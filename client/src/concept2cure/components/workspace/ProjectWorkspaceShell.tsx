@@ -93,6 +93,23 @@ import { canEscalateToEdit } from '../../contexts/DocumentModeContext';
 type LeftRailMode = 'files' | 'dossier' | 'templates' | 'outline' | 'registry';
 type OperatingLayer = 'document_studio' | 'vault' | 'reports';
 type WorkspaceWorkbench = 'cmc' | 'biostats' | 'device' | 'clinical';
+type ProjectNav =
+  | 'overview'
+  | 'documents'
+  | 'vault'
+  | 'reports'
+  | 'tasks'
+  | 'reviews'
+  | 'submission'
+  | 'activity';
+type DocumentTab =
+  | 'content'
+  | 'evidence'
+  | 'versions'
+  | 'review'
+  | 'signatures'
+  | 'provenance'
+  | 'export';
 
 // ── Dossier metrics types ────────────────────────────────────────────────────
 interface SectionMetrics {
@@ -195,6 +212,27 @@ const WORKBENCHES: WorkbenchConfig[] = [
   },
 ];
 
+const PROJECT_NAV_ITEMS: Array<{ id: ProjectNav; label: string }> = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'documents', label: 'Documents' },
+  { id: 'vault', label: 'Vault' },
+  { id: 'reports', label: 'Reports' },
+  { id: 'tasks', label: 'Tasks' },
+  { id: 'reviews', label: 'Reviews' },
+  { id: 'submission', label: 'Submission' },
+  { id: 'activity', label: 'Activity' },
+];
+
+const DOCUMENT_TAB_ITEMS: Array<{ id: DocumentTab; label: string }> = [
+  { id: 'content', label: 'Content' },
+  { id: 'evidence', label: 'Evidence' },
+  { id: 'versions', label: 'Versions' },
+  { id: 'review', label: 'Review' },
+  { id: 'signatures', label: 'Signatures' },
+  { id: 'provenance', label: 'Provenance' },
+  { id: 'export', label: 'Export' },
+];
+
 // ── Types ────────────────────────────────────────────────────────────────────
 
 interface ProjectWorkspaceShellProps {
@@ -249,6 +287,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const [selectedFolder, setSelectedFolder] = useState<string>('drafts');
   const [selectedDocId, setSelectedDocId] = useState<string | undefined>();
   const [mode, setMode] = useState<'dashboard' | 'browse' | 'edit'>('dashboard');
+  const [projectNav, setProjectNav] = useState<ProjectNav>('overview');
+  const [documentTab, setDocumentTab] = useState<DocumentTab>('content');
   const [leftRailMode, setLeftRailMode] = useState<LeftRailMode>('files');
   const [activeLayer, setActiveLayer] = useState<OperatingLayer>('document_studio');
   const [activeWorkbench, setActiveWorkbench] = useState<WorkspaceWorkbench>('clinical');
@@ -406,6 +446,58 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     },
     [pushShellToast]
   );
+
+  useEffect(() => {
+    if (activeLayer === 'vault') {
+      setProjectNav('vault');
+      return;
+    }
+    if (activeLayer === 'reports') {
+      setProjectNav('reports');
+      return;
+    }
+    if (phase4Panel === 'pulse') {
+      setProjectNav('activity');
+      return;
+    }
+    if (mode === 'dashboard') {
+      setProjectNav('overview');
+      return;
+    }
+    setProjectNav('documents');
+  }, [activeLayer, mode, phase4Panel]);
+
+  useEffect(() => {
+    if (mode !== 'edit') {
+      setDocumentTab('content');
+      setEditorInitialInspector(null);
+      return;
+    }
+    switch (documentTab) {
+      case 'content':
+        setShowGovernedPanel(false);
+        setEditorInitialInspector(null);
+        break;
+      case 'evidence':
+        setShowGovernedPanel(true);
+        setEditorInitialInspector('provenance');
+        break;
+      case 'versions':
+        setShowGovernedPanel(false);
+        setEditorInitialInspector('compare');
+        break;
+      case 'review':
+      case 'signatures':
+      case 'export':
+        setShowGovernedPanel(true);
+        setEditorInitialInspector('audit');
+        break;
+      case 'provenance':
+        setShowGovernedPanel(true);
+        setEditorInitialInspector('provenance');
+        break;
+    }
+  }, [documentTab, mode]);
 
   // ── Global keyboard shortcuts ────────────────────────────────────────────
   useEffect(() => {
@@ -844,8 +936,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       }
       setSelectedDocId(artifactId);
       setMode('edit');
-      if (inspector) setEditorInitialInspector(inspector);
-      setShowGovernedPanel(inspector === 'audit');
+      if (inspector === 'compare') setDocumentTab('versions');
+      else if (inspector === 'provenance') setDocumentTab('provenance');
+      else if (inspector === 'audit') setDocumentTab('review');
+      else setDocumentTab('content');
     },
     [artifacts, pushShellToast]
   );
@@ -905,7 +999,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       if (!tryOpenForEdit(doc.status)) return;
       setSelectedDocId(doc.id);
       setMode('edit');
-      setShowGovernedPanel(true);
+      setDocumentTab('content');
       setSectionReqs(null); // close reqs panel when opening governed panel
     },
     [tryOpenForEdit]
@@ -1158,6 +1252,45 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           </div>
         </div>
 
+        <div className="flex items-center gap-1 px-4 h-9 border-b border-zinc-200 bg-zinc-50/70 shrink-0 overflow-x-auto">
+          {PROJECT_NAV_ITEMS.map(item => (
+            <button
+              key={item.id}
+              onClick={() => {
+                setProjectNav(item.id);
+                if (item.id === 'overview') {
+                  setMode('dashboard');
+                  setPhase4Panel('none');
+                } else if (item.id === 'documents') {
+                  setActiveLayer('document_studio');
+                  setMode(selectedDocId ? 'edit' : 'browse');
+                  setPhase4Panel('none');
+                } else if (item.id === 'vault') {
+                  setActiveLayer('vault');
+                  setMode('browse');
+                  setLeftRailMode('files');
+                } else if (item.id === 'reports' || item.id === 'activity' || item.id === 'reviews') {
+                  setActiveLayer('reports');
+                  setMode('browse');
+                  setPhase4Panel('pulse');
+                } else if (item.id === 'submission') {
+                  onNavigate ? onNavigate('submission-builder') : setMode('dashboard');
+                } else if (item.id === 'tasks') {
+                  setMode('dashboard');
+                }
+              }}
+              className={cn(
+                'px-2.5 py-1 text-xs rounded-md border whitespace-nowrap transition-colors',
+                projectNav === item.id
+                  ? 'bg-zinc-900 text-white border-zinc-900'
+                  : 'bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-100'
+              )}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
         {/* ── Pending move banner ───────────────────────────────────────────── */}
         {pendingMove && (
           <div className="flex items-center gap-2.5 px-4 h-10 border-b border-amber-200 bg-amber-50 shrink-0">
@@ -1365,6 +1498,25 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               </button>
               <NotificationCenter projectId={projectId} industryMode={industryMode} />
             </div>
+          </div>
+        )}
+
+        {mode === 'edit' && activeArtifact && (
+          <div className="flex items-center gap-1 px-4 h-9 border-b border-zinc-200 bg-white shrink-0 overflow-x-auto">
+            {DOCUMENT_TAB_ITEMS.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setDocumentTab(tab.id)}
+                className={cn(
+                  'px-2.5 py-1 text-xs rounded-md border whitespace-nowrap transition-colors',
+                  documentTab === tab.id
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-zinc-600 border-zinc-200 hover:bg-blue-50'
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         )}
 
@@ -1841,9 +1993,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               onClose={() => setShowGovernedPanel(false)}
               onOpenDiff={() => {
                 if (!tryOpenForEdit(activeArtifact.status)) return;
-                setShowGovernedPanel(false);
                 setMode('edit');
-                setEditorInitialInspector('compare');
+                setDocumentTab('versions');
               }}
             />
           )}
