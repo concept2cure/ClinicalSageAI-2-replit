@@ -13,17 +13,9 @@
  */
 
 import { Router, Request, Response } from 'express';
+import * as crypto from 'crypto';
 
 const router = Router();
-
-function requireOrgId(req: Request, res: Response): number | null {
-  const orgId = (req as any).user?.organizationId;
-  if (!orgId) {
-    res.status(401).json({ error: 'Organization context required' });
-    return null;
-  }
-  return orgId;
-}
 
 // Lazy-import services to avoid startup crashes if deps are missing
 async function getSvc<T>(path: string): Promise<T> {
@@ -104,8 +96,7 @@ router.post('/figures/auto-insert', async (req: Request, res: Response) => {
  */
 router.post('/export/pdf', async (req: Request, res: Response) => {
   try {
-    const { PDFConverter } = await getSvc<any>('../services/documentExportService.js');
-    const converter = new PDFConverter();
+    const { generatePDF } = await getSvc<any>('../services/documentExportService.js');
     const { projectId, title, options } = req.body;
     const user = (req as any).user;
 
@@ -113,14 +104,25 @@ router.post('/export/pdf', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'projectId is required' });
     }
 
-    const result = await converter.generatePDF(
-      projectId,
-      user?.organizationId,
-      title || 'Document Export',
-      options || {}
-    );
+    const result = await generatePDF({
+      projectId: Number(projectId),
+      organizationId: Number(user?.organizationId),
+      userId: Number(user?.id || user?.userId || 0),
+      ...(options || {}),
+    });
 
-    res.json({ success: true, export: result });
+    if (!result.success) {
+      return res.status(422).json({ success: false, error: result.error || 'PDF export failed' });
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${title ? String(title).replace(/\s+/g, '_') : result.filename}"`
+    );
+    res.setHeader('X-Export-Format', 'pdf');
+    res.setHeader('X-Export-Page-Count', String(result.pageCount));
+    return res.send(result.buffer);
   } catch (error: any) {
     console.error('[AuditServices] PDF export failed:', error);
     res.status(500).json({ error: error.message || 'PDF export failed' });
@@ -133,23 +135,39 @@ router.post('/export/pdf', async (req: Request, res: Response) => {
  */
 router.post('/export/ectd', async (req: Request, res: Response) => {
   try {
-    const { ECTDExportPackager } = await getSvc<any>('../services/documentExportService.js');
-    const packager = new ECTDExportPackager();
-    const { projectId, applicationNumber, sequenceNumber, region, lifecycle } = req.body;
+    const { generateEctdPackage, validateEctdPackage } = await getSvc<any>(
+      '../services/ectdExportService.js'
+    );
+    const { projectId, applicationNumber, sequenceNumber, region, submissionType, validateAfter } =
+      req.body;
     const user = (req as any).user;
 
     if (!projectId || !applicationNumber) {
       return res.status(400).json({ error: 'projectId and applicationNumber are required' });
     }
 
-    const result = await packager.assembleECTDPackage(projectId, user?.organizationId, {
+    const result = await generateEctdPackage(Number(projectId), Number(user?.organizationId), {
       applicationNumber,
       sequenceNumber: sequenceNumber || '0000',
-      region: region || 'us',
-      lifecycleOperations: lifecycle || {},
+      region: region || 'FDA',
+      submissionType: submissionType || 'initial',
     });
 
-    res.json({ success: true, ectdPackage: result });
+    const validation = validateAfter === false ? null : await validateEctdPackage(result.buffer);
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+    res.setHeader('X-Export-Format', 'ectd');
+    res.setHeader('X-ECTD-Total-Modules', String(result.stats.totalModules));
+    res.setHeader('X-ECTD-Total-Files', String(result.stats.totalFiles));
+    res.setHeader('X-ECTD-Generated-At', result.stats.generatedAt);
+    res.setHeader('X-ECTD-Index-XML-Path', 'index.xml');
+    res.setHeader('X-ECTD-Regional-XML-Path', `m1/${(region || 'FDA') === 'FDA' ? 'us' : (region || 'FDA') === 'EMA' ? 'eu' : 'jp'}-regional.xml`);
+    if (validation) {
+      res.setHeader('X-ECTD-Valid', String(validation.valid));
+      res.setHeader('X-ECTD-Validation-Errors', String(validation.errors.length));
+    }
+    return res.send(result.buffer);
   } catch (error: any) {
     console.error('[AuditServices] eCTD export failed:', error);
     res.status(500).json({ error: error.message || 'eCTD export failed' });
@@ -167,22 +185,32 @@ router.post('/export/ectd', async (req: Request, res: Response) => {
 router.post('/traceability/map', async (req: Request, res: Response) => {
   try {
     const svc = await getSvc<any>('../services/sentenceTraceabilityService.js');
-    const { documentId, content, projectId, sources } = req.body;
+    const { documentId, content, projectId, persist = true } = req.body;
     const user = (req as any).user;
+    const organizationId = Number(user?.organizationId);
 
-    if (!content) {
-      return res.status(400).json({ error: 'content is required' });
+    if (!content || !projectId || !organizationId) {
+      return res.status(400).json({ error: 'content, projectId, and auth context are required' });
     }
 
     const sentences = svc.detectSentences(content);
     const traceLinks = await svc.mapSentencesToSources(
       sentences,
-      sources || [],
-      documentId || 'inline',
-      user?.organizationId
+      Number(projectId),
+      organizationId
     );
 
-    res.json({ success: true, sentences: sentences.length, traceLinks });
+    let persisted = null;
+    if (persist !== false && traceLinks.length > 0) {
+      persisted = await svc.persistTraceLinks(
+        traceLinks,
+        Number(projectId),
+        organizationId,
+        String(documentId || `inline-${crypto.randomUUID().slice(0, 8)}`)
+      );
+    }
+
+    return res.json({ success: true, sentences: sentences.length, traceLinks, persisted });
   } catch (error: any) {
     console.error('[AuditServices] Traceability mapping failed:', error);
     res.status(500).json({ error: error.message || 'Traceability mapping failed' });
@@ -196,22 +224,24 @@ router.post('/traceability/map', async (req: Request, res: Response) => {
 router.post('/traceability/click-through', async (req: Request, res: Response) => {
   try {
     const svc = await getSvc<any>('../services/sentenceTraceabilityService.js');
-    const { content, charOffset, sources } = req.body;
+    const { content, charOffset, projectId } = req.body;
+    const user = (req as any).user;
+    const organizationId = Number(user?.organizationId);
 
-    if (!content || charOffset === undefined) {
-      return res.status(400).json({ error: 'content and charOffset are required' });
+    if (!content || charOffset === undefined || !projectId || !organizationId) {
+      return res
+        .status(400)
+        .json({ error: 'content, charOffset, projectId, and auth context are required' });
     }
 
-    const sentences = svc.detectSentences(content);
-    const traceLinks = await svc.mapSentencesToSources(
-      sentences,
-      sources || [],
-      'click-through',
-      (req as any).user?.organizationId
+    const result = await svc.resolveClickThrough(
+      String(content),
+      Number(charOffset),
+      Number(projectId),
+      organizationId
     );
-    const result = svc.resolveClickThrough(charOffset, sentences, traceLinks);
 
-    res.json({ success: true, clickThrough: result });
+    return res.json({ success: true, clickThrough: result });
   } catch (error: any) {
     console.error('[AuditServices] Click-through failed:', error);
     res.status(500).json({ error: error.message || 'Click-through resolution failed' });
@@ -225,23 +255,22 @@ router.post('/traceability/click-through', async (req: Request, res: Response) =
 router.post('/traceability/report', async (req: Request, res: Response) => {
   try {
     const svc = await getSvc<any>('../services/sentenceTraceabilityService.js');
-    const { content, documentId, sources } = req.body;
+    const { content, documentId, projectId } = req.body;
     const user = (req as any).user;
+    const organizationId = Number(user?.organizationId);
 
-    if (!content) {
-      return res.status(400).json({ error: 'content is required' });
+    if (!content || !projectId || !organizationId) {
+      return res.status(400).json({ error: 'content, projectId, and auth context are required' });
     }
 
-    const sentences = svc.detectSentences(content);
-    const traceLinks = await svc.mapSentencesToSources(
-      sentences,
-      sources || [],
-      documentId || 'report',
-      user?.organizationId
+    const report = await svc.generateTraceabilityReport(
+      String(documentId || `report-${crypto.randomUUID().slice(0, 8)}`),
+      String(content),
+      Number(projectId),
+      organizationId
     );
-    const report = svc.generateTraceabilityReport(documentId || 'report', sentences, traceLinks);
 
-    res.json({ success: true, report });
+    return res.json({ success: true, report });
   } catch (error: any) {
     console.error('[AuditServices] Traceability report failed:', error);
     res.status(500).json({ error: error.message || 'Traceability report generation failed' });
@@ -259,7 +288,7 @@ router.post('/traceability/report', async (req: Request, res: Response) => {
 router.post('/keywords/extract', async (req: Request, res: Response) => {
   try {
     const svc = await getSvc<any>('../services/keywordExtractionService.js');
-    const { content, projectId, linkSources } = req.body;
+    const { content, linkSources } = req.body;
     const user = (req as any).user;
 
     if (!content) {

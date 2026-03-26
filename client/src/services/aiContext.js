@@ -380,7 +380,7 @@ function normalizeResponse(raw, context, originalPrompt) {
   const confidence = citations.length === 0 ? 0.1 : Math.min(avgScore, 1.0);
 
   const model = raw?.metadata?.aiModel || raw?.model || 'unknown';
-  const isRealAI = model !== 'lumen-cortex-demo'
+  const isRealAI = model !== 'ana-cortex-demo'
     && model !== 'fallback'
     && model !== 'unknown'
     && model !== 'demo';

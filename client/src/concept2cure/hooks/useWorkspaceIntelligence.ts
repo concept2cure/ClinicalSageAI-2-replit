@@ -2,8 +2,8 @@
  * useWorkspaceIntelligence — React Query hooks for AnA 1.0 RI, Foresight, and CSR APIs.
  *
  * Endpoints wired:
- * - AnA 1.0 RI:    POST /api/lumen-cortex/regulatory-analysis
- * - AnA 1.0 RI:    GET  /api/lumen-cortex/intelligence
+ * - AnA 1.0 RI:    POST /api/ana-cortex/regulatory-analysis
+ * - AnA 1.0 RI:    GET  /api/ana-cortex/intelligence
  * - CSR Search:    GET  /api/csr-search/fast-query
  * - Foresight:     POST /api/foresight/score
  * - Foresight AI:  POST /api/foresight-ai/risk-analysis/clinical
@@ -18,10 +18,10 @@ export interface RegulatoryAnalysisResult {
   regulatory_framework: string;
   overall_confidence_score: number;
   regulatory_impact_summary: string;
-  lumen_ai_recommendations: string[];
+  ana_1_0_ri_recommendations: string[];
   comprehensive_analysis: string;
   cost_analysis: Record<string, unknown>;
-  lumen_intelligence_summary: string;
+  ana_1_0_ri_intelligence_summary: string;
 }
 
 export interface CSRSearchResult {
@@ -109,7 +109,7 @@ export const workspaceIntelKeys = {
 export function useRegulatoryAnalysis() {
   return useMutation({
     mutationFn: async (query: string): Promise<RegulatoryAnalysisResult> => {
-      const res = await apiRequest('POST', '/api/lumen-cortex/regulatory-analysis', { query });
+      const res = await apiRequest('POST', '/api/ana-cortex/regulatory-analysis', { query });
       const data = await res.json();
       return data.data ?? data;
     },
@@ -122,7 +122,7 @@ export function useIntelligenceFeeds() {
     queryKey: workspaceIntelKeys.feeds(),
     queryFn: async (): Promise<IntelligenceFeed[]> => {
       try {
-        const res = await apiRequest('GET', '/api/lumen-cortex/intelligence');
+        const res = await apiRequest('GET', '/api/ana-cortex/intelligence');
         const data = await res.json();
         return data.feeds ?? data.data ?? [];
       } catch {

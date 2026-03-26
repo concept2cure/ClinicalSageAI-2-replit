@@ -574,7 +574,7 @@ function CouncilChat({ advisorId, projectId }: { advisorId: string; projectId: s
     try {
       const systemPrompt = `You are ${persona?.name || 'a regulatory advisor'}, a ${persona?.role || 'specialist'} on the Concept2Cure platform. Your capabilities include: ${(persona?.capabilities || []).join(', ')}. Be concise, practical, and action-oriented. If the user asks about a specific regulatory topic, provide expert guidance.`;
 
-      const res = await apiRequest('POST', '/api/lumen-cortex/chat', {
+      const res = await apiRequest('POST', '/api/ana-cortex/chat', {
           message: userMsg,
           context: {
             screen: 'convergent-canvas',

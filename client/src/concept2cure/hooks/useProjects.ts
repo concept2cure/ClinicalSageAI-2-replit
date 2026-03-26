@@ -33,74 +33,21 @@ function getAuthHeaders(): Record<string, string> {
 }
 
 function withRequiredOwnership(project: Project): Project {
-  const canonicalChatHistory = project.conversations;
-  const canonicalDocumentInventory = project.knowledge?.documents;
-  const canonicalApprovals = project.signatures;
-  const canonicalActivity = project.auditTrail;
-  const existingDerived = project.ownership?.derived;
-  const existingPreferences = project.ownership?.preferences;
-
-  const projectInstructions =
-    existingPreferences?.projectInstructions ??
-    project.ownership?.projectInstructions ??
-    project.customInstructions ??
-    '';
-  const reusableSnippetsKnowledge =
-    existingPreferences?.reusableSnippetsKnowledge ??
-    project.ownership?.reusableSnippetsKnowledge ??
-    [];
-  const currentWorkbenchContext =
-    existingPreferences?.currentWorkbenchContext ??
-    project.ownership?.currentWorkbenchContext ??
-    'project-home';
-
-  const derived = {
-    chatHistory:
-      canonicalChatHistory !== undefined
-        ? canonicalChatHistory
-        : existingDerived?.chatHistory ?? project.ownership?.chatHistory ?? [],
-    documentInventory:
-      canonicalDocumentInventory !== undefined
-        ? canonicalDocumentInventory
-        : existingDerived?.documentInventory ?? project.ownership?.documentInventory ?? [],
-    vaultLinkedFilesEvidence:
-      existingDerived?.vaultLinkedFilesEvidence ?? project.ownership?.vaultLinkedFilesEvidence ?? [],
-    reports: existingDerived?.reports ?? project.ownership?.reports ?? [],
-    reviewState: existingDerived?.reviewState ?? project.ownership?.reviewState ?? 'not_started',
-    approvals:
-      canonicalApprovals !== undefined
-        ? canonicalApprovals
-        : existingDerived?.approvals ?? project.ownership?.approvals ?? [],
-    readinessState:
-      existingDerived?.readinessState ?? project.ownership?.readinessState ?? 'not_ready',
-    activityHistory:
-      canonicalActivity !== undefined
-        ? canonicalActivity
-        : existingDerived?.activityHistory ?? project.ownership?.activityHistory ?? [],
-  };
-
   return {
     ...project,
-    customInstructions: project.customInstructions ?? projectInstructions,
     ownership: {
-      derived,
-      preferences: {
-        projectInstructions,
-        reusableSnippetsKnowledge,
-        currentWorkbenchContext: currentWorkbenchContext as WorkbenchMode,
-      },
-      // Backward-compat flat shape
-      chatHistory: derived.chatHistory,
-      documentInventory: derived.documentInventory,
-      vaultLinkedFilesEvidence: derived.vaultLinkedFilesEvidence,
-      reports: derived.reports,
-      reviewState: derived.reviewState,
-      approvals: derived.approvals,
-      readinessState: derived.readinessState,
-      activityHistory: derived.activityHistory,
-      projectInstructions,
-      reusableSnippetsKnowledge,
-      currentWorkbenchContext: currentWorkbenchContext as WorkbenchMode,
+      chatHistory: project.ownership?.chatHistory ?? project.conversations ?? [],
+      documentInventory: project.ownership?.documentInventory ?? project.knowledge?.documents ?? [],
+      vaultLinkedFilesEvidence: project.ownership?.vaultLinkedFilesEvidence ?? [],
+      projectInstructions:
+        project.ownership?.projectInstructions ?? project.customInstructions ?? '',
+      reusableSnippetsKnowledge: project.ownership?.reusableSnippetsKnowledge ?? [],
+      reports: project.ownership?.reports ?? [],
+      reviewState: project.ownership?.reviewState ?? 'draft',
+      approvals: project.ownership?.approvals ?? project.signatures ?? [],
+      readinessState: project.ownership?.readinessState ?? 'not_started',
+      activityHistory: project.ownership?.activityHistory ?? project.auditTrail ?? [],
+      currentWorkbenchContext: project.ownership?.currentWorkbenchContext ?? '',
     },
   };
 }
@@ -227,33 +174,6 @@ async function updateProjectAPI(project: Project): Promise<Project> {
   if (!response.ok || payload?.success === false) {
     throw new Error(
       payload?.error?.message || payload?.error || `Failed to update project: ${response.status}`
-    );
-  }
-  return withRequiredOwnership(payload?.data ?? payload);
-}
-
-async function patchOwnershipPreferencesAPI(
-  projectId: string,
-  preferences: {
-    projectInstructions?: string;
-    reusableSnippetsKnowledge?: string[];
-    currentWorkbenchContext?: WorkbenchMode;
-  }
-): Promise<Project> {
-  const response = await fetch(`/api/concept2cure/projects/${projectId}/ownership-preferences`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeaders(),
-    },
-    body: JSON.stringify(preferences),
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok || payload?.success === false) {
-    throw new Error(
-      payload?.error?.message ||
-        payload?.error ||
-        `Failed to update ownership preferences: ${response.status}`
     );
   }
   return withRequiredOwnership(payload?.data ?? payload);

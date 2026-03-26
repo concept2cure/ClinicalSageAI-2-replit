@@ -35,12 +35,15 @@ import {
   type SectionRequirement,
 } from '../../models/ctdHierarchy';
 import { ProjectDashboard } from './ProjectDashboard';
+import { OperatingSystemRegistryPanel, type RegistryKind } from './OperatingSystemRegistryPanel';
+import { DocumentStudioSurface } from './DocumentStudioSurface';
 import { RegulatoryTransformCanvas } from './RegulatoryTransformCanvas';
 import { GoldenDossierVerificationPanel } from './GoldenDossierVerificationPanel';
 import { ProgramTwinPanel } from './ProgramTwinPanel';
 import { SubmissionAppsPanel } from './SubmissionAppsPanel';
 import { ReviewPulseDashboard } from './ReviewPulseDashboard';
 import { NotificationCenter } from './NotificationCenter';
+import { ComputeJobPanel } from '../compute/ComputeJobPanel';
 import {
   ChevronLeft,
   Loader2,
@@ -87,7 +90,9 @@ import { NewDocumentDialog } from './NewDocumentDialog';
 import { canEscalateToEdit } from '../../contexts/DocumentModeContext';
 
 // ── Left-rail mode type ──────────────────────────────────────────────────────
-type LeftRailMode = 'files' | 'dossier' | 'templates' | 'outline';
+type LeftRailMode = 'files' | 'dossier' | 'templates' | 'outline' | 'registry';
+type OperatingLayer = 'document_studio' | 'vault' | 'reports';
+type WorkspaceWorkbench = 'cmc' | 'biostats' | 'device' | 'clinical';
 
 // ── Dossier metrics types ────────────────────────────────────────────────────
 interface SectionMetrics {
@@ -100,6 +105,21 @@ interface SectionMetrics {
   templateCoverageAvailable: boolean;
   evidenceCount: number;
   precedentCount: number;
+}
+
+interface OperatingLayerConfig {
+  id: OperatingLayer;
+  label: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+interface WorkbenchConfig {
+  id: WorkspaceWorkbench;
+  label: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  defaultFolder: string;
 }
 
 // ── Cut/paste move state ─────────────────────────────────────────────────────
@@ -122,6 +142,58 @@ const FOLDER_LABELS: Record<string, string> = {
   audit: 'Audit / Provenance',
   final: 'Submitted / Final',
 };
+
+const OPERATING_LAYERS: OperatingLayerConfig[] = [
+  {
+    id: 'document_studio',
+    label: 'Document Studio',
+    description: 'Core authoring + governed workflow',
+    icon: FileText,
+  },
+  {
+    id: 'vault',
+    label: 'Vault Layer',
+    description: 'Evidence and document operations',
+    icon: Files,
+  },
+  {
+    id: 'reports',
+    label: 'Reports Layer',
+    description: 'Readiness, review, and executive reporting',
+    icon: Activity,
+  },
+];
+
+const WORKBENCHES: WorkbenchConfig[] = [
+  {
+    id: 'cmc',
+    label: 'CMC',
+    description: 'Module 3 authoring',
+    icon: Layers,
+    defaultFolder: 'cmc',
+  },
+  {
+    id: 'biostats',
+    label: 'Biostats',
+    description: 'Statistical narratives',
+    icon: Brain,
+    defaultFolder: 'clinical',
+  },
+  {
+    id: 'device',
+    label: 'Device',
+    description: 'Device evidence and equivalence',
+    icon: Target,
+    defaultFolder: 'evidence',
+  },
+  {
+    id: 'clinical',
+    label: 'Clinical',
+    description: 'Clinical studies and summaries',
+    icon: BookOpen,
+    defaultFolder: 'clinical',
+  },
+];
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -178,6 +250,16 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const [selectedDocId, setSelectedDocId] = useState<string | undefined>();
   const [mode, setMode] = useState<'dashboard' | 'browse' | 'edit'>('dashboard');
   const [leftRailMode, setLeftRailMode] = useState<LeftRailMode>('files');
+  const [activeLayer, setActiveLayer] = useState<OperatingLayer>('document_studio');
+  const [activeWorkbench, setActiveWorkbench] = useState<WorkspaceWorkbench>('clinical');
+  const [activeRegistry, setActiveRegistry] = useState<RegistryKind>('documents');
+  // operatingLayer maps 'document_studio' -> 'documents' for OperatingSystemRegistryPanel compatibility
+  const operatingLayer = activeLayer === 'document_studio' ? 'documents' : activeLayer;
+  const setOperatingLayer = (layer: string) => {
+    if (layer === 'documents') setActiveLayer('document_studio');
+    else if (layer === 'vault') setActiveLayer('vault');
+    else if (layer === 'reports') setActiveLayer('reports');
+  };
   const [selectedCtdSection, setSelectedCtdSection] = useState<string | undefined>();
 
   // New document creation
@@ -687,6 +769,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     if (!selectedDocId) return null;
     return artifacts.find(a => a.id === selectedDocId) || null;
   }, [selectedDocId, artifacts]);
+  const reviewInFlight = useMemo(
+    () => artifacts.filter(a => ['review', 'approved'].includes((a.status || '').toLowerCase())).length,
+    [artifacts]
+  );
 
   // Ref for use in callbacks that need current activeArtifact
   const activeArtifactRef = useRef(activeArtifact);
@@ -748,6 +834,21 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     setPhase4Panel('none');
     setPhase4Ctx({});
   }, []);
+
+  const openComputeArtifact = useCallback(
+    (artifactId: string, inspector: 'compare' | 'provenance' | 'audit' | null = null) => {
+      const art = artifacts.find(a => a.id === artifactId);
+      if (!art) {
+        pushShellToast('Computed artifact not found in project context', 'error');
+        return;
+      }
+      setSelectedDocId(artifactId);
+      setMode('edit');
+      if (inspector) setEditorInitialInspector(inspector);
+      setShowGovernedPanel(inspector === 'audit');
+    },
+    [artifacts, pushShellToast]
+  );
 
   /** Called when Transform Canvas / Submission App creates a draft */
   const handlePhase4CreateDraft = useCallback(
@@ -827,6 +928,32 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const handleBackToList = useCallback(() => {
     setSelectedDocId(undefined);
     setMode('dashboard');
+  }, []);
+
+  const handleLayerChange = useCallback((layer: OperatingLayer) => {
+    setActiveLayer(layer);
+    if (layer === 'document_studio') {
+      setPhase4Panel('none');
+      return;
+    }
+    if (layer === 'vault') {
+      setPhase4Panel('none');
+      setMode('browse');
+      setLeftRailMode('files');
+      return;
+    }
+    setMode('browse');
+    setPhase4Panel('pulse');
+  }, []);
+
+  const handleWorkbenchChange = useCallback((workbench: WorkspaceWorkbench) => {
+    setActiveWorkbench(workbench);
+    const config = WORKBENCHES.find(item => item.id === workbench);
+    if (!config) return;
+    setSelectedFolder(config.defaultFolder);
+    setLeftRailMode('files');
+    setMode('browse');
+    setPhase4Panel('none');
   }, []);
 
   // Which docs to show in the center pane when browsing
@@ -937,6 +1064,98 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               </button>
             </div>
           )}
+        </div>
+
+        {/* ── AnA 1.0 controlled shell layer/workbench bar ─────────────────── */}
+        <div className="flex items-center gap-3 px-4 h-11 border-b border-zinc-200 bg-zinc-50/70 shrink-0 overflow-x-auto">
+          <div className="text-[11px] font-semibold tracking-wide text-zinc-500 uppercase whitespace-nowrap">
+            AnA 1.0 Shell
+          </div>
+          <div className="flex items-center gap-1.5">
+            {OPERATING_LAYERS.map(layer => {
+              const LayerIcon = layer.icon;
+              const selected = activeLayer === layer.id;
+              return (
+                <button
+                  key={layer.id}
+                  onClick={() => handleLayerChange(layer.id)}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors',
+                    selected
+                      ? 'bg-zinc-900 text-white'
+                      : 'bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-100'
+                  )}
+                  title={layer.description}
+                >
+                  <LayerIcon className="w-3.5 h-3.5" />
+                  {layer.label}
+                </button>
+              );
+            })}
+          </div>
+          <span className="text-zinc-300">|</span>
+          <div className="text-[11px] font-semibold tracking-wide text-zinc-500 uppercase whitespace-nowrap">
+            Workbenches
+          </div>
+          <div className="flex items-center gap-1.5">
+            {WORKBENCHES.map(workbench => {
+              const WorkbenchIcon = workbench.icon;
+              const selected = activeWorkbench === workbench.id;
+              return (
+                <button
+                  key={workbench.id}
+                  onClick={() => handleWorkbenchChange(workbench.id)}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors',
+                    selected
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-zinc-600 border border-zinc-200 hover:bg-blue-50'
+                  )}
+                  title={workbench.description}
+                >
+                  <WorkbenchIcon className="w-3.5 h-3.5" />
+                  {workbench.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Canonical shell context band (project/document/review/report continuity) ───────── */}
+        <div className="flex items-center gap-2 px-4 h-9 border-b border-zinc-200 bg-white/95 shrink-0">
+          <span className="text-[11px] font-semibold text-zinc-700">Project</span>
+          <span className="text-[11px] text-zinc-900 font-medium truncate max-w-[240px]">
+            {projectName || 'Untitled Project'}
+          </span>
+          <span className="text-zinc-300">/</span>
+          <span className="text-[11px] text-zinc-600">
+            Doc: {activeArtifact?.title ? activeArtifact.title.slice(0, 44) : 'No document selected'}
+          </span>
+          <span className="text-zinc-300">/</span>
+          <span className="text-[11px] text-zinc-600">Reviews in flight: {reviewInFlight}</span>
+          <div className="ml-auto flex items-center gap-1">
+            <button
+              onClick={() => {
+                setMode('dashboard');
+                setPhase4Panel('pulse');
+              }}
+              className="text-[11px] px-2 py-0.5 rounded border border-rose-200 text-rose-700 hover:bg-rose-50"
+            >
+              Reviews
+            </button>
+            <button
+              onClick={() => setOperatingLayer('reports')}
+              className="text-[11px] px-2 py-0.5 rounded border border-blue-200 text-blue-700 hover:bg-blue-50"
+            >
+              Reports
+            </button>
+            <button
+              onClick={() => (onNavigate ? onNavigate('submission-builder') : setMode('dashboard'))}
+              className="text-[11px] px-2 py-0.5 rounded border border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+            >
+              Submission
+            </button>
+          </div>
         </div>
 
         {/* ── Pending move banner ───────────────────────────────────────────── */}
@@ -1154,6 +1373,33 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           {/* Left: Tree panel with mode toggle — hidden in dashboard mode for full-width layout */}
           {mode !== 'dashboard' && (
             <div className="w-[200px] 2xl:w-[240px] border-r border-zinc-200 shrink-0 flex flex-col bg-white">
+              <div className="grid grid-cols-3 gap-1 p-1.5 border-b border-zinc-200 bg-white">
+                {[
+                  { key: 'documents' as OperatingLayer, label: 'Docs' },
+                  { key: 'vault' as OperatingLayer, label: 'Vault' },
+                  { key: 'reports' as OperatingLayer, label: 'Reports' },
+                ].map(layer => (
+                  <button
+                    key={layer.key}
+                    onClick={() => {
+                      setOperatingLayer(layer.key);
+                      if (layer.key === 'vault') setActiveRegistry('vault');
+                      if (layer.key === 'reports') setActiveRegistry('reports');
+                      if (layer.key === 'documents' && activeRegistry !== 'projects') {
+                        setActiveRegistry('documents');
+                      }
+                    }}
+                    className={cn(
+                      'rounded-md px-2 py-1 text-[11px] font-medium transition-colors',
+                      operatingLayer === layer.key
+                        ? 'bg-zinc-900 text-white'
+                        : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                    )}
+                  >
+                    {layer.label}
+                  </button>
+                ))}
+              </div>
               {/* Mode toggle tabs */}
               <div className="flex border-b border-zinc-200 shrink-0 bg-zinc-50/60">
                 {[
@@ -1175,6 +1421,12 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     icon: List,
                     label: 'Outline',
                     disabled: !outlineAvailable,
+                  },
+                  {
+                    key: 'registry' as LeftRailMode,
+                    icon: Brain,
+                    label: 'OS',
+                    disabled: false,
                   },
                 ].map(tab => (
                   <button
@@ -1294,6 +1546,14 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     </p>
                   </div>
                 )
+              ) : leftRailMode === 'registry' ? (
+                <OperatingSystemRegistryPanel
+                  projectId={projectId}
+                  projectName={projectName}
+                  artifacts={artifacts}
+                  activeRegistry={activeRegistry}
+                  onRegistryChange={setActiveRegistry}
+                />
               ) : (
                 <TemplateTree
                   onCreateFromTemplate={handleCreateFromTemplate}
@@ -1368,6 +1628,14 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             )}
 
             {/* Mode: browse = DocumentListPane, edit = EditorPanel, Phase 4 overlay */}
+            <DocumentStudioSurface
+              osLayer={operatingLayer}
+              onOpenWorkbench={domain => {
+                if (domain === 'biostatistics') onNavigate?.('biostatistics');
+                if (domain === 'safety-narrative') onNavigate?.('safety-narrative');
+                if (domain === 'precedent-intelligence') onNavigate?.('precedent-intelligence');
+              }}
+            >
             {phase4Panel === 'transform' ? (
               <RegulatoryTransformCanvas
                 projectId={projectId}
@@ -1476,33 +1744,46 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 />
               </div>
             ) : mode === 'dashboard' ? (
-              <ProjectDashboard
-                projectId={projectId}
-                projectName={projectName || 'Untitled Project'}
-                projectType={projectType}
-                submissionType={submissionType}
-                artifacts={artifacts}
-                onOpenDocument={(docId: string) => {
-                  const art = artifacts.find(a => a.id === docId);
-                  if (!tryOpenForEdit(art?.status)) {
+              <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+                <ComputeJobPanel
+                  projectId={projectId}
+                  onOpenArtifact={artifactId => openComputeArtifact(artifactId)}
+                  onOpenProvenance={artifactId => openComputeArtifact(artifactId, 'provenance')}
+                  onOpenAudit={artifactId => openComputeArtifact(artifactId, 'audit')}
+                  onPlaceArtifact={artifactId => {
+                    const art = artifacts.find(a => a.id === artifactId);
+                    if (!art) return;
+                    handleOpenPlacementForDoc(art, art.ctdSection ? 'relocate' : 'place');
+                  }}
+                />
+                <ProjectDashboard
+                  projectId={projectId}
+                  projectName={projectName || 'Untitled Project'}
+                  projectType={projectType}
+                  submissionType={submissionType}
+                  artifacts={artifacts}
+                  onOpenDocument={(docId: string) => {
+                    const art = artifacts.find(a => a.id === docId);
+                    if (!tryOpenForEdit(art?.status)) {
+                      setSelectedDocId(docId);
+                      setMode('browse');
+                      return;
+                    }
                     setSelectedDocId(docId);
+                    setMode('edit');
+                    setShowGovernedPanel(true);
+                  }}
+                  onCreateDocument={() => setShowNewDocDialog(true)}
+                  onOpenEditor={() => setMode('browse')}
+                  onOpenDossier={() => {
+                    setLeftRailMode('dossier');
                     setMode('browse');
-                    return;
-                  }
-                  setSelectedDocId(docId);
-                  setMode('edit');
-                  setShowGovernedPanel(true);
-                }}
-                onCreateDocument={() => setShowNewDocDialog(true)}
-                onOpenEditor={() => setMode('browse')}
-                onOpenDossier={() => {
-                  setLeftRailMode('dossier');
-                  setMode('browse');
-                }}
-                onOpenIntelligence={onSwitchToIntelligence}
-                onOpenSubmissions={onNavigate ? () => onNavigate('submission-builder') : undefined}
-                onOpenTemplates={onNavigate ? () => onNavigate('template-library') : undefined}
-              />
+                  }}
+                  onOpenIntelligence={onSwitchToIntelligence}
+                  onOpenSubmissions={onNavigate ? () => onNavigate('submission-builder') : undefined}
+                  onOpenTemplates={onNavigate ? () => onNavigate('template-library') : undefined}
+                />
+              </div>
             ) : mode === 'browse' ? (
               <DocumentListPane
                 folderLabel={browseLabel}
@@ -1538,6 +1819,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 </Suspense>
               </div>
             )}
+            </DocumentStudioSurface>
           </div>
 
           {/* ── Section requirements side panel ─────────────────────────────── */}
@@ -1604,13 +1886,6 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   t.type === 'info' && 'bg-zinc-700 text-white'
                 )}
               >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
                 {t.message}
                 <button
                   onClick={() => setShellToasts(prev => prev.filter(x => x.id !== t.id))}
@@ -1813,7 +2088,6 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
             </div>
           </div>
         )}
-      </div>
       </div>
     </div>
   );

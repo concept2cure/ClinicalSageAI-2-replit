@@ -313,13 +313,13 @@ export function RegulatoryIntelligencePanel({
                 </div>
 
                 {/* Recommendations */}
-                {analysisResult.lumen_ai_recommendations?.length > 0 && (
+                {analysisResult.ana_1_0_ri_recommendations?.length > 0 && (
                   <div className="p-2.5 bg-violet-50 border border-violet-100 rounded-lg">
                     <span className="text-xs font-semibold text-violet-700 uppercase tracking-wider">
                       Recommendations
                     </span>
                     <ul className="mt-1.5 space-y-1">
-                      {analysisResult.lumen_ai_recommendations.map((rec, i) => (
+                      {analysisResult.ana_1_0_ri_recommendations.map((rec, i) => (
                         <li key={i} className="flex items-start gap-1.5 text-xs text-zinc-700">
                           <Lightbulb className="w-3 h-3 flex-shrink-0 mt-0.5 text-violet-500" />
                           {rec}

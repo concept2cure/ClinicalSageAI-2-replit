@@ -6,8 +6,8 @@
  * Consolidated from:
  * - cortexComplianceService.ts
  * - cortexPrimeService.ts
- * - lumenCortexClient.ts
- * - lumen-cortex-service.ts
+ * - anaCortexClient.ts
+ * - ana-cortex-service.ts
  * - lumen-insights-service.ts
  * - cognitiveAdvisoryService.ts
  *
@@ -18,7 +18,7 @@
 // Re-export primary services
 export * from '../cortexPrimeService';
 export * from '../cortexComplianceService';
-export * from '../lumenCortexClient';
+export * from '../anaCortexClient';
 
 // Unified interface
 export interface CortexQuery {

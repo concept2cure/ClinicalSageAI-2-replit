@@ -374,7 +374,7 @@ export type ModuleId =
   | 'project_hub'
   | 'timeline_planner'
   | 'platform_readiness'
-  | 'lumen_cortex'
+  | 'ana_cortex'
   | 'ivdr_module'
   | 'settings';
 
