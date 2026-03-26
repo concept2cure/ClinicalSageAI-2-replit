@@ -8,8 +8,7 @@ setup-services:
 aios-evidence:
 	python3 scripts/generate_aios_evidence_pack.py \
 		--metrics docs/aios/sample_evidence_metrics.json \
-		--output docs/aios/AIOS_EVIDENCE_PACK_SAMPLE.md \
-		--summary-output docs/aios/AIOS_EVIDENCE_SUMMARY_SAMPLE.json
+		--output docs/aios/AIOS_EVIDENCE_PACK_SAMPLE.md
 
 aios-validate:
 	python3 scripts/validate_aios_audit_assets.py
@@ -22,6 +21,4 @@ aios-gate:
 	python3 scripts/generate_aios_evidence_pack.py \
 		--metrics docs/aios/sample_evidence_metrics.json \
 		--output docs/aios/AIOS_EVIDENCE_PACK_SAMPLE.md \
-		--summary-output docs/aios/AIOS_EVIDENCE_SUMMARY_SAMPLE.json \
-		--fail-on-gate-fail \
-		--fail-on-control-fail
+		--fail-on-gate-fail

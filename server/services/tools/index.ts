@@ -16,6 +16,23 @@ import { generateRegulatory, type DocxInput } from '../docx/docxFactory';
 import { getTemplate, listTemplates, mergeWithTemplate } from '../docx/templateRegistry';
 import fs from 'fs/promises';
 import path from 'path';
+import {
+  COMPRESSION_PROFILES,
+  compressPdfBatch,
+  compressPdfWithGhostscript,
+  isGhostscriptAvailable,
+  recommendCompressionQuality,
+  type PdfCompressionQuality,
+} from '../pdf-compression-service';
+import { runDocxPdfPipeline } from '../docx-pdf-pipeline';
+
+const PDF_QUALITY_OPTIONS: ReadonlySet<PdfCompressionQuality> = new Set([
+  'screen',
+  'ebook',
+  'printer',
+  'prepress',
+  'default',
+]);
 
 // ─── Workspace Tools ──────────────────────────────────────────────────────────
 
@@ -36,6 +53,405 @@ registerTool({
     },
     redirect: '/concept2cure?panel=vault',
   }),
+});
+
+registerTool({
+  name: 'documents.pdf_compress_recommend',
+  label: 'Recommend PDF Compression',
+  description:
+    'Analyze a PDF size and return the recommended Ghostscript quality profile before compression.',
+  category: 'documents',
+  params: [{ name: 'inputPath', type: 'string', required: true, description: 'Path to PDF file' }],
+  aliases: ['pdf.compress.recommend', 'ana.pdf_compress_recommend'],
+  execute: async (params): Promise<ToolResult> => {
+    if (!params.inputPath) {
+      return {
+        ok: false,
+        artifact: null,
+        message: { role: 'assistant', content: 'inputPath is required.' },
+      };
+    }
+    try {
+      const recommendation = await recommendCompressionQuality(params.inputPath);
+      return {
+        ok: true,
+        artifact: {
+          type: 'pdf_compression_recommendation',
+          id: `pdf-compress-recommend-${Date.now()}`,
+          title: `Compression Recommendation (${recommendation.recommendedQuality})`,
+          status: 'generated',
+          data: recommendation as unknown as Record<string, unknown>,
+        },
+        message: {
+          role: 'assistant',
+          content: `Recommended quality: ${recommendation.recommendedQuality}. ${recommendation.reason}`,
+        },
+      };
+    } catch (error: any) {
+      return {
+        ok: false,
+        artifact: null,
+        message: {
+          role: 'assistant',
+          content: `Could not generate recommendation: ${error?.message || 'Unknown error'}`,
+        },
+      };
+    }
+  },
+});
+
+registerTool({
+  name: 'documents.pdf_compress_batch',
+  label: 'Batch Compress PDFs',
+  description:
+    'Compress multiple PDFs in one assistant action and return per-file success/failure details.',
+  category: 'documents',
+  params: [
+    {
+      name: 'jobs',
+      type: 'string',
+      required: true,
+      description:
+        'JSON array: [{\"inputPath\":\"...pdf\",\"outputPath\":\"...pdf\",\"quality\":\"ebook\"}]',
+    },
+    {
+      name: 'defaultQuality',
+      type: 'string',
+      description: 'Fallback quality for jobs with no explicit quality',
+    },
+  ],
+  aliases: ['pdf.compress.batch', 'ana.pdf_compress_batch'],
+  execute: async (params): Promise<ToolResult> => {
+    const available = await isGhostscriptAvailable();
+    if (!available) {
+      return {
+        ok: false,
+        artifact: null,
+        message: {
+          role: 'assistant',
+          content: 'Ghostscript is not available on this runtime. Please install ghostscript (gs).',
+        },
+      };
+    }
+
+    if (!params.jobs) {
+      return {
+        ok: false,
+        artifact: null,
+        message: { role: 'assistant', content: 'jobs JSON is required.' },
+      };
+    }
+
+    let jobs: Array<{ inputPath: string; outputPath?: string; quality?: PdfCompressionQuality }> = [];
+    try {
+      const parsed = JSON.parse(params.jobs);
+      if (!Array.isArray(parsed)) throw new Error('jobs must be a JSON array');
+      jobs = parsed;
+    } catch (error: any) {
+      return {
+        ok: false,
+        artifact: null,
+        message: { role: 'assistant', content: `Invalid jobs JSON: ${error?.message || 'Unknown'}` },
+      };
+    }
+
+    const defaultQuality = (params.defaultQuality as PdfCompressionQuality) || 'ebook';
+    if (!PDF_QUALITY_OPTIONS.has(defaultQuality)) {
+      return {
+        ok: false,
+        artifact: null,
+        message: {
+          role: 'assistant',
+          content: `Invalid defaultQuality. Use one of: ${Array.from(PDF_QUALITY_OPTIONS).join(', ')}.`,
+        },
+      };
+    }
+
+    const result = await compressPdfBatch({ files: jobs, defaultQuality });
+    const successCount = result.results.filter(r => r.ok).length;
+    return {
+      ok: true,
+      artifact: {
+        type: 'batch_compressed_pdf',
+        id: `pdf-compress-batch-${Date.now()}`,
+        title: `Batch PDF Compression (${successCount}/${result.results.length} succeeded)`,
+        status: 'generated',
+        data: result as unknown as Record<string, unknown>,
+      },
+      message: {
+        role: 'assistant',
+        content: `Batch compression complete: ${successCount}/${result.results.length} files succeeded.`,
+      },
+    };
+  },
+});
+
+registerTool({
+  name: 'documents.pdf_compress_profiles',
+  label: 'List PDF Compression Profiles',
+  description: 'List available Ghostscript quality profiles with recommended use-cases.',
+  category: 'documents',
+  params: [],
+  aliases: ['pdf.compress.profiles', 'ana.pdf_compress_profiles'],
+  execute: async (): Promise<ToolResult> => ({
+    ok: true,
+    artifact: {
+      type: 'pdf_compression_profiles',
+      id: `pdf-compress-profiles-${Date.now()}`,
+      title: 'PDF Compression Profiles',
+      status: 'generated',
+      data: { profiles: COMPRESSION_PROFILES },
+    },
+    message: {
+      role: 'assistant',
+      content: COMPRESSION_PROFILES.map(
+        p => `${p.quality}: ${p.expectedUseCase}`
+      ).join('\n'),
+    },
+  }),
+});
+
+registerTool({
+  name: 'documents.pdf_compress_auto',
+  label: 'Auto Compress PDF',
+  description:
+    'Automatically recommend the best profile for a PDF and compress it in one orchestrated action.',
+  category: 'documents',
+  params: [
+    { name: 'inputPath', type: 'string', required: true, description: 'Path to PDF file' },
+    { name: 'outputPath', type: 'string', description: 'Optional destination path' },
+  ],
+  aliases: ['pdf.compress.auto', 'ana.pdf_compress_auto'],
+  execute: async (params): Promise<ToolResult> => {
+    const available = await isGhostscriptAvailable();
+    if (!available) {
+      return {
+        ok: false,
+        artifact: null,
+        message: {
+          role: 'assistant',
+          content: 'Ghostscript is not available on this runtime. Please install ghostscript (gs).',
+        },
+      };
+    }
+
+    if (!params.inputPath) {
+      return {
+        ok: false,
+        artifact: null,
+        message: { role: 'assistant', content: 'inputPath is required.' },
+      };
+    }
+
+    try {
+      const recommendation = await recommendCompressionQuality(params.inputPath);
+      const result = await compressPdfWithGhostscript({
+        inputPath: params.inputPath,
+        outputPath: params.outputPath || undefined,
+        quality: recommendation.recommendedQuality,
+      });
+      return {
+        ok: true,
+        artifact: {
+          type: 'compressed_pdf',
+          id: `pdf-compress-auto-${Date.now()}`,
+          title: path.basename(result.outputPath),
+          status: 'generated',
+          data: {
+            recommendation,
+            result,
+          } as unknown as Record<string, unknown>,
+        },
+        message: {
+          role: 'assistant',
+          content: `Auto-compressed using ${recommendation.recommendedQuality}. Saved to ${result.outputPath}.`,
+        },
+      };
+    } catch (error: any) {
+      return {
+        ok: false,
+        artifact: null,
+        message: {
+          role: 'assistant',
+          content: `Auto compression failed: ${error?.message || 'Unknown error'}`,
+        },
+      };
+    }
+  },
+});
+
+registerTool({
+  name: 'documents.pdf_docx_python_pipeline',
+  label: 'DOCX→PDF Python Pipeline',
+  description:
+    'Run Python DOCX-to-PDF pipeline with optional Ghostscript compression for AnA backend automation.',
+  category: 'documents',
+  params: [
+    { name: 'inputDocxPath', type: 'string', required: true, description: 'Path to source DOCX file' },
+    { name: 'outputPdfPath', type: 'string', description: 'Optional output PDF path' },
+    { name: 'compress', type: 'boolean', description: 'Compress final PDF using Ghostscript' },
+    {
+      name: 'quality',
+      type: 'string',
+      description: 'Compression quality: screen, ebook, printer, prepress, default',
+    },
+  ],
+  aliases: ['python.docx_pdf_pipeline', 'ana.docx_pdf_pipeline'],
+  execute: async (params): Promise<ToolResult> => {
+    if (!params.inputDocxPath) {
+      return {
+        ok: false,
+        artifact: null,
+        message: { role: 'assistant', content: 'inputDocxPath is required.' },
+      };
+    }
+    const compress =
+      String((params as any).compress).toLowerCase() === 'true' ||
+      String((params as any).compress) === '1';
+    const quality = ((params as any).quality as PdfCompressionQuality) || 'ebook';
+    if (!PDF_QUALITY_OPTIONS.has(quality)) {
+      return {
+        ok: false,
+        artifact: null,
+        message: {
+          role: 'assistant',
+          content: 'Invalid quality. Use one of: screen, ebook, printer, prepress, default.',
+        },
+      };
+    }
+
+    try {
+      const result = await runDocxPdfPipeline({
+        inputDocxPath: params.inputDocxPath,
+        outputPdfPath: params.outputPdfPath || undefined,
+        compress,
+        quality,
+      });
+
+      return {
+        ok: true,
+        artifact: {
+          type: 'pdf_document',
+          id: `docx-pdf-pipeline-${Date.now()}`,
+          title: path.basename(result.finalPdf),
+          status: 'generated',
+          data: result as unknown as Record<string, unknown>,
+        },
+        message: {
+          role: 'assistant',
+          content: `Python pipeline complete. Final PDF: ${result.finalPdf}`,
+        },
+      };
+    } catch (error: any) {
+      return {
+        ok: false,
+        artifact: null,
+        message: {
+          role: 'assistant',
+          content: `Python pipeline failed: ${error?.message || 'Unknown error'}`,
+        },
+      };
+    }
+  },
+});
+
+registerTool({
+  name: 'documents.pdf_compress',
+  label: 'Compress PDF',
+  description:
+    'Compress a PDF file using Ghostscript and return the optimized file path and compression stats.',
+  category: 'documents',
+  params: [
+    { name: 'inputPath', type: 'string', required: true, description: 'Absolute or relative path to PDF' },
+    { name: 'outputPath', type: 'string', description: 'Optional output path for compressed PDF' },
+    {
+      name: 'quality',
+      type: 'string',
+      description: 'Compression quality: screen, ebook, printer, prepress, default',
+    },
+  ],
+  aliases: ['pdf.compress', 'ana.pdf_compress', 'documents.compress_pdf'],
+  execute: async (params): Promise<ToolResult> => {
+    const available = await isGhostscriptAvailable();
+    if (!available) {
+      return {
+        ok: false,
+        artifact: null,
+        message: {
+          role: 'assistant',
+          content:
+            'Ghostscript is not available on this runtime. Please install ghostscript (gs) and try again.',
+        },
+        summary: 'Ghostscript unavailable',
+      };
+    }
+
+    if (!params.inputPath) {
+      return {
+        ok: false,
+        artifact: null,
+        message: {
+          role: 'assistant',
+          content: 'inputPath is required to compress a PDF.',
+        },
+      };
+    }
+
+    const quality = (params.quality as PdfCompressionQuality) || 'ebook';
+    if (!PDF_QUALITY_OPTIONS.has(quality)) {
+      return {
+        ok: false,
+        artifact: null,
+        message: {
+          role: 'assistant',
+          content:
+            'Invalid quality value. Use one of: screen, ebook, printer, prepress, default.',
+        },
+      };
+    }
+
+    try {
+      const result = await compressPdfWithGhostscript({
+        inputPath: params.inputPath,
+        outputPath: params.outputPath || undefined,
+        quality,
+      });
+
+      const reductionPct = Math.max(0, (1 - result.compressionRatio) * 100);
+
+      return {
+        ok: true,
+        artifact: {
+          type: 'compressed_pdf',
+          id: `pdf-compress-${Date.now()}`,
+          title: path.basename(result.outputPath),
+          status: 'generated',
+          data: {
+            inputPath: params.inputPath,
+            outputPath: result.outputPath,
+            quality,
+            originalSizeBytes: result.originalSizeBytes,
+            compressedSizeBytes: result.compressedSizeBytes,
+            compressionRatio: result.compressionRatio,
+          },
+        },
+        message: {
+          role: 'assistant',
+          content: `PDF compression complete. Saved to ${result.outputPath} (${reductionPct.toFixed(1)}% size reduction).`,
+        },
+        summary: `Compressed PDF to ${result.outputPath}`,
+      };
+    } catch (error: any) {
+      return {
+        ok: false,
+        artifact: null,
+        message: {
+          role: 'assistant',
+          content: `PDF compression failed: ${error?.message || 'Unknown error'}`,
+        },
+      };
+    }
+  },
 });
 
 registerTool({
@@ -512,6 +928,24 @@ registerTool({
       description:
         'Regulatory template to use: cer-eu-mdr (EU MDR CER), fda-510k (FDA 510k), csr-ich-e3 (ICH E3 CSR). When set, the template defines required sections and the LLM content is merged into the blueprint.',
     },
+    {
+      name: 'exportPdf',
+      type: 'boolean',
+      required: false,
+      description: 'If true, run Python DOCX→PDF pipeline after DOCX generation.',
+    },
+    {
+      name: 'compressPdf',
+      type: 'boolean',
+      required: false,
+      description: 'If true and exportPdf=true, compress the generated PDF using Ghostscript.',
+    },
+    {
+      name: 'pdfQuality',
+      type: 'string',
+      required: false,
+      description: 'Compression quality when compressPdf=true: screen|ebook|printer|prepress|default.',
+    },
   ],
   aliases: ['doc.generate', 'generate.docx'],
   execute: async (params, ctx): Promise<ToolResult> => {
@@ -577,6 +1011,24 @@ registerTool({
       await fs.writeFile(docxPath, result.buffer);
       await fs.writeFile(jsonPath, JSON.stringify(result.source, null, 2));
 
+      const shouldExportPdf = String((params as any).exportPdf).toLowerCase() === 'true';
+      const shouldCompressPdf = String((params as any).compressPdf).toLowerCase() === 'true';
+      const pdfQuality = ((params as any).pdfQuality as PdfCompressionQuality) || 'ebook';
+      let pdfPipeline: Record<string, unknown> | null = null;
+
+      if (shouldExportPdf) {
+        const pipelineResult = await runDocxPdfPipeline({
+          inputDocxPath: docxPath,
+          compress: shouldCompressPdf,
+          quality: pdfQuality,
+        });
+        pdfPipeline = {
+          convertedPdfPath: pipelineResult.convertedPdf,
+          finalPdfPath: pipelineResult.finalPdf,
+          compression: pipelineResult.compression || null,
+        };
+      }
+
       return {
         ok: true,
         artifact: {
@@ -591,12 +1043,13 @@ registerTool({
             sourcePath: jsonPath,
             sizeBytes: result.buffer.length,
             sectionCount: sections.length,
+            pdfPipeline,
           },
         },
-        summary: `Generated ${result.filename} (${Math.round(result.buffer.length / 1024)}KB, ${input.sections.length} sections${params.templateId ? `, template: ${params.templateId}` : ''})`,
+        summary: `Generated ${result.filename} (${Math.round(result.buffer.length / 1024)}KB, ${input.sections.length} sections${params.templateId ? `, template: ${params.templateId}` : ''}${shouldExportPdf ? ', PDF pipeline: enabled' : ''})`,
         message: {
           role: 'assistant',
-          content: `Document generated: **${result.filename}** (${Math.round(result.buffer.length / 1024)}KB). The file contains ${input.sections.length} section(s) with regulatory-compliant formatting.${params.templateId ? ` Template **${params.templateId}** was used to enforce regulatory section structure.` : ''} A source JSON file was also saved for future regeneration.`,
+          content: `Document generated: **${result.filename}** (${Math.round(result.buffer.length / 1024)}KB). The file contains ${input.sections.length} section(s) with regulatory-compliant formatting.${params.templateId ? ` Template **${params.templateId}** was used to enforce regulatory section structure.` : ''}${shouldExportPdf ? ` Python DOCX→PDF pipeline executed${shouldCompressPdf ? ` with ${pdfQuality} compression` : ''}.` : ''} A source JSON file was also saved for future regeneration.`,
         },
       };
     } catch (err: any) {

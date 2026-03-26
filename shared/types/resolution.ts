@@ -239,6 +239,21 @@ export interface BundleExecutionReceipt {
   bundleId: string;
   planId?: string;
 
+  /** Contradiction IDs this bundle addresses (Pass 9) */
+  contradictionIds?: string[];
+
+  /** Overlay/body context that shaped the plan (Pass 9) */
+  overlayContext?: {
+    regulatorBody?: string;
+    appliedRuleIds?: string[];
+  };
+
+  /** User confirmation decision if applicable (Pass 9) */
+  userConfirmation?: 'confirmed' | 'rejected' | 'auto';
+
+  /** Actor who triggered execution (Pass 9) */
+  executedBy?: number;
+
   executedSteps: ExecutedStep[];
   preparedSteps: PreparedStep[];
   blockedSteps: BlockedStep[];
@@ -249,6 +264,15 @@ export interface BundleExecutionReceipt {
   requiresReapproval: string[];
 
   contradictionState: string;
+
+  /** Post-execution actions run by contradiction-specific handlers (Pass 9) */
+  postExecution?: {
+    reviewThreadsCreated: number;
+    memosAttached: number;
+    reapprovalFlagsSet: number;
+    escalationsRecorded: number;
+    errors: string[];
+  };
 
   summary: {
     totalItems: number;
@@ -347,6 +371,135 @@ export interface OrchestratorResult {
   explanation: AnaResolutionExplanation;
 
   /** Timestamp of orchestration */
+  timestamp: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RESOLUTION BUNDLE PLAN — Pass 9
+//
+// Canonical plan object for resolving contradictions.
+// Maps contradiction findings → governed, authority-gated actions.
+// Feeds real execution or real blocked-execution paths.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export type ContradictionBundleActionKind =
+  | 'prepare-correction-draft'
+  | 'apply-harmonization'
+  | 'supersede-assumption'
+  | 'create-review-thread'
+  | 'attach-contradiction-memo'
+  | 'mark-needs-reapproval'
+  | 'escalate'
+  | 'other';
+
+/**
+ * Maps bundle action kinds to existing BundleItemActionType for execution.
+ */
+export const ACTION_KIND_TO_BUNDLE_ACTION: Record<ContradictionBundleActionKind, BundleItemActionType> = {
+  'prepare-correction-draft': 'rewrite',
+  'apply-harmonization': 'harmonize',
+  'supersede-assumption': 'supersede',
+  'create-review-thread': 'review',
+  'attach-contradiction-memo': 'review',
+  'mark-needs-reapproval': 'reapprove',
+  'escalate': 'escalate',
+  'other': 'review',
+};
+
+export interface ResolutionBundlePlanAction {
+  id: string;
+  kind: ContradictionBundleActionKind;
+  targetObjectType: string;
+  targetObjectId: string;
+  targetObjectTitle?: string;
+  targetVersionId?: string;
+  description: string;
+  requiresConfirmation: boolean;
+  requiresApproval: boolean;
+  requiresEscalation: boolean;
+  status: 'planned' | 'skipped' | 'executed' | 'failed';
+}
+
+export interface ResolutionBundlePlan {
+  id: string;
+  projectId: number;
+  organizationId: number;
+
+  contradictionIds: string[];
+  regulatorBody?: string;
+  submissionType?: string;
+  workflowStage?: string;
+
+  summary: string;
+  rationale: string;
+
+  actions: ResolutionBundlePlanAction[];
+
+  authority: {
+    requiresHumanConfirmation: boolean;
+    requiresReviewerApproval: boolean;
+    requiresEscalation: boolean;
+    blockedReason?: string;
+  };
+
+  expectedConsequences: Array<{
+    kind: string;
+    summary: string;
+  }>;
+
+  /** Overlay context that shaped this plan */
+  overlayContext?: {
+    regulatorBody: string;
+    appliedRuleIds: string[];
+    severityOverrides: Record<string, string>;
+    authorityOverrides: Record<string, string>;
+    consequenceOverrides: Record<string, string>;
+  };
+
+  createdAt: string;
+}
+
+/**
+ * Contradiction types that the bundle planner supports with typed action mapping.
+ */
+export type PlannerContradictionType =
+  | 'assumption_drift'
+  | 'summary_body_inconsistency'
+  | 'protocol_sap_inconsistency'
+  | 'decision_action_inconsistency'
+  | 'regulator_overlay_conflict'
+  | 'body_specific_expectation_conflict'
+  | 'approved_vs_working_inconsistency'
+  | 'status_conflict';
+
+/**
+ * Input trigger for contradiction-aware orchestration.
+ */
+export interface ContradictionOrchestrationTrigger {
+  projectId: number;
+  contradictionIds: string[];
+  regulatorBody?: string;
+  submissionType?: string;
+  workflowStage?: string;
+  /** If true, execute safe actions immediately */
+  autoExecute?: boolean;
+}
+
+/**
+ * Result of contradiction-aware orchestration.
+ */
+export interface ContradictionOrchestrationResult {
+  plan: ResolutionBundlePlan;
+  decision: OrchestratorDecision;
+  decisionRationale: string;
+  bundle?: {
+    id: string;
+    state: string;
+    itemCount: number;
+  };
+  receipt?: BundleExecutionReceipt;
+  readinessRefreshed: boolean;
+  contradictionStatesUpdated: string[];
   timestamp: string;
 }
 

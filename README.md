@@ -72,6 +72,8 @@ cp .env.example .env
 
 # Run database migrations
 npm run db:migrate
+# Optional: sync schema/table drift in local/dev
+npm run db:push
 
 # Start development server
 npm run dev
@@ -109,6 +111,7 @@ npm run dev
 - [Agent Architecture](docs/AGENT_ARCHITECTURE.md) - AI agent system design
 - [Service Consolidation](docs/SERVICE_CONSOLIDATION_PLAN.md) - Codebase cleanup plan
 - [Consolidation Summary](docs/CONSOLIDATION_SUMMARY.md) - Recent cleanup work
+- [Local Infra Warnings](docs/guides/local-dev-infra-warnings.md) - Resolve expected local DB/Redis warnings
 
 ---
 

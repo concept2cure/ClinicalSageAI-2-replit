@@ -26,6 +26,8 @@ import React, { useState, useCallback, useMemo, useEffect, useRef, Suspense } fr
 import { cn } from '@/lib/utils';
 import { useProjects } from '@/concept2cure/hooks/useProjects';
 import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { queryKeys } from '@/concept2cure/hooks/queryKeys';
 import {
   Loader2,
   AlertTriangle,
@@ -572,10 +574,7 @@ function CouncilChat({ advisorId, projectId }: { advisorId: string; projectId: s
     try {
       const systemPrompt = `You are ${persona?.name || 'a regulatory advisor'}, a ${persona?.role || 'specialist'} on the Concept2Cure platform. Your capabilities include: ${(persona?.capabilities || []).join(', ')}. Be concise, practical, and action-oriented. If the user asks about a specific regulatory topic, provide expert guidance.`;
 
-      const res = await fetch('/api/lumen-cortex/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const res = await apiRequest('POST', '/api/lumen-cortex/chat', {
           message: userMsg,
           context: {
             screen: 'convergent-canvas',
@@ -584,8 +583,7 @@ function CouncilChat({ advisorId, projectId }: { advisorId: string; projectId: s
             systemPrompt,
           },
           history: messages.slice(-6),
-        }),
-      });
+        });
 
       if (res.ok) {
         const data = await res.json();
@@ -704,13 +702,21 @@ export const ConvergentCanvas: React.FC<ConvergentCanvasProps> = ({
 
   // Fetch artifact summary for document count
   const { data: summaryRaw } = useQuery({
-    queryKey: ['/api/concept2cure/projects/all/artifacts-summary'],
+    queryKey: queryKeys.projects.artifactsSummary(),
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/concept2cure/projects/all/artifacts-summary');
+      return res.json();
+    },
   });
   const artifactSummary = (summaryRaw as any)?.data || { total: 0, review: 0 };
 
   // Fetch pending reviews for alerts
   const { data: reviewsRaw } = useQuery({
-    queryKey: ['/api/concept2cure/reviews/pending'],
+    queryKey: queryKeys.reviews.pending(),
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/concept2cure/reviews/pending');
+      return res.json();
+    },
   });
   const pendingReviews = (reviewsRaw as any)?.data?.totalPending || 0;
 

@@ -25,6 +25,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { LIFECYCLE } from '../ui/enterprise';
 import { Input } from '@/components/ui/input';
@@ -39,6 +40,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { LoadingState } from '@/components/ui/statesV2';
 
 import {
   Pill,
@@ -165,25 +169,36 @@ const STATUS_COLORS: Record<CDxStatus, string> = {
 // COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
+interface CDxCreateForm {
+  product: string;
+  substance: string;
+  indication: string;
+  biomarker: string;
+  decision: string;
+  regRef: string;
+  nb: string;
+  intendedUse: string;
+  biomarkerType: string;
+  evidenceInput: string;
+}
+
 export default function CDxWorkflow() {
   const [workflows, setWorkflows] = useState<CDxWorkflowRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [evidenceIds, setEvidenceIds] = useState<string[]>([]);
+  const { toast } = useToast();
 
-  // Create form
-  const [formProduct, setFormProduct] = useState('');
-  const [formSubstance, setFormSubstance] = useState('');
-  const [formIndication, setFormIndication] = useState('');
-  const [formBiomarker, setFormBiomarker] = useState('');
-  const [formDecision, setFormDecision] = useState('');
-  const [formRegRef, setFormRegRef] = useState('');
-  const [formNB, setFormNB] = useState('');
-  const [formIntendedUse, setFormIntendedUse] = useState('');
-  const [formBiomarkerType, setFormBiomarkerType] = useState('');
-  const [formEvidenceIds, setFormEvidenceIds] = useState<string[]>([]);
-  const [formEvidenceInput, setFormEvidenceInput] = useState('');
+  // Create form — canonical react-hook-form pattern
+  const createForm = useForm<CDxCreateForm>({
+    defaultValues: {
+      product: '', substance: '', indication: '', biomarker: '',
+      decision: '', regRef: '', nb: '', intendedUse: '', biomarkerType: '',
+      evidenceInput: '',
+    },
+  });
 
   // Status update
   const [advanceNotes, setAdvanceNotes] = useState('');
@@ -195,17 +210,15 @@ export default function CDxWorkflow() {
   const loadWorkflows = useCallback(async () => {
     setLoading(true);
     try {
-      const resp = await fetch('/api/ivdr/cdx-workflows');
-      if (resp.ok) {
-        const data = await resp.json();
-        setWorkflows(data.workflows || []);
-      }
+      const resp = await apiRequest('GET', '/api/ivdr/cdx-workflows');
+      const data = await resp.json();
+      setWorkflows(data.workflows || []);
     } catch (err) {
-      console.error('Load CDx workflows failed:', err);
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to load CDx workflows', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     loadWorkflows();
@@ -216,56 +229,46 @@ export default function CDxWorkflow() {
   // Fetch workflow transition history on selection
   useEffect(() => {
     if (selected) {
-      fetch(`/api/ivdr/cdx-workflows/${selected.id}/history`)
-        .then(r => (r.ok ? r.json() : { history: [] }))
+      apiRequest('GET', `/api/ivdr/cdx-workflows/${selected.id}/history`)
+        .then(r => r.json())
         .then(data => setWorkflowHistory(data.history || []))
-        .catch(() => setWorkflowHistory([]));
+        .catch(() => {
+          setWorkflowHistory([]);
+          toast({ title: 'Warning', description: 'Could not load workflow history', variant: 'destructive' });
+        });
     }
-  }, [selected]);
+  }, [selected, toast]);
 
   // ── Create workflow ────────────────────────────────────────────────────
   const handleCreate = async () => {
-    if (!formProduct.trim() || !formBiomarker.trim()) return;
+    const vals = createForm.getValues();
+    if (!vals.product.trim() || !vals.biomarker.trim()) return;
     setSaving(true);
     try {
-      const resp = await fetch('/api/ivdr/cdx-workflows', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          medicinalProductName: formProduct,
-          activeSubstance: formSubstance || undefined,
-          therapeuticIndication: formIndication || undefined,
-          biomarker: formBiomarker,
-          treatmentDecision: formDecision || undefined,
-          regulatoryReference: formRegRef || undefined,
-          notifiedBodyId: formNB || undefined,
-          intendedUseStatement: formIntendedUse || undefined,
-          biomarkerType: formBiomarkerType || undefined,
+      const resp = await apiRequest('POST', '/api/ivdr/cdx-workflows', {
+          medicinalProductName: vals.product,
+          activeSubstance: vals.substance || undefined,
+          therapeuticIndication: vals.indication || undefined,
+          biomarker: vals.biomarker,
+          treatmentDecision: vals.decision || undefined,
+          regulatoryReference: vals.regRef || undefined,
+          notifiedBodyId: vals.nb || undefined,
+          intendedUseStatement: vals.intendedUse || undefined,
+          biomarkerType: vals.biomarkerType || undefined,
           clinicalEvidenceIds:
-            formEvidenceIds.length > 0
-              ? formEvidenceIds.map(Number).filter(n => !isNaN(n))
+            evidenceIds.length > 0
+              ? evidenceIds.map(Number).filter(n => !isNaN(n))
               : undefined,
-        }),
-      });
-      if (resp.ok) {
-        const data = await resp.json();
-        setWorkflows(prev => [data.workflow, ...prev]);
-        setSelectedId(data.workflow.id);
-        setShowCreate(false);
-        setFormProduct('');
-        setFormSubstance('');
-        setFormIndication('');
-        setFormBiomarker('');
-        setFormDecision('');
-        setFormRegRef('');
-        setFormNB('');
-        setFormIntendedUse('');
-        setFormBiomarkerType('');
-        setFormEvidenceIds([]);
-        setFormEvidenceInput('');
-      }
+        });
+      const data = await resp.json();
+      setWorkflows(prev => [data.workflow, ...prev]);
+      setSelectedId(data.workflow.id);
+      setShowCreate(false);
+      createForm.reset();
+      setEvidenceIds([]);
+      toast({ title: 'CDx Pairing Created', description: `Created "${vals.product}" pairing.` });
     } catch (err) {
-      console.error('Create CDx workflow failed:', err);
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to create CDx workflow', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -276,20 +279,17 @@ export default function CDxWorkflow() {
     if (!selectedId) return;
     setSaving(true);
     try {
-      const resp = await fetch(`/api/ivdr/cdx-workflows/${selectedId}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const resp = await apiRequest('PUT', `/api/ivdr/cdx-workflows/${selectedId}/status`, {
           status: newStatus,
           notes: advanceNotes || undefined,
-        }),
-      });
+        });
       if (resp.ok) {
         setAdvanceNotes('');
         await loadWorkflows();
+        toast({ title: 'Status Updated', description: `Advanced to ${newStatus.replace(/_/g, ' ')}` });
       }
     } catch (err) {
-      console.error('Advance CDx status failed:', err);
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to advance status', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -343,61 +343,54 @@ export default function CDxWorkflow() {
                 <Label>Medicinal Product Name *</Label>
                 <Input
                   placeholder="e.g., Keytruda® (pembrolizumab)"
-                  value={formProduct}
-                  onChange={e => setFormProduct(e.target.value)}
+                  {...createForm.register('product')}
                 />
               </div>
               <div>
                 <Label>Active Substance</Label>
                 <Input
                   placeholder="e.g., Pembrolizumab"
-                  value={formSubstance}
-                  onChange={e => setFormSubstance(e.target.value)}
+                  {...createForm.register('substance')}
                 />
               </div>
               <div>
                 <Label>Therapeutic Indication</Label>
                 <Input
                   placeholder="e.g., Non-small cell lung cancer (NSCLC)"
-                  value={formIndication}
-                  onChange={e => setFormIndication(e.target.value)}
+                  {...createForm.register('indication')}
                 />
               </div>
               <div>
                 <Label>Biomarker *</Label>
                 <Input
                   placeholder="e.g., PD-L1 (22C3 antibody, TPS ≥50%)"
-                  value={formBiomarker}
-                  onChange={e => setFormBiomarker(e.target.value)}
+                  {...createForm.register('biomarker')}
                 />
               </div>
               <div>
                 <Label>Treatment Decision</Label>
                 <Input
                   placeholder="e.g., Patient selection for first-line monotherapy"
-                  value={formDecision}
-                  onChange={e => setFormDecision(e.target.value)}
+                  {...createForm.register('decision')}
                 />
               </div>
               <div>
                 <Label>Regulatory Reference</Label>
                 <Input
                   placeholder="e.g., EMA/CHMP/BWP/187338/2014"
-                  value={formRegRef}
-                  onChange={e => setFormRegRef(e.target.value)}
+                  {...createForm.register('regRef')}
                 />
               </div>
               <div>
                 <Label>Notified Body ID</Label>
                 <Input
                   placeholder="e.g., NB 0123 (TÜV SÜD)"
-                  value={formNB}
-                  onChange={e => setFormNB(e.target.value)}
+                  {...createForm.register('nb')}
                 />
               </div>
               <div>
                 <Label>Biomarker Type</Label>
-                <Select value={formBiomarkerType} onValueChange={setFormBiomarkerType}>
+                <Select value={createForm.watch('biomarkerType')} onValueChange={(v) => createForm.setValue('biomarkerType', v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select biomarker type..." />
                   </SelectTrigger>
@@ -425,8 +418,7 @@ export default function CDxWorkflow() {
                 <Textarea
                   className="min-h-[80px]"
                   placeholder="e.g., This in vitro diagnostic device is intended for the qualitative detection of PD-L1 protein expression in FFPE tissue specimens from patients with NSCLC, as an aid in identifying patients for treatment with pembrolizumab..."
-                  value={formIntendedUse}
-                  onChange={e => setFormIntendedUse(e.target.value)}
+                  {...createForm.register('intendedUse')}
                 />
               </div>
               <div>
@@ -436,15 +428,14 @@ export default function CDxWorkflow() {
                     <Input
                       placeholder="Enter clinical evidence study ID"
                       type="number"
-                      value={formEvidenceInput}
-                      onChange={e => setFormEvidenceInput(e.target.value)}
+                      {...createForm.register('evidenceInput')}
                       onKeyDown={e => {
-                        if (e.key === 'Enter' && formEvidenceInput.trim()) {
+                        if (e.key === 'Enter' && createForm.getValues('evidenceInput').trim()) {
                           e.preventDefault();
-                          if (!formEvidenceIds.includes(formEvidenceInput.trim())) {
-                            setFormEvidenceIds(prev => [...prev, formEvidenceInput.trim()]);
+                          if (!evidenceIds.includes(createForm.getValues('evidenceInput').trim())) {
+                            setEvidenceIds(prev => [...prev, createForm.getValues('evidenceInput').trim()]);
                           }
-                          setFormEvidenceInput('');
+                          createForm.setValue('evidenceInput', '');
                         }
                       }}
                     />
@@ -453,27 +444,27 @@ export default function CDxWorkflow() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    disabled={!formEvidenceInput.trim()}
+                    disabled={!createForm.getValues('evidenceInput').trim()}
                     onClick={() => {
-                      if (!formEvidenceIds.includes(formEvidenceInput.trim())) {
-                        setFormEvidenceIds(prev => [...prev, formEvidenceInput.trim()]);
+                      if (!evidenceIds.includes(createForm.getValues('evidenceInput').trim())) {
+                        setEvidenceIds(prev => [...prev, createForm.getValues('evidenceInput').trim()]);
                       }
-                      setFormEvidenceInput('');
+                      createForm.setValue('evidenceInput', '');
                     }}
                   >
                     <Plus className="h-3 w-3 mr-1" />
                     Link
                   </Button>
                 </div>
-                {formEvidenceIds.length > 0 && (
+                {evidenceIds.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {formEvidenceIds.map((eid, idx) => (
+                    {evidenceIds.map((eid, idx) => (
                       <Badge key={idx} variant="secondary" className="flex items-center gap-1">
                         Study #{eid}
                         <button
                           className="ml-1 hover:text-red-500"
                           onClick={() =>
-                            setFormEvidenceIds(prev => prev.filter((_, i) => i !== idx))
+                            setEvidenceIds(prev => prev.filter((_, i) => i !== idx))
                           }
                         >
                           <X className="h-3 w-3" />
@@ -507,7 +498,7 @@ export default function CDxWorkflow() {
             <h3 className="text-lg font-semibold">CDx Pairings</h3>
           </div>
           <div className="px-4 py-3">
-            {loading && <p className="text-sm text-muted-foreground">Loading...</p>}
+            {loading && <LoadingState message="Loading CDx workflows..." size="sm" testId="cdx-loading" />}
             {!loading && workflows.length === 0 && (
               <p className="text-sm text-muted-foreground">
                 No CDx pairings yet. Click "New CDx Pairing" to begin.

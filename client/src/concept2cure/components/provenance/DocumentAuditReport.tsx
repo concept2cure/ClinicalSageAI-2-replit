@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import {
   FileText,
   Download,
@@ -28,14 +29,6 @@ import {
   XCircle,
   MessageSquare,
 } from 'lucide-react';
-
-// ── Auth helper ──────────────────────────────────────────────────────────────
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface AuditReportData {
@@ -217,9 +210,8 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
   const handleVerifyIntegrity = useCallback(async () => {
     setVerifyingIntegrity(true);
     try {
-      const res = await fetch(
-        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/verify-integrity`,
-        { headers: getAuthHeaders() }
+      const res = await apiRequest('GET',
+        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/verify-integrity`
       );
       if (res.ok) {
         const payload = await res.json();
@@ -248,9 +240,8 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
 
   const fetchComments = useCallback(async () => {
     try {
-      const res = await fetch(
-        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/comments`,
-        { headers: getAuthHeaders() }
+      const res = await apiRequest('GET',
+        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/comments`
       );
       if (res.ok) {
         const payload = await res.json();
@@ -268,9 +259,8 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(
-        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/audit-report?mode=${mode}`,
-        { headers: getAuthHeaders() }
+      const res = await apiRequest('GET',
+        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/audit-report?mode=${mode}`
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const payload = await res.json();

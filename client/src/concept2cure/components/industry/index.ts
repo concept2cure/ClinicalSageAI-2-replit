@@ -123,7 +123,6 @@ export {
 // ═══════════════════════════════════════════════════════════════════════════════
 export {
   ContextRibbon,
-  type RiskLevel,
   type ConnectionStatus,
   type WorkspaceMode,
 } from '../layout/ContextRibbon';

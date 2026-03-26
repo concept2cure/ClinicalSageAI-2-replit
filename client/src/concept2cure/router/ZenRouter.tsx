@@ -112,11 +112,10 @@ const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading..
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col items-center gap-6"
     >
-      {/* Brand logo with gentle pulse */}
       <motion.div
         animate={{ scale: [1, 1.03, 1], opacity: [0.8, 1, 0.8] }}
         transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-        className="relative"
+        className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-md"
       >
         <div className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-md">
           <img

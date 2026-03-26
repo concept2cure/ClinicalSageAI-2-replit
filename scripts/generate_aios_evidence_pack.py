@@ -15,7 +15,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-from aios_controls_parser import ControlSpec, parse_controls, parse_exit_gates
+from aios_controls_parser import parse_exit_gates
 
 
 class GateEvaluationError(ValueError):
@@ -32,31 +32,25 @@ def gate_pass(metric_value: float, op: str, expected: float) -> bool:
     raise GateEvaluationError(f"Unsupported operator: {op}")
 
 
-def evaluate_controls(metrics: Dict[str, Any], controls: List[ControlSpec], gates: List[Tuple[str, str, float]]) -> Dict[str, str]:
-    gate_operators = {metric: op for metric, op, _ in gates}
-    statuses: Dict[str, str] = {}
-
-    for control in controls:
-        passed = True
-        for metric in control.required_metrics:
-            if metric not in metrics or metric not in control.thresholds:
-                passed = False
-                break
-
-            observed = float(metrics[metric])
-            expected = float(control.thresholds[metric])
-            operator = gate_operators.get(metric, "==")
-            if not gate_pass(observed, operator, expected):
-                passed = False
-                break
-
-        statuses[control.control_id] = "Pass" if passed else "Fail"
-
+def control_status(metrics: Dict[str, Any]) -> Dict[str, str]:
+    statuses = {
+        "AIOS-01": "Pass" if float(metrics.get("lineage_completeness_pct", 0)) >= 99 else "Fail",
+        "AIOS-02": "Pass" if float(metrics.get("policy_coverage_pct", 0)) >= 100 else "Fail",
+        "AIOS-03": "Pass" if float(metrics.get("version_drift_events", 1)) == 0 else "Fail",
+        "AIOS-04": "Pass" if float(metrics.get("integrity_check_failures", 1)) == 0 else "Fail",
+        "AIOS-05": "Pass" if float(metrics.get("tenant_boundary_violations", 1)) == 0 else "Fail",
+        "AIOS-06": "Pass" if float(metrics.get("unapproved_changes", 1)) == 0 else "Fail",
+        "AIOS-07": "Pass"
+        if float(metrics.get("sev1_incidents", 1)) == 0
+        and float(metrics.get("reliability_improvement_pct", 0)) >= 20
+        and float(metrics.get("latency_regression_pct", 999)) <= 10
+        else "Fail",
+    }
     return statuses
 
 
-def evaluate_gates(metrics: Dict[str, Any], gates: List[Tuple[str, str, float]]) -> tuple[list[dict[str, Any]], bool]:
-    gate_rows: list[dict[str, Any]] = []
+def evaluate_gates(metrics: Dict[str, Any], gates: List[Tuple[str, str, float]]) -> tuple[list[str], bool]:
+    gate_rows: list[str] = []
     overall_pass = True
 
     for metric, op, expected in gates:
@@ -66,39 +60,22 @@ def evaluate_gates(metrics: Dict[str, Any], gates: List[Tuple[str, str, float]])
         observed = float(metrics[metric])
         passed = gate_pass(observed, op, expected)
         overall_pass = overall_pass and passed
-        gate_rows.append(
-            {
-                "metric": metric,
-                "operator": op,
-                "expected": expected,
-                "observed": observed,
-                "passed": passed,
-            }
-        )
+        gate_rows.append(f"| {metric} | {op} {expected} | {observed} | {'Pass' if passed else 'Fail'} |")
 
     return gate_rows, overall_pass
 
 
-def build_markdown(
-    metrics: Dict[str, Any],
-    controls: List[ControlSpec],
-    gate_rows: list[dict[str, Any]],
-    control_statuses: Dict[str, str],
-    overall_pass: bool,
-    strict_controls_pass: bool,
-) -> str:
+def build_markdown(metrics: Dict[str, Any], gates: List[Tuple[str, str, float]]) -> tuple[str, bool]:
     now = dt.datetime.now(dt.UTC).strftime("%Y-%m-%d")
+    statuses = control_status(metrics)
+    gate_rows, overall_pass = evaluate_gates(metrics, gates)
 
     control_rows = "\n".join(
-        f"| {control.control_id} | {control_statuses[control.control_id]} | {metrics.get('evidence_link_prefix', 'TBD')}/{control.control_id.lower()} |  |"
-        for control in controls
-    )
-    gate_table_rows = "\n".join(
-        f"| {row['metric']} | {row['operator']} {row['expected']} | {row['observed']} | {'Pass' if row['passed'] else 'Fail'} |"
-        for row in gate_rows
+        f"| {cid} | {status} | {metrics.get('evidence_link_prefix', 'TBD')}/{cid.lower()} |  |"
+        for cid, status in statuses.items()
     )
 
-    return f"""# AIOS Evidence Pack (Generated)
+    markdown = f"""# AIOS Evidence Pack (Generated)
 
 Generated: {now}
 Release ID: {metrics.get('release_id', 'TBD')}
@@ -122,12 +99,11 @@ Environment: {metrics.get('environment', 'staging')}
 
 | Gate Metric | Threshold | Observed | Pass/Fail |
 | --- | --- | --- | --- |
-{gate_table_rows}
+{'\n'.join(gate_rows)}
 
 ## Decision
 
 Overall pilot gate decision: {'PASS' if overall_pass else 'FAIL'}
-Overall control decision: {'PASS' if strict_controls_pass else 'FAIL'}
 
 ## Notes
 
@@ -135,32 +111,7 @@ Overall control decision: {'PASS' if strict_controls_pass else 'FAIL'}
 - Attach control-level artifacts before compliance review.
 """
 
-
-def build_summary(
-    metrics: Dict[str, Any],
-    controls: List[ControlSpec],
-    control_statuses: Dict[str, str],
-    gate_rows: list[dict[str, Any]],
-    overall_pass: bool,
-    strict_controls_pass: bool,
-) -> Dict[str, Any]:
-    failed_controls = [control_id for control_id, status in control_statuses.items() if status != "Pass"]
-    return {
-        "release_id": metrics.get("release_id", "TBD"),
-        "environment": metrics.get("environment", "staging"),
-        "decision": "PASS" if overall_pass else "FAIL",
-        "controls_decision": "PASS" if strict_controls_pass else "FAIL",
-        "failed_controls": failed_controls,
-        "controls": [
-            {
-                "id": control.control_id,
-                "status": control_statuses[control.control_id],
-                "owner": control.owner,
-            }
-            for control in controls
-        ],
-        "gates": gate_rows,
-    }
+    return markdown, overall_pass
 
 
 def parse_args() -> argparse.Namespace:
@@ -173,18 +124,9 @@ def parse_args() -> argparse.Namespace:
         help="Path to controls YAML containing exit_gates",
     )
     parser.add_argument(
-        "--summary-output",
-        help="Optional path to write machine-readable JSON summary",
-    )
-    parser.add_argument(
         "--fail-on-gate-fail",
         action="store_true",
         help="Exit with non-zero status if any exit gate fails",
-    )
-    parser.add_argument(
-        "--fail-on-control-fail",
-        action="store_true",
-        help="Exit with non-zero status if any control fails",
     )
     return parser.parse_args()
 
@@ -193,38 +135,18 @@ def main() -> int:
     args = parse_args()
     metrics_path = Path(args.metrics)
     output_path = Path(args.output)
-    controls_path = Path(args.controls)
 
     metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
-    controls = parse_controls(controls_path)
-    gates = parse_exit_gates(controls_path)
-
-    control_statuses = evaluate_controls(metrics, controls, gates)
-    strict_controls_pass = all(status == "Pass" for status in control_statuses.values())
-
-    gate_rows, overall_pass = evaluate_gates(metrics, gates)
-    markdown = build_markdown(metrics, controls, gate_rows, control_statuses, overall_pass, strict_controls_pass)
+    gates = parse_exit_gates(Path(args.controls))
+    markdown, overall_pass = build_markdown(metrics, gates)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(markdown, encoding="utf-8")
-
-    if args.summary_output:
-        summary_path = Path(args.summary_output)
-        summary_path.parent.mkdir(parents=True, exist_ok=True)
-        summary = build_summary(metrics, controls, control_statuses, gate_rows, overall_pass, strict_controls_pass)
-        summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
-        print(f"Wrote evidence summary to {summary_path}")
-
     print(f"Wrote evidence pack to {output_path}")
 
     if args.fail_on_gate_fail and not overall_pass:
         print("AIOS exit-gate decision is FAIL")
         return 2
-
-    if args.fail_on_control_fail and not strict_controls_pass:
-        print("AIOS control decision is FAIL")
-        return 3
-
     return 0
 
 

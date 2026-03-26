@@ -1,20 +1,28 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
-  BarChart,
-  FileBarChart,
-  PieChart,
-  TrendingUp,
-  Calendar,
-  Download,
-  RefreshCw,
-  Filter,
-  Search,
+  Activity,
   ArrowLeft,
+  BarChart3,
+  BellRing,
+  CheckCircle2,
+  Clock3,
+  Download,
+  Eye,
+  FileBarChart2,
+  Filter,
+  Layers3,
+  RefreshCw,
+  Search,
+  ShieldAlert,
+  SquareChartGantt,
+  Users,
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useLocation } from 'wouter';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -22,363 +30,383 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useLocation } from 'wouter';
+import { Switch } from '@/components/ui/switch';
+import { Progress } from '@/components/ui/progress';
 
-/**
- * ReportsDashboard Page
- *
- * Comprehensive reports dashboard showing all generated reports,
- * analytics, and report generation capabilities across all modules.
- */
+const reportModules = [
+  { id: 'executive', label: 'Executive Intelligence', icon: BarChart3 },
+  { id: 'project', label: 'Project Performance', icon: SquareChartGantt },
+  { id: 'risk', label: 'Risk & Controls (KRI)', icon: ShieldAlert },
+  { id: 'operations', label: 'Task & Delivery Ops', icon: CheckCircle2 },
+  { id: 'client', label: 'Client Reporting Packs', icon: Users },
+];
+
+const paidPersonaReports = {
+  startup: [
+    'Burn-down vs milestone confidence report',
+    'Investor update snapshot (weekly)',
+    'Regulatory readiness trendline',
+  ],
+  growth: [
+    'Program portfolio KPI dashboard',
+    'Vendor/cost variance report',
+    'Audit readiness and CAPA closure report',
+  ],
+  enterprise: [
+    'Cross-program PMO command center report',
+    'KRI heatmap + corrective action pack',
+    'Board-level operating rhythm report',
+  ],
+};
+
+const starterProjects = [
+  { id: 'PJT-401', name: 'BTX-112 IND', health: 87, tasksDone: 138, tasksTotal: 161, risk: 'Low' },
+  { id: 'PJT-577', name: 'OncoLead CER v2', health: 71, tasksDone: 92, tasksTotal: 128, risk: 'Medium' },
+  { id: 'PJT-812', name: 'CMC Tech Transfer', health: 58, tasksDone: 64, tasksTotal: 123, risk: 'High' },
+];
+
+const starterTaskLedger = [
+  { stream: 'Clinical', completed: 42, inProgress: 10, blocked: 3 },
+  { stream: 'Regulatory', completed: 37, inProgress: 8, blocked: 2 },
+  { stream: 'CMC', completed: 24, inProgress: 7, blocked: 5 },
+  { stream: 'Quality', completed: 18, inProgress: 5, blocked: 1 },
+];
+
 const ReportsDashboard = () => {
   const [, setLocation] = useLocation();
-  const [filterType, setFilterType] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [module, setModule] = useState('executive');
+  const [query, setQuery] = useState('');
+  const [persona, setPersona] = useState('growth');
+  const [liveMode, setLiveMode] = useState(true);
+  const [showKPI, setShowKPI] = useState(true);
+  const [showKRI, setShowKRI] = useState(true);
+  const [showProjectReports, setShowProjectReports] = useState(true);
+  const [pulse, setPulse] = useState(0);
 
-  // Mock comprehensive reports data
-  const allReports = [
-    {
-      id: 'report-1',
-      title: 'BTX-112 IND Readiness Assessment',
-      type: 'regulatory',
-      category: 'IND Submission',
-      date: '2025-05-08T14:30:00Z',
-      status: 'complete',
-      size: '2.4 MB',
-      downloadCount: 12,
-      module: 'IND Wizard',
-    },
-    {
-      id: 'report-2',
-      title: 'CMC Documentation Quality Audit',
-      type: 'quality',
-      category: 'Quality Assessment',
-      date: '2025-05-05T09:15:00Z',
-      status: 'complete',
-      size: '1.8 MB',
-      downloadCount: 8,
-      module: 'CMC Module',
-    },
-    {
-      id: 'report-3',
-      title: 'Clinical Trial Enrollment Analytics',
-      type: 'clinical',
-      category: 'Trial Management',
-      date: '2025-05-01T11:45:00Z',
-      status: 'complete',
-      size: '3.1 MB',
-      downloadCount: 15,
-      module: 'Study Architect',
-    },
-    {
-      id: 'report-4',
-      title: 'Multi-Agency Compliance Report',
-      type: 'regulatory',
-      category: 'Compliance',
-      date: '2025-04-28T16:20:00Z',
-      status: 'complete',
-      size: '4.2 MB',
-      downloadCount: 23,
-      module: 'CoAuthor',
-    },
-    {
-      id: 'report-5',
-      title: 'CER Safety Analysis Report',
-      type: 'clinical',
-      category: 'Safety Assessment',
-      date: '2025-04-25T13:10:00Z',
-      status: 'complete',
-      size: '2.9 MB',
-      downloadCount: 7,
-      module: 'CER Module',
-    },
-    {
-      id: 'report-6',
-      title: 'Manufacturing Batch Quality Report',
-      type: 'cmc',
-      category: 'Manufacturing',
-      date: '2025-04-22T10:30:00Z',
-      status: 'complete',
-      size: '1.6 MB',
-      downloadCount: 11,
-      module: 'CMC Module',
-    },
-  ];
+  useEffect(() => {
+    if (!liveMode) return undefined;
+    const timer = window.setInterval(() => {
+      setPulse(prev => prev + 1);
+    }, 3500);
+    return () => window.clearInterval(timer);
+  }, [liveMode]);
 
-  // Analytics data
-  const analyticsData = {
-    totalReports: allReports.length,
-    thisMonth: 4,
-    totalDownloads: allReports.reduce((sum, report) => sum + report.downloadCount, 0),
-    averageSize: '2.5 MB',
-    reportsByType: {
-      regulatory: allReports.filter(r => r.type === 'regulatory').length,
-      clinical: allReports.filter(r => r.type === 'clinical').length,
-      quality: allReports.filter(r => r.type === 'quality').length,
-      cmc: allReports.filter(r => r.type === 'cmc').length,
-    },
-  };
-
-  // Filter reports based on type and search term
-  const filteredReports = allReports.filter(report => {
-    const matchesType = filterType === 'all' || report.type === filterType;
-    const matchesSearch =
-      report.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.module.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesType && matchesSearch;
-  });
-
-  // Format date
-  const formatDate = dateString => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  // Get report type icon and color
-  const getReportTypeInfo = type => {
-    switch (type) {
-      case 'regulatory':
+  const projects = useMemo(
+    () =>
+      starterProjects.map((project, index) => {
+        if (!liveMode) return project;
+        const healthShift = ((pulse + index) % 3) - 1;
         return {
-          icon: BarChart,
-          color: 'text-blue-600',
-          bgColor: 'bg-blue-100',
-          label: 'Regulatory',
+          ...project,
+          health: Math.max(42, Math.min(96, project.health + healthShift)),
         };
-      case 'clinical':
-        return {
-          icon: TrendingUp,
-          color: 'text-purple-600',
-          bgColor: 'bg-purple-100',
-          label: 'Clinical',
-        };
-      case 'quality':
-        return {
-          icon: PieChart,
-          color: 'text-green-600',
-          bgColor: 'bg-green-100',
-          label: 'Quality',
-        };
-      case 'cmc':
-        return {
-          icon: FileBarChart,
-          color: 'text-orange-600',
-          bgColor: 'bg-orange-100',
-          label: 'CMC',
-        };
-      default:
-        return {
-          icon: FileBarChart,
-          color: 'text-gray-600',
-          bgColor: 'bg-gray-100',
-          label: 'Other',
-        };
-    }
-  };
+      }),
+    [pulse, liveMode],
+  );
 
-  // Handle download simulation
-  const handleDownload = (reportId, reportTitle) => {
-    console.log(`Downloading report: ${reportTitle}`);
-    // In a real app, this would trigger actual file download
-  };
+  const filteredProjects = useMemo(
+    () =>
+      projects.filter(
+        p =>
+          p.name.toLowerCase().includes(query.toLowerCase()) ||
+          p.id.toLowerCase().includes(query.toLowerCase()),
+      ),
+    [projects, query],
+  );
 
-  // Generate new report
-  const handleGenerateReport = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setLocation('/client-portal'); // Navigate back to portal with reports module active
-    }, 1500);
-  };
+  const summary = useMemo(() => {
+    const totalDone = starterTaskLedger.reduce((sum, row) => sum + row.completed, 0);
+    const totalInProgress = starterTaskLedger.reduce((sum, row) => sum + row.inProgress, 0);
+    const totalBlocked = starterTaskLedger.reduce((sum, row) => sum + row.blocked, 0);
+    return {
+      totalDone,
+      totalInProgress,
+      totalBlocked,
+      completionRate: Math.round((totalDone / (totalDone + totalInProgress + totalBlocked)) * 100),
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setLocation('/client-portal')}
-              className="mr-4"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Portal
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Reports Dashboard</h1>
-              <p className="text-gray-600 mt-1">Comprehensive reporting across all modules</p>
-            </div>
+    <div className="min-h-screen bg-neutral-100 p-4 md:p-6">
+      <div className="mx-auto flex w-full max-w-[1400px] gap-4 md:gap-6">
+        <aside className="hidden w-72 shrink-0 rounded-2xl border border-neutral-200 bg-white p-4 lg:block">
+          <div className="mb-5 flex items-center justify-between">
+            <h2 className="text-sm font-semibold tracking-wide text-neutral-500 uppercase">Reports</h2>
+            <Badge variant="outline" className="gap-1">
+              <BellRing className="h-3 w-3" />
+              Live
+            </Badge>
           </div>
-          <Button
-            className="bg-pink-600 hover:bg-pink-700"
-            onClick={handleGenerateReport}
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <FileBarChart className="h-4 w-4 mr-2" />
-                Generate New Report
-              </>
-            )}
-          </Button>
-        </div>
 
-        {/* Analytics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Total Reports</CardDescription>
-              <CardTitle className="text-2xl">{analyticsData.totalReports}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">+{analyticsData.thisMonth} this month</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Total Downloads</CardDescription>
-              <CardTitle className="text-2xl">{analyticsData.totalDownloads}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">Across all reports</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Report Types</CardDescription>
-              <CardTitle className="text-2xl">4</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">Regulatory, Clinical, Quality, CMC</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Average Size</CardDescription>
-              <CardTitle className="text-2xl">{analyticsData.averageSize}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">Per report file</p>
-            </CardContent>
-          </Card>
-        </div>
+          <div className="space-y-2">
+            {reportModules.map(item => {
+              const Icon = item.icon;
+              const isActive = module === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setModule(item.id)}
+                  className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm transition ${
+                    isActive
+                      ? 'border-neutral-900 bg-neutral-900 text-white'
+                      : 'border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-100'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
 
-        {/* Filters and Search */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Filter & Search Reports</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder="Search reports by title, category, or module..."
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-full md:w-48">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Filter by type" />
+          <Card className="mt-5 border-neutral-200 bg-neutral-50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Persona Report Library</CardTitle>
+              <CardDescription>Starter examples for paid plans</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Select value={persona} onValueChange={setPersona}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select user type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="regulatory">Regulatory</SelectItem>
-                  <SelectItem value="clinical">Clinical</SelectItem>
-                  <SelectItem value="quality">Quality</SelectItem>
-                  <SelectItem value="cmc">CMC</SelectItem>
+                  <SelectItem value="startup">Startup Plan</SelectItem>
+                  <SelectItem value="growth">Growth Plan</SelectItem>
+                  <SelectItem value="enterprise">Enterprise Plan</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Reports List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>All Reports ({filteredReports.length})</CardTitle>
-            <CardDescription>Generated reports from all modules and workflows</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {filteredReports.map(report => {
-                const typeInfo = getReportTypeInfo(report.type);
-                const IconComponent = typeInfo.icon;
-
-                return (
-                  <div
-                    key={report.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div className={`p-2 rounded-lg ${typeInfo.bgColor}`}>
-                        <IconComponent className={`h-5 w-5 ${typeInfo.color}`} />
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-gray-900">{report.title}</h3>
-                        <div className="flex items-center space-x-4 mt-1">
-                          <Badge variant="outline">{typeInfo.label}</Badge>
-                          <span className="text-sm text-gray-500">{report.category}</span>
-                          <span className="text-sm text-gray-500">•</span>
-                          <span className="text-sm text-gray-500">{report.module}</span>
-                        </div>
-                        <div className="flex items-center space-x-4 mt-1 text-xs text-gray-400">
-                          <div className="flex items-center">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            {formatDate(report.date)}
-                          </div>
-                          <span>•</span>
-                          <span>{report.size}</span>
-                          <span>•</span>
-                          <span>{report.downloadCount} downloads</span>
-                        </div>
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDownload(report.id, report.title)}
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
-                    </Button>
-                  </div>
-                );
-              })}
-
-              {filteredReports.length === 0 && (
-                <div className="text-center py-8">
-                  <FileBarChart className="h-12 w-12 mx-auto text-gray-400 mb-3" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">No reports found</h3>
-                  <p className="text-gray-500">
-                    {searchTerm || filterType !== 'all'
-                      ? 'Try adjusting your search or filter criteria.'
-                      : 'Generate your first report to get started.'}
+              <div className="space-y-2 text-xs text-neutral-700">
+                {paidPersonaReports[persona].map(example => (
+                  <p key={example} className="rounded-lg border border-neutral-200 bg-white px-2.5 py-2">
+                    {example}
                   </p>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </aside>
+
+        <main className="flex-1 space-y-4 md:space-y-6">
+          <Card className="rounded-2xl border-neutral-200 bg-white">
+            <CardHeader>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="mb-3 flex items-center gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => setLocation('/client-portal')}>
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Back
+                    </Button>
+                    <Badge variant="outline" className="gap-1 border-emerald-200 bg-emerald-50 text-emerald-700">
+                      <Activity className="h-3 w-3" />
+                      {liveMode ? 'Live updates: ON' : 'Live updates: OFF'}
+                    </Badge>
+                  </div>
+                  <CardTitle className="text-2xl">Unified Reports Command Center</CardTitle>
+                  <CardDescription>
+                    Claude-style single surface for KPI, KRI, project, and task-reporting with built-in examples.
+                  </CardDescription>
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline">
+                    <Eye className="mr-2 h-4 w-4" />
+                    Preview Pack
+                  </Button>
+                  <Button className="bg-neutral-900 text-white hover:bg-black">
+                    <Download className="mr-2 h-4 w-4" />
+                    Export Client Report
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <Card className="border-neutral-200">
+                  <CardHeader className="pb-1">
+                    <CardDescription>KPI Completion</CardDescription>
+                    <CardTitle>{summary.completionRate}%</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Progress value={summary.completionRate} />
+                  </CardContent>
+                </Card>
+                <Card className="border-neutral-200">
+                  <CardHeader className="pb-1">
+                    <CardDescription>Tasks Completed</CardDescription>
+                    <CardTitle>{summary.totalDone}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-xs text-neutral-500">Across all active streams</CardContent>
+                </Card>
+                <Card className="border-neutral-200">
+                  <CardHeader className="pb-1">
+                    <CardDescription>Tasks In Progress</CardDescription>
+                    <CardTitle>{summary.totalInProgress}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-xs text-neutral-500">Auto-refreshed every ~3.5s in live mode</CardContent>
+                </Card>
+                <Card className="border-neutral-200">
+                  <CardHeader className="pb-1">
+                    <CardDescription>Blocked Tasks / KRI</CardDescription>
+                    <CardTitle className="text-red-600">{summary.totalBlocked}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-xs text-neutral-500">Escalation-ready blockers</CardContent>
+                </Card>
+              </div>
+
+              <div className="grid gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 md:grid-cols-2 xl:grid-cols-5">
+                <div className="flex items-center gap-2 xl:col-span-2">
+                  <Search className="h-4 w-4 text-neutral-500" />
+                  <Input
+                    value={query}
+                    onChange={e => setQuery(e.target.value)}
+                    placeholder="Search project reports"
+                    className="bg-white"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-neutral-500" />
+                  <Select defaultValue="weekly">
+                    <SelectTrigger className="bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="daily">Daily</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white px-3 py-2">
+                  <Label htmlFor="toggle-kpi">KPI</Label>
+                  <Switch id="toggle-kpi" checked={showKPI} onCheckedChange={setShowKPI} />
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white px-3 py-2">
+                  <Label htmlFor="toggle-kri">KRI</Label>
+                  <Switch id="toggle-kri" checked={showKRI} onCheckedChange={setShowKRI} />
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white px-3 py-2">
+                  <Label htmlFor="toggle-project">Projects</Label>
+                  <Switch
+                    id="toggle-project"
+                    checked={showProjectReports}
+                    onCheckedChange={setShowProjectReports}
+                  />
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white px-3 py-2">
+                  <Label htmlFor="toggle-live">Live Feed</Label>
+                  <Switch id="toggle-live" checked={liveMode} onCheckedChange={setLiveMode} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {showProjectReports && (
+            <Card className="rounded-2xl border-neutral-200 bg-white">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Layers3 className="h-5 w-5" />
+                  Project Reports (Live)
+                </CardTitle>
+                <CardDescription>
+                  Pre-populated examples with real-time health drift simulation to mimic a live command center.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {filteredProjects.map(project => (
+                  <div
+                    key={project.id}
+                    className="grid gap-3 rounded-xl border border-neutral-200 p-3 md:grid-cols-[1.4fr_1fr_1fr_auto] md:items-center"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-neutral-900">{project.name}</p>
+                      <p className="text-xs text-neutral-500">{project.id}</p>
+                    </div>
+                    {showKPI && (
+                      <div>
+                        <p className="mb-1 text-xs text-neutral-500">KPI Project Health</p>
+                        <Progress value={project.health} />
+                        <p className="mt-1 text-xs font-medium text-neutral-700">{project.health}%</p>
+                      </div>
+                    )}
+                    {showKRI && (
+                      <div className="text-sm">
+                        <p className="text-xs text-neutral-500">KRI Risk Status</p>
+                        <Badge
+                          className={
+                            project.risk === 'High'
+                              ? 'bg-red-100 text-red-700'
+                              : project.risk === 'Medium'
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-emerald-100 text-emerald-700'
+                          }
+                        >
+                          {project.risk}
+                        </Badge>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline">
+                        <FileBarChart2 className="mr-1.5 h-4 w-4" />
+                        Open
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        <Download className="mr-1.5 h-4 w-4" />
+                        PDF
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          <Card className="rounded-2xl border-neutral-200 bg-white">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Clock3 className="h-5 w-5" />
+                Task Completion Status Report
+              </CardTitle>
+              <CardDescription>
+                Completed, in-progress, and blocked task reporting with examples included by default.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px] text-sm">
+                  <thead>
+                    <tr className="border-b text-left text-neutral-500">
+                      <th className="pb-2 font-medium">Workstream</th>
+                      <th className="pb-2 font-medium">Completed</th>
+                      <th className="pb-2 font-medium">In Progress</th>
+                      <th className="pb-2 font-medium">Blocked</th>
+                      <th className="pb-2 font-medium">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {starterTaskLedger.map(item => {
+                      const statusLabel = item.blocked > 3 ? 'Needs attention' : 'On track';
+                      return (
+                        <tr key={item.stream} className="border-b last:border-b-0">
+                          <td className="py-3 font-medium text-neutral-800">{item.stream}</td>
+                          <td className="py-3">{item.completed}</td>
+                          <td className="py-3">{item.inProgress}</td>
+                          <td className="py-3">{item.blocked}</td>
+                          <td className="py-3">
+                            <Badge variant="outline">{statusLabel}</Badge>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <div className="mt-4 flex items-center gap-2 text-xs text-neutral-500">
+                <RefreshCw className="h-3.5 w-3.5" />
+                Last refreshed: {new Date().toLocaleTimeString('en-US')}
+              </div>
+            </CardContent>
+          </Card>
+        </main>
       </div>
     </div>
   );

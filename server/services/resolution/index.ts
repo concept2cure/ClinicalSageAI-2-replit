@@ -15,9 +15,7 @@ export {
 } from './resolution-planner';
 
 // Affected-Object Clustering
-export {
-  clusterAffectedObjects,
-} from './cluster-engine';
+export { clusterAffectedObjects } from './cluster-engine';
 
 // Resolution Bundles
 export {
@@ -43,10 +41,7 @@ export {
 } from './supersession-engine';
 
 // Reapproval Engine
-export {
-  determineReapprovalRequirements,
-  checkPromotionBlock,
-} from './reapproval-engine';
+export { determineReapprovalRequirements, checkPromotionBlock } from './reapproval-engine';
 
 // Rewrite Coordinator
 export {
@@ -66,9 +61,7 @@ export {
 } from './resolution-state-machine';
 
 // Bundle Executor
-export {
-  executeBundle,
-} from './bundle-executor';
+export { executeBundle } from './bundle-executor';
 
 // AnA Resolution Support
 export {
@@ -78,6 +71,22 @@ export {
 } from './ana-resolution-support';
 
 // AnA Resolution Orchestrator
+export { orchestrateResolution } from './ana-resolution-orchestrator';
+
+// Contradiction Bundle Planner (Pass 9)
+export { buildContradictionBundlePlan, classifyPlanActions } from './contradiction-bundle-planner';
+
+// Contradiction Resolution Orchestrator (Pass 9)
 export {
-  orchestrateResolution,
-} from './ana-resolution-orchestrator';
+  orchestrateContradictionResolution,
+  buildContradictionExplanation,
+} from './contradiction-resolution-orchestrator';
+
+// Contradiction → Resolution Bridge (Pass 9)
+export {
+  resolveContradiction,
+  planContradictionResolution,
+  executeContradictionResolution,
+  explainContradictionResolution,
+  getProjectResolutionStatus,
+} from './contradiction-resolution-bridge';

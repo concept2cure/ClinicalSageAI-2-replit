@@ -15,6 +15,9 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
+import { queryKeys } from '@/concept2cure/hooks/queryKeys';
+import { DataStateWrapper } from '@/components/ui/statesV2';
 import {
   Shield,
   ShieldCheck,
@@ -111,12 +114,11 @@ const DecisionLineageMap: React.FC<DecisionLineageMapProps> = ({
 
   // Fetch lineage graph
   const { data: graph, isLoading, error } = useQuery<LineageGraph>({
-    queryKey: ['decision-lineage', entityType, entityId, organizationId],
+    queryKey: queryKeys.decisionLineage.graph(entityType, entityId, organizationId),
     queryFn: async () => {
       const params = new URLSearchParams();
       if (organizationId) params.set('organizationId', String(organizationId));
-      const res = await fetch(`/api/decision-lineage/${entityType}/${entityId}?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch lineage');
+      const res = await apiRequest('GET', `/api/decision-lineage/${entityType}/${entityId}?${params}`);
       return res.json();
     },
     enabled: !!entityType && entityId > 0,
@@ -124,10 +126,9 @@ const DecisionLineageMap: React.FC<DecisionLineageMapProps> = ({
 
   // Fetch chain verification
   const { data: chainStatus } = useQuery({
-    queryKey: ['decision-lineage-chain'],
+    queryKey: queryKeys.decisionLineage.chainVerification(),
     queryFn: async () => {
-      const res = await fetch('/api/decision-lineage/verify-chain');
-      if (!res.ok) throw new Error('Chain verification failed');
+      const res = await apiRequest('GET', '/api/decision-lineage/verify-chain');
       return res.json();
     },
   });
@@ -141,7 +142,7 @@ const DecisionLineageMap: React.FC<DecisionLineageMapProps> = ({
   const handleExport = async (format: 'json' | 'csv' | 'xml') => {
     const params = new URLSearchParams({ format });
     if (organizationId) params.set('organizationId', String(organizationId));
-    const res = await fetch(`/api/decision-lineage/${entityType}/${entityId}/export?${params}`);
+    const res = await apiRequest('GET', `/api/decision-lineage/${entityType}/${entityId}/export?${params}`);
     if (!res.ok) return;
 
     const blob = await res.blob();
@@ -153,26 +154,16 @@ const DecisionLineageMap: React.FC<DecisionLineageMapProps> = ({
     URL.revokeObjectURL(url);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex-1 flex items-center justify-center p-8">
-        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-      </div>
-    );
-  }
-
-  if (error || !graph) {
-    return (
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="text-center">
-          <AlertTriangle className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
-          <p className="text-xs text-zinc-500">No lineage data available</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
+    <DataStateWrapper<LineageGraph>
+      isLoading={isLoading}
+      error={error}
+      data={graph ?? undefined}
+      emptyTitle="No Lineage Data"
+      emptyDescription="No decision lineage data available for this entity."
+      testId="decision-lineage"
+    >
+      {(graphData) => (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
       <div className="border-b px-5 py-3 flex items-center justify-between">
@@ -180,7 +171,7 @@ const DecisionLineageMap: React.FC<DecisionLineageMapProps> = ({
           <GitBranch className="w-5 h-5 text-blue-500" />
           <h2 className="text-sm font-semibold text-zinc-900">Decision Lineage</h2>
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500">
-            {graph.nodes.length} records
+            {graphData.nodes.length} records
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -233,26 +224,26 @@ const DecisionLineageMap: React.FC<DecisionLineageMapProps> = ({
         <div className="flex items-center gap-1.5">
           <Shield className="w-3 h-3 text-blue-500" />
           <span className="font-medium text-zinc-600">Compliance:</span>
-          {graph.metadata.complianceFrameworks.slice(0, 3).map(f => (
+          {graphData.metadata.complianceFrameworks.slice(0, 3).map(f => (
             <span key={f} className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-medium">
               {f}
             </span>
           ))}
-          {graph.metadata.complianceFrameworks.length > 3 && (
+          {graphData.metadata.complianceFrameworks.length > 3 && (
             <span className="text-zinc-400">
-              +{graph.metadata.complianceFrameworks.length - 3} more
+              +{graphData.metadata.complianceFrameworks.length - 3} more
             </span>
           )}
         </div>
         <div className="ml-auto flex items-center gap-3">
           <span className="text-zinc-500">
-            <span className="font-semibold text-emerald-600">{graph.metadata.totalApprovals}</span> approved
+            <span className="font-semibold text-emerald-600">{graphData.metadata.totalApprovals}</span> approved
           </span>
           <span className="text-zinc-500">
-            <span className="font-semibold text-red-600">{graph.metadata.totalRejections}</span> rejected
+            <span className="font-semibold text-red-600">{graphData.metadata.totalRejections}</span> rejected
           </span>
           <span className="text-zinc-500">
-            <span className="font-semibold text-orange-600">{graph.metadata.totalDelegations}</span> delegated
+            <span className="font-semibold text-orange-600">{graphData.metadata.totalDelegations}</span> delegated
           </span>
         </div>
       </div>
@@ -399,10 +390,12 @@ const DecisionLineageMap: React.FC<DecisionLineageMapProps> = ({
           All records are immutable and auditable.
         </p>
         <p className="text-[9px] text-zinc-400">
-          Generated: {graph.metadata.generatedAt ? new Date(graph.metadata.generatedAt).toLocaleString() : 'now'}
+          Generated: {graphData.metadata.generatedAt ? new Date(graphData.metadata.generatedAt).toLocaleString() : 'now'}
         </p>
       </div>
     </div>
+      )}
+    </DataStateWrapper>
   );
 };
 

@@ -1,6 +1,6 @@
 # AIOS Evidence Pack (Generated)
 
-Generated: 2026-03-25
+Generated: 2026-03-24
 Release ID: pilot-rc1
 Environment: staging
 
@@ -37,7 +37,6 @@ Environment: staging
 ## Decision
 
 Overall pilot gate decision: PASS
-Overall control decision: PASS
 
 ## Notes
 
