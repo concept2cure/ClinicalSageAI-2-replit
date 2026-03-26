@@ -37,7 +37,14 @@ import {
   Activity,
   Heart,
   Microscope,
-  FlaskConical,
+  BarChart2,
+  Home,
+  FolderKanban,
+  Database,
+  ClipboardCheck,
+  SendHorizontal,
+  Shield,
+  Cog,
 } from 'lucide-react';
 import logoSrc from '@/assets/concept2cure-logo.jpg';
 
@@ -478,23 +485,24 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         </button>
         <button
           onClick={onOpenProjects}
-          aria-label="Projects"
+          aria-label="AnA Home"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'projects' ? 'bg-blue-100 text-blue-500' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'home' ? 'bg-blue-100 text-blue-500' : 'text-zinc-500 hover:bg-zinc-200'
           )}
+          title="AnA Home"
         >
-          <FolderOpen className="w-4 h-4" />
+          <Home className="w-4 h-4" />
         </button>
 
         {/* Primary workflow icons */}
         <div className="w-8 border-t border-zinc-200 my-1" />
         <button
-          onClick={() => onNavigate?.('dossier')}
-          aria-label="Dossier"
+          onClick={() => onNavigate?.('documents')}
+          aria-label="Documents"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'dossier' ? 'bg-blue-100 text-blue-500' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'documents' ? 'bg-blue-100 text-blue-500' : 'text-zinc-500 hover:bg-zinc-200'
           )}
         >
           <LayoutGrid className="w-4 h-4" />
@@ -510,14 +518,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <PenLine className="w-4 h-4" />
         </button>
         <button
-          onClick={() => onNavigate?.('review')}
-          aria-label="Review"
+          onClick={() => onNavigate?.('reports')}
+          aria-label="Reports"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'review' ? 'bg-emerald-50 text-emerald-600' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'reports' ? 'bg-emerald-50 text-emerald-600' : 'text-zinc-500 hover:bg-zinc-200'
           )}
         >
-          <ShieldCheck className="w-4 h-4" />
+          <BarChart2 className="w-4 h-4" />
         </button>
         <button
           onClick={() => onNavigate?.('submissions')}
@@ -565,7 +573,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               <img src={logoSrc} alt="Concept2Cure" className="w-full h-full object-cover object-center" />
               <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at center, transparent 40%, var(--color-bg, #faf9f5) 100%)' }} />
             </div>
-            <span className="font-semibold text-zinc-800 text-[13px]">ClinicalSage</span>
+            <span className="font-semibold text-zinc-800 text-[13px]">Concept2Cure</span>
           </div>
           <button
             onClick={onToggleCollapse}
@@ -608,6 +616,62 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           className="flex-1 overflow-y-auto min-h-0 zen-scroll py-1"
           style={{ scrollbarWidth: 'thin' }}
         >
+          <WorkspaceGroup label="Global OS" defaultOpen={true}>
+            <NavItem
+              icon={<Home className="w-3.5 h-3.5" />}
+              label="AnA Home"
+              active={activeNavId === 'home'}
+              accentColor="blue"
+              onClick={() => onNavigate?.('home')}
+            />
+            <NavItem
+              icon={<FolderKanban className="w-3.5 h-3.5" />}
+              label="Projects"
+              active={activeNavId === 'projects'}
+              onClick={() => onNavigate?.('projects')}
+            />
+            <NavItem
+              icon={<Database className="w-3.5 h-3.5" />}
+              label="Vault"
+              active={activeNavId === 'vault'}
+              onClick={() => onNavigate?.('vault')}
+            />
+            <NavItem
+              icon={<PenLine className="w-3.5 h-3.5" />}
+              label="Documents"
+              active={activeNavId === 'documents'}
+              onClick={() => onNavigate?.('documents')}
+            />
+            <NavItem
+              icon={<BarChart2 className="w-3.5 h-3.5" />}
+              label="Reports"
+              active={activeNavId === 'reports'}
+              onClick={() => onNavigate?.('reports')}
+            />
+            <NavItem
+              icon={<ClipboardCheck className="w-3.5 h-3.5" />}
+              label="Reviews"
+              active={activeNavId === 'review'}
+              accentColor="emerald"
+              onClick={() => onNavigate?.('review')}
+            />
+            <NavItem
+              icon={<SendHorizontal className="w-3.5 h-3.5" />}
+              label="Submission"
+              active={activeNavId === 'submissions'}
+              accentColor="blue"
+              onClick={() => onNavigate?.('submissions')}
+            />
+            <NavItem
+              icon={<Cog className="w-3.5 h-3.5" />}
+              label="Admin"
+              active={activeNavId === 'admin'}
+              onClick={() => onNavigate?.('admin')}
+            />
+          </WorkspaceGroup>
+
+          <div className="mx-2 my-1 border-t border-zinc-100" />
+
           {/* ── PINNED PROJECTS ── */}
           {pinnedProjects.length > 0 && (
             <WorkspaceGroup label="Pinned" defaultOpen={true}>
@@ -677,42 +741,25 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             </>
           )}
 
-          {/* ── SUBMISSION WORKFLOW — secondary nav ────────────────── */}
           <div className="mx-2 my-1 border-t border-zinc-100" />
-          <WorkspaceGroup label="Workflow" defaultOpen={true}>
+          <WorkspaceGroup label="Project" defaultOpen={true}>
             <NavItem
               icon={<LayoutGrid className="w-3.5 h-3.5" />}
-              label="Dossier Map"
-              active={activeNavId === 'dossier'}
-              accentColor="blue"
-              onClick={() => onNavigate?.('dossier')}
+              label="Overview"
+              active={activeNavId === 'project-overview'}
+              onClick={() => onNavigate?.('project-overview')}
             />
             <NavItem
-              icon={<PenLine className="w-3.5 h-3.5" />}
-              label="Documents"
-              active={activeNavId === 'documents'}
-              onClick={() => onNavigate?.('documents')}
+              icon={<Database className="w-3.5 h-3.5" />}
+              label="Vault / Evidence"
+              active={activeNavId === 'project-vault'}
+              onClick={() => onNavigate?.('project-vault')}
             />
             <NavItem
-              icon={<ShieldCheck className="w-3.5 h-3.5" />}
-              label="Review"
-              active={activeNavId === 'review'}
-              accentColor="emerald"
-              onClick={() => onNavigate?.('review')}
-            />
-            <NavItem
-              icon={<FlaskConical className="w-3.5 h-3.5" />}
-              label="Biostats"
-              active={activeNavId === 'biostatistics'}
-              accentColor="emerald"
-              onClick={() => onNavigate?.('biostatistics')}
-            />
-            <NavItem
-              icon={<Send className="w-3.5 h-3.5" />}
-              label="Submissions"
-              active={activeNavId === 'submissions'}
-              accentColor="blue"
-              onClick={() => onNavigate?.('submissions')}
+              icon={<Shield className="w-3.5 h-3.5" />}
+              label="Activity"
+              active={activeNavId === 'project-activity'}
+              onClick={() => onNavigate?.('project-activity')}
             />
           </WorkspaceGroup>
         </div>
