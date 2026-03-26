@@ -43,6 +43,7 @@ import { ProgramTwinPanel } from './ProgramTwinPanel';
 import { SubmissionAppsPanel } from './SubmissionAppsPanel';
 import { ReviewPulseDashboard } from './ReviewPulseDashboard';
 import { NotificationCenter } from './NotificationCenter';
+import { ComputeJobPanel } from '../compute/ComputeJobPanel';
 import {
   ChevronLeft,
   Loader2,
@@ -768,6 +769,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     if (!selectedDocId) return null;
     return artifacts.find(a => a.id === selectedDocId) || null;
   }, [selectedDocId, artifacts]);
+  const reviewInFlight = useMemo(
+    () => artifacts.filter(a => ['review', 'approved'].includes((a.status || '').toLowerCase())).length,
+    [artifacts]
+  );
 
   // Ref for use in callbacks that need current activeArtifact
   const activeArtifactRef = useRef(activeArtifact);
@@ -829,6 +834,21 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     setPhase4Panel('none');
     setPhase4Ctx({});
   }, []);
+
+  const openComputeArtifact = useCallback(
+    (artifactId: string, inspector: 'compare' | 'provenance' | 'audit' | null = null) => {
+      const art = artifacts.find(a => a.id === artifactId);
+      if (!art) {
+        pushShellToast('Computed artifact not found in project context', 'error');
+        return;
+      }
+      setSelectedDocId(artifactId);
+      setMode('edit');
+      if (inspector) setEditorInitialInspector(inspector);
+      setShowGovernedPanel(inspector === 'audit');
+    },
+    [artifacts, pushShellToast]
+  );
 
   /** Called when Transform Canvas / Submission App creates a draft */
   const handlePhase4CreateDraft = useCallback(
@@ -1098,6 +1118,43 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 </button>
               );
             })}
+          </div>
+        </div>
+
+        {/* ── Canonical shell context band (project/document/review/report continuity) ───────── */}
+        <div className="flex items-center gap-2 px-4 h-9 border-b border-zinc-200 bg-white/95 shrink-0">
+          <span className="text-[11px] font-semibold text-zinc-700">Project</span>
+          <span className="text-[11px] text-zinc-900 font-medium truncate max-w-[240px]">
+            {projectName || 'Untitled Project'}
+          </span>
+          <span className="text-zinc-300">/</span>
+          <span className="text-[11px] text-zinc-600">
+            Doc: {activeArtifact?.title ? activeArtifact.title.slice(0, 44) : 'No document selected'}
+          </span>
+          <span className="text-zinc-300">/</span>
+          <span className="text-[11px] text-zinc-600">Reviews in flight: {reviewInFlight}</span>
+          <div className="ml-auto flex items-center gap-1">
+            <button
+              onClick={() => {
+                setMode('dashboard');
+                setPhase4Panel('pulse');
+              }}
+              className="text-[11px] px-2 py-0.5 rounded border border-rose-200 text-rose-700 hover:bg-rose-50"
+            >
+              Reviews
+            </button>
+            <button
+              onClick={() => setOperatingLayer('reports')}
+              className="text-[11px] px-2 py-0.5 rounded border border-blue-200 text-blue-700 hover:bg-blue-50"
+            >
+              Reports
+            </button>
+            <button
+              onClick={() => (onNavigate ? onNavigate('submission-builder') : setMode('dashboard'))}
+              className="text-[11px] px-2 py-0.5 rounded border border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+            >
+              Submission
+            </button>
           </div>
         </div>
 
@@ -1687,33 +1744,46 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 />
               </div>
             ) : mode === 'dashboard' ? (
-              <ProjectDashboard
-                projectId={projectId}
-                projectName={projectName || 'Untitled Project'}
-                projectType={projectType}
-                submissionType={submissionType}
-                artifacts={artifacts}
-                onOpenDocument={(docId: string) => {
-                  const art = artifacts.find(a => a.id === docId);
-                  if (!tryOpenForEdit(art?.status)) {
+              <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+                <ComputeJobPanel
+                  projectId={projectId}
+                  onOpenArtifact={artifactId => openComputeArtifact(artifactId)}
+                  onOpenProvenance={artifactId => openComputeArtifact(artifactId, 'provenance')}
+                  onOpenAudit={artifactId => openComputeArtifact(artifactId, 'audit')}
+                  onPlaceArtifact={artifactId => {
+                    const art = artifacts.find(a => a.id === artifactId);
+                    if (!art) return;
+                    handleOpenPlacementForDoc(art, art.ctdSection ? 'relocate' : 'place');
+                  }}
+                />
+                <ProjectDashboard
+                  projectId={projectId}
+                  projectName={projectName || 'Untitled Project'}
+                  projectType={projectType}
+                  submissionType={submissionType}
+                  artifacts={artifacts}
+                  onOpenDocument={(docId: string) => {
+                    const art = artifacts.find(a => a.id === docId);
+                    if (!tryOpenForEdit(art?.status)) {
+                      setSelectedDocId(docId);
+                      setMode('browse');
+                      return;
+                    }
                     setSelectedDocId(docId);
+                    setMode('edit');
+                    setShowGovernedPanel(true);
+                  }}
+                  onCreateDocument={() => setShowNewDocDialog(true)}
+                  onOpenEditor={() => setMode('browse')}
+                  onOpenDossier={() => {
+                    setLeftRailMode('dossier');
                     setMode('browse');
-                    return;
-                  }
-                  setSelectedDocId(docId);
-                  setMode('edit');
-                  setShowGovernedPanel(true);
-                }}
-                onCreateDocument={() => setShowNewDocDialog(true)}
-                onOpenEditor={() => setMode('browse')}
-                onOpenDossier={() => {
-                  setLeftRailMode('dossier');
-                  setMode('browse');
-                }}
-                onOpenIntelligence={onSwitchToIntelligence}
-                onOpenSubmissions={onNavigate ? () => onNavigate('submission-builder') : undefined}
-                onOpenTemplates={onNavigate ? () => onNavigate('template-library') : undefined}
-              />
+                  }}
+                  onOpenIntelligence={onSwitchToIntelligence}
+                  onOpenSubmissions={onNavigate ? () => onNavigate('submission-builder') : undefined}
+                  onOpenTemplates={onNavigate ? () => onNavigate('template-library') : undefined}
+                />
+              </div>
             ) : mode === 'browse' ? (
               <DocumentListPane
                 folderLabel={browseLabel}

@@ -3997,6 +3997,11 @@ import concept2cureRoutes from './routes/concept2cure';
 app.use('/api/concept2cure', concept2cureRoutes);
 console.log('✅ Concept2Cure API routes mounted successfully');
 
+// Mount Artifact Compute Plane routes (sandboxed governed output generation)
+import computeRoutes from './routes/compute';
+app.use('/api/concept2cure/compute', computeRoutes);
+console.log('✅ Concept2Cure Compute Plane routes mounted successfully');
+
 // Mount AI Actions unified execution API (Phase 1 — conversational OS spine)
 try {
   // Initialize action registry and handlers BEFORE mounting routes
