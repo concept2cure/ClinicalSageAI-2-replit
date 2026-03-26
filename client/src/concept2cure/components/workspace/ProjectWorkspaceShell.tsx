@@ -35,6 +35,8 @@ import {
   type SectionRequirement,
 } from '../../models/ctdHierarchy';
 import { ProjectDashboard } from './ProjectDashboard';
+import { OperatingSystemRegistryPanel, type RegistryKind } from './OperatingSystemRegistryPanel';
+import { DocumentStudioSurface } from './DocumentStudioSurface';
 import { RegulatoryTransformCanvas } from './RegulatoryTransformCanvas';
 import { GoldenDossierVerificationPanel } from './GoldenDossierVerificationPanel';
 import { ProgramTwinPanel } from './ProgramTwinPanel';
@@ -87,7 +89,7 @@ import { NewDocumentDialog } from './NewDocumentDialog';
 import { canEscalateToEdit } from '../../contexts/DocumentModeContext';
 
 // ── Left-rail mode type ──────────────────────────────────────────────────────
-type LeftRailMode = 'files' | 'dossier' | 'templates' | 'outline';
+type LeftRailMode = 'files' | 'dossier' | 'templates' | 'outline' | 'registry';
 type OperatingLayer = 'document_studio' | 'vault' | 'reports';
 type WorkspaceWorkbench = 'cmc' | 'biostats' | 'device' | 'clinical';
 
@@ -249,6 +251,14 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const [leftRailMode, setLeftRailMode] = useState<LeftRailMode>('files');
   const [activeLayer, setActiveLayer] = useState<OperatingLayer>('document_studio');
   const [activeWorkbench, setActiveWorkbench] = useState<WorkspaceWorkbench>('clinical');
+  const [activeRegistry, setActiveRegistry] = useState<RegistryKind>('documents');
+  // operatingLayer maps 'document_studio' -> 'documents' for OperatingSystemRegistryPanel compatibility
+  const operatingLayer = activeLayer === 'document_studio' ? 'documents' : activeLayer;
+  const setOperatingLayer = (layer: string) => {
+    if (layer === 'documents') setActiveLayer('document_studio');
+    else if (layer === 'vault') setActiveLayer('vault');
+    else if (layer === 'reports') setActiveLayer('reports');
+  };
   const [selectedCtdSection, setSelectedCtdSection] = useState<string | undefined>();
 
   // New document creation
@@ -1306,6 +1316,33 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           {/* Left: Tree panel with mode toggle — hidden in dashboard mode for full-width layout */}
           {mode !== 'dashboard' && (
             <div className="w-[200px] 2xl:w-[240px] border-r border-zinc-200 shrink-0 flex flex-col bg-white">
+              <div className="grid grid-cols-3 gap-1 p-1.5 border-b border-zinc-200 bg-white">
+                {[
+                  { key: 'documents' as OperatingLayer, label: 'Docs' },
+                  { key: 'vault' as OperatingLayer, label: 'Vault' },
+                  { key: 'reports' as OperatingLayer, label: 'Reports' },
+                ].map(layer => (
+                  <button
+                    key={layer.key}
+                    onClick={() => {
+                      setOperatingLayer(layer.key);
+                      if (layer.key === 'vault') setActiveRegistry('vault');
+                      if (layer.key === 'reports') setActiveRegistry('reports');
+                      if (layer.key === 'documents' && activeRegistry !== 'projects') {
+                        setActiveRegistry('documents');
+                      }
+                    }}
+                    className={cn(
+                      'rounded-md px-2 py-1 text-[11px] font-medium transition-colors',
+                      operatingLayer === layer.key
+                        ? 'bg-zinc-900 text-white'
+                        : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                    )}
+                  >
+                    {layer.label}
+                  </button>
+                ))}
+              </div>
               {/* Mode toggle tabs */}
               <div className="flex border-b border-zinc-200 shrink-0 bg-zinc-50/60">
                 {[
@@ -1327,6 +1364,12 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     icon: List,
                     label: 'Outline',
                     disabled: !outlineAvailable,
+                  },
+                  {
+                    key: 'registry' as LeftRailMode,
+                    icon: Brain,
+                    label: 'OS',
+                    disabled: false,
                   },
                 ].map(tab => (
                   <button
@@ -1446,6 +1489,14 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     </p>
                   </div>
                 )
+              ) : leftRailMode === 'registry' ? (
+                <OperatingSystemRegistryPanel
+                  projectId={projectId}
+                  projectName={projectName}
+                  artifacts={artifacts}
+                  activeRegistry={activeRegistry}
+                  onRegistryChange={setActiveRegistry}
+                />
               ) : (
                 <TemplateTree
                   onCreateFromTemplate={handleCreateFromTemplate}
@@ -1520,6 +1571,14 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             )}
 
             {/* Mode: browse = DocumentListPane, edit = EditorPanel, Phase 4 overlay */}
+            <DocumentStudioSurface
+              osLayer={operatingLayer}
+              onOpenWorkbench={domain => {
+                if (domain === 'biostatistics') onNavigate?.('biostatistics');
+                if (domain === 'safety-narrative') onNavigate?.('safety-narrative');
+                if (domain === 'precedent-intelligence') onNavigate?.('precedent-intelligence');
+              }}
+            >
             {phase4Panel === 'transform' ? (
               <RegulatoryTransformCanvas
                 projectId={projectId}
@@ -1690,6 +1749,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 </Suspense>
               </div>
             )}
+            </DocumentStudioSurface>
           </div>
 
           {/* ── Section requirements side panel ─────────────────────────────── */}
