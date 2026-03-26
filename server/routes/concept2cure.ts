@@ -541,6 +541,25 @@ const updateKnowledgeSchema = z
   })
   .partial();
 
+const ownershipPreferencesSchema = z
+  .object({
+    projectInstructions: z.string().max(5000).optional(),
+    reusableSnippetsKnowledge: z.array(z.string().max(2000)).max(200).optional(),
+    currentWorkbenchContext: z
+      .enum([
+        'project-home',
+        'regulatory-workspace',
+        'documents',
+        'review',
+        'review-readiness',
+        'submissions',
+        'section-workspace',
+        'report-engine',
+      ])
+      .optional(),
+  })
+  .partial();
+
 const errorLogSchema = z.object({
   id: z.string().min(1),
   timestamp: z.string().datetime(),
@@ -687,6 +706,7 @@ interface ProjectKnowledge {
   context?: string;
 }
 
+<<<<<<< HEAD
 interface ProjectOwnership {
   chatHistory: Conversation[];
   documentInventory: UploadedDocument[];
@@ -705,11 +725,108 @@ function buildProjectOwnership(
   conversations: Conversation[],
   settings: Record<string, unknown>
 ): ProjectOwnership {
+=======
+type OwnershipReviewState =
+  | 'not_started'
+  | 'in_review'
+  | 'changes_requested'
+  | 'approval_pending'
+  | 'approved';
+type OwnershipReadinessState = 'not_ready' | 'at_risk' | 'ready_for_review' | 'ready';
+type WorkbenchMode =
+  | 'project-home'
+  | 'regulatory-workspace'
+  | 'documents'
+  | 'review'
+  | 'review-readiness'
+  | 'submissions'
+  | 'section-workspace'
+  | 'report-engine';
+
+interface OwnershipReportRef {
+  id: string;
+  title: string;
+  kind: 'artifact_report' | 'submission_snapshot';
+  status: 'draft' | 'review' | 'approved' | 'published' | 'locked';
+  updatedAt?: string;
+}
+
+interface OwnershipPreferences {
+  projectInstructions: string;
+  reusableSnippetsKnowledge: string[];
+  currentWorkbenchContext: WorkbenchMode;
+}
+
+interface ProjectOwnershipDerived {
+  chatHistory: Conversation[];
+  documentInventory: UploadedDocument[];
+  vaultLinkedFilesEvidence: UploadedDocument[];
+  reports: OwnershipReportRef[];
+  reviewState: OwnershipReviewState;
+  approvals: Array<Record<string, unknown>>;
+  readinessState: OwnershipReadinessState;
+  activityHistory: AuditEntry[];
+}
+
+interface ProjectOwnership {
+  derived: ProjectOwnershipDerived;
+  preferences: OwnershipPreferences;
+  // Backward compatibility mirror fields
+  chatHistory: Conversation[];
+  documentInventory: UploadedDocument[];
+  vaultLinkedFilesEvidence: UploadedDocument[];
+  reports: OwnershipReportRef[];
+  reviewState: OwnershipReviewState;
+  approvals: Array<Record<string, unknown>>;
+  readinessState: OwnershipReadinessState;
+  activityHistory: AuditEntry[];
+  projectInstructions: string;
+  reusableSnippetsKnowledge: string[];
+  currentWorkbenchContext: WorkbenchMode;
+}
+
+function deriveReviewState(
+  reviewTasks: Array<{ status: string | null; taskType: string | null }>
+): OwnershipReviewState {
+  if (reviewTasks.length === 0) return 'not_started';
+  const open = reviewTasks.filter(t => t.status === 'open' || t.status === 'in_progress');
+  const hasApprovalPending = open.some(t => t.taskType === 'approval_task');
+  const hasChangeRequest = open.some(t => t.taskType === 'change_request');
+  if (hasChangeRequest) return 'changes_requested';
+  if (hasApprovalPending) return 'approval_pending';
+  if (open.length > 0) return 'in_review';
+  return 'approved';
+}
+
+function deriveReadinessState(input: {
+  reviewState: OwnershipReviewState;
+  openReviewTasks: number;
+  openApprovalTasks: number;
+}): OwnershipReadinessState {
+  if (input.reviewState === 'approved' && input.openReviewTasks === 0 && input.openApprovalTasks === 0) {
+    return 'ready';
+  }
+  if (input.openApprovalTasks > 0 || input.reviewState === 'approval_pending') return 'ready_for_review';
+  if (input.openReviewTasks > 0 || input.reviewState === 'in_review') return 'at_risk';
+  return 'not_ready';
+}
+
+function buildProjectOwnership(params: {
+  conversations: Conversation[];
+  settings: Record<string, unknown>;
+  approvals: Array<Record<string, unknown>>;
+  reviewTasks: Array<{ status: string | null; taskType: string | null }>;
+  reports: OwnershipReportRef[];
+  activityHistory: AuditEntry[];
+}): ProjectOwnership {
+  const { conversations, settings, approvals, reviewTasks, reports, activityHistory } = params;
+>>>>>>> pr270
   const knowledge = normalizeKnowledge(settings);
   const ownership =
     settings.ownership && typeof settings.ownership === 'object'
       ? (settings.ownership as Record<string, unknown>)
       : {};
+<<<<<<< HEAD
 
   return {
     chatHistory: conversations,
@@ -735,6 +852,74 @@ function buildProjectOwnership(
       typeof ownership.currentWorkbenchContext === 'string'
         ? ownership.currentWorkbenchContext
         : '',
+=======
+  const preferences =
+    ownership.preferences && typeof ownership.preferences === 'object'
+      ? (ownership.preferences as Record<string, unknown>)
+      : {};
+
+  const projectInstructions =
+    typeof preferences.projectInstructions === 'string'
+      ? preferences.projectInstructions
+      : typeof ownership.projectInstructions === 'string'
+        ? ownership.projectInstructions
+        : typeof settings.customInstructions === 'string'
+          ? settings.customInstructions
+          : '';
+  const reusableSnippetsKnowledge = Array.isArray(preferences.reusableSnippetsKnowledge)
+    ? (preferences.reusableSnippetsKnowledge as string[])
+    : Array.isArray(ownership.reusableSnippetsKnowledge)
+      ? (ownership.reusableSnippetsKnowledge as string[])
+      : [];
+  const currentWorkbenchContext =
+    (typeof preferences.currentWorkbenchContext === 'string'
+      ? preferences.currentWorkbenchContext
+      : typeof ownership.currentWorkbenchContext === 'string'
+        ? ownership.currentWorkbenchContext
+        : 'project-home') as WorkbenchMode;
+
+  const vaultLinkedFilesEvidence = knowledge.documents.filter(doc => {
+    const anyDoc = doc as unknown as Record<string, unknown>;
+    if (typeof anyDoc?.type === 'string' && anyDoc.type.toLowerCase().includes('evidence')) return true;
+    return Boolean(anyDoc?.vaultFileId || anyDoc?.evidenceLink || anyDoc?.evidenceId);
+  });
+  const reviewState = deriveReviewState(reviewTasks);
+  const openReviewTasks = reviewTasks.filter(t => t.status === 'open' || t.status === 'in_progress').length;
+  const openApprovalTasks = reviewTasks.filter(
+    t => (t.status === 'open' || t.status === 'in_progress') && t.taskType === 'approval_task'
+  ).length;
+  const readinessState = deriveReadinessState({ reviewState, openReviewTasks, openApprovalTasks });
+
+  const derived: ProjectOwnershipDerived = {
+    chatHistory: conversations,
+    documentInventory: knowledge.documents,
+    vaultLinkedFilesEvidence,
+    reports,
+    reviewState,
+    approvals,
+    readinessState,
+    activityHistory,
+  };
+
+  return {
+    derived,
+    preferences: {
+      projectInstructions,
+      reusableSnippetsKnowledge,
+      currentWorkbenchContext,
+    },
+    chatHistory: derived.chatHistory,
+    documentInventory: derived.documentInventory,
+    vaultLinkedFilesEvidence: derived.vaultLinkedFilesEvidence,
+    reports: derived.reports,
+    reviewState: derived.reviewState,
+    approvals: derived.approvals,
+    readinessState: derived.readinessState,
+    activityHistory: derived.activityHistory,
+    projectInstructions,
+    reusableSnippetsKnowledge,
+    currentWorkbenchContext,
+>>>>>>> pr270
   };
 }
 
@@ -856,6 +1041,204 @@ async function getConversationsFromDb(
   }));
 }
 
+async function getOwnershipDerivationData(
+  projectIds: number[],
+  organizationId: number
+): Promise<{
+  approvalsByProject: Map<number, Array<Record<string, unknown>>>;
+  reviewTasksByProject: Map<number, Array<{ status: string | null; taskType: string | null }>>;
+  reportsByProject: Map<number, OwnershipReportRef[]>;
+  activitiesByProject: Map<number, AuditEntry[]>;
+}> {
+  const approvalsByProject = new Map<number, Array<Record<string, unknown>>>();
+  const reviewTasksByProject = new Map<number, Array<{ status: string | null; taskType: string | null }>>();
+  const reportsByProject = new Map<number, OwnershipReportRef[]>();
+  const activitiesByProject = new Map<number, AuditEntry[]>();
+
+  if (projectIds.length === 0) {
+    return { approvalsByProject, reviewTasksByProject, reportsByProject, activitiesByProject };
+  }
+
+  const signatureRows = await db
+    .select({
+      projectId: concept2cureArtifacts.projectId,
+      signatureId: concept2cureSignatures.signatureId,
+      signerName: concept2cureSignatures.signerName,
+      signedAt: concept2cureSignatures.signedAt,
+      signatureMeaning: concept2cureSignatures.signatureMeaning,
+      signatureHash: concept2cureSignatures.signatureHash,
+    })
+    .from(concept2cureSignatures)
+    .innerJoin(concept2cureArtifacts, eq(concept2cureSignatures.artifactId, concept2cureArtifacts.id))
+    .where(
+      and(
+        inArray(concept2cureArtifacts.projectId, projectIds),
+        eq(concept2cureSignatures.organizationId, organizationId),
+        eq(concept2cureArtifacts.organizationId, organizationId)
+      )
+    );
+  for (const row of signatureRows) {
+    const list = approvalsByProject.get(row.projectId) || [];
+    list.push({
+      signerId: row.signatureId,
+      signerName: row.signerName,
+      signedAt: row.signedAt?.toISOString(),
+      meaning: row.signatureMeaning || 'Approved',
+      signatureHash: row.signatureHash,
+    });
+    approvalsByProject.set(row.projectId, list);
+  }
+
+  const reviewRows = await db
+    .select({
+      projectId: concept2cureReviewTasks.projectId,
+      status: concept2cureReviewTasks.status,
+      taskType: concept2cureReviewTasks.taskType,
+    })
+    .from(concept2cureReviewTasks)
+    .where(
+      and(
+        inArray(concept2cureReviewTasks.projectId, projectIds),
+        eq(concept2cureReviewTasks.orgId, organizationId)
+      )
+    );
+  for (const row of reviewRows) {
+    const list = reviewTasksByProject.get(row.projectId) || [];
+    list.push({ status: row.status, taskType: row.taskType });
+    reviewTasksByProject.set(row.projectId, list);
+  }
+
+  const artifactReportRows = await db
+    .select({
+      projectId: concept2cureArtifacts.projectId,
+      artifactId: concept2cureArtifacts.artifactId,
+      title: concept2cureArtifacts.title,
+      status: concept2cureArtifacts.status,
+      updatedAt: concept2cureArtifacts.updatedAt,
+      type: concept2cureArtifacts.type,
+    })
+    .from(concept2cureArtifacts)
+    .where(
+      and(
+        inArray(concept2cureArtifacts.projectId, projectIds),
+        eq(concept2cureArtifacts.organizationId, organizationId)
+      )
+    );
+  for (const row of artifactReportRows) {
+    const lowerType = row.type?.toLowerCase() || '';
+    const isReportLike = lowerType.includes('report') || lowerType.includes('summary');
+    if (!isReportLike) continue;
+    const list = reportsByProject.get(row.projectId) || [];
+    list.push({
+      id: row.artifactId,
+      title: row.title,
+      kind: 'artifact_report',
+      status: (row.status as OwnershipReportRef['status']) || 'draft',
+      updatedAt: row.updatedAt?.toISOString(),
+    });
+    reportsByProject.set(row.projectId, list);
+  }
+
+  const snapshotRows = await db
+    .select({
+      projectId: concept2cureArtifacts.projectId,
+      snapshotId: concept2cureSubmissionSnapshots.snapshotId,
+      title: concept2cureSubmissionSnapshots.title,
+      actionType: concept2cureSubmissionSnapshots.actionType,
+      createdAt: concept2cureSubmissionSnapshots.createdAt,
+    })
+    .from(concept2cureSubmissionSnapshots)
+    .innerJoin(concept2cureArtifacts, eq(concept2cureSubmissionSnapshots.artifactId, concept2cureArtifacts.id))
+    .where(
+      and(
+        inArray(concept2cureArtifacts.projectId, projectIds),
+        eq(concept2cureSubmissionSnapshots.organizationId, organizationId),
+        eq(concept2cureArtifacts.organizationId, organizationId)
+      )
+    );
+  for (const row of snapshotRows) {
+    const list = reportsByProject.get(row.projectId) || [];
+    list.push({
+      id: row.snapshotId,
+      title: row.title,
+      kind: 'submission_snapshot',
+      status: row.actionType === 'publish' ? 'published' : 'approved',
+      updatedAt: row.createdAt?.toISOString(),
+    });
+    reportsByProject.set(row.projectId, list);
+  }
+
+  const activityRows = await db
+    .select({
+      projectId: projectActivities.projectId,
+      id: projectActivities.id,
+      createdAt: projectActivities.createdAt,
+      userId: projectActivities.userId,
+      activityType: projectActivities.activityType,
+      entityType: projectActivities.entityType,
+      entityId: projectActivities.entityId,
+      description: projectActivities.description,
+    })
+    .from(projectActivities)
+    .where(
+      and(inArray(projectActivities.projectId, projectIds), eq(projectActivities.organizationId, organizationId))
+    )
+    .orderBy(desc(projectActivities.createdAt));
+  for (const row of activityRows) {
+    const list = activitiesByProject.get(row.projectId) || [];
+    if (list.length >= 50) continue;
+    list.push({
+      id: `project_activity_${row.id}`,
+      timestamp: row.createdAt?.toISOString() || new Date().toISOString(),
+      userId: row.userId?.toString() || 'system',
+      userName: 'project-activity',
+      action: (row.activityType?.toUpperCase() as AuditEntry['action']) || 'UPDATE',
+      entityType: (row.entityType as AuditEntry['entityType']) || 'project',
+      entityId: row.entityId || `proj_${row.projectId}`,
+      newValue: { description: row.description },
+    });
+    activitiesByProject.set(row.projectId, list);
+  }
+
+  const projectEntityIds = projectIds.map(id => `proj_${id}`);
+  const auditRows = await db
+    .select({
+      entityId: regulatoryAuditLogs.entityId,
+      timestamp: regulatoryAuditLogs.timestamp,
+      userId: regulatoryAuditLogs.userId,
+      userName: regulatoryAuditLogs.userName,
+      action: regulatoryAuditLogs.action,
+      entityType: regulatoryAuditLogs.entityType,
+    })
+    .from(regulatoryAuditLogs)
+    .where(
+      and(
+        eq(regulatoryAuditLogs.organizationId, organizationId),
+        eq(regulatoryAuditLogs.entityType, 'project'),
+        inArray(regulatoryAuditLogs.entityId, projectEntityIds)
+      )
+    )
+    .orderBy(desc(regulatoryAuditLogs.timestamp));
+  for (const row of auditRows) {
+    const numeric = Number.parseInt((row.entityId || '').replace('proj_', ''), 10);
+    if (!numeric || Number.isNaN(numeric)) continue;
+    const list = activitiesByProject.get(numeric) || [];
+    if (list.length >= 50) continue;
+    list.push({
+      id: `audit_${row.entityId}_${row.timestamp?.toISOString() || Date.now()}`,
+      timestamp: row.timestamp?.toISOString() || new Date().toISOString(),
+      userId: row.userId?.toString() || 'system',
+      userName: row.userName || 'unknown',
+      action: (row.action as AuditEntry['action']) || 'UPDATE',
+      entityType: (row.entityType as AuditEntry['entityType']) || 'project',
+      entityId: row.entityId || `proj_${numeric}`,
+    });
+    activitiesByProject.set(numeric, list);
+  }
+
+  return { approvalsByProject, reviewTasksByProject, reportsByProject, activitiesByProject };
+}
+
 /**
  * Get artifacts for a project from database.
  */
@@ -950,6 +1333,7 @@ router.get('/projects', async (req: Request, res: Response) => {
     // Batch-load all conversations for all projects (2 queries total instead of 2*N)
     const projectIds = result.rows.map((p: any) => p.id);
     const allConversationsByProject = new Map<number, Conversation[]>();
+    const derivationData = await getOwnershipDerivationData(projectIds, organizationId);
 
     if (projectIds.length > 0) {
       const allDbConvs = await db
@@ -1018,7 +1402,18 @@ router.get('/projects', async (req: Request, res: Response) => {
         region: p.metadata?.region,
         organizationId,
         conversations,
+<<<<<<< HEAD
         ownership: buildProjectOwnership(conversations, normalizeProjectSettings(p.settings)),
+=======
+        ownership: buildProjectOwnership({
+          conversations,
+          settings: normalizeProjectSettings(p.settings),
+          approvals: derivationData.approvalsByProject.get(p.id) || [],
+          reviewTasks: derivationData.reviewTasksByProject.get(p.id) || [],
+          reports: derivationData.reportsByProject.get(p.id) || [],
+          activityHistory: derivationData.activitiesByProject.get(p.id) || [],
+        }),
+>>>>>>> pr270
         createdAt: p.created_at,
         updatedAt: p.updated_at,
       };
@@ -1064,6 +1459,10 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
 
     const settings = normalizeProjectSettings(project.settings);
     const conversations = await getConversationsFromDb(project.id, organizationId);
+<<<<<<< HEAD
+=======
+    const derivationData = await getOwnershipDerivationData([project.id], organizationId);
+>>>>>>> pr270
 
     // Transform to API response with DB conversations
     const response = {
@@ -1078,7 +1477,18 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
       status: project.status,
       organizationId: project.organizationId,
       conversations,
+<<<<<<< HEAD
       ownership: buildProjectOwnership(conversations, settings),
+=======
+      ownership: buildProjectOwnership({
+        conversations,
+        settings,
+        approvals: derivationData.approvalsByProject.get(project.id) || [],
+        reviewTasks: derivationData.reviewTasksByProject.get(project.id) || [],
+        reports: derivationData.reportsByProject.get(project.id) || [],
+        activityHistory: derivationData.activitiesByProject.get(project.id) || [],
+      }),
+>>>>>>> pr270
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
     };
@@ -1133,6 +1543,7 @@ router.post('/projects', async (req: Request, res: Response) => {
         settings: {
           customInstructions: sanitizedData.customInstructions,
           ownership: {
+<<<<<<< HEAD
             chatHistory: [],
             documentInventory: [],
             vaultLinkedFilesEvidence: [],
@@ -1144,6 +1555,13 @@ router.post('/projects', async (req: Request, res: Response) => {
             readinessState: 'not_started',
             activityHistory: [],
             currentWorkbenchContext: '',
+=======
+            preferences: {
+              projectInstructions: sanitizedData.customInstructions || '',
+              reusableSnippetsKnowledge: [],
+              currentWorkbenchContext: 'project-home',
+            },
+>>>>>>> pr270
           },
         },
       })
@@ -1168,7 +1586,18 @@ router.post('/projects', async (req: Request, res: Response) => {
       product: data.product,
       region: data.region,
       conversations: [],
+<<<<<<< HEAD
       ownership: buildProjectOwnership([], normalizeProjectSettings(newProject.settings)),
+=======
+      ownership: buildProjectOwnership({
+        conversations: [],
+        settings: normalizeProjectSettings(newProject.settings),
+        approvals: [],
+        reviewTasks: [],
+        reports: [],
+        activityHistory: [],
+      }),
+>>>>>>> pr270
       status: newProject.status,
       organizationId: newProject.organizationId,
       createdAt: newProject.createdAt,
@@ -1275,6 +1704,10 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
 
     // Transform response with DB conversations
     const conversations = await getConversationsFromDb(numericId, organizationId);
+<<<<<<< HEAD
+=======
+    const derivationData = await getOwnershipDerivationData([numericId], organizationId);
+>>>>>>> pr270
     const response = {
       id: req.params.id,
       name: updated.name,
@@ -1284,7 +1717,18 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
       product: (updated.metadata as any)?.product,
       region: (updated.metadata as any)?.region,
       conversations,
+<<<<<<< HEAD
       ownership: buildProjectOwnership(conversations, normalizeProjectSettings(updated.settings)),
+=======
+      ownership: buildProjectOwnership({
+        conversations,
+        settings: normalizeProjectSettings(updated.settings),
+        approvals: derivationData.approvalsByProject.get(numericId) || [],
+        reviewTasks: derivationData.reviewTasksByProject.get(numericId) || [],
+        reports: derivationData.reportsByProject.get(numericId) || [],
+        activityHistory: derivationData.activitiesByProject.get(numericId) || [],
+      }),
+>>>>>>> pr270
       status: updated.status,
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,
@@ -1298,6 +1742,106 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
     }
     logger.error('Failed to update project', { error: error.message });
     return sendError(res, 500, 'Failed to update project');
+  }
+});
+
+router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const projectId = req.params.id.replace('proj_', '');
+    const numericId = parseInt(projectId, 10);
+    if (isNaN(numericId)) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+
+    const payload = ownershipPreferencesSchema.parse(req.body);
+    const [existing] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .limit(1);
+    if (!existing) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    const settings = normalizeProjectSettings(existing.settings);
+    const ownership =
+      settings.ownership && typeof settings.ownership === 'object'
+        ? (settings.ownership as Record<string, unknown>)
+        : {};
+    const existingPreferences =
+      ownership.preferences && typeof ownership.preferences === 'object'
+        ? (ownership.preferences as Record<string, unknown>)
+        : {};
+
+    const nextPreferences = {
+      projectInstructions:
+        payload.projectInstructions !== undefined
+          ? sanitizeContent(payload.projectInstructions)
+          : (existingPreferences.projectInstructions as string) ||
+            (ownership.projectInstructions as string) ||
+            '',
+      reusableSnippetsKnowledge:
+        payload.reusableSnippetsKnowledge !== undefined
+          ? payload.reusableSnippetsKnowledge.map(sanitizeContent)
+          : Array.isArray(existingPreferences.reusableSnippetsKnowledge)
+            ? (existingPreferences.reusableSnippetsKnowledge as string[])
+            : [],
+      currentWorkbenchContext:
+        payload.currentWorkbenchContext !== undefined
+          ? payload.currentWorkbenchContext
+          : ((existingPreferences.currentWorkbenchContext as WorkbenchMode) || 'project-home'),
+    };
+
+    const mergedSettings = {
+      ...settings,
+      customInstructions: nextPreferences.projectInstructions,
+      ownership: {
+        ...ownership,
+        preferences: nextPreferences,
+        projectInstructions: nextPreferences.projectInstructions,
+        reusableSnippetsKnowledge: nextPreferences.reusableSnippetsKnowledge,
+        currentWorkbenchContext: nextPreferences.currentWorkbenchContext,
+      },
+    };
+
+    const [updated] = await db
+      .update(projects)
+      .set({ settings: mergedSettings, updatedAt: new Date() })
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .returning();
+
+    const conversations = await getConversationsFromDb(numericId, organizationId);
+    const derivationData = await getOwnershipDerivationData([numericId], organizationId);
+    return sendSuccess(res, {
+      id: `proj_${updated.id}`,
+      name: updated.name,
+      submissionType: (updated.metadata as any)?.submissionType || 'IND',
+      description: updated.description,
+      sponsor: (updated.metadata as any)?.sponsor,
+      product: (updated.metadata as any)?.product,
+      region: (updated.metadata as any)?.region,
+      customInstructions: nextPreferences.projectInstructions,
+      status: updated.status,
+      organizationId: updated.organizationId,
+      conversations,
+      ownership: buildProjectOwnership({
+        conversations,
+        settings: normalizeProjectSettings(updated.settings),
+        approvals: derivationData.approvalsByProject.get(numericId) || [],
+        reviewTasks: derivationData.reviewTasksByProject.get(numericId) || [],
+        reports: derivationData.reportsByProject.get(numericId) || [],
+        activityHistory: derivationData.activitiesByProject.get(numericId) || [],
+      }),
+      createdAt: updated.createdAt,
+      updatedAt: updated.updatedAt,
+    });
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+    }
+    logger.error('Failed to update ownership preferences', { error: error.message });
+    return sendError(res, 500, 'Failed to update ownership preferences');
   }
 });
 

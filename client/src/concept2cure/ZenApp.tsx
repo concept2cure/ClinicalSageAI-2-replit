@@ -662,6 +662,7 @@ export const ZenApp: React.FC = () => {
     createProject: createProjectMutation,
     updateProject: updateProjectMutation,
     deleteProject: deleteProjectMutation,
+    updateOwnershipPreferences: updateOwnershipPreferencesMutation,
   } = useProjects();
 
   // Map DB submission type strings to the UI SubmissionType enum
@@ -898,6 +899,68 @@ export const ZenApp: React.FC = () => {
 
   // Derive active project early so downstream hooks / memos can reference it
   const activeProject = projects.find(p => p.id === activeProjectId);
+  const activeRawProject = rawProjects.find(p => p.id === activeProjectId);
+
+  useEffect(() => {
+    if (!activeRawProject) return;
+    const preferredContext =
+      activeRawProject.ownership?.preferences?.currentWorkbenchContext ||
+      activeRawProject.ownership?.currentWorkbenchContext;
+    if (!preferredContext) return;
+    if (layoutMode === preferredContext) return;
+    if (urlProjectId) return; // Respect direct URL route during initial load
+    setLayoutMode(preferredContext as LayoutMode);
+  }, [activeRawProject, layoutMode, urlProjectId]);
+
+  useEffect(() => {
+    if (!activeProjectId) return;
+    if (!activeRawProject) return;
+    const supportedContexts = new Set([
+      'project-home',
+      'regulatory-workspace',
+      'documents',
+      'review',
+      'review-readiness',
+      'submissions',
+      'section-workspace',
+      'report-engine',
+    ]);
+    if (!supportedContexts.has(layoutMode)) return;
+    const currentStored =
+      activeRawProject.ownership?.preferences?.currentWorkbenchContext ||
+      activeRawProject.ownership?.currentWorkbenchContext;
+    if (currentStored === layoutMode) return;
+    const t = setTimeout(() => {
+      void updateOwnershipPreferencesMutation({
+        projectId: activeProjectId,
+        preferences: { currentWorkbenchContext: layoutMode as any },
+      }).catch(error => {
+        console.warn('Failed to persist workbench context preference', error);
+      });
+    }, 350);
+    return () => clearTimeout(t);
+  }, [activeProjectId, activeRawProject, layoutMode, updateOwnershipPreferencesMutation]);
+
+  useEffect(() => {
+    if (!activeRawProject?.ownership) return;
+    setModuleContext(prev => ({
+      ...prev,
+      projectInstructions:
+        activeRawProject.ownership?.preferences?.projectInstructions ||
+        activeRawProject.ownership?.projectInstructions ||
+        '',
+      reviewState:
+        activeRawProject.ownership?.derived?.reviewState || activeRawProject.ownership?.reviewState,
+      readinessState:
+        activeRawProject.ownership?.derived?.readinessState ||
+        activeRawProject.ownership?.readinessState,
+    }));
+    setCustomInstructions(
+      activeRawProject.ownership?.preferences?.projectInstructions ||
+        activeRawProject.ownership?.projectInstructions ||
+        ''
+    );
+  }, [activeRawProject]);
 
   // Readiness score for the active project (displayed in ProjectHeaderBar)
   const { data: readinessData } = useReadinessAssessment(
@@ -1586,8 +1649,10 @@ export const ZenApp: React.FC = () => {
       : '—';
     const complianceScore = taskSummary.healthScore / 100;
     const riskCount = taskSummary.overdue + (taskSummary.byStatus?.blocked || 0);
-    const lastActivity =
-      taskSummary.total > 0
+    const ownershipActivity = activeRawProject?.ownership?.derived?.activityHistory?.[0];
+    const lastActivity = ownershipActivity
+      ? `${ownershipActivity.action} · ${new Date(ownershipActivity.timestamp).toLocaleString()}`
+      : taskSummary.total > 0
         ? `${taskSummary.completed}/${taskSummary.total} tasks complete`
         : 'No tasks yet';
     return {
@@ -1597,7 +1662,7 @@ export const ZenApp: React.FC = () => {
       lastActivity,
       auditStatus: 'Audit trail active',
     };
-  }, [activeProject, taskSummary]);
+  }, [activeProject, activeRawProject, taskSummary]);
 
   // Dynamic workspace label based on active project's submission type
   const submissionWorkspaceLabel = useMemo(() => {
@@ -2784,6 +2849,7 @@ export const ZenApp: React.FC = () => {
                 activeProject: activeProject?.name,
                 projectId: activeProjectId,
                 moduleContext,
+                customInstructions,
               }}
               greeting={
                 layoutMode === 'deep-research'
