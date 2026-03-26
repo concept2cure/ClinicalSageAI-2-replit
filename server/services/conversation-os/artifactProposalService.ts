@@ -1,64 +1,85 @@
 import { kernelStore } from './conversationKernel';
+import { conversationPersistence, type ConversationContext } from './persistence';
+import { registerArtifactWithGovernance } from '../compute/artifactWriteback';
 import { authorizeToolUse } from './toolGateService';
 
-export function createProposal(params: { conversationId: string; artifactId: string; content: string }) {
+const withDefaultCtx = (ctx: Partial<ConversationContext> & { conversationId: string }): ConversationContext => ({
+  projectId: ctx.projectId ?? 'project-unscoped',
+  conversationId: ctx.conversationId,
+  userId: ctx.userId ?? 'system',
+});
+
+export async function createProposal(params: { conversationId: string; artifactId: string; content: string; projectId?: string; userId?: string; quality?: unknown }) {
+  const ctx = withDefaultCtx(params);
   const proposal = {
     id: kernelStore.id(),
-    conversationId: params.conversationId,
+    conversationId: ctx.conversationId,
     artifactId: params.artifactId,
     content: params.content,
     createdAt: new Date().toISOString(),
     status: 'pending' as const,
   };
-  const list = kernelStore.proposals.get(params.conversationId) ?? [];
-  kernelStore.proposals.set(params.conversationId, [proposal, ...list]);
+  const list = kernelStore.proposals.get(ctx.conversationId) ?? [];
+  kernelStore.proposals.set(ctx.conversationId, [proposal, ...list]);
   kernelStore.persist();
+  await conversationPersistence.createProposal(ctx, proposal, params.quality);
   return proposal;
 }
 
-export function listProposals(conversationId: string) {
-  return kernelStore.proposals.get(conversationId) ?? [];
+export async function listProposals(params: { conversationId: string; projectId?: string; userId?: string }) {
+  const ctx = withDefaultCtx(params);
+  const persisted = await conversationPersistence.listProposals(ctx);
+  if (persisted.length > 0) return persisted;
+  return kernelStore.proposals.get(ctx.conversationId) ?? [];
 }
 
-export function acceptProposal(params: { conversationId: string; proposalId: string }) {
-  const gate = authorizeToolUse({
-    conversationId: params.conversationId,
-    tool: 'artifact.accept',
-    explicitTrigger: true,
-  });
-  if (gate.action === 'blocked') {
-    throw new Error(gate.reason);
-  }
+export async function acceptProposal(params: { conversationId: string; proposalId: string; projectId?: string; userId?: string }) {
+  const ctx = withDefaultCtx(params);
+  const gate = await authorizeToolUse({ ...ctx, tool: 'artifact.accept', explicitTrigger: true });
+  if (gate.action === 'blocked') throw new Error(gate.reason);
 
-  const proposals = kernelStore.proposals.get(params.conversationId) ?? [];
+  const proposals = await listProposals(ctx);
   const target = proposals.find(p => p.id === params.proposalId);
-  if (!target) {
-    throw new Error('Proposal not found');
-  }
+  if (!target) throw new Error('Proposal not found');
 
-  const updated = proposals.map(p =>
-    p.id === params.proposalId ? { ...p, status: 'accepted' as const } : p
-  );
-  kernelStore.proposals.set(params.conversationId, updated);
+  const updated = proposals.map(p => (p.id === params.proposalId ? { ...p, status: 'accepted' as const } : p));
+  kernelStore.proposals.set(ctx.conversationId, updated);
+  await conversationPersistence.updateProposalStatus(ctx, params.proposalId, 'accepted');
+
+  let governedConsequence: Awaited<ReturnType<typeof registerArtifactWithGovernance>> | null = null;
+  const numericProjectId = Number(ctx.projectId);
+  const numericUserId = Number(ctx.userId);
+  if (Number.isFinite(numericProjectId) && Number.isFinite(numericUserId)) {
+    try {
+      governedConsequence = await registerArtifactWithGovernance({
+        organizationId: 1,
+        projectId: numericProjectId,
+        userId: numericUserId,
+        title: `Accepted Proposal ${params.proposalId}`,
+        content: target.content,
+        ctdSection: '5.0',
+        sourceJobId: `conversation-${ctx.conversationId}`,
+        surfaceKey: 'conversation_os_proposal_accept',
+      });
+    } catch {
+      governedConsequence = null;
+    }
+  }
 
   const versions = kernelStore.artifactVersions.get(target.artifactId) ?? [];
-  const version = {
-    version: versions.length + 1,
-    content: target.content,
-    acceptedAt: new Date().toISOString(),
-  };
+  const version = { version: versions.length + 1, content: target.content, acceptedAt: new Date().toISOString() };
   kernelStore.artifactVersions.set(target.artifactId, [...versions, version]);
   kernelStore.persist();
 
-  return { proposalId: target.id, artifactId: target.artifactId, version };
+  return { proposalId: target.id, artifactId: target.artifactId, version, governedConsequence };
 }
 
-export function rejectProposal(params: { conversationId: string; proposalId: string }) {
-  const proposals = kernelStore.proposals.get(params.conversationId) ?? [];
-  const updated = proposals.map(p =>
-    p.id === params.proposalId ? { ...p, status: 'rejected' as const } : p
-  );
-  kernelStore.proposals.set(params.conversationId, updated);
+export async function rejectProposal(params: { conversationId: string; proposalId: string; projectId?: string; userId?: string }) {
+  const ctx = withDefaultCtx(params);
+  const proposals = await listProposals(ctx);
+  const updated = proposals.map(p => (p.id === params.proposalId ? { ...p, status: 'rejected' as const } : p));
+  kernelStore.proposals.set(ctx.conversationId, updated);
+  await conversationPersistence.updateProposalStatus(ctx, params.proposalId, 'rejected');
   kernelStore.persist();
   return updated.find(p => p.id === params.proposalId);
 }
