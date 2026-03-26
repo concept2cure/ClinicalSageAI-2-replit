@@ -14,6 +14,9 @@ import {
 import { buildAnaAuditReport } from '../control-plane/audit-report';
 import { ANA_RULE_CATALOG } from '../control-plane/rule-catalog';
 import { runAnaSelfTest } from '../control-plane/self-test';
+import { getPersistentKernelDecisionSummary } from '../control-plane/persistent-queries';
+import { buildAnaAuditReport } from '../control-plane/audit-report';
+import { ANA_RULE_CATALOG } from '../control-plane/rule-catalog';
 
 const router = Router();
 
@@ -28,6 +31,10 @@ function requireControlPlaneAccess(req: any, res: any, next: any) {
   const allowNonProdBypass = process.env.ANA_ALLOW_NONPROD_CONTROL_PLANE !== 'false';
 
   if (hasAdminRole || hasOpsHeader || (nonProd && allowNonProdBypass)) {
+  const hasOpsHeader = req.headers['x-ana-ops-token'] && req.headers['x-ana-ops-token'] === process.env.ANA_OPS_TOKEN;
+  const nonProd = process.env.NODE_ENV !== 'production';
+
+  if (hasAdminRole || hasOpsHeader || nonProd) {
     return next();
   }
 

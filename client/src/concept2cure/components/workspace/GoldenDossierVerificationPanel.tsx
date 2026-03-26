@@ -8,6 +8,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { LoadingState, ErrorState } from '@/components/ui/statesV2';
 import {
   ShieldCheck,
   CheckCircle,
@@ -24,14 +27,6 @@ import {
   ChevronRight,
   PenLine,
 } from 'lucide-react';
-
-// ── Auth helper ──
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 // ── Types ──
 interface Finding {
@@ -85,6 +80,8 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
     new Set(['placement', 'templateConformance', 'evidenceSupport', 'governance'])
   );
 
+  const { toast } = useToast();
+
   const load = useCallback(async () => {
     if (!projectId || !artifactId) {
       setLoading(false);
@@ -94,22 +91,21 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(
-        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/verification`,
-        { headers: getAuthHeaders() }
-      );
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/verification`);
       if (res.ok) {
         const payload = await res.json();
         setResult(payload.data);
       } else {
         setError('Verification failed');
+        toast({ title: 'Verification failed', variant: 'destructive' });
       }
     } catch {
       setError('Network error');
+      toast({ title: 'Verification request failed', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
-  }, [projectId, artifactId]);
+  }, [projectId, artifactId, toast]);
 
   useEffect(() => {
     load();
@@ -126,8 +122,9 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-white">
-        <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+      <div className="flex-1 flex flex-col bg-white">
+        <PanelHeader onClose={onClose} title="Golden Dossier Verification" />
+        <LoadingState message="Verifying artifact…" size="sm" />
       </div>
     );
   }
@@ -136,9 +133,11 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
     return (
       <div className="flex-1 flex flex-col bg-white">
         <PanelHeader onClose={onClose} title="Golden Dossier Verification" />
-        <div className="flex-1 flex items-center justify-center p-4">
-          <span className="text-sm text-zinc-400">{error || 'No data'}</span>
-        </div>
+        <ErrorState
+          title="Verification failed"
+          message={error || 'No data available'}
+          retry={load}
+        />
       </div>
     );
   }

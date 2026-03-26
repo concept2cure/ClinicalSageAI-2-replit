@@ -10,17 +10,7 @@
  */
 
 import { useQuery, useMutation } from '@tanstack/react-query';
-
-// ── Auth helper ──────────────────────────────────────────────────────────────
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
+import { apiRequest } from '@/lib/queryClient';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -119,12 +109,7 @@ export const workspaceIntelKeys = {
 export function useRegulatoryAnalysis() {
   return useMutation({
     mutationFn: async (query: string): Promise<RegulatoryAnalysisResult> => {
-      const res = await fetch('/api/lumen-cortex/regulatory-analysis', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ query }),
-      });
-      if (!res.ok) throw new Error(`Regulatory analysis failed: ${res.status}`);
+      const res = await apiRequest('POST', '/api/lumen-cortex/regulatory-analysis', { query });
       const data = await res.json();
       return data.data ?? data;
     },
@@ -136,12 +121,13 @@ export function useIntelligenceFeeds() {
   return useQuery({
     queryKey: workspaceIntelKeys.feeds(),
     queryFn: async (): Promise<IntelligenceFeed[]> => {
-      const res = await fetch('/api/lumen-cortex/intelligence', {
-        headers: getAuthHeaders(),
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
-      return data.feeds ?? data.data ?? [];
+      try {
+        const res = await apiRequest('GET', '/api/lumen-cortex/intelligence');
+        const data = await res.json();
+        return data.feeds ?? data.data ?? [];
+      } catch {
+        return [];
+      }
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -160,10 +146,7 @@ export function useCSRSearch(params: CSRSearchParams | null) {
       if (params.outcome) qs.set('outcome', params.outcome);
       if (params.limit) qs.set('limit', String(params.limit));
 
-      const res = await fetch(`/api/csr-search/fast-query?${qs.toString()}`, {
-        headers: getAuthHeaders(),
-      });
-      if (!res.ok) throw new Error(`CSR search failed: ${res.status}`);
+      const res = await apiRequest('GET', `/api/csr-search/fast-query?${qs.toString()}`);
       const data = await res.json();
       return data.data ?? data.results ?? [];
     },
@@ -176,20 +159,15 @@ export function useCSRSearch(params: CSRSearchParams | null) {
 export function useForesightPrediction() {
   return useMutation({
     mutationFn: async (params: ForesightScoreParams): Promise<ForesightPrediction> => {
-      const res = await fetch('/api/foresight/score', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          studyId: params.studyId || `study_${Date.now()}`,
-          phase: params.phase,
-          indication: params.indication,
-          biomarkers: params.biomarkers || [],
-          endpoints: params.endpoints || [],
-          sampleSize: params.sampleSize || 100,
-          organizationId: params.organizationId || 'org_default',
-        }),
+      const res = await apiRequest('POST', '/api/foresight/score', {
+        studyId: params.studyId || `study_${Date.now()}`,
+        phase: params.phase,
+        indication: params.indication,
+        biomarkers: params.biomarkers || [],
+        endpoints: params.endpoints || [],
+        sampleSize: params.sampleSize || 100,
+        organizationId: params.organizationId || 'org_default',
       });
-      if (!res.ok) throw new Error(`Foresight prediction failed: ${res.status}`);
       const data = await res.json();
       return data.prediction ?? data.data ?? data;
     },
@@ -200,20 +178,15 @@ export function useForesightPrediction() {
 export function useClinicalRiskAnalysis() {
   return useMutation({
     mutationFn: async (params: ClinicalRiskParams): Promise<ClinicalRiskResult> => {
-      const res = await fetch('/api/foresight-ai/risk-analysis/clinical', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          organizationId: params.organizationId || 'org_default',
-          phase: params.phase,
-          indication: params.indication,
-          targetPopulation: params.targetPopulation,
-          competitiveLandscape: params.competitiveLandscape,
-          historicalData: params.historicalData,
-          regulatoryPrecedents: params.regulatoryPrecedents,
-        }),
+      const res = await apiRequest('POST', '/api/foresight-ai/risk-analysis/clinical', {
+        organizationId: params.organizationId || 'org_default',
+        phase: params.phase,
+        indication: params.indication,
+        targetPopulation: params.targetPopulation,
+        competitiveLandscape: params.competitiveLandscape,
+        historicalData: params.historicalData,
+        regulatoryPrecedents: params.regulatoryPrecedents,
       });
-      if (!res.ok) throw new Error(`Clinical risk analysis failed: ${res.status}`);
       const data = await res.json();
       return data.data ?? data;
     },

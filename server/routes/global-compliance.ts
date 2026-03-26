@@ -18,8 +18,62 @@
 
 import { Router, Request, Response } from 'express';
 import { pool } from '../db';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = Router();
+router.use(authenticateToken);
+
+function resolveRequestContext(req: Request): { userId: number; orgId: number; role: string } {
+  const user = (req as any).user || {};
+  return {
+    userId: Number(user.id || user.userId || 0),
+    orgId: Number(
+      user.organizationId ||
+      (req as any).tenantId ||
+      (req as any).tenantContext?.organizationId ||
+      0
+    ),
+    role: String(user.role || user.title || '').toLowerCase(),
+  };
+}
+
+function isGlobalComplianceAdmin(role: string): boolean {
+  return ['super_admin', 'platform_admin'].includes(role);
+}
+
+function hasElevatedPrivacyAccess(role: string): boolean {
+  return [
+    'admin',
+    'manager',
+    'owner',
+    'dpo',
+    'privacy_officer',
+  ].includes(role);
+}
+
+function enforceOrgScope(req: Request, res: Response, routeOrgId: number): boolean {
+  const { orgId, role } = resolveRequestContext(req);
+  if (!routeOrgId) {
+    res.status(400).json({ error: 'Invalid organization scope' });
+    return false;
+  }
+  if (isGlobalComplianceAdmin(role)) return true;
+  if (orgId !== routeOrgId) {
+    res.status(403).json({ error: 'Forbidden: organization scope mismatch' });
+    return false;
+  }
+  return true;
+}
+
+function enforceSubjectAccess(req: Request, res: Response, dataSubjectId: number): boolean {
+  const { userId, role } = resolveRequestContext(req);
+  if (hasElevatedPrivacyAccess(role)) return true;
+  if (!userId || userId !== dataSubjectId) {
+    res.status(403).json({ error: 'Forbidden: data subject scope violation' });
+    return false;
+  }
+  return true;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // REGIONAL COMPLIANCE MANAGEMENT
@@ -336,6 +390,221 @@ router.get('/gdpr/:orgId/dsr/overdue', async (req: Request, res: Response) => {
     });
   } catch (err: any) {
     res.json({ success: true, data: [], overdue: 0 });
+  }
+});
+
+/**
+ * GET /gdpr/:orgId/data-subject/:dataSubjectId/export
+ * Export data for a subject (GDPR Art. 15 + Art. 20 portability)
+ */
+router.get('/gdpr/:orgId/data-subject/:dataSubjectId/export', async (req: Request, res: Response) => {
+  try {
+    const orgId = parseInt(req.params.orgId, 10);
+    const dataSubjectIdRaw = req.params.dataSubjectId;
+    const userId = Number.parseInt(dataSubjectIdRaw, 10);
+
+    if (!orgId || !dataSubjectIdRaw) {
+      return res.status(400).json({ error: 'orgId and dataSubjectId are required' });
+    }
+    if (!enforceOrgScope(req, res, orgId)) return;
+    if (!Number.isFinite(userId) || !enforceSubjectAccess(req, res, userId)) return;
+
+    const safeQuery = async (query: string, params: any[]) => {
+      try {
+        return await pool.query(query, params);
+      } catch {
+        return { rows: [] as any[] };
+      }
+    };
+
+    const [
+      userResult,
+      conversationsResult,
+      artifactsResult,
+      reviewThreadsResult,
+      commentsResult,
+      dsrResult,
+    ] = await Promise.all([
+      safeQuery(
+        `SELECT id, organization_id, email, name, title, department, created_at, updated_at
+         FROM users
+         WHERE organization_id = $1 AND id = $2`,
+        [orgId, Number.isFinite(userId) ? userId : -1]
+      ),
+      safeQuery(
+        `SELECT id, project_id, title, summary, status, message_count, created_at, updated_at
+         FROM concept2cure_conversations
+         WHERE organization_id = $1 AND created_by_id = $2
+         ORDER BY updated_at DESC LIMIT 500`,
+        [orgId, Number.isFinite(userId) ? userId : -1]
+      ),
+      safeQuery(
+        `SELECT artifact_id, project_id, title, status, ctd_section, source, created_at, updated_at
+         FROM concept2cure_artifacts
+         WHERE organization_id = $1 AND created_by_id = $2
+         ORDER BY updated_at DESC LIMIT 500`,
+        [orgId, Number.isFinite(userId) ? userId : -1]
+      ),
+      safeQuery(
+        `SELECT id, thread_id, project_id, artifact_id, title, status, priority, created_at, updated_at
+         FROM concept2cure_review_threads
+         WHERE org_id = $1 AND created_by_id = $2
+         ORDER BY updated_at DESC LIMIT 500`,
+        [orgId, Number.isFinite(userId) ? userId : -1]
+      ),
+      safeQuery(
+        `SELECT id, thread_id, artifact_id, body, kind, created_at, updated_at
+         FROM concept2cure_thread_comments
+         WHERE org_id = $1 AND author_id = $2
+         ORDER BY updated_at DESC LIMIT 500`,
+        [orgId, Number.isFinite(userId) ? userId : -1]
+      ),
+      safeQuery(
+        `SELECT id, request_type, status, received_at, response_deadline, completed_at, response_details
+         FROM gdpr_data_subject_requests
+         WHERE organization_id = $1 AND data_subject_id = $2
+         ORDER BY created_at DESC LIMIT 100`,
+        [orgId, dataSubjectIdRaw]
+      ),
+    ]);
+
+    const exportBundle = {
+      dataSubjectId: dataSubjectIdRaw,
+      organizationId: orgId,
+      exportedAt: new Date().toISOString(),
+      legalBasis: {
+        article15: 'Right of access',
+        article20: 'Right to data portability',
+      },
+      profile: userResult.rows[0] || null,
+      conversations: conversationsResult.rows,
+      artifacts: artifactsResult.rows,
+      reviewThreads: reviewThreadsResult.rows,
+      comments: commentsResult.rows,
+      dsrHistory: dsrResult.rows,
+    };
+
+    try {
+      await pool.query(
+        `INSERT INTO gdpr_data_subject_requests
+          (organization_id, data_subject_id, request_type, status, response_deadline, completed_at, response_details)
+         VALUES ($1, $2, 'access_export', 'completed', NOW(), NOW(), $3)`,
+        [orgId, dataSubjectIdRaw, `Export completed at ${exportBundle.exportedAt}`]
+      );
+    } catch {
+      // no-op if table is unavailable
+    }
+
+    return res.json({
+      success: true,
+      data: exportBundle,
+      summary: {
+        conversations: conversationsResult.rows.length,
+        artifacts: artifactsResult.rows.length,
+        reviewThreads: reviewThreadsResult.rows.length,
+        comments: commentsResult.rows.length,
+      },
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to export data subject payload', details: err.message });
+  }
+});
+
+/**
+ * DELETE /gdpr/:orgId/data-subject/:dataSubjectId
+ * Execute right-to-erasure workflows (GDPR Art. 17)
+ */
+router.delete('/gdpr/:orgId/data-subject/:dataSubjectId', async (req: Request, res: Response) => {
+  const client = await pool.connect();
+  try {
+    const orgId = parseInt(req.params.orgId, 10);
+    const dataSubjectIdRaw = req.params.dataSubjectId;
+    const userId = Number.parseInt(dataSubjectIdRaw, 10);
+    const reason = req.body?.reason || 'Data subject erasure request (Art. 17)';
+
+    if (!orgId || !dataSubjectIdRaw || !Number.isFinite(userId)) {
+      return res.status(400).json({ error: 'orgId and numeric dataSubjectId are required' });
+    }
+    if (!enforceOrgScope(req, res, orgId)) return;
+    if (!enforceSubjectAccess(req, res, userId)) return;
+
+    await client.query('BEGIN');
+
+    const userResult = await client.query(
+      `UPDATE users
+       SET email = CONCAT('erased+', id, '@redacted.local'),
+           name = CONCAT('[ERASED USER ', id, ']'),
+           title = NULL,
+           department = NULL,
+           preferences = '{}'::jsonb,
+           updated_at = NOW()
+       WHERE organization_id = $1 AND id = $2
+       RETURNING id`,
+      [orgId, userId]
+    );
+
+    const conversationsResult = await client.query(
+      `UPDATE concept2cure_conversations
+       SET title = '[ERASED CONVERSATION]',
+           summary = '[REDACTED PER GDPR ART.17]',
+           updated_at = NOW()
+       WHERE organization_id = $1 AND created_by_id = $2
+       RETURNING id`,
+      [orgId, userId]
+    ).catch(() => ({ rows: [] as any[] }));
+
+    const artifactsResult = await client.query(
+      `UPDATE concept2cure_artifacts
+       SET title = CONCAT('[ERASED] ', COALESCE(title, 'artifact')),
+           content = '[REDACTED PER GDPR ART.17]',
+           metadata = COALESCE(metadata, '{}'::jsonb) || '{"gdpr_erased": true}'::jsonb,
+           updated_at = NOW()
+       WHERE organization_id = $1 AND created_by_id = $2
+       RETURNING artifact_id`,
+      [orgId, userId]
+    ).catch(() => ({ rows: [] as any[] }));
+
+    const commentsResult = await client.query(
+      `UPDATE concept2cure_thread_comments
+       SET body = '[REDACTED PER GDPR ART.17]',
+           updated_at = NOW()
+       WHERE org_id = $1 AND author_id = $2
+       RETURNING id`,
+      [orgId, userId]
+    ).catch(() => ({ rows: [] as any[] }));
+
+    await client.query(
+      `INSERT INTO gdpr_data_subject_requests
+        (organization_id, data_subject_id, request_type, status, response_deadline, completed_at, response_details)
+       VALUES ($1, $2, 'erasure', 'completed', NOW(), NOW(), $3)`,
+      [
+        orgId,
+        dataSubjectIdRaw,
+        `Erasure completed at ${new Date().toISOString()}. Reason: ${reason}`,
+      ]
+    ).catch(() => undefined);
+
+    await client.query('COMMIT');
+
+    return res.json({
+      success: true,
+      legalBasis: {
+        article17: 'Right to erasure',
+      },
+      data: {
+        dataSubjectId: dataSubjectIdRaw,
+        organizationId: orgId,
+        redactedUser: userResult.rows.length > 0,
+        redactedConversations: conversationsResult.rows.length,
+        redactedArtifacts: artifactsResult.rows.length,
+        redactedComments: commentsResult.rows.length,
+      },
+    });
+  } catch (err: any) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return res.status(500).json({ error: 'Failed to process erasure request', details: err.message });
+  } finally {
+    client.release();
   }
 });
 

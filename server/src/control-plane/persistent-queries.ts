@@ -12,14 +12,6 @@ export interface PersistentDecisionSummary {
   };
 }
 
-export interface PersistentHashChainVerification {
-  persistenceEnabled: boolean;
-  checkedRows: number;
-  linkageMismatches: number;
-  nullHashRows: number;
-  ok: boolean;
-}
-
 function zeroSummary(): PersistentDecisionSummary {
   return {
     total: 0,
@@ -73,59 +65,4 @@ export async function getPersistentKernelDecisionSummary(hours = 24): Promise<Pe
   }
 
   return result;
-}
-
-export async function verifyPersistentKernelHashChain(): Promise<PersistentHashChainVerification> {
-  const fallback: PersistentHashChainVerification = {
-    persistenceEnabled: process.env.ANA_KERNEL_PERSIST === 'true',
-    checkedRows: 0,
-    linkageMismatches: 0,
-    nullHashRows: 0,
-    ok: true,
-  };
-
-  if (process.env.ANA_KERNEL_PERSIST !== 'true') {
-    return fallback;
-  }
-
-  try {
-    const { getPool } = await import('../../db');
-    const pool = getPool();
-    const rs = await pool.query(`
-      WITH ordered AS (
-        SELECT
-          id,
-          prev_hash,
-          entry_hash,
-          LAG(entry_hash) OVER (ORDER BY id) AS expected_prev_hash
-        FROM ana_kernel_decision_log
-      )
-      SELECT
-        COUNT(*)::int AS checked_rows,
-        COUNT(*) FILTER (
-          WHERE id > (SELECT MIN(id) FROM ordered)
-            AND coalesce(prev_hash, '') <> coalesce(expected_prev_hash, '')
-        )::int AS linkage_mismatches,
-        COUNT(*) FILTER (WHERE entry_hash IS NULL OR entry_hash = '')::int AS null_hash_rows
-      FROM ordered;
-    `);
-
-    const row = rs.rows[0] || {};
-    const checkedRows = Number(row.checked_rows || 0);
-    const linkageMismatches = Number(row.linkage_mismatches || 0);
-    const nullHashRows = Number(row.null_hash_rows || 0);
-
-    return {
-      persistenceEnabled: true,
-      checkedRows,
-      linkageMismatches,
-      nullHashRows,
-      ok: linkageMismatches === 0 && nullHashRows === 0,
-    };
-  } catch {
-    return {
-      ...fallback,
-      ok: false,
-    };
-  }
 }

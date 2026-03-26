@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,8 +28,12 @@ import {
   FlaskConical,
   Users,
   FileCheck,
+  ArrowRight,
+  Brain,
+  MessageSquare,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAnAAssistant } from '@/contexts/AnAAssistantContext';
 import CMCReportsTab from './cmc/CMCReportsTab';
 
 export default function CMCModule() {
@@ -39,6 +44,8 @@ export default function CMCModule() {
   const [loading, setLoading] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  const { openAssistant } = useAnAAssistant();
 
   const loadCMCData = useCallback(async () => {
     setLoading(true);
@@ -116,6 +123,103 @@ export default function CMCModule() {
     );
   };
 
+  const quickLaunchPaths = [
+    {
+      title: 'Medical Affairs',
+      description: 'Summaries and defensible scientific narratives for cross-functional teams.',
+      action: () => {
+        openAssistant('cmc', {
+          objective: 'medical_affairs_briefing',
+          focus: 'module3_quality_story',
+          projectId: selectedProjectId || undefined,
+        });
+      },
+      buttonLabel: 'Ask AnA for medical summary',
+    },
+    {
+      title: 'Regulatory Affairs',
+      description: 'Drive Module 3 readiness, deficiency preemption, and submission packaging.',
+      action: () => setLocation('/cmc-wizard'),
+      buttonLabel: 'Open CMC Wizard',
+    },
+    {
+      title: 'Clinical Affairs',
+      description: 'Connect quality attributes to clinical implications and risk controls.',
+      action: () => {
+        openAssistant('cmc', {
+          objective: 'clinical_cmc_alignment',
+          focus: 'risk_benefit_alignment',
+          projectId: selectedProjectId || undefined,
+        });
+      },
+      buttonLabel: 'Generate alignment brief',
+    },
+  ];
+
+  const handleBuildModule3Draft = async project => {
+    try {
+      const response = await fetch(`/api/cmc/projects/${project.id}/documents`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: `${project.name || project.drugName || 'Project'} - CTD Module 3 Draft`,
+          documentType: 'ctd_module_3',
+          status: 'draft',
+          content: `Auto-seeded Module 3 draft for ${project.drugName || project.name || 'selected project'}.\n\nNext steps:\n1. Complete 3.2.S drug substance details\n2. Complete 3.2.P drug product details\n3. Run quality/compliance checks\n4. Generate submission-ready export`,
+          metadata: {
+            source: 'cmc_projects_table',
+            generatedBy: 'ana_ri_quick_action',
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed with status ${response.status}`);
+      }
+
+      const created = await response.json();
+      toast({
+        title: 'Module 3 draft created',
+        description: `Draft document created for ${project.name || 'project'}.`,
+      });
+      setActiveTab('reports');
+      setSelectedProjectId(project.id);
+      return created;
+    } catch (error) {
+      console.error('Failed to create Module 3 draft:', error);
+      toast({
+        title: 'Could not create Module 3 draft',
+        description: 'Please verify project permissions and try again.',
+        variant: 'destructive',
+      });
+      return null;
+    }
+  };
+
+  const handleAskAnAAboutProject = (project, objective = 'module3_readiness') => {
+    openAssistant('cmc', {
+      source: 'cmc_projects_table',
+      projectId: project?.id,
+      projectName: project?.name,
+      drugName: project?.drugName,
+      developmentStage: project?.developmentStage,
+      regulatoryRegion: project?.regulatoryRegion,
+      objective,
+      humanGoal: 'project_specific_regulatory_guidance',
+    });
+  };
+
+  const getProjectReadinessScore = project => {
+    let score = 35;
+    if (project?.drugName) score += 15;
+    if (project?.drugType) score += 10;
+    if (project?.regulatoryRegion) score += 10;
+    if (project?.developmentStage) score += 10;
+    if (['active', 'review', 'approved'].includes(project?.status)) score += 15;
+    return Math.min(score, 95);
+  };
+
   return (
     <div className="container mx-auto px-6 py-8">
       <Card>
@@ -129,6 +233,71 @@ export default function CMCModule() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <Card className="mb-6 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Brain className="w-5 h-5 text-blue-600" />
+                Human-first launchpad: biotech, pharma, and med-device teams
+              </CardTitle>
+              <CardDescription>
+                Start from your function and quickly move CMC data into executable Module 3 outputs.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {quickLaunchPaths.map(item => (
+                <Card key={item.title} className="border border-blue-100 bg-white/80">
+                  <CardContent className="p-4 space-y-3">
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{item.title}</h3>
+                      <p className="text-sm text-gray-600">{item.description}</p>
+                    </div>
+                    <Button size="sm" className="w-full" onClick={item.action}>
+                      {item.buttonLabel}
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </CardContent>
+            <CardContent className="pt-0">
+              <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-gray-700">
+                <div className="flex flex-wrap items-center gap-2">
+                <span className="font-medium">Top flow:</span>
+                <span>Project setup</span>
+                <ArrowRight className="w-4 h-4" />
+                <span>Substance/Product data</span>
+                <ArrowRight className="w-4 h-4" />
+                <span>Quality checks</span>
+                <ArrowRight className="w-4 h-4" />
+                <span>Reports & Module 3 docs</span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!selectedProjectId}
+                  onClick={() => {
+                    const selectedProject = projects.find(project => project.id === selectedProjectId);
+                    if (selectedProject) handleBuildModule3Draft(selectedProject);
+                  }}
+                >
+                  <FileText className="w-4 h-4 mr-1" />
+                  Build Module 3 draft
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!selectedProjectId}
+                  onClick={() => {
+                    const selectedProject = projects.find(project => project.id === selectedProjectId);
+                    if (selectedProject) handleAskAnAAboutProject(selectedProject);
+                  }}
+                >
+                  <MessageSquare className="w-4 h-4 mr-1" />
+                  Ask AnA about this project
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="projects">Projects</TabsTrigger>
@@ -243,6 +412,7 @@ export default function CMCModule() {
                           <TableHead>Type</TableHead>
                           <TableHead>Stage</TableHead>
                           <TableHead>Region</TableHead>
+                          <TableHead>Module 3 Readiness</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Actions</TableHead>
                         </TableRow>
@@ -255,6 +425,11 @@ export default function CMCModule() {
                             <TableCell>{project.drugType}</TableCell>
                             <TableCell>{project.developmentStage}</TableCell>
                             <TableCell>{project.regulatoryRegion}</TableCell>
+                            <TableCell>
+                              <Badge className="bg-indigo-100 text-indigo-800">
+                                {getProjectReadinessScore(project)}%
+                              </Badge>
+                            </TableCell>
                             <TableCell>{getStatusBadge(project.status)}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
@@ -263,6 +438,22 @@ export default function CMCModule() {
                                 </Button>
                                 <Button variant="ghost" size="sm">
                                   <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  title="Build Module 3 draft"
+                                  onClick={() => handleBuildModule3Draft(project)}
+                                >
+                                  <FileText className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  title="Ask AnA about this project"
+                                  onClick={() => handleAskAnAAboutProject(project)}
+                                >
+                                  <MessageSquare className="w-4 h-4" />
                                 </Button>
                               </div>
                             </TableCell>

@@ -158,6 +158,13 @@ export interface OrchestratorInput {
   submissionType?: SubmissionType;
   /** Conversation history for context */
   conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  /** Authoring context with optional pre-fetched decision context (_decisionContext) */
+  authoringContext?: {
+    projectId?: string;
+    sectionCode?: string;
+    moduleCode?: string;
+    [key: string]: unknown;
+  };
 }
 
 export interface OrchestratorOutput {
@@ -256,6 +263,30 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
   systemPrompt +=
     '\n\n## OPERATIONAL COMMANDS\nYou can execute platform commands. Available: create_project, list_projects, update_project, create_artifact, update_artifact, update_artifact_status, list_artifacts, place_in_dossier, create_task, update_task, list_tasks, check_dossier_readiness, create_submission_package, create_review_thread, add_review_comment, search_artifacts, list_team_members, list_artifact_versions, run_compliance_scan, export_artifact, compare_versions, review_version_impact, create_milestone, update_milestone, list_milestones, revert_to_version, load_user_context, load_conversation_history.\n\nWhen you decide to act (not just advise), embed commands:\n```command\n{"command":"command_name","params":{...}}\n```\nMultiple commands execute sequentially. Chain stops on failure.';
 
+  // 8b. Inject decision architecture context for grounded explanations.
+  // The chat route layer (async) pre-fetches decision context and attaches it
+  // as _decisionContext on the authoringContext object. This keeps orchestrate() sync.
+  if (input.authoringContext?.projectId) {
+    try {
+      const decisionCtx = (input.authoringContext as any)?._decisionContext as
+        Array<{ decision: any; receipt?: any }> | undefined;
+      if (decisionCtx && decisionCtx.length > 0) {
+        const decisionBlock = decisionCtx.map(({ decision, receipt }: any) => {
+          let line = `- [${decision.status?.toUpperCase?.() || '?'}] ${decision.kind}: ${decision.summary}`;
+          if (decision.authority?.level) line += ` (authority: ${decision.authority.level})`;
+          if (decision.sourceSignals?.length > 0) line += ` — ${decision.sourceSignals.length} signal(s)`;
+          if (receipt) {
+            if (receipt.execution?.executed) line += ' → executed';
+            if (receipt.pendingApprovals?.length > 0) line += ` → ${receipt.pendingApprovals.length} pending approval(s)`;
+            if (receipt.provisionalItems?.length > 0) line += ` → ${receipt.provisionalItems.length} provisional`;
+          }
+          return line;
+        }).join('\n');
+        systemPrompt += `\n\n## DECISION CONTEXT\nRecent decisions for this project/section:\n${decisionBlock}\n\nWhen explaining results, reference these decisions. Answer "why" from source signals and rationale. Answer "what happened" from receipts. Answer "what needs approval" from pending approvals. Never invent explanations — if no decision record exists, say so.`;
+      }
+    } catch { /* non-blocking */ }
+  }
+
   // 9. Inject conversation continuity context
   if (input.conversationHistory && input.conversationHistory.length > 0) {
     const continuityContext = buildContinuityContext(
@@ -267,7 +298,10 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     }
   }
 
-  // 10. Determine suggested document actions
+  // 10. Inject command context — tells AnA what operational commands are available
+  systemPrompt += '\n\n' + buildCommandContextForPrompt();
+
+  // 11. Determine suggested document actions
   const suggestedActions = getSuggestedActions(
     detectedIntent.lens,
     detectedSubmissionType,

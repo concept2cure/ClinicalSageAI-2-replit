@@ -42,6 +42,10 @@
     "db:seed:admin": "node scripts/seed-admin.mjs",
     "db:check": "node scripts/db_check.js",
     "db:status": "node scripts/db_status.js",
+    "db:readiness": "node scripts/db/readiness-audit.mjs",
+    "db:readiness:strict": "node scripts/db/readiness-audit.mjs --strict-warn",
+    "db:sync-manifest": "node scripts/db/sync-migration-manifest.mjs",
+    "db:sync-manifest:check": "node scripts/db/sync-migration-manifest.mjs --check",
     "smoke:cerv2-workbench": "node scripts/smoke_cerv2_workbench.js",
     "cerv2:seed-demo": "node scripts/cerv2_seed_demo.js",
     "cerv2:verify": "node scripts/verify_cerv2_workbench.js",
@@ -55,7 +59,8 @@
     "generate:risk-codes": "tsx scripts/generate-risk-code-types.ts",
     "ci:risk-codes": "tsx scripts/generate-risk-code-types.ts --check",
     "validate:ectd-stubs": "tsx scripts/validate-ectd-stubs-bundle.ts",
-    "ci:ectd-stubs": "tsx scripts/validate-ectd-stubs-bundle.ts"
+    "ci:ectd-stubs": "tsx scripts/validate-ectd-stubs-bundle.ts",
+    "test:ana": "bash -lc 'DATABASE_URL=${DATABASE_URL:-postgres://user:pass@localhost:5432/testdb} SKIP_DB_STARTUP_TEST=${SKIP_DB_STARTUP_TEST:-true} vitest run tests/routes/ana-ri-health.test.ts tests/routes/ana-gap-analysis.test.ts tests/resolution/ana-orchestrator.test.ts server/services/__tests__/ana-ri.test.ts'"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [

@@ -27,8 +27,6 @@ Delivered runtime primitives now include:
 - Persistent summary endpoint added: `/api/control-plane/kernel/summary/persistent?hours=N`.
 - Audit-report endpoint added: `/api/control-plane/kernel/audit-report?hours=N` with maturity scoring + recommendations.
 - Rule-catalog endpoint added: `/api/control-plane/kernel/rules` with regulatory references per control.
-- Hash-chain verification endpoint added: `/api/control-plane/kernel/hash-chain/verify` for tamper-evidence checks.
-- Self-test endpoint added: `/api/control-plane/kernel/self-test` for runtime stability validation of core regulatory controls.
 - Regulatory Affairs/Medical Writing guardrails added for scientific-integrity risk terms and high-risk CER/510(k)/eCTD/CMC route controls.
 
 ## WS-1: Governance Hardening

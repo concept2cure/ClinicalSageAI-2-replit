@@ -1,0 +1,14 @@
+{
+  "release_id": "pilot-rc1",
+  "environment": "staging",
+  "evidence_link_prefix": "https://evidence.concept2cure.local/releases/pilot-rc1",
+  "lineage_completeness_pct": 99.4,
+  "policy_coverage_pct": 100,
+  "reliability_improvement_pct": 22.1,
+  "latency_regression_pct": 6.3,
+  "sev1_incidents": 0,
+  "version_drift_events": 0,
+  "integrity_check_failures": 0,
+  "tenant_boundary_violations": 0,
+  "unapproved_changes": 0
+}

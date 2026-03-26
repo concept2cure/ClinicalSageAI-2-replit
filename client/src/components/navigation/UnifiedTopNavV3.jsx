@@ -5,7 +5,7 @@ import { useLocation, Link } from 'wouter';
 import { OrganizationSwitcher } from '../tenant/OrganizationSwitcher';
 import { ClientWorkspaceSwitcher } from '../tenant/ClientWorkspaceSwitcher';
 import { Settings, Users, Building2, SwitchCamera, Sparkles, Rocket } from 'lucide-react';
-import { useLumenAiAssistant } from '../../contexts/LumenAiAssistantContext';
+import { useAnAAssistant } from '../../contexts/AnAAssistantContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import HelpButton from '../common/HelpButton';
 
@@ -16,7 +16,7 @@ export default function UnifiedTopNavV3({
   navItems = [],
 }) {
   const [location, navigate] = useLocation();
-  const { openAssistant } = useLumenAiAssistant();
+  const { openAssistant } = useAnAAssistant();
 
   // Format tab names for display
   const formatTabName = name => {
@@ -267,7 +267,13 @@ export default function UnifiedTopNavV3({
             onClick={() => {
               if (tabKey === 'Ask RI') {
                 // Open the AI assistant instead of changing tabs
-                openAssistant('regulatory_affairs', { source: 'top_nav' });
+                openAssistant('regulatory_affairs', {
+                  source: 'top_nav',
+                  route: location,
+                  breadcrumbs,
+                  activeTab,
+                  humanGoal: 'regulatory_decision_support',
+                });
               } else if (tabKey === 'Risk Heatmap') {
                 navigate('/regulatory-risk-dashboard');
               } else if (tabKey === 'Timeline Simulator') {

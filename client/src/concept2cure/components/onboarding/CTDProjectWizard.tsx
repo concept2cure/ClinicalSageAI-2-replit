@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import {
   FileText, Globe, Upload, CheckCircle, AlertTriangle,
   ChevronRight, ChevronLeft, FolderOpen, Search,
@@ -104,12 +105,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
   async function handleCreateProject() {
     setCreateError(null);
     try {
-      const res = await fetch('/api/ctd/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(project),
-      });
+      const res = await apiRequest('POST', '/api/ctd/projects', project);
       if (res.ok) {
         const data = await res.json();
         setProjectId(data.projectId);
@@ -132,12 +128,9 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
       // Try auto-detect
       let detected = null;
       try {
-        const detectRes = await fetch(`/api/ctd/projects/${projectId}/detect-section`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ fileName: file.name }),
-        });
+        const detectRes = await apiRequest('POST', `/api/ctd/projects/${projectId}/detect-section`,
+          { fileName: file.name }
+        );
         if (detectRes.ok) {
           const data = await detectRes.json();
           if (data.detected) detected = data;
@@ -185,10 +178,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
   async function handleValidate() {
     if (projectId) {
       try {
-        const res = await fetch(`/api/ctd/projects/${projectId}/validate`, {
-          method: 'POST',
-          credentials: 'include',
-        });
+        const res = await apiRequest('POST', `/api/ctd/projects/${projectId}/validate`);
         if (res.ok) {
           const data = await res.json();
           setGaps(data.gaps || []);

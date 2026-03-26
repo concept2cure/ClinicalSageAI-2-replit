@@ -18,14 +18,10 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { LoadingState } from '@/components/ui/statesV2';
 import { getThreadTaskTailoring } from '../../config/industry-tailoring';
-
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 interface Notification {
   notificationId: string;
@@ -85,6 +81,7 @@ function getNotifIcon(type: string) {
 
 export function NotificationCenter({ projectId, industryMode }: NotificationCenterProps) {
   const tailoring = getThreadTaskTailoring(industryMode);
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -99,20 +96,18 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
       const params = new URLSearchParams({ limit: '50' });
       if (status) params.set('status', status);
       if (projectId) params.set('projectId', projectId);
-      const res = await fetch(`/api/concept2cure/notifications/my?${params}`, {
-        headers: getAuthHeaders(),
-      });
+      const res = await apiRequest('GET', `/api/concept2cure/notifications/my?${params}`);
       if (res.ok) {
         const data = await res.json();
         setNotifications(data.data?.notifications || []);
         setUnreadCount(data.data?.unreadCount ?? 0);
       }
     } catch {
-      // silent
+      toast({ title: 'Failed to load notifications', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
-  }, [tab, projectId]);
+  }, [tab, projectId, toast]);
 
   useEffect(() => {
     if (open) fetchNotifications();
@@ -122,15 +117,13 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
   useEffect(() => {
     const poll = async () => {
       try {
-        const res = await fetch('/api/concept2cure/notifications/my?limit=1&status=unread', {
-          headers: getAuthHeaders(),
-        });
+        const res = await apiRequest('GET', '/api/concept2cure/notifications/my?limit=1&status=unread');
         if (res.ok) {
           const data = await res.json();
           setUnreadCount(data.data?.unreadCount ?? 0);
         }
       } catch {
-        // silent
+        // poll failure is non-critical — suppress
       }
     };
     poll();
@@ -152,10 +145,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
 
   const markRead = async (notifId: string) => {
     try {
-      await fetch(`/api/concept2cure/notifications/${notifId}/read`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-      });
+      await apiRequest('POST', `/api/concept2cure/notifications/${notifId}/read`);
       setNotifications(prev =>
         prev.map(n =>
           n.notificationId === notifId
@@ -165,35 +155,29 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
       );
       setUnreadCount(c => Math.max(0, c - 1));
     } catch {
-      // silent
+      toast({ title: 'Failed to mark as read', variant: 'destructive' });
     }
   };
 
   const dismiss = async (notifId: string) => {
     try {
-      await fetch(`/api/concept2cure/notifications/${notifId}/dismiss`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-      });
+      await apiRequest('POST', `/api/concept2cure/notifications/${notifId}/dismiss`);
       setNotifications(prev => prev.filter(n => n.notificationId !== notifId));
       setUnreadCount(c => Math.max(0, c - 1));
     } catch {
-      // silent
+      toast({ title: 'Failed to dismiss notification', variant: 'destructive' });
     }
   };
 
   const markAllRead = async () => {
     try {
-      await fetch('/api/concept2cure/notifications/mark-all-read', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-      });
+      await apiRequest('POST', '/api/concept2cure/notifications/mark-all-read');
       setNotifications(prev =>
         prev.map(n => ({ ...n, status: 'read', readAt: new Date().toISOString() }))
       );
       setUnreadCount(0);
     } catch {
-      // silent
+      toast({ title: 'Failed to mark all as read', variant: 'destructive' });
     }
   };
 
@@ -256,9 +240,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
           {/* Content */}
           <div className="max-h-64 overflow-y-auto">
             {loading ? (
-              <div className="flex justify-center py-6">
-                <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
-              </div>
+              <LoadingState message="Loading…" size="sm" />
             ) : notifications.length === 0 ? (
               <p className="text-xs text-zinc-400 text-center py-6">
                 {tab === 'unread' ? 'No unread notifications' : 'No notifications'}

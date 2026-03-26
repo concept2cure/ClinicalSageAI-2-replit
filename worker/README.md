@@ -35,6 +35,9 @@ The worker is configured through environment variables:
 | `AWS_ACCESS_KEY`     | AWS access key                          | Required if AWS enabled  |
 | `AWS_SECRET_KEY`     | AWS secret key                          | Required if AWS enabled  |
 | `OPENAI_API_KEY`     | OpenAI API key                          | Required for AI features |
+| `EMBEDDING_CACHE_TTL_MS` | Embedding cache TTL in milliseconds | `900000` (15 min) |
+| `EMBEDDING_CACHE_MAX_ENTRIES` | Max in-memory embedding cache entries | `10000` |
+| `EMBEDDING_CACHE_LOG_EVERY` | Cache telemetry log interval (lookups) | `20` |
 
 ## Development
 
