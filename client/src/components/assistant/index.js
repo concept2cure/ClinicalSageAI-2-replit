@@ -1,4 +1,4 @@
-import { LumenAssistantProvider, useLumenAssistant } from './LumenAssistantProvider';
-import LumenAssistant, { LumenAssistantButton } from './LumenAssistant';
+import { AnAQuickAssistantProvider, useAnAQuickAssistant } from './AnAQuickAssistantProvider';
+import AnAQuickAssistant, { AnAQuickAssistantButton } from './AnAQuickAssistant';
 
-export { LumenAssistant, LumenAssistantButton, LumenAssistantProvider, useLumenAssistant };
+export { AnAQuickAssistant, AnAQuickAssistantButton, AnAQuickAssistantProvider, useAnAQuickAssistant };

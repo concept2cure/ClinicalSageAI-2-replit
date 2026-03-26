@@ -1,10 +1,10 @@
 import { Sun, Moon, Bot } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
-import { useLumenAssistant } from './assistant';
+import { useAnAQuickAssistant } from './assistant';
 
 export default function TopNav() {
-  const { toggleAssistant } = useLumenAssistant();
+  const { toggleAssistant } = useAnAQuickAssistant();
   const [dark, setDark] = useState(
     localStorage.getItem('theme') === 'dark' ||
       (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)

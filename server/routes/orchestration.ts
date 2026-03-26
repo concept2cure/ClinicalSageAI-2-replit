@@ -7,7 +7,8 @@
  * GET  /api/orchestration/project/:id      — Get all workflows for a project
  * POST /api/orchestration/cancel/:id       — Cancel a running workflow
  *
- * POST /api/orchestration/readiness        — Compute readiness assessment
+ * GET  /api/orchestration/projects/:projectId/readiness — Get readiness for a project (dashboard)
+ * POST /api/orchestration/readiness        — Compute readiness assessment (with body)
  * POST /api/orchestration/recommendations  — Generate recommendations
  * POST /api/orchestration/continuity       — Get project continuity briefing
  * GET  /api/orchestration/continuity/:projectId — Get latest continuity snapshot
@@ -180,6 +181,35 @@ router.post('/cancel/:id', (req: Request, res: Response) => {
     res.json({ success: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Cancel failed';
+    res.status(500).json({ error: message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/orchestration/projects/:projectId/readiness
+// ---------------------------------------------------------------------------
+
+router.get('/projects/:projectId/readiness', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrganizationId(req);
+    const projectId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectId) || projectId <= 0) {
+      return res.status(400).json({ error: 'projectId must be a positive integer' });
+    }
+
+    const module = req.query.module as string | undefined;
+
+    const payload = await assembleCrossObjectPayload({
+      organizationId: orgId,
+      projectId,
+      module,
+    });
+
+    const assessment = computeReadinessAssessment(payload);
+    res.json(assessment);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Readiness assessment failed';
+    console.error('[Orchestration] GET readiness error:', err);
     res.status(500).json({ error: message });
   }
 });

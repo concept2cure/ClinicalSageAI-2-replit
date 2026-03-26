@@ -1,19 +1,19 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 
 // Create the context
-const LumenAiAssistantContext = createContext();
+const AnAAssistantContext = createContext();
 
 // Custom hook to use the context
-export const useLumenAiAssistant = () => {
-  const context = useContext(LumenAiAssistantContext);
+export const useAnAAssistant = () => {
+  const context = useContext(AnAAssistantContext);
   if (!context) {
-    throw new Error('useLumenAiAssistant must be used within a LumenAiAssistantProvider');
+    throw new Error('useAnAAssistant must be used within a AnAAssistantProvider');
   }
   return context;
 };
 
 // Provider component
-export const LumenAiAssistantProvider = ({ children }) => {
+export const AnAAssistantProvider = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
@@ -67,8 +67,8 @@ export const LumenAiAssistantProvider = ({ children }) => {
   };
 
   return (
-    <LumenAiAssistantContext.Provider value={value}>{children}</LumenAiAssistantContext.Provider>
+    <AnAAssistantContext.Provider value={value}>{children}</AnAAssistantContext.Provider>
   );
 };
 
-export default LumenAiAssistantContext;
+export default AnAAssistantContext;

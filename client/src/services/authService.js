@@ -31,10 +31,19 @@ export const authService = {
     );
   },
 
-  setToken(token) {
+  setToken(token, user) {
     localStorage.setItem('token', token);
     localStorage.setItem('authToken', token);
     localStorage.setItem('auth_token', token);
+    // Persist organizationId from user payload for API headers
+    if (user?.organizationId) {
+      localStorage.setItem('organizationId', String(user.organizationId));
+      localStorage.setItem('currentOrganizationId', String(user.organizationId));
+    }
+    // Persist email for silent token refresh
+    if (user?.email) {
+      localStorage.setItem('userEmail', user.email);
+    }
   },
 
   clearToken() {

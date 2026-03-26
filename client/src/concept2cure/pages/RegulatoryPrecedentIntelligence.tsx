@@ -35,7 +35,7 @@ import {
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-type TabKey = 'crl' | 'rtf' | 'ema' | 'advisory' | 'cross-jurisdictional' | 'calibration' | 'assumptions' | 'decisions' | 'contradictions' | 'impact';
+type TabKey = 'crl' | 'rtf' | 'ema' | 'advisory' | 'cross-jurisdictional' | 'calibration' | 'assumptions' | 'decisions' | 'contradictions' | 'overlays' | 'impact';
 
 interface Tab {
   key: TabKey;
@@ -64,6 +64,7 @@ const tabs: Tab[] = [
   { key: 'assumptions', label: 'Assumptions' },
   { key: 'decisions', label: 'Decisions' },
   { key: 'contradictions', label: 'Contradictions' },
+  { key: 'overlays', label: 'Overlay Rules' },
   { key: 'impact', label: 'Impact & Staleness' },
 ];
 
@@ -568,7 +569,21 @@ function DecisionsPanel() {
 }
 
 function ContradictionsPanel() {
-  const { data, isLoading } = useQuery({
+  const [scanning, setScanning] = React.useState(false);
+  const [scanResult, setScanResult] = React.useState<{ count: number; message: string } | null>(null);
+
+  // Fetch active project for scan targeting
+  const { data: projectsData } = useQuery({
+    queryKey: ['governed-intel', 'projects-for-scan'],
+    queryFn: async () => {
+      const res = await fetch('/api/concept2cure/projects');
+      if (!res.ok) return { projects: [] };
+      return res.json();
+    },
+  });
+  const activeProjectId = projectsData?.projects?.[0]?.id ?? 1;
+
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['governed-intel', 'contradictions'],
     queryFn: async () => {
       const res = await fetch(`${GOV_API}/contradictions/search`, {
@@ -579,6 +594,28 @@ function ContradictionsPanel() {
       return res.json();
     },
   });
+
+  const handleScanProject = async (projectId: number = activeProjectId) => {
+    setScanning(true);
+    setScanResult(null);
+    try {
+      const res = await fetch(`${GOV_API}/contradictions/scan/${projectId}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+      });
+      const result = await res.json();
+      const findingCount = result.findings?.length ?? result.count ?? 0;
+      setScanResult({
+        count: findingCount,
+        message: findingCount > 0
+          ? `Scan complete: ${findingCount} finding(s) detected`
+          : 'Scan complete: no contradictions found',
+      });
+      refetch();
+    } catch {
+      setScanResult({ count: 0, message: 'Scan failed — contradiction engine may be unavailable' });
+    }
+    setScanning(false);
+  };
 
   const findings = data?.findings ?? [];
 
@@ -592,6 +629,16 @@ function ContradictionsPanel() {
           title="No Contradiction Findings"
           description="Run a project contradiction scan to detect assumption drift, decision/action inconsistencies, and cross-jurisdictional divergences. Each finding includes source classification, severity, and consequence paths."
         />
+        <div className="px-6 pb-6 flex justify-center">
+          <EnterpriseButton onClick={() => handleScanProject()} disabled={scanning} size="md">
+            {scanning ? 'Scanning...' : 'Run Contradiction Scan'}
+          </EnterpriseButton>
+        </div>
+        {scanResult && (
+          <div className={cn('mx-6 mb-4 px-3 py-2 rounded text-xs', scanResult.count > 0 ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700')}>
+            {scanResult.message}
+          </div>
+        )}
       </EnterpriseCard>
     );
   }
@@ -602,10 +649,22 @@ function ContradictionsPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard label="Total Findings" value={String(findings.length)} icon={AlertTriangle} iconClassName="bg-red-100 text-red-600" />
-        <MetricCard label="Unresolved" value={String(findings.filter((f: Record<string, unknown>) => f.reviewState === 'unresolved').length)} icon={XCircle} iconClassName="bg-amber-100 text-amber-600" />
+      <div className="flex items-center justify-between">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1">
+          <MetricCard label="Total Findings" value={String(findings.length)} icon={AlertTriangle} iconClassName="bg-red-100 text-red-600" />
+          <MetricCard label="Unresolved" value={String(findings.filter((f: Record<string, unknown>) => f.reviewState === 'unresolved').length)} icon={XCircle} iconClassName="bg-amber-100 text-amber-600" />
+        </div>
+        <div className="ml-4 flex-shrink-0">
+          <EnterpriseButton onClick={() => handleScanProject()} disabled={scanning} size="sm" variant="secondary">
+            {scanning ? 'Scanning...' : 'Re-scan'}
+          </EnterpriseButton>
+        </div>
       </div>
+      {scanResult && (
+        <div className={cn('px-3 py-2 rounded text-xs', scanResult.count > 0 ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700')}>
+          {scanResult.message}
+        </div>
+      )}
       <EnterpriseCard noPadding>
         <CardSection border={false}>
           <CardHeader icon={AlertTriangle} iconClassName="bg-red-100 text-red-600" title="Contradiction Findings" subtitle="Structured-first detection with source classification" />
@@ -632,25 +691,154 @@ function ContradictionsPanel() {
   );
 }
 
-// ─── Impact & Staleness Panel ────────────────────────────────────────────────
+// ─── Overlay Rules Panel (Pass 15) ───────────────────────────────────────────
 
-function ImpactPanel() {
-  const { data, isLoading } = useQuery({
-    queryKey: ['governed-intel', 'impact-summary', 1],
+function OverlayRulesPanel() {
+  const [seeding, setSeeding] = React.useState(false);
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['governed-intel', 'overlay-rules'],
     queryFn: async () => {
-      const res = await fetch(`${GOV_API}/impact-summary/1`);
-      if (!res.ok) return null;
+      const res = await fetch(`${GOV_API}/overlays/search`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ limit: 50 }),
+      });
+      if (!res.ok) return { rules: [], count: 0 };
       return res.json();
     },
   });
 
-  const { data: staleData } = useQuery({
-    queryKey: ['governed-intel', 'stale-deps', 1],
+  const rules = data?.rules ?? [];
+
+  const handleSeedRules = async () => {
+    setSeeding(true);
+    try {
+      await fetch('/api/authoring-actions/seed-overlay-rules', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+      });
+      refetch();
+    } catch { /* ignore */ }
+    setSeeding(false);
+  };
+
+  if (isLoading) return <LoadingCards count={3} />;
+
+  const bodyIcon: Record<string, string> = { FDA: 'bg-blue-100 text-blue-600', EMA: 'bg-green-100 text-green-600', PMDA: 'bg-purple-100 text-purple-600', MHRA: 'bg-amber-100 text-amber-600' };
+  const authorityVariant: Record<string, 'default' | 'info' | 'success' | 'warning' | 'danger'> = {
+    advisory_only: 'default', requires_review: 'info', requires_approval: 'warning', blocks_promotion: 'danger', requires_escalation: 'danger',
+  };
+  const severityVariant: Record<string, 'default' | 'info' | 'success' | 'warning' | 'danger'> = {
+    critical: 'danger', high: 'danger', medium: 'warning', low: 'default',
+  };
+
+  if (rules.length === 0) {
+    return (
+      <EnterpriseCard>
+        <EmptyState
+          icon={Layers}
+          title="No Overlay Rules"
+          description="Overlay rules adapt contradiction severity, authority, and consequences by regulator body. Seed the default rules to get started."
+        />
+        <div className="px-6 pb-6 flex justify-center">
+          <EnterpriseButton onClick={handleSeedRules} disabled={seeding} size="md">
+            {seeding ? 'Seeding...' : 'Seed Default Overlay Rules'}
+          </EnterpriseButton>
+        </div>
+      </EnterpriseCard>
+    );
+  }
+
+  // Group by regulator body
+  const byBody: Record<string, typeof rules> = {};
+  for (const r of rules) {
+    const body = (r.regulatorBody as string) || 'General';
+    if (!byBody[body]) byBody[body] = [];
+    byBody[body].push(r);
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <MetricCard label="Total Rules" value={String(rules.length)} icon={Layers} iconClassName="bg-blue-100 text-blue-600" />
+        <MetricCard label="Regulator Bodies" value={String(Object.keys(byBody).length)} icon={Globe} iconClassName="bg-green-100 text-green-600" />
+        <MetricCard label="Blocking Rules" value={String(rules.filter((r: Record<string, unknown>) => r.authorityOverride === 'blocks_promotion').length)} icon={Shield} iconClassName="bg-red-100 text-red-600" />
+        <MetricCard label="Active" value={String(rules.filter((r: Record<string, unknown>) => r.active !== false).length)} icon={CheckCircle} iconClassName="bg-emerald-100 text-emerald-600" />
+      </div>
+
+      {Object.entries(byBody).map(([body, bodyRules]) => (
+        <EnterpriseCard key={body} noPadding>
+          <CardSection border={false}>
+            <CardHeader
+              icon={Globe}
+              iconClassName={bodyIcon[body] ?? 'bg-zinc-100 text-zinc-600'}
+              title={`${body} Overlay Rules`}
+              subtitle={`${bodyRules.length} rule${bodyRules.length !== 1 ? 's' : ''} — adapts contradiction handling for ${body} submissions`}
+            />
+          </CardSection>
+          {bodyRules.map((r: Record<string, unknown>) => (
+            <CardSection key={r.id as string || r.ruleCode as string}>
+              <ListItem
+                icon={Shield}
+                iconClassName={r.authorityOverride === 'blocks_promotion' ? 'bg-red-100 text-red-600' : r.authorityOverride === 'requires_approval' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}
+                title={r.ruleName as string || r.ruleCode as string}
+                subtitle={`${formatCategory(r.contradictionType as string)} · Priority: ${r.priority ?? '—'} · ${r.regulatoryReference || 'No ref'}`}
+                meta={
+                  <div className="flex items-center gap-2">
+                    {r.severityOverride && <StatusPill label={`→ ${r.severityOverride as string}`} variant={severityVariant[r.severityOverride as string] ?? 'default'} dot />}
+                    {r.authorityOverride && <StatusPill label={formatCategory(r.authorityOverride as string)} variant={authorityVariant[r.authorityOverride as string] ?? 'default'} />}
+                  </div>
+                }
+                chevron
+              />
+              {r.description && (
+                <div className="text-xs text-zinc-500 mt-1 pl-9 leading-relaxed">{r.description as string}</div>
+              )}
+            </CardSection>
+          ))}
+        </EnterpriseCard>
+      ))}
+
+      <div className="flex justify-end">
+        <EnterpriseButton onClick={handleSeedRules} disabled={seeding} size="sm" variant="secondary">
+          {seeding ? 'Seeding...' : 'Re-seed Default Rules'}
+        </EnterpriseButton>
+      </div>
+    </div>
+  );
+}
+
+// ─── Impact & Staleness Panel ────────────────────────────────────────────────
+
+function ImpactPanel() {
+  // Fetch active project for the org (uses first available)
+  const { data: projectsData } = useQuery({
+    queryKey: ['governed-intel', 'projects-for-impact'],
     queryFn: async () => {
-      const res = await fetch(`${GOV_API}/dependencies/stale/1`);
+      const res = await fetch('/api/concept2cure/projects');
+      if (!res.ok) return { projects: [] };
+      return res.json();
+    },
+  });
+  const activeProjectId = projectsData?.projects?.[0]?.id ?? 1;
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['governed-intel', 'impact-summary', activeProjectId],
+    queryFn: async () => {
+      const res = await fetch(`${GOV_API}/impact-summary/${activeProjectId}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!activeProjectId,
+  });
+
+  const { data: staleData } = useQuery({
+    queryKey: ['governed-intel', 'stale-deps', activeProjectId],
+    queryFn: async () => {
+      const res = await fetch(`${GOV_API}/dependencies/stale/${activeProjectId}`);
       if (!res.ok) return { stale: [], count: 0 };
       return res.json();
     },
+    enabled: !!activeProjectId,
   });
 
   if (isLoading) return <LoadingCards count={4} />;
@@ -801,6 +989,7 @@ export default function RegulatoryPrecedentIntelligence({ onClose, onContextChan
       case 'assumptions': return <AssumptionsPanel />;
       case 'decisions': return <DecisionsPanel />;
       case 'contradictions': return <ContradictionsPanel />;
+      case 'overlays': return <OverlayRulesPanel />;
       case 'impact': return <ImpactPanel />;
       default: return null;
     }
