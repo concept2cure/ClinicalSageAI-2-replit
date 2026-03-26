@@ -959,6 +959,12 @@ export const ZenApp: React.FC = () => {
     [layoutMode]
   );
 
+  useEffect(() => {
+    if (layoutMode !== 'biostatistics') return;
+    setLayoutMode('regulatory-workspace');
+    setActiveToolPanel('ana-biostats');
+  }, [layoutMode]);
+
   // ── P2: Navigate to section — real navigation ──
   const handleNavigateToSection = useCallback((sectionCode: string) => {
     setActiveSectionCode(sectionCode);
@@ -1005,8 +1011,20 @@ export const ZenApp: React.FC = () => {
 
   // Workspace suggested actions — context-aware quick-start chips for AnA
   const workspaceSuggestedActions = useMemo(() => {
+    const biostatsAction = {
+      id: 'open-ana-biostats',
+      label: 'Open AnA Biostats',
+      intent: 'go-biostatistics',
+      description: 'Run SAP-grade biostatistics analysis and governed document generation.',
+    };
+
     const base = workspaceSummary?.nextActions ?? [];
-    if (base.length > 0) return base.slice(0, 4);
+    if (base.length > 0) {
+      const withBiostats = base.some(action => action.intent === 'go-biostatistics')
+        ? base
+        : [biostatsAction, ...base];
+      return withBiostats.slice(0, 4);
+    }
 
     const t = (activeProject?.type || 'IND').toUpperCase();
     const starters: Record<
@@ -1118,7 +1136,10 @@ export const ZenApp: React.FC = () => {
         },
       ],
     };
-    return (starters[t] ?? starters['IND']).slice(0, 4);
+    const fallback = starters[t] ?? starters['IND'];
+    return fallback.some(action => action.intent === 'go-biostatistics')
+      ? fallback.slice(0, 4)
+      : [biostatsAction, ...fallback].slice(0, 4);
   }, [activeProject?.type, workspaceSummary?.nextActions]);
 
   // Pending draft request from IND Workspace → passed to AnA when switching to workspace mode
@@ -1397,12 +1418,15 @@ export const ZenApp: React.FC = () => {
         'go-copilot': 'regulatory-workspace',
         'go-home': 'projects',
         'go-review-readiness': 'review-readiness',
-        'go-biostatistics': 'biostatistics',
+        'go-biostatistics': 'regulatory-workspace',
         'go-report-engine': 'report-engine',
       };
 
       if (MODULE_ROUTES[actionId]) {
         setLayoutMode(MODULE_ROUTES[actionId]);
+        if (actionId === 'go-biostatistics') {
+          setActiveToolPanel('ana-biostats');
+        }
         setCommandPaletteOpen(false);
         return;
       }
@@ -1758,7 +1782,9 @@ export const ZenApp: React.FC = () => {
         activeConversationId={activeConversationId}
         activeProjectId={activeProjectId}
         activeNavId={
-          (
+          activeToolPanel === 'ana-biostats'
+            ? 'biostatistics'
+            : (
             {
               // ── Unified workflow nav mapping ──
               'project-home': 'projects',
@@ -1792,7 +1818,7 @@ export const ZenApp: React.FC = () => {
               'collaboration-hub': 'review',
               'user-inbox': 'projects',
               'client-branding': 'projects',
-              biostatistics: 'documents',
+              biostatistics: 'biostatistics',
               'training-center': 'enablement-center',
               'client-onboarding': 'enablement-center',
               'knowledge-base': 'projects',
@@ -1905,7 +1931,8 @@ export const ZenApp: React.FC = () => {
               setLayoutMode('review-readiness');
               break;
             case 'biostatistics':
-              setLayoutMode('biostatistics');
+              setLayoutMode('regulatory-workspace');
+              setActiveToolPanel('ana-biostats');
               break;
             case 'report-engine':
               setLayoutMode('report-engine');

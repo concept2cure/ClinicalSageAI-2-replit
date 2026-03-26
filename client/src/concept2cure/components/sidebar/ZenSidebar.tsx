@@ -37,6 +37,7 @@ import {
   Activity,
   Heart,
   Microscope,
+  FlaskConical,
 } from 'lucide-react';
 import logoSrc from '@/assets/concept2cure-logo.jpg';
 
@@ -678,7 +679,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
           {/* ── SUBMISSION WORKFLOW — secondary nav ────────────────── */}
           <div className="mx-2 my-1 border-t border-zinc-100" />
-          <WorkspaceGroup label="Workflow" defaultOpen={false}>
+          <WorkspaceGroup label="Workflow" defaultOpen={true}>
             <NavItem
               icon={<LayoutGrid className="w-3.5 h-3.5" />}
               label="Dossier Map"
@@ -698,6 +699,13 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               active={activeNavId === 'review'}
               accentColor="emerald"
               onClick={() => onNavigate?.('review')}
+            />
+            <NavItem
+              icon={<FlaskConical className="w-3.5 h-3.5" />}
+              label="Biostats"
+              active={activeNavId === 'biostatistics'}
+              accentColor="emerald"
+              onClick={() => onNavigate?.('biostatistics')}
             />
             <NavItem
               icon={<Send className="w-3.5 h-3.5" />}
