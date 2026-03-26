@@ -912,10 +912,11 @@ try {
 
 // Mount AnA Intelligence dedicated routes (10-K harvesting, observation terms)
 try {
-  const lumenCortexRoutes = await import('./routes/lumen-cortex');
-  app.use('/api/lumen-cortex', lumenCortexRoutes.default);
+  const anaCortexRoutes = await import('./routes/ana-cortex');
+  app.use('/api/ana-cortex', anaCortexRoutes.default);
+  app.use('/api/ana-1-0-ri-cortex', anaCortexRoutes.default);
   console.log(
-    '✅ AnA Intelligence dedicated routes mounted (health, 10K harvest, observation terms)'
+    '✅ AnA Cortex routes mounted (/api/ana-cortex, /api/ana-1-0-ri-cortex)'
   );
 } catch (error) {
   console.error('❌ Failed to mount AnA Intelligence routes:', error);
@@ -972,8 +973,6 @@ try {
     foresightFeedbackRoutes
   );
   // New AnA Intelligence aliases
-  app.use('/api/lumen', foresightDeprecation, foresightApiRoutes);
-  app.use('/api/lumen-ai', foresightDeprecation, foresightAIAdvancedRoutes);
   console.log('✅ AnA Intelligence™ Intelligence API routes mounted (+ legacy /foresight aliases)');
 } catch (error) {
   console.error('Failed to mount AnA Intelligence routes:', error);
@@ -989,7 +988,6 @@ try {
     next();
   };
   app.use('/api/foresight/rag', foresightRagDeprecation, foresightRagRoutes.default);
-  app.use('/api/lumen/rag', foresightRagDeprecation, foresightRagRoutes.default); // New alias
   console.log('✅ AnA Intelligence RAG API routes mounted successfully');
 } catch (error) {
   console.error('Failed to mount AnA Intelligence RAG routes:', error);
@@ -2463,7 +2461,7 @@ app.get('/api/reports', async (req: Request, res: Response) => {
           timestamp: r.timestamp,
           user: r.user_name,
           section: r.metadata?.section || 'N/A',
-          modelVersion: 'lumen-cortex-v2',
+          modelVersion: 'ana-cortex-v2',
           status: 'success',
           latency: 0,
         })),
@@ -2528,10 +2526,10 @@ app.get('/api/reports/count', async (_req: Request, res: Response) => {
   }
 });
 
-app.get('/api/reports/lumen-bio', async (_req: Request, res: Response) => {
+app.get('/api/reports/ana-bio', async (_req: Request, res: Response) => {
   try {
     const result = await pool.query(
-      `SELECT id, title, report_type, status, created_at FROM reports WHERE report_type = 'lumen-bio' ORDER BY created_at DESC`
+      `SELECT id, title, report_type, status, created_at FROM reports WHERE report_type = 'ana-bio' ORDER BY created_at DESC`
     );
     return res.json({ reports: result.rows, status: 'available' });
   } catch (error) {
@@ -2539,10 +2537,10 @@ app.get('/api/reports/lumen-bio', async (_req: Request, res: Response) => {
   }
 });
 
-app.get('/api/reports/lumen-bio/recent', async (_req: Request, res: Response) => {
+app.get('/api/reports/ana-bio/recent', async (_req: Request, res: Response) => {
   try {
     const result = await pool.query(
-      `SELECT id, title, report_type, status, created_at FROM reports WHERE report_type = 'lumen-bio' ORDER BY created_at DESC LIMIT 5`
+      `SELECT id, title, report_type, status, created_at FROM reports WHERE report_type = 'ana-bio' ORDER BY created_at DESC LIMIT 5`
     );
     return res.json({ reports: result.rows, status: 'available' });
   } catch (error) {
@@ -5821,7 +5819,7 @@ app.get('/api/vault/list', async (req: Request, res: Response) => {
 });
 
 // AnA RI Regulatory Intelligence endpoint
-app.get('/api/lumen/regulatory-intelligence', async (req: Request, res: Response) => {
+app.get('/api/ana/regulatory-intelligence', async (req: Request, res: Response) => {
   try {
     // Return regulatory intelligence data
     res.json({
@@ -5857,7 +5855,7 @@ app.get('/api/lumen/regulatory-intelligence', async (req: Request, res: Response
 });
 
 // AnA RI Regulatory Analysis endpoint
-app.post('/api/lumen/regulatory-analysis', async (req: Request, res: Response) => {
+app.post('/api/ana/regulatory-analysis', async (req: Request, res: Response) => {
   console.log('🔥 AnA RI Regulatory Analysis endpoint hit!');
   try {
     // Add cache-busting headers
@@ -5897,7 +5895,7 @@ Return JSON shape:
     "regulatory_gaps": [{ "regulation_section": string, "risk_level": string, "compliance_status": string, "requirement_area": string }],
     "ich_e6r3_assessment": { "compliance_score": number, "risk_factors": string[], "recommendations": string[] }
   },
-  "lumen_intelligence_summary": {
+  "ana_1_0_ri_intelligence_summary": {
     "confidence_score": number,
     "analysis_timestamp": string,
     "data_sources": string[]
@@ -5908,7 +5906,7 @@ Return JSON shape:
       maxTokens: 3000,
       temperature: 0.2,
       strategy: 'quality_optimized',
-      callerModule: 'lumen/regulatory-analysis',
+      callerModule: 'ana/regulatory-analysis',
     });
 
     try {
@@ -5923,7 +5921,7 @@ Return JSON shape:
           regulatory_gaps: [],
           ich_e6r3_assessment: { compliance_score: 75, risk_factors: [], recommendations: [] },
         },
-        lumen_intelligence_summary: {
+        ana_1_0_ri_intelligence_summary: {
           confidence_score: 60,
           analysis_timestamp: new Date().toISOString(),
           data_sources: ['AI Gateway', 'Parser fallback'],
@@ -5938,7 +5936,7 @@ Return JSON shape:
 });
 
 // AnA RI ICH E6(R3) Guidance endpoint
-app.post('/api/lumen/ich-e6r3-guidance', async (req: Request, res: Response) => {
+app.post('/api/ana/ich-e6r3-guidance', async (req: Request, res: Response) => {
   console.log('🔥 AnA RI ICH E6(R3) Guidance endpoint hit!');
   try {
     // Add cache-busting headers
@@ -5986,7 +5984,7 @@ Return JSON:
       maxTokens: 2200,
       temperature: 0.2,
       strategy: 'quality_optimized',
-      callerModule: 'lumen/ich-e6r3-guidance',
+      callerModule: 'ana/ich-e6r3-guidance',
     });
 
     try {
@@ -7420,9 +7418,9 @@ async function startServer() {
   }
 
   try {
-    const lumenCortexFtRoutes = await import('./routes/lumen-cortex-ft');
-    app.use('/api/lumen-cortex-ft', lumenCortexFtRoutes.default);
-    console.log('✅ AnA Intelligence Fine-Tuning routes mounted at /api/lumen-cortex-ft');
+    const anaCortexFtRoutes = await import('./routes/ana-cortex-ft');
+    app.use('/api/ana-cortex-ft', anaCortexFtRoutes.default);
+    console.log('✅ AnA Intelligence Fine-Tuning routes mounted at /api/ana-cortex-ft');
   } catch (error) {
     console.error('❌ Failed to mount AnA Intelligence FT routes:', error);
   }

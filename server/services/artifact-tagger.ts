@@ -27,7 +27,7 @@ export interface TagArtifactParams {
   status?: string;
   /** Optional existing artifact ID to update instead of create */
   artifactId?: number;
-  /** Source of the content: 'lumen_cortex' | 'manual' | 'import' | 'template' */
+  /** Source of the content: 'ana_cortex' | 'manual' | 'import' | 'template' */
   source?: string;
   /** Additional metadata to store */
   metadata?: Record<string, any>;
@@ -55,7 +55,7 @@ export async function tagArtifact(params: TagArtifactParams): Promise<TagArtifac
     content,
     status = 'draft',
     artifactId,
-    source = 'lumen_cortex',
+    source = 'ana_cortex',
     metadata = {},
   } = params;
 

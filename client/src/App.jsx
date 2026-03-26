@@ -88,8 +88,8 @@ const LoadingPage = () => (
 
 // Eagerly load the landing pages for faster initial render
 import UnifiedSubmissionCenter from './pages/ind/UnifiedSubmissionCenter';
-// Import Lumen Cortex AI Assistant
-const LumenCortex = lazy(() => import('./pages/LumenCortex'));
+// Import AnA Cortex AI Assistant
+const AnaCortex = lazy(() => import('./pages/AnaCortex'));
 
 // Import Concept2Cure - Claude.ai-style regulatory interface with ZenRouter
 const ZenRouter = lazy(() => import('./concept2cure/router/ZenRouter'));
@@ -435,13 +435,16 @@ function MainApp() {
             {/* Root and legacy portal routes → redirect to Concept2Cure home */}
             <Route path="/">{() => <Redirect to="/concept2cure" />}</Route>
             <Route path="/submission-center" component={UnifiedSubmissionCenter} />
-            {/* Lumen Cortex AI Assistant - Full Page */}
-            <Route path="/lumen-cortex">
+            {/* AnA Cortex AI Assistant - Full Page */}
+            <Route path="/ana">
               {() => (
                 <Suspense fallback={<LoadingPage />}>
-                  <LumenCortex />
+                  <AnaCortex />
                 </Suspense>
               )}
+            </Route>
+            <Route path="/ana-cortex">
+              {() => <Redirect to="/ana" />}
             </Route>
             <Route path="/module-settings">
               {() => (
@@ -584,7 +587,7 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
-            {/* CoAuthor Ask Lumen tab */}
+            {/* CoAuthor Ask AnA tab */}
             <Route path="/coauthor/canvas">
               {() => (
                 <Suspense fallback={<LoadingPage />}>

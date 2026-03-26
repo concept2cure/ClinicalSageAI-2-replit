@@ -4,7 +4,7 @@
  * A modern, enterprise-grade chat interface for regulatory AI assistance.
  * Provides Claude-like conversational experience with markdown rendering.
  *
- * @module client/components/LumenCortexChat
+ * @module client/components/AnaCortexChat
  */
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -56,7 +56,7 @@ interface ModelInfo {
   domain?: string;
 }
 
-interface LumenCortexChatProps {
+interface AnaCortexChatProps {
   className?: string;
   initialMessage?: string;
   placeholder?: string;
@@ -110,7 +110,7 @@ function renderMarkdown(text: string): string {
   );
 }
 
-export function LumenCortexChat({ className, initialMessage, placeholder }: LumenCortexChatProps) {
+export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCortexChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -120,14 +120,11 @@ export function LumenCortexChat({ className, initialMessage, placeholder }: Lume
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Fine-tuned model state
-  const [models, setModels] = useState<ModelInfo[]>([]);
+  const [models] = useState<ModelInfo[]>([]);
   const [activeModel, setActiveModel] = useState<string>('base');
   const [showModelSelector, setShowModelSelector] = useState(false);
 
-  // Load available models on mount
-  useEffect(() => {
-    loadModels();
-  }, []);
+  // Single-screen assistant policy: route all AI requests through AnA Cortex chat.
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -141,20 +138,6 @@ export function LumenCortexChat({ className, initialMessage, placeholder }: Lume
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
     }
   }, [input]);
-
-  // Load available fine-tuned models
-  const loadModels = async () => {
-    try {
-      const res = await fetch('/api/lumen-cortex-ft/models');
-      if (res.ok) {
-        const data = await res.json();
-        setModels(data.models || []);
-      }
-    } catch (error) {
-      // Graceful degradation — model selector just won't show fine-tuned options
-      console.warn('Fine-tuned models unavailable:', (error as Error).message);
-    }
-  };
 
   // Handle send message
   const handleSend = async () => {
@@ -172,48 +155,18 @@ export function LumenCortexChat({ className, initialMessage, placeholder }: Lume
     setIsLoading(true);
 
     try {
-      let data: { answer?: string; response?: string; thread_id?: string; modelId?: string };
-
-      // Route through fine-tuned model if one is selected
-      if (activeModel !== 'base') {
-        const ftResponse = await fetch('/api/lumen-cortex-ft/inference', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            prompt: userMessage.content,
-            modelId: activeModel,
-            context: threadId ? `thread:${threadId}` : undefined,
-            parameters: { temperature: 0.3, maxTokens: 2048 },
-          }),
-        });
-
-        if (ftResponse.ok) {
-          const ftData = await ftResponse.json();
-          data = {
-            answer: ftData.response || ftData.content || ftData.text,
-            modelId: ftData.modelId || activeModel,
-          };
-        } else {
-          // Fallback to base model
-          console.warn('Fine-tuned model unavailable, falling back to base');
-          const response = await fetch('/api/chat/send-message', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: userMessage.content, thread_id: threadId }),
-          });
-          data = await response.json();
-        }
-      } else {
-        // Base model path (original flow)
-        const response = await fetch('/api/chat/send-message', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: userMessage.content, thread_id: threadId }),
-        });
-
-        if (!response.ok) throw new Error(`API error: ${response.status}`);
-        data = await response.json();
-      }
+      const response = await fetch('/api/ana-cortex/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage.content,
+          context: { screen: 'ana-single-screen', threadId: threadId || undefined },
+          conversationHistory: messages.map(m => ({ role: m.role, content: m.content })),
+        }),
+      });
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      const data: { answer?: string; response?: string; thread_id?: string; modelId?: string } =
+        await response.json();
 
       if (data.thread_id) setThreadId(data.thread_id);
 
@@ -669,4 +622,4 @@ export function LumenCortexChat({ className, initialMessage, placeholder }: Lume
   );
 }
 
-export default LumenCortexChat;
+export default AnaCortexChat;

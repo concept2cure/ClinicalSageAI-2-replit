@@ -1,11 +1,16 @@
 import express from 'express';
-import { lumenCortexService } from '../services/lumen-cortex-service';
+import { anaCortexService } from '../services/ana-cortex-service';
 import { db } from '../db';
 import { and, eq } from 'drizzle-orm';
-import { lumenObservationTerms } from '@shared/schema';
+import { anaObservationTerms } from '@shared/schema';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
+router.use((req, res, next) => {
+  res.setHeader('X-AnA-Cortex-Version', 'AnA 1.0 RI');
+  res.setHeader('X-AnA-Cortex-Route', 'canonical');
+  next();
+});
 
 const buildRegulatoryAnalysisResponse = (payload: any) => {
   const query = payload?.query || 'Regulatory readiness assessment';
@@ -16,7 +21,7 @@ const buildRegulatoryAnalysisResponse = (payload: any) => {
     overall_confidence_score: 92,
     regulatory_impact_summary:
       'ICH E6(R3) alignment requires targeted remediation before submission.',
-    lumen_ai_recommendations: [
+    ana_1_0_ri_recommendations: [
       'Prioritize quality management evidence mapped to ICH E6(R3) Section 5.0.',
       'Address risk-based monitoring controls and data-integrity traceability.',
       'Close critical documentation gaps before regulatory pre-submission review.',
@@ -87,7 +92,7 @@ const buildRegulatoryAnalysisResponse = (payload: any) => {
         clinical_hold_risk: 75000,
       },
     },
-    lumen_intelligence_summary: {
+    ana_1_0_ri_intelligence_summary: {
       confidence_score: 92,
       generated_at: new Date().toISOString(),
       source: 'ana-ri',
@@ -153,7 +158,7 @@ const buildIchGuidanceResponse = (payload: any) => {
     ich_e6r3_guidance: sections,
     guidance_references: sections,
     ich_e6r3_sections_covered: sections,
-    lumen_ai_ich_analysis:
+    ana_1_0_ri_ich_analysis:
       'Cross-checked requirements against the requested regulatory context and highlighted priority compliance actions.',
     regulatory_impact_assessment:
       'Current posture indicates moderate-to-high risk if critical controls are not remediated before submission.',
@@ -166,7 +171,7 @@ const buildIchGuidanceResponse = (payload: any) => {
 
 router.get('/health', async (_req, res) => {
   try {
-    const status = await lumenCortexService.verifyNeonConnection();
+    const status = await anaCortexService.getCapabilityHealth();
     res.json({ success: true, status });
   } catch (error) {
     console.error('AnA RI health check failed:', error);
@@ -222,6 +227,19 @@ router.get('/intelligence', async (_req, res) => {
   }
 });
 
+router.get('/capabilities', async (_req, res) => {
+  try {
+    const status = await anaCortexService.getCapabilityHealth();
+    res.json({
+      success: true,
+      ...status,
+    });
+  } catch (error) {
+    console.error('AnA Cortex capability check failed:', error);
+    res.status(500).json({ success: false, error: 'Failed to inspect capabilities' });
+  }
+});
+
 router.post('/harvest/10k', async (req, res) => {
   try {
     const { cik, limit, includeAmended, organizationId } = req.body || {};
@@ -234,7 +252,7 @@ router.post('/harvest/10k', async (req, res) => {
       });
     }
 
-    const result = await lumenCortexService.harvest10KFilings({
+    const result = await anaCortexService.harvest10KFilings({
       organizationId: Number(orgId),
       cik,
       limit,
@@ -263,7 +281,7 @@ router.post('/observation-terms/csr', async (req, res) => {
       });
     }
 
-    const result = await lumenCortexService.syncObservationTermsFromCSR(Number(orgId), limit);
+    const result = await anaCortexService.syncObservationTermsFromCSR(Number(orgId), limit);
 
     res.json({ success: true, ...result });
   } catch (error) {
@@ -287,17 +305,17 @@ router.get('/observation-terms', async (req, res) => {
       });
     }
 
-    const conditions = [eq(lumenObservationTerms.organizationId, Number(orgId))];
+    const conditions = [eq(anaObservationTerms.organizationId, Number(orgId))];
     if (category) {
-      conditions.push(eq(lumenObservationTerms.category, String(category)));
+      conditions.push(eq(anaObservationTerms.category, String(category)));
     }
     if (termType) {
-      conditions.push(eq(lumenObservationTerms.termType, String(termType)));
+      conditions.push(eq(anaObservationTerms.termType, String(termType)));
     }
 
     const terms = await db
       .select()
-      .from(lumenObservationTerms)
+      .from(anaObservationTerms)
       .where(and(...conditions));
 
     res.json({

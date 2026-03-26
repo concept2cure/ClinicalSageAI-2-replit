@@ -190,10 +190,10 @@ export default function StudyRegulatoryIntelligenceSuite() {
 
   // Fetch regulatory readiness
   const { data: regulatoryData, isLoading: regulatoryLoading } = useQuery({
-    queryKey: ['/api/lumen-cortex/regulatory-analysis'],
+    queryKey: ['/api/ana-cortex/regulatory-analysis'],
     enabled: activeTab === 'compliance',
     queryFn: async () => {
-      const response = await fetch('/api/lumen-cortex/regulatory-analysis', {
+      const response = await fetch('/api/ana-cortex/regulatory-analysis', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -274,7 +274,7 @@ export default function StudyRegulatoryIntelligenceSuite() {
 
     setLumenLoading(true);
     try {
-      const response = await fetch('/api/lumen-cortex/ich-e6r3-guidance', {
+      const response = await fetch('/api/ana-cortex/ich-e6r3-guidance', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

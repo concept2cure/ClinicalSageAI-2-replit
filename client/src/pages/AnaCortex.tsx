@@ -1,19 +1,19 @@
 /**
- * Lumen Cortex AI Assistant Page
+ * AnA Cortex AI Assistant Page
  *
  * Full-page conversational AI interface for regulatory intelligence.
- * This is the standalone page version of the Lumen Cortex chat.
+ * This is the standalone page version of the AnA Cortex chat.
  *
- * @module client/pages/LumenCortex
+ * @module client/pages/AnaCortex
  */
 
 import React from 'react';
-import LumenCortexChat from '@/components/LumenCortexChat';
+import AnaCortexChat from '@/components/AnaCortexChat';
 import { Brain, ArrowLeft } from 'lucide-react';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 
-export default function LumenCortex() {
+export default function AnaCortex() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
@@ -46,7 +46,7 @@ export default function LumenCortex() {
       {/* Main content */}
       <main className="container mx-auto px-4 py-6">
         <div className="max-w-4xl mx-auto">
-          <LumenCortexChat className="h-[calc(100vh-180px)] shadow-sm border border-slate-200/60 bg-white/80" />
+          <AnaCortexChat className="h-[calc(100vh-180px)] shadow-sm border border-slate-200/60 bg-white/80" />
         </div>
       </main>
 
