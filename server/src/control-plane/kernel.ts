@@ -9,6 +9,7 @@ export interface KernelTraceStep {
   decision: KernelDecision;
   rationale: string;
   timestamp: string;
+  regulatoryReference?: string[];
   evidence?: Record<string, unknown>;
 }
 
@@ -24,9 +25,13 @@ export interface KernelEvaluationInput {
 export interface KernelEvaluation {
   requestId: string;
   finalDecision: KernelDecision;
+  enforcedDecision?: KernelDecision;
   score: number;
   trace: KernelTraceStep[];
   flags: string[];
+  policyBundleId?: string;
+  policyBundleVersion?: string;
+  mode?: 'enforce' | 'audit' | 'alert';
   controls: {
     requiresHumanReview: boolean;
     requiresAuditEscalation: boolean;
@@ -50,7 +55,9 @@ function clamp(value: number, min = 0, max = 100) {
 
 function digestRequestSurface(input: KernelEvaluationInput): string {
   return createHash('sha256')
-    .update(`${input.method}:${input.path}:${input.actorId ?? 'anonymous'}:${input.tenantId ?? 'unknown'}`)
+    .update(
+      `${input.method}:${input.path}:${input.actorId ?? 'anonymous'}:${input.tenantId ?? 'unknown'}`
+    )
     .digest('hex');
 }
 
@@ -94,7 +101,8 @@ export class AnaMicrokernel {
         domain: 'governance',
         ruleId: 'gov-bias-screen-v1',
         decision: 'review',
-        rationale: 'Prompt/body includes multiple protected-attribute terms; human review required.',
+        rationale:
+          'Prompt/body includes multiple protected-attribute terms; human review required.',
         timestamp: new Date().toISOString(),
         evidence: { hits },
       });
@@ -157,3 +165,7 @@ export class AnaMicrokernel {
 }
 
 export const anaMicrokernel = new AnaMicrokernel();
+
+export function createAnaMicrokernel(): AnaMicrokernel {
+  return new AnaMicrokernel();
+}

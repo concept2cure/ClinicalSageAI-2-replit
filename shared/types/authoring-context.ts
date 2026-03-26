@@ -156,9 +156,16 @@ export type AuthoringActionWave2Id =
   | 'resolution_changelog'
   | 'module_readiness';
 
+/** Wave 3 action identifiers — Contradiction → Resolution bridge */
+export type AuthoringActionWave3Id =
+  | 'plan_contradiction_resolution'
+  | 'execute_contradiction_resolution'
+  | 'explain_contradiction_resolution'
+  | 'project_resolution_status';
+
 /** Strongly typed action request */
 export interface AuthoringActionRequest {
-  actionId: AuthoringActionId | AuthoringActionWave2Id;
+  actionId: AuthoringActionId | AuthoringActionWave2Id | AuthoringActionWave3Id;
   context: AuthoringContextPack;
   /** Additional parameters specific to the action */
   params?: Record<string, unknown>;
@@ -184,6 +191,14 @@ export const ACTION_REQUIRED_CONTEXT: Record<AuthoringActionId, (keyof Authoring
   explain_promotion_blockers: ['projectId'],
   compare_against_approved: ['projectId', 'artifactId'],
   promote_to_review: ['projectId', 'artifactId'],
+};
+
+/** Minimum context required for each Wave 3 action */
+export const WAVE3_ACTION_REQUIRED_CONTEXT: Record<AuthoringActionWave3Id, (keyof AuthoringContextPack)[]> = {
+  plan_contradiction_resolution: ['projectId'],
+  execute_contradiction_resolution: ['projectId'],
+  explain_contradiction_resolution: ['projectId'],
+  project_resolution_status: ['projectId'],
 };
 
 /**

@@ -1337,127 +1337,32 @@ export const ZenLogin: React.FC = () => {
   // ─────────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left panel — branding / hero */}
-      <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900">
-        {/* Decorative grid */}
-        <div
-          className="absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M60 0H0v60' fill='none' stroke='%23fff' stroke-width='.5'/%3E%3C/svg%3E\")",
-          }}
-        />
-        {/* Gradient orbs */}
-        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-blue-500/20 blur-[120px]" />
-        <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-blue-500/20 blur-[100px]" />
-
-        <div className="relative z-10 flex flex-col justify-between p-12 w-full">
-          {/* Top — logo */}
-          <div>
-            <div className="flex items-center gap-3">
-              <C2CLogo size="lg" />
-            </div>
-          </div>
-
-          {/* Center — tagline */}
-          <div className="space-y-6">
-            <h2 className="text-4xl font-semibold text-white leading-tight">
-              Accelerate your path
-              <br />
-              from concept to cure.
-            </h2>
-            <p className="text-lg text-blue-200/80 max-w-md leading-relaxed">
-              RI-powered regulatory intelligence for IND, NDA, BLA, 510(k) and beyond —
-              purpose-built for life-sciences teams.
-            </p>
-            {/* Trust badges */}
-            <div className="flex items-center gap-4 pt-4">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur text-xs font-medium text-blue-200">
-                <ShieldIcon /> FDA 21 CFR Part 11
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur text-xs font-medium text-blue-200">
-                <ShieldIcon /> HIPAA Compliant
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur text-xs font-medium text-blue-200">
-                <ShieldIcon /> SOC 2 Type II
-              </span>
-            </div>
-          </div>
-
-          {/* Bottom — testimonial / stat */}
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
-            <p className="text-sm text-blue-100/90 italic leading-relaxed">
-              "Concept2Cure reduced our IND preparation time from 18 months to under 6 — with full
-              regulatory traceability at every step."
-            </p>
-            <p className="mt-3 text-xs text-blue-300/70">
-              — VP Regulatory Affairs, Top-20 Biopharma
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Right panel — auth form */}
-      <div className="flex-1 flex flex-col bg-white">
-        {/* Mobile logo (shown on small screens only) */}
-        <div className="lg:hidden flex items-center gap-3 p-6 border-b border-zinc-200">
-          <C2CLogo size="md" />
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+      <div className="w-full max-w-sm px-6">
+        {/* AnA 1.0 RI branding */}
+        <div className="mb-10 text-center">
+          <h1 className="text-3xl font-bold tracking-tight text-zinc-900">
+            AnA 1.0 RI
+          </h1>
         </div>
 
-        <div className="flex-1 flex items-center justify-center px-6 py-12 sm:px-12">
-          <motion.div
-            variants={cardVariants}
-            initial="initial"
-            animate="animate"
-            className="w-full max-w-sm"
-          >
-            {/* Title */}
-            <div className="mb-8">
-              <h1 className="text-2xl font-semibold text-zinc-900">
-                {step === 'success' ? '' : 'Welcome back'}
-              </h1>
-              {step === 'email' && (
-                <p className="mt-2 text-sm text-zinc-500">Sign in to your Concept2Cure account</p>
-              )}
-            </div>
-
-            {/* Auth form */}
-            <AnimatePresence mode="wait">
-              {step === 'email' && renderEmailStep()}
-              {step === 'password' && renderPasswordStep()}
-              {step === 'mfa' && renderMfaStep()}
-              {step === 'mfa-recovery' && renderMfaRecoveryStep()}
-              {step === 'forgot-password' && renderForgotPasswordStep()}
-              {step === 'reset-sent' && renderResetSentStep()}
-              {step === 'success' && renderSuccessStep()}
-            </AnimatePresence>
-
-            {/* Sign up link */}
-            {(step === 'email' || step === 'password') && (
-              <p className="mt-8 text-center text-sm text-zinc-500">
-                Don't have an account?{' '}
-                <button
-                  onClick={() => setLocation('/concept2cure/signup')}
-                  className="text-blue-600 hover:text-blue-700 font-semibold"
-                >
-                  Request access
-                </button>
-              </p>
-            )}
-          </motion.div>
+        {/* Title */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-semibold text-zinc-900">
+            {step === 'success' ? '' : 'Sign in'}
+          </h2>
         </div>
 
-        {/* Footer */}
-        <footer className="py-5 px-6 border-t border-zinc-200">
-          <div className="max-w-sm mx-auto flex items-center justify-between text-xs text-zinc-400">
-            <span>© {new Date().getFullYear()} Concept2Cure Inc.</span>
-            <div className="flex items-center gap-1">
-              <ShieldIcon />
-              <span>Enterprise-grade security</span>
-            </div>
-          </div>
-        </footer>
+        {/* Auth form */}
+        <AnimatePresence mode="wait">
+          {step === 'email' && renderEmailStep()}
+          {step === 'password' && renderPasswordStep()}
+          {step === 'mfa' && renderMfaStep()}
+          {step === 'mfa-recovery' && renderMfaRecoveryStep()}
+          {step === 'forgot-password' && renderForgotPasswordStep()}
+          {step === 'reset-sent' && renderResetSentStep()}
+          {step === 'success' && renderSuccessStep()}
+        </AnimatePresence>
       </div>
     </div>
   );

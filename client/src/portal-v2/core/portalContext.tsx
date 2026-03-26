@@ -88,8 +88,15 @@ export const PortalProvider = ({ children, initialModule = 'dashboard' }: Portal
   const { user: authUser } = useAuth();
 
   // User context
-  const currentRole = (authUser?.roles?.[0] as UserRole) || 'viewer';
-  const agencies: RegulatoryAgency[] = []; // TODO: Load from user profile
+  const isAnaRiIdentity = useMemo(() => {
+    if (!authUser) return false;
+    const email = (authUser.email || '').toLowerCase();
+    const roles = (authUser.roles || []).map(role => role.toLowerCase());
+    return roles.includes('ana_ri') || roles.includes('ana-ri') || email.includes('ana-ri');
+  }, [authUser]);
+
+  const currentRole = (isAnaRiIdentity ? 'admin' : authUser?.roles?.[0] as UserRole) || 'viewer';
+  const agencies: RegulatoryAgency[] = useMemo(() => [], []); // TODO: Load from user profile
   const rolePreset = useMemo(() => getRolePreset(currentRole), [currentRole]);
 
   // Build portal user from auth user

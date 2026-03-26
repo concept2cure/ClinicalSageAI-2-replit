@@ -6,10 +6,6 @@ export interface SessionSnapshot {
   hasActiveArtifact: boolean;
   artifactCount: number;
   collaborationConnected: boolean;
-  signatureCount: number;
-  provenanceCount: number;
-  unresolvedCommentCount: number;
-  trustLoadFailed: boolean;
 }
 
 export interface ReadinessCheckModel {
@@ -17,7 +13,6 @@ export interface ReadinessCheckModel {
   label: string;
   status: CheckStatus;
   detail: string;
-  inspectorTarget?: string;
 }
 
 export interface CapabilityModel {
@@ -99,79 +94,6 @@ export function buildCapabilityModels(snapshot: SessionSnapshot): CapabilityMode
   ];
 }
 
-export function buildReadinessChecks(snapshot: SessionSnapshot): ReadinessCheckModel[] {
-  return [
-    {
-      id: 'project-context',
-      label: 'Project context',
-      status: snapshot.projectId ? 'ready' : 'missing',
-      detail: snapshot.projectId
-        ? `Linked to project ${snapshot.projectId.slice(0, 8)}…`
-        : 'Open editor with a projectId to enable persistence, governance, and audit.',
-      inspectorTarget: 'submission-readiness',
-    },
-    {
-      id: 'artifact-loaded',
-      label: 'Document loaded',
-      status: snapshot.hasActiveArtifact ? 'ready' : 'missing',
-      detail: snapshot.hasActiveArtifact
-        ? 'Active artifact selected for editing.'
-        : 'No active artifact selected. Choose or create a document.',
-      inspectorTarget: 'versions',
-    },
-    {
-      id: 'api-wiring',
-      label: 'Authoring API wiring',
-      status: snapshot.artifactCount > 0 ? 'ready' : 'partial',
-      detail:
-        snapshot.artifactCount > 0
-          ? `Artifact APIs responding (${snapshot.artifactCount} document${snapshot.artifactCount === 1 ? '' : 's'} loaded).`
-          : 'No artifacts fetched yet. Confirm artifact list endpoint wiring.',
-      inspectorTarget: 'versions',
-    },
-    {
-      id: 'collaboration',
-      label: 'Collaboration channel',
-      status: snapshot.collaborationConnected ? 'ready' : 'partial',
-      detail: snapshot.collaborationConnected
-        ? 'Presence and typing channel connected.'
-        : 'Collaboration socket offline; single-user authoring still available.',
-      inspectorTarget: 'comments',
-    },
-    {
-      id: 'part11-signatures',
-      label: 'Part 11 signature coverage',
-      status: snapshot.signatureCount > 0 ? 'ready' : 'partial',
-      detail:
-        snapshot.signatureCount > 0
-          ? `${snapshot.signatureCount} electronic signature(s) recorded.`
-          : 'No signatures recorded yet for this artifact.',
-      inspectorTarget: 'audit',
-    },
-    {
-      id: 'provenance-audit',
-      label: 'Provenance and trust telemetry',
-      status: snapshot.trustLoadFailed ? 'missing' : snapshot.provenanceCount > 0 ? 'ready' : 'partial',
-      detail: snapshot.trustLoadFailed
-        ? 'Trust indicators failed to load; verify provenance/audit APIs.'
-        : snapshot.provenanceCount > 0
-          ? `${snapshot.provenanceCount} provenance events loaded.`
-          : 'No provenance events visible yet.',
-      inspectorTarget: 'provenance',
-    },
-    {
-      id: 'review-closure',
-      label: 'Review closure signal',
-      status: snapshot.unresolvedCommentCount === 0 ? 'ready' : 'partial',
-      detail:
-        snapshot.unresolvedCommentCount === 0
-          ? 'No unresolved comments.'
-          : `${snapshot.unresolvedCommentCount} unresolved comment thread(s) remain.`,
-      inspectorTarget: 'comments',
-    },
-  ];
-}
-
 export function buildRemediationQueue(
   checks: ReadinessCheckModel[],
   capabilities: CapabilityModel[]
@@ -182,7 +104,14 @@ export function buildRemediationQueue(
       id: `check-${check.id}`,
       title: check.label,
       detail: check.detail,
-      inspectorTarget: check.inspectorTarget || 'intelligence',
+      inspectorTarget:
+        check.id === 'project-context'
+          ? 'submission-readiness'
+          : check.id === 'collaboration'
+            ? 'comments'
+            : check.id === 'api-wiring'
+              ? 'versions'
+              : 'intelligence',
       severity: check.status === 'missing' ? 'high' : 'medium',
     }));
 

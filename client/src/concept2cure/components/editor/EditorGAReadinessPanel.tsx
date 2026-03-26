@@ -45,7 +45,6 @@ export interface EditorGAReadinessPanelProps {
   capabilities: CompetitorCapability[];
   remediationQueue: RemediationItem[];
   onOpenInspector?: (id: string) => void;
-  onSnooze?: () => void;
   onClose?: () => void;
 }
 
@@ -76,8 +75,6 @@ export function EditorGAReadinessPanel({
   capabilities,
   remediationQueue,
   onOpenInspector,
-  onSnooze,
-  onClose,
 }: EditorGAReadinessPanelProps) {
   const readyCount = checks.filter(c => c.status === 'ready').length;
   const score = checks.length ? Math.round((readyCount / checks.length) * 100) : 0;
@@ -88,24 +85,10 @@ export function EditorGAReadinessPanel({
     <div className="h-full overflow-y-auto p-4 space-y-4 bg-white">
       <Card>
         <CardHeader className="pb-2">
-          <div className="flex items-center justify-between gap-2">
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <Rocket className="w-4 h-4 text-violet-600" />
-              GA & Competitive Readiness
-            </CardTitle>
-            <div className="flex items-center gap-1">
-              {onSnooze && (
-                <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={onSnooze}>
-                  Snooze
-                </Button>
-              )}
-              {onClose && (
-                <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={onClose}>
-                  Close
-                </Button>
-              )}
-            </div>
-          </div>
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Rocket className="w-4 h-4 text-violet-600" />
+            GA & Competitive Readiness
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div>

@@ -217,31 +217,58 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'projectId and artifactId are required' });
     }
 
-    // Step 1: Check promotion blockers
+    const orgId = (req as any).tenantId || (req as any).organizationId || 1;
+
+    // Step 1: Governance boundary evaluation (includes contradiction + readiness gates)
     let blocked = false;
     const blockReasons: string[] = [];
+    let boundaryTransition: any = null;
 
     try {
-      const { contradictionEngineService } = await import(
-        '../services/contradiction-engine-service.js'
+      const { GovernanceBoundaryService } = await import(
+        '../services/governance-boundary-service.js'
       );
-      if (contradictionEngineService?.checkPromotionBlocked) {
-        const result = await contradictionEngineService.checkPromotionBlocked(
-          'default',
-          Number(projectId),
-          Number(artifactId)
-        );
-        if (result?.blocked) {
-          blocked = true;
-          blockReasons.push(
-            ...((result.findings || []).map(
-              (f: any) => f.explanation || 'Unresolved blocking contradiction'
-            ))
-          );
-        }
+      const boundaryService = GovernanceBoundaryService.getInstance();
+      const transitionResult = await boundaryService.evaluateTransition({
+        organizationId: Number(orgId),
+        projectId: Number(projectId),
+        artifactId: Number(artifactId),
+        fromBoundary: 'advisory',
+        toBoundary: 'governed_draft',
+        actorId: (req as any).userId ? Number((req as any).userId) : undefined,
+        actorRole: (req as any).userRole || undefined,
+      });
+
+      boundaryTransition = transitionResult.transition;
+
+      if (!transitionResult.allowed) {
+        blocked = true;
+        blockReasons.push(...transitionResult.blockedReasons);
       }
     } catch {
-      // Non-blocking — proceed without contradiction check
+      // Governance boundary service unavailable — fall back to direct contradiction check
+      try {
+        const { contradictionEngineService } = await import(
+          '../services/contradiction-engine-service.js'
+        );
+        if (contradictionEngineService?.checkPromotionBlocked) {
+          const result = await contradictionEngineService.checkPromotionBlocked(
+            orgId,
+            Number(projectId),
+            Number(artifactId)
+          );
+          if (result?.blocked) {
+            blocked = true;
+            blockReasons.push(
+              ...((result.blockingFindings || result.findings || []).map(
+                (f: any) => f.title || f.explanation || 'Unresolved blocking contradiction'
+              ))
+            );
+          }
+        }
+      } catch {
+        // Non-blocking — proceed without contradiction check
+      }
     }
 
     // ── Record blocked promotion as a formal decision ──────────────
@@ -388,6 +415,7 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
         receiptId: promotionReceipt?.id || null,
         authority: promotionDecision?.authority || null,
         pendingApprovals: promotionReceipt?.pendingApprovals || [],
+        boundaryTransitionId: boundaryTransition?.id || null,
       });
     } catch (promoteErr: any) {
       return res.json({
@@ -399,6 +427,346 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
   } catch (err: any) {
     console.error('[authoring-actions] promote-to-review error:', err?.message);
     return res.status(500).json({ error: 'Failed to promote to review' });
+  }
+});
+
+// ─── Promotion Lifecycle: approve-artifact (review → approved) ──────────────
+
+router.post('/approve-artifact', async (req: Request, res: Response) => {
+  try {
+    const { projectId, artifactId } = req.body;
+    if (!projectId || !artifactId) {
+      return res.status(400).json({ error: 'projectId and artifactId are required' });
+    }
+
+    const orgId = (req as any).tenantId || (req as any).organizationId || 1;
+    const userId = (req as any).userId;
+    const userRole = (req as any).userRole;
+
+    // Step 1: Governance boundary check (governed_draft → approved)
+    let blocked = false;
+    const blockReasons: string[] = [];
+    let boundaryTransition: any = null;
+
+    try {
+      const { GovernanceBoundaryService } = await import('../services/governance-boundary-service.js');
+      const boundaryService = GovernanceBoundaryService.getInstance();
+      const result = await boundaryService.evaluateTransition({
+        organizationId: Number(orgId),
+        projectId: Number(projectId),
+        artifactId: Number(artifactId),
+        fromBoundary: 'governed_draft',
+        toBoundary: 'approved',
+        actorId: userId ? Number(userId) : undefined,
+        actorRole: userRole || undefined,
+      });
+      boundaryTransition = result.transition;
+      if (!result.allowed) {
+        blocked = true;
+        blockReasons.push(...result.blockedReasons);
+      }
+    } catch (err: any) {
+      // Boundary service unavailable — fail closed for approval
+      blocked = true;
+      blockReasons.push('Governance boundary service unavailable — cannot approve without boundary check');
+    }
+
+    if (blocked) {
+      // Record blocked approval decision
+      let blockedDecision: any = null;
+      try {
+        const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
+        blockedDecision = decisionLifecycleService.recordGovernedActionDecision({
+          projectId: String(projectId), kind: 'promotion-decision',
+          governedAction: 'approve-artifact', artifactId: String(artifactId),
+          summary: `Approval blocked: ${blockReasons.length} issue(s)`,
+          rationale: blockReasons.join('; '),
+          sourceSignals: blockReasons.map(r => ({ kind: 'system-rule' as const, summary: r })),
+          createdByType: 'ana', createdById: userId || undefined,
+        });
+      } catch { /* non-blocking */ }
+
+      return res.json({
+        approved: false, reason: 'blocked', blockers: blockReasons,
+        message: `Approval blocked: ${blockReasons.length} issue(s). Resolve before approving.`,
+        decisionId: blockedDecision?.id || null,
+      });
+    }
+
+    // Step 2: Authority check
+    let authorityCheck: any = null;
+    try {
+      const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
+      authorityCheck = decisionLifecycleService.checkAuthority('approve-artifact', userRole || undefined);
+      if (authorityCheck && !authorityCheck.allowed) {
+        return res.json({
+          approved: false, reason: 'unauthorized',
+          message: authorityCheck.reason || 'Reviewer approval required',
+          authority: authorityCheck.authority,
+        });
+      }
+    } catch { /* non-blocking */ }
+
+    // Step 3: Execute status transition
+    try {
+      const { concept2cureArtifacts } = await import('../../shared/schema/index.js');
+      const { eq } = await import('drizzle-orm');
+      const { db } = await import('../db.js');
+
+      const [artifact] = await db.select().from(concept2cureArtifacts)
+        .where(eq(concept2cureArtifacts.id, Number(artifactId))).limit(1);
+      if (!artifact) throw new Error('Artifact not found');
+      if (artifact.status !== 'review') throw new Error(`Cannot approve: artifact is ${artifact.status}, must be in review`);
+
+      await db.update(concept2cureArtifacts)
+        .set({ status: 'approved', approvedVersionId: artifact.version, updatedAt: new Date() })
+        .where(eq(concept2cureArtifacts.id, Number(artifactId)));
+
+      // Record decision + receipt
+      let approveDecision: any = null;
+      let approveReceipt: any = null;
+      try {
+        const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
+        approveDecision = decisionLifecycleService.recordGovernedActionDecision({
+          projectId: String(projectId), kind: 'promotion-decision',
+          governedAction: 'approve-artifact', artifactId: String(artifactId),
+          summary: 'Artifact approved', rationale: 'All governance gates passed. Reviewer approved.',
+          sourceSignals: [{ kind: 'user-request' as const, summary: 'Reviewer approved artifact' }],
+          createdByType: 'human', createdById: userId || undefined,
+        });
+        if (approveDecision) {
+          decisionLifecycleService.transitionDecision(approveDecision.id, 'confirmed', { actorId: userId });
+          decisionLifecycleService.transitionDecision(approveDecision.id, 'executed', { actorId: userId });
+          approveReceipt = decisionLifecycleService.createReceipt({
+            decisionId: approveDecision.id, projectId: String(projectId),
+            recommendation: { summary: 'Approve artifact', actionIds: ['approve-artifact'], rationale: 'All gates passed' },
+            confirmation: { accepted: true, confirmedById: userId || undefined },
+            execution: { executed: true, executedById: userId || undefined, executionMethod: 'status-transition:review→approved' },
+            affectedObjects: [{ objectType: 'artifact', objectId: String(artifactId), previousState: 'review', newState: 'approved', changeDescription: 'Artifact approved by reviewer' }],
+          });
+        }
+      } catch { /* non-blocking */ }
+
+      return res.json({
+        approved: true, message: 'Artifact approved.', newStatus: 'approved',
+        decisionId: approveDecision?.id || null, receiptId: approveReceipt?.id || null,
+        boundaryTransitionId: boundaryTransition?.id || null,
+      });
+    } catch (err: any) {
+      return res.json({ approved: false, reason: 'error', message: err?.message || 'Failed to approve' });
+    }
+  } catch (err: any) {
+    console.error('[authoring-actions] approve-artifact error:', err?.message);
+    return res.status(500).json({ error: 'Failed to approve artifact' });
+  }
+});
+
+// ─── Promotion Lifecycle: lock-artifact (approved → locked) ─────────────────
+
+router.post('/lock-artifact', async (req: Request, res: Response) => {
+  try {
+    const { projectId, artifactId } = req.body;
+    if (!projectId || !artifactId) {
+      return res.status(400).json({ error: 'projectId and artifactId are required' });
+    }
+
+    const orgId = (req as any).tenantId || (req as any).organizationId || 1;
+    const userId = (req as any).userId;
+    const userRole = (req as any).userRole;
+
+    // Step 1: Governance boundary check (approved → locked)
+    let blocked = false;
+    const blockReasons: string[] = [];
+    let boundaryTransition: any = null;
+
+    try {
+      const { GovernanceBoundaryService } = await import('../services/governance-boundary-service.js');
+      const boundaryService = GovernanceBoundaryService.getInstance();
+      const result = await boundaryService.evaluateTransition({
+        organizationId: Number(orgId), projectId: Number(projectId),
+        artifactId: Number(artifactId),
+        fromBoundary: 'approved', toBoundary: 'locked',
+        actorId: userId ? Number(userId) : undefined,
+        actorRole: userRole || undefined,
+      });
+      boundaryTransition = result.transition;
+      if (!result.allowed) { blocked = true; blockReasons.push(...result.blockedReasons); }
+    } catch (err: any) {
+      blocked = true;
+      blockReasons.push('Governance boundary service unavailable — cannot lock without boundary check');
+    }
+
+    if (blocked) {
+      return res.json({
+        locked: false, reason: 'blocked', blockers: blockReasons,
+        message: `Lock blocked: ${blockReasons.length} issue(s).`,
+      });
+    }
+
+    // Step 2: Authority check
+    try {
+      const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
+      const authorityCheck = decisionLifecycleService.checkAuthority('lock-artifact', userRole || undefined);
+      if (authorityCheck && !authorityCheck.allowed) {
+        return res.json({ locked: false, reason: 'unauthorized', message: authorityCheck.reason || 'Reviewer approval required' });
+      }
+    } catch { /* non-blocking */ }
+
+    // Step 3: Execute lock
+    try {
+      const { concept2cureArtifacts } = await import('../../shared/schema/index.js');
+      const { eq } = await import('drizzle-orm');
+      const { db } = await import('../db.js');
+
+      const [artifact] = await db.select().from(concept2cureArtifacts)
+        .where(eq(concept2cureArtifacts.id, Number(artifactId))).limit(1);
+      if (!artifact) throw new Error('Artifact not found');
+      if (artifact.status !== 'approved') throw new Error(`Cannot lock: artifact is ${artifact.status}, must be approved`);
+
+      await db.update(concept2cureArtifacts).set({
+        status: 'locked', publishedVersionId: artifact.version,
+        lockedAt: new Date(), lockedById: userId ? Number(userId) : undefined,
+        updatedAt: new Date(),
+      }).where(eq(concept2cureArtifacts.id, Number(artifactId)));
+
+      // Record decision + receipt
+      let lockDecision: any = null;
+      let lockReceipt: any = null;
+      try {
+        const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
+        lockDecision = decisionLifecycleService.recordGovernedActionDecision({
+          projectId: String(projectId), kind: 'promotion-decision',
+          governedAction: 'lock-artifact', artifactId: String(artifactId),
+          summary: 'Artifact locked for submission', rationale: 'All decisions resolved. Content locked.',
+          sourceSignals: [{ kind: 'user-request' as const, summary: 'Artifact locked by authorized user' }],
+          createdByType: 'human', createdById: userId || undefined,
+        });
+        if (lockDecision) {
+          decisionLifecycleService.transitionDecision(lockDecision.id, 'confirmed', { actorId: userId });
+          decisionLifecycleService.transitionDecision(lockDecision.id, 'executed', { actorId: userId });
+          lockReceipt = decisionLifecycleService.createReceipt({
+            decisionId: lockDecision.id, projectId: String(projectId),
+            recommendation: { summary: 'Lock artifact', actionIds: ['lock-artifact'], rationale: 'All gates passed' },
+            confirmation: { accepted: true, confirmedById: userId || undefined },
+            execution: { executed: true, executedById: userId || undefined, executionMethod: 'status-transition:approved→locked' },
+            affectedObjects: [{ objectType: 'artifact', objectId: String(artifactId), previousState: 'approved', newState: 'locked', changeDescription: 'Artifact locked for submission' }],
+          });
+        }
+      } catch { /* non-blocking */ }
+
+      return res.json({
+        locked: true, message: 'Artifact locked for submission.', newStatus: 'locked',
+        decisionId: lockDecision?.id || null, receiptId: lockReceipt?.id || null,
+        boundaryTransitionId: boundaryTransition?.id || null,
+      });
+    } catch (err: any) {
+      return res.json({ locked: false, reason: 'error', message: err?.message || 'Failed to lock' });
+    }
+  } catch (err: any) {
+    console.error('[authoring-actions] lock-artifact error:', err?.message);
+    return res.status(500).json({ error: 'Failed to lock artifact' });
+  }
+});
+
+// ─── Promotion Lifecycle: mark-submission-ready (locked → submission_ready) ──
+
+router.post('/mark-submission-ready', async (req: Request, res: Response) => {
+  try {
+    const { projectId, artifactId } = req.body;
+    if (!projectId || !artifactId) {
+      return res.status(400).json({ error: 'projectId and artifactId are required' });
+    }
+
+    const orgId = (req as any).tenantId || (req as any).organizationId || 1;
+    const userId = (req as any).userId;
+    const userRole = (req as any).userRole;
+
+    // Step 1: Governance boundary check (locked → submission_ready)
+    let blocked = false;
+    const blockReasons: string[] = [];
+    let boundaryTransition: any = null;
+
+    try {
+      const { GovernanceBoundaryService } = await import('../services/governance-boundary-service.js');
+      const boundaryService = GovernanceBoundaryService.getInstance();
+      const result = await boundaryService.evaluateTransition({
+        organizationId: Number(orgId), projectId: Number(projectId),
+        artifactId: Number(artifactId),
+        fromBoundary: 'locked', toBoundary: 'submission_ready',
+        actorId: userId ? Number(userId) : undefined,
+        actorRole: userRole || undefined,
+      });
+      boundaryTransition = result.transition;
+      if (!result.allowed) { blocked = true; blockReasons.push(...result.blockedReasons); }
+    } catch (err: any) {
+      blocked = true;
+      blockReasons.push('Governance boundary service unavailable — cannot mark submission-ready without boundary check');
+    }
+
+    if (blocked) {
+      return res.json({
+        submissionReady: false, reason: 'blocked', blockers: blockReasons,
+        message: `Submission-ready blocked: ${blockReasons.length} issue(s).`,
+      });
+    }
+
+    // Step 2: Authority check (requires escalation — RA/submission lead)
+    try {
+      const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
+      const authorityCheck = decisionLifecycleService.checkAuthority('judge-dossier-ready', userRole || undefined);
+      if (authorityCheck && !authorityCheck.allowed) {
+        return res.json({
+          submissionReady: false, reason: 'unauthorized',
+          message: authorityCheck.reason || 'Escalation required — RA or submission lead must approve',
+        });
+      }
+    } catch { /* non-blocking */ }
+
+    // Step 3: Record governance-level transition (artifact stays 'locked' in DB — submission_ready is a governance boundary)
+    let decision: any = null;
+    let receipt: any = null;
+    try {
+      const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
+      decision = decisionLifecycleService.recordGovernedActionDecision({
+        projectId: String(projectId), kind: 'promotion-decision',
+        governedAction: 'judge-dossier-ready', artifactId: String(artifactId),
+        summary: 'Artifact marked submission-ready',
+        rationale: 'All assumptions approved, all decisions resolved, strong confidence. Ready for submission.',
+        sourceSignals: [{ kind: 'user-request' as const, summary: 'RA/submission lead confirmed readiness' }],
+        createdByType: 'human', createdById: userId || undefined,
+      });
+      if (decision) {
+        decisionLifecycleService.transitionDecision(decision.id, 'confirmed', { actorId: userId });
+        decisionLifecycleService.transitionDecision(decision.id, 'executed', { actorId: userId });
+        receipt = decisionLifecycleService.createReceipt({
+          decisionId: decision.id, projectId: String(projectId),
+          recommendation: { summary: 'Mark submission-ready', actionIds: ['judge-dossier-ready'], rationale: 'All gates passed' },
+          confirmation: { accepted: true, confirmedById: userId || undefined },
+          execution: { executed: true, executedById: userId || undefined, executionMethod: 'governance-transition:locked→submission_ready' },
+          affectedObjects: [{ objectType: 'artifact', objectId: String(artifactId), previousState: 'locked', newState: 'submission_ready', changeDescription: 'Artifact marked submission-ready' }],
+        });
+      }
+    } catch { /* non-blocking */ }
+
+    // Update artifact metadata to record submission readiness
+    try {
+      const { concept2cureArtifacts } = await import('../../shared/schema/index.js');
+      const { eq } = await import('drizzle-orm');
+      const { db } = await import('../db.js');
+      await db.update(concept2cureArtifacts).set({
+        publishedAt: new Date(), updatedAt: new Date(),
+      }).where(eq(concept2cureArtifacts.id, Number(artifactId)));
+    } catch { /* non-blocking */ }
+
+    return res.json({
+      submissionReady: true, message: 'Artifact marked submission-ready.',
+      governanceBoundary: 'submission_ready',
+      decisionId: decision?.id || null, receiptId: receipt?.id || null,
+      boundaryTransitionId: boundaryTransition?.id || null,
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] mark-submission-ready error:', err?.message);
+    return res.status(500).json({ error: 'Failed to mark submission-ready' });
   }
 });
 
@@ -2281,6 +2649,139 @@ router.get('/contradiction-context/:projectId', async (req: Request, res: Respon
   } catch (err: any) {
     console.error('[authoring-actions] contradiction-context error:', err?.message);
     return res.status(500).json({ error: 'Failed to fetch contradiction context' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// WAVE 3 ACTIONS — Contradiction → Resolution Bridge (Pass 10)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /plan-contradiction-resolution
+ * Plan (but don't execute) resolution for a specific contradiction.
+ * Returns authority check, recommended path, affected objects.
+ */
+router.post('/plan-contradiction-resolution', async (req: Request, res: Response) => {
+  try {
+    const { projectId, findingId, finding, overlayRules } = req.body;
+    if (!projectId || !findingId || !finding) {
+      return res.status(400).json({ error: 'projectId, findingId, and finding are required' });
+    }
+
+    const orgId = (req as any).tenantId || (req as any).organizationId || 1;
+    const userId = (req as any).userId || 0;
+
+    const { planContradictionResolution } = await import(
+      '../services/resolution/contradiction-resolution-bridge.js'
+    );
+    const result = await planContradictionResolution(
+      Number(orgId), Number(userId), Number(projectId),
+      findingId, finding, overlayRules
+    );
+
+    return res.json({
+      status: result.success ? 'data' : 'error',
+      action: 'plan_contradiction_resolution',
+      ...result,
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] plan-contradiction-resolution error:', err?.message);
+    return res.status(500).json({ error: 'Failed to plan contradiction resolution' });
+  }
+});
+
+/**
+ * POST /execute-contradiction-resolution
+ * Execute a contradiction resolution (full orchestration with authority + overlay awareness).
+ * Creates decision record + receipt. Triggers preflight refresh.
+ */
+router.post('/execute-contradiction-resolution', async (req: Request, res: Response) => {
+  try {
+    const { projectId, findingId, finding, overlayRules } = req.body;
+    if (!projectId || !findingId || !finding) {
+      return res.status(400).json({ error: 'projectId, findingId, and finding are required' });
+    }
+
+    const orgId = (req as any).tenantId || (req as any).organizationId || 1;
+    const userId = (req as any).userId || 0;
+    const actorRole = (req as any).userRole || undefined;
+
+    const { executeContradictionResolution } = await import(
+      '../services/resolution/contradiction-resolution-bridge.js'
+    );
+    const result = await executeContradictionResolution(
+      Number(orgId), Number(userId), Number(projectId),
+      findingId, finding, overlayRules, actorRole
+    );
+
+    return res.json({
+      status: result.success ? 'data' : 'blocked',
+      action: 'execute_contradiction_resolution',
+      ...result,
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] execute-contradiction-resolution error:', err?.message);
+    return res.status(500).json({ error: 'Failed to execute contradiction resolution' });
+  }
+});
+
+/**
+ * POST /explain-contradiction-resolution
+ * Explain a contradiction resolution plan (structured, no LLM).
+ */
+router.post('/explain-contradiction-resolution', async (req: Request, res: Response) => {
+  try {
+    const { projectId, findingId, finding, overlayRules } = req.body;
+    if (!projectId || !findingId || !finding) {
+      return res.status(400).json({ error: 'projectId, findingId, and finding are required' });
+    }
+
+    const orgId = (req as any).tenantId || (req as any).organizationId || 1;
+
+    const { explainContradictionResolution } = await import(
+      '../services/resolution/contradiction-resolution-bridge.js'
+    );
+    const result = await explainContradictionResolution(
+      Number(orgId), Number(projectId), findingId, finding, overlayRules
+    );
+
+    return res.json({
+      status: result.success ? 'data' : 'error',
+      action: 'explain_contradiction_resolution',
+      ...result,
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] explain-contradiction-resolution error:', err?.message);
+    return res.status(500).json({ error: 'Failed to explain contradiction resolution' });
+  }
+});
+
+/**
+ * GET /project-resolution-status/:projectId
+ * Get resolution status for a project (plans + bundles summary).
+ */
+router.get('/project-resolution-status/:projectId', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid projectId' });
+    }
+
+    const orgId = (req as any).tenantId || (req as any).organizationId || 1;
+
+    const { getProjectResolutionStatus } = await import(
+      '../services/resolution/contradiction-resolution-bridge.js'
+    );
+    const result = await getProjectResolutionStatus(Number(orgId), projectId);
+
+    return res.json({
+      status: result.success ? 'data' : 'error',
+      action: 'project_resolution_status',
+      ...result,
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] project-resolution-status error:', err?.message);
+    return res.status(500).json({ error: 'Failed to get project resolution status' });
   }
 });
 

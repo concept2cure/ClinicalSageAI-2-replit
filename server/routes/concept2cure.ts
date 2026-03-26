@@ -2824,7 +2824,6 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
       })),
       metadata: updatedArtifact.metadata as Record<string, unknown>,
       status: updatedArtifact.status || 'draft',
-      ctdSection: updatedArtifact.ctdSection,
       createdAt: updatedArtifact.createdAt,
       updatedAt: updatedArtifact.updatedAt,
     };

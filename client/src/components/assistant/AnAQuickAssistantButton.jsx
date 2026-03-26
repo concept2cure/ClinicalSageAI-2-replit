@@ -1,9 +1,9 @@
-// /client/src/components/assistant/LumenAssistantButton.jsx
+// /client/src/components/assistant/AnAQuickAssistantButton.jsx
 
 import React, { useState } from 'react';
 import { MessageSquare, X, Maximize2, Minimize2, Send } from 'lucide-react';
 
-export default function LumenAssistantButton({
+export default function AnAQuickAssistantButton({
   variant = 'default',
   size = 'md',
   tooltip = 'Ask AnA',

@@ -34,7 +34,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 
-export const LumenAiAssistant = ({ isOpen, onClose, module = 'general', context = {} }) => {
+export const AnAAssistant = ({ isOpen, onClose, module = 'general', context = {} }) => {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
@@ -75,31 +75,57 @@ export const LumenAiAssistant = ({ isOpen, onClose, module = 'general', context 
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/ai/regulatory-guidance', {
+      let response = await fetch('/api/ana-ri/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          question: userMessage.content,
-          model: agentModel,
-          context: 'regulatory_compliance',
-          module,
-          contextData: context,
+          message: userMessage.content,
+          intent_lens: 'auto',
+          user_role: 'general',
+          project_context: {
+            module,
+            ...context,
+          },
+          context: {
+            module,
+            ...context,
+          },
         }),
       });
+
+      // Backward compatibility fallback for environments where /api/ana-ri may be unavailable
+      if (!response.ok) {
+        response = await fetch('/api/ai/regulatory-guidance', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            question: userMessage.content,
+            model: agentModel,
+            context: 'regulatory_compliance',
+            module,
+            contextData: context,
+          }),
+        });
+      }
 
       if (!response.ok) {
         throw new Error(`Request failed: ${response.status}`);
       }
 
       const data = await response.json();
+      const normalizedResponse =
+        data?.data?.response ||
+        data?.response ||
+        data?.answer ||
+        'I apologize, but I was unable to generate a response at this time. Please try again.';
 
       const aiMessage = {
         role: 'assistant',
-        content:
-          data.response ||
-          'I apologize, but I was unable to generate a response at this time. Please try again.',
+        content: normalizedResponse,
         timestamp: new Date().toLocaleTimeString(),
         model: agentModel,
       };

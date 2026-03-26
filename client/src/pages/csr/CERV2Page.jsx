@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-// Safely handle LumenAiAssistant context access with fallbacks
-import { useLumenAiAssistant } from '@/contexts/LumenAiAssistantContext';
+// Safely handle AnAAssistant context access with fallbacks
+import { useAnAAssistant } from '@/contexts/AnAAssistantContext';
 import { useTenantContext } from '@/contexts/TenantContext';
 import { useToast } from '@/components/ui/toaster';
 import { queryClient } from '@/lib/queryClient';
@@ -165,11 +165,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 
 // Create a fallback if context is unavailable
-const safeAssistantHook = () => {
+const useSafeAssistantHook = () => {
   try {
-    return useLumenAiAssistant();
+    return useAnAAssistant();
   } catch (e) {
-    console.warn('LumenAiAssistant context not available, using fallback');
+    console.warn('AnAAssistant context not available, using fallback');
     return {
       openAssistant: () => console.log('Opening AnA Assistant...'),
       setModuleContext: () => {},
@@ -198,7 +198,7 @@ export default function CERV2Page({
   const effectiveInitialDocType = initialDocumentType || urlMode || '';
 
   // Use the safe assistant hook instead of direct context access
-  const assistantContext = safeAssistantHook();
+  const assistantContext = useSafeAssistantHook();
   const { openAssistant = () => {}, setModuleContext = () => {} } = assistantContext || {};
   const { toast } = useToast();
 
