@@ -23,6 +23,9 @@ import {
 } from 'lucide-react';
 import { LIFECYCLE, toLifecycleStage } from '../ui/enterprise';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { LoadingState } from '@/components/ui/statesV2';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -44,15 +47,6 @@ interface GlobalDocumentSearchProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenDocument: (projectId: string, documentId: string) => void;
-}
-
-// ── Auth ───────────────────────────────────────────────────────────────────
-
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 // ── Status helpers ─────────────────────────────────────────────────────────
@@ -83,6 +77,7 @@ function normalizeStatus(raw?: string): string {
 // ── Component ──────────────────────────────────────────────────────────────
 
 export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: GlobalDocumentSearchProps) {
+  const { toast } = useToast();
   const [query, setQuery] = useState('');
   const [allDocs, setAllDocs] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -95,15 +90,18 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
   useEffect(() => {
     if (!isOpen) return;
     setLoading(true);
-    fetch('/api/concept2cure/artifacts', { headers: getAuthHeaders() })
+    apiRequest('GET', '/api/concept2cure/artifacts')
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(payload => {
         const data = payload.data || payload || [];
         setAllDocs(data);
       })
-      .catch(() => setAllDocs([]))
+      .catch(() => {
+        setAllDocs([]);
+        toast({ title: 'Failed to load documents', variant: 'destructive' });
+      })
       .finally(() => setLoading(false));
-  }, [isOpen]);
+  }, [isOpen, toast]);
 
   // Focus input on open
   useEffect(() => {
@@ -246,9 +244,7 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
         {/* Results */}
         <div className="max-h-[55vh] overflow-y-auto">
           {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-6 h-6 text-zinc-400 animate-spin" />
-            </div>
+            <LoadingState message="Searching documents…" size="sm" />
           ) : results.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center px-6">
               <Search className="w-10 h-10 text-zinc-300 mb-3" />

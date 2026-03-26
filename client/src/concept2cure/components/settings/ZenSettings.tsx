@@ -14,6 +14,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
 import {
   X,
@@ -143,7 +144,7 @@ const ProfileSection: React.FC = () => {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
 
   useEffect(() => {
-    fetch('/api/users/me', { credentials: 'include' })
+    apiRequest('GET', '/api/users/me')
       .then(r => (r.ok ? r.json() : null))
       .then(data => {
         if (data) {
@@ -161,12 +162,9 @@ const ProfileSection: React.FC = () => {
     setSaving(true);
     setSaveStatus('idle');
     try {
-      const res = await fetch('/api/users/me', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ name, title, department, bio }),
-      });
+      const res = await apiRequest('PATCH', '/api/users/me',
+        { name, title, department, bio }
+      );
       if (res.ok) {
         setSaveStatus('saved');
         // Also sync to localStorage for ZenApp profile context
@@ -398,7 +396,7 @@ const NotificationsSection: React.FC = () => {
   const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
-    fetch('/api/users/me/notifications', { credentials: 'include' })
+    apiRequest('GET', '/api/users/me/notifications')
       .then(r => (r.ok ? r.json() : null))
       .then(data => {
         if (data) setPrefs(p => ({ ...p, ...data }));
@@ -412,12 +410,7 @@ const NotificationsSection: React.FC = () => {
   };
 
   const save = () => {
-    fetch('/api/users/me/notifications', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(prefs),
-    })
+    apiRequest('PATCH', '/api/users/me/notifications', prefs)
       .then(() => setDirty(false))
       .catch(() => {});
   };

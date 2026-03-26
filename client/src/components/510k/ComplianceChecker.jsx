@@ -8,22 +8,22 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  FaCheckCircle,
-  FaExclamationCircle,
-  FaExclamationTriangle,
-  FaFilePdf,
-  FaFileExcel,
-  FaMagic,
-  FaSpinner,
-  FaRedo,
-  FaDownload,
-  FaClipboardCheck,
-  FaChevronDown,
-  FaChevronRight,
-  FaGlobe,
-  FaBalanceScale,
-  FaShieldAlt,
-} from 'react-icons/fa';
+  CheckCircle as FaCheckCircle,
+  AlertCircle as FaExclamationCircle,
+  AlertTriangle as FaExclamationTriangle,
+  FileText as FaFilePdf,
+  FileSpreadsheet as FaFileExcel,
+  Wand2 as FaMagic,
+  Loader2 as FaSpinner,
+  RotateCw as FaRedo,
+  Download as FaDownload,
+  ClipboardCheck as FaClipboardCheck,
+  ChevronDown as FaChevronDown,
+  ChevronRight as FaChevronRight,
+  Globe as FaGlobe,
+  Scale as FaBalanceScale,
+  ShieldCheck as FaShieldAlt,
+} from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -44,7 +44,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/components/ui/toaster';
 import fda510kService from '../../services/FDA510kService';
 
@@ -60,10 +66,10 @@ const REGIONAL_FRAMEWORKS = {
       { id: 'substantial_equivalence', name: 'Substantial Equivalence', weight: 25 },
       { id: 'performance_data', name: 'Performance Data', weight: 20 },
       { id: 'labeling', name: 'Labeling', weight: 10 },
-      { id: 'risk_analysis', name: 'Risk Analysis', weight: 10 }
+      { id: 'risk_analysis', name: 'Risk Analysis', weight: 10 },
     ],
     requiredFields: ['deviceName', 'deviceType', 'deviceClass', 'intendedUse', 'description'],
-    criticalChecks: ['predicate_device', 'substantial_equivalence', 'performance_testing']
+    criticalChecks: ['predicate_device', 'substantial_equivalence', 'performance_testing'],
   },
   EU_MDR: {
     name: 'EU MDR',
@@ -75,10 +81,22 @@ const REGIONAL_FRAMEWORKS = {
       { id: 'clinical_evaluation', name: 'Clinical Evaluation', weight: 30 },
       { id: 'risk_management', name: 'Risk Management', weight: 20 },
       { id: 'technical_documentation', name: 'Technical Documentation', weight: 15 },
-      { id: 'post_market_surveillance', name: 'Post-Market Surveillance', weight: 5 }
+      { id: 'post_market_surveillance', name: 'Post-Market Surveillance', weight: 5 },
     ],
-    requiredFields: ['deviceName', 'deviceType', 'mdrClassification', 'intendedPurpose', 'description', 'authorizedRepresentative'],
-    criticalChecks: ['clinical_evidence', 'conformity_assessment', 'ce_marking', 'authorized_representative']
+    requiredFields: [
+      'deviceName',
+      'deviceType',
+      'mdrClassification',
+      'intendedPurpose',
+      'description',
+      'authorizedRepresentative',
+    ],
+    criticalChecks: [
+      'clinical_evidence',
+      'conformity_assessment',
+      'ce_marking',
+      'authorized_representative',
+    ],
   },
   HEALTH_CANADA: {
     name: 'Health Canada',
@@ -90,11 +108,18 @@ const REGIONAL_FRAMEWORKS = {
       { id: 'safety_effectiveness', name: 'Safety & Effectiveness', weight: 25 },
       { id: 'quality_system', name: 'Quality System', weight: 20 },
       { id: 'labeling', name: 'Labeling', weight: 12 },
-      { id: 'canadian_requirements', name: 'Canadian-Specific Requirements', weight: 10 }
+      { id: 'canadian_requirements', name: 'Canadian-Specific Requirements', weight: 10 },
     ],
-    requiredFields: ['deviceName', 'deviceType', 'healthCanadaClass', 'intendedUse', 'description', 'licenseeInformation'],
-    criticalChecks: ['canadian_licensee', 'quality_system', 'safety_effectiveness']
-  }
+    requiredFields: [
+      'deviceName',
+      'deviceType',
+      'healthCanadaClass',
+      'intendedUse',
+      'description',
+      'licenseeInformation',
+    ],
+    criticalChecks: ['canadian_licensee', 'quality_system', 'safety_effectiveness'],
+  },
 };
 
 // Cross-Format Harmonizer: Compliance gap categories
@@ -103,7 +128,7 @@ const GAP_CATEGORIES = {
   FORMAT_MISMATCH: 'Format Mismatch',
   REGULATORY_SPECIFIC: 'Region-Specific Requirement',
   CROSS_REFERENCE: 'Cross-Regional Inconsistency',
-  VALIDATION_ERROR: 'Validation Error'
+  VALIDATION_ERROR: 'Validation Error',
 };
 
 // Status badge component
@@ -151,25 +176,25 @@ const ComplianceChecker = ({ projectId, deviceProfile, targetMarkets = ['FDA_510
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
   const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
-  
+
   // Cross-Format Harmonizer state
   const [selectedRegion, setSelectedRegion] = useState('FDA_510K');
   const [multiRegionalResults, setMultiRegionalResults] = useState({});
   const [complianceGaps, setComplianceGaps] = useState([]);
   const [harmonizationMode, setHarmonizationMode] = useState('single'); // 'single' or 'multi'
   const [gapAnalysisResults, setGapAnalysisResults] = useState(null);
-  
+
   const { toast } = useToast();
 
   // Cross-Format Harmonizer: Multi-regional compliance validation
   const validateMultiRegionalCompliance = async (profile, regions) => {
     const results = {};
     const allGaps = [];
-    
+
     for (const region of regions) {
       const framework = REGIONAL_FRAMEWORKS[region];
       if (!framework) continue;
-      
+
       const regionResult = {
         region,
         framework: framework.name,
@@ -178,14 +203,14 @@ const ComplianceChecker = ({ projectId, deviceProfile, targetMarkets = ['FDA_510
         gaps: [],
         criticalIssues: 0,
         warnings: 0,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
-      
+
       // Validate required fields
-      const missingFields = framework.requiredFields.filter(field => 
-        !profile[field] || profile[field].toString().trim() === ''
+      const missingFields = framework.requiredFields.filter(
+        field => !profile[field] || profile[field].toString().trim() === ''
       );
-      
+
       missingFields.forEach(field => {
         const gap = {
           id: `missing_${field}_${region}`,
@@ -194,20 +219,20 @@ const ComplianceChecker = ({ projectId, deviceProfile, targetMarkets = ['FDA_510
           severity: 'critical',
           field,
           message: `Missing required field '${field}' for ${framework.name}`,
-          recommendation: `Please provide the ${field} information as required by ${framework.name}`
+          recommendation: `Please provide the ${field} information as required by ${framework.name}`,
         };
         regionResult.gaps.push(gap);
         allGaps.push(gap);
         regionResult.criticalIssues++;
       });
-      
+
       // Validate section completeness
       let totalScore = 0;
       framework.sections.forEach(section => {
         const sectionScore = calculateSectionScore(profile, section, region);
         regionResult.sectionScores[section.id] = sectionScore;
         totalScore += sectionScore * (section.weight / 100);
-        
+
         if (sectionScore < 70) {
           const gap = {
             id: `incomplete_${section.id}_${region}`,
@@ -217,11 +242,11 @@ const ComplianceChecker = ({ projectId, deviceProfile, targetMarkets = ['FDA_510
             section: section.name,
             score: sectionScore,
             message: `${section.name} section incomplete for ${framework.name} (${sectionScore}% complete)`,
-            recommendation: `Complete the ${section.name} documentation to meet ${framework.name} requirements`
+            recommendation: `Complete the ${section.name} documentation to meet ${framework.name} requirements`,
           };
           regionResult.gaps.push(gap);
           allGaps.push(gap);
-          
+
           if (sectionScore < 50) {
             regionResult.criticalIssues++;
           } else {
@@ -229,41 +254,43 @@ const ComplianceChecker = ({ projectId, deviceProfile, targetMarkets = ['FDA_510
           }
         }
       });
-      
+
       regionResult.overallScore = Math.round(totalScore);
       results[region] = regionResult;
     }
-    
+
     // Detect cross-regional inconsistencies
     const crossRegionalGaps = detectCrossRegionalInconsistencies(profile, regions, results);
     allGaps.push(...crossRegionalGaps);
-    
+
     return {
       results,
       totalGaps: allGaps.length,
       gaps: allGaps,
-      avgScore: Math.round(Object.values(results).reduce((sum, r) => sum + r.overallScore, 0) / regions.length),
-      timestamp: new Date().toISOString()
+      avgScore: Math.round(
+        Object.values(results).reduce((sum, r) => sum + r.overallScore, 0) / regions.length
+      ),
+      timestamp: new Date().toISOString(),
     };
   };
-  
+
   // Calculate section completeness score
   const calculateSectionScore = (profile, section, region) => {
     // Basic scoring logic - can be enhanced with more sophisticated rules
     const framework = REGIONAL_FRAMEWORKS[region];
     let score = 0;
-    
+
     // Check if required fields for this section are present
     const sectionFields = getSectionFields(section.id, region);
-    const completedFields = sectionFields.filter(field => 
-      profile[field] && profile[field].toString().trim() !== ''
+    const completedFields = sectionFields.filter(
+      field => profile[field] && profile[field].toString().trim() !== ''
     );
-    
+
     score = sectionFields.length > 0 ? (completedFields.length / sectionFields.length) * 100 : 100;
-    
+
     return Math.round(score);
   };
-  
+
   // Get fields associated with a section
   const getSectionFields = (sectionId, region) => {
     const fieldMap = {
@@ -279,16 +306,16 @@ const ComplianceChecker = ({ projectId, deviceProfile, targetMarkets = ['FDA_510
       labeling: ['deviceName', 'intendedUse'],
       canadian_requirements: ['licenseeInformation'],
       technical_documentation: ['technicalCharacteristics', 'materials'],
-      post_market_surveillance: ['postMarketSurveillance']
+      post_market_surveillance: ['postMarketSurveillance'],
     };
-    
+
     return fieldMap[sectionId] || [];
   };
-  
+
   // Detect inconsistencies across regions
   const detectCrossRegionalInconsistencies = (profile, regions, results) => {
     const gaps = [];
-    
+
     // Check for classification inconsistencies
     if (regions.length > 1) {
       const classifications = {};
@@ -301,7 +328,7 @@ const ComplianceChecker = ({ projectId, deviceProfile, targetMarkets = ['FDA_510
           classifications[region] = profile.healthCanadaClass;
         }
       });
-      
+
       // Add cross-regional gap if classifications don't align
       const classValues = Object.values(classifications);
       if (classValues.length > 1 && new Set(classValues).size > 1) {
@@ -312,66 +339,69 @@ const ComplianceChecker = ({ projectId, deviceProfile, targetMarkets = ['FDA_510
           severity: 'warning',
           message: 'Device classifications are inconsistent across regions',
           recommendation: 'Review and align device classifications for regulatory consistency',
-          details: classifications
+          details: classifications,
         });
       }
     }
-    
+
     return gaps;
   };
-  
+
   // Enhanced compliance check with multi-regional support
   const runMultiRegionalCompliance = async () => {
     setChecking(true);
     setError(null);
-    
+
     try {
       if (!deviceProfile) {
         throw new Error('Device profile is required for compliance checking');
       }
-      
+
       const regions = harmonizationMode === 'multi' ? targetMarkets : [selectedRegion];
       const analysisResult = await validateMultiRegionalCompliance(deviceProfile, regions);
-      
+
       setMultiRegionalResults(analysisResult.results);
       setComplianceGaps(analysisResult.gaps);
       setGapAnalysisResults(analysisResult);
-      
+
       // Set traditional results format for compatibility
       const primaryRegion = regions[0];
       const primaryResult = analysisResult.results[primaryRegion];
-      
+
       setResults({
         overallScore: analysisResult.avgScore,
-        completedSections: Object.values(analysisResult.results).reduce((sum, r) => 
-          sum + Object.values(r.sectionScores).filter(score => score >= 70).length, 0
+        completedSections: Object.values(analysisResult.results).reduce(
+          (sum, r) => sum + Object.values(r.sectionScores).filter(score => score >= 70).length,
+          0
         ),
-        totalSections: Object.values(analysisResult.results).reduce((sum, r) => 
-          sum + Object.keys(r.sectionScores).length, 0
+        totalSections: Object.values(analysisResult.results).reduce(
+          (sum, r) => sum + Object.keys(r.sectionScores).length,
+          0
         ),
         criticalIssues: analysisResult.gaps.filter(g => g.severity === 'critical').length,
         warnings: analysisResult.gaps.filter(g => g.severity === 'warning').length,
-        sections: Object.values(analysisResult.results).flatMap(result => 
+        sections: Object.values(analysisResult.results).flatMap(result =>
           Object.entries(result.sectionScores).map(([sectionId, score]) => ({
             id: `${sectionId}_${result.region}`,
             name: `${sectionId.replace('_', ' ').toUpperCase()} (${REGIONAL_FRAMEWORKS[result.region].name})`,
             status: score >= 70 ? 'passed' : score >= 50 ? 'warning' : 'failed',
-            checks: result.gaps.filter(gap => gap.section && gap.section.toLowerCase().includes(sectionId)).map(gap => ({
-              id: gap.id,
-              description: gap.message,
-              message: gap.recommendation,
-              status: gap.severity === 'critical' ? 'failed' : 'warning',
-              autoFixAvailable: false
-            }))
+            checks: result.gaps
+              .filter(gap => gap.section && gap.section.toLowerCase().includes(sectionId))
+              .map(gap => ({
+                id: gap.id,
+                description: gap.message,
+                message: gap.recommendation,
+                status: gap.severity === 'critical' ? 'failed' : 'warning',
+                autoFixAvailable: false,
+              })),
           }))
-        )
+        ),
       });
-      
+
       toast({
         title: 'Multi-Regional Compliance Check Complete',
         description: `Checked ${regions.length} region(s) with ${analysisResult.totalGaps} gap(s) detected`,
       });
-      
     } catch (err) {
       console.error('Error running multi-regional compliance check:', err);
       setError('Failed to run multi-regional compliance check. Please try again.');
@@ -384,14 +414,14 @@ const ComplianceChecker = ({ projectId, deviceProfile, targetMarkets = ['FDA_510
       setChecking(false);
     }
   };
-  
+
   // Fetch initial compliance results
   useEffect(() => {
     if (projectId) {
       fetchComplianceResults();
     }
   }, [projectId]);
-  
+
   // Auto-run multi-regional compliance when device profile changes
   useEffect(() => {
     if (deviceProfile && targetMarkets.length > 0) {
@@ -421,7 +451,7 @@ const ComplianceChecker = ({ projectId, deviceProfile, targetMarkets = ['FDA_510
       // Use enhanced multi-regional compliance
       return runMultiRegionalCompliance();
     }
-    
+
     // Fallback to legacy single-region check
     setChecking(true);
     setError(null);
@@ -576,10 +606,7 @@ const ComplianceChecker = ({ projectId, deviceProfile, targetMarkets = ['FDA_510
           </div>
           <div className="flex items-center space-x-2">
             {gapAnalysisResults && (
-              <Badge 
-                variant="outline" 
-                className="bg-white/20 text-white border-white/30"
-              >
+              <Badge variant="outline" className="bg-white/20 text-white border-white/30">
                 <FaBalanceScale className="h-3 w-3 mr-1" />
                 {gapAnalysisResults.totalGaps} Gap{gapAnalysisResults.totalGaps !== 1 ? 's' : ''}
               </Badge>
@@ -592,10 +619,12 @@ const ComplianceChecker = ({ projectId, deviceProfile, targetMarkets = ['FDA_510
       <div className="px-6 py-4 bg-gray-50 border-b">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
-              Compliance Mode
-            </label>
-            <Select value={harmonizationMode} onValueChange={setHarmonizationMode} data-testid="select-compliance-mode">
+            <label className="text-sm font-medium text-gray-700 mb-2 block">Compliance Mode</label>
+            <Select
+              value={harmonizationMode}
+              onValueChange={setHarmonizationMode}
+              data-testid="select-compliance-mode"
+            >
               <SelectTrigger className="bg-white">
                 <SelectValue />
               </SelectTrigger>
@@ -615,13 +644,15 @@ const ComplianceChecker = ({ projectId, deviceProfile, targetMarkets = ['FDA_510
               </SelectContent>
             </Select>
           </div>
-          
+
           {harmonizationMode === 'single' && (
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">
-                Target Region
-              </label>
-              <Select value={selectedRegion} onValueChange={setSelectedRegion} data-testid="select-single-region">
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Target Region</label>
+              <Select
+                value={selectedRegion}
+                onValueChange={setSelectedRegion}
+                data-testid="select-single-region"
+              >
                 <SelectTrigger className="bg-white">
                   <SelectValue />
                 </SelectTrigger>
@@ -638,7 +669,7 @@ const ComplianceChecker = ({ projectId, deviceProfile, targetMarkets = ['FDA_510
               </Select>
             </div>
           )}
-          
+
           {harmonizationMode === 'multi' && (
             <div>
               <label className="text-sm font-medium text-gray-700 mb-2 block">
@@ -656,7 +687,7 @@ const ComplianceChecker = ({ projectId, deviceProfile, targetMarkets = ['FDA_510
               </div>
             </div>
           )}
-          
+
           <div className="flex items-end">
             <Button
               onClick={runMultiRegionalCompliance}
@@ -680,18 +711,24 @@ const ComplianceChecker = ({ projectId, deviceProfile, targetMarkets = ['FDA_510
           </div>
         </div>
       </div>
-      
+
       <CardHeader>
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
           <div>
             <CardDescription className="text-gray-600">
-              Automated {harmonizationMode === 'multi' ? 'multi-regional' : 'regulatory'} validation with Cross-Format Harmonizer
+              Automated {harmonizationMode === 'multi' ? 'multi-regional' : 'regulatory'} validation
+              with Cross-Format Harmonizer
             </CardDescription>
           </div>
           <div className="flex gap-2">
             <DropdownMenu open={exportDropdownOpen} onOpenChange={setExportDropdownOpen}>
               <DropdownMenuTrigger asChild>
-                <Button disabled={exporting || !results} variant="outline" className="gap-2" data-testid="button-export">
+                <Button
+                  disabled={exporting || !results}
+                  variant="outline"
+                  className="gap-2"
+                  data-testid="button-export"
+                >
                   {exporting ? (
                     <>
                       <FaSpinner className="animate-spin h-4 w-4" />
@@ -737,13 +774,14 @@ const ComplianceChecker = ({ projectId, deviceProfile, targetMarkets = ['FDA_510
                 <FaGlobe className="h-4 w-4" />
                 <AlertTitle className="text-blue-900">Multi-Regional Analysis Complete</AlertTitle>
                 <AlertDescription className="text-blue-800">
-                  Validated across {Object.keys(multiRegionalResults).length} regulatory frameworks with 
-                  {gapAnalysisResults.totalGaps} compliance gaps detected. 
-                  Average compliance score: {gapAnalysisResults.avgScore}%
+                  Validated across {Object.keys(multiRegionalResults).length} regulatory frameworks
+                  with
+                  {gapAnalysisResults.totalGaps} compliance gaps detected. Average compliance score:{' '}
+                  {gapAnalysisResults.avgScore}%
                 </AlertDescription>
               </Alert>
             )}
-            
+
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <Card className="bg-white/50">
                 <CardContent className="pt-6">
@@ -794,9 +832,14 @@ const ComplianceChecker = ({ projectId, deviceProfile, targetMarkets = ['FDA_510
                 </h3>
                 <div className="space-y-3">
                   {complianceGaps.slice(0, 5).map((gap, index) => (
-                    <Alert key={gap.id} className={`${
-                      gap.severity === 'critical' ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50'
-                    }`}>
+                    <Alert
+                      key={gap.id}
+                      className={`${
+                        gap.severity === 'critical'
+                          ? 'border-red-200 bg-red-50'
+                          : 'border-amber-200 bg-amber-50'
+                      }`}
+                    >
                       <div className="flex items-start space-x-3">
                         {gap.severity === 'critical' ? (
                           <FaExclamationCircle className="h-4 w-4 text-red-600 mt-0.5" />
@@ -805,25 +848,33 @@ const ComplianceChecker = ({ projectId, deviceProfile, targetMarkets = ['FDA_510
                         )}
                         <div className="flex-grow">
                           <div className="flex items-center justify-between">
-                            <AlertTitle className={`text-sm font-medium ${
-                              gap.severity === 'critical' ? 'text-red-800' : 'text-amber-800'
-                            }`}>
+                            <AlertTitle
+                              className={`text-sm font-medium ${
+                                gap.severity === 'critical' ? 'text-red-800' : 'text-amber-800'
+                              }`}
+                            >
                               {gap.message}
                             </AlertTitle>
                             <div className="flex items-center space-x-2">
                               {gap.region !== 'multi-regional' && (
                                 <Badge variant="outline" className="text-xs">
-                                  {REGIONAL_FRAMEWORKS[gap.region]?.flag} {REGIONAL_FRAMEWORKS[gap.region]?.name}
+                                  {REGIONAL_FRAMEWORKS[gap.region]?.flag}{' '}
+                                  {REGIONAL_FRAMEWORKS[gap.region]?.name}
                                 </Badge>
                               )}
-                              <Badge variant={gap.severity === 'critical' ? 'destructive' : 'secondary'} className="text-xs">
+                              <Badge
+                                variant={gap.severity === 'critical' ? 'destructive' : 'secondary'}
+                                className="text-xs"
+                              >
                                 {gap.category}
                               </Badge>
                             </div>
                           </div>
-                          <AlertDescription className={`text-xs mt-1 ${
-                            gap.severity === 'critical' ? 'text-red-700' : 'text-amber-700'
-                          }`}>
+                          <AlertDescription
+                            className={`text-xs mt-1 ${
+                              gap.severity === 'critical' ? 'text-red-700' : 'text-amber-700'
+                            }`}
+                          >
                             {gap.recommendation}
                           </AlertDescription>
                         </div>
@@ -840,7 +891,7 @@ const ComplianceChecker = ({ projectId, deviceProfile, targetMarkets = ['FDA_510
                 </div>
               </div>
             )}
-            
+
             <div className="space-y-4 mt-8">
               {results.sections.map(section => (
                 <Collapsible

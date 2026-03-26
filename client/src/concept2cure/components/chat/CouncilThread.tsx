@@ -347,7 +347,7 @@ const MessageBubble: React.FC<{
 
         {/* Feedback Bar (for non-user messages) */}
         {!isUser && !message.isThinking && (
-          <div className="flex items-center gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-2 mt-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => onFeedback?.(true)}
               className="p-1 text-zinc-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors duration-150"

@@ -1,23 +1,23 @@
 /**
  * Entity Extraction Worker - Enterprise Edition
- * 
+ *
  * FDA 21 CFR Part 11 Compliant Implementation
- * 
+ *
  * Upgrades document ingestion to extract structured entities, not just text chunks.
  * This is the foundation of the Neuro-Symbolic Knowledge Graph.
- * 
+ *
  * Compliance Features:
  * - Input validation for all operations
  * - Rate limiting for external API calls
  * - Retry logic with exponential backoff
  * - Comprehensive audit logging
- * 
+ *
  * Extracts:
  * - Clinical entities (Drug, Dose, Indication, Population)
  * - Statistical entities (p-values, CIs, effect sizes)
  * - Regulatory entities (NCT IDs, IND numbers)
  * - Document entities (Protocol versions, amendments)
- * 
+ *
  * @module EntityExtractionWorker
  * @version 2.0.0
  * @compliance FDA 21 CFR Part 11, ICH E6(R2)
@@ -28,16 +28,40 @@ import { v4 as uuidv4 } from 'uuid';
 import { createHash } from 'crypto';
 import { ai } from '../lib/unified-ai-client';
 
-export type EntityType = 
-  | 'DRUG_SUBSTANCE' | 'DRUG_PRODUCT' | 'DOSE' | 'ROUTE_OF_ADMINISTRATION'
-  | 'INDICATION' | 'POPULATION' | 'SAMPLE_SIZE' | 'STUDY_PHASE' | 'STUDY_DESIGN'
-  | 'PRIMARY_ENDPOINT' | 'SECONDARY_ENDPOINT' | 'SAFETY_ENDPOINT'
-  | 'P_VALUE' | 'CONFIDENCE_INTERVAL' | 'EFFECT_SIZE' | 'HAZARD_RATIO'
-  | 'ADVERSE_EVENT' | 'SERIOUS_ADVERSE_EVENT'
-  | 'NCT_ID' | 'IND_NUMBER' | 'NDA_NUMBER' | 'BLA_NUMBER'
-  | 'PROTOCOL_VERSION' | 'AMENDMENT' | 'SECTION_REFERENCE'
-  | 'SPONSOR' | 'CRO' | 'INVESTIGATOR' | 'SITE'
-  | 'DATE' | 'DURATION' | 'MEASUREMENT' | 'OTHER';
+export type EntityType =
+  | 'DRUG_SUBSTANCE'
+  | 'DRUG_PRODUCT'
+  | 'DOSE'
+  | 'ROUTE_OF_ADMINISTRATION'
+  | 'INDICATION'
+  | 'POPULATION'
+  | 'SAMPLE_SIZE'
+  | 'STUDY_PHASE'
+  | 'STUDY_DESIGN'
+  | 'PRIMARY_ENDPOINT'
+  | 'SECONDARY_ENDPOINT'
+  | 'SAFETY_ENDPOINT'
+  | 'P_VALUE'
+  | 'CONFIDENCE_INTERVAL'
+  | 'EFFECT_SIZE'
+  | 'HAZARD_RATIO'
+  | 'ADVERSE_EVENT'
+  | 'SERIOUS_ADVERSE_EVENT'
+  | 'NCT_ID'
+  | 'IND_NUMBER'
+  | 'NDA_NUMBER'
+  | 'BLA_NUMBER'
+  | 'PROTOCOL_VERSION'
+  | 'AMENDMENT'
+  | 'SECTION_REFERENCE'
+  | 'SPONSOR'
+  | 'CRO'
+  | 'INVESTIGATOR'
+  | 'SITE'
+  | 'DATE'
+  | 'DURATION'
+  | 'MEASUREMENT'
+  | 'OTHER';
 
 export interface ExtractedEntity {
   entityType: EntityType;
@@ -101,7 +125,7 @@ export class EntityExtractionWorker {
 
   constructor(pool: Pool) {
     this.pool = pool;
-    
+
     if (!process.env.OPENAI_API_KEY) {
       throw new Error('OPENAI_API_KEY environment variable is required');
     }
@@ -130,30 +154,30 @@ export class EntityExtractionWorker {
     correlationId: string
   ): Promise<T> {
     let lastError: Error | null = null;
-    
+
     for (let attempt = 1; attempt <= this.MAX_RETRIES; attempt++) {
       try {
         return await fn();
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        
+
         if (attempt < this.MAX_RETRIES) {
           const delay = this.RETRY_DELAY_MS * Math.pow(2, attempt - 1);
           console.warn(
             `[EntityExtraction:${correlationId}] ${operation} attempt ${attempt} failed, ` +
-            `retrying in ${delay}ms: ${lastError.message}`
+              `retrying in ${delay}ms: ${lastError.message}`
           );
           await new Promise(resolve => setTimeout(resolve, delay));
         }
       }
     }
-    
+
     throw lastError;
   }
 
   /**
    * Extract entities from a document atom
-   * 
+   *
    * @param atomId - The atom ID to extract entities from
    * @param content - The text content to process
    * @returns ExtractionResult with entities, relationships, and metadata
@@ -174,7 +198,7 @@ export class EntityExtractionWorker {
 
     console.log(
       `[EntityExtraction:${correlationId}] Starting extraction for atom ${atomId}, ` +
-      `content length: ${content.length}, hash: ${contentHash.substring(0, 16)}...`
+        `content length: ${content.length}, hash: ${contentHash.substring(0, 16)}...`
     );
 
     // Chunk content if too large
@@ -185,26 +209,33 @@ export class EntityExtractionWorker {
 
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
-      
+
       try {
         const response = await this.withRetry(
-          () => this.ai.chat({
-            model: 'gpt-4-turbo',
-            temperature: 0,
-            max_tokens: 4000,
-            response_format: { type: 'json_object' },
-            messages: [
-              { role: 'system', content: ENTITY_EXTRACTION_PROMPT },
-              { role: 'user', content: `Extract entities from this text (chunk ${i + 1}/${chunks.length}):\n\n${chunk}` }
-            ]
-          }),
+          () =>
+            ai.chat({
+              model: 'gpt-4-turbo',
+              temperature: 0,
+              max_tokens: 4000,
+              response_format: { type: 'json_object' },
+              messages: [
+                { role: 'system', content: ENTITY_EXTRACTION_PROMPT },
+                {
+                  role: 'user',
+                  content: `Extract entities from this text (chunk ${i + 1}/${chunks.length}):\n\n${chunk}`,
+                },
+              ],
+            }),
           `chunk_${i + 1}_extraction`,
           correlationId
         );
 
-        const output = aiResult.content || '{}';
-        let parsed: { entities?: Array<Record<string, unknown>>; relationships?: ExtractedRelationship[] };
-        
+        const output = response.content || '{}';
+        let parsed: {
+          entities?: Array<Record<string, unknown>>;
+          relationships?: ExtractedRelationship[];
+        };
+
         try {
           parsed = JSON.parse(output);
         } catch (parseError) {
@@ -216,23 +247,27 @@ export class EntityExtractionWorker {
         }
 
         if (parsed.entities && Array.isArray(parsed.entities)) {
-          allEntities.push(...parsed.entities.map((e: Record<string, unknown>) => ({
-            entityType: e.entityType as EntityType,
-            entityValue: String(e.entityValue || ''),
-            normalizedValue: e.normalizedValue ? String(e.normalizedValue) : undefined,
-            confidenceScore: typeof e.confidenceScore === 'number' ? e.confidenceScore : 0.5,
-            sourceSpan: (e.sourceSpan as { start: number; end: number; text: string }) || 
-              { start: 0, end: 0, text: String(e.entityValue || '') },
-            numericValue: typeof e.numericValue === 'number' ? e.numericValue : undefined,
-            unit: e.unit ? String(e.unit) : undefined,
-            context: e.context ? String(e.context) : undefined
-          })));
+          allEntities.push(
+            ...parsed.entities.map((e: Record<string, unknown>) => ({
+              entityType: e.entityType as EntityType,
+              entityValue: String(e.entityValue || ''),
+              normalizedValue: e.normalizedValue ? String(e.normalizedValue) : undefined,
+              confidenceScore: typeof e.confidenceScore === 'number' ? e.confidenceScore : 0.5,
+              sourceSpan: (e.sourceSpan as { start: number; end: number; text: string }) || {
+                start: 0,
+                end: 0,
+                text: String(e.entityValue || ''),
+              },
+              numericValue: typeof e.numericValue === 'number' ? e.numericValue : undefined,
+              unit: e.unit ? String(e.unit) : undefined,
+              context: e.context ? String(e.context) : undefined,
+            }))
+          );
         }
 
         if (parsed.relationships && Array.isArray(parsed.relationships)) {
           allRelationships.push(...parsed.relationships);
         }
-
       } catch (error) {
         chunkErrors++;
         console.error(
@@ -246,8 +281,8 @@ export class EntityExtractionWorker {
     // Log extraction summary
     console.log(
       `[EntityExtraction:${correlationId}] Extraction complete: ` +
-      `${allEntities.length} entities, ${allRelationships.length} relationships, ` +
-      `${chunkErrors} chunk errors from ${chunks.length} chunks`
+        `${allEntities.length} entities, ${allRelationships.length} relationships, ` +
+        `${chunkErrors} chunk errors from ${chunks.length} chunks`
     );
 
     // Deduplicate entities
@@ -270,8 +305,8 @@ export class EntityExtractionWorker {
         modelUsed: 'gpt-4-turbo',
         entityCount: deduped.length,
         correlationId,
-        contentHash
-      }
+        contentHash,
+      },
     };
   }
 
@@ -290,7 +325,7 @@ export class EntityExtractionWorker {
         entityValue: match[0],
         normalizedValue: match[0],
         confidenceScore: 1.0,
-        sourceSpan: { start: match.index, end: match.index + match[0].length, text: match[0] }
+        sourceSpan: { start: match.index, end: match.index + match[0].length, text: match[0] },
       });
     }
 
@@ -303,7 +338,7 @@ export class EntityExtractionWorker {
         entityValue: match[0],
         numericValue: numericMatch ? parseFloat(numericMatch[0]) : undefined,
         confidenceScore: 0.95,
-        sourceSpan: { start: match.index, end: match.index + match[0].length, text: match[0] }
+        sourceSpan: { start: match.index, end: match.index + match[0].length, text: match[0] },
       });
     }
 
@@ -314,7 +349,7 @@ export class EntityExtractionWorker {
         entityType: 'CONFIDENCE_INTERVAL',
         entityValue: match[0],
         confidenceScore: 0.9,
-        sourceSpan: { start: match.index, end: match.index + match[0].length, text: match[0] }
+        sourceSpan: { start: match.index, end: match.index + match[0].length, text: match[0] },
       });
     }
 
@@ -327,7 +362,7 @@ export class EntityExtractionWorker {
         entityValue: match[0],
         numericValue: numericMatch ? parseInt(numericMatch[0]) : undefined,
         confidenceScore: 0.95,
-        sourceSpan: { start: match.index, end: match.index + match[0].length, text: match[0] }
+        sourceSpan: { start: match.index, end: match.index + match[0].length, text: match[0] },
       });
     }
 
@@ -342,7 +377,7 @@ export class EntityExtractionWorker {
         numericValue: numericMatch ? parseFloat(numericMatch[0]) : undefined,
         unit: unitMatch ? unitMatch[0] : undefined,
         confidenceScore: 0.85,
-        sourceSpan: { start: match.index, end: match.index + match[0].length, text: match[0] }
+        sourceSpan: { start: match.index, end: match.index + match[0].length, text: match[0] },
       });
     }
 
@@ -353,7 +388,7 @@ export class EntityExtractionWorker {
    * Store entities to database with audit trail
    */
   private async storeEntities(
-    atomId: string, 
+    atomId: string,
     entities: ExtractedEntity[],
     correlationId: string
   ): Promise<void> {
@@ -381,7 +416,7 @@ export class EntityExtractionWorker {
             entity.confidenceScore,
             entity.sourceSpan ? JSON.stringify(entity.sourceSpan) : null,
             entity.numericValue,
-            entity.unit
+            entity.unit,
           ]
         );
       }
@@ -406,7 +441,7 @@ export class EntityExtractionWorker {
    * Store relationships to database
    */
   private async storeRelationships(
-    atomId: string, 
+    atomId: string,
     relationships: ExtractedRelationship[],
     correlationId: string
   ): Promise<void> {
@@ -418,9 +453,9 @@ export class EntityExtractionWorker {
     // we store them for later graph edge creation during post-processing
     console.log(
       `[EntityExtraction:${correlationId}] Found ${relationships.length} relationships for atom ${atomId}. ` +
-      `Cross-atom edge creation will occur during graph consolidation phase.`
+        `Cross-atom edge creation will occur during graph consolidation phase.`
     );
-    
+
     // Future enhancement: Create edges when both entities resolve to atoms
     // This requires entity resolution and atom matching which is handled by
     // the KnowledgeGraphService during batch processing

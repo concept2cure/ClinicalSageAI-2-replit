@@ -37,17 +37,13 @@ import {
   PenTool,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { LoadingState } from '@/components/ui/statesV2';
 import { ReviewThreadsPanel } from './ReviewThreadsPanel';
 import { getGovWorkflowTailoring } from '../../config/industry-tailoring';
 import { useDocumentModeOptional } from '../../contexts/DocumentModeContext';
-
-// ── Auth helper ──────────────────────────────────────────────────────────────
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
+import DecisionLineageMap from '../audit/DecisionLineageMap';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface Artifact {
@@ -214,7 +210,7 @@ export function GovernedDocumentPanel({
   const [changingStatus, setChangingStatus] = useState(false);
   const [rollingBack, setRollingBack] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    'status' | 'audit' | 'versions' | 'snapshots' | 'threads'
+    'status' | 'audit' | 'versions' | 'snapshots' | 'threads' | 'governance' | 'lineage'
   >('status');
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
 
@@ -233,17 +229,15 @@ export function GovernedDocumentPanel({
   const currentStatus = artifact.status || 'draft';
   const allowedTransitions = VALID_TRANSITIONS[currentStatus] || [];
 
+  const { toast } = useToast();
+
   // ── Fetch user permissions ───────────────────────────────────────────
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch('/api/concept2cure/user/permissions', {
-          headers: getAuthHeaders(),
-        });
-        if (res.ok) {
-          const payload = await res.json();
-          setPermissions(payload.data ?? payload);
-        }
+        const res = await apiRequest('GET', '/api/concept2cure/user/permissions');
+        const payload = await res.json();
+        setPermissions(payload.data ?? payload);
       } catch {
         // Default to restrictive if permissions fetch fails
       }
@@ -256,15 +250,9 @@ export function GovernedDocumentPanel({
     setLoading(true);
     try {
       const [provRes, verRes, snapRes] = await Promise.all([
-        fetch(`/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/provenance`, {
-          headers: getAuthHeaders(),
-        }),
-        fetch(`/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/versions`, {
-          headers: getAuthHeaders(),
-        }),
-        fetch(`/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/snapshots`, {
-          headers: getAuthHeaders(),
-        }),
+        apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/provenance`),
+        apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/versions`),
+        apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/snapshots`),
       ]);
 
       if (provRes.ok) {
@@ -343,11 +331,11 @@ export function GovernedDocumentPanel({
         );
       }
     } catch {
-      // silent
+      toast({ title: 'Failed to load governance data', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
-  }, [projectId, artifact.id]);
+  }, [projectId, artifact.id, toast]);
 
   useEffect(() => {
     fetchData();
@@ -367,20 +355,16 @@ export function GovernedDocumentPanel({
         if (reason) body.reason = reason;
         if (attestation) body.attestation = attestation;
 
-        const res = await fetch(
-          `/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/status`,
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-            body: JSON.stringify(body),
-          }
-        );
+        const res = await apiRequest('PUT', `/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/status`, body);
         if (res.ok) {
           onStatusChange?.(targetStatus);
+          toast({ title: `Status changed to ${targetStatus}` });
           fetchData(); // refresh audit trail
+        } else {
+          toast({ title: 'Status change failed', variant: 'destructive' });
         }
       } catch {
-        // silent
+        toast({ title: 'Status change failed', variant: 'destructive' });
       } finally {
         setChangingStatus(false);
         setRationaleTarget(null);
@@ -418,20 +402,16 @@ export function GovernedDocumentPanel({
       if (!projectId || !artifact.id || currentStatus === 'locked') return;
       setRollingBack(true);
       try {
-        const res = await fetch(
-          `/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/rollback`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-            body: JSON.stringify({ targetVersion }),
-          }
-        );
+        const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/rollback`, { targetVersion });
         if (res.ok) {
           onStatusChange?.(currentStatus); // trigger UI refresh
+          toast({ title: `Rolled back to version ${targetVersion}` });
           fetchData();
+        } else {
+          toast({ title: 'Rollback failed', variant: 'destructive' });
         }
       } catch {
-        // silent
+        toast({ title: 'Rollback failed', variant: 'destructive' });
       } finally {
         setRollingBack(false);
       }
@@ -460,7 +440,7 @@ export function GovernedDocumentPanel({
 
       {/* Tab bar */}
       <div className="flex border-b border-zinc-200">
-        {(['status', 'audit', 'versions', 'snapshots', 'threads'] as const).map(tab => (
+        {(['status', 'audit', 'governance', 'lineage', 'versions', 'snapshots', 'threads'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -475,16 +455,18 @@ export function GovernedDocumentPanel({
               ? 'History'
               : tab === 'threads'
                 ? 'Threads'
-                : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                : tab === 'governance'
+                  ? 'Gov'
+                  : tab === 'lineage'
+                    ? 'Lineage'
+                    : tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </div>
 
       <div className="flex-1 overflow-y-auto">
         {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
-          </div>
+          <LoadingState message="Loading governance data…" size="sm" />
         ) : activeTab === 'status' ? (
           <StatusTab
             artifact={artifact}
@@ -499,6 +481,10 @@ export function GovernedDocumentPanel({
           />
         ) : activeTab === 'audit' ? (
           <AuditTab events={events} />
+        ) : activeTab === 'governance' ? (
+          <GovernanceTrailTab projectId={projectId} artifactId={artifact.id} />
+        ) : activeTab === 'lineage' ? (
+          <DecisionLineageTab entityType="artifact" entityId={typeof artifact.id === 'string' ? parseInt(artifact.id, 10) || 0 : artifact.id} />
         ) : activeTab === 'snapshots' ? (
           <SnapshotsTab snapshots={snapshots} />
         ) : activeTab === 'threads' ? (
@@ -877,6 +863,160 @@ function StatusTab({
 }
 
 // ── Audit Tab ────────────────────────────────────────────────────────────────
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DECISION LINEAGE TAB — Wraps DecisionLineageMap for the panel context
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function DecisionLineageTab({ entityType, entityId }: { entityType: string; entityId: number }) {
+  if (!entityId || entityId <= 0) {
+    return (
+      <div className="p-4 text-center text-xs text-zinc-400">
+        No artifact selected. Open an artifact to view its decision lineage.
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-1">
+      <DecisionLineageMap entityType={entityType} entityId={entityId} />
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GOVERNANCE TRAIL TAB — Shows boundary transitions + decision records
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface GovernanceTransition {
+  id: string;
+  fromBoundary: string;
+  toBoundary: string;
+  transitionAllowed: boolean;
+  blockedReasons: string[];
+  actorRole?: string;
+  createdAt: string;
+}
+
+function GovernanceTrailTab({ projectId, artifactId }: { projectId: string | number; artifactId: string | number }) {
+  const [transitions, setTransitions] = React.useState<GovernanceTransition[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = sessionStorage.getItem('trialsage_access_token') || localStorage.getItem('trialsage_access_token');
+        const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+        const res = await fetch(
+          `/api/operating-system/governance/transitions?projectId=${projectId}&artifactId=${artifactId}`,
+          { headers }
+        );
+        if (!res.ok) throw new Error('Failed to fetch');
+        const data = await res.json();
+        if (!cancelled) {
+          setTransitions(data.data || []);
+          setLoading(false);
+        }
+      } catch {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [projectId, artifactId]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
+      </div>
+    );
+  }
+
+  if (transitions.length === 0) {
+    return (
+      <div className="p-4 text-center text-xs text-zinc-400">
+        No governance transitions recorded yet. Transitions are created when artifacts move through the governance pipeline.
+      </div>
+    );
+  }
+
+  const boundaryLabel: Record<string, string> = {
+    advisory: 'Advisory',
+    governed_draft: 'Governed Draft',
+    approved: 'Approved',
+    locked: 'Locked',
+    submission_ready: 'Submission Ready',
+  };
+
+  const boundaryColor: Record<string, string> = {
+    advisory: 'bg-zinc-100 text-zinc-600',
+    governed_draft: 'bg-blue-100 text-blue-700',
+    approved: 'bg-green-100 text-green-700',
+    locked: 'bg-amber-100 text-amber-700',
+    submission_ready: 'bg-purple-100 text-purple-700',
+  };
+
+  return (
+    <div className="p-2.5">
+      <div className="text-xs text-zinc-400 uppercase tracking-wide mb-2">
+        Governance Trail ({transitions.length} transition{transitions.length !== 1 ? 's' : ''})
+      </div>
+
+      <div className="relative">
+        <div className="absolute left-[5px] top-2 bottom-2 w-px bg-zinc-200" />
+
+        <div className="space-y-2">
+          {transitions.map(t => (
+            <div key={t.id} className="flex items-start gap-2 relative">
+              <div className="relative z-10 mt-1 bg-white">
+                {t.transitionAllowed ? (
+                  <CheckCircle className="w-3 h-3 text-green-500" />
+                ) : (
+                  <AlertCircle className="w-3 h-3 text-red-400" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1 text-xs">
+                  <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium', boundaryColor[t.fromBoundary] || 'bg-zinc-100 text-zinc-600')}>
+                    {boundaryLabel[t.fromBoundary] || t.fromBoundary}
+                  </span>
+                  <ArrowRight className="w-2.5 h-2.5 text-zinc-400" />
+                  <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium', boundaryColor[t.toBoundary] || 'bg-zinc-100 text-zinc-600')}>
+                    {boundaryLabel[t.toBoundary] || t.toBoundary}
+                  </span>
+                  <span className={cn('ml-1 text-[10px]', t.transitionAllowed ? 'text-green-600' : 'text-red-500')}>
+                    {t.transitionAllowed ? 'allowed' : 'blocked'}
+                  </span>
+                </div>
+                {!t.transitionAllowed && t.blockedReasons?.length > 0 && (
+                  <div className="mt-1 space-y-0.5">
+                    {t.blockedReasons.map((reason, i) => (
+                      <div key={i} className="text-[10px] text-red-500 leading-snug pl-1 border-l border-red-200">
+                        {reason}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="text-[10px] text-zinc-400 mt-0.5 flex items-center gap-1">
+                  {t.actorRole && (
+                    <>
+                      <User className="w-2.5 h-2.5" />
+                      <span>{t.actorRole}</span>
+                      <span className="text-zinc-300">|</span>
+                    </>
+                  )}
+                  <Clock className="w-2.5 h-2.5" />
+                  <span>{new Date(t.createdAt).toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function AuditTab({ events }: { events: ProvenanceEvent[] }) {
   if (events.length === 0) {

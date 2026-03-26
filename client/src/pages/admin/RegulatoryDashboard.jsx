@@ -6,7 +6,7 @@ import AdvisorSummaryPanel from '../../components/advisor/AdvisorSummaryPanel';
 import AdvisorRiskHeatmapV2 from '../../components/advisor/AdvisorRiskHeatmapV2';
 import AdvisorTimelineSimulator from '../../components/advisor/AdvisorTimelineSimulator';
 import AskLumenAI from '../../components/advisor/AskLumenAI';
-// LumenAssistantButton removed — mock AI, not part of beta (Wave 2)
+// Legacy floating assistant button removed — mock AI, not part of beta (Wave 2)
 
 export default function RegulatoryDashboard() {
   const [activeTab, setActiveTab] = useState('RiskHeatmap');
@@ -44,7 +44,7 @@ export default function RegulatoryDashboard() {
         )}
       </div>
 
-      {/* Floating LumenAssistantButton removed — mock AI (Wave 2) */}
+      {/* Floating assistant button removed — mock AI (Wave 2) */}
     </div>
   );
 }
