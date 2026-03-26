@@ -565,7 +565,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               <img src={logoSrc} alt="Concept2Cure" className="w-full h-full object-cover object-center" />
               <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at center, transparent 40%, var(--color-bg, #faf9f5) 100%)' }} />
             </div>
-            <span className="font-semibold text-zinc-800 text-[13px]">ClinicalSage</span>
+            <span className="font-semibold text-zinc-800 text-[13px]">Concept2Cure</span>
           </div>
           <button
             onClick={onToggleCollapse}
@@ -694,11 +694,23 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               onClick={() => onNavigate?.('documents')}
             />
             <NavItem
+              icon={<Archive className="w-3.5 h-3.5" />}
+              label="Vault"
+              active={activeNavId === 'vault'}
+              onClick={() => onNavigate?.('document-vault')}
+            />
+            <NavItem
               icon={<ShieldCheck className="w-3.5 h-3.5" />}
               label="Review"
               active={activeNavId === 'review'}
               accentColor="emerald"
               onClick={() => onNavigate?.('review')}
+            />
+            <NavItem
+              icon={<Activity className="w-3.5 h-3.5" />}
+              label="Reports"
+              active={activeNavId === 'reports'}
+              onClick={() => onNavigate?.('report-engine')}
             />
             <NavItem
               icon={<FlaskConical className="w-3.5 h-3.5" />}

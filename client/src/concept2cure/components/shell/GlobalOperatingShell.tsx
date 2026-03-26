@@ -1,10 +1,12 @@
 import React from 'react';
-import { Layers, FolderKanban, FileText, Archive, ScrollText } from 'lucide-react';
+import { Layers, FolderKanban, FileText, Archive, ScrollText, Search, ShieldCheck, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface GlobalOperatingShellProps {
   layoutMode: string;
   activeProjectName?: string;
+  currentGlobalNodeLabel?: string;
+  onAction?: (action: 'home' | 'search' | 'vault' | 'review' | 'reports' | 'submission') => void;
   children: React.ReactNode;
 }
 
@@ -15,7 +17,13 @@ const LAYERS = [
   { id: 'reports', label: 'Reports', icon: ScrollText },
 ] as const;
 
-export function GlobalOperatingShell({ layoutMode, activeProjectName, children }: GlobalOperatingShellProps) {
+export function GlobalOperatingShell({
+  layoutMode,
+  activeProjectName,
+  currentGlobalNodeLabel,
+  onAction,
+  children,
+}: GlobalOperatingShellProps) {
   const showHeader = [
     'regulatory-workspace',
     'documents',
@@ -34,7 +42,64 @@ export function GlobalOperatingShell({ layoutMode, activeProjectName, children }
           {activeProjectName && (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600">{activeProjectName}</span>
           )}
+          {currentGlobalNodeLabel && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100">
+              {currentGlobalNodeLabel}
+            </span>
+          )}
           <div className="ml-auto flex items-center gap-1">
+            {onAction && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => onAction('home')}
+                  className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
+                >
+                  <FolderKanban className="w-3 h-3" />
+                  Home
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onAction('search')}
+                  className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
+                >
+                  <Search className="w-3 h-3" />
+                  Search
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onAction('vault')}
+                  className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
+                >
+                  <Archive className="w-3 h-3" />
+                  Vault
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onAction('review')}
+                  className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
+                >
+                  <ShieldCheck className="w-3 h-3" />
+                  Review
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onAction('reports')}
+                  className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
+                >
+                  <ScrollText className="w-3 h-3" />
+                  Reports
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onAction('submission')}
+                  className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
+                >
+                  <Send className="w-3 h-3" />
+                  Submission
+                </button>
+              </>
+            )}
             {LAYERS.map(layer => {
               const Icon = layer.icon;
               const isActive =

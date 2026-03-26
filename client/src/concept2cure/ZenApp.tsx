@@ -433,6 +433,65 @@ type LayoutMode =
   | 'team-workspace'
   | 'program-analytics';
 
+const PRIMARY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
+  projects: 'projects',
+  'project-home': 'projects',
+  'dossier-map': 'dossier',
+  documents: 'documents',
+  review: 'review',
+  submissions: 'submissions',
+  'section-workspace': 'dossier',
+  'vault-workspace': 'vault',
+  'review-readiness': 'review',
+  'report-engine': 'reports',
+};
+
+const LEGACY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
+  'regulatory-workspace': 'documents',
+  workspace: 'documents',
+  'ind-workspace': 'documents',
+  'ectd-coauthor': 'documents',
+  cmc: 'documents',
+  'clinical-trial': 'documents',
+  author: 'documents',
+  editor: 'documents',
+  templates: 'documents',
+  'document-builder': 'documents',
+  'intelligence-hub': 'documents',
+  snowglobe: 'projects',
+  'snowglobe-chambers': 'projects',
+  'command-center': 'projects',
+  'mission-control': 'projects',
+  'submission-workspace': 'submissions',
+  'document-vault': 'vault',
+  'enablement-center': 'projects',
+  'client-intelligence': 'projects',
+  'collaboration-hub': 'review',
+  'user-inbox': 'projects',
+  'client-branding': 'projects',
+  biostatistics: 'biostatistics',
+  'training-center': 'projects',
+  'client-onboarding': 'projects',
+  'knowledge-base': 'projects',
+  'project-knowledge': 'projects',
+  'legal-center': 'review',
+  sherpa: 'documents',
+  audit: 'review',
+  timeline: 'projects',
+  analytics: 'projects',
+  artifacts: 'documents',
+  'about-training': 'projects',
+  'precedent-intelligence': 'documents',
+  'deep-research': 'documents',
+  'safety-narrative': 'documents',
+  'ana-dashboard': 'projects',
+  'ana-platform-control': 'projects',
+  'platform-admin': 'projects',
+  'biologics-dashboard': 'documents',
+  'ctd-onboarding': 'projects',
+  integrations: 'projects',
+};
+
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
   'pharma',
@@ -1684,6 +1743,58 @@ export const ZenApp: React.FC = () => {
   }, [activeProject?.type]);
 
   const workflowRunId = activeProjectId ? `workflow-run-${activeProjectId}` : 'workflow-run-demo';
+  const activeNavId = useMemo(() => {
+    if (activeToolPanel === 'vault') return 'vault';
+    if (activeToolPanel === 'ana-biostats') return 'biostatistics';
+    return PRIMARY_NAV_ID_BY_LAYOUT[layoutMode] ?? LEGACY_NAV_ID_BY_LAYOUT[layoutMode];
+  }, [activeToolPanel, layoutMode]);
+
+  const currentGlobalNodeLabel = useMemo(() => {
+    if (activeToolPanel === 'vault') return 'Vault';
+    if (activeToolPanel === 'ana-biostats') return 'Biostatistics';
+    const labelByNavId: Record<string, string> = {
+      projects: activeProject ? `${activeProject.name} · Project Home` : 'Project Home',
+      dossier: 'Dossier Workspace',
+      documents: 'Document Studio',
+      vault: 'Vault Workspace',
+      review: 'Review',
+      reports: 'Reports',
+      submissions: 'Submission',
+      biostatistics: 'Biostatistics',
+    };
+    return activeNavId ? labelByNavId[activeNavId] ?? 'Workspace' : 'Workspace';
+  }, [activeNavId, activeProject, activeToolPanel]);
+
+  const handleHeaderAction = useCallback(
+    (action: 'home' | 'search' | 'vault' | 'review' | 'reports' | 'submission') => {
+      switch (action) {
+        case 'home':
+          setLayoutMode(activeProjectId ? 'project-home' : 'projects');
+          break;
+        case 'search':
+          setCommandPaletteOpen(true);
+          break;
+        case 'vault':
+          setActiveToolPanel(null);
+          setLayoutMode('vault-workspace');
+          break;
+        case 'review':
+          setActiveToolPanel(null);
+          setLayoutMode('review');
+          break;
+        case 'reports':
+          setActiveToolPanel(null);
+          setLayoutMode('report-engine');
+          break;
+        case 'submission':
+          setActiveToolPanel(null);
+          setLayoutMode('submissions');
+          break;
+      }
+    },
+    [activeProjectId]
+  );
+
   const timelineSteps = useMemo(
     () => [
       {
@@ -1857,69 +1968,7 @@ export const ZenApp: React.FC = () => {
         projects={projects}
         activeConversationId={activeConversationId}
         activeProjectId={activeProjectId}
-        activeNavId={
-          activeToolPanel === 'ana-biostats'
-            ? 'biostatistics'
-            : (
-            {
-              // ── Unified workflow nav mapping ──
-              'project-home': 'projects',
-              'dossier-map': 'dossier',
-              documents: 'documents',
-              'vault-workspace': 'documents',
-              review: 'review',
-              submissions: 'submissions',
-              'section-workspace': 'dossier',
-              // ── Legacy mappings (still functional) ──
-              'regulatory-workspace': 'documents',
-              workspace: 'documents',
-              'ind-workspace': 'documents',
-              'ectd-coauthor': 'documents',
-              cmc: 'documents',
-              'clinical-trial': 'documents',
-              author: 'documents',
-              editor: 'documents',
-              templates: 'documents',
-              'document-builder': 'documents',
-              'intelligence-hub': 'documents',
-              'review-readiness': 'review',
-              snowglobe: 'projects',
-              'snowglobe-chambers': 'projects',
-              // [BATCH 2] Remap deleted nav IDs to surviving ones
-              'command-center': 'projects',
-              'mission-control': 'projects',
-              'submission-workspace': 'submissions',
-              'document-vault': 'vault-workspace',
-              'enablement-center': 'projects',
-              'client-intelligence': 'projects',
-              'collaboration-hub': 'review',
-              'user-inbox': 'projects',
-              'client-branding': 'projects',
-              biostatistics: 'biostatistics',
-              'training-center': 'enablement-center',
-              'client-onboarding': 'enablement-center',
-              'knowledge-base': 'projects',
-              'project-knowledge': 'projects',
-              'legal-center': 'review',
-              sherpa: 'documents',
-              audit: 'review',
-              timeline: 'projects',
-              analytics: 'projects',
-              artifacts: 'documents',
-              'about-training': 'projects',
-              'precedent-intelligence': 'documents',
-              'deep-research': 'documents',
-              'report-engine': 'documents',
-              'ana-dashboard': 'projects',
-              'safety-narrative': 'documents',
-              'ana-platform-control': 'projects',
-              'platform-admin': 'projects',
-              'biologics-dashboard': 'documents',
-              'ctd-onboarding': 'projects',
-              integrations: 'projects',
-            } as Record<string, string>
-          )[layoutMode] ?? undefined
-        }
+        activeNavId={activeNavId}
         onSelectConversation={id => {
           setActiveConversationId(id);
           setActiveThreadId(id);
@@ -2081,7 +2130,12 @@ export const ZenApp: React.FC = () => {
       />
 
       {/* Main area — no top bar, exactly like Claude.ai */}
-      <GlobalOperatingShell layoutMode={layoutMode} activeProjectName={activeProject?.name}>
+      <GlobalOperatingShell
+        layoutMode={layoutMode}
+        activeProjectName={activeProject?.name}
+        currentGlobalNodeLabel={currentGlobalNodeLabel}
+        onAction={handleHeaderAction}
+      >
         {/* Content Area */}
         <div className="flex-1 flex min-w-0 min-h-0">
           {/* ── Embedded Module Host ── */}
