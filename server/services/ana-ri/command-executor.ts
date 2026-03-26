@@ -14,9 +14,15 @@
  * @module server/services/ana-ri/command-executor
  */
 
-import { pool } from '../../db.js';
+import { getPool } from '../../db.ts';
 import { tagArtifact, type TagArtifactResult } from '../artifact-tagger.js';
 import { logGeneration } from './enforcement.js';
+
+
+const pool = {
+  query: (...args: Parameters<ReturnType<typeof getPool>['query']>) => getPool().query(...args),
+  connect: (...args: Parameters<ReturnType<typeof getPool>['connect']>) => getPool().connect(...args),
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Backend service imports — wiring AnA to the full platform

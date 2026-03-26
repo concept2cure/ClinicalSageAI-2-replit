@@ -13,9 +13,53 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { generateEctdPackage, validateEctdPackage } from '../services/ectdExportService';
 
 const router = Router();
+
+const exportGovernanceSchema = z.object({
+  aiGenerated: z.boolean().default(true),
+  humanReviewApproved: z.boolean().default(false),
+  reviewerName: z.string().trim().min(1).max(200).optional(),
+  reviewerRole: z.string().trim().min(1).max(200).optional(),
+  reviewTimestamp: z.string().datetime().optional(),
+});
+
+function shouldEnforceExportReviewGate(): boolean {
+  if (process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW === 'true') return true;
+  if (process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW === 'false') return false;
+  return process.env.NODE_ENV === 'production';
+}
+
+function validateExportGovernance(req: Request, res: Response) {
+  const parsed = exportGovernanceSchema.safeParse(req.body?.governance ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ error: 'Invalid governance payload', details: parsed.error.flatten() });
+    return null;
+  }
+
+  const governance = parsed.data;
+  if (shouldEnforceExportReviewGate() && !governance.humanReviewApproved) {
+    res.status(403).json({
+      error: 'HUMAN_REVIEW_REQUIRED',
+      message: 'Human review approval is required before export in this environment',
+    });
+    return null;
+  }
+
+  res.setHeader('X-Concept2Cure-AI-Generated', String(governance.aiGenerated));
+  res.setHeader('X-Concept2Cure-Human-Review-Approved', String(governance.humanReviewApproved));
+  res.setHeader('X-Concept2Cure-Review-Required', 'true');
+  if (governance.reviewerName) {
+    res.setHeader('X-Concept2Cure-Reviewer', encodeURIComponent(governance.reviewerName));
+  }
+  if (governance.reviewTimestamp) {
+    res.setHeader('X-Concept2Cure-Review-Timestamp', governance.reviewTimestamp);
+  }
+
+  return governance;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/ectd/export/:submissionId — Generate & download eCTD package
@@ -46,6 +90,8 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
     applicationNumber,
     validateAfter = true,
   } = req.body || {};
+
+  if (!validateExportGovernance(req, res)) return;
 
   try {
     console.log(

@@ -481,7 +481,7 @@ export class AIProviderRouter {
     // Moonshot uses OpenAI-compatible API
     const moonshot = new OpenAI({
       apiKey: process.env.MOONSHOT_API_KEY,
-      baseURL: 'https://api.moonshot.cn/v1',
+      baseURL: 'https://api.moonshot.ai/v1',
     });
 
     const response = await moonshot.chat.completions.create({

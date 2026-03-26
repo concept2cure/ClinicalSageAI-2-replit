@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { SwitchCamera } from 'lucide-react';
 import { DocumentContextProvider } from '@/contexts/DocumentContext';
-import { useLumenAiAssistant } from '@/contexts/LumenAiAssistantContext';
+import { useAnAAssistant } from '@/contexts/AnAAssistantContext';
 
 /**
  * DocTypeSwitcher
@@ -13,7 +13,7 @@ import { useLumenAiAssistant } from '@/contexts/LumenAiAssistantContext';
  * It uses the context API to share state with the About510kDialog component.
  */
 function DocTypeSwitcher({ documentType, setDocumentType, title, setTitle, className }) {
-  const { openAssistant, setModuleContext } = useLumenAiAssistant();
+  const { openAssistant, setModuleContext } = useAnAAssistant();
 
   // Handle switching to CER mode
   const switchToCER = () => {

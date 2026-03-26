@@ -3,10 +3,10 @@ import { MessageSquare, X, Send, Loader2, PlusCircle, MoreVertical, Download } f
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useLumenAssistant } from './LumenAssistantProvider';
+import { useAnAQuickAssistant } from './AnAQuickAssistantProvider';
 
-export function LumenAssistantButton({ variant = 'default', size = 'default', tooltip }) {
-  const { isAssistantOpen, setIsAssistantOpen } = useLumenAssistant();
+export function AnAQuickAssistantButton({ variant = 'default', size = 'default', tooltip }) {
+  const { isAssistantOpen, setIsAssistantOpen } = useAnAQuickAssistant();
 
   return (
     <Button
@@ -37,8 +37,8 @@ const mockMessages = [
   },
 ];
 
-export default function LumenAssistant() {
-  const { isAssistantOpen, setIsAssistantOpen } = useLumenAssistant();
+export default function AnAQuickAssistant() {
+  const { isAssistantOpen, setIsAssistantOpen } = useAnAQuickAssistant();
   const [messages, setMessages] = useState(mockMessages);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);

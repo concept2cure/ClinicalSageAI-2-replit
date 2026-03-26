@@ -7,8 +7,8 @@
  * @version 2.0.0
  */
 
-import React, { useState, useMemo, useCallback, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,7 +51,6 @@ import {
   SortDesc,
   Plus,
   Lock,
-  Unlock,
 } from 'lucide-react';
 import type {
   DocumentSummary,
@@ -83,11 +82,15 @@ interface VaultDocument extends DocumentSummary {
   isLocked?: boolean;
   lockOwner?: string;
   ctdSection?: string;
+  isTemplate?: boolean;
+  folderId?: string;
 }
 
 type ViewMode = 'grid' | 'list';
 type SortField = 'name' | 'updatedAt' | 'status' | 'size';
 type SortOrder = 'asc' | 'desc';
+const MAX_UPLOAD_SIZE = 50 * 1024 * 1024;
+const ACCEPTED_EXTENSIONS = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'png', 'jpg', 'jpeg', 'txt', 'csv', 'json', 'md'];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STATUS CONFIGURATION
@@ -172,8 +175,16 @@ const FolderTree: React.FC<FolderTreeProps> = ({
 
     return (
       <div key={folder.id}>
-        <button
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => onSelectFolder(folder.id)}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onSelectFolder(folder.id);
+            }
+          }}
           className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors ${
             isSelected ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50'
           }`}
@@ -206,7 +217,7 @@ const FolderTree: React.FC<FolderTreeProps> = ({
           <Badge variant="secondary" className="text-xs px-1.5">
             {folder.documentCount}
           </Badge>
-        </button>
+        </div>
         {hasChildren && folder.isExpanded && (
           <div>{folder.children!.map(child => renderFolder(child, depth + 1))}</div>
         )}
@@ -242,6 +253,8 @@ interface DocumentListItemProps {
   onView: (doc: VaultDocument) => void;
   onEdit: (doc: VaultDocument) => void;
   onDownload: (doc: VaultDocument) => void;
+  onDelete: (doc: VaultDocument) => void;
+  onAppendVersion: (doc: VaultDocument) => void;
   onToggleFavorite: (doc: VaultDocument) => void;
 }
 
@@ -251,11 +264,14 @@ const DocumentListItem: React.FC<DocumentListItemProps> = ({
   onView,
   onEdit,
   onDownload,
+  onDelete,
+  onAppendVersion,
   onToggleFavorite,
 }) => {
   const statusConfig = STATUS_CONFIG[document.status];
   const categoryConfig = CATEGORY_CONFIG[document.category];
   const canWrite = usePermission('documents:write');
+  const canDelete = usePermission('documents:delete');
 
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
@@ -301,6 +317,16 @@ const DocumentListItem: React.FC<DocumentListItemProps> = ({
               <DropdownMenuItem onClick={() => onDownload(document)}>
                 <Download className="h-4 w-4 mr-2" /> Download
               </DropdownMenuItem>
+              {canWrite && !document.isTemplate && (
+                <DropdownMenuItem onClick={() => onAppendVersion(document)}>
+                  <Copy className="h-4 w-4 mr-2" /> Append Version
+                </DropdownMenuItem>
+              )}
+              {canDelete && !document.isTemplate && (
+                <DropdownMenuItem className="text-red-600" onClick={() => onDelete(document)}>
+                  <Trash2 className="h-4 w-4 mr-2" /> Delete
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => onToggleFavorite(document)}>
                 {document.isFavorite ? (
@@ -327,6 +353,7 @@ const DocumentListItem: React.FC<DocumentListItemProps> = ({
           </div>
           <div className="flex items-center gap-2">
             <Badge className={`text-xs ${statusConfig.color}`}>{statusConfig.label}</Badge>
+            {document.isTemplate && <Badge variant="secondary" className="text-xs">Template</Badge>}
             <span className="text-xs text-muted-foreground">v{document.version}</span>
           </div>
           <p className="text-xs text-muted-foreground">
@@ -352,6 +379,7 @@ const DocumentListItem: React.FC<DocumentListItemProps> = ({
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
           <Badge className={`text-xs ${categoryConfig.color}`}>{categoryConfig.label}</Badge>
+          {document.isTemplate && <Badge variant="secondary" className="text-xs">Template</Badge>}
           <span>v{document.version}</span>
           <span>•</span>
           <span>{document.author}</span>
@@ -387,9 +415,19 @@ const DocumentListItem: React.FC<DocumentListItemProps> = ({
             <DropdownMenuItem onClick={() => onDownload(document)}>
               <Download className="h-4 w-4 mr-2" /> Download
             </DropdownMenuItem>
+            {canWrite && !document.isTemplate && (
+              <DropdownMenuItem onClick={() => onAppendVersion(document)}>
+                <Copy className="h-4 w-4 mr-2" /> Append Version
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem>
               <History className="h-4 w-4 mr-2" /> Version History
             </DropdownMenuItem>
+            {canDelete && !document.isTemplate && (
+              <DropdownMenuItem className="text-red-600" onClick={() => onDelete(document)}>
+                <Trash2 className="h-4 w-4 mr-2" /> Delete
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <Share2 className="h-4 w-4 mr-2" /> Share
@@ -422,15 +460,25 @@ export const DocumentVault: React.FC = () => {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const appendInputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // State
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [sortField, setSortField] = useState<SortField>('updatedAt');
+  const [sortField] = useState<SortField>('updatedAt');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<DocumentStatus | 'all'>('all');
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const [appendTargetDoc, setAppendTargetDoc] = useState<VaultDocument | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const [uiNotice, setUiNotice] = useState<string | null>(null);
+  const [uiError, setUiError] = useState<string | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<VaultDocument | null>(null);
+  const [previewText, setPreviewText] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
 
   // Fetch documents from API
   const { data: vaultDocuments = [], isLoading, error, refetch } = useQuery({
@@ -473,13 +521,59 @@ export const DocumentVault: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vault-documents'] });
+      setUiNotice('Upload complete.');
+      setUiError(null);
     },
+    onError: (error: Error) => setUiError(error.message || 'Upload failed.'),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (docId: string) => {
+      const res = await fetch(`/api/vault/document/${docId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Delete failed');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vault-documents'] });
+      setUiNotice('Document deleted.');
+      setUiError(null);
+    },
+    onError: (error: Error) => setUiError(error.message || 'Delete failed.'),
+  });
+
+  const appendVersionMutation = useMutation({
+    mutationFn: async ({ docId, file }: { docId: string; file: File }) => {
+      const formData = new FormData();
+      formData.append('document', file);
+      formData.append('version', new Date().toISOString());
+      const res = await fetch(`/api/vault/documents/${docId}/save-version`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) throw new Error('Append version failed');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vault-documents'] });
+      setUiNotice('New version appended.');
+      setUiError(null);
+    },
+    onError: (error: Error) => setUiError(error.message || 'Append version failed.'),
   });
 
   // Upload handler — field name must match server's multer config ('document')
   const handleUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+    if (file.size > MAX_UPLOAD_SIZE) {
+      setUiError('File exceeds 50MB upload limit.');
+      return;
+    }
+    if (!ACCEPTED_EXTENSIONS.includes(ext)) {
+      setUiError(`Unsupported file type: .${ext || 'unknown'}`);
+      return;
+    }
     const formData = new FormData();
     formData.append('document', file); // Server expects 'document', not 'file'
     formData.append('title', file.name);
@@ -487,6 +581,32 @@ export const DocumentVault: React.FC = () => {
     uploadMutation.mutate(formData);
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, [uploadMutation]);
+
+  const uploadFile = useCallback((file: File) => {
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+    if (file.size > MAX_UPLOAD_SIZE) {
+      setUiError(`"${file.name}" exceeds 50MB upload limit.`);
+      return;
+    }
+    if (!ACCEPTED_EXTENSIONS.includes(ext)) {
+      setUiError(`"${file.name}" has an unsupported file type.`);
+      return;
+    }
+    const formData = new FormData();
+    formData.append('document', file);
+    formData.append('title', file.name);
+    formData.append('category', 'regulatory');
+    uploadMutation.mutate(formData);
+  }, [uploadMutation]);
+
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragActive(false);
+    const files = Array.from(e.dataTransfer.files || []);
+    if (!files.length) return;
+    files.forEach(file => uploadFile(file));
+    setUiNotice(`${files.length} file${files.length === 1 ? '' : 's'} queued for upload.`);
+  }, [uploadFile]);
 
   // Download handler — use fetch with credentials instead of anchor tag
   const handleDownload = useCallback(async (doc: VaultDocument) => {
@@ -508,6 +628,24 @@ export const DocumentVault: React.FC = () => {
       console.error('Download error:', err);
     }
   }, []);
+
+  const handleDelete = useCallback((doc: VaultDocument) => {
+    if (!window.confirm(`Delete "${doc.name}" from vault?`)) return;
+    deleteMutation.mutate(doc.id);
+  }, [deleteMutation]);
+
+  const handleAppendVersion = useCallback((doc: VaultDocument) => {
+    setAppendTargetDoc(doc);
+    appendInputRef.current?.click();
+  }, []);
+
+  const handleAppendUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !appendTargetDoc) return;
+    appendVersionMutation.mutate({ docId: appendTargetDoc.id, file });
+    setAppendTargetDoc(null);
+    if (appendInputRef.current) appendInputRef.current.value = '';
+  }, [appendTargetDoc, appendVersionMutation]);
 
   // View handler — show document in a detail panel (sets selected doc state)
   const [viewingDoc, setViewingDoc] = useState<VaultDocument | null>(null);
@@ -541,9 +679,14 @@ export const DocumentVault: React.FC = () => {
 
   // Package-mode-aware folder structures
   const [packageMode, setPackageMode] = useState<string>('ind');
+  const [showTemplates, setShowTemplates] = useState(true);
 
   const FOLDER_STRUCTURES: Record<string, VaultFolder[]> = useMemo(() => ({
     ind: [
+      { id: 'pre-ind', name: 'Pre-IND Strategy', parentId: null, documentCount: 0, isExpanded: true, children: [
+        { id: 'briefing-book', name: 'Pre-IND Briefing Package', parentId: 'pre-ind', documentCount: 0 },
+        { id: 'meeting-minutes', name: 'FDA Meeting Minutes', parentId: 'pre-ind', documentCount: 0 },
+      ]},
       { id: 'ctd', name: 'CTD Modules', parentId: null, documentCount: 0, isExpanded: true, children: [
         { id: 'm1', name: 'Module 1 - Administrative', parentId: 'ctd', documentCount: 0 },
         { id: 'm2', name: 'Module 2 - CTD Summaries', parentId: 'ctd', documentCount: 0 },
@@ -668,12 +811,52 @@ export const DocumentVault: React.FC = () => {
   }, []);
 
   // Apply favorites to documents
+  const templateDocuments = useMemo(() => {
+    const templateMap: Record<string, Array<Partial<VaultDocument> & { id: string; name: string }>> = {
+      ind: [
+        { id: 'tpl-ind-cover-letter', name: 'Template - IND Cover Letter', folderId: 'm1', category: 'regulatory' },
+        { id: 'tpl-ind-1571', name: 'Template - FDA Form 1571 Narrative', folderId: 'm1', category: 'administrative' },
+        { id: 'tpl-ind-clin-protocol', name: 'Template - Clinical Protocol', folderId: 'protocols', category: 'protocol' },
+        { id: 'tpl-ind-cmc-qos', name: 'Template - Quality Overall Summary', folderId: 'm3', category: 'cmc' },
+      ],
+      '510k': [
+        { id: 'tpl-510k-cover', name: 'Template - 510(k) Cover Letter', folderId: 'cover', category: 'administrative' },
+        { id: 'tpl-510k-summary', name: 'Template - 510(k) Summary', folderId: '510k-summary', category: 'regulatory' },
+        { id: 'tpl-510k-device-desc', name: 'Template - Device Description', folderId: 'device-desc', category: 'regulatory' },
+        { id: 'tpl-510k-se', name: 'Template - Substantial Equivalence', folderId: 'sub-equiv', category: 'regulatory' },
+      ],
+      nda: [
+        { id: 'tpl-nda-uspi', name: 'Template - USPI Labeling', folderId: 'labeling', category: 'labeling' },
+      ],
+    };
+
+    return (templateMap[packageMode] || []).map((template, index) => ({
+      id: template.id,
+      name: template.name,
+      category: template.category || 'regulatory',
+      status: 'draft',
+      version: 'template',
+      author: 'System',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      size: 0,
+      fileType: 'docx',
+      tags: ['template', packageMode],
+      isFavorite: false,
+      isLocked: false,
+      isTemplate: true,
+      folderId: template.folderId,
+      ctdModule: template.folderId?.startsWith('m') ? template.folderId as CTDModule : undefined,
+      ctdSection: `template-${index + 1}`,
+    } as VaultDocument));
+  }, [packageMode]);
+
   const documentsWithFavorites = useMemo(() =>
-    vaultDocuments.map(doc => ({
+    (showTemplates ? [...templateDocuments, ...vaultDocuments] : vaultDocuments).map(doc => ({
       ...doc,
       isFavorite: favoriteIds.has(doc.id),
     })),
-    [vaultDocuments, favoriteIds]
+    [showTemplates, templateDocuments, vaultDocuments, favoriteIds]
   );
 
   // Filter and sort documents
@@ -690,6 +873,7 @@ export const DocumentVault: React.FC = () => {
       if (selectedFolderId.startsWith('m')) {
         result = result.filter(doc => doc.ctdModule === selectedFolderId);
       } else {
+        result = result.filter(doc => (doc.folderId ? doc.folderId === selectedFolderId : true));
         // Map folder to category
         const folderCategoryMap: Record<string, DocumentCategory> = {
           protocols: 'protocol',
@@ -727,6 +911,83 @@ export const DocumentVault: React.FC = () => {
     return result;
   }, [documentsWithFavorites, statusFilter, selectedFolderId, sortField, sortOrder]);
 
+  const recentActivityDocs = useMemo(() => {
+    return [...vaultDocuments]
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      .slice(0, 5);
+  }, [vaultDocuments]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.target as HTMLElement)?.tagName === 'INPUT') return;
+      if (event.key === '/') {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+      }
+      if (event.key.toLowerCase() === 'u' && canUpload) {
+        event.preventDefault();
+        fileInputRef.current?.click();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [canUpload]);
+
+  useEffect(() => {
+    if (!previewDoc) {
+      setPreviewText(null);
+      setPreviewError(null);
+      setPreviewLoading(false);
+      return;
+    }
+
+    const textLikeTypes = ['txt', 'md', 'json', 'csv'];
+    const docType = (previewDoc.fileType || '').toLowerCase();
+    const isTextPreview = textLikeTypes.some(type => docType.includes(type));
+    if (!isTextPreview) {
+      setPreviewText(null);
+      setPreviewError(null);
+      return;
+    }
+
+    let active = true;
+    setPreviewLoading(true);
+    setPreviewError(null);
+    fetch(`/api/vault/documents/${previewDoc.id}/view`, { credentials: 'include' })
+      .then(async res => {
+        if (!res.ok) throw new Error('Preview failed');
+        return res.text();
+      })
+      .then(text => {
+        if (!active) return;
+        setPreviewText(text.slice(0, 10000));
+      })
+      .catch(err => {
+        if (!active) return;
+        setPreviewError(String(err));
+      })
+      .finally(() => {
+        if (!active) return;
+        setPreviewLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [previewDoc]);
+
+  useEffect(() => {
+    if (!uiNotice) return;
+    const timeout = setTimeout(() => setUiNotice(null), 3500);
+    return () => clearTimeout(timeout);
+  }, [uiNotice]);
+
+  useEffect(() => {
+    if (!uiError) return;
+    const timeout = setTimeout(() => setUiError(null), 5000);
+    return () => clearTimeout(timeout);
+  }, [uiError]);
+
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
@@ -755,8 +1016,18 @@ export const DocumentVault: React.FC = () => {
                 <Upload className="h-4 w-4 mr-2" />
                 {uploadMutation.isPending ? 'Uploading...' : 'Upload'}
               </Button>
+              <input
+                ref={appendInputRef}
+                type="file"
+                className="hidden"
+                onChange={handleAppendUpload}
+              />
             </>
           )}
+          <Button variant="outline" size="sm" onClick={() => setShowTemplates(prev => !prev)}>
+            <Plus className="h-4 w-4 mr-2" />
+            {showTemplates ? 'Hide Templates' : 'Show Templates'}
+          </Button>
           {/* Package mode selector */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -791,11 +1062,47 @@ export const DocumentVault: React.FC = () => {
         </div>
       </div>
 
+      <div className="mb-4 grid gap-3 md:grid-cols-3">
+        <Card className="md:col-span-2">
+          <CardContent className="pt-4 text-sm">
+            <p className="font-medium mb-1">Quick Start</p>
+            <p className="text-muted-foreground">
+              1) Choose a package mode, 2) enable templates, 3) upload or drag files, 4) append versions during review.
+            </p>
+          </CardContent>
+        </Card>
+        <div
+          className={`rounded-lg border-2 border-dashed p-3 text-sm transition-colors ${
+            dragActive ? 'border-blue-500 bg-blue-50' : 'border-slate-300 bg-white'
+          }`}
+          onDragOver={e => {
+            e.preventDefault();
+            setDragActive(true);
+          }}
+          onDragLeave={() => setDragActive(false)}
+          onDrop={handleDrop}
+        >
+          <p className="font-medium">Drag & drop upload</p>
+          <p className="text-muted-foreground">Drop one file here to upload to the active vault view.</p>
+        </div>
+      </div>
+
+      {uiNotice && (
+        <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+          {uiNotice}
+        </div>
+      )}
+      {uiError && (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          {uiError}
+        </div>
+      )}
+
       {/* Main Content */}
       <div className="flex-1 flex gap-6 min-h-0">
         {/* Sidebar */}
         <div className="w-64 flex-shrink-0">
-          <Card className="h-full">
+          <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm">Folders</CardTitle>
             </CardHeader>
@@ -808,6 +1115,33 @@ export const DocumentVault: React.FC = () => {
               />
             </CardContent>
           </Card>
+          <Card className="mt-3">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">Recent Activity</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="space-y-2">
+                {recentActivityDocs.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No recent document activity yet.</p>
+                ) : (
+                  recentActivityDocs.map(doc => (
+                    <button
+                      key={`recent-${doc.id}`}
+                      className="w-full text-left rounded-md px-2 py-1.5 hover:bg-slate-50"
+                      onClick={() => setViewingDoc(doc)}
+                    >
+                      <p className="text-xs font-medium truncate">{doc.name}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(
+                          new Date(doc.updatedAt)
+                        )}
+                      </p>
+                    </button>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Document List */}
@@ -817,12 +1151,17 @@ export const DocumentVault: React.FC = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
+                ref={searchInputRef}
                 placeholder="Search documents..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="pl-9"
               />
             </div>
+            <span className="text-xs text-muted-foreground hidden xl:inline">
+              Shortcuts: <kbd className="px-1 border rounded">/</kbd> search •{' '}
+              <kbd className="px-1 border rounded">U</kbd> upload
+            </span>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -900,19 +1239,32 @@ export const DocumentVault: React.FC = () => {
                 <FileText className="h-12 w-12 mb-4 opacity-50" />
                 <p className="text-lg font-medium">No documents found</p>
                 <p className="text-sm">Try adjusting your search or filters</p>
+                <div className="mt-4 flex items-center gap-2">
+                  {canUpload && (
+                    <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload first document
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="sm" onClick={() => setShowTemplates(true)}>
+                    Show starter templates
+                  </Button>
+                </div>
               </div>
             ) : viewMode === 'grid' ? (
               <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredDocuments.map(doc => (
-                  <DocumentListItem
-                    key={doc.id}
-                    document={doc}
-                    viewMode={viewMode}
-                    onView={handleView}
-                    onEdit={handleEdit}
-                    onDownload={handleDownload}
-                    onToggleFavorite={toggleFavorite}
-                  />
+                      <DocumentListItem
+                        key={doc.id}
+                        document={doc}
+                        viewMode={viewMode}
+                        onView={handleView}
+                        onEdit={handleEdit}
+                        onDownload={handleDownload}
+                        onDelete={handleDelete}
+                        onAppendVersion={handleAppendVersion}
+                        onToggleFavorite={toggleFavorite}
+                      />
                 ))}
               </div>
             ) : (
@@ -925,6 +1277,8 @@ export const DocumentVault: React.FC = () => {
                     onView={handleView}
                     onEdit={handleEdit}
                     onDownload={handleDownload}
+                    onDelete={handleDelete}
+                    onAppendVersion={handleAppendVersion}
                     onToggleFavorite={toggleFavorite}
                   />
                 ))}
@@ -997,11 +1351,50 @@ export const DocumentVault: React.FC = () => {
                   <Download className="h-4 w-4 mr-2" />
                   Download
                 </Button>
+                {!viewingDoc.isTemplate && (
+                  <Button variant="outline" className="w-full" size="sm" onClick={() => setPreviewDoc(viewingDoc)}>
+                    <Eye className="h-4 w-4 mr-2" />
+                    Quick Preview
+                  </Button>
+                )}
               </div>
             </div>
           </div>
         )}
       </div>
+      {previewDoc && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-6">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl h-[80vh] flex flex-col">
+            <div className="p-3 border-b flex items-center justify-between">
+              <h4 className="text-sm font-semibold truncate">{previewDoc.name}</h4>
+              <Button variant="ghost" size="sm" onClick={() => setPreviewDoc(null)}>Close</Button>
+            </div>
+            <div className="w-full h-full rounded-b-lg overflow-auto">
+              {previewDoc.fileType?.toLowerCase().includes('pdf') ? (
+                <iframe
+                  title={`preview-${previewDoc.id}`}
+                  src={`/api/vault/documents/${previewDoc.id}/view`}
+                  className="w-full h-full rounded-b-lg"
+                />
+              ) : previewLoading ? (
+                <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+                  Loading preview…
+                </div>
+              ) : previewText ? (
+                <pre className="p-4 text-xs whitespace-pre-wrap">{previewText}</pre>
+              ) : (
+                <div className="p-6 text-sm text-muted-foreground space-y-2">
+                  <p>{previewError ? 'Unable to preview this document inline.' : 'Preview not available for this file type yet.'}</p>
+                  <Button size="sm" variant="outline" onClick={() => handleDownload(previewDoc)}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download to view
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

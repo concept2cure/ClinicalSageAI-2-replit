@@ -1,130 +1,206 @@
 {
   "$schema": "https://concept2cure-riai.com/schemas/migrations-manifest-v1.json",
   "version": "1.0.0",
-  "generatedAt": "2025-01-14T00:00:00Z",
+  "generatedAt": "2026-03-25T23:51:47.139Z",
   "description": "Migration manifest for Concept2Cure.RI database schema. Documents execution order, dependencies, and resolves numbering conflicts.",
-  "totalMigrations": 101,
+  "totalMigrations": 140,
   "conflicts": {
     "summary": "20+ migrations share the same prefix number. This manifest defines canonical execution order.",
     "conflictingPrefixes": [
       {
         "prefix": "007",
-        "files": ["007_008_gcc_verify.sql", "007_gcc_heatmap_views.sql", "007_gcc_shadow_run_groups.sql"],
+        "files": [
+          "007_008_gcc_verify.sql",
+          "007_gcc_heatmap_views.sql",
+          "007_gcc_shadow_run_groups.sql"
+        ],
         "resolution": "Execute in alphabetical order: verify → heatmap → shadow"
       },
       {
         "prefix": "008",
-        "files": ["008_gcc_snapshot_exports.sql", "008_gcc_submission_snapshots.sql"],
+        "files": [
+          "008_gcc_snapshot_exports.sql",
+          "008_gcc_submission_snapshots.sql"
+        ],
         "resolution": "Execute exports before snapshots"
       },
       {
         "prefix": "009",
-        "files": ["009_gcc_esign_and_submission_gate.sql", "009_process_core.sql"],
+        "files": [
+          "009_gcc_esign_and_submission_gate.sql",
+          "009_process_core.sql"
+        ],
         "resolution": "Execute gcc_esign first (audit requirement)"
       },
       {
         "prefix": "010",
-        "files": ["010_gcc_program_scoping_rls.sql", "010_process_design_ppq_cpv.sql"],
+        "files": [
+          "010_gcc_program_scoping_rls.sql",
+          "010_process_design_ppq_cpv.sql"
+        ],
         "resolution": "Execute gcc_program_scoping first (RLS policy dependency)"
       },
       {
         "prefix": "011",
-        "files": ["011_gcc_config_bundles.sql", "011_process_fmea_impact_doe.sql"],
+        "files": [
+          "011_gcc_config_bundles.sql",
+          "011_process_fmea_impact_doe.sql"
+        ],
         "resolution": "Execute gcc_config_bundles first"
       },
       {
         "prefix": "012",
-        "files": ["012_gcc_retention_legal_hold.sql", "012_process_playbooks_layout.sql"],
+        "files": [
+          "012_gcc_retention_legal_hold.sql",
+          "012_process_playbooks_layout.sql"
+        ],
         "resolution": "Execute gcc_retention first (legal compliance requirement)"
       },
       {
         "prefix": "013",
-        "files": ["013_documents_sections.sql", "013_gcc_drift_monitoring.sql"],
+        "files": [
+          "013_documents_sections.sql",
+          "013_gcc_drift_monitoring.sql"
+        ],
         "resolution": "Execute documents_sections first (core dependency)"
       },
       {
         "prefix": "014",
-        "files": ["014_gcc_regulatory_timeline.sql", "014_seed_cmc_documents.sql"],
+        "files": [
+          "014_gcc_regulatory_timeline.sql",
+          "014_seed_cmc_documents.sql"
+        ],
         "resolution": "Execute gcc_regulatory_timeline first, then seed"
       },
       {
         "prefix": "015",
-        "files": ["015_esign_cpvrules.sql", "015_gcc_submission_package.sql"],
+        "files": [
+          "015_esign_cpvrules.sql",
+          "015_gcc_submission_package.sql"
+        ],
         "resolution": "Execute esign_cpvrules first (Part 11 compliance)"
       },
       {
         "prefix": "031",
-        "files": ["031_REGULATORY_AUDIT_REPORT.md", "031_gcc_enum_extensions_and_entity_utils.sql", "031_stability_workflow.sql"],
+        "files": [
+          "031_REGULATORY_AUDIT_REPORT.md",
+          "031_gcc_enum_extensions_and_entity_utils.sql",
+          "031_stability_workflow.sql"
+        ],
         "resolution": "Skip .md file, execute gcc_enum first, then stability_workflow"
       },
       {
         "prefix": "032",
-        "files": ["032_gcc_safety_signal_intelligence.sql", "032_stability_assignments.sql"],
+        "files": [
+          "032_gcc_safety_signal_intelligence.sql",
+          "032_stability_assignments.sql"
+        ],
         "resolution": "Execute gcc_safety_signal first"
       },
       {
         "prefix": "033",
-        "files": ["033_gcc_cro_execution_intelligence.sql", "033_stability_tp_assignments.sql"],
+        "files": [
+          "033_gcc_cro_execution_intelligence.sql",
+          "033_stability_tp_assignments.sql"
+        ],
         "resolution": "Execute gcc_cro_execution first"
       },
       {
         "prefix": "034",
-        "files": ["034_gcc_intel_packs.sql", "034_stability_samples.sql"],
+        "files": [
+          "034_gcc_intel_packs.sql",
+          "034_stability_samples.sql"
+        ],
         "resolution": "Execute gcc_intel_packs first"
       },
       {
         "prefix": "035",
-        "files": ["035_gcc_entity_chain_events.sql", "035_stability_sample_link_coc.sql"],
+        "files": [
+          "035_gcc_entity_chain_events.sql",
+          "035_stability_sample_link_coc.sql"
+        ],
         "resolution": "Execute gcc_entity_chain first"
       },
       {
         "prefix": "042",
-        "files": ["042_gcc_evidence_vault.sql", "042_quality_base_tables.sql"],
+        "files": [
+          "042_gcc_evidence_vault.sql",
+          "042_quality_base_tables.sql"
+        ],
         "resolution": "Execute gcc_evidence_vault first"
       },
       {
         "prefix": "043",
-        "files": ["043_gcc_ectd_expanded_modules.sql", "043_quality_step2_pro.sql"],
+        "files": [
+          "043_gcc_ectd_expanded_modules.sql",
+          "043_quality_step2_pro.sql"
+        ],
         "resolution": "Execute gcc_ectd_expanded first"
       },
       {
         "prefix": "044",
-        "files": ["044_gcc_cognitive_fabric_rag.sql", "044_quality_step3.sql", "044b_gcc_lumen_schema_prerequisite.sql"],
+        "files": [
+          "044_gcc_cognitive_fabric_rag.sql",
+          "044_quality_step3.sql",
+          "044b_gcc_lumen_schema_prerequisite.sql"
+        ],
         "resolution": "Execute gcc_cognitive_fabric first, then quality_step3, then lumen"
       },
       {
         "prefix": "045",
-        "files": ["045_gcc_neuro_symbolic_knowledge_graph.sql", "045_quality_step4.sql", "045_quality_templates.sql"],
+        "files": [
+          "045_gcc_neuro_symbolic_knowledge_graph.sql",
+          "045_quality_step4.sql",
+          "045_quality_templates.sql"
+        ],
         "resolution": "Execute gcc_neuro_symbolic first, then quality_step4, then templates"
       },
       {
         "prefix": "046",
-        "files": ["046_gcc_multi_agent_council.sql", "046_quality_step5.sql"],
+        "files": [
+          "046_gcc_multi_agent_council.sql",
+          "046_quality_step5.sql"
+        ],
         "resolution": "Execute gcc_multi_agent_council first"
       },
       {
         "prefix": "060",
-        "files": ["060_gcc_glsos_enhancements.sql", "060_regulatory_foundation.sql"],
+        "files": [
+          "060_gcc_glsos_enhancements.sql",
+          "060_regulatory_foundation.sql"
+        ],
         "resolution": "Execute gcc_glsos first"
       },
       {
         "prefix": "061",
-        "files": ["061_gcc_jsonb_indexes_and_constraints.sql", "061_regulatory_m3_builder.sql"],
+        "files": [
+          "061_gcc_jsonb_indexes_and_constraints.sql",
+          "061_regulatory_m3_builder.sql"
+        ],
         "resolution": "Execute gcc_jsonb_indexes first"
       },
       {
         "prefix": "062",
-        "files": ["062_gcc_schema_fixes.sql", "062_reg_q12_autopilot.sql"],
+        "files": [
+          "062_gcc_schema_fixes.sql",
+          "062_reg_q12_autopilot.sql"
+        ],
         "resolution": "Execute gcc_schema_fixes first"
       },
       {
         "prefix": "063",
-        "files": ["063_gcc_cognitive_agent_runtime.sql", "063_reg_questions_hub.sql"],
+        "files": [
+          "063_gcc_cognitive_agent_runtime.sql",
+          "063_reg_questions_hub.sql"
+        ],
         "resolution": "Execute gcc_cognitive_agent_runtime first"
       },
       {
         "prefix": "071",
-        "files": ["071_gcc_rls_lumen_and_org_enforcement.sql", "071_portfolio.sql"],
+        "files": [
+          "071_gcc_rls_lumen_and_org_enforcement.sql",
+          "071_portfolio.sql"
+        ],
         "resolution": "Execute gcc_rls_lumen first (security requirement)"
       }
     ]
@@ -160,7 +236,9 @@
         "078_gcc_cross_domain_transfer.sql",
         "079_gcc_unified_functions_views.sql"
       ],
-      "dependencies": ["compliance"]
+      "dependencies": [
+        "compliance"
+      ]
     },
     "cognitive_ecosystem": {
       "description": "Multi-agent council and cognitive fabric",
@@ -262,29 +340,9 @@
     "001_gcc_core.sql",
     "002_gcc_audit_immutability.sql",
     "003_gcc_prose_versioning.sql",
-    "003_gcc_prose_versioning_verify.sql",
     "004_gcc_enhanced_citations.sql",
     "005_gcc_database_roles.sql",
     "006_gcc_dashboard_views.sql",
-    "007_008_gcc_verify.sql",
-    "007_gcc_heatmap_views.sql",
-    "007_gcc_shadow_run_groups.sql",
-    "008_gcc_snapshot_exports.sql",
-    "008_gcc_submission_snapshots.sql",
-    "009_gcc_esign_and_submission_gate.sql",
-    "009_process_core.sql",
-    "010_gcc_program_scoping_rls.sql",
-    "010_process_design_ppq_cpv.sql",
-    "011_gcc_config_bundles.sql",
-    "011_process_fmea_impact_doe.sql",
-    "012_gcc_retention_legal_hold.sql",
-    "012_process_playbooks_layout.sql",
-    "013_documents_sections.sql",
-    "013_gcc_drift_monitoring.sql",
-    "014_gcc_regulatory_timeline.sql",
-    "014_seed_cmc_documents.sql",
-    "015_esign_cpvrules.sql",
-    "015_gcc_submission_package.sql",
     "016_perf_indexes.sql",
     "017_gcc_shadow_agent_rbac.sql",
     "018_gcc_purge_workflow.sql",
@@ -297,34 +355,13 @@
     "028_strategy_core.sql",
     "029_strategy_step2.sql",
     "030_stability_results.sql",
-    "031_gcc_enum_extensions_and_entity_utils.sql",
-    "031_stability_workflow.sql",
-    "032_gcc_safety_signal_intelligence.sql",
-    "032_stability_assignments.sql",
-    "033_gcc_cro_execution_intelligence.sql",
-    "033_stability_tp_assignments.sql",
-    "034_gcc_intel_packs.sql",
-    "034_stability_samples.sql",
-    "035_gcc_entity_chain_events.sql",
-    "035_stability_sample_link_coc.sql",
     "036_gcc_discovery_bridge.sql",
     "037_gcc_registry_trial_ledger.sql",
     "038_gcc_ectd_seeder_service.sql",
     "039_gcc_label_impact_simulator.sql",
     "040_gcc_site_intelligence.sql",
     "041_gcc_signing_gates.sql",
-    "042_gcc_evidence_vault.sql",
-    "042_quality_base_tables.sql",
-    "043_gcc_ectd_expanded_modules.sql",
-    "043_quality_step2_pro.sql",
-    "044_gcc_cognitive_fabric_rag.sql",
-    "044_quality_step3.sql",
     "044b_gcc_lumen_schema_prerequisite.sql",
-    "045_gcc_neuro_symbolic_knowledge_graph.sql",
-    "045_quality_step4.sql",
-    "045_quality_templates.sql",
-    "046_gcc_multi_agent_council.sql",
-    "046_quality_step5.sql",
     "047_quality_step6.sql",
     "048_quality_step7.sql",
     "049_quality_step8.sql",
@@ -338,14 +375,7 @@
     "057_gcc_product_master.sql",
     "058_gcc_fhir_resources.sql",
     "059_gcc_vector_embeddings.sql",
-    "060_gcc_glsos_enhancements.sql",
-    "060_regulatory_foundation.sql",
-    "061_gcc_jsonb_indexes_and_constraints.sql",
-    "061_regulatory_m3_builder.sql",
-    "062_gcc_schema_fixes.sql",
-    "062_reg_q12_autopilot.sql",
     "063_gcc_cognitive_agent_runtime.sql",
-    "063_reg_questions_hub.sql",
     "064_gcc_cognitive_audit_schema.sql",
     "065_gcc_global_dossier_schema.sql",
     "066_gcc_manufacturing_digital_twins.sql",
@@ -353,8 +383,6 @@
     "068_regulatory_schema_alignment.sql",
     "069_gcc_multitenant_rls_expansion.sql",
     "070_gcc_rls_extended_ga.sql",
-    "071_gcc_rls_lumen_and_org_enforcement.sql",
-    "071_portfolio.sql",
     "072_gcc_innovation_platform_core.sql",
     "073_cortex_prime_unified_brain.sql",
     "074_gcc_regulatory_intuition_engine.sql",
@@ -373,7 +401,81 @@
     "20260128_concept2cure_wbs_assignments.sql",
     "20260130_add_assembly_docs_table.sql",
     "20260130_add_assembly_audit_logs.sql",
-    "20260130_add_workflow_rls_and_step_runs_immutability.sql"
+    "20260130_add_workflow_rls_and_step_runs_immutability.sql",
+    "044c_gcc_vault_schema.sql",
+    "081_grdhe_regulatory_mapping_layer.sql",
+    "082_ectd_submission_agent.sql",
+    "20260125_add_atom_embeddings.sql",
+    "20260125_ai_provider_audit_log.sql",
+    "20260125_enhanced_cortex_schema.sql",
+    "20260129_add_org_industry_stripe_audit_logs.sql",
+    "20260129_add_org_uuid_alignment.sql",
+    "20260129_phase5_intelligent_document_system.sql",
+    "20260129_proof_audit_logs.sql",
+    "20260129_workflow_indexes_and_dlq.sql",
+    "20260203_phase2_anchors_xrefs.sql",
+    "20260203_phase2_graph_rls_indexes_patch.sql",
+    "20260203_phase2_review_batch_persistence.sql",
+    "20260203_phase2_review_batch_runner_hardening.sql",
+    "20260203_rps_event_store.sql",
+    "20260204_review_batch_worker.sql",
+    "20260205_review_batch_admin.sql",
+    "20260206_phase4_orchestration_kernel.sql",
+    "20260206_phase5_contradiction_scanner.sql",
+    "20260206_phase5_evidence_fabric.sql",
+    "20260206_phase5_idempotent_provenance.sql",
+    "20260206_phase6_docx_factory.sql",
+    "20260206_review_batch_ops_control.sql",
+    "20260207_phase4_seed_templates.sql",
+    "20260207_phase6_6_predicate_intelligence.sql",
+    "20260207_phase6_6a_fda_clearance_universe.sql",
+    "20260208_phase6_6a_risk_rollups.sql",
+    "20260209_create_pm_settings.sql",
+    "20260209_phase6_6a_fda_ingest_runs.sql",
+    "20260211_phase6_6d_defense_packets.sql",
+    "20260211_phase6_6e_proof_pack_exports.sql",
+    "20260211_phase6_6g_proof_pack_trust_chain.sql",
+    "20260211_phase7_0a_render_jobs.sql",
+    "20260212_phase7_0c_render_tenant_safety.sql",
+    "20260216_enterprise_4pillar_expansion.sql",
+    "20260220_ind_section_tracking.sql",
+    "20260220_user_intelligence_platform.sql",
+    "20260222_audit_events_hash_chain.sql",
+    "20260222_audit_events_immutability.sql",
+    "20260222_ivdr_schema_hardening.sql",
+    "20260223_ivdr_binder_packs.sql",
+    "20260223_ivdr_packs_building_status.sql",
+    "20260224_ai_claims_verifier_flags.sql",
+    "20260224_ai_trace_chain.sql",
+    "20260224_binder_evidence_source_types.sql",
+    "20260225_ivdr_pack_warnings_artifact_hashes.sql",
+    "20260305_projects_add_path_column.sql",
+    "20260306_chat_tool_runs.sql",
+    "20260306_precedent_engine.sql",
+    "20260311_concept2cure_artifacts.sql",
+    "20260311_concept2cure_provenance_events.sql",
+    "20260313_concept2cure_submission_snapshots.sql",
+    "20260313_phase11_governed_workflow.sql",
+    "20260314_phase12_multi_user_review.sql",
+    "20260317_global_regulatory_compliance.sql",
+    "20260317_submission_twin.sql",
+    "20260318_ga_immutability_hardening.sql",
+    "20260319_billing_usage_budgets_alerts.sql",
+    "20260319_evidence_fabric.sql",
+    "20260319_ga_indexes_and_fixes.sql",
+    "20260322_quality_checkpoints.sql",
+    "20260322_regulatory_precedent_intelligence.sql",
+    "20260323_assumption_decision_contradiction.sql",
+    "20260323_reactive_dependency_layer.sql",
+    "20260324_ai_goal_plan_runs.sql",
+    "20260324_ai_kernel_agent_protocol_events.sql",
+    "20260324_ai_kernel_decision_records.sql",
+    "20260324_ai_kernel_policy_outcomes.sql",
+    "20260324_ana_kernel_decision_log.sql",
+    "20260325_ai_goal_plan_hardening.sql",
+    "20260325_ai_goal_plan_step_events.sql",
+    "20260325_decision_receipts.sql",
+    "emergency_security_migration.sql"
   ],
   "skipFiles": [
     "031_REGULATORY_AUDIT_REPORT.md"
@@ -422,15 +524,30 @@
   "migrationGroups": {
     "core_bootstrap": {
       "description": "Run first on fresh database",
-      "migrations": ["000_gcc_bootstrap_core.sql", "001_gcc_core.sql"]
+      "migrations": [
+        "000_gcc_bootstrap_core.sql",
+        "001_gcc_core.sql"
+      ]
     },
     "compliance_critical": {
       "description": "Required for Part 11 compliance",
-      "migrations": ["002_gcc_audit_immutability.sql", "054_gcc_part11_audit.sql", "080_gcc_21cfr_part11_compliance.sql"]
+      "migrations": [
+        "002_gcc_audit_immutability.sql",
+        "054_gcc_part11_audit.sql",
+        "080_gcc_21cfr_part11_compliance.sql"
+      ]
     },
     "cortex_prime": {
       "description": "Unified AI brain (run after compliance)",
-      "migrations": ["073_cortex_prime_unified_brain.sql", "074_gcc_regulatory_intuition_engine.sql", "075_gcc_epistemic_intelligence.sql", "076_gcc_causal_inference_engine.sql", "077_gcc_self_evolving_intelligence.sql", "078_gcc_cross_domain_transfer.sql", "079_gcc_unified_functions_views.sql"]
+      "migrations": [
+        "073_cortex_prime_unified_brain.sql",
+        "074_gcc_regulatory_intuition_engine.sql",
+        "075_gcc_epistemic_intelligence.sql",
+        "076_gcc_causal_inference_engine.sql",
+        "077_gcc_self_evolving_intelligence.sql",
+        "078_gcc_cross_domain_transfer.sql",
+        "079_gcc_unified_functions_views.sql"
+      ]
     }
   },
   "notes": {

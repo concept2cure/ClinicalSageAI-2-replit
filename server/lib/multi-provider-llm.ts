@@ -1,16 +1,16 @@
 /**
  * Multi-Provider LLM Service - Enterprise Edition
- * 
+ *
  * FDA 21 CFR Part 11 Compliant - Multi-Provider Resilience
- * 
+ *
  * Supports multiple LLM providers with automatic failover:
  *   Primary: Kimi AI / Moonshot (moonshot-v1-32k)
  *   Secondary: OpenAI (GPT-4-turbo)
- * 
+ *
  * When the primary provider fails (circuit breaker opens), the system
  * automatically fails over to the secondary provider, ensuring
  * continuous operation even during provider outages.
- * 
+ *
  * Features:
  * - Provider-specific circuit breakers
  * - Automatic failover between providers
@@ -18,7 +18,7 @@
  * - Unified interface for all LLM operations
  * - Provider preference configuration
  * - Cost optimization (can prefer cheaper provider)
- * 
+ *
  * @module MultiProviderLLM
  * @version 1.0.0
  * @compliance FDA 21 CFR Part 11
@@ -118,24 +118,24 @@ const PROVIDER_CONFIGS: Record<Exclude<LLMProvider, 'AUTO'>, LLMProviderConfig> 
     defaultModel: 'gpt-4-turbo',
     models: {
       chat: 'gpt-4-turbo',
-      embedding: 'text-embedding-3-small'
+      embedding: 'text-embedding-3-small',
     },
     maxTokens: 4096,
-    costPer1kTokens: 0.01 // Approximate
+    costPer1kTokens: 0.01, // Approximate
   },
   KIMI: {
     name: 'KIMI',
     displayName: 'Kimi AI (Moonshot)',
-    baseURL: process.env.KIMI_BASE_URL || 'https://api.moonshot.cn/v1',
+    baseURL: process.env.KIMI_BASE_URL || 'https://api.moonshot.ai/v1',
     apiKeyEnvVar: 'KIMI_API_KEY',
     defaultModel: 'moonshot-v1-32k',
     models: {
       chat: 'moonshot-v1-32k',
-      embedding: 'text-embedding-3-small'
+      embedding: 'text-embedding-3-small',
     },
     maxTokens: 32000,
-    costPer1kTokens: 0.008 // Approximate, Kimi is often cheaper
-  }
+    costPer1kTokens: 0.008, // Approximate, Kimi is often cheaper
+  },
 };
 
 // =============================================================================
@@ -153,18 +153,18 @@ export class MultiProviderLLMService {
     providerSuccesses: { OPENAI: 0, KIMI: 0 },
     providerFailures: { OPENAI: 0, KIMI: 0 },
   };
-  
+
   // Provider priority order (first available is used)
   // Kimi AI is PRIMARY, OpenAI is SECONDARY fallback
   private providerPriority: LLMProvider[] = ['KIMI', 'OPENAI'];
-  
+
   constructor(pool: Pool, options?: { providerPriority?: LLMProvider[] }) {
     this.pool = pool;
-    
+
     if (options?.providerPriority) {
       this.providerPriority = options.providerPriority.filter(p => p !== 'AUTO');
     }
-    
+
     // Initialize providers
     this.initializeProviders();
   }
@@ -176,48 +176,56 @@ export class MultiProviderLLMService {
     for (const [providerName, config] of Object.entries(PROVIDER_CONFIGS)) {
       const provider = providerName as Exclude<LLMProvider, 'AUTO'>;
       const apiKey = process.env[config.apiKeyEnvVar];
-      
+
       if (apiKey) {
         // Create OpenAI client (Kimi uses OpenAI-compatible API)
         const clientConfig: ConstructorParameters<typeof OpenAI>[0] = {
           apiKey,
           timeout: 120000,
-          maxRetries: 2
+          maxRetries: 2,
         };
-        
+
         if (config.baseURL) {
           clientConfig.baseURL = config.baseURL;
         }
-        
+
         this.clients.set(provider, new OpenAI(clientConfig));
-        
+
         // Create circuit breaker for this provider
-        this.circuitBreakers.set(provider, new CircuitBreaker({
-          name: config.displayName,
-          failureThreshold: 5,
-          resetTimeoutMs: 30000,
-          successThreshold: 2,
-          requestTimeoutMs: 120000,
-          onStateChange: (from, to, reason) => {
-            console.log(`[${config.displayName}] Circuit breaker: ${from} → ${to} (${reason})`);
-            
-            // Log to audit
-            this.logProviderEvent('CIRCUIT_BREAKER_OPENED', provider, { from, to, reason })
-              .catch(err => console.error('Failed to log circuit breaker event:', err));
-          }
-        }));
-        
+        this.circuitBreakers.set(
+          provider,
+          new CircuitBreaker({
+            name: config.displayName,
+            failureThreshold: 5,
+            resetTimeoutMs: 30000,
+            successThreshold: 2,
+            requestTimeoutMs: 120000,
+            onStateChange: (from, to, reason) => {
+              console.log(`[${config.displayName}] Circuit breaker: ${from} → ${to} (${reason})`);
+
+              // Log to audit
+              this.logProviderEvent('CIRCUIT_BREAKER_OPENED', provider, { from, to, reason }).catch(
+                err => console.error('Failed to log circuit breaker event:', err)
+              );
+            },
+          })
+        );
+
         console.log(`[MultiProvider] ${config.displayName} initialized`);
       } else {
-        console.warn(`[MultiProvider] ${config.displayName} not available (${config.apiKeyEnvVar} not set)`);
+        console.warn(
+          `[MultiProvider] ${config.displayName} not available (${config.apiKeyEnvVar} not set)`
+        );
       }
     }
-    
+
     const availableCount = this.clients.size;
     if (availableCount === 0) {
       console.error('[MultiProvider] WARNING: No LLM providers available!');
     } else {
-      console.log(`[MultiProvider] ${availableCount} provider(s) available: ${Array.from(this.clients.keys()).join(', ')}`);
+      console.log(
+        `[MultiProvider] ${availableCount} provider(s) available: ${Array.from(this.clients.keys()).join(', ')}`
+      );
     }
   }
 
@@ -228,10 +236,10 @@ export class MultiProviderLLMService {
     const startTime = Date.now();
     const correlationId = `llm-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`;
     const routingPolicy = this.resolveRoutingPolicy(request);
-    
+
     // Determine which providers to try
     const providersToTry = this.getProvidersToTry(request, routingPolicy);
-    
+
     if (providersToTry.length === 0) {
       throw new LLMProviderError(
         'No LLM providers available. Please configure OPENAI_API_KEY or KIMI_API_KEY.',
@@ -241,7 +249,7 @@ export class MultiProviderLLMService {
 
     // Sanitize user messages for prompt injection
     const sanitizedMessages = this.sanitizeMessages(request.messages, correlationId);
-    
+
     let lastError: Error | null = null;
     let fallbackUsed = false;
     const providersTried: Exclude<LLMProvider, 'AUTO'>[] = [];
@@ -252,20 +260,22 @@ export class MultiProviderLLMService {
       const client = this.clients.get(provider);
       const breaker = this.circuitBreakers.get(provider);
       const config = PROVIDER_CONFIGS[provider];
-      
+
       if (!client || !breaker) continue;
       providersTried.push(provider);
-      
+
       // Check if circuit breaker allows requests
       if (!breaker.isAllowingRequests()) {
-        console.log(`[MultiProvider:${correlationId}] ${config.displayName} circuit is open, skipping`);
+        console.log(
+          `[MultiProvider:${correlationId}] ${config.displayName} circuit is open, skipping`
+        );
         fallbackUsed = true;
         continue;
       }
 
       try {
         console.log(`[MultiProvider:${correlationId}] Trying ${config.displayName}...`);
-        
+
         const response = await breaker.execute(async () => {
           const requestedMaxTokens = request.maxTokens || config.maxTokens;
           const effectiveMaxTokens = routingPolicy.maxTokensCap
@@ -277,18 +287,17 @@ export class MultiProviderLLMService {
             messages: sanitizedMessages,
             temperature: request.temperature ?? 0.1,
             max_tokens: effectiveMaxTokens,
-            response_format: request.responseFormat === 'json' 
-              ? { type: 'json_object' } 
-              : undefined
+            response_format:
+              request.responseFormat === 'json' ? { type: 'json_object' } : undefined,
           });
         });
 
         const latencyMs = Date.now() - startTime;
         const content = response.choices[0]?.message?.content || '';
-        
+
         console.log(
           `[MultiProvider:${correlationId}] ${config.displayName} succeeded in ${latencyMs}ms, ` +
-          `${response.usage?.total_tokens || 0} tokens`
+            `${response.usage?.total_tokens || 0} tokens`
         );
         this.routingStats.providerSuccesses[provider] += 1;
         if (fallbackUsed) {
@@ -302,7 +311,7 @@ export class MultiProviderLLMService {
           tokensUsed: {
             prompt: response.usage?.prompt_tokens || 0,
             completion: response.usage?.completion_tokens || 0,
-            total: response.usage?.total_tokens || 0
+            total: response.usage?.total_tokens || 0,
           },
           latencyMs,
           fallbackUsed,
@@ -314,22 +323,21 @@ export class MultiProviderLLMService {
             providersTried,
           },
         };
-
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
         fallbackUsed = true;
         this.routingStats.providerFailures[provider] += 1;
-        
+
         console.warn(
           `[MultiProvider:${correlationId}] ${config.displayName} failed: ${lastError.message}`
         );
-        
+
         // Log failure
         await this.logProviderEvent('AGENT_EXECUTION_FAILED', provider, {
           error: lastError.message,
-          correlationId
+          correlationId,
         }).catch(() => {});
-        
+
         // Continue to next provider
       }
     }
@@ -361,8 +369,8 @@ export class MultiProviderLLMService {
     }
 
     // AUTO mode - rank providers using request policy + health + configured priority
-    const availableProviders = this.providerPriority.filter(p =>
-      p !== 'AUTO' && this.clients.has(p)
+    const availableProviders = this.providerPriority.filter(
+      p => p !== 'AUTO' && this.clients.has(p)
     ) as Exclude<LLMProvider, 'AUTO'>[];
 
     const resolvedPolicy = routingPolicy || this.resolveRoutingPolicy(request);
@@ -479,21 +487,21 @@ export class MultiProviderLLMService {
     return messages.map(msg => {
       if (msg.role === 'user') {
         const result = this.promptProtection.analyze(msg.content);
-        
+
         if (result.detected.length > 0) {
           console.warn(
             `[MultiProvider:${correlationId}] Prompt injection patterns detected, ` +
-            `risk score: ${result.riskScore}`
+              `risk score: ${result.riskScore}`
           );
         }
-        
+
         if (result.blocked) {
           throw new LLMProviderError(
             'User input contains potentially malicious content',
             'PROMPT_INJECTION_BLOCKED'
           );
         }
-        
+
         return { ...msg, content: result.sanitized };
       }
       return msg;
@@ -512,7 +520,7 @@ export class MultiProviderLLMService {
       const auditLog = getTamperProofAuditLog(this.pool);
       await auditLog.log(eventType, `LLM Provider event: ${provider}`, {
         provider,
-        ...details
+        ...details,
       });
     } catch (error) {
       console.error('Failed to log provider event:', error);
@@ -528,20 +536,20 @@ export class MultiProviderLLMService {
    */
   getProviderHealth(): ProviderHealth[] {
     const health: ProviderHealth[] = [];
-    
+
     for (const [provider, breaker] of this.circuitBreakers) {
       const metrics = breaker.getMetrics();
-      
+
       health.push({
         provider,
         available: this.clients.has(provider),
         circuitState: metrics.state,
         lastSuccessTime: metrics.lastSuccessTime || undefined,
         lastFailureTime: metrics.lastFailureTime || undefined,
-        avgLatencyMs: metrics.avgResponseTimeMs
+        avgLatencyMs: metrics.avgResponseTimeMs,
       });
     }
-    
+
     return health;
   }
 
@@ -551,7 +559,9 @@ export class MultiProviderLLMService {
   getRoutingStats(): RoutingStats {
     const fallbackRatePct =
       this.routingStats.totalRequests > 0
-        ? Number(((this.routingStats.totalFallbacks / this.routingStats.totalRequests) * 100).toFixed(2))
+        ? Number(
+            ((this.routingStats.totalFallbacks / this.routingStats.totalRequests) * 100).toFixed(2)
+          )
         : 0;
 
     return {
@@ -588,7 +598,7 @@ export class MultiProviderLLMService {
   getPreferredProvider(): LLMProvider | null {
     for (const provider of this.providerPriority) {
       if (provider === 'AUTO') continue;
-      
+
       const breaker = this.circuitBreakers.get(provider);
       if (breaker?.isAllowingRequests()) {
         return provider;
@@ -623,9 +633,9 @@ export class MultiProviderLLMService {
 export class LLMProviderError extends Error {
   constructor(
     message: string,
-    public readonly code: 
-      | 'NO_PROVIDERS' 
-      | 'ALL_PROVIDERS_FAILED' 
+    public readonly code:
+      | 'NO_PROVIDERS'
+      | 'ALL_PROVIDERS_FAILED'
       | 'PROVIDER_UNAVAILABLE'
       | 'PROMPT_INJECTION_BLOCKED'
       | 'TIMEOUT',

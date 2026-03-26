@@ -8,6 +8,7 @@
  */
 
 import { db } from '../db';
+import { ai } from '../lib/unified-ai-client';
 import { eq, and, sql } from 'drizzle-orm';
 import { spawn } from 'child_process';
 import { createHash } from 'crypto';
@@ -58,12 +59,8 @@ interface ProtocolExtractionResult {
 }
 
 class ProtocolExtractionPersistenceService {
-  private openai: OpenAI | null = null;
-
-  private getOpenAI(): OpenAI {
-    if (!this.openai) {
-    }
-    return this.openai;
+  private getAI() {
+    return ai;
   }
 
   /**
