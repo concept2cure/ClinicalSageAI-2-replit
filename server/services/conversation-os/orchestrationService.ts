@@ -44,6 +44,7 @@ export function planAndExecute(params: { conversationId: string; task: string })
   });
 
   kernelStore.plans.set(conversationId, trace);
+  kernelStore.persist();
 
   return {
     trace,

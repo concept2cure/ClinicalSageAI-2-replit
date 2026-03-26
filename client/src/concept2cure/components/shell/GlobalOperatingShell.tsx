@@ -6,6 +6,7 @@ interface GlobalOperatingShellProps {
   layoutMode: string;
   activeProjectName?: string;
   currentGlobalNodeLabel?: string;
+  activeArtifactLabel?: string;
   onAction?: (action: 'home' | 'search' | 'vault' | 'review' | 'reports' | 'submission') => void;
   children: React.ReactNode;
 }
@@ -21,6 +22,7 @@ export function GlobalOperatingShell({
   layoutMode,
   activeProjectName,
   currentGlobalNodeLabel,
+  activeArtifactLabel,
   onAction,
   children,
 }: GlobalOperatingShellProps) {
@@ -38,9 +40,14 @@ export function GlobalOperatingShell({
       {showHeader && (
         <div className="h-9 border-b border-zinc-200 bg-white px-3 flex items-center gap-2">
           <Layers className="w-3.5 h-3.5 text-zinc-500" />
-          <span className="text-xs font-medium text-zinc-700">Operating System Shell</span>
+          <span className="text-xs font-medium text-zinc-700">Concept2Cure OS</span>
           {activeProjectName && (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600">{activeProjectName}</span>
+          )}
+          {activeArtifactLabel && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100">
+              {activeArtifactLabel}
+            </span>
           )}
           {currentGlobalNodeLabel && (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100">

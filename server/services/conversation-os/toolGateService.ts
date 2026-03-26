@@ -15,6 +15,7 @@ export function upsertToolManifest(conversationId: string, mode: ToolMode, tools
     updatedAt: new Date().toISOString(),
   };
   kernelStore.manifests.set(conversationId, manifest);
+  kernelStore.persist();
   return manifest;
 }
 
@@ -61,6 +62,7 @@ function logToolEvent(
     timestamp: new Date().toISOString(),
   };
   kernelStore.events.unshift(event);
+  kernelStore.persist();
   return event;
 }
 

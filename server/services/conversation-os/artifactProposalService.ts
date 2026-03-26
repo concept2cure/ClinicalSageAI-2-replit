@@ -12,6 +12,7 @@ export function createProposal(params: { conversationId: string; artifactId: str
   };
   const list = kernelStore.proposals.get(params.conversationId) ?? [];
   kernelStore.proposals.set(params.conversationId, [proposal, ...list]);
+  kernelStore.persist();
   return proposal;
 }
 
@@ -47,6 +48,7 @@ export function acceptProposal(params: { conversationId: string; proposalId: str
     acceptedAt: new Date().toISOString(),
   };
   kernelStore.artifactVersions.set(target.artifactId, [...versions, version]);
+  kernelStore.persist();
 
   return { proposalId: target.id, artifactId: target.artifactId, version };
 }
@@ -57,6 +59,7 @@ export function rejectProposal(params: { conversationId: string; proposalId: str
     p.id === params.proposalId ? { ...p, status: 'rejected' as const } : p
   );
   kernelStore.proposals.set(params.conversationId, updated);
+  kernelStore.persist();
   return updated.find(p => p.id === params.proposalId);
 }
 
