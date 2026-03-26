@@ -66,7 +66,7 @@ pytesseract==0.3.10
 
 # Async and concurrency
 celery==5.3.4
-redis==5.0.1
+redis==7.4.0
 
 # Cryptography and security
 cryptography==42.0.4
