@@ -113,6 +113,63 @@ describe('Claude Migration - Server AI Completion Route', () => {
     const content = fs.readFileSync(path.join(ROOT, 'server/index.ts'), 'utf-8');
     expect(content).toContain("import('./routes/ai-completion')");
   });
+
+  it('lumen regulatory analysis/guidance endpoints use AI Gateway (not static templates)', () => {
+    const content = fs.readFileSync(path.join(ROOT, 'server/index.ts'), 'utf-8');
+    expect(content).toContain("app.post('/api/lumen/regulatory-analysis'");
+    expect(content).toContain("app.post('/api/lumen/ich-e6r3-guidance'");
+    expect(content).toContain("callerModule: 'lumen/regulatory-analysis'");
+    expect(content).toContain("callerModule: 'lumen/ich-e6r3-guidance'");
+    expect(content).not.toContain('projected_delay_days: 30');
+    expect(content).not.toContain('processing_time_ms: 1250');
+  });
+});
+
+describe('Claude Migration - AnA FT Gateway + Lifecycle Controls', () => {
+  it('lumen-cortex-ft.ts routes inference through centralized AI gateway', () => {
+    const content = fs.readFileSync(
+      path.join(ROOT, 'server/routes/lumen-cortex-ft.ts'),
+      'utf-8'
+    );
+    expect(content).toContain("import { getGateway } from '../services/ai-gateway/index.js'");
+    expect(content).toContain('gateway.route({');
+    expect(content).toContain("taskType: 'regulatory_review'");
+    expect(content).not.toContain("https://api.openai.com/v1/chat/completions");
+  });
+
+  it('lumen-cortex-ft.ts exposes promote + rollback lifecycle endpoints', () => {
+    const content = fs.readFileSync(
+      path.join(ROOT, 'server/routes/lumen-cortex-ft.ts'),
+      'utf-8'
+    );
+    expect(content).toContain("router.post('/models/:modelId/promote'");
+    expect(content).toContain("router.post('/models/:modelId/rollback'");
+    expect(content).toContain("router.get('/models/:modelId/deployment-history'");
+    expect(content).toContain("router.post('/models/:modelId/quantize'");
+    expect(content).toContain("router.get('/models/:modelId/variants'");
+    expect(content).toContain("router.get('/models/:modelId/quantization-benchmarks'");
+    expect(content).toContain("router.get('/governance/policy'");
+    expect(content).toContain("router.get('/roadmap'");
+    expect(content).toContain("router.post('/roadmap/:itemId/status'");
+    expect(content).toContain("router.post('/wisdom/assess'");
+    expect(content).toContain("router.get('/audit/report'");
+    expect(content).toContain("router.get('/beta-readiness'");
+    expect(content).toContain('STAGE_TRANSITIONS');
+    expect(content).toContain('CONTROL_PLANE_STATE_PATH');
+    expect(content).toContain('hydrateFromDisk(');
+    expect(content).toContain('persistState(');
+    expect(content).toContain("deploymentStage?: 'staged' | 'canary' | 'live' | 'rollback'");
+    expect(content).toContain('LUMEN_GOVERNANCE_POLICY');
+    expect(content).toContain('AuditRemediationPlanItem');
+    expect(content).toContain('allowedGatewayModels');
+    expect(content).toContain('promoteModel(');
+    expect(content).toContain('rollbackModel(');
+    expect(content).toContain('getDeploymentHistory(');
+    expect(content).toContain('createQuantizedVariant(');
+    expect(content).toContain('getLatestDeploymentEvents(');
+    expect(content).toContain('buildWisdomProfile(');
+    expect(content).toContain('evidenceDiscipline');
+  });
 });
 
 describe('Claude Migration - Client Services No Longer Expose API Keys', () => {
