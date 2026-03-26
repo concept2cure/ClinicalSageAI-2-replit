@@ -230,13 +230,11 @@ jobs:
 
       - name: Run tests with coverage
         run: npm test -- --coverage --passWithNoTests
-        continue-on-error: true
         env:
           CI: true
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
-        continue-on-error: true # Advisory until project binding is fixed
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
