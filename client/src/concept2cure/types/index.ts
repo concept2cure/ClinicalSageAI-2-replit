@@ -143,6 +143,22 @@ export interface Project {
   auditTrail?: AuditEntry[];
   /** Electronic signatures on the project */
   signatures?: ElectronicSignature[];
+  /** Canonical project-owned collaboration and governance modules */
+  ownership?: ProjectOwnership;
+}
+
+export interface ProjectOwnership {
+  chatHistory: Conversation[];
+  documentInventory: UploadedDocument[];
+  vaultLinkedFilesEvidence: UploadedDocument[];
+  projectInstructions: string;
+  reusableSnippetsKnowledge: string[];
+  reports: string[];
+  reviewState: string;
+  approvals: ElectronicSignature[];
+  readinessState: string;
+  activityHistory: AuditEntry[];
+  currentWorkbenchContext: string;
 }
 
 /**

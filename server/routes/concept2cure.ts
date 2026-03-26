@@ -687,6 +687,57 @@ interface ProjectKnowledge {
   context?: string;
 }
 
+interface ProjectOwnership {
+  chatHistory: Conversation[];
+  documentInventory: UploadedDocument[];
+  vaultLinkedFilesEvidence: UploadedDocument[];
+  projectInstructions: string;
+  reusableSnippetsKnowledge: string[];
+  reports: string[];
+  reviewState: string;
+  approvals: Array<Record<string, unknown>>;
+  readinessState: string;
+  activityHistory: AuditEntry[];
+  currentWorkbenchContext: string;
+}
+
+function buildProjectOwnership(
+  conversations: Conversation[],
+  settings: Record<string, unknown>
+): ProjectOwnership {
+  const knowledge = normalizeKnowledge(settings);
+  const ownership =
+    settings.ownership && typeof settings.ownership === 'object'
+      ? (settings.ownership as Record<string, unknown>)
+      : {};
+
+  return {
+    chatHistory: conversations,
+    documentInventory: knowledge.documents,
+    vaultLinkedFilesEvidence: Array.isArray(ownership.vaultLinkedFilesEvidence)
+      ? (ownership.vaultLinkedFilesEvidence as UploadedDocument[])
+      : [],
+    projectInstructions:
+      (typeof settings.customInstructions === 'string' ? settings.customInstructions : '') ||
+      (typeof ownership.projectInstructions === 'string' ? ownership.projectInstructions : ''),
+    reusableSnippetsKnowledge: Array.isArray(ownership.reusableSnippetsKnowledge)
+      ? (ownership.reusableSnippetsKnowledge as string[])
+      : [],
+    reports: Array.isArray(ownership.reports) ? (ownership.reports as string[]) : [],
+    reviewState: typeof ownership.reviewState === 'string' ? ownership.reviewState : 'draft',
+    approvals: Array.isArray(ownership.approvals)
+      ? (ownership.approvals as Array<Record<string, unknown>>)
+      : [],
+    readinessState:
+      typeof ownership.readinessState === 'string' ? ownership.readinessState : 'not_started',
+    activityHistory: [],
+    currentWorkbenchContext:
+      typeof ownership.currentWorkbenchContext === 'string'
+        ? ownership.currentWorkbenchContext
+        : '',
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // TENANT-AWARE DATA ACCESS HELPERS
 // All database operations must include organizationId for tenant isolation
@@ -887,7 +938,7 @@ router.get('/projects', async (req: Request, res: Response) => {
 
     // Use raw SQL to avoid Drizzle ORM schema mismatch (parent_project_id doesn't exist in DB)
     const result = await pool.query(
-      `SELECT id, name, description, status, type, metadata, created_at, updated_at
+      `SELECT id, name, description, status, type, metadata, settings, created_at, updated_at
        FROM projects
        WHERE organization_id = $1
          AND actual_end_date IS NULL
@@ -954,20 +1005,24 @@ router.get('/projects', async (req: Request, res: Response) => {
       }
     }
 
-    const response = result.rows.map((p: any) => ({
-      id: `proj_${p.id}`,
-      name: p.name,
-      submissionType: p.metadata?.submissionType || p.type || 'IND',
-      description: p.description,
-      status: p.status || 'active',
-      sponsor: p.metadata?.sponsor,
-      product: p.metadata?.product,
-      region: p.metadata?.region,
-      organizationId,
-      conversations: allConversationsByProject.get(p.id) || [],
-      createdAt: p.created_at,
-      updatedAt: p.updated_at,
-    }));
+    const response = result.rows.map((p: any) => {
+      const conversations = allConversationsByProject.get(p.id) || [];
+      return {
+        id: `proj_${p.id}`,
+        name: p.name,
+        submissionType: p.metadata?.submissionType || p.type || 'IND',
+        description: p.description,
+        status: p.status || 'active',
+        sponsor: p.metadata?.sponsor,
+        product: p.metadata?.product,
+        region: p.metadata?.region,
+        organizationId,
+        conversations,
+        ownership: buildProjectOwnership(conversations, normalizeProjectSettings(p.settings)),
+        createdAt: p.created_at,
+        updatedAt: p.updated_at,
+      };
+    });
 
     return sendSuccess(res, response);
   } catch (error: any) {
@@ -1007,6 +1062,9 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
       return sendError(res, 404, 'Project not found');
     }
 
+    const settings = normalizeProjectSettings(project.settings);
+    const conversations = await getConversationsFromDb(project.id, organizationId);
+
     // Transform to API response with DB conversations
     const response = {
       id: `proj_${project.id}`,
@@ -1019,7 +1077,8 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
       customInstructions: (project.settings as any)?.customInstructions,
       status: project.status,
       organizationId: project.organizationId,
-      conversations: await getConversationsFromDb(project.id, organizationId),
+      conversations,
+      ownership: buildProjectOwnership(conversations, settings),
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
     };
@@ -1073,6 +1132,19 @@ router.post('/projects', async (req: Request, res: Response) => {
         },
         settings: {
           customInstructions: sanitizedData.customInstructions,
+          ownership: {
+            chatHistory: [],
+            documentInventory: [],
+            vaultLinkedFilesEvidence: [],
+            projectInstructions: sanitizedData.customInstructions || '',
+            reusableSnippetsKnowledge: [],
+            reports: [],
+            reviewState: 'draft',
+            approvals: [],
+            readinessState: 'not_started',
+            activityHistory: [],
+            currentWorkbenchContext: '',
+          },
         },
       })
       .returning();
@@ -1096,6 +1168,7 @@ router.post('/projects', async (req: Request, res: Response) => {
       product: data.product,
       region: data.region,
       conversations: [],
+      ownership: buildProjectOwnership([], normalizeProjectSettings(newProject.settings)),
       status: newProject.status,
       organizationId: newProject.organizationId,
       createdAt: newProject.createdAt,
@@ -1201,6 +1274,7 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
     await logAuditEntry(req, 'UPDATE', 'project', req.params.id, existing, updated);
 
     // Transform response with DB conversations
+    const conversations = await getConversationsFromDb(numericId, organizationId);
     const response = {
       id: req.params.id,
       name: updated.name,
@@ -1209,7 +1283,8 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
       sponsor: (updated.metadata as any)?.sponsor,
       product: (updated.metadata as any)?.product,
       region: (updated.metadata as any)?.region,
-      conversations: await getConversationsFromDb(numericId, organizationId),
+      conversations,
+      ownership: buildProjectOwnership(conversations, normalizeProjectSettings(updated.settings)),
       status: updated.status,
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,
