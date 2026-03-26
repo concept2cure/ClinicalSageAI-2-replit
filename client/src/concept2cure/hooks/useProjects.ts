@@ -15,7 +15,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Project, Conversation, SubmissionType } from '../types';
+import { Project, Conversation, SubmissionType, WorkbenchMode } from '../types';
 import { queryKeys } from './queryKeys';
 
 /** Storage key for localStorage fallback */
@@ -333,6 +333,60 @@ export function useProjects() {
     },
   });
 
+  const updateOwnershipPreferences = useMutation({
+    mutationFn: async ({
+      projectId,
+      preferences,
+    }: {
+      projectId: string;
+      preferences: {
+        projectInstructions?: string;
+        reusableSnippetsKnowledge?: string[];
+        currentWorkbenchContext?: WorkbenchMode;
+      };
+    }) => {
+      if (USE_API) {
+        try {
+          return await patchOwnershipPreferencesAPI(projectId, preferences);
+        } catch (e) {
+          console.warn('API ownership preference update failed, using localStorage fallback:', e);
+        }
+      }
+
+      const projects = getStoredProjects();
+      const index = projects.findIndex(p => p.id === projectId);
+      if (index === -1) throw new Error('Project not found');
+      const project = withRequiredOwnership(projects[index]);
+      const merged = withRequiredOwnership({
+        ...project,
+        customInstructions: preferences.projectInstructions ?? project.customInstructions,
+        ownership: {
+          ...project.ownership,
+          preferences: {
+            projectInstructions:
+              preferences.projectInstructions ??
+              project.ownership?.preferences.projectInstructions ??
+              '',
+            reusableSnippetsKnowledge:
+              preferences.reusableSnippetsKnowledge ??
+              project.ownership?.preferences.reusableSnippetsKnowledge ??
+              [],
+            currentWorkbenchContext:
+              preferences.currentWorkbenchContext ??
+              project.ownership?.preferences.currentWorkbenchContext ??
+              'project-home',
+          },
+        },
+      });
+      projects[index] = merged;
+      saveStoredProjects(projects);
+      return merged;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.projects.all] });
+    },
+  });
+
   // Add conversation to project
   const addConversation = useMutation({
     mutationFn: async ({ projectId, title }: { projectId: string; title?: string }) => {
@@ -437,6 +491,8 @@ export function useProjects() {
     isCreating: createProject.isPending,
     isUpdating: updateProject.isPending,
     isDeleting: deleteProject.isPending,
+    updateOwnershipPreferences: updateOwnershipPreferences.mutateAsync,
+    isUpdatingOwnershipPreferences: updateOwnershipPreferences.isPending,
   };
 }
 
