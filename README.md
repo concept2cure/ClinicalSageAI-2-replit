@@ -112,6 +112,7 @@ npm run dev
 - [Service Consolidation](docs/SERVICE_CONSOLIDATION_PLAN.md) - Codebase cleanup plan
 - [Consolidation Summary](docs/CONSOLIDATION_SUMMARY.md) - Recent cleanup work
 - [Local Infra Warnings](docs/guides/local-dev-infra-warnings.md) - Resolve expected local DB/Redis warnings
+- [Repo Memory & Execution Discipline](docs/getting-started/REPO_MEMORY_EXECUTION_DISCIPLINE.md) - Required preflight and execution protocol before code changes
 
 ---
 
