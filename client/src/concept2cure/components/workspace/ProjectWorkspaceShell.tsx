@@ -177,6 +177,12 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const [selectedFolder, setSelectedFolder] = useState<string>('drafts');
   const [selectedDocId, setSelectedDocId] = useState<string | undefined>();
   const [mode, setMode] = useState<'dashboard' | 'browse' | 'edit'>('dashboard');
+  const [projectNav, setProjectNav] = useState<
+    'overview' | 'documents' | 'vault' | 'reports' | 'tasks' | 'reviews' | 'submission' | 'activity'
+  >('overview');
+  const [documentTab, setDocumentTab] = useState<
+    'content' | 'evidence' | 'versions' | 'review' | 'signatures' | 'provenance' | 'export'
+  >('content');
   const [leftRailMode, setLeftRailMode] = useState<LeftRailMode>('files');
   const [selectedCtdSection, setSelectedCtdSection] = useState<string | undefined>();
 
@@ -235,6 +241,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   useEffect(() => {
     if (initialContent && initialTitle) {
       setMode('edit');
+      setProjectNav('documents');
     }
   }, [initialContent, initialTitle]);
 
@@ -246,10 +253,12 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       // Still select the doc for viewing, but don't enter edit mode
       setSelectedDocId(openArtifactId);
       setMode('browse');
+      setProjectNav('documents');
       return;
     }
     setSelectedDocId(openArtifactId);
     setMode('edit');
+    setProjectNav('documents');
   }, [openArtifactId, artifacts, tryOpenForEdit]);
 
   // ── Load artifacts ───────────────────────────────────────────────────────
@@ -294,6 +303,40 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   useEffect(() => {
     setPendingMove(null);
   }, [projectId]);
+
+  useEffect(() => {
+    if (mode !== 'edit') return;
+    switch (documentTab) {
+      case 'content':
+        setShowGovernedPanel(false);
+        setEditorInitialInspector(null);
+        break;
+      case 'evidence':
+        setShowGovernedPanel(true);
+        setEditorInitialInspector('provenance');
+        break;
+      case 'versions':
+        setShowGovernedPanel(false);
+        setEditorInitialInspector('compare');
+        break;
+      case 'review':
+        setShowGovernedPanel(true);
+        setEditorInitialInspector('audit');
+        break;
+      case 'signatures':
+        setShowGovernedPanel(true);
+        setEditorInitialInspector('audit');
+        break;
+      case 'provenance':
+        setShowGovernedPanel(false);
+        setEditorInitialInspector('provenance');
+        break;
+      case 'export':
+        setShowGovernedPanel(false);
+        setEditorInitialInspector('audit');
+        break;
+    }
+  }, [documentTab, mode]);
 
   // ── Toast notification queue ─────────────────────────────────────────────
   type ShellToast = { id: number; message: string; type: 'success' | 'error' | 'info' };
@@ -939,6 +982,40 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           )}
         </div>
 
+        <div className="flex items-center gap-1 px-2 py-1.5 border-b border-zinc-100 bg-zinc-50/70 shrink-0 overflow-x-auto">
+          {[
+            { key: 'overview', label: 'Overview' },
+            { key: 'documents', label: 'Documents' },
+            { key: 'vault', label: 'Vault / Evidence' },
+            { key: 'reports', label: 'Reports' },
+            { key: 'tasks', label: 'Tasks' },
+            { key: 'reviews', label: 'Reviews' },
+            { key: 'submission', label: 'Submission' },
+            { key: 'activity', label: 'Activity' },
+          ].map(item => (
+            <button
+              key={item.key}
+              onClick={() => {
+                const key = item.key as typeof projectNav;
+                setProjectNav(key);
+                if (key === 'overview') setMode('dashboard');
+                if (key === 'documents') setMode(selectedDocId ? 'edit' : 'browse');
+                if (key === 'reviews') onNavigate?.('review');
+                if (key === 'submission') onNavigate?.('submissions');
+                if (key === 'reports') onNavigate?.('report-engine');
+              }}
+              className={cn(
+                'px-2.5 py-1 text-xs rounded-md whitespace-nowrap',
+                projectNav === item.key
+                  ? 'bg-zinc-900 text-white'
+                  : 'text-zinc-600 hover:bg-white hover:text-zinc-900'
+              )}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
         {/* ── Pending move banner ───────────────────────────────────────────── */}
         {pendingMove && (
           <div className="flex items-center gap-2.5 px-4 h-10 border-b border-amber-200 bg-amber-50 shrink-0">
@@ -1146,6 +1223,36 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               </button>
               <NotificationCenter projectId={projectId} industryMode={industryMode} />
             </div>
+          </div>
+        )}
+
+        {mode === 'edit' && (
+          <div className="flex items-center gap-1 px-2 py-1.5 border-b border-zinc-100 bg-white shrink-0 overflow-x-auto">
+            {[
+              { key: 'content', label: 'Content' },
+              { key: 'evidence', label: 'Evidence' },
+              { key: 'versions', label: 'Versions' },
+              { key: 'review', label: 'Review' },
+              { key: 'signatures', label: 'Signatures' },
+              { key: 'provenance', label: 'Provenance' },
+              { key: 'export', label: 'Export' },
+            ].map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => {
+                  const key = tab.key as typeof documentTab;
+                  setDocumentTab(key);
+                }}
+                className={cn(
+                  'px-2.5 py-1 text-xs rounded-md whitespace-nowrap',
+                  documentTab === tab.key
+                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                    : 'text-zinc-600 hover:bg-zinc-100'
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         )}
 
@@ -1604,14 +1711,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   t.type === 'info' && 'bg-zinc-700 text-white'
                 )}
               >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-                {t.message}
+                <span>{t.message}</span>
                 <button
                   onClick={() => setShellToasts(prev => prev.filter(x => x.id !== t.id))}
                   className="ml-1 opacity-60 hover:opacity-100"
@@ -1813,7 +1913,6 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
             </div>
           </div>
         )}
-      </div>
       </div>
     </div>
   );

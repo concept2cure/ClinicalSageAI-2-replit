@@ -117,6 +117,11 @@ import {
   Rocket,
   FileStack,
   Users,
+  Home,
+  Search,
+  Database,
+  ClipboardCheck,
+  Send,
 } from 'lucide-react';
 import { LoadingState } from '@/components/ui/statesV2';
 
@@ -425,6 +430,64 @@ type LayoutMode =
   | 'task-board'
   | 'team-workspace'
   | 'program-analytics';
+
+const PRIMARY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
+  projects: 'projects',
+  'project-home': 'projects',
+  documents: 'documents',
+  'dossier-map': 'documents',
+  'section-workspace': 'documents',
+  review: 'review',
+  submissions: 'submissions',
+  'report-engine': 'reports',
+};
+
+const LEGACY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
+  'regulatory-workspace': 'documents',
+  workspace: 'documents',
+  'ind-workspace': 'documents',
+  'ectd-coauthor': 'documents',
+  cmc: 'documents',
+  'clinical-trial': 'documents',
+  author: 'documents',
+  editor: 'documents',
+  templates: 'documents',
+  'document-builder': 'documents',
+  'intelligence-hub': 'documents',
+  'review-readiness': 'review',
+  snowglobe: 'projects',
+  'snowglobe-chambers': 'projects',
+  'command-center': 'projects',
+  'mission-control': 'projects',
+  'submission-workspace': 'submissions',
+  'document-vault': 'documents',
+  'enablement-center': 'projects',
+  'client-intelligence': 'projects',
+  'collaboration-hub': 'review',
+  'user-inbox': 'projects',
+  'client-branding': 'projects',
+  biostatistics: 'biostatistics',
+  'training-center': 'projects',
+  'client-onboarding': 'projects',
+  'knowledge-base': 'projects',
+  'project-knowledge': 'projects',
+  'legal-center': 'review',
+  sherpa: 'documents',
+  audit: 'review',
+  timeline: 'projects',
+  analytics: 'projects',
+  artifacts: 'documents',
+  'about-training': 'projects',
+  'precedent-intelligence': 'documents',
+  'deep-research': 'documents',
+  'ana-dashboard': 'projects',
+  'safety-narrative': 'documents',
+  'ana-platform-control': 'projects',
+  'platform-admin': 'projects',
+  'biologics-dashboard': 'documents',
+  'ctd-onboarding': 'projects',
+  integrations: 'projects',
+};
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -1732,6 +1795,22 @@ export const ZenApp: React.FC = () => {
     </div>
   );
 
+  const currentGlobalNodeLabel =
+    ({
+      home: 'AnA Home',
+      projects: 'Projects',
+      vault: 'Vault',
+      documents: 'Documents',
+      reports: 'Reports',
+      review: 'Reviews',
+      submissions: 'Submission',
+      admin: 'Admin',
+    } as Record<string, string>)[
+      activeToolPanel === 'vault'
+        ? 'vault'
+        : PRIMARY_NAV_ID_BY_LAYOUT[layoutMode] ?? LEGACY_NAV_ID_BY_LAYOUT[layoutMode] ?? 'projects'
+    ] ?? 'Projects';
+
   return (
     <div className="zen flex h-screen w-full overflow-hidden bg-white">
       {/* CSS Variables */}
@@ -1782,66 +1861,13 @@ export const ZenApp: React.FC = () => {
         activeConversationId={activeConversationId}
         activeProjectId={activeProjectId}
         activeNavId={
-          activeToolPanel === 'ana-biostats'
+          activeToolPanel === 'vault'
+            ? 'vault'
+            : activeToolPanel === 'ana-biostats'
             ? 'biostatistics'
-            : (
-            {
-              // ── Unified workflow nav mapping ──
-              'project-home': 'projects',
-              'dossier-map': 'dossier',
-              documents: 'documents',
-              review: 'review',
-              submissions: 'submissions',
-              'section-workspace': 'dossier',
-              // ── Legacy mappings (still functional) ──
-              'regulatory-workspace': 'documents',
-              workspace: 'documents',
-              'ind-workspace': 'documents',
-              'ectd-coauthor': 'documents',
-              cmc: 'documents',
-              'clinical-trial': 'documents',
-              author: 'documents',
-              editor: 'documents',
-              templates: 'documents',
-              'document-builder': 'documents',
-              'intelligence-hub': 'documents',
-              'review-readiness': 'review',
-              snowglobe: 'projects',
-              'snowglobe-chambers': 'projects',
-              // [BATCH 2] Remap deleted nav IDs to surviving ones
-              'command-center': 'projects',
-              'mission-control': 'projects',
-              'submission-workspace': 'submissions',
-              'document-vault': 'documents',
-              'enablement-center': 'projects',
-              'client-intelligence': 'projects',
-              'collaboration-hub': 'review',
-              'user-inbox': 'projects',
-              'client-branding': 'projects',
-              biostatistics: 'biostatistics',
-              'training-center': 'enablement-center',
-              'client-onboarding': 'enablement-center',
-              'knowledge-base': 'projects',
-              'project-knowledge': 'projects',
-              'legal-center': 'review',
-              sherpa: 'documents',
-              audit: 'review',
-              timeline: 'projects',
-              analytics: 'projects',
-              artifacts: 'documents',
-              'about-training': 'projects',
-              'precedent-intelligence': 'documents',
-              'deep-research': 'documents',
-              'report-engine': 'documents',
-              'ana-dashboard': 'projects',
-              'safety-narrative': 'documents',
-              'ana-platform-control': 'projects',
-              'platform-admin': 'projects',
-              'biologics-dashboard': 'documents',
-              'ctd-onboarding': 'projects',
-              integrations: 'projects',
-            } as Record<string, string>
-          )[layoutMode] ?? undefined
+            : PRIMARY_NAV_ID_BY_LAYOUT[layoutMode] ??
+              LEGACY_NAV_ID_BY_LAYOUT[layoutMode] ??
+              undefined
         }
         onSelectConversation={id => {
           setActiveConversationId(id);
@@ -1865,6 +1891,22 @@ export const ZenApp: React.FC = () => {
               break;
             case 'projects':
               setLayoutMode('projects');
+              break;
+            case 'vault':
+            case 'project-vault':
+              setActiveToolPanel('vault');
+              break;
+            case 'reports':
+              setLayoutMode('report-engine');
+              break;
+            case 'admin':
+              setSettingsOpen(true);
+              break;
+            case 'project-overview':
+              setLayoutMode('project-home');
+              break;
+            case 'project-activity':
+              setLayoutMode('review');
               break;
             case 'tools':
               setActiveToolPanel('intelligence');
@@ -2000,8 +2042,80 @@ export const ZenApp: React.FC = () => {
         userEmail={userEmail}
       />
 
-      {/* Main area — no top bar, exactly like Claude.ai */}
+      {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
+        <div className="h-12 border-b border-zinc-200 bg-white px-4 flex items-center gap-3 shrink-0">
+          <button
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900"
+            onClick={() => setLayoutMode('projects')}
+            title="Quick return to AnA Home"
+          >
+            <Home className="w-3.5 h-3.5" />
+            AnA Home
+          </button>
+          <span className="text-zinc-300">/</span>
+          <span className="text-xs text-zinc-500">{currentGlobalNodeLabel}</span>
+          <span className="text-zinc-300">/</span>
+          <span className="text-xs text-zinc-500">Project</span>
+          <span className="text-sm font-semibold text-zinc-900 truncate max-w-[220px]">
+            {activeProject?.name || 'No project selected'}
+          </span>
+          {activeArtifactId && (
+            <>
+              <span className="text-zinc-300">/</span>
+              <span className="text-xs text-zinc-500">Artifact</span>
+              <button
+                onClick={() => setLayoutMode('documents')}
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium truncate max-w-[180px]"
+              >
+                {activeArtifactId}
+              </button>
+            </>
+          )}
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={() => setCommandPaletteOpen(true)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-zinc-200 text-xs text-zinc-600 hover:bg-zinc-50"
+            >
+              <Search className="w-3.5 h-3.5" />
+              Search
+            </button>
+            <button
+              onClick={() => setActiveToolPanel(activeToolPanel === 'vault' ? null : 'vault')}
+              className={cn(
+                'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs border',
+                activeToolPanel === 'vault'
+                  ? 'bg-blue-50 text-blue-700 border-blue-200'
+                  : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
+              )}
+            >
+              <Database className="w-3.5 h-3.5" />
+              Vault
+            </button>
+            <button
+              onClick={() => setLayoutMode('review')}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-zinc-200 text-xs text-zinc-600 hover:bg-zinc-50"
+            >
+              <ClipboardCheck className="w-3.5 h-3.5" />
+              Review
+            </button>
+            <button
+              onClick={() => setLayoutMode('report-engine')}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-zinc-200 text-xs text-zinc-600 hover:bg-zinc-50"
+            >
+              <BarChart2 className="w-3.5 h-3.5" />
+              Reports
+            </button>
+            <button
+              onClick={() => setLayoutMode('submissions')}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-zinc-200 text-xs text-zinc-600 hover:bg-zinc-50"
+            >
+              <Send className="w-3.5 h-3.5" />
+              Submission
+            </button>
+          </div>
+        </div>
+
         {/* Content Area */}
         <div className="flex-1 flex min-w-0 min-h-0">
           {/* ── Embedded Module Host ── */}
@@ -2766,6 +2880,17 @@ export const ZenApp: React.FC = () => {
             />
           )}
       </div>
+
+      {activeToolPanel && (
+        <div className="fixed inset-y-0 right-0 z-40 w-[380px] max-w-[90vw] shadow-2xl">
+          <ToolPanelWrapper
+            panel={activeToolPanel}
+            onClose={() => setActiveToolPanel(null)}
+            isFullscreen={toolPanelFullscreen}
+            onToggleFullscreen={() => setToolPanelFullscreen(v => !v)}
+          />
+        </div>
+      )}
 
       {/* Dr. Sage — Persistent global help/guide/copilot layer */}
       <DrSageGlobalLayer
