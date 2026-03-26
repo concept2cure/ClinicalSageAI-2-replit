@@ -146,6 +146,7 @@ import DrSageGlobalLayer from './components/dr-sage/DrSagePanel';
 
 // AnA Persistent Panel — always-available AI conversation on every page
 import AnaPersistentPanel from './components/chat/AnaPersistentPanel';
+import { GlobalOperatingShell } from './components/shell/GlobalOperatingShell';
 
 // Canonical authoring context resolver
 import {
@@ -2001,7 +2002,7 @@ export const ZenApp: React.FC = () => {
       />
 
       {/* Main area — no top bar, exactly like Claude.ai */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-0">
+      <GlobalOperatingShell layoutMode={layoutMode} activeProjectName={activeProject?.name}>
         {/* Content Area */}
         <div className="flex-1 flex min-w-0 min-h-0">
           {/* ── Embedded Module Host ── */}
@@ -2352,6 +2353,7 @@ export const ZenApp: React.FC = () => {
                     setActiveArtifactStatus(undefined);
                   }
                 }}
+                onNavigate={mode => setLayoutMode(mode as LayoutMode)}
               />
             ))}
 
@@ -2765,7 +2767,7 @@ export const ZenApp: React.FC = () => {
               onRefreshIntelligence={authoringIntelligence.refetch}
             />
           )}
-      </div>
+      </GlobalOperatingShell>
 
       {/* Dr. Sage — Persistent global help/guide/copilot layer */}
       <DrSageGlobalLayer
