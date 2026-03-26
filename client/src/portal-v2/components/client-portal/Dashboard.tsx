@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useTenant } from '@/contexts/TenantContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +14,6 @@ import {
   MessageSquare,
   Microscope,
 } from 'lucide-react';
-import LumenCortexChat from '@/components/LumenCortexChat';
 
 const moduleToRoute: Record<string, string> = {
   dashboard: '/client-portal',
@@ -28,7 +27,7 @@ const moduleToRoute: Record<string, string> = {
   cer_generator: '/client-portal/cer-generator',
   ectd_coauthor: '/client-portal/documents', // [BATCH 5] remapped from ectd-coauthor
   '510k_builder': '/client-portal/510k-builder',
-  lumen_cortex: '/client-portal/lumen-cortex',
+  ana_cortex: '/ana',
   ai_assistant: '/client-portal/ai-assistant',
   safety_reporting: '/client-portal/safety',
   training: '/client-portal/training',
@@ -55,7 +54,6 @@ export const Dashboard = () => {
   const tenant = useTenant();
   const { experience } = usePortal();
   const [, setLocation] = useLocation();
-  const [showChat, setShowChat] = useState(true);
 
   const orgName = tenant.currentOrganization?.name || 'Organization';
   const clientName = tenant.currentClientWorkspace?.name || 'Client Workspace';
@@ -75,21 +73,20 @@ export const Dashboard = () => {
             Powered by AnA — RI Co-pilot
           </Badge>
           <Button
-            variant={showChat ? 'default' : 'outline'}
+            variant="default"
             size="sm"
-            onClick={() => setShowChat(!showChat)}
-            className={showChat ? 'bg-gradient-to-r from-indigo-500 to-purple-600' : ''}
+            onClick={() => setLocation('/ana')}
+            className="bg-gradient-to-r from-indigo-500 to-purple-600"
           >
             <MessageSquare className="w-4 h-4 mr-2" />
-            AI Assistant
+            Open AnA
           </Button>
         </div>
       </div>
 
       {/* Main content grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left column - Modules and info */}
-        <div className="lg:col-span-2 space-y-6">
+      <div className="space-y-6">
+        <div className="space-y-6">
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
@@ -167,12 +164,6 @@ export const Dashboard = () => {
           </div>
         </div>
 
-        {/* Right column - Lumen Cortex Chat */}
-        {showChat && (
-          <div className="lg:col-span-1">
-            <LumenCortexChat className="h-[600px]" />
-          </div>
-        )}
       </div>
 
       {/* Tenant Context Footer */}

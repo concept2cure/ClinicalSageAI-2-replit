@@ -14,7 +14,7 @@
  * - Circuit breaker integration
  * - Comprehensive error handling
  *
- * @module server/services/lumenCortexClient
+ * @module server/services/anaCortexClient
  * @version 2.0.0
  */
 
@@ -27,7 +27,7 @@ import { EventEmitter } from 'events';
 /**
  * Client configuration options
  */
-export interface LumenCortexConfig {
+export interface AnaCortexConfig {
   baseUrl: string;
   apiKey?: string;
   timeout?: number;
@@ -419,7 +419,7 @@ async function withRetry<T>(
       lastError = error as Error;
 
       // Don't retry on client errors (4xx)
-      if (error instanceof LumenCortexError && error.statusCode >= 400 && error.statusCode < 500) {
+      if (error instanceof AnaCortexError && error.statusCode >= 400 && error.statusCode < 500) {
         throw error;
       }
 
@@ -437,7 +437,7 @@ async function withRetry<T>(
 //                          ERROR CLASSES
 // ═══════════════════════════════════════════════════════════════════════════
 
-export class LumenCortexError extends Error {
+export class AnaCortexError extends Error {
   constructor(
     message: string,
     public code: string,
@@ -446,11 +446,11 @@ export class LumenCortexError extends Error {
     public traceId?: string
   ) {
     super(message);
-    this.name = 'LumenCortexError';
+    this.name = 'AnaCortexError';
   }
 
-  static fromApiError(error: ApiError, statusCode: number): LumenCortexError {
-    return new LumenCortexError(
+  static fromApiError(error: ApiError, statusCode: number): AnaCortexError {
+    return new AnaCortexError(
       error.message,
       error.code,
       statusCode,
@@ -460,28 +460,28 @@ export class LumenCortexError extends Error {
   }
 }
 
-export class NetworkError extends LumenCortexError {
+export class NetworkError extends AnaCortexError {
   constructor(message: string, public originalError?: Error) {
     super(message, 'NETWORK_ERROR', 0);
     this.name = 'NetworkError';
   }
 }
 
-export class TimeoutError extends LumenCortexError {
+export class TimeoutError extends AnaCortexError {
   constructor(message: string = 'Request timed out') {
     super(message, 'TIMEOUT', 408);
     this.name = 'TimeoutError';
   }
 }
 
-export class AuthenticationError extends LumenCortexError {
+export class AuthenticationError extends AnaCortexError {
   constructor(message: string = 'Authentication failed') {
     super(message, 'AUTH_ERROR', 401);
     this.name = 'AuthenticationError';
   }
 }
 
-export class RateLimitError extends LumenCortexError {
+export class RateLimitError extends AnaCortexError {
   constructor(
     message: string = 'Rate limit exceeded',
     public retryAfter?: number
@@ -495,13 +495,13 @@ export class RateLimitError extends LumenCortexError {
 //                          MAIN CLIENT CLASS
 // ═══════════════════════════════════════════════════════════════════════════
 
-export class LumenCortexClient extends EventEmitter {
-  private config: Required<LumenCortexConfig>;
+export class AnaCortexClient extends EventEmitter {
+  private config: Required<AnaCortexConfig>;
   private circuitBreaker: CircuitBreaker;
   private requestInterceptors: Array<(req: Request) => Request> = [];
   private responseInterceptors: Array<(res: Response) => Response> = [];
 
-  constructor(config: LumenCortexConfig) {
+  constructor(config: AnaCortexConfig) {
     super();
 
     this.config = {
@@ -597,7 +597,7 @@ export class LumenCortexClient extends EventEmitter {
           }
         };
       } catch (error) {
-        if (error instanceof LumenCortexError) {
+        if (error instanceof AnaCortexError) {
           throw error;
         }
 
@@ -639,7 +639,7 @@ export class LumenCortexClient extends EventEmitter {
       case 429:
         throw new RateLimitError(error.error?.message || error.message);
       default:
-        throw LumenCortexError.fromApiError(
+        throw AnaCortexError.fromApiError(
           error.error || { code: 'HTTP_ERROR', message: error.message || 'Request failed' },
           status
         );
@@ -950,7 +950,7 @@ export class LumenCortexClient extends EventEmitter {
 
     if (!response.ok) {
       const error = await response.json();
-      throw LumenCortexError.fromApiError(error.error, response.status);
+      throw AnaCortexError.fromApiError(error.error, response.status);
     }
 
     const reader = response.body?.getReader();
@@ -1041,21 +1041,21 @@ export class LumenCortexClient extends EventEmitter {
 /**
  * Create a new AnA RI client instance
  */
-export function createLumenCortexClient(config: LumenCortexConfig): LumenCortexClient {
-  return new LumenCortexClient(config);
+export function createAnaCortexClient(config: AnaCortexConfig): AnaCortexClient {
+  return new AnaCortexClient(config);
 }
 
 /**
  * Create a client with default configuration
  */
-export function createDefaultClient(): LumenCortexClient {
-  return new LumenCortexClient({
-    baseUrl: process.env.LUMEN_CORTEX_URL || 'http://localhost:8000',
-    apiKey: process.env.LUMEN_CORTEX_API_KEY,
+export function createDefaultClient(): AnaCortexClient {
+  return new AnaCortexClient({
+    baseUrl: process.env.ANA_CORTEX_URL || 'http://localhost:8000',
+    apiKey: process.env.ANA_CORTEX_API_KEY,
     timeout: 30000,
     retryAttempts: 3,
     enableCircuitBreaker: true
   });
 }
 
-export default LumenCortexClient;
+export default AnaCortexClient;

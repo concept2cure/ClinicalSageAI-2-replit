@@ -8,7 +8,7 @@
  * - cortexAdvisoryRoutes.ts (advisory features)
  * - cortexManagementRoutes.ts (management features)
  * - cortexQueryRoutes.ts (query operations)
- * - lumen-cortex.ts (AnA 1.0 RI integration)
+ * - ana-cortex.ts (AnA 1.0 RI integration)
  *
  * @version 2.0.0
  * @module server/routes/cortex-unified
@@ -17,7 +17,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { createScopedLogger } from '../utils/logger';
 import { requireAuth } from '../middleware/auth.js';
-import { buildContextAwarePrompt } from '../services/lumen-context-builder.js';
+import { buildContextAwarePrompt } from '../services/ana-context-builder.js';
 import { getGateway } from '../services/ai-gateway/index.js';
 import type { GatewayResponse } from '../services/ai-gateway/types.js';
 import {
@@ -147,7 +147,7 @@ router.get('/health', (_req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     service: 'cortex-unified-api',
     version: '2.0.0',
-    modules: ['advisory', 'management', 'query', 'lumen'],
+    modules: ['advisory', 'management', 'query', 'ana'],
   });
 });
 
@@ -181,10 +181,10 @@ router.get('/docs', (_req: Request, res: Response) => {
         methods: ['POST'],
         legacyPath: '/api/cortex/query/*',
       },
-      '/lumen': {
+      '/ana': {
         description: 'AnA 1.0 RI integration features',
         methods: ['GET', 'POST'],
-        legacyPath: '/api/lumen-cortex/*',
+        legacyPath: '/api/ana-cortex/*',
       },
     },
     rateLimit: {
@@ -398,7 +398,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
     });
 
     // Compose the final system prompt: base context + orchestrator enrichments
-    // The base prompt (from lumen-context-builder) already has the core AnA identity,
+    // The base prompt (from ana-context-builder) already has the core AnA identity,
     // project context, user intelligence, and section-specific guidance.
     // The orchestrator adds: intent lens, deficiency patterns, role-adaptive context,
     // conversation continuity, and document action context.
@@ -485,7 +485,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       res.flushHeaders();
 
       let fullContent = '';
-      let streamModel = 'lumen-cortex-demo';
+      let streamModel = 'ana-cortex-demo';
       let streamAborted = false;
       const toolArtifacts: Array<{
         type: string;
@@ -844,7 +844,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
 
     // ── NON-STREAMING PATH (JSON) ───────────────────────────────────────────
     let assistantMessage: string;
-    let model = 'lumen-cortex-demo';
+    let model = 'ana-cortex-demo';
     let usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
 
     // Route through AI Gateway
@@ -860,7 +860,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
           messages: aiMessages,
           temperature: 0.7,
           maxTokens: 4000,
-          callerModule: 'lumen-cortex-chat',
+          callerModule: 'ana-cortex-chat',
           organizationId: String(organizationId),
           userId: userId ? String(userId) : undefined,
           projectId: numericProjectId ? String(numericProjectId) : undefined,
@@ -878,7 +878,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       } catch (gwError: any) {
         logger.warn(`[Chat] AI Gateway call failed, using demo mode: ${gwError.message}`);
         assistantMessage = generateContextAwareDemoResponse(message, context);
-        model = 'lumen-cortex-demo';
+        model = 'ana-cortex-demo';
       }
     } else {
       assistantMessage = generateContextAwareDemoResponse(message, context);
@@ -907,7 +907,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       thread_id: threadId,
       usage,
       model,
-      demo: model === 'lumen-cortex-demo', // Flag demo fallback so UI can warn users
+      demo: model === 'ana-cortex-demo', // Flag demo fallback so UI can warn users
       context: {
         projectName: context.project?.name || null,
         submissionType: context.project?.submissionType || submission_type || null,
@@ -981,7 +981,7 @@ router.post('/save-draft', async (req: Request, res: Response) => {
       title: title || `Draft: ${section_code}`,
       content,
       status: status || 'draft',
-      source: 'lumen_cortex',
+      source: 'ana_cortex',
       metadata: { savedVia: 'cortex-save-draft' },
     });
 
@@ -1007,7 +1007,7 @@ router.post('/save-draft', async (req: Request, res: Response) => {
  */
 function generateContextAwareDemoResponse(
   message: string,
-  context: import('../services/lumen-context-builder.js').LumenContext
+  context: import('../services/ana-context-builder.js').LumenContext
 ): string {
   const lower = message.toLowerCase().trim();
   const projectName = context.project?.name || 'your project';
@@ -1162,9 +1162,9 @@ async function mountSubRouters() {
 
   // AnA 1.0 RI integration
   try {
-    const lumenModule = await import('./lumen-cortex');
-    router.use('/lumen', lumenModule.default);
-    logger.info('Mounted: /lumen (AnA 1.0 RI integration)');
+    const anaModule = await import('./ana-cortex');
+    router.use('/ana', anaModule.default);
+    logger.info('Mounted: /ana (AnA 1.0 RI integration)');
   } catch (error) {
     logger.error('Failed to mount AnA 1.0 RI routes:', error);
   }
