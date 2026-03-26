@@ -30,6 +30,7 @@ RUN apt-get update && \
       libreoffice-common \
       libreoffice-writer \
       fonts-liberation \
+      ghostscript \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install production dependencies only

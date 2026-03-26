@@ -33,6 +33,19 @@ module.exports = {
     'tailwindcss/no-custom-classname': 'warn', // Just warn for custom classnames
 
     // ============================================
+    // UI STATE GOVERNANCE (Added 2026-03-24)
+    // Ban deprecated state imports — enforce statesV2 as canonical
+    // ============================================
+    'no-restricted-imports': ['error', {
+      paths: [
+        {
+          name: '@/components/ui/states',
+          message: 'Deprecated. Use @/components/ui/statesV2 instead — it is the single canonical state primitive layer.',
+        },
+      ],
+    }],
+
+    // ============================================
     // TECH DEBT PREVENTION RULES (Added 2026-01-24)
     // ============================================
 
@@ -83,6 +96,34 @@ module.exports = {
     'client/src/components/_deprecated/',
   ],
   overrides: [
+    // UI State & Layout Governance — enforce canonical primitives in concept2cure/
+    {
+      files: ['client/src/concept2cure/**/*.tsx'],
+      rules: {
+        'no-restricted-imports': ['error', {
+          paths: [
+            {
+              name: '@/components/ui/states',
+              message: 'Deprecated. Use @/components/ui/statesV2 instead.',
+            },
+            {
+              name: '@/components/common/LoadingOverlay',
+              message: 'Deprecated. Use LoadingState from @/components/ui/statesV2 instead.',
+            },
+            {
+              name: '@/components/common/ThinkingDots',
+              message: 'Deprecated. Use Spinner from @/components/ui/spinner instead.',
+            },
+          ],
+          patterns: [
+            {
+              group: ['@/components/ui/states'],
+              message: 'Deprecated. Use @/components/ui/statesV2 instead.',
+            },
+          ],
+        }],
+      },
+    },
     // Stricter rules for new code in modules/
     {
       files: ['modules/**/*.ts', 'modules/**/*.tsx'],

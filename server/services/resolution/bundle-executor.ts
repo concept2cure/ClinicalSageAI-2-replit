@@ -36,6 +36,7 @@ import type {
 import { recordSupersession, confirmSupersession } from './supersession-engine';
 import { transitionBundleState } from './bundle-builder';
 import { transitionResolutionState } from './resolution-state-machine';
+import { getResolutionPlan } from './resolution-planner';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // BUNDLE EXECUTION
@@ -244,24 +245,23 @@ export async function executeBundle(
   // 5. Transition the resolution plan state if linked
   if (bundle.planId) {
     try {
-      if (contradictionState === 'resolved_pending_review') {
+      const linkedPlan = await getResolutionPlan(organizationId, bundle.planId);
+      if (!linkedPlan) {
+        console.warn(`[bundle-executor] Linked plan ${bundle.planId} not found; skipping state transition.`);
+      } else if (linkedPlan.state === contradictionState) {
+        // Avoid noisy invalid self-transitions (e.g., in_resolution → in_resolution)
+      } else if (contradictionState === 'resolved_pending_review') {
         await transitionResolutionState(
           organizationId, userId, bundle.planId,
           'resolved_pending_review',
           `Bundle ${bundleId} execution complete. ${executedSteps.length} executed, ${preparedSteps.length} prepared, ${blockedSteps.length} blocked.`
         );
       } else if (contradictionState === 'in_resolution') {
-        // Plan may already be in_resolution — try to transition, ignore if already there
-        try {
-          await transitionResolutionState(
-            organizationId, userId, bundle.planId,
-            'in_resolution',
-            `Bundle ${bundleId} partially executed. ${executedSteps.length} executed, ${preparedSteps.length} prepared, ${blockedSteps.length} blocked.`
-          );
-        } catch (innerErr: unknown) {
-          // Plan may already be in in_resolution — log but don't fail execution
-          console.warn(`[bundle-executor] Plan ${bundle.planId} state transition to in_resolution skipped:`, innerErr instanceof Error ? innerErr.message : innerErr);
-        }
+        await transitionResolutionState(
+          organizationId, userId, bundle.planId,
+          'in_resolution',
+          `Bundle ${bundleId} partially executed. ${executedSteps.length} executed, ${preparedSteps.length} prepared, ${blockedSteps.length} blocked.`
+        );
       }
     } catch (outerErr: unknown) {
       console.error(`[bundle-executor] Plan ${bundle.planId} state transition failed:`, outerErr instanceof Error ? outerErr.message : outerErr);

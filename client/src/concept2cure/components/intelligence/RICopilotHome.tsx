@@ -17,14 +17,24 @@
  * Evidence is never hidden.
  */
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
+import { queryKeys } from '@/concept2cure/hooks/queryKeys';
 import { useCSRSearch } from '../../hooks/useWorkspaceIntelligence';
 import {
   usePrecedentSearch,
   usePrecedentRisk,
   usePrecedentStrategy,
 } from '../../hooks/usePrecedentEngine';
+import {
+  DataStateWrapper,
+  ErrorState,
+  SkeletonCard,
+  SkeletonText,
+} from '@/components/ui/statesV2';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Brain,
   Database,
@@ -141,57 +151,60 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
   // Evidence filters
   const [filterPhase, setFilterPhase] = useState<string>('');
   const [filterOutcome, setFilterOutcome] = useState<string>('');
-  // Project artifact data for governance rail
-  const [artifactCount, setArtifactCount] = useState(0);
-  const [artifactDrafts, setArtifactDrafts] = useState(0);
-  const [artifactApproved, setArtifactApproved] = useState(0);
 
   // ── Live data from real APIs ───────────────────────────────────────────────
   // Use indication (project description) or fall back to projectName/submissionType
   const csrQueryText = indication || projectName || submissionType || '';
-  const { data: csrResults = [], isLoading: csrLoading } = useCSRSearch(
-    csrQueryText ? { query_text: csrQueryText, limit: 50 } : null
-  );
-  const { data: precedents = [], isLoading: precedentLoading } = usePrecedentSearch(
+  const {
+    data: csrResults = [],
+    isLoading: csrLoading,
+    error: csrError,
+    refetch: refetchCSR,
+  } = useCSRSearch(csrQueryText ? { query_text: csrQueryText, limit: 50 } : null);
+  const {
+    data: precedents = [],
+    isLoading: precedentLoading,
+    error: precedentError,
+    refetch: refetchPrecedents,
+  } = usePrecedentSearch(
     submissionType ? { submissionType, indication: indication || projectName } : null
   );
-  const { data: riskData, isLoading: riskLoading } = usePrecedentRisk(
+  const {
+    data: riskData,
+    isLoading: riskLoading,
+    error: riskError,
+    refetch: refetchRisk,
+  } = usePrecedentRisk(
     submissionType
       ? { submissionType, indication: indication || projectName, deviceName: projectName }
       : null
   );
-  const { data: strategyData, isLoading: strategyLoading } = usePrecedentStrategy(
+  const {
+    data: strategyData,
+    isLoading: strategyLoading,
+    error: strategyError,
+    refetch: refetchStrategy,
+  } = usePrecedentStrategy(
     submissionType
       ? { submissionType, indication: indication || projectName, deviceName: projectName }
       : null
   );
 
   // ── Load project artifacts for governance rail ─────────────────────────────
-  const loadArtifactStats = useCallback(async () => {
-    if (!projectId) return;
-    try {
-      const token =
-        sessionStorage.getItem('trialsage_access_token') ||
-        localStorage.getItem('trialsage_access_token');
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, { headers });
-      if (res.ok) {
-        const payload = await res.json();
-        const arts = payload.data ?? payload ?? [];
-        setArtifactCount(arts.length);
-        setArtifactDrafts(arts.filter((a: any) => a.status === 'draft').length);
-        setArtifactApproved(
-          arts.filter((a: any) => a.status === 'approved' || a.status === 'locked').length
-        );
-      }
-    } catch {
-      /* silent */
-    }
-  }, [projectId]);
-  useEffect(() => {
-    loadArtifactStats();
-  }, [loadArtifactStats]);
+  const artifactQuery = useQuery({
+    queryKey: queryKeys.projects.artifacts(projectId!),
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts`);
+      const payload = await res.json();
+      return (payload.data ?? payload ?? []) as Array<{ status: string }>;
+    },
+    enabled: !!projectId,
+    staleTime: 30_000,
+  });
+  const artifactCount = artifactQuery.data?.length ?? 0;
+  const artifactDrafts = artifactQuery.data?.filter(a => a.status === 'draft').length ?? 0;
+  const artifactApproved =
+    artifactQuery.data?.filter(a => a.status === 'approved' || a.status === 'locked').length ?? 0;
 
   // ── Filtered CSR results ───────────────────────────────────────────────────
   const filteredCSR = useMemo(() => {
@@ -503,9 +516,17 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
               </div>
             )}
             {strategyLoading && (
-              <div className="mt-3 flex items-center gap-2 text-xs text-zinc-400">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                Computing strategic recommendation…
+              <div className="mt-3 rounded-lg border border-zinc-200 bg-zinc-50/50 p-3">
+                <SkeletonText lines={2} label="Computing strategic recommendation" />
+              </div>
+            )}
+            {strategyError && !strategyLoading && (
+              <div className="mt-3">
+                <ErrorState
+                  message="Failed to compute strategic recommendation."
+                  retry={refetchStrategy}
+                  testId="strategy-error"
+                />
               </div>
             )}
           </div>
@@ -570,7 +591,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
               <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-1.5">
                 <Database className="w-4 h-4 text-violet-500" />
                 Matched Clinical Study Reports
-                {csrLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400 ml-1" />}
+                {csrLoading && <Spinner size="sm" className="ml-1" />}
               </h2>
               <span className="text-xs text-zinc-400">
                 {filteredCSR.length}
@@ -578,7 +599,13 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
               </span>
             </div>
 
-            {filteredCSR.length === 0 && !csrLoading ? (
+            {csrError && !csrLoading ? (
+              <ErrorState
+                message="Failed to search clinical study reports."
+                retry={refetchCSR}
+                testId="csr-error"
+              />
+            ) : filteredCSR.length === 0 && !csrLoading ? (
               <div className="rounded-xl border border-dashed border-zinc-200 bg-white p-6 text-center">
                 <Database className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
                 <p className="text-xs text-zinc-500">No CSR data matched for this indication.</p>
@@ -708,10 +735,16 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                 </div>
               )}
               {riskLoading && (
-                <div className="rounded-xl border border-zinc-200 bg-white p-4 flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
-                  <span className="text-xs text-zinc-500">Analyzing regulatory risk…</span>
+                <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                  <SkeletonCard label="Analyzing regulatory risk" />
                 </div>
+              )}
+              {riskError && !riskLoading && (
+                <ErrorState
+                  message="Failed to analyze regulatory risk."
+                  retry={refetchRisk}
+                  testId="risk-error"
+                />
               )}
 
               {/* Strategy with alternative pathways */}
@@ -745,6 +778,21 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
           )}
 
           {/* ── 5. Precedent Match Cards ───────────────────────────── */}
+          {precedentError && !precedentLoading && (
+            <div className="mb-5">
+              <ErrorState
+                message="Failed to search regulatory precedents."
+                retry={refetchPrecedents}
+                testId="precedent-error"
+              />
+            </div>
+          )}
+          {precedentLoading && !precedents.length && (
+            <div className="mb-5 space-y-2">
+              <SkeletonCard label="Loading precedent matches" />
+              <SkeletonCard label="Loading precedent matches" />
+            </div>
+          )}
           {precedents.length > 0 && (
             <div className="mb-5">
               <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-1.5 mb-3">

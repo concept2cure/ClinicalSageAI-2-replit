@@ -1,0 +1,81 @@
+{
+  "release_id": "pilot-rc1",
+  "environment": "staging",
+  "decision": "PASS",
+  "controls_decision": "PASS",
+  "failed_controls": [],
+  "controls": [
+    {
+      "id": "AIOS-01",
+      "status": "Pass",
+      "owner": "Platform BE"
+    },
+    {
+      "id": "AIOS-02",
+      "status": "Pass",
+      "owner": "Security Eng"
+    },
+    {
+      "id": "AIOS-03",
+      "status": "Pass",
+      "owner": "Runtime Team"
+    },
+    {
+      "id": "AIOS-04",
+      "status": "Pass",
+      "owner": "SRE + Compliance"
+    },
+    {
+      "id": "AIOS-05",
+      "status": "Pass",
+      "owner": "Platform Security"
+    },
+    {
+      "id": "AIOS-06",
+      "status": "Pass",
+      "owner": "Eng Manager"
+    },
+    {
+      "id": "AIOS-07",
+      "status": "Pass",
+      "owner": "SRE"
+    }
+  ],
+  "gates": [
+    {
+      "metric": "lineage_completeness_pct",
+      "operator": ">=",
+      "expected": 99.0,
+      "observed": 99.4,
+      "passed": true
+    },
+    {
+      "metric": "policy_coverage_pct",
+      "operator": ">=",
+      "expected": 100.0,
+      "observed": 100.0,
+      "passed": true
+    },
+    {
+      "metric": "reliability_improvement_pct",
+      "operator": ">=",
+      "expected": 20.0,
+      "observed": 22.1,
+      "passed": true
+    },
+    {
+      "metric": "latency_regression_pct",
+      "operator": "<=",
+      "expected": 10.0,
+      "observed": 6.3,
+      "passed": true
+    },
+    {
+      "metric": "sev1_incidents",
+      "operator": "==",
+      "expected": 0.0,
+      "observed": 0.0,
+      "passed": true
+    }
+  ]
+}

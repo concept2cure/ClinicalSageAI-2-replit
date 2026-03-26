@@ -10,7 +10,7 @@
  * @module server/services/client-intelligence-memory
  */
 
-import { db } from '../db';
+import { db, pool } from '../db';
 import {
   clientIntelligenceProfiles,
   clientMemoryEntries,
@@ -27,6 +27,7 @@ import {
   type ProjectIngestedDocument,
 } from 'shared/schema';
 import { eq, and, desc, sql, asc } from 'drizzle-orm';
+import { getEmbeddingService } from './enhancedEmbeddingService.js';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -510,7 +511,7 @@ function extractMemoryEntriesFromText(
  * Ingest a document into client intelligence memory.
  */
 export async function ingestDocument(
-  profileId: number,
+  profileId: number | null,
   organizationId: number,
   file: { buffer: Buffer; originalname: string; mimetype: string; size: number },
   userId: number
@@ -632,7 +633,7 @@ export async function ingestDocument(
  * Get all memory entries for a client profile, optionally filtered by category.
  */
 export async function getMemoryEntries(
-  profileId: number,
+  profileId?: number,
   options?: { category?: string; limit?: number; offset?: number }
 ): Promise<MemorySearchResult> {
   const conditions = [
@@ -923,7 +924,7 @@ export async function getProjectIntelligence(
  * Ingest a document into project-level intelligence.
  */
 export async function ingestProjectDocument(
-  projectProfileId: number,
+  projectProfileId: number | null,
   projectId: number,
   organizationId: number,
   file: { buffer: Buffer; originalname: string; mimetype: string; size: number },
@@ -1160,7 +1161,7 @@ function extractProjectMemoryEntries(
  * Get project memory entries.
  */
 export async function getProjectMemoryEntries(
-  projectProfileId: number,
+  projectProfileId?: number,
   options?: { category?: string; limit?: number }
 ): Promise<{ entries: ProjectMemoryEntry[]; totalCount: number }> {
   const conditions = [
@@ -1275,4 +1276,298 @@ ${items.map(e => `- ${e.title}: ${e.content.slice(0, 200)}`).join('\n')}`);
   }
 
   return parts.join('\n');
+}
+
+
+export type SemanticMemoryHit<T> = T & { similarity: number };
+
+
+
+export interface SharedMemoryPoolEntry {
+  id: number;
+  scope: 'client' | 'project';
+  profileId: number | null;
+  projectId: number | null;
+  category: string;
+  subcategory: string | null;
+  title: string;
+  content: string;
+  status: string;
+  confidenceScore: number | null;
+  importanceLevel: string | null;
+  isVerifiedByUser: boolean;
+  sourceDocumentName: string | null;
+  sourceDocumentType: string | null;
+  updatedAt: string;
+}
+
+export interface SemanticMemorySearchResult<T> {
+  entries: Array<SemanticMemoryHit<T>>;
+  totalCount: number;
+  query: string;
+}
+
+
+
+/**
+ * Supersede a client memory entry (lifecycle transition from active -> superseded).
+ */
+export async function supersedeClientMemoryEntry(
+  entryId: number,
+  organizationId: number,
+  supersededById?: number
+): Promise<void> {
+  await db
+    .update(clientMemoryEntries)
+    .set({
+      status: 'superseded',
+      supersededById: supersededById ?? null,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(clientMemoryEntries.id, entryId),
+        eq(clientMemoryEntries.organizationId, organizationId)
+      )
+    );
+}
+
+/**
+ * Supersede a project memory entry (lifecycle transition from active -> superseded).
+ */
+export async function supersedeProjectMemoryEntry(
+  entryId: number,
+  projectId: number,
+  organizationId: number
+): Promise<void> {
+  await db
+    .update(projectMemoryEntries)
+    .set({
+      status: 'superseded',
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(projectMemoryEntries.id, entryId),
+        eq(projectMemoryEntries.projectId, projectId),
+        eq(projectMemoryEntries.organizationId, organizationId)
+      )
+    );
+}
+
+/**
+ * Shared memory pool view for multi-agent collaboration.
+ * Merges client + project memory entries into one normalized list.
+ */
+export async function getSharedMemoryPool(
+  organizationId: number,
+  options?: {
+    projectId?: number;
+    category?: string;
+    query?: string;
+    limit?: number;
+    includeSuperseded?: boolean;
+  }
+): Promise<{ entries: SharedMemoryPoolEntry[]; totalCount: number }> {
+  const limit = Math.max(1, Math.min(options?.limit || 100, 500));
+  const includeSuperseded = Boolean(options?.includeSuperseded);
+  const statusFilter = includeSuperseded ? `IN ('active', 'superseded')` : `= 'active'`;
+
+  const params: any[] = [organizationId];
+  const pushParam = (v: any) => {
+    params.push(v);
+    return `$${params.length}`;
+  };
+
+  const clientWhere: string[] = [];
+  const projectWhere: string[] = [];
+
+  if (options?.category) {
+    const p = pushParam(options.category);
+    clientWhere.push(`category = ${p}`);
+    projectWhere.push(`category = ${p}`);
+  }
+
+  if (options?.query?.trim()) {
+    const q = pushParam(`%${options.query.trim()}%`);
+    clientWhere.push(`(title ILIKE ${q} OR content ILIKE ${q})`);
+    projectWhere.push(`(title ILIKE ${q} OR content ILIKE ${q})`);
+  }
+
+  if (options?.projectId) {
+    const pid = pushParam(options.projectId);
+    projectWhere.push(`project_id = ${pid}`);
+  }
+
+  const clientExtra = clientWhere.length ? ` AND ${clientWhere.join(' AND ')}` : '';
+  const projectExtra = projectWhere.length ? ` AND ${projectWhere.join(' AND ')}` : '';
+  const limitParam = pushParam(limit);
+
+  const rows = await pool.query(
+    `SELECT * FROM (
+      SELECT
+        id,
+        'client'::text AS scope,
+        profile_id,
+        NULL::integer AS project_id,
+        category,
+        subcategory,
+        title,
+        content,
+        status,
+        confidence_score,
+        importance_level,
+        is_verified_by_user,
+        source_document_name,
+        source_document_type,
+        updated_at
+      FROM client_memory_entries
+      WHERE organization_id = $1
+        AND status ${statusFilter}
+        ${clientExtra}
+
+      UNION ALL
+
+      SELECT
+        id,
+        'project'::text AS scope,
+        project_profile_id AS profile_id,
+        project_id,
+        category,
+        subcategory,
+        title,
+        content,
+        status,
+        confidence_score,
+        importance_level,
+        is_verified_by_user,
+        source_document_name,
+        source_document_type,
+        updated_at
+      FROM project_memory_entries
+      WHERE organization_id = $1
+        AND status ${statusFilter}
+        ${projectExtra}
+    ) shared_pool
+    ORDER BY updated_at DESC
+    LIMIT ${limitParam}`,
+    params
+  );
+
+  return {
+    entries: rows.rows.map((row: any) => ({
+      id: row.id,
+      scope: row.scope,
+      profileId: row.profile_id,
+      projectId: row.project_id,
+      category: row.category,
+      subcategory: row.subcategory,
+      title: row.title,
+      content: row.content,
+      status: row.status,
+      confidenceScore: row.confidence_score,
+      importanceLevel: row.importance_level,
+      isVerifiedByUser: Boolean(row.is_verified_by_user),
+      sourceDocumentName: row.source_document_name,
+      sourceDocumentType: row.source_document_type,
+      updatedAt: new Date(row.updated_at).toISOString(),
+    })),
+    totalCount: rows.rows.length,
+  };
+}
+
+/**
+ * Semantic search over client memory entries using pgvector similarity.
+ */
+export async function searchMemoryEntriesSemantic(
+  profileId: number | null,
+  organizationId: number,
+  query: string,
+  options?: { limit?: number; category?: string; minSimilarity?: number }
+ ): Promise<SemanticMemorySearchResult<ClientMemoryEntry>> {
+  const limit = Math.max(1, Math.min(options?.limit || 10, 50));
+  const minSimilarity = options?.minSimilarity ?? 0.65;
+
+  const embeddingService = getEmbeddingService(pool);
+  const embedded = await embeddingService.embed(query, 'text-embedding-3-small');
+  const vectorLiteral = `[${embedded.embedding.join(',')}]`;
+
+  const profileClause = profileId ? 'AND profile_id = $3' : '';
+  const categoryClause = options?.category ? `AND category = $${profileId ? 5 : 4}` : '';
+  const params: any[] = profileId
+    ? [vectorLiteral, organizationId, profileId, minSimilarity]
+    : [vectorLiteral, organizationId, minSimilarity];
+  if (options?.category) params.push(options.category);
+  params.push(limit);
+
+  const rows = await pool.query(
+    `SELECT
+       *,
+       1 - (embedding <=> $1::vector) AS similarity
+     FROM client_memory_entries
+     WHERE organization_id = $2
+       ${profileClause}
+       AND status = 'active'
+       AND embedding IS NOT NULL
+       AND 1 - (embedding <=> $1::vector) >= $${profileId ? 4 : 3}
+       ${categoryClause}
+     ORDER BY embedding <=> $1::vector
+     LIMIT $${params.length}`,
+    params
+  );
+
+  return {
+    entries: rows.rows as Array<SemanticMemoryHit<ClientMemoryEntry>>,
+    totalCount: rows.rows.length,
+    query,
+  };
+}
+
+/**
+ * Semantic search over project memory entries using pgvector similarity.
+ */
+export async function searchProjectMemoryEntriesSemantic(
+  projectProfileId: number | null,
+  projectId: number,
+  organizationId: number,
+  query: string,
+  options?: { limit?: number; category?: string; minSimilarity?: number }
+): Promise<SemanticMemorySearchResult<ProjectMemoryEntry>> {
+  const limit = Math.max(1, Math.min(options?.limit || 10, 50));
+  const minSimilarity = options?.minSimilarity ?? 0.65;
+
+  const embeddingService = getEmbeddingService(pool);
+  const embedded = await embeddingService.embed(query, 'text-embedding-3-small');
+  const vectorLiteral = `[${embedded.embedding.join(',')}]`;
+
+  const profileClause = projectProfileId ? 'AND project_profile_id = $4' : '';
+  const categoryClause = options?.category ? `AND category = $${projectProfileId ? 6 : 5}` : '';
+  const params: any[] = projectProfileId
+    ? [vectorLiteral, organizationId, projectId, projectProfileId, minSimilarity]
+    : [vectorLiteral, organizationId, projectId, minSimilarity];
+  if (options?.category) params.push(options.category);
+  params.push(limit);
+
+  const rows = await pool.query(
+    `SELECT
+       *,
+       1 - (embedding <=> $1::vector) AS similarity
+     FROM project_memory_entries
+     WHERE organization_id = $2
+       AND project_id = $3
+       ${profileClause}
+       AND status = 'active'
+       AND embedding IS NOT NULL
+       AND 1 - (embedding <=> $1::vector) >= $${projectProfileId ? 5 : 4}
+       ${categoryClause}
+     ORDER BY embedding <=> $1::vector
+     LIMIT $${params.length}`,
+    params
+  );
+
+  return {
+    entries: rows.rows as Array<SemanticMemoryHit<ProjectMemoryEntry>>,
+    totalCount: rows.rows.length,
+    query,
+  };
 }

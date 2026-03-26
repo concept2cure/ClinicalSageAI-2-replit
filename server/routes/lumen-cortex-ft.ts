@@ -379,6 +379,11 @@ class ModelRegistry {
     void this.persistState();
   }
 
+  async hydrateFromDisk(): Promise<void> {
+    // No-op: models are registered in-memory via constructor.
+    // This method exists to satisfy startup initialization calls.
+  }
+
   getActiveModel(): LumenCortexModel | undefined {
     return this.activeModelId ? this.models.get(this.activeModelId) : undefined;
   }
@@ -921,6 +926,22 @@ async function performInference(request: InferenceRequest): Promise<InferenceRes
         },
       });
 
+      const response = await gateway.route({
+        taskType: 'regulatory_review',
+        messages,
+        model: process.env.LUMEN_CORTEX_MODEL_ID || undefined,
+        temperature: request.temperature ?? 0.3,
+        maxTokens: request.maxTokens ?? 4096,
+        strategy: 'quality_optimized',
+        callerModule: 'lumen-cortex-ft/inference',
+        metadata: {
+          regulatoryBody,
+          submissionType: request.regulatoryContext?.submissionType || null,
+          formatGuide: request.formatGuide || null,
+          citationMode: request.citationMode || null,
+        },
+      });
+
       content = response.content || '';
 
       // Extract inline citations from generated text
@@ -1159,6 +1180,11 @@ router.post('/models/:modelId/promote', (req: Request, res: Response) => {
   } catch (err) {
     return res.status(409).json({ error: String(err) });
   }
+  const updated = registry.promoteModel(
+    req.params.modelId,
+    stage as NonNullable<DeploymentConfig['deploymentStage']>,
+    actor
+  );
   if (!updated) return res.status(404).json({ error: 'Model not found' });
 
   return res.json({
@@ -1186,6 +1212,7 @@ router.post('/models/:modelId/rollback', (req: Request, res: Response) => {
   } catch (err) {
     return res.status(409).json({ error: String(err) });
   }
+  const updated = registry.rollbackModel(req.params.modelId, actor);
   if (!updated) return res.status(404).json({ error: 'Model not found' });
   return res.json({
     success: true,

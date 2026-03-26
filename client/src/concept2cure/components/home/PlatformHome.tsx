@@ -7,6 +7,8 @@
 
 import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { WorkspaceCanvas } from '@/components/ui/workspace-primitives';
+import { EmptyState } from '@/components/ui/statesV2';
 import {
   Plus,
   Sparkles,
@@ -48,7 +50,7 @@ interface Project {
 export interface PlatformHomeProps {
   userName?: string;
   projects: Project[];
-  onProjectClick: (projectId: number) => void;
+  onProjectClick: (projectId: string) => void;
   onNewProject: () => void;
   onNavigate: (mode: string) => void;
   workspaceSummary?: any;
@@ -57,26 +59,136 @@ export interface PlatformHomeProps {
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 const QUICK_ACTIONS = [
-  { id: 'new-project', label: 'New Project', subtitle: 'Start a submission', icon: Plus, color: 'text-blue-600', bg: 'bg-blue-50', action: 'new-project' },
-  { id: 'copilot', label: 'AI Copilot', subtitle: 'Chat with AnA', icon: Sparkles, color: 'text-violet-600', bg: 'bg-violet-50', action: 'assistant' },
-  { id: 'collab', label: 'Collaboration', subtitle: 'Team workspace', icon: Users, color: 'text-amber-600', bg: 'bg-amber-50', action: 'collaboration-hub' },
-  { id: 'biostat', label: 'Biostatistics', subtitle: 'Statistical analysis', icon: FlaskConical, color: 'text-teal-600', bg: 'bg-teal-50', action: 'biostatistics' },
+  {
+    id: 'new-project',
+    label: 'New Project',
+    subtitle: 'Start a submission',
+    icon: Plus,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50',
+    action: 'new-project',
+  },
+  {
+    id: 'copilot',
+    label: 'AI Copilot',
+    subtitle: 'Chat with AnA',
+    icon: Sparkles,
+    color: 'text-violet-600',
+    bg: 'bg-violet-50',
+    action: 'assistant',
+  },
+  {
+    id: 'collab',
+    label: 'Collaboration',
+    subtitle: 'Team workspace',
+    icon: Users,
+    color: 'text-amber-600',
+    bg: 'bg-amber-50',
+    action: 'collaboration-hub',
+  },
+  {
+    id: 'biostat',
+    label: 'Biostatistics',
+    subtitle: 'Statistical analysis',
+    icon: FlaskConical,
+    color: 'text-teal-600',
+    bg: 'bg-teal-50',
+    action: 'biostatistics',
+  },
 ];
 
 const MODULE_CATALOG = [
-  { id: 'regulatory-workspace', label: 'Regulatory Workspace', subtitle: 'Full submission environment', icon: FileText, color: 'text-blue-600' },
-  { id: 'ectd-coauthor', label: 'eCTD Co-Author', subtitle: 'Document authoring', icon: PenLine, color: 'text-violet-600' },
-  { id: 'intelligence-hub', label: 'Intelligence Hub', subtitle: 'Evidence & insights', icon: Search, color: 'text-blue-600' },
-  { id: 'review-readiness', label: 'Review Readiness', subtitle: 'Submission QC', icon: ShieldCheck, color: 'text-emerald-600' },
-  { id: 'command-center', label: 'Command Center', subtitle: 'Operations hub', icon: Building2, color: 'text-zinc-700' },
-  { id: 'legal-center', label: 'Legal Center', subtitle: 'IP & contracts', icon: Scale, color: 'text-indigo-600' },
-  { id: 'biostatistics', label: 'Biostatistics', subtitle: 'Statistical platform', icon: FlaskConical, color: 'text-teal-600' },
-  { id: 'training-center', label: 'Training Center', subtitle: 'Courses & certs', icon: GraduationCap, color: 'text-amber-600' },
-  { id: 'snowglobe', label: 'SnowGlobe', subtitle: 'Cross-platform intel', icon: Snowflake, color: 'text-sky-600' },
-  { id: 'collaboration-hub', label: 'Collaboration Hub', subtitle: 'Team threads', icon: Users, color: 'text-amber-600' },
-  { id: 'knowledge-base', label: 'Knowledge Base', subtitle: 'Skills & uploads', icon: Upload, color: 'text-violet-600' },
-  { id: 'project-knowledge', label: 'Project Knowledge', subtitle: 'Project context', icon: FileStack, color: 'text-blue-600' },
-  { id: 'client-onboarding', label: 'Client Onboarding', subtitle: 'Setup wizard', icon: Rocket, color: 'text-emerald-600' },
+  {
+    id: 'regulatory-workspace',
+    label: 'Regulatory Workspace',
+    subtitle: 'Full submission environment',
+    icon: FileText,
+    color: 'text-blue-600',
+  },
+  {
+    id: 'ectd-coauthor',
+    label: 'eCTD Co-Author',
+    subtitle: 'Document authoring',
+    icon: PenLine,
+    color: 'text-violet-600',
+  },
+  {
+    id: 'intelligence-hub',
+    label: 'Intelligence Hub',
+    subtitle: 'Evidence & insights',
+    icon: Search,
+    color: 'text-blue-600',
+  },
+  {
+    id: 'review-readiness',
+    label: 'Review Readiness',
+    subtitle: 'Submission QC',
+    icon: ShieldCheck,
+    color: 'text-emerald-600',
+  },
+  {
+    id: 'command-center',
+    label: 'Command Center',
+    subtitle: 'Operations hub',
+    icon: Building2,
+    color: 'text-zinc-700',
+  },
+  {
+    id: 'legal-center',
+    label: 'Legal Center',
+    subtitle: 'IP & contracts',
+    icon: Scale,
+    color: 'text-indigo-600',
+  },
+  {
+    id: 'biostatistics',
+    label: 'Biostatistics',
+    subtitle: 'Statistical platform',
+    icon: FlaskConical,
+    color: 'text-teal-600',
+  },
+  {
+    id: 'training-center',
+    label: 'Training Center',
+    subtitle: 'Courses & certs',
+    icon: GraduationCap,
+    color: 'text-amber-600',
+  },
+  {
+    id: 'snowglobe',
+    label: 'SnowGlobe',
+    subtitle: 'Cross-platform intel',
+    icon: Snowflake,
+    color: 'text-sky-600',
+  },
+  {
+    id: 'collaboration-hub',
+    label: 'Collaboration Hub',
+    subtitle: 'Team threads',
+    icon: Users,
+    color: 'text-amber-600',
+  },
+  {
+    id: 'knowledge-base',
+    label: 'Knowledge Base',
+    subtitle: 'Skills & uploads',
+    icon: Upload,
+    color: 'text-violet-600',
+  },
+  {
+    id: 'project-knowledge',
+    label: 'Project Knowledge',
+    subtitle: 'Project context',
+    icon: FileStack,
+    color: 'text-blue-600',
+  },
+  {
+    id: 'client-onboarding',
+    label: 'Client Onboarding',
+    subtitle: 'Setup wizard',
+    icon: Rocket,
+    color: 'text-emerald-600',
+  },
 ];
 
 const TYPE_COLORS: Record<string, string> = {
@@ -111,17 +223,19 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
   const firstName = userName?.split(' ')[0];
 
   return (
-    <div className="flex-1 overflow-y-auto zen-scroll bg-zinc-50/30">
-      <div className="max-w-5xl mx-auto px-6 py-10">
-
+    <WorkspaceCanvas maxWidth="5xl" className="zen-scroll bg-zinc-50/30" testId="platform-home">
+      <div className="py-4">
         {/* ── Greeting ─────────────────────────────────────────── */}
         <div className="mb-10">
           <h1 className="text-3xl font-semibold text-zinc-900 tracking-tight">
-            {greeting}{firstName ? `, ${firstName}` : ''}
+            {greeting}
+            {firstName ? `, ${firstName}` : ''}
           </h1>
           <p className="text-base text-zinc-500 mt-1.5">
             {activeProjects.length} active project{activeProjects.length !== 1 ? 's' : ''}
-            {workspaceSummary?.counts?.documents ? ` \u00b7 ${workspaceSummary.counts.documents} documents` : ''}
+            {workspaceSummary?.counts?.documents
+              ? ` \u00b7 ${workspaceSummary.counts.documents} documents`
+              : ''}
           </p>
         </div>
 
@@ -134,10 +248,17 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
             {QUICK_ACTIONS.map(action => (
               <button
                 key={action.id}
-                onClick={() => action.action === 'new-project' ? onNewProject() : onNavigate(action.action)}
+                onClick={() =>
+                  action.action === 'new-project' ? onNewProject() : onNavigate(action.action)
+                }
                 className="group flex items-center gap-3 p-4 rounded-xl bg-white border border-zinc-100 hover:border-zinc-200 hover:shadow-sm transition-all text-left"
               >
-                <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0', action.bg)}>
+                <div
+                  className={cn(
+                    'w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0',
+                    action.bg
+                  )}
+                >
                   <action.icon className={cn('w-5 h-5', action.color)} />
                 </div>
                 <div className="min-w-0">
@@ -169,10 +290,18 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-zinc-100 bg-zinc-50/60">
-                    <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider">Type</th>
-                    <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider">Project</th>
-                    <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider hidden sm:table-cell">Chats</th>
-                    <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider hidden sm:table-cell text-right">Updated</th>
+                    <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider">
+                      Project
+                    </th>
+                    <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider hidden sm:table-cell">
+                      Chats
+                    </th>
+                    <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider hidden sm:table-cell text-right">
+                      Updated
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
@@ -184,21 +313,35 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
                     >
                       <td className="px-4 py-2.5 whitespace-nowrap">
                         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-600">
-                          <span className={cn('w-1.5 h-1.5 rounded-full', TYPE_COLORS[project.type] ?? 'bg-zinc-400')} />
+                          <span
+                            className={cn(
+                              'w-1.5 h-1.5 rounded-full',
+                              TYPE_COLORS[project.type] ?? 'bg-zinc-400'
+                            )}
+                          />
                           {project.type}
                         </span>
                       </td>
                       <td className="px-4 py-2.5">
                         <span className="font-medium text-zinc-900">{project.name}</span>
-                        {project.starred && <Star className="w-3 h-3 text-amber-400 fill-amber-400 inline ml-1.5 -mt-0.5" />}
+                        {project.starred && (
+                          <Star className="w-3 h-3 text-amber-400 fill-amber-400 inline ml-1.5 -mt-0.5" />
+                        )}
                         {project.description && (
-                          <span className="block text-xs text-zinc-400 truncate max-w-md">{project.description}</span>
+                          <span className="block text-xs text-zinc-400 truncate max-w-md">
+                            {project.description}
+                          </span>
                         )}
                       </td>
-                      <td className="px-4 py-2.5 text-zinc-400 hidden sm:table-cell">{project.conversationCount}</td>
+                      <td className="px-4 py-2.5 text-zinc-400 hidden sm:table-cell">
+                        {project.conversationCount}
+                      </td>
                       <td className="px-4 py-2.5 text-zinc-400 text-right hidden sm:table-cell">
                         {project.lastUpdated
-                          ? new Date(project.lastUpdated).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+                          ? new Date(project.lastUpdated).toLocaleDateString(undefined, {
+                              month: 'short',
+                              day: 'numeric',
+                            })
                           : '\u2014'}
                       </td>
                     </tr>
@@ -207,17 +350,12 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
               </table>
             </div>
           ) : (
-            <div className="border border-dashed border-zinc-300 bg-white px-6 py-8 text-center rounded-xl">
-              <FolderOpen className="w-5 h-5 text-zinc-400 mx-auto mb-2" />
-              <p className="text-sm text-zinc-600 mb-3">No projects yet</p>
-              <button
-                onClick={onNewProject}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Create first project
-              </button>
-            </div>
+            <EmptyState
+              icon={<FolderOpen className="w-5 h-5 text-zinc-400" />}
+              title="No projects yet"
+              primaryAction={{ label: 'Create first project', onClick: onNewProject }}
+              testId="platform-home-empty-projects"
+            />
           )}
         </div>
 
@@ -252,11 +390,17 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
             </h2>
             <div className="divide-y divide-zinc-100 border border-zinc-200 rounded-xl overflow-hidden bg-white">
               {workspaceSummary!.recent.artifacts!.slice(0, 4).map((a: any) => (
-                <div key={a.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 transition-colors">
+                <div
+                  key={a.id}
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 transition-colors"
+                >
                   <FileText className="w-3.5 h-3.5 text-violet-500 flex-shrink-0" />
-                  <span className="text-sm font-medium text-zinc-900 truncate flex-1">{a.title || a.type}</span>
+                  <span className="text-sm font-medium text-zinc-900 truncate flex-1">
+                    {a.title || a.type}
+                  </span>
                   <span className="text-xs text-zinc-400 flex-shrink-0">
-                    {a.type} · {a.status} · {a.createdAt ? new Date(a.createdAt).toLocaleDateString() : ''}
+                    {a.type} · {a.status} ·{' '}
+                    {a.createdAt ? new Date(a.createdAt).toLocaleDateString() : ''}
                   </span>
                 </div>
               ))}
@@ -272,11 +416,19 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
             </h2>
             <div className="divide-y divide-zinc-100 border border-zinc-200 rounded-xl overflow-hidden bg-white">
               {workspaceSummary!.recent.threads!.slice(0, 5).map((t: any) => (
-                <div key={t.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 transition-colors">
+                <div
+                  key={t.id}
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 transition-colors"
+                >
                   <MessageSquare className="w-4 h-4 text-zinc-400 flex-shrink-0" />
                   <span className="text-sm text-zinc-700 truncate flex-1">{t.title}</span>
                   <span className="text-xs text-zinc-400 flex-shrink-0">
-                    {t.updatedAt ? new Date(t.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}
+                    {t.updatedAt
+                      ? new Date(t.updatedAt).toLocaleDateString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                        })
+                      : ''}
                   </span>
                 </div>
               ))}
@@ -284,7 +436,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </WorkspaceCanvas>
   );
 };
 

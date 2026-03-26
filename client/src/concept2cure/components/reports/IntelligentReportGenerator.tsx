@@ -14,6 +14,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import NanoBananaImageGenerator from '@/components/NanoBananaImageGenerator';
 import {
   FileText, Shield, Lock, CheckCircle2, AlertTriangle,
@@ -210,8 +211,8 @@ export default function IntelligentReportGenerator() {
   const loadCatalog = async () => {
     try {
       const [domainsRes, bodiesRes] = await Promise.all([
-        fetch('/api/intelligent-reports/catalog/domains'),
-        fetch('/api/intelligent-reports/catalog/regulatory-bodies'),
+        apiRequest('GET', '/api/intelligent-reports/catalog/domains'),
+        apiRequest('GET', '/api/intelligent-reports/catalog/regulatory-bodies'),
       ]);
       const domainsData = await domainsRes.json();
       const bodiesData = await bodiesRes.json();
@@ -235,10 +236,7 @@ export default function IntelligentReportGenerator() {
     setComplianceScore(null);
 
     try {
-      const res = await fetch('/api/intelligent-reports/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const res = await apiRequest('POST', '/api/intelligent-reports/generate', {
           organizationId: 1,
           domain: selectedDomain.domain,
           subtype: selectedSubtype || undefined,
@@ -248,7 +246,6 @@ export default function IntelligentReportGenerator() {
             ? customFrameworks
             : selectedDomain.defaultComplianceFrameworks,
           parameters: {},
-        }),
       });
 
       const data = await res.json();
@@ -258,8 +255,8 @@ export default function IntelligentReportGenerator() {
 
         // Load attestations and provenance in parallel
         const [attRes, provRes] = await Promise.all([
-          fetch(`/api/intelligent-reports/${data.data.reportId}/attestations`),
-          fetch(`/api/intelligent-reports/${data.data.reportId}/provenance`),
+          apiRequest('GET', `/api/intelligent-reports/${data.data.reportId}/attestations`),
+          apiRequest('GET', `/api/intelligent-reports/${data.data.reportId}/provenance`),
         ]);
         const attData = await attRes.json();
         const provData = await provRes.json();
@@ -280,11 +277,9 @@ export default function IntelligentReportGenerator() {
     setSealing(true);
 
     try {
-      const res = await fetch(`/api/intelligent-reports/${generatedReport.reportId}/seal`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ justification: sealJustification }),
-      });
+      const res = await apiRequest('POST', `/api/intelligent-reports/${generatedReport.reportId}/seal`,
+        { justification: sealJustification }
+      );
 
       const data = await res.json();
       if (data.success) {
@@ -304,7 +299,7 @@ export default function IntelligentReportGenerator() {
     if (!generatedReport) return;
 
     try {
-      const res = await fetch(`/api/intelligent-reports/${generatedReport.reportId}/verify`);
+      const res = await apiRequest('GET', `/api/intelligent-reports/${generatedReport.reportId}/verify`);
       const data = await res.json();
       if (data.success) setVerificationResult(data.data);
     } catch (err) {
@@ -318,7 +313,7 @@ export default function IntelligentReportGenerator() {
     if (!generatedReport) return;
     setProvenanceLoading(true);
     try {
-      const res = await fetch(`/api/intelligent-reports/${generatedReport.reportId}/provenance`);
+      const res = await apiRequest('GET', `/api/intelligent-reports/${generatedReport.reportId}/provenance`);
       const data = await res.json();
       if (data.success) setProvenanceEntries(data.data);
     } catch (err) {
@@ -340,7 +335,7 @@ export default function IntelligentReportGenerator() {
     if (!generatedReport) return;
     setValidating(true);
     try {
-      const res = await fetch(`/api/intelligent-reports/${generatedReport.reportId}/compliance-validation`);
+      const res = await apiRequest('GET', `/api/intelligent-reports/${generatedReport.reportId}/compliance-validation`);
       const data = await res.json();
       if (data.success) {
         setComplianceChecks(data.data.checks);
@@ -365,7 +360,7 @@ export default function IntelligentReportGenerator() {
     if (!generatedReport) return;
     setCheckingDrift(true);
     try {
-      const res = await fetch(`/api/intelligent-reports/${generatedReport.reportId}/drift-check`);
+      const res = await apiRequest('GET', `/api/intelligent-reports/${generatedReport.reportId}/drift-check`);
       const data = await res.json();
       if (data.success) setDriftResult(data.data);
     } catch (err) {
@@ -407,21 +402,17 @@ export default function IntelligentReportGenerator() {
     if (!generatedReport || !selectedDomain || !reportTitle) return;
     setSuperseding(true);
     try {
-      const res = await fetch(`/api/intelligent-reports/${generatedReport.reportId}/supersede`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const res = await apiRequest('POST', `/api/intelligent-reports/${generatedReport.reportId}/supersede`, {
           organizationId: 1,
           domain: generatedReport.record.reportDomain || selectedDomain.domain,
           title: `${reportTitle} (v2)`,
           targetRegulatory: generatedReport.record.targetRegulatory || selectedBody || undefined,
           complianceFrameworks: generatedReport.record.complianceFrameworks || selectedDomain.defaultComplianceFrameworks,
-        }),
       });
       const data = await res.json();
       if (data.success) {
         // Load the new report
-        const newRes = await fetch(`/api/intelligent-reports/${data.data.newReportId}`);
+        const newRes = await apiRequest('GET', `/api/intelligent-reports/${data.data.newReportId}`);
         const newData = await newRes.json();
         if (newData.success) {
           setGeneratedReport({
@@ -459,11 +450,9 @@ export default function IntelligentReportGenerator() {
     if (!generatedReport || !revokeJustification) return;
     setRevoking(true);
     try {
-      const res = await fetch(`/api/intelligent-reports/${generatedReport.reportId}/revoke`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ justification: revokeJustification }),
-      });
+      const res = await apiRequest('POST', `/api/intelligent-reports/${generatedReport.reportId}/revoke`,
+        { justification: revokeJustification }
+      );
       const data = await res.json();
       if (data.success) {
         setGeneratedReport(prev => prev ? { ...prev, sealStatus: 'revoked' } : null);
@@ -481,7 +470,7 @@ export default function IntelligentReportGenerator() {
 
   const loadHistory = useCallback(async () => {
     try {
-      const res = await fetch('/api/intelligent-reports/list/1?limit=50');
+      const res = await apiRequest('GET', '/api/intelligent-reports/list/1?limit=50');
       const data = await res.json();
       if (data.success) setReportHistory(data.data);
     } catch (err) {

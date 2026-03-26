@@ -8,6 +8,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { LoadingState, ErrorState } from '@/components/ui/statesV2';
 import {
   Brain,
   Loader2,
@@ -27,14 +30,6 @@ import {
   Sparkles,
   Info,
 } from 'lucide-react';
-
-// ── Auth helper ──
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 // ── Types ──
 interface ProgramTwinData {
@@ -105,8 +100,10 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
   onOpenTransformCanvas,
   onSelectSection,
 }) => {
+  const { toast } = useToast();
   const [data, setData] = useState<ProgramTwinData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set(['readiness', 'problems']));
 
   useEffect(() => {
@@ -116,22 +113,24 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
     }
     const load = async () => {
       setLoading(true);
+      setError(null);
       try {
-        const res = await fetch(`/api/concept2cure/projects/${projectId}/program-twin`, {
-          headers: getAuthHeaders(),
-        });
+        const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/program-twin`);
         if (res.ok) {
           const payload = await res.json();
           setData(payload.data);
+        } else {
+          setError('Failed to load program twin');
         }
       } catch {
-        /* silent */
+        setError('Failed to load program twin');
+        toast({ title: 'Failed to load program twin', variant: 'destructive' });
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, [projectId]);
+  }, [projectId, toast]);
 
   const toggle = (key: string) => {
     setExpanded(prev => {
@@ -144,19 +143,21 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-white">
-        <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+      <div className="flex-1 flex flex-col bg-white">
+        <TwinHeader onClose={onClose} projectName={projectName} />
+        <LoadingState message="Loading program twin…" size="sm" />
       </div>
     );
   }
 
-  if (!data) {
+  if (error || !data) {
     return (
       <div className="flex-1 flex flex-col bg-white">
         <TwinHeader onClose={onClose} projectName={projectName} />
-        <div className="flex-1 flex items-center justify-center">
-          <span className="text-sm text-zinc-400">No project data</span>
-        </div>
+        <ErrorState
+          title={error || 'No project data'}
+          message="Select a project to view the program twin."
+        />
       </div>
     );
   }

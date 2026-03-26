@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { diffWords, diffLines } from 'diff';
 import {
   GitCompare,
@@ -21,14 +22,6 @@ import {
   RotateCcw,
   CheckCircle,
 } from 'lucide-react';
-
-// ── Auth helper ──────────────────────────────────────────────────────────────
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface VersionData {
@@ -233,9 +226,8 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(
-        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/versions`,
-        { headers: getAuthHeaders() }
+      const res = await apiRequest('GET',
+        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/versions`
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const payload = await res.json();
@@ -272,13 +264,9 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
       setRollingBack(true);
       setRollbackResult(null);
       try {
-        const res = await fetch(
+        const res = await apiRequest('POST',
           `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/rollback`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-            body: JSON.stringify({ targetVersion }),
-          }
+          { targetVersion }
         );
         const payload = await res.json();
         const d = payload.data ?? payload;
@@ -310,10 +298,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
     setReviewingImpact(true);
     setImpactResult(null);
     try {
-      const res = await fetch('/api/ana-ri/execute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify({
+      const res = await apiRequest('POST', '/api/ana-ri/execute', {
           command: 'review_version_impact',
           params: {
             projectId: Number(projectId),
@@ -322,7 +307,6 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
             versionB: vB,
             saveAsArtifact: save,
           },
-        }),
       });
       const result = await res.json();
       if (result.success && result.data?.impact) {

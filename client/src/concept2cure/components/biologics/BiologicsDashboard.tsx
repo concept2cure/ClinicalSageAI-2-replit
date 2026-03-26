@@ -10,6 +10,8 @@ import {
   FlaskConical, Globe, Zap, GitCompare, Layers,
   Shield, ChevronDown, CheckCircle, AlertTriangle, Info,
 } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 // ============================================================================
 // TYPES
@@ -61,6 +63,7 @@ export default function BiologicsDashboard() {
   const [pathways, setPathways] = useState<PathwayInfo[]>([]);
   const [expedited, setExpedited] = useState<ExpeditedPathway[]>([]);
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   async function fetchPathway() {
     setLoading(true);
@@ -71,13 +74,11 @@ export default function BiologicsDashboard() {
         indication: indication || 'general',
         targetAgencies: selectedAgencies.join(','),
       });
-      const res = await fetch(`/api/biologics/pathway?${params}`, { credentials: 'include' });
-      if (res.ok) {
-        const data = await res.json();
-        setPathways(data.agencies || []);
-      }
-    } catch {
-      // Handle error
+      const res = await apiRequest('GET', `/api/biologics/pathway?${params}`);
+      const data = await res.json();
+      setPathways(data.agencies || []);
+    } catch (err) {
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to fetch pathway data', variant: 'destructive' });
     }
     setLoading(false);
   }
@@ -92,14 +93,12 @@ export default function BiologicsDashboard() {
           seriousCondition: 'true',
           targetAgency: agency,
         });
-        const res = await fetch(`/api/biologics/expedited-pathways?${params}`, { credentials: 'include' });
-        if (res.ok) {
-          const data = await res.json();
-          setExpedited((prev) => [...prev.filter((p) => p.agency !== agency), ...(data.pathways || [])]);
-        }
+        const res = await apiRequest('GET', `/api/biologics/expedited-pathways?${params}`);
+        const data = await res.json();
+        setExpedited((prev) => [...prev.filter((p) => p.agency !== agency), ...(data.pathways || [])]);
       }
-    } catch {
-      // Handle error
+    } catch (err) {
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to fetch expedited pathways', variant: 'destructive' });
     }
     setLoading(false);
   }

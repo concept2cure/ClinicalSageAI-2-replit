@@ -9,6 +9,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { LoadingState } from '@/components/ui/statesV2';
 import {
   getSectionLabel,
   getExpectedDocTypesForSection,
@@ -32,14 +35,6 @@ import {
   MapPin,
   GitCompare,
 } from 'lucide-react';
-
-// ── Auth helper ──
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 // ── Types ──
 interface TransformContext {
@@ -94,6 +89,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
   onOpenPlacement,
   onOpenVerification,
 }) => {
+  const { toast } = useToast();
   const [context, setContext] = useState<TransformContext | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedCtd, setSelectedCtd] = useState(preCtdSection || '');
@@ -110,21 +106,19 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
     const load = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/concept2cure/projects/${projectId}/transform-context`, {
-          headers: getAuthHeaders(),
-        });
+        const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/transform-context`);
         if (res.ok) {
           const payload = await res.json();
           setContext(payload.data);
         }
       } catch {
-        /* silent */
+        toast({ title: 'Failed to load transform context', variant: 'destructive' });
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, [projectId]);
+  }, [projectId, toast]);
 
   // Derive template structure
   const templateStructure: TemplateStructureNode[] = selectedTemplate
@@ -147,8 +141,8 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-white">
-        <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+      <div className="flex-1 flex flex-col bg-white">
+        <LoadingState message="Loading transform context…" size="sm" />
       </div>
     );
   }

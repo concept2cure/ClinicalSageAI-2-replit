@@ -7,6 +7,8 @@
  * across the application.
  */
 
+import { randomBytes } from 'crypto';
+
 type Environment = 'development' | 'staging' | 'production';
 
 // Determine current environment with fallback to development
@@ -97,16 +99,15 @@ const getJwtSecret = (): string => {
   if (ENV === 'production') {
     throw new Error(
       `[FATAL] Missing required JWT secret in production. ` +
-      `Set ${envVar} or JWT_SECRET to a secure random string of at least 32 characters.`
+        `Set ${envVar} or JWT_SECRET to a secure random string of at least 32 characters.`
     );
   }
 
   // Development/staging: generate a random ephemeral secret and warn loudly
-  const crypto = require('crypto');
-  const ephemeral = crypto.randomBytes(48).toString('base64url');
+  const ephemeral = randomBytes(48).toString('base64url');
   console.warn(
     `[SECURITY] ${envVar} not found — using random ephemeral JWT secret. ` +
-    `Sessions will NOT survive restarts. Set JWT_SECRET to fix.`
+      `Sessions will NOT survive restarts. Set JWT_SECRET to fix.`
   );
   return ephemeral;
 };

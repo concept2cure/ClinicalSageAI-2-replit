@@ -3,7 +3,15 @@
  *
  * Provides a centralized database connection with Drizzle ORM
  * integration for type-safe database operations.
+ *
+ * IMPORTANT: dotenv must be loaded BEFORE any env var reads.
+ * ESM hoists imports above runtime code, so `server/index.ts`'s
+ * `dotenvConfig({ override: true })` runs AFTER this module initializes.
+ * We load dotenv here to guarantee .env values are available.
  */
+import { config as dotenvConfig } from 'dotenv';
+dotenvConfig({ override: true });
+
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';

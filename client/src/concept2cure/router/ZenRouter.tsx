@@ -62,9 +62,7 @@ const BillingDashboard = lazy(() => import('@/pages/billing/BillingDashboard'));
 const SalesLandingPage = lazy(() => import('@/pages/SalesLandingPage'));
 
 // Lazy-load PasswordReset for the reset-password-via-email flow
-const PasswordResetPage = lazy(
-  () => import('@/portal-v2/components/auth/PasswordReset'),
-);
+const PasswordResetPage = lazy(() => import('@/portal-v2/components/auth/PasswordReset'));
 
 /**
  * Bridge that extracts :projectId from URL and renders CERV2Page with it.
@@ -75,8 +73,6 @@ const Project510kBridge: React.FC = () => {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#FAF9F5]">
-          <p className="text-sm text-[#B0AEA5]">Loading workspace…</p>
         <div className="min-h-screen flex items-center justify-center bg-[#faf9f5]">
           <p className="text-sm text-zinc-400">Loading workspace…</p>
         </div>
@@ -110,51 +106,17 @@ const ProjectPMABridge: React.FC = () => {
 // LOADING SCREEN
 // ═══════════════════════════════════════════════════════════════════════════════
 const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading...' }) => (
-  <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center">
   <div className="min-h-screen bg-[#faf9f5] flex items-center justify-center">
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col items-center gap-6"
     >
-      {/* Brand logo with gentle pulse */}
       <motion.div
         animate={{ scale: [1, 1.03, 1], opacity: [0.8, 1, 0.8] }}
         transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-        className="relative"
+        className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-md"
       >
-        <svg
-          viewBox="0 0 40 40"
-          className="w-full h-full"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <circle
-            cx="20"
-            cy="20"
-            r="18"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="text-[#D97757]"
-          />
-          <motion.path
-            d="M12 14C16 14 18 18 20 20C22 22 24 26 28 26"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            className="text-[#D97757]"
-          />
-          <motion.path
-            d="M28 14C24 14 22 18 20 20C18 22 16 26 12 26"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            className="text-[#E8967A]"
-          />
-        </svg>
-      </motion.div>
-
-      <p className="text-sm text-[#8A8880]">{message}</p>
         <div className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-md">
           <img
             src="/src/assets/concept2cure-logo.jpg"
@@ -163,17 +125,20 @@ const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading..
           />
           <div
             className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(circle at center, transparent 40%, #faf9f5 100%)' }}
+            style={{
+              background: 'radial-gradient(circle at center, transparent 40%, #faf9f5 100%)',
+            }}
           />
         </div>
       </motion.div>
 
-      <p className="text-sm text-zinc-500" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>{message}</p>
+      <p className="text-sm text-zinc-500" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>
+        {message}
+      </p>
 
       {/* Progress bar */}
       <div className="w-48 h-1 bg-[#E8E6DC] rounded-full overflow-hidden">
         <motion.div
-          className="h-full bg-[#D97757] rounded-full"
           className="h-full rounded-full"
           style={{ background: 'linear-gradient(135deg, #d97757, #c15f3c)' }}
           initial={{ x: '-100%' }}
@@ -348,7 +313,11 @@ export const ZenRouter: React.FC = () => {
           <Route path="/concept2cure/password-reset">
             {() => (
               <PageTransition>
-                <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center min-h-screen">Loading...</div>
+                  }
+                >
                   <PasswordResetPage />
                 </Suspense>
               </PageTransition>
@@ -422,25 +391,67 @@ export const ZenRouter: React.FC = () => {
 
           {/* Legal Pages — public, no auth required */}
           <Route path="/concept2cure/legal/terms">
-            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><TermsOfService /></Suspense></PageTransition>)}
+            {() => (
+              <PageTransition>
+                <Suspense fallback={<ZenLoadingScreen message="Loading..." />}>
+                  <TermsOfService />
+                </Suspense>
+              </PageTransition>
+            )}
           </Route>
           <Route path="/concept2cure/legal/privacy">
-            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><PrivacyPolicy /></Suspense></PageTransition>)}
+            {() => (
+              <PageTransition>
+                <Suspense fallback={<ZenLoadingScreen message="Loading..." />}>
+                  <PrivacyPolicy />
+                </Suspense>
+              </PageTransition>
+            )}
           </Route>
           <Route path="/concept2cure/legal/dpa">
-            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><DataProcessingAgreement /></Suspense></PageTransition>)}
+            {() => (
+              <PageTransition>
+                <Suspense fallback={<ZenLoadingScreen message="Loading..." />}>
+                  <DataProcessingAgreement />
+                </Suspense>
+              </PageTransition>
+            )}
           </Route>
           <Route path="/concept2cure/legal/baa">
-            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><BusinessAssociateAgreement /></Suspense></PageTransition>)}
+            {() => (
+              <PageTransition>
+                <Suspense fallback={<ZenLoadingScreen message="Loading..." />}>
+                  <BusinessAssociateAgreement />
+                </Suspense>
+              </PageTransition>
+            )}
           </Route>
           <Route path="/concept2cure/legal/sla">
-            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><ServiceLevelAgreement /></Suspense></PageTransition>)}
+            {() => (
+              <PageTransition>
+                <Suspense fallback={<ZenLoadingScreen message="Loading..." />}>
+                  <ServiceLevelAgreement />
+                </Suspense>
+              </PageTransition>
+            )}
           </Route>
           <Route path="/concept2cure/legal/cookies">
-            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><CookiePolicy /></Suspense></PageTransition>)}
+            {() => (
+              <PageTransition>
+                <Suspense fallback={<ZenLoadingScreen message="Loading..." />}>
+                  <CookiePolicy />
+                </Suspense>
+              </PageTransition>
+            )}
           </Route>
           <Route path="/concept2cure/legal/aup">
-            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><AcceptableUsePolicy /></Suspense></PageTransition>)}
+            {() => (
+              <PageTransition>
+                <Suspense fallback={<ZenLoadingScreen message="Loading..." />}>
+                  <AcceptableUsePolicy />
+                </Suspense>
+              </PageTransition>
+            )}
           </Route>
 
           {/* Project-scoped hub — ZenApp reads :projectId from route */}

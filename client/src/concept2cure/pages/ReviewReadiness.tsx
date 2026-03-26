@@ -39,6 +39,11 @@ import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/concept2cure/hooks/queryKeys';
 import { useReadinessScore, useCrossModuleAnalysis } from '@/concept2cure/hooks/useIntelligence';
 
+// Lazy-load ProjectReadinessDashboard (heavy component with sub-tabs)
+const ProjectReadinessDashboardLazy = React.lazy(
+  () => import('@/concept2cure/components/readiness/ProjectReadinessDashboard')
+);
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -1530,7 +1535,11 @@ export function ReviewReadiness({ onClose, projectId }: { onClose: () => void; p
       case 'snowglobe':
         return <SnowGlobeView />;
       case 'readiness':
-        return <ReadinessScoreView readinessModules={readinessModules} summary={summary} projectId={projectId} />;
+        return projectId
+          ? <React.Suspense fallback={<div className="flex items-center justify-center py-12 text-zinc-400 text-sm">Loading readiness dashboard...</div>}>
+              <ProjectReadinessDashboardLazy projectId={projectId} />
+            </React.Suspense>
+          : <ReadinessScoreView readinessModules={readinessModules} summary={summary} projectId={projectId} />;
       case 'evidence':
         return <EvidenceConfidenceView evidenceSections={evidenceSections} />;
       case 'audit':

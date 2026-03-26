@@ -532,7 +532,7 @@ class SubmissionTwinService {
       .where(
         and(
           eq(c2cSubmissionPackages.id, packageId),
-          eq(c2cSubmissionPackages.organizationId, organizationId)
+          eq(c2cSubmissionPackages.orgId, organizationId)
         )
       )
       .limit(1);
@@ -558,7 +558,7 @@ class SubmissionTwinService {
       .where(
         and(
           eq(c2cBlockers.packageDbId, packageId),
-          eq(c2cBlockers.organizationId, organizationId),
+          eq(c2cBlockers.orgId, organizationId),
           eq(c2cBlockers.status, 'open')
         )
       );
@@ -570,7 +570,7 @@ class SubmissionTwinService {
       .where(
         and(
           eq(c2cReadinessSnapshots.packageDbId, packageId),
-          eq(c2cReadinessSnapshots.organizationId, organizationId)
+          eq(c2cReadinessSnapshots.orgId, organizationId)
         )
       )
       .orderBy(desc(c2cReadinessSnapshots.computedAt))
@@ -788,7 +788,7 @@ class SubmissionTwinService {
         .where(
           and(
             eq(c2cBlockers.packageDbId, packageId),
-            eq(c2cBlockers.organizationId, organizationId),
+            eq(c2cBlockers.orgId, organizationId),
             eq(c2cBlockers.status, 'open')
           )
         ),
@@ -798,7 +798,7 @@ class SubmissionTwinService {
         .where(
           and(
             eq(c2cReadinessSnapshots.packageDbId, packageId),
-            eq(c2cReadinessSnapshots.organizationId, organizationId)
+            eq(c2cReadinessSnapshots.orgId, organizationId)
           )
         )
         .orderBy(desc(c2cReadinessSnapshots.computedAt))
@@ -876,7 +876,7 @@ class SubmissionTwinService {
       .where(
         and(
           eq(c2cReadinessSnapshots.packageDbId, packageId),
-          eq(c2cReadinessSnapshots.organizationId, organizationId)
+          eq(c2cReadinessSnapshots.orgId, organizationId)
         )
       )
       .orderBy(desc(c2cReadinessSnapshots.computedAt))
@@ -929,7 +929,7 @@ class SubmissionTwinService {
       .where(
         and(
           eq(c2cBlockers.packageDbId, packageId),
-          eq(c2cBlockers.organizationId, organizationId),
+          eq(c2cBlockers.orgId, organizationId),
           eq(c2cBlockers.status, 'open')
         )
       );
@@ -1201,7 +1201,7 @@ class SubmissionTwinService {
       .where(
         and(
           eq(c2cPackageSections.packageDbId, packageId),
-          eq(c2cPackageSections.organizationId, organizationId)
+          eq(c2cPackageSections.orgId, organizationId)
         )
       );
 

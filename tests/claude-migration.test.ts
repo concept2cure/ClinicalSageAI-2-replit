@@ -162,6 +162,7 @@ describe('Claude Migration - AnA FT Gateway + Lifecycle Controls', () => {
     expect(content).toContain('LUMEN_GOVERNANCE_POLICY');
     expect(content).toContain('AuditRemediationPlanItem');
     expect(content).toContain('allowedGatewayModels');
+    expect(content).toContain("deploymentStage?: 'staged' | 'canary' | 'live' | 'rollback'");
     expect(content).toContain('promoteModel(');
     expect(content).toContain('rollbackModel(');
     expect(content).toContain('getDeploymentHistory(');
