@@ -538,3 +538,42 @@ When producing audit reports, analysis summaries, or any long-form deliverable:
 - **Write the report to a file** (e.g., `docs/reports/<descriptive-name>.md`) so the user can copy the entire thing at once.
 - Always tell the user the file path so they can open/copy it.
 - Still provide a brief summary in chat, but the full report goes to a file.
+
+---
+
+## gstack
+
+Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__claude-in-chrome__*` tools.
+
+If gstack skills aren't working, run `cd .claude/skills/gstack && ./setup` to build the binary and register skills.
+
+### Available Skills
+
+| Skill | Purpose |
+|---|---|
+| `/office-hours` | Open-ended Q&A / planning session |
+| `/plan-ceo-review` | CEO-level plan review |
+| `/plan-eng-review` | Engineering plan review |
+| `/plan-design-review` | Design plan review |
+| `/design-consultation` | Design consultation |
+| `/review` | Code / artifact review |
+| `/ship` | Ship a feature end-to-end |
+| `/land-and-deploy` | Land and deploy changes |
+| `/canary` | Canary deploy |
+| `/benchmark` | Performance benchmark |
+| `/browse` | Web browsing (use this — never `mcp__claude-in-chrome__*`) |
+| `/qa` | Full QA pass |
+| `/qa-only` | QA without changes |
+| `/design-review` | Design review |
+| `/setup-browser-cookies` | Set up browser cookies |
+| `/setup-deploy` | Set up deploy pipeline |
+| `/retro` | Retrospective |
+| `/investigate` | Deep investigation |
+| `/document-release` | Document a release |
+| `/codex` | Codex lookup |
+| `/cso` | CSO workflow |
+| `/careful` | Careful/guarded execution mode |
+| `/freeze` | Freeze a system/branch |
+| `/guard` | Guard mode |
+| `/unfreeze` | Unfreeze a system/branch |
+| `/gstack-upgrade` | Upgrade gstack |
