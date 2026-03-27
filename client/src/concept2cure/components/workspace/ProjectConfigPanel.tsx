@@ -372,7 +372,7 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                   Team Management
                 </h3>
                 <p className="text-sm text-[#4D4B45]/50 max-w-[260px]">
-                  Team management coming soon for enterprise accounts.
+                  Team management for enterprise accounts.
                   Assign roles, manage permissions, and track contributor activity.
                 </p>
               </div>
