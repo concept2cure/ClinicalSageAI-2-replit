@@ -455,29 +455,16 @@ type LayoutMode =
   | 'program-analytics';
 
 const PRIMARY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
-  // Global destinations
-  projects: 'projects',
-  apps: 'apps',
-  'artifacts-center': 'artifacts-center',
-  setup: 'setup',
-  // Project tabs
-  'project-home': 'overview',
-  documents: 'work',
-  vault: 'vault',
+  projects: 'ri-copilot',
+  'project-home': 'ri-copilot',
+  'dossier-map': 'clinical-module5',
+  documents: 'submission-builder',
   review: 'review',
-  submissions: 'submit',
-  'dossier-map': 'work',
-  'section-workspace': 'work',
-  editor: 'work',
-  'regulatory-workspace': 'work',
+  submissions: 'publish',
+  'section-workspace': 'clinical-module5',
   'vault-workspace': 'vault',
-  'review-readiness': 'review',
-  'report-engine': 'review',
-  // Specialist tools map to global apps
-  'precedent-intelligence': 'apps',
-  biostatistics: 'apps',
-  'safety-narrative': 'apps',
-  'deep-research': 'apps',
+  'review-readiness': 'verify',
+  'report-engine': 'haq',
 };
 
 const LEGACY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
@@ -1878,34 +1865,64 @@ export const ZenApp: React.FC = () => {
   const workflowRunId = activeProjectId ? `workflow-run-${activeProjectId}` : 'workflow-run-demo';
   const activeNavId = useMemo(() => {
     if (activeToolPanel === 'vault') return 'vault';
-    if (activeToolPanel === 'ana-biostats') return 'apps';
+    if (activeToolPanel === 'ana-biostats') return 'biostatistics';
+    if (layoutMode === 'regulatory-workspace') {
+      return riViewMode === 'intelligence' ? 'ri-copilot' : 'submission-builder';
+    }
     return PRIMARY_NAV_ID_BY_LAYOUT[layoutMode] ?? LEGACY_NAV_ID_BY_LAYOUT[layoutMode];
-  }, [activeToolPanel, layoutMode]);
+  }, [activeToolPanel, layoutMode, riViewMode]);
 
   const currentGlobalNodeLabel = useMemo(() => {
     if (activeToolPanel === 'vault') return 'Vault';
     if (activeToolPanel === 'ana-biostats') return 'Biostatistics';
     const labelByNavId: Record<string, string> = {
-      projects: activeProject ? `${activeProject.name} · Project Home` : 'Project Home',
-      dossier: 'Dossier Workspace',
-      documents: 'Document Studio',
+      'ri-copilot': 'RI Copilot',
+      'submission-builder': 'Submission Builder',
+      cmc: 'CMC',
+      'clinical-module5': 'Clinical / Module 5',
+      verify: 'Verify',
       vault: 'Vault Workspace',
       review: 'Review',
-      reports: 'Reports',
-      submissions: 'Submission',
+      publish: 'Publish',
+      haq: 'HAQ',
       biostatistics: 'Biostatistics',
     };
     return activeNavId ? (labelByNavId[activeNavId] ?? 'Workspace') : 'Workspace';
   }, [activeNavId, activeProject, activeToolPanel]);
 
   const handleHeaderAction = useCallback(
-    (action: 'home' | 'search' | 'vault' | 'review' | 'reports' | 'submission') => {
+    (
+      action:
+        | 'ri-copilot'
+        | 'submission-builder'
+        | 'cmc'
+        | 'clinical-module5'
+        | 'verify'
+        | 'review'
+        | 'publish'
+        | 'haq'
+        | 'vault'
+    ) => {
       switch (action) {
-        case 'home':
-          setLayoutMode(activeProjectId ? 'project-home' : 'projects');
+        case 'ri-copilot':
+          setRiViewMode('intelligence');
+          setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'projects');
           break;
-        case 'search':
-          setCommandPaletteOpen(true);
+        case 'submission-builder':
+          setRiViewMode('editor');
+          setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'projects');
+          break;
+        case 'cmc':
+          setRiViewMode('editor');
+          setLayoutMode('section-workspace');
+          break;
+        case 'clinical-module5':
+          setRiViewMode('editor');
+          setLayoutMode('section-workspace');
+          break;
+        case 'verify':
+          setActiveToolPanel(null);
+          setLayoutMode('review-readiness');
           break;
         case 'vault':
           setActiveToolPanel(null);
@@ -1915,11 +1932,11 @@ export const ZenApp: React.FC = () => {
           setActiveToolPanel(null);
           setLayoutMode('review');
           break;
-        case 'reports':
+        case 'haq':
           setActiveToolPanel(null);
           setLayoutMode('report-engine');
           break;
-        case 'submission':
+        case 'publish':
           setActiveToolPanel(null);
           setLayoutMode('submissions');
           break;
@@ -2144,8 +2161,16 @@ export const ZenApp: React.FC = () => {
             case 'reports':
             case 'submissions':
             case 'dossier':
-            case 'project-home':
+            case 'publish':
+            case 'verify':
+            case 'haq':
+            case 'submission-builder':
+            case 'clinical-module5':
+            case 'cmc':
+            case 'ri-copilot':
               setLayoutMode(SIDEBAR_NAV_TO_LAYOUT[id] ?? 'projects');
+              if (id === 'ri-copilot') setRiViewMode('intelligence');
+              if (id === 'submission-builder') setRiViewMode('editor');
               break;
             case 'tools':
               setLayoutMode(SIDEBAR_NAV_TO_LAYOUT['tools'] ?? 'documents');
@@ -3527,21 +3552,17 @@ const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
   // Global destinations
   projects: 'projects',
   home: 'projects',
-  apps: 'apps',
-  'artifacts-center': 'artifacts-center',
-  setup: 'setup',
-  // Project tabs (new nav IDs from sidebar)
-  overview: 'project-home',
-  tools: 'documents',
-  work: 'documents',
-  vault: 'vault',
-  'review-tab': 'review',
-  submit: 'submissions',
-  // Legacy nav IDs (keep for backward compat)
-  documents: 'documents',
-  review: 'review',
-  reports: 'report-engine',
+  documents: 'regulatory-workspace',
   submissions: 'submissions',
+  reports: 'report-engine',
   dossier: 'dossier-map',
-  'project-home': 'project-home',
+  'ri-copilot': 'regulatory-workspace',
+  'submission-builder': 'regulatory-workspace',
+  cmc: 'section-workspace',
+  'clinical-module5': 'section-workspace',
+  verify: 'review-readiness',
+  vault: 'vault-workspace',
+  review: 'review',
+  publish: 'submissions',
+  haq: 'report-engine',
 };

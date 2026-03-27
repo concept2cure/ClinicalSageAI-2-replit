@@ -97,14 +97,15 @@ type LeftRailMode = 'files' | 'dossier' | 'templates' | 'outline' | 'registry';
 type OperatingLayer = 'document_studio' | 'vault' | 'reports';
 type WorkspaceWorkbench = 'cmc' | 'biostats' | 'device' | 'clinical';
 type ProjectNav =
-  | 'overview'
-  | 'documents'
+  | 'submission_builder'
+  | 'cmc'
+  | 'clinical_module5'
+  | 'verify'
+  | 'review'
+  | 'publish'
+  | 'haq'
   | 'vault'
-  | 'reports'
-  | 'tasks'
-  | 'reviews'
-  | 'submission'
-  | 'activity';
+  | 'overview';
 type DocumentTab =
   | 'content'
   | 'evidence'
@@ -216,14 +217,15 @@ const WORKBENCHES: WorkbenchConfig[] = [
 ];
 
 const PROJECT_NAV_ITEMS: Array<{ id: ProjectNav; label: string }> = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'documents', label: 'Tools' },
+  { id: 'submission_builder', label: 'Submission Builder' },
+  { id: 'cmc', label: 'CMC' },
+  { id: 'clinical_module5', label: 'Clinical / Module 5' },
+  { id: 'verify', label: 'Verify' },
+  { id: 'review', label: 'Review' },
+  { id: 'publish', label: 'Publish' },
+  { id: 'haq', label: 'HAQ' },
   { id: 'vault', label: 'Vault' },
-  { id: 'reports', label: 'Readiness' },
-  { id: 'tasks', label: 'Tasks' },
-  { id: 'reviews', label: 'Reviews' },
-  { id: 'submission', label: 'Submission' },
-  { id: 'activity', label: 'Activity' },
+  { id: 'overview', label: 'Overview' },
 ];
 
 const DOCUMENT_TAB_ITEMS: Array<{ id: DocumentTab; label: string }> = [
@@ -297,7 +299,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const [selectedFolder, setSelectedFolder] = useState<string>('drafts');
   const [selectedDocId, setSelectedDocId] = useState<string | undefined>();
   const [mode, setMode] = useState<'dashboard' | 'browse' | 'edit'>('dashboard');
-  const [projectNav, setProjectNav] = useState<ProjectNav>('overview');
+  const [projectNav, setProjectNav] = useState<ProjectNav>('submission_builder');
   const [documentTab, setDocumentTab] = useState<DocumentTab>('content');
   const [leftRailMode, setLeftRailMode] = useState<LeftRailMode>('files');
   const [activeLayer, setActiveLayer] = useState<OperatingLayer>('document_studio');
@@ -1415,12 +1417,39 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               Reports
             </button>
             <button
-              onClick={() => (onNavigate ? onNavigate('submission-builder') : setMode('dashboard'))}
+              onClick={() => {
+                setProjectNav('submission_builder');
+                setActiveLayer('document_studio');
+                setLeftRailMode('dossier');
+                setMode(selectedDocId ? 'edit' : 'browse');
+              }}
               className="text-[11px] px-2 py-0.5 rounded border border-emerald-200 text-emerald-700 hover:bg-emerald-50"
             >
-              Submission
+              Submission Builder
             </button>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2 px-4 h-9 border-b border-zinc-200 bg-emerald-50/40 shrink-0 overflow-x-auto">
+          <span className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wide whitespace-nowrap">
+            Guided CTD Flow
+          </span>
+          {[
+            { module: 'Module 1', focus: 'Administrative / regional' },
+            { module: 'Module 2', focus: 'Summaries & overviews' },
+            { module: 'Module 3', focus: 'CMC' },
+            { module: 'Module 5', focus: 'Clinical reports' },
+          ].map(step => (
+            <span
+              key={step.module}
+              className="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-white px-2 py-0.5 text-[11px] text-emerald-800 whitespace-nowrap"
+              title={step.focus}
+            >
+              <MapPin className="w-3 h-3 text-emerald-600" />
+              <span className="font-medium">{step.module}</span>
+              <span className="text-emerald-600">{step.focus}</span>
+            </span>
+          ))}
         </div>
 
         <div className="flex items-center gap-1 px-4 h-9 border-b border-zinc-200 bg-zinc-50/70 shrink-0 overflow-x-auto">
@@ -1432,26 +1461,43 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 if (item.id === 'overview') {
                   setMode('dashboard');
                   setPhase4Panel('none');
-                } else if (item.id === 'documents') {
+                } else if (item.id === 'submission_builder') {
                   setActiveLayer('document_studio');
+                  setLeftRailMode('dossier');
                   setMode(selectedDocId ? 'edit' : 'browse');
                   setPhase4Panel('none');
+                } else if (item.id === 'cmc') {
+                  setActiveLayer('document_studio');
+                  setActiveWorkbench('cmc');
+                  setSelectedFolder('cmc');
+                  setLeftRailMode('dossier');
+                  setMode('browse');
+                  setPhase4Panel('none');
+                } else if (item.id === 'clinical_module5') {
+                  setActiveLayer('document_studio');
+                  setActiveWorkbench('clinical');
+                  setSelectedCtdSection('5');
+                  setLeftRailMode('dossier');
+                  setMode('browse');
+                  setPhase4Panel('none');
+                } else if (item.id === 'verify') {
+                  setActiveLayer('reports');
+                  setMode('browse');
+                  setPhase4Panel('verification');
+                } else if (item.id === 'review') {
+                  setActiveLayer('reports');
+                  setMode('browse');
+                  setPhase4Panel('pulse');
+                } else if (item.id === 'publish') {
+                  onNavigate ? onNavigate('submissions') : setMode('dashboard');
+                } else if (item.id === 'haq') {
+                  setActiveLayer('reports');
+                  setMode('dashboard');
+                  setPhase4Panel('pulse');
                 } else if (item.id === 'vault') {
                   setActiveLayer('vault');
                   setMode('browse');
                   setLeftRailMode('files');
-                } else if (
-                  item.id === 'reports' ||
-                  item.id === 'activity' ||
-                  item.id === 'reviews'
-                ) {
-                  setActiveLayer('reports');
-                  setMode('browse');
-                  setPhase4Panel('pulse');
-                } else if (item.id === 'submission') {
-                  onNavigate ? onNavigate('submission-builder') : setMode('dashboard');
-                } else if (item.id === 'tasks') {
-                  setMode('dashboard');
                 }
               }}
               className={cn(
@@ -2110,10 +2156,37 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     }}
                     onOpenIntelligence={onSwitchToIntelligence}
                     onOpenSubmissions={
-                      onNavigate ? () => onNavigate('submission-builder') : undefined
+                      onNavigate ? () => onNavigate('submissions') : undefined
                     }
-                    onOpenTemplates={onNavigate ? () => onNavigate('template-library') : undefined}
+                    onOpenTemplates={undefined}
                   />
+                  {projectNav === 'haq' && (
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-4 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                        <span className="text-sm font-semibold text-emerald-900">
+                          HAQ Manager — Governed Artifact Queue
+                        </span>
+                        <Badge variant="outline" className="text-[10px] ml-auto border-emerald-200 text-emerald-700">
+                          {artifacts.filter(a => a.status === 'review' || a.status === 'draft').length} open
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-emerald-800">
+                        Triage governed artifacts, review pulse signals, and proposal accept/reject actions in one quality queue.
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div className="rounded border border-emerald-200 bg-white px-3 py-2 text-xs text-emerald-800">
+                          Draft artifacts: <span className="font-semibold">{artifacts.filter(a => a.status === 'draft').length}</span>
+                        </div>
+                        <div className="rounded border border-emerald-200 bg-white px-3 py-2 text-xs text-emerald-800">
+                          Reviews in flight: <span className="font-semibold">{reviewInFlight}</span>
+                        </div>
+                        <div className="rounded border border-emerald-200 bg-white px-3 py-2 text-xs text-emerald-800">
+                          Pending proposals: <span className="font-semibold">{conversationSnapshot.proposals.filter(p => p.status === 'pending').length}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="w-4 h-4 text-emerald-600" />

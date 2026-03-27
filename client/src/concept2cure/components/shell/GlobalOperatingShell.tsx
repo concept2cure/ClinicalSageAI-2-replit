@@ -1,14 +1,15 @@
 import React from 'react';
 import {
   Layers,
-  FolderKanban,
-  FileText,
+  Brain,
+  FlaskConical,
+  Microscope,
+  FileCheck,
   Archive,
-  ScrollText,
-  Search,
   ShieldCheck,
   Send,
-  Home,
+  Upload,
+  Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -18,17 +19,31 @@ interface GlobalOperatingShellProps {
   activeNavId?: string;
   currentGlobalNodeLabel?: string;
   activeArtifactLabel?: string;
-  onAction?: (action: 'home' | 'search' | 'vault' | 'review' | 'reports' | 'submission') => void;
+  onAction?: (
+    action:
+      | 'ri-copilot'
+      | 'submission-builder'
+      | 'cmc'
+      | 'clinical-module5'
+      | 'verify'
+      | 'review'
+      | 'publish'
+      | 'haq'
+      | 'vault'
+  ) => void;
   children: React.ReactNode;
 }
 
-const LAYERS = [
-  { id: 'projects', label: 'Home', icon: Home },
-  { id: 'documents', label: 'Search', icon: Search },
-  { id: 'vault', label: 'Vault', icon: Archive },
+const GLOBAL_NODES = [
+  { id: 'ri-copilot', label: 'RI Copilot', icon: Brain },
+  { id: 'submission-builder', label: 'Submission Builder', icon: Layers },
+  { id: 'cmc', label: 'CMC', icon: FlaskConical },
+  { id: 'clinical-module5', label: 'Clinical / Module 5', icon: Microscope },
+  { id: 'verify', label: 'Verify', icon: FileCheck },
   { id: 'review', label: 'Review', icon: ShieldCheck },
-  { id: 'reports', label: 'Reports', icon: ScrollText },
-  { id: 'submissions', label: 'Submission', icon: Send },
+  { id: 'publish', label: 'Publish', icon: Send },
+  { id: 'haq', label: 'HAQ', icon: Shield },
+  { id: 'vault', label: 'Vault', icon: Archive },
 ] as const;
 
 export function GlobalOperatingShell({
@@ -75,27 +90,43 @@ export function GlobalOperatingShell({
               <>
                 <button
                   type="button"
-                  onClick={() => onAction('home')}
+                  onClick={() => onAction('ri-copilot')}
                   className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
                 >
-                  <FolderKanban className="w-3 h-3" />
-                  Home
+                  <Brain className="w-3 h-3" />
+                  RI Copilot
                 </button>
                 <button
                   type="button"
-                  onClick={() => onAction('search')}
+                  onClick={() => onAction('submission-builder')}
                   className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
                 >
-                  <Search className="w-3 h-3" />
-                  Search
+                  <Layers className="w-3 h-3" />
+                  Submission Builder
                 </button>
                 <button
                   type="button"
-                  onClick={() => onAction('vault')}
+                  onClick={() => onAction('cmc')}
                   className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
                 >
-                  <Archive className="w-3 h-3" />
-                  Vault
+                  <FlaskConical className="w-3 h-3" />
+                  CMC
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onAction('clinical-module5')}
+                  className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
+                >
+                  <Microscope className="w-3 h-3" />
+                  Clinical / Module 5
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onAction('verify')}
+                  className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
+                >
+                  <FileCheck className="w-3 h-3" />
+                  Verify
                 </button>
                 <button
                   type="button"
@@ -107,29 +138,33 @@ export function GlobalOperatingShell({
                 </button>
                 <button
                   type="button"
-                  onClick={() => onAction('reports')}
+                  onClick={() => onAction('publish')}
                   className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
                 >
-                  <ScrollText className="w-3 h-3" />
-                  Reports
+                  <Upload className="w-3 h-3" />
+                  Publish
                 </button>
                 <button
                   type="button"
-                  onClick={() => onAction('submission')}
+                  onClick={() => onAction('haq')}
                   className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
                 >
-                  <Send className="w-3 h-3" />
-                  Submission
+                  <Shield className="w-3 h-3" />
+                  HAQ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onAction('vault')}
+                  className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
+                >
+                  <Archive className="w-3 h-3" />
+                  Vault
                 </button>
               </>
             )}
             {GLOBAL_NODES.map(layer => {
               const Icon = layer.icon;
-              const isActive =
-                ((layoutMode === 'documents' || layoutMode === 'regulatory-workspace') &&
-                  layer.id === 'documents') ||
-                (layoutMode === 'report-engine' && layer.id === 'reports') ||
-                (layoutMode === 'projects' && layer.id === 'projects');
+              const isActive = activeNavId === layer.id;
               return (
                 <span
                   key={layer.id}
