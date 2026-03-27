@@ -1733,6 +1733,16 @@ try {
   console.error('❌ Failed to mount Evidence routes:', error);
 }
 
+// Mount Evidence Ask API route (Data Room / Ask — semantic Q&A over project documents)
+try {
+  const evidenceAskModule = await import('./routes/evidence-ask.js');
+  const evidenceAskRoutes = evidenceAskModule.default;
+  app.use('/api/evidence', evidenceAskRoutes);
+  console.log('✅ Evidence Ask API route mounted successfully (Data Room / Ask)');
+} catch (error) {
+  console.error('❌ Failed to mount Evidence Ask route:', error);
+}
+
 // Mount Evidence Search API routes (semantic + artifact search for Evidence Search UI)
 try {
   const evidenceSearchModule = await import('./routes/evidence-search.js');

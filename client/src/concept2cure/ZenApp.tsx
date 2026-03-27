@@ -263,6 +263,11 @@ const SubmissionReadinessView = lazy(() =>
     default: m.SubmissionReadiness,
   }))
 );
+const HAQManagerView = lazy(() =>
+  import('./components/workflow/HAQManager').then(m => ({
+    default: m.HAQManager,
+  }))
+);
 
 // ─── New intent-organized workspace lazy loads ──────────────────────────────
 // [BATCH 1 DELETED] IntelligenceHub
@@ -858,8 +863,8 @@ export const ZenApp: React.FC = () => {
 
   const [moduleAssistantOpen, setModuleAssistantOpen] = useState(false);
 
-  // Tools sub-view: 'landing' shows the curated workbench, 'builder' shows FullDocumentBuilder
-  const [toolsSubView, setToolsSubView] = useState<'landing' | 'builder'>('landing');
+  // Tools sub-view: 'landing' shows the curated workbench, 'builder' shows FullDocumentBuilder, 'haq' shows HAQ Manager
+  const [toolsSubView, setToolsSubView] = useState<'landing' | 'builder' | 'haq'>('landing');
   // Reset tools sub-view when entering documents mode (always land on workbench)
   useEffect(() => {
     if (layoutMode === 'documents') setToolsSubView('landing');
@@ -2835,6 +2840,17 @@ export const ZenApp: React.FC = () => {
                         setToolsSubView('landing');
                       }}
                     />
+                  ) : toolsSubView === 'haq' ? (
+                    <HAQManagerView
+                      projectId={activeProjectId}
+                      projectName={activeProject?.name}
+                      onOpenInEditor={(content, title) => {
+                        setPendingEditorContent({ content, title });
+                        setRiViewMode('editor');
+                        setLayoutMode('regulatory-workspace');
+                        setToolsSubView('landing');
+                      }}
+                    />
                   ) : (
                     <ToolsLanding
                       projectName={activeProject?.name}
@@ -2878,10 +2894,7 @@ export const ZenApp: React.FC = () => {
                             setLayoutMode('submissions');
                             break;
                           case 'haq':
-                            // HAQ Manager — Phase 6 will add dedicated workflow
-                            // For now, route to workspace with AnA context for HAQ
-                            setRiViewMode('editor');
-                            setLayoutMode('regulatory-workspace');
+                            setToolsSubView('haq');
                             break;
                         }
                       }}
