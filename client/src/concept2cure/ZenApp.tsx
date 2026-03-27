@@ -36,8 +36,8 @@ import { ZenSettings } from './components/settings/ZenSettings';
 import {
   ProjectSwitcher,
   NewProjectModal,
-  EditProjectModal,
 } from './components/projects/ProjectSwitcher';
+import ProjectConfigPanel from './components/workspace/ProjectConfigPanel';
 // [BATCH 3] WorkflowTimeline — renderer removed, import kept for type compatibility
 import { ProjectFilesCompact } from './components/workspace/ProjectFilesCompact';
 import { ProjectHeaderBar } from './components/workspace/ProjectHeaderBar';
@@ -1050,6 +1050,17 @@ export const ZenApp: React.FC = () => {
   );
   const projectReadinessScore = readinessData?.metrics?.readinessScore;
 
+  // Project intelligence stats for AnaPersistentPanel greeting enrichment
+  const projectIntelligenceStats = useMemo(() => {
+    if (!readinessData) return undefined;
+    return {
+      documentCount: readinessData?.metrics?.artifactCount ?? 0,
+      signalCount: readinessData?.metrics?.signalCount ?? 0,
+      readinessScore: projectReadinessScore ?? null,
+      memoryAtomCount: readinessData?.metrics?.memoryAtomCount ?? 0,
+    };
+  }, [readinessData, projectReadinessScore]);
+
   // ── Canonical AuthoringContextPack — derived from all available state ──────
   const authoringContext = useMemo<AuthoringContextPack | null>(() => {
     return resolveAuthoringContext({
@@ -1682,24 +1693,52 @@ export const ZenApp: React.FC = () => {
     [rawProjects, updateProjectMutation]
   );
 
+  const handleToggleProjectPin = useCallback(
+    async (id: string) => {
+      const project = rawProjects.find(p => p.id === id);
+      if (project) {
+        const currentPinned = (project.metadata as any)?.pinned ?? false;
+        await updateProjectMutation({
+          ...project,
+          metadata: { ...((project.metadata as any) || {}), pinned: !currentPinned } as any,
+        });
+      }
+    },
+    [rawProjects, updateProjectMutation]
+  );
+
+  const handleArchiveProject = useCallback(
+    async (id: string) => {
+      const project = rawProjects.find(p => p.id === id);
+      if (project) {
+        await updateProjectMutation({
+          ...project,
+          status: 'archived',
+        });
+      }
+    },
+    [rawProjects, updateProjectMutation]
+  );
+
   const handleEditProject = useCallback(
-    async (data: {
-      name: string;
-      description?: string;
-      sponsor?: string;
-      product?: string;
-      region?: string;
-    }) => {
+    async (data: Record<string, any>) => {
       const project = rawProjects.find(p => p.id === activeProjectId);
       if (project) {
         try {
           await updateProjectMutation({
             ...project,
-            name: data.name,
-            description: data.description,
-            sponsor: data.sponsor,
-            product: data.product,
-            region: data.region,
+            ...(data.name !== undefined && { name: data.name }),
+            ...(data.description !== undefined && { description: data.description }),
+            ...(data.sponsor !== undefined && { sponsor: data.sponsor }),
+            ...(data.product !== undefined && { product: data.product }),
+            ...(data.region !== undefined && { region: data.region }),
+            ...(data.status !== undefined && { status: data.status }),
+            metadata: {
+              ...((project.metadata as any) || {}),
+              ...(data.targetAgency !== undefined && { targetAgency: data.targetAgency }),
+              ...(data.targetSubmissionDate !== undefined && { targetSubmissionDate: data.targetSubmissionDate }),
+              ...(data.submissionType !== undefined && { submissionType: data.submissionType }),
+            } as any,
           });
         } catch (error) {
           console.error('Failed to update project:', error);
@@ -2011,7 +2050,9 @@ export const ZenApp: React.FC = () => {
         onOpenSettings={() => setSettingsOpen(true)}
         onDeleteConversation={handleDeleteConversation}
         onToggleStar={handleToggleConversationStar}
-        onTogglePin={handleToggleConversationPin}
+        onTogglePin={handleToggleProjectPin}
+        onArchiveProject={handleArchiveProject}
+        onDeleteProject={handleDeleteProject}
         industryMode={industryMode}
         onNavigate={id => {
           switch (id) {
@@ -2903,6 +2944,7 @@ export const ZenApp: React.FC = () => {
                     activeProject: activeProject?.name,
                     projectId: activeProjectId,
                   }}
+                  projectIntelligence={projectIntelligenceStats}
                   greeting={
                     platformGreeting?.text ||
                     `How can I help with ${activeProject?.name || 'your project'}?`
@@ -3023,6 +3065,7 @@ export const ZenApp: React.FC = () => {
                 moduleContext,
                 customInstructions,
               }}
+              projectIntelligence={projectIntelligenceStats}
               greeting={
                 layoutMode === 'deep-research'
                   ? "What would you like to research? I'll search across ClinicalTrials.gov, PubMed, FDA, EMA, and more."
@@ -3129,17 +3172,23 @@ export const ZenApp: React.FC = () => {
         onCreate={handleCreateProject}
       />
 
-      {/* Edit project modal */}
-      <EditProjectModal
+      {/* Project config flyout (replaces EditProjectModal) */}
+      <ProjectConfigPanel
         isOpen={editProjectOpen}
         onClose={() => setEditProjectOpen(false)}
-        initialData={{
-          name: activeProject?.name ?? '',
-          description: activeProject?.description,
-          sponsor: activeProject?.sponsor,
-          product: activeProject?.product,
-          region: activeProject?.region,
-        }}
+        project={activeProject ? {
+          id: activeProject.id,
+          name: activeProject.name,
+          description: activeProject.description,
+          submissionType: activeProject.type,
+          sponsor: activeProject.sponsor,
+          product: activeProject.product,
+          region: activeProject.region,
+          targetAgency: activeProject.targetAgency,
+          targetSubmissionDate: activeProject.targetSubmissionDate,
+          status: activeProject.status,
+          customInstructions: customInstructions,
+        } : null}
         onSave={handleEditProject}
       />
 

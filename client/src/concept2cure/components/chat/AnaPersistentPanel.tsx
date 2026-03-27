@@ -41,6 +41,7 @@ import {
   FileEdit,
   FolderPlus,
   Bot,
+  FolderOpen,
 } from 'lucide-react';
 
 marked.setOptions({ breaks: true, gfm: true });
@@ -475,6 +476,13 @@ interface AnaPersistentPanelProps {
   mode?: 'full' | 'compact';
   /** Pre-select the chat mode (standard, deep-research, or nano-banana) */
   defaultChatMode?: 'standard' | 'deep-research' | 'nano-banana';
+  /** Project intelligence stats for enriched greeting */
+  projectIntelligence?: {
+    documentCount: number;
+    signalCount: number;
+    readinessScore: number | null;
+    memoryAtomCount: number;
+  };
 }
 
 // ─── Context labels ──────────────────────────────────────────────────────────
@@ -515,6 +523,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   onRefreshIntelligence,
   mode = 'full',
   defaultChatMode = 'standard',
+  projectIntelligence,
 }) => {
   // AI Action system — unified execution spine (Phase 1)
   const aiAction = useAIAction();
@@ -905,10 +914,22 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     const hour = new Date().getHours();
     const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
     if (contextProfile?.activeProject) {
-      return `${timeGreeting}. Ready to work on ${contextProfile.activeProject}. How can I help?`;
+      const stats = projectIntelligence;
+      if (stats && (stats.documentCount > 0 || stats.memoryAtomCount > 0 || stats.signalCount > 0)) {
+        const parts = [`${timeGreeting}. You're working on **${contextProfile.activeProject}**.`];
+        const statParts: string[] = [];
+        if (stats.documentCount > 0) statParts.push(`${stats.documentCount} indexed document${stats.documentCount !== 1 ? 's' : ''}`);
+        if (stats.memoryAtomCount > 0) statParts.push(`${stats.memoryAtomCount} knowledge atom${stats.memoryAtomCount !== 1 ? 's' : ''}`);
+        if (stats.signalCount > 0) statParts.push(`${stats.signalCount} intelligence signal${stats.signalCount !== 1 ? 's' : ''}`);
+        if (statParts.length > 0) parts.push(`I have ${statParts.join(', ')}.`);
+        if (stats.readinessScore != null) parts.push(`Current readiness: ${stats.readinessScore}%.`);
+        parts.push('What would you like to work on?');
+        return parts.join(' ');
+      }
+      return `${timeGreeting}. Ready to work on **${contextProfile.activeProject}**. How can I help?`;
     }
-    return `${timeGreeting}. I'm AnA — regulatory intelligence for FDA, EMA, and ICH submissions. What are you working on?`;
-  }, [greeting, contextProfile?.activeProject]);
+    return `${timeGreeting}. I'm AnA — your regulatory intelligence partner. What are you working on?`;
+  }, [greeting, contextProfile?.activeProject, projectIntelligence]);
 
   // Auto-scroll when new messages
   useEffect(() => {
@@ -3144,6 +3165,23 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 </p>
                 <h2 className="text-xl font-semibold text-[#141413]">{defaultGreeting}</h2>
                 {screenLabel && <p className="text-sm text-[#B0AEA5] mt-1">{screenLabel}</p>}
+                {/* Project context badge */}
+                {contextProfile?.activeProject && !messages?.length && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F5F4EF] rounded-full text-[11px] border border-[#E8E6DC] mb-2">
+                    <FolderOpen className="w-3 h-3 text-[#6D6B63]" />
+                    <span className="font-medium text-[#4D4B45]">
+                      {contextProfile.activeProject}
+                    </span>
+                    {contextProfile.productType && (
+                      <>
+                        <span className="text-[#B0AEA5]">·</span>
+                        <span className="font-medium text-[#6D6B63] uppercase tracking-wider" style={{ fontSize: '9px' }}>
+                          {contextProfile.productType}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                )}
                 {/* Authoring context indicator strip */}
                 {authoringContext &&
                   (authoringContext.sectionCode || authoringContext.artifactId) && (

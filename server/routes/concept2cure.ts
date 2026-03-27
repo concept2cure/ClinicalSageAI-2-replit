@@ -530,6 +530,8 @@ const createProjectSchema = z.object({
   sponsor: z.string().max(200).optional(),
   product: z.string().max(200).optional(),
   region: z.string().max(100).optional(),
+  pinned: z.boolean().optional(),
+  targetAgency: z.string().max(50).optional(),
 });
 
 const updateProjectSchema = createProjectSchema.partial();
@@ -1234,6 +1236,8 @@ router.get('/projects', async (req: Request, res: Response) => {
         sponsor: p.metadata?.sponsor,
         product: p.metadata?.product,
         region: p.metadata?.region,
+        pinned: (p.metadata as any)?.pinned ?? false,
+        targetAgency: (p.metadata as any)?.targetAgency ?? null,
         organizationId,
         conversations,
         ownership: buildProjectOwnership(conversations, normalizeProjectSettings(p.settings)),
@@ -1292,6 +1296,8 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
       sponsor: (project.metadata as any)?.sponsor,
       product: (project.metadata as any)?.product,
       region: (project.metadata as any)?.region,
+      pinned: (project.metadata as any)?.pinned ?? false,
+      targetAgency: (project.metadata as any)?.targetAgency ?? null,
       customInstructions: (project.settings as any)?.customInstructions,
       status: project.status,
       organizationId: project.organizationId,
@@ -1347,6 +1353,8 @@ router.post('/projects', async (req: Request, res: Response) => {
           sponsor: data.sponsor,
           product: data.product,
           region: data.region,
+          pinned: data.pinned ?? false,
+          targetAgency: data.targetAgency ?? null,
         },
         settings: {
           customInstructions: sanitizedData.customInstructions,
@@ -1454,7 +1462,9 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
       data.targetSubmissionDate ||
       data.sponsor !== undefined ||
       data.product !== undefined ||
-      data.region !== undefined
+      data.region !== undefined ||
+      data.pinned !== undefined ||
+      data.targetAgency !== undefined
     ) {
       updateData.metadata = {
         ...((existing.metadata as object) || {}),
@@ -1469,6 +1479,8 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
         ...(data.region !== undefined && {
           region: data.region ? sanitizeContent(data.region) : null,
         }),
+        ...(data.pinned !== undefined && { pinned: data.pinned }),
+        ...(data.targetAgency !== undefined && { targetAgency: data.targetAgency ? sanitizeContent(data.targetAgency) : null }),
       };
     }
 

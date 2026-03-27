@@ -12,7 +12,7 @@
  * Account/profile at bottom.
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import {
   Plus,
@@ -38,7 +38,17 @@ import {
   Archive,
   ShieldCheck,
   Send,
+  MoreHorizontal,
+  Pin,
+  PinOff,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import logoSrc from '@/assets/concept2cure-logo.jpg';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -59,6 +69,7 @@ interface Project {
   color: string;
   description?: string;
   starred?: boolean;
+  pinned?: boolean;
   archived?: boolean;
   status?: string;
 }
@@ -79,6 +90,8 @@ export interface ZenSidebarProps {
   onDeleteConversation: (id: string) => void;
   onToggleStar: (id: string) => void;
   onTogglePin: (id: string) => void;
+  onArchiveProject?: (id: string) => void;
+  onDeleteProject?: (id: string) => void;
   onNavigate?: (id: string) => void;
   userName?: string;
   userEmail?: string;
@@ -282,9 +295,13 @@ const ProjectRow: React.FC<{
   conversations: Conversation[];
   activeConversationId?: string;
   onSelect: () => void;
+  onToggleExpand: () => void;
   onSelectConversation: (id: string) => void;
   onDeleteConversation: (id: string) => void;
   onNewChat: () => void;
+  onTogglePin?: (id: string) => void;
+  onArchiveProject?: (id: string) => void;
+  onDeleteProject?: (id: string) => void;
 }> = ({
   project,
   isActive,
@@ -292,36 +309,48 @@ const ProjectRow: React.FC<{
   conversations,
   activeConversationId,
   onSelect,
+  onToggleExpand,
   onSelectConversation,
   onDeleteConversation,
   onNewChat,
+  onTogglePin,
+  onArchiveProject,
+  onDeleteProject,
 }) => {
   const badge = SUBMISSION_BADGE[project.type] ?? FALLBACK_BADGE;
-  const [hovered, setHovered] = useState(false);
+  const isPinned = project.starred || project.pinned;
 
   return (
     <div className="mb-0.5">
       <div
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        onClick={onSelect}
-        role="button"
-        tabIndex={0}
-        onKeyDown={e => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onSelect();
-          }
-        }}
         className={cn(
-          'group relative flex items-center gap-2 mx-1 px-2.5 py-2 rounded-lg cursor-pointer select-none transition-all duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
+          'group relative flex items-center gap-2 mx-1 px-2.5 py-2 rounded-lg cursor-pointer select-none transition-all duration-150',
           isActive
-            ? 'bg-zinc-900 text-white'
+            ? 'bg-zinc-900 text-white border-l-2 border-zinc-800'
             : 'text-zinc-700 hover:bg-zinc-100'
         )}
       >
+        {/* Expand chevron — toggles expand independently */}
+        <button
+          onClick={e => {
+            e.stopPropagation();
+            onToggleExpand();
+          }}
+          aria-label={isExpanded ? 'Collapse project' : 'Expand project'}
+          className="flex-shrink-0 p-0.5 rounded hover:bg-zinc-200/50 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+        >
+          <ChevronDown
+            className={cn(
+              'w-3 h-3 transition-transform duration-150',
+              isActive ? 'text-white/60' : 'text-zinc-400',
+              !isExpanded && '-rotate-90'
+            )}
+          />
+        </button>
+
         {/* Submission type badge pill */}
         <span
+          onClick={onSelect}
           className={cn(
             'inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide leading-none flex-shrink-0 min-w-[32px]',
             isActive ? 'bg-white/20 text-white' : `${badge.bg} ${badge.color}`
@@ -330,8 +359,22 @@ const ProjectRow: React.FC<{
           {badge.label}
         </span>
 
-        {/* Project name */}
-        <span className={cn('flex-1 text-[13px] font-medium truncate leading-5', isActive && 'text-white')}>
+        {/* Project name — clicking selects the project */}
+        <span
+          onClick={onSelect}
+          role="button"
+          tabIndex={0}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onSelect();
+            }
+          }}
+          className={cn(
+            'flex-1 text-[13px] font-medium truncate leading-5 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded',
+            isActive && 'text-white'
+          )}
+        >
           {project.name}
         </span>
 
@@ -342,18 +385,78 @@ const ProjectRow: React.FC<{
         />
 
         {/* Starred indicator */}
-        {project.starred && (
+        {isPinned && (
           <Star className={cn('w-3 h-3 flex-shrink-0 fill-current', isActive ? 'text-amber-300' : 'text-amber-400')} />
         )}
 
-        {/* Expand chevron */}
-        <ChevronDown
-          className={cn(
-            'w-3 h-3 flex-shrink-0 transition-transform duration-150',
-            isActive ? 'text-white/60' : 'text-zinc-400',
-            !isExpanded && '-rotate-90'
-          )}
-        />
+        {/* Three-dot menu — visible on hover */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              onClick={e => e.stopPropagation()}
+              aria-label={`Actions for ${project.name}`}
+              className={cn(
+                'flex-shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
+                isActive
+                  ? 'text-white/60 hover:text-white hover:bg-white/10'
+                  : 'text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200'
+              )}
+            >
+              <MoreHorizontal className="w-3.5 h-3.5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem
+              onClick={e => {
+                e.stopPropagation();
+                onSelect();
+                onNewChat();
+              }}
+            >
+              <MessageSquare className="w-3.5 h-3.5 mr-2" />
+              New conversation
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={e => {
+                e.stopPropagation();
+                onTogglePin?.(project.id);
+              }}
+            >
+              {isPinned ? (
+                <>
+                  <PinOff className="w-3.5 h-3.5 mr-2" />
+                  Unpin
+                </>
+              ) : (
+                <>
+                  <Pin className="w-3.5 h-3.5 mr-2" />
+                  Pin
+                </>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={e => {
+                e.stopPropagation();
+                onArchiveProject?.(project.id);
+              }}
+            >
+              <Archive className="w-3.5 h-3.5 mr-2" />
+              Archive
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={e => {
+                e.stopPropagation();
+                onDeleteProject?.(project.id);
+              }}
+              className="text-red-600 focus:text-red-600"
+            >
+              <Trash2 className="w-3.5 h-3.5 mr-2" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Expanded: nested conversations */}
@@ -476,6 +579,9 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   onOpenSearch,
   onOpenSettings,
   onDeleteConversation,
+  onTogglePin,
+  onArchiveProject,
+  onDeleteProject,
   onNavigate,
   userName,
   userEmail,
@@ -484,6 +590,30 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   const displayName = userName || 'My Account';
   const avatarInitial = displayName[0].toUpperCase();
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Independent expand/collapse state for project rows
+  const [expandedProjectIds, setExpandedProjectIds] = useState<Set<string>>(new Set());
+
+  const toggleProjectExpand = (projectId: string) => {
+    setExpandedProjectIds(prev => {
+      const next = new Set(prev);
+      if (next.has(projectId)) next.delete(projectId);
+      else next.add(projectId);
+      return next;
+    });
+  };
+
+  // Auto-expand active project
+  useEffect(() => {
+    if (activeProjectId) {
+      setExpandedProjectIds(prev => {
+        if (prev.has(activeProjectId)) return prev;
+        const next = new Set(prev);
+        next.add(activeProjectId);
+        return next;
+      });
+    }
+  }, [activeProjectId]);
 
   // Derive active project object for project block
   const activeProject = useMemo(
@@ -520,8 +650,8 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
       );
     }
 
-    const pinned = filtered.filter(p => p.starred);
-    const recent = filtered.filter(p => !p.starred).sort((a, b) => {
+    const pinned = filtered.filter(p => p.starred || p.pinned);
+    const recent = filtered.filter(p => !p.starred && !p.pinned).sort((a, b) => {
       if (a.id === activeProjectId) return -1;
       if (b.id === activeProjectId) return 1;
       return a.name.localeCompare(b.name);
@@ -769,13 +899,17 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
                   key={project.id}
                   project={project}
                   isActive={project.id === activeProjectId}
-                  isExpanded={project.id === activeProjectId}
+                  isExpanded={expandedProjectIds.has(project.id)}
                   conversations={conversationsByProject.get(project.id) || []}
                   activeConversationId={activeConversationId}
                   onSelect={() => onSelectProject?.(project.id)}
+                  onToggleExpand={() => toggleProjectExpand(project.id)}
                   onSelectConversation={onSelectConversation}
                   onDeleteConversation={onDeleteConversation}
                   onNewChat={onNewChat}
+                  onTogglePin={onTogglePin}
+                  onArchiveProject={onArchiveProject}
+                  onDeleteProject={onDeleteProject}
                 />
               ))}
             </WorkspaceGroup>
@@ -801,13 +935,17 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
                 key={project.id}
                 project={project}
                 isActive={project.id === activeProjectId}
-                isExpanded={project.id === activeProjectId}
+                isExpanded={expandedProjectIds.has(project.id)}
                 conversations={conversationsByProject.get(project.id) || []}
                 activeConversationId={activeConversationId}
                 onSelect={() => onSelectProject?.(project.id)}
+                onToggleExpand={() => toggleProjectExpand(project.id)}
                 onSelectConversation={onSelectConversation}
                 onDeleteConversation={onDeleteConversation}
                 onNewChat={onNewChat}
+                onTogglePin={onTogglePin}
+                onArchiveProject={onArchiveProject}
+                onDeleteProject={onDeleteProject}
               />
             ))}
           </WorkspaceGroup>
