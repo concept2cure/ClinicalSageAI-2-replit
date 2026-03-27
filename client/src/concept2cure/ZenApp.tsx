@@ -2439,9 +2439,16 @@ export const ZenApp: React.FC = () => {
                         case 'cer-generator':
                           window.location.href = '/cerv2?mode=cer';
                           break;
+                        // Specialist Studios — route to Work with appropriate context
+                        case 'cmc':
+                        case 'clinical':
+                        case 'device':
+                          if (activeProjectId) setLayoutMode('documents');
+                          else setLayoutMode('projects');
+                          break;
                         default:
-                          // For doc-producing apps (evidence-memo, clinical-overview, etc.),
-                          // navigate to documents/Work so the user can create the artifact there
+                          // Doc-producing apps (evidence-memo, clinical-overview, etc.)
+                          // navigate to Work so the user can create the artifact there
                           if (activeProjectId) setLayoutMode('documents');
                           else setLayoutMode('projects');
                           break;

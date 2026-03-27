@@ -105,11 +105,12 @@ const AppCardComponent: React.FC<{
     <button
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
+      title={disabled ? 'Select a project to access this app' : undefined}
       aria-label={`Launch ${app.label}${recommended ? ' (Recommended)' : ''}`}
       className={cn(
         'flex items-start gap-3 p-3 rounded-lg border transition-all text-left group focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
         disabled
-          ? 'opacity-50 cursor-not-allowed border-zinc-100'
+          ? 'grayscale opacity-60 cursor-not-allowed border-zinc-200'
           : recommended
             ? 'border-blue-200 bg-blue-50/30 hover:border-blue-300 hover:bg-blue-50/50'
             : 'border-zinc-100 hover:border-zinc-200 hover:bg-zinc-50/50'
@@ -122,9 +123,9 @@ const AppCardComponent: React.FC<{
         <div className="flex items-center gap-1.5">
           <span className="text-sm font-medium text-zinc-800">{app.label}</span>
           {recommended && (
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-blue-100 text-blue-700">
-              <Star className="w-2.5 h-2.5 fill-current" />
-              Recommended
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">
+              <Star className="w-3 h-3 fill-current" />
+              Best match
             </span>
           )}
           <ArrowRight className="w-3 h-3 text-zinc-300 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity ml-auto" />
@@ -136,9 +137,9 @@ const AppCardComponent: React.FC<{
 };
 
 const AppGroup: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-  <div className="mb-8">
+  <div className="mb-10">
     <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3 px-1">{title}</h3>
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
       {children}
     </div>
   </div>
@@ -200,7 +201,7 @@ export const AppsPage: React.FC<AppsPageProps> = ({
       />
 
       {noProject && (
-        <div className="mt-4 px-3 py-2.5 rounded-lg bg-amber-50 text-amber-700 text-xs">
+        <div className="mt-4 px-4 py-3 rounded-lg bg-amber-50 text-amber-700 text-sm">
           Open a project from the sidebar to enable app launching.
         </div>
       )}
