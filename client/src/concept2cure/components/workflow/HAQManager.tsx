@@ -161,7 +161,7 @@ export const HAQManager: React.FC<HAQManagerProps> = ({
     );
 
     try {
-      const data = await apiRequest<AskResponse>('POST', '/api/evidence/ask', {
+      const res = await apiRequest('POST', '/api/evidence/ask', {
         question: question.questionText,
         projectId,
         context: `This is a Health Authority Question (HAQ) requiring a formal, defensible regulatory response. The response must:
@@ -171,6 +171,8 @@ export const HAQManager: React.FC<HAQManagerProps> = ({
 - Anticipate follow-up questions
 Submission type context: ${projectName || 'regulatory submission'}`,
       });
+      const json = await res.json();
+      const data = (json.data || json) as AskResponse;
 
       setQuestions(prev =>
         prev.map(q =>

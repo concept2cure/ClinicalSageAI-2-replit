@@ -135,7 +135,11 @@ export function useSubmissionSections(
 
   const indSectionsQuery = useQuery({
     queryKey: ['concept2cure', 'ind-sections'] as const,
-    queryFn: () => apiRequest<{ modules: INDSectionRaw[] }>('GET', '/api/ind-sections'),
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/ind-sections');
+      const json = await res.json();
+      return json as { modules: INDSectionRaw[] };
+    },
     enabled: isPharma,
     staleTime: 5 * 60 * 1000, // 5 min cache
   });
@@ -143,11 +147,12 @@ export function useSubmissionSections(
   // Fetch project artifacts for status enrichment
   const artifactsQuery = useQuery({
     queryKey: ['concept2cure', 'projects', projectId, 'artifacts'] as const,
-    queryFn: () =>
-      apiRequest<ArtifactSummary[]>(
-        'GET',
-        `/api/concept2cure/projects/${projectId}/artifacts`
-      ),
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts`);
+      const json = await res.json();
+      // Unwrap sendSuccess envelope: { success: true, data: [...] }
+      return (json.data || json) as ArtifactSummary[];
+    },
     enabled: !!projectId,
     staleTime: 30 * 1000, // 30s cache
   });
