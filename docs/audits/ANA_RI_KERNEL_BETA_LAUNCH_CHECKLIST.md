@@ -1,5 +1,12 @@
 # AnA RI Kernel Beta Launch Checklist
 
+> Status: ACTIVE
+> Canonical: Yes
+> Supersedes: —
+> Superseded By: —
+> Related Reports: BETA_READINESS_MASTER.md; ANA_RI_BRAINSTEM_AUDIT_2026-03-24.md
+
+
 Date: 2026-03-25
 
 ## Core Runtime

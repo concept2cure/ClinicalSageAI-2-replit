@@ -1,5 +1,12 @@
 # Concept2Cure + AnA Integration Execution Plan (Post-Audit)
 
+> Status: ACTIVE
+> Canonical: Yes
+> Supersedes: —
+> Superseded By: —
+> Related Reports: BETA_READINESS_MASTER.md; CONCEPT2CURE_ANA_INTEGRATION_AUDIT_2026-03-24.md
+
+
 **Date:** 2026-03-24  
 **Scope:** Integration / Service / Tooling layers that connect AnA + Concept2Cure to external systems and enterprise execution flows.
 

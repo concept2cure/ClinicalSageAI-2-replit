@@ -1,5 +1,12 @@
 # Launch-Gate Document Consequence Baseline Audit
 
+> Status: SUPERSEDED
+> Canonical: No
+> Supersedes: —
+> Superseded By: LAUNCH_GATE_DOCUMENT_CONSEQUENCE_REPORT.md
+> Related Reports: DOCUMENT_CONSEQUENCE_AUDIT.md
+
+
 **Date**: 2026-03-26
 **Branch**: concept2cure-v2
 **Auditor**: Copilot launch-gate sprint

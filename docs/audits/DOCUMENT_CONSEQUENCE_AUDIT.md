@@ -1,5 +1,12 @@
 # Document Consequence Audit (2026-03-26)
 
+> Status: ACTIVE
+> Canonical: Yes
+> Supersedes: —
+> Superseded By: —
+> Related Reports: BETA_READINESS_MASTER.md; LAUNCH_GATE_DOCUMENT_CONSEQUENCE_REPORT.md
+
+
 ## Scope
 - Proposal acceptance + generated document consequence visibility in governed artifact lifecycle.
 

@@ -1,5 +1,12 @@
 # Launch-Gate Sprint: Document Consequence Visibility — Final Report
 
+> Status: ACTIVE
+> Canonical: Yes
+> Supersedes: LAUNCH_GATE_DOCUMENT_CONSEQUENCE_BASELINE.md
+> Superseded By: —
+> Related Reports: BETA_READINESS_MASTER.md; DOCUMENT_CONSEQUENCE_AUDIT.md
+
+
 > **Branch**: `concept2cure-v2` > **Date**: 2026-03-26
 > **Sprint goal**: Make document consequence visibly real across the beta path
 
