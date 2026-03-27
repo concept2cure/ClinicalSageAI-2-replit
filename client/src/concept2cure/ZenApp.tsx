@@ -240,6 +240,11 @@ const SafetyNarrativePage = lazy(() => import('./pages/SafetyNarrative'));
 
 // [BATCH 3] AnaPlatformControlPage — demoted, redirect to projects
 
+const DocumentCanvasPanel = lazy(() =>
+  import('./components/workspace/DocumentCanvasPanel').then(m => ({
+    default: m.DocumentCanvasPanel,
+  }))
+);
 const ProjectKnowledgePanel = lazy(() =>
   import('./components/workspace/ProjectKnowledgePanel').then(m => ({
     default: m.ProjectKnowledgePanel,
@@ -1179,9 +1184,14 @@ export const ZenApp: React.FC = () => {
 
   // ── P2: Open artifact — real navigation ──
   const handleOpenArtifact = useCallback((artifactId: string) => {
-    setOpenArtifactId(artifactId);
-    setLayoutMode('documents');
-  }, []);
+    // On project-home (AnA-first): show artifact in canvas panel without leaving conversation
+    // On other modes: navigate to documents/editor
+    setActiveArtifactId(artifactId);
+    if (layoutMode !== 'project-home') {
+      setOpenArtifactId(artifactId);
+      setLayoutMode('documents');
+    }
+  }, [layoutMode]);
 
   // ── P5: Governed promotion — calls real status API ──
   const handleRequestPromotion = useCallback(
@@ -3399,6 +3409,26 @@ export const ZenApp: React.FC = () => {
               onRequestPromotion={handleRequestPromotion}
               onRefreshIntelligence={authoringIntelligence.refetch}
             />
+          )}
+
+          {/* ── Document Canvas: Claude-style right-side artifact preview ── */}
+          {/* Shows when on project-home and an artifact is active */}
+          {layoutMode === 'project-home' && activeArtifactId && (
+            <div className="w-[45%] xl:w-[50%] flex-shrink-0 hidden lg:block">
+              <ErrorBoundary>
+                <Suspense fallback={<ModuleLoadingFallback />}>
+                  <DocumentCanvasPanel
+                    artifactId={activeArtifactId}
+                    projectId={activeProjectId}
+                    onClose={() => setActiveArtifactId(undefined)}
+                    onEdit={(id) => {
+                      setOpenArtifactId(id);
+                      setLayoutMode('documents');
+                    }}
+                  />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
           )}
       </GlobalOperatingShell>
 
