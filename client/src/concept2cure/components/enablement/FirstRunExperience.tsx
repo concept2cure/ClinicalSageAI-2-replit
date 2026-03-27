@@ -289,12 +289,12 @@ function ConfidenceScreen({
     ? [
         { id: 'work', label: 'Start in Work', description: 'Open the document workspace' },
         { id: '510k-workspace', label: 'Open 510(k) Workspace', description: 'Predicate comparison and SE testing' },
-        { id: 'vault', label: 'Open Vault', description: 'Upload evidence and source files' },
+        { id: 'vault', label: 'Open Vault', description: 'Browse files and evidence' },
       ]
     : [
         { id: 'work', label: 'Start in Work', description: 'Open the document workspace' },
-        { id: 'clinical-overview', label: 'Create Clinical Overview', description: 'Start your Module 2.5 document' },
-        { id: 'vault', label: 'Open Vault', description: 'Upload source documents' },
+        { id: 'apps', label: 'Browse Apps', description: 'Explore builders and specialist tools' },
+        { id: 'vault', label: 'Open Vault', description: 'Browse files and evidence' },
       ];
 
   return (

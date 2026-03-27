@@ -3397,14 +3397,18 @@ export const ZenApp: React.FC = () => {
               // Auto-select the project created during onboarding and navigate
               if (options?.projectId) {
                 setActiveProjectId(options.projectId);
-                // Navigate based on the suggested action the user chose
-                const actionToMode: Record<string, LayoutMode> = {
-                  'work': 'documents',
-                  'vault': 'vault',
-                  'clinical-overview': 'documents',
-                  '510k-workspace': 'documents',
-                };
-                setLayoutMode(actionToMode[options.action || ''] || 'project-home');
+                const action = options.action || '';
+                // 510(k) workspace has its own embedded route
+                if (action === '510k-workspace') {
+                  navigate(`/concept2cure/project/${options.projectId}/510k`);
+                } else {
+                  const actionToMode: Record<string, LayoutMode> = {
+                    'work': 'documents',
+                    'vault': 'vault',
+                    'apps': 'apps',
+                  };
+                  setLayoutMode(actionToMode[action] || 'project-home');
+                }
               }
             }}
             onSkip={() => {
