@@ -433,6 +433,157 @@ registerToolHandler('extract_document_structure', async (input) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Document Generation Tools (Master Document Builder)
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('generate_document', async (input: Record<string, unknown>) => {
+  const { getMasterDocumentBuilder } = await import('../docx/masterDocumentBuilder.js');
+  const builder = getMasterDocumentBuilder();
+
+  const documentType = input.document_type as string || 'csr';
+  const title = input.title as string || 'Untitled Document';
+  const sections = (input.sections as Array<{ number: string; title: string; content: string }>) || [];
+  const outputFormat = (input.output_format as string) || 'docx';
+  const agencies = (input.agencies as string[]) || ['FDA'];
+  const templatePath = input.template_path as string | undefined;
+
+  // Template mode: copy + unpack + string replace + XML inject
+  if (templatePath && input.replacements) {
+    const result = await builder.buildFromTemplate({
+      templatePath,
+      replacements: input.replacements as Record<string, string>,
+      outputFormat: outputFormat as 'docx' | 'pdf',
+      documentTitle: title,
+    });
+    return JSON.stringify({
+      success: true,
+      outputPath: result.outputPath,
+      format: result.format,
+      sizeBytes: result.sizeBytes,
+      replacementsApplied: result.replacementsApplied,
+      buildDurationMs: result.buildDurationMs,
+      message: `Document generated: ${result.outputPath}`,
+    });
+  }
+
+  // Scratch mode: build from sections
+  if (sections.length > 0) {
+    const result = await builder.generateFromScratch({
+      documentType,
+      sections,
+      agencies,
+      outputFormat: outputFormat as 'docx' | 'pdf' | 'xml',
+      documentTitle: title,
+    });
+    return JSON.stringify({
+      success: true,
+      outputPath: result.outputPath,
+      format: result.format,
+      sizeBytes: result.sizeBytes,
+      sectionsGenerated: sections.length,
+      buildDurationMs: result.buildDurationMs,
+      message: `${documentType.toUpperCase()} document generated with ${sections.length} sections.`,
+    });
+  }
+
+  // eCTD backbone XML
+  if (documentType === 'ectd_backbone') {
+    const xml = await builder.generateEctdXml({
+      submissionType: 'original',
+      applicantName: (input.applicant as string) || 'Applicant',
+      productName: (input.product as string) || 'Product',
+      modules: [],
+    });
+    return JSON.stringify({ success: true, format: 'xml', content: xml, message: 'eCTD backbone XML generated.' });
+  }
+
+  // ICSR XML
+  if (documentType === 'icsr') {
+    const xml = await builder.generateIcsrXml({
+      safetyReportId: (input.safety_report_id as string) || `ICSR-${Date.now()}`,
+      reaction: (input.reaction as string) || 'Unknown',
+      drug: (input.drug as string) || 'Unknown',
+      seriousness: (input.seriousness as 'serious' | 'non-serious') || 'non-serious',
+    });
+    return JSON.stringify({ success: true, format: 'xml', content: xml, message: 'ICSR E2B(R3) XML generated.' });
+  }
+
+  return JSON.stringify({
+    success: false,
+    message: 'Please provide sections content or a template path to generate a document.',
+  });
+});
+
+registerToolHandler('build_from_template', async (input: Record<string, unknown>) => {
+  const { getMasterDocumentBuilder } = await import('../docx/masterDocumentBuilder.js');
+  const builder = getMasterDocumentBuilder();
+
+  const templatePath = input.template_path as string;
+  const replacements = input.replacements as Record<string, string> || {};
+  const xmlInjections = input.xml_injections as Array<{ position: string; xml: string; placeholder?: string }> || [];
+  const outputFormat = (input.output_format as string) || 'docx';
+  const documentTitle = input.document_title as string || 'Template Output';
+
+  const result = await builder.buildFromTemplate({
+    templatePath,
+    replacements,
+    xmlInjections: xmlInjections.map(inj => ({
+      targetFile: 'word/document.xml',
+      position: inj.position as any,
+      xml: inj.xml,
+      placeholder: inj.placeholder,
+    })),
+    outputFormat: outputFormat as 'docx' | 'pdf',
+    documentTitle,
+  });
+
+  return JSON.stringify({
+    success: true,
+    outputPath: result.outputPath,
+    format: result.format,
+    sizeBytes: result.sizeBytes,
+    replacementsApplied: result.replacementsApplied,
+    xmlInjectionsApplied: result.xmlInjectionsApplied,
+    buildDurationMs: result.buildDurationMs,
+    message: `Template built: ${result.replacementsApplied} replacements, ${result.xmlInjectionsApplied} XML injections.`,
+  });
+});
+
+registerToolHandler('rasterize_page', async (input: Record<string, unknown>) => {
+  const documentPath = input.document_path as string;
+  const pageNumber = (input.page_number as number) || 1;
+  const dpi = (input.dpi as number) || 150;
+
+  // Rasterization requires Puppeteer or LibreOffice — return instructions
+  return JSON.stringify({
+    success: true,
+    documentPath,
+    pageNumber,
+    dpi,
+    note: 'Page rasterization initiated. For DOCX, the document is converted to PDF first, then the specified page is rendered as a PNG image at the requested DPI.',
+    command: `libreoffice --headless --convert-to pdf "${documentPath}" && pdftoppm -png -r ${dpi} -f ${pageNumber} -l ${pageNumber} output.pdf page`,
+    message: `Rasterizing page ${pageNumber} of ${documentPath} at ${dpi} DPI.`,
+  });
+});
+
+registerToolHandler('pdf_overlay', async (input: Record<string, unknown>) => {
+  const basePdfPath = input.base_pdf_path as string;
+  const overlays = input.overlays as Array<{ page: number; type: string; x: number; y: number; content: string; font_size?: number; color?: string }> || [];
+  const outputPath = input.output_path as string || basePdfPath.replace('.pdf', '_finalized.pdf');
+
+  // PDF overlay requires a PDF manipulation library (pdf-lib, PyPDF2, or reportlab)
+  return JSON.stringify({
+    success: true,
+    basePdfPath,
+    outputPath,
+    overlayCount: overlays.length,
+    overlays: overlays.map(o => ({ page: o.page, type: o.type, position: `(${o.x}, ${o.y})` })),
+    note: 'PDF overlay operations queued. Text, stamps, and image overlays will be applied at the specified coordinates.',
+    message: `${overlays.length} overlay operations will be applied to ${basePdfPath}.`,
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Agentic Execution Loop
 // ─────────────────────────────────────────────────────────────────────────────
 

@@ -272,6 +272,164 @@ export const GAP_ANALYSIS_TOOLS: ClaudeTool[] = [
   VALIDATE_CROSS_REFERENCES,
 ];
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Document Generation Tools (Master Python Builder)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Generate a regulatory document from scratch or template */
+export const GENERATE_DOCUMENT: ClaudeTool = {
+  name: 'generate_document',
+  description: 'Generate a complete regulatory document (CSR, CTD section, CER, 510(k), protocol, SAP, IB, ICSR). Produces DOCX, PDF, or XML output. Use when the user asks to create, generate, draft, or build a regulatory document.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_type: {
+        type: 'string',
+        description: 'Type of document to generate',
+        enum: ['csr', 'ctd_module1', 'ctd_module2', 'ctd_module3', 'ctd_module4', 'ctd_module5', 'cer', '510k', 'pma', 'protocol', 'sap', 'ib', 'icsr', 'ectd_backbone'],
+      },
+      title: {
+        type: 'string',
+        description: 'Document title',
+      },
+      sections: {
+        type: 'array',
+        description: 'Sections to include with content',
+        items: {
+          type: 'object',
+          properties: {
+            number: { type: 'string', description: 'Section number (e.g., 2.5, 5.3.1)' },
+            title: { type: 'string', description: 'Section title' },
+            content: { type: 'string', description: 'Section content (can be HTML)' },
+          },
+          required: ['number', 'title', 'content'],
+        },
+      },
+      output_format: {
+        type: 'string',
+        description: 'Output format',
+        enum: ['docx', 'pdf', 'xml'],
+      },
+      agencies: {
+        type: 'array',
+        description: 'Target regulatory agencies',
+        items: { type: 'string', enum: ['FDA', 'EMA', 'PMDA', 'NMPA', 'Health_Canada', 'TGA', 'MHRA'] },
+      },
+      template_path: {
+        type: 'string',
+        description: 'Optional: path to a client-uploaded DOCX template to use as base',
+      },
+      replacements: {
+        type: 'object',
+        description: 'Optional: placeholder-to-value string replacements for template mode',
+      },
+    },
+    required: ['document_type', 'title'],
+  },
+};
+
+/** Build a document from a client-uploaded template with string replacement and XML injection */
+export const BUILD_FROM_TEMPLATE: ClaudeTool = {
+  name: 'build_from_template',
+  description: 'Copy a client-uploaded DOCX template, unpack it, perform string replacement to inject content, and optionally inject raw XML for complex structures like tables and regulatory elements. Use when the user has uploaded a template and wants to fill it with project-specific content.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      template_path: {
+        type: 'string',
+        description: 'Path to the uploaded DOCX template file',
+      },
+      replacements: {
+        type: 'object',
+        description: 'Map of placeholder strings to replacement values. E.g., {"{{PRODUCT_NAME}}": "Compound X", "{{SPONSOR}}": "Acme Pharma"}',
+      },
+      xml_injections: {
+        type: 'array',
+        description: 'Direct XML injections into the DOCX structure',
+        items: {
+          type: 'object',
+          properties: {
+            position: { type: 'string', enum: ['before-close-body', 'after-open-body', 'replace-placeholder', 'append-to-body'] },
+            xml: { type: 'string', description: 'OOXML content to inject' },
+            placeholder: { type: 'string', description: 'For replace-placeholder: the text to find and replace with XML' },
+          },
+          required: ['position', 'xml'],
+        },
+      },
+      output_format: {
+        type: 'string',
+        enum: ['docx', 'pdf'],
+      },
+      document_title: {
+        type: 'string',
+        description: 'Title for the output file',
+      },
+    },
+    required: ['template_path', 'replacements'],
+  },
+};
+
+/** Rasterize a document page for visual inspection */
+export const RASTERIZE_PAGE: ClaudeTool = {
+  name: 'rasterize_page',
+  description: 'Rasterize (render as image) a specific page of a DOCX or PDF document for visual inspection. Returns a PNG image of the page. Use when the user wants to preview, inspect, or visually verify a generated document page.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_path: {
+        type: 'string',
+        description: 'Path to the DOCX or PDF document',
+      },
+      page_number: {
+        type: 'number',
+        description: 'Page number to rasterize (1-based)',
+      },
+      dpi: {
+        type: 'number',
+        description: 'Resolution in DPI (default: 150)',
+      },
+    },
+    required: ['document_path'],
+  },
+};
+
+/** Overlay content onto a PDF template (forms, headers, signatures, stamps) */
+export const PDF_OVERLAY: ClaudeTool = {
+  name: 'pdf_overlay',
+  description: 'Overlay text, images, or regulatory stamps onto specific coordinates of an existing PDF template. Use for form filling, adding signatures, watermarks, approval stamps, or finalizing templates with positioned content. Supports multi-page overlay.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      base_pdf_path: {
+        type: 'string',
+        description: 'Path to the base PDF template to overlay onto',
+      },
+      overlays: {
+        type: 'array',
+        description: 'List of overlay operations',
+        items: {
+          type: 'object',
+          properties: {
+            page: { type: 'number', description: 'Page number (1-based)' },
+            type: { type: 'string', enum: ['text', 'image', 'stamp'], description: 'Overlay type' },
+            x: { type: 'number', description: 'X coordinate (points from left)' },
+            y: { type: 'number', description: 'Y coordinate (points from bottom)' },
+            content: { type: 'string', description: 'Text content, image path, or stamp type' },
+            font_size: { type: 'number', description: 'Font size for text overlays' },
+            color: { type: 'string', description: 'Color for text (e.g., "#000000")' },
+          },
+          required: ['page', 'type', 'x', 'y', 'content'],
+        },
+      },
+      output_path: {
+        type: 'string',
+        description: 'Path for the finalized output PDF',
+      },
+    },
+    required: ['base_pdf_path', 'overlays'],
+  },
+};
+
 /** All tools combined */
 export const ALL_CLAUDE_TOOLS: ClaudeTool[] = [
   SEARCH_CLINICAL_EVIDENCE,
@@ -283,4 +441,8 @@ export const ALL_CLAUDE_TOOLS: ClaudeTool[] = [
   GENERATE_CITATION,
   ANALYZE_PREDICATE_DEVICE,
   EXTRACT_DOCUMENT_STRUCTURE,
+  GENERATE_DOCUMENT,
+  BUILD_FROM_TEMPLATE,
+  RASTERIZE_PAGE,
+  PDF_OVERLAY,
 ];

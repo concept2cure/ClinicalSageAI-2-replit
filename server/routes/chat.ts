@@ -28,6 +28,9 @@ import {
 } from '../services/kernel-adaptive-policy.js';
 import { createHash } from 'crypto';
 import { interceptChatResponse } from '../services/intelligence/rim-interceptors.js';
+import { ALL_CLAUDE_TOOLS } from '../services/claude/ClaudeToolDefinitions.js';
+import { executeAgenticLoop } from '../services/claude/ClaudeToolExecutor.js';
+import type { ClaudeEnhancedResponse } from '../services/ai-gateway/types.js';
 import { buildMemoryContextForChat } from '../services/memory-context-assembler.js';
 
 const router = Router();
@@ -508,16 +511,28 @@ const sendMessageHandler = async (req: Request, res: Response) => {
           ? (preferred_provider as (typeof VALID_PROVIDERS)[number])
           : undefined;
 
-      const gwResponse: GatewayResponse = await gw.route({
+      // ── Agentic tool-use loop: AnA can search, check compliance, generate docs ──
+      const baseRequest = {
         taskType: routingPlan.taskType,
         messages: gwMessages,
         temperature: routingPlan.temperature,
         maxTokens: routingPlan.maxTokens,
-        callerModule: 'ana-ri-chat',
+        callerModule: 'ana-ri-chat' as const,
         organizationId: numericOrgId ?? undefined,
         userId: numericUserId,
         strategy: selectedStrategy,
+        tools: ALL_CLAUDE_TOOLS,
+        toolChoice: 'auto' as const,
         ...(validatedChatProvider ? { provider: validatedChatProvider } : {}),
+      };
+
+      // Use agentic loop for multi-turn tool execution (max 5 rounds)
+      const gwResponse: ClaudeEnhancedResponse = await executeAgenticLoop(baseRequest, {
+        maxRounds: 5,
+        onToolExecution: (toolName, input, result) => {
+          // Log tool usage for audit trail
+          console.log(`[AnA Tool] ${toolName} called`);
+        },
       });
 
       assistantMessage =
