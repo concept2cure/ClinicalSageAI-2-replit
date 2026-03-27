@@ -16,7 +16,6 @@ import { DataStateWrapper } from '@/components/ui/statesV2';
 import {
   Archive,
   Search,
-  Upload,
   FileText,
   FolderOpen,
   Clock,
@@ -119,7 +118,6 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
       <PageTitleHeader
         title="Vault"
         subtitle={`Files and evidence for ${projectName || 'project'}`}
-        icon={<Archive className="w-5 h-5 text-zinc-500" />}
       />
 
       {/* Toolbar: search + upload */}
@@ -134,14 +132,6 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
             className="w-full pl-10 pr-4 text-sm"
           />
         </div>
-        <button
-          disabled
-          title="File upload coming soon"
-          className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg border border-zinc-200 text-zinc-400 cursor-not-allowed opacity-60"
-        >
-          <Upload className="w-4 h-4" />
-          Upload
-        </button>
       </div>
 
       {/* File tree grouped by folder */}

@@ -14,6 +14,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 import {
   Plus,
   MessageSquare,
@@ -107,16 +108,17 @@ export interface ZenSidebarProps {
 
 // ─── Submission type badge config ────────────────────────────────────────────
 
+// 3-color palette: zinc (default), blue (device/diagnostics), violet (pharma/biotech)
 const SUBMISSION_BADGE: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; color: string; bg: string }> = {
   '510K': { label: '510(k)', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
-  IND: { label: 'IND', icon: Beaker, color: 'text-purple-600', bg: 'bg-purple-50' },
-  NDA: { label: 'NDA', icon: Pill, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+  IND: { label: 'IND', icon: Beaker, color: 'text-violet-600', bg: 'bg-violet-50' },
+  NDA: { label: 'NDA', icon: Pill, color: 'text-violet-600', bg: 'bg-violet-50' },
   BLA: { label: 'BLA', icon: Activity, color: 'text-violet-600', bg: 'bg-violet-50' },
-  PMA: { label: 'PMA', icon: Heart, color: 'text-red-600', bg: 'bg-red-50' },
-  MAA: { label: 'MAA', icon: Microscope, color: 'text-teal-600', bg: 'bg-teal-50' },
-  DE_NOVO: { label: 'De Novo', icon: FileText, color: 'text-cyan-600', bg: 'bg-cyan-50' },
-  EUA: { label: 'EUA', icon: Activity, color: 'text-orange-600', bg: 'bg-orange-50' },
-  IVDR: { label: 'IVDR', icon: FileText, color: 'text-green-600', bg: 'bg-green-50' },
+  PMA: { label: 'PMA', icon: Heart, color: 'text-blue-600', bg: 'bg-blue-50' },
+  MAA: { label: 'MAA', icon: Microscope, color: 'text-violet-600', bg: 'bg-violet-50' },
+  DE_NOVO: { label: 'De Novo', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
+  EUA: { label: 'EUA', icon: Activity, color: 'text-blue-600', bg: 'bg-blue-50' },
+  IVDR: { label: 'IVDR', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
 };
 
 const FALLBACK_BADGE = { label: 'PRJ', icon: FolderOpen, color: 'text-zinc-500', bg: 'bg-zinc-100' };
@@ -963,13 +965,13 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <div className="px-2 py-1.5 flex-shrink-0">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
-            <input
+            <Input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search projects..."
               aria-label="Search projects"
-              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-zinc-200 bg-white text-zinc-700 placeholder:text-zinc-400 focus:border-zinc-300 focus:ring-1 focus:ring-zinc-300 outline-none transition-all"
+              className="w-full pl-8 pr-3 py-1.5 text-xs"
             />
           </div>
         </div>
