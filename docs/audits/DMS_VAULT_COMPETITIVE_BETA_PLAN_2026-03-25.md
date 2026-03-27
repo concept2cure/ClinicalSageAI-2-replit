@@ -1,5 +1,12 @@
 # DMS Vault Audit + Competitive Plan (Veeva Vault / SharePoint)
 
+Status: SUPERSEDED
+Canonical: No
+Supersedes: —
+Superseded By: DMS_VAULT_BETA_BUILD_PLAN_2026-03-25.md
+Related Reports: VAULT_UI_HUMAN_EXPERIENCE_AUDIT_2026-03-25.md
+
+
 _Date: 2026-03-25_
 
 ## 1) What our current Vault does today (in-repo audit)

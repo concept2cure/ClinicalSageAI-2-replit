@@ -10,6 +10,13 @@ interface WritebackInput {
   ctdSection?: string;
   sourceJobId: string;
   surfaceKey: string;
+  metadata?: Record<string, unknown>;
+  sourceDescription?: string;
+  backendRoute?: string;
+  backendService?: string;
+  actorName?: string;
+  auditAction?: string;
+  auditMetadata?: Record<string, unknown>;
 }
 
 export async function registerArtifactWithGovernance(input: WritebackInput): Promise<{
@@ -45,7 +52,11 @@ export async function registerArtifactWithGovernance(input: WritebackInput): Pro
         contentHash,
         input.ctdSection ?? null,
         input.userId,
-        JSON.stringify({ computeJobId: input.sourceJobId, surfaceKey: input.surfaceKey }),
+        JSON.stringify({
+          computeJobId: input.sourceJobId,
+          surfaceKey: input.surfaceKey,
+          ...(input.metadata ?? {}),
+        }),
         now,
       ]
     );
@@ -73,35 +84,48 @@ export async function registerArtifactWithGovernance(input: WritebackInput): Pro
       `INSERT INTO concept2cure_provenance_events (
         event_id, artifact_id, artifact_version_id, organization_id, event_type, event_action,
         actor_id, actor_name, actor_email, details, source_description, backend_route, backend_service, ip_address, created_at, updated_at
-      ) VALUES ($1,$2,$3,$4,'generation','artifact_compute_writeback',$5,'Artifact Compute Plane',NULL,$6,$7,$8,'artifact-compute','127.0.0.1',$9,$9)`,
+      ) VALUES ($1,$2,$3,$4,'generation','artifact_compute_writeback',$5,$6,NULL,$7,$8,$9,$10,'127.0.0.1',$11,$11)`,
       [
         provenanceEventId,
         artifactPk,
         versionInsert.rows[0].id,
         input.organizationId,
         input.userId,
-        JSON.stringify({ computeJobId: input.sourceJobId, generatedAt: now.toISOString() }),
-        `Compute surface ${input.surfaceKey}`,
-        '/api/concept2cure/compute/jobs/:jobId/finalize',
+        input.actorName ?? 'Artifact Compute Plane',
+        JSON.stringify({
+          computeJobId: input.sourceJobId,
+          generatedAt: now.toISOString(),
+          ...(input.metadata ?? {}),
+        }),
+        input.sourceDescription ?? `Compute surface ${input.surfaceKey}`,
+        input.backendRoute ?? '/api/concept2cure/compute/jobs/:jobId/finalize',
+        input.backendService ?? 'artifact-compute',
         now,
       ]
     );
 
+    const auditAction = input.auditAction ?? 'CREATE';
     const auditId = `audit_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     await client.query(
       `INSERT INTO regulatory_audit_logs (
         audit_id, organization_id, entity_type, entity_id, action, action_category,
         previous_value, new_value, user_id, user_name, user_role, ip_address,
         is_gxp_relevant, timestamp, metadata, created_at, updated_at
-      ) VALUES ($1,$2,'artifact',$3,'CREATE','data-change',NULL,$4,$5,'artifact-compute','system','127.0.0.1',TRUE,$6,$7,$6,$6)`,
+      ) VALUES ($1,$2,'artifact',$3,$4,'data-change',NULL,$5,$6,$7,'system','127.0.0.1',TRUE,$8,$9,$8,$8)`,
       [
         auditId,
         input.organizationId,
         externalArtifactId,
+        auditAction,
         JSON.stringify({ title: input.title, sourceJobId: input.sourceJobId }),
         input.userId,
+        input.actorName?.toLowerCase().replace(/\s+/g, '-') ?? 'artifact-compute',
         now,
-        JSON.stringify({ source: 'artifact_compute_plane', surfaceKey: input.surfaceKey }),
+        JSON.stringify({
+          source: input.surfaceKey,
+          surfaceKey: input.surfaceKey,
+          ...(input.auditMetadata ?? {}),
+        }),
       ]
     );
 

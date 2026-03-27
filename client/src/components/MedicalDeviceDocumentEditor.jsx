@@ -2863,6 +2863,14 @@ ${sections}
       });
       return;
     }
+    if (!projectId || Number(projectId) <= 0) {
+      toast({
+        title: 'Project Required',
+        description: 'eSTAR governed export requires a valid project context.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     try {
       const response = await fetch('/api/510k/estar/build', {
@@ -2874,8 +2882,11 @@ ${sections}
         body: JSON.stringify({
           meta: {
             id: documentId || 'draft',
+            projectId: Number(projectId),
             deviceName: deviceProfile.deviceName,
             manufacturer: deviceProfile.manufacturer,
+            title: `${deviceProfile.deviceName || 'Device'} eSTAR Export`,
+            ctdSection: 'm1.5',
           },
           content: content,
           attachments: [],
@@ -2883,17 +2894,28 @@ ${sections}
       });
 
       if (response.ok) {
-        const blob = await response.blob();
+        const payload = await response.json();
+        const ref = payload?.downloadable_output_ref;
+        if (!ref?.data || ref?.encoding !== 'base64') {
+          throw new Error('Governed export did not provide downloadable output');
+        }
+
+        const binary = atob(ref.data);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], { type: ref.mime_type || 'application/zip' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${deviceProfile.deviceName || 'device'}_eSTAR_${new Date().toISOString().split('T')[0]}.zip`;
+        a.download = ref.filename || `${deviceProfile.deviceName || 'device'}_eSTAR_${new Date().toISOString().split('T')[0]}.zip`;
         a.click();
         window.URL.revokeObjectURL(url);
 
         toast({
           title: 'eSTAR Package Generated',
-          description: 'FDA eSTAR submission package has been created',
+          description: `Governed eSTAR package created (artifact ${payload?.artifact_id || 'n/a'})`,
         });
       }
     } catch (error) {

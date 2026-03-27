@@ -1,5 +1,12 @@
 # CMC + AnA Integration Audit (Codebase Reality Check)
 
+Status: ACTIVE
+Canonical: Yes
+Supersedes: —
+Superseded By: —
+Related Reports: CMC_TOP_LEVEL_UI_HUMAN_EXPERIENCE_AUDIT_2026-03-25.md; CONCEPT2CURE_ANA_INTEGRATION_EXECUTION_PLAN_2026-03-24.md
+
+
 **Date:** 2026-03-25  
 **Scope audited:** CMC module backend + frontend, AnA integration surfaces, API connectivity, and activation/readiness gaps.
 

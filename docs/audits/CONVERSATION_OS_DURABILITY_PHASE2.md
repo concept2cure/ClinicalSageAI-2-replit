@@ -1,5 +1,12 @@
 # Conversation OS Durability Phase 2 (2026-03-26)
 
+Status: ACTIVE
+Canonical: Yes
+Supersedes: CONVERSATION_OS_DURABILITY_AUDIT.md
+Superseded By: —
+Related Reports: ANA_RI_KERNEL_BETA_LAUNCH_CHECKLIST.md; LAUNCH_GATE_DOCUMENT_CONSEQUENCE_REPORT.md
+
+
 ## Hardening Delivered
 - Removed silent defaults (`project-unscoped`, `system`) from primary durable service paths.
 - Added strict context validation in routes for durable reads/writes and fail-closed behavior for governed accept.

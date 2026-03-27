@@ -347,7 +347,17 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     manifestMode?: string;
     latestFinding?: string;
     latestPlanTask?: string;
-    proposals: Array<{ id: string; status: string }>;
+    proposals: Array<{
+      id: string;
+      status: string;
+      governanceState?: 'ACCEPTED_GOVERNED' | 'ACCEPTED_PERSISTED_NO_GOVERNANCE' | 'REJECTED';
+      artifactId?: string;
+      artifactVersion?: number;
+      artifactStatus?: string;
+      placementState?: string;
+      provenanceRef?: string;
+      auditRef?: string;
+    }>;
   }>({ proposals: [] });
 
   // Governed document panel (right inspector)
@@ -405,23 +415,74 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     });
   }, [projectId, mode]);
 
+  // ── Load artifacts (must be defined before actOnProposal) ────────────────
+  const loadArtifacts = useCallback(async () => {
+    if (!projectId) return;
+    setLoading(true);
+    try {
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts`);
+      const payload = await res.json();
+      const list = payload.data ?? payload;
+      setArtifacts(Array.isArray(list) ? list : []);
+    } catch {
+      pushShellToast('Failed to load artifacts', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId]);
+
   const actOnProposal = useCallback(
     async (proposalId: string, action: 'accept' | 'reject') => {
       if (!projectId) return;
       const conversationId = `project-${projectId}`;
-      await apiRequest(
+      const res = await apiRequest(
         'POST',
         `/api/conversation-os/conversations/${conversationId}/proposals/${proposalId}/${action}`,
         { projectId }
       );
+      const payload = (await res.json()) as {
+        success: boolean;
+        result?: {
+          state: string;
+          proposalId: string;
+          artifactId?: string;
+          governedConsequence?: {
+            artifactId: string;
+            version: number;
+            artifactStatus: string;
+            placementState: string;
+            provenanceEventId: string;
+            auditId: string;
+          };
+        };
+      };
+
+      const result = payload.result;
       setConversationSnapshot(prev => ({
         ...prev,
         proposals: prev.proposals.map(p =>
-          p.id === proposalId ? { ...p, status: action === 'accept' ? 'accepted' : 'rejected' } : p
+          p.id === proposalId
+            ? {
+                ...p,
+                status: action === 'accept' ? 'accepted' : 'rejected',
+                governanceState: result?.state as any,
+                artifactId: result?.governedConsequence?.artifactId ?? result?.artifactId,
+                artifactVersion: result?.governedConsequence?.version,
+                artifactStatus: result?.governedConsequence?.artifactStatus,
+                placementState: result?.governedConsequence?.placementState,
+                provenanceRef: result?.governedConsequence?.provenanceEventId,
+                auditRef: result?.governedConsequence?.auditId,
+              }
+            : p
         ),
       }));
+
+      // Reload artifacts so governed artifact appears in project context
+      if (action === 'accept') {
+        await loadArtifacts();
+      }
     },
-    [projectId]
+    [projectId, loadArtifacts]
   );
 
   // If openArtifactId is provided, switch to edit mode for that artifact (gated)
@@ -437,22 +498,6 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     setSelectedDocId(openArtifactId);
     setMode('edit');
   }, [openArtifactId, artifacts, tryOpenForEdit]);
-
-  // ── Load artifacts ───────────────────────────────────────────────────────
-  const loadArtifacts = useCallback(async () => {
-    if (!projectId) return;
-    setLoading(true);
-    try {
-      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts`);
-      const payload = await res.json();
-      const list = payload.data ?? payload;
-      setArtifacts(Array.isArray(list) ? list : []);
-    } catch {
-      pushShellToast('Failed to load artifacts', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [projectId]);
 
   useEffect(() => {
     loadArtifacts();
@@ -2019,50 +2064,278 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     }
                     onOpenTemplates={onNavigate ? () => onNavigate('template-library') : undefined}
                   />
-                  <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-2">
-                    <div className="text-sm font-semibold text-slate-900">
-                      Conversation OS Durability
+                  <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                      <span className="text-sm font-semibold text-slate-900">
+                        Recent Governed Documents
+                      </span>
+                      <Badge variant="outline" className="text-[10px] ml-auto">
+                        {
+                          artifacts.filter(a => {
+                            const age = Date.now() - new Date(a.updatedAt ?? a.createdAt).getTime();
+                            return age < 24 * 60 * 60 * 1000;
+                          }).length
+                        }{' '}
+                        in 24h
+                      </Badge>
                     </div>
-                    <div className="text-xs text-slate-600">
-                      Tool manifest: {conversationSnapshot.manifestMode ?? 'not initialized'}
-                    </div>
-                    <div className="text-xs text-slate-600">
-                      Latest scout: {conversationSnapshot.latestFinding ?? 'no finding yet'}
-                    </div>
-                    <div className="text-xs text-slate-600">
-                      Latest plan: {conversationSnapshot.latestPlanTask ?? 'no plan yet'}
-                    </div>
-                    <div className="text-xs text-slate-700 space-y-1">
-                      <div>Proposals:</div>
-                      {conversationSnapshot.proposals.length ? (
-                        conversationSnapshot.proposals.map(p => (
-                          <div key={p.id} className="flex items-center gap-2">
+                    {/* Recent project artifacts (last 24h or last 5) */}
+                    {(() => {
+                      const recent = artifacts
+                        .slice()
+                        .sort(
+                          (a, b) =>
+                            new Date(b.updatedAt ?? b.createdAt).getTime() -
+                            new Date(a.updatedAt ?? a.createdAt).getTime()
+                        )
+                        .slice(0, 5);
+                      if (!recent.length)
+                        return (
+                          <div className="text-xs text-slate-500">
+                            No governed artifacts yet. Generate or accept a document to begin.
+                          </div>
+                        );
+                      return recent.map(art => (
+                        <div
+                          key={art.id}
+                          className="rounded border border-slate-100 px-3 py-2 space-y-1"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="text-xs font-medium text-slate-800 truncate max-w-[260px]">
+                              {art.title}
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'text-[10px]',
+                                art.status === 'draft' && 'text-amber-700 border-amber-200',
+                                art.status === 'approved' && 'text-emerald-700 border-emerald-200',
+                                art.status === 'review' && 'text-blue-700 border-blue-200',
+                                art.status === 'locked' && 'text-slate-700 border-slate-200'
+                              )}
+                            >
+                              {art.status || 'draft'}
+                            </Badge>
+                          </div>
+                          <div className="text-[11px] text-slate-500 flex items-center gap-2 flex-wrap">
+                            <span>v{art.version || 1}</span>
+                            <span className="text-slate-300">·</span>
+                            <span>{art.ctdSection ? `§${art.ctdSection}` : 'unplaced'}</span>
+                            <span className="text-slate-300">·</span>
+                            <span>{art.id.slice(0, 16)}</span>
+                            <span className="text-slate-300">·</span>
                             <span>
-                              {p.id.slice(0, 8)} ({p.status})
+                              {art.metadata?.source === 'compute'
+                                ? 'Compute'
+                                : art.metadata?.source === 'export_pdf'
+                                ? 'Export PDF'
+                                : art.metadata?.source === 'export_docx'
+                                ? 'Export DOCX'
+                                : art.metadata?.source === 'export_estar_zip'
+                                ? 'Export eSTAR ZIP'
+                                : art.metadata?.anaRiActionType
+                                ? 'AnA RI'
+                                : art.metadata?.source === 'proposal_accept'
+                                ? 'Proposal'
+                                : 'Manual'}
                             </span>
-                            {p.status === 'pending' && (
-                              <>
-                                <button
-                                  className="text-emerald-700 underline"
-                                  onClick={() => actOnProposal(p.id, 'accept')}
-                                >
-                                  accept
-                                </button>
-                                <button
-                                  className="text-rose-700 underline"
-                                  onClick={() => actOnProposal(p.id, 'reject')}
-                                >
-                                  reject
-                                </button>
-                              </>
+                          </div>
+                          <div className="flex items-center gap-2 pt-0.5">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-[11px] text-blue-600"
+                              onClick={() => {
+                                if (tryOpenForEdit(art.status)) {
+                                  setSelectedDocId(art.id);
+                                  setMode('edit');
+                                } else {
+                                  setSelectedDocId(art.id);
+                                  setMode('browse');
+                                }
+                              }}
+                            >
+                              <FileText className="w-3 h-3 mr-1" />
+                              Open
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-[11px] text-violet-600"
+                              onClick={() => {
+                                setSelectedDocId(art.id);
+                                setMode('edit');
+                                setDocumentTab('provenance');
+                              }}
+                            >
+                              Provenance
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-[11px] text-emerald-600"
+                              onClick={() => {
+                                setSelectedDocId(art.id);
+                                setMode('edit');
+                                setDocumentTab('review');
+                              }}
+                            >
+                              Audit
+                            </Button>
+                            {!art.ctdSection && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-2 text-[11px] text-orange-600"
+                                onClick={() => handleOpenPlacementForDoc(art, 'place')}
+                              >
+                                Place
+                              </Button>
                             )}
                           </div>
-                        ))
-                      ) : (
-                        <div>none</div>
-                      )}
-                    </div>
+                        </div>
+                      ));
+                    })()}
                   </div>
+
+                  {/* Conversation proposals with governed consequence visibility */}
+                  {conversationSnapshot.proposals.length > 0 && (
+                    <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Target className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm font-semibold text-slate-900">
+                          Document Proposals
+                        </span>
+                        <Badge variant="outline" className="text-[10px] ml-auto">
+                          {conversationSnapshot.proposals.length}
+                        </Badge>
+                      </div>
+                      {conversationSnapshot.proposals.map(p => (
+                        <div
+                          key={p.id}
+                          className="rounded border border-slate-100 px-3 py-2 space-y-1.5"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-slate-800">
+                              {p.id.slice(0, 12)}
+                            </span>
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'text-[10px]',
+                                p.status === 'pending' && 'text-amber-700 border-amber-200',
+                                p.status === 'accepted' && 'text-emerald-700 border-emerald-200',
+                                p.status === 'rejected' && 'text-rose-700 border-rose-200'
+                              )}
+                            >
+                              {p.status}
+                            </Badge>
+                          </div>
+
+                          {/* Governance consequence (visible after accept) */}
+                          {p.status === 'accepted' && p.governanceState && (
+                            <div className="rounded bg-slate-50 border border-slate-100 px-2.5 py-1.5 text-[11px] space-y-1">
+                              <div className="flex items-center gap-1.5">
+                                <ShieldCheck
+                                  className={cn(
+                                    'w-3 h-3',
+                                    p.governanceState === 'ACCEPTED_GOVERNED'
+                                      ? 'text-emerald-600'
+                                      : 'text-amber-500'
+                                  )}
+                                />
+                                <span
+                                  className={cn(
+                                    'font-medium',
+                                    p.governanceState === 'ACCEPTED_GOVERNED'
+                                      ? 'text-emerald-700'
+                                      : 'text-amber-700'
+                                  )}
+                                >
+                                  {p.governanceState === 'ACCEPTED_GOVERNED'
+                                    ? 'Governed'
+                                    : 'Persisted (no governance)'}
+                                </span>
+                              </div>
+                              {p.artifactId && (
+                                <div className="text-slate-600 space-y-0.5">
+                                  <div>
+                                    Artifact:{' '}
+                                    <span className="font-medium text-slate-800">
+                                      {p.artifactId.slice(0, 20)}
+                                    </span>{' '}
+                                    · v{p.artifactVersion ?? 1} · {p.artifactStatus || 'draft'}
+                                  </div>
+                                  <div>
+                                    Placement: {p.placementState || 'unplaced'} · Provenance:{' '}
+                                    {p.provenanceRef ? p.provenanceRef.slice(0, 12) : 'none'} ·
+                                    Audit: {p.auditRef ? p.auditRef.slice(0, 12) : 'none'}
+                                  </div>
+                                </div>
+                              )}
+                              {p.artifactId && (
+                                <div className="flex items-center gap-2 pt-0.5">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-5 px-1.5 text-[10px] text-blue-600"
+                                    onClick={() => openComputeArtifact(p.artifactId!)}
+                                  >
+                                    Open in editor
+                                  </Button>
+                                  {p.provenanceRef && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-5 px-1.5 text-[10px] text-violet-600"
+                                      onClick={() =>
+                                        openComputeArtifact(p.artifactId!, 'provenance')
+                                      }
+                                    >
+                                      Provenance
+                                    </Button>
+                                  )}
+                                  {p.auditRef && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-5 px-1.5 text-[10px] text-emerald-600"
+                                      onClick={() => openComputeArtifact(p.artifactId!, 'audit')}
+                                    >
+                                      Audit
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Actions for pending proposals */}
+                          {p.status === 'pending' && (
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-6 px-2.5 text-[11px] text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+                                onClick={() => actOnProposal(p.id, 'accept')}
+                              >
+                                Accept
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-6 px-2.5 text-[11px] text-rose-700 border-rose-200 hover:bg-rose-50"
+                                onClick={() => actOnProposal(p.id, 'reject')}
+                              >
+                                Reject
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : mode === 'browse' ? (
                 <DocumentListPane
