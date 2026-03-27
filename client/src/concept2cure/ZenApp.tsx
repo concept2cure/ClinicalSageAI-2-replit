@@ -2119,6 +2119,7 @@ export const ZenApp: React.FC = () => {
       <GlobalOperatingShell
         layoutMode={layoutMode}
         activeProjectName={activeProject?.name}
+        activeNavId={activeNavId}
         currentGlobalNodeLabel={currentGlobalNodeLabel}
         activeArtifactLabel={
           activeArtifactId
@@ -3053,19 +3054,6 @@ export const ZenApp: React.FC = () => {
 
 export default ZenApp;
 
-const SIDEBAR_ACTIVE_NAV_BY_LAYOUT: Record<string, string> = {
-  projects: 'projects',
-  'project-home': 'projects',
-  documents: 'documents',
-  'regulatory-workspace': 'documents',
-  'section-workspace': 'documents',
-  'vault-workspace': 'vault',
-  'report-engine': 'reports',
-  review: 'review',
-  'review-readiness': 'review',
-  submissions: 'submissions',
-  'dossier-map': 'dossier',
-};
 
 const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
   projects: 'projects',
