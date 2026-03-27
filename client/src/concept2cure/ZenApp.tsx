@@ -915,6 +915,7 @@ export const ZenApp: React.FC = () => {
     cmc: 'documents',
     'document-vault': 'vault',
     'vault-workspace': 'vault',
+    'review-readiness': 'review',
     'clinical-trial': 'documents',
     templates: 'documents',
     'document-builder': 'documents',
@@ -2150,9 +2151,7 @@ export const ZenApp: React.FC = () => {
               setLayoutMode('regulatory-workspace');
               break;
             case '510k-workspace':
-              if (embeddedModule !== null || !embedModulesEnabled) {
-                window.location.href = '/cerv2';
-              } else if (activeProjectId) {
+              if (activeProjectId) {
                 navigate(`/concept2cure/project/${activeProjectId}/510k`);
               } else {
                 setLayoutMode('projects');
@@ -2168,7 +2167,11 @@ export const ZenApp: React.FC = () => {
               }
               break;
             case 'cer-generator':
-              window.location.href = '/cerv2?mode=cer';
+              if (activeProjectId) {
+                navigate(`/concept2cure/project/${activeProjectId}/cer`);
+              } else {
+                setLayoutMode('projects');
+              }
               break;
             // ── Core submission workflow ──
             case 'regulatory-workspace':
@@ -2407,6 +2410,75 @@ export const ZenApp: React.FC = () => {
             </>
           )}
 
+          {/* ── Embedded CER Module Host ── */}
+          {embeddedModule === 'cer' && urlProjectId && (
+            <>
+              <div
+                className={cn(
+                  'flex-1 flex flex-col min-h-0 overflow-hidden',
+                  moduleAssistantOpen && 'mr-0'
+                )}
+              >
+                <ErrorBoundary>
+                  <Suspense fallback={<ModuleLoadingFallback />}>
+                    <EmbeddedCERV2Page
+                      embedded={true}
+                      initialDocumentType="cerv2_cer"
+                      projectId={urlProjectId}
+                      onBackToProject={() => navigate(`/concept2cure/project/${urlProjectId}`)}
+                    />
+                  </Suspense>
+                </ErrorBoundary>
+              </div>
+
+              {!moduleAssistantOpen && (
+                <button
+                  onClick={() => setModuleAssistantOpen(true)}
+                  className="flex-shrink-0 w-10 flex flex-col items-center justify-center gap-1 bg-zinc-50 hover:bg-zinc-100 border-l border-zinc-200 transition-colors"
+                  title="Open AI Assistant"
+                  data-testid="module-assistant-toggle-cer"
+                >
+                  <MessageSquare className="w-4 h-4 text-zinc-500" />
+                  <span
+                    className="text-[10px] text-zinc-400 writing-mode-vertical"
+                    style={{ writingMode: 'vertical-rl' }}
+                  >
+                    Assistant
+                  </span>
+                </button>
+              )}
+
+              {moduleAssistantOpen && (
+                <div
+                  className="flex-shrink-0 w-[380px] flex flex-col border-l border-zinc-200 bg-white"
+                  data-testid="module-assistant-panel-cer"
+                >
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-zinc-50">
+                    <span className="text-sm font-medium text-zinc-700">AI Assistant</span>
+                    <button
+                      onClick={() => setModuleAssistantOpen(false)}
+                      className="p-1 rounded hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="flex-1 min-h-0 overflow-hidden">
+                    <ZenChat
+                      projectId={activeProjectId || urlProjectId}
+                      projectName={activeProject?.name}
+                      submissionType="CER"
+                      threadId={activeThreadId}
+                      greeting={{ text: 'How can I help with your Clinical Evaluation Report?' }}
+                      onNavigate={() => {}}
+                      onNewProject={() => {}}
+                      onThreadChange={handleThreadChange}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
           {/* [BATCH 3] Removed renderers: sherpa, analytics, timeline, audit,
               mission-control, snowglobe, snowglobe-chambers.
               These modes now redirect via DEMOTED_REDIRECTS useEffect. */}
@@ -2439,20 +2511,13 @@ export const ZenApp: React.FC = () => {
                           else setLayoutMode('projects');
                           break;
                         case 'cer-generator':
-                          window.location.href = '/cerv2?mode=cer';
-                          break;
-                        // Specialist Studios — route to Work with appropriate context
-                        case 'cmc':
-                        case 'clinical':
-                        case 'device':
-                          if (activeProjectId) setLayoutMode('documents');
+                          if (activeProjectId) navigate(`/concept2cure/project/${activeProjectId}/cer`);
                           else setLayoutMode('projects');
                           break;
                         default:
-                          // Doc-producing apps (evidence-memo, clinical-overview, etc.)
-                          // navigate to Work so the user can create the artifact there
-                          if (activeProjectId) setLayoutMode('documents');
-                          else setLayoutMode('projects');
+                          // All apps in the catalog have explicit routes above.
+                          // If somehow an unknown app ID arrives, go to projects.
+                          setLayoutMode('projects');
                           break;
                       }
                     }}

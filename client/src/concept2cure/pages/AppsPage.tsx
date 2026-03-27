@@ -12,12 +12,7 @@ import {
   Search as SearchIcon,
   Scale,
   FileText,
-  FlaskConical,
-  ShieldCheck,
-  BookOpen,
-  Layers,
   Stethoscope,
-  ClipboardList,
   Beaker,
   Heart,
   Microscope,
@@ -46,26 +41,17 @@ const DEVICE_TYPES = ['510K', 'PMA', 'DE_NOVO', 'EUA', 'IVDR'];
 const STRATEGY_APPS: AppCard[] = [
   { id: 'deep-research', label: 'Deep Research', description: 'Search ClinicalTrials.gov, PubMed, FDA, EMA and more', icon: <SearchIcon className="w-5 h-5" />, tracks: [...PHARMA_TYPES, ...DEVICE_TYPES] },
   { id: 'precedent-intelligence', label: 'Precedent Intelligence', description: 'Regulatory precedent analysis and comparison', icon: <Scale className="w-5 h-5" />, tracks: [...PHARMA_TYPES, ...DEVICE_TYPES] },
-  { id: 'evidence-memo', label: 'Evidence Memo', description: 'Generate evidence summary from CSR and precedent search', icon: <FileText className="w-5 h-5" />, tracks: [...PHARMA_TYPES, '510K', 'PMA'] },
-  { id: 'protocol-rationale', label: 'Protocol Rationale', description: 'Justify clinical protocol design choices', icon: <FlaskConical className="w-5 h-5" />, tracks: PHARMA_TYPES },
-  { id: 'risk-benefit', label: 'Risk-Benefit Analysis', description: 'Structured risk-benefit assessment for submissions', icon: <ShieldCheck className="w-5 h-5" />, tracks: [...PHARMA_TYPES, ...DEVICE_TYPES] },
 ];
 
 const BUILDER_APPS: AppCard[] = [
-  { id: 'clinical-overview', label: 'Clinical Overview', description: 'Module 2.5 clinical overview document', icon: <BookOpen className="w-5 h-5" />, tracks: PHARMA_TYPES },
-  { id: 'module3-builder', label: 'Module 3 Builder', description: 'Quality/CMC documents for Module 3', icon: <Layers className="w-5 h-5" />, tracks: PHARMA_TYPES },
-  { id: 'safety-narrative', label: 'Safety Narrative', description: 'Safety narrative builder for submissions', icon: <Stethoscope className="w-5 h-5" />, tracks: [...PHARMA_TYPES, 'PMA'] },
   { id: '510k-workspace', label: '510(k) Workspace', description: 'Predicate comparison, SE testing, submission package', icon: <FileText className="w-5 h-5" />, tracks: ['510K', 'DE_NOVO'] },
   { id: 'pma-workspace', label: 'PMA Workspace', description: 'Premarket approval application workspace', icon: <Heart className="w-5 h-5" />, tracks: ['PMA'] },
-  { id: 'cer-generator', label: 'CER Generator', description: 'Clinical evaluation report for EU MDR/IVDR', icon: <Microscope className="w-5 h-5" />, tracks: ['IVDR', 'MAA'] },
-  { id: 'audit-report', label: 'Audit Report', description: 'Inspection-ready audit report generation', icon: <ClipboardList className="w-5 h-5" />, tracks: [...PHARMA_TYPES, ...DEVICE_TYPES] },
+  { id: 'cer-generator', label: 'CER Generator', description: 'Clinical evaluation report for EU MDR/IVDR', icon: <Microscope className="w-5 h-5" />, tracks: ['IVDR', ...DEVICE_TYPES] },
+  { id: 'safety-narrative', label: 'Safety Narrative', description: 'Safety narrative builder for submissions', icon: <Stethoscope className="w-5 h-5" />, tracks: [...PHARMA_TYPES, 'PMA'] },
 ];
 
 const STUDIO_APPS: AppCard[] = [
-  { id: 'cmc', label: 'CMC', description: 'Chemistry, Manufacturing, and Controls workspace', icon: <FlaskConical className="w-5 h-5" />, tracks: PHARMA_TYPES },
   { id: 'biostatistics', label: 'Biostatistics', description: 'Statistical analysis, power calculations, endpoints', icon: <Beaker className="w-5 h-5" />, tracks: [...PHARMA_TYPES, 'PMA'] },
-  { id: 'clinical', label: 'Clinical', description: 'Clinical operations and study management', icon: <Stethoscope className="w-5 h-5" />, tracks: PHARMA_TYPES },
-  { id: 'device', label: 'Device', description: 'Medical device and diagnostics workflows', icon: <Heart className="w-5 h-5" />, tracks: DEVICE_TYPES },
 ];
 
 const GROUPS: { key: GroupKey; label: string; apps: AppCard[] }[] = [
