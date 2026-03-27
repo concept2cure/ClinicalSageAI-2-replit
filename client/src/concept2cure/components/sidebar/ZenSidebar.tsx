@@ -412,6 +412,54 @@ const IconBtn: React.FC<{
   </button>
 );
 
+// ─── New dropdown (Create: Chat / Project / Artifact) ──────────────────────────
+
+const NewDropdown: React.FC<{
+  onNewChat: () => void;
+  onNewProject: () => void;
+  onNewArtifact: () => void;
+}> = ({ onNewChat, onNewProject, onNewArtifact }) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative mx-1">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-200 text-zinc-700 text-[13px] font-medium hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+      >
+        <Plus className="w-4 h-4 flex-shrink-0" />
+        New
+        <ChevronDown className={cn('w-3 h-3 ml-auto text-zinc-400 transition-transform', open && 'rotate-180')} />
+      </button>
+      {open && (
+        <div className="absolute left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg z-50 py-1">
+          <button
+            onClick={() => { onNewChat(); setOpen(false); }}
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50 transition-colors"
+          >
+            <MessageSquare className="w-3.5 h-3.5 text-zinc-400" />
+            New Chat
+          </button>
+          <button
+            onClick={() => { onNewProject(); setOpen(false); }}
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50 transition-colors"
+          >
+            <FolderOpen className="w-3.5 h-3.5 text-zinc-400" />
+            New Project
+          </button>
+          <button
+            onClick={() => { onNewArtifact(); setOpen(false); }}
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50 transition-colors"
+          >
+            <FileStack className="w-3.5 h-3.5 text-zinc-400" />
+            New Artifact
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── Main sidebar ─────────────────────────────────────────────────────────────
 
 export const ZenSidebar: React.FC<ZenSidebarProps> = ({
@@ -514,7 +562,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <IconBtn label="Artifacts" active={activeNavId === 'artifacts-center'} onClick={() => onNavigate?.('artifacts-center')}>
           <FileStack className="w-4 h-4" />
         </IconBtn>
-        <IconBtn label="Setup" active={activeNavId === 'setup'} onClick={() => onNavigate?.('setup')}>
+        <IconBtn label="Setup" active={activeNavId === 'setup'} onClick={onOpenSettings}>
           <Settings className="w-4 h-4" />
         </IconBtn>
 
@@ -594,14 +642,12 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
         {/* ── Global Navigation (6 items) ──────────────────────────────── */}
         <div className="px-1 pb-1 flex-shrink-0 space-y-0.5">
-          {/* New — prominent button */}
-          <button
-            onClick={onNewChat}
-            className="w-full flex items-center gap-2 mx-1 px-3 py-2 rounded-lg border border-zinc-200 text-zinc-700 text-[13px] font-medium hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
-          >
-            <Plus className="w-4 h-4 flex-shrink-0" />
-            New
-          </button>
+          {/* New — dropdown with 3 options */}
+          <NewDropdown
+            onNewChat={onNewChat}
+            onNewProject={onOpenProjects}
+            onNewArtifact={() => onNavigate?.('apps')}
+          />
 
           <NavItem
             icon={<Search className="w-3.5 h-3.5" />}
@@ -633,7 +679,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             icon={<Settings className="w-3.5 h-3.5" />}
             label="Setup"
             active={activeNavId === 'setup'}
-            onClick={() => onNavigate?.('setup')}
+            onClick={onOpenSettings}
           />
         </div>
 

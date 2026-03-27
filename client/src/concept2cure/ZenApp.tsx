@@ -304,6 +304,11 @@ const AnaBiostatsPanel = lazy(() => import('@/concept2cure/components/biostats/A
 // Platform Home — Claude.ai-style landing dashboard
 const PlatformHome = lazy(() => import('./components/home/PlatformHome'));
 
+// ─── New global destination pages (Phase 1 OS restructure) ──────────────────
+const AppsPage = lazy(() => import('./pages/AppsPage'));
+const ArtifactsPage = lazy(() => import('./pages/ArtifactsPage'));
+const VaultPage = lazy(() => import('./pages/VaultPage'));
+
 // [BATCH 3] ArtifactsGalleryPage — demoted, redirect to documents
 
 // [BATCH 3] PlatformAdminPage — demoted, redirect to projects
@@ -904,6 +909,7 @@ export const ZenApp: React.FC = () => {
     'ectd-coauthor': 'documents',
     cmc: 'documents',
     'document-vault': 'vault',
+    'vault-workspace': 'vault',
     'clinical-trial': 'documents',
     templates: 'documents',
     'document-builder': 'documents',
@@ -1793,7 +1799,7 @@ export const ZenApp: React.FC = () => {
           break;
         case 'vault':
           setActiveToolPanel(null);
-          setLayoutMode('vault-workspace');
+          setLayoutMode('vault');
           break;
         case 'review':
           setActiveToolPanel(null);
@@ -2069,7 +2075,7 @@ export const ZenApp: React.FC = () => {
               setLayoutMode(id);
               break;
             case 'document-vault':
-              setLayoutMode('vault-workspace');
+              setLayoutMode('vault');
               break;
             // ── Surviving specialist tools ──
             case 'precedent-intelligence':
@@ -2307,44 +2313,88 @@ export const ZenApp: React.FC = () => {
           {/* [BATCH 3] Removed: timeline, audit, mission-control, snowglobe, snowglobe-chambers */}
           {/* [BATCH 1] Removed: about-training, ind-workspace, medtech-dashboard */}
 
-          {/* ── New global destinations (Phase 1 placeholders) ── */}
+          {/* ── Global destination: Apps launcher ── */}
           {!embeddedModule && layoutMode === 'apps' && (
-            <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-0" data-testid="workspace-apps">
-              <Sparkles className="w-10 h-10 text-zinc-300 mb-3" />
-              <h2 className="text-lg font-semibold text-zinc-800 mb-1">Apps</h2>
-              <p className="text-sm text-zinc-500 max-w-md text-center">
-                Strategy & Evidence, Builders, and Specialist Studios. Full launcher coming in Phase 2.
-              </p>
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-apps">
+              <ErrorBoundary>
+                <Suspense fallback={<ModuleLoadingFallback />}>
+                  <AppsPage
+                    onNavigate={id => {
+                      switch (id) {
+                        case 'deep-research': setLayoutMode('deep-research'); break;
+                        case 'precedent-intelligence': setLayoutMode('precedent-intelligence'); break;
+                        case 'safety-narrative': setLayoutMode('safety-narrative'); break;
+                        case 'biostatistics':
+                          setLayoutMode('regulatory-workspace');
+                          setActiveToolPanel('ana-biostats');
+                          break;
+                        case '510k-workspace':
+                          if (activeProjectId) navigate(`/concept2cure/project/${activeProjectId}/510k`);
+                          else setLayoutMode('projects');
+                          break;
+                        case 'pma-workspace':
+                          if (activeProjectId) navigate(`/concept2cure/project/${activeProjectId}/pma`);
+                          else setLayoutMode('projects');
+                          break;
+                        case 'cer-generator':
+                          window.location.href = '/cerv2?mode=cer';
+                          break;
+                        default:
+                          // For doc-producing apps (evidence-memo, clinical-overview, etc.),
+                          // navigate to documents/Work so the user can create the artifact there
+                          if (activeProjectId) setLayoutMode('documents');
+                          else setLayoutMode('projects');
+                          break;
+                      }
+                    }}
+                    activeProjectId={activeProjectId}
+                    activeProjectName={activeProject?.name}
+                  />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           )}
 
+          {/* ── Global destination: Artifacts browser ── */}
           {!embeddedModule && layoutMode === 'artifacts-center' && (
-            <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-0" data-testid="workspace-artifacts-center">
-              <FileStack className="w-10 h-10 text-zinc-300 mb-3" />
-              <h2 className="text-lg font-semibold text-zinc-800 mb-1">Artifacts</h2>
-              <p className="text-sm text-zinc-500 max-w-md text-center">
-                Browse governed outputs across all projects. Full browser coming in Phase 2.
-              </p>
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-artifacts-center">
+              <ErrorBoundary>
+                <Suspense fallback={<ModuleLoadingFallback />}>
+                  <ArtifactsPage
+                    onOpenArtifact={(projectId, artifactId) => {
+                      setActiveProjectId(projectId);
+                      setLayoutMode('documents');
+                    }}
+                  />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           )}
 
+          {/* ── Global destination: Setup — opens settings modal ── */}
+          {/* Setup is handled by onOpenSettings in sidebar, which opens ZenSettings modal.
+              If user somehow lands on setup layout mode, redirect to projects. */}
           {!embeddedModule && layoutMode === 'setup' && (
-            <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-0" data-testid="workspace-setup">
-              <Shield className="w-10 h-10 text-zinc-300 mb-3" />
-              <h2 className="text-lg font-semibold text-zinc-800 mb-1">Setup</h2>
-              <p className="text-sm text-zinc-500 max-w-md text-center">
-                Organization, preferences, integrations, and templates. Full page coming in Phase 2.
-              </p>
-            </div>
+            <RedirectToWorkspace onRedirect={() => {
+              setSettingsOpen(true);
+              setLayoutMode('projects');
+            }} />
           )}
 
+          {/* ── Project tab: Vault ── */}
           {!embeddedModule && layoutMode === 'vault' && (
-            <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-0" data-testid="workspace-vault">
-              <Archive className="w-10 h-10 text-zinc-300 mb-3" />
-              <h2 className="text-lg font-semibold text-zinc-800 mb-1">Vault</h2>
-              <p className="text-sm text-zinc-500 max-w-md text-center">
-                Files, evidence, and linked artifacts for {activeProject?.name || 'your project'}. Full vault coming in Phase 3.
-              </p>
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-vault">
+              <ErrorBoundary>
+                <Suspense fallback={<ModuleLoadingFallback />}>
+                  <VaultPage
+                    projectId={activeProjectId}
+                    projectName={activeProject?.name}
+                    onOpenDocument={(docId) => {
+                      setLayoutMode('documents');
+                    }}
+                  />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           )}
 
