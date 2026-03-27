@@ -130,6 +130,7 @@ import pmSettingsRouter from './src/routes/pm-settings.router';
 import controlPlaneRouter from './src/routes/control-plane.router';
 import reportsManifestRoutes from './routes/reports/manifest-routes';
 import reportsGenerationRoutes from './routes/reports/generate-report';
+import firecrawlWebhooksRoutes from './routes/firecrawl-webhooks';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -267,6 +268,9 @@ console.log('✅ Enterprise security and performance middleware enabled');
 // Middleware setup
 app.use(httpLogger); // Add structured logging
 // Audit logging now handled by enterprise-security middleware
+
+// Firecrawl webhooks require raw body-safe handling before global JSON parser.
+app.use('/api/firecrawl-webhooks', firecrawlWebhooksRoutes);
 
 // Body parsing with size limits
 // 50MB needed for large document uploads via JSON (base64-encoded); file uploads use multer separately
@@ -4046,6 +4050,19 @@ try {
   console.log('✅ AnA RI routes mounted (/api/ana-ri) with circuit breaker');
 } catch (error) {
   console.error('❌ Failed to mount AnA RI routes:', error);
+}
+
+// Mount External Evidence Intelligence routes
+try {
+  const firecrawlRoutes = await import('./routes/firecrawl');
+  const externalEvidenceRoutes = await import('./routes/external-evidence');
+  const workspaceToolSettingsRoutes = await import('./routes/workspace-tool-settings');
+  app.use('/api/firecrawl', firecrawlRoutes.default);
+  app.use('/api/external-evidence', externalEvidenceRoutes.default);
+  app.use('/api/workspace-tool-settings', workspaceToolSettingsRoutes.default);
+  console.log('✅ External Evidence Intelligence routes mounted');
+} catch (error) {
+  console.error('❌ Failed to mount external evidence routes:', error);
 }
 
 // Mount Authoring Actions routes (Wave 1 + Wave 2 AnA-first authoring actions)
