@@ -2577,22 +2577,7 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* ── Review & Readiness — quality, compliance, stress-testing ── */}
-          {!embeddedModule && layoutMode === 'review-readiness' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-review-readiness">
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <LoadingState size="sm" message="" />
-                    </div>
-                  }
-                >
-                  <ReviewReadiness onClose={() => setLayoutMode('projects')} />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
+          {/* [CONSOLIDATED] review-readiness now redirects to 'review' via DEMOTED_REDIRECTS */}
 
           {/* ── Biostatistics Platform — power, endpoints, design ── */}
           {!embeddedModule && layoutMode === 'biostatistics' && (
@@ -2844,30 +2829,7 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* ── Global Vault Workspace: browse/search/manage from anywhere ── */}
-          {!embeddedModule && layoutMode === 'vault-workspace' && (
-            <div className="flex-1 flex flex-col min-h-0 bg-zinc-50" data-testid="workspace-vault">
-              <div className="h-12 px-4 flex items-center justify-between border-b border-zinc-200 bg-white">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-zinc-500" />
-                  <span className="text-sm font-semibold text-zinc-900">Vault Workspace</span>
-                </div>
-                <button
-                  onClick={() => setActiveToolPanel('vault')}
-                  className="text-xs font-medium px-2.5 py-1 rounded-md border border-zinc-200 hover:bg-zinc-100 text-zinc-700"
-                >
-                  Open in right drawer
-                </button>
-              </div>
-              <div className="flex-1 min-h-0">
-                <ErrorBoundary>
-                  <Suspense fallback={<ModuleLoadingFallback />}>
-                    <VaultBrowserPanel moduleContext="vault" />
-                  </Suspense>
-                </ErrorBoundary>
-              </div>
-            </div>
-          )}
+          {/* [CONSOLIDATED] vault-workspace now redirects to 'vault' via DEMOTED_REDIRECTS */}
 
           {/* ── Unified Workflow: Review (governance & approvals) ─────────── */}
           {!embeddedModule && layoutMode === 'review' && (

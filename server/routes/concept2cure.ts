@@ -70,6 +70,7 @@ import * as crypto from 'crypto';
 import { guardEmptyContent, guardDemoContent } from '../middleware/documentLoopGuards';
 import { computeConversationHealth } from '../services/conversation-health.js';
 import { interceptComplianceScan, interceptArtifactChange, interceptFeedback } from '../services/intelligence/rim-interceptors.js';
+import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
 import {
   buildWorkingMemoryPrompt,
   storeWorkingMemory,
@@ -3311,6 +3312,24 @@ router.post('/projects/:projectId/artifacts', guardEmptyContent, guardDemoConten
       contentLength: sanitizedContent.length,
       source: data.metadata?.generationMethod === 'ai' ? 'lumen_cortex' : 'manual',
       content: sanitizedContent,
+    });
+
+    // Emit generation trace: artifact_created
+    const traceId = (data.metadata as Record<string, unknown>)?.traceId as string || createTraceId();
+    emitTraceEvent({
+      traceId,
+      timestamp: new Date().toISOString(),
+      event: 'artifact_created',
+      sourceSystem: (data.metadata as Record<string, unknown>)?.sourceSystem as any || 'document_builder',
+      projectId: numericProjectId,
+      artifactId,
+      userId,
+      metadata: {
+        documentType: data.type,
+        ctdSection: ctdSection || null,
+        contentLength: sanitizedContent.length,
+        generationMethod: (data.metadata as Record<string, unknown>)?.generationMethod || 'unknown',
+      },
     });
 
     logger.info('Created artifact', { projectId: req.params.projectId, artifactId });
