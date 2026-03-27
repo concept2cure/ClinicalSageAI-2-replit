@@ -2132,6 +2132,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                                   ? 'Export PDF'
                                   : art.metadata?.source === 'export_docx'
                                     ? 'Export DOCX'
+                                    : art.metadata?.source === 'export_zip'
+                                      ? 'Export ZIP'
                                     : art.metadata?.source === 'export_estar_zip'
                                       ? 'Export eSTAR ZIP'
                                       : art.metadata?.source === 'governed_export'
