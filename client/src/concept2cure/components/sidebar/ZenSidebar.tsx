@@ -12,7 +12,7 @@
  * Account/profile at bottom.
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import {
   Plus,
@@ -523,11 +523,36 @@ const NewDropdown: React.FC<{
   onNewArtifact: () => void;
 }> = ({ onNewChat, onNewProject, onNewArtifact }) => {
   const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Close on click outside
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [open]);
 
   return (
-    <div className="relative mx-1">
+    <div className="relative mx-1" ref={containerRef}>
       <button
         onClick={() => setOpen(o => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
         className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-200 text-zinc-700 text-[13px] font-medium hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
       >
         <Plus className="w-4 h-4 flex-shrink-0" />
@@ -535,24 +560,27 @@ const NewDropdown: React.FC<{
         <ChevronDown className={cn('w-3 h-3 ml-auto text-zinc-400 transition-transform', open && 'rotate-180')} />
       </button>
       {open && (
-        <div className="absolute left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg z-50 py-1">
+        <div role="menu" className="absolute left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg z-50 py-1">
           <button
+            role="menuitem"
             onClick={() => { onNewChat(); setOpen(false); }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50 transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
           >
             <MessageSquare className="w-3.5 h-3.5 text-zinc-400" />
             New Chat
           </button>
           <button
+            role="menuitem"
             onClick={() => { onNewProject(); setOpen(false); }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50 transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
           >
             <FolderOpen className="w-3.5 h-3.5 text-zinc-400" />
             New Project
           </button>
           <button
+            role="menuitem"
             onClick={() => { onNewArtifact(); setOpen(false); }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50 transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
           >
             <FileStack className="w-3.5 h-3.5 text-zinc-400" />
             New Artifact

@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { WorkspaceCanvas, PageTitleHeader } from '@/components/ui/workspace-primitives';
-import { DataStateWrapper } from '@/components/ui/statesV2';
 import {
   PenLine,
   Archive,
@@ -55,7 +54,7 @@ interface Artifact {
 // ─── Status config ────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; color: string; bg: string }> = {
-  draft: { label: 'Draft', icon: Clock, color: 'text-zinc-600', bg: 'bg-zinc-100' },
+  draft: { label: 'Draft', icon: Clock, color: 'text-zinc-500', bg: 'bg-zinc-50' },
   review: { label: 'In Review', icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50' },
   approved: { label: 'Approved', icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50' },
   locked: { label: 'Ready', icon: Lock, color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -64,11 +63,14 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ComponentType<{
 // ─── Quick nav cards ──────────────────────────────────────────────────────────
 
 const PROJECT_TABS = [
-  { id: 'work', label: 'Work', description: 'Author and edit documents', icon: PenLine, color: 'text-blue-600 bg-blue-50' },
+  { id: 'work', label: 'Work', description: 'Author and edit documents', icon: PenLine, color: 'text-zinc-600 bg-zinc-100' },
   { id: 'vault', label: 'Vault', description: 'Files, evidence, source materials', icon: Archive, color: 'text-zinc-600 bg-zinc-100' },
-  { id: 'review-tab', label: 'Review', description: 'Quality, compliance, readiness', icon: ShieldCheck, color: 'text-emerald-600 bg-emerald-50' },
-  { id: 'submit', label: 'Submit', description: 'Finalize and export package', icon: Send, color: 'text-violet-600 bg-violet-50' },
+  { id: 'review-tab', label: 'Review', description: 'Quality, compliance, readiness', icon: ShieldCheck, color: 'text-zinc-600 bg-zinc-100' },
+  { id: 'submit', label: 'Submit', description: 'Finalize and export package', icon: Send, color: 'text-zinc-600 bg-zinc-100' },
 ];
+
+const RECENT_LIMIT = 5;
+const VALID_STATUSES = ['draft', 'review', 'approved', 'locked'] as const;
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -77,13 +79,13 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
   onNavigate,
 }) => {
   // Fetch project artifacts for pipeline stats
-  const { data: artifacts, isLoading } = useQuery<Artifact[]>({
+  const { data: artifacts, isLoading, isError } = useQuery<Artifact[]>({
     queryKey: ['project', project.id, 'overview-artifacts'],
     queryFn: async () => {
       const res = await apiRequest('GET', `/api/concept2cure/projects/${project.id}/artifacts`);
       if (!res.ok) return [];
       const json = await res.json();
-      return json.data ?? json.artifacts ?? json ?? [];
+      return Array.isArray(json.data) ? json.data : [];
     },
     staleTime: 30_000,
   });
@@ -93,15 +95,17 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
     const list = artifacts ?? [];
     const counts = { draft: 0, review: 0, approved: 0, locked: 0 };
     for (const a of list) {
-      const s = a.status as keyof typeof counts;
-      if (s in counts) counts[s]++;
+      const s = a.status as string;
+      if (s && (VALID_STATUSES as readonly string[]).includes(s)) {
+        counts[s as keyof typeof counts]++;
+      }
     }
     const total = list.length;
     const ready = counts.approved + counts.locked;
     const readinessScore = total > 0 ? Math.round((ready / total) * 100) : 0;
     const recent = [...list]
       .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
-      .slice(0, 5);
+      .slice(0, RECENT_LIMIT);
     return { counts, total, ready, readinessScore, recent };
   }, [artifacts]);
 
@@ -171,7 +175,11 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
                   <div className={cn('inline-flex items-center justify-center w-8 h-8 rounded-lg mb-1', cfg.bg)}>
                     <Icon className={cn('w-4 h-4', cfg.color)} />
                   </div>
-                  <div className="text-lg font-bold text-zinc-800">{stats.counts[status]}</div>
+                  {isLoading ? (
+                    <div className="h-6 w-8 mx-auto bg-zinc-100 rounded animate-pulse" />
+                  ) : (
+                    <div className="text-lg font-bold text-zinc-800">{stats.counts[status]}</div>
+                  )}
                   <div className="text-[10px] text-zinc-400 uppercase tracking-wider">{cfg.label}</div>
                 </div>
               );
@@ -186,6 +194,7 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
           <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Recent Artifacts</h3>
           <button
             onClick={() => onNavigate('work')}
+            aria-label="View all artifacts"
             className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-0.5"
           >
             View all <ChevronRight className="w-3 h-3" />
@@ -194,8 +203,12 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
         {isLoading ? (
           <div className="space-y-2">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-10 bg-zinc-100 rounded-lg animate-pulse" />
+              <div key={i} className="h-9 bg-zinc-50 rounded-lg animate-pulse" />
             ))}
+          </div>
+        ) : isError ? (
+          <div className="text-center py-6 text-sm text-red-500">
+            Failed to load artifacts. Please try again.
           </div>
         ) : stats.recent.length === 0 ? (
           <div className="text-center py-6 text-sm text-zinc-400">
@@ -210,10 +223,10 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
                 <button
                   key={artifact.id}
                   onClick={() => onNavigate('work')}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-zinc-50 transition-colors text-left"
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-zinc-50 transition-colors text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                 >
                   <FileText className="w-4 h-4 text-zinc-400 flex-shrink-0" />
-                  <span className="flex-1 text-sm text-zinc-700 truncate">{artifact.title}</span>
+                  <span className="flex-1 text-sm text-zinc-700 truncate" title={artifact.title}>{artifact.title}</span>
                   {artifact.ctdSection && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 font-medium flex-shrink-0">
                       {artifact.ctdSection}
@@ -241,7 +254,8 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
               <button
                 key={tab.id}
                 onClick={() => onNavigate(tab.id)}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-zinc-100 hover:border-zinc-200 hover:bg-zinc-50/50 transition-all text-center group"
+                aria-label={`Navigate to ${tab.label}`}
+                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-zinc-100 hover:border-zinc-200 hover:bg-zinc-50/50 transition-all text-center group focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
               >
                 <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', tab.color)}>
                   <Icon className="w-5 h-5" />

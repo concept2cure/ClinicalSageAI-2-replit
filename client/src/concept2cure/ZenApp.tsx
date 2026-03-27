@@ -2658,9 +2658,9 @@ export const ZenApp: React.FC = () => {
                       name: activeProject.name,
                       type: activeProject.type,
                       description: activeProject.description ?? null,
-                      sponsor: (activeProject as Record<string, unknown>).sponsor as string | null ?? null,
-                      product: (activeProject as Record<string, unknown>).product as string | null ?? null,
-                      region: (activeProject as Record<string, unknown>).region as string | null ?? null,
+                      sponsor: ((activeProject as Record<string, unknown>).sponsor as string) || null,
+                      product: ((activeProject as Record<string, unknown>).product as string) || null,
+                      region: ((activeProject as Record<string, unknown>).region as string) || null,
                     }}
                     onNavigate={(mode, sectionCode) => {
                       if (sectionCode) {
@@ -2672,7 +2672,7 @@ export const ZenApp: React.FC = () => {
                         if (mapped) {
                           setLayoutMode(mapped);
                         } else {
-                          setLayoutMode(mode as LayoutMode);
+                          console.warn(`[ProjectHomeDashboard] Unknown nav mode: ${mode}`);
                         }
                       }
                     }}

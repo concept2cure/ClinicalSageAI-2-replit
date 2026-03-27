@@ -118,7 +118,7 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onOpenArtifact }) 
             className={cn(
               'px-3 py-1.5 text-xs rounded-md transition-colors',
               activeTab === tab.key
-                ? 'bg-zinc-900 text-white font-medium'
+                ? 'bg-zinc-200 text-zinc-900 font-medium'
                 : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
             )}
           >
