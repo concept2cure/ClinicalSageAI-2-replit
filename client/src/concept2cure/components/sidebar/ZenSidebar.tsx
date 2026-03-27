@@ -47,6 +47,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import logoSrc from '@/assets/concept2cure-logo.jpg';
@@ -88,6 +91,8 @@ export interface ZenSidebarProps {
   onOpenSearch: () => void;
   onOpenSettings: () => void;
   onDeleteConversation: (id: string) => void;
+  onRenameConversation?: (id: string) => void;
+  onMoveConversation?: (conversationId: string, targetProjectId: string) => void;
   onToggleStar: (id: string) => void;
   onTogglePin: (id: string) => void;
   onArchiveProject?: (id: string) => void;
@@ -239,13 +244,12 @@ const ConvoRow: React.FC<{
   isActive: boolean;
   onSelect: () => void;
   onDelete: () => void;
-}> = ({ convo, isActive, onSelect, onDelete }) => {
-  const [hovered, setHovered] = useState(false);
-
+  onRename?: () => void;
+  onMoveToProject?: (targetProjectId: string) => void;
+  availableProjects?: Project[];
+}> = ({ convo, isActive, onSelect, onDelete, onRename, onMoveToProject, availableProjects }) => {
   return (
     <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       onClick={onSelect}
       role="button"
       tabIndex={0}
@@ -267,21 +271,64 @@ const ConvoRow: React.FC<{
       <span className="text-[10px] text-zinc-400 flex-shrink-0 tabular-nums">
         {relativeTime(convo.timestamp)}
       </span>
-      {hovered && (
-        <button
-          onClick={e => {
-            e.stopPropagation();
-            onDelete();
-          }}
-          aria-label={`Delete conversation: ${convo.title}`}
-          className={cn(
-            'flex-shrink-0 p-0.5 rounded text-zinc-400 hover:bg-zinc-200 hover:text-red-500 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-all',
-            hovered ? 'opacity-100' : 'opacity-0 focus-visible:opacity-100'
+
+      {/* Three-dot menu — visible on hover */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            onClick={e => e.stopPropagation()}
+            aria-label={`Actions for conversation: ${convo.title}`}
+            className="flex-shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+          >
+            <MoreHorizontal className="w-3.5 h-3.5" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          {onRename && (
+            <DropdownMenuItem
+              onClick={e => {
+                e.stopPropagation();
+                onRename();
+              }}
+            >
+              <PenLine className="w-3.5 h-3.5 mr-2" />
+              Rename
+            </DropdownMenuItem>
           )}
-        >
-          <Trash2 className="w-3 h-3" />
-        </button>
-      )}
+          {onMoveToProject && availableProjects && availableProjects.length > 0 && (
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <FolderOpen className="w-3.5 h-3.5 mr-2" />
+                Move to project
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="w-48">
+                {availableProjects.map(p => (
+                  <DropdownMenuItem
+                    key={p.id}
+                    onClick={e => {
+                      e.stopPropagation();
+                      onMoveToProject(p.id);
+                    }}
+                  >
+                    <span className="truncate">{p.name}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={e => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="text-red-600 focus:text-red-600"
+          >
+            <Trash2 className="w-3.5 h-3.5 mr-2" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };
@@ -298,6 +345,9 @@ const ProjectRow: React.FC<{
   onToggleExpand: () => void;
   onSelectConversation: (id: string) => void;
   onDeleteConversation: (id: string) => void;
+  onRenameConversation?: (id: string) => void;
+  onMoveConversation?: (conversationId: string, targetProjectId: string) => void;
+  allProjects?: Project[];
   onNewChat: () => void;
   onTogglePin?: (id: string) => void;
   onArchiveProject?: (id: string) => void;
@@ -312,6 +362,9 @@ const ProjectRow: React.FC<{
   onToggleExpand,
   onSelectConversation,
   onDeleteConversation,
+  onRenameConversation,
+  onMoveConversation,
+  allProjects,
   onNewChat,
   onTogglePin,
   onArchiveProject,
@@ -485,6 +538,9 @@ const ProjectRow: React.FC<{
               isActive={c.id === activeConversationId}
               onSelect={() => onSelectConversation(c.id)}
               onDelete={() => onDeleteConversation(c.id)}
+              onRename={onRenameConversation ? () => onRenameConversation(c.id) : undefined}
+              onMoveToProject={onMoveConversation ? (targetProjectId: string) => onMoveConversation(c.id, targetProjectId) : undefined}
+              availableProjects={allProjects?.filter(p => p.id !== project.id)}
             />
           ))}
         </div>
@@ -607,6 +663,8 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   onOpenSearch,
   onOpenSettings,
   onDeleteConversation,
+  onRenameConversation,
+  onMoveConversation,
   onTogglePin,
   onArchiveProject,
   onDeleteProject,

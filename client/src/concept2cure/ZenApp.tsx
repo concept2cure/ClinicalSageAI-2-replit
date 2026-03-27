@@ -50,7 +50,7 @@ import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import { usePlatformContext } from './hooks/useLicense';
 import { useWorkspaceSummary } from './hooks/useWorkspaceSummary';
 import { useReadinessAssessment } from './hooks/useOrchestration';
-import { useProjectIntelligence, useNextBestActions } from './hooks/useIntelligence';
+import { useProjectIntelligence, useNextBestActions, useRecommendations } from './hooks/useIntelligence';
 
 import { WorkspaceReadinessStrip } from './components/workspace/WorkspaceReadinessStrip';
 import { ProjectWorkspaceShell } from './components/workspace/ProjectWorkspaceShell';
@@ -1059,6 +1059,9 @@ export const ZenApp: React.FC = () => {
     activeProjectId ? Number(activeProjectId) : null,
     5
   );
+  const { data: recommendationsData } = useRecommendations(
+    activeProjectId ? Number(activeProjectId) : null
+  );
 
   // Project intelligence stats for AnaPersistentPanel greeting enrichment
   const projectIntelligenceStats = useMemo(() => {
@@ -1068,13 +1071,16 @@ export const ZenApp: React.FC = () => {
       signalCount: readinessData?.metrics?.signalCount ?? 0,
       readinessScore: projectReadinessScore ?? null,
       memoryAtomCount: readinessData?.metrics?.memoryAtomCount ?? 0,
-      // Enriched from intelligence profile
-      recommendations: intelligenceProfile?.learnedInsights?.slice(0, 5).map((ins, i) => ({
-        id: `insight-${i}`,
-        title: ins.insight,
-        severity: ins.confidence >= 0.8 ? 'high' : ins.confidence >= 0.5 ? 'medium' : 'low',
-        category: ins.source,
-      })),
+      // Enriched from useRecommendations (active recommendations sorted by severity)
+      recommendations: recommendationsData?.recommendations
+        ?.filter(r => r.status === 'active')
+        ?.slice(0, 5)
+        ?.map(r => ({
+          id: r.recommendationId,
+          title: r.suggestedAction || r.reason,
+          severity: r.severity,
+          category: r.type,
+        })),
       nextActions: nextActionsData?.actions?.slice(0, 3).map(a => ({
         id: a.actionId,
         title: a.title,
@@ -1092,7 +1098,7 @@ export const ZenApp: React.FC = () => {
         context: oq.context ?? '',
       })),
     };
-  }, [readinessData, projectReadinessScore, intelligenceProfile, nextActionsData]);
+  }, [readinessData, projectReadinessScore, intelligenceProfile, nextActionsData, recommendationsData]);
 
   // ── Canonical AuthoringContextPack — derived from all available state ──────
   const authoringContext = useMemo<AuthoringContextPack | null>(() => {
