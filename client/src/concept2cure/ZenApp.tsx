@@ -2720,38 +2720,29 @@ export const ZenApp: React.FC = () => {
               />
             ))}
 
-          {/* ── Project Overview: real dashboard with readiness, pipeline, recent artifacts ── */}
+          {/* ── Project Home: AnA-first with light context strip ── */}
           {!embeddedModule && layoutMode === 'project-home' && activeProject && (
-            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-overview">
-              <ErrorBoundary>
-                <Suspense fallback={<ModuleLoadingFallback />}>
-                  <ProjectHomeDashboard
-                    project={{
-                      id: Number(activeProjectId) || 0,
-                      name: activeProject.name,
-                      type: activeProject.type,
-                      description: activeProject.description ?? null,
-                      sponsor: ((activeProject as Record<string, unknown>).sponsor as string) || null,
-                      product: ((activeProject as Record<string, unknown>).product as string) || null,
-                      region: ((activeProject as Record<string, unknown>).region as string) || null,
-                    }}
-                    onNavigate={(mode, sectionCode) => {
-                      if (sectionCode) {
-                        setActiveSectionCode(sectionCode);
-                        setLayoutMode('section-workspace');
-                      } else {
-                        // Use SIDEBAR_NAV_TO_LAYOUT for new tab IDs (work, vault, review-tab, submit)
-                        const mapped = SIDEBAR_NAV_TO_LAYOUT[mode];
-                        if (mapped) {
-                          setLayoutMode(mapped);
-                        } else {
-                          console.warn(`[ProjectHomeDashboard] Unknown nav mode: ${mode}`);
-                        }
-                      }
-                    }}
-                  />
-                </Suspense>
-              </ErrorBoundary>
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-overview">
+              <ProjectHomeDashboard
+                project={{
+                  id: Number(activeProjectId) || 0,
+                  name: activeProject.name,
+                  type: activeProject.type,
+                  description: activeProject.description ?? null,
+                  sponsor: ((activeProject as Record<string, unknown>).sponsor as string) || null,
+                  product: ((activeProject as Record<string, unknown>).product as string) || null,
+                  region: ((activeProject as Record<string, unknown>).region as string) || null,
+                }}
+                onNavigate={(mode) => {
+                  const mapped = SIDEBAR_NAV_TO_LAYOUT[mode];
+                  if (mapped) {
+                    setLayoutMode(mapped);
+                  } else {
+                    console.warn(`[ProjectHomeDashboard] Unknown nav mode: ${mode}`);
+                  }
+                }}
+              />
+              {/* AnA takes the rest of the space — this is the primary interface */}
             </div>
           )}
 
@@ -3231,6 +3222,7 @@ export const ZenApp: React.FC = () => {
             <AnaPersistentPanel
               mode={
                 layoutMode === 'projects' ||
+                layoutMode === 'project-home' ||
                 layoutMode === 'deep-research'
                   ? 'full'
                   : 'compact'
@@ -3426,6 +3418,7 @@ const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
   setup: 'setup',
   // Project tabs (new nav IDs from sidebar)
   overview: 'project-home',
+  tools: 'documents',
   work: 'documents',
   vault: 'vault',
   'review-tab': 'review',

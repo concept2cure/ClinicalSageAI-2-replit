@@ -42,6 +42,7 @@ import {
   MoreHorizontal,
   Pin,
   PinOff,
+  Wrench,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -797,8 +798,8 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             <IconBtn label="Overview" active={activeNavId === 'overview'} onClick={() => onNavigate?.('overview')}>
               <LayoutDashboard className="w-4 h-4" />
             </IconBtn>
-            <IconBtn label="Work" active={activeNavId === 'work'} onClick={() => onNavigate?.('work')}>
-              <PenLine className="w-4 h-4" />
+            <IconBtn label="Tools" active={activeNavId === 'work'} onClick={() => onNavigate?.('tools')}>
+              <Wrench className="w-4 h-4" />
             </IconBtn>
             <IconBtn label="Vault" active={activeNavId === 'vault'} onClick={() => onNavigate?.('vault')}>
               <Archive className="w-4 h-4" />
@@ -928,11 +929,11 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
                   onClick={() => onNavigate?.('overview')}
                 />
                 <NavItem
-                  icon={<PenLine className="w-3.5 h-3.5" />}
-                  label="Work"
+                  icon={<Wrench className="w-3.5 h-3.5" />}
+                  label="Tools"
                   active={activeNavId === 'work'}
                   accentColor="blue"
-                  onClick={() => onNavigate?.('work')}
+                  onClick={() => onNavigate?.('tools')}
                 />
                 <NavItem
                   icon={<Archive className="w-3.5 h-3.5" />}
