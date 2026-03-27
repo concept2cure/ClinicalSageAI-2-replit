@@ -2340,6 +2340,11 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   selectedId={selectedDocId}
                   onSelect={handleSelectDoc}
                   onCreateNew={() => setShowNewDoc(true)}
+                  onAIDraft={leftRailMode === 'dossier' && selectedCtdSection ? () => {
+                    // AI draft for this section — open editor with section context
+                    if (onNavigate) onNavigate('regulatory-workspace');
+                  } : undefined}
+                  sectionAIDraftable={leftRailMode === 'dossier' && !!selectedCtdSection}
                   onCutDocument={handleCutDocument}
                   onCopyCtdPath={handleCopyCtdPath}
                   onOpenPlacement={handleOpenPlacementForDoc}

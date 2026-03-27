@@ -2871,6 +2871,8 @@ export const ZenApp: React.FC = () => {
                             setLayoutMode('regulatory-workspace');
                             break;
                           case 'create':
+                            // Open workspace in editor mode — EditorPanel shows new doc dialog
+                            setPendingEditorContent({ content: '', title: 'Untitled Document' });
                             setRiViewMode('editor');
                             setLayoutMode('regulatory-workspace');
                             break;
