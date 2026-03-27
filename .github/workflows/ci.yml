@@ -53,7 +53,6 @@ jobs:
         env:
           CI: true
 
-
   ana-readiness-tests:
     name: AnA Readiness Tests
     runs-on: ubuntu-latest
@@ -125,7 +124,6 @@ jobs:
           CI: true
           RUN_INTEGRATION_TESTS: 'true'
           TEST_DATABASE_URL: postgresql://postgres:${{ env.TEST_DB_PASSWORD }}@localhost:5432/concept2cure-ri_test
-
 
   aios-audit-assets:
     name: AIOS Audit Assets
@@ -234,7 +232,7 @@ jobs:
           CI: true
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarcloud-github-action@v4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -248,3 +246,4 @@ jobs:
             -Dsonar.test.inclusions=**/*.test.ts,**/*.test.tsx,**/*.spec.ts,**/*.spec.tsx
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
             -Dsonar.typescript.tsconfigPath=tsconfig.json
+            -Dsonar.qualitygate.wait=true

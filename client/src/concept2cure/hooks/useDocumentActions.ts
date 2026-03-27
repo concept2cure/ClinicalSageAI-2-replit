@@ -15,6 +15,7 @@
 import { useCallback, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useMutation } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 interface SaveArtifactParams {
   projectId: string;
@@ -68,27 +69,19 @@ export function useDocumentActions(): DocumentActionsResult {
 
   const saveArtifactMutation = useMutation({
     mutationFn: async (params: SaveArtifactParams) => {
-      const response = await fetch(
+      const response = await apiRequest(
+        'POST',
         `/api/concept2cure/projects/${params.projectId}/artifacts`,
         {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: params.title,
-            content: params.content,
-            type: params.type || 'markdown',
-            category: params.category || 'document',
-            conversationId: params.conversationId,
-            metadata: params.metadata,
-            ctdSection: params.ctdSection,
-          }),
+          title: params.title,
+          content: params.content,
+          type: params.type || 'markdown',
+          category: params.category || 'document',
+          conversationId: params.conversationId,
+          metadata: params.metadata,
+          ctdSection: params.ctdSection,
         }
       );
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err?.message || 'Failed to save artifact');
-      }
 
       const payload = await response.json();
       return payload?.data ?? payload;
@@ -99,20 +92,11 @@ export function useDocumentActions(): DocumentActionsResult {
 
   const createDocumentMutation = useMutation({
     mutationFn: async (params: CreateDocumentParams) => {
-      const response = await fetch('/api/document-authoring/documents', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: params.title,
-          content: params.content,
-          documentType: params.documentType || 'regulatory',
-        }),
+      const response = await apiRequest('POST', '/api/document-authoring/documents', {
+        title: params.title,
+        content: params.content,
+        documentType: params.documentType || 'regulatory',
       });
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err?.message || 'Failed to create document');
-      }
 
       const payload = await response.json();
       return payload?.data ?? payload;
@@ -128,16 +112,10 @@ export function useDocumentActions(): DocumentActionsResult {
     setIsExporting(true);
     setExportError(null);
     try {
-      const response = await fetch('/api/concept2cure/artifacts/export-docx', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content }),
+      const response = await apiRequest('POST', '/api/concept2cure/artifacts/export-docx', {
+        title,
+        content,
       });
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err?.message || 'Failed to export DOCX');
-      }
 
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
@@ -166,16 +144,10 @@ export function useDocumentActions(): DocumentActionsResult {
     setIsExportingPdf(true);
     setExportPdfError(null);
     try {
-      const response = await fetch('/api/concept2cure/artifacts/export-pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content }),
+      const response = await apiRequest('POST', '/api/concept2cure/artifacts/export-pdf', {
+        title,
+        content,
       });
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err?.message || 'Failed to export PDF');
-      }
 
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
@@ -198,30 +170,30 @@ export function useDocumentActions(): DocumentActionsResult {
   // ─── Save and Register in Vault ────────────────────────────────────────────
 
   /** Save artifact and also register in vault for governed document management */
-  const saveAndRegisterInVault = useCallback(async (params: SaveArtifactParams) => {
-    // First save as concept2cure artifact
-    const artifact = await saveArtifactMutation.mutateAsync(params);
+  const saveAndRegisterInVault = useCallback(
+    async (params: SaveArtifactParams) => {
+      // First save as concept2cure artifact
+      const artifact = await saveArtifactMutation.mutateAsync(params);
 
-    // Then register in vault for governed document management
-    try {
-      await fetch('/api/concept2cure/vault/register-artifact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          artifactId: (artifact as { id?: string; artifactId?: string })?.id || (artifact as { id?: string; artifactId?: string })?.artifactId,
+      // Then register in vault for governed document management
+      try {
+        await apiRequest('POST', '/api/concept2cure/vault/register-artifact', {
+          artifactId:
+            (artifact as { id?: string; artifactId?: string })?.id ||
+            (artifact as { id?: string; artifactId?: string })?.artifactId,
           projectId: params.projectId,
           title: params.title,
           ctdSection: params.ctdSection,
           documentType: params.category || 'document',
-        }),
-      });
-    } catch (err) {
-      // Vault registration is best-effort; artifact save is the critical path
-      // Vault registration is best-effort; artifact was already saved successfully
-    }
+        });
+      } catch (err) {
+        // Vault registration is best-effort; artifact was already saved successfully
+      }
 
-    return artifact;
-  }, [saveArtifactMutation]);
+      return artifact;
+    },
+    [saveArtifactMutation]
+  );
 
   // ─── Open in Editor ─────────────────────────────────────────────────────────
 

@@ -3,6 +3,7 @@
  * Connects to report-generator-service and Docx Factory.
  */
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 export interface Report {
   id: string;
@@ -20,16 +21,13 @@ export function useReports(projectId?: string) {
     queryFn: async () => {
       // Try fetching existing reports
       try {
-        const res = await fetch(
+        const res = await apiRequest('GET',
           projectId
             ? `/api/concept2cure/projects/${projectId}/reports`
-            : '/api/concept2cure/reports',
-          { credentials: 'include' }
+            : '/api/concept2cure/reports'
         );
-        if (res.ok) {
-          const json = await res.json();
-          return json.data || json || [];
-        }
+        const json = await res.json();
+        return json.data || json || [];
       } catch {
         // Reports endpoint may not exist yet
       }
@@ -45,11 +43,8 @@ export function useReports(projectId?: string) {
       projectId?: string;
     }) => {
       // Generate report via Docx Factory
-      const res = await fetch('/api/docx-factory/renders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
+      try {
+        const res = await apiRequest('POST', '/api/docx-factory/renders', {
           templateId: params.type,
           title: params.title,
           projectId: params.projectId,
@@ -57,37 +52,26 @@ export function useReports(projectId?: string) {
             reportType: params.type,
             generatedAt: new Date().toISOString(),
           },
-        }),
-      });
-
-      if (!res.ok) {
+        });
+        return res.json();
+      } catch {
         // Fall back to simple DOCX export
-        const docxRes = await fetch('/api/concept2cure/artifacts/export-docx', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            title: params.title,
-            content: `# ${params.title}\n\nGenerated: ${new Date().toLocaleDateString()}\n\nThis report was generated from the Concept2Cure platform.`,
-          }),
+        const docxRes = await apiRequest('POST', '/api/concept2cure/artifacts/export-docx', {
+          title: params.title,
+          content: `# ${params.title}\n\nGenerated: ${new Date().toLocaleDateString()}\n\nThis report was generated from the Concept2Cure platform.`,
         });
 
-        if (docxRes.ok) {
-          const blob = await docxRes.blob();
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${params.title.replace(/[^a-zA-Z0-9_.-]/g, '_')}.docx`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          return { id: 'local', title: params.title, status: 'exported' };
-        }
-        throw new Error('Report generation failed');
+        const blob = await docxRes.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${params.title.replace(/[^a-zA-Z0-9_.-]/g, '_')}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        return { id: 'local', title: params.title, status: 'exported' };
       }
-
-      return res.json();
     },
   });
 

@@ -30,15 +30,7 @@ import { useQueryClient } from '@tanstack/react-query';
 // Types
 // ---------------------------------------------------------------------------
 
-export type DeliverableFormat =
-  | 'pdf'
-  | 'docx'
-  | 'xlsx'
-  | 'csv'
-  | 'json'
-  | 'xml'
-  | 'zip'
-  | 'html';
+export type DeliverableFormat = 'pdf' | 'docx' | 'xlsx' | 'csv' | 'json' | 'xml' | 'zip' | 'html';
 
 export interface DeliverableRequest {
   /** Backend API endpoint */
@@ -135,7 +127,7 @@ function tryDownloadFromGovernedRef(data: GovernedExportResponse, fallbackFilena
 async function registerInVaultAndPM(
   request: DeliverableRequest,
   result: DeliverableResult,
-  queryClient: ReturnType<typeof useQueryClient>,
+  queryClient: ReturnType<typeof useQueryClient>
 ) {
   const { projectId, title, filename, format, ctdSection } = request;
   if (!projectId) return; // Skip if no project context
@@ -216,15 +208,42 @@ export function useDeliverable() {
           const blob = await response.blob();
           triggerDownload(blob, filename);
 
-          const result: DeliverableResult = { success: true };
+          // Extract governance artifact identity from response headers
+          const governedArtifactId = response.headers.get('X-Concept2Cure-Artifact-Id');
+          const governancePersistence = response.headers.get(
+            'X-Concept2Cure-Governance-Persistence'
+          );
+
+          const result: DeliverableResult = {
+            success: true,
+            recordId: governedArtifactId || undefined,
+            data: governedArtifactId
+              ? {
+                  artifactId: governedArtifactId,
+                  governed: governancePersistence === 'full',
+                  provenanceId: response.headers.get('X-Concept2Cure-Provenance-Id'),
+                  auditId: response.headers.get('X-Concept2Cure-Audit-Id'),
+                  snapshotId: response.headers.get('X-Concept2Cure-Snapshot-Id'),
+                }
+              : undefined,
+          };
           setLastResult(result);
 
           // Auto-register in vault and project management
           registerInVaultAndPM(request, result, queryClient);
 
+          // Invalidate project artifact queries so new governed export appears immediately
+          if (request.projectId) {
+            queryClient.invalidateQueries({
+              queryKey: [`/api/concept2cure/projects/${request.projectId}/artifacts`],
+            });
+          }
+
           toast({
             title: `${title} ready`,
-            description: `${filename} has been downloaded.`,
+            description: governedArtifactId
+              ? `${filename} downloaded. Governed artifact ${governedArtifactId.slice(0, 20)} created.`
+              : `${filename} has been downloaded.`,
           });
 
           return result;
@@ -270,9 +289,7 @@ export function useDeliverable() {
 
           toast({
             title: `${title} ready`,
-            description: saveOnly
-              ? `${title} has been saved.`
-              : `${filename} has been downloaded.`,
+            description: saveOnly ? `${title} has been saved.` : `${filename} has been downloaded.`,
           });
 
           return result;
@@ -291,9 +308,7 @@ export function useDeliverable() {
 
         toast({
           title: saveOnly ? `${title} saved` : `${title} generated`,
-          description: saveOnly
-            ? `Record created successfully.`
-            : `${title} has been generated.`,
+          description: saveOnly ? `Record created successfully.` : `${title} has been generated.`,
         });
 
         return result;

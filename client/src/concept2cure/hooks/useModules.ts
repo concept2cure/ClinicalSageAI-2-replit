@@ -15,6 +15,7 @@
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLicenseGating } from './useLicense';
+import { apiRequest } from '@/lib/queryClient';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -86,21 +87,6 @@ export const MODULE_IDS = {
   VAULT: 'vault',
   IVDR: 'ivdr-module',
 } as const;
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// AUTH HELPER
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('token') ||
-    localStorage.getItem('authToken');
-  return token
-    ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-    : { 'Content-Type': 'application/json' };
-}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN HOOK: useModules()
@@ -190,20 +176,11 @@ export function useEctdCompile(projectId: number | string) {
     mutationFn: async (
       opts: { submissionType?: string; region?: string; modules?: string[] } = {}
     ) => {
-      const res = await fetch(`/api/ectd-compile/${pid}/compile`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        credentials: 'include',
-        body: JSON.stringify({
-          submissionType: opts.submissionType || 'initial',
-          region: opts.region || 'FDA',
-          modules: opts.modules,
-        }),
+      const res = await apiRequest('POST', `/api/ectd-compile/${pid}/compile`, {
+        submissionType: opts.submissionType || 'initial',
+        region: opts.region || 'FDA',
+        modules: opts.modules,
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Compilation failed' }));
-        throw new Error(err.error || err.message || 'Compilation failed');
-      }
       return res.json() as Promise<CompilationResult>;
     },
     onSuccess: () => {
@@ -225,11 +202,7 @@ export function useEctdStatus(projectId: number | string) {
   return useQuery({
     queryKey: ['ectd-status', pid],
     queryFn: async () => {
-      const res = await fetch(`/api/ectd-compile/${pid}/status`, {
-        headers: getAuthHeaders(),
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error('Failed to fetch eCTD status');
+      const res = await apiRequest('GET', `/api/ectd-compile/${pid}/status`);
       return res.json() as Promise<EctdReadiness>;
     },
     enabled: !!pid,
@@ -249,11 +222,7 @@ export function useEctdHistory(projectId: number | string) {
   return useQuery({
     queryKey: ['ectd-history', pid],
     queryFn: async () => {
-      const res = await fetch(`/api/ectd-compile/${pid}/history`, {
-        headers: getAuthHeaders(),
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error('Failed to fetch compilation history');
+      const res = await apiRequest('GET', `/api/ectd-compile/${pid}/history`);
       return res.json() as Promise<{ projectId: number; compilations: any[] }>;
     },
     enabled: !!pid,
@@ -272,13 +241,9 @@ export function useEctdValidate(projectId: number | string) {
 
   return useMutation({
     mutationFn: async (opts: { region?: string } = {}) => {
-      const res = await fetch(`/api/ectd-compile/${pid}/validate`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        credentials: 'include',
-        body: JSON.stringify({ region: opts.region || 'FDA' }),
+      const res = await apiRequest('POST', `/api/ectd-compile/${pid}/validate`, {
+        region: opts.region || 'FDA',
       });
-      if (!res.ok) throw new Error('Validation failed');
       return res.json();
     },
   });

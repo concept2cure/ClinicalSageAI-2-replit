@@ -10,15 +10,7 @@
  */
 
 import { useMutation } from '@tanstack/react-query';
-
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token
-    ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-    : { 'Content-Type': 'application/json' };
-}
+import { apiRequest } from '@/lib/queryClient';
 
 // ── Generate DOCX from content (via knowledge-base → shadow service) ──────
 export interface GenerateDocxParams {
@@ -36,15 +28,7 @@ export interface GenerateDocxParams {
 export function useGenerateDocx() {
   return useMutation({
     mutationFn: async (params: GenerateDocxParams): Promise<Blob> => {
-      const res = await fetch('/api/knowledge-base/generate-docx', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(params),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'DOCX generation failed' }));
-        throw new Error(err.error || 'DOCX generation failed');
-      }
+      const res = await apiRequest('POST', '/api/knowledge-base/generate-docx', params);
       return res.blob();
     },
   });
@@ -68,31 +52,19 @@ export interface GeneratedSection {
 export function useGenerateINDSection() {
   return useMutation({
     mutationFn: async (params: GenerateINDSectionParams): Promise<GeneratedSection> => {
-      const res = await fetch('/api/knowledge-base/generate-ind-section', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(params),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Section generation failed' }));
-        throw new Error(err.error || 'Section generation failed');
-      }
+      const res = await apiRequest('POST', '/api/knowledge-base/generate-ind-section', params);
       const data = await res.json();
       const content = data.content || data.data?.content || '';
 
       // Auto-persist as artifact if projectId provided and content is real
       if (params.projectId && content && content.trim().length > 0) {
         try {
-          await fetch('/api/knowledge-base/save-docx-as-artifact', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({
-              projectId: params.projectId,
-              title: `${params.sectionCode} — ${params.sectionTitle}`,
-              htmlContent: content,
-              ctdSection: params.sectionCode,
-              type: 'regulatory_document',
-            }),
+          await apiRequest('POST', '/api/knowledge-base/save-docx-as-artifact', {
+            projectId: params.projectId,
+            title: `${params.sectionCode} — ${params.sectionTitle}`,
+            htmlContent: content,
+            ctdSection: params.sectionCode,
+            type: 'regulatory_document',
           });
         } catch {
           // Non-blocking — artifact save failure doesn't break generation
@@ -114,20 +86,11 @@ export interface GenerateINDPackageParams {
 export function useGenerateINDPackage() {
   return useMutation({
     mutationFn: async (params: GenerateINDPackageParams): Promise<Blob> => {
-      // Pass saveAsArtifact flag so server persists as governed artifact
-      const res = await fetch('/api/knowledge-base/generate-ind-package', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          ...params,
-          saveAsArtifact: true,
-          artifactProjectId: params.projectId,
-        }),
+      const res = await apiRequest('POST', '/api/knowledge-base/generate-ind-package', {
+        ...params,
+        saveAsArtifact: true,
+        artifactProjectId: params.projectId,
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Package generation failed' }));
-        throw new Error(err.error || 'Package generation failed');
-      }
       return res.blob();
     },
   });
@@ -165,20 +128,11 @@ export interface GenerateModule3Params {
 export function useGenerateModule3Docx() {
   return useMutation({
     mutationFn: async (params: GenerateModule3Params & { projectId?: string }): Promise<Blob> => {
-      // Pass saveAsArtifact flag so server persists as governed artifact
-      const res = await fetch('/api/knowledge-base/generate-module3-docx', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          ...params,
-          saveAsArtifact: true,
-          artifactProjectId: params.projectId || undefined,
-        }),
+      const res = await apiRequest('POST', '/api/knowledge-base/generate-module3-docx', {
+        ...params,
+        saveAsArtifact: true,
+        artifactProjectId: params.projectId || undefined,
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Module 3 generation failed' }));
-        throw new Error(err.error || 'Module 3 generation failed');
-      }
       return res.blob();
     },
   });
@@ -198,15 +152,7 @@ export function useSaveAsArtifact() {
     mutationFn: async (
       params: SaveAsArtifactParams
     ): Promise<{ artifactId: string; title: string; version: number }> => {
-      const res = await fetch('/api/knowledge-base/save-docx-as-artifact', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(params),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Save failed' }));
-        throw new Error(err.error || 'Save failed');
-      }
+      const res = await apiRequest('POST', '/api/knowledge-base/save-docx-as-artifact', params);
       const payload = await res.json();
       return payload.data;
     },

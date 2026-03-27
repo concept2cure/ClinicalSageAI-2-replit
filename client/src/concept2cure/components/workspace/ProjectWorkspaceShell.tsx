@@ -1484,8 +1484,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 activeArtifact.status === 'locked'
                   ? 'bg-red-100/60 text-red-600'
                   : activeArtifact.status === 'approved'
-                  ? 'bg-green-100/60 text-green-600'
-                  : 'bg-zinc-100 text-zinc-500'
+                    ? 'bg-green-100/60 text-green-600'
+                    : 'bg-zinc-100 text-zinc-500'
               )}
             >
               {activeArtifact.status || 'draft'}
@@ -1531,10 +1531,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 activeArtifact.status === 'locked'
                   ? 'bg-red-50 text-red-700'
                   : activeArtifact.status === 'approved'
-                  ? 'bg-green-50 text-green-700'
-                  : activeArtifact.status === 'review'
-                  ? 'bg-yellow-50 text-yellow-700'
-                  : 'bg-zinc-100 text-zinc-500'
+                    ? 'bg-green-50 text-green-700'
+                    : activeArtifact.status === 'review'
+                      ? 'bg-yellow-50 text-yellow-700'
+                      : 'bg-zinc-100 text-zinc-500'
               )}
             >
               {activeArtifact.status || 'draft'}
@@ -1716,8 +1716,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                       leftRailMode === tab.key
                         ? 'text-zinc-900 bg-white border-b-2 border-zinc-900'
                         : tab.disabled
-                        ? 'text-zinc-400 cursor-not-allowed'
-                        : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/60'
+                          ? 'text-zinc-400 cursor-not-allowed'
+                          : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/60'
                     )}
                     data-testid={`rail-mode-${tab.key}`}
                     title={tab.disabled ? 'Open a document to use Outline' : tab.label}
@@ -1757,10 +1757,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                         activeArtifact.status === 'locked'
                           ? 'bg-red-50 text-red-700'
                           : activeArtifact.status === 'approved'
-                          ? 'bg-green-50 text-green-700'
-                          : activeArtifact.status === 'review'
-                          ? 'bg-yellow-50 text-yellow-700'
-                          : 'bg-zinc-100 text-zinc-500'
+                            ? 'bg-green-50 text-green-700'
+                            : activeArtifact.status === 'review'
+                              ? 'bg-yellow-50 text-yellow-700'
+                              : 'bg-zinc-100 text-zinc-500'
                       )}
                     >
                       {activeArtifact.status || 'draft'}
@@ -2129,17 +2129,37 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                               {art.metadata?.source === 'compute'
                                 ? 'Compute'
                                 : art.metadata?.source === 'export_pdf'
-                                ? 'Export PDF'
-                                : art.metadata?.source === 'export_docx'
-                                ? 'Export DOCX'
-                                : art.metadata?.source === 'export_estar_zip'
-                                ? 'Export eSTAR ZIP'
-                                : art.metadata?.anaRiActionType
-                                ? 'AnA RI'
-                                : art.metadata?.source === 'proposal_accept'
-                                ? 'Proposal'
-                                : 'Manual'}
+                                  ? 'Export PDF'
+                                  : art.metadata?.source === 'export_docx'
+                                    ? 'Export DOCX'
+                                    : art.metadata?.source === 'export_estar_zip'
+                                      ? 'Export eSTAR ZIP'
+                                      : art.metadata?.source === 'governed_export'
+                                        ? `Export ${(art.metadata?.exportFormat || '').toString().toUpperCase()}`
+                                        : art.metadata?.anaRiActionType
+                                          ? 'AnA RI'
+                                          : art.metadata?.source === 'proposal_accept'
+                                            ? 'Proposal'
+                                            : 'Manual'}
                             </span>
+                            {art.metadata?.governed && (
+                              <>
+                                <span className="text-slate-300">·</span>
+                                <span className="text-emerald-600 font-medium">Governed</span>
+                              </>
+                            )}
+                            {art.metadata?.provenancePresent && (
+                              <>
+                                <span className="text-slate-300">·</span>
+                                <span className="text-violet-600">Prov ✓</span>
+                              </>
+                            )}
+                            {art.metadata?.auditPresent && (
+                              <>
+                                <span className="text-slate-300">·</span>
+                                <span className="text-sky-600">Audit ✓</span>
+                              </>
+                            )}
                           </div>
                           <div className="flex items-center gap-2 pt-0.5">
                             <Button
@@ -2614,8 +2634,8 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
                     metrics.completionPercent >= 75
                       ? 'bg-emerald-500'
                       : metrics.completionPercent >= 25
-                      ? 'bg-amber-500'
-                      : 'bg-red-400'
+                        ? 'bg-amber-500'
+                        : 'bg-red-400'
                   )}
                   style={{ width: `${Math.min(100, metrics.completionPercent)}%` }}
                 />
