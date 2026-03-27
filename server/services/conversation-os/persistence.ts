@@ -248,48 +248,53 @@ export class ConversationOsPersistence {
     try {
       const pool = getPool();
       const result = await pool.query(
-        `SELECT id, conversation_id, artifact_id, content, status, created_at FROM conversation_os_artifact_proposals
-         WHERE project_id = $1 AND conversation_id = $2 ORDER BY created_at DESC`,
+        `SELECT
+           p.id,
+           p.conversation_id,
+           p.artifact_id,
+           p.content,
+           p.status,
+           p.created_at,
+           av.governance_state,
+           av.artifact_version,
+           av.artifact_status,
+           av.placement_state,
+           av.provenance_event_id,
+           av.audit_id
+         FROM conversation_os_artifact_proposals p
+         LEFT JOIN LATERAL (
+           SELECT
+             governance_state,
+             artifact_version,
+             artifact_status,
+             placement_state,
+             provenance_event_id,
+             audit_id
+           FROM conversation_os_accepted_artifact_versions
+           WHERE project_id = p.project_id
+             AND conversation_id = p.conversation_id
+             AND proposal_id = p.id
+           ORDER BY created_at DESC
+           LIMIT 1
+         ) av ON TRUE
+         WHERE p.project_id = $1 AND p.conversation_id = $2
+         ORDER BY p.created_at DESC`,
         [ctx.projectId, ctx.conversationId]
       );
-      if (result.rows.length === 0) return [];
-
-      const acceptedRes = await pool.query(
-        `SELECT DISTINCT ON (proposal_id)
-            proposal_id,
-            artifact_external_id,
-            artifact_version,
-            artifact_status,
-            placement_state,
-            provenance_event_id,
-            audit_id,
-            governance_state
-         FROM conversation_os_accepted_artifact_versions
-         WHERE project_id = $1 AND conversation_id = $2
-         ORDER BY proposal_id, created_at DESC`,
-        [ctx.projectId, ctx.conversationId]
-      );
-      const consequenceByProposalId = new Map(
-        acceptedRes.rows.map(row => [row.proposal_id, row] as const)
-      );
-
-      return result.rows.map(row => {
-        const consequence = consequenceByProposalId.get(row.id);
-        return {
-          id: row.id,
-          conversationId: row.conversation_id,
-          artifactId: consequence?.artifact_external_id ?? row.artifact_id,
-          content: row.content,
-          status: row.status,
-          createdAt: new Date(row.created_at).toISOString(),
-          governanceState: consequence?.governance_state,
-          artifactVersion: consequence?.artifact_version ?? undefined,
-          artifactStatus: consequence?.artifact_status ?? undefined,
-          placementState: consequence?.placement_state ?? undefined,
-          provenanceRef: consequence?.provenance_event_id ?? undefined,
-          auditRef: consequence?.audit_id ?? undefined,
-        } satisfies ArtifactProposal;
-      });
+      return result.rows.map(row => ({
+        id: row.id,
+        conversationId: row.conversation_id,
+        artifactId: row.artifact_id,
+        content: row.content,
+        status: row.status,
+        createdAt: new Date(row.created_at).toISOString(),
+        governanceState: row.governance_state ?? undefined,
+        artifactVersion: row.artifact_version ?? undefined,
+        artifactStatus: row.artifact_status ?? undefined,
+        placementState: row.placement_state ?? undefined,
+        provenanceRef: row.provenance_event_id ?? undefined,
+        auditRef: row.audit_id ?? undefined,
+      }));
     } catch (error) {
       if (canFallback(error)) return [];
       throw error;

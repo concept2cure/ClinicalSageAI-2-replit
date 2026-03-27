@@ -1,39 +1,37 @@
-# LAUNCH GATE — DOCUMENT CONSEQUENCE BASELINE (Pre-sprint)
+# LAUNCH GATE — DOCUMENT CONSEQUENCE BASELINE
 
 Date: 2026-03-27  
-Branch observed: `work` (requested `concept2cure-v2` not present in local git refs)
+Requested branch: `concept2cure-v2` (not present in local clone; work performed on current `work` branch snapshot)
 
-## 1) Beta-visible generated-document entry points
+## 1) Beta-visible generated-document entry points (baseline before this sprint pass)
 
-| Entry point | Surface | Creates governed artifact? | Appears in project context? | Reopens in editor? | Version/status/placement/provenance/audit visible? | Compute-driven? | Proposal-accept-driven? | Dead-end/partial status |
-|---|---|---|---|---|---|---|---|---|
-| Compute preset launch (`Artifact Compute Plane`) | `ComputeJobPanel` in dashboard | Yes (via compute writeback) | Yes after artifact reload/list path | Yes (`Open`) | Partial: status/version/placement shown; refs mostly abbreviated and split between summary/details | Yes | No | Partial visibility quality |
-| Conversation proposal accept | `ProjectWorkspaceShell` proposal cards | Yes or persisted-only fallback | Partial: accepted governance is tracked in local state, but proposal reload path drops consequence fields | Yes when governed artifact id exists | Partial: shown immediately after action, not robust on refresh/list | No | Yes | Partial durability-to-UI mapping |
-| Submission Apps “Create Governed Draft” | `SubmissionAppsPanel` via `onCreateDraft` | Yes (artifact creation path) | Yes | Yes | Partial: appears as artifact but source/provenance/audit semantics unclear in recent list | No | No | Partial metadata trust |
-| Transform Canvas / phase-4 draft create | `ProjectWorkspaceShell` `handlePhase4CreateDraft` | Yes | Yes | Yes | Partial: same metadata clarity gap | No | No | Partial |
-| Governed export compute preset | `ComputeJobPanel` preset (`governed_export`) | Yes artifact is created; output still file-oriented | Yes | Yes | Partial: intent/export semantics not explicitly labeled export-only vs editable artifact consequence | Yes | No | Partial labeling |
+| Entry point | File(s) | Governed artifact created | Appears in project context | Reopens in editor | Version/Status/Placement/Prov/Audit visible | Compute-driven | Proposal-accept-driven | Dead-end / partial baseline |
+|---|---|---:|---:|---:|---|---:|---:|---|
+| Artifact Compute Plane panel | `client/src/concept2cure/components/compute/ComputeJobPanel.tsx`, `server/services/compute/computeService.ts`, `server/routes/compute.ts` | Yes | Yes | Yes | Mostly yes (all fields present in list/detail + panel) | Yes | No | Partial: consequence is visible, but not unified with proposal history in persisted list state |
+| Conversation OS proposal accept | `server/services/conversation-os/artifactProposalService.ts`, `server/routes/conversation-os.ts`, `client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx` | Yes when valid context; explicit persisted-only fallback otherwise | Partial | Partial | Partial (accept response carries fields, but baseline list reload did not carry persisted consequence fields) | No | Yes | Partial: accepts were not fully durable/visible after refresh in proposal list view |
+| Workspace recent governed documents | `client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx` | Yes (artifact list based) | Yes | Yes | Partial (metadata visible if present in artifact metadata) | Mixed | Mixed | Partial: proposal-side governed state could be silent after reload |
+| Guided authoring / generated draft surfaces reachable via workspace shell | `client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx` + existing artifact creation surfaces | Mixed by route | Mixed | Mixed | Mixed | Mixed | Mixed | Partial (some flows still export-only elsewhere in codebase; see trust gaps) |
 
-## 2) Exact files to touch
+## 2) Top 8 trust gaps (baseline)
 
-- `client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx`
-- `client/src/concept2cure/components/compute/ComputeJobPanel.tsx`
-- `server/services/compute/computeService.ts`
-- `server/services/compute/artifactWriteback.ts`
-- `server/services/conversation-os/persistence.ts`
+1. Accepted proposal consequence fields were not being rehydrated from proposal list reads; visibility depended on same-session local state.  
+2. Proposal list endpoint returned only proposal core fields (no governance consequence join), which weakened post-refresh trust.  
+3. Workspace “recent governed documents” and proposal consequence were adjacent but not backed by a fully durable shared consequence view.  
+4. Some beta-visible generation/export routes in broader codebase remain export/download oriented and are not represented as reopenable governed artifacts.  
+5. Proposal persisted-no-governance state existed backend-side, but durable read-path visualization was incomplete.  
+6. Not all generation surfaces consistently expose placement/provenance/audit references in the same visible place.  
+7. Hero-path trust still depends on users seeing consequence in workspace immediately after action; this was fragile on reload for proposals.  
+8. Local repository snapshot lacks `concept2cure-v2` branch, blocking exact-branch verification requested for launch-gate signoff.
+
+## 3) Exact files targeted in this sprint pass
+
 - `server/services/conversation-os/types.ts`
-- `server/services/conversation-os/artifactProposalService.ts`
-- `server/__tests__/services/computeService.integration.test.ts`
-- `server/services/__tests__/conversation-os.test.ts`
-- `client/src/concept2cure/components/workspace/documentConsequence.ts` (new)
-- `client/src/concept2cure/components/workspace/__tests__/documentConsequence.test.ts` (new)
+- `server/services/conversation-os/persistence.ts`
+- `client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx`
+- `server/services/__tests__/artifactProposalService.test.ts`
+- `docs/audits/LAUNCH_GATE_DOCUMENT_CONSEQUENCE_BASELINE.md`
+- `docs/audits/LAUNCH_GATE_DOCUMENT_CONSEQUENCE_REPORT.md`
 
-## 3) Top 8 trust gaps in current visible beta path
+## 4) Scope control
 
-1. Proposal consequence metadata is not reliably returned from proposal list reads (refresh can lose governed/persisted nuance).
-2. Proposal cards map API responses to only `id/status` during initial snapshot load, dropping consequence fields.
-3. Compute consequence summary is present but not structured as an explicit governed consequence contract (artifact id/refs are visually weak).
-4. Workspace “Recent Governed Documents” relies on inconsistent artifact metadata fields (`source`, provenance/audit presence) that are not guaranteed by writeback.
-5. Compute writeback metadata does not consistently mark source/governed/provenance/audit presence for downstream UI trust surfaces.
-6. Proposal accept writeback does not stamp source metadata to let workspace distinguish proposal-governed consequences from manual drafts.
-7. Placement/provenance/audit action affordances are split across panels, making consequence loop less immediate and less undeniable.
-8. Hero-path generated drafts (Submission Apps / transform-create) become artifacts, but consequence surface does not consistently identify them as generated draft sources.
+This pass avoids shell redesign and focuses only on durable, visible governed consequence in existing workspace/product surfaces.

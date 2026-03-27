@@ -412,19 +412,17 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         manifestMode: (manifestRes as any)?.manifest?.mode,
         latestFinding: (scoutRes as any)?.findings?.[0]?.summary,
         latestPlanTask: (planRes as any)?.plan?.task,
-        proposals: ((proposalRes as any)?.proposals ?? [])
-          .slice(0, 3)
-          .map((p: any) => ({
-            id: p.id,
-            status: p.status,
-            governanceState: p.governanceState,
-            artifactId: p.artifactId,
-            artifactVersion: p.artifactVersion,
-            artifactStatus: p.artifactStatus,
-            placementState: p.placementState,
-            provenanceRef: p.provenanceRef,
-            auditRef: p.auditRef,
-          })),
+        proposals: ((proposalRes as any)?.proposals ?? []).slice(0, 3).map((p: any) => ({
+          id: p.id,
+          status: p.status,
+          governanceState: p.governanceState,
+          artifactId: p.artifactId,
+          artifactVersion: p.artifactVersion,
+          artifactStatus: p.artifactStatus,
+          placementState: p.placementState,
+          provenanceRef: p.provenanceRef,
+          auditRef: p.auditRef,
+        })),
       });
     });
   }, [projectId, mode]);

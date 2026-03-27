@@ -1,66 +1,44 @@
-# LAUNCH GATE — DOCUMENT CONSEQUENCE REPORT (Sprint Result)
+# LAUNCH GATE — DOCUMENT CONSEQUENCE REPORT
 
-Date: 2026-03-27
+Date: 2026-03-27  
+Requested branch: `concept2cure-v2` (not present in local clone; implementation validated on current `work` branch snapshot)
 
-## Scope executed
-Focused only on compute consequence visibility, proposal acceptance consequence visibility, and in-workspace consequence surfacing. No shell-wide redesign work was performed.
+## What was changed (this sprint pass)
 
-## Implemented changes
+### A) Conversation proposal consequence durability/visibility hardened
+- Extended proposal domain type to carry governed consequence fields (`governanceState`, artifact version/status, placement/provenance/audit refs).  
+- Updated proposal persistence list query to join latest accepted consequence per proposal from `conversation_os_accepted_artifact_versions`.  
+- Updated workspace proposal snapshot hydration so refreshed dashboard state now includes durable consequence fields, not only transient accept-response state.
 
-### 1) Compute consequence metadata hardening
-- Compute writeback now stamps governed metadata (`source`, `governed`, provenance/audit presence) at artifact creation.
-- Compute service now passes explicit compute source metadata and returns a `governedConsequence` payload in create-job responses.
+### B) Honest state labeling retained and tested
+- Kept explicit split between `ACCEPTED_GOVERNED` and `ACCEPTED_PERSISTED_NO_GOVERNANCE`.  
+- Added focused tests for: governed accept consequence, persisted-only fallback, and durable proposal consequence field pass-through.
 
-### 2) Proposal accept consequence durability + visibility
-- Proposal accept writeback now stamps `proposal_accept` source metadata.
-- Governed acceptance response now returns the governed artifact id (not the seed proposal artifact id).
-- Conversation persistence proposal listing now hydrates latest accepted consequence data (governance state, artifact version/status, placement, provenance/audit refs).
+## Exact surfaces updated
 
-### 3) Workspace consequence surface
-- Added a thin “Document Consequence Ledger” in `ProjectWorkspaceShell` that shows:
-  - title
-  - artifact id
-  - version
-  - status
-  - source type (`compute`, `proposal_accept`, `generated_draft`)
-  - placement
-  - provenance present
-  - audit present
-  - open in editor/provenance/audit actions
-- Added helper logic for deterministic merged consequence rows from compute jobs, accepted proposals, and generated drafts.
+1. **Conversation OS proposal list/read consequence surface** (server persistence read path).  
+2. **Project workspace dashboard proposal consequence panel** (client hydration path after load/refresh).  
+3. **Service-level consequence contract tests** for proposal acceptance outcomes.
 
-### 4) Compute panel visibility polish (non-cosmetic)
-- Compute consequence summary now surfaces explicit artifact/provenance/audit refs and placement state.
-- Action labels clarified to “Open in editor”, “Open provenance”, “Open audit”, and “Apply placement”.
-- Replaced touched ad-hoc raw action buttons with governed `Button` component usage.
+## Fully governed flows now confirmed in this pass
 
-### 5) GA hardening follow-up (post-review)
-- Eliminated duplicate artifact creation in Submission Apps flow by reusing the artifact id returned by the initial create API call.
-- Added `generated_draft` source metadata at draft creation points so workspace consequence classification is deterministic.
-- Tightened consequence ledger to avoid mislabeling manual artifacts as generated consequences.
-- Marked non-reopenable consequences honestly in the ledger (`Not reopenable in editor`) rather than presenting a misleading open action.
+1. **Compute-generated outputs via Artifact Compute Plane**: governed artifact consequence already present and still intact (artifact/version/status/placement/prov/audit + reopen actions).  
+2. **Conversation proposal accept with valid context**: governed consequence returned, persisted, and now reloaded with durable visibility in the workspace proposal surface.
 
-## Focused tests added/updated
-- Updated compute integration test to assert governed consequence payload fields.
-- Added conversation proposal persistence test to verify proposal list hydration with governed consequence state.
-- Added workspace consequence-row unit tests for source typing, metadata fields, dedupe behavior.
-- Added a guard test confirming manual artifacts are excluded from generated consequence rows.
+## Flows that remain partial
 
-## Hero path truth after sprint
+1. Export/download-oriented routes outside the touched workspace/compute/conversation-os scope remain partial or export-only in broader repo areas.  
+2. Full hero-path closure across every beta-visible generator cannot be claimed from this scoped patch alone.  
+3. Exact requested-branch verification (`concept2cure-v2`) is blocked by branch absence in local checkout.
 
-### Fully governed + visible
-- Compute-generated document path (Artifact Compute Plane presets) -> governed artifact + visible consequence + reopen path.
-- Proposal acceptance path with valid context -> governed consequence persisted + visible state + reopen path.
-- Generated draft flows (submission apps / transform create-draft callback) -> project-bound artifacts visible in consequence ledger with reopen path.
+## Definition-of-done assessment (for this scoped pass)
 
-### Partial / caveated
-- Any legacy/off-path routes outside the workspace hero path that still return download URLs remain outside this sprint’s touched scope.
-- Local environment missing dependencies prevented runtime lint/test execution; assertions rely on code inspection and static patch review.
+- Compute-generated governed consequence visibility: **Pass (maintained)**  
+- Proposal accept governed/persisted-only honest state: **Pass (improved durability on reload)**  
+- Project/workspace context visibility for accepted proposals: **Pass (improved)**  
+- Reopen in editor paths from workspace surfaces: **Pass (existing behavior retained)**  
+- No shell redesign/scope creep: **Pass**
 
-## Dead-end handling status
-- No new download-only behavior introduced.
-- In touched surfaces, consequence is now rendered as project-bound artifact entries with editor reopen actions.
+## Caveats
 
-## Risk notes
-- Requested branch `concept2cure-v2` does not exist in local refs; work was committed to current branch (`work`).
-- Manual browser-level smoke was not possible in this environment (no browser tool in toolchain for this run).
+- This report is technically honest to the touched scope and current local repository state. It is not a blanket claim that all product-wide generation routes are now governed.

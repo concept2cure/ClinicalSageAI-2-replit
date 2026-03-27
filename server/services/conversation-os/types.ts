@@ -65,7 +65,7 @@ export interface ArtifactProposal {
   governanceState?: 'ACCEPTED_GOVERNED' | 'ACCEPTED_PERSISTED_NO_GOVERNANCE' | 'REJECTED';
   artifactVersion?: number;
   artifactStatus?: string;
-  placementState?: string | null;
-  provenanceRef?: string | null;
-  auditRef?: string | null;
+  placementState?: string;
+  provenanceRef?: string;
+  auditRef?: string;
 }
