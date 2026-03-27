@@ -1,0 +1,35 @@
+{
+  "version": "1.0.0",
+  "tasks": [
+    {
+      "id": "parse_510k_pdf_tables",
+      "category": "parsing_quality",
+      "description": "Extract hierarchy/tables from representative 510(k) PDF",
+      "gate": "beta"
+    },
+    {
+      "id": "retrieve_citable_evidence",
+      "category": "retrieval_citation",
+      "description": "Return scoped evidence with citation payload",
+      "gate": "beta"
+    },
+    {
+      "id": "enforce_human_review_gate",
+      "category": "policy_enforcement",
+      "description": "Block export without required human review",
+      "gate": "beta"
+    },
+    {
+      "id": "temporal_retry_cancel_resume",
+      "category": "workflow_reliability",
+      "description": "Validate long-running job retry/cancel/resume behavior",
+      "gate": "ga"
+    },
+    {
+      "id": "trace_correlation_integrity",
+      "category": "observability_completeness",
+      "description": "Verify trace/policy/workflow ID correlation",
+      "gate": "ga"
+    }
+  ]
+}

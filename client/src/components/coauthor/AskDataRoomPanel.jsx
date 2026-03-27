@@ -113,22 +113,29 @@ export default function AskDataRoomPanel({
     },
   });
 
-  // Ask AI about Data Room content
+  // Ask AI about Data Room content — wired to POST /api/evidence/ask
   const askDataRoomMutation = useMutation({
     mutationFn: async (question) => {
       setIsAskingAI(true);
-      return apiRequest('/api/evidence/ask', {
-        method: 'POST',
-        body: JSON.stringify({
-          question,
-          projectId,
-          organizationId,
-          documentContext: selectedDocumentId,
-        }),
+      const res = await apiRequest('POST', '/api/evidence/ask', {
+        question,
+        projectId,
+        context: selectedDocumentId ? `Current document: ${selectedDocumentId}` : undefined,
       });
+      // Unwrap response envelope (sendSuccess wraps in { success, data })
+      const json = await res.json();
+      return json.data || json;
     },
     onSuccess: (data) => {
-      setAiResponse(data);
+      // Normalize source field names for display
+      setAiResponse({
+        answer: data?.answer || '',
+        sources: (data?.sources || []).map((s) => ({
+          title: s.docTitle || s.title || 'Unknown source',
+          excerpt: s.excerpt || '',
+          relevanceScore: s.relevanceScore,
+        })),
+      });
       setIsAskingAI(false);
     },
     onError: (error) => {

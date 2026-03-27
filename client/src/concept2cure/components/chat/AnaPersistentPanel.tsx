@@ -471,6 +471,9 @@ const SLASH_COMMANDS: SlashCommand[] = [
   { command: '/sign', description: 'Electronic signature (21 CFR Part 11)', category: 'Lifecycle' },
   { command: '/submit', description: 'Submit to regulatory workflow', category: 'Lifecycle' },
   { command: '/preflight', description: 'Section/module/dossier preflight', category: 'Lifecycle' },
+  // HAQ & Data Room
+  { command: '/haq', description: 'Draft Health Authority Question response', category: 'Authoring' },
+  { command: '/ask', description: 'Query project data room with AI', category: 'Analysis' },
   // Navigation & Meta
   { command: '/workflow', description: 'Full submission workflow progress', category: 'Navigation' },
   { command: '/knowledge', description: 'Search knowledge base', category: 'Navigation' },

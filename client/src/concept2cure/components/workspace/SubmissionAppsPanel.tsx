@@ -46,7 +46,12 @@ interface SubmissionAppsPanelProps {
   projectId?: string;
   projectName?: string;
   onClose: () => void;
-  onCreateDraft: (title: string, ctdSection: string, templateKey?: string) => void;
+  onCreateDraft: (
+    title: string,
+    ctdSection: string,
+    templateKey?: string,
+    existingArtifactId?: string
+  ) => void;
   onOpenTransformCanvas?: (ctdSection: string, templateKey?: string) => void;
 }
 
@@ -75,10 +80,16 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
         category: 'document',
         ctdSection: selectedApp.defaultCtdSection,
         templateId: selectedApp.templateKey,
+        metadata: {
+          source: 'generated_draft',
+          governed: true,
+        },
       });
       if (res.ok) {
+        const payload = await res.json();
+        const created = payload.data ?? payload;
         toast({ title: 'Draft created' });
-        onCreateDraft(title, selectedApp.defaultCtdSection, selectedApp.templateKey);
+        onCreateDraft(title, selectedApp.defaultCtdSection, selectedApp.templateKey, created.id);
       } else {
         toast({ title: 'Failed to create draft', variant: 'destructive' });
       }

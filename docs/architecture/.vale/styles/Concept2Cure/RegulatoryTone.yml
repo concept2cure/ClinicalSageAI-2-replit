@@ -1,0 +1,9 @@
+extends: existence
+message: "Avoid promotional claim '%s' in regulated medical writing."
+level: error
+ignorecase: true
+tokens:
+  - breakthrough
+  - guaranteed
+  - 100% safe
+  - zero risk
