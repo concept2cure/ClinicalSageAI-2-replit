@@ -2418,6 +2418,7 @@ export const ZenApp: React.FC = () => {
               <ErrorBoundary>
                 <Suspense fallback={<ModuleLoadingFallback />}>
                   <AppsPage
+                    submissionType={activeProject?.type}
                     onNavigate={id => {
                       switch (id) {
                         case 'deep-research': setLayoutMode('deep-research'); break;
