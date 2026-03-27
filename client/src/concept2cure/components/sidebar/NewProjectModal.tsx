@@ -212,10 +212,18 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
     setIsCreating(true);
     setCreateError(null);
     try {
+      // Build description that includes sponsor/agency/instructions context
+      const descParts: string[] = [];
+      if (projectDescription.trim()) descParts.push(projectDescription.trim());
+      if (sponsor.trim()) descParts.push(`Sponsor: ${sponsor.trim()}`);
+      if (targetAgency) descParts.push(`Agency: ${targetAgency}`);
+      if (targetDate) descParts.push(`Target: ${targetDate}`);
+      if (customInstructions.trim()) descParts.push(`Instructions: ${customInstructions.trim()}`);
+
       const project = await createProject(
         projectName.trim(),
         selectedType,
-        projectDescription.trim() || undefined
+        descParts.join(' · ') || undefined
       );
       setCreatedProject({ id: project.id, type: selectedType });
       setStep('success');
