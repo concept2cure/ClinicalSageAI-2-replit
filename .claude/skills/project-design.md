@@ -514,13 +514,13 @@ Gaps from the redesign plan — use this as a checklist when building:
 | E3 | Project context badge in chat | ✅ DONE (AnaPersistentPanel) |
 | E4 | Auto-title conversations from first message | ✅ DONE (chat.ts) |
 | E5 | DossierMap + SubmissionReadiness use real API | ✅ DONE (API-driven, no mock data) |
-| E6 | Move conversations between projects | ⬜ TODO |
-| E7 | RAG file activation (toggle file in/out of context) | ⬜ TODO |
-| E8 | Nightly memory summaries (background job) | ⬜ TODO |
-| E9 | Project sharing + permissions UI (Enterprise) | ⬜ TODO |
+| E6 | Move conversations between projects | ✅ DONE (PATCH /api/chat/thread/:id + sidebar submenu) |
+| E7 | RAG file activation (toggle file in/out of context) | ✅ DONE (isActive toggle + context builder filtering) |
+| E8 | Nightly memory summaries (background job) | ✅ DONE (memory-consolidation-job.ts, 2AM UTC cron) |
+| E9 | Project sharing + permissions UI (Enterprise) | ⬜ TODO (Enterprise tier) |
 | N1 | Add text content to project knowledge | ✅ DONE (useProjectKnowledge + panel UI) |
-| N2 | Context usage / token bar in knowledge panel | ⬜ TODO |
-| N3 | Team sharing UI (invite, roles, audit) | ⬜ TODO |
+| N2 | Context usage / token bar in knowledge panel | ✅ DONE (ContextMeter + token estimation) |
+| N3 | Team sharing UI (invite, roles, audit) | ⬜ TODO (Enterprise tier) |
 
 ---
 

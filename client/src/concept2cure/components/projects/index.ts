@@ -5,3 +5,4 @@
 
 export { ProjectSwitcher, NewProjectModal } from './ProjectSwitcher';
 export { ConnectedProjectSwitcher } from './ConnectedProjectSwitcher';
+export { ProjectConfigPanel } from './ProjectConfigPanel';

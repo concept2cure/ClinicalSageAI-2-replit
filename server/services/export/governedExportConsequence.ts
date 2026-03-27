@@ -1,6 +1,6 @@
 import { registerArtifactWithGovernance } from '../compute/artifactWriteback';
 
-export type ExportSourceType = 'export_pdf' | 'export_docx' | 'export_estar_zip';
+export type ExportSourceType = 'export_pdf' | 'export_docx' | 'export_zip' | 'export_estar_zip';
 
 export interface GovernedExportInput {
   organizationId: number;
@@ -16,6 +16,16 @@ export interface GovernedExportInput {
   mimeType: string;
   filename: string;
   metadata?: Record<string, unknown>;
+}
+
+const DEFAULT_MAX_GOVERNED_EXPORT_BYTES = 25 * 1024 * 1024; // 25 MiB
+
+function getMaxGovernedExportBytes(): number {
+  const raw = process.env.GOVERNED_EXPORT_MAX_BYTES;
+  if (!raw) return DEFAULT_MAX_GOVERNED_EXPORT_BYTES;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT_MAX_GOVERNED_EXPORT_BYTES;
+  return Math.floor(parsed);
 }
 
 export interface GovernedExportConsequence {
@@ -36,9 +46,44 @@ export interface GovernedExportConsequence {
   };
 }
 
+function assertValidGovernedExportInput(input: GovernedExportInput): void {
+  if (!Number.isFinite(input.organizationId) || input.organizationId <= 0) {
+    throw new Error('INVALID_GOVERNED_EXPORT_INPUT: organizationId must be a positive number');
+  }
+  if (!Number.isFinite(input.projectId) || input.projectId <= 0) {
+    throw new Error('INVALID_GOVERNED_EXPORT_INPUT: projectId must be a positive number');
+  }
+  if (!Number.isFinite(input.userId) || input.userId <= 0) {
+    throw new Error('INVALID_GOVERNED_EXPORT_INPUT: userId must be a positive number');
+  }
+  if (!input.title?.trim()) {
+    throw new Error('INVALID_GOVERNED_EXPORT_INPUT: title is required');
+  }
+  if (!input.backendRoute?.trim()) {
+    throw new Error('INVALID_GOVERNED_EXPORT_INPUT: backendRoute is required');
+  }
+  if (!input.mimeType?.trim()) {
+    throw new Error('INVALID_GOVERNED_EXPORT_INPUT: mimeType is required');
+  }
+  if (!input.filename?.trim()) {
+    throw new Error('INVALID_GOVERNED_EXPORT_INPUT: filename is required');
+  }
+  if (!Buffer.isBuffer(input.binaryOutput) || input.binaryOutput.length === 0) {
+    throw new Error('INVALID_GOVERNED_EXPORT_INPUT: binaryOutput must be a non-empty Buffer');
+  }
+  const maxBytes = getMaxGovernedExportBytes();
+  if (input.binaryOutput.length > maxBytes) {
+    throw new Error(
+      `INVALID_GOVERNED_EXPORT_INPUT: binaryOutput exceeds max size (${maxBytes} bytes)`
+    );
+  }
+}
+
 export async function createGovernedExportConsequence(
   input: GovernedExportInput
 ): Promise<GovernedExportConsequence> {
+  assertValidGovernedExportInput(input);
+
   const consequence = await registerArtifactWithGovernance({
     organizationId: input.organizationId,
     projectId: input.projectId,

@@ -14,6 +14,7 @@
  */
 import crypto from 'node:crypto';
 import { getPool } from '../../db.ts';
+import { emitTraceEvent, createTraceId } from '../generation-guard.js';
 
 export interface ExportGovernanceInput {
   organizationId: number;
@@ -242,6 +243,26 @@ export async function registerGovernedExport(
 
     await client.query('COMMIT');
 
+    // Trace: export_success
+    const traceId = createTraceId();
+    emitTraceEvent({
+      traceId,
+      timestamp: now.toISOString(),
+      event: 'export_success',
+      sourceSystem: (input.docType === 'cerv2_510k' ? 'cerv2_510k' : input.docType === 'cerv2_pma' ? 'cerv2_pma' : input.docType === 'cerv2_cer' ? 'cerv2_cer' : 'document_builder') as any,
+      projectId: input.projectId,
+      artifactId: externalArtifactId,
+      userId: input.userId,
+      metadata: {
+        exportFormat: input.exportFormat,
+        exportFilename: input.exportFilename,
+        exportFileSize: input.exportFileSize,
+        provenanceEventId,
+        auditId,
+        snapshotId,
+      },
+    });
+
     return {
       artifactId: externalArtifactId,
       version: 1,
@@ -257,6 +278,18 @@ export async function registerGovernedExport(
   } catch (error) {
     await client.query('ROLLBACK').catch(() => {});
     console.error('[ExportGovernance] Failed to register governed export — degraded mode:', error);
+
+    // Trace: export_failure
+    emitTraceEvent({
+      traceId: createTraceId(),
+      timestamp: new Date().toISOString(),
+      event: 'export_failure',
+      sourceSystem: 'document_builder' as any,
+      projectId: input.projectId,
+      userId: input.userId,
+      metadata: { error: (error as Error).message, exportFormat: input.exportFormat },
+    });
+
     return null;
   } finally {
     client.release();

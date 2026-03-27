@@ -72,12 +72,15 @@ import {
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
 import { SkeletonText, LoadingState } from '@/components/ui/statesV2';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   DocumentModeProvider,
   resolveDocumentMode,
   MODE_CAPABILITIES,
   type WorkflowStage,
 } from '../../contexts/DocumentModeContext';
+import { buildDocumentConsequenceRows, type ConsequenceComputeJob } from './documentConsequence';
 
 // Feature flag for governed drag-and-drop (Phase 3C groundwork)
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -149,7 +152,7 @@ interface PendingMove {
 // ── Folder label map ─────────────────────────────────────────────────────────
 const FOLDER_LABELS: Record<string, string> = {
   drafts: 'Drafts',
-  generated: 'Generated Documents',
+  generated: 'Generated',
   dossier: 'Dossier',
   evidence: 'Evidence Packs',
   cmc: 'CMC',
@@ -169,13 +172,13 @@ const OPERATING_LAYERS: OperatingLayerConfig[] = [
   },
   {
     id: 'vault',
-    label: 'Vault Layer',
+    label: 'Evidence',
     description: 'Evidence and document operations',
     icon: Files,
   },
   {
     id: 'reports',
-    label: 'Reports Layer',
+    label: 'Readiness',
     description: 'Readiness, review, and executive reporting',
     icon: Activity,
   },
@@ -214,9 +217,9 @@ const WORKBENCHES: WorkbenchConfig[] = [
 
 const PROJECT_NAV_ITEMS: Array<{ id: ProjectNav; label: string }> = [
   { id: 'overview', label: 'Overview' },
-  { id: 'documents', label: 'Documents' },
+  { id: 'documents', label: 'Tools' },
   { id: 'vault', label: 'Vault' },
-  { id: 'reports', label: 'Reports' },
+  { id: 'reports', label: 'Readiness' },
   { id: 'tasks', label: 'Tasks' },
   { id: 'reviews', label: 'Reviews' },
   { id: 'submission', label: 'Submission' },
@@ -359,6 +362,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       auditRef?: string;
     }>;
   }>({ proposals: [] });
+  const [computeJobs, setComputeJobs] = useState<ConsequenceComputeJob[]>([]);
 
   // Governed document panel (right inspector)
   const [showGovernedPanel, setShowGovernedPanel] = useState(false);
@@ -439,6 +443,17 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     }
   }, [projectId]);
 
+  const loadComputeJobs = useCallback(async () => {
+    if (!projectId) return;
+    try {
+      const res = await apiRequest('GET', `/api/concept2cure/compute/projects/${projectId}/jobs`);
+      const payload = await res.json();
+      setComputeJobs(payload.data ?? []);
+    } catch {
+      setComputeJobs([]);
+    }
+  }, [projectId]);
+
   const actOnProposal = useCallback(
     async (proposalId: string, action: 'accept' | 'reject') => {
       if (!projectId) return;
@@ -510,6 +525,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   useEffect(() => {
     loadArtifacts();
   }, [loadArtifacts]);
+
+  useEffect(() => {
+    loadComputeJobs();
+  }, [loadComputeJobs]);
 
   // ── Load dossier metrics ─────────────────────────────────────────────────
   const loadDossierMetrics = useCallback(async () => {
@@ -1072,21 +1091,30 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
   /** Called when Transform Canvas / Submission App creates a draft */
   const handlePhase4CreateDraft = useCallback(
-    async (title: string, ctdSection: string, templateKey?: string) => {
+    async (title: string, ctdSection: string, templateKey?: string, existingArtifactId?: string) => {
       if (!projectId) return;
       try {
-        const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
-          title,
-          content: `<h1>${title}</h1><p>Begin editing this document.</p>`,
-          type: 'regulatory_document',
-          category: 'document',
-          ctdSection,
-          templateId: templateKey,
-        });
-        const payload = await res.json();
-        const created = payload.data ?? payload;
+        let createdId = existingArtifactId;
+        if (!createdId) {
+          const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
+            title,
+            content: `<h1>${title}</h1><p>Begin editing this document.</p>`,
+            type: 'regulatory_document',
+            category: 'document',
+            ctdSection,
+            templateId: templateKey,
+            metadata: {
+              source: 'generated_draft',
+              governed: true,
+            },
+          });
+          const payload = await res.json();
+          const created = payload.data ?? payload;
+          createdId = created.id;
+        }
         await loadArtifacts();
-        setSelectedDocId(created.id);
+        if (!createdId) return;
+        setSelectedDocId(createdId);
         setMode('edit');
         closePhase4Panel();
       } catch {
@@ -1094,6 +1122,19 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       }
     },
     [projectId, loadArtifacts, closePhase4Panel]
+  );
+
+  const documentConsequenceRows = useMemo(
+    () =>
+      buildDocumentConsequenceRows({
+        artifacts,
+        computeJobs,
+        proposals: conversationSnapshot.proposals,
+        canOpenArtifact: (artifactId: string, status: string) =>
+          artifacts.some(a => a.id === artifactId) &&
+          MODE_CAPABILITIES[resolveDocumentMode(status)].canEdit,
+      }),
+    [artifacts, computeJobs, conversationSnapshot.proposals]
   );
 
   // ── Create missing subsection from template structure ────────────────────
@@ -1283,7 +1324,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 Intelligence
               </button>
               <button className="px-3 py-1.5 text-xs font-medium bg-zinc-900 text-white transition-colors duration-150">
-                Documents
+                Work
               </button>
             </div>
           )}
@@ -1663,7 +1704,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 {[
                   { key: 'documents' as OperatingLayer, label: 'Docs' },
                   { key: 'vault' as OperatingLayer, label: 'Vault' },
-                  { key: 'reports' as OperatingLayer, label: 'Reports' },
+                  { key: 'reports' as OperatingLayer, label: 'Readiness' },
                 ].map(layer => (
                   <button
                     key={layer.key}
@@ -2034,6 +2075,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
                   <ComputeJobPanel
                     projectId={projectId}
+                    onJobsLoaded={jobs => setComputeJobs(jobs)}
                     onOpenArtifact={artifactId => openComputeArtifact(artifactId)}
                     onOpenProvenance={artifactId => openComputeArtifact(artifactId, 'provenance')}
                     onOpenAudit={artifactId => openComputeArtifact(artifactId, 'audit')}
@@ -2076,42 +2118,30 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="w-4 h-4 text-emerald-600" />
                       <span className="text-sm font-semibold text-slate-900">
-                        Recent Governed Documents
+                        Document Consequence Ledger
                       </span>
                       <Badge variant="outline" className="text-[10px] ml-auto">
-                        {
-                          artifacts.filter(a => {
-                            const age = Date.now() - new Date(a.updatedAt ?? a.createdAt).getTime();
-                            return age < 24 * 60 * 60 * 1000;
-                          }).length
-                        }{' '}
-                        in 24h
+                        {documentConsequenceRows.length} tracked
                       </Badge>
                     </div>
-                    {/* Recent project artifacts (last 24h or last 5) */}
-                    {(() => {
-                      const recent = artifacts
-                        .slice()
-                        .sort(
-                          (a, b) =>
-                            new Date(b.updatedAt ?? b.createdAt).getTime() -
-                            new Date(a.updatedAt ?? a.createdAt).getTime()
-                        )
-                        .slice(0, 5);
-                      if (!recent.length)
-                        return (
-                          <div className="text-xs text-slate-500">
-                            No governed artifacts yet. Generate or accept a document to begin.
-                          </div>
-                        );
-                      return recent.map(art => (
-                        <div
-                          key={art.id}
-                          className="rounded border border-slate-100 px-3 py-2 space-y-1"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="text-xs font-medium text-slate-800 truncate max-w-[260px]">
-                              {art.title}
+                    {documentConsequenceRows.length === 0 ? (
+                      <div className="text-xs text-slate-500">
+                        No generated or accepted document consequences yet.
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {documentConsequenceRows.map(row => (
+                          <div
+                            key={row.rowKey}
+                            className="rounded border border-slate-100 px-3 py-2 space-y-1.5"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="text-xs font-medium text-slate-800 truncate">
+                                {row.title}
+                              </div>
+                              <Badge variant="outline" className="text-[10px]">
+                                {row.status}
+                              </Badge>
                             </div>
                             <Badge
                               variant="outline"
@@ -2140,6 +2170,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                                   ? 'Export PDF'
                                   : art.metadata?.source === 'export_docx'
                                     ? 'Export DOCX'
+                                    : art.metadata?.source === 'export_zip'
+                                      ? 'Export ZIP'
                                     : art.metadata?.source === 'export_estar_zip'
                                       ? 'Export eSTAR ZIP'
                                       : art.metadata?.source === 'governed_export'
@@ -2215,16 +2247,37 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-6 px-2 text-[11px] text-orange-600"
-                                onClick={() => handleOpenPlacementForDoc(art, 'place')}
+                                className="h-6 px-2 text-[11px] text-blue-600"
+                                disabled={!row.openable}
+                                onClick={() => openComputeArtifact(row.artifactId)}
                               >
-                                Place
+                                {row.openable ? 'Open in editor' : 'Not reopenable in editor'}
                               </Button>
-                            )}
+                              {row.provenancePresent && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-[11px] text-violet-600"
+                                  onClick={() => openComputeArtifact(row.artifactId, 'provenance')}
+                                >
+                                  Provenance
+                                </Button>
+                              )}
+                              {row.auditPresent && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-[11px] text-emerald-600"
+                                  onClick={() => openComputeArtifact(row.artifactId, 'audit')}
+                                >
+                                  Audit
+                                </Button>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ));
-                    })()}
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Conversation proposals with governed consequence visibility */}
@@ -2372,6 +2425,11 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   selectedId={selectedDocId}
                   onSelect={handleSelectDoc}
                   onCreateNew={() => setShowNewDoc(true)}
+                  onAIDraft={leftRailMode === 'dossier' && selectedCtdSection ? () => {
+                    // AI draft for this section — open editor with section context
+                    if (onNavigate) onNavigate('regulatory-workspace');
+                  } : undefined}
+                  sectionAIDraftable={leftRailMode === 'dossier' && !!selectedCtdSection}
                   onCutDocument={handleCutDocument}
                   onCopyCtdPath={handleCopyCtdPath}
                   onOpenPlacement={handleOpenPlacementForDoc}
@@ -2628,7 +2686,7 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-zinc-500">Documents</span>
+                <span className="text-zinc-500">Artifacts</span>
                 <span className="font-medium text-zinc-700">{metrics.artifactCount}</span>
               </div>
               <div className="flex items-center justify-between">

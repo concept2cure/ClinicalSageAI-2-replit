@@ -169,3 +169,13 @@ export {
   type RIMIntegrationResult,
   type RIMIntegrationContext,
 } from './rim-integration.js';
+
+export {
+  ProactiveCommitmentEngine,
+  type ProactiveCheckResult,
+  type ProactiveCommitment,
+  type AtRiskCommitment,
+  type OverdueCommitment,
+  type PhaseGateAlert,
+  type CriticalPathWarning,
+} from './proactive-commitment-engine.js';

@@ -21,6 +21,9 @@ import { createScopedLogger } from '../utils/logger';
 
 const logger = createScopedLogger('working-memory');
 
+/** Message count threshold before generating/refreshing working memory summary */
+const WORKING_MEMORY_THRESHOLD = parseInt(process.env.WORKING_MEMORY_THRESHOLD || '20', 10);
+
 export interface WorkingMemory {
   id?: number;
   conversationId: number;
@@ -190,10 +193,10 @@ export async function needsWorkingMemoryRefresh(
   currentMessageCount: number
 ): Promise<boolean> {
   const existing = await getLatestWorkingMemory(conversationId, organizationId);
-  if (!existing) return currentMessageCount >= 20;
+  if (!existing) return currentMessageCount >= WORKING_MEMORY_THRESHOLD;
 
   const messagesSinceSummary = currentMessageCount - existing.messageCountAtGeneration;
 
-  // Refresh thresholds: every 20 messages after first summary
-  return messagesSinceSummary >= 20;
+  // Refresh thresholds: every N messages after first summary
+  return messagesSinceSummary >= WORKING_MEMORY_THRESHOLD;
 }

@@ -92,6 +92,16 @@ export async function enqueueAndRunComputeJob(intent: ComputeIntent) {
       content: intent.content,
       sourceJobId: jobId,
       surfaceKey: intent.surfaceKey,
+      sourceType: 'compute',
+      metadata: {
+        source: 'compute',
+        runtimeMaturity,
+        outputFormat: intent.format,
+      },
+      auditMetadata: {
+        runtimeMaturity,
+        outputFormat: intent.format,
+      },
     });
 
     await pool.query(
@@ -138,6 +148,15 @@ export async function enqueueAndRunComputeJob(intent: ComputeIntent) {
       runtimeProfile: profile.profileKey,
       runtimeMaturity,
       artifactId: writeback.artifactId,
+      governedConsequence: {
+        artifactId: writeback.artifactId,
+        artifactTitle: writeback.artifactTitle,
+        artifactStatus: writeback.artifactStatus,
+        artifactVersion: writeback.version,
+        placementState: writeback.placementState,
+        provenanceRef: writeback.provenanceEventId,
+        auditRef: writeback.auditId,
+      },
     };
   } catch (error: any) {
     await pool.query(

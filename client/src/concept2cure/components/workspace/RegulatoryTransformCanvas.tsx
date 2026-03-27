@@ -70,7 +70,12 @@ interface RegulatoryTransformCanvasProps {
   artifactId?: string;
   artifactTitle?: string;
   onClose: () => void;
-  onCreateDraft: (title: string, ctdSection: string, templateKey?: string) => void;
+  onCreateDraft: (
+    title: string,
+    ctdSection: string,
+    templateKey?: string,
+    existingArtifactId?: string
+  ) => void;
   onOpenEditor: (artifactId: string) => void;
   onOpenPlacement: (artifactId?: string) => void;
   onOpenVerification?: (artifactId: string) => void;

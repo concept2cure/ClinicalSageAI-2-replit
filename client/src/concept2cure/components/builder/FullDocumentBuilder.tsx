@@ -74,7 +74,12 @@ const DESIGNS = [
 // COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export const FullDocumentBuilder: React.FC = () => {
+interface FullDocumentBuilderProps {
+  /** Called when user clicks "Open in Editor" after generation completes */
+  onOpenInEditor?: (content: string, title: string, ctdSection?: string) => void;
+}
+
+export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpenInEditor }) => {
   const [step, setStep] = useState<BuilderStep>('type');
   const [selectedType, setSelectedType] = useState('');
   const [selectedAgencies, setSelectedAgencies] = useState<string[]>(['FDA']);
@@ -339,7 +344,20 @@ export const FullDocumentBuilder: React.FC = () => {
               {buildResult.sections.length} sections | {draftedSections.length} drafted | Validation: {validationPasses}/{validationTotal} passed
             </p>
           </div>
-          <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+          <button
+            onClick={() => {
+              if (!buildResult || !onOpenInEditor) return;
+              // Combine all generated sections into one HTML document
+              const combinedContent = buildResult.sections
+                .map(s => `<h2>${s.number} ${s.title}</h2>\n${s.content}`)
+                .join('\n\n');
+              const title = `${DOC_TYPES.find(d => d.type === selectedType)?.name || 'Document'} — ${studyInfo.title || 'Untitled'}`;
+              const ctdSection = selectedType === 'csr' ? '5.3' : selectedType === 'ctd_module2' ? '2' : selectedType === 'ctd_module5' ? '5' : undefined;
+              onOpenInEditor(combinedContent, title, ctdSection);
+            }}
+            disabled={!onOpenInEditor}
+            className="px-4 py-2 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+          >
             Open in Editor
           </button>
         </div>

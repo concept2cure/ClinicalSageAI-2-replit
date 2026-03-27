@@ -57,7 +57,9 @@ import {
   ChevronRight,
   AlertTriangle,
   Loader2,
+  Plus,
 } from 'lucide-react';
+import { EmptyState } from '@/design-system/patterns/EmptyState';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -358,13 +360,13 @@ export const ProjectKnowledge: React.FC<ProjectKnowledgeProps> = ({ project, cla
 
             {/* Empty State */}
             {knowledge && knowledge.documents.length === 0 && !isUploading && (
-              <div className="text-center py-6 text-sm text-zinc-500">
-                <FileText className="h-8 w-8 mx-auto mb-2 text-zinc-400" />
-                <p>No documents uploaded yet.</p>
-                <p className="text-xs mt-1">
-                  Upload device specs, predicate summaries, test data, etc.
-                </p>
-              </div>
+              <EmptyState
+                icon={FileText}
+                title="No documents added yet"
+                description="Add your clinical study reports, predicate comparisons, or performance data. AnA will index them and reference them in every conversation."
+                size="sm"
+                variant="minimal"
+              />
             )}
 
             {/* Divider */}

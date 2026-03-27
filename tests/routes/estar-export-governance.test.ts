@@ -95,6 +95,11 @@ describe('510(k) eSTAR governed export', () => {
         placement_state: 'placed',
         provenance_ref: 'prov_estar_1',
         audit_ref: 'audit_estar_1',
+        downloadable_output_ref: expect.objectContaining({
+          encoding: 'base64',
+          mime_type: 'application/zip',
+          filename: 'k123_eSTAR.zip',
+        }),
       })
     );
   });

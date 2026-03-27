@@ -30,6 +30,8 @@ interface UseProjectKnowledgeReturn {
   addTextContent: (title: string, content: string) => Promise<UploadedDocument | null>;
   /** Remove a document from the project */
   removeDocument: (documentId: string) => Promise<void>;
+  /** Toggle a document's active state in/out of the AI context window */
+  toggleDocumentActive: (documentId: string) => Promise<void>;
   /** Update custom instructions */
   updateCustomInstructions: (instructions: string) => Promise<void>;
   /** Current context token count */
@@ -132,9 +134,11 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // Calculate context metrics
+  // Calculate context metrics (only count active documents toward context usage)
   const contextTokens =
-    knowledge?.documents.reduce((sum, doc) => sum + (doc.tokenCount || 0), 0) || 0;
+    knowledge?.documents
+      .filter(doc => doc.isActive !== false)
+      .reduce((sum, doc) => sum + (doc.tokenCount || 0), 0) || 0;
   const maxContextTokens = MAX_CONTEXT_TOKENS;
   const contextUsagePercent = Math.round((contextTokens / maxContextTokens) * 100);
 
@@ -358,6 +362,44 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
   );
 
   /**
+   * Toggle a document's active state in/out of the AI context window (E7).
+   */
+  const toggleDocumentActive = useCallback(
+    async (documentId: string): Promise<void> => {
+      if (!projectId) return;
+
+      // Find current state
+      const doc = knowledge?.documents.find(d => d.id === documentId);
+      if (!doc) return;
+
+      const newIsActive = doc.isActive === false ? true : false;
+
+      try {
+        // Persist via API (non-blocking on failure — update locally regardless)
+        await apiRequest('PATCH', `/api/concept2cure/documents/${documentId}/activation`, {
+          isActive: newIsActive,
+        }).catch(() => {
+          // Ignore API errors, proceed with local update
+        });
+
+        // Update local state
+        setKnowledge(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            documents: prev.documents.map(d =>
+              d.id === documentId ? { ...d, isActive: newIsActive } : d
+            ),
+          };
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to toggle document activation');
+      }
+    },
+    [projectId, knowledge]
+  );
+
+  /**
    * Update custom instructions for the project.
    */
   const updateCustomInstructions = useCallback(
@@ -452,6 +494,7 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
     uploadDocument,
     addTextContent,
     removeDocument,
+    toggleDocumentActive,
     updateCustomInstructions,
     contextTokens,
     maxContextTokens,
