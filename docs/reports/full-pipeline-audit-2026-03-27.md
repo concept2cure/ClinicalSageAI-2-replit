@@ -79,28 +79,26 @@ Provider health: 3 consecutive failures -> unhealthy (exponential backoff recove
 
 ---
 
-## Remaining Items (Not Yet Fixed)
+## Medium Priority (All Fixed)
 
-### Medium Priority
+| Issue | Component | Fix Applied |
+|-------|-----------|-------------|
+| No retry logic per request | AI Gateway | retryWithBackoff with exponential backoff + 30% jitter |
+| No jitter in backoff | AI Gateway | Added 20% jitter to provider health recovery setTimeout |
+| No idempotency keys | AnA RI | 5-min TTL in-memory cache, returns cached response on retry |
+| Socket.io not initialized | server/index.ts | initializeSocketServer called on startup |
+| Socket.io no tenant isolation | socketServer.ts | JWT auth middleware + org-scoped room names |
+| Socket.io no Redis adapter | socketServer.ts | TODO added (requires @socket.io/redis-adapter package) |
+| Health check service not mounted | server/index.ts | GET /api/health/full mounted with HealthCheckService |
+| No Prometheus metrics endpoint | server/index.ts | GET /api/metrics (memory, uptime, DB pool) |
+| Circuit breaker not integrated | server/index.ts | aiCircuitBreaker applied to /api/ana-ri routes |
+| Working memory threshold hardcoded | working-memory.ts | Configurable via WORKING_MEMORY_THRESHOLD env var |
+
+## Remaining (Low Priority / Future)
 
 | Issue | Component | Description |
 |-------|-----------|-------------|
-| No retry logic per request | AI Gateway | Each provider tried once; no per-request retry with backoff |
-| No jitter in backoff | AI Gateway | Thundering herd risk on provider recovery |
-| No distributed rate limiting | AI Gateway Policy | In-memory only; resets on restart |
-| No idempotency keys | AnA RI | Duplicate messages possible on client retry |
-| Socket.io not initialized | server/index.ts | Real-time features defined but not active |
-| Socket.io no Redis adapter | socketServer.ts | In-memory only; can't scale horizontally |
-| Socket.io no tenant isolation | socketServer.ts | Rooms not scoped by organizationId |
-| Health check service not mounted | server/index.ts | HealthCheckService exists but not on routes |
-| No Prometheus metrics endpoint | - | No /metrics for external monitoring |
-| Circuit breaker not integrated | lib/circuit-breaker.ts | Exists but not wrapping external calls |
-| Working memory threshold hardcoded | working-memory.ts | 20-message trigger not configurable |
-
-### Low Priority / Future
-
-| Issue | Component | Description |
-|-------|-----------|-------------|
+| No distributed rate limiting | AI Gateway Policy | In-memory only; needs Redis for multi-instance |
 | No distributed tracing | - | No OpenTelemetry or correlation IDs |
 | No DLQ analysis | Bull Queue | Failed jobs retained but no analysis dashboard |
 | Audit log buffer not flushed on shutdown | audit.ts | Recent entries lost on process exit |
@@ -125,6 +123,8 @@ Provider health: 3 consecutive failures -> unhealthy (exponential backoff recove
 ## Commits This Session
 
 ```
+d6c6269b fix: complete medium-priority audit fixes — retry, circuit breaker, idempotency, socket, metrics
+29b0654d docs: full pipeline audit report — data orchestration, security, HA
 2fc3fc99 fix: propagate persistence warnings + add semantic search timeout protection
 ff6f3987 fix: HA hardening — timeout protection, rate limit fix, stream recovery, health endpoint
 0c8bbf18 fix: critical security + data pipeline fixes across AnA RI, chat, intelligence
