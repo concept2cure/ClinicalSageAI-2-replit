@@ -75,6 +75,7 @@ interface ComputeJobPanelProps {
   onOpenProvenance?: (artifactId: string) => void;
   onOpenAudit?: (artifactId: string) => void;
   onPlaceArtifact?: (artifactId: string) => void;
+  onJobsLoaded?: (jobs: ComputeJob[]) => void;
 }
 
 export function ComputeJobPanel({
@@ -83,6 +84,7 @@ export function ComputeJobPanel({
   onOpenProvenance,
   onOpenAudit,
   onPlaceArtifact,
+  onJobsLoaded,
 }: ComputeJobPanelProps) {
   const [jobs, setJobs] = useState<ComputeJob[]>([]);
   const [busySurface, setBusySurface] = useState<string | null>(null);
@@ -98,8 +100,10 @@ export function ComputeJobPanel({
     if (!projectId) return;
     const res = await apiRequest('GET', `/api/concept2cure/compute/projects/${projectId}/jobs`);
     const payload = await res.json();
-    setJobs(payload.data || []);
-  }, [projectId]);
+    const nextJobs = payload.data || [];
+    setJobs(nextJobs);
+    onJobsLoaded?.(nextJobs);
+  }, [projectId, onJobsLoaded]);
 
   const loadDetail = useCallback(
     async (jobId: string) => {
@@ -195,8 +199,10 @@ export function ComputeJobPanel({
                   {job.runtime_maturity || 'seeded'}
                 </span>
               </div>
-              <button
-                className="text-[11px] text-blue-600 hover:text-blue-800"
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-5 px-1.5 text-[11px] text-blue-600 hover:text-blue-800"
                 onClick={async () => {
                   if (expandedJobId === job.job_id) {
                     setExpandedJobId(null);
@@ -207,42 +213,59 @@ export function ComputeJobPanel({
                 }}
               >
                 {expandedJobId === job.job_id ? 'Hide details' : 'Details'}
-              </button>
+              </Button>
             </div>
             {/* Governed artifact summary — visible without expanding */}
             {job.artifact_id && job.status === 'completed' && (
               <div className="mt-1.5 rounded bg-emerald-50/60 border border-emerald-100 px-2 py-1 text-[11px] text-emerald-800">
-                <span className="font-medium">{job.artifact_title || job.artifact_id}</span>
-                {' · v'}
-                {job.artifact_version || 1}
-                {' · '}
-                {job.artifact_status || 'draft'}
-                {' · '}
-                {job.placement_state === 'placed' && job.artifact_ctd_section
-                  ? `§${job.artifact_ctd_section}`
-                  : 'unplaced'}
-                {job.provenance_ref ? ' · prov ✓' : ''}
-                {job.audit_ref ? ' · audit ✓' : ''}
-                <span className="ml-2">
-                  <button
-                    className="text-blue-600 hover:text-blue-800 mr-2"
+                <div className="font-medium">{job.artifact_title || job.artifact_id}</div>
+                <div>
+                  Artifact ID: {job.artifact_id} · v{job.artifact_version || 1} ·{' '}
+                  {job.artifact_status || 'draft'}
+                </div>
+                <div>
+                  Placement:{' '}
+                  {job.placement_state === 'placed' && job.artifact_ctd_section
+                    ? `§${job.artifact_ctd_section}`
+                    : 'unplaced'}{' '}
+                  · Provenance: {job.provenance_ref || 'none'} · Audit: {job.audit_ref || 'none'}
+                </div>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-5 px-1.5 text-[10px] text-blue-600 hover:text-blue-800"
                     onClick={() => onOpenArtifact?.(job.artifact_id!)}
                   >
-                    Open
-                  </button>
-                  <button
-                    className="text-violet-600 hover:text-violet-800 mr-2"
+                    Open in editor
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-5 px-1.5 text-[10px] text-violet-600 hover:text-violet-800"
                     onClick={() => onOpenProvenance?.(job.artifact_id!)}
                   >
-                    Provenance
-                  </button>
-                  <button
-                    className="text-emerald-600 hover:text-emerald-800"
+                    Open provenance
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-5 px-1.5 text-[10px] text-emerald-600 hover:text-emerald-800"
                     onClick={() => onOpenAudit?.(job.artifact_id!)}
                   >
-                    Audit
-                  </button>
-                </span>
+                    Open audit
+                  </Button>
+                  {job.placement_state !== 'placed' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 px-1.5 text-[10px] text-orange-600 hover:text-orange-800"
+                      onClick={() => onPlaceArtifact?.(job.artifact_id!)}
+                    >
+                      Apply placement
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
             {expandedJobId === job.job_id && (
@@ -281,30 +304,38 @@ export function ComputeJobPanel({
                         : 'Review pipeline in progress.'}
                     </div>
                     <div className="flex flex-wrap gap-2 pt-1">
-                      <button
-                        className="text-blue-600 hover:text-blue-800"
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 px-1.5 text-[10px] text-blue-600 hover:text-blue-800"
                         onClick={() => onOpenArtifact?.(job.artifact_id!)}
                       >
                         Open editor
-                      </button>
-                      <button
-                        className="text-violet-600 hover:text-violet-800"
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 px-1.5 text-[10px] text-violet-600 hover:text-violet-800"
                         onClick={() => onOpenProvenance?.(job.artifact_id!)}
                       >
                         Provenance
-                      </button>
-                      <button
-                        className="text-emerald-600 hover:text-emerald-800"
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 px-1.5 text-[10px] text-emerald-600 hover:text-emerald-800"
                         onClick={() => onOpenAudit?.(job.artifact_id!)}
                       >
                         Audit
-                      </button>
-                      <button
-                        className="text-orange-600 hover:text-orange-800"
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 px-1.5 text-[10px] text-orange-600 hover:text-orange-800"
                         onClick={() => onPlaceArtifact?.(job.artifact_id!)}
                       >
                         Place
-                      </button>
+                      </Button>
                     </div>
                   </>
                 ) : (

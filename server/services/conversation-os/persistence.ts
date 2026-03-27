@@ -252,7 +252,44 @@ export class ConversationOsPersistence {
          WHERE project_id = $1 AND conversation_id = $2 ORDER BY created_at DESC`,
         [ctx.projectId, ctx.conversationId]
       );
-      return result.rows.map(row => ({ id: row.id, conversationId: row.conversation_id, artifactId: row.artifact_id, content: row.content, status: row.status, createdAt: new Date(row.created_at).toISOString() }));
+      if (result.rows.length === 0) return [];
+
+      const acceptedRes = await pool.query(
+        `SELECT DISTINCT ON (proposal_id)
+            proposal_id,
+            artifact_external_id,
+            artifact_version,
+            artifact_status,
+            placement_state,
+            provenance_event_id,
+            audit_id,
+            governance_state
+         FROM conversation_os_accepted_artifact_versions
+         WHERE project_id = $1 AND conversation_id = $2
+         ORDER BY proposal_id, created_at DESC`,
+        [ctx.projectId, ctx.conversationId]
+      );
+      const consequenceByProposalId = new Map(
+        acceptedRes.rows.map(row => [row.proposal_id, row] as const)
+      );
+
+      return result.rows.map(row => {
+        const consequence = consequenceByProposalId.get(row.id);
+        return {
+          id: row.id,
+          conversationId: row.conversation_id,
+          artifactId: consequence?.artifact_external_id ?? row.artifact_id,
+          content: row.content,
+          status: row.status,
+          createdAt: new Date(row.created_at).toISOString(),
+          governanceState: consequence?.governance_state,
+          artifactVersion: consequence?.artifact_version ?? undefined,
+          artifactStatus: consequence?.artifact_status ?? undefined,
+          placementState: consequence?.placement_state ?? undefined,
+          provenanceRef: consequence?.provenance_event_id ?? undefined,
+          auditRef: consequence?.audit_id ?? undefined,
+        } satisfies ArtifactProposal;
+      });
     } catch (error) {
       if (canFallback(error)) return [];
       throw error;

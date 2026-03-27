@@ -1,23 +1,66 @@
-# Launch Gate — Document Consequence Report
+# LAUNCH GATE — DOCUMENT CONSEQUENCE REPORT (Sprint Result)
 
 Date: 2026-03-27
 
-## Current gate position
-Broad beta launch remains gated on consistent governed document consequence across primary export paths.
+## Scope executed
+Focused only on compute consequence visibility, proposal acceptance consequence visibility, and in-workspace consequence surfacing. No shell-wide redesign work was performed.
 
-## Post-merge update (PR #279)
-PR #279 materially improved consequence integrity by landing governed export persistence in the Artifact Compute Plane path:
-- compute jobs can run `governed_export` intent/surface,
-- completed jobs register governed artifacts,
-- and job summaries include artifact + provenance + audit references.
+## Implemented changes
 
-This closes the prior absolute blocker (“no governed export persistence exists”).
+### 1) Compute consequence metadata hardening
+- Compute writeback now stamps governed metadata (`source`, `governed`, provenance/audit presence) at artifact creation.
+- Compute service now passes explicit compute source metadata and returns a `governedConsequence` payload in create-job responses.
 
-## What still blocks launch
-1. CERV2 direct export routes (`/api/cerv2/export/pdf|docx|zip`) still produce download streams without required governed artifact writeback.
-2. eSTAR build route (`/api/510k/estar/build`) still exports zip directly without required governed artifact/version/provenance persistence.
-3. Mixed-path reality means user-facing truth is inconsistent unless product hard-routes export through governed consequence path.
+### 2) Proposal accept consequence durability + visibility
+- Proposal accept writeback now stamps `proposal_accept` source metadata.
+- Governed acceptance response now returns the governed artifact id (not the seed proposal artifact id).
+- Conversation persistence proposal listing now hydrates latest accepted consequence data (governance state, artifact version/status, placement, provenance/audit refs).
 
-## Launch recommendation
-- **Broad beta:** NO-GO.
-- **Controlled beta:** possible only if UI and policy enforce governed export path for regulated workflows and clearly label non-governed routes as non-launch/non-compliant paths.
+### 3) Workspace consequence surface
+- Added a thin “Document Consequence Ledger” in `ProjectWorkspaceShell` that shows:
+  - title
+  - artifact id
+  - version
+  - status
+  - source type (`compute`, `proposal_accept`, `generated_draft`)
+  - placement
+  - provenance present
+  - audit present
+  - open in editor/provenance/audit actions
+- Added helper logic for deterministic merged consequence rows from compute jobs, accepted proposals, and generated drafts.
+
+### 4) Compute panel visibility polish (non-cosmetic)
+- Compute consequence summary now surfaces explicit artifact/provenance/audit refs and placement state.
+- Action labels clarified to “Open in editor”, “Open provenance”, “Open audit”, and “Apply placement”.
+- Replaced touched ad-hoc raw action buttons with governed `Button` component usage.
+
+### 5) GA hardening follow-up (post-review)
+- Eliminated duplicate artifact creation in Submission Apps flow by reusing the artifact id returned by the initial create API call.
+- Added `generated_draft` source metadata at draft creation points so workspace consequence classification is deterministic.
+- Tightened consequence ledger to avoid mislabeling manual artifacts as generated consequences.
+- Marked non-reopenable consequences honestly in the ledger (`Not reopenable in editor`) rather than presenting a misleading open action.
+
+## Focused tests added/updated
+- Updated compute integration test to assert governed consequence payload fields.
+- Added conversation proposal persistence test to verify proposal list hydration with governed consequence state.
+- Added workspace consequence-row unit tests for source typing, metadata fields, dedupe behavior.
+- Added a guard test confirming manual artifacts are excluded from generated consequence rows.
+
+## Hero path truth after sprint
+
+### Fully governed + visible
+- Compute-generated document path (Artifact Compute Plane presets) -> governed artifact + visible consequence + reopen path.
+- Proposal acceptance path with valid context -> governed consequence persisted + visible state + reopen path.
+- Generated draft flows (submission apps / transform create-draft callback) -> project-bound artifacts visible in consequence ledger with reopen path.
+
+### Partial / caveated
+- Any legacy/off-path routes outside the workspace hero path that still return download URLs remain outside this sprint’s touched scope.
+- Local environment missing dependencies prevented runtime lint/test execution; assertions rely on code inspection and static patch review.
+
+## Dead-end handling status
+- No new download-only behavior introduced.
+- In touched surfaces, consequence is now rendered as project-bound artifact entries with editor reopen actions.
+
+## Risk notes
+- Requested branch `concept2cure-v2` does not exist in local refs; work was committed to current branch (`work`).
+- Manual browser-level smoke was not possible in this environment (no browser tool in toolchain for this run).
