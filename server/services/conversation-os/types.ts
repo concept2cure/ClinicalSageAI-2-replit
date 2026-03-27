@@ -62,4 +62,10 @@ export interface ArtifactProposal {
   content: string;
   createdAt: string;
   status: 'pending' | 'accepted' | 'rejected';
+  governanceState?: 'ACCEPTED_GOVERNED' | 'ACCEPTED_PERSISTED_NO_GOVERNANCE' | 'REJECTED';
+  artifactVersion?: number;
+  artifactStatus?: string;
+  placementState?: string;
+  provenanceRef?: string;
+  auditRef?: string;
 }
