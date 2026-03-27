@@ -281,7 +281,7 @@ Submission type context: ${projectName || 'regulatory submission'}`,
     <WorkspaceCanvas maxWidth="3xl" testId="haq-manager">
       <PageTitleHeader
         title="HAQ Response Manager"
-        subtitle={projectName ? `for ${projectName}` : 'Health Authority Question workflow'}
+        description={projectName ? `for ${projectName}` : 'Health Authority Question workflow'}
       />
 
       {/* ── Ingest area ── */}
@@ -362,10 +362,10 @@ Submission type context: ${projectName || 'regulatory submission'}`,
       {/* ── Questions list ── */}
       {questions.length === 0 ? (
         <EmptyState
-          icon={<MessageSquareMore className="w-8 h-8" />}
+          icon={MessageSquareMore}
           title="No questions ingested yet"
           description="Paste questions above to start the HAQ response workflow. Also available: type /haq in AnA chat."
-          testId="haq-empty"
+          className="py-12"
         />
       ) : (
         <div className="flex gap-4 min-h-[400px]" role="region" aria-label="HAQ questions and responses">
@@ -467,7 +467,7 @@ Submission type context: ${projectName || 'regulatory submission'}`,
               <EmptyState
                 title="Select a question"
                 description="Click a question on the left to view or draft a response."
-                testId="haq-no-selection"
+                className="py-16"
               />
             )}
           </div>

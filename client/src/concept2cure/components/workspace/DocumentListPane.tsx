@@ -24,6 +24,7 @@ import {
   Search,
   X,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { getSectionLabel } from '../../models/ctdHierarchy';
 import type { PlacementOperation } from './PlacementDialog';
 import type { TreeArtifact } from './ProjectFileTree';
@@ -187,26 +188,27 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
             {documents.length === 0 && (
               <div className="flex items-center gap-2">
                 {sectionAIDraftable && onAIDraft && (
-                  <button
+                  <Button
+                    size="sm"
                     onClick={onAIDraft}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors duration-150"
                     aria-label="Draft this section with AI"
                     data-testid="ai-draft-section"
                   >
-                    <Sparkles className="w-3 h-3" />
+                    <Sparkles className="w-3 h-3 mr-1.5" />
                     Draft with AI
-                  </button>
+                  </Button>
                 )}
                 {onCreateNew && (
-                  <button
+                  <Button
+                    size="sm"
+                    variant="outline"
                     onClick={onCreateNew}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-700 bg-zinc-100 rounded-md hover:bg-zinc-200 transition-colors duration-150"
                     aria-label="Create a blank document"
                     data-testid="create-blank-document"
                   >
-                    <Plus className="w-3 h-3" />
+                    <Plus className="w-3 h-3 mr-1.5" />
                     {sectionAIDraftable ? 'Start Blank' : 'Create Document'}
-                  </button>
+                  </Button>
                 )}
               </div>
             )}

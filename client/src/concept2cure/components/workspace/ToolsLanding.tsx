@@ -94,10 +94,10 @@ export const ToolsLanding: React.FC<ToolsLandingProps> = ({
   const groups = ['resume', 'create', 'manage', 'finalize'] as const;
 
   return (
-    <WorkspaceCanvas maxWidth="2xl" testId="tools-landing">
+    <WorkspaceCanvas maxWidth="3xl" testId="tools-landing">
       <PageTitleHeader
         title="Tools"
-        subtitle={projectName || undefined}
+        description={projectName || undefined}
       />
 
       {/* ── Resume card: show recent artifacts if available ── */}
@@ -141,7 +141,6 @@ export const ToolsLanding: React.FC<ToolsLandingProps> = ({
           <EmptyState
             title="No recent documents"
             description="Create a new document or use the Document Builder to get started."
-            testId="tools-no-recent"
           />
         </div>
       )}
