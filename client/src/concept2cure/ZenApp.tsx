@@ -145,8 +145,8 @@ const RedirectToWorkspace: React.FC<{ onRedirect: () => void }> = ({ onRedirect 
 // Enablement Center — Dr. Sage + AnA 1.0 dual-AI enablement hub
 // [BATCH 3] EnablementCenter — renderer removed
 
-// Dr. Sage Global Layer — persistent help/guide/copilot presence
-import DrSageGlobalLayer from './components/dr-sage/DrSagePanel';
+// [Phase A] Dr. Sage removed — AnA is the single guide identity
+// import DrSageGlobalLayer from './components/dr-sage/DrSagePanel';
 
 // AnA Persistent Panel — always-available AI conversation on every page
 import AnaPersistentPanel from './components/chat/AnaPersistentPanel';
@@ -3299,16 +3299,7 @@ export const ZenApp: React.FC = () => {
         </div>
       )}
 
-      {/* Dr. Sage — Persistent global help/guide/copilot layer */}
-      <DrSageGlobalLayer
-        onOpenEnablementCenter={() => setLayoutMode('enablement-center')}
-        contextProfile={{
-          productType: activeProject?.type,
-          userRole: userRole,
-          screenName: layoutMode,
-          activeProject: activeProject?.name,
-        }}
-      />
+      {/* [Phase A] Dr. Sage removed — AnA is the single guide identity */}
 
       {/* AnA — moved to inline bottom bar (see below) */}
 
