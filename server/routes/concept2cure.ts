@@ -521,6 +521,36 @@ const SubmissionTypeEnum = z
   ])
   .transform(val => (val === 'FDA_510K' ? '510K' : val));
 
+
+// Submission-type-specific default instruction templates
+const submissionTypeInstructionTemplates: Record<string, (product: string) => string> = {
+  '510K': (product) =>
+    `You are an FDA 510(k) regulatory expert for ${product}. Focus on substantial equivalence analysis, predicate device comparison, performance data requirements, and 510(k) submission readiness. Reference all project documents, predicate device information, and intelligence when responding.`,
+  IND: (product) =>
+    `You are an FDA IND (Investigational New Drug) regulatory expert for ${product}. Focus on preclinical data requirements, clinical trial protocol design, CMC (Chemistry, Manufacturing, and Controls) documentation, and IND submission strategy. Reference all project documents and intelligence when responding.`,
+  NDA: (product) =>
+    `You are an FDA NDA (New Drug Application) regulatory expert for ${product}. Focus on clinical efficacy and safety data, labeling strategy, risk-benefit analysis, CMC compliance, and NDA submission readiness. Reference all project documents and intelligence when responding.`,
+  BLA: (product) =>
+    `You are an FDA BLA (Biologics License Application) regulatory expert for ${product}. Focus on biological product characterization, manufacturing process validation, clinical immunogenicity data, and BLA submission strategy. Reference all project documents and intelligence when responding.`,
+  MAA: (product) =>
+    `You are an EMA MAA (Marketing Authorisation Application) regulatory expert for ${product}. Focus on EU regulatory requirements, CTD Module structure, scientific advice alignment, and MAA submission readiness across EU member states. Reference all project documents and intelligence when responding.`,
+  PMA: (product) =>
+    `You are an FDA PMA (Premarket Approval) regulatory expert for ${product}. Focus on clinical evidence requirements, device safety and effectiveness, manufacturing quality systems, and PMA submission strategy. Reference all project documents and intelligence when responding.`,
+  DE_NOVO: (product) =>
+    `You are an FDA De Novo classification regulatory expert for ${product}. Focus on risk-benefit analysis for novel devices, classification rationale, special controls development, and De Novo submission readiness. Reference all project documents and intelligence when responding.`,
+  EUA: (product) =>
+    `You are an FDA EUA (Emergency Use Authorization) regulatory expert for ${product}. Focus on known and potential benefits vs. risks, available alternatives analysis, emergency use criteria, and EUA submission strategy. Reference all project documents and intelligence when responding.`,
+};
+
+function generateDefaultCustomInstructions(submissionType: string, product?: string | null, projectName?: string): string {
+  const productLabel = product || projectName || 'this product';
+  const templateFn = submissionTypeInstructionTemplates[submissionType];
+  if (templateFn) {
+    return templateFn(productLabel);
+  }
+  // Generic fallback for unknown submission types
+  return `You are a ${submissionType} regulatory expert for ${productLabel}. Focus on regulatory strategy, submission readiness, and compliance. Reference all project documents and intelligence when responding.`;
+}
 const createProjectSchema = z.object({
   name: z.string().min(1, 'Project name is required').max(200, 'Name too long'),
   submissionType: SubmissionTypeEnum,
@@ -1317,6 +1347,37 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
 });
 
 /**
+ * Returns submission-type-aware suggested actions for display after project creation.
+ */
+function getSuggestedActionsForType(submissionType: string): Array<{ id: string; label: string; command: string }> {
+  const base = [
+    { id: 'dossier-map', label: 'Start Dossier Map', command: '/dossier' },
+    { id: 'add-docs', label: 'Add Documents', command: '/upload' },
+    { id: 'readiness', label: 'Run Readiness Check', command: '/readiness' },
+  ];
+
+  const upperType = (submissionType ?? '').toUpperCase();
+
+  // Device submissions
+  if (['510K', 'PMA', 'DE_NOVO'].includes(upperType)) {
+    return [...base, { id: 'predicates', label: 'Find Predicates', command: '/predicates' }];
+  }
+
+  // Drug submissions
+  if (['IND', 'NDA', 'BLA', 'ANDA'].includes(upperType)) {
+    return [...base, { id: 'clinical-review', label: 'Review Clinical Data', command: '/clinical' }];
+  }
+
+  // EU submissions
+  if (['MAA', 'IVDR'].includes(upperType)) {
+    return [...base, { id: 'regulatory-path', label: 'Map Regulatory Path', command: '/pathway' }];
+  }
+
+  // Default (EUA or unknown)
+  return [...base, { id: 'strategy', label: 'Define Strategy', command: '/strategy' }];
+}
+
+/**
  * POST /api/concept2cure/projects
  * Create a new project with tenant isolation.
  *
@@ -1330,11 +1391,20 @@ router.post('/projects', async (req: Request, res: Response) => {
     const clientWorkspaceId = getClientWorkspaceId(req);
     const data = createProjectSchema.parse(req.body);
 
+    // Auto-populate custom instructions based on submission type and product if not provided
+    if (!data.customInstructions) {
+      data.customInstructions = generateDefaultCustomInstructions(
+        data.submissionType,
+        data.product,
+        data.name,
+      );
+    }
+
     // Sanitize user input
     const sanitizedData = {
       name: sanitizeContent(data.name),
       description: data.description ? sanitizeContent(data.description) : null,
-      customInstructions: data.customInstructions ? sanitizeContent(data.customInstructions) : null,
+      customInstructions: sanitizeContent(data.customInstructions),
     };
 
     // Insert into database with tenant context
@@ -1386,6 +1456,9 @@ router.post('/projects', async (req: Request, res: Response) => {
       organizationId,
     });
 
+    // Create initial AnA conversation thread for the project
+    const initialThreadId = `thread_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+
     // Transform response
     const response = {
       id: projectId,
@@ -1403,6 +1476,8 @@ router.post('/projects', async (req: Request, res: Response) => {
       targetAgency: (newProject.metadata as any)?.targetAgency ?? null,
       createdAt: newProject.createdAt,
       updatedAt: newProject.updatedAt,
+      initialThreadId,
+      suggestedActions: getSuggestedActionsForType(data.submissionType),
     };
 
     logger.info('Created new project', {
@@ -1471,6 +1546,33 @@ router.post('/projects', async (req: Request, res: Response) => {
           }
         } catch (err) {
           logger.error('[projects] Failed to auto-initialize CTD sections:', err);
+        }
+      })(),
+      // Create initial AnA conversation thread with onboarding message
+      (async () => {
+        try {
+          const productName = data.product || newProject.name;
+          const submissionLabel = data.submissionType || 'regulatory';
+          const onboardingContent = `I've set up your ${submissionLabel} project for ${productName}. What would you like to work on first?\n\nI can help you map your CTD structure, identify predicate devices, run a readiness assessment, or start drafting sections.`;
+
+          await pool.query(
+            `INSERT INTO ai_threads (id, organization_id, project_id, title, created_by, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
+            [initialThreadId, organizationId, newProject.id, `${productName} — Getting Started`, userId]
+          );
+
+          await pool.query(
+            `INSERT INTO ai_messages (thread_id, role, content) VALUES ($1, 'assistant', $2)`,
+            [initialThreadId, onboardingContent]
+          );
+
+          logger.info('Auto-created initial AnA thread', { projectId, threadId: initialThreadId });
+        } catch (err: any) {
+          if (err?.code !== '42P01') {
+            logger.error('[projects] Failed to auto-create initial AnA thread:', err);
+          } else {
+            logger.warn('[projects] ai_threads/ai_messages table missing — skipping onboarding thread');
+          }
         }
       })(),
     ]).catch(() => {});
