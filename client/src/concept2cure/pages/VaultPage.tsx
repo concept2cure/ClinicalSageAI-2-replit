@@ -17,11 +17,6 @@ import {
   Archive,
   Search,
   FileText,
-  FolderOpen,
-  Clock,
-  CheckCircle,
-  AlertTriangle,
-  Lock,
 } from 'lucide-react';
 
 interface VaultItem {
@@ -37,7 +32,7 @@ interface VaultItem {
 
 const FOLDER_LABELS: Record<string, string> = {
   drafts: 'Drafts',
-  generated: 'Generated Documents',
+  generated: 'Generated',
   dossier: 'Dossier',
   evidence: 'Evidence Packs',
   cmc: 'CMC',
@@ -48,11 +43,12 @@ const FOLDER_LABELS: Record<string, string> = {
   final: 'Submitted / Final',
 };
 
-const STATUS_ICON: Record<string, React.ReactNode> = {
-  draft: <Clock className="w-3 h-3 text-zinc-400" />,
-  review: <AlertTriangle className="w-3 h-3 text-amber-500" />,
-  approved: <CheckCircle className="w-3 h-3 text-emerald-500" />,
-  locked: <Lock className="w-3 h-3 text-blue-500" />,
+// Monochrome status labels — semantic text color, no background
+const STATUS_LABEL: Record<string, { label: string; color: string }> = {
+  draft: { label: 'Draft', color: 'text-zinc-400' },
+  review: { label: 'In Review', color: 'text-amber-600' },
+  approved: { label: 'Approved', color: 'text-emerald-600' },
+  locked: { label: 'Ready', color: 'text-blue-600' },
 };
 
 interface VaultPageProps {
@@ -146,33 +142,34 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
           <div className="space-y-4">
             {Array.from(grouped.entries()).map(([folder, items]) => (
               <div key={folder}>
-                <div className="flex items-center gap-2 px-2 py-1.5 mb-1">
-                  <FolderOpen className="w-4 h-4 text-zinc-400" />
-                  <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                <div className="flex items-center gap-2 px-2 py-2 mb-0.5">
+                  <span className="text-xs font-medium text-zinc-500">
                     {FOLDER_LABELS[folder] || folder}
                   </span>
-                  <span className="text-[10px] text-zinc-400 ml-1">{items.length}</span>
+                  <span className="text-[10px] text-zinc-300">{items.length}</span>
                 </div>
                 <div className="space-y-0.5">
-                  {items.map(item => (
+                  {items.map(item => {
+                    const statusCfg = STATUS_LABEL[item.status || 'draft'] ?? STATUS_LABEL.draft;
+                    const meta = [
+                      item.ctdSection,
+                      item.version ? `v${item.version}` : null,
+                      statusCfg.label,
+                    ].filter(Boolean).join(' · ');
+                    return (
                     <button
                       key={item.id}
                       onClick={() => onOpenDocument?.(item.id)}
-                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-zinc-50 transition-colors text-left"
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-zinc-50 transition-colors text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                     >
-                      <FileText className="w-4 h-4 text-zinc-400 flex-shrink-0" />
-                      <span className="flex-1 text-sm text-zinc-700 truncate">{item.title}</span>
-                      {item.ctdSection && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 font-medium flex-shrink-0">
-                          {item.ctdSection}
-                        </span>
-                      )}
-                      {item.status && (STATUS_ICON[item.status] || STATUS_ICON.draft)}
-                      {item.version && (
-                        <span className="text-[10px] text-zinc-400 tabular-nums flex-shrink-0">v{item.version}</span>
-                      )}
+                      <FileText className="w-4 h-4 text-zinc-300 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm text-zinc-700 truncate block">{item.title}</span>
+                        {meta && <span className="text-[11px] text-zinc-400 truncate block mt-0.5">{meta}</span>}
+                      </div>
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ))}

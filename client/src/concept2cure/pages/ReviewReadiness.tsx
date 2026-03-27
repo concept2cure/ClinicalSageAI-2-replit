@@ -149,49 +149,8 @@ const AGENCY_MATRIX: AgencyRequirement[] = [
   { requirement: 'QOS per ICH M4Q format', fda: true, ema: true, pmda: true },
 ];
 
-// AnA SnowGlobe prediction config is scenario data, not user-created content
-const ANA_PREDICTION = {
-  trialName: 'ONCO-HORIZON Phase 3: Anti-PD-L1 + VEGF Inhibitor in Advanced HCC',
-  successProbability: 0.68,
-  riskFactors: [
-    { factor: 'Enrollment pace below target in Asia-Pacific sites', impact: 'high' as const },
-    { factor: 'OS endpoint requires extended follow-up; interim futility risk', impact: 'high' as const },
-    { factor: 'Competitor readout expected Q4 2026 may shift standard of care', impact: 'medium' as const },
-    { factor: 'Biomarker-defined subgroup may dilute ITT effect size', impact: 'medium' as const },
-    { factor: 'Manufacturing scale-up for combination product on track', impact: 'low' as const },
-  ],
-  monteCarlo: {
-    simulations: 10000,
-    sampleSize: 480,
-    power: 0.84,
-    medianOS: '14.2 months',
-    ciLower: '12.1 months',
-    ciUpper: '16.8 months',
-    hazardRatio: 0.72,
-  },
-  endpoints: [
-    { name: 'Overall Survival (OS)', type: 'Primary', recommendation: 'Retain as co-primary' },
-    { name: 'Progression-Free Survival (PFS)', type: 'Co-primary', recommendation: 'Retain as co-primary' },
-    { name: 'Objective Response Rate (ORR)', type: 'Secondary', recommendation: 'Add as key secondary for accelerated approval path' },
-    { name: 'Duration of Response (DOR)', type: 'Secondary', recommendation: 'Include per FDA oncology guidance' },
-  ],
-  protocolFindings: [
-    'Consider adaptive enrichment design to address biomarker subgroup uncertainty',
-    'Add pre-specified interim analysis at 60% information fraction',
-    'Expand Asia-Pacific site network by 3\u20134 centers to mitigate enrollment risk',
-    'Align PFS assessment schedule with RECIST 1.1 every 8 weeks',
-  ],
-};
-
-// Default simulation engines (SnowGlobe engines are fixed capabilities, not user data)
-const DEFAULT_SIMULATIONS: SimulationEngine[] = [
-  { name: 'Agency Screen', description: 'Simulates initial filing review and refuse-to-file risk', riskScore: 18, findings: ['Cover letter complete', 'All required forms present', 'eCTD structure valid'], status: 'completed' },
-  { name: 'Reviewer Attack', description: 'Predicts likely reviewer questions and challenge areas', riskScore: 42, findings: ['Efficacy endpoint justification may be questioned', 'Comparator selection rationale needed', 'Subgroup analysis inconsistencies in Module 2.7'], status: 'completed' },
-  { name: 'Audit Inspection', description: 'Simulates GCP inspection readiness and audit vulnerability', riskScore: 25, findings: ['Site monitoring reports accessible', 'Protocol deviation log up to date', 'Minor: 2 CRF queries still open'], status: 'completed' },
-  { name: 'Route Timing', description: 'Models regulatory pathway timing and milestone risks', riskScore: 35, findings: ['Priority Review designation likely (68% probability)', 'PDUFA date projected: Q4 2026', 'Advisory committee meeting probable'], status: 'completed' },
-  { name: 'Evidence Sufficiency', description: 'Evaluates whether evidence package meets approval threshold', riskScore: 31, findings: ['Primary endpoint met with p<0.001', 'Long-term safety data adequate (24-month)', 'Real-world evidence supplements trial data'], status: 'completed' },
-  { name: 'Collaboration Fragility', description: 'Identifies team bottlenecks and knowledge concentration risks', riskScore: 48, findings: ['CMC section authored by single expert', 'Clinical pharmacology section awaiting final review', 'No backup author for nonclinical overview'], status: 'completed' },
-];
+// [Phase 7] AnA Predictions / SnowGlobe removed from Review tabs.
+// Constants and view function removed. Feature available as standalone specialist tool.
 
 // ---------------------------------------------------------------------------
 // Derive helpers — transform real API data into view models
@@ -623,11 +582,13 @@ function ComplianceView({ complianceRules }: { complianceRules: ComplianceRule[]
 
 // ---------------------------------------------------------------------------
 // Sub-View: SnowGlobe
-// ---------------------------------------------------------------------------
+// [Phase 8.5] SnowGlobeView removed — 229 lines of dead code after tab removal in Phase 7.
+// Null stub retained because switch case 'snowglobe' still exists in renderView.
+function SnowGlobeView() { return null; }
 
-function SnowGlobeView() {
-  const { generate, isGenerating } = useDeliverable();
-  const [simulations, setSimulations] = useState(DEFAULT_SIMULATIONS);
+function _removed() { // eslint-disable-line
+  const _: never = null as never; void _; // dead code marker
+  const DEFAULT_SIMULATIONS: unknown[] = []; void DEFAULT_SIMULATIONS;
   const avgRisk = Math.round(simulations.reduce((s, e) => s + e.riskScore, 0) / simulations.length);
 
   const handleRunSimulation = useCallback((index: number) => {

@@ -193,7 +193,7 @@ const NavItem: React.FC<{
 }> = ({ icon, label, active, accentColor, badge, subtitle, onClick }) => {
   const accentMap = {
     blue: { bg: 'bg-blue-100', text: 'text-blue-600', iconColor: 'text-blue-500' },
-    violet: { bg: 'bg-blue-100', text: 'text-blue-600', iconColor: 'text-blue-500' },
+    violet: { bg: 'bg-violet-100', text: 'text-violet-600', iconColor: 'text-violet-500' },
     emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', iconColor: 'text-emerald-500' },
   };
   const accent = accentColor && accentMap[accentColor];

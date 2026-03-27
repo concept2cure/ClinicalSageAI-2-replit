@@ -17,11 +17,6 @@ import { DataStateWrapper } from '@/components/ui/statesV2';
 import {
   FileStack,
   Search,
-  Clock,
-  AlertTriangle,
-  CheckCircle,
-  Lock,
-  FolderOpen,
   FileText,
 } from 'lucide-react';
 
@@ -41,11 +36,12 @@ interface Artifact {
   updatedAt?: string;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; color: string; bg: string }> = {
-  draft: { label: 'Draft', icon: Clock, color: 'text-zinc-600', bg: 'bg-zinc-100' },
-  review: { label: 'In Review', icon: AlertTriangle, color: 'text-amber-700', bg: 'bg-amber-50' },
-  approved: { label: 'Approved', icon: CheckCircle, color: 'text-emerald-700', bg: 'bg-emerald-50' },
-  locked: { label: 'Submission Ready', icon: Lock, color: 'text-blue-700', bg: 'bg-blue-50' },
+// Monochrome status — zinc background, semantic text color only
+const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
+  draft: { label: 'Draft', color: 'text-zinc-500' },
+  review: { label: 'In Review', color: 'text-amber-600' },
+  approved: { label: 'Approved', color: 'text-emerald-600' },
+  locked: { label: 'Submission Ready', color: 'text-blue-600' },
 };
 
 const TABS: { key: TabFilter; label: string }[] = [
@@ -151,38 +147,29 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onOpenArtifact }) 
         emptyDescription={searchQuery ? 'Try a different search term' : 'Create artifacts from the Work tab or Apps'}
       >
         {(items) => (
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {items.map((artifact: Artifact) => {
               const statusCfg = STATUS_CONFIG[artifact.status || 'draft'] ?? STATUS_CONFIG.draft;
-              const StatusIcon = statusCfg.icon;
+              // Compact metadata: "ProjectName · 2.5 · v3 · In Review"
+              const meta = [
+                artifact.projectName,
+                artifact.ctdSection,
+                artifact.version ? `v${artifact.version}` : null,
+              ].filter(Boolean).join(' · ');
               return (
                 <button
                   key={artifact.id}
                   onClick={() => artifact.projectId && onOpenArtifact?.(artifact.projectId, artifact.id)}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-zinc-50 transition-colors text-left group"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-zinc-50 transition-colors text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                 >
-                  <FileText className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+                  <FileText className="w-4 h-4 text-zinc-300 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm text-zinc-800 font-medium truncate block">{artifact.title}</span>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {artifact.projectName && (
-                        <span className="flex items-center gap-1 text-[11px] text-zinc-400">
-                          <FolderOpen className="w-3 h-3" />
-                          {artifact.projectName}
-                        </span>
-                      )}
-                      {artifact.ctdSection && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 font-medium">
-                          {artifact.ctdSection}
-                        </span>
-                      )}
-                    </div>
+                    <span className="text-sm text-zinc-800 truncate block">{artifact.title}</span>
+                    {meta && (
+                      <span className="text-[11px] text-zinc-400 truncate block mt-0.5">{meta}</span>
+                    )}
                   </div>
-                  {artifact.version && (
-                    <span className="text-[11px] text-zinc-400 tabular-nums flex-shrink-0">v{artifact.version}</span>
-                  )}
-                  <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0', statusCfg.bg, statusCfg.color)}>
-                    <StatusIcon className="w-3 h-3" />
+                  <span className={cn('text-[11px] font-medium flex-shrink-0', statusCfg.color)}>
                     {statusCfg.label}
                   </span>
                 </button>
