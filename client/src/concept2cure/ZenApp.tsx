@@ -3379,7 +3379,7 @@ export const ZenApp: React.FC = () => {
           <FirstRunExperience
             userName={userName}
             existingProjects={projects}
-            onComplete={selectedRole => {
+            onComplete={(selectedRole, options) => {
               setShowFirstRun(false);
               try {
                 localStorage.setItem('concept2cure_first_run_complete', 'true');
@@ -3393,6 +3393,18 @@ export const ZenApp: React.FC = () => {
                   localStorage.setItem('concept2cure_user_profile', JSON.stringify(profile));
                   setUserProfile(profile);
                 } catch {}
+              }
+              // Auto-select the project created during onboarding and navigate
+              if (options?.projectId) {
+                setActiveProjectId(options.projectId);
+                // Navigate based on the suggested action the user chose
+                const actionToMode: Record<string, LayoutMode> = {
+                  'work': 'documents',
+                  'vault': 'vault',
+                  'clinical-overview': 'documents',
+                  '510k-workspace': 'documents',
+                };
+                setLayoutMode(actionToMode[options.action || ''] || 'project-home');
               }
             }}
             onSkip={() => {

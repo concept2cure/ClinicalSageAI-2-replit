@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 // ─── Props ──────────────────────────────────────────────────────────────────
 
 interface FirstRunExperienceProps {
-  onComplete: (selectedRole?: string) => void;
+  onComplete: (selectedRole?: string, options?: { projectId?: string; action?: string }) => void;
   onSkip: () => void;
   existingProjects?: Array<{ id: string; name: string; type?: string }>;
   userName?: string;
@@ -390,8 +390,11 @@ export default function FirstRunExperience({
     localStorage.setItem('concept2cure_first_run_complete', 'true');
     if (role) localStorage.setItem('concept2cure_user_role', role);
     if (track) localStorage.setItem('concept2cure_client_track', track);
-    onComplete(role ?? undefined);
-  }, [onComplete, role, track]);
+    onComplete(role ?? undefined, {
+      projectId: createdProjectId ?? undefined,
+      action,
+    });
+  }, [onComplete, role, track, createdProjectId]);
 
   const handleSkip = useCallback(() => {
     localStorage.setItem('concept2cure_first_run_complete', 'true');
