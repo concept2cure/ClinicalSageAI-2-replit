@@ -272,6 +272,34 @@ describe('registerGovernedExport — behavioral', () => {
     expect(metadataJson.exportFormat).toBe('zip');
     expect(metadataJson.backendRoute).toBe('POST /api/510k/estar/build');
   });
+
+  // ── Test 10: CERV2 ZIP export governance metadata ───────────────────────
+
+  it('handles CERV2 ZIP export type correctly', async () => {
+    const result = await registerGovernedExport(
+      makeExportInput({
+        docType: 'cerv2_510k',
+        exportFormat: 'zip',
+        title: 'CERV2 ZIP Package',
+        backendRoute: 'POST /api/cerv2/export/zip',
+        ctdSection: 'm1.5',
+      })
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.placementState).toBe('placed');
+
+    const artifactCall = mockClient.query.mock.calls.find(
+      c =>
+        typeof c[0] === 'string' &&
+        c[0].includes('concept2cure_artifacts') &&
+        c[0].includes('INSERT')
+    );
+    const metadataJson = JSON.parse(artifactCall![1][8]);
+    expect(metadataJson.docType).toBe('cerv2_510k');
+    expect(metadataJson.exportFormat).toBe('zip');
+    expect(metadataJson.backendRoute).toBe('POST /api/cerv2/export/zip');
+  });
 });
 
 // ════════════════════════════════════════════════════════════════════════════════
@@ -312,11 +340,13 @@ describe('CER v2 export routes — governed wiring', () => {
   it('consequence includes sourceType export_pdf and export_docx', () => {
     expect(src).toContain("sourceType: 'export_pdf'");
     expect(src).toContain("sourceType: 'export_docx'");
+    expect(src).toContain("sourceType: 'export_zip'");
   });
 
   it('consequence includes backendRoute for traceability', () => {
     expect(src).toContain("backendRoute: 'POST /api/cerv2/export/pdf'");
     expect(src).toContain("backendRoute: 'POST /api/cerv2/export/docx'");
+    expect(src).toContain("backendRoute: 'POST /api/cerv2/export/zip'");
   });
 });
 
@@ -351,9 +381,10 @@ describe('UI consequence loop — export artifacts visible in project context', 
   );
 
   it('displays "Export" source labels for export-type artifacts', () => {
-    // Upstream uses specific source types: export_pdf, export_docx, export_estar_zip
+    // Upstream uses specific source types: export_pdf, export_docx, export_zip, export_estar_zip
     expect(shellSrc).toContain("source === 'export_pdf'");
     expect(shellSrc).toContain("source === 'export_docx'");
+    expect(shellSrc).toContain("source === 'export_zip'");
     expect(shellSrc).toContain("source === 'export_estar_zip'");
     // Also supports governed_export as fallback
     expect(shellSrc).toContain("source === 'governed_export'");

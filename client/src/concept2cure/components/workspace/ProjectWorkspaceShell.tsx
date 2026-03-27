@@ -2145,20 +2145,107 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                                 {row.status}
                               </Badge>
                             </div>
-                            <div className="text-[11px] text-slate-600 flex items-center gap-2 flex-wrap">
-                              <span>ID: {row.artifactId.slice(0, 22)}</span>
-                              <span className="text-slate-300">·</span>
-                              <span>v{row.version}</span>
-                              <span className="text-slate-300">·</span>
-                              <span>{row.sourceType}</span>
-                              <span className="text-slate-300">·</span>
-                              <span>Placement: {row.placement}</span>
-                              <span className="text-slate-300">·</span>
-                              <span>Prov: {row.provenancePresent ? 'yes' : 'no'}</span>
-                              <span className="text-slate-300">·</span>
-                              <span>Audit: {row.auditPresent ? 'yes' : 'no'}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'text-[10px]',
+                                art.status === 'draft' && 'text-amber-700 border-amber-200',
+                                art.status === 'approved' && 'text-emerald-700 border-emerald-200',
+                                art.status === 'review' && 'text-blue-700 border-blue-200',
+                                art.status === 'locked' && 'text-slate-700 border-slate-200'
+                              )}
+                            >
+                              {art.status || 'draft'}
+                            </Badge>
+                          </div>
+                          <div className="text-[11px] text-slate-500 flex items-center gap-2 flex-wrap">
+                            <span>v{art.version || 1}</span>
+                            <span className="text-slate-300">·</span>
+                            <span>{art.ctdSection ? `§${art.ctdSection}` : 'unplaced'}</span>
+                            <span className="text-slate-300">·</span>
+                            <span>{art.id.slice(0, 16)}</span>
+                            <span className="text-slate-300">·</span>
+                            <span>
+                              {art.metadata?.source === 'compute'
+                                ? 'Compute'
+                                : art.metadata?.source === 'export_pdf'
+                                  ? 'Export PDF'
+                                  : art.metadata?.source === 'export_docx'
+                                    ? 'Export DOCX'
+                                    : art.metadata?.source === 'export_zip'
+                                      ? 'Export ZIP'
+                                    : art.metadata?.source === 'export_estar_zip'
+                                      ? 'Export eSTAR ZIP'
+                                      : art.metadata?.source === 'governed_export'
+                                        ? `Export ${(art.metadata?.exportFormat || '').toString().toUpperCase()}`
+                                        : art.metadata?.anaRiActionType
+                                          ? 'AnA RI'
+                                          : art.metadata?.source === 'proposal_accept'
+                                            ? 'Proposal'
+                                            : 'Manual'}
+                            </span>
+                            {art.metadata?.governed && (
+                              <>
+                                <span className="text-slate-300">·</span>
+                                <span className="text-emerald-600 font-medium">Governed</span>
+                              </>
+                            )}
+                            {art.metadata?.provenancePresent && (
+                              <>
+                                <span className="text-slate-300">·</span>
+                                <span className="text-violet-600">Prov ✓</span>
+                              </>
+                            )}
+                            {art.metadata?.auditPresent && (
+                              <>
+                                <span className="text-slate-300">·</span>
+                                <span className="text-sky-600">Audit ✓</span>
+                              </>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 pt-0.5">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-[11px] text-blue-600"
+                              onClick={() => {
+                                if (tryOpenForEdit(art.status)) {
+                                  setSelectedDocId(art.id);
+                                  setMode('edit');
+                                } else {
+                                  setSelectedDocId(art.id);
+                                  setMode('browse');
+                                }
+                              }}
+                            >
+                              <FileText className="w-3 h-3 mr-1" />
+                              Open
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-[11px] text-violet-600"
+                              onClick={() => {
+                                setSelectedDocId(art.id);
+                                setMode('edit');
+                                setDocumentTab('provenance');
+                              }}
+                            >
+                              Provenance
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-[11px] text-emerald-600"
+                              onClick={() => {
+                                setSelectedDocId(art.id);
+                                setMode('edit');
+                                setDocumentTab('review');
+                              }}
+                            >
+                              Audit
+                            </Button>
+                            {!art.ctdSection && (
                               <Button
                                 variant="ghost"
                                 size="sm"
