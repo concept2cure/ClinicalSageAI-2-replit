@@ -269,6 +269,29 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
   const { data: dashboard } = useIntelligenceDashboard(projectId);
   const enrichIntelligence = useEnrichIntelligence(projectId ? Number(projectId) : null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Drag-and-drop handlers
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const files = e.dataTransfer.files;
+    if (!files || !projectId) return;
+    for (let i = 0; i < files.length; i++) {
+      await uploadDocument(files[i]);
+    }
+  }, [projectId, uploadDocument]);
 
   // Add text content state
   const [isAddingText, setIsAddingText] = useState(false);
@@ -492,24 +515,40 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
         {/* ── Project Files Section ── */}
         <Section title="Documents" icon={HardDrive} count={docs.length}>
           <div className="px-4">
-            {/* Upload button */}
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={!projectId || isUploading}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-dashed border-zinc-200 text-xs text-zinc-500 hover:border-zinc-300 hover:bg-zinc-50 disabled:opacity-40 transition-colors mb-2"
+            {/* Drop zone + upload button */}
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => !isUploading && fileInputRef.current?.click()}
+              role="button"
+              tabIndex={0}
+              className={cn(
+                'w-full flex items-center justify-center gap-2 px-3 py-3 rounded-lg border-2 border-dashed text-xs cursor-pointer transition-all duration-150 mb-2',
+                isDragging
+                  ? 'border-violet-400 bg-violet-50 text-violet-600'
+                  : isUploading
+                    ? 'border-zinc-200 bg-zinc-50 text-zinc-400 cursor-wait'
+                    : 'border-zinc-200 text-zinc-500 hover:border-zinc-300 hover:bg-zinc-50'
+              )}
             >
               {isUploading ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   Uploading... {uploadProgress}%
                 </>
+              ) : isDragging ? (
+                <>
+                  <Upload className="w-4 h-4" />
+                  Drop files here
+                </>
               ) : (
                 <>
                   <Upload className="w-3.5 h-3.5" />
-                  Upload files (PDF, DOCX, TXT, CSV, XLSX)
+                  Drop files or click to upload
                 </>
               )}
-            </button>
+            </div>
             <input
               ref={fileInputRef}
               type="file"

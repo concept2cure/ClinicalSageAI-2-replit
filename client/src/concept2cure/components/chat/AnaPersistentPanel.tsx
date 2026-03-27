@@ -4224,67 +4224,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               )}
             </div>
 
-            {/* AnA RI Intent Lens selector — only in standard mode */}
-            {chatMode === 'standard' && (
-              <div className="relative flex-shrink-0 self-center" ref={lensDropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => setShowLensDropdown(prev => !prev)}
-                  className={cn(
-                    'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
-                    intentLens !== 'auto'
-                      ? 'bg-[#FBF0EB] text-[#D97757] hover:bg-[#F5E1D6]'
-                      : 'text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]'
-                  )}
-                  title="Intent lens"
-                >
-                  {INTENT_LENSES.find(l => l.id === intentLens)?.icon}
-                  <span className="hidden sm:inline">
-                    {INTENT_LENSES.find(l => l.id === intentLens)?.label}
-                  </span>
-                  <ChevronDown className="w-3 h-3 opacity-50" />
-                </button>
-
-                {showLensDropdown && (
-                  <div className="absolute bottom-full left-0 mb-1.5 w-52 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
-                    {INTENT_LENSES.map(lens => (
-                      <button
-                        key={lens.id}
-                        type="button"
-                        onClick={() => {
-                          setIntentLens(lens.id);
-                          setShowLensDropdown(false);
-                        }}
-                        className={cn(
-                          'w-full flex items-start gap-3 px-3 py-2 text-left hover:bg-[#FAF9F5] transition-colors',
-                          intentLens === lens.id && 'bg-[#FAF9F5]'
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            'mt-0.5 flex-shrink-0',
-                            intentLens === lens.id ? 'text-[#D97757]' : 'text-[#8A8880]'
-                          )}
-                        >
-                          {lens.icon}
-                        </span>
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium text-[#141413]">{lens.label}</div>
-                          <div className="text-[10px] text-[#B0AEA5] leading-tight">
-                            {lens.description}
-                          </div>
-                        </div>
-                        {intentLens === lens.id && (
-                          <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5 flex-shrink-0" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* AI Provider / Model Selector */}
+            {/* AI Provider / Model Selector — clean, minimal like Claude.ai */}
             <div className="relative flex-shrink-0 self-center" ref={providerDropdownRef}>
               <button
                 type="button"
@@ -4380,6 +4320,29 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               <ArrowUp className="w-4 h-4" />
             </button>
           </div>
+
+          {/* ── Intent lens strip — subtle pills below input (Claude.ai clean) ── */}
+          {chatMode === 'standard' && (
+            <div className="flex items-center gap-1.5 mt-1.5 pl-1" ref={lensDropdownRef}>
+              {INTENT_LENSES.map(lens => (
+                <button
+                  key={lens.id}
+                  type="button"
+                  onClick={() => setIntentLens(lens.id)}
+                  className={cn(
+                    'flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors',
+                    intentLens === lens.id
+                      ? 'bg-[#FBF0EB] text-[#D97757]'
+                      : 'text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]'
+                  )}
+                  title={lens.description}
+                >
+                  {lens.icon}
+                  <span className="hidden sm:inline">{lens.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

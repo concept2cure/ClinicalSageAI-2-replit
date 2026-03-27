@@ -120,6 +120,7 @@ import {
   Rocket,
   FileStack,
   Users,
+  Loader2,
 } from 'lucide-react';
 import { LoadingState } from '@/components/ui/statesV2';
 
@@ -3068,13 +3069,15 @@ export const ZenApp: React.FC = () => {
                   }
                 />
 
-                {/* Right sidebar: Claude.ai-style (Context, Instructions, Files) */}
+                {/* Right sidebar: Claude.ai-style project knowledge (Context, Strategy, Instructions, Files, Intelligence, RIM) */}
                 {/* Desktop: static panel */}
                 <div className="w-72 xl:w-80 border-l border-zinc-100 bg-white flex-shrink-0 hidden lg:flex">
-                  <ProjectSidebar
-                    projectId={activeProjectId ?? null}
-                    projectType={activeProject?.type}
-                  />
+                  <Suspense fallback={<div className="flex items-center justify-center py-12 w-full"><Loader2 className="w-5 h-5 animate-spin text-zinc-400" /></div>}>
+                    <ProjectKnowledgePanel
+                      projectId={activeProjectId ?? null}
+                      className="w-full"
+                    />
+                  </Suspense>
                 </div>
                 {/* Mobile/Tablet: floating toggle + slide-over drawer */}
                 {workspacePanelOpen && (
@@ -3093,10 +3096,12 @@ export const ZenApp: React.FC = () => {
                           <X className="w-4 h-4 text-zinc-400" />
                         </button>
                       </div>
-                      <ProjectSidebar
-                        projectId={activeProjectId ?? null}
-                        projectType={activeProject?.type}
-                      />
+                      <Suspense fallback={<div className="flex items-center justify-center py-12 w-full"><Loader2 className="w-5 h-5 animate-spin text-zinc-400" /></div>}>
+                        <ProjectKnowledgePanel
+                          projectId={activeProjectId ?? null}
+                          className="w-full"
+                        />
+                      </Suspense>
                     </div>
                   </>
                 )}
@@ -3142,6 +3147,79 @@ export const ZenApp: React.FC = () => {
             />
           )}
         </div>
+
+        {/* ── Project Cards Grid — Claude.ai-style projects landing ── */}
+        {layoutMode === 'projects' && !embeddedModule && projects.length > 0 && (
+          <div className="px-6 pt-6 pb-2 max-w-5xl mx-auto w-full flex-shrink-0">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-zinc-900">Projects</h2>
+              <button
+                onClick={() => setNewProjectOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                New project
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {projects
+                .filter(p => !p.archived)
+                .sort((a, b) => {
+                  if (a.starred && !b.starred) return -1;
+                  if (!a.starred && b.starred) return 1;
+                  return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
+                })
+                .slice(0, 12)
+                .map(project => (
+                  <button
+                    key={project.id}
+                    onClick={() => {
+                      setActiveProjectId(project.id);
+                      setLayoutMode('workspace');
+                    }}
+                    className={cn(
+                      'group text-left p-4 rounded-xl border transition-all duration-150',
+                      activeProjectId === project.id
+                        ? 'border-zinc-300 bg-zinc-50 ring-1 ring-zinc-200'
+                        : 'border-zinc-200 hover:border-zinc-300 hover:shadow-sm bg-white'
+                    )}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <span
+                        className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold text-white"
+                        style={{ backgroundColor: project.color || '#6366f1' }}
+                      >
+                        {project.type}
+                      </span>
+                      {project.starred && (
+                        <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 flex-shrink-0" />
+                      )}
+                    </div>
+                    <h3 className="text-sm font-semibold text-zinc-900 truncate mb-0.5 group-hover:text-zinc-700">
+                      {project.name}
+                    </h3>
+                    {project.description && (
+                      <p className="text-xs text-zinc-500 line-clamp-2 mb-2 leading-relaxed">
+                        {project.description}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-3 text-[11px] text-zinc-400">
+                      <span className="flex items-center gap-1">
+                        <MessageSquare className="w-3 h-3" />
+                        {project.conversationCount}
+                      </span>
+                      {project.sponsor && (
+                        <span className="truncate">{project.sponsor}</span>
+                      )}
+                      <span className="ml-auto tabular-nums">
+                        {new Date(project.lastUpdated).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
 
         {/* AnA — THE single chat surface (ChatGPT/Claude style)
             projects/project-home/deep-research: full screen — AnA IS the interface
