@@ -309,6 +309,7 @@ const PlatformHome = lazy(() => import('./components/home/PlatformHome'));
 const AppsPage = lazy(() => import('./pages/AppsPage'));
 const ArtifactsPage = lazy(() => import('./pages/ArtifactsPage'));
 const VaultPage = lazy(() => import('./pages/VaultPage'));
+const SetupPage = lazy(() => import('./pages/SetupPage'));
 
 // [BATCH 3] ArtifactsGalleryPage — demoted, redirect to documents
 
@@ -2478,14 +2479,19 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* ── Global destination: Setup — opens settings modal ── */}
-          {/* Setup is handled by onOpenSettings in sidebar, which opens ZenSettings modal.
-              If user somehow lands on setup layout mode, redirect to projects. */}
+          {/* ── Global destination: Setup ── */}
           {!embeddedModule && layoutMode === 'setup' && (
-            <RedirectToWorkspace onRedirect={() => {
-              setSettingsOpen(true);
-              setLayoutMode('projects');
-            }} />
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-setup">
+              <ErrorBoundary>
+                <Suspense fallback={<ModuleLoadingFallback />}>
+                  <SetupPage
+                    onOpenSettings={(section) => {
+                      setSettingsOpen(true);
+                    }}
+                  />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
           )}
 
           {/* ── Project tab: Vault ── */}

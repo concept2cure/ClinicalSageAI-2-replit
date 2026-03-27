@@ -9,6 +9,7 @@ import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { queryKeys } from '@/concept2cure/hooks/queryKeys';
 import { WorkspaceCanvas, PageTitleHeader } from '@/components/ui/workspace-primitives';
 import {
   PenLine,
@@ -80,7 +81,7 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
 }) => {
   // Fetch project artifacts for pipeline stats
   const { data: artifacts, isLoading, isError } = useQuery<Artifact[]>({
-    queryKey: ['project', project.id, 'overview-artifacts'],
+    queryKey: queryKeys.projects.overviewArtifacts(project.id),
     queryFn: async () => {
       const res = await apiRequest('GET', `/api/concept2cure/projects/${project.id}/artifacts`);
       if (!res.ok) return [];

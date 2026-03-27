@@ -779,7 +779,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <IconBtn label="Artifacts" active={activeNavId === 'artifacts-center'} onClick={() => onNavigate?.('artifacts-center')}>
           <FileStack className="w-4 h-4" />
         </IconBtn>
-        <IconBtn label="Setup" active={activeNavId === 'setup'} onClick={onOpenSettings}>
+        <IconBtn label="Setup" active={activeNavId === 'setup'} onClick={() => onNavigate?.('setup')}>
           <Settings className="w-4 h-4" />
         </IconBtn>
 
@@ -896,7 +896,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             icon={<Settings className="w-3.5 h-3.5" />}
             label="Setup"
             active={activeNavId === 'setup'}
-            onClick={onOpenSettings}
+            onClick={() => onNavigate?.('setup')}
           />
         </div>
 

@@ -9,6 +9,8 @@ import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { queryKeys } from '@/concept2cure/hooks/queryKeys';
+import { Input } from '@/components/ui/input';
 import { WorkspaceCanvas, PageTitleHeader } from '@/components/ui/workspace-primitives';
 import { DataStateWrapper } from '@/components/ui/statesV2';
 import {
@@ -64,7 +66,7 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data: artifacts, isLoading, error } = useQuery<VaultItem[]>({
-    queryKey: ['project', projectId, 'vault-artifacts'],
+    queryKey: queryKeys.projects.vaultArtifacts(projectId || 'none'),
     queryFn: async () => {
       if (!projectId) return [];
       const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts`);
@@ -124,12 +126,12 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
       <div className="flex items-center gap-3 mt-4 mb-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-          <input
+          <Input
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search files and artifacts..."
-            className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-700 placeholder:text-zinc-400 focus:border-zinc-300 focus:ring-1 focus:ring-zinc-300 outline-none transition-all"
+            className="w-full pl-10 pr-4 text-sm"
           />
         </div>
         <button

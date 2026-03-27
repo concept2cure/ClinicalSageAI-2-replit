@@ -10,6 +10,8 @@ import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { queryKeys } from '@/concept2cure/hooks/queryKeys';
+import { Input } from '@/components/ui/input';
 import { WorkspaceCanvas, PageTitleHeader } from '@/components/ui/workspace-primitives';
 import { DataStateWrapper } from '@/components/ui/statesV2';
 import {
@@ -63,7 +65,7 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onOpenArtifact }) 
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data: artifacts, isLoading, error } = useQuery<Artifact[]>({
-    queryKey: ['global', 'artifacts'],
+    queryKey: queryKeys.artifacts.global,
     queryFn: async () => {
       const res = await apiRequest('GET', '/api/concept2cure/artifacts');
       if (!res.ok) throw new Error('Failed to load artifacts');
@@ -131,12 +133,12 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onOpenArtifact }) 
       {/* Search */}
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-        <input
+        <Input
           type="text"
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           placeholder="Search artifacts by title, project, section, or type..."
-          className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-700 placeholder:text-zinc-400 focus:border-zinc-300 focus:ring-1 focus:ring-zinc-300 outline-none transition-all"
+          className="w-full pl-10 pr-4 text-sm"
         />
       </div>
 
