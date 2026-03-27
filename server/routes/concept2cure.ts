@@ -1397,6 +1397,8 @@ router.post('/projects', async (req: Request, res: Response) => {
       ownership: buildProjectOwnership([], normalizeProjectSettings(newProject.settings)),
       status: newProject.status,
       organizationId: newProject.organizationId,
+      pinned: (newProject.metadata as any)?.pinned ?? false,
+      targetAgency: (newProject.metadata as any)?.targetAgency ?? null,
       createdAt: newProject.createdAt,
       updatedAt: newProject.updatedAt,
     };
@@ -1516,6 +1518,8 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
       conversations,
       ownership: buildProjectOwnership(conversations, normalizeProjectSettings(updated.settings)),
       status: updated.status,
+      pinned: (updated.metadata as any)?.pinned ?? false,
+      targetAgency: (updated.metadata as any)?.targetAgency ?? null,
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,
     };
