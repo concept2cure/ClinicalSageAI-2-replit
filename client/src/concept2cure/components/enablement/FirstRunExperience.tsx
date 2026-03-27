@@ -231,6 +231,7 @@ function CreateProjectScreen({
   onChangeProjectName: (v: string) => void;
   onChangeProductName: (v: string) => void;
   isCreating: boolean;
+  createError: boolean;
 }) {
   return (
     <div className="flex flex-col items-center justify-center h-full px-8">
@@ -238,6 +239,12 @@ function CreateProjectScreen({
       <p className="text-sm text-zinc-500 mb-8">
         {submissionType ? `A ${submissionType} project to get you started.` : 'Give your project a name.'}
       </p>
+
+      {createError && (
+        <div className="max-w-sm w-full mb-4 px-4 py-3 rounded-lg bg-red-50 text-red-700 text-sm">
+          Project creation failed. Check your connection and try again.
+        </div>
+      )}
 
       <div className="max-w-sm w-full space-y-4">
         <div>
@@ -345,6 +352,7 @@ export default function FirstRunExperience({
   const [projectName, setProjectName] = useState('');
   const [productName, setProductName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [createError, setCreateError] = useState(false);
   const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
 
   const canContinue = useCallback((): boolean => {
@@ -360,6 +368,7 @@ export default function FirstRunExperience({
     // Screen 2 → 3: create the project
     if (screen === 2 && !createdProjectId) {
       setIsCreating(true);
+      setCreateError(false);
       try {
         const res = await apiRequest('POST', '/api/concept2cure/projects', {
           name: projectName.trim(),
@@ -371,10 +380,22 @@ export default function FirstRunExperience({
         if (res.ok) {
           const json = await res.json();
           const id = json.data?.id ?? json.id;
-          if (id) setCreatedProjectId(String(id));
+          if (id) {
+            setCreatedProjectId(String(id));
+          } else {
+            setCreateError(true);
+            setIsCreating(false);
+            return; // Don't advance — show error on screen 3
+          }
+        } else {
+          setCreateError(true);
+          setIsCreating(false);
+          return; // Don't advance — show error on screen 3
         }
       } catch {
-        // Project creation failed — still advance to let user continue
+        setCreateError(true);
+        setIsCreating(false);
+        return; // Don't advance — show error on screen 3
       }
       setIsCreating(false);
     }
@@ -445,6 +466,7 @@ export default function FirstRunExperience({
                 onChangeProjectName={setProjectName}
                 onChangeProductName={setProductName}
                 isCreating={isCreating}
+                createError={createError}
               />
             )}
             {screen === 3 && (
