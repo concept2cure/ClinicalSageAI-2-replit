@@ -60,7 +60,15 @@
     "ci:risk-codes": "tsx scripts/generate-risk-code-types.ts --check",
     "validate:ectd-stubs": "tsx scripts/validate-ectd-stubs-bundle.ts",
     "ci:ectd-stubs": "tsx scripts/validate-ectd-stubs-bundle.ts",
-    "test:ana": "bash -lc 'DATABASE_URL=${DATABASE_URL:-postgres://user:pass@localhost:5432/testdb} SKIP_DB_STARTUP_TEST=${SKIP_DB_STARTUP_TEST:-true} vitest run tests/routes/ana-ri-health.test.ts tests/routes/ana-gap-analysis.test.ts tests/resolution/ana-orchestrator.test.ts server/services/__tests__/ana-ri.test.ts'"
+    "test:ana": "bash -lc 'DATABASE_URL=${DATABASE_URL:-postgres://user:pass@localhost:5432/testdb} SKIP_DB_STARTUP_TEST=${SKIP_DB_STARTUP_TEST:-true} vitest run tests/routes/ana-ri-health.test.ts tests/routes/ana-gap-analysis.test.ts tests/resolution/ana-orchestrator.test.ts server/services/__tests__/ana-ri.test.ts'",
+    "oss:supervisor:audit": "node scripts/oss/supervisor-audit.mjs",
+    "oss:checkpoint": "node scripts/oss/create-checkpoint.mjs",
+    "oss:eval:check": "node scripts/oss/eval-check.mjs",
+    "oss:ga:check": "node scripts/oss/ga-readiness-check.mjs",
+    "oss:uat:metrics": "node scripts/oss/uat-metrics.mjs",
+    "oss:scorecard:sync": "node scripts/oss/scorecard-sync.mjs",
+    "oss:reg:check": "node scripts/oss/regulatory-catalog-check.mjs",
+    "oss:medwrite:check": "node scripts/oss/medical-writing-check.mjs"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [

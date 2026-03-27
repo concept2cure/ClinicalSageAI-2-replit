@@ -1,0 +1,15 @@
+{
+  "version": "1.0.0",
+  "sessions": [
+    {
+      "session_id": "UAT-001",
+      "stage": "beta",
+      "user_role": "regulatory_writer",
+      "tasks_attempted": 4,
+      "tasks_passed": 4,
+      "citation_trust_score": 4.0,
+      "critical_defects_found": 0,
+      "notes": "example"
+    }
+  ]
+}
