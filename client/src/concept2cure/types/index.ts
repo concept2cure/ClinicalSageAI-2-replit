@@ -239,6 +239,8 @@ export interface UploadedDocument {
   uploadedAt: Date;
   extractedText?: string;
   embedding?: number[];
+  /** Whether this document is active in the AI context window (default: true) */
+  isActive?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

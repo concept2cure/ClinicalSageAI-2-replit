@@ -1038,6 +1038,59 @@ router.get('/thread/:threadId', async (req: Request, res: Response) => {
 });
 
 /**
+ * PATCH /api/chat/thread/:threadId
+ * Move a conversation to a different project or update thread metadata (E6)
+ */
+router.patch('/thread/:threadId', async (req: Request, res: Response) => {
+  try {
+    const { threadId } = req.params;
+    const { project_id, title } = req.body;
+    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+
+    if (!orgId) {
+      return res.status(401).json({ ok: false, error: 'Organization context required' });
+    }
+
+    // Verify thread exists and belongs to org
+    const threadCheck = await pool.query(
+      `SELECT id FROM ai_threads WHERE id = $1 AND organization_id = $2`,
+      [threadId, orgId]
+    );
+
+    if (threadCheck.rows.length === 0) {
+      return res.status(404).json({ ok: false, error: 'Thread not found' });
+    }
+
+    // Build dynamic SET clause
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramIdx = 1;
+
+    if (project_id !== undefined) {
+      updates.push(`project_id = $${paramIdx++}`);
+      values.push(project_id || null);
+    }
+    if (title !== undefined) {
+      updates.push(`title = $${paramIdx++}`);
+      values.push(title);
+    }
+    updates.push(`updated_at = NOW()`);
+
+    values.push(threadId);
+
+    await pool.query(
+      `UPDATE ai_threads SET ${updates.join(', ')} WHERE id = $${paramIdx}`,
+      values
+    );
+
+    res.json({ ok: true, threadId, project_id: project_id ?? undefined });
+  } catch (error: any) {
+    console.error('[AnA] Patch thread error:', error);
+    res.status(500).json({ ok: false, error: 'Failed to update thread' });
+  }
+});
+
+/**
  * DELETE /api/chat/thread/:threadId
  * Delete a conversation thread from database
  */

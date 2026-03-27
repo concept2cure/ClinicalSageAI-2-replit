@@ -919,9 +919,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         const parts = [`${timeGreeting}. You're working on **${contextProfile.activeProject}**.`];
         const statParts: string[] = [];
         if (stats.documentCount > 0) statParts.push(`${stats.documentCount} indexed document${stats.documentCount !== 1 ? 's' : ''}`);
-        if (stats.memoryAtomCount > 0) statParts.push(`${stats.memoryAtomCount} knowledge atom${stats.memoryAtomCount !== 1 ? 's' : ''}`);
         if (stats.signalCount > 0) statParts.push(`${stats.signalCount} intelligence signal${stats.signalCount !== 1 ? 's' : ''}`);
-        if (statParts.length > 0) parts.push(`I have ${statParts.join(', ')}.`);
+        if (statParts.length > 0) parts.push(`I have your regulatory strategy, ${statParts.join(', and ')}.`);
         if (stats.readinessScore != null) parts.push(`Current readiness: ${stats.readinessScore}%.`);
         parts.push('What would you like to work on?');
         return parts.join(' ');

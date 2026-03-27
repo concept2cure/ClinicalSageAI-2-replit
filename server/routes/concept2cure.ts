@@ -700,6 +700,8 @@ interface UploadedDocument {
   tokenCount?: number;
   pageCount?: number;
   status?: string;
+  /** Whether this document is active in the AI context window (default: true) */
+  isActive?: boolean;
 }
 
 interface ProjectKnowledge {
@@ -1408,6 +1410,71 @@ router.post('/projects', async (req: Request, res: Response) => {
       name: newProject.name,
       organizationId,
     });
+
+    // Post-creation: initialize intelligence profile and CTD sections (non-blocking)
+    Promise.allSettled([
+      // Create intelligence profile
+      (async () => {
+        try {
+          const { getOrCreateProfile } = await import('../services/intelligence/project-intelligence-service.js');
+          await getOrCreateProfile(newProject.id, organizationId);
+          logger.info('Auto-created intelligence profile', { projectId });
+        } catch (err) {
+          logger.error('[projects] Failed to auto-create intelligence profile:', err);
+        }
+      })(),
+      // Initialize CTD sections based on submission type
+      (async () => {
+        try {
+          const { getAllINDSections } = await import('../../services/regulatory/ind-ectd-sections.js');
+          const allSections = getAllINDSections();
+          const client = await pool.connect();
+          try {
+            await client.query('BEGIN');
+            let inserted = 0;
+            for (const section of allSections) {
+              await client.query(
+                `INSERT INTO project_sections
+                   (organization_id, project_id, section_code, module, title, status, estimated_hours, priority, metadata)
+                 VALUES ($1, $2, $3, $4, $5, 'not_started', $6, $7, $8)
+                 ON CONFLICT DO NOTHING`,
+                [
+                  organizationId,
+                  newProject.id,
+                  section.code,
+                  section.module,
+                  section.title,
+                  section.estimatedHours,
+                  section.required ? 'high' : 'medium',
+                  JSON.stringify({
+                    required: section.required,
+                    requiredForAmendment: section.requiredForAmendment,
+                    aiDraftable: section.aiDraftable,
+                    authoringMode: section.authoringMode,
+                    role: section.role,
+                    regulatoryRef: section.regulatoryRef,
+                    format: section.format,
+                    parentCode: section.parentCode,
+                    depth: section.depth,
+                  }),
+                ]
+              );
+              inserted++;
+            }
+            await client.query('COMMIT');
+            logger.info('Auto-initialized CTD sections', { projectId, sectionsInserted: inserted });
+          } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+          } finally {
+            client.release();
+          }
+        } catch (err) {
+          logger.error('[projects] Failed to auto-initialize CTD sections:', err);
+        }
+      })(),
+    ]).catch(() => {});
+
     return sendSuccess(res.status(201), response);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
@@ -1946,6 +2013,66 @@ router.delete('/documents/:documentId', async (req: Request, res: Response) => {
   } catch (error: any) {
     logger.error('Failed to delete knowledge document', { error: error.message });
     return sendError(res, 500, 'Failed to delete knowledge document');
+  }
+});
+
+/**
+ * PATCH /api/concept2cure/documents/:documentId/activation
+ * Toggle a document's active state in the AI context window (E7).
+ * Body: { isActive: boolean }
+ */
+router.patch('/documents/:documentId/activation', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const documentId = req.params.documentId;
+    const { isActive } = req.body;
+
+    if (typeof isActive !== 'boolean') {
+      return sendError(res, 400, 'isActive must be a boolean');
+    }
+
+    const dbProjects = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.organizationId, organizationId), isNull(projects.actualEndDate)));
+
+    const target = dbProjects.find(project => {
+      const settings = normalizeProjectSettings(project.settings);
+      const knowledge = normalizeKnowledge(settings);
+      return knowledge.documents.some(doc => doc.id === documentId);
+    });
+
+    if (!target) {
+      return sendError(res, 404, 'Document not found');
+    }
+
+    const settings = normalizeProjectSettings(target.settings);
+    const knowledge = normalizeKnowledge(settings);
+    const updatedKnowledge: ProjectKnowledge = {
+      ...knowledge,
+      documents: knowledge.documents.map(doc =>
+        doc.id === documentId ? { ...doc, isActive } : doc
+      ),
+    };
+
+    const updatedSettings = {
+      ...settings,
+      customInstructions: updatedKnowledge.customInstructions,
+      knowledge: updatedKnowledge,
+    };
+
+    const [updated] = await db
+      .update(projects)
+      .set({ settings: updatedSettings, updatedAt: new Date() })
+      .where(and(eq(projects.id, target.id), eq(projects.organizationId, organizationId)))
+      .returning();
+
+    await logAuditEntry(req, 'UPDATE', 'project', `proj_${target.id}`, target, updated);
+
+    return sendSuccess(res, { documentId, isActive });
+  } catch (error: any) {
+    logger.error('Failed to toggle document activation', { error: error.message });
+    return sendError(res, 500, 'Failed to toggle document activation');
   }
 });
 

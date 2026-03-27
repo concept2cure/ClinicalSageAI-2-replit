@@ -501,6 +501,12 @@ async function loadProjectContext(
 
 /**
  * Load document/artifact context for the project.
+ *
+ * TODO (E7): When project knowledge documents gain isActive toggle support,
+ * filter out documents where isActive === false so they are excluded from
+ * the AI context window. Currently this function queries concept2cure_artifacts
+ * (not the project settings knowledge.documents array), so the isActive flag
+ * on UploadedDocument does not yet affect context assembly here.
  */
 async function loadDocumentContext(
   projectId: number,
