@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 interface GlobalOperatingShellProps {
   layoutMode: string;
   activeProjectName?: string;
+  activeNavId?: string;
   currentGlobalNodeLabel?: string;
   activeArtifactLabel?: string;
   onAction?: (action: 'home' | 'search' | 'vault' | 'review' | 'reports' | 'submission') => void;
@@ -33,6 +34,7 @@ const LAYERS = [
 export function GlobalOperatingShell({
   layoutMode,
   activeProjectName,
+  activeNavId,
   currentGlobalNodeLabel,
   activeArtifactLabel,
   onAction,
@@ -121,7 +123,7 @@ export function GlobalOperatingShell({
                 </button>
               </>
             )}
-            {LAYERS.map(layer => {
+            {GLOBAL_NODES.map(layer => {
               const Icon = layer.icon;
               const isActive =
                 ((layoutMode === 'documents' || layoutMode === 'regulatory-workspace') &&
