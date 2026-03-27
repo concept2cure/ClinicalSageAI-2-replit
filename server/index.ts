@@ -393,6 +393,33 @@ app.get('/api/health', async (req: Request, res: Response) => {
   });
 });
 
+// AI Gateway provider health endpoint
+app.get('/api/ai-gateway/health', async (_req: Request, res: Response) => {
+  try {
+    const { getGateway } = await import('./services/ai-gateway');
+    const gw = getGateway();
+    if (!gw) {
+      return res.status(503).json({
+        status: 'unavailable',
+        message: 'AI Gateway not initialized',
+      });
+    }
+    const providers = gw.getProviderHealth();
+    const enabled = gw.getEnabledProviders();
+    const healthyCount = providers.filter((p: any) => p.healthy).length;
+
+    res.json({
+      status: healthyCount > 0 ? 'healthy' : 'degraded',
+      providers,
+      enabledProviders: enabled,
+      healthyProviders: healthyCount,
+      totalProviders: providers.length,
+    });
+  } catch (err: any) {
+    res.status(500).json({ status: 'error', message: err?.message });
+  }
+});
+
 // Server-authoritative timestamp.
 // Used by SignaturePage to display accurate date before signing.
 // The authoritative signature timestamp is generated server-side
@@ -512,6 +539,7 @@ app.use('/api', (req: Request, res: Response, next: NextFunction) => {
     '/api/health',
     '/api/cortex/health',
     '/api/claude/health',
+    '/api/ai-gateway/health',
     '/api/claude/models',
   ];
   const fullPath = req.baseUrl + req.path;

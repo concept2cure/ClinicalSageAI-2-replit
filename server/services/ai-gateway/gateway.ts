@@ -763,31 +763,37 @@ export class AIGateway {
     let outputTokens = 0;
     let stopReason = 'unknown';
 
-    for await (const event of stream as AsyncIterable<any>) {
-      if (event.type === 'content_block_delta') {
-        if (event.delta?.type === 'text_delta') {
-          content += event.delta.text;
-          onStream(event.delta.text, { type: 'text' });
-        } else if (event.delta?.type === 'thinking_delta') {
-          thinking += event.delta.thinking;
-          onStream('', { type: 'thinking', thinkingContent: event.delta.thinking });
-        } else if (event.delta?.type === 'input_json_delta') {
-          // Tool input streaming — accumulate
+    try {
+      for await (const event of stream as AsyncIterable<any>) {
+        if (event.type === 'content_block_delta') {
+          if (event.delta?.type === 'text_delta') {
+            content += event.delta.text;
+            onStream(event.delta.text, { type: 'text' });
+          } else if (event.delta?.type === 'thinking_delta') {
+            thinking += event.delta.thinking;
+            onStream('', { type: 'thinking', thinkingContent: event.delta.thinking });
+          } else if (event.delta?.type === 'input_json_delta') {
+            // Tool input streaming — accumulate
+          }
+        } else if (event.type === 'content_block_start') {
+          if (event.content_block?.type === 'tool_use') {
+            toolUses.push({
+              id: event.content_block.id,
+              name: event.content_block.name,
+              input: {},
+            });
+          }
+        } else if (event.type === 'message_delta') {
+          stopReason = event.delta?.stop_reason || stopReason;
+          outputTokens = event.usage?.output_tokens || outputTokens;
+        } else if (event.type === 'message_start') {
+          inputTokens = event.message?.usage?.input_tokens || 0;
         }
-      } else if (event.type === 'content_block_start') {
-        if (event.content_block?.type === 'tool_use') {
-          toolUses.push({
-            id: event.content_block.id,
-            name: event.content_block.name,
-            input: {},
-          });
-        }
-      } else if (event.type === 'message_delta') {
-        stopReason = event.delta?.stop_reason || stopReason;
-        outputTokens = event.usage?.output_tokens || outputTokens;
-      } else if (event.type === 'message_start') {
-        inputTokens = event.message?.usage?.input_tokens || 0;
       }
+    } catch (streamErr: any) {
+      console.error('[AI Gateway] Stream interrupted:', streamErr?.message);
+      // Return whatever content was accumulated so far
+      if (!content) throw streamErr; // Re-throw if nothing was captured
     }
 
     return {

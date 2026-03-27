@@ -309,16 +309,23 @@ router.get('/memory/context-assemble', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: 'query is required' });
     }
 
-    const result = await buildMemoryContextForChat({
-      threadId,
-      organizationId,
-      projectId,
-      query,
-      limitPerLayer,
-      maxChars,
-      minSimilarity,
-      maxAgeDays,
-    });
+    const CONTEXT_ASSEMBLY_TIMEOUT_MS = 30000;
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Memory context assembly timeout')), CONTEXT_ASSEMBLY_TIMEOUT_MS)
+    );
+    const result = await Promise.race([
+      buildMemoryContextForChat({
+        threadId,
+        organizationId,
+        projectId,
+        query,
+        limitPerLayer,
+        maxChars,
+        minSimilarity,
+        maxAgeDays,
+      }),
+      timeoutPromise,
+    ]) as Awaited<ReturnType<typeof buildMemoryContextForChat>>;
 
     return res.json({
       success: true,
@@ -327,6 +334,10 @@ router.get('/memory/context-assemble', async (req: Request, res: Response) => {
       memoryDiagnostics: result.diagnostics,
     });
   } catch (err: any) {
+    if (err.message === 'Memory context assembly timeout') {
+      console.error('[ClientIntelligence] GET /memory/context-assemble timed out after 30s');
+      return res.status(504).json({ success: false, error: 'Memory context assembly timed out' });
+    }
     console.error('[ClientIntelligence] GET /memory/context-assemble error:', err);
     return res.status(500).json({ success: false, error: err.message });
   }
