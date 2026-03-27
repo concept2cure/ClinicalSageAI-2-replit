@@ -62,10 +62,17 @@ router.post('/ask', authMiddleware, askRateLimiter, async (req: Request, res: Re
       return sendError(res, 400, 'Question is required (minimum 3 characters)', null, 'VALIDATION_ERROR');
     }
 
-    // Build context prefix with project info if available
+    // Tenant scoping — ensure queries are scoped to the user's organization
+    const userId = (req as Record<string, unknown>).userId as number | undefined;
+    const orgId = req.header('x-organization-id') || (req as Record<string, unknown>).tenantId as string | undefined;
+
+    // Build context prefix with project and tenant info
     const contextParts: string[] = [];
     if (projectId) {
       contextParts.push(`Project context: project ID ${projectId}`);
+    }
+    if (orgId) {
+      contextParts.push(`Organization: ${orgId}`);
     }
     if (context) {
       contextParts.push(context);

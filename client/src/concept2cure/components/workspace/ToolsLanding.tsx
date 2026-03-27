@@ -164,6 +164,7 @@ export const ToolsLanding: React.FC<ToolsLandingProps> = ({
                     size="sm"
                     onClick={() => onAction(tool.id)}
                     aria-label={`${tool.label}: ${tool.description}`}
+                    data-testid={`tool-${tool.id}`}
                     className="w-full justify-start text-left h-auto py-2.5 px-3 group"
                   >
                     <div className="w-8 h-8 rounded-md bg-zinc-100 flex items-center justify-center flex-shrink-0 mr-3">
