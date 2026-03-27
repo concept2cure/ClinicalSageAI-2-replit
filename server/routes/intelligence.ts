@@ -469,7 +469,7 @@ router.get('/projects/:projectId/rim/signals', async (req: Request, res: Respons
       return res.status(400).json({ error: 'Missing projectId or organization context' });
     }
 
-    const summary = getProjectSignals(organizationId, projectId);
+    const summary = await getProjectSignals(organizationId, projectId);
     return res.json(summary);
   } catch (error) {
     console.error('[intelligence] Signal summary failed:', error);
@@ -491,7 +491,7 @@ router.get('/projects/:projectId/rim/cross-artifact', async (req: Request, res: 
       return res.status(400).json({ error: 'Missing projectId or organization context' });
     }
 
-    const report = analyzeCrossArtifactIntelligence(organizationId, projectId);
+    const report = await analyzeCrossArtifactIntelligence(organizationId, projectId);
     return res.json(report);
   } catch (error) {
     console.error('[intelligence] Cross-artifact analysis failed:', error);
@@ -514,7 +514,7 @@ router.get('/projects/:projectId/rim/section/:sectionCode', async (req: Request,
       return res.status(400).json({ error: 'Missing required parameters' });
     }
 
-    const enrichment = enrichChangeImpact(organizationId, projectId, sectionCode);
+    const enrichment = await enrichChangeImpact(organizationId, projectId, sectionCode);
     return res.json(enrichment);
   } catch (error) {
     console.error('[intelligence] Section enrichment failed:', error);

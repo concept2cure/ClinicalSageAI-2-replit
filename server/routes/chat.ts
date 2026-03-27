@@ -994,6 +994,22 @@ router.get('/threads', async (req: Request, res: Response) => {
 router.get('/threads/:threadId/messages', async (req: Request, res: Response) => {
   try {
     const { threadId } = req.params;
+    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+
+    if (!orgId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+
+    // Verify thread belongs to org before returning messages
+    const threadCheck = await pool.query(
+      `SELECT id FROM ai_threads WHERE id = $1 AND organization_id = $2`,
+      [threadId, orgId]
+    );
+
+    if (threadCheck.rows.length === 0) {
+      return res.status(404).json({ messages: [], error: 'Thread not found' });
+    }
+
     const limit = Math.min(parseInt((req.query.limit as string) || '30', 10), 100);
     const messages = await getThreadMessages(threadId);
     res.json({ messages: messages.slice(-limit) });
@@ -1010,9 +1026,19 @@ router.get('/threads/:threadId/messages', async (req: Request, res: Response) =>
 router.get('/thread/:threadId', async (req: Request, res: Response) => {
   try {
     const { threadId } = req.params;
-    const threadResult = await pool.query('SELECT id, created_at FROM chat_threads WHERE id = $1', [
-      threadId,
-    ]);
+    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+
+    if (!orgId) {
+      return res.status(401).json({
+        error: 'Organization context required',
+        code: 'ORG_CONTEXT_REQUIRED',
+      });
+    }
+
+    const threadResult = await pool.query(
+      'SELECT id, created_at FROM chat_threads WHERE id = $1 AND organization_id = $2',
+      [threadId, orgId]
+    );
 
     if (threadResult.rows.length === 0) {
       return res.status(404).json({
@@ -1097,7 +1123,19 @@ router.patch('/thread/:threadId', async (req: Request, res: Response) => {
 router.delete('/thread/:threadId', async (req: Request, res: Response) => {
   try {
     const { threadId } = req.params;
-    const result = await pool.query('DELETE FROM chat_threads WHERE id = $1', [threadId]);
+    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+
+    if (!orgId) {
+      return res.status(401).json({
+        error: 'Organization context required',
+        code: 'ORG_CONTEXT_REQUIRED',
+      });
+    }
+
+    const result = await pool.query(
+      'DELETE FROM chat_threads WHERE id = $1 AND organization_id = $2',
+      [threadId, orgId]
+    );
     const deleted = (result.rowCount || 0) > 0;
 
     res.json({

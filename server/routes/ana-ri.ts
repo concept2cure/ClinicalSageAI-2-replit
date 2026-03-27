@@ -285,7 +285,10 @@ router.post('/chat', async (req: Request, res: Response) => {
     // Intelligence + memory + enrichment — run in PARALLEL for speed
     const chatProjectId = req.body.project_id || req.body.context?.projectId;
     const [chatIntelligencePrefix, chatMemoryResult, chatEnrichment] = await Promise.all([
-      getIntelligencePrefix(orgId ? Number(orgId) : undefined, chatProjectId).catch(() => ''),
+      getIntelligencePrefix(orgId ? Number(orgId) : undefined, chatProjectId).catch((err) => {
+        console.warn('[AnA RI] Intelligence prefix failed:', err?.message);
+        return '';
+      }),
       buildMemoryContextForChat({
         threadId: thread_id || undefined,
         organizationId: orgId ? Number(orgId) : undefined,
@@ -293,13 +296,19 @@ router.post('/chat', async (req: Request, res: Response) => {
         query: message,
         limitPerLayer: 4,
         maxChars: 3500,
-      }).catch(() => ({ memoryBlock: '', atoms: [], diagnostics: null })),
+      }).catch((err) => {
+        console.warn('[AnA RI] Memory context failed:', err?.message);
+        return { memoryBlock: '', atoms: [], diagnostics: null };
+      }),
       enrichContextForChat({
         message,
         projectId: chatProjectId,
         organizationId: orgId ? Number(orgId) : undefined,
         submissionType: orchestration.detectedSubmissionType || undefined,
-      }).catch(() => ({ block: '', sources: [] as string[] })),
+      }).catch((err) => {
+        console.warn('[AnA RI] Context enrichment failed:', err?.message);
+        return { block: '', sources: [] as string[] };
+      }),
     ]);
 
     const enrichedSystemPrompt =
@@ -326,7 +335,11 @@ router.post('/chat', async (req: Request, res: Response) => {
       }
     }
     if (!historyLoaded && conversation_history && Array.isArray(conversation_history)) {
-      for (const msg of conversation_history.slice(-20)) {
+      const MAX_HISTORY_MSGS = 20;
+      const MAX_MSG_LENGTH = 50000;
+      for (const msg of conversation_history.slice(-MAX_HISTORY_MSGS)) {
+        if (!msg.role || !['user', 'assistant'].includes(msg.role)) continue;
+        if (typeof msg.content !== 'string' || msg.content.length > MAX_MSG_LENGTH) continue;
         messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
       }
     }
@@ -336,8 +349,8 @@ router.post('/chat', async (req: Request, res: Response) => {
     if (fileIds && Array.isArray(fileIds) && fileIds.length > 0) {
       try {
         const fileResult = await dbPool.query(
-          `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1)`,
-          [fileIds]
+          `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1) AND organization_id = $2`,
+          [fileIds, orgId ? Number(orgId) : 0]
         );
         if (fileResult.rows.length > 0) {
           const fileContext = fileResult.rows
@@ -469,12 +482,14 @@ router.post('/chat', async (req: Request, res: Response) => {
     const projectIdForRim = req.body.project_id || req.body.context?.projectId;
     if (response.content && projectIdForRim) {
       void interceptChatResponse({
-        projectId: String(projectIdForRim),
-        organizationId: orgId ? Number(orgId) : undefined,
-        threadId: resolvedThreadId || undefined,
-        userMessage: message,
+        organizationId: orgId ? Number(orgId) : 0,
+        projectId: projectIdForRim ? Number(projectIdForRim) : 0,
+        userId: typeof userId === 'number' ? userId : undefined,
         assistantMessage: response.content,
-        submissionType: orchestration.detectedSubmissionType || undefined,
+        claimCount: 0,
+        supportedClaimRate: 0.5,
+        model: response.model || 'unknown',
+        provider: response.provider || 'unknown',
       }).catch(() => {});
     }
 
@@ -619,7 +634,10 @@ router.post('/stream', async (req: Request, res: Response) => {
 
     // Intelligence + memory + enrichment — run in PARALLEL for speed
     const [intelligencePrefix, memoryResult, enrichment] = await Promise.all([
-      getIntelligencePrefix(orgId ? Number(orgId) : undefined, project_id).catch(() => ''),
+      getIntelligencePrefix(orgId ? Number(orgId) : undefined, project_id).catch((err) => {
+        console.warn('[AnA RI] Intelligence prefix failed:', err?.message);
+        return '';
+      }),
       buildMemoryContextForChat({
         threadId: thread_id || undefined,
         organizationId: orgId ? Number(orgId) : undefined,
@@ -627,13 +645,19 @@ router.post('/stream', async (req: Request, res: Response) => {
         query: message,
         limitPerLayer: 4,
         maxChars: 3500,
-      }).catch(() => ({ memoryBlock: '', atoms: [], diagnostics: null })),
+      }).catch((err) => {
+        console.warn('[AnA RI] Memory context failed:', err?.message);
+        return { memoryBlock: '', atoms: [], diagnostics: null };
+      }),
       enrichContextForChat({
         message,
         projectId: project_id,
         organizationId: orgId ? Number(orgId) : undefined,
         submissionType: orchestration.detectedSubmissionType || undefined,
-      }).catch(() => ({ block: '', sources: [] as string[] })),
+      }).catch((err) => {
+        console.warn('[AnA RI] Context enrichment failed:', err?.message);
+        return { block: '', sources: [] as string[] };
+      }),
     ]);
 
     const memoryBlock = memoryResult.memoryBlock;
@@ -683,7 +707,11 @@ router.post('/stream', async (req: Request, res: Response) => {
       }
     }
     if (!streamHistoryLoaded && conversation_history && Array.isArray(conversation_history)) {
-      for (const msg of conversation_history.slice(-20)) {
+      const MAX_HISTORY_MSGS = 20;
+      const MAX_MSG_LENGTH = 50000;
+      for (const msg of conversation_history.slice(-MAX_HISTORY_MSGS)) {
+        if (!msg.role || !['user', 'assistant'].includes(msg.role)) continue;
+        if (typeof msg.content !== 'string' || msg.content.length > MAX_MSG_LENGTH) continue;
         messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
       }
     }
@@ -693,8 +721,8 @@ router.post('/stream', async (req: Request, res: Response) => {
     if (streamFileIds && Array.isArray(streamFileIds) && streamFileIds.length > 0) {
       try {
         const fileResult = await dbPool.query(
-          `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1)`,
-          [streamFileIds]
+          `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1) AND organization_id = $2`,
+          [streamFileIds, orgId ? Number(orgId) : 0]
         );
         if (fileResult.rows.length > 0) {
           const fileContext = fileResult.rows
@@ -789,12 +817,14 @@ router.post('/stream', async (req: Request, res: Response) => {
     // RIM interception — capture intelligence signals (non-blocking)
     if (fullContent && project_id) {
       void interceptChatResponse({
-        projectId: String(project_id),
-        organizationId: orgId ? Number(orgId) : undefined,
-        threadId: threadId || undefined,
-        userMessage: message,
+        organizationId: orgId ? Number(orgId) : 0,
+        projectId: project_id ? Number(project_id) : 0,
+        userId: typeof userId === 'number' ? userId : undefined,
         assistantMessage: fullContent,
-        submissionType: orchestration.detectedSubmissionType || undefined,
+        claimCount: 0,
+        supportedClaimRate: 0.5,
+        model: gwResponse.model || 'unknown',
+        provider: gwResponse.provider || 'unknown',
       }).catch(() => {});
     }
 
