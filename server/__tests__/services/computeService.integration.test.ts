@@ -78,6 +78,9 @@ describe('computeService integration behavior', () => {
 
     expect(result.status).toBe('completed');
     expect(result.runtimeMaturity).toBe('production-path');
+    expect(result.governedConsequence?.artifactId).toBe('artifact_123');
+    expect(result.governedConsequence?.provenanceRef).toBe('prov_123');
+    expect(result.governedConsequence?.auditRef).toBe('audit_123');
     expect(registerArtifactMock).toHaveBeenCalledTimes(1);
 
     const updateCall = queryMock.mock.calls.find(c =>

@@ -91,6 +91,9 @@ export async function acceptProposal(params: { conversationId: string; proposalI
       ctdSection: '5.0',
       sourceJobId: `conversation-${ctx.conversationId}`,
       surfaceKey: 'conversation_os_proposal_accept',
+      sourceType: 'proposal_accept',
+      metadata: { source: 'proposal_accept', proposalId: params.proposalId },
+      auditMetadata: { source: 'proposal_accept', proposalId: params.proposalId },
     });
 
     await conversationPersistence.recordAcceptedArtifactVersion(
@@ -110,7 +113,7 @@ export async function acceptProposal(params: { conversationId: string; proposalI
     return {
       state: 'ACCEPTED_GOVERNED' as const,
       proposalId: target.id,
-      artifactId: target.artifactId,
+      artifactId: governedConsequence.artifactId,
       governedConsequence,
     };
   } catch (error: any) {

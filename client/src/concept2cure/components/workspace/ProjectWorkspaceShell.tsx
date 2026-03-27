@@ -72,12 +72,15 @@ import {
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
 import { SkeletonText, LoadingState } from '@/components/ui/statesV2';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   DocumentModeProvider,
   resolveDocumentMode,
   MODE_CAPABILITIES,
   type WorkflowStage,
 } from '../../contexts/DocumentModeContext';
+import { buildDocumentConsequenceRows, type ConsequenceComputeJob } from './documentConsequence';
 
 // Feature flag for governed drag-and-drop (Phase 3C groundwork)
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -359,6 +362,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       auditRef?: string;
     }>;
   }>({ proposals: [] });
+  const [computeJobs, setComputeJobs] = useState<ConsequenceComputeJob[]>([]);
 
   // Governed document panel (right inspector)
   const [showGovernedPanel, setShowGovernedPanel] = useState(false);
@@ -410,7 +414,17 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         latestPlanTask: (planRes as any)?.plan?.task,
         proposals: ((proposalRes as any)?.proposals ?? [])
           .slice(0, 3)
-          .map((p: any) => ({ id: p.id, status: p.status })),
+          .map((p: any) => ({
+            id: p.id,
+            status: p.status,
+            governanceState: p.governanceState,
+            artifactId: p.artifactId,
+            artifactVersion: p.artifactVersion,
+            artifactStatus: p.artifactStatus,
+            placementState: p.placementState,
+            provenanceRef: p.provenanceRef,
+            auditRef: p.auditRef,
+          })),
       });
     });
   }, [projectId, mode]);
@@ -428,6 +442,17 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       pushShellToast('Failed to load artifacts', 'error');
     } finally {
       setLoading(false);
+    }
+  }, [projectId]);
+
+  const loadComputeJobs = useCallback(async () => {
+    if (!projectId) return;
+    try {
+      const res = await apiRequest('GET', `/api/concept2cure/compute/projects/${projectId}/jobs`);
+      const payload = await res.json();
+      setComputeJobs(payload.data ?? []);
+    } catch {
+      setComputeJobs([]);
     }
   }, [projectId]);
 
@@ -502,6 +527,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   useEffect(() => {
     loadArtifacts();
   }, [loadArtifacts]);
+
+  useEffect(() => {
+    loadComputeJobs();
+  }, [loadComputeJobs]);
 
   // ── Load dossier metrics ─────────────────────────────────────────────────
   const loadDossierMetrics = useCallback(async () => {
@@ -1064,21 +1093,30 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
   /** Called when Transform Canvas / Submission App creates a draft */
   const handlePhase4CreateDraft = useCallback(
-    async (title: string, ctdSection: string, templateKey?: string) => {
+    async (title: string, ctdSection: string, templateKey?: string, existingArtifactId?: string) => {
       if (!projectId) return;
       try {
-        const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
-          title,
-          content: `<h1>${title}</h1><p>Begin editing this document.</p>`,
-          type: 'regulatory_document',
-          category: 'document',
-          ctdSection,
-          templateId: templateKey,
-        });
-        const payload = await res.json();
-        const created = payload.data ?? payload;
+        let createdId = existingArtifactId;
+        if (!createdId) {
+          const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
+            title,
+            content: `<h1>${title}</h1><p>Begin editing this document.</p>`,
+            type: 'regulatory_document',
+            category: 'document',
+            ctdSection,
+            templateId: templateKey,
+            metadata: {
+              source: 'generated_draft',
+              governed: true,
+            },
+          });
+          const payload = await res.json();
+          const created = payload.data ?? payload;
+          createdId = created.id;
+        }
         await loadArtifacts();
-        setSelectedDocId(created.id);
+        if (!createdId) return;
+        setSelectedDocId(createdId);
         setMode('edit');
         closePhase4Panel();
       } catch {
@@ -1086,6 +1124,19 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       }
     },
     [projectId, loadArtifacts, closePhase4Panel]
+  );
+
+  const documentConsequenceRows = useMemo(
+    () =>
+      buildDocumentConsequenceRows({
+        artifacts,
+        computeJobs,
+        proposals: conversationSnapshot.proposals,
+        canOpenArtifact: (artifactId: string, status: string) =>
+          artifacts.some(a => a.id === artifactId) &&
+          MODE_CAPABILITIES[resolveDocumentMode(status)].canEdit,
+      }),
+    [artifacts, computeJobs, conversationSnapshot.proposals]
   );
 
   // ── Create missing subsection from template structure ────────────────────
@@ -2026,6 +2077,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
                   <ComputeJobPanel
                     projectId={projectId}
+                    onJobsLoaded={jobs => setComputeJobs(jobs)}
                     onOpenArtifact={artifactId => openComputeArtifact(artifactId)}
                     onOpenProvenance={artifactId => openComputeArtifact(artifactId, 'provenance')}
                     onOpenAudit={artifactId => openComputeArtifact(artifactId, 'audit')}
@@ -2068,155 +2120,79 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="w-4 h-4 text-emerald-600" />
                       <span className="text-sm font-semibold text-slate-900">
-                        Recent Artifacts
+                        Document Consequence Ledger
                       </span>
                       <Badge variant="outline" className="text-[10px] ml-auto">
-                        {
-                          artifacts.filter(a => {
-                            const age = Date.now() - new Date(a.updatedAt ?? a.createdAt).getTime();
-                            return age < 24 * 60 * 60 * 1000;
-                          }).length
-                        }{' '}
-                        in 24h
+                        {documentConsequenceRows.length} tracked
                       </Badge>
                     </div>
-                    {/* Recent project artifacts (last 24h or last 5) */}
-                    {(() => {
-                      const recent = artifacts
-                        .slice()
-                        .sort(
-                          (a, b) =>
-                            new Date(b.updatedAt ?? b.createdAt).getTime() -
-                            new Date(a.updatedAt ?? a.createdAt).getTime()
-                        )
-                        .slice(0, 5);
-                      if (!recent.length)
-                        return (
-                          <div className="text-xs text-slate-500">
-                            No governed artifacts yet. Generate or accept a document to begin.
-                          </div>
-                        );
-                      return recent.map(art => (
-                        <div
-                          key={art.id}
-                          className="rounded border border-slate-100 px-3 py-2 space-y-1"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="text-xs font-medium text-slate-800 truncate max-w-[260px]">
-                              {art.title}
+                    {documentConsequenceRows.length === 0 ? (
+                      <div className="text-xs text-slate-500">
+                        No generated or accepted document consequences yet.
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {documentConsequenceRows.map(row => (
+                          <div
+                            key={row.rowKey}
+                            className="rounded border border-slate-100 px-3 py-2 space-y-1.5"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="text-xs font-medium text-slate-800 truncate">
+                                {row.title}
+                              </div>
+                              <Badge variant="outline" className="text-[10px]">
+                                {row.status}
+                              </Badge>
                             </div>
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                'text-[10px]',
-                                art.status === 'draft' && 'text-amber-700 border-amber-200',
-                                art.status === 'approved' && 'text-emerald-700 border-emerald-200',
-                                art.status === 'review' && 'text-blue-700 border-blue-200',
-                                art.status === 'locked' && 'text-slate-700 border-slate-200'
-                              )}
-                            >
-                              {art.status || 'draft'}
-                            </Badge>
-                          </div>
-                          <div className="text-[11px] text-slate-500 flex items-center gap-2 flex-wrap">
-                            <span>v{art.version || 1}</span>
-                            <span className="text-slate-300">·</span>
-                            <span>{art.ctdSection ? `§${art.ctdSection}` : 'unplaced'}</span>
-                            <span className="text-slate-300">·</span>
-                            <span>{art.id.slice(0, 16)}</span>
-                            <span className="text-slate-300">·</span>
-                            <span>
-                              {art.metadata?.source === 'compute'
-                                ? 'Compute'
-                                : art.metadata?.source === 'export_pdf'
-                                  ? 'Export PDF'
-                                  : art.metadata?.source === 'export_docx'
-                                    ? 'Export DOCX'
-                                    : art.metadata?.source === 'export_estar_zip'
-                                      ? 'Export eSTAR ZIP'
-                                      : art.metadata?.source === 'governed_export'
-                                        ? `Export ${(art.metadata?.exportFormat || '').toString().toUpperCase()}`
-                                        : art.metadata?.anaRiActionType
-                                          ? 'AnA RI'
-                                          : art.metadata?.source === 'proposal_accept'
-                                            ? 'Proposal'
-                                            : 'Manual'}
-                            </span>
-                            {art.metadata?.governed && (
-                              <>
-                                <span className="text-slate-300">·</span>
-                                <span className="text-emerald-600 font-medium">Governed</span>
-                              </>
-                            )}
-                            {art.metadata?.provenancePresent && (
-                              <>
-                                <span className="text-slate-300">·</span>
-                                <span className="text-violet-600">Prov ✓</span>
-                              </>
-                            )}
-                            {art.metadata?.auditPresent && (
-                              <>
-                                <span className="text-slate-300">·</span>
-                                <span className="text-sky-600">Audit ✓</span>
-                              </>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 pt-0.5">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 px-2 text-[11px] text-blue-600"
-                              onClick={() => {
-                                if (tryOpenForEdit(art.status)) {
-                                  setSelectedDocId(art.id);
-                                  setMode('edit');
-                                } else {
-                                  setSelectedDocId(art.id);
-                                  setMode('browse');
-                                }
-                              }}
-                            >
-                              <FileText className="w-3 h-3 mr-1" />
-                              Open
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 px-2 text-[11px] text-violet-600"
-                              onClick={() => {
-                                setSelectedDocId(art.id);
-                                setMode('edit');
-                                setDocumentTab('provenance');
-                              }}
-                            >
-                              Provenance
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 px-2 text-[11px] text-emerald-600"
-                              onClick={() => {
-                                setSelectedDocId(art.id);
-                                setMode('edit');
-                                setDocumentTab('review');
-                              }}
-                            >
-                              Audit
-                            </Button>
-                            {!art.ctdSection && (
+                            <div className="text-[11px] text-slate-600 flex items-center gap-2 flex-wrap">
+                              <span>ID: {row.artifactId.slice(0, 22)}</span>
+                              <span className="text-slate-300">·</span>
+                              <span>v{row.version}</span>
+                              <span className="text-slate-300">·</span>
+                              <span>{row.sourceType}</span>
+                              <span className="text-slate-300">·</span>
+                              <span>Placement: {row.placement}</span>
+                              <span className="text-slate-300">·</span>
+                              <span>Prov: {row.provenancePresent ? 'yes' : 'no'}</span>
+                              <span className="text-slate-300">·</span>
+                              <span>Audit: {row.auditPresent ? 'yes' : 'no'}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-6 px-2 text-[11px] text-orange-600"
-                                onClick={() => handleOpenPlacementForDoc(art, 'place')}
+                                className="h-6 px-2 text-[11px] text-blue-600"
+                                disabled={!row.openable}
+                                onClick={() => openComputeArtifact(row.artifactId)}
                               >
-                                Place
+                                {row.openable ? 'Open in editor' : 'Not reopenable in editor'}
                               </Button>
-                            )}
+                              {row.provenancePresent && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-[11px] text-violet-600"
+                                  onClick={() => openComputeArtifact(row.artifactId, 'provenance')}
+                                >
+                                  Provenance
+                                </Button>
+                              )}
+                              {row.auditPresent && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-[11px] text-emerald-600"
+                                  onClick={() => openComputeArtifact(row.artifactId, 'audit')}
+                                >
+                                  Audit
+                                </Button>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ));
-                    })()}
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Conversation proposals with governed consequence visibility */}

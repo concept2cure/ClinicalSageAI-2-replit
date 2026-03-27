@@ -17,6 +17,7 @@ interface WritebackInput {
   actorName?: string;
   auditAction?: string;
   auditMetadata?: Record<string, unknown>;
+  sourceType?: 'compute' | 'proposal_accept' | 'generated_draft';
 }
 
 export async function registerArtifactWithGovernance(input: WritebackInput): Promise<{
@@ -33,6 +34,9 @@ export async function registerArtifactWithGovernance(input: WritebackInput): Pro
   const now = new Date();
   const externalArtifactId = `artifact_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
   const contentHash = crypto.createHash('sha256').update(input.content).digest('hex');
+  const sourceType =
+    input.sourceType ??
+    (input.surfaceKey === 'conversation_os_proposal_accept' ? 'proposal_accept' : 'compute');
 
   try {
     await client.query('BEGIN');
@@ -55,6 +59,10 @@ export async function registerArtifactWithGovernance(input: WritebackInput): Pro
         JSON.stringify({
           computeJobId: input.sourceJobId,
           surfaceKey: input.surfaceKey,
+          source: sourceType,
+          governed: true,
+          provenancePresent: true,
+          auditPresent: true,
           ...(input.metadata ?? {}),
         }),
         now,
