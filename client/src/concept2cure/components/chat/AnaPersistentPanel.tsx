@@ -221,6 +221,12 @@ interface AnaMessage {
   modelProvider?: string;
   /** AI model name that generated this response */
   modelName?: string;
+  evidenceUsage?: {
+    firecrawlRequested?: boolean;
+    firecrawlUsed?: boolean;
+    quotaConsumed?: number;
+    quotaRemaining?: number;
+  };
 }
 
 interface SuggestedAction {
@@ -622,6 +628,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const [selectedProvider, setSelectedProvider] = useState<AIProviderChoice>('auto');
   const [showProviderDropdown, setShowProviderDropdown] = useState(false);
   const providerDropdownRef = useRef<HTMLDivElement>(null);
+  const [useFirecrawl, setUseFirecrawl] = useState(false);
+  const [showToolDropdown, setShowToolDropdown] = useState(false);
+  const [firecrawlQuotaRemaining, setFirecrawlQuotaRemaining] = useState<number | null>(null);
+  const [firecrawlDisabledReason, setFirecrawlDisabledReason] = useState<
+    'admin_disabled' | 'quota_exhausted' | null
+  >(null);
+  const toolsDropdownRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   // Slash command autocomplete
@@ -634,6 +647,37 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
   const screenName = contextProfile?.screenName || 'default';
   const screenLabel = SCREEN_LABELS[screenName] || '';
+
+  useEffect(() => {
+    const tenantId =
+      contextProfile?.organizationId ||
+      localStorage.getItem('organizationId') ||
+      localStorage.getItem('currentOrganizationId');
+    if (!tenantId) return;
+
+    fetch(`/api/firecrawl/quota-status?tenantId=${tenantId}`, {
+      credentials: 'include',
+      headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
+    })
+      .then(async res => {
+        const payload = await res.json().catch(() => null);
+        if (!res.ok || !payload?.success) return;
+        const quota = payload.data;
+        setFirecrawlQuotaRemaining(Number(quota?.remaining ?? 0));
+        if (quota?.reason === 'policy_blocked') {
+          setFirecrawlDisabledReason('admin_disabled');
+          setUseFirecrawl(false);
+        } else if (quota?.reason === 'quota_exhausted') {
+          setFirecrawlDisabledReason('quota_exhausted');
+          setUseFirecrawl(false);
+        } else {
+          setFirecrawlDisabledReason(null);
+        }
+      })
+      .catch(() => {
+        // Non-blocking UI hint only
+      });
+  }, [contextProfile?.organizationId]);
 
   // ── Slash command autocomplete filtering ──────────────────────────────────
   const filteredSlashCommands = useMemo(() => {
@@ -1047,6 +1091,18 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
   }, [showProviderDropdown]);
 
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (toolsDropdownRef.current && !toolsDropdownRef.current.contains(e.target as Node)) {
+        setShowToolDropdown(false);
+      }
+    };
+    if (showToolDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showToolDropdown]);
+
   // AnA personality — rotating thinking messages
   const [thinkingMsg, setThinkingMsg] = useState('');
   useEffect(() => {
@@ -1453,11 +1509,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
           let rawData: any = null;
           let chatSucceeded = false;
+          let anaErrorCode: string | null = null;
 
           // ── Build chat body (reused for retries) ──
           const chatBody = JSON.stringify({
             message: text,
             chatMode,
+            useFirecrawl,
             thread_id: threadIdRef.current || undefined,
             project_id: contextProfile?.projectId || undefined,
             submission_type: contextProfile?.productType || undefined,
@@ -1515,6 +1573,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               chatSucceeded = true;
             } else {
               const errBody = await anaRes.text().catch(() => '');
+              try {
+                const parsed = JSON.parse(errBody);
+                anaErrorCode = parsed?.error?.code || parsed?.code || null;
+              } catch {
+                // ignore parse failures
+              }
               console.warn(`[AnA RI] ${anaRes.status}: ${errBody.slice(0, 200)}`);
             }
           } catch (anaErr: any) {
@@ -1591,6 +1655,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           }
 
           if (!chatSucceeded || !rawData) {
+            if (anaErrorCode === 'quota_exhausted') {
+              setFirecrawlDisabledReason('quota_exhausted');
+              setUseFirecrawl(false);
+              throw new Error('Workspace daily Firecrawl allowance is exhausted.');
+            }
+            if (anaErrorCode === 'policy_blocked') {
+              setFirecrawlDisabledReason('admin_disabled');
+              setUseFirecrawl(false);
+              throw new Error('Firecrawl is disabled by workspace policy.');
+            }
             throw new Error(
               'Unable to reach AI service. Please check your connection and try again.'
             );
@@ -1611,6 +1685,14 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
           const assistantContent =
             data.response || data.answer || 'I received your message but had no response content.';
+          if (data?.evidenceUsage?.quotaRemaining !== undefined) {
+            const remaining = Number(data.evidenceUsage.quotaRemaining);
+            setFirecrawlQuotaRemaining(remaining);
+            if (remaining <= 0) {
+              setFirecrawlDisabledReason('quota_exhausted');
+              setUseFirecrawl(false);
+            }
+          }
 
           setMessages(prev => [
             ...prev,
@@ -1622,6 +1704,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               executedActions: data.executedActions || undefined,
               modelProvider: data.provider || data.modelProvider || undefined,
               modelName: data.model || data.modelName || undefined,
+              evidenceUsage: data.evidenceUsage || undefined,
             },
           ]);
 
@@ -1728,7 +1811,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         inputRef.current?.focus();
       }
     },
-    [input, isThinking, messages, contextProfile, chatMode, intentLens, selectedProvider]
+    [input, isThinking, messages, contextProfile, chatMode, intentLens, selectedProvider, useFirecrawl]
   );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -3728,6 +3811,21 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                     : msg.modelProvider}
                             </span>
                           )}
+                          {msg.evidenceUsage?.firecrawlRequested && (
+                            <span
+                              className={cn(
+                                'text-[10px] font-medium px-1.5 py-0.5 rounded mr-1',
+                                msg.evidenceUsage.firecrawlUsed
+                                  ? 'text-[#D97757] bg-[#FBF0EB]'
+                                  : 'text-zinc-500 bg-zinc-50'
+                              )}
+                              title="External evidence usage"
+                            >
+                              {msg.evidenceUsage.firecrawlUsed
+                                ? `Firecrawl used • -${msg.evidenceUsage.quotaConsumed ?? 0}`
+                                : 'Firecrawl requested'}
+                            </span>
+                          )}
                           <button
                             onClick={() => handleCopy(msg.id, msg.content)}
                             className="p-1 text-[#B0AEA5] hover:text-[#4D4B45] hover:bg-[#F5F4EF] rounded transition-colors"
@@ -4224,6 +4322,53 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               )}
             </div>
 
+            {/* External tool selector (+) */}
+            <div className="relative flex-shrink-0 self-center" ref={toolsDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setShowToolDropdown(prev => !prev)}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]"
+                title="Add tools"
+              >
+                <FolderPlus className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Tools</span>
+              </button>
+              {showToolDropdown && (
+                <div className="absolute bottom-full left-0 mb-1.5 w-64 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (firecrawlDisabledReason) return;
+                      setUseFirecrawl(v => !v);
+                      setShowToolDropdown(false);
+                    }}
+                    className={cn(
+                      'w-full flex items-start gap-3 px-3 py-2 text-left transition-colors',
+                      firecrawlDisabledReason
+                        ? 'opacity-60 cursor-not-allowed'
+                        : 'hover:bg-[#FAF9F5]',
+                      useFirecrawl && 'bg-[#FAF9F5]'
+                    )}
+                  >
+                    <Search className="w-4 h-4 mt-0.5 text-[#D97757] flex-shrink-0" />
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-[#141413]">Use Firecrawl</div>
+                      <div className="text-[10px] text-[#8A8880] leading-tight">
+                        {firecrawlDisabledReason === 'quota_exhausted'
+                          ? 'On but quota exhausted'
+                          : firecrawlDisabledReason === 'admin_disabled'
+                            ? 'On but admin-disabled for workspace'
+                            : firecrawlQuotaRemaining !== null
+                              ? `Optional open-web evidence (${firecrawlQuotaRemaining} free remaining)`
+                              : 'Optional governed open-web evidence'}
+                      </div>
+                    </div>
+                    {useFirecrawl && <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5" />}
+                  </button>
+                </div>
+              )}
+            </div>
+
             {/* AI Provider / Model Selector — clean, minimal like Claude.ai */}
             <div className="relative flex-shrink-0 self-center" ref={providerDropdownRef}>
               <button
@@ -4320,6 +4465,19 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               <ArrowUp className="w-4 h-4" />
             </button>
           </div>
+
+          {useFirecrawl && (
+            <div className="mt-1.5 pl-1">
+              <button
+                type="button"
+                onClick={() => setUseFirecrawl(false)}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#FBF0EB] text-[#D97757] hover:bg-[#F6E6DF]"
+                title="Disable Firecrawl for this message"
+              >
+                Firecrawl On
+              </button>
+            </div>
+          )}
 
           {/* ── Intent lens strip — subtle pills below input (Claude.ai clean) ── */}
           {chatMode === 'standard' && (

@@ -80,6 +80,10 @@ import {
   processCommandsInResponse,
   type CommandContext,
 } from '../services/ana-ri/command-executor.js';
+import { getFirecrawlQuotaStatus, recordSuccessfulFirecrawlScrape } from '../integrations/firecrawl/usage';
+import { routeEvidenceRequest } from '../services/research-intelligence';
+import { persistEvidence } from '../services/research-intelligence';
+import { normalizeEvidence } from '../services/research-intelligence';
 
 const router = Router();
 
@@ -188,6 +192,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       conversation_history,
       authoring_context,
       preferred_provider,
+      useFirecrawl,
     } = req.body;
 
     // Check idempotency cache — return cached response on client retry
@@ -264,6 +269,89 @@ router.post('/chat', async (req: Request, res: Response) => {
       }
       parts.push('</authoring_context>');
       authoringContextBlock = parts.join('\n');
+    }
+
+    // Optional governed external evidence pre-routing (AnA-owned orchestration)
+    let evidenceUsage: any = {
+      firecrawlRequested: Boolean(useFirecrawl),
+      firecrawlUsed: false,
+      quotaConsumed: 0,
+      quotaRemaining: 0,
+      evidenceDocumentIds: [],
+      sourcesSummary: [],
+    };
+    if (useFirecrawl && orgId) {
+      const quota = await getFirecrawlQuotaStatus(Number(orgId));
+      if (!quota.allowed) {
+        return sendError(
+          res,
+          429,
+          'Workspace daily Firecrawl allowance is exhausted',
+          { quota },
+          'quota_exhausted'
+        );
+      }
+      evidenceUsage.quotaConsumed = 0;
+      evidenceUsage.quotaRemaining = quota.remaining;
+      const route = await routeEvidenceRequest(message, true).catch(() => null);
+      evidenceUsage.firecrawlUsed = route?.route === 'fallback_firecrawl';
+      evidenceUsage.sourcesSummary = [
+        route?.route || 'no_external_needed',
+        route?.decision?.reason || 'no decision rationale available',
+      ];
+
+      const docs = route?.data?.scrapedDocuments;
+      if (Array.isArray(docs) && docs.length > 0) {
+        const persistedIds: number[] = [];
+        for (const doc of docs) {
+          let id: number | null = null;
+          try {
+            const normalized = normalizeEvidence({
+              provider: 'firecrawl',
+              url: doc.url,
+              title: doc.title,
+              markdown: doc.markdown,
+              html: doc.html,
+              metadata: doc.metadata,
+            });
+            id = await persistEvidence({
+              tenantId: Number(orgId),
+              conversationId: thread_id || undefined,
+              sourceProvider: 'firecrawl',
+              acquisitionMethod: 'search+scrape',
+              url: normalized.url,
+              title: normalized.title,
+              rawMarkdown: normalized.payload?.markdown,
+              rawHtml: normalized.payload?.html,
+              metadata: {
+                route: route.route,
+                source: 'ana-ri-chat',
+                taxonomy: 'external_evidence_mode',
+                domain: normalized.domain,
+                canonicalUrl: normalized.canonicalUrl,
+                normalizedAt: normalized.normalizedAt,
+                regulatorySignals: normalized.regulatorySignals,
+              },
+            }).catch(() => null);
+          } catch (normalizationError: any) {
+            console.warn('[AnA RI] normalization_failed', normalizationError?.message);
+          }
+          if (id) persistedIds.push(id);
+        }
+
+        if (persistedIds.length > 0) {
+          evidenceUsage.evidenceDocumentIds = persistedIds;
+        }
+        const units = Number(route?.data?.quotaUnitsToCharge || docs.length || 0);
+        if (units > 0) {
+          await recordSuccessfulFirecrawlScrape(Number(orgId), units).catch(() => {});
+          const updatedQuota = await getFirecrawlQuotaStatus(Number(orgId)).catch(() => null);
+          if (updatedQuota) {
+            evidenceUsage.quotaConsumed = units;
+            evidenceUsage.quotaRemaining = updatedQuota.remaining;
+          }
+        }
+      }
     }
 
     // Orchestrate — build the complete system prompt
@@ -550,6 +638,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       _meta: {
         ...(persistenceFailed && { persistenceWarning: 'Messages may not have been saved' }),
       },
+      evidenceUsage,
     };
 
     // Cache response for idempotency on client retry
