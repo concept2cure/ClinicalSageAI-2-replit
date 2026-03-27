@@ -214,7 +214,7 @@ const WORKBENCHES: WorkbenchConfig[] = [
 
 const PROJECT_NAV_ITEMS: Array<{ id: ProjectNav; label: string }> = [
   { id: 'overview', label: 'Overview' },
-  { id: 'documents', label: 'Work' },
+  { id: 'documents', label: 'Tools' },
   { id: 'vault', label: 'Vault' },
   { id: 'reports', label: 'Readiness' },
   { id: 'tasks', label: 'Tasks' },

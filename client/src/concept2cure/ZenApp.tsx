@@ -68,6 +68,8 @@ const EmbeddedPMAWorkspace = lazy(() => import('./components/pma/PMAWorkspace'))
 // AboutTrainingCenter, LegalCenter, IntegrationsPage, SubmissionOpsCommandCenter, INDWorkspace, PricingPage
 // Full Document Builder wizard (CSR + CTD across global agencies)
 const FullDocumentBuilder = lazy(() => import('./components/builder/FullDocumentBuilder'));
+// Tools Landing — curated workbench (builder is one tool inside it)
+const ToolsLanding = lazy(() => import('./components/workspace/ToolsLanding'));
 import {
   Archive,
   X,
@@ -855,6 +857,13 @@ export const ZenApp: React.FC = () => {
   const [workspacePanelOpen, setWorkspacePanelOpen] = useState(true);
 
   const [moduleAssistantOpen, setModuleAssistantOpen] = useState(false);
+
+  // Tools sub-view: 'landing' shows the curated workbench, 'builder' shows FullDocumentBuilder
+  const [toolsSubView, setToolsSubView] = useState<'landing' | 'builder'>('landing');
+  // Reset tools sub-view when entering documents mode (always land on workbench)
+  useEffect(() => {
+    if (layoutMode === 'documents') setToolsSubView('landing');
+  }, [layoutMode]);
 
   // Pending editor content — when a module wants to open the editor with pre-populated content
   const [pendingEditorContent, setPendingEditorContent] = useState<{
@@ -2812,18 +2821,72 @@ export const ZenApp: React.FC = () => {
             </Suspense>
           )}
 
-          {/* ── Unified Workflow: Documents (consolidated Author + Document Builder) */}
+          {/* ── Unified Workflow: Tools (curated workbench — builder is one tool inside) */}
           {!embeddedModule && layoutMode === 'documents' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-documents">
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-tools">
               <ErrorBoundary>
                 <Suspense fallback={<ModuleLoadingFallback />}>
-                  <FullDocumentBuilder
-                    onOpenInEditor={(content, title, ctdSection) => {
-                      setPendingEditorContent({ content, title, ctdSection });
-                      setRiViewMode('editor');
-                      setLayoutMode('regulatory-workspace');
-                    }}
-                  />
+                  {toolsSubView === 'builder' ? (
+                    <FullDocumentBuilder
+                      onOpenInEditor={(content, title, ctdSection) => {
+                        setPendingEditorContent({ content, title, ctdSection });
+                        setRiViewMode('editor');
+                        setLayoutMode('regulatory-workspace');
+                        setToolsSubView('landing');
+                      }}
+                    />
+                  ) : (
+                    <ToolsLanding
+                      projectName={activeProject?.name}
+                      recentArtifacts={workspaceSummary?.recent?.documents?.slice(0, 3)?.map(d => ({
+                        id: d.id,
+                        title: d.name,
+                        updatedAt: d.uploadedAt,
+                      }))}
+                      onResumeArtifact={(artifactId) => {
+                        setOpenArtifactId(artifactId);
+                        setRiViewMode('editor');
+                        setLayoutMode('regulatory-workspace');
+                      }}
+                      onAction={(toolId) => {
+                        switch (toolId) {
+                          case 'recent':
+                            setRiViewMode('editor');
+                            setLayoutMode('regulatory-workspace');
+                            break;
+                          case 'create':
+                            setRiViewMode('editor');
+                            setLayoutMode('regulatory-workspace');
+                            break;
+                          case 'builder':
+                            setToolsSubView('builder');
+                            break;
+                          case 'templates':
+                            setRiViewMode('editor');
+                            setLayoutMode('regulatory-workspace');
+                            break;
+                          case 'dossier':
+                            setLayoutMode('dossier-map');
+                            break;
+                          case 'vault':
+                            setLayoutMode('vault');
+                            break;
+                          case 'review':
+                            setLayoutMode('review');
+                            break;
+                          case 'submit':
+                            setLayoutMode('submissions');
+                            break;
+                          case 'haq':
+                            // HAQ Manager — Phase 6 will add dedicated workflow
+                            // For now, route to workspace with AnA context for HAQ
+                            setRiViewMode('editor');
+                            setLayoutMode('regulatory-workspace');
+                            break;
+                        }
+                      }}
+                    />
+                  )}
                 </Suspense>
               </ErrorBoundary>
             </div>
