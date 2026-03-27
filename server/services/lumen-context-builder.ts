@@ -63,6 +63,9 @@ export interface DocumentContext {
     sectionCode: string | null;
     updatedAt: string;
   }>;
+  /** Knowledge base document counts (uploaded reference documents) */
+  totalKnowledgeDocuments: number;
+  activeKnowledgeDocuments: number;
 }
 
 export interface WorkflowContext {
@@ -501,45 +504,83 @@ async function loadProjectContext(
 
 /**
  * Load document/artifact context for the project.
+ *
+ * Queries concept2cure_artifacts for authored submission documents and also
+ * loads the project's knowledge documents from project settings, filtering
+ * out any where isActive === false so deactivated documents are excluded
+ * from the AI context window.
  */
 async function loadDocumentContext(
   projectId: number,
   organizationId: number
 ): Promise<DocumentContext | null> {
   try {
-    // Get document counts from concept2cure_artifacts
-    const countResult = await pool.query(
-      `SELECT
-         COUNT(*) as total,
-         COUNT(*) FILTER (WHERE status IN ('published', 'approved', 'locked')) as completed,
-         COUNT(*) FILTER (WHERE status IN ('draft', 'in_progress', 'review')) as in_progress
-       FROM concept2cure_artifacts
-       WHERE project_id = $1 AND organization_id = $2`,
-      [projectId, organizationId]
-    );
-
-    // Get recent documents
-    const recentResult = await pool.query(
-      `SELECT title, status, metadata, updated_at
-       FROM concept2cure_artifacts
-       WHERE project_id = $1 AND organization_id = $2
-       ORDER BY updated_at DESC
-       LIMIT 5`,
-      [projectId, organizationId]
-    );
+    // Load artifact counts and project knowledge documents in parallel
+    const [countResult, recentResult, projectResult] = await Promise.all([
+      // Get document counts from concept2cure_artifacts
+      pool.query(
+        `SELECT
+           COUNT(*) as total,
+           COUNT(*) FILTER (WHERE status IN ('published', 'approved', 'locked')) as completed,
+           COUNT(*) FILTER (WHERE status IN ('draft', 'in_progress', 'review')) as in_progress
+         FROM concept2cure_artifacts
+         WHERE project_id = $1 AND organization_id = $2`,
+        [projectId, organizationId]
+      ),
+      // Get recent documents
+      pool.query(
+        `SELECT title, status, metadata, updated_at
+         FROM concept2cure_artifacts
+         WHERE project_id = $1 AND organization_id = $2
+         ORDER BY updated_at DESC
+         LIMIT 5`,
+        [projectId, organizationId]
+      ),
+      // Load project settings to get knowledge documents with isActive state
+      pool.query(
+        `SELECT settings FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+        [projectId, organizationId]
+      ),
+    ]);
 
     const counts = countResult.rows[0] || { total: 0, completed: 0, in_progress: 0 };
+
+    // Extract knowledge documents from project settings and filter by isActive
+    const projectSettings = projectResult.rows[0]?.settings;
+    const knowledgeObj =
+      projectSettings && typeof projectSettings === 'object'
+        ? (projectSettings as Record<string, unknown>).knowledge
+        : null;
+    const knowledgeDocs: Array<{ id?: string; isActive?: boolean }> =
+      knowledgeObj && typeof knowledgeObj === 'object' && Array.isArray((knowledgeObj as any).documents)
+        ? (knowledgeObj as any).documents
+        : [];
+    const totalKnowledgeDocs = knowledgeDocs.length;
+    const activeKnowledgeDocs = knowledgeDocs.filter(doc => doc.isActive !== false);
+    const deactivatedDocIds = new Set(
+      knowledgeDocs.filter(doc => doc.isActive === false).map(doc => doc.id).filter(Boolean)
+    );
+
+    // Filter recent artifacts — exclude any linked to a deactivated knowledge document
+    const recentDocuments = recentResult.rows
+      .filter((r: any) => {
+        const linkedDocId = r.metadata?.knowledgeDocumentId || r.metadata?.sourceDocumentId;
+        return !linkedDocId || !deactivatedDocIds.has(linkedDocId);
+      })
+      .map((r: any) => ({
+        title: r.title,
+        status: r.status,
+        sectionCode: r.metadata?.sectionCode || r.metadata?.ectd_section || null,
+        updatedAt: r.updated_at?.toISOString() || '',
+      }));
 
     return {
       totalDocuments: parseInt(counts.total, 10) || 0,
       completedDocuments: parseInt(counts.completed, 10) || 0,
       inProgressDocuments: parseInt(counts.in_progress, 10) || 0,
-      recentDocuments: recentResult.rows.map((r: any) => ({
-        title: r.title,
-        status: r.status,
-        sectionCode: r.metadata?.sectionCode || r.metadata?.ectd_section || null,
-        updatedAt: r.updated_at?.toISOString() || '',
-      })),
+      recentDocuments,
+      totalKnowledgeDocuments: totalKnowledgeDocs,
+      activeKnowledgeDocuments: activeKnowledgeDocs.length,
     };
   } catch (error) {
     console.warn('[AnA RI] Failed to load document context:', error);
@@ -900,11 +941,14 @@ Use conversation history to avoid re-asking for information the user has already
   }
 
   // ── Document Context ─────────────────────────────────────────────────────
-  if (context.documents && context.documents.totalDocuments > 0) {
+  if (context.documents && (context.documents.totalDocuments > 0 || context.documents.totalKnowledgeDocuments > 0)) {
     const d = context.documents;
+    const knowledgeInfo = d.totalKnowledgeDocuments > 0
+      ? `\n- **Knowledge Base**: ${d.activeKnowledgeDocuments}/${d.totalKnowledgeDocuments} documents active in context${d.totalKnowledgeDocuments - d.activeKnowledgeDocuments > 0 ? ` (${d.totalKnowledgeDocuments - d.activeKnowledgeDocuments} deactivated)` : ''}`
+      : '';
     parts.push(`
 ## Document Status
-- **Total**: ${d.totalDocuments} documents | **Completed**: ${d.completedDocuments} | **In Progress**: ${d.inProgressDocuments}${
+- **Total**: ${d.totalDocuments} documents | **Completed**: ${d.completedDocuments} | **In Progress**: ${d.inProgressDocuments}${knowledgeInfo}${
       d.recentDocuments.length > 0
         ? `\n- **Recent work**: ${d.recentDocuments
             .map(r => `${r.title} (${r.status}${r.sectionCode ? `, ${r.sectionCode}` : ''})`)

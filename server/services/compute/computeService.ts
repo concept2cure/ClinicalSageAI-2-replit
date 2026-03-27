@@ -12,7 +12,9 @@ const DEFAULT_PROFILE = 'docx-python';
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
     promise,
-    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`Compute timeout after ${ms}ms`)), ms)),
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Compute timeout after ${ms}ms`)), ms)
+    ),
   ]);
 }
 
@@ -55,7 +57,12 @@ export async function enqueueAndRunComputeJob(intent: ComputeIntent) {
     );
 
     for (const output of outputs) {
-      const stored = await persistOutput(intent.organizationId, jobId, output.fileName, output.buffer);
+      const stored = await persistOutput(
+        intent.organizationId,
+        jobId,
+        output.fileName,
+        output.buffer
+      );
       await pool.query(
         `INSERT INTO artifact_compute_outputs (
           output_id, job_id, organization_id, output_type, mime_type, file_name,
@@ -85,6 +92,16 @@ export async function enqueueAndRunComputeJob(intent: ComputeIntent) {
       content: intent.content,
       sourceJobId: jobId,
       surfaceKey: intent.surfaceKey,
+      sourceType: 'compute',
+      metadata: {
+        source: 'compute',
+        runtimeMaturity,
+        outputFormat: intent.format,
+      },
+      auditMetadata: {
+        runtimeMaturity,
+        outputFormat: intent.format,
+      },
     });
 
     await pool.query(
@@ -131,6 +148,15 @@ export async function enqueueAndRunComputeJob(intent: ComputeIntent) {
       runtimeProfile: profile.profileKey,
       runtimeMaturity,
       artifactId: writeback.artifactId,
+      governedConsequence: {
+        artifactId: writeback.artifactId,
+        artifactTitle: writeback.artifactTitle,
+        artifactStatus: writeback.artifactStatus,
+        artifactVersion: writeback.version,
+        placementState: writeback.placementState,
+        provenanceRef: writeback.provenanceEventId,
+        auditRef: writeback.auditId,
+      },
     };
   } catch (error: any) {
     await pool.query(
@@ -173,7 +199,10 @@ export async function listComputeJobs(projectId: number, organizationId: number)
         a.type AS artifact_type,
         a.status AS artifact_status,
         a.version AS artifact_version,
-        a.ctd_section AS artifact_ctd_section
+        a.ctd_section AS artifact_ctd_section,
+        CASE WHEN a.ctd_section IS NOT NULL THEN 'placed' ELSE 'unplaced' END AS placement_state,
+        (j.result_summary->>'provenanceRef') AS provenance_ref,
+        (j.result_summary->>'auditRef') AS audit_ref
        FROM artifact_compute_jobs
       j
       LEFT JOIN concept2cure_artifacts a

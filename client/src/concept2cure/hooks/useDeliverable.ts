@@ -30,15 +30,7 @@ import { useQueryClient } from '@tanstack/react-query';
 // Types
 // ---------------------------------------------------------------------------
 
-export type DeliverableFormat =
-  | 'pdf'
-  | 'docx'
-  | 'xlsx'
-  | 'csv'
-  | 'json'
-  | 'xml'
-  | 'zip'
-  | 'html';
+export type DeliverableFormat = 'pdf' | 'docx' | 'xlsx' | 'csv' | 'json' | 'xml' | 'zip' | 'html';
 
 export interface DeliverableRequest {
   /** Backend API endpoint */
@@ -71,6 +63,20 @@ export interface DeliverableResult {
   data?: unknown;
 }
 
+type GovernedDownloadRef = {
+  encoding: 'base64';
+  mime_type: string;
+  filename: string;
+  data: string;
+};
+
+type GovernedExportResponse = {
+  governed?: boolean;
+  artifact_id?: string;
+  source_type?: string;
+  downloadable_output_ref?: GovernedDownloadRef;
+};
+
 const MIME_TYPES: Record<DeliverableFormat, string> = {
   pdf: 'application/pdf',
   docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -97,6 +103,18 @@ function triggerDownload(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+function tryDownloadFromGovernedRef(data: GovernedExportResponse, fallbackFilename: string): boolean {
+  const ref = data?.downloadable_output_ref;
+  if (!ref || ref.encoding !== 'base64' || !ref.data) return false;
+
+  const bytes = atob(ref.data);
+  const arr = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+  const blob = new Blob([arr], { type: ref.mime_type || 'application/octet-stream' });
+  triggerDownload(blob, ref.filename || fallbackFilename);
+  return true;
+}
+
 // ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
@@ -109,7 +127,7 @@ function triggerDownload(blob: Blob, filename: string) {
 async function registerInVaultAndPM(
   request: DeliverableRequest,
   result: DeliverableResult,
-  queryClient: ReturnType<typeof useQueryClient>,
+  queryClient: ReturnType<typeof useQueryClient>
 ) {
   const { projectId, title, filename, format, ctdSection } = request;
   if (!projectId) return; // Skip if no project context
@@ -170,7 +188,11 @@ export function useDeliverable() {
 
       try {
         // Make the API call
-        const response = await apiRequest(method, endpoint, body);
+        const requestBody =
+          method === 'POST' && request.projectId && body && !Object.prototype.hasOwnProperty.call(body, 'projectId')
+            ? { ...body, projectId: Number(request.projectId) }
+            : body;
+        const response = await apiRequest(method, endpoint, requestBody);
 
         // If the response is a file (binary), download it
         const contentType = response.headers.get('Content-Type') || '';
@@ -186,22 +208,65 @@ export function useDeliverable() {
           const blob = await response.blob();
           triggerDownload(blob, filename);
 
-          const result: DeliverableResult = { success: true };
+          // Extract governance artifact identity from response headers
+          const governedArtifactId = response.headers.get('X-Concept2Cure-Artifact-Id');
+          const governancePersistence = response.headers.get(
+            'X-Concept2Cure-Governance-Persistence'
+          );
+
+          const result: DeliverableResult = {
+            success: true,
+            recordId: governedArtifactId || undefined,
+            data: governedArtifactId
+              ? {
+                  artifactId: governedArtifactId,
+                  governed: governancePersistence === 'full',
+                  provenanceId: response.headers.get('X-Concept2Cure-Provenance-Id'),
+                  auditId: response.headers.get('X-Concept2Cure-Audit-Id'),
+                  snapshotId: response.headers.get('X-Concept2Cure-Snapshot-Id'),
+                }
+              : undefined,
+          };
           setLastResult(result);
 
           // Auto-register in vault and project management
           registerInVaultAndPM(request, result, queryClient);
 
+          // Invalidate project artifact queries so new governed export appears immediately
+          if (request.projectId) {
+            queryClient.invalidateQueries({
+              queryKey: [`/api/concept2cure/projects/${request.projectId}/artifacts`],
+            });
+          }
+
           toast({
             title: `${title} ready`,
-            description: `${filename} has been downloaded.`,
+            description: governedArtifactId
+              ? `${filename} downloaded. Governed artifact ${governedArtifactId.slice(0, 20)} created.`
+              : `${filename} has been downloaded.`,
           });
 
           return result;
         }
 
         // JSON response — could be a record creation or a download URL
-        const data = await response.json().catch(() => ({}));
+        const data = (await response.json().catch(() => ({}))) as GovernedExportResponse & Record<string, any>;
+
+        if (!saveOnly && tryDownloadFromGovernedRef(data, filename)) {
+          const result: DeliverableResult = {
+            success: true,
+            recordId: data.artifact_id,
+            data,
+          };
+          setLastResult(result);
+          registerInVaultAndPM(request, result, queryClient);
+          queryClient.invalidateQueries({ queryKey: ['project-workspace-artifacts', request.projectId] });
+          toast({
+            title: `${title} ready`,
+            description: `${filename} has been downloaded from governed export.`,
+          });
+          return result;
+        }
 
         if (data.downloadUrl) {
           // Fetch the file from the download URL
@@ -224,9 +289,7 @@ export function useDeliverable() {
 
           toast({
             title: `${title} ready`,
-            description: saveOnly
-              ? `${title} has been saved.`
-              : `${filename} has been downloaded.`,
+            description: saveOnly ? `${title} has been saved.` : `${filename} has been downloaded.`,
           });
 
           return result;
@@ -245,9 +308,7 @@ export function useDeliverable() {
 
         toast({
           title: saveOnly ? `${title} saved` : `${title} generated`,
-          description: saveOnly
-            ? `Record created successfully.`
-            : `${title} has been generated.`,
+          description: saveOnly ? `Record created successfully.` : `${title} has been generated.`,
         });
 
         return result;

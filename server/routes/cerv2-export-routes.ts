@@ -24,8 +24,10 @@ import {
   renderCombinedPdf,
   renderCombinedDocx,
 } from '../export/renderers';
+import { PassThrough } from 'stream';
 import { mockVault } from '../services/mockVault';
 import { authMiddleware } from '../auth';
+import { createGovernedExportConsequence } from '../services/export/governedExportConsequence';
 
 const router = Router();
 
@@ -60,7 +62,11 @@ const requireEditorAccess = (req: any, res: any, next: () => void) => {
   if (!orgId) {
     return res.status(400).json({ error: 'Organization context required' });
   }
-  req.resolvedOrganizationId = Number(orgId);
+  const numericOrgId = Number(orgId);
+  if (!Number.isFinite(numericOrgId) || numericOrgId <= 0) {
+    return res.status(400).json({ error: 'Valid numeric organization context required' });
+  }
+  req.resolvedOrganizationId = numericOrgId;
   return next();
 };
 
@@ -69,6 +75,7 @@ const validDocTypes = ['cerv2_510k', 'cerv2_pma', 'cerv2_cer'] as const;
 
 const exportSchema = z.object({
   docType: z.enum(validDocTypes),
+  projectId: z.coerce.number().int().positive(),
   content: z.object({
     type: z.literal('doc'),
     content: z.array(z.any()).min(1, 'Editor content must have at least one node'),
@@ -116,6 +123,7 @@ function applyGovernanceHeaders(res: Response, governance: z.infer<typeof export
   res.setHeader('X-Concept2Cure-Human-Review-Approved', String(governance.humanReviewApproved));
   res.setHeader('X-Concept2Cure-Review-Required', 'true');
   res.setHeader('X-Concept2Cure-Review-Notice', 'Human review required for regulated use');
+  res.setHeader('X-Concept2Cure-Governance-Persistence', 'governed');
   if (governance.reviewerName) {
     res.setHeader('X-Concept2Cure-Reviewer', encodeURIComponent(governance.reviewerName));
   }
@@ -144,6 +152,97 @@ function validateExportGovernance(req: Request, res: Response) {
   return governance;
 }
 
+function resolveCtdPlacement(docType: (typeof validDocTypes)[number]) {
+  if (docType === 'cerv2_510k') return { ctdSection: 'm1.5', suggestedPlacement: 'Module 1 / 510(k) dossier package' };
+  if (docType === 'cerv2_pma') return { ctdSection: 'm2.5', suggestedPlacement: 'Module 2 / PMA summaries' };
+  return { ctdSection: 'm5.0', suggestedPlacement: 'Module 5 / Clinical Evaluation Report' };
+}
+
+function getUserId(req: Request): number {
+  const raw = (req as any).userId ?? (req as any).user?.id;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw new Error('Valid numeric userId is required for governed export');
+  }
+  return parsed;
+}
+
+async function buildZipBuffer(
+  docType: (typeof validDocTypes)[number],
+  content: z.infer<typeof exportSchema>['content'],
+  title: string,
+  attachments: Array<{ filename: string; buffer: string }>
+): Promise<Buffer> {
+  const archive = archiver('zip', { zlib: { level: 9 } });
+  const pass = new PassThrough();
+  const chunks: Buffer[] = [];
+  let archiveError: Error | null = null;
+
+  pass.on('data', chunk => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+  archive.on('error', err => {
+    archiveError = err as Error;
+    pass.destroy(err);
+  });
+
+  archive.pipe(pass);
+
+  // Generate per-section PDFs based on doc type
+  if (docType === 'cerv2_510k') {
+    const pack = stylePacks['510k_v1'];
+    const pdfs = await renderPdfBuffersFor510k(content, pack);
+    archive.append(pdfs.coverLetter, { name: '01_CoverLetter.pdf' });
+    archive.append(pdfs.summary, { name: '02_510kSummary.pdf' });
+    archive.append(pdfs.deviceDescription, { name: '03_DeviceDescription.pdf' });
+    archive.append(pdfs.seDiscussion, { name: '04_SE_Discussion.pdf' });
+    archive.append(pdfs.performanceTesting, { name: '05_PerformanceTesting.pdf' });
+    archive.append(pdfs.labeling, { name: '06_Labeling.pdf' });
+  } else if (docType === 'cerv2_pma') {
+    const pack = stylePacks['pma_v1'];
+    const pdfs = await renderPdfBuffersForPma(content, pack);
+    archive.append(pdfs.summaryInfo, { name: '01_SummaryAndGeneralInfo.pdf' });
+    archive.append(pdfs.nonclinical, { name: '02_NonclinicalStudies.pdf' });
+    archive.append(pdfs.clinical, { name: '03_ClinicalInvestigations.pdf' });
+    archive.append(pdfs.manufacturing, { name: '04_ManufacturingQA.pdf' });
+    archive.append(pdfs.labeling, { name: '05_Labeling.pdf' });
+    archive.append(pdfs.riskBenefit, { name: '06_RiskBenefitDetermination.pdf' });
+    archive.append(pdfs.postApproval, { name: '07_PostApprovalPMS.pdf' });
+  } else {
+    const pack = stylePacks['cer_mdr_v1'];
+    const pdfs = await renderPdfBuffersForCer(content, pack);
+    archive.append(pdfs.stateOfArt, { name: '01_StateOfTheArt.pdf' });
+    archive.append(pdfs.devicePurpose, { name: '02_DeviceIntendedPurpose.pdf' });
+    archive.append(pdfs.clinicalDataSet, { name: '03_ClinicalDataSet.pdf' });
+    archive.append(pdfs.appraisal, { name: '04_CriticalAppraisal.pdf' });
+    archive.append(pdfs.benefitRisk, { name: '05_BenefitRiskDetermination.pdf' });
+    archive.append(pdfs.gsprMapping, { name: '06_GSPRMapping.pdf' });
+    archive.append(pdfs.pmsPlan, { name: '07_PMSPlanPMCF.pdf' });
+    archive.append(pdfs.conclusions, { name: '08_ConclusionsRecommendations.pdf' });
+  }
+
+  // Combined full-document PDF and DOCX
+  const [combinedPdf, combinedDocx] = await Promise.all([
+    renderCombinedPdf(docType, content),
+    renderCombinedDocx(docType, content),
+  ]);
+  archive.append(combinedPdf, { name: `${title}_Combined.pdf` });
+  archive.append(combinedDocx, { name: `${title}_Combined.docx` });
+
+  // Attachments
+  for (const att of attachments) {
+    const buf = Buffer.from(att.buffer, 'base64');
+    archive.append(buf, { name: `attachments/${sanitizeFilename(att.filename)}` });
+  }
+
+  await archive.finalize();
+  await new Promise<void>((resolve, reject) => {
+    pass.on('end', () => resolve());
+    pass.on('error', reject);
+  });
+
+  if (archiveError) throw archiveError;
+  return Buffer.concat(chunks);
+}
+
 // ── POST /pdf ──────────────────────────────────────────────────────────────────
 router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, res: Response) => {
   try {
@@ -154,7 +253,7 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
         .json({ error: 'Invalid request', details: validation.error.flatten() });
     }
 
-    const { docType, content, meta } = validation.data;
+    const { docType, content, meta, projectId } = validation.data;
     if (!validateExportGovernance(req, res)) return;
 
     // Validate content has substantive nodes (not just empty paragraphs)
@@ -181,13 +280,31 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
     }
 
     const filename = sanitizeFilename(meta?.title || `${docType}_export`) + '.pdf';
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.send(pdfBuffer);
+    const placement = resolveCtdPlacement(docType);
+    const consequence = await createGovernedExportConsequence({
+      organizationId: (req as any).resolvedOrganizationId,
+      projectId,
+      userId: getUserId(req),
+      title: meta?.title || `${docType} PDF Export`,
+      contentForArtifact: JSON.stringify(content),
+      sourceType: 'export_pdf',
+      ctdSection: placement.ctdSection,
+      suggestedPlacement: placement.suggestedPlacement,
+      backendRoute: 'POST /api/cerv2/export/pdf',
+      binaryOutput: pdfBuffer,
+      mimeType: 'application/pdf',
+      filename,
+      metadata: { docType, format: 'pdf' },
+    });
+
+    return res.status(200).json(consequence);
   } catch (err: any) {
     console.error('[CERV2 Export] PDF error:', err);
     if (!res.headersSent) {
-      res.status(500).json({ error: 'PDF generation failed', message: err.message });
+      res.status(500).json({
+        error: 'GOVERNED_EXPORT_FAILED',
+        message: err.message || 'Governed PDF export failed before consequence persistence',
+      });
     }
   }
 });
@@ -202,7 +319,7 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
         .json({ error: 'Invalid request', details: validation.error.flatten() });
     }
 
-    const { docType, content, meta } = validation.data;
+    const { docType, content, meta, projectId } = validation.data;
     if (!validateExportGovernance(req, res)) return;
 
     // Validate content has substantive nodes
@@ -229,16 +346,31 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
     }
 
     const filename = sanitizeFilename(meta?.title || `${docType}_export`) + '.docx';
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    );
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.send(docxBuffer);
+    const placement = resolveCtdPlacement(docType);
+    const consequence = await createGovernedExportConsequence({
+      organizationId: (req as any).resolvedOrganizationId,
+      projectId,
+      userId: getUserId(req),
+      title: meta?.title || `${docType} DOCX Export`,
+      contentForArtifact: JSON.stringify(content),
+      sourceType: 'export_docx',
+      ctdSection: placement.ctdSection,
+      suggestedPlacement: placement.suggestedPlacement,
+      backendRoute: 'POST /api/cerv2/export/docx',
+      binaryOutput: docxBuffer,
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      filename,
+      metadata: { docType, format: 'docx' },
+    });
+
+    return res.status(200).json(consequence);
   } catch (err: any) {
     console.error('[CERV2 Export] DOCX error:', err);
     if (!res.headersSent) {
-      res.status(500).json({ error: 'DOCX generation failed', message: err.message });
+      res.status(500).json({
+        error: 'GOVERNED_EXPORT_FAILED',
+        message: err.message || 'Governed DOCX export failed before consequence persistence',
+      });
     }
   }
 });
@@ -253,7 +385,7 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
         .json({ error: 'Invalid request', details: validation.error.flatten() });
     }
 
-    const { docType, content, meta, attachments = [] } = validation.data;
+    const { docType, content, meta, attachments = [], projectId } = validation.data;
     if (!validateExportGovernance(req, res)) return;
     const title = sanitizeFilename(meta?.title || meta?.id || docType);
 
@@ -272,68 +404,37 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
       }
     }
 
-    res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', `attachment; filename="${title}_export.zip"`);
+    const zipBuffer = await buildZipBuffer(docType, content, title, attachments);
+    if (!zipBuffer || zipBuffer.length === 0) {
+      return res.status(500).json({ error: 'ZIP generation produced empty output' });
+    }
 
-    const archive = archiver('zip', { zlib: { level: 9 } });
-    archive.on('error', err => {
-      console.error('[CERV2 Export] ZIP archive error:', err);
-      if (!res.headersSent) res.status(500).end();
+    const placement = resolveCtdPlacement(docType);
+    const filename = `${title}_export.zip`;
+    const consequence = await createGovernedExportConsequence({
+      organizationId: (req as any).resolvedOrganizationId,
+      projectId,
+      userId: getUserId(req),
+      title: meta?.title || `${docType} ZIP Export`,
+      contentForArtifact: JSON.stringify(content),
+      sourceType: 'export_zip',
+      ctdSection: placement.ctdSection,
+      suggestedPlacement: placement.suggestedPlacement,
+      backendRoute: 'POST /api/cerv2/export/zip',
+      binaryOutput: zipBuffer,
+      mimeType: 'application/zip',
+      filename,
+      metadata: { docType, format: 'zip', attachmentCount: attachments.length },
     });
-    archive.pipe(res);
 
-    // Generate per-section PDFs based on doc type
-    if (docType === 'cerv2_510k') {
-      const pack = stylePacks['510k_v1'];
-      const pdfs = await renderPdfBuffersFor510k(content, pack);
-      archive.append(pdfs.coverLetter, { name: '01_CoverLetter.pdf' });
-      archive.append(pdfs.summary, { name: '02_510kSummary.pdf' });
-      archive.append(pdfs.deviceDescription, { name: '03_DeviceDescription.pdf' });
-      archive.append(pdfs.seDiscussion, { name: '04_SE_Discussion.pdf' });
-      archive.append(pdfs.performanceTesting, { name: '05_PerformanceTesting.pdf' });
-      archive.append(pdfs.labeling, { name: '06_Labeling.pdf' });
-    } else if (docType === 'cerv2_pma') {
-      const pack = stylePacks['pma_v1'];
-      const pdfs = await renderPdfBuffersForPma(content, pack);
-      archive.append(pdfs.summaryInfo, { name: '01_SummaryAndGeneralInfo.pdf' });
-      archive.append(pdfs.nonclinical, { name: '02_NonclinicalStudies.pdf' });
-      archive.append(pdfs.clinical, { name: '03_ClinicalInvestigations.pdf' });
-      archive.append(pdfs.manufacturing, { name: '04_ManufacturingQA.pdf' });
-      archive.append(pdfs.labeling, { name: '05_Labeling.pdf' });
-      archive.append(pdfs.riskBenefit, { name: '06_RiskBenefitDetermination.pdf' });
-      archive.append(pdfs.postApproval, { name: '07_PostApprovalPMS.pdf' });
-    } else if (docType === 'cerv2_cer') {
-      const pack = stylePacks['cer_mdr_v1'];
-      const pdfs = await renderPdfBuffersForCer(content, pack);
-      archive.append(pdfs.stateOfArt, { name: '01_StateOfTheArt.pdf' });
-      archive.append(pdfs.devicePurpose, { name: '02_DeviceIntendedPurpose.pdf' });
-      archive.append(pdfs.clinicalDataSet, { name: '03_ClinicalDataSet.pdf' });
-      archive.append(pdfs.appraisal, { name: '04_CriticalAppraisal.pdf' });
-      archive.append(pdfs.benefitRisk, { name: '05_BenefitRiskDetermination.pdf' });
-      archive.append(pdfs.gsprMapping, { name: '06_GSPRMapping.pdf' });
-      archive.append(pdfs.pmsPlan, { name: '07_PMSPlanPMCF.pdf' });
-      archive.append(pdfs.conclusions, { name: '08_ConclusionsRecommendations.pdf' });
-    }
-
-    // Combined full-document PDF and DOCX
-    const [combinedPdf, combinedDocx] = await Promise.all([
-      renderCombinedPdf(docType, content),
-      renderCombinedDocx(docType, content),
-    ]);
-    archive.append(combinedPdf, { name: `${title}_Combined.pdf` });
-    archive.append(combinedDocx, { name: `${title}_Combined.docx` });
-
-    // Attachments
-    for (const att of attachments) {
-      const buf = Buffer.from(att.buffer, 'base64');
-      archive.append(buf, { name: `attachments/${sanitizeFilename(att.filename)}` });
-    }
-
-    await archive.finalize();
+    return res.status(200).json(consequence);
   } catch (err: any) {
     console.error('[CERV2 Export] ZIP error:', err);
     if (!res.headersSent) {
-      res.status(500).json({ error: 'ZIP generation failed', message: err.message });
+      res.status(500).json({
+        error: 'GOVERNED_EXPORT_FAILED',
+        message: err.message || 'Governed ZIP export failed before consequence persistence',
+      });
     }
   }
 });

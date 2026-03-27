@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import FormalComplianceGraph from '../../services/proof/FormalComplianceGraph';
 import { ZeroKnowledgeCompliance, UserIdentity } from '../../services/proof/zk/ZeroKnowledgeCompliance';
 import { DeltaVerificationEngine } from '../../services/proof/DeltaVerificationEngine';

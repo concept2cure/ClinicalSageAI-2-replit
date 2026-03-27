@@ -1,5 +1,12 @@
 # DMS Vault Beta Build Plan (Combined)
 
+Status: ACTIVE
+Canonical: Yes
+Supersedes: DMS_VAULT_COMPETITIVE_BETA_PLAN_2026-03-25.md
+Superseded By: —
+Related Reports: VAULT_UI_HUMAN_EXPERIENCE_AUDIT_2026-03-25.md
+
+
 _Date: 2026-03-25_
 
 ## Objective

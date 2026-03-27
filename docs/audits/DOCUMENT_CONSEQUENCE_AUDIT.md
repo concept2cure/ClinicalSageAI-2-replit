@@ -1,5 +1,12 @@
 # Document Consequence Audit (2026-03-26)
 
+Status: SUPERSEDED
+Canonical: No
+Supersedes: —
+Superseded By: LAUNCH_GATE_DOCUMENT_CONSEQUENCE_BASELINE.md; LAUNCH_GATE_DOCUMENT_CONSEQUENCE_REPORT.md
+Related Reports: 510K_DOCUMENT_GENERATION_AUDIT.md
+
+
 ## Scope
 - Proposal acceptance + generated document consequence visibility in governed artifact lifecycle.
 

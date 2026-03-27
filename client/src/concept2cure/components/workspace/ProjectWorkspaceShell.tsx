@@ -72,12 +72,15 @@ import {
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
 import { SkeletonText, LoadingState } from '@/components/ui/statesV2';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   DocumentModeProvider,
   resolveDocumentMode,
   MODE_CAPABILITIES,
   type WorkflowStage,
 } from '../../contexts/DocumentModeContext';
+import { buildDocumentConsequenceRows, type ConsequenceComputeJob } from './documentConsequence';
 
 // Feature flag for governed drag-and-drop (Phase 3C groundwork)
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -149,7 +152,7 @@ interface PendingMove {
 // ── Folder label map ─────────────────────────────────────────────────────────
 const FOLDER_LABELS: Record<string, string> = {
   drafts: 'Drafts',
-  generated: 'Generated Documents',
+  generated: 'Generated',
   dossier: 'Dossier',
   evidence: 'Evidence Packs',
   cmc: 'CMC',
@@ -169,13 +172,13 @@ const OPERATING_LAYERS: OperatingLayerConfig[] = [
   },
   {
     id: 'vault',
-    label: 'Vault Layer',
+    label: 'Evidence',
     description: 'Evidence and document operations',
     icon: Files,
   },
   {
     id: 'reports',
-    label: 'Reports Layer',
+    label: 'Readiness',
     description: 'Readiness, review, and executive reporting',
     icon: Activity,
   },
@@ -214,9 +217,9 @@ const WORKBENCHES: WorkbenchConfig[] = [
 
 const PROJECT_NAV_ITEMS: Array<{ id: ProjectNav; label: string }> = [
   { id: 'overview', label: 'Overview' },
-  { id: 'documents', label: 'Documents' },
+  { id: 'documents', label: 'Tools' },
   { id: 'vault', label: 'Vault' },
-  { id: 'reports', label: 'Reports' },
+  { id: 'reports', label: 'Readiness' },
   { id: 'tasks', label: 'Tasks' },
   { id: 'reviews', label: 'Reviews' },
   { id: 'submission', label: 'Submission' },
@@ -347,8 +350,19 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     manifestMode?: string;
     latestFinding?: string;
     latestPlanTask?: string;
-    proposals: Array<{ id: string; status: string }>;
+    proposals: Array<{
+      id: string;
+      status: string;
+      governanceState?: 'ACCEPTED_GOVERNED' | 'ACCEPTED_PERSISTED_NO_GOVERNANCE' | 'REJECTED';
+      artifactId?: string;
+      artifactVersion?: number;
+      artifactStatus?: string;
+      placementState?: string;
+      provenanceRef?: string;
+      auditRef?: string;
+    }>;
   }>({ proposals: [] });
+  const [computeJobs, setComputeJobs] = useState<ConsequenceComputeJob[]>([]);
 
   // Governed document panel (right inspector)
   const [showGovernedPanel, setShowGovernedPanel] = useState(false);
@@ -398,30 +412,100 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         manifestMode: (manifestRes as any)?.manifest?.mode,
         latestFinding: (scoutRes as any)?.findings?.[0]?.summary,
         latestPlanTask: (planRes as any)?.plan?.task,
-        proposals: ((proposalRes as any)?.proposals ?? [])
-          .slice(0, 3)
-          .map((p: any) => ({ id: p.id, status: p.status })),
+        proposals: ((proposalRes as any)?.proposals ?? []).slice(0, 3).map((p: any) => ({
+          id: p.id,
+          status: p.status,
+          governanceState: p.governanceState,
+          artifactId: p.artifactId,
+          artifactVersion: p.artifactVersion,
+          artifactStatus: p.artifactStatus,
+          placementState: p.placementState,
+          provenanceRef: p.provenanceRef,
+          auditRef: p.auditRef,
+        })),
       });
     });
   }, [projectId, mode]);
+
+  // ── Load artifacts (must be defined before actOnProposal) ────────────────
+  const loadArtifacts = useCallback(async () => {
+    if (!projectId) return;
+    setLoading(true);
+    try {
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts`);
+      const payload = await res.json();
+      const list = payload.data ?? payload;
+      setArtifacts(Array.isArray(list) ? list : []);
+    } catch {
+      pushShellToast('Failed to load artifacts', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId]);
+
+  const loadComputeJobs = useCallback(async () => {
+    if (!projectId) return;
+    try {
+      const res = await apiRequest('GET', `/api/concept2cure/compute/projects/${projectId}/jobs`);
+      const payload = await res.json();
+      setComputeJobs(payload.data ?? []);
+    } catch {
+      setComputeJobs([]);
+    }
+  }, [projectId]);
 
   const actOnProposal = useCallback(
     async (proposalId: string, action: 'accept' | 'reject') => {
       if (!projectId) return;
       const conversationId = `project-${projectId}`;
-      await apiRequest(
+      const res = await apiRequest(
         'POST',
         `/api/conversation-os/conversations/${conversationId}/proposals/${proposalId}/${action}`,
         { projectId }
       );
+      const payload = (await res.json()) as {
+        success: boolean;
+        result?: {
+          state: string;
+          proposalId: string;
+          artifactId?: string;
+          governedConsequence?: {
+            artifactId: string;
+            version: number;
+            artifactStatus: string;
+            placementState: string;
+            provenanceEventId: string;
+            auditId: string;
+          };
+        };
+      };
+
+      const result = payload.result;
       setConversationSnapshot(prev => ({
         ...prev,
         proposals: prev.proposals.map(p =>
-          p.id === proposalId ? { ...p, status: action === 'accept' ? 'accepted' : 'rejected' } : p
+          p.id === proposalId
+            ? {
+                ...p,
+                status: action === 'accept' ? 'accepted' : 'rejected',
+                governanceState: result?.state as any,
+                artifactId: result?.governedConsequence?.artifactId ?? result?.artifactId,
+                artifactVersion: result?.governedConsequence?.version,
+                artifactStatus: result?.governedConsequence?.artifactStatus,
+                placementState: result?.governedConsequence?.placementState,
+                provenanceRef: result?.governedConsequence?.provenanceEventId,
+                auditRef: result?.governedConsequence?.auditId,
+              }
+            : p
         ),
       }));
+
+      // Reload artifacts so governed artifact appears in project context
+      if (action === 'accept') {
+        await loadArtifacts();
+      }
     },
-    [projectId]
+    [projectId, loadArtifacts]
   );
 
   // If openArtifactId is provided, switch to edit mode for that artifact (gated)
@@ -438,25 +522,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     setMode('edit');
   }, [openArtifactId, artifacts, tryOpenForEdit]);
 
-  // ── Load artifacts ───────────────────────────────────────────────────────
-  const loadArtifacts = useCallback(async () => {
-    if (!projectId) return;
-    setLoading(true);
-    try {
-      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts`);
-      const payload = await res.json();
-      const list = payload.data ?? payload;
-      setArtifacts(Array.isArray(list) ? list : []);
-    } catch {
-      pushShellToast('Failed to load artifacts', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [projectId]);
-
   useEffect(() => {
     loadArtifacts();
   }, [loadArtifacts]);
+
+  useEffect(() => {
+    loadComputeJobs();
+  }, [loadComputeJobs]);
 
   // ── Load dossier metrics ─────────────────────────────────────────────────
   const loadDossierMetrics = useCallback(async () => {
@@ -1019,21 +1091,30 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
   /** Called when Transform Canvas / Submission App creates a draft */
   const handlePhase4CreateDraft = useCallback(
-    async (title: string, ctdSection: string, templateKey?: string) => {
+    async (title: string, ctdSection: string, templateKey?: string, existingArtifactId?: string) => {
       if (!projectId) return;
       try {
-        const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
-          title,
-          content: `<h1>${title}</h1><p>Begin editing this document.</p>`,
-          type: 'regulatory_document',
-          category: 'document',
-          ctdSection,
-          templateId: templateKey,
-        });
-        const payload = await res.json();
-        const created = payload.data ?? payload;
+        let createdId = existingArtifactId;
+        if (!createdId) {
+          const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
+            title,
+            content: `<h1>${title}</h1><p>Begin editing this document.</p>`,
+            type: 'regulatory_document',
+            category: 'document',
+            ctdSection,
+            templateId: templateKey,
+            metadata: {
+              source: 'generated_draft',
+              governed: true,
+            },
+          });
+          const payload = await res.json();
+          const created = payload.data ?? payload;
+          createdId = created.id;
+        }
         await loadArtifacts();
-        setSelectedDocId(created.id);
+        if (!createdId) return;
+        setSelectedDocId(createdId);
         setMode('edit');
         closePhase4Panel();
       } catch {
@@ -1041,6 +1122,19 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       }
     },
     [projectId, loadArtifacts, closePhase4Panel]
+  );
+
+  const documentConsequenceRows = useMemo(
+    () =>
+      buildDocumentConsequenceRows({
+        artifacts,
+        computeJobs,
+        proposals: conversationSnapshot.proposals,
+        canOpenArtifact: (artifactId: string, status: string) =>
+          artifacts.some(a => a.id === artifactId) &&
+          MODE_CAPABILITIES[resolveDocumentMode(status)].canEdit,
+      }),
+    [artifacts, computeJobs, conversationSnapshot.proposals]
   );
 
   // ── Create missing subsection from template structure ────────────────────
@@ -1230,7 +1324,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 Intelligence
               </button>
               <button className="px-3 py-1.5 text-xs font-medium bg-zinc-900 text-white transition-colors duration-150">
-                Documents
+                Work
               </button>
             </div>
           )}
@@ -1291,7 +1385,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           </div>
         </div>
 
-        {/* ── Canonical shell context band (project/document/review/report continuity) ───────── */}
+        {/* ── Canonical shell context band ─────────────────────────────────────────── */}
         <div className="flex items-center gap-2 px-4 h-9 border-b border-zinc-200 bg-white/95 shrink-0">
           <span className="text-[11px] font-semibold text-zinc-700">Project</span>
           <span className="text-[11px] text-zinc-900 font-medium truncate max-w-[240px]">
@@ -1439,8 +1533,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 activeArtifact.status === 'locked'
                   ? 'bg-red-100/60 text-red-600'
                   : activeArtifact.status === 'approved'
-                  ? 'bg-green-100/60 text-green-600'
-                  : 'bg-zinc-100 text-zinc-500'
+                    ? 'bg-green-100/60 text-green-600'
+                    : 'bg-zinc-100 text-zinc-500'
               )}
             >
               {activeArtifact.status || 'draft'}
@@ -1486,10 +1580,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 activeArtifact.status === 'locked'
                   ? 'bg-red-50 text-red-700'
                   : activeArtifact.status === 'approved'
-                  ? 'bg-green-50 text-green-700'
-                  : activeArtifact.status === 'review'
-                  ? 'bg-yellow-50 text-yellow-700'
-                  : 'bg-zinc-100 text-zinc-500'
+                    ? 'bg-green-50 text-green-700'
+                    : activeArtifact.status === 'review'
+                      ? 'bg-yellow-50 text-yellow-700'
+                      : 'bg-zinc-100 text-zinc-500'
               )}
             >
               {activeArtifact.status || 'draft'}
@@ -1610,7 +1704,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 {[
                   { key: 'documents' as OperatingLayer, label: 'Docs' },
                   { key: 'vault' as OperatingLayer, label: 'Vault' },
-                  { key: 'reports' as OperatingLayer, label: 'Reports' },
+                  { key: 'reports' as OperatingLayer, label: 'Readiness' },
                 ].map(layer => (
                   <button
                     key={layer.key}
@@ -1671,8 +1765,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                       leftRailMode === tab.key
                         ? 'text-zinc-900 bg-white border-b-2 border-zinc-900'
                         : tab.disabled
-                        ? 'text-zinc-400 cursor-not-allowed'
-                        : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/60'
+                          ? 'text-zinc-400 cursor-not-allowed'
+                          : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/60'
                     )}
                     data-testid={`rail-mode-${tab.key}`}
                     title={tab.disabled ? 'Open a document to use Outline' : tab.label}
@@ -1712,10 +1806,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                         activeArtifact.status === 'locked'
                           ? 'bg-red-50 text-red-700'
                           : activeArtifact.status === 'approved'
-                          ? 'bg-green-50 text-green-700'
-                          : activeArtifact.status === 'review'
-                          ? 'bg-yellow-50 text-yellow-700'
-                          : 'bg-zinc-100 text-zinc-500'
+                            ? 'bg-green-50 text-green-700'
+                            : activeArtifact.status === 'review'
+                              ? 'bg-yellow-50 text-yellow-700'
+                              : 'bg-zinc-100 text-zinc-500'
                       )}
                     >
                       {activeArtifact.status || 'draft'}
@@ -1981,6 +2075,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
                   <ComputeJobPanel
                     projectId={projectId}
+                    onJobsLoaded={jobs => setComputeJobs(jobs)}
                     onOpenArtifact={artifactId => openComputeArtifact(artifactId)}
                     onOpenProvenance={artifactId => openComputeArtifact(artifactId, 'provenance')}
                     onOpenAudit={artifactId => openComputeArtifact(artifactId, 'audit')}
@@ -2019,50 +2114,309 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     }
                     onOpenTemplates={onNavigate ? () => onNavigate('template-library') : undefined}
                   />
-                  <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-2">
-                    <div className="text-sm font-semibold text-slate-900">
-                      Conversation OS Durability
+                  <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                      <span className="text-sm font-semibold text-slate-900">
+                        Document Consequence Ledger
+                      </span>
+                      <Badge variant="outline" className="text-[10px] ml-auto">
+                        {documentConsequenceRows.length} tracked
+                      </Badge>
                     </div>
-                    <div className="text-xs text-slate-600">
-                      Tool manifest: {conversationSnapshot.manifestMode ?? 'not initialized'}
-                    </div>
-                    <div className="text-xs text-slate-600">
-                      Latest scout: {conversationSnapshot.latestFinding ?? 'no finding yet'}
-                    </div>
-                    <div className="text-xs text-slate-600">
-                      Latest plan: {conversationSnapshot.latestPlanTask ?? 'no plan yet'}
-                    </div>
-                    <div className="text-xs text-slate-700 space-y-1">
-                      <div>Proposals:</div>
-                      {conversationSnapshot.proposals.length ? (
-                        conversationSnapshot.proposals.map(p => (
-                          <div key={p.id} className="flex items-center gap-2">
+                    {documentConsequenceRows.length === 0 ? (
+                      <div className="text-xs text-slate-500">
+                        No generated or accepted document consequences yet.
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {documentConsequenceRows.map(row => (
+                          <div
+                            key={row.rowKey}
+                            className="rounded border border-slate-100 px-3 py-2 space-y-1.5"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="text-xs font-medium text-slate-800 truncate">
+                                {row.title}
+                              </div>
+                              <Badge variant="outline" className="text-[10px]">
+                                {row.status}
+                              </Badge>
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'text-[10px]',
+                                art.status === 'draft' && 'text-amber-700 border-amber-200',
+                                art.status === 'approved' && 'text-emerald-700 border-emerald-200',
+                                art.status === 'review' && 'text-blue-700 border-blue-200',
+                                art.status === 'locked' && 'text-slate-700 border-slate-200'
+                              )}
+                            >
+                              {art.status || 'draft'}
+                            </Badge>
+                          </div>
+                          <div className="text-[11px] text-slate-500 flex items-center gap-2 flex-wrap">
+                            <span>v{art.version || 1}</span>
+                            <span className="text-slate-300">·</span>
+                            <span>{art.ctdSection ? `§${art.ctdSection}` : 'unplaced'}</span>
+                            <span className="text-slate-300">·</span>
+                            <span>{art.id.slice(0, 16)}</span>
+                            <span className="text-slate-300">·</span>
                             <span>
-                              {p.id.slice(0, 8)} ({p.status})
+                              {art.metadata?.source === 'compute'
+                                ? 'Compute'
+                                : art.metadata?.source === 'export_pdf'
+                                  ? 'Export PDF'
+                                  : art.metadata?.source === 'export_docx'
+                                    ? 'Export DOCX'
+                                    : art.metadata?.source === 'export_zip'
+                                      ? 'Export ZIP'
+                                    : art.metadata?.source === 'export_estar_zip'
+                                      ? 'Export eSTAR ZIP'
+                                      : art.metadata?.source === 'governed_export'
+                                        ? `Export ${(art.metadata?.exportFormat || '').toString().toUpperCase()}`
+                                        : art.metadata?.anaRiActionType
+                                          ? 'AnA RI'
+                                          : art.metadata?.source === 'proposal_accept'
+                                            ? 'Proposal'
+                                            : 'Manual'}
                             </span>
-                            {p.status === 'pending' && (
+                            {art.metadata?.governed && (
                               <>
-                                <button
-                                  className="text-emerald-700 underline"
-                                  onClick={() => actOnProposal(p.id, 'accept')}
-                                >
-                                  accept
-                                </button>
-                                <button
-                                  className="text-rose-700 underline"
-                                  onClick={() => actOnProposal(p.id, 'reject')}
-                                >
-                                  reject
-                                </button>
+                                <span className="text-slate-300">·</span>
+                                <span className="text-emerald-600 font-medium">Governed</span>
+                              </>
+                            )}
+                            {art.metadata?.provenancePresent && (
+                              <>
+                                <span className="text-slate-300">·</span>
+                                <span className="text-violet-600">Prov ✓</span>
+                              </>
+                            )}
+                            {art.metadata?.auditPresent && (
+                              <>
+                                <span className="text-slate-300">·</span>
+                                <span className="text-sky-600">Audit ✓</span>
                               </>
                             )}
                           </div>
-                        ))
-                      ) : (
-                        <div>none</div>
-                      )}
-                    </div>
+                          <div className="flex items-center gap-2 pt-0.5">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-[11px] text-blue-600"
+                              onClick={() => {
+                                if (tryOpenForEdit(art.status)) {
+                                  setSelectedDocId(art.id);
+                                  setMode('edit');
+                                } else {
+                                  setSelectedDocId(art.id);
+                                  setMode('browse');
+                                }
+                              }}
+                            >
+                              <FileText className="w-3 h-3 mr-1" />
+                              Open
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-[11px] text-violet-600"
+                              onClick={() => {
+                                setSelectedDocId(art.id);
+                                setMode('edit');
+                                setDocumentTab('provenance');
+                              }}
+                            >
+                              Provenance
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-[11px] text-emerald-600"
+                              onClick={() => {
+                                setSelectedDocId(art.id);
+                                setMode('edit');
+                                setDocumentTab('review');
+                              }}
+                            >
+                              Audit
+                            </Button>
+                            {!art.ctdSection && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-2 text-[11px] text-blue-600"
+                                disabled={!row.openable}
+                                onClick={() => openComputeArtifact(row.artifactId)}
+                              >
+                                {row.openable ? 'Open in editor' : 'Not reopenable in editor'}
+                              </Button>
+                              {row.provenancePresent && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-[11px] text-violet-600"
+                                  onClick={() => openComputeArtifact(row.artifactId, 'provenance')}
+                                >
+                                  Provenance
+                                </Button>
+                              )}
+                              {row.auditPresent && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-[11px] text-emerald-600"
+                                  onClick={() => openComputeArtifact(row.artifactId, 'audit')}
+                                >
+                                  Audit
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
+
+                  {/* Conversation proposals with governed consequence visibility */}
+                  {conversationSnapshot.proposals.length > 0 && (
+                    <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Target className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm font-semibold text-slate-900">
+                          Document Proposals
+                        </span>
+                        <Badge variant="outline" className="text-[10px] ml-auto">
+                          {conversationSnapshot.proposals.length}
+                        </Badge>
+                      </div>
+                      {conversationSnapshot.proposals.map(p => (
+                        <div
+                          key={p.id}
+                          className="rounded border border-slate-100 px-3 py-2 space-y-1.5"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-slate-800">
+                              {p.id.slice(0, 12)}
+                            </span>
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'text-[10px]',
+                                p.status === 'pending' && 'text-amber-700 border-amber-200',
+                                p.status === 'accepted' && 'text-emerald-700 border-emerald-200',
+                                p.status === 'rejected' && 'text-rose-700 border-rose-200'
+                              )}
+                            >
+                              {p.status}
+                            </Badge>
+                          </div>
+
+                          {/* Governance consequence (visible after accept) */}
+                          {p.status === 'accepted' && p.governanceState && (
+                            <div className="rounded bg-slate-50 border border-slate-100 px-2.5 py-1.5 text-[11px] space-y-1">
+                              <div className="flex items-center gap-1.5">
+                                <ShieldCheck
+                                  className={cn(
+                                    'w-3 h-3',
+                                    p.governanceState === 'ACCEPTED_GOVERNED'
+                                      ? 'text-emerald-600'
+                                      : 'text-amber-500'
+                                  )}
+                                />
+                                <span
+                                  className={cn(
+                                    'font-medium',
+                                    p.governanceState === 'ACCEPTED_GOVERNED'
+                                      ? 'text-emerald-700'
+                                      : 'text-amber-700'
+                                  )}
+                                >
+                                  {p.governanceState === 'ACCEPTED_GOVERNED'
+                                    ? 'Governed'
+                                    : 'Persisted (no governance)'}
+                                </span>
+                              </div>
+                              {p.artifactId && (
+                                <div className="text-slate-600 space-y-0.5">
+                                  <div>
+                                    Artifact:{' '}
+                                    <span className="font-medium text-slate-800">
+                                      {p.artifactId.slice(0, 20)}
+                                    </span>{' '}
+                                    · v{p.artifactVersion ?? 1} · {p.artifactStatus || 'draft'}
+                                  </div>
+                                  <div>
+                                    Placement: {p.placementState || 'unplaced'} · Provenance:{' '}
+                                    {p.provenanceRef ? p.provenanceRef.slice(0, 12) : 'none'} ·
+                                    Audit: {p.auditRef ? p.auditRef.slice(0, 12) : 'none'}
+                                  </div>
+                                </div>
+                              )}
+                              {p.artifactId && (
+                                <div className="flex items-center gap-2 pt-0.5">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-5 px-1.5 text-[10px] text-blue-600"
+                                    onClick={() => openComputeArtifact(p.artifactId!)}
+                                  >
+                                    Open in editor
+                                  </Button>
+                                  {p.provenanceRef && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-5 px-1.5 text-[10px] text-violet-600"
+                                      onClick={() =>
+                                        openComputeArtifact(p.artifactId!, 'provenance')
+                                      }
+                                    >
+                                      Provenance
+                                    </Button>
+                                  )}
+                                  {p.auditRef && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-5 px-1.5 text-[10px] text-emerald-600"
+                                      onClick={() => openComputeArtifact(p.artifactId!, 'audit')}
+                                    >
+                                      Audit
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Actions for pending proposals */}
+                          {p.status === 'pending' && (
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-6 px-2.5 text-[11px] text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+                                onClick={() => actOnProposal(p.id, 'accept')}
+                              >
+                                Accept
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-6 px-2.5 text-[11px] text-rose-700 border-rose-200 hover:bg-rose-50"
+                                onClick={() => actOnProposal(p.id, 'reject')}
+                              >
+                                Reject
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : mode === 'browse' ? (
                 <DocumentListPane
@@ -2071,6 +2425,11 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   selectedId={selectedDocId}
                   onSelect={handleSelectDoc}
                   onCreateNew={() => setShowNewDoc(true)}
+                  onAIDraft={leftRailMode === 'dossier' && selectedCtdSection ? () => {
+                    // AI draft for this section — open editor with section context
+                    if (onNavigate) onNavigate('regulatory-workspace');
+                  } : undefined}
+                  sectionAIDraftable={leftRailMode === 'dossier' && !!selectedCtdSection}
                   onCutDocument={handleCutDocument}
                   onCopyCtdPath={handleCopyCtdPath}
                   onOpenPlacement={handleOpenPlacementForDoc}
@@ -2172,7 +2531,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   t.type === 'info' && 'bg-zinc-700 text-white'
                 )}
               >
-                {t.message}
+                <span>{t.message}</span>
                 <button
                   onClick={() => setShellToasts(prev => prev.filter(x => x.id !== t.id))}
                   className="ml-1 opacity-60 hover:opacity-100"
@@ -2327,7 +2686,7 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-zinc-500">Documents</span>
+                <span className="text-zinc-500">Artifacts</span>
                 <span className="font-medium text-zinc-700">{metrics.artifactCount}</span>
               </div>
               <div className="flex items-center justify-between">
@@ -2341,8 +2700,8 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
                     metrics.completionPercent >= 75
                       ? 'bg-emerald-500'
                       : metrics.completionPercent >= 25
-                      ? 'bg-amber-500'
-                      : 'bg-red-400'
+                        ? 'bg-amber-500'
+                        : 'bg-red-400'
                   )}
                   style={{ width: `${Math.min(100, metrics.completionPercent)}%` }}
                 />

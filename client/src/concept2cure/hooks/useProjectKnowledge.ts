@@ -10,6 +10,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import type { ProjectKnowledge, UploadedDocument } from '../types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -29,6 +30,8 @@ interface UseProjectKnowledgeReturn {
   addTextContent: (title: string, content: string) => Promise<UploadedDocument | null>;
   /** Remove a document from the project */
   removeDocument: (documentId: string) => Promise<void>;
+  /** Toggle a document's active state in/out of the AI context window */
+  toggleDocumentActive: (documentId: string) => Promise<void>;
   /** Update custom instructions */
   updateCustomInstructions: (instructions: string) => Promise<void>;
   /** Current context token count */
@@ -71,12 +74,19 @@ const ALLOWED_FILE_TYPES = [
 // HELPER FUNCTIONS
 // ─────────────────────────────────────────────────────────────────────────────
 
-function getAuthHeaders(): Record<string, string> {
+/** Build auth headers for FormData uploads (apiRequest cannot handle FormData). */
+function getUploadAuthHeaders(): Record<string, string> {
   const token =
     sessionStorage.getItem('trialsage_access_token') ||
     localStorage.getItem('trialsage_access_token');
-
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  const orgId =
+    localStorage.getItem('trialsage_org_id') ||
+    sessionStorage.getItem('trialsage_org_id') ||
+    'default';
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    'x-organization-id': orgId,
+  };
 }
 /**
  * Estimate token count from text length.
@@ -124,9 +134,11 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // Calculate context metrics
+  // Calculate context metrics (only count active documents toward context usage)
   const contextTokens =
-    knowledge?.documents.reduce((sum, doc) => sum + (doc.tokenCount || 0), 0) || 0;
+    knowledge?.documents
+      .filter(doc => doc.isActive !== false)
+      .reduce((sum, doc) => sum + (doc.tokenCount || 0), 0) || 0;
   const maxContextTokens = MAX_CONTEXT_TOKENS;
   const contextUsagePercent = Math.round((contextTokens / maxContextTokens) * 100);
 
@@ -142,30 +154,20 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
       setError(null);
 
       try {
-        // Try API first
-        const response = await fetch(`/api/concept2cure/projects/${projectId}/knowledge`, {
-          headers: getAuthHeaders(),
-        });
+        // Try API first (apiRequest throws on non-OK responses)
+        const response = await apiRequest(
+          'GET',
+          `/api/concept2cure/projects/${projectId}/knowledge`
+        );
 
-        if (response.ok) {
-          const payload = await response.json().catch(() => ({}));
-          if (payload?.success === false) {
-            throw new Error(
-              payload?.error?.message || payload?.error || 'Failed to load project knowledge'
-            );
-          }
-          const data = payload?.data ?? payload;
-          setKnowledge(data);
-        } else if (response.status === 404) {
-          // Initialize empty knowledge
-          setKnowledge({
-            documents: [],
-            customInstructions: '',
-            context: '',
-          });
-        } else {
-          throw new Error('Failed to load project knowledge');
+        const payload = await response.json().catch(() => ({}));
+        if (payload?.success === false) {
+          throw new Error(
+            payload?.error?.message || payload?.error || 'Failed to load project knowledge'
+          );
         }
+        const data = payload?.data ?? payload;
+        setKnowledge(data);
       } catch (err) {
         // Fallback to localStorage
         const stored = localStorage.getItem(`concept2cure_knowledge_${projectId}`);
@@ -241,10 +243,11 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
         let processedDocument: UploadedDocument;
 
         try {
-          // Try API upload
+          // Try API upload (FormData — cannot use apiRequest which JSON-stringifies body)
           const response = await fetch('/api/concept2cure/documents/upload', {
             method: 'POST',
-            headers: getAuthHeaders(),
+            headers: getUploadAuthHeaders(),
+            credentials: 'include',
             body: formData,
           });
 
@@ -339,10 +342,7 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
 
       try {
         // Try API first
-        await fetch(`/api/concept2cure/documents/${documentId}`, {
-          method: 'DELETE',
-          headers: getAuthHeaders(),
-        }).catch(() => {
+        await apiRequest('DELETE', `/api/concept2cure/documents/${documentId}`).catch(() => {
           // Ignore API errors, proceed with local removal
         });
 
@@ -362,6 +362,44 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
   );
 
   /**
+   * Toggle a document's active state in/out of the AI context window (E7).
+   */
+  const toggleDocumentActive = useCallback(
+    async (documentId: string): Promise<void> => {
+      if (!projectId) return;
+
+      // Find current state
+      const doc = knowledge?.documents.find(d => d.id === documentId);
+      if (!doc) return;
+
+      const newIsActive = doc.isActive === false ? true : false;
+
+      try {
+        // Persist via API (non-blocking on failure — update locally regardless)
+        await apiRequest('PATCH', `/api/concept2cure/documents/${documentId}/activation`, {
+          isActive: newIsActive,
+        }).catch(() => {
+          // Ignore API errors, proceed with local update
+        });
+
+        // Update local state
+        setKnowledge(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            documents: prev.documents.map(d =>
+              d.id === documentId ? { ...d, isActive: newIsActive } : d
+            ),
+          };
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to toggle document activation');
+      }
+    },
+    [projectId, knowledge]
+  );
+
+  /**
    * Update custom instructions for the project.
    */
   const updateCustomInstructions = useCallback(
@@ -370,13 +408,8 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
 
       try {
         // Try API first
-        await fetch(`/api/concept2cure/projects/${projectId}/knowledge`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeaders(),
-          },
-          body: JSON.stringify({ customInstructions: instructions }),
+        await apiRequest('PATCH', `/api/concept2cure/projects/${projectId}/knowledge`, {
+          customInstructions: instructions,
         }).catch(() => {
           // Ignore API errors, proceed with local update
         });
@@ -412,7 +445,9 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
 
       const tokenCount = estimateTokens(content);
       if (contextTokens + tokenCount > maxContextTokens) {
-        setError(`Adding this content would exceed the ${maxContextTokens.toLocaleString()} token limit`);
+        setError(
+          `Adding this content would exceed the ${maxContextTokens.toLocaleString()} token limit`
+        );
         return null;
       }
 
@@ -420,10 +455,11 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
 
       try {
         // Try API — create as a text document
-        await fetch('/api/concept2cure/documents/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-          body: JSON.stringify({ projectId, title, content, type: 'text' }),
+        await apiRequest('POST', '/api/concept2cure/documents/upload', {
+          projectId,
+          title,
+          content,
+          type: 'text',
         }).catch(() => {}); // Non-blocking
 
         const doc: UploadedDocument = {
@@ -458,6 +494,7 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
     uploadDocument,
     addTextContent,
     removeDocument,
+    toggleDocumentActive,
     updateCustomInstructions,
     contextTokens,
     maxContextTokens,

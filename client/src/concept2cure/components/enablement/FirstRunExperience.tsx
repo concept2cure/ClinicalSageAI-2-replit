@@ -1,96 +1,74 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+/**
+ * FirstRunExperience — Value-first onboarding.
+ *
+ * 4 screens:
+ *   1. Welcome + client track (Pharma or Device)
+ *   2. Quick setup (role + submission type + region)
+ *   3. Create first project (name + product)
+ *   4. You're set (confidence checkpoint + suggested first action)
+ *
+ * Design: calm, fast, no agent architecture, no auto-advance.
+ * AnA is the single guide identity. No Dr. Sage.
+ */
+
+import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { apiRequest } from '@/lib/queryClient';
+import { Input } from '@/components/ui/input';
 
 // ─── Props ──────────────────────────────────────────────────────────────────
 
 interface FirstRunExperienceProps {
-  onComplete: (selectedRole?: string) => void;
+  onComplete: (selectedRole?: string, options?: { projectId?: string; action?: string }) => void;
   onSkip: () => void;
-  /** Pass existing projects so onboarding adapts for returning users */
   existingProjects?: Array<{ id: string; name: string; type?: string }>;
   userName?: string;
 }
 
-// ─── Types ──────────────────────────────────────────────────────────────────
-
-type SubmissionType =
-  | '510k'
-  | 'IND'
-  | 'NDA_BLA'
-  | 'PMA'
-  | 'DeNovo'
-  | 'CER_MDR'
-  | 'MAA'
-  | 'CTA';
-
-type AutomationLevel = 'supervised' | 'guided' | 'autonomous';
-
-interface Agent {
-  id: string;
-  name: string;
-  description: string;
-  phase: 'Planning' | 'Drafting' | 'Review' | 'Assembly' | 'Validation';
-}
-
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const TOTAL_SCREENS = 7;
+const TOTAL_SCREENS = 4;
 
-const ROLES = [
-  { id: 'regulatory-writer', title: 'Regulatory Writer', description: 'Author eCTD-ready documents with AI co-writing' },
-  { id: 'regulatory-strategist', title: 'Strategist', description: 'Plan submissions and navigate agency interactions' },
-  { id: 'quality-cmc', title: 'Quality/CMC Specialist', description: 'Manage quality systems and CMC documentation' },
-  { id: 'clinical-operations', title: 'Clinical Operations', description: 'Coordinate trials, sites, and study execution' },
-  { id: 'executive-overview', title: 'Executive Overview', description: 'Portfolio dashboards and strategic insights' },
+type ClientTrack = 'pharma' | 'device';
+
+const PHARMA_ROLES = [
+  { id: 'regulatory-writer', label: 'Regulatory Writer' },
+  { id: 'regulatory-strategist', label: 'Strategist' },
+  { id: 'quality-cmc', label: 'Quality / CMC' },
+  { id: 'clinical-operations', label: 'Clinical Operations' },
+  { id: 'executive-overview', label: 'Executive / PM' },
 ];
 
-const SUBMISSION_OPTIONS: { id: SubmissionType; label: string; description: string }[] = [
-  { id: '510k', label: '510(k)', description: 'Premarket notification for moderate-risk devices' },
-  { id: 'IND', label: 'IND', description: 'Investigational New Drug application' },
-  { id: 'NDA_BLA', label: 'NDA/BLA', description: 'New Drug or Biologics License Application' },
-  { id: 'PMA', label: 'PMA', description: 'Premarket Approval for high-risk devices' },
-  { id: 'DeNovo', label: 'De Novo', description: 'Novel low-to-moderate risk device classification' },
-  { id: 'CER_MDR', label: 'CER/MDR', description: 'Clinical Evaluation Report under EU MDR' },
-  { id: 'MAA', label: 'MAA', description: 'Marketing Authorization Application (EMA)' },
-  { id: 'CTA', label: 'CTA', description: 'Clinical Trial Application' },
+const DEVICE_ROLES = [
+  { id: 'regulatory-writer', label: 'Regulatory Writer' },
+  { id: 'regulatory-strategist', label: 'Strategist' },
+  { id: 'quality-cmc', label: 'Quality / CMC' },
+  { id: 'device-engineer', label: 'Device Engineer' },
+  { id: 'executive-overview', label: 'Executive / PM' },
 ];
 
-const ALL_AGENTS: Agent[] = [
-  { id: 'predicate', name: 'Predicate Researcher', description: 'Identifies and analyzes predicate devices from FDA databases', phase: 'Planning' },
-  { id: 'evidence', name: 'Evidence Agent', description: 'Gathers clinical evidence and literature references', phase: 'Planning' },
-  { id: 'protocol', name: 'Protocol Analyzer', description: 'Reviews and validates clinical trial protocols', phase: 'Planning' },
-  { id: 'researcher', name: 'Researcher', description: 'Performs literature searches and evidence synthesis', phase: 'Planning' },
-  { id: 'drafter', name: 'Drafter', description: 'Generates regulatory document sections from structured data', phase: 'Drafting' },
-  { id: 'statistician', name: 'Statistician', description: 'Validates statistical methods and analyzes clinical data', phase: 'Drafting' },
-  { id: 'translator', name: 'Translator', description: 'Adapts documents for regional regulatory requirements', phase: 'Drafting' },
-  { id: 'se_matrix', name: 'SE Matrix Reviewer', description: 'Evaluates substantial equivalence comparisons', phase: 'Review' },
-  { id: 'qc_agent', name: 'QC Agent', description: 'Performs quality checks on document completeness and accuracy', phase: 'Review' },
-  { id: 'reviewer', name: 'Reviewer', description: 'Simulates FDA-style review of the submission package', phase: 'Review' },
-  { id: 'compliance', name: 'Compliance Agent', description: 'Checks regulatory compliance across all applicable guidelines', phase: 'Validation' },
-  { id: 'compliance_eu', name: 'Compliance Agent (EU)', description: 'Validates compliance with EU MDR and MEDDEV guidance', phase: 'Validation' },
-  { id: 'compiler', name: 'Compiler', description: 'Assembles final eCTD-compliant submission packages', phase: 'Assembly' },
+const PHARMA_TYPES = [
+  { id: 'IND', label: 'IND', description: 'Investigational New Drug' },
+  { id: 'NDA', label: 'NDA', description: 'New Drug Application' },
+  { id: 'BLA', label: 'BLA', description: 'Biologics License' },
+  { id: 'MAA', label: 'MAA', description: 'Marketing Authorization (EMA)' },
 ];
 
-const AGENT_MAP: Record<SubmissionType, string[]> = {
-  '510k': ['predicate', 'evidence', 'drafter', 'se_matrix', 'compliance', 'compiler'],
-  IND: ['protocol', 'drafter', 'statistician', 'qc_agent', 'compliance', 'compiler'],
-  NDA_BLA: ALL_AGENTS.map((a) => a.id),
-  PMA: ALL_AGENTS.map((a) => a.id),
-  DeNovo: ['predicate', 'evidence', 'drafter', 'compliance', 'compiler'],
-  CER_MDR: ['researcher', 'drafter', 'compliance_eu', 'translator'],
-  MAA: ['researcher', 'drafter', 'statistician', 'compliance', 'compiler'],
-  CTA: ['protocol', 'drafter', 'statistician', 'compliance', 'compiler'],
-};
-
-const AUTOMATION_LEVELS: { id: AutomationLevel; label: string; description: string }[] = [
-  { id: 'supervised', label: 'Supervised', description: 'Agents suggest, you approve every step' },
-  { id: 'guided', label: 'Guided', description: 'Agents handle routine tasks, pause for critical decisions' },
-  { id: 'autonomous', label: 'Autonomous', description: 'Agents handle the full workflow end-to-end' },
+const DEVICE_TYPES = [
+  { id: '510K', label: '510(k)', description: 'Premarket Notification' },
+  { id: 'PMA', label: 'PMA', description: 'Premarket Approval' },
+  { id: 'DE_NOVO', label: 'De Novo', description: 'Novel Device Classification' },
+  { id: 'IVDR', label: 'IVDR', description: 'In Vitro Diagnostic Regulation' },
 ];
 
-const PHASE_ORDER = ['Planning', 'Drafting', 'Review', 'Assembly', 'Validation'] as const;
-
-// ─── Animation ──────────────────────────────────────────────────────────────
+const REGIONS = [
+  { id: 'FDA', label: 'FDA (US)' },
+  { id: 'EMA', label: 'EMA (EU)' },
+  { id: 'PMDA', label: 'PMDA (Japan)' },
+  { id: 'Health Canada', label: 'Health Canada' },
+  { id: 'TGA', label: 'TGA (Australia)' },
+  { id: 'MHRA', label: 'MHRA (UK)' },
+];
 
 const fadeUp = {
   initial: { opacity: 0, y: 4 },
@@ -99,264 +77,135 @@ const fadeUp = {
   transition: { duration: 0.15 },
 };
 
-// ─── Progress Dots ──────────────────────────────────────────────────────────
+// ─── Screen 1: Welcome + Track ──────────────────────────────────────────────
 
-function ProgressDots({ current, total }: { current: number; total: number }) {
-  return (
-    <div className="flex items-center gap-2">
-      {Array.from({ length: total }, (_, i) => (
-        <div
-          key={i}
-          className={`w-1.5 h-1.5 rounded-full transition-colors ${
-            i === current ? 'bg-zinc-900' : 'bg-zinc-200'
-          }`}
-        />
-      ))}
-    </div>
-  );
-}
-
-// ─── Screen 0: Welcome ──────────────────────────────────────────────────────
-
-function WelcomeScreen({ userName, projectCount }: { userName?: string; projectCount?: number }) {
-  const hasProjects = (projectCount ?? 0) > 0;
+function WelcomeScreen({
+  userName,
+  track,
+  onSelectTrack,
+}: {
+  userName?: string;
+  track: ClientTrack | null;
+  onSelectTrack: (t: ClientTrack) => void;
+}) {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-8">
       <h1 className="text-2xl font-semibold text-zinc-900">
-        {userName ? `Welcome back, ${userName}` : 'Welcome to Concept2Cure'}
+        {userName ? `Welcome, ${userName}` : 'Welcome to Concept2Cure'}
       </h1>
-      <p className="text-base text-zinc-500 mt-3">
-        {hasProjects
-          ? `You have ${projectCount} active project${projectCount !== 1 ? 's' : ''}. Let's set up your AI assistants to work even smarter.`
-          : 'One platform. Two intelligent systems. Your entire regulatory workflow.'}
+      <p className="text-sm text-zinc-500 mt-2 max-w-md">
+        Let's get you set up. This takes about a minute.
       </p>
-    </div>
-  );
-}
 
-// ─── Screen 1: Dr. Sage ─────────────────────────────────────────────────────
-
-function DrSageScreen() {
-  return (
-    <div className="flex flex-col items-center justify-center h-full text-center px-8">
-      <div className="w-14 h-14 rounded-lg bg-emerald-50 flex items-center justify-center mb-6">
-        <span className="text-2xl">&#x1F9D1;&#x200D;&#x2695;&#xFE0F;</span>
-      </div>
-      <h2 className="text-2xl font-semibold text-zinc-900">Meet Dr. Sage</h2>
-      <p className="text-base text-zinc-500 max-w-md leading-relaxed mt-4">
-        Your guide, trainer, and workflow operator. Dr. Sage helps you navigate the
-        platform, learn best practices, and execute tasks with confidence.
-      </p>
-      <div className="mt-6 max-w-md text-left space-y-3">
-        <div className="flex items-start gap-3">
-          <span className="text-emerald-500 mt-0.5">&#x2713;</span>
-          <p className="text-sm text-zinc-600">Contextual help wherever you are — just look for the guide icon</p>
-        </div>
-        <div className="flex items-start gap-3">
-          <span className="text-emerald-500 mt-0.5">&#x2713;</span>
-          <p className="text-sm text-zinc-600">Guided walkthroughs and platform training built right in</p>
-        </div>
-        <div className="flex items-start gap-3">
-          <span className="text-emerald-500 mt-0.5">&#x2713;</span>
-          <p className="text-sm text-zinc-600">Safe, auditable corrections and compliance checks</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Screen 2: AnA 1.0 ─────────────────────────────────────────────────────
-
-function AnAScreen() {
-  return (
-    <div className="flex flex-col items-center justify-center h-full text-center px-8">
-      <div className="w-14 h-14 rounded-lg bg-violet-50 flex items-center justify-center mb-6">
-        <span className="text-2xl">&#x2728;</span>
-      </div>
-      <h2 className="text-2xl font-semibold text-zinc-900">Meet AnA</h2>
-      <p className="text-base text-zinc-500 max-w-md leading-relaxed mt-4">
-        Your Regulatory Intelligence Copilot — always available at the bottom of every page.
-        AnA is context-aware: it knows which workspace you're in and adapts its guidance.
-      </p>
-      <div className="mt-6 max-w-md text-left space-y-3">
-        <div className="flex items-start gap-3">
-          <span className="text-violet-500 mt-0.5">&#x2713;</span>
-          <p className="text-sm text-zinc-600">Always visible at the bottom — type a question from any page</p>
-        </div>
-        <div className="flex items-start gap-3">
-          <span className="text-violet-500 mt-0.5">&#x2713;</span>
-          <p className="text-sm text-zinc-600">Context-aware: knows your project, workspace, and submission type</p>
-        </div>
-        <div className="flex items-start gap-3">
-          <span className="text-violet-500 mt-0.5">&#x2713;</span>
-          <p className="text-sm text-zinc-600">Evidence analysis, gap detection, and precedent intelligence</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Screen 3: Choose Your Role ─────────────────────────────────────────────
-
-function ChooseRoleScreen({
-  selectedRole,
-  onSelect,
-}: {
-  selectedRole: string | null;
-  onSelect: (id: string) => void;
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center h-full px-8">
-      <h2 className="text-2xl font-semibold text-zinc-900 mb-2">Choose your role</h2>
-      <p className="text-base text-zinc-500 mb-8">
-        Select your primary role to personalize your experience
-      </p>
-      <div className="max-w-md w-full space-y-1">
-        {ROLES.map((role) => {
-          const selected = selectedRole === role.id;
-          return (
-            <button
-              key={role.id}
-              onClick={() => onSelect(role.id)}
-              className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
-                selected ? 'bg-zinc-50' : 'hover:bg-zinc-50'
-              }`}
-            >
-              <p className={`text-sm font-medium ${selected ? 'text-zinc-900' : 'text-zinc-700'}`}>
-                {role.title}
-              </p>
-              <p className="text-xs text-zinc-400 mt-0.5">{role.description}</p>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ─── Screen 4: Select Submission Type ───────────────────────────────────────
-
-function SubmissionTypeScreen({
-  selected,
-  onSelect,
-}: {
-  selected: SubmissionType | null;
-  onSelect: (t: SubmissionType) => void;
-}) {
-  const count = selected ? (AGENT_MAP[selected]?.length ?? 0) : 0;
-
-  return (
-    <div className="flex flex-col items-center justify-center h-full px-8">
-      <h2 className="text-2xl font-semibold text-zinc-900 mb-2">What are you working on?</h2>
-      <p className="text-base text-zinc-500 mb-8">Select your submission type</p>
-      <div className="max-w-md w-full space-y-1">
-        {SUBMISSION_OPTIONS.map((opt) => (
+      <div className="mt-10 max-w-sm w-full space-y-3">
+        <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider text-left">
+          What do you work on?
+        </p>
+        {([
+          { id: 'pharma' as ClientTrack, label: 'Pharma & Biotech', description: 'Drugs, biologics, clinical trials' },
+          { id: 'device' as ClientTrack, label: 'Medical Device & Diagnostics', description: 'Devices, IVDs, combination products' },
+        ]).map(option => (
           <button
-            key={opt.id}
-            onClick={() => onSelect(opt.id)}
-            className={`w-full text-left px-4 py-2.5 rounded-lg transition-colors ${
-              selected === opt.id
-                ? 'bg-zinc-50 border-l-2 border-zinc-900'
-                : 'border-l-2 border-transparent hover:bg-zinc-50'
+            key={option.id}
+            onClick={() => onSelectTrack(option.id)}
+            className={`w-full text-left px-4 py-3 rounded-lg border transition-colors ${
+              track === option.id
+                ? 'border-zinc-900 bg-zinc-50'
+                : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
             }`}
           >
-            <span className="text-sm font-medium text-zinc-900">{opt.label}</span>
-            <p className="text-xs text-zinc-500 mt-0.5">{opt.description}</p>
+            <span className="text-sm font-medium text-zinc-900">{option.label}</span>
+            <span className="text-xs text-zinc-400 block mt-0.5">{option.description}</span>
           </button>
         ))}
       </div>
-      {selected && (
-        <p className="text-xs text-zinc-400 mt-4">
-          {count} agents available for this pathway
-        </p>
-      )}
     </div>
   );
 }
 
-// ─── Screen 5: Your AI Team + Automation Level ──────────────────────────────
+// ─── Screen 2: Quick Setup ──────────────────────────────────────────────────
 
-function AgentTeamScreen({
+function SetupScreen({
+  track,
+  role,
   submissionType,
-  enabledAgents,
-  onToggleAgent,
-  automationLevel,
-  onSelectAutomation,
+  region,
+  onSelectRole,
+  onSelectType,
+  onSelectRegion,
 }: {
-  submissionType: SubmissionType;
-  enabledAgents: Set<string>;
-  onToggleAgent: (id: string) => void;
-  automationLevel: AutomationLevel;
-  onSelectAutomation: (l: AutomationLevel) => void;
+  track: ClientTrack;
+  role: string | null;
+  submissionType: string | null;
+  region: string | null;
+  onSelectRole: (id: string) => void;
+  onSelectType: (id: string) => void;
+  onSelectRegion: (id: string) => void;
 }) {
-  const relevantIds = AGENT_MAP[submissionType] ?? [];
-  const relevant = ALL_AGENTS.filter((a) => relevantIds.includes(a.id));
-  const grouped = PHASE_ORDER.map((phase) => ({
-    phase,
-    agents: relevant.filter((a) => a.phase === phase),
-  })).filter((g) => g.agents.length > 0);
+  const roles = track === 'device' ? DEVICE_ROLES : PHARMA_ROLES;
+  const types = track === 'device' ? DEVICE_TYPES : PHARMA_TYPES;
 
   return (
-    <div className="flex flex-col items-center h-full px-8 pt-12 overflow-y-auto">
-      <h2 className="text-2xl font-semibold text-zinc-900 mb-2">Your AI team</h2>
-      <p className="text-base text-zinc-500 mb-6">
-        {enabledAgents.size} agents configured by phase
-      </p>
+    <div className="flex flex-col items-center h-full px-8 pt-16 overflow-y-auto">
+      <h2 className="text-xl font-semibold text-zinc-900 mb-1">Quick setup</h2>
+      <p className="text-sm text-zinc-500 mb-8">Three quick choices to personalize your experience.</p>
 
-      <div className="max-w-lg w-full space-y-5">
-        {grouped.map((group) => (
-          <div key={group.phase}>
-            <p className="text-xs font-medium text-zinc-400 uppercase tracking-wide mb-2">
-              {group.phase}
-            </p>
-            <div className="space-y-1">
-              {group.agents.map((agent) => (
-                <button
-                  key={agent.id}
-                  onClick={() => onToggleAgent(agent.id)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded hover:bg-zinc-50 transition-colors duration-150"
-                >
-                  <div className="text-left">
-                    <span className="text-sm text-zinc-900">{agent.name}</span>
-                    <p className="text-xs text-zinc-500">{agent.description}</p>
-                  </div>
-                  <span
-                    className={`flex-shrink-0 ml-3 h-4 w-7 rounded-full transition-colors relative ${
-                      enabledAgents.has(agent.id) ? 'bg-zinc-900' : 'bg-zinc-200'
-                    }`}
-                  >
-                    <span
-                      className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition-transform ${
-                        enabledAgents.has(agent.id) ? 'translate-x-3.5' : 'translate-x-0.5'
-                      }`}
-                    />
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-
-        <div className="border-t border-zinc-200 pt-5">
-          <p className="text-xs font-medium text-zinc-400 uppercase tracking-wide mb-2">
-            Automation level
-          </p>
-          <div className="space-y-1">
-            {AUTOMATION_LEVELS.map((opt) => (
+      <div className="max-w-sm w-full space-y-6">
+        {/* Role */}
+        <div>
+          <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">Your role</p>
+          <div className="flex flex-wrap gap-2">
+            {roles.map(r => (
               <button
-                key={opt.id}
-                onClick={() => onSelectAutomation(opt.id)}
-                className={`w-full text-left px-3 py-3 rounded transition-colors ${
-                  automationLevel === opt.id
-                    ? 'bg-zinc-50 border-l-2 border-zinc-900'
-                    : 'border-l-2 border-transparent hover:bg-zinc-50'
+                key={r.id}
+                onClick={() => onSelectRole(r.id)}
+                className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+                  role === r.id
+                    ? 'border-zinc-900 bg-zinc-900 text-white'
+                    : 'border-zinc-200 text-zinc-600 hover:border-zinc-300'
                 }`}
               >
-                <span className="text-sm font-medium text-zinc-900">{opt.label}</span>
-                {automationLevel === opt.id && opt.id === 'guided' && (
-                  <span className="ml-2 text-xs text-zinc-400">Recommended</span>
-                )}
-                <p className="text-xs text-zinc-500 mt-0.5">{opt.description}</p>
+                {r.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Submission type */}
+        <div>
+          <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">Submission type</p>
+          <div className="flex flex-wrap gap-2">
+            {types.map(t => (
+              <button
+                key={t.id}
+                onClick={() => onSelectType(t.id)}
+                className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+                  submissionType === t.id
+                    ? 'border-zinc-900 bg-zinc-900 text-white'
+                    : 'border-zinc-200 text-zinc-600 hover:border-zinc-300'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Region */}
+        <div>
+          <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">Target agency</p>
+          <div className="flex flex-wrap gap-2">
+            {REGIONS.map(r => (
+              <button
+                key={r.id}
+                onClick={() => onSelectRegion(r.id)}
+                className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+                  region === r.id
+                    ? 'border-zinc-900 bg-zinc-900 text-white'
+                    : 'border-zinc-200 text-zinc-600 hover:border-zinc-300'
+                }`}
+              >
+                {r.label}
               </button>
             ))}
           </div>
@@ -366,115 +215,207 @@ function AgentTeamScreen({
   );
 }
 
-// ─── Screen 6: Ready to Go ──────────────────────────────────────────────────
+// ─── Screen 3: Create Project ───────────────────────────────────────────────
 
-function ReadyScreen({
-  selectedRole,
+function CreateProjectScreen({
+  projectName,
+  productName,
   submissionType,
-  enabledAgentCount,
-  automationLevel,
-  onLaunch,
+  onChangeProjectName,
+  onChangeProductName,
+  isCreating,
 }: {
-  selectedRole: string | null;
-  submissionType: SubmissionType | null;
-  enabledAgentCount: number;
-  automationLevel: AutomationLevel;
-  onLaunch: () => void;
+  projectName: string;
+  productName: string;
+  submissionType: string | null;
+  onChangeProjectName: (v: string) => void;
+  onChangeProductName: (v: string) => void;
+  isCreating: boolean;
+  createError: boolean;
 }) {
-  const roleLabel = ROLES.find((r) => r.id === selectedRole)?.title ?? 'Not selected';
-  const subLabel = SUBMISSION_OPTIONS.find((o) => o.id === submissionType)?.label ?? 'Not selected';
-  const autoLabel = AUTOMATION_LEVELS.find((l) => l.id === automationLevel)?.label ?? automationLevel;
-
   return (
     <div className="flex flex-col items-center justify-center h-full px-8">
-      <h2 className="text-2xl font-semibold text-zinc-900 mb-2">Ready to go</h2>
-      <p className="text-base text-zinc-500 mb-8">
-        35 AI agents configured for your {subLabel} workflow.
+      <h2 className="text-xl font-semibold text-zinc-900 mb-1">Create your first project</h2>
+      <p className="text-sm text-zinc-500 mb-8">
+        {submissionType ? `A ${submissionType} project to get you started.` : 'Give your project a name.'}
       </p>
 
-      <div className="max-w-sm w-full space-y-1 mb-8">
-        <div className="flex justify-between px-3 py-2 text-sm">
-          <span className="text-zinc-500">Role</span>
-          <span className="text-zinc-900">{roleLabel}</span>
+      {createError && (
+        <div className="max-w-sm w-full mb-4 px-4 py-3 rounded-lg bg-red-50 text-red-700 text-sm">
+          Project creation failed. Check your connection and try again.
         </div>
-        <div className="flex justify-between px-3 py-2 text-sm">
-          <span className="text-zinc-500">Submission type</span>
-          <span className="text-zinc-900">{subLabel}</span>
+      )}
+
+      <div className="max-w-sm w-full space-y-4">
+        <div>
+          <label htmlFor="project-name" className="text-xs font-medium text-zinc-500 block mb-1.5">
+            Project name
+          </label>
+          <Input
+            id="project-name"
+            type="text"
+            value={projectName}
+            onChange={e => onChangeProjectName(e.target.value)}
+            placeholder="e.g. Compound X IND Submission"
+            autoFocus
+          />
         </div>
-        <div className="flex justify-between px-3 py-2 text-sm">
-          <span className="text-zinc-500">Active agents</span>
-          <span className="text-zinc-900">{enabledAgentCount}</span>
-        </div>
-        <div className="flex justify-between px-3 py-2 text-sm">
-          <span className="text-zinc-500">Automation</span>
-          <span className="text-zinc-900">{autoLabel}</span>
+        <div>
+          <label htmlFor="product-name" className="text-xs font-medium text-zinc-500 block mb-1.5">
+            Product or device name <span className="text-zinc-300">(optional)</span>
+          </label>
+          <Input
+            id="product-name"
+            type="text"
+            value={productName}
+            onChange={e => onChangeProductName(e.target.value)}
+            placeholder="e.g. Compound X, DeviceY Pro"
+          />
         </div>
       </div>
 
-      <button
-        onClick={onLaunch}
-        className="text-sm font-medium text-blue-600 hover:underline transition-colors duration-150"
-      >
-        Launch Concept2Cure
-      </button>
+      {isCreating && (
+        <p className="text-xs text-zinc-400 mt-6">Creating project...</p>
+      )}
+    </div>
+  );
+}
+
+// ─── Screen 4: You're Set ───────────────────────────────────────────────────
+
+function ConfidenceScreen({
+  track,
+  submissionType,
+  onAction,
+}: {
+  track: ClientTrack;
+  submissionType: string | null;
+  onAction: (action: string) => void;
+}) {
+  const suggestions = track === 'device'
+    ? [
+        { id: 'work', label: 'Start in Work', description: 'Open the document workspace' },
+        { id: '510k-workspace', label: 'Open 510(k) Workspace', description: 'Predicate comparison and SE testing' },
+        { id: 'vault', label: 'Open Vault', description: 'Browse files and evidence' },
+      ]
+    : [
+        { id: 'work', label: 'Start in Work', description: 'Open the document workspace' },
+        { id: 'apps', label: 'Browse Apps', description: 'Explore builders and specialist tools' },
+        { id: 'vault', label: 'Open Vault', description: 'Browse files and evidence' },
+      ];
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full px-8 text-center">
+      <h2 className="text-xl font-semibold text-zinc-900 mb-2">You're all set</h2>
+      <p className="text-sm text-zinc-500 max-w-md">
+        Your project is ready. AnA is always available at the bottom of every page to help you.
+      </p>
+
+      <div className="mt-8 max-w-sm w-full space-y-2">
+        <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider text-left mb-2">
+          What would you like to do first?
+        </p>
+        {suggestions.map(s => (
+          <button
+            key={s.id}
+            onClick={() => onAction(s.id)}
+            className="w-full text-left px-4 py-3 rounded-lg border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+          >
+            <span className="text-sm font-medium text-zinc-800">{s.label}</span>
+            <span className="text-xs text-zinc-400 block mt-0.5">{s.description}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
-export default function FirstRunExperience({ onComplete, onSkip, existingProjects, userName }: FirstRunExperienceProps) {
+export default function FirstRunExperience({
+  onComplete,
+  onSkip,
+  existingProjects,
+  userName,
+}: FirstRunExperienceProps) {
   const [screen, setScreen] = useState(0);
-  const [selectedRole, setSelectedRole] = useState<string | null>(null);
-  const [submissionType, setSubmissionType] = useState<SubmissionType | null>(null);
-  const [enabledAgents, setEnabledAgents] = useState<Set<string>>(new Set());
-  const [automationLevel, setAutomationLevel] = useState<AutomationLevel>('guided');
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Auto-advance for intro screens only (0-2)
-  useEffect(() => {
-    if (screen > 2) return;
-    timerRef.current = setTimeout(() => setScreen((s) => s + 1), 6000);
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [screen]);
+  // Screen 1 state
+  const [track, setTrack] = useState<ClientTrack | null>(null);
 
-  const handleSubmissionSelect = useCallback((type: SubmissionType) => {
-    setSubmissionType(type);
-    setEnabledAgents(new Set(AGENT_MAP[type] ?? []));
-  }, []);
+  // Screen 2 state
+  const [role, setRole] = useState<string | null>(null);
+  const [submissionType, setSubmissionType] = useState<string | null>(null);
+  const [region, setRegion] = useState<string | null>(null);
 
-  const toggleAgent = useCallback((id: string) => {
-    setEnabledAgents((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
+  // Screen 3 state
+  const [projectName, setProjectName] = useState('');
+  const [productName, setProductName] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const [createError, setCreateError] = useState(false);
+  const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
 
   const canContinue = useCallback((): boolean => {
-    if (screen === 3) return selectedRole !== null;
-    if (screen === 4) return submissionType !== null;
-    if (screen === 5) return enabledAgents.size > 0;
+    if (screen === 0) return track !== null;
+    if (screen === 1) return role !== null && submissionType !== null;
+    if (screen === 2) return projectName.trim().length > 0;
     return true;
-  }, [screen, selectedRole, submissionType, enabledAgents.size]);
+  }, [screen, track, role, submissionType, projectName]);
 
-  const goNext = useCallback(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    if (screen < TOTAL_SCREENS - 1 && canContinue()) setScreen((s) => s + 1);
-  }, [screen, canContinue]);
+  const goNext = useCallback(async () => {
+    if (!canContinue()) return;
+
+    // Screen 2 → 3: create the project
+    if (screen === 2 && !createdProjectId) {
+      setIsCreating(true);
+      setCreateError(false);
+      try {
+        const res = await apiRequest('POST', '/api/concept2cure/projects', {
+          name: projectName.trim(),
+          submissionType: submissionType || 'IND',
+          product: productName.trim() || undefined,
+          region: region || 'FDA',
+          description: `${submissionType || 'Regulatory'} project`,
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const id = json.data?.id ?? json.id;
+          if (id) {
+            setCreatedProjectId(String(id));
+          } else {
+            setCreateError(true);
+            setIsCreating(false);
+            return; // Don't advance — show error on screen 3
+          }
+        } else {
+          setCreateError(true);
+          setIsCreating(false);
+          return; // Don't advance — show error on screen 3
+        }
+      } catch {
+        setCreateError(true);
+        setIsCreating(false);
+        return; // Don't advance — show error on screen 3
+      }
+      setIsCreating(false);
+    }
+
+    if (screen < TOTAL_SCREENS - 1) setScreen(s => s + 1);
+  }, [screen, canContinue, createdProjectId, projectName, submissionType, productName, region]);
 
   const goPrev = useCallback(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    if (screen > 0) setScreen((s) => s - 1);
+    if (screen > 0) setScreen(s => s - 1);
   }, [screen]);
 
-  const handleComplete = useCallback(() => {
+  const handleFinish = useCallback((action?: string) => {
     localStorage.setItem('concept2cure_first_run_complete', 'true');
-    onComplete(selectedRole ?? undefined);
-  }, [onComplete, selectedRole]);
+    if (role) localStorage.setItem('concept2cure_user_role', role);
+    if (track) localStorage.setItem('concept2cure_client_track', track);
+    onComplete(role ?? undefined, {
+      projectId: createdProjectId ?? undefined,
+      action,
+    });
+  }, [onComplete, role, track, createdProjectId]);
 
   const handleSkip = useCallback(() => {
     localStorage.setItem('concept2cure_first_run_complete', 'true');
@@ -484,39 +425,11 @@ export default function FirstRunExperience({ onComplete, onSkip, existingProject
   // Keyboard navigation
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight' || e.key === 'Enter') goNext();
-      else if (e.key === 'ArrowLeft') goPrev();
-      else if (e.key === 'Escape') handleSkip();
+      if (e.key === 'Escape') handleSkip();
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [goNext, goPrev, handleSkip]);
-
-  const screens = [
-    <WelcomeScreen key="welcome" userName={userName} projectCount={existingProjects?.length} />,
-    <DrSageScreen key="sage" />,
-    <AnAScreen key="ana" />,
-    <ChooseRoleScreen key="role" selectedRole={selectedRole} onSelect={setSelectedRole} />,
-    <SubmissionTypeScreen key="submission" selected={submissionType} onSelect={handleSubmissionSelect} />,
-    submissionType ? (
-      <AgentTeamScreen
-        key="team"
-        submissionType={submissionType}
-        enabledAgents={enabledAgents}
-        onToggleAgent={toggleAgent}
-        automationLevel={automationLevel}
-        onSelectAutomation={setAutomationLevel}
-      />
-    ) : null,
-    <ReadyScreen
-      key="ready"
-      selectedRole={selectedRole}
-      submissionType={submissionType}
-      enabledAgentCount={enabledAgents.size}
-      automationLevel={automationLevel}
-      onLaunch={handleComplete}
-    />,
-  ];
+  }, [handleSkip]);
 
   const isLastScreen = screen === TOTAL_SCREENS - 1;
 
@@ -530,49 +443,88 @@ export default function FirstRunExperience({ onComplete, onSkip, existingProject
       {/* Screen content */}
       <div className="flex-1 relative overflow-hidden">
         <AnimatePresence mode="wait">
-          <motion.div
-            key={screen}
-            className="absolute inset-0"
-            {...fadeUp}
-          >
-            {screens[screen]}
+          <motion.div key={screen} className="absolute inset-0" {...fadeUp}>
+            {screen === 0 && (
+              <WelcomeScreen userName={userName} track={track} onSelectTrack={setTrack} />
+            )}
+            {screen === 1 && track && (
+              <SetupScreen
+                track={track}
+                role={role}
+                submissionType={submissionType}
+                region={region}
+                onSelectRole={setRole}
+                onSelectType={setSubmissionType}
+                onSelectRegion={setRegion}
+              />
+            )}
+            {screen === 2 && (
+              <CreateProjectScreen
+                projectName={projectName}
+                productName={productName}
+                submissionType={submissionType}
+                onChangeProjectName={setProjectName}
+                onChangeProductName={setProductName}
+                isCreating={isCreating}
+                createError={createError}
+              />
+            )}
+            {screen === 3 && (
+              <ConfidenceScreen
+                track={track || 'pharma'}
+                submissionType={submissionType}
+                onAction={action => {
+                  handleFinish(action);
+                }}
+              />
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
 
       {/* Bottom controls */}
       <div className="flex items-center justify-between px-8 pb-8 pt-4">
-        <div className="flex items-center gap-4">
-          {screen > 0 && (
+        <div>
+          {screen > 0 && !isLastScreen && (
             <button
               onClick={goPrev}
-              className="text-sm text-zinc-600 hover:text-zinc-900 transition-colors duration-150"
+              className="text-sm text-zinc-500 hover:text-zinc-700 transition-colors"
             >
-              &larr; Back
+              Back
             </button>
           )}
         </div>
 
-        <ProgressDots current={screen} total={TOTAL_SCREENS} />
+        {/* Progress */}
+        <div className="flex items-center gap-2">
+          {Array.from({ length: TOTAL_SCREENS }, (_, i) => (
+            <div
+              key={i}
+              className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                i === screen ? 'bg-zinc-900' : i < screen ? 'bg-zinc-400' : 'bg-zinc-200'
+              }`}
+            />
+          ))}
+        </div>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4">
           <button
             onClick={handleSkip}
-            className="text-sm text-zinc-400 hover:text-zinc-600 transition-colors duration-150"
+            className="text-sm text-zinc-400 hover:text-zinc-600 transition-colors"
           >
             Skip
           </button>
           {!isLastScreen && (
             <button
               onClick={goNext}
-              disabled={!canContinue()}
+              disabled={!canContinue() || isCreating}
               className={`text-sm font-medium transition-colors ${
-                canContinue()
+                canContinue() && !isCreating
                   ? 'text-zinc-900 hover:underline'
-                  : 'text-zinc-400 cursor-not-allowed'
+                  : 'text-zinc-300 cursor-not-allowed'
               }`}
             >
-              Continue &rarr;
+              Continue
             </button>
           )}
         </div>

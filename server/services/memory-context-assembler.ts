@@ -6,6 +6,21 @@ import {
 } from './client-intelligence-memory.js';
 import type { ClientMemoryEntry, ProjectMemoryEntry } from 'shared/schema';
 
+/**
+ * Race a promise against a timeout. If the promise doesn't resolve within `ms`
+ * milliseconds the fallback value is returned instead, preventing indefinite
+ * hangs when the embedding service or vector DB is slow/unreachable.
+ */
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => {
+      console.warn(`[memory-context] Semantic search timed out after ${ms}ms, using fallback`);
+      resolve(fallback);
+    }, ms))
+  ]);
+}
+
 export interface MemoryContextAssemblerInput {
   threadId: string;
   organizationId?: number;
@@ -203,23 +218,31 @@ export async function buildMemoryContextForChat(
 
   if (input.organizationId && input.query?.trim()) {
     try {
-      const clientResult = await searchMemoryEntriesSemantic(
-        null,
-        input.organizationId,
-        input.query,
-        { limit, minSimilarity }
-      ).catch(() => ({ entries: [], totalCount: 0, query: input.query }));
+      const clientResult = await withTimeout(
+        searchMemoryEntriesSemantic(
+          null,
+          input.organizationId,
+          input.query,
+          { limit, minSimilarity }
+        ).catch(() => ({ entries: [], totalCount: 0, query: input.query })),
+        10000,
+        { entries: [] as SemanticMemoryHit[], totalCount: 0, query: input.query }
+      );
 
       atoms.push(...clientResult.entries.map(mapClientEntryToAtom));
 
       if (input.projectId) {
-        const projectResult = await searchProjectMemoryEntriesSemantic(
-          null,
-          input.projectId,
-          input.organizationId,
-          input.query,
-          { limit, minSimilarity }
-        ).catch(() => ({ entries: [], totalCount: 0, query: input.query }));
+        const projectResult = await withTimeout(
+          searchProjectMemoryEntriesSemantic(
+            null,
+            input.projectId,
+            input.organizationId,
+            input.query,
+            { limit, minSimilarity }
+          ).catch(() => ({ entries: [], totalCount: 0, query: input.query })),
+          10000,
+          { entries: [] as SemanticMemoryHit[], totalCount: 0, query: input.query }
+        );
 
         atoms.push(...projectResult.entries.map(mapProjectEntryToAtom));
       }
