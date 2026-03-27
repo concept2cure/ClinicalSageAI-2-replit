@@ -76,7 +76,7 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onOpenArtifact }) 
   const filtered = useMemo(() => {
     let list = artifacts ?? [];
     if (activeTab !== 'all') {
-      list = list.filter(a => a.status === activeTab);
+      list = list.filter(a => (a.status || 'draft') === activeTab);
     }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -94,10 +94,10 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onOpenArtifact }) 
     const all = artifacts ?? [];
     return {
       all: all.length,
-      draft: all.filter(a => a.status === 'draft').length,
-      review: all.filter(a => a.status === 'review').length,
-      approved: all.filter(a => a.status === 'approved').length,
-      locked: all.filter(a => a.status === 'locked').length,
+      draft: all.filter(a => (a.status || 'draft') === 'draft').length,
+      review: all.filter(a => (a.status || 'draft') === 'review').length,
+      approved: all.filter(a => (a.status || 'draft') === 'approved').length,
+      locked: all.filter(a => (a.status || 'draft') === 'locked').length,
     };
   }, [artifacts]);
 
@@ -145,8 +145,8 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onOpenArtifact }) 
         data={filtered}
         isLoading={isLoading}
         error={error}
-        emptyMessage="No artifacts found"
-        emptyIcon="document"
+        emptyTitle="No artifacts found"
+        emptyDescription={searchQuery ? 'Try a different search term' : 'Create artifacts from the Work tab or Apps'}
       >
         {(items) => (
           <div className="space-y-1">

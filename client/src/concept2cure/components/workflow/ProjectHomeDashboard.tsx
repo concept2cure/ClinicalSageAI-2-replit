@@ -23,7 +23,6 @@ import {
   Lock,
   TrendingUp,
   Gauge,
-  LayoutDashboard,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -53,11 +52,12 @@ interface Artifact {
 
 // ─── Status config ────────────────────────────────────────────────────────────
 
+// Status colors unified with ArtifactsPage
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; color: string; bg: string }> = {
-  draft: { label: 'Draft', icon: Clock, color: 'text-zinc-500', bg: 'bg-zinc-50' },
-  review: { label: 'In Review', icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50' },
-  approved: { label: 'Approved', icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  locked: { label: 'Ready', icon: Lock, color: 'text-blue-600', bg: 'bg-blue-50' },
+  draft: { label: 'Draft', icon: Clock, color: 'text-zinc-600', bg: 'bg-zinc-100' },
+  review: { label: 'In Review', icon: AlertTriangle, color: 'text-amber-700', bg: 'bg-amber-50' },
+  approved: { label: 'Approved', icon: CheckCircle, color: 'text-emerald-700', bg: 'bg-emerald-50' },
+  locked: { label: 'Submission Ready', icon: Lock, color: 'text-blue-700', bg: 'bg-blue-50' },
 };
 
 // ─── Quick nav cards ──────────────────────────────────────────────────────────
@@ -121,7 +121,6 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
         title={project.name}
         description={project.description ?? undefined}
         badges={badges}
-        icon={<LayoutDashboard className="w-5 h-5 text-zinc-500" />}
       />
 
       {/* ── Readiness Score + Pipeline ──────────────────────────────── */}
@@ -195,7 +194,7 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
           <button
             onClick={() => onNavigate('work')}
             aria-label="View all artifacts"
-            className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-0.5"
+            className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-0.5 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded"
           >
             View all <ChevronRight className="w-3 h-3" />
           </button>

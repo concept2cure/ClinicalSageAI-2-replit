@@ -76,21 +76,30 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
     staleTime: 30_000,
   });
 
-  // Group by folder
-  const grouped = React.useMemo(() => {
+  // Filter items by search
+  const filteredItems = React.useMemo(() => {
     const items = artifacts ?? [];
-    const filtered = searchQuery.trim()
-      ? items.filter(a => (a.title || '').toLowerCase().includes(searchQuery.toLowerCase()))
+    const q = searchQuery.trim().toLowerCase();
+    return q
+      ? items.filter(a =>
+          (a.title || '').toLowerCase().includes(q) ||
+          (a.ctdSection || '').toLowerCase().includes(q) ||
+          (a.type || '').toLowerCase().includes(q) ||
+          (a.folder || '').toLowerCase().includes(q)
+        )
       : items;
+  }, [artifacts, searchQuery]);
 
+  // Group filtered items by folder
+  const grouped = React.useMemo(() => {
     const groups = new Map<string, VaultItem[]>();
-    for (const item of filtered) {
+    for (const item of filteredItems) {
       const folder = item.folder || 'drafts';
       if (!groups.has(folder)) groups.set(folder, []);
       groups.get(folder)!.push(item);
     }
     return groups;
-  }, [artifacts, searchQuery]);
+  }, [filteredItems]);
 
   if (!projectId) {
     return (
@@ -123,7 +132,11 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
             className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-700 placeholder:text-zinc-400 focus:border-zinc-300 focus:ring-1 focus:ring-zinc-300 outline-none transition-all"
           />
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 transition-colors">
+        <button
+          disabled
+          title="File upload coming soon"
+          className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg border border-zinc-200 text-zinc-400 cursor-not-allowed opacity-60"
+        >
           <Upload className="w-4 h-4" />
           Upload
         </button>
@@ -131,11 +144,11 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
 
       {/* File tree grouped by folder */}
       <DataStateWrapper
-        data={artifacts}
+        data={filteredItems}
         isLoading={isLoading}
         error={error}
-        emptyMessage="No files or artifacts in this project yet"
-        emptyIcon="document"
+        emptyTitle={searchQuery ? 'No matching files' : 'No files or artifacts yet'}
+        emptyDescription={searchQuery ? 'Try a different search term' : 'Upload files or create artifacts from the Work tab'}
       >
         {() => (
           <div className="space-y-4">
@@ -162,7 +175,7 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
                           {item.ctdSection}
                         </span>
                       )}
-                      {item.status && STATUS_ICON[item.status]}
+                      {item.status && (STATUS_ICON[item.status] || STATUS_ICON.draft)}
                       {item.version && (
                         <span className="text-[10px] text-zinc-400 tabular-nums flex-shrink-0">v{item.version}</span>
                       )}
@@ -171,11 +184,6 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
                 </div>
               </div>
             ))}
-            {grouped.size === 0 && (
-              <div className="text-center py-8">
-                <p className="text-sm text-zinc-400">No matching files</p>
-              </div>
-            )}
           </div>
         )}
       </DataStateWrapper>

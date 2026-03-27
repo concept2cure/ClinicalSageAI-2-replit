@@ -65,20 +65,29 @@ interface AppsPageProps {
   activeProjectName?: string;
 }
 
-const AppCardComponent: React.FC<{ app: AppCard; onClick: () => void }> = ({ app, onClick }) => {
-  const [iconBg, iconText] = app.color.split(' ');
+const AppCardComponent: React.FC<{ app: AppCard; onClick: () => void; disabled?: boolean }> = ({ app, onClick, disabled }) => {
+  const colors = app.color.split(' ');
+  const iconBg = colors[0] || 'bg-zinc-50';
+  const iconText = colors[1] || 'text-zinc-500';
   return (
     <button
-      onClick={onClick}
-      className="flex items-start gap-3 p-3 rounded-lg border border-zinc-100 hover:border-zinc-200 hover:bg-zinc-50/50 transition-all text-left group focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      aria-label={`Launch ${app.label}`}
+      className={cn(
+        'flex items-start gap-3 p-3 rounded-lg border border-zinc-100 transition-all text-left group focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
+        disabled
+          ? 'opacity-50 cursor-not-allowed'
+          : 'hover:border-zinc-200 hover:bg-zinc-50/50'
+      )}
     >
-      <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0', iconBg || 'bg-zinc-50')}>
-        <span className={iconText || 'text-zinc-500'}>{app.icon}</span>
+      <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0', iconBg)}>
+        <span className={iconText}>{app.icon}</span>
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1">
           <span className="text-sm font-medium text-zinc-800">{app.label}</span>
-          <ArrowRight className="w-3 h-3 text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <ArrowRight className="w-3 h-3 text-zinc-300 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity" />
         </div>
         <p className="text-xs text-zinc-500 leading-relaxed mt-0.5">{app.description}</p>
       </div>
@@ -96,30 +105,37 @@ const AppGroup: React.FC<{ title: string; children: React.ReactNode }> = ({ titl
 );
 
 export const AppsPage: React.FC<AppsPageProps> = ({ onNavigate, activeProjectId, activeProjectName }) => {
+  const noProject = !activeProjectId;
+
   return (
     <WorkspaceCanvas maxWidth="5xl" testId="apps-page">
       <PageTitleHeader
         title="Apps"
-        subtitle={activeProjectId ? `for ${activeProjectName || 'current project'}` : 'Select a project to launch apps'}
-        icon={<Sparkles className="w-5 h-5 text-violet-500" />}
+        subtitle={activeProjectId ? `for ${activeProjectName || 'current project'}` : 'Select a project first to launch apps'}
       />
+
+      {noProject && (
+        <div className="mt-4 px-3 py-2.5 rounded-lg bg-amber-50 text-amber-700 text-xs">
+          Open a project from the sidebar to enable app launching.
+        </div>
+      )}
 
       <div className="mt-6">
         <AppGroup title="Strategy & Evidence">
           {STRATEGY_APPS.map(app => (
-            <AppCardComponent key={app.id} app={app} onClick={() => onNavigate(app.id)} />
+            <AppCardComponent key={app.id} app={app} onClick={() => onNavigate(app.id)} disabled={noProject} />
           ))}
         </AppGroup>
 
         <AppGroup title="Builders">
           {BUILDER_APPS.map(app => (
-            <AppCardComponent key={app.id} app={app} onClick={() => onNavigate(app.id)} />
+            <AppCardComponent key={app.id} app={app} onClick={() => onNavigate(app.id)} disabled={noProject} />
           ))}
         </AppGroup>
 
         <AppGroup title="Specialist Studios">
           {STUDIO_APPS.map(app => (
-            <AppCardComponent key={app.id} app={app} onClick={() => onNavigate(app.id)} />
+            <AppCardComponent key={app.id} app={app} onClick={() => onNavigate(app.id)} disabled={noProject} />
           ))}
         </AppGroup>
       </div>
