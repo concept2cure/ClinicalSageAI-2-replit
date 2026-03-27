@@ -1,5 +1,12 @@
 # Enterprise Ethics + MLOps Execution Plan (Post-Audit)
 
+Status: ACTIVE
+Canonical: Yes
+Supersedes: ENTERPRISE_ETHICS_MLOPS_DOMAIN_AUDIT_2026-03-24.md
+Superseded By: —
+Related Reports: EXPORT_GOVERNANCE_ROUTE_INVENTORY_2026-03-24.md
+
+
 **Date:** 2026-03-24  
 **Status:** Execution-ready  
 **Input:** `ENTERPRISE_ETHICS_MLOPS_DOMAIN_AUDIT_2026-03-24.md` and implemented P0 boundary controls.

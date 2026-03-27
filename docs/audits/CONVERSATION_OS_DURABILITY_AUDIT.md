@@ -1,5 +1,12 @@
 # Conversation OS Durability Audit (2026-03-26)
 
+Status: SUPERSEDED
+Canonical: No
+Supersedes: —
+Superseded By: CONVERSATION_OS_DURABILITY_PHASE2.md
+Related Reports: LAUNCH_GATE_DOCUMENT_CONSEQUENCE_REPORT.md
+
+
 ## Scope
 - Conversation OS state durability for manifests, tool events, retrieval, scout, plans/steps, proposals/versions, and quality evaluations.
 

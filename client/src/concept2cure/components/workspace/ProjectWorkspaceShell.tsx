@@ -2128,6 +2128,12 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                             <span>
                               {art.metadata?.source === 'compute'
                                 ? 'Compute'
+                                : art.metadata?.source === 'export_pdf'
+                                ? 'Export PDF'
+                                : art.metadata?.source === 'export_docx'
+                                ? 'Export DOCX'
+                                : art.metadata?.source === 'export_estar_zip'
+                                ? 'Export eSTAR ZIP'
                                 : art.metadata?.anaRiActionType
                                 ? 'AnA RI'
                                 : art.metadata?.source === 'proposal_accept'

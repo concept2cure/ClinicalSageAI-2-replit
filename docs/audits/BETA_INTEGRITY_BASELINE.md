@@ -1,5 +1,12 @@
 # BETA INTEGRITY BASELINE (Phase 0)
 
+Status: SUPERSEDED
+Canonical: No
+Supersedes: —
+Superseded By: BETA_INTEGRITY_REPORT.md
+Related Reports: LAUNCH_GATE_DOCUMENT_CONSEQUENCE_BASELINE.md
+
+
 Date: 2026-03-26 (UTC)
 Branch observed: `work` (requested `concept2cure-v2` branch is not present locally)
 

@@ -1,5 +1,12 @@
 # 510(k) / Medical Device / eSTAR — Document Generation Audit
 
+Status: ACTIVE
+Canonical: No
+Supersedes: —
+Superseded By: —
+Related Reports: LAUNCH_GATE_DOCUMENT_CONSEQUENCE_REPORT.md; EXPORT_GOVERNANCE_ROUTE_INVENTORY_2026-03-24.md
+
+
 > **Date:** 2026-03-26
 > **Scope:** All beta-visible 510(k) document generation flows
 > **Question:** Which flows produce governed artifacts (provenance, audit, placement) vs. dead-end download-only?

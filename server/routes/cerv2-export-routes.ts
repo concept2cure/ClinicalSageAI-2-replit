@@ -26,6 +26,7 @@ import {
 } from '../export/renderers';
 import { mockVault } from '../services/mockVault';
 import { authMiddleware } from '../auth';
+import { createGovernedExportConsequence } from '../services/export/governedExportConsequence';
 
 const router = Router();
 
@@ -60,7 +61,11 @@ const requireEditorAccess = (req: any, res: any, next: () => void) => {
   if (!orgId) {
     return res.status(400).json({ error: 'Organization context required' });
   }
-  req.resolvedOrganizationId = Number(orgId);
+  const numericOrgId = Number(orgId);
+  if (!Number.isFinite(numericOrgId) || numericOrgId <= 0) {
+    return res.status(400).json({ error: 'Valid numeric organization context required' });
+  }
+  req.resolvedOrganizationId = numericOrgId;
   return next();
 };
 
@@ -69,6 +74,7 @@ const validDocTypes = ['cerv2_510k', 'cerv2_pma', 'cerv2_cer'] as const;
 
 const exportSchema = z.object({
   docType: z.enum(validDocTypes),
+  projectId: z.coerce.number().int().positive(),
   content: z.object({
     type: z.literal('doc'),
     content: z.array(z.any()).min(1, 'Editor content must have at least one node'),
@@ -111,17 +117,12 @@ function shouldEnforceExportReviewGate(): boolean {
   return process.env.NODE_ENV === 'production';
 }
 
-// LAUNCH-GATE NOTE (2025-01): These governance headers are HTTP-response-only.
-// They are NOT persisted to concept2cure_provenance_events or concept2cure_audit_events.
-// This means the export has no governed consequence — the headers vanish with the response.
-// To make exports governed, route content through the Artifact Compute Plane
-// (server/services/compute/artifactWriteback.ts → registerArtifactWithGovernance).
 function applyGovernanceHeaders(res: Response, governance: z.infer<typeof exportGovernanceSchema>) {
   res.setHeader('X-Concept2Cure-AI-Generated', String(governance.aiGenerated));
   res.setHeader('X-Concept2Cure-Human-Review-Approved', String(governance.humanReviewApproved));
   res.setHeader('X-Concept2Cure-Review-Required', 'true');
   res.setHeader('X-Concept2Cure-Review-Notice', 'Human review required for regulated use');
-  res.setHeader('X-Concept2Cure-Governance-Persistence', 'none');
+  res.setHeader('X-Concept2Cure-Governance-Persistence', 'governed');
   if (governance.reviewerName) {
     res.setHeader('X-Concept2Cure-Reviewer', encodeURIComponent(governance.reviewerName));
   }
@@ -150,6 +151,21 @@ function validateExportGovernance(req: Request, res: Response) {
   return governance;
 }
 
+function resolveCtdPlacement(docType: (typeof validDocTypes)[number]) {
+  if (docType === 'cerv2_510k') return { ctdSection: 'm1.5', suggestedPlacement: 'Module 1 / 510(k) dossier package' };
+  if (docType === 'cerv2_pma') return { ctdSection: 'm2.5', suggestedPlacement: 'Module 2 / PMA summaries' };
+  return { ctdSection: 'm5.0', suggestedPlacement: 'Module 5 / Clinical Evaluation Report' };
+}
+
+function getUserId(req: Request): number {
+  const raw = (req as any).userId ?? (req as any).user?.id;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw new Error('Valid numeric userId is required for governed export');
+  }
+  return parsed;
+}
+
 // ── POST /pdf ──────────────────────────────────────────────────────────────────
 router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, res: Response) => {
   try {
@@ -160,7 +176,7 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
         .json({ error: 'Invalid request', details: validation.error.flatten() });
     }
 
-    const { docType, content, meta } = validation.data;
+    const { docType, content, meta, projectId } = validation.data;
     if (!validateExportGovernance(req, res)) return;
 
     // Validate content has substantive nodes (not just empty paragraphs)
@@ -187,13 +203,31 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
     }
 
     const filename = sanitizeFilename(meta?.title || `${docType}_export`) + '.pdf';
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.send(pdfBuffer);
+    const placement = resolveCtdPlacement(docType);
+    const consequence = await createGovernedExportConsequence({
+      organizationId: (req as any).resolvedOrganizationId,
+      projectId,
+      userId: getUserId(req),
+      title: meta?.title || `${docType} PDF Export`,
+      contentForArtifact: JSON.stringify(content),
+      sourceType: 'export_pdf',
+      ctdSection: placement.ctdSection,
+      suggestedPlacement: placement.suggestedPlacement,
+      backendRoute: 'POST /api/cerv2/export/pdf',
+      binaryOutput: pdfBuffer,
+      mimeType: 'application/pdf',
+      filename,
+      metadata: { docType, format: 'pdf' },
+    });
+
+    return res.status(200).json(consequence);
   } catch (err: any) {
     console.error('[CERV2 Export] PDF error:', err);
     if (!res.headersSent) {
-      res.status(500).json({ error: 'PDF generation failed', message: err.message });
+      res.status(500).json({
+        error: 'GOVERNED_EXPORT_FAILED',
+        message: err.message || 'Governed PDF export failed before consequence persistence',
+      });
     }
   }
 });
@@ -208,7 +242,7 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
         .json({ error: 'Invalid request', details: validation.error.flatten() });
     }
 
-    const { docType, content, meta } = validation.data;
+    const { docType, content, meta, projectId } = validation.data;
     if (!validateExportGovernance(req, res)) return;
 
     // Validate content has substantive nodes
@@ -235,16 +269,31 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
     }
 
     const filename = sanitizeFilename(meta?.title || `${docType}_export`) + '.docx';
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    );
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.send(docxBuffer);
+    const placement = resolveCtdPlacement(docType);
+    const consequence = await createGovernedExportConsequence({
+      organizationId: (req as any).resolvedOrganizationId,
+      projectId,
+      userId: getUserId(req),
+      title: meta?.title || `${docType} DOCX Export`,
+      contentForArtifact: JSON.stringify(content),
+      sourceType: 'export_docx',
+      ctdSection: placement.ctdSection,
+      suggestedPlacement: placement.suggestedPlacement,
+      backendRoute: 'POST /api/cerv2/export/docx',
+      binaryOutput: docxBuffer,
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      filename,
+      metadata: { docType, format: 'docx' },
+    });
+
+    return res.status(200).json(consequence);
   } catch (err: any) {
     console.error('[CERV2 Export] DOCX error:', err);
     if (!res.headersSent) {
-      res.status(500).json({ error: 'DOCX generation failed', message: err.message });
+      res.status(500).json({
+        error: 'GOVERNED_EXPORT_FAILED',
+        message: err.message || 'Governed DOCX export failed before consequence persistence',
+      });
     }
   }
 });

@@ -1,5 +1,12 @@
 # Concept2Cure + AnA Integration / Service / Tooling Audit (2026-03-24)
 
+Status: SUPERSEDED
+Canonical: No
+Supersedes: —
+Superseded By: CONCEPT2CURE_ANA_INTEGRATION_EXECUTION_PLAN_2026-03-24.md
+Related Reports: CMC_AnA_Integration_Audit_2026-03-25.md
+
+
 ## Scope
 This audit covers the runtime layers that connect the AI OS to external systems and operational execution:
 - Concept2Cure and AnA API integration surfaces
