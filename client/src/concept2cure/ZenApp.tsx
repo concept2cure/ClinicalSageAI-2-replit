@@ -68,6 +68,7 @@ const EmbeddedPMAWorkspace = lazy(() => import('./components/pma/PMAWorkspace'))
 // Full Document Builder wizard (CSR + CTD across global agencies)
 const FullDocumentBuilder = lazy(() => import('./components/builder/FullDocumentBuilder'));
 import {
+  Archive,
   X,
   ChevronLeft,
   Maximize2,
@@ -349,19 +350,24 @@ type ToolPanel =
   | null;
 
 type LayoutMode =
-  // ── Core submission workflow (first-class) ──
+  // ── Global destinations ──
   | 'projects'
-  | 'project-home'
-  | 'dossier-map'
-  | 'documents'
-  | 'review'
-  | 'submissions'
-  | 'section-workspace'
+  | 'apps'
+  | 'artifacts-center'
+  | 'setup'
+  // ── Project tabs ──
+  | 'project-home'      // Overview
+  | 'documents'          // Work
+  | 'vault'              // Vault
+  | 'review'             // Review
+  | 'submissions'        // Submit
+  | 'dossier-map'        // Sub-view within Work
+  | 'section-workspace'  // Sub-view within Work
   // ── Canonical workspace + editor ──
   | 'regulatory-workspace'
   | 'editor'
   | 'deep-research'
-  // ── Surviving specialist tools ──
+  // ── Specialist tools (launched from Apps) ──
   | 'precedent-intelligence'
   | 'biostatistics'
   | 'review-readiness'
@@ -434,16 +440,27 @@ type LayoutMode =
   | 'program-analytics';
 
 const PRIMARY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
+  // Global destinations
   projects: 'projects',
-  'project-home': 'projects',
-  'dossier-map': 'dossier',
-  documents: 'documents',
+  apps: 'apps',
+  'artifacts-center': 'artifacts-center',
+  setup: 'setup',
+  // Project tabs
+  'project-home': 'overview',
+  documents: 'work',
+  vault: 'vault',
   review: 'review',
-  submissions: 'submissions',
-  'section-workspace': 'documents',
+  submissions: 'submit',
+  'dossier-map': 'work',
+  'section-workspace': 'work',
   'vault-workspace': 'vault',
   'review-readiness': 'review',
-  'report-engine': 'reports',
+  'report-engine': 'review',
+  // Specialist tools map to global apps
+  'precedent-intelligence': 'apps',
+  biostatistics: 'apps',
+  'safety-narrative': 'apps',
+  'deep-research': 'apps',
 };
 
 const LEGACY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
@@ -886,11 +903,11 @@ export const ZenApp: React.FC = () => {
     rules: 'projects',
     'ectd-coauthor': 'documents',
     cmc: 'documents',
-    'document-vault': 'vault-workspace',
+    'document-vault': 'vault',
     'clinical-trial': 'documents',
     templates: 'documents',
     'document-builder': 'documents',
-    artifacts: 'documents',
+    artifacts: 'artifacts-center',
     sherpa: 'projects',
     analytics: 'projects',
     timeline: 'projects',
@@ -1745,7 +1762,7 @@ export const ZenApp: React.FC = () => {
   const workflowRunId = activeProjectId ? `workflow-run-${activeProjectId}` : 'workflow-run-demo';
   const activeNavId = useMemo(() => {
     if (activeToolPanel === 'vault') return 'vault';
-    if (activeToolPanel === 'ana-biostats') return 'biostatistics';
+    if (activeToolPanel === 'ana-biostats') return 'apps';
     return PRIMARY_NAV_ID_BY_LAYOUT[layoutMode] ?? LEGACY_NAV_ID_BY_LAYOUT[layoutMode];
   }, [activeToolPanel, layoutMode]);
 
@@ -1992,10 +2009,18 @@ export const ZenApp: React.FC = () => {
         industryMode={industryMode}
         onNavigate={id => {
           switch (id) {
+            // ── Global destinations + project tabs (mapped via SIDEBAR_NAV_TO_LAYOUT) ──
             case 'projects':
             case 'home':
-            case 'documents':
+            case 'apps':
+            case 'artifacts-center':
+            case 'setup':
+            case 'overview':
+            case 'work':
             case 'vault':
+            case 'review-tab':
+            case 'submit':
+            case 'documents':
             case 'review':
             case 'reports':
             case 'submissions':
@@ -2281,6 +2306,47 @@ export const ZenApp: React.FC = () => {
 
           {/* [BATCH 3] Removed: timeline, audit, mission-control, snowglobe, snowglobe-chambers */}
           {/* [BATCH 1] Removed: about-training, ind-workspace, medtech-dashboard */}
+
+          {/* ── New global destinations (Phase 1 placeholders) ── */}
+          {!embeddedModule && layoutMode === 'apps' && (
+            <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-0" data-testid="workspace-apps">
+              <Sparkles className="w-10 h-10 text-zinc-300 mb-3" />
+              <h2 className="text-lg font-semibold text-zinc-800 mb-1">Apps</h2>
+              <p className="text-sm text-zinc-500 max-w-md text-center">
+                Strategy & Evidence, Builders, and Specialist Studios. Full launcher coming in Phase 2.
+              </p>
+            </div>
+          )}
+
+          {!embeddedModule && layoutMode === 'artifacts-center' && (
+            <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-0" data-testid="workspace-artifacts-center">
+              <FileStack className="w-10 h-10 text-zinc-300 mb-3" />
+              <h2 className="text-lg font-semibold text-zinc-800 mb-1">Artifacts</h2>
+              <p className="text-sm text-zinc-500 max-w-md text-center">
+                Browse governed outputs across all projects. Full browser coming in Phase 2.
+              </p>
+            </div>
+          )}
+
+          {!embeddedModule && layoutMode === 'setup' && (
+            <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-0" data-testid="workspace-setup">
+              <Shield className="w-10 h-10 text-zinc-300 mb-3" />
+              <h2 className="text-lg font-semibold text-zinc-800 mb-1">Setup</h2>
+              <p className="text-sm text-zinc-500 max-w-md text-center">
+                Organization, preferences, integrations, and templates. Full page coming in Phase 2.
+              </p>
+            </div>
+          )}
+
+          {!embeddedModule && layoutMode === 'vault' && (
+            <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-0" data-testid="workspace-vault">
+              <Archive className="w-10 h-10 text-zinc-300 mb-3" />
+              <h2 className="text-lg font-semibold text-zinc-800 mb-1">Vault</h2>
+              <p className="text-sm text-zinc-500 max-w-md text-center">
+                Files, evidence, and linked artifacts for {activeProject?.name || 'your project'}. Full vault coming in Phase 3.
+              </p>
+            </div>
+          )}
 
           {/* ── Review & Readiness — quality, compliance, stress-testing ── */}
           {!embeddedModule && layoutMode === 'review-readiness' && (
@@ -3065,10 +3131,20 @@ export const ZenApp: React.FC = () => {
 export default ZenApp;
 
 const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
+  // Global destinations
   projects: 'projects',
   home: 'projects',
+  apps: 'apps',
+  'artifacts-center': 'artifacts-center',
+  setup: 'setup',
+  // Project tabs (new nav IDs from sidebar)
+  overview: 'project-home',
+  work: 'documents',
+  vault: 'vault',
+  'review-tab': 'review',
+  submit: 'submissions',
+  // Legacy nav IDs (keep for backward compat)
   documents: 'documents',
-  vault: 'vault-workspace',
   review: 'review',
   reports: 'report-engine',
   submissions: 'submissions',

@@ -1,43 +1,43 @@
 /**
- * @fileoverview Zen Sidebar — Claude.ai Projects-style navigation
+ * @fileoverview Zen Sidebar — Human-first OS navigation
  * @module concept2cure/components/sidebar/ZenSidebar
  *
- * Navigation structured around Claude.ai's project hierarchy:
- *   Pinned Projects → Recent Projects → General Conversations
+ * Global shell (6 items):
+ *   New → Search → Projects → Apps → Artifacts → Setup
  *
- * Submission workflow nav (Dossier, Documents, Review, Submissions)
- * is a secondary group below the project list.
+ * Project shell (5 tabs, shown when project is active):
+ *   Overview → Work → Vault → Review → Submit
  *
- * Each project row shows a colored submission type badge, status dot,
- * and expands to reveal nested conversations (Claude.ai pattern).
+ * Below: Pinned + Recent project list with nested conversations.
+ * Account/profile at bottom.
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import {
   Plus,
   MessageSquare,
   Trash2,
-  Settings,
   FolderOpen,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
   FileText,
-  LayoutGrid,
-  PenLine,
-  ShieldCheck,
-  Send,
   Search,
   Star,
-  MoreHorizontal,
-  Archive,
   Beaker,
   Pill,
   Activity,
   Heart,
   Microscope,
-  FlaskConical,
+  Sparkles,
+  FileStack,
+  Settings,
+  LayoutDashboard,
+  PenLine,
+  Archive,
+  ShieldCheck,
+  Send,
 } from 'lucide-react';
 import logoSrc from '@/assets/concept2cure-logo.jpg';
 
@@ -390,6 +390,28 @@ const ProjectRow: React.FC<{
   );
 };
 
+// ─── Collapsed icon button ──────────────────────────────────────────────────
+
+const IconBtn: React.FC<{
+  label: string;
+  active?: boolean;
+  accentBg?: string;
+  accentText?: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}> = ({ label, active, accentBg = 'bg-blue-100', accentText = 'text-blue-500', onClick, children }) => (
+  <button
+    onClick={onClick}
+    aria-label={label}
+    className={cn(
+      'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
+      active ? `${accentBg} ${accentText}` : 'text-zinc-500 hover:bg-zinc-200'
+    )}
+  >
+    {children}
+  </button>
+);
+
 // ─── Main sidebar ─────────────────────────────────────────────────────────────
 
 export const ZenSidebar: React.FC<ZenSidebarProps> = ({
@@ -403,6 +425,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   onSelectProject,
   onNewChat,
   onOpenProjects,
+  onOpenSearch,
   onOpenSettings,
   onDeleteConversation,
   onNavigate,
@@ -414,7 +437,13 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   const avatarInitial = displayName[0].toUpperCase();
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Group conversations by project (Claude.ai style)
+  // Derive active project object for project block
+  const activeProject = useMemo(
+    () => projects.find(p => p.id === activeProjectId),
+    [projects, activeProjectId]
+  );
+
+  // Group conversations by project
   const conversationsByProject = useMemo(() => {
     const map = new Map<string, Conversation[]>();
     const sorted = [...conversations].sort(
@@ -428,14 +457,12 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
     return map;
   }, [conversations]);
 
-  // Unscoped conversations (no project)
   const unscopedConversations = conversationsByProject.get('__unscoped__') || [];
 
-  // Filter + sort projects: starred first, then active, then by name
+  // Filter + sort projects
   const { pinnedProjects, recentProjects } = useMemo(() => {
     let filtered = projects.filter(p => !p.archived);
 
-    // Search filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter(p =>
@@ -455,100 +482,89 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
     return { pinnedProjects: pinned, recentProjects: recent };
   }, [projects, activeProjectId, searchQuery]);
 
-  const allVisibleProjects = [...pinnedProjects, ...recentProjects];
-
   // ── Collapsed icon-only strip ──────────────────────────────────────────────
   if (isCollapsed) {
+    const activeBadge = activeProject ? (SUBMISSION_BADGE[activeProject.type] ?? FALLBACK_BADGE) : null;
+
     return (
       <aside
-        className="flex flex-col h-full w-14 bg-zinc-50 border-r border-zinc-200 items-center py-3 gap-2 flex-shrink-0"
+        className="flex flex-col h-full w-14 bg-zinc-50 border-r border-zinc-200 items-center py-3 gap-1 flex-shrink-0"
         role="navigation"
         aria-label="Main sidebar"
       >
-        <div className="relative w-8 h-8 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
+        {/* Logo */}
+        <div className="relative w-8 h-8 rounded-xl overflow-hidden shadow-sm flex-shrink-0 mb-1">
           <img src={logoSrc} alt="C2C" className="w-full h-full object-cover object-center" />
           <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at center, transparent 40%, var(--color-bg, #faf9f5) 100%)' }} />
         </div>
-        <button
-          onClick={onNewChat}
-          aria-label="New chat"
-          className="w-9 h-9 rounded-xl bg-zinc-900 text-white flex items-center justify-center hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
-        >
+
+        {/* ── Global nav (6 items) ── */}
+        <IconBtn label="New" onClick={onNewChat}>
           <Plus className="w-4 h-4" />
-        </button>
-        <button
-          onClick={onOpenProjects}
-          aria-label="Projects"
-          className={cn(
-            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'projects' ? 'bg-blue-100 text-blue-500' : 'text-zinc-500 hover:bg-zinc-200'
-          )}
-        >
+        </IconBtn>
+        <IconBtn label="Search" active={activeNavId === 'search'} onClick={onOpenSearch}>
+          <Search className="w-4 h-4" />
+        </IconBtn>
+        <IconBtn label="Projects" active={activeNavId === 'projects'} onClick={onOpenProjects}>
           <FolderOpen className="w-4 h-4" />
-        </button>
-
-        {/* Primary workflow icons */}
-        <div className="w-8 border-t border-zinc-200 my-1" />
-        <button
-          onClick={() => onNavigate?.('dossier')}
-          aria-label="Dossier"
-          className={cn(
-            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'dossier' ? 'bg-blue-100 text-blue-500' : 'text-zinc-500 hover:bg-zinc-200'
-          )}
-        >
-          <LayoutGrid className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => onNavigate?.('documents')}
-          aria-label="Documents"
-          className={cn(
-            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'documents' ? 'bg-blue-100 text-blue-500' : 'text-zinc-500 hover:bg-zinc-200'
-          )}
-        >
-          <PenLine className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => onNavigate?.('review')}
-          aria-label="Review"
-          className={cn(
-            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'review' ? 'bg-emerald-50 text-emerald-600' : 'text-zinc-500 hover:bg-zinc-200'
-          )}
-        >
-          <ShieldCheck className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => onNavigate?.('submissions')}
-          aria-label="Submissions"
-          className={cn(
-            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'submissions' ? 'bg-blue-100 text-blue-500' : 'text-zinc-500 hover:bg-zinc-200'
-          )}
-        >
-          <Send className="w-4 h-4" />
-        </button>
-
-        <button
-          onClick={onToggleCollapse}
-          aria-label="Expand sidebar"
-          className="mt-auto w-9 h-9 rounded-xl text-zinc-400 flex items-center justify-center hover:bg-zinc-200 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
-        <button
-          onClick={onOpenSettings}
-          aria-label="Settings"
-          className="w-9 h-9 rounded-xl text-zinc-400 flex items-center justify-center hover:bg-zinc-200 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
-        >
+        </IconBtn>
+        <IconBtn label="Apps" active={activeNavId === 'apps'} onClick={() => onNavigate?.('apps')}>
+          <Sparkles className="w-4 h-4" />
+        </IconBtn>
+        <IconBtn label="Artifacts" active={activeNavId === 'artifacts-center'} onClick={() => onNavigate?.('artifacts-center')}>
+          <FileStack className="w-4 h-4" />
+        </IconBtn>
+        <IconBtn label="Setup" active={activeNavId === 'setup'} onClick={() => onNavigate?.('setup')}>
           <Settings className="w-4 h-4" />
-        </button>
+        </IconBtn>
+
+        {/* ── Project tabs (only when project active) ── */}
+        {activeProject && (
+          <>
+            <div className="w-8 border-t border-zinc-300 my-1" />
+            {activeBadge && (
+              <span className={cn('text-[8px] font-bold px-1 py-0.5 rounded', activeBadge.bg, activeBadge.color)}>
+                {activeBadge.label}
+              </span>
+            )}
+            <IconBtn label="Overview" active={activeNavId === 'overview'} onClick={() => onNavigate?.('overview')}>
+              <LayoutDashboard className="w-4 h-4" />
+            </IconBtn>
+            <IconBtn label="Work" active={activeNavId === 'work'} onClick={() => onNavigate?.('work')}>
+              <PenLine className="w-4 h-4" />
+            </IconBtn>
+            <IconBtn label="Vault" active={activeNavId === 'vault'} onClick={() => onNavigate?.('vault')}>
+              <Archive className="w-4 h-4" />
+            </IconBtn>
+            <IconBtn label="Review" active={activeNavId === 'review'} accentBg="bg-emerald-50" accentText="text-emerald-600" onClick={() => onNavigate?.('review-tab')}>
+              <ShieldCheck className="w-4 h-4" />
+            </IconBtn>
+            <IconBtn label="Submit" active={activeNavId === 'submit'} onClick={() => onNavigate?.('submit')}>
+              <Send className="w-4 h-4" />
+            </IconBtn>
+          </>
+        )}
+
+        {/* Bottom: expand + account */}
+        <div className="mt-auto flex flex-col items-center gap-1">
+          <button
+            onClick={onToggleCollapse}
+            aria-label="Expand sidebar"
+            className="w-9 h-9 rounded-xl text-zinc-400 flex items-center justify-center hover:bg-zinc-200 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+          <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center">
+            <span className="text-[10px] font-bold text-blue-600 leading-none">{avatarInitial}</span>
+          </div>
+        </div>
       </aside>
     );
   }
 
   // ── Full expanded sidebar ──────────────────────────────────────────────────
+  const activeBadge = activeProject ? (SUBMISSION_BADGE[activeProject.type] ?? FALLBACK_BADGE) : null;
+
   return (
     <>
       {/* Mobile backdrop */}
@@ -576,19 +592,112 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           </button>
         </div>
 
-        {/* New chat button — prominent, Claude.ai style */}
-        <div className="px-2 pb-1 flex-shrink-0">
+        {/* ── Global Navigation (6 items) ──────────────────────────────── */}
+        <div className="px-1 pb-1 flex-shrink-0 space-y-0.5">
+          {/* New — prominent button */}
           <button
             onClick={onNewChat}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-200 text-zinc-700 text-[13px] font-medium hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+            className="w-full flex items-center gap-2 mx-1 px-3 py-2 rounded-lg border border-zinc-200 text-zinc-700 text-[13px] font-medium hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
           >
             <Plus className="w-4 h-4 flex-shrink-0" />
-            New chat
+            New
           </button>
+
+          <NavItem
+            icon={<Search className="w-3.5 h-3.5" />}
+            label="Search"
+            active={activeNavId === 'search'}
+            onClick={onOpenSearch}
+          />
+          <NavItem
+            icon={<FolderOpen className="w-3.5 h-3.5" />}
+            label="Projects"
+            active={activeNavId === 'projects'}
+            accentColor="blue"
+            onClick={onOpenProjects}
+          />
+          <NavItem
+            icon={<Sparkles className="w-3.5 h-3.5" />}
+            label="Apps"
+            active={activeNavId === 'apps'}
+            accentColor="violet"
+            onClick={() => onNavigate?.('apps')}
+          />
+          <NavItem
+            icon={<FileStack className="w-3.5 h-3.5" />}
+            label="Artifacts"
+            active={activeNavId === 'artifacts-center'}
+            onClick={() => onNavigate?.('artifacts-center')}
+          />
+          <NavItem
+            icon={<Settings className="w-3.5 h-3.5" />}
+            label="Setup"
+            active={activeNavId === 'setup'}
+            onClick={() => onNavigate?.('setup')}
+          />
         </div>
 
-        {/* Search */}
-        <div className="px-2 pb-1.5 flex-shrink-0">
+        {/* ── Current Project Block (only when project active) ──────── */}
+        {activeProject && (
+          <>
+            <div className="mx-2 border-t border-zinc-200 flex-shrink-0" />
+            <div className="px-2 py-2 flex-shrink-0">
+              {/* Project identity */}
+              <div className="flex items-center gap-2 px-2 mb-1.5">
+                {activeBadge && (
+                  <span className={cn('text-[9px] font-bold px-1.5 py-0.5 rounded leading-none', activeBadge.bg, activeBadge.color)}>
+                    {activeBadge.label}
+                  </span>
+                )}
+                <span className="text-[12px] font-semibold text-zinc-800 truncate flex-1">
+                  {activeProject.name}
+                </span>
+              </div>
+
+              {/* Project tabs */}
+              <div className="space-y-0.5">
+                <NavItem
+                  icon={<LayoutDashboard className="w-3.5 h-3.5" />}
+                  label="Overview"
+                  active={activeNavId === 'overview'}
+                  onClick={() => onNavigate?.('overview')}
+                />
+                <NavItem
+                  icon={<PenLine className="w-3.5 h-3.5" />}
+                  label="Work"
+                  active={activeNavId === 'work'}
+                  accentColor="blue"
+                  onClick={() => onNavigate?.('work')}
+                />
+                <NavItem
+                  icon={<Archive className="w-3.5 h-3.5" />}
+                  label="Vault"
+                  active={activeNavId === 'vault'}
+                  onClick={() => onNavigate?.('vault')}
+                />
+                <NavItem
+                  icon={<ShieldCheck className="w-3.5 h-3.5" />}
+                  label="Review"
+                  active={activeNavId === 'review'}
+                  accentColor="emerald"
+                  onClick={() => onNavigate?.('review-tab')}
+                />
+                <NavItem
+                  icon={<Send className="w-3.5 h-3.5" />}
+                  label="Submit"
+                  active={activeNavId === 'submit'}
+                  accentColor="blue"
+                  onClick={() => onNavigate?.('submit')}
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        <div className="mx-2 border-t border-zinc-100 flex-shrink-0" />
+
+        {/* ── Search ──────────────────────────────────────────────────── */}
+        <div className="px-2 py-1.5 flex-shrink-0">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
             <input
@@ -601,14 +710,12 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           </div>
         </div>
 
-        <div className="mx-2 border-t border-zinc-100 flex-shrink-0" />
-
-        {/* ── Scrollable content ──────────────────────────────────────── */}
+        {/* ── Scrollable project list ──────────────────────────────────── */}
         <div
           className="flex-1 overflow-y-auto min-h-0 zen-scroll py-1"
           style={{ scrollbarWidth: 'thin' }}
         >
-          {/* ── PINNED PROJECTS ── */}
+          {/* Pinned projects */}
           {pinnedProjects.length > 0 && (
             <WorkspaceGroup label="Pinned" defaultOpen={true}>
               {pinnedProjects.map(project => (
@@ -628,7 +735,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             </WorkspaceGroup>
           )}
 
-          {/* ── RECENT PROJECTS ── */}
+          {/* Recent projects */}
           <WorkspaceGroup label={pinnedProjects.length > 0 ? 'Recent' : 'Projects'} defaultOpen={true}>
             {recentProjects.length === 0 && pinnedProjects.length === 0 && (
               <div className="px-4 py-4 text-center">
@@ -659,7 +766,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             ))}
           </WorkspaceGroup>
 
-          {/* ── GENERAL CONVERSATIONS (no project) ── */}
+          {/* General conversations (no project) */}
           {unscopedConversations.length > 0 && (
             <>
               <div className="mx-2 my-1 border-t border-zinc-100" />
@@ -676,60 +783,9 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               </WorkspaceGroup>
             </>
           )}
-
-          {/* ── SUBMISSION WORKFLOW — secondary nav ────────────────── */}
-          <div className="mx-2 my-1 border-t border-zinc-100" />
-          <WorkspaceGroup label="Global Operating Nav" defaultOpen={true}>
-            <NavItem
-              icon={<LayoutGrid className="w-3.5 h-3.5" />}
-              label="Dossier Map"
-              active={activeNavId === 'dossier'}
-              accentColor="blue"
-              onClick={() => onNavigate?.('dossier')}
-            />
-            <NavItem
-              icon={<PenLine className="w-3.5 h-3.5" />}
-              label="Documents"
-              active={activeNavId === 'documents'}
-              onClick={() => onNavigate?.('documents')}
-            />
-            <NavItem
-              icon={<Archive className="w-3.5 h-3.5" />}
-              label="Vault"
-              active={activeNavId === 'vault'}
-              onClick={() => onNavigate?.('document-vault')}
-            />
-            <NavItem
-              icon={<ShieldCheck className="w-3.5 h-3.5" />}
-              label="Review"
-              active={activeNavId === 'review'}
-              accentColor="emerald"
-              onClick={() => onNavigate?.('review')}
-            />
-            <NavItem
-              icon={<Activity className="w-3.5 h-3.5" />}
-              label="Reports"
-              active={activeNavId === 'reports'}
-              onClick={() => onNavigate?.('report-engine')}
-            />
-            <NavItem
-              icon={<FlaskConical className="w-3.5 h-3.5" />}
-              label="Biostats"
-              active={activeNavId === 'biostatistics'}
-              accentColor="emerald"
-              onClick={() => onNavigate?.('biostatistics')}
-            />
-            <NavItem
-              icon={<Send className="w-3.5 h-3.5" />}
-              label="Submissions"
-              active={activeNavId === 'submissions'}
-              accentColor="blue"
-              onClick={() => onNavigate?.('submissions')}
-            />
-          </WorkspaceGroup>
         </div>
 
-        {/* User / settings footer */}
+        {/* User / account footer */}
         <div className="flex-shrink-0 border-t border-zinc-100 p-2">
           <button
             onClick={onOpenSettings}
