@@ -129,11 +129,10 @@ interface TraceabilityClaim {
 // ---------------------------------------------------------------------------
 
 const TAB_LABELS: { key: TabKey; label: string }[] = [
-  { key: 'quality', label: 'Quality Center' },
+  { key: 'quality', label: 'Quality' },
   { key: 'compliance', label: 'Compliance' },
-  { key: 'snowglobe', label: 'AnA Predictions' },
-  { key: 'readiness', label: 'Readiness Score' },
-  { key: 'evidence', label: 'Evidence Confidence' },
+  { key: 'readiness', label: 'Readiness' },
+  { key: 'evidence', label: 'Evidence' },
   { key: 'audit', label: 'Audit Trail' },
   { key: 'traceability', label: 'Traceability' },
 ];
@@ -1552,24 +1551,19 @@ export function ReviewReadiness({ onClose, projectId }: { onClose: () => void; p
   }, [activeTab, qcSections, complianceRules, readinessModules, summary, evidenceSections, auditEntries, traceability]);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#faf9f5]">
-      {/* Top bar */}
-      <header className="flex-shrink-0 h-12 border-b border-zinc-200 bg-white">
-        <div className="flex items-center h-full px-6">
-          {/* Back */}
+    <div className="flex-1 flex flex-col min-h-0">
+      {/* Tab bar — compact, inline */}
+      <div className="flex-shrink-0 border-b border-zinc-100 bg-white px-6">
+        <div className="flex items-center h-11">
           <button
             onClick={onClose}
-            className="flex items-center gap-1.5 text-zinc-400 hover:text-zinc-600 transition-colors mr-4"
+            aria-label="Back to Overview"
+            className="flex items-center gap-1.5 text-zinc-400 hover:text-zinc-600 transition-colors mr-6 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
 
-          <span className="text-sm font-medium text-zinc-900 mr-8">
-            Review &amp; Readiness
-          </span>
-
-          {/* Tabs */}
-          <nav className="flex items-center gap-6 h-full overflow-x-auto">
+          <nav className="flex items-center gap-1 h-full overflow-x-auto">
             {TAB_LABELS.map((tab) => {
               const isActive = activeTab === tab.key;
               return (
@@ -1577,30 +1571,23 @@ export function ReviewReadiness({ onClose, projectId }: { onClose: () => void; p
                   key={tab.key}
                   onClick={() => handleTabChange(tab.key)}
                   className={cn(
-                    'relative text-sm h-full flex items-center transition-colors whitespace-nowrap',
+                    'px-3 py-1.5 text-xs rounded-md transition-colors whitespace-nowrap',
                     isActive
-                      ? 'text-zinc-900'
-                      : 'text-zinc-400 hover:text-zinc-600'
+                      ? 'bg-zinc-200 text-zinc-900 font-medium'
+                      : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
                   )}
                 >
                   {tab.label}
-                  {isActive && (
-                    <motion.div
-                      className="absolute inset-x-0 bottom-0 h-0.5 bg-zinc-900"
-                      layoutId="reviewReadinessActiveTab"
-                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                    />
-                  )}
                 </button>
               );
             })}
           </nav>
         </div>
-      </header>
+      </div>
 
-      {/* Content */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto">
+      {/* Content — generous padding, restrained width */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto px-6 py-6">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -1613,7 +1600,7 @@ export function ReviewReadiness({ onClose, projectId }: { onClose: () => void; p
             </motion.div>
           </AnimatePresence>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
