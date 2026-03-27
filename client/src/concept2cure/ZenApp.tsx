@@ -754,6 +754,8 @@ export const ZenApp: React.FC = () => {
       sponsor: p.sponsor,
       product: p.product,
       region: p.region,
+      targetAgency: (p as any).targetAgency,
+      pinned: (p.metadata as any)?.pinned ?? false,
       lastUpdated: p.updatedAt,
       conversationCount: p.conversations?.length ?? 0,
       starred: (p.metadata as any)?.starred ?? false,
@@ -2765,6 +2767,8 @@ export const ZenApp: React.FC = () => {
               <ProjectHeaderBar
                 projectName={activeProject?.name || 'Untitled Project'}
                 submissionType={activeProject?.type || 'IND'}
+                productName={activeProject?.product}
+                targetAgency={activeProject?.targetAgency}
                 readinessScore={projectReadinessScore}
                 onOpenConfig={() => setEditProjectOpen(true)}
                 onSwitchProject={() => setProjectSwitcherOpen(true)}

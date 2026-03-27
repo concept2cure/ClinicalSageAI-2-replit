@@ -1,8 +1,9 @@
 /**
- * Concept2Cure - New Project Modal
+ * Concept2Cure — New Project Modal
  *
- * Modal for creating new regulatory submission projects.
- * Following Claude.ai pattern: simple selection of project type.
+ * Enhanced project creation flow per .claude/skills/project-design.md §5.
+ * Three steps: (1) Select submission type, (2) Project details with sponsor/agency/date/instructions,
+ * (3) Success with guided next actions.
  */
 
 import React, { useState } from 'react';
@@ -32,6 +33,10 @@ import {
   Loader2,
   CheckCircle2,
   Microscope,
+  Map,
+  Upload,
+  BarChart2,
+  Search,
 } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -134,34 +139,65 @@ const submissionTypes: SubmissionTypeOption[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
+// TARGET AGENCIES
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TARGET_AGENCIES = [
+  { value: 'FDA', label: 'FDA', flag: '🇺🇸' },
+  { value: 'EMA', label: 'EMA', flag: '🇪🇺' },
+  { value: 'PMDA', label: 'PMDA', flag: '🇯🇵' },
+  { value: 'Health Canada', label: 'Health Canada', flag: '🇨🇦' },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SUGGESTED ACTIONS (post-creation)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SUGGESTED_ACTIONS = [
+  { label: 'Start Dossier Map', icon: Map, description: 'Map your CTD structure' },
+  { label: 'Add Documents', icon: Upload, description: 'Upload reference docs' },
+  { label: 'Run Readiness Check', icon: BarChart2, description: 'Assess submission readiness' },
+  { label: 'Find Predicates', icon: Search, description: 'Search predicate devices' },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
 // COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface NewProjectModalProps {
   open: boolean;
   onClose: () => void;
-  /** Called after successful creation with the new project ID and type */
   onProjectCreated?: (projectId: string, submissionType: SubmissionType) => void;
 }
 
-export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose, onProjectCreated }) => {
+export const NewProjectModal: React.FC<NewProjectModalProps> = ({
+  open,
+  onClose,
+  onProjectCreated,
+}) => {
   const { createProject } = useProject();
 
   const [step, setStep] = useState<'type' | 'details' | 'success'>('type');
   const [selectedType, setSelectedType] = useState<SubmissionType | null>(null);
   const [projectName, setProjectName] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
+  const [sponsor, setSponsor] = useState('');
+  const [targetAgency, setTargetAgency] = useState('FDA');
+  const [targetDate, setTargetDate] = useState('');
+  const [customInstructions, setCustomInstructions] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [createdProject, setCreatedProject] = useState<{
+    id: string;
+    type: SubmissionType;
+  } | null>(null);
 
-  const selectedTypeOption = submissionTypes.find(t => t.type === selectedType);
+  const selectedTypeOption = submissionTypes.find((t) => t.type === selectedType);
 
   const handleTypeSelect = (type: SubmissionType) => {
     setSelectedType(type);
     setStep('details');
   };
-
-  const [createdProject, setCreatedProject] = useState<{ id: string; type: SubmissionType } | null>(null);
 
   const handleCreate = async () => {
     if (!selectedType || !projectName.trim()) return;
@@ -169,11 +205,18 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose,
     setIsCreating(true);
     setCreateError(null);
     try {
-      const project = await createProject(projectName.trim(), selectedType, projectDescription.trim() || undefined);
+      const project = await createProject(
+        projectName.trim(),
+        selectedType,
+        projectDescription.trim() || undefined
+      );
       setCreatedProject({ id: project.id, type: selectedType });
-      setStep('success' as any);
+      setStep('success');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to create project. Please try again.';
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to create project. Please try again.';
       setCreateError(message);
     } finally {
       setIsCreating(false);
@@ -192,6 +235,10 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose,
     setSelectedType(null);
     setProjectName('');
     setProjectDescription('');
+    setSponsor('');
+    setTargetAgency('FDA');
+    setTargetDate('');
+    setCustomInstructions('');
     setCreatedProject(null);
     setCreateError(null);
     onClose();
@@ -203,124 +250,207 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose,
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[620px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-base">
             {step === 'success' ? (
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              <CheckCircle2 className="h-5 w-5 text-emerald-600" />
             ) : (
-              <Sparkles className="h-5 w-5 text-blue-600" />
+              <Sparkles className="h-5 w-5 text-violet-600" />
             )}
-            {step === 'type' ? 'Create New Project' : step === 'success' ? 'Project Created' : 'Project Details'}
+            {step === 'type'
+              ? 'New Project'
+              : step === 'success'
+                ? 'Project Created'
+                : 'Project Details'}
           </DialogTitle>
           <DialogDescription>
             {step === 'type'
-              ? 'Select the type of regulatory submission for your project.'
+              ? 'Select the submission type for your regulatory project.'
               : step === 'success'
-                ? "Here's how to get started."
+                ? 'Your project is ready. Here are some next steps.'
                 : `Setting up a new ${selectedTypeOption?.fullName} project.`}
           </DialogDescription>
         </DialogHeader>
 
-        {/* Step 1: Select Type */}
+        {/* ── Step 1: Select Type ── */}
         {step === 'type' && (
-          <div className="grid grid-cols-2 gap-3 py-4">
-            {submissionTypes.map(option => {
+          <div className="grid grid-cols-2 gap-2.5 py-3">
+            {submissionTypes.map((option) => {
               const Icon = option.icon;
               return (
                 <button
                   key={option.type}
                   onClick={() => handleTypeSelect(option.type)}
                   className={cn(
-                    'flex flex-col items-start p-4 rounded-lg border transition-all text-left',
+                    'flex flex-col items-start p-3.5 rounded-lg border transition-all text-left',
                     option.bgColor,
-                    selectedType === option.type && 'ring-2 ring-offset-2 ring-blue-500'
+                    selectedType === option.type &&
+                      'ring-2 ring-offset-1 ring-zinc-900'
                   )}
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <Icon className={cn('h-5 w-5', option.color)} />
-                    <span className="font-semibold text-zinc-900">{option.name}</span>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Icon className={cn('h-4 w-4', option.color)} />
+                    <span className="font-semibold text-sm text-zinc-900">
+                      {option.name}
+                    </span>
                   </div>
-                  <span className="text-xs text-zinc-600 line-clamp-2">{option.description}</span>
+                  <span className="text-[11px] text-zinc-600 leading-relaxed line-clamp-2">
+                    {option.description}
+                  </span>
                 </button>
               );
             })}
           </div>
         )}
 
-        {/* Step 2: Project Details */}
+        {/* ── Step 2: Project Details (Enhanced per spec §5) ── */}
         {step === 'details' && selectedTypeOption && (
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-3 max-h-[60vh] overflow-y-auto">
             {/* Selected type indicator */}
             <div
-              className={cn('flex items-center gap-3 p-3 rounded-lg', selectedTypeOption.bgColor)}
+              className={cn(
+                'flex items-center gap-3 p-2.5 rounded-lg border',
+                selectedTypeOption.bgColor
+              )}
             >
-              <selectedTypeOption.icon className={cn('h-5 w-5', selectedTypeOption.color)} />
-              <div>
-                <div className="font-medium text-zinc-900">{selectedTypeOption.name}</div>
-                <div className="text-xs text-zinc-600">{selectedTypeOption.fullName}</div>
+              <selectedTypeOption.icon
+                className={cn('h-4 w-4', selectedTypeOption.color)}
+              />
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-sm text-zinc-900">
+                  {selectedTypeOption.name}
+                </div>
+                <div className="text-[11px] text-zinc-500">
+                  {selectedTypeOption.fullName}
+                </div>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleBack}
-                className="ml-auto text-zinc-500 hover:text-zinc-700"
+                className="text-xs text-zinc-500 hover:text-zinc-700 h-7"
               >
                 Change
               </Button>
             </div>
 
-            {/* Project name */}
-            <div className="space-y-2">
-              <Label htmlFor="project-name">Project Name *</Label>
+            {/* Product / Device Name */}
+            <div className="space-y-1.5">
+              <Label htmlFor="project-name" className="text-[13px]">
+                Product / Device Name *
+              </Label>
               <Input
                 id="project-name"
-                placeholder={`e.g., ${selectedTypeOption.type === '510K' ? 'Glucose Monitor XYZ' : 'Drug Candidate ABC'}`}
+                placeholder={
+                  selectedTypeOption.type === '510K'
+                    ? 'e.g., Coronary Stent Model X'
+                    : 'e.g., Drug Candidate ABC'
+                }
                 value={projectName}
-                onChange={e => setProjectName(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && projectName.trim() && !isCreating) handleCreate();
+                onChange={(e) => setProjectName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && projectName.trim() && !isCreating)
+                    handleCreate();
                 }}
                 autoFocus
+                className="h-9"
               />
             </div>
 
-            {/* Project description */}
-            <div className="space-y-2">
-              <Label htmlFor="project-description">Description (optional)</Label>
-              <Textarea
+            {/* Sponsor / Organization */}
+            <div className="space-y-1.5">
+              <Label htmlFor="project-sponsor" className="text-[13px]">
+                Sponsor / Organization
+              </Label>
+              <Input
+                id="project-sponsor"
+                placeholder="e.g., Acme Medical Devices, Inc."
+                value={sponsor}
+                onChange={(e) => setSponsor(e.target.value)}
+                className="h-9"
+              />
+            </div>
+
+            {/* Target Agency */}
+            <div className="space-y-1.5">
+              <Label className="text-[13px]">Target Agency</Label>
+              <div className="flex gap-2">
+                {TARGET_AGENCIES.map((agency) => (
+                  <button
+                    key={agency.value}
+                    onClick={() => setTargetAgency(agency.value)}
+                    className={cn(
+                      'flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-all',
+                      targetAgency === agency.value
+                        ? 'bg-zinc-900 text-white border-zinc-900'
+                        : 'bg-white text-zinc-700 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+                    )}
+                  >
+                    <span className="text-xs">{agency.flag}</span>
+                    {agency.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Target Submission Date */}
+            <div className="space-y-1.5">
+              <Label htmlFor="target-date" className="text-[13px]">
+                Target Submission Date
+              </Label>
+              <Input
+                id="target-date"
+                type="date"
+                value={targetDate}
+                onChange={(e) => setTargetDate(e.target.value)}
+                className="h-9"
+              />
+            </div>
+
+            {/* Description */}
+            <div className="space-y-1.5">
+              <Label htmlFor="project-description" className="text-[13px]">
+                Description (optional)
+              </Label>
+              <Input
                 id="project-description"
                 placeholder="Brief description of your submission project..."
                 value={projectDescription}
-                onChange={e => setProjectDescription(e.target.value)}
-                rows={3}
+                onChange={(e) => setProjectDescription(e.target.value)}
+                className="h-9"
               />
             </div>
 
-            {/* What happens next */}
-            <div className="bg-zinc-50 rounded-lg p-4 space-y-2">
-              <h4 className="text-sm font-medium text-zinc-900 flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                What happens next
-              </h4>
-              <ul className="text-xs text-zinc-600 space-y-1 ml-6">
-                <li>• Your project workspace will be created</li>
-                <li>• You can start chatting immediately</li>
-                <li>• Upload documents to build project knowledge</li>
-                <li>• RI will remember everything across conversations</li>
-              </ul>
+            {/* Custom Instructions */}
+            <div className="space-y-1.5">
+              <Label htmlFor="custom-instructions" className="text-[13px]">
+                Custom Instructions (optional)
+              </Label>
+              <Textarea
+                id="custom-instructions"
+                placeholder={`Tell AnA what to remember about this ${selectedTypeOption.name} project...`}
+                value={customInstructions}
+                onChange={(e) => setCustomInstructions(e.target.value)}
+                rows={3}
+                className="text-[13px] resize-y"
+              />
+              <p className="text-[11px] text-zinc-400">
+                These instructions are injected into every conversation in this
+                project.
+              </p>
             </div>
           </div>
         )}
 
-        {/* Step 3: Success — guide user to next action */}
+        {/* ── Step 3: Success — guided next actions ── */}
         {step === 'success' && selectedTypeOption && (
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-3">
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-50 mb-3">
-                <CheckCircle2 className="h-6 w-6 text-green-600" />
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-50 mb-3">
+                <CheckCircle2 className="h-6 w-6 text-emerald-600" />
               </div>
-              <h3 className="text-lg font-semibold text-zinc-900">
+              <h3 className="text-base font-semibold text-zinc-900">
                 {projectName} is ready
               </h3>
               <p className="text-sm text-zinc-500 mt-1">
@@ -328,25 +458,30 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose,
               </p>
             </div>
 
-            <div className="bg-zinc-50 rounded-xl p-4 space-y-3">
-              <h4 className="text-sm font-semibold text-zinc-900">What to do first</h4>
-              <div className="space-y-2">
-                {[
-                  { step: '1', label: 'Open your project workspace', desc: 'Click below to start working' },
-                  { step: '2', label: 'Ask AnA to plan your submission', desc: 'Get a step-by-step roadmap' },
-                  { step: '3', label: 'Upload reference documents', desc: 'Give AnA context about your product' },
-                ].map(item => (
-                  <div key={item.step} className="flex gap-3 items-start">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-zinc-200 text-zinc-700 text-xs font-semibold flex items-center justify-center">
-                      {item.step}
-                    </span>
-                    <div>
-                      <div className="text-sm font-medium text-zinc-900">{item.label}</div>
-                      <div className="text-xs text-zinc-500">{item.desc}</div>
+            {/* Suggested action chips per spec §5 */}
+            <div className="grid grid-cols-2 gap-2">
+              {SUGGESTED_ACTIONS.map((action) => {
+                const Icon = action.icon;
+                return (
+                  <button
+                    key={action.label}
+                    onClick={handleOpenProject}
+                    className="flex items-center gap-2.5 p-3 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors text-left"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-4 h-4 text-zinc-600" />
                     </div>
-                  </div>
-                ))}
-              </div>
+                    <div className="min-w-0">
+                      <div className="text-[13px] font-medium text-zinc-900">
+                        {action.label}
+                      </div>
+                      <div className="text-[11px] text-zinc-500">
+                        {action.description}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -367,11 +502,17 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose,
                 Back
               </Button>
               {createError && (
-                <div role="alert" className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                <div
+                  role="alert"
+                  className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"
+                >
                   {createError}
                 </div>
               )}
-              <Button onClick={handleCreate} disabled={!projectName.trim() || isCreating}>
+              <Button
+                onClick={handleCreate}
+                disabled={!projectName.trim() || isCreating}
+              >
                 {isCreating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -379,7 +520,6 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose,
                   </>
                 ) : (
                   <>
-                    <Sparkles className="mr-2 h-4 w-4" />
                     Create Project
                   </>
                 )}

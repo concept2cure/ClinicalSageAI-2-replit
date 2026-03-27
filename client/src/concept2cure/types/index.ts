@@ -139,6 +139,12 @@ export interface Project {
   status?: ProjectStatus;
   /** Additional metadata */
   metadata?: ProjectMetadata;
+  /** Whether this project is pinned to the top of the sidebar */
+  pinned?: boolean;
+  /** Target regulatory agency (FDA, EMA, PMDA, Health Canada) */
+  targetAgency?: string;
+  /** ISO 8601 target submission date */
+  targetSubmissionDate?: string;
   /** Audit trail for 21 CFR Part 11 compliance */
   auditTrail?: AuditEntry[];
   /** Electronic signatures on the project */

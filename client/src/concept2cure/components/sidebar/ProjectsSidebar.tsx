@@ -1,18 +1,25 @@
 /**
- * Concept2Cure - Projects Sidebar
+ * Concept2Cure — Projects Sidebar
  *
- * Claude.ai-style sidebar with Projects list, conversations, and navigation.
- * This replaces the traditional module-based navigation.
+ * Claude.ai-style sidebar with PINNED / RECENT / GENERAL grouping,
+ * project → conversation hierarchy, status dots, and pin/unpin support.
+ *
+ * Mirrors the design spec in .claude/skills/project-design.md §2.
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useProject } from '../../context/ProjectContext';
-import type { Project, SubmissionType } from '../../types';
+import type { Project, SubmissionType, Conversation } from '../../types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   Plus,
   MessageSquare,
@@ -27,11 +34,11 @@ import {
   Edit2,
   Clock,
   Sparkles,
-  LayoutGrid,
-  Home,
-  Users,
-  ClipboardList,
-  BarChart2,
+  Pin,
+  PinOff,
+  ChevronRight,
+  ChevronDown,
+  FolderOpen,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -41,101 +48,191 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { NewProjectModal } from './NewProjectModal';
-import { ArtifactsCatalog } from '../templates/ArtifactsCatalog';
-import { ProjectKnowledge } from '../knowledge';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SUBMISSION TYPE BADGES
+// SUBMISSION TYPE BADGES — color-coded per skill spec §3
 // ─────────────────────────────────────────────────────────────────────────────
 
-const submissionTypeColors: Record<SubmissionType, string> = {
-  '510K': 'bg-blue-100 text-blue-700 border-blue-200',
-  IND: 'bg-purple-100 text-purple-700 border-purple-200',
-  NDA: 'bg-green-100 text-green-700 border-green-200',
-  BLA: 'bg-orange-100 text-orange-700 border-orange-200',
-  MAA: 'bg-pink-100 text-pink-700 border-pink-200',
-  PMA: 'bg-cyan-100 text-cyan-700 border-cyan-200',
-  DE_NOVO: 'bg-amber-100 text-amber-700 border-amber-200',
-  EUA: 'bg-red-100 text-red-700 border-red-200',
+const submissionTypeConfig: Record<
+  SubmissionType,
+  { label: string; color: string; dotColor: string }
+> = {
+  '510K': { label: '510K', color: 'bg-blue-100 text-blue-700 border-blue-200', dotColor: 'bg-blue-500' },
+  IND: { label: 'IND', color: 'bg-purple-100 text-purple-700 border-purple-200', dotColor: 'bg-purple-500' },
+  NDA: { label: 'NDA', color: 'bg-indigo-100 text-indigo-700 border-indigo-200', dotColor: 'bg-indigo-500' },
+  BLA: { label: 'BLA', color: 'bg-violet-100 text-violet-700 border-violet-200', dotColor: 'bg-violet-500' },
+  MAA: { label: 'MAA', color: 'bg-teal-100 text-teal-700 border-teal-200', dotColor: 'bg-teal-500' },
+  PMA: { label: 'PMA', color: 'bg-red-100 text-red-700 border-red-200', dotColor: 'bg-red-500' },
+  DE_NOVO: { label: 'De Novo', color: 'bg-cyan-100 text-cyan-700 border-cyan-200', dotColor: 'bg-cyan-500' },
+  EUA: { label: 'EUA', color: 'bg-orange-100 text-orange-700 border-orange-200', dotColor: 'bg-orange-500' },
+  IVDR: { label: 'IVDR', color: 'bg-green-100 text-green-700 border-green-200', dotColor: 'bg-green-500' },
 };
 
-const SubmissionBadge: React.FC<{ type: SubmissionType }> = ({ type }) => (
-  <Badge
-    variant="outline"
-    className={cn('text-xs font-medium px-1.5 py-0', submissionTypeColors[type])}
-  >
-    {type.replace('_', ' ')}
-  </Badge>
+const SubmissionBadge: React.FC<{ type: SubmissionType; compact?: boolean }> = ({
+  type,
+  compact,
+}) => {
+  const cfg = submissionTypeConfig[type] ?? submissionTypeConfig['510K'];
+  if (compact) {
+    return (
+      <span
+        className={cn('inline-block w-2 h-2 rounded-full flex-shrink-0', cfg.dotColor)}
+        title={cfg.label}
+      />
+    );
+  }
+  return (
+    <Badge
+      variant="outline"
+      className={cn('text-[10px] font-semibold px-1.5 py-0 leading-4 flex-shrink-0', cfg.color)}
+    >
+      {cfg.label}
+    </Badge>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATUS DOT — active (green), in review (amber), submitted (blue), archived (gray)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const statusDotColor: Record<string, string> = {
+  active: 'bg-emerald-500',
+  in_review: 'bg-amber-500',
+  submitted: 'bg-blue-500',
+  archived: 'bg-zinc-400',
+  draft: 'bg-zinc-300',
+  planning: 'bg-zinc-300',
+};
+
+const StatusDot: React.FC<{ status?: string }> = ({ status }) => (
+  <span
+    className={cn(
+      'inline-block w-1.5 h-1.5 rounded-full flex-shrink-0',
+      statusDotColor[status || 'active'] ?? 'bg-emerald-500'
+    )}
+    title={status || 'active'}
+  />
 );
 
-const ACCESS_ITEMS = [
-  { id: 'home', label: 'Home', icon: Home },
-  { id: 'projects', label: 'Projects', icon: LayoutGrid },
-  { id: 'agents', label: 'Agents', icon: Users },
-  { id: 'tasks', label: 'Tasks', icon: ClipboardList },
-  { id: 'templates', label: 'Templates', icon: LayoutGrid },
-  { id: 'analytics', label: 'Analytics', icon: BarChart2 },
-];
-
 // ─────────────────────────────────────────────────────────────────────────────
-// PROJECT ITEM
+// TIME FORMATTING
 // ─────────────────────────────────────────────────────────────────────────────
 
-interface ProjectItemProps {
-  project: Project;
-  isActive: boolean;
-  isCollapsed: boolean;
-  onClick: () => void;
-  onDelete: () => void;
-  onArchive: () => void;
+function formatRelativeTime(date: Date | string): string {
+  const now = new Date();
+  const d = new Date(date);
+  const diffMs = now.getTime() - d.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-const ProjectItem: React.FC<ProjectItemProps> = ({
+// ─────────────────────────────────────────────────────────────────────────────
+// CONVERSATION ROW — nested under expanded project
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface ConversationRowProps {
+  conversation: Conversation;
+  isActive: boolean;
+  onClick: () => void;
+}
+
+const ConversationRow: React.FC<ConversationRowProps> = ({
+  conversation,
+  isActive,
+  onClick,
+}) => (
+  <button
+    onClick={onClick}
+    className={cn(
+      'w-full flex items-center gap-2 px-2 py-1.5 text-left rounded-md transition-colors text-[13px]',
+      isActive
+        ? 'bg-zinc-100 text-zinc-900 font-medium'
+        : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700'
+    )}
+  >
+    <span
+      className={cn(
+        'w-1.5 h-1.5 rounded-full flex-shrink-0',
+        isActive ? 'bg-zinc-900' : 'bg-transparent'
+      )}
+    />
+    <span className="truncate flex-1">{conversation.title || 'New conversation'}</span>
+    <span className="text-[11px] text-zinc-400 flex-shrink-0 tabular-nums">
+      {formatRelativeTime(conversation.updatedAt)}
+    </span>
+  </button>
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROJECT ROW — with expand/collapse for conversation nesting
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface ProjectRowProps {
+  project: Project;
+  isActive: boolean;
+  isExpanded: boolean;
+  isCollapsed: boolean; // sidebar collapsed
+  conversations: Conversation[];
+  activeConversationId?: string | null;
+  onSelect: () => void;
+  onToggleExpand: () => void;
+  onPin: () => void;
+  onDelete: () => void;
+  onArchive: () => void;
+  onNewConversation: () => void;
+  onSelectConversation: (id: string) => void;
+}
+
+const ProjectRow: React.FC<ProjectRowProps> = ({
   project,
   isActive,
+  isExpanded,
   isCollapsed,
-  onClick,
+  conversations,
+  activeConversationId,
+  onSelect,
+  onToggleExpand,
+  onPin,
   onDelete,
   onArchive,
+  onNewConversation,
+  onSelectConversation,
 }) => {
-  const formatRelativeTime = (date: Date) => {
-    const now = new Date();
-    const diffMs = now.getTime() - new Date(date).getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
+  const submissionType = project.submissionType || project.type || '510K';
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return new Date(date).toLocaleDateString();
-  };
-
+  // Collapsed sidebar: icon only
   if (isCollapsed) {
     return (
       <TooltipProvider>
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
             <button
-              onClick={onClick}
+              onClick={onSelect}
               className={cn(
                 'flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-150',
                 isActive
-                  ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200'
-                  : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none'
+                  ? 'bg-zinc-100 text-zinc-900 ring-1 ring-zinc-200'
+                  : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900'
               )}
             >
-              <span className="text-sm font-semibold">{project.name.charAt(0).toUpperCase()}</span>
+              <SubmissionBadge type={submissionType} compact />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="right" className="max-w-[200px]">
+          <TooltipContent side="right" className="max-w-[220px]">
             <div className="space-y-1">
-              <div className="font-medium">{project.name}</div>
+              <div className="font-medium text-sm">{project.name}</div>
               <div className="flex items-center gap-2 text-xs text-zinc-500">
-                <SubmissionBadge type={project.type} />
-                <span>·</span>
-                <span>{project.conversationCount} chats</span>
+                <SubmissionBadge type={submissionType} />
+                <StatusDot status={project.status} />
+                <span>{project.conversationCount ?? conversations.length} chats</span>
               </div>
             </div>
           </TooltipContent>
@@ -144,148 +241,165 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
     );
   }
 
+  // Expanded sidebar: full row
   return (
     <div
       className={cn(
-        'group relative rounded-lg transition-all cursor-pointer',
-        isActive ? 'bg-blue-50 ring-1 ring-blue-200' : 'hover:bg-zinc-50'
+        'group rounded-lg transition-all',
+        isActive ? 'bg-zinc-50' : ''
       )}
     >
-      <button
-        onClick={onClick}
-        className="w-full p-3 text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded-lg"
+      {/* Project header row */}
+      <div
+        className={cn(
+          'relative flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer transition-colors',
+          isActive
+            ? 'border-l-2 border-zinc-900 bg-zinc-50'
+            : 'border-l-2 border-transparent hover:bg-zinc-50'
+        )}
       >
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span
-                className={cn('font-medium truncate', isActive ? 'text-blue-900' : 'text-zinc-900')}
-              >
-                {project.name}
-              </span>
-              <SubmissionBadge type={project.type} />
-            </div>
-            {project.description && (
-              <p className="mt-0.5 text-xs text-zinc-500 truncate">{project.description}</p>
-            )}
-            <div className="mt-2 flex items-center gap-3 text-xs text-zinc-400">
-              <span className="flex items-center gap-1">
-                <MessageSquare className="h-3 w-3" />
-                {project.conversationCount}
-              </span>
-              <span className="flex items-center gap-1">
-                <FileText className="h-3 w-3" />
-                {project.artifactCount}
-              </span>
-              <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {formatRelativeTime(project.lastActiveAt)}
-              </span>
-            </div>
-          </div>
-        </div>
-      </button>
+        {/* Expand chevron */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleExpand();
+          }}
+          className="p-0.5 rounded text-zinc-400 hover:text-zinc-600 flex-shrink-0"
+        >
+          {isExpanded ? (
+            <ChevronDown className="w-3.5 h-3.5" />
+          ) : (
+            <ChevronRight className="w-3.5 h-3.5" />
+          )}
+        </button>
 
-      {/* Actions dropdown */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+        {/* Submission badge */}
+        <SubmissionBadge type={submissionType} />
+
+        {/* Project name + metadata */}
+        <button
+          onClick={onSelect}
+          className="flex-1 min-w-0 text-left"
+        >
+          <div className="flex items-center gap-1.5">
+            <span
+              className={cn(
+                'text-[13px] truncate',
+                isActive ? 'font-semibold text-zinc-900' : 'font-medium text-zinc-700'
+              )}
+            >
+              {project.name}
+            </span>
+            <StatusDot status={project.status} />
+          </div>
+          {project.product && (
+            <p className="text-[11px] text-zinc-400 truncate mt-0.5">
+              {project.product}
+            </p>
+          )}
+        </button>
+
+        {/* Three-dot menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className={cn(
+                'p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0',
+                'hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600'
+              )}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreHorizontal className="h-3.5 w-3.5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem onClick={onNewConversation}>
+              <Plus className="mr-2 h-3.5 w-3.5" />
+              New chat
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Edit2 className="mr-2 h-3.5 w-3.5" />
+              Rename
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onPin}>
+              {project.pinned ? (
+                <>
+                  <PinOff className="mr-2 h-3.5 w-3.5" />
+                  Unpin
+                </>
+              ) : (
+                <>
+                  <Pin className="mr-2 h-3.5 w-3.5" />
+                  Pin
+                </>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onArchive}>
+              <Archive className="mr-2 h-3.5 w-3.5" />
+              Archive
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={onDelete}
+              className="text-red-600 focus:text-red-600"
+            >
+              <Trash2 className="mr-2 h-3.5 w-3.5" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Expanded: conversation list */}
+      {isExpanded && (
+        <div className="ml-5 pl-3 border-l border-zinc-200 space-y-0.5 pb-2 pt-1">
+          {/* New conversation link */}
           <button
-            className={cn(
-              'absolute right-2 top-2 p-1 rounded opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity',
-              'hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none focus-visible:opacity-100'
-            )}
-            onClick={e => e.stopPropagation()}
+            onClick={onNewConversation}
+            className="w-full flex items-center gap-2 px-2 py-1.5 text-[12px] text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
           >
-            <MoreHorizontal className="h-4 w-4" />
+            <Plus className="h-3 w-3" />
+            New chat
           </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem>
-            <Edit2 className="mr-2 h-4 w-4" />
-            Rename
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onArchive}>
-            <Archive className="mr-2 h-4 w-4" />
-            Archive
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={onDelete} className="text-red-600 focus:text-red-600">
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+
+          {/* Conversation rows */}
+          {conversations.length > 0 ? (
+            conversations.map((convo) => (
+              <ConversationRow
+                key={convo.id}
+                conversation={convo}
+                isActive={activeConversationId === convo.id}
+                onClick={() => onSelectConversation(convo.id)}
+              />
+            ))
+          ) : (
+            <p className="px-2 py-2 text-[11px] text-zinc-400">
+              No conversations yet
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CONVERSATION ITEM (within a project)
+// SECTION HEADER — PINNED / RECENT / GENERAL
 // ─────────────────────────────────────────────────────────────────────────────
 
-interface ConversationItemProps {
-  title: string;
-  lastMessage?: string;
-  updatedAt: Date;
-  isActive: boolean;
-  artifactCount: number;
-  onClick: () => void;
-}
-
-const ConversationItem: React.FC<ConversationItemProps> = ({
-  title,
-  lastMessage,
-  updatedAt,
-  isActive,
-  artifactCount,
-  onClick,
-}) => {
-  const formatTime = (date: Date) => {
-    const now = new Date();
-    const d = new Date(date);
-    const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) {
-      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return d.toLocaleDateString([], { weekday: 'short' });
-    return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
-  };
-
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        'w-full px-3 py-2 text-left rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
-        isActive
-          ? 'bg-zinc-100 text-zinc-900'
-          : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
-      )}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <MessageSquare className="h-3.5 w-3.5 flex-shrink-0 text-zinc-400" />
-            <span className="text-sm font-medium truncate">{title}</span>
-          </div>
-          {lastMessage && (
-            <p className="mt-0.5 text-xs text-zinc-400 truncate pl-5">{lastMessage}</p>
-          )}
-        </div>
-        <div className="flex flex-col items-end gap-1">
-          <span className="text-xs text-zinc-400">{formatTime(updatedAt)}</span>
-          {artifactCount > 0 && (
-            <span className="flex items-center gap-0.5 text-xs text-zinc-400">
-              <FileText className="h-2.5 w-2.5" />
-              {artifactCount}
-            </span>
-          )}
-        </div>
-      </div>
-    </button>
-  );
-};
+const SectionHeader: React.FC<{ label: string; count?: number }> = ({
+  label,
+  count,
+}) => (
+  <div className="flex items-center justify-between px-3 pt-4 pb-1.5">
+    <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+      {label}
+    </span>
+    {count !== undefined && count > 0 && (
+      <span className="text-[10px] text-zinc-400 tabular-nums">{count}</span>
+    )}
+  </div>
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN SIDEBAR COMPONENT
@@ -306,50 +420,88 @@ export const ProjectsSidebar: React.FC = () => {
   } = useProject();
 
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
-  const [showArtifactsCatalog, setShowArtifactsCatalog] = useState(false);
-  const [expandedProjectId, setExpandedProjectId] = useState<string | null>(null);
+  const [expandedProjectIds, setExpandedProjectIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
 
   const isCollapsed = state.ui.sidebarCollapsed;
 
-  // Filter and sort projects
-  const filteredProjects = useMemo(() => {
-    let projects = state.projects.filter(p => p.status === 'active');
+  // ── Grouping: PINNED / RECENT / GENERAL ──
+  const { pinned, recent, general } = useMemo(() => {
+    let projects = state.projects.filter(
+      (p) => p.status !== 'archived'
+    );
 
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase();
       projects = projects.filter(
-        p =>
-          p.name.toLowerCase().includes(query) ||
-          p.description?.toLowerCase().includes(query) ||
-          p.type.toLowerCase().includes(query)
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.description?.toLowerCase().includes(q) ||
+          (p.submissionType || p.type || '').toLowerCase().includes(q) ||
+          p.product?.toLowerCase().includes(q)
       );
     }
 
-    return projects.sort(
-      (a, b) => new Date(b.lastActiveAt).getTime() - new Date(a.lastActiveAt).getTime()
+    // Sort by last active descending
+    projects.sort(
+      (a, b) =>
+        new Date(b.lastActiveAt || b.updatedAt).getTime() -
+        new Date(a.lastActiveAt || a.updatedAt).getTime()
     );
+
+    const pinnedProjects = projects.filter((p) => p.pinned);
+    const unpinnedProjects = projects.filter((p) => !p.pinned);
+
+    // Recent: activity in last 7 days (not pinned)
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const recentProjects = unpinnedProjects.filter(
+      (p) => new Date(p.lastActiveAt || p.updatedAt).getTime() > sevenDaysAgo
+    );
+    const olderProjects = unpinnedProjects.filter(
+      (p) => new Date(p.lastActiveAt || p.updatedAt).getTime() <= sevenDaysAgo
+    );
+
+    return { pinned: pinnedProjects, recent: recentProjects, general: olderProjects };
   }, [state.projects, searchQuery]);
 
-  const handleProjectClick = (projectId: string) => {
-    if (activeProject?.id === projectId) {
-      // Toggle expansion
-      setExpandedProjectId(expandedProjectId === projectId ? null : projectId);
-    } else {
-      setActiveProject(projectId);
-      setExpandedProjectId(projectId);
-    }
+  // Get conversations for a specific project
+  const getProjectConversations = useCallback(
+    (projectId: string): Conversation[] => {
+      if (activeProject?.id === projectId) return projectConversations;
+      const proj = state.projects.find((p) => p.id === projectId);
+      return proj?.conversations ?? [];
+    },
+    [activeProject, projectConversations, state.projects]
+  );
+
+  // ── Handlers ──
+
+  const handleProjectSelect = (projectId: string) => {
+    setActiveProject(projectId);
+    // Auto-expand on select
+    setExpandedProjectIds((prev) => new Set(prev).add(projectId));
   };
 
-  const handleNewConversation = async () => {
-    if (activeProject) {
-      const convo = await createConversation(activeProject.id);
-      setActiveConversation(convo.id);
-    }
+  const toggleExpand = (projectId: string) => {
+    setExpandedProjectIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(projectId)) {
+        next.delete(projectId);
+      } else {
+        next.add(projectId);
+      }
+      return next;
+    });
+  };
+
+  const handleNewConversation = async (projectId: string) => {
+    setActiveProject(projectId);
+    const convo = await createConversation(projectId);
+    setActiveConversation(convo.id);
   };
 
   const handleDeleteProject = (projectId: string) => {
-    if (confirm('Are you sure you want to delete this project? This cannot be undone.')) {
+    if (confirm('Delete this project? This cannot be undone.')) {
       deleteProject(projectId);
     }
   };
@@ -358,30 +510,44 @@ export const ProjectsSidebar: React.FC = () => {
     updateProject(projectId, { status: 'archived' });
   };
 
-  const handleAccess = (id: string) => {
-    switch (id) {
-      case 'home':
-        setActiveProject(null);
-        setActiveConversation(null);
-        break;
-      case 'projects':
-        setShowNewProjectModal(true);
-        break;
-      case 'templates':
-      case 'tasks':
-      case 'agents':
-      case 'analytics':
-      default:
-        setShowArtifactsCatalog(true);
-        break;
-    }
+  const handlePinProject = (project: Project) => {
+    updateProject(project.id, { pinned: !project.pinned });
   };
 
-  // Collapsed sidebar view
+  // ── Render helper for a group of projects ──
+  const renderProjectList = (projects: Project[]) =>
+    projects.map((project) => (
+      <ProjectRow
+        key={project.id}
+        project={project}
+        isActive={activeProject?.id === project.id}
+        isExpanded={
+          expandedProjectIds.has(project.id) || activeProject?.id === project.id
+        }
+        isCollapsed={isCollapsed}
+        conversations={getProjectConversations(project.id)}
+        activeConversationId={activeConversation?.id}
+        onSelect={() => handleProjectSelect(project.id)}
+        onToggleExpand={() => toggleExpand(project.id)}
+        onPin={() => handlePinProject(project)}
+        onDelete={() => handleDeleteProject(project.id)}
+        onArchive={() => handleArchiveProject(project.id)}
+        onNewConversation={() => handleNewConversation(project.id)}
+        onSelectConversation={(id) => setActiveConversation(id)}
+      />
+    ));
+
+  const allProjects = [...pinned, ...recent, ...general];
+  const hasAnyProjects = allProjects.length > 0;
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // COLLAPSED SIDEBAR
+  // ──────────────────────────────────────────────────────────────────────────
+
   if (isCollapsed) {
     return (
       <div className="flex h-full w-16 flex-col border-r border-zinc-200/50 bg-zinc-50/80 backdrop-blur-sm">
-        {/* Logo / Toggle */}
+        {/* Toggle */}
         <div className="flex h-14 items-center justify-center border-b border-zinc-200/50">
           <button
             onClick={() => toggleSidebar(false)}
@@ -398,7 +564,7 @@ export const ProjectsSidebar: React.FC = () => {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setShowNewProjectModal(true)}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-900 text-white hover:bg-zinc-800 transition-colors duration-150"
+                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-900 text-white hover:bg-zinc-800 transition-colors"
                 >
                   <Plus className="h-5 w-5" />
                 </button>
@@ -408,42 +574,25 @@ export const ProjectsSidebar: React.FC = () => {
           </TooltipProvider>
         </div>
 
-        {/* Access points */}
-        <div className="px-2 pb-2">
-          <div className="flex flex-col items-center gap-1" role="navigation" aria-label="Primary">
-            {ACCESS_ITEMS.map(item => {
-              const Icon = item.icon;
-              return (
-                <TooltipProvider key={item.id}>
-                  <Tooltip delayDuration={0}>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={() => handleAccess(item.id)}
-                        className="flex h-10 w-10 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-200/50 hover:text-zinc-900"
-                      >
-                        <Icon className="h-4 w-4" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">{item.label}</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Projects List */}
+        {/* Projects */}
         <ScrollArea className="flex-1 px-2">
-          <div className="space-y-2 py-2">
-            {filteredProjects.map(project => (
-              <ProjectItem
+          <div className="space-y-1.5 py-2">
+            {allProjects.map((project) => (
+              <ProjectRow
                 key={project.id}
                 project={project}
                 isActive={activeProject?.id === project.id}
+                isExpanded={false}
                 isCollapsed={true}
-                onClick={() => handleProjectClick(project.id)}
+                conversations={[]}
+                activeConversationId={null}
+                onSelect={() => handleProjectSelect(project.id)}
+                onToggleExpand={() => {}}
+                onPin={() => handlePinProject(project)}
                 onDelete={() => handleDeleteProject(project.id)}
                 onArchive={() => handleArchiveProject(project.id)}
+                onNewConversation={() => handleNewConversation(project.id)}
+                onSelectConversation={() => {}}
               />
             ))}
           </div>
@@ -475,16 +624,19 @@ export const ProjectsSidebar: React.FC = () => {
     );
   }
 
-  // Expanded sidebar view
+  // ──────────────────────────────────────────────────────────────────────────
+  // EXPANDED SIDEBAR
+  // ──────────────────────────────────────────────────────────────────────────
+
   return (
     <div className="flex h-full w-72 flex-col border-r border-zinc-200/50 bg-zinc-50/80 backdrop-blur-sm">
-      {/* Header */}
+      {/* Header — brand + collapse */}
       <div className="flex h-14 items-center justify-between border-b border-zinc-200/50 px-4">
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-xl bg-violet-600 flex items-center justify-center shadow-sm">
-            <Sparkles className="h-4 w-4 text-white" />
+          <div className="h-7 w-7 rounded-lg bg-violet-600 flex items-center justify-center">
+            <Sparkles className="h-3.5 w-3.5 text-white" />
           </div>
-          <span className="font-semibold text-zinc-900">Concept2Cure</span>
+          <span className="font-semibold text-sm text-zinc-900">ClinicalSage</span>
         </div>
         <button
           onClick={() => toggleSidebar(true)}
@@ -494,135 +646,112 @@ export const ProjectsSidebar: React.FC = () => {
         </button>
       </div>
 
-      {/* Access points */}
-      <div className="px-3 pt-3">
-        <h3 className="px-2 mb-1 text-xs font-medium text-zinc-400">Access</h3>
-        <div className="space-y-1" role="navigation" aria-label="Primary">
-          {ACCESS_ITEMS.map(item => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleAccess(item.id)}
-                className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/50 transition-colors duration-150"
-              >
-                <Icon className="h-4 w-4" />
-                {item.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Search */}
-      <div className="p-3 border-b border-zinc-200">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-          <input
-            type="text"
-            placeholder="Search projects..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 text-sm bg-white border border-zinc-200 rounded-md placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 focus:border-blue-500"
-          />
-        </div>
-      </div>
-
-      {/* New Project Button */}
-      <div className="p-3">
+      {/* New Project + Search */}
+      <div className="px-3 pt-3 space-y-2">
         <Button
           onClick={() => setShowNewProjectModal(true)}
-          className="w-full justify-start gap-2"
+          className="w-full justify-start gap-2 h-9 text-[13px]"
           variant="default"
         >
           <Plus className="h-4 w-4" />
           New Project
         </Button>
+
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+          <input
+            type="text"
+            placeholder="Search projects..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-8 pr-3 py-1.5 text-[13px] bg-white border border-zinc-200 rounded-md placeholder:text-zinc-400 focus:ring-2 focus:ring-zinc-900 focus:border-zinc-900 outline-none transition-colors"
+          />
+        </div>
       </div>
 
-      {/* Projects List */}
-      <ScrollArea className="flex-1 px-3">
-        <div className="space-y-1 pb-4">
-          {filteredProjects.length === 0 ? (
-            <div className="py-8 text-center text-sm text-zinc-500">
-              {searchQuery ? (
-                <p>No projects found</p>
-              ) : (
-                <div className="space-y-2">
-                  <p>No projects yet</p>
-                  <p className="text-xs">Create your first regulatory submission project</p>
-                </div>
-              )}
+      {/* Project List with grouping */}
+      <ScrollArea className="flex-1 px-2 pt-1">
+        {!hasAnyProjects ? (
+          /* ── Empty state per spec §9 ── */
+          <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+            <div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center mb-3">
+              <FolderOpen className="w-5 h-5 text-zinc-400" />
             </div>
-          ) : (
-            filteredProjects.map(project => (
-              <div key={project.id}>
-                <ProjectItem
-                  project={project}
-                  isActive={activeProject?.id === project.id}
-                  isCollapsed={false}
-                  onClick={() => handleProjectClick(project.id)}
-                  onDelete={() => handleDeleteProject(project.id)}
-                  onArchive={() => handleArchiveProject(project.id)}
+            <p className="text-sm font-medium text-zinc-700 mb-1">No projects yet</p>
+            <p className="text-xs text-zinc-500 leading-relaxed">
+              Create your first regulatory project to unlock AnA's full intelligence,
+              dossier mapping, and readiness scoring.
+            </p>
+            <Button
+              onClick={() => setShowNewProjectModal(true)}
+              className="mt-4 h-8 text-xs"
+              variant="default"
+            >
+              <Plus className="h-3.5 w-3.5 mr-1.5" />
+              Create your first project
+            </Button>
+          </div>
+        ) : (
+          <div className="pb-4">
+            {/* PINNED section */}
+            {pinned.length > 0 && (
+              <>
+                <SectionHeader label="Pinned" count={pinned.length} />
+                <div className="space-y-0.5 px-1">
+                  {renderProjectList(pinned)}
+                </div>
+              </>
+            )}
+
+            {/* RECENT section */}
+            {recent.length > 0 && (
+              <>
+                <SectionHeader label="Recent" count={recent.length} />
+                <div className="space-y-0.5 px-1">
+                  {renderProjectList(recent)}
+                </div>
+              </>
+            )}
+
+            {/* GENERAL (older) section */}
+            {general.length > 0 && (
+              <>
+                <SectionHeader
+                  label={pinned.length > 0 || recent.length > 0 ? 'General' : 'Projects'}
+                  count={general.length}
                 />
+                <div className="space-y-0.5 px-1">
+                  {renderProjectList(general)}
+                </div>
+              </>
+            )}
 
-                {/* Expanded conversations list */}
-                {activeProject?.id === project.id && expandedProjectId === project.id && (
-                  <div className="mt-1 ml-2 pl-3 border-l-2 border-zinc-200 space-y-0.5">
-                    {/* Project Knowledge Panel - Claude.ai parity */}
-                    <div className="py-2">
-                      <ProjectKnowledge project={activeProject} />
-                    </div>
-
-                    {/* New conversation button */}
-                    <button
-                      onClick={handleNewConversation}
-                      className="w-full px-3 py-1.5 text-left text-xs text-blue-600 hover:bg-blue-50 rounded-md flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
-                    >
-                      <Plus className="h-3 w-3" />
-                      New conversation
-                    </button>
-
-                    {/* Conversations */}
-                    {projectConversations.map(convo => (
-                      <ConversationItem
-                        key={convo.id}
-                        title={convo.title}
-                        lastMessage={convo.messages[convo.messages.length - 1]?.content}
-                        updatedAt={convo.updatedAt}
-                        isActive={activeConversation?.id === convo.id}
-                        artifactCount={convo.artifacts.length}
-                        onClick={() => setActiveConversation(convo.id)}
-                      />
-                    ))}
-                  </div>
-                )}
+            {/* Search: no results */}
+            {searchQuery && allProjects.length === 0 && (
+              <div className="py-8 text-center text-sm text-zinc-500">
+                No projects matching "{searchQuery}"
               </div>
-            ))
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </ScrollArea>
 
       {/* Footer */}
-      <div className="border-t border-zinc-200 p-3 space-y-1">
-        <button
-          onClick={() => setShowArtifactsCatalog(true)}
-          className="w-full px-3 py-2 text-left text-sm text-zinc-600 hover:bg-zinc-50 rounded-md flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
-        >
-          <LayoutGrid className="h-4 w-4" />
-          Templates Catalog
-        </button>
-        <button className="w-full px-3 py-2 text-left text-sm text-zinc-600 hover:bg-zinc-50 rounded-md flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none">
+      <div className="border-t border-zinc-200/50 p-2">
+        <button className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 transition-colors">
           <Settings className="h-4 w-4" />
           Settings
         </button>
       </div>
 
-      <NewProjectModal open={showNewProjectModal} onClose={() => setShowNewProjectModal(false)} />
-
-      <ArtifactsCatalog
-        open={showArtifactsCatalog}
-        onClose={() => setShowArtifactsCatalog(false)}
+      <NewProjectModal
+        open={showNewProjectModal}
+        onClose={() => setShowNewProjectModal(false)}
+        onProjectCreated={(projectId) => {
+          setActiveProject(projectId);
+          setExpandedProjectIds((prev) => new Set(prev).add(projectId));
+          setShowNewProjectModal(false);
+        }}
       />
     </div>
   );
