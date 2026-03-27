@@ -1,7 +1,7 @@
-export type ProjectModuleKey = '510k' | 'pma' | 'cer';
+export type ProjectModuleKey = '510k' | 'pma' | 'cer' | 'ind' | 'ectd' | 'cmc';
 
 const PROJECT_ROUTE_PREFIX = '/concept2cure/project/';
-const SUPPORTED_PROJECT_MODULES: ProjectModuleKey[] = ['510k', 'pma', 'cer'];
+const SUPPORTED_PROJECT_MODULES: ProjectModuleKey[] = ['510k', 'pma', 'cer', 'ind', 'ectd', 'cmc'];
 
 export interface ParsedProjectRoute {
   pathname: string;
@@ -25,6 +25,12 @@ export const STANDALONE_MODULE_ROUTE_PATTERNS: ReadonlyArray<string> = [
   '/concept2cure/project/:projectId/pma/:rest*',
   '/concept2cure/project/:projectId/cer',
   '/concept2cure/project/:projectId/cer/:rest*',
+  '/concept2cure/project/:projectId/ind',
+  '/concept2cure/project/:projectId/ind/:rest*',
+  '/concept2cure/project/:projectId/ectd',
+  '/concept2cure/project/:projectId/ectd/:rest*',
+  '/concept2cure/project/:projectId/cmc',
+  '/concept2cure/project/:projectId/cmc/:rest*',
 ] as const;
 
 const normalizePathname = (rawPathname: string): string => {
