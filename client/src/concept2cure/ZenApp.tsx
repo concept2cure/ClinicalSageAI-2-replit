@@ -459,6 +459,8 @@ const PRIMARY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
   submissions: 'submit',
   'dossier-map': 'work',
   'section-workspace': 'work',
+  editor: 'work',
+  'regulatory-workspace': 'work',
   'vault-workspace': 'vault',
   'review-readiness': 'review',
   'report-engine': 'review',

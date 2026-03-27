@@ -674,7 +674,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   activeNavId,
 }) => {
   const displayName = userName || 'My Account';
-  const avatarInitial = displayName[0].toUpperCase();
+  const avatarInitial = displayName.length > 0 ? displayName[0].toUpperCase() : 'U';
   const [searchQuery, setSearchQuery] = useState('');
 
   // Independent expand/collapse state for project rows
@@ -967,6 +967,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search projects..."
+              aria-label="Search projects"
               className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-zinc-200 bg-white text-zinc-700 placeholder:text-zinc-400 focus:border-zinc-300 focus:ring-1 focus:ring-zinc-300 outline-none transition-all"
             />
           </div>
