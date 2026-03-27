@@ -112,6 +112,20 @@ const sendError = (
   code?: string
 ) => res.status(status).json({ success: false, error: { message, code, details } });
 
+// Idempotency cache: key -> { response, timestamp }
+const idempotencyCache = new Map<string, { response: any; timestamp: number }>();
+const IDEMPOTENCY_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+// Periodic cleanup every 10 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of idempotencyCache.entries()) {
+    if (now - entry.timestamp > IDEMPOTENCY_TTL_MS) {
+      idempotencyCache.delete(key);
+    }
+  }
+}, 10 * 60 * 1000);
+
 // AI Gateway instance
 let gateway: ReturnType<typeof getGateway> | null = null;
 function ensureGateway() {
@@ -164,6 +178,7 @@ router.post('/chat', async (req: Request, res: Response) => {
   try {
     const {
       message,
+      idempotency_key,
       thread_id,
       intent_lens,
       user_role,
@@ -174,6 +189,14 @@ router.post('/chat', async (req: Request, res: Response) => {
       authoring_context,
       preferred_provider,
     } = req.body;
+
+    // Check idempotency cache — return cached response on client retry
+    if (idempotency_key && typeof idempotency_key === 'string') {
+      const cached = idempotencyCache.get(idempotency_key);
+      if (cached && Date.now() - cached.timestamp < IDEMPOTENCY_TTL_MS) {
+        return sendSuccess(res, { ...cached.response, _cached: true });
+      }
+    }
 
     if (!message || typeof message !== 'string') {
       return sendError(res, 400, 'Message is required', null, 'INVALID_MESSAGE');
@@ -493,7 +516,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       }).catch(() => {});
     }
 
-    return sendSuccess(res, {
+    const responsePayload = {
       response: response.content,
       thread_id: resolvedThreadId,
       orchestration: {
@@ -527,7 +550,14 @@ router.post('/chat', async (req: Request, res: Response) => {
       _meta: {
         ...(persistenceFailed && { persistenceWarning: 'Messages may not have been saved' }),
       },
-    });
+    };
+
+    // Cache response for idempotency on client retry
+    if (idempotency_key && typeof idempotency_key === 'string') {
+      idempotencyCache.set(idempotency_key, { response: responsePayload, timestamp: Date.now() });
+    }
+
+    return sendSuccess(res, responsePayload);
   } catch (error: any) {
     console.error('[AnA RI] Chat error:', error);
     void logKernelDecision({

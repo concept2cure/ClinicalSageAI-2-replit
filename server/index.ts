@@ -393,6 +393,64 @@ app.get('/api/health', async (req: Request, res: Response) => {
   });
 });
 
+// Full health check endpoint — comprehensive system health with dependency checks
+app.get('/api/health/full', async (req: Request, res: Response) => {
+  try {
+    const { HealthCheckService } = await import('./lib/health-check.js');
+    const healthCheck = new HealthCheckService(pool);
+    const result = await healthCheck.checkFull();
+    const status = result.status === 'healthy' ? 200 : result.status === 'degraded' ? 200 : 503;
+    res.status(status).json(result);
+  } catch (err: any) {
+    res.status(500).json({ status: 'error', message: err?.message });
+  }
+});
+
+// Prometheus-compatible metrics endpoint
+app.get('/api/metrics', async (req: Request, res: Response) => {
+  try {
+    const memUsage = process.memoryUsage();
+    const uptime = process.uptime();
+
+    // Prometheus text format
+    const lines = [
+      '# HELP process_memory_heap_used_bytes Heap memory used',
+      '# TYPE process_memory_heap_used_bytes gauge',
+      `process_memory_heap_used_bytes ${memUsage.heapUsed}`,
+      '# HELP process_memory_rss_bytes Resident set size',
+      '# TYPE process_memory_rss_bytes gauge',
+      `process_memory_rss_bytes ${memUsage.rss}`,
+      '# HELP process_uptime_seconds Process uptime',
+      '# TYPE process_uptime_seconds gauge',
+      `process_uptime_seconds ${uptime}`,
+      '# HELP nodejs_active_handles Number of active handles',
+      '# TYPE nodejs_active_handles gauge',
+      `nodejs_active_handles ${(process as any)._getActiveHandles?.()?.length || 0}`,
+    ];
+
+    // DB pool metrics if available
+    try {
+      const { pool } = await import('./db.js');
+      if (pool) {
+        lines.push('# HELP db_pool_total Total connections in pool');
+        lines.push('# TYPE db_pool_total gauge');
+        lines.push(`db_pool_total ${pool.totalCount || 0}`);
+        lines.push('# HELP db_pool_idle Idle connections');
+        lines.push('# TYPE db_pool_idle gauge');
+        lines.push(`db_pool_idle ${pool.idleCount || 0}`);
+        lines.push('# HELP db_pool_waiting Waiting requests');
+        lines.push('# TYPE db_pool_waiting gauge');
+        lines.push(`db_pool_waiting ${pool.waitingCount || 0}`);
+      }
+    } catch {}
+
+    res.set('Content-Type', 'text/plain; version=0.0.4');
+    res.send(lines.join('\n') + '\n');
+  } catch (err: any) {
+    res.status(500).send('# Error collecting metrics\n');
+  }
+});
+
 // AI Gateway provider health endpoint
 app.get('/api/ai-gateway/health', async (_req: Request, res: Response) => {
   try {
@@ -537,6 +595,8 @@ app.use('/api', (req: Request, res: Response, next: NextFunction) => {
     '/api/logout',
     '/api/register',
     '/api/health',
+    '/api/health/full',
+    '/api/metrics',
     '/api/cortex/health',
     '/api/claude/health',
     '/api/ai-gateway/health',
@@ -3972,8 +4032,8 @@ try {
 // Mount AnA RI routes (regulatory intelligence copilot)
 try {
   const anaRiModule = await import('./routes/ana-ri');
-  app.use('/api/ana-ri', anaRiModule.default);
-  console.log('✅ AnA RI routes mounted (/api/ana-ri)');
+  app.use('/api/ana-ri', aiCircuitBreaker, anaRiModule.default);
+  console.log('✅ AnA RI routes mounted (/api/ana-ri) with circuit breaker');
 } catch (error) {
   console.error('❌ Failed to mount AnA RI routes:', error);
 }
@@ -7863,6 +7923,15 @@ async function startServer() {
     }
   } catch (err) {
     console.warn('⚠️ RIM pattern registry load failed (using seed patterns only):', err);
+  }
+
+  // Initialize Socket.io for real-time collaboration
+  try {
+    const { initializeSocketServer } = await import('./socketServer.js');
+    initializeSocketServer(httpServer);
+    console.log('[Socket.io] Real-time server initialized');
+  } catch (err: any) {
+    console.warn('[Socket.io] Failed to initialize (non-blocking):', err?.message);
   }
 
   // Start the HTTP server

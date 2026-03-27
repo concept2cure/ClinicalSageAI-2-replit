@@ -260,6 +260,35 @@ export class AIGateway {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
+  // Per-request retry with exponential backoff + jitter
+  // ─────────────────────────────────────────────────────────────────────────
+
+  private async retryWithBackoff<T>(
+    fn: () => Promise<T>,
+    maxRetries: number = 1,
+    baseDelayMs: number = 1000
+  ): Promise<T> {
+    let lastError: Error | undefined;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await fn();
+      } catch (err: any) {
+        lastError = err;
+        // Don't retry on non-transient errors
+        const status = err?.status || err?.statusCode;
+        if (status === 400 || status === 401 || status === 403) throw err;
+
+        if (attempt < maxRetries) {
+          const delay = baseDelayMs * Math.pow(2, attempt);
+          const jitter = delay * 0.3 * Math.random(); // 0-30% jitter
+          await new Promise(r => setTimeout(r, delay + jitter));
+        }
+      }
+    }
+    throw lastError;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
   // Public API
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -296,9 +325,11 @@ export class AIGateway {
     let lastError: Error | null = null;
     const triedProviders: ProviderName[] = [];
 
-    // Try primary model
+    // Try primary model (with per-request retry: 2 attempts, 1s base delay)
     try {
-      const response = await this.executeProvider(selectedModel, request, requestId, startTime);
+      const response = await this.retryWithBackoff(
+        () => this.executeProvider(selectedModel, request, requestId, startTime), 1, 1000
+      );
       this.recordSuccess(selectedModel.provider, response.latencyMs);
       await this.logAudit(request, response, strategy, true);
       return response;
@@ -311,12 +342,14 @@ export class AIGateway {
       );
     }
 
-    // Try fallback providers
+    // Try fallback providers (with per-request retry: 2 attempts, 1s base delay)
     const fallbacks = this.getFallbackModels(request.taskType, triedProviders);
     for (const fallback of fallbacks) {
       try {
         console.log(`[AI Gateway] Falling back to ${fallback.provider}/${fallback.model}`);
-        const response = await this.executeProvider(fallback, request, requestId, startTime);
+        const response = await this.retryWithBackoff(
+          () => this.executeProvider(fallback, request, requestId, startTime), 1, 1000
+        );
         this.recordSuccess(fallback.provider, response.latencyMs);
         await this.logAudit(request, response, strategy, true);
         return response;
@@ -1037,16 +1070,17 @@ export class AIGateway {
         `[AI Gateway] Provider ${provider} marked unhealthy after ${health.consecutiveFailures} failures — recovery in ${backoffMs / 1000}s`
       );
 
+      const jitter = backoffMs * 0.2 * Math.random(); // 0-20% jitter on health recovery
       setTimeout(() => {
         // Only recover if no new successes have already reset it
         if (!health.healthy) {
           health.healthy = true;
           health.consecutiveFailures = 0;
           console.log(
-            `[AI Gateway] Provider ${provider} auto-recovered after ${backoffMs / 1000}s backoff`
+            `[AI Gateway] Provider ${provider} auto-recovered after ${Math.round((backoffMs + jitter) / 1000)}s backoff`
           );
         }
-      }, backoffMs);
+      }, backoffMs + jitter);
     }
   }
 

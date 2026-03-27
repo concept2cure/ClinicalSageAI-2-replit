@@ -1,5 +1,6 @@
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import { Server } from 'http';
+import jwt from 'jsonwebtoken';
 
 // Define types for socket events
 interface TaskData {
@@ -125,9 +126,15 @@ interface FieldSubscription {
   fields?: string[]; // Optional specific fields to watch
 }
 
-// Store active document rooms and collaborators
+// Extended socket interface with tenant context
+interface AuthenticatedSocket extends Socket {
+  orgId?: string;
+  authUserId?: string;
+}
+
+// Store active document rooms and collaborators (keys are now org-scoped: "org_<orgId>_<docId>")
 const documentRooms = new Map<string, Map<string, CollaboratorInfo>>();
-const socketToUser = new Map<string, { userId: string; documentId: string }>();
+const socketToUser = new Map<string, { userId: string; documentId: string; orgId: string }>();
 const documentActivities = new Map<string, Activity[]>();
 const documentComments = new Map<string, Comment[]>();
 const sectionLocks = new Map<string, SectionLock>();
@@ -173,42 +180,77 @@ export function initializeSocketServer(server: Server) {
     return;
   }
 
-  ioInstance.on('connection', (socket: Socket) => {
-    console.log('New WebSocket connection:', socket.id);
+  // TODO: Add @socket.io/redis-adapter for horizontal scaling when the package is available
+  // Install: npm install @socket.io/redis-adapter
+  // Then: import { createAdapter } from '@socket.io/redis-adapter';
+  //       const { getRedisClient } = await import('./services/ai-actions/redis-manager.js');
+  //       const client = getRedisClient();
+  //       if (client) io.adapter(createAdapter(client, client.duplicate()));
 
-    // Join room based on organization/project
+  // Authentication middleware — extract orgId from JWT for tenant isolation
+  ioInstance.use((socket: AuthenticatedSocket, next) => {
+    try {
+      const token = socket.handshake.auth?.token || socket.handshake.query?.token;
+      if (token) {
+        const secret = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'development-secret';
+        const decoded = jwt.verify(token as string, secret) as any;
+        socket.orgId = String(decoded.organizationId || decoded.orgId || 'default');
+        socket.authUserId = String(decoded.userId || decoded.id || '');
+      } else {
+        // Allow unauthenticated connections but isolate them to a default org
+        socket.orgId = 'default';
+        console.warn(`[Socket.io] Connection ${socket.id} has no auth token — using default org scope`);
+      }
+      next();
+    } catch (err: any) {
+      console.warn(`[Socket.io] Auth failed for ${socket.id}: ${err?.message} — using default org scope`);
+      (socket as AuthenticatedSocket).orgId = 'default';
+      next();
+    }
+  });
+
+  ioInstance.on('connection', (socket: AuthenticatedSocket) => {
+    const orgId = socket.orgId || 'default';
+    console.log(`New WebSocket connection: ${socket.id} (org: ${orgId})`);
+
+    // Helper to build tenant-scoped room names
+    const scopedRoom = (roomName: string) => `org_${orgId}_${roomName}`;
+
+    // Join room based on organization/project (tenant-scoped)
     socket.on('join-room', (data: { room: string }) => {
-      console.log(`Socket ${socket.id} joining room: ${data.room}`);
-      socket.join(data.room);
+      const room = scopedRoom(data.room);
+      console.log(`Socket ${socket.id} joining room: ${room}`);
+      socket.join(room);
       socket.emit('room-joined', { room: data.room });
     });
 
     // ========== Collaboration Events for eCTD Co-Author ==========
 
-    // Join document collaboration room
+    // Join document collaboration room (tenant-scoped)
     socket.on('join-document', (data: {
       documentId: string;
       user: { id: string; name: string; email?: string; avatar?: string }
     }) => {
       const { documentId, user } = data;
-      const roomName = `doc_${documentId}`;
+      const roomName = scopedRoom(`doc_${documentId}`);
+      const docKey = `${orgId}_${documentId}`;
 
       // Leave any previous document rooms
       const previousRoom = socketToUser.get(socket.id);
       if (previousRoom) {
-        socket.leave(`doc_${previousRoom.documentId}`);
-        handleUserLeaveDocument(socket, previousRoom.documentId, previousRoom.userId);
+        socket.leave(scopedRoom(`doc_${previousRoom.documentId}`));
+        handleUserLeaveDocument(socket, `${previousRoom.orgId}_${previousRoom.documentId}`, previousRoom.userId, previousRoom.orgId);
       }
 
       // Join new document room
       socket.join(roomName);
 
-      // Get or create collaborators map for this document
-      if (!documentRooms.has(documentId)) {
-        documentRooms.set(documentId, new Map());
+      // Get or create collaborators map for this document (org-scoped key)
+      if (!documentRooms.has(docKey)) {
+        documentRooms.set(docKey, new Map());
       }
 
-      const collaborators = documentRooms.get(documentId)!;
+      const collaborators = documentRooms.get(docKey)!;
       const userIndex = collaborators.size;
 
       // Create collaborator info
@@ -224,7 +266,7 @@ export function initializeSocketServer(server: Server) {
       };
 
       collaborators.set(user.id, collaborator);
-      socketToUser.set(socket.id, { userId: user.id, documentId });
+      socketToUser.set(socket.id, { userId: user.id, documentId, orgId });
 
       // Add join activity
       const activity: Activity = {
@@ -238,10 +280,10 @@ export function initializeSocketServer(server: Server) {
         timestamp: new Date()
       };
 
-      if (!documentActivities.has(documentId)) {
-        documentActivities.set(documentId, []);
+      if (!documentActivities.has(docKey)) {
+        documentActivities.set(docKey, []);
       }
-      documentActivities.get(documentId)!.push(activity);
+      documentActivities.get(docKey)!.push(activity);
 
       // Notify other collaborators
       socket.to(roomName).emit('collaborator-joined', {
@@ -253,14 +295,14 @@ export function initializeSocketServer(server: Server) {
       // Send current state to the joining user
       socket.emit('document-state', {
         collaborators: Array.from(collaborators.values()),
-        activities: documentActivities.get(documentId) || [],
-        comments: documentComments.get(documentId) || [],
+        activities: documentActivities.get(docKey) || [],
+        comments: documentComments.get(docKey) || [],
         locks: Array.from(sectionLocks.entries())
-          .filter(([key]) => key.startsWith(`${documentId}_`))
+          .filter(([key]) => key.startsWith(`${docKey}_`))
           .map(([, lock]) => lock)
       });
 
-      console.log(`User ${user.name} joined document ${documentId}`);
+      console.log(`User ${user.name} joined document ${documentId} (org: ${orgId})`);
     });
 
     // Handle cursor movement
