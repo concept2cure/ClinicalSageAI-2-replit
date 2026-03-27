@@ -2867,19 +2867,22 @@ export const ZenApp: React.FC = () => {
                       onAction={(toolId) => {
                         switch (toolId) {
                           case 'recent':
+                            // Open workspace in document studio mode — shows recent documents list
                             setRiViewMode('editor');
                             setLayoutMode('regulatory-workspace');
                             break;
                           case 'create':
-                            // Open workspace in editor mode — EditorPanel shows new doc dialog
+                            // Create a new blank document — lands in EditorPanel with new artifact
                             setPendingEditorContent({ content: '', title: 'Untitled Document' });
                             setRiViewMode('editor');
                             setLayoutMode('regulatory-workspace');
                             break;
                           case 'builder':
+                            // Open Document Builder wizard (multi-step CSR/CTD generation)
                             setToolsSubView('builder');
                             break;
                           case 'templates':
+                            // Open workspace — user selects templates from left rail
                             setRiViewMode('editor');
                             setLayoutMode('regulatory-workspace');
                             break;

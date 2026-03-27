@@ -264,11 +264,14 @@ Submission type context: ${projectName || 'regulatory submission'}`,
   }, [onOpenInEditor, questions, projectName]);
 
   const handleClearSession = useCallback(() => {
+    if (questions.length > 0 && !window.confirm(`Clear all ${questions.length} questions? This cannot be undone.`)) {
+      return;
+    }
     setQuestions([]);
     setSelectedQuestion(null);
     sessionStorage.removeItem(getSessionKey(projectId));
     toast({ title: 'HAQ session cleared' });
-  }, [projectId, toast]);
+  }, [projectId, questions.length, toast]);
 
   const selected = questions.find(q => q.id === selectedQuestion);
   const pendingCount = questions.filter(q => q.status === 'pending').length;
