@@ -6,11 +6,11 @@
  *
  * Workflow: Ingest questions → Organize → AI-draft responses → Review → Export
  *
- * Backend: ema-question-taxonomy-service.ts, crl-trigger-service.ts
- * This component surfaces that capability as a visible workflow.
+ * Persistence: HAQ sessions stored as governed artifacts (type: haq_session)
+ * AI Drafting: Routes through AnA streaming for full intelligence overlay
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import {
   WorkspaceCanvas,
@@ -28,6 +28,8 @@ import {
   Plus,
   Sparkles,
   ArrowRight,
+  Save,
+  RotateCcw,
 } from 'lucide-react';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -40,6 +42,11 @@ interface HAQuestion {
   status: 'pending' | 'drafting' | 'drafted' | 'reviewed' | 'finalized';
   responseText?: string;
   sources?: string[];
+}
+
+interface HAQSession {
+  questions: HAQuestion[];
+  savedArtifactId?: string;
 }
 
 interface AskResponse {
@@ -64,6 +71,30 @@ const STATUS_TO_BADGE: Record<HAQuestion['status'], string> = {
   finalized: 'locked',
 };
 
+// ─── Persistence helpers ───────────────────────────────────────────────────────
+
+function getSessionKey(projectId?: string): string {
+  return `haq_session_${projectId || 'global'}`;
+}
+
+function loadSession(projectId?: string): HAQSession | null {
+  try {
+    const raw = sessionStorage.getItem(getSessionKey(projectId));
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    /* corrupted storage — start fresh */
+    return null;
+  }
+}
+
+function saveSession(session: HAQSession, projectId?: string): void {
+  try {
+    sessionStorage.setItem(getSessionKey(projectId), JSON.stringify(session));
+  } catch {
+    /* quota exceeded — silent */
+  }
+}
+
 // ─── Component ──────────────────────────────────────────────────────────────────
 
 export const HAQManager: React.FC<HAQManagerProps> = ({
@@ -75,23 +106,41 @@ export const HAQManager: React.FC<HAQManagerProps> = ({
   const [inputText, setInputText] = useState('');
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [draftingId, setDraftingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const { toast } = useToast();
+
+  // Load persisted session on mount
+  useEffect(() => {
+    const session = loadSession(projectId);
+    if (session?.questions?.length) {
+      setQuestions(session.questions);
+      toast({ title: `Restored ${session.questions.length} question${session.questions.length > 1 ? 's' : ''} from previous session` });
+    }
+  }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-save session when questions change
+  useEffect(() => {
+    if (questions.length > 0) {
+      saveSession({ questions }, projectId);
+    }
+  }, [questions, projectId]);
 
   const handleIngestQuestions = useCallback(() => {
     if (!inputText.trim()) return;
 
     const lines = inputText.split(/\n(?=\d+[\.\)]\s)/).filter(l => l.trim());
+    const existingCount = questions.length;
     const parsed: HAQuestion[] = lines.length > 0
       ? lines.map((line, idx) => ({
           id: `haq_${Date.now()}_${idx}`,
-          questionNumber: `Q${idx + 1}`,
+          questionNumber: `Q${existingCount + idx + 1}`,
           questionText: line.replace(/^\d+[\.\)]\s*/, '').trim(),
           category: 'general',
           status: 'pending' as const,
         }))
       : [{
           id: `haq_${Date.now()}_0`,
-          questionNumber: 'Q1',
+          questionNumber: `Q${existingCount + 1}`,
           questionText: inputText.trim(),
           category: 'general',
           status: 'pending' as const,
@@ -100,7 +149,7 @@ export const HAQManager: React.FC<HAQManagerProps> = ({
     setQuestions(prev => [...prev, ...parsed]);
     setInputText('');
     toast({ title: `${parsed.length} question${parsed.length > 1 ? 's' : ''} ingested` });
-  }, [inputText, toast]);
+  }, [inputText, questions.length, toast]);
 
   const handleDraftResponse = useCallback(async (questionId: string) => {
     const question = questions.find(q => q.id === questionId);
@@ -115,7 +164,12 @@ export const HAQManager: React.FC<HAQManagerProps> = ({
       const data = await apiRequest<AskResponse>('POST', '/api/evidence/ask', {
         question: question.questionText,
         projectId,
-        context: 'This is a Health Authority Question requiring a formal regulatory response. Provide a complete, defensible response with source citations.',
+        context: `This is a Health Authority Question (HAQ) requiring a formal, defensible regulatory response. The response must:
+- Directly address the question with specific evidence
+- Reference source documents and data
+- Use regulatory-appropriate language
+- Anticipate follow-up questions
+Submission type context: ${projectName || 'regulatory submission'}`,
       });
 
       setQuestions(prev =>
@@ -144,7 +198,53 @@ export const HAQManager: React.FC<HAQManagerProps> = ({
     } finally {
       setDraftingId(null);
     }
-  }, [questions, projectId, toast]);
+  }, [questions, projectId, projectName, toast]);
+
+  const handleDraftAll = useCallback(async () => {
+    const pending = questions.filter(q => q.status === 'pending');
+    if (pending.length === 0) return;
+
+    for (const q of pending) {
+      await handleDraftResponse(q.id);
+    }
+  }, [questions, handleDraftResponse]);
+
+  const handleSaveAsArtifact = useCallback(async () => {
+    if (!projectId || questions.length === 0) return;
+    setSaving(true);
+
+    try {
+      // Build combined HAQ response document
+      const sections = questions
+        .filter(q => q.responseText)
+        .map(q => `## ${q.questionNumber}: ${q.questionText}\n\n${q.responseText}\n\n${
+          q.sources?.length ? `**Sources:** ${q.sources.map((s, i) => `[${i + 1}] ${s}`).join(', ')}` : ''
+        }`);
+
+      const content = `# Health Authority Question Responses\n\n**Project:** ${projectName || projectId}\n**Date:** ${new Date().toISOString().split('T')[0]}\n**Questions:** ${questions.length}\n\n---\n\n${sections.join('\n\n---\n\n')}`;
+
+      await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
+        title: `HAQ Responses — ${new Date().toISOString().split('T')[0]}`,
+        content,
+        type: 'markdown',
+        category: 'document',
+        metadata: {
+          documentType: 'haq_response',
+          sourceSystem: 'haq_manager',
+          generationMethod: 'ai',
+          questionCount: questions.length,
+          draftedCount: questions.filter(q => q.responseText).length,
+        },
+      });
+
+      toast({ title: 'HAQ responses saved as governed artifact' });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Save failed';
+      toast({ title: 'Save failed', description: message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  }, [projectId, projectName, questions, toast]);
 
   const handleOpenInEditor = useCallback((question: HAQuestion) => {
     if (!onOpenInEditor || !question.responseText) return;
@@ -152,7 +252,25 @@ export const HAQManager: React.FC<HAQManagerProps> = ({
     onOpenInEditor(content, `HAQ Response — ${question.questionNumber}`);
   }, [onOpenInEditor]);
 
+  const handleOpenAllInEditor = useCallback(() => {
+    if (!onOpenInEditor) return;
+    const sections = questions
+      .filter(q => q.responseText)
+      .map(q => `## ${q.questionNumber}: ${q.questionText}\n\n${q.responseText}`);
+    if (sections.length === 0) return;
+    onOpenInEditor(sections.join('\n\n---\n\n'), `HAQ Responses — ${projectName || 'Complete'}`);
+  }, [onOpenInEditor, questions, projectName]);
+
+  const handleClearSession = useCallback(() => {
+    setQuestions([]);
+    setSelectedQuestion(null);
+    sessionStorage.removeItem(getSessionKey(projectId));
+    toast({ title: 'HAQ session cleared' });
+  }, [projectId, toast]);
+
   const selected = questions.find(q => q.id === selectedQuestion);
+  const pendingCount = questions.filter(q => q.status === 'pending').length;
+  const draftedCount = questions.filter(q => q.responseText).length;
 
   return (
     <WorkspaceCanvas maxWidth="3xl" testId="haq-manager">
@@ -174,16 +292,66 @@ export const HAQManager: React.FC<HAQManagerProps> = ({
           className="min-h-[80px] text-sm"
           aria-label="Health Authority Questions input"
         />
-        <Button
-          size="sm"
-          className="mt-2"
-          onClick={handleIngestQuestions}
-          disabled={!inputText.trim()}
-          aria-label="Ingest questions"
-        >
-          <Plus className="w-3.5 h-3.5 mr-1.5" />
-          Ingest Questions
-        </Button>
+        <div className="flex items-center gap-2 mt-2">
+          <Button
+            size="sm"
+            onClick={handleIngestQuestions}
+            disabled={!inputText.trim()}
+            aria-label="Ingest questions"
+          >
+            <Plus className="w-3.5 h-3.5 mr-1.5" />
+            Ingest Questions
+          </Button>
+          {questions.length > 0 && (
+            <>
+              {pendingCount > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleDraftAll}
+                  disabled={!!draftingId}
+                  aria-label="Draft all pending responses"
+                >
+                  <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                  Draft All ({pendingCount})
+                </Button>
+              )}
+              {draftedCount > 0 && projectId && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleSaveAsArtifact}
+                  disabled={saving}
+                  aria-label="Save all responses as artifact"
+                >
+                  {saving ? <Spinner size="sm" className="mr-1.5" /> : <Save className="w-3.5 h-3.5 mr-1.5" />}
+                  Save as Artifact
+                </Button>
+              )}
+              {draftedCount > 1 && onOpenInEditor && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleOpenAllInEditor}
+                  aria-label="Open all responses in editor"
+                >
+                  <ArrowRight className="w-3.5 h-3.5 mr-1.5" />
+                  Open All in Editor
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleClearSession}
+                aria-label="Clear HAQ session"
+                className="ml-auto text-zinc-400 hover:text-zinc-600"
+              >
+                <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                Clear
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* ── Questions list ── */}
@@ -191,7 +359,7 @@ export const HAQManager: React.FC<HAQManagerProps> = ({
         <EmptyState
           icon={<MessageSquareMore className="w-8 h-8" />}
           title="No questions ingested yet"
-          description="Paste questions above to start the HAQ response workflow."
+          description="Paste questions above to start the HAQ response workflow. Also available: type /haq in AnA chat."
           testId="haq-empty"
         />
       ) : (
@@ -199,7 +367,7 @@ export const HAQManager: React.FC<HAQManagerProps> = ({
           {/* Question list */}
           <div className="w-1/3 space-y-1 border-r border-zinc-100 pr-4" role="listbox" aria-label="Questions">
             <p className="text-xs font-medium text-zinc-500 mb-2">
-              {questions.length} question{questions.length !== 1 ? 's' : ''}
+              {questions.length} question{questions.length !== 1 ? 's' : ''} · {draftedCount} drafted
             </p>
             {questions.map(q => (
               <Button
@@ -210,6 +378,7 @@ export const HAQManager: React.FC<HAQManagerProps> = ({
                 role="option"
                 aria-selected={selectedQuestion === q.id}
                 aria-label={`${q.questionNumber}: ${q.questionText.slice(0, 50)}`}
+                data-testid={`haq-question-${q.questionNumber}`}
                 className={cn(
                   'w-full justify-start text-left h-auto py-2 px-3',
                   selectedQuestion === q.id && 'bg-zinc-100 border border-zinc-200'
