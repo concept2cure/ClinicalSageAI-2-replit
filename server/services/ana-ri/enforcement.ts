@@ -445,9 +445,13 @@ export function getGenerationStats(): {
 // 5. Document Action Contract
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Re-export the canonical contract from shared types — single source of truth
+export type { CanonicalDocumentContract, ArtifactSourceSystem, ArtifactStatus, ArtifactProvenance, GenerationGuardResult } from '../../../shared/types/document-contract.js';
+export { validateDocumentContract } from '../../../shared/types/document-contract.js';
+
 /**
- * The standardized contract for every document action in the system.
- * No variation allowed across flows.
+ * GovernedArtifactContract — AnA-specific extension of the canonical contract.
+ * Kept for backward compatibility. New code should use CanonicalDocumentContract directly.
  */
 export interface GovernedArtifactContract {
   /** Document classification */
@@ -456,8 +460,8 @@ export interface GovernedArtifactContract {
   projectId: number;
   /** Tenant isolation (required) */
   organizationId: number;
-  /** AnA RI as source */
-  source: 'ana_ri';
+  /** Source system */
+  source: string;
   /** Active intent lens */
   intentLens: string;
   /** User role for audit trail */

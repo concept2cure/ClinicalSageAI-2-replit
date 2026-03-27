@@ -2246,13 +2246,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       <InspectorRibbon
         groups={[
           {
-            label: 'AI',
+            label: 'Draft',
             items: [
-              { id: 'intelligence', label: 'Intelligence', icon: <Brain className="w-3.5 h-3.5" /> },
+              { id: 'intelligence', label: 'AI Assist', icon: <Brain className="w-3.5 h-3.5" /> },
               { id: 'batch-ai', label: 'Batch AI', icon: <Layers className="w-3.5 h-3.5" /> },
-              { id: 'health', label: 'Health', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
-              { id: 'compliance-scanner', label: 'Compliance', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
-              { id: 'ana-memory', label: 'Memory', icon: <Brain className="w-3.5 h-3.5" /> },
+              { id: 'dataroom', label: 'Data Room', icon: <Database className="w-3.5 h-3.5" /> },
+              { id: 'ana-memory', label: 'Context', icon: <Brain className="w-3.5 h-3.5" /> },
             ],
           },
           {
@@ -2266,21 +2265,22 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             ],
           },
           {
-            label: 'Compliance',
+            label: 'Verify',
             items: [
+              { id: 'provenance', label: 'Provenance', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
               { id: 'crossref', label: 'Cross-Refs', icon: <Link2 className="w-3.5 h-3.5" /> },
               { id: 'inconsistency', label: 'Issues', icon: <Zap className="w-3.5 h-3.5" /> },
-              { id: 'dataroom', label: 'Data Room', icon: <Database className="w-3.5 h-3.5" /> },
+              { id: 'compliance-scanner', label: 'Compliance', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
+              { id: 'proof', label: 'Evidence', icon: <Shield className="w-3.5 h-3.5" />, activeColor: 'bg-emerald-600 text-white font-medium shadow-sm' },
             ],
           },
           {
-            label: 'Audit',
+            label: 'Publish',
             items: [
-              { id: 'provenance', label: 'Provenance', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
               { id: 'audit', label: 'Audit Trail', icon: <ClipboardList className="w-3.5 h-3.5" /> },
               { id: 'submission-readiness', label: 'Submission', icon: <Shield className="w-3.5 h-3.5" /> },
-              { id: 'ga-readiness', label: 'GA Readiness', icon: <Rocket className="w-3.5 h-3.5" /> },
-              { id: 'proof', label: 'Proof', icon: <Shield className="w-3.5 h-3.5" />, activeColor: 'bg-emerald-600 text-white font-medium shadow-sm' },
+              { id: 'health', label: 'Health', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
+              { id: 'ga-readiness', label: 'Readiness', icon: <Rocket className="w-3.5 h-3.5" /> },
             ],
           },
         ] satisfies InspectorRibbonGroup[]}

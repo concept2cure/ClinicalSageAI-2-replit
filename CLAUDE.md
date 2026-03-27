@@ -525,9 +525,18 @@ The project has gone through systematic consolidation:
 5. **AnA 1.0 RI** — Regulatory intelligence orchestration, persona routing
 6. **Kernel Architecture** — Control plane, goal planner, decision records, adaptive policy
 7. **Memory & Knowledge** — Shared memory pool, supersession management, 3-layer assembler
-8. **Cross-Cutting Audit** — Systematic audit of all major systems (current phase)
+8. **Cross-Cutting Audit** — Systematic audit of all major systems
+9. **Document System Convergence Sprint (Active)** — Single drafting sequence, Weave parity, Anthropic-quality UX
 
-**Current state**: Enterprise GA hardening. Systems are audited, governed, and production-ready.
+**Current state**: Document-system convergence sprint. Controlling spec: `docs/plans/FINAL_DOCUMENT_SYSTEM_PROJECT_AND_BUILD_PLAN_2026-03-27.md`
+
+### Active Sprint Locked Rules
+- AnA = single visible guide. Project home = conversational first. Tools = secondary.
+- EditorPanel = canonical editor. Every creation path converges here. No exceptions.
+- Draft → Review → Verify → Publish = explicit, calm, visible lifecycle stages.
+- No duplicate document worlds. No dead-end builders. No silent handoffs. No fake buttons.
+- Weave parity by 10 visible use cases (directive §3). Superiority via biostat/precedent/device/multi-agency.
+- Phase 0 docs required before any implementation code.
 
 ---
 

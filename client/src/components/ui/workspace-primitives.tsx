@@ -645,6 +645,10 @@ interface InspectorRibbonProps {
   groups: InspectorRibbonGroup[];
   activeInspector: string | null;
   onToggle: (id: string) => void;
+  /** When set, only the group containing the active inspector (or this stage name) shows expanded.
+   *  Other groups collapse to just the group label as a clickable pill.
+   *  Set to null to show all groups expanded (legacy behavior). */
+  progressiveCollapse?: boolean;
   className?: string;
   testId?: string;
 }
@@ -653,64 +657,102 @@ export const InspectorRibbon: React.FC<InspectorRibbonProps> = ({
   groups,
   activeInspector,
   onToggle,
+  progressiveCollapse = true,
   className,
   testId = 'inspector-ribbon',
-}) => (
-  <div
-    className={cn('flex items-stretch px-3 border-b border-zinc-100 bg-zinc-50/40 shrink-0 overflow-x-auto', className)}
-    data-testid={testId}
-    role="toolbar"
-    aria-label="Inspector panel toggles"
-  >
-    {groups.map((group, gi) => (
-      <div
-        key={group.label}
-        className={cn(
-          'flex flex-col items-center py-1',
-          gi < groups.length - 1 && 'pr-3 mr-3 border-r border-zinc-200'
-        )}
-      >
-        <div className="flex items-center gap-0.5">
-          {group.items.map(item => {
-            const isActive = activeInspector === item.id;
-            return (
+}) => {
+  // Determine which group is "active" (contains the active inspector panel)
+  const activeGroupIdx = activeInspector
+    ? groups.findIndex(g => g.items.some(i => i.id === activeInspector))
+    : -1;
+
+  return (
+    <div
+      className={cn('flex items-stretch px-3 border-b border-zinc-100 bg-zinc-50/40 shrink-0 overflow-x-auto', className)}
+      data-testid={testId}
+      role="toolbar"
+      aria-label="Inspector panel toggles"
+    >
+      {groups.map((group, gi) => {
+        const isActiveGroup = gi === activeGroupIdx;
+        const hasActiveItem = group.items.some(i => i.id === activeInspector);
+        // When progressive collapse is on, only show items for the active group
+        // Other groups show as collapsed clickable pills
+        const showExpanded = !progressiveCollapse || isActiveGroup || activeGroupIdx === -1;
+
+        return (
+          <div
+            key={group.label}
+            className={cn(
+              'flex flex-col items-center py-1',
+              gi < groups.length - 1 && 'pr-3 mr-3 border-r border-zinc-200'
+            )}
+          >
+            {showExpanded ? (
+              <>
+                <div className="flex items-center gap-0.5">
+                  {group.items.map(item => {
+                    const isActive = activeInspector === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        data-testid={item.testId || `ribbon-${item.id}`}
+                        onClick={() => onToggle(item.id)}
+                        className={cn(
+                          'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
+                          isActive
+                            ? (item.activeColor || 'bg-blue-600 text-white font-medium shadow-sm')
+                            : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+                        )}
+                      >
+                        {item.icon}
+                        {item.label}
+                        {item.badge != null && item.badge > 0 && (
+                          <span
+                            className={cn(
+                              'ml-1 inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full text-[10px] font-semibold',
+                              isActive ? 'bg-white text-blue-600' : 'bg-amber-500 text-white'
+                            )}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+                        {item.pulse && isActive && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">
+                  {group.label}
+                </span>
+              </>
+            ) : (
+              /* Collapsed group — just a clickable label pill that opens the first item */
               <button
-                key={item.id}
-                data-testid={item.testId || `ribbon-${item.id}`}
-                onClick={() => onToggle(item.id)}
+                onClick={() => onToggle(group.items[0].id)}
                 className={cn(
-                  'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
-                  isActive
-                    ? (item.activeColor || 'bg-blue-600 text-white font-medium shadow-sm')
-                    : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+                  'px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider rounded-md transition-all whitespace-nowrap',
+                  hasActiveItem
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100'
                 )}
+                aria-label={`Open ${group.label} panels`}
+                data-testid={`ribbon-group-${group.label.toLowerCase()}`}
               >
-                {item.icon}
-                {item.label}
-                {item.badge != null && item.badge > 0 && (
-                  <span
-                    className={cn(
-                      'ml-1 inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full text-[10px] font-semibold',
-                      isActive ? 'bg-white text-blue-600' : 'bg-amber-500 text-white'
-                    )}
-                  >
-                    {item.badge}
-                  </span>
-                )}
-                {item.pulse && isActive && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                {group.label}
+                {group.items.some(i => (i.badge ?? 0) > 0) && (
+                  <span className="ml-1 w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
                 )}
               </button>
-            );
-          })}
-        </div>
-        <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">
-          {group.label}
-        </span>
-      </div>
-    ))}
-  </div>
-);
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 14. INSPECTOR DRAWER — Standard wrapper for inspector panel content (w-80)

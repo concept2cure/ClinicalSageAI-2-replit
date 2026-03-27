@@ -109,6 +109,18 @@ function saveStoredProjects(projects: Project[]): void {
 }
 
 /**
+ * Normalizes API response to ensure pinned and targetAgency fields are present.
+ * The API may return these as top-level fields; this guarantees consistent defaults.
+ */
+function normalizeProjectResponse(project: Project): Project {
+  return {
+    ...project,
+    pinned: project.pinned ?? false,
+    targetAgency: project.targetAgency ?? null,
+  };
+}
+
+/**
  * Fetches projects from the API
  * @returns Promise resolving to array of projects
  * @throws {Error} If API request fails
@@ -124,7 +136,9 @@ async function fetchProjectsFromAPI(): Promise<Project[]> {
       payload?.error?.message || payload?.error || `Failed to fetch projects: ${response.status}`
     );
   }
-  return (payload?.data ?? payload).map((project: Project) => withRequiredOwnership(project));
+  return (payload?.data ?? payload).map((project: Project) =>
+    normalizeProjectResponse(withRequiredOwnership(project))
+  );
 }
 
 /**
@@ -151,7 +165,7 @@ async function createProjectAPI(
       payload?.error?.message || payload?.error || `Failed to create project: ${response.status}`
     );
   }
-  return withRequiredOwnership(payload?.data ?? payload);
+  return normalizeProjectResponse(withRequiredOwnership(payload?.data ?? payload));
 }
 
 /**
@@ -176,7 +190,7 @@ async function updateProjectAPI(project: Project): Promise<Project> {
       payload?.error?.message || payload?.error || `Failed to update project: ${response.status}`
     );
   }
-  return withRequiredOwnership(payload?.data ?? payload);
+  return normalizeProjectResponse(withRequiredOwnership(payload?.data ?? payload));
 }
 
 /**
@@ -254,6 +268,9 @@ export function useProjects() {
       name: string;
       submissionType: SubmissionType;
       description?: string;
+      pinned?: boolean;
+      targetAgency?: string;
+      customInstructions?: string;
     }) => {
       if (USE_API) {
         try {

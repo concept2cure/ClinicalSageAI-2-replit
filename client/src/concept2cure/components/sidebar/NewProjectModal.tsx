@@ -51,6 +51,8 @@ interface SubmissionTypeOption {
   icon: React.ElementType;
   color: string;
   bgColor: string;
+  /** If true, shows "Early Access" badge — workflow exists but not fully production-hardened */
+  earlyAccess?: boolean;
 }
 
 const submissionTypes: SubmissionTypeOption[] = [
@@ -71,6 +73,7 @@ const submissionTypes: SubmissionTypeOption[] = [
     icon: FlaskConical,
     color: 'text-purple-600',
     bgColor: 'bg-purple-50 hover:bg-purple-100 border-purple-200',
+    earlyAccess: true,
   },
   {
     type: 'NDA',
@@ -80,6 +83,7 @@ const submissionTypes: SubmissionTypeOption[] = [
     icon: Pill,
     color: 'text-green-600',
     bgColor: 'bg-green-50 hover:bg-green-100 border-green-200',
+    earlyAccess: true,
   },
   {
     type: 'BLA',
@@ -89,6 +93,7 @@ const submissionTypes: SubmissionTypeOption[] = [
     icon: Syringe,
     color: 'text-orange-600',
     bgColor: 'bg-orange-50 hover:bg-orange-100 border-orange-200',
+    earlyAccess: true,
   },
   {
     type: 'MAA',
@@ -98,6 +103,7 @@ const submissionTypes: SubmissionTypeOption[] = [
     icon: Globe,
     color: 'text-pink-600',
     bgColor: 'bg-pink-50 hover:bg-pink-100 border-pink-200',
+    earlyAccess: true,
   },
   {
     type: 'PMA',
@@ -125,6 +131,7 @@ const submissionTypes: SubmissionTypeOption[] = [
     icon: Shield,
     color: 'text-red-600',
     bgColor: 'bg-red-50 hover:bg-red-100 border-red-200',
+    earlyAccess: true,
   },
   {
     type: 'IVDR',
@@ -294,6 +301,11 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                     <span className="font-semibold text-sm text-zinc-900">
                       {option.name}
                     </span>
+                    {option.earlyAccess && (
+                      <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200">
+                        Early Access
+                      </span>
+                    )}
                   </div>
                   <span className="text-[11px] text-zinc-600 leading-relaxed line-clamp-2">
                     {option.description}

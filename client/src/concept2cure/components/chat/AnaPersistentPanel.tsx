@@ -41,6 +41,7 @@ import {
   FileEdit,
   FolderPlus,
   Bot,
+  FolderOpen,
 } from 'lucide-react';
 
 marked.setOptions({ breaks: true, gfm: true });
@@ -419,6 +420,78 @@ const DOCUMENT_ACTION_CONFIGS: DocumentActionConfig[] = [
   },
 ];
 
+// ─── Slash Command Autocomplete — 43 AnA 1.0 RI commands ──────────────────────
+
+interface SlashCommand {
+  command: string;
+  description: string;
+  category: string;
+}
+
+const SLASH_COMMANDS: SlashCommand[] = [
+  // Intelligence
+  { command: '/assess', description: 'Full project assessment', category: 'Intelligence' },
+  { command: '/readiness', description: 'Readiness score + dimensions + gaps', category: 'Intelligence' },
+  { command: '/risk', description: 'Risk profile with predictions', category: 'Intelligence' },
+  { command: '/recommend', description: 'Prioritized action list', category: 'Intelligence' },
+  { command: '/next', description: 'What should I do next?', category: 'Intelligence' },
+  { command: '/signals', description: 'Accumulated intelligence signals', category: 'Intelligence' },
+  { command: '/status', description: 'Quick 5-line project briefing', category: 'Intelligence' },
+  // Analysis
+  { command: '/twin', description: 'Submission twin analysis', category: 'Analysis' },
+  { command: '/consistency', description: 'Cross-module consistency check', category: 'Analysis' },
+  { command: '/claims', description: 'Evidence chain strength + confidence', category: 'Analysis' },
+  { command: '/deficiencies', description: 'Known deficiency patterns', category: 'Analysis' },
+  { command: '/simulate', description: 'Simulate reviewer challenges', category: 'Analysis' },
+  { command: '/precedent', description: 'Similar products / predicates', category: 'Analysis' },
+  // Biostatistics
+  { command: '/sap', description: 'Generate Statistical Analysis Plan', category: 'Biostatistics' },
+  { command: '/power', description: 'Sample size and power calculation', category: 'Biostatistics' },
+  { command: '/dose', description: 'Dose escalation design', category: 'Biostatistics' },
+  { command: '/defensibility', description: 'Statistical defensibility audit', category: 'Biostatistics' },
+  { command: '/design', description: 'Clinical trial design', category: 'Biostatistics' },
+  // Subspecialties
+  { command: '/safety', description: 'TEAE, SAE, benefit-risk analysis', category: 'Subspecialties' },
+  { command: '/cmc', description: 'Manufacturing / Module 3', category: 'Subspecialties' },
+  { command: '/csr', description: 'Clinical study report analysis', category: 'Subspecialties' },
+  { command: '/device', description: '510(k), PMA, De Novo intelligence', category: 'Subspecialties' },
+  { command: '/ectd', description: 'Module structure / artifact placement', category: 'Subspecialties' },
+  // Document Authoring
+  { command: '/draft', description: 'Draft submission-ready CTD section', category: 'Authoring' },
+  { command: '/audit', description: 'Hostile reviewer audit', category: 'Authoring' },
+  { command: '/amend', description: 'Change tracking with impact analysis', category: 'Authoring' },
+  { command: '/review', description: 'Regulatory review from reviewer perspective', category: 'Authoring' },
+  { command: '/scan', description: 'Deficiency scanning', category: 'Authoring' },
+  { command: '/memo', description: 'Risk assessment memo (go/no-go)', category: 'Authoring' },
+  { command: '/brief', description: 'Reviewer question anticipation brief', category: 'Authoring' },
+  { command: '/strategy', description: 'Regulatory strategy note', category: 'Authoring' },
+  // Document Lifecycle
+  { command: '/checklist', description: 'Compliance checklist generation', category: 'Lifecycle' },
+  { command: '/freeze', description: 'Freeze document (immutable snapshot)', category: 'Lifecycle' },
+  { command: '/sign', description: 'Electronic signature (21 CFR Part 11)', category: 'Lifecycle' },
+  { command: '/submit', description: 'Submit to regulatory workflow', category: 'Lifecycle' },
+  { command: '/preflight', description: 'Section/module/dossier preflight', category: 'Lifecycle' },
+  // HAQ & Data Room
+  { command: '/haq', description: 'Draft Health Authority Question response', category: 'Authoring' },
+  { command: '/ask', description: 'Query project data room with AI', category: 'Analysis' },
+  // Navigation & Meta
+  { command: '/workflow', description: 'Full submission workflow progress', category: 'Navigation' },
+  { command: '/knowledge', description: 'Search knowledge base', category: 'Navigation' },
+  { command: '/decisions', description: 'Decision audit trail', category: 'Navigation' },
+  { command: '/help', description: 'Show all capabilities', category: 'Navigation' },
+  { command: '/export', description: 'Download conversation as markdown', category: 'Navigation' },
+];
+
+const SLASH_CATEGORY_COLORS: Record<string, string> = {
+  Intelligence: 'text-violet-600',
+  Analysis: 'text-blue-600',
+  Biostatistics: 'text-emerald-600',
+  Subspecialties: 'text-amber-600',
+  Authoring: 'text-rose-600',
+  Lifecycle: 'text-teal-600',
+  Navigation: 'text-zinc-500',
+};
+
 // ─── Authoring context import ────────────────────────────────────────────────
 import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
 import {
@@ -475,6 +548,18 @@ interface AnaPersistentPanelProps {
   mode?: 'full' | 'compact';
   /** Pre-select the chat mode (standard, deep-research, or nano-banana) */
   defaultChatMode?: 'standard' | 'deep-research' | 'nano-banana';
+  /** Project intelligence stats for enriched greeting */
+  projectIntelligence?: {
+    documentCount: number;
+    signalCount: number;
+    readinessScore: number | null;
+    memoryAtomCount: number;
+    /** Enriched from useProjectIntelligence + useNextBestActions */
+    recommendations?: Array<{ id: string; title: string; severity: string; category: string }>;
+    nextActions?: Array<{ id: string; title: string; priority: string; reason: string }>;
+    riskFactors?: Array<{ description: string; likelihood: string; impact: string }>;
+    openQuestions?: Array<{ question: string; priority: string; context: string }>;
+  };
 }
 
 // ─── Context labels ──────────────────────────────────────────────────────────
@@ -515,6 +600,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   onRefreshIntelligence,
   mode = 'full',
   defaultChatMode = 'standard',
+  projectIntelligence,
 }) => {
   // AI Action system — unified execution spine (Phase 1)
   const aiAction = useAIAction();
@@ -541,12 +627,37 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const providerDropdownRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  // Slash command autocomplete
+  const [slashMenuOpen, setSlashMenuOpen] = useState(false);
+  const [slashMenuIndex, setSlashMenuIndex] = useState(0);
+  const slashMenuRef = useRef<HTMLDivElement>(null);
   const initialMessageSentRef = useRef(false);
   // Thread persistence — reuse thread_id across messages for continuous conversation
   const threadIdRef = useRef<string | null>(null);
 
   const screenName = contextProfile?.screenName || 'default';
   const screenLabel = SCREEN_LABELS[screenName] || '';
+
+  // ── Slash command autocomplete filtering ──────────────────────────────────
+  const filteredSlashCommands = useMemo(() => {
+    if (!slashMenuOpen) return [];
+    const trimmed = input.trim().toLowerCase();
+    if (!trimmed.startsWith('/')) return [];
+    const query = trimmed;
+    return SLASH_COMMANDS.filter(
+      (cmd) =>
+        cmd.command.startsWith(query) ||
+        cmd.description.toLowerCase().includes(query.slice(1))
+    ).slice(0, 10);
+  }, [input, slashMenuOpen]);
+
+  // Close slash menu when input no longer starts with /
+  useEffect(() => {
+    const trimmed = input.trim();
+    if (!trimmed.startsWith('/') || trimmed.includes(' ')) {
+      setSlashMenuOpen(false);
+    }
+  }, [input]);
 
   // ── Authoring-aware suggested actions (Wave 1) ─────────────────────────────
   const authoringSuggestedActions = useMemo<SuggestedAction[]>(() => {
@@ -804,16 +915,101 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     return actions;
   }, [authoringContext]);
 
-  // Merge parent-provided actions with authoring-aware actions
+  // Intelligence-driven suggested actions from recommendations + nextActions + riskFactors + openQuestions
+  const intelligenceSuggestedActions = useMemo<SuggestedAction[]>(() => {
+    if (!projectIntelligence) return [];
+    const actions: SuggestedAction[] = [];
+
+    // Surface critical/high recommendations as priority action chips
+    if (projectIntelligence.recommendations?.length) {
+      const urgent = projectIntelligence.recommendations.filter(
+        r => r.severity === 'critical' || r.severity === 'high'
+      );
+      for (const rec of urgent.slice(0, 2)) {
+        actions.push({
+          id: `intel-rec-${rec.id}`,
+          label: rec.title.length > 55 ? rec.title.slice(0, 52) + '...' : rec.title,
+          intent: 'recommendation',
+          description: `${rec.severity} ${rec.category} recommendation`,
+        });
+      }
+    }
+
+    // Surface next best actions as suggested action chips
+    if (projectIntelligence.nextActions?.length) {
+      for (const na of projectIntelligence.nextActions) {
+        actions.push({
+          id: `intel-nba-${na.id}`,
+          label: na.title,
+          intent: 'next-action',
+          description: na.reason,
+        });
+      }
+    }
+
+    // Surface high-priority risk factors as prompts
+    if (projectIntelligence.riskFactors?.length) {
+      const highRisks = projectIntelligence.riskFactors.filter(
+        rf => rf.likelihood === 'high' || rf.impact === 'high'
+      );
+      for (const rf of highRisks.slice(0, 2)) {
+        actions.push({
+          id: `intel-risk-${rf.description.slice(0, 20).replace(/\s+/g, '-')}`,
+          label: `Assess risk: ${rf.description.length > 50 ? rf.description.slice(0, 47) + '...' : rf.description}`,
+          intent: 'risk-assessment',
+          description: `${rf.likelihood} likelihood, ${rf.impact} impact`,
+        });
+      }
+    }
+
+    // Surface top open question as a prompt
+    if (projectIntelligence.openQuestions?.length) {
+      const topQ = projectIntelligence.openQuestions[0];
+      actions.push({
+        id: `intel-oq-${topQ.question.slice(0, 20).replace(/\s+/g, '-')}`,
+        label: topQ.question.length > 60 ? topQ.question.slice(0, 57) + '...' : topQ.question,
+        intent: 'open-question',
+        description: topQ.context || `Priority: ${topQ.priority}`,
+      });
+    }
+
+    return actions;
+  }, [projectIntelligence]);
+
+  // Default project-scoped suggested actions (shown when no other actions available)
+  const defaultProjectActions: SuggestedAction[] = useMemo(() => {
+    if (!contextProfile?.activeProject) return [];
+    return [
+      { id: 'default-ctd-map', label: 'Map my CTD structure', intent: 'ctd_map', description: 'Build your dossier map based on submission type' },
+      { id: 'default-find-predicates', label: 'Find predicates', intent: 'find_predicates', description: 'Search for predicate devices and comparisons' },
+      { id: 'default-check-readiness', label: 'Check readiness', intent: 'check_readiness', description: 'Assess your submission readiness score' },
+      { id: 'default-draft-section', label: 'Draft a section', intent: 'draft_section', description: 'Start drafting a submission section' },
+    ];
+  }, [contextProfile?.activeProject]);
+
+  // Merge parent-provided actions with authoring-aware + intelligence actions
   const effectiveSuggestedActions = useMemo(() => {
     const parent = suggestedActions || [];
     if (authoringSuggestedActions.length > 0) {
       // Show up to 5 authoring actions, rotate based on context richness
       const limit = authoringSuggestedActions.length > 5 ? 5 : authoringSuggestedActions.length;
-      return [...authoringSuggestedActions.slice(0, limit), ...parent.slice(0, 1)];
+      const base = [...authoringSuggestedActions.slice(0, limit), ...parent.slice(0, 1)];
+      // Append intelligence actions if there's room (up to 6 total)
+      const remaining = 6 - base.length;
+      if (remaining > 0 && intelligenceSuggestedActions.length > 0) {
+        return [...base, ...intelligenceSuggestedActions.slice(0, remaining)];
+      }
+      return base;
     }
-    return parent;
-  }, [suggestedActions, authoringSuggestedActions]);
+    // No authoring context — lead with intelligence actions, then parent
+    if (intelligenceSuggestedActions.length > 0) {
+      return [...intelligenceSuggestedActions.slice(0, 4), ...parent.slice(0, 2)];
+    }
+    // Fall back to parent actions if available
+    if (parent.length > 0) return parent;
+    // Fall back to default project actions when project is active but no other actions
+    return defaultProjectActions;
+  }, [suggestedActions, authoringSuggestedActions, intelligenceSuggestedActions, defaultProjectActions]);
 
   // Close mode dropdown on outside click
   useEffect(() => {
@@ -905,10 +1101,30 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     const hour = new Date().getHours();
     const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
     if (contextProfile?.activeProject) {
-      return `${timeGreeting}. Ready to work on ${contextProfile.activeProject}. How can I help?`;
+      const stats = projectIntelligence;
+      if (stats && (stats.documentCount > 0 || stats.memoryAtomCount > 0 || stats.signalCount > 0)) {
+        const parts = [`${timeGreeting}. You're working on **${contextProfile.activeProject}**.`];
+        const statParts: string[] = [];
+        if (stats.documentCount > 0) statParts.push(`${stats.documentCount} indexed document${stats.documentCount !== 1 ? 's' : ''}`);
+        if (stats.signalCount > 0) statParts.push(`${stats.signalCount} intelligence signal${stats.signalCount !== 1 ? 's' : ''}`);
+        if (statParts.length > 0) parts.push(`I have your regulatory strategy, ${statParts.join(', and ')}.`);
+        if (stats.readinessScore != null) parts.push(`Current readiness: ${stats.readinessScore}%.`);
+        // Surface recommendation + risk factor counts when available
+        const criticalRecs = stats.recommendations?.filter(r => r.severity === 'critical' || r.severity === 'high') ?? [];
+        const highRisks = stats.riskFactors?.filter(rf => rf.likelihood === 'high' || rf.impact === 'high') ?? [];
+        if (criticalRecs.length > 0 || highRisks.length > 0) {
+          const alertParts: string[] = [];
+          if (criticalRecs.length > 0) alertParts.push(`${criticalRecs.length} priority recommendation${criticalRecs.length !== 1 ? 's' : ''}`);
+          if (highRisks.length > 0) alertParts.push(`${highRisks.length} high-impact risk${highRisks.length !== 1 ? 's' : ''}`);
+          parts.push(`I've identified ${alertParts.join(' and ')} to review.`);
+        }
+        parts.push('What would you like to work on?');
+        return parts.join(' ');
+      }
+      return `${timeGreeting}. Ready to work on **${contextProfile.activeProject}**. I have your project context loaded. What would you like to tackle?`;
     }
-    return `${timeGreeting}. I'm AnA — regulatory intelligence for FDA, EMA, and ICH submissions. What are you working on?`;
-  }, [greeting, contextProfile?.activeProject]);
+    return `${timeGreeting}. I'm AnA — your regulatory intelligence partner. What are you working on?`;
+  }, [greeting, contextProfile?.activeProject, projectIntelligence]);
 
   // Auto-scroll when new messages
   useEffect(() => {
@@ -1518,7 +1734,46 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     [input, isThinking, messages, contextProfile, chatMode, intentLens, selectedProvider]
   );
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setInput(val);
+    const trimmed = val.trim();
+    if (trimmed.startsWith('/') && !trimmed.includes(' ') && trimmed.length >= 1) {
+      setSlashMenuOpen(true);
+      setSlashMenuIndex(0);
+    }
+  };
+
+  const selectSlashCommand = (cmd: SlashCommand) => {
+    setInput(cmd.command + ' ');
+    setSlashMenuOpen(false);
+    inputRef.current?.focus();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Slash command navigation
+    if (slashMenuOpen && filteredSlashCommands.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSlashMenuIndex((prev) => Math.min(prev + 1, filteredSlashCommands.length - 1));
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSlashMenuIndex((prev) => Math.max(prev - 1, 0));
+        return;
+      }
+      if (e.key === 'Tab' || (e.key === 'Enter' && !e.shiftKey)) {
+        e.preventDefault();
+        selectSlashCommand(filteredSlashCommands[slashMenuIndex]);
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setSlashMenuOpen(false);
+        return;
+      }
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -3058,8 +3313,42 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         )}
 
         {/* Input bar */}
-        <div className="px-4 py-2.5 bg-white">
-          <div className="max-w-3xl mx-auto">
+        <div className="px-4 py-2.5 bg-white relative">
+          <div className="max-w-3xl mx-auto relative">
+            {/* Slash command autocomplete dropdown */}
+            {slashMenuOpen && filteredSlashCommands.length > 0 && (
+              <div
+                ref={slashMenuRef}
+                className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-[#E8E6DC] shadow-lg max-h-[280px] overflow-y-auto z-50"
+                role="listbox"
+                aria-label="Slash commands"
+              >
+                {filteredSlashCommands.map((cmd, i) => (
+                  <button
+                    key={cmd.command}
+                    type="button"
+                    role="option"
+                    aria-selected={i === slashMenuIndex}
+                    onMouseDown={(e) => { e.preventDefault(); selectSlashCommand(cmd); }}
+                    onMouseEnter={() => setSlashMenuIndex(i)}
+                    className={cn(
+                      'w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors',
+                      i === slashMenuIndex ? 'bg-[#FAF9F5]' : 'hover:bg-[#FAF9F5]/50'
+                    )}
+                  >
+                    <code className="text-xs font-mono font-semibold text-[#141413] min-w-[100px]">
+                      {cmd.command}
+                    </code>
+                    <span className="text-xs text-[#6B6962] flex-1 truncate">
+                      {cmd.description}
+                    </span>
+                    <span className={cn('text-[10px] font-medium', SLASH_CATEGORY_COLORS[cmd.category] || 'text-zinc-400')}>
+                      {cmd.category}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
             <div
               className={cn(
                 'flex items-end gap-2 px-3.5 py-2.5 bg-[#FAF9F5] border rounded-2xl transition-colors duration-150',
@@ -3079,11 +3368,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               <textarea
                 ref={inputRef}
                 value={input}
-                onChange={e => setInput(e.target.value)}
+                onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                placeholder="Message AnA..."
+                onBlur={() => { setIsFocused(false); setTimeout(() => setSlashMenuOpen(false), 150); }}
+                placeholder="Message AnA — type / for commands..."
                 rows={1}
                 className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"
               />
@@ -3122,6 +3411,44 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   // ── Full mode: fills available space like Claude.ai ──
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-white">
+      {/* ── E3: Persistent project context banner ── */}
+      {contextProfile?.activeProject && (
+        <div
+          className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800 px-4 py-2 shrink-0 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-900/70 transition-colors"
+          onClick={() => onNavigate?.('project-config')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onNavigate?.('project-config'); }}
+          aria-label={`Active project: ${contextProfile.activeProject}. Click to open project config.`}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <FolderOpen className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+            <span className="text-[13px] font-semibold text-zinc-700 dark:text-zinc-300 truncate">
+              {contextProfile.activeProject}
+            </span>
+            {contextProfile.productType && (
+              <>
+                <span className="text-zinc-300 dark:text-zinc-600">·</span>
+                <span className={cn(
+                  'text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded',
+                  contextProfile.productType.includes('510') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' :
+                  contextProfile.productType.includes('PMA') ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' :
+                  contextProfile.productType.includes('NDA') ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' :
+                  contextProfile.productType.includes('BLA') ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' :
+                  contextProfile.productType.includes('IND') ? 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300' :
+                  contextProfile.productType.includes('ANDA') ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' :
+                  'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
+                )}>
+                  {contextProfile.productType}
+                </span>
+              </>
+            )}
+          </div>
+          <span className="text-[11px] text-zinc-400 dark:text-zinc-500 whitespace-nowrap ml-3">
+            Quick project switch ←
+          </span>
+        </div>
+      )}
       {/* ── Conversation area — fills available space ── */}
       <div
         className="flex-1 overflow-y-auto zen-scroll"
@@ -3144,6 +3471,23 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 </p>
                 <h2 className="text-xl font-semibold text-[#141413]">{defaultGreeting}</h2>
                 {screenLabel && <p className="text-sm text-[#B0AEA5] mt-1">{screenLabel}</p>}
+                {/* Project context badge */}
+                {contextProfile?.activeProject && !messages?.length && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F5F4EF] rounded-full text-[11px] border border-[#E8E6DC] mb-2">
+                    <FolderOpen className="w-3 h-3 text-[#6D6B63]" />
+                    <span className="font-medium text-[#4D4B45]">
+                      {contextProfile.activeProject}
+                    </span>
+                    {contextProfile.productType && (
+                      <>
+                        <span className="text-[#B0AEA5]">·</span>
+                        <span className="font-medium text-[#6D6B63] uppercase tracking-wider" style={{ fontSize: '9px' }}>
+                          {contextProfile.productType}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                )}
                 {/* Authoring context indicator strip */}
                 {authoringContext &&
                   (authoringContext.sectionCode || authoringContext.artifactId) && (
@@ -3171,10 +3515,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   )}
               </div>
 
-              {/* Suggested actions */}
+              {/* Suggested actions — up to 6 chips (authoring + intelligence + parent) */}
               {effectiveSuggestedActions && effectiveSuggestedActions.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg mx-auto">
-                  {effectiveSuggestedActions.slice(0, 5).map(action => (
+                  {effectiveSuggestedActions.slice(0, 6).map(action => (
                     <button
                       key={action.id}
                       onClick={() => handleSuggestedAction(action)}
@@ -3718,7 +4062,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
       {/* ── Bottom input bar — always visible ── */}
       <div className="flex-shrink-0 px-4 py-3 border-t border-[#F5F4EF] bg-white">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto relative">
           {/* Clear conversation button */}
           {hasMessages && (
             <div className="flex justify-center mb-2">
@@ -3732,6 +4076,41 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 <RotateCcw className="w-3 h-3" />
                 New thread
               </button>
+            </div>
+          )}
+
+          {/* Slash command autocomplete dropdown (full mode) */}
+          {slashMenuOpen && filteredSlashCommands.length > 0 && (
+            <div
+              ref={slashMenuRef}
+              className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-[#E8E6DC] shadow-lg max-h-[280px] overflow-y-auto z-50"
+              role="listbox"
+              aria-label="Slash commands"
+            >
+              {filteredSlashCommands.map((cmd, i) => (
+                <button
+                  key={cmd.command}
+                  type="button"
+                  role="option"
+                  aria-selected={i === slashMenuIndex}
+                  onMouseDown={(e) => { e.preventDefault(); selectSlashCommand(cmd); }}
+                  onMouseEnter={() => setSlashMenuIndex(i)}
+                  className={cn(
+                    'w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors',
+                    i === slashMenuIndex ? 'bg-[#FAF9F5]' : 'hover:bg-[#FAF9F5]/50'
+                  )}
+                >
+                  <code className="text-xs font-mono font-semibold text-[#141413] min-w-[100px]">
+                    {cmd.command}
+                  </code>
+                  <span className="text-xs text-[#6B6962] flex-1 truncate">
+                    {cmd.description}
+                  </span>
+                  <span className={cn('text-[10px] font-medium', SLASH_CATEGORY_COLORS[cmd.category] || 'text-zinc-400')}>
+                    {cmd.category}
+                  </span>
+                </button>
+              ))}
             </div>
           )}
 
@@ -3848,67 +4227,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               )}
             </div>
 
-            {/* AnA RI Intent Lens selector — only in standard mode */}
-            {chatMode === 'standard' && (
-              <div className="relative flex-shrink-0 self-center" ref={lensDropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => setShowLensDropdown(prev => !prev)}
-                  className={cn(
-                    'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
-                    intentLens !== 'auto'
-                      ? 'bg-[#FBF0EB] text-[#D97757] hover:bg-[#F5E1D6]'
-                      : 'text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]'
-                  )}
-                  title="Intent lens"
-                >
-                  {INTENT_LENSES.find(l => l.id === intentLens)?.icon}
-                  <span className="hidden sm:inline">
-                    {INTENT_LENSES.find(l => l.id === intentLens)?.label}
-                  </span>
-                  <ChevronDown className="w-3 h-3 opacity-50" />
-                </button>
-
-                {showLensDropdown && (
-                  <div className="absolute bottom-full left-0 mb-1.5 w-52 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
-                    {INTENT_LENSES.map(lens => (
-                      <button
-                        key={lens.id}
-                        type="button"
-                        onClick={() => {
-                          setIntentLens(lens.id);
-                          setShowLensDropdown(false);
-                        }}
-                        className={cn(
-                          'w-full flex items-start gap-3 px-3 py-2 text-left hover:bg-[#FAF9F5] transition-colors',
-                          intentLens === lens.id && 'bg-[#FAF9F5]'
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            'mt-0.5 flex-shrink-0',
-                            intentLens === lens.id ? 'text-[#D97757]' : 'text-[#8A8880]'
-                          )}
-                        >
-                          {lens.icon}
-                        </span>
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium text-[#141413]">{lens.label}</div>
-                          <div className="text-[10px] text-[#B0AEA5] leading-tight">
-                            {lens.description}
-                          </div>
-                        </div>
-                        {intentLens === lens.id && (
-                          <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5 flex-shrink-0" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* AI Provider / Model Selector */}
+            {/* AI Provider / Model Selector — clean, minimal like Claude.ai */}
             <div className="relative flex-shrink-0 self-center" ref={providerDropdownRef}>
               <button
                 type="button"
@@ -3972,10 +4291,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             <textarea
               ref={inputRef}
               value={input}
-              onChange={e => setInput(e.target.value)}
+              onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
+              onBlur={() => { setIsFocused(false); setTimeout(() => setSlashMenuOpen(false), 150); }}
               placeholder={
                 chatMode === 'deep-research'
                   ? 'Ask a deep research question...'
@@ -3983,7 +4302,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     ? 'Describe an image, infographic, or presentation...'
                     : intentLens !== 'auto'
                       ? `Message AnA (${intentLens} lens)...`
-                      : 'Message AnA...'
+                      : 'Message AnA — type / for commands...'
               }
               rows={1}
               className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"
@@ -4004,6 +4323,29 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               <ArrowUp className="w-4 h-4" />
             </button>
           </div>
+
+          {/* ── Intent lens strip — subtle pills below input (Claude.ai clean) ── */}
+          {chatMode === 'standard' && (
+            <div className="flex items-center gap-1.5 mt-1.5 pl-1" ref={lensDropdownRef}>
+              {INTENT_LENSES.map(lens => (
+                <button
+                  key={lens.id}
+                  type="button"
+                  onClick={() => setIntentLens(lens.id)}
+                  className={cn(
+                    'flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors',
+                    intentLens === lens.id
+                      ? 'bg-[#FBF0EB] text-[#D97757]'
+                      : 'text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]'
+                  )}
+                  title={lens.description}
+                >
+                  {lens.icon}
+                  <span className="hidden sm:inline">{lens.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -70,6 +70,7 @@ import * as crypto from 'crypto';
 import { guardEmptyContent, guardDemoContent } from '../middleware/documentLoopGuards';
 import { computeConversationHealth } from '../services/conversation-health.js';
 import { interceptComplianceScan, interceptArtifactChange, interceptFeedback } from '../services/intelligence/rim-interceptors.js';
+import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
 import {
   buildWorkingMemoryPrompt,
   storeWorkingMemory,
@@ -521,6 +522,36 @@ const SubmissionTypeEnum = z
   ])
   .transform(val => (val === 'FDA_510K' ? '510K' : val));
 
+
+// Submission-type-specific default instruction templates
+const submissionTypeInstructionTemplates: Record<string, (product: string) => string> = {
+  '510K': (product) =>
+    `You are an FDA 510(k) regulatory expert for ${product}. Focus on substantial equivalence analysis, predicate device comparison, performance data requirements, and 510(k) submission readiness. Reference all project documents, predicate device information, and intelligence when responding.`,
+  IND: (product) =>
+    `You are an FDA IND (Investigational New Drug) regulatory expert for ${product}. Focus on preclinical data requirements, clinical trial protocol design, CMC (Chemistry, Manufacturing, and Controls) documentation, and IND submission strategy. Reference all project documents and intelligence when responding.`,
+  NDA: (product) =>
+    `You are an FDA NDA (New Drug Application) regulatory expert for ${product}. Focus on clinical efficacy and safety data, labeling strategy, risk-benefit analysis, CMC compliance, and NDA submission readiness. Reference all project documents and intelligence when responding.`,
+  BLA: (product) =>
+    `You are an FDA BLA (Biologics License Application) regulatory expert for ${product}. Focus on biological product characterization, manufacturing process validation, clinical immunogenicity data, and BLA submission strategy. Reference all project documents and intelligence when responding.`,
+  MAA: (product) =>
+    `You are an EMA MAA (Marketing Authorisation Application) regulatory expert for ${product}. Focus on EU regulatory requirements, CTD Module structure, scientific advice alignment, and MAA submission readiness across EU member states. Reference all project documents and intelligence when responding.`,
+  PMA: (product) =>
+    `You are an FDA PMA (Premarket Approval) regulatory expert for ${product}. Focus on clinical evidence requirements, device safety and effectiveness, manufacturing quality systems, and PMA submission strategy. Reference all project documents and intelligence when responding.`,
+  DE_NOVO: (product) =>
+    `You are an FDA De Novo classification regulatory expert for ${product}. Focus on risk-benefit analysis for novel devices, classification rationale, special controls development, and De Novo submission readiness. Reference all project documents and intelligence when responding.`,
+  EUA: (product) =>
+    `You are an FDA EUA (Emergency Use Authorization) regulatory expert for ${product}. Focus on known and potential benefits vs. risks, available alternatives analysis, emergency use criteria, and EUA submission strategy. Reference all project documents and intelligence when responding.`,
+};
+
+function generateDefaultCustomInstructions(submissionType: string, product?: string | null, projectName?: string): string {
+  const productLabel = product || projectName || 'this product';
+  const templateFn = submissionTypeInstructionTemplates[submissionType];
+  if (templateFn) {
+    return templateFn(productLabel);
+  }
+  // Generic fallback for unknown submission types
+  return `You are a ${submissionType} regulatory expert for ${productLabel}. Focus on regulatory strategy, submission readiness, and compliance. Reference all project documents and intelligence when responding.`;
+}
 const createProjectSchema = z.object({
   name: z.string().min(1, 'Project name is required').max(200, 'Name too long'),
   submissionType: SubmissionTypeEnum,
@@ -530,6 +561,8 @@ const createProjectSchema = z.object({
   sponsor: z.string().max(200).optional(),
   product: z.string().max(200).optional(),
   region: z.string().max(100).optional(),
+  pinned: z.boolean().optional(),
+  targetAgency: z.string().max(50).optional(),
 });
 
 const updateProjectSchema = createProjectSchema.partial();
@@ -698,6 +731,8 @@ interface UploadedDocument {
   tokenCount?: number;
   pageCount?: number;
   status?: string;
+  /** Whether this document is active in the AI context window (default: true) */
+  isActive?: boolean;
 }
 
 interface ProjectKnowledge {
@@ -1234,6 +1269,8 @@ router.get('/projects', async (req: Request, res: Response) => {
         sponsor: p.metadata?.sponsor,
         product: p.metadata?.product,
         region: p.metadata?.region,
+        pinned: (p.metadata as any)?.pinned ?? false,
+        targetAgency: (p.metadata as any)?.targetAgency ?? null,
         organizationId,
         conversations,
         ownership: buildProjectOwnership(conversations, normalizeProjectSettings(p.settings)),
@@ -1292,6 +1329,8 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
       sponsor: (project.metadata as any)?.sponsor,
       product: (project.metadata as any)?.product,
       region: (project.metadata as any)?.region,
+      pinned: (project.metadata as any)?.pinned ?? false,
+      targetAgency: (project.metadata as any)?.targetAgency ?? null,
       customInstructions: (project.settings as any)?.customInstructions,
       status: project.status,
       organizationId: project.organizationId,
@@ -1309,6 +1348,37 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
 });
 
 /**
+ * Returns submission-type-aware suggested actions for display after project creation.
+ */
+function getSuggestedActionsForType(submissionType: string): Array<{ id: string; label: string; command: string }> {
+  const base = [
+    { id: 'dossier-map', label: 'Start Dossier Map', command: '/dossier' },
+    { id: 'add-docs', label: 'Add Documents', command: '/upload' },
+    { id: 'readiness', label: 'Run Readiness Check', command: '/readiness' },
+  ];
+
+  const upperType = (submissionType ?? '').toUpperCase();
+
+  // Device submissions
+  if (['510K', 'PMA', 'DE_NOVO'].includes(upperType)) {
+    return [...base, { id: 'predicates', label: 'Find Predicates', command: '/predicates' }];
+  }
+
+  // Drug submissions
+  if (['IND', 'NDA', 'BLA', 'ANDA'].includes(upperType)) {
+    return [...base, { id: 'clinical-review', label: 'Review Clinical Data', command: '/clinical' }];
+  }
+
+  // EU submissions
+  if (['MAA', 'IVDR'].includes(upperType)) {
+    return [...base, { id: 'regulatory-path', label: 'Map Regulatory Path', command: '/pathway' }];
+  }
+
+  // Default (EUA or unknown)
+  return [...base, { id: 'strategy', label: 'Define Strategy', command: '/strategy' }];
+}
+
+/**
  * POST /api/concept2cure/projects
  * Create a new project with tenant isolation.
  *
@@ -1322,11 +1392,20 @@ router.post('/projects', async (req: Request, res: Response) => {
     const clientWorkspaceId = getClientWorkspaceId(req);
     const data = createProjectSchema.parse(req.body);
 
+    // Auto-populate custom instructions based on submission type and product if not provided
+    if (!data.customInstructions) {
+      data.customInstructions = generateDefaultCustomInstructions(
+        data.submissionType,
+        data.product,
+        data.name,
+      );
+    }
+
     // Sanitize user input
     const sanitizedData = {
       name: sanitizeContent(data.name),
       description: data.description ? sanitizeContent(data.description) : null,
-      customInstructions: data.customInstructions ? sanitizeContent(data.customInstructions) : null,
+      customInstructions: sanitizeContent(data.customInstructions),
     };
 
     // Insert into database with tenant context
@@ -1347,6 +1426,8 @@ router.post('/projects', async (req: Request, res: Response) => {
           sponsor: data.sponsor,
           product: data.product,
           region: data.region,
+          pinned: data.pinned ?? false,
+          targetAgency: data.targetAgency ?? null,
         },
         settings: {
           customInstructions: sanitizedData.customInstructions,
@@ -1376,6 +1457,9 @@ router.post('/projects', async (req: Request, res: Response) => {
       organizationId,
     });
 
+    // Create initial AnA conversation thread for the project
+    const initialThreadId = `thread_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+
     // Transform response
     const response = {
       id: projectId,
@@ -1389,8 +1473,12 @@ router.post('/projects', async (req: Request, res: Response) => {
       ownership: buildProjectOwnership([], normalizeProjectSettings(newProject.settings)),
       status: newProject.status,
       organizationId: newProject.organizationId,
+      pinned: (newProject.metadata as any)?.pinned ?? false,
+      targetAgency: (newProject.metadata as any)?.targetAgency ?? null,
       createdAt: newProject.createdAt,
       updatedAt: newProject.updatedAt,
+      initialThreadId,
+      suggestedActions: getSuggestedActionsForType(data.submissionType),
     };
 
     logger.info('Created new project', {
@@ -1398,6 +1486,98 @@ router.post('/projects', async (req: Request, res: Response) => {
       name: newProject.name,
       organizationId,
     });
+
+    // Post-creation: initialize intelligence profile and CTD sections (non-blocking)
+    Promise.allSettled([
+      // Create intelligence profile
+      (async () => {
+        try {
+          const { getOrCreateProfile } = await import('../services/intelligence/project-intelligence-service.js');
+          await getOrCreateProfile(newProject.id, organizationId);
+          logger.info('Auto-created intelligence profile', { projectId });
+        } catch (err) {
+          logger.error('[projects] Failed to auto-create intelligence profile:', err);
+        }
+      })(),
+      // Initialize CTD sections based on submission type
+      (async () => {
+        try {
+          const { getAllINDSections } = await import('../../services/regulatory/ind-ectd-sections.js');
+          const allSections = getAllINDSections();
+          const client = await pool.connect();
+          try {
+            await client.query('BEGIN');
+            let inserted = 0;
+            for (const section of allSections) {
+              await client.query(
+                `INSERT INTO project_sections
+                   (organization_id, project_id, section_code, module, title, status, estimated_hours, priority, metadata)
+                 VALUES ($1, $2, $3, $4, $5, 'not_started', $6, $7, $8)
+                 ON CONFLICT DO NOTHING`,
+                [
+                  organizationId,
+                  newProject.id,
+                  section.code,
+                  section.module,
+                  section.title,
+                  section.estimatedHours,
+                  section.required ? 'high' : 'medium',
+                  JSON.stringify({
+                    required: section.required,
+                    requiredForAmendment: section.requiredForAmendment,
+                    aiDraftable: section.aiDraftable,
+                    authoringMode: section.authoringMode,
+                    role: section.role,
+                    regulatoryRef: section.regulatoryRef,
+                    format: section.format,
+                    parentCode: section.parentCode,
+                    depth: section.depth,
+                  }),
+                ]
+              );
+              inserted++;
+            }
+            await client.query('COMMIT');
+            logger.info('Auto-initialized CTD sections', { projectId, sectionsInserted: inserted });
+          } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+          } finally {
+            client.release();
+          }
+        } catch (err) {
+          logger.error('[projects] Failed to auto-initialize CTD sections:', err);
+        }
+      })(),
+      // Create initial AnA conversation thread with onboarding message
+      (async () => {
+        try {
+          const productName = data.product || newProject.name;
+          const submissionLabel = data.submissionType || 'regulatory';
+          const onboardingContent = `I've set up your ${submissionLabel} project for ${productName}. What would you like to work on first?\n\nI can help you map your CTD structure, identify predicate devices, run a readiness assessment, or start drafting sections.`;
+
+          await pool.query(
+            `INSERT INTO ai_threads (id, organization_id, project_id, title, created_by, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
+            [initialThreadId, organizationId, newProject.id, `${productName} — Getting Started`, userId]
+          );
+
+          await pool.query(
+            `INSERT INTO ai_messages (thread_id, role, content) VALUES ($1, 'assistant', $2)`,
+            [initialThreadId, onboardingContent]
+          );
+
+          logger.info('Auto-created initial AnA thread', { projectId, threadId: initialThreadId });
+        } catch (err: any) {
+          if (err?.code !== '42P01') {
+            logger.error('[projects] Failed to auto-create initial AnA thread:', err);
+          } else {
+            logger.warn('[projects] ai_threads/ai_messages table missing — skipping onboarding thread');
+          }
+        }
+      })(),
+    ]).catch(() => {});
+
     return sendSuccess(res.status(201), response);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
@@ -1454,7 +1634,9 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
       data.targetSubmissionDate ||
       data.sponsor !== undefined ||
       data.product !== undefined ||
-      data.region !== undefined
+      data.region !== undefined ||
+      data.pinned !== undefined ||
+      data.targetAgency !== undefined
     ) {
       updateData.metadata = {
         ...((existing.metadata as object) || {}),
@@ -1469,6 +1651,8 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
         ...(data.region !== undefined && {
           region: data.region ? sanitizeContent(data.region) : null,
         }),
+        ...(data.pinned !== undefined && { pinned: data.pinned }),
+        ...(data.targetAgency !== undefined && { targetAgency: data.targetAgency ? sanitizeContent(data.targetAgency) : null }),
       };
     }
 
@@ -1504,6 +1688,8 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
       conversations,
       ownership: buildProjectOwnership(conversations, normalizeProjectSettings(updated.settings)),
       status: updated.status,
+      pinned: (updated.metadata as any)?.pinned ?? false,
+      targetAgency: (updated.metadata as any)?.targetAgency ?? null,
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,
     };
@@ -1930,6 +2116,66 @@ router.delete('/documents/:documentId', async (req: Request, res: Response) => {
   } catch (error: any) {
     logger.error('Failed to delete knowledge document', { error: error.message });
     return sendError(res, 500, 'Failed to delete knowledge document');
+  }
+});
+
+/**
+ * PATCH /api/concept2cure/documents/:documentId/activation
+ * Toggle a document's active state in the AI context window (E7).
+ * Body: { isActive: boolean }
+ */
+router.patch('/documents/:documentId/activation', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const documentId = req.params.documentId;
+    const { isActive } = req.body;
+
+    if (typeof isActive !== 'boolean') {
+      return sendError(res, 400, 'isActive must be a boolean');
+    }
+
+    const dbProjects = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.organizationId, organizationId), isNull(projects.actualEndDate)));
+
+    const target = dbProjects.find(project => {
+      const settings = normalizeProjectSettings(project.settings);
+      const knowledge = normalizeKnowledge(settings);
+      return knowledge.documents.some(doc => doc.id === documentId);
+    });
+
+    if (!target) {
+      return sendError(res, 404, 'Document not found');
+    }
+
+    const settings = normalizeProjectSettings(target.settings);
+    const knowledge = normalizeKnowledge(settings);
+    const updatedKnowledge: ProjectKnowledge = {
+      ...knowledge,
+      documents: knowledge.documents.map(doc =>
+        doc.id === documentId ? { ...doc, isActive } : doc
+      ),
+    };
+
+    const updatedSettings = {
+      ...settings,
+      customInstructions: updatedKnowledge.customInstructions,
+      knowledge: updatedKnowledge,
+    };
+
+    const [updated] = await db
+      .update(projects)
+      .set({ settings: updatedSettings, updatedAt: new Date() })
+      .where(and(eq(projects.id, target.id), eq(projects.organizationId, organizationId)))
+      .returning();
+
+    await logAuditEntry(req, 'UPDATE', 'project', `proj_${target.id}`, target, updated);
+
+    return sendSuccess(res, { documentId, isActive });
+  } catch (error: any) {
+    logger.error('Failed to toggle document activation', { error: error.message });
+    return sendError(res, 500, 'Failed to toggle document activation');
   }
 });
 
@@ -3066,6 +3312,24 @@ router.post('/projects/:projectId/artifacts', guardEmptyContent, guardDemoConten
       contentLength: sanitizedContent.length,
       source: data.metadata?.generationMethod === 'ai' ? 'lumen_cortex' : 'manual',
       content: sanitizedContent,
+    });
+
+    // Emit generation trace: artifact_created
+    const traceId = (data.metadata as Record<string, unknown>)?.traceId as string || createTraceId();
+    emitTraceEvent({
+      traceId,
+      timestamp: new Date().toISOString(),
+      event: 'artifact_created',
+      sourceSystem: (data.metadata as Record<string, unknown>)?.sourceSystem as any || 'document_builder',
+      projectId: numericProjectId,
+      artifactId,
+      userId,
+      metadata: {
+        documentType: data.type,
+        ctdSection: ctdSection || null,
+        contentLength: sanitizedContent.length,
+        generationMethod: (data.metadata as Record<string, unknown>)?.generationMethod || 'unknown',
+      },
     });
 
     logger.info('Created artifact', { projectId: req.params.projectId, artifactId });

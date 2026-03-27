@@ -15,6 +15,7 @@ import {
   Clock,
   AlertTriangle,
   Plus,
+  Sparkles,
   Scissors,
   MapPin,
   Copy,
@@ -34,6 +35,12 @@ interface DocumentListPaneProps {
   selectedId?: string;
   onSelect: (doc: TreeArtifact) => void;
   onCreateNew?: () => void;
+  /** When provided, shows "Draft with AI" button for AI-draftable sections */
+  onAIDraft?: () => void;
+  /** Whether this section supports AI drafting */
+  sectionAIDraftable?: boolean;
+  /** Regulatory reference for context (e.g., "21 CFR 312.23(a)(1)") */
+  sectionRegRef?: string;
   onCutDocument?: (art: TreeArtifact) => void;
   onCopyCtdPath?: (art: TreeArtifact) => void;
   onOpenPlacement?: (art: TreeArtifact, op: PlacementOperation) => void;
@@ -75,6 +82,9 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
   selectedId,
   onSelect,
   onCreateNew,
+  onAIDraft,
+  sectionAIDraftable,
+  sectionRegRef,
   onCutDocument,
   onCopyCtdPath,
   onOpenPlacement,
@@ -159,24 +169,46 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
       {/* Table */}
       <div className="flex-1 overflow-y-auto zen-scroll">
         {filteredDocs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+          <div className="flex flex-col items-center justify-center py-16 px-6 text-center" data-testid="document-list-empty">
             <FileText className="w-8 h-8 text-zinc-200 mb-3" />
             <p className="text-sm font-medium text-zinc-500 mb-1">
-              {documents.length === 0 ? 'No documents in this folder' : 'No matching documents'}
+              {documents.length === 0 ? 'No documents in this section' : 'No matching documents'}
             </p>
-            <p className="text-xs text-zinc-400 max-w-[260px] mb-3">
+            <p className="text-xs text-zinc-400 max-w-[300px] mb-4">
               {documents.length === 0
-                ? 'Create your first document to start regulatory authoring.'
+                ? sectionAIDraftable
+                  ? 'This section can be AI-drafted from your project data, or you can start from scratch.'
+                  : 'Create your first document to start regulatory authoring.'
                 : 'Try broadening your search or adjusting filters.'}
             </p>
-            {documents.length === 0 && onCreateNew && (
-              <button
-                onClick={onCreateNew}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors duration-150"
-              >
-                <Plus className="w-3 h-3" />
-                Create Document
-              </button>
+            {sectionRegRef && documents.length === 0 && (
+              <p className="text-[10px] text-zinc-400 mb-3 font-mono">{sectionRegRef}</p>
+            )}
+            {documents.length === 0 && (
+              <div className="flex items-center gap-2">
+                {sectionAIDraftable && onAIDraft && (
+                  <button
+                    onClick={onAIDraft}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors duration-150"
+                    aria-label="Draft this section with AI"
+                    data-testid="ai-draft-section"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    Draft with AI
+                  </button>
+                )}
+                {onCreateNew && (
+                  <button
+                    onClick={onCreateNew}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-700 bg-zinc-100 rounded-md hover:bg-zinc-200 transition-colors duration-150"
+                    aria-label="Create a blank document"
+                    data-testid="create-blank-document"
+                  >
+                    <Plus className="w-3 h-3" />
+                    {sectionAIDraftable ? 'Start Blank' : 'Create Document'}
+                  </button>
+                )}
+              </div>
             )}
           </div>
         ) : (

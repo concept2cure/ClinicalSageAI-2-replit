@@ -152,7 +152,7 @@ interface PendingMove {
 // ── Folder label map ─────────────────────────────────────────────────────────
 const FOLDER_LABELS: Record<string, string> = {
   drafts: 'Drafts',
-  generated: 'Generated Documents',
+  generated: 'Generated',
   dossier: 'Dossier',
   evidence: 'Evidence Packs',
   cmc: 'CMC',
@@ -172,13 +172,13 @@ const OPERATING_LAYERS: OperatingLayerConfig[] = [
   },
   {
     id: 'vault',
-    label: 'Vault Layer',
+    label: 'Evidence',
     description: 'Evidence and document operations',
     icon: Files,
   },
   {
     id: 'reports',
-    label: 'Reports Layer',
+    label: 'Readiness',
     description: 'Readiness, review, and executive reporting',
     icon: Activity,
   },
@@ -217,9 +217,9 @@ const WORKBENCHES: WorkbenchConfig[] = [
 
 const PROJECT_NAV_ITEMS: Array<{ id: ProjectNav; label: string }> = [
   { id: 'overview', label: 'Overview' },
-  { id: 'documents', label: 'Documents' },
+  { id: 'documents', label: 'Tools' },
   { id: 'vault', label: 'Vault' },
-  { id: 'reports', label: 'Reports' },
+  { id: 'reports', label: 'Readiness' },
   { id: 'tasks', label: 'Tasks' },
   { id: 'reviews', label: 'Reviews' },
   { id: 'submission', label: 'Submission' },
@@ -1326,7 +1326,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 Intelligence
               </button>
               <button className="px-3 py-1.5 text-xs font-medium bg-zinc-900 text-white transition-colors duration-150">
-                Documents
+                Work
               </button>
             </div>
           )}
@@ -1706,7 +1706,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 {[
                   { key: 'documents' as OperatingLayer, label: 'Docs' },
                   { key: 'vault' as OperatingLayer, label: 'Vault' },
-                  { key: 'reports' as OperatingLayer, label: 'Reports' },
+                  { key: 'reports' as OperatingLayer, label: 'Readiness' },
                 ].map(layer => (
                   <button
                     key={layer.key}
@@ -2596,7 +2596,7 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-zinc-500">Documents</span>
+                <span className="text-zinc-500">Artifacts</span>
                 <span className="font-medium text-zinc-700">{metrics.artifactCount}</span>
               </div>
               <div className="flex items-center justify-between">
