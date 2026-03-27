@@ -98,22 +98,27 @@ const AppCardComponent: React.FC<{
   disabled?: boolean;
   recommended?: boolean;
 }> = ({ app, onClick, disabled, recommended }) => {
+  // Color format: 'text-X bg-Y' — [0] is text color, [1] is bg color
   const colors = app.color.split(' ');
-  const iconBg = colors[0] || 'bg-zinc-50';
-  const iconText = colors[1] || 'text-zinc-500';
+  const iconText = colors[0] || 'text-zinc-500';
+  const iconBg = colors[1] || 'bg-zinc-50';
   return (
     <button
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
+      aria-disabled={disabled || undefined}
       title={disabled ? 'Select a project to access this app' : undefined}
-      aria-label={`Launch ${app.label}${recommended ? ' (Recommended)' : ''}`}
+      aria-label={`Launch ${app.label}${recommended ? ' (Best match)' : ''}`}
       className={cn(
-        'flex items-start gap-3 p-3 rounded-lg border transition-all text-left group focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
+        'flex items-start gap-3 p-3 rounded-lg border transition-all text-left group',
         disabled
-          ? 'grayscale opacity-60 cursor-not-allowed border-zinc-200'
-          : recommended
-            ? 'border-blue-200 bg-blue-50/30 hover:border-blue-300 hover:bg-blue-50/50'
-            : 'border-zinc-100 hover:border-zinc-200 hover:bg-zinc-50/50'
+          ? 'grayscale opacity-60 cursor-not-allowed border-zinc-200 pointer-events-none'
+          : cn(
+              'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
+              recommended
+                ? 'border-blue-200 bg-blue-50/30 hover:border-blue-300 hover:bg-blue-50/50'
+                : 'border-zinc-100 hover:border-zinc-200 hover:bg-zinc-50/50'
+            )
       )}
     >
       <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0', iconBg)}>
@@ -186,8 +191,8 @@ export const AppsPage: React.FC<AppsPageProps> = ({
       ? 'Device & Diagnostics'
       : isPharmaTrack(submissionType)
         ? 'Pharma & Biotech'
-        : null
-    : null;
+        : undefined
+    : undefined;
 
   return (
     <WorkspaceCanvas maxWidth="5xl" testId="apps-page">
