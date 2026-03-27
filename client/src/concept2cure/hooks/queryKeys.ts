@@ -16,12 +16,20 @@ export const queryKeys = {
       ['concept2cure', 'projects', projectId, 'artifacts'] as const,
     artifactsSummary: () =>
       ['concept2cure', 'projects', 'all', 'artifacts-summary'] as const,
+    /** Vault tab: project-scoped files and artifacts */
+    vaultArtifacts: (projectId: number | string) =>
+      ['concept2cure', 'projects', projectId, 'vault-artifacts'] as const,
+    /** Overview tab: project artifact pipeline stats */
+    overviewArtifacts: (projectId: number | string) =>
+      ['concept2cure', 'projects', projectId, 'overview-artifacts'] as const,
   },
 
   // ── Artifacts ──────────────────────────────────────────────────────────────
   artifacts: {
     all: ['concept2cure', 'artifacts'] as const,
     detail: (id: number | string) => ['concept2cure', 'artifacts', id] as const,
+    /** Global artifacts browser */
+    global: ['concept2cure', 'artifacts', 'global'] as const,
   },
 
   // ── Audit Logs ─────────────────────────────────────────────────────────────

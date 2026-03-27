@@ -20,7 +20,7 @@ interface RateBucket {
 
 const DEFAULT_POLICY: PolicyConfig = {
   maxTokensPerRequest: 128_000,
-  maxRequestsPerMinutePerOrg: 120,
+  maxRequestsPerMinutePerOrg: 100,
   maxRequestsPerMinutePerUser: 30,
   blockedPatterns: [],
   contentFilters: true,

@@ -80,6 +80,10 @@ import {
   processCommandsInResponse,
   type CommandContext,
 } from '../services/ana-ri/command-executor.js';
+import { getFirecrawlQuotaStatus, recordSuccessfulFirecrawlScrape } from '../integrations/firecrawl/usage';
+import { routeEvidenceRequest } from '../services/research-intelligence';
+import { persistEvidence } from '../services/research-intelligence';
+import { normalizeEvidence } from '../services/research-intelligence';
 
 const router = Router();
 
@@ -111,6 +115,20 @@ const sendError = (
   details?: unknown,
   code?: string
 ) => res.status(status).json({ success: false, error: { message, code, details } });
+
+// Idempotency cache: key -> { response, timestamp }
+const idempotencyCache = new Map<string, { response: any; timestamp: number }>();
+const IDEMPOTENCY_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+// Periodic cleanup every 10 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of idempotencyCache.entries()) {
+    if (now - entry.timestamp > IDEMPOTENCY_TTL_MS) {
+      idempotencyCache.delete(key);
+    }
+  }
+}, 10 * 60 * 1000);
 
 // AI Gateway instance
 let gateway: ReturnType<typeof getGateway> | null = null;
@@ -164,6 +182,7 @@ router.post('/chat', async (req: Request, res: Response) => {
   try {
     const {
       message,
+      idempotency_key,
       thread_id,
       intent_lens,
       user_role,
@@ -173,7 +192,16 @@ router.post('/chat', async (req: Request, res: Response) => {
       conversation_history,
       authoring_context,
       preferred_provider,
+      useFirecrawl,
     } = req.body;
+
+    // Check idempotency cache — return cached response on client retry
+    if (idempotency_key && typeof idempotency_key === 'string') {
+      const cached = idempotencyCache.get(idempotency_key);
+      if (cached && Date.now() - cached.timestamp < IDEMPOTENCY_TTL_MS) {
+        return sendSuccess(res, { ...cached.response, _cached: true });
+      }
+    }
 
     if (!message || typeof message !== 'string') {
       return sendError(res, 400, 'Message is required', null, 'INVALID_MESSAGE');
@@ -243,6 +271,89 @@ router.post('/chat', async (req: Request, res: Response) => {
       authoringContextBlock = parts.join('\n');
     }
 
+    // Optional governed external evidence pre-routing (AnA-owned orchestration)
+    let evidenceUsage: any = {
+      firecrawlRequested: Boolean(useFirecrawl),
+      firecrawlUsed: false,
+      quotaConsumed: 0,
+      quotaRemaining: 0,
+      evidenceDocumentIds: [],
+      sourcesSummary: [],
+    };
+    if (useFirecrawl && orgId) {
+      const quota = await getFirecrawlQuotaStatus(Number(orgId));
+      if (!quota.allowed) {
+        return sendError(
+          res,
+          429,
+          'Workspace daily Firecrawl allowance is exhausted',
+          { quota },
+          'quota_exhausted'
+        );
+      }
+      evidenceUsage.quotaConsumed = 0;
+      evidenceUsage.quotaRemaining = quota.remaining;
+      const route = await routeEvidenceRequest(message, true).catch(() => null);
+      evidenceUsage.firecrawlUsed = route?.route === 'fallback_firecrawl';
+      evidenceUsage.sourcesSummary = [
+        route?.route || 'no_external_needed',
+        route?.decision?.reason || 'no decision rationale available',
+      ];
+
+      const docs = route?.data?.scrapedDocuments;
+      if (Array.isArray(docs) && docs.length > 0) {
+        const persistedIds: number[] = [];
+        for (const doc of docs) {
+          let id: number | null = null;
+          try {
+            const normalized = normalizeEvidence({
+              provider: 'firecrawl',
+              url: doc.url,
+              title: doc.title,
+              markdown: doc.markdown,
+              html: doc.html,
+              metadata: doc.metadata,
+            });
+            id = await persistEvidence({
+              tenantId: Number(orgId),
+              conversationId: thread_id || undefined,
+              sourceProvider: 'firecrawl',
+              acquisitionMethod: 'search+scrape',
+              url: normalized.url,
+              title: normalized.title,
+              rawMarkdown: normalized.payload?.markdown,
+              rawHtml: normalized.payload?.html,
+              metadata: {
+                route: route.route,
+                source: 'ana-ri-chat',
+                taxonomy: 'external_evidence_mode',
+                domain: normalized.domain,
+                canonicalUrl: normalized.canonicalUrl,
+                normalizedAt: normalized.normalizedAt,
+                regulatorySignals: normalized.regulatorySignals,
+              },
+            }).catch(() => null);
+          } catch (normalizationError: any) {
+            console.warn('[AnA RI] normalization_failed', normalizationError?.message);
+          }
+          if (id) persistedIds.push(id);
+        }
+
+        if (persistedIds.length > 0) {
+          evidenceUsage.evidenceDocumentIds = persistedIds;
+        }
+        const units = Number(route?.data?.quotaUnitsToCharge || docs.length || 0);
+        if (units > 0) {
+          await recordSuccessfulFirecrawlScrape(Number(orgId), units).catch(() => {});
+          const updatedQuota = await getFirecrawlQuotaStatus(Number(orgId)).catch(() => null);
+          if (updatedQuota) {
+            evidenceUsage.quotaConsumed = units;
+            evidenceUsage.quotaRemaining = updatedQuota.remaining;
+          }
+        }
+      }
+    }
+
     // Orchestrate — build the complete system prompt
     const orchestratorInput: OrchestratorInput = {
       message,
@@ -285,7 +396,10 @@ router.post('/chat', async (req: Request, res: Response) => {
     // Intelligence + memory + enrichment — run in PARALLEL for speed
     const chatProjectId = req.body.project_id || req.body.context?.projectId;
     const [chatIntelligencePrefix, chatMemoryResult, chatEnrichment] = await Promise.all([
-      getIntelligencePrefix(orgId ? Number(orgId) : undefined, chatProjectId).catch(() => ''),
+      getIntelligencePrefix(orgId ? Number(orgId) : undefined, chatProjectId).catch((err) => {
+        console.warn('[AnA RI] Intelligence prefix failed:', err?.message);
+        return '';
+      }),
       buildMemoryContextForChat({
         threadId: thread_id || undefined,
         organizationId: orgId ? Number(orgId) : undefined,
@@ -293,13 +407,19 @@ router.post('/chat', async (req: Request, res: Response) => {
         query: message,
         limitPerLayer: 4,
         maxChars: 3500,
-      }).catch(() => ({ memoryBlock: '', atoms: [], diagnostics: null })),
+      }).catch((err) => {
+        console.warn('[AnA RI] Memory context failed:', err?.message);
+        return { memoryBlock: '', atoms: [], diagnostics: null };
+      }),
       enrichContextForChat({
         message,
         projectId: chatProjectId,
         organizationId: orgId ? Number(orgId) : undefined,
         submissionType: orchestration.detectedSubmissionType || undefined,
-      }).catch(() => ({ block: '', sources: [] as string[] })),
+      }).catch((err) => {
+        console.warn('[AnA RI] Context enrichment failed:', err?.message);
+        return { block: '', sources: [] as string[] };
+      }),
     ]);
 
     const enrichedSystemPrompt =
@@ -326,7 +446,11 @@ router.post('/chat', async (req: Request, res: Response) => {
       }
     }
     if (!historyLoaded && conversation_history && Array.isArray(conversation_history)) {
-      for (const msg of conversation_history.slice(-20)) {
+      const MAX_HISTORY_MSGS = 20;
+      const MAX_MSG_LENGTH = 50000;
+      for (const msg of conversation_history.slice(-MAX_HISTORY_MSGS)) {
+        if (!msg.role || !['user', 'assistant'].includes(msg.role)) continue;
+        if (typeof msg.content !== 'string' || msg.content.length > MAX_MSG_LENGTH) continue;
         messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
       }
     }
@@ -336,8 +460,8 @@ router.post('/chat', async (req: Request, res: Response) => {
     if (fileIds && Array.isArray(fileIds) && fileIds.length > 0) {
       try {
         const fileResult = await dbPool.query(
-          `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1)`,
-          [fileIds]
+          `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1) AND organization_id = $2`,
+          [fileIds, orgId ? Number(orgId) : 0]
         );
         if (fileResult.rows.length > 0) {
           const fileContext = fileResult.rows
@@ -469,16 +593,18 @@ router.post('/chat', async (req: Request, res: Response) => {
     const projectIdForRim = req.body.project_id || req.body.context?.projectId;
     if (response.content && projectIdForRim) {
       void interceptChatResponse({
-        projectId: String(projectIdForRim),
-        organizationId: orgId ? Number(orgId) : undefined,
-        threadId: resolvedThreadId || undefined,
-        userMessage: message,
+        organizationId: orgId ? Number(orgId) : 0,
+        projectId: projectIdForRim ? Number(projectIdForRim) : 0,
+        userId: typeof userId === 'number' ? userId : undefined,
         assistantMessage: response.content,
-        submissionType: orchestration.detectedSubmissionType || undefined,
+        claimCount: 0,
+        supportedClaimRate: 0.5,
+        model: response.model || 'unknown',
+        provider: response.provider || 'unknown',
       }).catch(() => {});
     }
 
-    return sendSuccess(res, {
+    const responsePayload = {
       response: response.content,
       thread_id: resolvedThreadId,
       orchestration: {
@@ -508,7 +634,19 @@ router.post('/chat', async (req: Request, res: Response) => {
       provider: response.provider,
       model: response.model,
       usage: response.usage,
-    });
+      persistenceFailed,
+      _meta: {
+        ...(persistenceFailed && { persistenceWarning: 'Messages may not have been saved' }),
+      },
+      evidenceUsage,
+    };
+
+    // Cache response for idempotency on client retry
+    if (idempotency_key && typeof idempotency_key === 'string') {
+      idempotencyCache.set(idempotency_key, { response: responsePayload, timestamp: Date.now() });
+    }
+
+    return sendSuccess(res, responsePayload);
   } catch (error: any) {
     console.error('[AnA RI] Chat error:', error);
     void logKernelDecision({
@@ -619,7 +757,10 @@ router.post('/stream', async (req: Request, res: Response) => {
 
     // Intelligence + memory + enrichment — run in PARALLEL for speed
     const [intelligencePrefix, memoryResult, enrichment] = await Promise.all([
-      getIntelligencePrefix(orgId ? Number(orgId) : undefined, project_id).catch(() => ''),
+      getIntelligencePrefix(orgId ? Number(orgId) : undefined, project_id).catch((err) => {
+        console.warn('[AnA RI] Intelligence prefix failed:', err?.message);
+        return '';
+      }),
       buildMemoryContextForChat({
         threadId: thread_id || undefined,
         organizationId: orgId ? Number(orgId) : undefined,
@@ -627,13 +768,19 @@ router.post('/stream', async (req: Request, res: Response) => {
         query: message,
         limitPerLayer: 4,
         maxChars: 3500,
-      }).catch(() => ({ memoryBlock: '', atoms: [], diagnostics: null })),
+      }).catch((err) => {
+        console.warn('[AnA RI] Memory context failed:', err?.message);
+        return { memoryBlock: '', atoms: [], diagnostics: null };
+      }),
       enrichContextForChat({
         message,
         projectId: project_id,
         organizationId: orgId ? Number(orgId) : undefined,
         submissionType: orchestration.detectedSubmissionType || undefined,
-      }).catch(() => ({ block: '', sources: [] as string[] })),
+      }).catch((err) => {
+        console.warn('[AnA RI] Context enrichment failed:', err?.message);
+        return { block: '', sources: [] as string[] };
+      }),
     ]);
 
     const memoryBlock = memoryResult.memoryBlock;
@@ -650,6 +797,7 @@ router.post('/stream', async (req: Request, res: Response) => {
 
     // Thread resolution (before message building so we can load server history)
     let threadId = thread_id;
+    let persistenceFailed = false;
     if (orgId) {
       try {
         threadId = await getOrCreateThread(
@@ -660,6 +808,7 @@ router.post('/stream', async (req: Request, res: Response) => {
         await saveMessage(threadId, 'user', message);
       } catch (e: any) {
         console.error('[AnA RI Stream] Thread persistence failed:', e?.message);
+        persistenceFailed = true;
       }
     }
 
@@ -683,7 +832,11 @@ router.post('/stream', async (req: Request, res: Response) => {
       }
     }
     if (!streamHistoryLoaded && conversation_history && Array.isArray(conversation_history)) {
-      for (const msg of conversation_history.slice(-20)) {
+      const MAX_HISTORY_MSGS = 20;
+      const MAX_MSG_LENGTH = 50000;
+      for (const msg of conversation_history.slice(-MAX_HISTORY_MSGS)) {
+        if (!msg.role || !['user', 'assistant'].includes(msg.role)) continue;
+        if (typeof msg.content !== 'string' || msg.content.length > MAX_MSG_LENGTH) continue;
         messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
       }
     }
@@ -693,8 +846,8 @@ router.post('/stream', async (req: Request, res: Response) => {
     if (streamFileIds && Array.isArray(streamFileIds) && streamFileIds.length > 0) {
       try {
         const fileResult = await dbPool.query(
-          `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1)`,
-          [streamFileIds]
+          `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1) AND organization_id = $2`,
+          [streamFileIds, orgId ? Number(orgId) : 0]
         );
         if (fileResult.rows.length > 0) {
           const fileContext = fileResult.rows
@@ -783,18 +936,21 @@ router.post('/stream', async (req: Request, res: Response) => {
         await saveMessage(threadId, 'assistant', fullContent);
       } catch (e: any) {
         console.error('[AnA RI Stream] Assistant persist failed:', e?.message);
+        persistenceFailed = true;
       }
     }
 
     // RIM interception — capture intelligence signals (non-blocking)
     if (fullContent && project_id) {
       void interceptChatResponse({
-        projectId: String(project_id),
-        organizationId: orgId ? Number(orgId) : undefined,
-        threadId: threadId || undefined,
-        userMessage: message,
+        organizationId: orgId ? Number(orgId) : 0,
+        projectId: project_id ? Number(project_id) : 0,
+        userId: typeof userId === 'number' ? userId : undefined,
         assistantMessage: fullContent,
-        submissionType: orchestration.detectedSubmissionType || undefined,
+        claimCount: 0,
+        supportedClaimRate: 0.5,
+        model: gwResponse.model || 'unknown',
+        provider: gwResponse.provider || 'unknown',
       }).catch(() => {});
     }
 
@@ -839,6 +995,11 @@ router.post('/stream', async (req: Request, res: Response) => {
       } catch (e: any) {
         console.warn('[AnA RI Stream] Command executor failed:', e?.message);
       }
+    }
+
+    // Warn client if thread persistence failed
+    if (persistenceFailed) {
+      res.write(`data: ${JSON.stringify({ type: 'warning', message: 'Thread persistence failed' })}\n\n`);
     }
 
     // Send done event

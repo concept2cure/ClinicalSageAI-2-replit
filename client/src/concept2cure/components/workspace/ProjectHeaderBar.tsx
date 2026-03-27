@@ -1,19 +1,21 @@
 /**
  * ProjectHeaderBar — Claude.ai-style persistent project context strip
  *
- * Sits at the top of the main content area when a project is active.
- * Shows: submission type badge, project name, readiness score, config button.
- *
- * Mirrors claude.ai's project indicator in the chat header.
+ * Per .claude/skills/project-design.md §3:
+ * Shows submission type badge, project name, product name, readiness score,
+ * target agency, and config button. Persistent at top of chat area.
  */
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Settings2, ChevronDown } from 'lucide-react';
+import { Settings2, ChevronDown, Target } from 'lucide-react';
 
-// ─── Submission type badge config (matches ProjectSwitcher) ─────────────────
+// ─── Submission type badge config (aligned to spec §3) ──────────────────────
 
-const SUBMISSION_BADGE: Record<string, { label: string; color: string; bg: string }> = {
+const SUBMISSION_BADGE: Record<
+  string,
+  { label: string; color: string; bg: string }
+> = {
   '510K': { label: '510(k)', color: 'text-blue-700', bg: 'bg-blue-100' },
   IND: { label: 'IND', color: 'text-purple-700', bg: 'bg-purple-100' },
   NDA: { label: 'NDA', color: 'text-indigo-700', bg: 'bg-indigo-100' },
@@ -25,9 +27,13 @@ const SUBMISSION_BADGE: Record<string, { label: string; color: string; bg: strin
   IVDR: { label: 'IVDR', color: 'text-green-700', bg: 'bg-green-100' },
 };
 
-const FALLBACK_BADGE = { label: 'Project', color: 'text-zinc-600', bg: 'bg-zinc-100' };
+const FALLBACK_BADGE = {
+  label: 'Project',
+  color: 'text-zinc-600',
+  bg: 'bg-zinc-100',
+};
 
-// ─── Readiness color ────────────────────────────────────────────────────────
+// ─── Readiness score styling ─────────────────────────────────────────────────
 
 function readinessColor(score: number): string {
   if (score >= 80) return 'text-emerald-600';
@@ -46,6 +52,8 @@ function readinessBg(score: number): string {
 export interface ProjectHeaderBarProps {
   projectName: string;
   submissionType: string;
+  productName?: string;
+  targetAgency?: string;
   readinessScore?: number;
   onOpenConfig?: () => void;
   onSwitchProject?: () => void;
@@ -55,6 +63,8 @@ export interface ProjectHeaderBarProps {
 export const ProjectHeaderBar: React.FC<ProjectHeaderBarProps> = ({
   projectName,
   submissionType,
+  productName,
+  targetAgency,
   readinessScore,
   onOpenConfig,
   onSwitchProject,
@@ -72,7 +82,7 @@ export const ProjectHeaderBar: React.FC<ProjectHeaderBarProps> = ({
       {/* Submission type badge */}
       <span
         className={cn(
-          'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold tracking-wide',
+          'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold tracking-wide flex-shrink-0',
           badge.bg,
           badge.color
         )}
@@ -83,16 +93,23 @@ export const ProjectHeaderBar: React.FC<ProjectHeaderBarProps> = ({
       {/* Project name — clickable to open config */}
       <button
         onClick={onOpenConfig}
-        className="flex items-center gap-1 text-sm font-medium text-zinc-900 hover:text-zinc-600 transition-colors truncate max-w-[300px]"
+        className="flex items-center gap-1.5 min-w-0 hover:opacity-70 transition-opacity"
         title={projectName}
       >
-        {projectName}
+        <span className="text-sm font-medium text-zinc-900 truncate max-w-[240px]">
+          {projectName}
+        </span>
+        {productName && (
+          <span className="text-[11px] text-zinc-400 truncate max-w-[160px] hidden sm:inline">
+            — {productName}
+          </span>
+        )}
       </button>
 
-      {/* Project switcher dropdown trigger */}
+      {/* Project switcher dropdown */}
       <button
         onClick={onSwitchProject}
-        className="p-0.5 rounded text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors"
+        className="p-0.5 rounded text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors flex-shrink-0"
         aria-label="Switch project"
         title="Switch project"
       >
@@ -100,6 +117,14 @@ export const ProjectHeaderBar: React.FC<ProjectHeaderBarProps> = ({
       </button>
 
       <div className="flex-1" />
+
+      {/* Target agency indicator */}
+      {targetAgency && (
+        <div className="hidden md:flex items-center gap-1 text-[11px] text-zinc-500">
+          <Target className="w-3 h-3" />
+          {targetAgency}
+        </div>
+      )}
 
       {/* Readiness score */}
       {readinessScore !== undefined && readinessScore > 0 && (
@@ -110,7 +135,12 @@ export const ProjectHeaderBar: React.FC<ProjectHeaderBarProps> = ({
           )}
         >
           <span className="text-zinc-500">Readiness</span>
-          <span className={cn('tabular-nums font-semibold', readinessColor(readinessScore))}>
+          <span
+            className={cn(
+              'tabular-nums font-semibold',
+              readinessColor(readinessScore)
+            )}
+          >
             {readinessScore}%
           </span>
         </div>
@@ -119,7 +149,7 @@ export const ProjectHeaderBar: React.FC<ProjectHeaderBarProps> = ({
       {/* Config button */}
       <button
         onClick={onOpenConfig}
-        className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors"
+        className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors flex-shrink-0"
         aria-label="Project settings"
         title="Project settings"
       >

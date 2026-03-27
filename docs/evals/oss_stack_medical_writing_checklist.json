@@ -1,0 +1,57 @@
+{
+  "version": "1.0.0",
+  "domains": {
+    "fda_510k": {
+      "required_sections": [
+        "device_description",
+        "substantial_equivalence",
+        "performance_testing",
+        "labeling"
+      ],
+      "required_quality_controls": [
+        "citation_traceability",
+        "human_review_gate",
+        "governed_export"
+      ]
+    },
+    "fda_pma": {
+      "required_sections": [
+        "clinical_summary",
+        "benefit_risk",
+        "safety_effectiveness",
+        "post_market_plan"
+      ],
+      "required_quality_controls": [
+        "citation_traceability",
+        "human_review_gate",
+        "approval_workflow"
+      ]
+    },
+    "eu_cer": {
+      "required_sections": [
+        "clinical_background",
+        "state_of_art",
+        "clinical_data_appraisal",
+        "conclusions"
+      ],
+      "required_quality_controls": [
+        "citation_traceability",
+        "methodological_consistency",
+        "human_review_gate"
+      ]
+    },
+    "ectd": {
+      "required_sections": [
+        "module_mapping",
+        "regional_requirements",
+        "metadata_index",
+        "submission_readiness"
+      ],
+      "required_quality_controls": [
+        "governed_export",
+        "auditability",
+        "human_review_gate"
+      ]
+    }
+  }
+}

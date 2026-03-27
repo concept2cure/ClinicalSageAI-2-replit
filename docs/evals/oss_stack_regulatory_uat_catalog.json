@@ -1,0 +1,47 @@
+{
+  "version": "1.0.0",
+  "tasks": [
+    {
+      "id": "fda_510k_substantial_equivalence_summary",
+      "domain": "fda_510k",
+      "persona": "medical_writer",
+      "workflow": "drafting",
+      "description": "Draft substantial equivalence summary with citation-backed claim mapping"
+    },
+    {
+      "id": "fda_510k_review_gate",
+      "domain": "fda_510k",
+      "persona": "regulatory_reviewer",
+      "workflow": "review_export_gate",
+      "description": "Validate human-review gate before governed export"
+    },
+    {
+      "id": "pma_clinical_evidence_trace",
+      "domain": "fda_pma",
+      "persona": "medical_writer",
+      "workflow": "evidence_traceability",
+      "description": "Assemble PMA clinical evidence summary with page-level provenance"
+    },
+    {
+      "id": "cer_section_harmonization",
+      "domain": "eu_cer",
+      "persona": "medical_writer",
+      "workflow": "drafting",
+      "description": "Draft CER section updates while preserving citation integrity"
+    },
+    {
+      "id": "ectd_m1_export_readiness",
+      "domain": "ectd",
+      "persona": "submission_manager",
+      "workflow": "submission_packaging",
+      "description": "Validate module placement and governed export readiness for eCTD"
+    },
+    {
+      "id": "policy_exception_audit",
+      "domain": "cross_domain",
+      "persona": "qa_compliance",
+      "workflow": "policy_enforcement",
+      "description": "Review deny/review-required policy decisions and audit links"
+    }
+  ]
+}

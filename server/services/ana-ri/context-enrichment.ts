@@ -42,7 +42,7 @@ interface SlashCommand {
 }
 
 function detectSlashCommand(message: string): SlashCommand | null {
-  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|help|sap|power|dose|defensibility|design|safety|cmc|csr|device|ectd|audit|amend|review|memo|brief|strategy|freeze|sign|scan|checklist|submit|workflow|status|narrative|report|iss|ise|ib|smpc|rmp|uspi)\b\s*(.*)/i);
+  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|help|sap|power|dose|defensibility|design|safety|cmc|csr|device|ectd|audit|amend|review|memo|brief|strategy|freeze|sign|scan|checklist|submit|workflow|status|narrative|report|iss|ise|ib|smpc|rmp|uspi|haq|ask)\b\s*(.*)/i);
   if (!match) return null;
   return { command: match[1].toLowerCase(), args: match[2].trim() };
 }
@@ -119,6 +119,13 @@ const CMC_TRIGGERS = [
 const CSR_TRIGGERS = [
   /\b(?:csr|clinical study report|study report|ich e3)\b/i,
   /\b(?:efficacy.*result|safety.*result|disposition|demographics|baseline)\b/i,
+];
+
+const HAQ_TRIGGERS = [
+  /\b(?:haq|health authority question|information request)\b/i,
+  /\b(?:fda question|ema question|reviewer question|agency question)\b/i,
+  /\b(?:respond to.*question|draft.*response|answer.*agency)\b/i,
+  /\b(?:rtq|request for information|day \d+ (?:question|list))\b/i,
 ];
 
 const DEVICE_TRIGGERS = [
@@ -607,6 +614,8 @@ export async function enrichContextForChat(params: {
       smpc: () => enrichWithSafety(projectId),
       rmp: () => enrichWithSafety(projectId),
       uspi: () => enrichWithSafety(projectId),
+      haq: () => Promise.all([enrichWithCRLRTF(projectId), enrichWithPrecedents(projectId), enrichWithClaims(projectId)]).then(r => r.join('')),
+      ask: () => enrichWithKnowledgeSearch(slash.args || message, projectId),
       workflow: () => submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
       status: () => Promise.all([
         enrichWithReadiness(projectId, organizationId),
@@ -701,6 +710,7 @@ export async function enrichContextForChat(params: {
       { test: CSR_TRIGGERS, fn: () => enrichWithCSR(projectId), name: 'csr' },
       { test: DEVICE_TRIGGERS, fn: () => enrichWithDevice(projectId), name: 'device' },
       { test: ECTD_TRIGGERS, fn: () => enrichWithECTD(projectId), name: 'ectd' },
+      { test: HAQ_TRIGGERS, fn: () => Promise.all([enrichWithCRLRTF(projectId), enrichWithPrecedents(projectId)]).then(r => r.join('')), name: 'haq' },
     ];
 
     const matchedFns = triggers.filter(t => matchesTriggers(message, t.test));

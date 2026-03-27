@@ -22,6 +22,7 @@ jobs:
   semgrep:
     name: Analyze (Semgrep)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     container:
       image: semgrep/semgrep:1
     steps:
@@ -34,6 +35,7 @@ jobs:
           set +e
           semgrep scan \
             --config=auto \
+            --metrics=off \
             --sarif \
             --output=semgrep.sarif \
             --error
@@ -46,6 +48,14 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: semgrep.sarif
+
+      - name: Upload SARIF artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-sarif
+          path: semgrep.sarif
+          if-no-files-found: error
 
       - name: Fail job on Semgrep findings
         if: steps.semgrep_scan.outputs.exit_code != '0'

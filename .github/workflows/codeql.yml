@@ -20,15 +20,18 @@ concurrency:
 
 jobs:
   analyze:
-    name: Analyze (CodeQL)
+    name: Analyze (CodeQL ${{ matrix.language }})
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        language: ['javascript-typescript']
+        language: ['javascript-typescript', 'python']
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3

@@ -1,0 +1,7 @@
+extends: existence
+message: "Phrase '%s' is ambiguous; use explicit evidence attribution."
+level: warning
+ignorecase: true
+tokens:
+  - data on file
+  - seems to

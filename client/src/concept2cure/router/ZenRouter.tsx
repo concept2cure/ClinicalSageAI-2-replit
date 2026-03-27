@@ -18,7 +18,7 @@
  */
 
 import React, { useEffect, lazy, Suspense } from 'react';
-import { Switch, Route, useLocation, Redirect } from 'wouter';
+import { Switch, Route, useLocation, useRoute, Redirect } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ZenLogin, ZenSignup, ZenAuthLayout, ZenOnboarding } from '../auth';
 import { ZenApp } from '../ZenApp';

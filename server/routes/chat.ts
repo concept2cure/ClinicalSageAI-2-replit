@@ -994,6 +994,22 @@ router.get('/threads', async (req: Request, res: Response) => {
 router.get('/threads/:threadId/messages', async (req: Request, res: Response) => {
   try {
     const { threadId } = req.params;
+    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+
+    if (!orgId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+
+    // Verify thread belongs to org before returning messages
+    const threadCheck = await pool.query(
+      `SELECT id FROM ai_threads WHERE id = $1 AND organization_id = $2`,
+      [threadId, orgId]
+    );
+
+    if (threadCheck.rows.length === 0) {
+      return res.status(404).json({ messages: [], error: 'Thread not found' });
+    }
+
     const limit = Math.min(parseInt((req.query.limit as string) || '30', 10), 100);
     const messages = await getThreadMessages(threadId);
     res.json({ messages: messages.slice(-limit) });
@@ -1010,9 +1026,19 @@ router.get('/threads/:threadId/messages', async (req: Request, res: Response) =>
 router.get('/thread/:threadId', async (req: Request, res: Response) => {
   try {
     const { threadId } = req.params;
-    const threadResult = await pool.query('SELECT id, created_at FROM chat_threads WHERE id = $1', [
-      threadId,
-    ]);
+    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+
+    if (!orgId) {
+      return res.status(401).json({
+        error: 'Organization context required',
+        code: 'ORG_CONTEXT_REQUIRED',
+      });
+    }
+
+    const threadResult = await pool.query(
+      'SELECT id, created_at FROM chat_threads WHERE id = $1 AND organization_id = $2',
+      [threadId, orgId]
+    );
 
     if (threadResult.rows.length === 0) {
       return res.status(404).json({
@@ -1038,13 +1064,78 @@ router.get('/thread/:threadId', async (req: Request, res: Response) => {
 });
 
 /**
+ * PATCH /api/chat/thread/:threadId
+ * Move a conversation to a different project or update thread metadata (E6)
+ */
+router.patch('/thread/:threadId', async (req: Request, res: Response) => {
+  try {
+    const { threadId } = req.params;
+    const { project_id, title } = req.body;
+    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+
+    if (!orgId) {
+      return res.status(401).json({ ok: false, error: 'Organization context required' });
+    }
+
+    // Verify thread exists and belongs to org
+    const threadCheck = await pool.query(
+      `SELECT id FROM ai_threads WHERE id = $1 AND organization_id = $2`,
+      [threadId, orgId]
+    );
+
+    if (threadCheck.rows.length === 0) {
+      return res.status(404).json({ ok: false, error: 'Thread not found' });
+    }
+
+    // Build dynamic SET clause
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramIdx = 1;
+
+    if (project_id !== undefined) {
+      updates.push(`project_id = $${paramIdx++}`);
+      values.push(project_id || null);
+    }
+    if (title !== undefined) {
+      updates.push(`title = $${paramIdx++}`);
+      values.push(title);
+    }
+    updates.push(`updated_at = NOW()`);
+
+    values.push(threadId);
+
+    await pool.query(
+      `UPDATE ai_threads SET ${updates.join(', ')} WHERE id = $${paramIdx}`,
+      values
+    );
+
+    res.json({ ok: true, threadId, project_id: project_id ?? undefined });
+  } catch (error: any) {
+    console.error('[AnA] Patch thread error:', error);
+    res.status(500).json({ ok: false, error: 'Failed to update thread' });
+  }
+});
+
+/**
  * DELETE /api/chat/thread/:threadId
  * Delete a conversation thread from database
  */
 router.delete('/thread/:threadId', async (req: Request, res: Response) => {
   try {
     const { threadId } = req.params;
-    const result = await pool.query('DELETE FROM chat_threads WHERE id = $1', [threadId]);
+    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+
+    if (!orgId) {
+      return res.status(401).json({
+        error: 'Organization context required',
+        code: 'ORG_CONTEXT_REQUIRED',
+      });
+    }
+
+    const result = await pool.query(
+      'DELETE FROM chat_threads WHERE id = $1 AND organization_id = $2',
+      [threadId, orgId]
+    );
     const deleted = (result.rowCount || 0) > 0;
 
     res.json({

@@ -27,9 +27,33 @@ const { mockGovernedConsequence } = vi.hoisted(() => ({
 }));
 
 vi.mock('../../server/export/renderers', () => ({
-  renderPdfBuffersFor510k: vi.fn(),
-  renderPdfBuffersForPma: vi.fn(),
-  renderPdfBuffersForCer: vi.fn(),
+  renderPdfBuffersFor510k: vi.fn(async () => ({
+    coverLetter: Buffer.from('cover'),
+    summary: Buffer.from('summary'),
+    deviceDescription: Buffer.from('device'),
+    seDiscussion: Buffer.from('se'),
+    performanceTesting: Buffer.from('perf'),
+    labeling: Buffer.from('label'),
+  })),
+  renderPdfBuffersForPma: vi.fn(async () => ({
+    summaryInfo: Buffer.from('summaryInfo'),
+    nonclinical: Buffer.from('nonclinical'),
+    clinical: Buffer.from('clinical'),
+    manufacturing: Buffer.from('manufacturing'),
+    labeling: Buffer.from('labeling'),
+    riskBenefit: Buffer.from('risk'),
+    postApproval: Buffer.from('post'),
+  })),
+  renderPdfBuffersForCer: vi.fn(async () => ({
+    stateOfArt: Buffer.from('soa'),
+    devicePurpose: Buffer.from('purpose'),
+    clinicalDataSet: Buffer.from('dataset'),
+    appraisal: Buffer.from('appraisal'),
+    benefitRisk: Buffer.from('benefit'),
+    gsprMapping: Buffer.from('gspr'),
+    pmsPlan: Buffer.from('pms'),
+    conclusions: Buffer.from('conclusions'),
+  })),
   renderCombinedPdf: mockPdf,
   renderCombinedDocx: mockDocx,
 }));
@@ -187,6 +211,45 @@ describe('CERV2 export governance gate', () => {
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'GOVERNED_EXPORT_FAILED' }));
+    expect(res.send).not.toHaveBeenCalled();
+  });
+
+  it('returns governed consequence for ZIP export (no direct attachment streaming)', async () => {
+    process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW = 'false';
+
+    const req = createMockRequest({
+      body: {
+        ...baseBody(),
+        attachments: [{ filename: 'table.csv', buffer: Buffer.from('a,b').toString('base64') }],
+      },
+    }) as any;
+    req.userRole = 'editor';
+    req.userId = 56;
+    req.header = (name: string) => (name === 'x-organization-id' ? '1' : undefined);
+    const res = createMockResponse();
+
+    const handler = getHandler('/zip');
+    await handler(req, res);
+
+    expect(mockGovernedConsequence).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceType: 'export_zip',
+        backendRoute: 'POST /api/cerv2/export/zip',
+        mimeType: 'application/zip',
+      })
+    );
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        governed: true,
+        source_type: 'export_zip',
+        provenance_ref: 'prov_123',
+        audit_ref: 'audit_123',
+        downloadable_output_ref: expect.objectContaining({
+          encoding: 'base64',
+          mime_type: 'application/zip',
+        }),
+      })
+    );
     expect(res.send).not.toHaveBeenCalled();
   });
 });

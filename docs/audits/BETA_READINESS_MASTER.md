@@ -5,7 +5,7 @@ Branch baseline: `concept2cure-v2` HEAD after merged PR #279 (as present in this
 
 ## Executive summary
 PR #279 closed an important blocker: there is now a governed export persistence path via the Artifact Compute Plane writeback flow (`registerArtifactWithGovernance`) with provenance + audit references persisted on job completion.  
-However, broad beta is still **NO-GO** because key beta-visible export entry points (notably CERV2 `/api/cerv2/export/*` and eSTAR `/api/510k/estar/build`) still stream download artifacts without guaranteed governed artifact persistence in the core artifact/version/provenance chain.
+As of the current route implementation, `POST /api/510k/estar/build` and CERV2 `POST /api/cerv2/export/pdf|docx|zip` all return governed export consequence payloads with artifact/provenance/audit references rather than direct dead-end streams. Broad beta readiness should now be evaluated on remaining operational gates (coverage tests, policy enforcement, and release controls), not on those route-family bypass claims.
 
 ## What changed (stale statements corrected)
 
@@ -17,8 +17,8 @@ However, broad beta is still **NO-GO** because key beta-visible export entry poi
 - This closes the “no governed path exists anywhere” claim.
 
 ### Corrected: “CERV2 PDF/DOCX are all dead-end downloads”
-- **Still true for direct CERV2 export endpoints** (`/api/cerv2/export/pdf`, `/docx`, `/zip`) because they return files directly.
-- **No longer universally true across the platform** because compute-plane governed export can persist to governed artifacts.
+- **No longer true.**
+- CERV2 `POST /api/cerv2/export/pdf|docx|zip` now use governed consequence responses.
 
 ## Updated blocker status
 
@@ -27,18 +27,18 @@ However, broad beta is still **NO-GO** because key beta-visible export entry poi
 2. Persisted consequence now includes artifact id/status/version + provenance/audit references in compute job result summary.
 
 ### Still open blockers (remaining only)
-1. **CERV2 direct export bypass:** `/api/cerv2/export/*` remains download-stream oriented with no mandatory governed artifact persistence.
-2. **eSTAR build bypass:** `/api/510k/estar/build` produces zip stream; no documented concept2cure artifact/version/provenance writeback in this path.
-3. **Path consistency gap:** beta users can still export through mixed paths (some governed, some non-governed), creating truth inconsistency.
-4. **Go/no-go risk:** until primary 510(k)/eSTAR UX routes converge on governed persistence or enforce a governed bridge, broad beta remains no-go.
+1. **Coverage-proof gap:** automated e2e route tests proving governed consequence persistence for eSTAR + CERV2 export surfaces are still required.
+2. **Policy enforcement gap:** production policy must explicitly block any future export path that does not produce governed consequence.
+3. **Path consistency risk:** new/legacy routes could drift unless governance coverage checks are codified in CI.
+4. **Go/no-go risk:** broad beta should remain no-go until governance coverage tests + release gate controls are active.
 
 ## Go / no-go recommendation (reassessed)
 - **Recommendation:** **NO-GO for broad beta** (unchanged).
-- **Reason:** major flows now have governed capability, but default/obvious export surfaces still allow non-governed dead-end outputs for 510(k)/eSTAR/CERV2.
-- **Conditional partial-go:** acceptable for controlled/internal beta if launch guidance hard-routes users through compute/governed export path and blocks unsupported direct exports.
+- **Reason:** route-level governed persistence now exists for primary eSTAR/CERV2 exports, but release evidence is still incomplete (policy/coverage gating not yet proven in CI/e2e).
+- **Conditional partial-go:** acceptable for controlled/internal beta if governed consequence coverage tests and policy checks are enforced for all beta-visible export surfaces.
 
 ## Next sprint priorities (post-PR #279)
-1. Add governed writeback option to `/api/cerv2/export/pdf|docx|zip` (or enforce handoff to compute writeback).
-2. Add governed persistence bridge for `/api/510k/estar/build` output.
-3. Add route-level policy: production mode should reject export paths that cannot produce governed artifact consequence.
-4. Add e2e tests that prove artifact/version/provenance/audit records for 510(k) and eSTAR export UX paths.
+1. Add route-level policy: production mode must reject export paths that cannot produce governed artifact consequence.
+2. Add e2e tests that prove artifact/version/provenance/audit records for eSTAR + CERV2 export UX paths.
+3. Add CI governance coverage checks to prevent route drift/regression.
+4. Publish an updated launch gate packet with governed export evidence snapshots.

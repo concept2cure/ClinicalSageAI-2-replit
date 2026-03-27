@@ -16,6 +16,7 @@ import { authMiddleware } from '../auth';
 import { getIntelligencePrefix } from '../services/lumen-context-builder.js';
 import { getGateway } from '../services/ai-gateway/gateway.js';
 import ragService from '../services/biotechRagService.js';
+import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
 
 // Initialize OpenAI for real AI generation
 let openai: OpenAI | null = null;
@@ -278,6 +279,19 @@ router.post(
       }
 
       const { docType, sectionId, fieldId, context } = validation.data;
+
+      // Trace: generation_start
+      const traceId = createTraceId();
+      const sourceSystem = docType === 'cerv2_510k' ? 'cerv2_510k' : docType === 'cerv2_pma' ? 'cerv2_pma' : 'cerv2_cer';
+      emitTraceEvent({
+        traceId,
+        timestamp: new Date().toISOString(),
+        event: 'generation_start',
+        sourceSystem: sourceSystem as any,
+        projectId: (req as any).body?.projectId,
+        userId: (req as any).userId,
+        metadata: { docType, sectionId, fieldId, endpoint: '/suggest' },
+      });
 
       // Build a meaningful query for RAG retrieval
       const deviceInfo = context?.deviceName || 'medical device';

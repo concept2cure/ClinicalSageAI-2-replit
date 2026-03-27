@@ -129,11 +129,10 @@ interface TraceabilityClaim {
 // ---------------------------------------------------------------------------
 
 const TAB_LABELS: { key: TabKey; label: string }[] = [
-  { key: 'quality', label: 'Quality Center' },
+  { key: 'quality', label: 'Quality' },
   { key: 'compliance', label: 'Compliance' },
-  { key: 'snowglobe', label: 'AnA Predictions' },
-  { key: 'readiness', label: 'Readiness Score' },
-  { key: 'evidence', label: 'Evidence Confidence' },
+  { key: 'readiness', label: 'Readiness' },
+  { key: 'evidence', label: 'Evidence' },
   { key: 'audit', label: 'Audit Trail' },
   { key: 'traceability', label: 'Traceability' },
 ];
@@ -150,49 +149,8 @@ const AGENCY_MATRIX: AgencyRequirement[] = [
   { requirement: 'QOS per ICH M4Q format', fda: true, ema: true, pmda: true },
 ];
 
-// AnA SnowGlobe prediction config is scenario data, not user-created content
-const ANA_PREDICTION = {
-  trialName: 'ONCO-HORIZON Phase 3: Anti-PD-L1 + VEGF Inhibitor in Advanced HCC',
-  successProbability: 0.68,
-  riskFactors: [
-    { factor: 'Enrollment pace below target in Asia-Pacific sites', impact: 'high' as const },
-    { factor: 'OS endpoint requires extended follow-up; interim futility risk', impact: 'high' as const },
-    { factor: 'Competitor readout expected Q4 2026 may shift standard of care', impact: 'medium' as const },
-    { factor: 'Biomarker-defined subgroup may dilute ITT effect size', impact: 'medium' as const },
-    { factor: 'Manufacturing scale-up for combination product on track', impact: 'low' as const },
-  ],
-  monteCarlo: {
-    simulations: 10000,
-    sampleSize: 480,
-    power: 0.84,
-    medianOS: '14.2 months',
-    ciLower: '12.1 months',
-    ciUpper: '16.8 months',
-    hazardRatio: 0.72,
-  },
-  endpoints: [
-    { name: 'Overall Survival (OS)', type: 'Primary', recommendation: 'Retain as co-primary' },
-    { name: 'Progression-Free Survival (PFS)', type: 'Co-primary', recommendation: 'Retain as co-primary' },
-    { name: 'Objective Response Rate (ORR)', type: 'Secondary', recommendation: 'Add as key secondary for accelerated approval path' },
-    { name: 'Duration of Response (DOR)', type: 'Secondary', recommendation: 'Include per FDA oncology guidance' },
-  ],
-  protocolFindings: [
-    'Consider adaptive enrichment design to address biomarker subgroup uncertainty',
-    'Add pre-specified interim analysis at 60% information fraction',
-    'Expand Asia-Pacific site network by 3\u20134 centers to mitigate enrollment risk',
-    'Align PFS assessment schedule with RECIST 1.1 every 8 weeks',
-  ],
-};
-
-// Default simulation engines (SnowGlobe engines are fixed capabilities, not user data)
-const DEFAULT_SIMULATIONS: SimulationEngine[] = [
-  { name: 'Agency Screen', description: 'Simulates initial filing review and refuse-to-file risk', riskScore: 18, findings: ['Cover letter complete', 'All required forms present', 'eCTD structure valid'], status: 'completed' },
-  { name: 'Reviewer Attack', description: 'Predicts likely reviewer questions and challenge areas', riskScore: 42, findings: ['Efficacy endpoint justification may be questioned', 'Comparator selection rationale needed', 'Subgroup analysis inconsistencies in Module 2.7'], status: 'completed' },
-  { name: 'Audit Inspection', description: 'Simulates GCP inspection readiness and audit vulnerability', riskScore: 25, findings: ['Site monitoring reports accessible', 'Protocol deviation log up to date', 'Minor: 2 CRF queries still open'], status: 'completed' },
-  { name: 'Route Timing', description: 'Models regulatory pathway timing and milestone risks', riskScore: 35, findings: ['Priority Review designation likely (68% probability)', 'PDUFA date projected: Q4 2026', 'Advisory committee meeting probable'], status: 'completed' },
-  { name: 'Evidence Sufficiency', description: 'Evaluates whether evidence package meets approval threshold', riskScore: 31, findings: ['Primary endpoint met with p<0.001', 'Long-term safety data adequate (24-month)', 'Real-world evidence supplements trial data'], status: 'completed' },
-  { name: 'Collaboration Fragility', description: 'Identifies team bottlenecks and knowledge concentration risks', riskScore: 48, findings: ['CMC section authored by single expert', 'Clinical pharmacology section awaiting final review', 'No backup author for nonclinical overview'], status: 'completed' },
-];
+// [Phase 7] AnA Predictions / SnowGlobe removed from Review tabs.
+// Constants and view function removed. Feature available as standalone specialist tool.
 
 // ---------------------------------------------------------------------------
 // Derive helpers — transform real API data into view models
@@ -257,7 +215,7 @@ function deriveReadinessModules(artifacts: any[], projects: any[]): ReadinessMod
   const completenessProj = projects.length > 0 ? Math.round((projectCompleted / projects.length) * 100) : 0;
 
   return [
-    { module: 'Documents', name: 'Approved Documents', completeness: completenessDoc, status: completenessDoc >= 85 ? 'ready' : completenessDoc >= 50 ? 'in-progress' : 'blocked' },
+    { module: 'Artifacts', name: 'Approved Artifacts', completeness: completenessDoc, status: completenessDoc >= 85 ? 'ready' : completenessDoc >= 50 ? 'in-progress' : 'blocked' },
     { module: 'Reviews', name: 'Under Review', completeness: completenessReview, status: review === 0 ? 'ready' : 'in-progress' },
     { module: 'Drafts', name: 'Drafts Remaining', completeness: completenessDraft, status: draft === 0 ? 'ready' : draft <= 3 ? 'in-progress' : 'blocked' },
     { module: 'Projects', name: 'Project Completion', completeness: completenessProj, status: completenessProj >= 85 ? 'ready' : completenessProj >= 50 ? 'in-progress' : 'blocked' },
@@ -624,11 +582,13 @@ function ComplianceView({ complianceRules }: { complianceRules: ComplianceRule[]
 
 // ---------------------------------------------------------------------------
 // Sub-View: SnowGlobe
-// ---------------------------------------------------------------------------
+// [Phase 8.5] SnowGlobeView removed — 229 lines of dead code after tab removal in Phase 7.
+// Null stub retained because switch case 'snowglobe' still exists in renderView.
+function SnowGlobeView() { return null; }
 
-function SnowGlobeView() {
-  const { generate, isGenerating } = useDeliverable();
-  const [simulations, setSimulations] = useState(DEFAULT_SIMULATIONS);
+function _removed() { // eslint-disable-line
+  const _: never = null as never; void _; // dead code marker
+  const DEFAULT_SIMULATIONS: unknown[] = []; void DEFAULT_SIMULATIONS;
   const avgRisk = Math.round(simulations.reduce((s, e) => s + e.riskScore, 0) / simulations.length);
 
   const handleRunSimulation = useCallback((index: number) => {
@@ -1552,24 +1512,19 @@ export function ReviewReadiness({ onClose, projectId }: { onClose: () => void; p
   }, [activeTab, qcSections, complianceRules, readinessModules, summary, evidenceSections, auditEntries, traceability]);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#faf9f5]">
-      {/* Top bar */}
-      <header className="flex-shrink-0 h-12 border-b border-zinc-200 bg-white">
-        <div className="flex items-center h-full px-6">
-          {/* Back */}
+    <div className="flex-1 flex flex-col min-h-0">
+      {/* Tab bar — compact, inline */}
+      <div className="flex-shrink-0 border-b border-zinc-100 bg-white px-6">
+        <div className="flex items-center h-11">
           <button
             onClick={onClose}
-            className="flex items-center gap-1.5 text-zinc-400 hover:text-zinc-600 transition-colors mr-4"
+            aria-label="Back to Overview"
+            className="flex items-center gap-1.5 text-zinc-400 hover:text-zinc-600 transition-colors mr-6 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
 
-          <span className="text-sm font-medium text-zinc-900 mr-8">
-            Review &amp; Readiness
-          </span>
-
-          {/* Tabs */}
-          <nav className="flex items-center gap-6 h-full overflow-x-auto">
+          <nav className="flex items-center gap-1 h-full overflow-x-auto">
             {TAB_LABELS.map((tab) => {
               const isActive = activeTab === tab.key;
               return (
@@ -1577,30 +1532,23 @@ export function ReviewReadiness({ onClose, projectId }: { onClose: () => void; p
                   key={tab.key}
                   onClick={() => handleTabChange(tab.key)}
                   className={cn(
-                    'relative text-sm h-full flex items-center transition-colors whitespace-nowrap',
+                    'px-3 py-1.5 text-xs rounded-md transition-colors whitespace-nowrap',
                     isActive
-                      ? 'text-zinc-900'
-                      : 'text-zinc-400 hover:text-zinc-600'
+                      ? 'bg-zinc-200 text-zinc-900 font-medium'
+                      : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
                   )}
                 >
                   {tab.label}
-                  {isActive && (
-                    <motion.div
-                      className="absolute inset-x-0 bottom-0 h-0.5 bg-zinc-900"
-                      layoutId="reviewReadinessActiveTab"
-                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                    />
-                  )}
                 </button>
               );
             })}
           </nav>
         </div>
-      </header>
+      </div>
 
-      {/* Content */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto">
+      {/* Content — generous padding, restrained width */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto px-6 py-6">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -1613,7 +1561,7 @@ export function ReviewReadiness({ onClose, projectId }: { onClose: () => void; p
             </motion.div>
           </AnimatePresence>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

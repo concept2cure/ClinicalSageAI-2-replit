@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "stage": "beta",
+  "weights": {
+    "parsing_quality": 0.25,
+    "retrieval_citation": 0.25,
+    "policy_enforcement": 0.2,
+    "workflow_reliability": 0.15,
+    "observability_completeness": 0.1,
+    "pilot_safety": 0.05
+  },
+  "scores": {
+    "parsing_quality": 0,
+    "retrieval_citation": 0,
+    "policy_enforcement": 0,
+    "workflow_reliability": 0,
+    "observability_completeness": 0,
+    "pilot_safety": 0
+  },
+  "hard_fail_conditions": {
+    "governed_export_bypass": false,
+    "uncitable_evidence": false,
+    "unbounded_long_running_execution": false,
+    "sandbox_direct_core_write": false
+  },
+  "human_testing": {
+    "beta_sessions_completed": 1,
+    "ga_sessions_completed": 0,
+    "critical_defects_open": 0,
+    "core_task_success_rate": 1,
+    "citation_trust_mean": 4
+  }
+}

@@ -1,6 +1,17 @@
-import React from 'react';
-import { FolderOpen, FileText, ShieldCheck, Send, ChevronRight } from 'lucide-react';
-import { WorkspaceCanvas, PageTitleHeader } from '@/components/ui/workspace-primitives';
+/**
+ * ProjectHomeDashboard — Light context strip for the AnA-first project home.
+ *
+ * Shows: project identity, readiness one-liner, and "Open Tools" action.
+ * AnA is the primary interface — this strip sits above the conversation.
+ */
+
+import React, { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { queryKeys } from '@/concept2cure/hooks/queryKeys';
+import { Wrench } from 'lucide-react';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ProjectHomeDashboardProps {
   project: {
@@ -15,82 +26,72 @@ interface ProjectHomeDashboardProps {
   onNavigate: (mode: string, sectionCode?: string) => void;
 }
 
-const WORKFLOW_STEPS = [
-  {
-    id: 'dossier',
-    label: 'Dossier Map',
-    description: 'CTD structure, section status, and completeness',
-    icon: FolderOpen,
-    color: 'text-blue-600 bg-blue-50',
-  },
-  {
-    id: 'documents',
-    label: 'Documents',
-    description: 'Author, edit, and manage regulatory documents',
-    icon: FileText,
-    color: 'text-emerald-600 bg-emerald-50',
-  },
-  {
-    id: 'review',
-    label: 'Review',
-    description: 'Quality gates, approvals, and compliance checks',
-    icon: ShieldCheck,
-    color: 'text-amber-600 bg-amber-50',
-  },
-  {
-    id: 'submissions',
-    label: 'Submissions',
-    description: 'Readiness assessment and export',
-    icon: Send,
-    color: 'text-violet-600 bg-violet-50',
-  },
-];
+interface Artifact {
+  id: string;
+  status?: string;
+}
+
+const VALID_STATUSES = ['draft', 'review', 'approved', 'locked'] as const;
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
   project,
   onNavigate,
 }) => {
-  const badges = [
-    { label: project.type },
-    ...(project.region ? [{ label: project.region }] : []),
-    ...(project.sponsor ? [{ label: `Sponsor: ${project.sponsor}` }] : []),
-  ];
+  const { data: artifacts } = useQuery<Artifact[]>({
+    queryKey: queryKeys.projects.overviewArtifacts(project.id),
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${project.id}/artifacts`);
+      if (!res.ok) return [];
+      const json = await res.json();
+      return Array.isArray(json.data) ? json.data : [];
+    },
+    staleTime: 30_000,
+  });
+
+  const summary = useMemo(() => {
+    const list = artifacts ?? [];
+    let ready = 0;
+    let review = 0;
+    for (const a of list) {
+      const s = a.status as string;
+      if (s === 'approved' || s === 'locked') ready++;
+      if (s === 'review') review++;
+    }
+    return { total: list.length, ready, review };
+  }, [artifacts]);
 
   return (
-    <WorkspaceCanvas maxWidth="4xl" testId="project-home-dashboard">
-      <PageTitleHeader
-        title={project.name}
-        description={project.description ?? undefined}
-        badges={badges}
-      />
+    <div className="flex-shrink-0 px-6 py-4 border-b border-zinc-100 bg-white" data-testid="project-context-strip">
+      <div className="flex items-center justify-between max-w-3xl mx-auto">
+        {/* Project identity + readiness */}
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <h1 className="text-sm font-semibold text-zinc-900 truncate">{project.name}</h1>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium flex-shrink-0">
+              {project.type}
+            </span>
+          </div>
+          {summary.total > 0 && (
+            <p className="text-xs text-zinc-400 mt-0.5">
+              {summary.ready} of {summary.total} artifacts ready
+              {summary.review > 0 && ` · ${summary.review} in review`}
+            </p>
+          )}
+        </div>
 
-      {/* Workflow steps */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {WORKFLOW_STEPS.map(step => {
-          const Icon = step.icon;
-          return (
-            <button
-              key={step.id}
-              onClick={() => onNavigate(step.id)}
-              className="flex items-start gap-4 p-5 rounded-xl border border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-sm transition-all text-left group"
-            >
-              <div
-                className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${step.color}`}
-              >
-                <Icon className="w-5 h-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-zinc-900">{step.label}</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <p className="text-xs text-zinc-500 mt-0.5">{step.description}</p>
-              </div>
-            </button>
-          );
-        })}
+        {/* Open Tools */}
+        <button
+          onClick={() => onNavigate('tools')}
+          aria-label="Open Tools"
+          className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50 hover:text-zinc-800 transition-colors flex-shrink-0 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+        >
+          <Wrench className="w-3.5 h-3.5" />
+          Open Tools
+        </button>
       </div>
-    </WorkspaceCanvas>
+    </div>
   );
 };
 

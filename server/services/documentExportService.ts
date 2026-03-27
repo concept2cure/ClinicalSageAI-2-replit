@@ -23,6 +23,7 @@ import PDFDocument from 'pdfkit';
 import { pool } from '../db.js';
 import crypto from 'crypto';
 import { Writable, PassThrough } from 'stream';
+import { appendVeraPdfValidation } from './documentQuality/pdfValidationAttachment';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -328,6 +329,12 @@ export async function generatePDF(options: PDFExportOptions): Promise<PDFExportR
       details: `${bookmarks.length} bookmarks`,
     });
 
+    const validationReportWithVeraPdf = await appendVeraPdfValidation({
+      pdfBuffer,
+      organizationId: options.organizationId,
+      existingValidationReport: validationReport,
+    });
+
     const filename = `${(projectInfo?.name || 'submission').replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
 
     // 12. Audit log
@@ -341,7 +348,7 @@ export async function generatePDF(options: PDFExportOptions): Promise<PDFExportR
       fileSize: pdfBuffer.length,
       bookmarks,
       checksums: { md5, sha256 },
-      validationReport,
+      validationReport: validationReportWithVeraPdf,
     };
   } catch (error: any) {
     console.error('[PDFConverter] Export failed:', error);
