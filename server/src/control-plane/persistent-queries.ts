@@ -20,7 +20,9 @@ function zeroSummary(): PersistentDecisionSummary {
   };
 }
 
-export async function getPersistentKernelDecisionSummary(hours = 24): Promise<PersistentDecisionSummary> {
+export async function getPersistentKernelDecisionSummary(
+  hours = 24
+): Promise<PersistentDecisionSummary> {
   const result = zeroSummary();
 
   if (process.env.ANA_KERNEL_PERSIST !== 'true') {
@@ -65,4 +67,62 @@ export async function getPersistentKernelDecisionSummary(hours = 24): Promise<Pe
   }
 
   return result;
+}
+
+export interface HashChainVerification {
+  valid: boolean;
+  totalRows: number;
+  checkedRows: number;
+  firstBrokenId: number | null;
+  error: string | null;
+}
+
+export async function verifyPersistentKernelHashChain(): Promise<HashChainVerification> {
+  if (process.env.ANA_KERNEL_PERSIST !== 'true') {
+    return { valid: true, totalRows: 0, checkedRows: 0, firstBrokenId: null, error: null };
+  }
+
+  try {
+    const { getPool } = await import('../../db');
+    const pool = getPool();
+
+    const countRes = await pool.query('SELECT COUNT(*)::int AS total FROM ana_kernel_decision_log');
+    const totalRows = countRes.rows[0]?.total ?? 0;
+
+    if (totalRows === 0) {
+      return { valid: true, totalRows: 0, checkedRows: 0, firstBrokenId: null, error: null };
+    }
+
+    // Verify chain: each row's prev_hash must match the previous row's entry_hash
+    const broken = await pool.query(`
+      WITH ordered AS (
+        SELECT id, entry_hash, prev_hash,
+               LAG(entry_hash) OVER (ORDER BY id) AS expected_prev
+        FROM ana_kernel_decision_log
+        ORDER BY id
+      )
+      SELECT id FROM ordered
+      WHERE expected_prev IS NOT NULL AND prev_hash IS DISTINCT FROM expected_prev
+      ORDER BY id
+      LIMIT 1
+    `);
+
+    const firstBrokenId = broken.rows.length > 0 ? Number(broken.rows[0].id) : null;
+
+    return {
+      valid: firstBrokenId === null,
+      totalRows,
+      checkedRows: totalRows,
+      firstBrokenId,
+      error: null,
+    };
+  } catch (err: any) {
+    return {
+      valid: false,
+      totalRows: 0,
+      checkedRows: 0,
+      firstBrokenId: null,
+      error: err?.message || 'Unknown error verifying hash chain',
+    };
+  }
 }

@@ -1,5 +1,5 @@
 // Database connection setup - re-exports canonical pool
-import { getPool, db as drizzleDb } from './db.ts';
+import { getPool, db as drizzleDb, db } from './db.ts';
 import 'dotenv/config';
 import EventEmitter from 'events';
 
@@ -249,4 +249,4 @@ export function createFallbackResult(rows = []) {
 }
 
 // Export database functions
-export { pool, getClientWithContext, testConnection, query };
+export { pool, getClientWithContext, testConnection, query, db };

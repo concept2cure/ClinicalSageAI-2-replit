@@ -130,6 +130,7 @@ import pmSettingsRouter from './src/routes/pm-settings.router';
 import controlPlaneRouter from './src/routes/control-plane.router';
 import reportsManifestRoutes from './routes/reports/manifest-routes';
 import reportsGenerationRoutes from './routes/reports/generate-report';
+import { registerSubscriptionsRoutes } from './routes/reports/subscriptions-routes';
 import firecrawlWebhooksRoutes from './routes/firecrawl-webhooks';
 
 const app = express();
@@ -2551,6 +2552,7 @@ app.get('/api/csr-real-data/stats', async (req: Request, res: Response) => {
 // Reports canonical routers (P1 extraction in progress)
 app.use('/api/reports', reportsGenerationRoutes);
 app.use('/api/reports', reportsManifestRoutes);
+registerSubscriptionsRoutes(app);
 
 // Reports compatibility facade — real DB query with fallback
 app.get('/api/reports', async (req: Request, res: Response) => {

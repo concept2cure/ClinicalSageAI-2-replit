@@ -218,17 +218,23 @@ export type DeepResearchJob = InferSelectModel<typeof deepResearchJobs>;
 // CONNECTOR CREDENTIALS (encrypted per-org, for Veeva/Medidata)
 // ============================================================
 
-export const connectorCredentials = pgTable('connector_credentials', {
-  id: serial('id').primaryKey(),
-  organizationId: integer('organization_id').references(() => organizations.id).notNull(),
-  connectorId: text('connector_id').notNull(), // veeva_vault, medidata_rave, etc.
-  credentials: text('credentials').notNull(), // AES-256-GCM encrypted JSON
-  isValid: boolean('is_valid').default(true),
-  lastValidatedAt: timestamp('last_validated_at'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-}, (table) => ({
-  uniqOrgConnector: unique().on(table.organizationId, table.connectorId),
-}));
+export const connectorCredentials = pgTable(
+  'connector_credentials',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .references(() => organizations.id)
+      .notNull(),
+    connectorId: text('connector_id').notNull(), // veeva_vault, medidata_rave, etc.
+    credentials: text('credentials').notNull(), // AES-256-GCM encrypted JSON
+    isValid: boolean('is_valid').default(true),
+    lastValidatedAt: timestamp('last_validated_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    uniqOrgConnector: unique().on(table.organizationId, table.connectorId),
+  })
+);
 
 export type ConnectorCredential = InferSelectModel<typeof connectorCredentials>;
 
@@ -236,17 +242,27 @@ export type ConnectorCredential = InferSelectModel<typeof connectorCredentials>;
 // USAGE RECORDS (credit-based metering for deep research, builders)
 // ============================================================
 
-export const usageRecords = pgTable('usage_records', {
-  id: serial('id').primaryKey(),
-  organizationId: integer('organization_id').references(() => organizations.id).notNull(),
-  userId: integer('user_id'),
-  featureId: text('feature_id').notNull(), // deep_research, csr_builder, ctd_builder
-  creditsUsed: integer('credits_used').default(1),
-  metadata: json('metadata'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-}, (table) => ({
-  idxUsageOrg: index('idx_usage_org_feature').on(table.organizationId, table.featureId, table.createdAt),
-}));
+export const usageRecords = pgTable(
+  'usage_records',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .references(() => organizations.id)
+      .notNull(),
+    userId: integer('user_id'),
+    featureId: text('feature_id').notNull(), // deep_research, csr_builder, ctd_builder
+    creditsUsed: integer('credits_used').default(1),
+    metadata: json('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    idxUsageOrg: index('idx_usage_org_feature').on(
+      table.organizationId,
+      table.featureId,
+      table.createdAt
+    ),
+  })
+);
 
 export type UsageRecord = InferSelectModel<typeof usageRecords>;
 
@@ -5411,8 +5427,9 @@ export const conversationWorkingMemory = pgTable(
   'conversation_working_memory',
   {
     id: serial('id').primaryKey(),
-    conversationId: integer('conversation_id')
-      .references(() => concept2cureConversations.id, { onDelete: 'cascade' }),
+    conversationId: integer('conversation_id').references(() => concept2cureConversations.id, {
+      onDelete: 'cascade',
+    }),
     threadId: text('thread_id'), // For legacy chat_threads integration
     organizationId: integer('organization_id')
       .notNull()
@@ -5440,10 +5457,13 @@ export const conversationWorkingMemory = pgTable(
 
 export type ConversationWorkingMemory = InferSelectModel<typeof conversationWorkingMemory>;
 
-export const insertConversationWorkingMemorySchema = createInsertSchemaOmit(conversationWorkingMemory, {
-  id: true,
-  generatedAt: true,
-});
+export const insertConversationWorkingMemorySchema = createInsertSchemaOmit(
+  conversationWorkingMemory,
+  {
+    id: true,
+    generatedAt: true,
+  }
+);
 
 // Insert Schemas
 export const insertConcept2cureConversationSchema = createInsertSchemaOmit(
@@ -15364,8 +15384,7 @@ export const clientIntelligenceProfiles = pgTable(
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
-    clientWorkspaceId: integer('client_workspace_id')
-      .references(() => clientWorkspaces.id),
+    clientWorkspaceId: integer('client_workspace_id').references(() => clientWorkspaces.id),
 
     // ── Company Identity ───────────────────────────────────────
     companyName: text('company_name').notNull(),
@@ -15709,8 +15728,7 @@ export const accountCanonItems = pgTable(
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
-    profileId: integer('profile_id')
-      .references(() => clientIntelligenceProfiles.id), // Link to intelligence profile
+    profileId: integer('profile_id').references(() => clientIntelligenceProfiles.id), // Link to intelligence profile
 
     // ── Canon Identity ──────────────────────────────────────────
     category: text('category').notNull(), // regulatory_region, terminology, submission_pattern, evidence_preference, authority_position, template_preference, compliance_constraint, reviewer_chain, risk_pattern, product_portfolio
@@ -15730,8 +15748,7 @@ export const accountCanonItems = pgTable(
     status: text('status').default('active').notNull(), // draft, active, locked, superseded, archived
     lockedAt: timestamp('locked_at'),
     lockedById: integer('locked_by_id').references(() => users.id),
-    supersededById: integer('superseded_by_id')
-      .references((): any => accountCanonItems.id), // Points to newer version's ID
+    supersededById: integer('superseded_by_id').references((): any => accountCanonItems.id), // Points to newer version's ID
 
     // ── Provenance ────────────────────────────────────────────────
     sourceType: text('source_type'), // manual, ai_extracted, document_import, event_derived
@@ -15799,10 +15816,8 @@ export const accountEvents = pgTable(
     // account_canon_resolved — canon items used in an AI run (audit trail)
 
     // ── Target Reference ──────────────────────────────────────────
-    canonItemId: integer('canon_item_id')
-      .references(() => accountCanonItems.id),
-    skillBundleId: integer('skill_bundle_id')
-      .references(() => accountSkillBundles.id), // FK to skill bundles
+    canonItemId: integer('canon_item_id').references(() => accountCanonItems.id),
+    skillBundleId: integer('skill_bundle_id').references(() => accountSkillBundles.id), // FK to skill bundles
     targetType: text('target_type'), // canon_item, skill_bundle, term_entry, template_entry
     targetId: text('target_id'), // External ID of the affected entity
 
@@ -15868,12 +15883,16 @@ export const accountProjection = pgTable(
 
     // ── Category Summaries ───────────────────────────────────────
     canonByCategory: json('canon_by_category').$type<Record<string, number>>().default({}),
-    recentEvents: json('recent_events').$type<Array<{
-      eventId: string;
-      eventType: string;
-      description: string;
-      createdAt: string;
-    }>>().default([]),
+    recentEvents: json('recent_events')
+      .$type<
+        Array<{
+          eventId: string;
+          eventType: string;
+          description: string;
+          createdAt: string;
+        }>
+      >()
+      .default([]),
 
     // ── Health Metrics ────────────────────────────────────────────
     lastEventAt: timestamp('last_event_at'),
@@ -15919,8 +15938,7 @@ export const accountSkillBundles = pgTable(
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
-    profileId: integer('profile_id')
-      .references(() => clientIntelligenceProfiles.id),
+    profileId: integer('profile_id').references(() => clientIntelligenceProfiles.id),
 
     // ── Bundle Identity ─────────────────────────────────────────
     name: text('name').notNull(), // "FDA 510(k) Drafting Bundle"
@@ -15934,11 +15952,15 @@ export const accountSkillBundles = pgTable(
     regulatoryRegions: json('regulatory_regions').$type<string[]>(), // ['US-FDA'] — null = all
 
     // ── Bundle Contents ─────────────────────────────────────────
-    promptFragments: json('prompt_fragments').$type<Array<{
-      role: string; // system_addon, instruction, constraint, style_guide
-      content: string;
-      priority: number; // 1-10, higher = more important
-    }>>().default([]),
+    promptFragments: json('prompt_fragments')
+      .$type<
+        Array<{
+          role: string; // system_addon, instruction, constraint, style_guide
+          content: string;
+          priority: number; // 1-10, higher = more important
+        }>
+      >()
+      .default([]),
 
     outputStructure: json('output_structure').$type<{
       format?: string; // markdown, docx, pdf
@@ -15961,11 +15983,15 @@ export const accountSkillBundles = pgTable(
       avoidPatterns?: string[];
     }>(),
 
-    policyBindings: json('policy_bindings').$type<Array<{
-      policyType: string; // quality_gate, review_requirement, compliance_check
-      description: string;
-      enforcement: string; // mandatory, recommended, optional
-    }>>().default([]),
+    policyBindings: json('policy_bindings')
+      .$type<
+        Array<{
+          policyType: string; // quality_gate, review_requirement, compliance_check
+          description: string;
+          enforcement: string; // mandatory, recommended, optional
+        }>
+      >()
+      .default([]),
 
     artifactDefaults: json('artifact_defaults').$type<{
       defaultStatus?: string;
@@ -16022,8 +16048,7 @@ export const accountTermDictionary = pgTable(
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
-    bundleId: integer('bundle_id')
-      .references(() => accountSkillBundles.id), // Optional link to a skill bundle
+    bundleId: integer('bundle_id').references(() => accountSkillBundles.id), // Optional link to a skill bundle
 
     // ── Term Definition ─────────────────────────────────────────
     term: text('term').notNull(), // The approved term
@@ -16075,8 +16100,7 @@ export const accountTemplateRegistry = pgTable(
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
-    bundleId: integer('bundle_id')
-      .references(() => accountSkillBundles.id),
+    bundleId: integer('bundle_id').references(() => accountSkillBundles.id),
 
     // ── Template Identity ───────────────────────────────────────
     templateKey: text('template_key').notNull(), // Maps to platform template ID or custom key
@@ -16086,14 +16110,16 @@ export const accountTemplateRegistry = pgTable(
     regulatoryRegion: text('regulatory_region'), // 'US-FDA', 'EU-EMA', etc.
 
     // ── Template Customizations ──────────────────────────────────
-    sectionOverrides: json('section_overrides').$type<Array<{
-      sectionCode: string;
-      title?: string; // Override section title
-      instruction?: string; // Override drafting instruction
-      required?: boolean;
-      defaultContent?: string;
-      order?: number;
-    }>>(),
+    sectionOverrides: json('section_overrides').$type<
+      Array<{
+        sectionCode: string;
+        title?: string; // Override section title
+        instruction?: string; // Override drafting instruction
+        required?: boolean;
+        defaultContent?: string;
+        order?: number;
+      }>
+    >(),
 
     defaultMetadata: json('default_metadata').$type<Record<string, unknown>>(),
     headerFooter: json('header_footer').$type<{
@@ -16178,10 +16204,13 @@ export const accountCanonResolutionLog = pgTable(
 
 export type AccountCanonResolutionLogEntry = InferSelectModel<typeof accountCanonResolutionLog>;
 
-export const insertAccountCanonResolutionLogSchema = createInsertSchemaOmit(accountCanonResolutionLog, {
-  id: true,
-  createdAt: true,
-});
+export const insertAccountCanonResolutionLogSchema = createInsertSchemaOmit(
+  accountCanonResolutionLog,
+  {
+    id: true,
+    createdAt: true,
+  }
+);
 
 // ============================================================
 // END ACCOUNT CANON + SKILL BUNDLES
@@ -16252,8 +16281,7 @@ export const sourceCitations = pgTable(
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
-    createdBy: integer('created_by')
-      .references(() => users.id),
+    createdBy: integer('created_by').references(() => users.id),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   table => ({
@@ -16337,7 +16365,9 @@ export const statisticalThreads = pgTable(
   'statistical_threads',
   {
     id: serial('id').primaryKey(),
-    uuid: uuid('uuid').default(sql`gen_random_uuid()`).notNull(),
+    uuid: uuid('uuid')
+      .default(sql`gen_random_uuid()`)
+      .notNull(),
     protocolId: integer('protocol_id'),
     title: text('title').notNull(),
     indication: text('indication'),
@@ -16760,8 +16790,7 @@ export const propensityModels = pgTable(
   'propensity_models',
   {
     id: serial('id').primaryKey(),
-    syntheticControlId: integer('synthetic_control_id')
-      .references(() => syntheticControls.id),
+    syntheticControlId: integer('synthetic_control_id').references(() => syntheticControls.id),
     modelType: text('model_type').notNull(),
     covariates: json('covariates').notNull(),
     coefficients: json('coefficients'),
@@ -16855,8 +16884,7 @@ export const adaptationDecisions = pgTable(
     planId: integer('plan_id')
       .notNull()
       .references(() => adaptiveTrialPlans.id),
-    snapshotId: integer('snapshot_id')
-      .references(() => interimDataSnapshots.id),
+    snapshotId: integer('snapshot_id').references(() => interimDataSnapshots.id),
     adaptationType: adaptationTypeEnum('adaptation_type').notNull(),
     decision: text('decision').notNull(),
     rationale: text('rationale').notNull(),
@@ -16973,8 +17001,7 @@ export const methodRegulatoryOutcomes = pgTable(
   'method_regulatory_outcomes',
   {
     id: serial('id').primaryKey(),
-    methodNodeId: integer('method_node_id')
-      .references(() => biostatKnowledgeNodes.id),
+    methodNodeId: integer('method_node_id').references(() => biostatKnowledgeNodes.id),
     methodName: text('method_name').notNull(),
     indication: text('indication').notNull(),
     endpoint: text('endpoint'),
@@ -17063,10 +17090,8 @@ export const submissionTwinClaims = pgTable(
     packageId: integer('package_id')
       .notNull()
       .references(() => c2cSubmissionPackages.id),
-    artifactId: integer('artifact_id')
-      .references(() => concept2cureArtifacts.id),
-    sectionId: integer('section_id')
-      .references(() => c2cPackageSections.id),
+    artifactId: integer('artifact_id').references(() => concept2cureArtifacts.id),
+    sectionId: integer('section_id').references(() => c2cPackageSections.id),
     claimText: text('claim_text').notNull(),
     claimType: text('claim_type').notNull(), // 'efficacy', 'safety', 'cmc_quality', 'regulatory_precedent', 'statistical', 'labeling'
     sectionPath: text('section_path'), // e.g. 'module2/2.5/clinical-overview'
@@ -17106,8 +17131,7 @@ export const submissionTwinEvidenceLinks = pgTable(
     claimId: integer('claim_id')
       .notNull()
       .references(() => submissionTwinClaims.id),
-    evidenceArtifactId: integer('evidence_artifact_id')
-      .references(() => concept2cureArtifacts.id),
+    evidenceArtifactId: integer('evidence_artifact_id').references(() => concept2cureArtifacts.id),
     evidenceVaultDocId: uuid('evidence_vault_doc_id'),
     evidenceText: text('evidence_text'),
     supportStrength: claimSupportStrengthEnum('support_strength').notNull(),
@@ -17128,10 +17152,13 @@ export const submissionTwinEvidenceLinks = pgTable(
   })
 );
 
-export const insertSubmissionTwinEvidenceLinkSchema = createInsertSchemaOmit(submissionTwinEvidenceLinks, {
-  id: true,
-  createdAt: true,
-});
+export const insertSubmissionTwinEvidenceLinkSchema = createInsertSchemaOmit(
+  submissionTwinEvidenceLinks,
+  {
+    id: true,
+    createdAt: true,
+  }
+);
 export type SubmissionTwinEvidenceLink = InferSelectModel<typeof submissionTwinEvidenceLinks>;
 
 /**
@@ -17147,10 +17174,8 @@ export const submissionTwinDriftAlerts = pgTable(
       .references(() => c2cSubmissionPackages.id),
     driftType: driftTypeEnum('drift_type').notNull(),
     severity: twinFindingSeverityEnum('severity').notNull(),
-    sourceArtifactId: integer('source_artifact_id')
-      .references(() => concept2cureArtifacts.id),
-    targetArtifactId: integer('target_artifact_id')
-      .references(() => concept2cureArtifacts.id),
+    sourceArtifactId: integer('source_artifact_id').references(() => concept2cureArtifacts.id),
+    targetArtifactId: integer('target_artifact_id').references(() => concept2cureArtifacts.id),
     description: text('description').notNull(),
     sourceExcerpt: text('source_excerpt'),
     targetExcerpt: text('target_excerpt'),
@@ -17174,10 +17199,13 @@ export const submissionTwinDriftAlerts = pgTable(
   })
 );
 
-export const insertSubmissionTwinDriftAlertSchema = createInsertSchemaOmit(submissionTwinDriftAlerts, {
-  id: true,
-  createdAt: true,
-});
+export const insertSubmissionTwinDriftAlertSchema = createInsertSchemaOmit(
+  submissionTwinDriftAlerts,
+  {
+    id: true,
+    createdAt: true,
+  }
+);
 export type SubmissionTwinDriftAlert = InferSelectModel<typeof submissionTwinDriftAlerts>;
 
 /**
@@ -17191,12 +17219,10 @@ export const submissionTwinChallenges = pgTable(
     packageId: integer('package_id')
       .notNull()
       .references(() => c2cSubmissionPackages.id),
-    assessmentId: integer('assessment_id')
-      .references(() => submissionTwinAssessments.id),
+    assessmentId: integer('assessment_id').references(() => submissionTwinAssessments.id),
     reviewerLens: reviewerLensEnum('reviewer_lens').notNull(),
     challengeText: text('challenge_text').notNull(),
-    targetClaimId: integer('target_claim_id')
-      .references(() => submissionTwinClaims.id),
+    targetClaimId: integer('target_claim_id').references(() => submissionTwinClaims.id),
     targetSection: text('target_section'),
     severity: twinFindingSeverityEnum('severity').notNull(),
     deficiencyLikelihood: real('deficiency_likelihood').default(0), // 0-1
@@ -17217,10 +17243,13 @@ export const submissionTwinChallenges = pgTable(
   })
 );
 
-export const insertSubmissionTwinChallengeSchema = createInsertSchemaOmit(submissionTwinChallenges, {
-  id: true,
-  createdAt: true,
-});
+export const insertSubmissionTwinChallengeSchema = createInsertSchemaOmit(
+  submissionTwinChallenges,
+  {
+    id: true,
+    createdAt: true,
+  }
+);
 export type SubmissionTwinChallenge = InferSelectModel<typeof submissionTwinChallenges>;
 
 /**
@@ -17239,10 +17268,8 @@ export const submissionTwinChangeImpacts = pgTable(
       .references(() => concept2cureArtifacts.id),
     changeDescription: text('change_description').notNull(),
     changeType: text('change_type').notNull(), // 'content_edit', 'status_change', 'version_bump', 'evidence_update', 'statistical_update'
-    impactedArtifactId: integer('impacted_artifact_id')
-      .references(() => concept2cureArtifacts.id),
-    impactedClaimId: integer('impacted_claim_id')
-      .references(() => submissionTwinClaims.id),
+    impactedArtifactId: integer('impacted_artifact_id').references(() => concept2cureArtifacts.id),
+    impactedClaimId: integer('impacted_claim_id').references(() => submissionTwinClaims.id),
     impactSeverity: twinFindingSeverityEnum('impact_severity').notNull(),
     impactDescription: text('impact_description').notNull(),
     remediation: text('remediation'),
@@ -17263,10 +17290,13 @@ export const submissionTwinChangeImpacts = pgTable(
   })
 );
 
-export const insertSubmissionTwinChangeImpactSchema = createInsertSchemaOmit(submissionTwinChangeImpacts, {
-  id: true,
-  createdAt: true,
-});
+export const insertSubmissionTwinChangeImpactSchema = createInsertSchemaOmit(
+  submissionTwinChangeImpacts,
+  {
+    id: true,
+    createdAt: true,
+  }
+);
 export type SubmissionTwinChangeImpact = InferSelectModel<typeof submissionTwinChangeImpacts>;
 
 /**
@@ -17309,11 +17339,14 @@ export const submissionTwinAssessments = pgTable(
   })
 );
 
-export const insertSubmissionTwinAssessmentSchema = createInsertSchemaOmit(submissionTwinAssessments, {
-  id: true,
-  completedAt: true,
-  createdAt: true,
-});
+export const insertSubmissionTwinAssessmentSchema = createInsertSchemaOmit(
+  submissionTwinAssessments,
+  {
+    id: true,
+    completedAt: true,
+    createdAt: true,
+  }
+);
 export type SubmissionTwinAssessment = InferSelectModel<typeof submissionTwinAssessments>;
 
 // ============================================================
@@ -17321,34 +17354,48 @@ export type SubmissionTwinAssessment = InferSelectModel<typeof submissionTwinAss
 // =====================================================
 /** Report domain categories across the entire platform */
 export const reportDomainEnum = pgEnum('report_domain', [
-  'regulatory_submission',   // eCTD, IND, NDA, BLA, 510k, PMA, CER
-  'clinical_study',          // CSR, IDMC, protocol, SAP
-  'cmc_manufacturing',       // CMC Module 3, stability, analytical
-  'pharmacovigilance',       // PSUR, DSUR, CIOMS, MedWatch
-  'quality_management',      // QMP, CAPA, deviation, audit
-  'compliance_attestation',  // 21 CFR Part 11, GDPR, SOC 2, GxP
-  'strategic_intelligence',  // competitive, pipeline, market access
-  'provenance_audit',        // document lineage, data provenance
-  'device_regulatory',       // MDR, IVDR, 510k, PMA, De Novo
-  'biostatistics',           // SAP, interim, futility, sample size
-  'environmental_safety',    // ESG, environmental impact
-  'cross_functional',        // multi-domain composite reports
+  'regulatory_submission', // eCTD, IND, NDA, BLA, 510k, PMA, CER
+  'clinical_study', // CSR, IDMC, protocol, SAP
+  'cmc_manufacturing', // CMC Module 3, stability, analytical
+  'pharmacovigilance', // PSUR, DSUR, CIOMS, MedWatch
+  'quality_management', // QMP, CAPA, deviation, audit
+  'compliance_attestation', // 21 CFR Part 11, GDPR, SOC 2, GxP
+  'strategic_intelligence', // competitive, pipeline, market access
+  'provenance_audit', // document lineage, data provenance
+  'device_regulatory', // MDR, IVDR, 510k, PMA, De Novo
+  'biostatistics', // SAP, interim, futility, sample size
+  'environmental_safety', // ESG, environmental impact
+  'cross_functional', // multi-domain composite reports
 ]);
 
 /** Immutability seal status for records */
 export const sealStatusEnum = pgEnum('seal_status', [
-  'draft',        // mutable, not yet sealed
+  'draft', // mutable, not yet sealed
   'pending_seal', // awaiting signatures before seal
-  'sealed',       // immutable — cryptographically locked
-  'superseded',   // replaced by newer sealed version
-  'revoked',      // invalidated (with justification)
+  'sealed', // immutable — cryptographically locked
+  'superseded', // replaced by newer sealed version
+  'revoked', // invalidated (with justification)
 ]);
 
 /** Regulatory body that the report targets */
 export const regulatoryBodyEnum = pgEnum('regulatory_body', [
-  'FDA', 'EMA', 'PMDA', 'NMPA', 'TGA', 'Health_Canada',
-  'MHRA', 'ANVISA', 'MFDS', 'Swissmedic', 'ICH', 'WHO_PQ',
-  'CDSCO', 'HSA', 'SAHPRA', 'COFEPRIS', 'multi_regional',
+  'FDA',
+  'EMA',
+  'PMDA',
+  'NMPA',
+  'TGA',
+  'Health_Canada',
+  'MHRA',
+  'ANVISA',
+  'MFDS',
+  'Swissmedic',
+  'ICH',
+  'WHO_PQ',
+  'CDSCO',
+  'HSA',
+  'SAHPRA',
+  'COFEPRIS',
+  'multi_regional',
 ]);
 
 /**
@@ -17363,69 +17410,65 @@ export const immutableReportRecords = pgTable(
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
-    clientWorkspaceId: integer('client_workspace_id')
-      .references(() => clientWorkspaces.id),
-    projectId: integer('project_id')
-      .references(() => projects.id),
+    clientWorkspaceId: integer('client_workspace_id').references(() => clientWorkspaces.id),
+    projectId: integer('project_id').references(() => projects.id),
 
     // Report identity
     reportUuid: uuid('report_uuid').defaultRandom().notNull().unique(),
-    reportCode: text('report_code').notNull(),          // e.g. "RPT-2026-0318-CSR-001"
+    reportCode: text('report_code').notNull(), // e.g. "RPT-2026-0318-CSR-001"
     reportTitle: text('report_title').notNull(),
     reportDomain: reportDomainEnum('report_domain').notNull(),
-    reportSubtype: text('report_subtype'),               // e.g. "ICH E3 CSR", "510(k) Summary"
+    reportSubtype: text('report_subtype'), // e.g. "ICH E3 CSR", "510(k) Summary"
     version: text('version').notNull().default('1.0.0'),
-    previousVersionId: integer('previous_version_id'),   // links to superseded version
+    previousVersionId: integer('previous_version_id'), // links to superseded version
 
     // Regulatory targeting
     targetRegulatory: regulatoryBodyEnum('target_regulatory'),
-    applicableGuidelines: json('applicable_guidelines'),  // [{code, title, version}]
-    complianceFrameworks: json('compliance_frameworks'),   // ["21 CFR Part 11", "ICH E6(R3)", ...]
+    applicableGuidelines: json('applicable_guidelines'), // [{code, title, version}]
+    complianceFrameworks: json('compliance_frameworks'), // ["21 CFR Part 11", "ICH E6(R3)", ...]
 
     // Content
-    content: json('content').notNull(),                   // full report payload
+    content: json('content').notNull(), // full report payload
     executiveSummary: text('executive_summary'),
-    sections: json('sections'),                           // [{sectionId, title, content, atomRefs[]}]
-    metadata: json('metadata'),                           // flexible metadata
+    sections: json('sections'), // [{sectionId, title, content, atomRefs[]}]
+    metadata: json('metadata'), // flexible metadata
 
     // Atom-level provenance
-    atomReferences: json('atom_references'),              // [{atomId, atomType, sourceTable, sourceId, fieldPath, value, confidence}]
-    dataLineageSnapshot: json('data_lineage_snapshot'),   // frozen lineage at generation time
-    sourceDocumentIds: json('source_document_ids'),       // [documentId, ...] inputs used
+    atomReferences: json('atom_references'), // [{atomId, atomType, sourceTable, sourceId, fieldPath, value, confidence}]
+    dataLineageSnapshot: json('data_lineage_snapshot'), // frozen lineage at generation time
+    sourceDocumentIds: json('source_document_ids'), // [documentId, ...] inputs used
 
     // Immutability & cryptographic integrity
     sealStatus: sealStatusEnum('seal_status').notNull().default('draft'),
-    contentHash: text('content_hash'),                    // SHA-256 of canonical content
-    previousHash: text('previous_hash'),                  // hash chain link
-    merkleRoot: text('merkle_root'),                      // merkle root of all section hashes
+    contentHash: text('content_hash'), // SHA-256 of canonical content
+    previousHash: text('previous_hash'), // hash chain link
+    merkleRoot: text('merkle_root'), // merkle root of all section hashes
     sealedAt: timestamp('sealed_at'),
-    sealedById: integer('sealed_by_id')
-      .references(() => users.id),
+    sealedById: integer('sealed_by_id').references(() => users.id),
     sealJustification: text('seal_justification'),
 
     // Quasi-indemnification attestation
-    complianceScore: real('compliance_score'),             // 0-100
-    attestationStatement: text('attestation_statement'),   // legal disclaimer + compliance attestation
-    regulatoryBasis: json('regulatory_basis'),             // [{regulation, section, requirement, status}]
-    riskDisclosures: json('risk_disclosures'),             // [{riskId, category, description, mitigation}]
+    complianceScore: real('compliance_score'), // 0-100
+    attestationStatement: text('attestation_statement'), // legal disclaimer + compliance attestation
+    regulatoryBasis: json('regulatory_basis'), // [{regulation, section, requirement, status}]
+    riskDisclosures: json('risk_disclosures'), // [{riskId, category, description, mitigation}]
     methodologyDeclaration: text('methodology_declaration'), // how report was generated
-    aiDisclosure: json('ai_disclosure'),                   // {model, version, promptHash, humanReviewStatus}
-    indemnificationTier: text('indemnification_tier'),      // 'full_audit_trail', 'partial', 'advisory_only'
+    aiDisclosure: json('ai_disclosure'), // {model, version, promptHash, humanReviewStatus}
+    indemnificationTier: text('indemnification_tier'), // 'full_audit_trail', 'partial', 'advisory_only'
 
     // Signatures (references to electronic_signatures)
-    requiredSignatures: json('required_signatures'),       // [{role, userId, status}]
+    requiredSignatures: json('required_signatures'), // [{role, userId, status}]
     signatureCount: integer('signature_count').default(0),
     allSignaturesCollected: boolean('all_signatures_collected').default(false),
 
     // Generation metadata
-    generatedBy: text('generated_by'),                     // 'system', 'ai_assisted', 'manual'
-    generationContext: json('generation_context'),          // {triggeredFrom, persona, parameters}
+    generatedBy: text('generated_by'), // 'system', 'ai_assisted', 'manual'
+    generationContext: json('generation_context'), // {triggeredFrom, persona, parameters}
     generationDurationMs: integer('generation_duration_ms'),
 
     // Lifecycle
-    status: text('status').notNull().default('draft'),     // draft, generated, review, sealed, distributed
-    createdById: integer('created_by_id')
-      .references(() => users.id),
+    status: text('status').notNull().default('draft'), // draft, generated, review, sealed, distributed
+    createdById: integer('created_by_id').references(() => users.id),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -17465,28 +17508,27 @@ export const reportAtomProvenance = pgTable(
       .references(() => organizations.id),
 
     // Where in the report
-    sectionPath: text('section_path').notNull(),          // e.g. "sections[2].efficacy.primaryEndpoint"
-    fieldLabel: text('field_label'),                       // human-readable label
-    reportedValue: text('reported_value'),                 // the value as it appears in the report
+    sectionPath: text('section_path').notNull(), // e.g. "sections[2].efficacy.primaryEndpoint"
+    fieldLabel: text('field_label'), // human-readable label
+    reportedValue: text('reported_value'), // the value as it appears in the report
 
     // Source atom reference
-    atomId: integer('atom_id'),                            // FK to lumen_data_atoms if applicable
-    sourceTable: text('source_table').notNull(),           // e.g. "csr_details", "cer_reports", "lumen_data_atoms"
-    sourceRecordId: text('source_record_id').notNull(),    // PK in source table
-    sourceField: text('source_field').notNull(),           // column/path in source
-    sourceValue: text('source_value'),                     // original value at source
-    valueHash: text('value_hash'),                         // SHA-256 of source value for drift detection
+    atomId: integer('atom_id'), // FK to lumen_data_atoms if applicable
+    sourceTable: text('source_table').notNull(), // e.g. "csr_details", "cer_reports", "lumen_data_atoms"
+    sourceRecordId: text('source_record_id').notNull(), // PK in source table
+    sourceField: text('source_field').notNull(), // column/path in source
+    sourceValue: text('source_value'), // original value at source
+    valueHash: text('value_hash'), // SHA-256 of source value for drift detection
 
     // Transformation
-    transformationType: text('transformation_type'),       // 'direct_copy', 'aggregation', 'calculation', 'ai_generated', 'manual_entry'
-    transformationRule: text('transformation_rule'),        // description of how value was derived
-    confidence: real('confidence'),                         // 0.0-1.0
+    transformationType: text('transformation_type'), // 'direct_copy', 'aggregation', 'calculation', 'ai_generated', 'manual_entry'
+    transformationRule: text('transformation_rule'), // description of how value was derived
+    confidence: real('confidence'), // 0.0-1.0
 
     // Integrity
     verified: boolean('verified').default(false),
     verifiedAt: timestamp('verified_at'),
-    verifiedById: integer('verified_by_id')
-      .references(() => users.id),
+    verifiedById: integer('verified_by_id').references(() => users.id),
     driftDetected: boolean('drift_detected').default(false), // source changed since report generated
 
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -17521,24 +17563,23 @@ export const reportSealEvents = pgTable(
       .notNull()
       .references(() => organizations.id),
 
-    eventType: text('event_type').notNull(),               // 'sealed', 'superseded', 'revoked', 'signature_added', 'verification_passed', 'verification_failed'
+    eventType: text('event_type').notNull(), // 'sealed', 'superseded', 'revoked', 'signature_added', 'verification_passed', 'verification_failed'
     previousSealStatus: text('previous_seal_status'),
     newSealStatus: text('new_seal_status'),
 
     // Cryptographic proof
-    contentHashAtEvent: text('content_hash_at_event'),     // hash snapshot at time of event
-    chainHash: text('chain_hash'),                         // hash of this event chained to previous
-    previousEventHash: text('previous_event_hash'),        // link to prior event hash
+    contentHashAtEvent: text('content_hash_at_event'), // hash snapshot at time of event
+    chainHash: text('chain_hash'), // hash of this event chained to previous
+    previousEventHash: text('previous_event_hash'), // link to prior event hash
 
     // Actor
-    performedById: integer('performed_by_id')
-      .references(() => users.id),
+    performedById: integer('performed_by_id').references(() => users.id),
     performedByName: text('performed_by_name'),
     performedByRole: text('performed_by_role'),
 
     // Context
     justification: text('justification'),
-    regulatoryContext: text('regulatory_context'),          // which regulation triggered this action
+    regulatoryContext: text('regulatory_context'), // which regulation triggered this action
     ipAddress: text('ip_address'),
     userAgent: text('user_agent'),
 
@@ -17577,38 +17618,37 @@ export const indemnificationAttestations = pgTable(
 
     // Attestation identity
     attestationUuid: uuid('attestation_uuid').defaultRandom().notNull().unique(),
-    attestationType: text('attestation_type').notNull(),   // 'regulatory_compliance', 'data_integrity', 'methodology', 'ai_transparency', 'provenance_complete', 'signature_authority'
+    attestationType: text('attestation_type').notNull(), // 'regulatory_compliance', 'data_integrity', 'methodology', 'ai_transparency', 'provenance_complete', 'signature_authority'
 
     // What is being attested
     regulatoryBody: regulatoryBodyEnum('regulatory_body'),
-    regulationCode: text('regulation_code'),               // e.g. "21 CFR 312.23(a)(6)"
+    regulationCode: text('regulation_code'), // e.g. "21 CFR 312.23(a)(6)"
     regulationTitle: text('regulation_title'),
     requirementDescription: text('requirement_description'),
-    guidelineReference: text('guideline_reference'),        // e.g. "ICH E3 Section 11.4"
+    guidelineReference: text('guideline_reference'), // e.g. "ICH E3 Section 11.4"
 
     // Attestation result
-    complianceStatus: text('compliance_status').notNull(),  // 'compliant', 'partially_compliant', 'non_compliant', 'not_applicable'
-    complianceScore: real('compliance_score'),               // 0-100
-    findings: json('findings'),                              // [{finding, severity, recommendation}]
-    evidenceReferences: json('evidence_references'),         // [{type, id, description}] pointers to supporting evidence
-    gapDescription: text('gap_description'),                 // if not fully compliant
-    mitigationPlan: text('mitigation_plan'),                 // remediation steps
+    complianceStatus: text('compliance_status').notNull(), // 'compliant', 'partially_compliant', 'non_compliant', 'not_applicable'
+    complianceScore: real('compliance_score'), // 0-100
+    findings: json('findings'), // [{finding, severity, recommendation}]
+    evidenceReferences: json('evidence_references'), // [{type, id, description}] pointers to supporting evidence
+    gapDescription: text('gap_description'), // if not fully compliant
+    mitigationPlan: text('mitigation_plan'), // remediation steps
 
     // Legal language
-    disclaimerText: text('disclaimer_text'),                 // platform liability disclaimer
-    attestationStatement: text('attestation_statement'),     // formal attestation language
-    scopeLimitations: text('scope_limitations'),             // what this attestation does NOT cover
-    indemnificationScope: text('indemnification_scope'),     // 'full', 'limited', 'advisory'
+    disclaimerText: text('disclaimer_text'), // platform liability disclaimer
+    attestationStatement: text('attestation_statement'), // formal attestation language
+    scopeLimitations: text('scope_limitations'), // what this attestation does NOT cover
+    indemnificationScope: text('indemnification_scope'), // 'full', 'limited', 'advisory'
 
     // Verification
     verifiedBySystem: boolean('verified_by_system').default(false),
     verifiedByHuman: boolean('verified_by_human').default(false),
-    verifierId: integer('verifier_id')
-      .references(() => users.id),
+    verifierId: integer('verifier_id').references(() => users.id),
     verifiedAt: timestamp('verified_at'),
 
     // Integrity
-    attestationHash: text('attestation_hash'),              // SHA-256 of canonical attestation content
+    attestationHash: text('attestation_hash'), // SHA-256 of canonical attestation content
     sealed: boolean('sealed').default(false),
     sealedAt: timestamp('sealed_at'),
 
@@ -17625,12 +17665,15 @@ export const indemnificationAttestations = pgTable(
   })
 );
 
-export const insertIndemnificationAttestationSchema = createInsertSchemaOmit(indemnificationAttestations, {
-  id: true,
-  attestationUuid: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const insertIndemnificationAttestationSchema = createInsertSchemaOmit(
+  indemnificationAttestations,
+  {
+    id: true,
+    attestationUuid: true,
+    createdAt: true,
+    updatedAt: true,
+  }
+);
 export type IndemnificationAttestation = InferSelectModel<typeof indemnificationAttestations>;
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -17658,7 +17701,7 @@ export const evidenceSources = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => ({
+  table => ({
     programIdx: index('evidence_sources_program_idx').on(table.programId),
     orgIdx: index('evidence_sources_org_idx').on(table.organizationId),
     hashIdx: index('evidence_sources_hash_idx').on(table.contentHash),
@@ -17687,7 +17730,7 @@ export const evidenceClaims = pgTable(
     extractedBy: integer('extracted_by'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => ({
+  table => ({
     sourceIdx: index('evidence_claims_source_idx').on(table.sourceId),
     programIdx: index('evidence_claims_program_idx').on(table.programId),
     orgIdx: index('evidence_claims_org_idx').on(table.organizationId),
@@ -17711,7 +17754,7 @@ export const evidenceClaimLinks = pgTable(
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
     deletedBy: integer('deleted_by'),
   },
-  (table) => ({
+  table => ({
     claimIdx: index('evidence_claim_links_claim_idx').on(table.claimId),
     docIdx: index('evidence_claim_links_doc_idx').on(table.documentId),
     sectionIdx: index('evidence_claim_links_section_idx').on(table.documentId, table.sectionId),
@@ -17735,7 +17778,7 @@ export const evidenceTraceabilitySnapshots = pgTable(
     createdBy: integer('created_by'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => ({
+  table => ({
     programIdx: index('evidence_snapshots_program_idx').on(table.programId),
     orgIdx: index('evidence_snapshots_org_idx').on(table.organizationId),
     typeIdx: index('evidence_snapshots_type_idx').on(table.snapshotType),
@@ -17750,9 +17793,15 @@ export const evidenceComplianceScores = pgTable(
     organizationId: integer('organization_id').notNull(),
     documentId: integer('document_id'),
     sectionId: varchar('section_id', { length: 200 }),
-    traceabilityScore: numeric('traceability_score', { precision: 5, scale: 2 }).notNull().default('0'),
-    completenessScore: numeric('completeness_score', { precision: 5, scale: 2 }).notNull().default('0'),
-    consistencyScore: numeric('consistency_score', { precision: 5, scale: 2 }).notNull().default('0'),
+    traceabilityScore: numeric('traceability_score', { precision: 5, scale: 2 })
+      .notNull()
+      .default('0'),
+    completenessScore: numeric('completeness_score', { precision: 5, scale: 2 })
+      .notNull()
+      .default('0'),
+    consistencyScore: numeric('consistency_score', { precision: 5, scale: 2 })
+      .notNull()
+      .default('0'),
     overallScore: numeric('overall_score', { precision: 5, scale: 2 }).notNull().default('0'),
     totalClaims: integer('total_claims').notNull().default(0),
     tracedClaims: integer('traced_claims').notNull().default(0),
@@ -17764,7 +17813,7 @@ export const evidenceComplianceScores = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => ({
+  table => ({
     programIdx: index('evidence_scores_program_idx').on(table.programId),
     orgIdx: index('evidence_scores_org_idx').on(table.organizationId),
     docIdx: index('evidence_scores_doc_idx').on(table.documentId),
@@ -17794,7 +17843,7 @@ export const evidenceChangeEvents = pgTable(
     createdBy: integer('created_by'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => ({
+  table => ({
     programIdx: index('evidence_events_program_idx').on(table.programId),
     orgIdx: index('evidence_events_org_idx').on(table.organizationId),
     typeIdx: index('evidence_events_type_idx').on(table.eventType),
@@ -17809,27 +17858,59 @@ export const evidenceSourcesRelations = relations(evidenceSources, ({ many }) =>
 }));
 
 export const evidenceClaimsRelations = relations(evidenceClaims, ({ one, many }) => ({
-  source: one(evidenceSources, { fields: [evidenceClaims.sourceId], references: [evidenceSources.id] }),
+  source: one(evidenceSources, {
+    fields: [evidenceClaims.sourceId],
+    references: [evidenceSources.id],
+  }),
   links: many(evidenceClaimLinks),
   changeEvents: many(evidenceChangeEvents),
 }));
 
 export const evidenceClaimLinksRelations = relations(evidenceClaimLinks, ({ one }) => ({
-  claim: one(evidenceClaims, { fields: [evidenceClaimLinks.claimId], references: [evidenceClaims.id] }),
+  claim: one(evidenceClaims, {
+    fields: [evidenceClaimLinks.claimId],
+    references: [evidenceClaims.id],
+  }),
 }));
 
 export const evidenceChangeEventsRelations = relations(evidenceChangeEvents, ({ one }) => ({
-  source: one(evidenceSources, { fields: [evidenceChangeEvents.sourceId], references: [evidenceSources.id] }),
-  claim: one(evidenceClaims, { fields: [evidenceChangeEvents.claimId], references: [evidenceClaims.id] }),
+  source: one(evidenceSources, {
+    fields: [evidenceChangeEvents.sourceId],
+    references: [evidenceSources.id],
+  }),
+  claim: one(evidenceClaims, {
+    fields: [evidenceChangeEvents.claimId],
+    references: [evidenceClaims.id],
+  }),
 }));
 
 // Insert schemas and types
-export const insertEvidenceSourceSchema = createInsertSchemaOmit(evidenceSources, { id: true, createdAt: true, updatedAt: true });
-export const insertEvidenceClaimSchema = createInsertSchemaOmit(evidenceClaims, { id: true, createdAt: true });
-export const insertEvidenceClaimLinkSchema = createInsertSchemaOmit(evidenceClaimLinks, { id: true, createdAt: true });
-export const insertEvidenceSnapshotSchema = createInsertSchemaOmit(evidenceTraceabilitySnapshots, { id: true, createdAt: true });
-export const insertEvidenceScoreSchema = createInsertSchemaOmit(evidenceComplianceScores, { id: true, createdAt: true, updatedAt: true });
-export const insertEvidenceChangeEventSchema = createInsertSchemaOmit(evidenceChangeEvents, { id: true, createdAt: true });
+export const insertEvidenceSourceSchema = createInsertSchemaOmit(evidenceSources, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export const insertEvidenceClaimSchema = createInsertSchemaOmit(evidenceClaims, {
+  id: true,
+  createdAt: true,
+});
+export const insertEvidenceClaimLinkSchema = createInsertSchemaOmit(evidenceClaimLinks, {
+  id: true,
+  createdAt: true,
+});
+export const insertEvidenceSnapshotSchema = createInsertSchemaOmit(evidenceTraceabilitySnapshots, {
+  id: true,
+  createdAt: true,
+});
+export const insertEvidenceScoreSchema = createInsertSchemaOmit(evidenceComplianceScores, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export const insertEvidenceChangeEventSchema = createInsertSchemaOmit(evidenceChangeEvents, {
+  id: true,
+  createdAt: true,
+});
 
 export type EvidenceSource = InferSelectModel<typeof evidenceSources>;
 export type InsertEvidenceSource = z.infer<typeof insertEvidenceSourceSchema>;
@@ -17877,21 +17958,27 @@ export type InsertGapAnalysisResult = z.infer<typeof insertGapAnalysisResultSche
 // BILLING: API USAGE TRACKING
 // ============================================================
 
-export const apiUsageLogs = pgTable('api_usage_logs', {
-  id: serial('id').primaryKey(),
-  organizationId: integer('organization_id').references(() => organizations.id).notNull(),
-  userId: integer('user_id'),
-  module: text('module').notNull(), // '510k', 'cer', 'ectd', 'cmc', 'ai_assistance', 'vault'
-  endpoint: text('endpoint'),
-  requestCount: integer('request_count').default(1).notNull(),
-  tokensUsed: integer('tokens_used').default(0).notNull(),
-  costCents: integer('cost_cents').default(0).notNull(), // cost in cents
-  metadata: json('metadata'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-}, (table) => ({
-  orgDateIdx: index('api_usage_org_date_idx').on(table.organizationId, table.createdAt),
-  moduleIdx: index('api_usage_module_idx').on(table.module),
-}));
+export const apiUsageLogs = pgTable(
+  'api_usage_logs',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .references(() => organizations.id)
+      .notNull(),
+    userId: integer('user_id'),
+    module: text('module').notNull(), // '510k', 'cer', 'ectd', 'cmc', 'ai_assistance', 'vault'
+    endpoint: text('endpoint'),
+    requestCount: integer('request_count').default(1).notNull(),
+    tokensUsed: integer('tokens_used').default(0).notNull(),
+    costCents: integer('cost_cents').default(0).notNull(), // cost in cents
+    metadata: json('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    orgDateIdx: index('api_usage_org_date_idx').on(table.organizationId, table.createdAt),
+    moduleIdx: index('api_usage_module_idx').on(table.module),
+  })
+);
 
 export type ApiUsageLog = InferSelectModel<typeof apiUsageLogs>;
 
@@ -17901,19 +17988,26 @@ export type ApiUsageLog = InferSelectModel<typeof apiUsageLogs>;
 
 export const billingBudgets = pgTable('billing_budgets', {
   id: serial('id').primaryKey(),
-  organizationId: integer('organization_id').references(() => organizations.id).notNull().unique(),
+  organizationId: integer('organization_id')
+    .references(() => organizations.id)
+    .notNull()
+    .unique(),
   monthlyBudgetCents: integer('monthly_budget_cents'), // null = no budget set
   hardLimitEnabled: boolean('hard_limit_enabled').default(false).notNull(),
-  alertThresholds: json('alert_thresholds').$type<Array<{
-    threshold: number; // 50, 75, 90, 100
-    emailEnabled: boolean;
-    inAppEnabled: boolean;
-  }>>().default([
-    { threshold: 50, emailEnabled: false, inAppEnabled: true },
-    { threshold: 75, emailEnabled: true, inAppEnabled: true },
-    { threshold: 90, emailEnabled: true, inAppEnabled: true },
-    { threshold: 100, emailEnabled: true, inAppEnabled: true },
-  ]),
+  alertThresholds: json('alert_thresholds')
+    .$type<
+      Array<{
+        threshold: number; // 50, 75, 90, 100
+        emailEnabled: boolean;
+        inAppEnabled: boolean;
+      }>
+    >()
+    .default([
+      { threshold: 50, emailEnabled: false, inAppEnabled: true },
+      { threshold: 75, emailEnabled: true, inAppEnabled: true },
+      { threshold: 90, emailEnabled: true, inAppEnabled: true },
+      { threshold: 100, emailEnabled: true, inAppEnabled: true },
+    ]),
   notifyEmails: json('notify_emails').$type<string[]>().default([]),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -17925,21 +18019,52 @@ export type BillingBudget = InferSelectModel<typeof billingBudgets>;
 // BILLING: ALERTS & NOTIFICATIONS
 // ============================================================
 
-export const billingAlerts = pgTable('billing_alerts', {
-  id: serial('id').primaryKey(),
-  organizationId: integer('organization_id').references(() => organizations.id).notNull(),
-  type: text('type').notNull(), // 'budget_warning', 'budget_exceeded', 'payment_failed', 'plan_change', 'invoice_ready'
-  threshold: integer('threshold'), // percentage threshold that triggered this alert (50, 75, 90, 100)
-  message: text('message').notNull(),
-  metadata: json('metadata'),
-  emailSent: boolean('email_sent').default(false).notNull(),
-  acknowledged: boolean('acknowledged').default(false).notNull(),
-  acknowledgedAt: timestamp('acknowledged_at'),
-  acknowledgedBy: integer('acknowledged_by'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-}, (table) => ({
-  orgIdx: index('billing_alerts_org_idx').on(table.organizationId),
-  typeIdx: index('billing_alerts_type_idx').on(table.type),
-}));
+export const billingAlerts = pgTable(
+  'billing_alerts',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .references(() => organizations.id)
+      .notNull(),
+    type: text('type').notNull(), // 'budget_warning', 'budget_exceeded', 'payment_failed', 'plan_change', 'invoice_ready'
+    threshold: integer('threshold'), // percentage threshold that triggered this alert (50, 75, 90, 100)
+    message: text('message').notNull(),
+    metadata: json('metadata'),
+    emailSent: boolean('email_sent').default(false).notNull(),
+    acknowledged: boolean('acknowledged').default(false).notNull(),
+    acknowledgedAt: timestamp('acknowledged_at'),
+    acknowledgedBy: integer('acknowledged_by'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('billing_alerts_org_idx').on(table.organizationId),
+    typeIdx: index('billing_alerts_type_idx').on(table.type),
+  })
+);
 
 export type BillingAlert = InferSelectModel<typeof billingAlerts>;
+
+// ============================================================
+// FEATURE TOGGLES
+// ============================================================
+
+export const featureToggles = pgTable(
+  'feature_toggles',
+  {
+    id: serial('id').primaryKey(),
+    featureKey: text('feature_key').notNull().unique(),
+    description: text('description'),
+    enabled: boolean('enabled').default(false).notNull(),
+    enabledForOrganizationIds: json('enabled_for_organization_ids').$type<number[]>().default([]),
+    enabledForClientWorkspaceIds: json('enabled_for_client_workspace_ids')
+      .$type<number[]>()
+      .default([]),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    featureKeyIdx: index('feature_toggles_feature_key_idx').on(table.featureKey),
+  })
+);
+
+export type FeatureToggle = InferSelectModel<typeof featureToggles>;

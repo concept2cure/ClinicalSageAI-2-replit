@@ -144,7 +144,11 @@ const LUMEN_GOVERNANCE_POLICY = {
   supportedModalities: ['text'] as const,
   allowedTaskType: 'regulatory_review' as const,
 };
-const CONTROL_PLANE_STATE_PATH = path.resolve(process.cwd(), 'tmp', 'lumen-cortex-ft-control-plane.json');
+const CONTROL_PLANE_STATE_PATH = path.resolve(
+  process.cwd(),
+  'tmp',
+  'lumen-cortex-ft-control-plane.json'
+);
 
 const STAGE_TRANSITIONS: Record<
   NonNullable<DeploymentConfig['deploymentStage']>,
@@ -257,7 +261,8 @@ class ModelRegistry {
     {
       id: 'AFT-P0-001',
       title: 'Unify inference via AI Gateway',
-      description: 'Remove direct provider inference paths and route all FT inference through gateway.',
+      description:
+        'Remove direct provider inference paths and route all FT inference through gateway.',
       priority: 'P0',
       status: 'completed',
       owner: 'AI Platform',
@@ -562,11 +567,23 @@ class ModelRegistry {
       quantization,
       measuredAt: new Date(),
       latencyP50Ms:
-        quantization === '4bit' ? 520 : quantization === '8bit' ? 690 : source.evaluationMetrics?.latencyP50Ms || 850,
+        quantization === '4bit'
+          ? 520
+          : quantization === '8bit'
+            ? 690
+            : source.evaluationMetrics?.latencyP50Ms || 850,
       latencyP99Ms:
-        quantization === '4bit' ? 1900 : quantization === '8bit' ? 2200 : source.evaluationMetrics?.latencyP99Ms || 2400,
+        quantization === '4bit'
+          ? 1900
+          : quantization === '8bit'
+            ? 2200
+            : source.evaluationMetrics?.latencyP99Ms || 2400,
       tokensPerSecond:
-        quantization === '4bit' ? 68 : quantization === '8bit' ? 56 : source.evaluationMetrics?.tokensPerSecond || 45,
+        quantization === '4bit'
+          ? 68
+          : quantization === '8bit'
+            ? 56
+            : source.evaluationMetrics?.tokensPerSecond || 45,
       hallucinationRateDelta: quantization === '4bit' ? 0.01 : quantization === '8bit' ? 0.005 : 0,
       recommendation: quantization === '4bit' ? 'review' : 'promote',
     };
@@ -687,9 +704,7 @@ class ModelRegistry {
     }
   }
 
-  private recordDeploymentEvent(
-    event: Omit<DeploymentEvent, 'id' | 'createdAt'>
-  ) {
+  private recordDeploymentEvent(event: Omit<DeploymentEvent, 'id' | 'createdAt'>) {
     const entry: DeploymentEvent = {
       id: `evt_${uuidv4()}`,
       createdAt: new Date(),
@@ -923,22 +938,6 @@ async function performInference(request: InferenceRequest): Promise<InferenceRes
           citationMode: request.citationMode || null,
           governancePolicy: 'lumen-ft-v1',
           supportedModalities: LUMEN_GOVERNANCE_POLICY.supportedModalities.join(','),
-        },
-      });
-
-      const response = await gateway.route({
-        taskType: 'regulatory_review',
-        messages,
-        model: process.env.LUMEN_CORTEX_MODEL_ID || undefined,
-        temperature: request.temperature ?? 0.3,
-        maxTokens: request.maxTokens ?? 4096,
-        strategy: 'quality_optimized',
-        callerModule: 'ana-cortex-ft/inference',
-        metadata: {
-          regulatoryBody,
-          submissionType: request.regulatoryContext?.submissionType || null,
-          formatGuide: request.formatGuide || null,
-          citationMode: request.citationMode || null,
         },
       });
 
@@ -1180,11 +1179,6 @@ router.post('/models/:modelId/promote', (req: Request, res: Response) => {
   } catch (err) {
     return res.status(409).json({ error: String(err) });
   }
-  const updated = registry.promoteModel(
-    req.params.modelId,
-    stage as NonNullable<DeploymentConfig['deploymentStage']>,
-    actor
-  );
   if (!updated) return res.status(404).json({ error: 'Model not found' });
 
   return res.json({
@@ -1212,7 +1206,6 @@ router.post('/models/:modelId/rollback', (req: Request, res: Response) => {
   } catch (err) {
     return res.status(409).json({ error: String(err) });
   }
-  const updated = registry.rollbackModel(req.params.modelId, actor);
   if (!updated) return res.status(404).json({ error: 'Model not found' });
   return res.json({
     success: true,
@@ -1237,7 +1230,9 @@ router.post('/models/:modelId/quantize', (req: Request, res: Response) => {
   const actor = String(req.body?.actor || 'system');
   const allowed = ['4bit', '8bit', 'none'] as const;
   if (!quantization || !allowed.includes(quantization)) {
-    return res.status(400).json({ error: "Invalid quantization. Expected '4bit' | '8bit' | 'none'" });
+    return res
+      .status(400)
+      .json({ error: "Invalid quantization. Expected '4bit' | '8bit' | 'none'" });
   }
 
   const variant = registry.createQuantizedVariant(req.params.modelId, quantization, actor);
@@ -1474,7 +1469,9 @@ router.post('/roadmap/:itemId/status', (req: Request, res: Response) => {
     'blocked',
   ];
   if (!status || !allowed.includes(status)) {
-    return res.status(400).json({ error: "Invalid status. Expected one of pending|in_progress|completed|blocked" });
+    return res
+      .status(400)
+      .json({ error: 'Invalid status. Expected one of pending|in_progress|completed|blocked' });
   }
   const item = registry.updateRemediationPlanStatus(req.params.itemId, status);
   if (!item) return res.status(404).json({ error: 'Roadmap item not found' });
@@ -1488,7 +1485,9 @@ router.post('/roadmap/:itemId/status', (req: Request, res: Response) => {
 router.post('/wisdom/assess', (req: Request, res: Response) => {
   const content = String(req.body?.content || '');
   const citations = (Array.isArray(req.body?.citations) ? req.body.citations : []) as Citation[];
-  const flags = (Array.isArray(req.body?.regulatoryFlags) ? req.body.regulatoryFlags : []) as RegulatoryFlag[];
+  const flags = (
+    Array.isArray(req.body?.regulatoryFlags) ? req.body.regulatoryFlags : []
+  ) as RegulatoryFlag[];
   if (!content.trim()) return res.status(400).json({ error: 'content is required' });
 
   const wisdom = buildWisdomProfile(content, citations, flags);
@@ -1579,7 +1578,8 @@ router.get('/beta-readiness', async (_req: Request, res: Response) => {
   const blockers: string[] = [];
   if (!activeModel) blockers.push('No active model configured.');
   if (!persistenceWritable) blockers.push('Control-plane persistence path is not writable.');
-  if (totalP0 > 0 && completedP0 < totalP0) blockers.push('Not all P0 remediation items are completed.');
+  if (totalP0 > 0 && completedP0 < totalP0)
+    blockers.push('Not all P0 remediation items are completed.');
   if (latestEvents.length === 0) blockers.push('No deployment events found.');
 
   return res.json({

@@ -33,10 +33,7 @@ import { ZenSidebar } from './components/sidebar/ZenSidebar';
 import { ZenChat } from './components/chat/ZenChat';
 import { ZenCommandPalette } from './components/command/ZenCommandPalette';
 import { ZenSettings } from './components/settings/ZenSettings';
-import {
-  ProjectSwitcher,
-  NewProjectModal,
-} from './components/projects/ProjectSwitcher';
+import { ProjectSwitcher, NewProjectModal } from './components/projects/ProjectSwitcher';
 import ProjectConfigPanel from './components/workspace/ProjectConfigPanel';
 // [BATCH 3] WorkflowTimeline — renderer removed, import kept for type compatibility
 import { ProjectFilesCompact } from './components/workspace/ProjectFilesCompact';
@@ -50,7 +47,11 @@ import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import { usePlatformContext } from './hooks/useLicense';
 import { useWorkspaceSummary } from './hooks/useWorkspaceSummary';
 import { useReadinessAssessment } from './hooks/useOrchestration';
-import { useProjectIntelligence, useNextBestActions, useRecommendations } from './hooks/useIntelligence';
+import {
+  useProjectIntelligence,
+  useNextBestActions,
+  useRecommendations,
+} from './hooks/useIntelligence';
 
 import { WorkspaceReadinessStrip } from './components/workspace/WorkspaceReadinessStrip';
 import { ProjectWorkspaceShell } from './components/workspace/ProjectWorkspaceShell';
@@ -376,13 +377,13 @@ type LayoutMode =
   | 'artifacts-center'
   | 'setup'
   // ── Project tabs ──
-  | 'project-home'      // Overview
-  | 'documents'          // Work
-  | 'vault'              // Vault
-  | 'review'             // Review
-  | 'submissions'        // Submit
-  | 'dossier-map'        // Sub-view within Work
-  | 'section-workspace'  // Sub-view within Work
+  | 'project-home' // Overview
+  | 'documents' // Work
+  | 'vault' // Vault
+  | 'review' // Review
+  | 'submissions' // Submit
+  | 'dossier-map' // Sub-view within Work
+  | 'section-workspace' // Sub-view within Work
   // ── Canonical workspace + editor ──
   | 'regulatory-workspace'
   | 'editor'
@@ -1109,7 +1110,13 @@ export const ZenApp: React.FC = () => {
         context: oq.context ?? '',
       })),
     };
-  }, [readinessData, projectReadinessScore, intelligenceProfile, nextActionsData, recommendationsData]);
+  }, [
+    readinessData,
+    projectReadinessScore,
+    intelligenceProfile,
+    nextActionsData,
+    recommendationsData,
+  ]);
 
   // ── Canonical AuthoringContextPack — derived from all available state ──────
   const authoringContext = useMemo<AuthoringContextPack | null>(() => {
@@ -1775,19 +1782,6 @@ export const ZenApp: React.FC = () => {
     [rawProjects, updateProjectMutation]
   );
 
-  const handleArchiveProject = useCallback(
-    async (id: string) => {
-      const project = rawProjects.find(p => p.id === id);
-      if (project) {
-        await updateProjectMutation({
-          ...project,
-          status: 'archived',
-        });
-      }
-    },
-    [rawProjects, updateProjectMutation]
-  );
-
   const handleEditProject = useCallback(
     async (data: Record<string, any>) => {
       const project = rawProjects.find(p => p.id === activeProjectId);
@@ -1804,7 +1798,9 @@ export const ZenApp: React.FC = () => {
             metadata: {
               ...((project.metadata as any) || {}),
               ...(data.targetAgency !== undefined && { targetAgency: data.targetAgency }),
-              ...(data.targetSubmissionDate !== undefined && { targetSubmissionDate: data.targetSubmissionDate }),
+              ...(data.targetSubmissionDate !== undefined && {
+                targetSubmissionDate: data.targetSubmissionDate,
+              }),
               ...(data.submissionType !== undefined && { submissionType: data.submissionType }),
             } as any,
           });
@@ -2538,30 +2534,42 @@ export const ZenApp: React.FC = () => {
 
           {/* ── Global destination: Apps launcher ── */}
           {!embeddedModule && layoutMode === 'apps' && (
-            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-apps">
+            <div
+              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
+              data-testid="workspace-apps"
+            >
               <ErrorBoundary>
                 <Suspense fallback={<ModuleLoadingFallback />}>
                   <AppsPage
                     submissionType={activeProject?.type}
                     onNavigate={id => {
                       switch (id) {
-                        case 'deep-research': setLayoutMode('deep-research'); break;
-                        case 'precedent-intelligence': setLayoutMode('precedent-intelligence'); break;
-                        case 'safety-narrative': setLayoutMode('safety-narrative'); break;
+                        case 'deep-research':
+                          setLayoutMode('deep-research');
+                          break;
+                        case 'precedent-intelligence':
+                          setLayoutMode('precedent-intelligence');
+                          break;
+                        case 'safety-narrative':
+                          setLayoutMode('safety-narrative');
+                          break;
                         case 'biostatistics':
                           setLayoutMode('regulatory-workspace');
                           setActiveToolPanel('ana-biostats');
                           break;
                         case '510k-workspace':
-                          if (activeProjectId) navigate(`/concept2cure/project/${activeProjectId}/510k`);
+                          if (activeProjectId)
+                            navigate(`/concept2cure/project/${activeProjectId}/510k`);
                           else setLayoutMode('projects');
                           break;
                         case 'pma-workspace':
-                          if (activeProjectId) navigate(`/concept2cure/project/${activeProjectId}/pma`);
+                          if (activeProjectId)
+                            navigate(`/concept2cure/project/${activeProjectId}/pma`);
                           else setLayoutMode('projects');
                           break;
                         case 'cer-generator':
-                          if (activeProjectId) navigate(`/concept2cure/project/${activeProjectId}/cer`);
+                          if (activeProjectId)
+                            navigate(`/concept2cure/project/${activeProjectId}/cer`);
                           else setLayoutMode('projects');
                           break;
                         default:
@@ -2581,7 +2589,10 @@ export const ZenApp: React.FC = () => {
 
           {/* ── Global destination: Artifacts browser ── */}
           {!embeddedModule && layoutMode === 'artifacts-center' && (
-            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-artifacts-center">
+            <div
+              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
+              data-testid="workspace-artifacts-center"
+            >
               <ErrorBoundary>
                 <Suspense fallback={<ModuleLoadingFallback />}>
                   <ArtifactsPage
@@ -2597,11 +2608,14 @@ export const ZenApp: React.FC = () => {
 
           {/* ── Global destination: Setup ── */}
           {!embeddedModule && layoutMode === 'setup' && (
-            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-setup">
+            <div
+              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
+              data-testid="workspace-setup"
+            >
               <ErrorBoundary>
                 <Suspense fallback={<ModuleLoadingFallback />}>
                   <SetupPage
-                    onOpenSettings={(section) => {
+                    onOpenSettings={section => {
                       setSettingsOpen(true);
                     }}
                   />
@@ -2612,13 +2626,16 @@ export const ZenApp: React.FC = () => {
 
           {/* ── Project tab: Vault ── */}
           {!embeddedModule && layoutMode === 'vault' && (
-            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-vault">
+            <div
+              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
+              data-testid="workspace-vault"
+            >
               <ErrorBoundary>
                 <Suspense fallback={<ModuleLoadingFallback />}>
                   <VaultPage
                     projectId={activeProjectId}
                     projectName={activeProject?.name}
-                    onOpenDocument={(docId) => {
+                    onOpenDocument={docId => {
                       setLayoutMode('documents');
                     }}
                   />
@@ -2834,7 +2851,7 @@ export const ZenApp: React.FC = () => {
                   product: ((activeProject as Record<string, unknown>).product as string) || null,
                   region: ((activeProject as Record<string, unknown>).region as string) || null,
                 }}
-                onNavigate={(mode) => {
+                onNavigate={mode => {
                   const mapped = SIDEBAR_NAV_TO_LAYOUT[mode];
                   if (mapped) {
                     setLayoutMode(mapped);
@@ -2895,12 +2912,12 @@ export const ZenApp: React.FC = () => {
                         title: d.name,
                         updatedAt: d.uploadedAt,
                       }))}
-                      onResumeArtifact={(artifactId) => {
+                      onResumeArtifact={artifactId => {
                         setOpenArtifactId(artifactId);
                         setRiViewMode('editor');
                         setLayoutMode('regulatory-workspace');
                       }}
-                      onAction={(toolId) => {
+                      onAction={toolId => {
                         switch (toolId) {
                           case 'recent':
                             // Open workspace in document studio mode — shows recent documents list
@@ -3213,11 +3230,14 @@ export const ZenApp: React.FC = () => {
                 {/* Right sidebar: Claude.ai-style project knowledge (Context, Strategy, Instructions, Files, Intelligence, RIM) */}
                 {/* Desktop: static panel */}
                 <div className="w-72 xl:w-80 border-l border-zinc-100 bg-white flex-shrink-0 hidden lg:flex">
-                  <Suspense fallback={<div className="flex items-center justify-center py-12 w-full"><Loader2 className="w-5 h-5 animate-spin text-zinc-400" /></div>}>
-                    <ProjectKnowledgePanel
-                      projectId={activeProjectId ?? null}
-                      className="w-full"
-                    />
+                  <Suspense
+                    fallback={
+                      <div className="flex items-center justify-center py-12 w-full">
+                        <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+                      </div>
+                    }
+                  >
+                    <ProjectKnowledgePanel projectId={activeProjectId ?? null} className="w-full" />
                   </Suspense>
                 </div>
                 {/* Mobile/Tablet: floating toggle + slide-over drawer */}
@@ -3237,7 +3257,13 @@ export const ZenApp: React.FC = () => {
                           <X className="w-4 h-4 text-zinc-400" />
                         </button>
                       </div>
-                      <Suspense fallback={<div className="flex items-center justify-center py-12 w-full"><Loader2 className="w-5 h-5 animate-spin text-zinc-400" /></div>}>
+                      <Suspense
+                        fallback={
+                          <div className="flex items-center justify-center py-12 w-full">
+                            <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+                          </div>
+                        }
+                      >
                         <ProjectKnowledgePanel
                           projectId={activeProjectId ?? null}
                           className="w-full"
@@ -3349,11 +3375,12 @@ export const ZenApp: React.FC = () => {
                         <MessageSquare className="w-3 h-3" />
                         {project.conversationCount}
                       </span>
-                      {project.sponsor && (
-                        <span className="truncate">{project.sponsor}</span>
-                      )}
+                      {project.sponsor && <span className="truncate">{project.sponsor}</span>}
                       <span className="ml-auto tabular-nums">
-                        {new Date(project.lastUpdated).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        {new Date(project.lastUpdated).toLocaleDateString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
                       </span>
                     </div>
                   </button>
@@ -3510,19 +3537,23 @@ export const ZenApp: React.FC = () => {
       <ProjectConfigPanel
         isOpen={editProjectOpen}
         onClose={() => setEditProjectOpen(false)}
-        project={activeProject ? {
-          id: activeProject.id,
-          name: activeProject.name,
-          description: activeProject.description,
-          submissionType: activeProject.type,
-          sponsor: activeProject.sponsor,
-          product: activeProject.product,
-          region: activeProject.region,
-          targetAgency: activeProject.targetAgency,
-          targetSubmissionDate: activeProject.targetSubmissionDate,
-          status: activeProject.status,
-          customInstructions: customInstructions,
-        } : null}
+        project={
+          activeProject
+            ? {
+                id: activeProject.id,
+                name: activeProject.name,
+                description: activeProject.description,
+                submissionType: activeProject.type,
+                sponsor: activeProject.sponsor,
+                product: activeProject.product,
+                region: activeProject.region,
+                targetAgency: activeProject.targetAgency,
+                targetSubmissionDate: activeProject.targetSubmissionDate,
+                status: activeProject.status,
+                customInstructions: customInstructions,
+              }
+            : null
+        }
         onSave={handleEditProject}
       />
 
@@ -3556,9 +3587,9 @@ export const ZenApp: React.FC = () => {
                   navigate(`/concept2cure/project/${options.projectId}/510k`);
                 } else {
                   const actionToMode: Record<string, LayoutMode> = {
-                    'work': 'documents',
-                    'vault': 'vault',
-                    'apps': 'apps',
+                    work: 'documents',
+                    vault: 'vault',
+                    apps: 'apps',
                   };
                   setLayoutMode(actionToMode[action] || 'project-home');
                 }

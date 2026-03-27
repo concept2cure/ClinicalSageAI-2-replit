@@ -213,93 +213,6 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     setActiveInspector(prev => (prev === panel ? null : panel));
   }, []);
 
-  const gaChecks = useMemo(
-    () => [
-      {
-        id: 'project-context',
-        label: 'Project context',
-        status: projectId ? 'ready' : ('missing' as const),
-        detail: projectId
-          ? `Linked to project ${projectId.slice(0, 8)}…`
-          : 'Editor should be opened with a projectId to enable persistence, governance, and audit.',
-      },
-      {
-        id: 'artifact-loaded',
-        label: 'Document loaded',
-        status: activeArtifact?.id ? 'ready' : ('missing' as const),
-        detail: activeArtifact?.id
-          ? `${activeArtifact.title} (${activeArtifact.status || 'draft'})`
-          : 'No active artifact selected. Choose or create a document.',
-      },
-      {
-        id: 'api-wiring',
-        label: 'Authoring API wiring',
-        status: artifacts.length > 0 ? ('ready' as const) : ('partial' as const),
-        detail:
-          artifacts.length > 0
-            ? `Artifact APIs responding (${artifacts.length} document${artifacts.length === 1 ? '' : 's'} loaded).`
-            : 'No artifacts fetched yet. Confirm /api/concept2cure/projects/:id/artifacts is reachable.',
-      },
-      {
-        id: 'collaboration',
-        label: 'Collaboration channel',
-        status: collaboration.isConnected ? ('ready' as const) : ('partial' as const),
-        detail: collaboration.isConnected
-          ? 'Presence + typing channel connected.'
-          : 'Collaboration socket is offline; editor still supports single-user authoring.',
-      },
-      {
-        id: 'export-controls',
-        label: 'Export and submission controls',
-        status: activeArtifact ? ('ready' as const) : ('partial' as const),
-        detail: activeArtifact
-          ? 'DOCX/PDF/Markdown export plus audit export are available.'
-          : 'Open a document to enable governed export and status pipeline.',
-      },
-    ],
-    [projectId, activeArtifact, artifacts.length, collaboration.isConnected]
-  );
-
-  const gaWorkflowModels = useMemo(
-    () => [
-      {
-        name: 'Author → Review → Approve → Lock',
-        owner: 'Regulatory author + QA reviewer',
-        objective: 'Produce a controlled submission-ready artifact with traceable approvals.',
-        path: ['Draft', 'Peer review', 'Approval', 'Locked'],
-      },
-      {
-        name: 'AI-assisted drafting loop',
-        owner: 'Medical writer',
-        objective: 'Accelerate drafting while preserving human-in-the-loop control.',
-        path: ['Prompt/selection', 'AI suggestion', 'Diff review', 'Apply + autosave'],
-      },
-      {
-        name: 'Evidence and compliance loop',
-        owner: 'Regulatory operations',
-        objective: 'Validate claims against references and submission requirements.',
-        path: ['Cross-ref', 'Claim check', 'Compliance scan', 'Submission readiness'],
-      },
-    ],
-    []
-  );
-
-  const competitiveCapabilities = useMemo(
-    () =>
-      buildCapabilityModels({
-        projectId,
-        hasActiveArtifact: !!activeArtifact,
-        artifactCount: artifacts.length,
-        collaborationConnected: collaboration.isConnected,
-      }),
-    [projectId, activeArtifact, artifacts.length, collaboration.isConnected]
-  );
-
-  const gaRemediationQueue = useMemo(
-    () => buildRemediationQueue(gaChecks, competitiveCapabilities),
-    [gaChecks, competitiveCapabilities]
-  );
-
   // Auto-open inspector when initialInspector is set from parent
   useEffect(() => {
     if (initialInspector) setActiveInspector(initialInspector);
@@ -490,7 +403,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         {
           id: 'draft',
           label: 'Draft with AnA',
-          done: !!activeArtifact?.content && activeArtifact.content.replace(/<[^>]+>/g, '').trim().length > 40,
+          done:
+            !!activeArtifact?.content &&
+            activeArtifact.content.replace(/<[^>]+>/g, '').trim().length > 40,
           target: 'intelligence',
         },
         {
@@ -514,13 +429,16 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         {
           id: 'submit',
           label: 'Submission ready',
-          done: gaBlockingCount === 0 && (activeArtifact?.status === 'approved' || activeArtifact?.status === 'locked'),
+          done:
+            gaBlockingCount === 0 &&
+            (activeArtifact?.status === 'approved' || activeArtifact?.status === 'locked'),
           target: 'submission-readiness',
         },
       ] as const,
     [activeArtifact, provenanceCount, comments, signatures.length, gaBlockingCount]
   );
-  const nextJourneyStep = humanJourneySteps.find(step => !step.done) || humanJourneySteps[humanJourneySteps.length - 1];
+  const nextJourneyStep =
+    humanJourneySteps.find(step => !step.done) || humanJourneySteps[humanJourneySteps.length - 1];
   const completedJourneySteps = humanJourneySteps.filter(step => step.done).length;
   const journeyProgress = Math.round((completedJourneySteps / humanJourneySteps.length) * 100);
   const gaSnoozeKey = useMemo(
@@ -837,7 +755,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     };
 
     // Fetch signatures
-    apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/signatures`)
+    apiRequest(
+      'GET',
+      `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/signatures`
+    )
       .then(r => r.json())
       .then(d => {
         if (!cancelled) setSignatures(d.data ?? d ?? []);
@@ -849,7 +770,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         }
       });
     // Fetch provenance count
-    apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/provenance`)
+    apiRequest(
+      'GET',
+      `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/provenance`
+    )
       .then(r => r.json())
       .then(d => {
         if (!cancelled && d) {
@@ -865,7 +789,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         }
       });
     // Fetch integrity verification
-    apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/verify-integrity`)
+    apiRequest(
+      'GET',
+      `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/verify-integrity`
+    )
       .then(r => r.json())
       .then(d => {
         if (!cancelled && d) setIntegrityVerified((d.data ?? d)?.verified ?? null);
@@ -890,12 +817,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     (async () => {
       try {
         const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
-            title: initialTitle,
-            content: initialContent,
-            type: 'regulatory_document',
-            category: 'document',
-            ctdSection: initialCtdSection || undefined,
-          });
+          title: initialTitle,
+          content: initialContent,
+          type: 'regulatory_document',
+          category: 'document',
+          ctdSection: initialCtdSection || undefined,
+        });
         if (res.ok) {
           const payload = await res.json();
           const created = payload.data ?? payload;
@@ -1089,11 +1016,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     setCreatingNew(true);
     try {
       const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
-          title: newDocTitle.trim(),
-          content: '<p>Begin editing your document here...</p>',
-          type: 'regulatory_document',
-          category: 'document',
-        });
+        title: newDocTitle.trim(),
+        content: '<p>Begin editing your document here...</p>',
+        type: 'regulatory_document',
+        category: 'document',
+      });
       if (res.ok) {
         const payload = await res.json();
         const created = payload.data ?? payload;
@@ -1122,11 +1049,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       pushToast(`Generating ${action.replace(/-/g, ' ')}…`, 'info');
       try {
         const res = await apiRequest('POST', '/api/concept2cure/ai/edit-section', {
-            action,
-            text: activeArtifact.content,
-            sectionTitle: activeArtifact.title,
-            submissionType: submissionType || undefined,
-          });
+          action,
+          text: activeArtifact.content,
+          sectionTitle: activeArtifact.title,
+          submissionType: submissionType || undefined,
+        });
         if (res.ok) {
           const payload = await res.json();
           const result = payload.data?.result ?? payload.result;
@@ -1200,7 +1127,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     if (!activeArtifact) return;
     pushToast('Exporting PDF…', 'info');
     try {
-      const res = await apiRequest('POST', '/api/concept2cure/artifacts/export-pdf', { title: activeArtifact.title, content: activeArtifact.content });
+      const res = await apiRequest('POST', '/api/concept2cure/artifacts/export-pdf', {
+        title: activeArtifact.title,
+        content: activeArtifact.content,
+      });
       if (!res.ok) throw new Error('Export failed');
       const blob = await res.blob();
       const filename = `${activeArtifact.title.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`;
@@ -1216,7 +1146,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     if (!activeArtifact) return;
     pushToast('Exporting PowerPoint…', 'info');
     try {
-      const res = await apiRequest('POST', '/api/concept2cure/artifacts/export-pptx', { title: activeArtifact.title, content: activeArtifact.content });
+      const res = await apiRequest('POST', '/api/concept2cure/artifacts/export-pptx', {
+        title: activeArtifact.title,
+        content: activeArtifact.content,
+      });
       if (!res.ok) throw new Error('Export failed');
       const blob = await res.blob();
       const filename = `${activeArtifact.title.replace(/[^a-zA-Z0-9_-]/g, '_')}.pptx`;
@@ -1328,12 +1261,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         'POST',
         `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/signatures`,
         {
-            signaturePurpose: 'Document review and approval',
-            signatureMeaning: 'I have reviewed this document and approve its content',
-            authenticationMethod: 'password',
-            secondFactorVerified: false,
-            version: activeArtifact.version,
-          }
+          signaturePurpose: 'Document review and approval',
+          signatureMeaning: 'I have reviewed this document and approve its content',
+          authenticationMethod: 'password',
+          secondFactorVerified: false,
+          version: activeArtifact.version,
+        }
       );
       if (res.ok) {
         setSignResult({ success: true, message: 'Signature recorded successfully' });
@@ -2207,7 +2140,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       {activeArtifact && (
         <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-200 bg-gradient-to-r from-blue-50/70 to-violet-50/70 overflow-x-auto">
           <span className="text-xs font-semibold text-zinc-700 shrink-0">
-            Human workflow ({completedJourneySteps}/{humanJourneySteps.length} · {journeyProgress}%):
+            Human workflow ({completedJourneySteps}/{humanJourneySteps.length} · {journeyProgress}
+            %):
           </span>
           {humanJourneySteps.map((step, idx) => (
             <React.Fragment key={step.id}>
@@ -2244,46 +2178,86 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
       {/* ── Ribbon toolbar — canonical InspectorRibbon ── */}
       <InspectorRibbon
-        groups={[
-          {
-            label: 'Draft',
-            items: [
-              { id: 'intelligence', label: 'AI Assist', icon: <Brain className="w-3.5 h-3.5" /> },
-              { id: 'batch-ai', label: 'Batch AI', icon: <Layers className="w-3.5 h-3.5" /> },
-              { id: 'dataroom', label: 'Data Room', icon: <Database className="w-3.5 h-3.5" /> },
-              { id: 'ana-memory', label: 'Context', icon: <Brain className="w-3.5 h-3.5" /> },
-            ],
-          },
-          {
-            label: 'Review',
-            items: [
-              { id: 'comments', label: 'Comments', icon: <MessageSquare className="w-3.5 h-3.5" />, badge: comments.filter(c => !c.resolved).length || undefined },
-              { id: 'review', label: 'Review', icon: <Eye className="w-3.5 h-3.5" />, activeColor: isReviewMode ? 'bg-amber-500 text-white font-medium shadow-sm' : undefined, pulse: isReviewMode },
-              { id: 'reviewers', label: 'Reviewers', icon: <Users className="w-3.5 h-3.5" /> },
-              { id: 'versions', label: 'History', icon: <GitCompare className="w-3.5 h-3.5" /> },
-              { id: 'compare', label: 'Compare', icon: <GitCompare className="w-3.5 h-3.5" /> },
-            ],
-          },
-          {
-            label: 'Verify',
-            items: [
-              { id: 'provenance', label: 'Provenance', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
-              { id: 'crossref', label: 'Cross-Refs', icon: <Link2 className="w-3.5 h-3.5" /> },
-              { id: 'inconsistency', label: 'Issues', icon: <Zap className="w-3.5 h-3.5" /> },
-              { id: 'compliance-scanner', label: 'Compliance', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
-              { id: 'proof', label: 'Evidence', icon: <Shield className="w-3.5 h-3.5" />, activeColor: 'bg-emerald-600 text-white font-medium shadow-sm' },
-            ],
-          },
-          {
-            label: 'Publish',
-            items: [
-              { id: 'audit', label: 'Audit Trail', icon: <ClipboardList className="w-3.5 h-3.5" /> },
-              { id: 'submission-readiness', label: 'Submission', icon: <Shield className="w-3.5 h-3.5" /> },
-              { id: 'health', label: 'Health', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
-              { id: 'ga-readiness', label: 'Readiness', icon: <Rocket className="w-3.5 h-3.5" /> },
-            ],
-          },
-        ] satisfies InspectorRibbonGroup[]}
+        groups={
+          [
+            {
+              label: 'Draft',
+              items: [
+                { id: 'intelligence', label: 'AI Assist', icon: <Brain className="w-3.5 h-3.5" /> },
+                { id: 'batch-ai', label: 'Batch AI', icon: <Layers className="w-3.5 h-3.5" /> },
+                { id: 'dataroom', label: 'Data Room', icon: <Database className="w-3.5 h-3.5" /> },
+                { id: 'ana-memory', label: 'Context', icon: <Brain className="w-3.5 h-3.5" /> },
+              ],
+            },
+            {
+              label: 'Review',
+              items: [
+                {
+                  id: 'comments',
+                  label: 'Comments',
+                  icon: <MessageSquare className="w-3.5 h-3.5" />,
+                  badge: comments.filter(c => !c.resolved).length || undefined,
+                },
+                {
+                  id: 'review',
+                  label: 'Review',
+                  icon: <Eye className="w-3.5 h-3.5" />,
+                  activeColor: isReviewMode
+                    ? 'bg-amber-500 text-white font-medium shadow-sm'
+                    : undefined,
+                  pulse: isReviewMode,
+                },
+                { id: 'reviewers', label: 'Reviewers', icon: <Users className="w-3.5 h-3.5" /> },
+                { id: 'versions', label: 'History', icon: <GitCompare className="w-3.5 h-3.5" /> },
+                { id: 'compare', label: 'Compare', icon: <GitCompare className="w-3.5 h-3.5" /> },
+              ],
+            },
+            {
+              label: 'Verify',
+              items: [
+                {
+                  id: 'provenance',
+                  label: 'Provenance',
+                  icon: <ShieldCheck className="w-3.5 h-3.5" />,
+                },
+                { id: 'crossref', label: 'Cross-Refs', icon: <Link2 className="w-3.5 h-3.5" /> },
+                { id: 'inconsistency', label: 'Issues', icon: <Zap className="w-3.5 h-3.5" /> },
+                {
+                  id: 'compliance-scanner',
+                  label: 'Compliance',
+                  icon: <AlertTriangle className="w-3.5 h-3.5" />,
+                },
+                {
+                  id: 'proof',
+                  label: 'Evidence',
+                  icon: <Shield className="w-3.5 h-3.5" />,
+                  activeColor: 'bg-emerald-600 text-white font-medium shadow-sm',
+                },
+              ],
+            },
+            {
+              label: 'Publish',
+              items: [
+                {
+                  id: 'audit',
+                  label: 'Audit Trail',
+                  icon: <ClipboardList className="w-3.5 h-3.5" />,
+                },
+                {
+                  id: 'submission-readiness',
+                  label: 'Submission',
+                  icon: <Shield className="w-3.5 h-3.5" />,
+                },
+                { id: 'health', label: 'Health', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
+                {
+                  id: 'ga-readiness',
+                  label: 'Readiness',
+                  icon: <Rocket className="w-3.5 h-3.5" />,
+                },
+              ],
+            },
+          ] satisfies InspectorRibbonGroup[]
+        }
         activeInspector={activeInspector}
         onToggle={toggleInspector}
       />
@@ -2693,330 +2667,342 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
         {/* Single inspector drawer — only one at a time (canonical InspectorDrawer) */}
         <InspectorDrawer visible={activeInspector === 'intelligence'}>
-            <RegulatoryIntelligencePanel
-              submissionType={submissionType}
-              indication={activeArtifact?.title}
-              deviceName={activeArtifact?.title}
-              documentContent={activeArtifact?.content}
-              onClose={() => setActiveInspector(null)}
-              onCreateDocument={async (content: string, title: string, ctdSection?: string) => {
-                if (!projectId) return;
-                try {
-                  const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
-                      title,
-                      content,
-                      type: 'regulatory_document',
-                      category: 'document',
-                      ctdSection: ctdSection || undefined,
-                    });
-                  if (res.ok) {
-                    const payload = await res.json();
-                    const created = payload.data ?? payload;
-                    setActiveArtifact(created);
-                    setShowArtifactList(false);
-                    setActiveInspector(null);
-                    loadArtifacts();
-                    pushToast(`Created "${title}" from Intelligence`, 'success');
-                  } else {
-                    pushToast('Document creation failed', 'error');
+          <RegulatoryIntelligencePanel
+            submissionType={submissionType}
+            indication={activeArtifact?.title}
+            deviceName={activeArtifact?.title}
+            documentContent={activeArtifact?.content}
+            onClose={() => setActiveInspector(null)}
+            onCreateDocument={async (content: string, title: string, ctdSection?: string) => {
+              if (!projectId) return;
+              try {
+                const res = await apiRequest(
+                  'POST',
+                  `/api/concept2cure/projects/${projectId}/artifacts`,
+                  {
+                    title,
+                    content,
+                    type: 'regulatory_document',
+                    category: 'document',
+                    ctdSection: ctdSection || undefined,
                   }
-                } catch {
-                  pushToast('Network error — document not created', 'error');
+                );
+                if (res.ok) {
+                  const payload = await res.json();
+                  const created = payload.data ?? payload;
+                  setActiveArtifact(created);
+                  setShowArtifactList(false);
+                  setActiveInspector(null);
+                  loadArtifacts();
+                  pushToast(`Created "${title}" from Intelligence`, 'success');
+                } else {
+                  pushToast('Document creation failed', 'error');
                 }
-              }}
-            />
+              } catch {
+                pushToast('Network error — document not created', 'error');
+              }
+            }}
+          />
         </InspectorDrawer>
-        <InspectorDrawer visible={activeInspector === 'provenance' && !!projectId && !!activeArtifact}>
-            <DocumentProvenancePanel
-              projectId={projectId!}
-              artifactId={activeArtifact?.id}
-              onClose={() => setActiveInspector(null)}
-              onOpenCompare={openCompare}
-              onOpenAudit={openAudit}
-            />
+        <InspectorDrawer
+          visible={activeInspector === 'provenance' && !!projectId && !!activeArtifact}
+        >
+          <DocumentProvenancePanel
+            projectId={projectId!}
+            artifactId={activeArtifact?.id}
+            onClose={() => setActiveInspector(null)}
+            onOpenCompare={openCompare}
+            onOpenAudit={openAudit}
+          />
         </InspectorDrawer>
-        <InspectorDrawer visible={activeInspector === 'compare' && !!projectId && !!activeArtifact} width="w-80 max-w-[35vw]">
-            <DocumentVersionCompare
-              projectId={projectId}
-              artifactId={activeArtifact.id}
-              onClose={() => setActiveInspector(null)}
-              onOpenAudit={openAudit}
-              onOpenProvenance={openProvenance}
-              onRollbackComplete={loadArtifacts}
-            />
+        <InspectorDrawer
+          visible={activeInspector === 'compare' && !!projectId && !!activeArtifact}
+          width="w-80 max-w-[35vw]"
+        >
+          <DocumentVersionCompare
+            projectId={projectId}
+            artifactId={activeArtifact.id}
+            onClose={() => setActiveInspector(null)}
+            onOpenAudit={openAudit}
+            onOpenProvenance={openProvenance}
+            onRollbackComplete={loadArtifacts}
+          />
         </InspectorDrawer>
         <InspectorDrawer visible={activeInspector === 'audit' && !!projectId && !!activeArtifact}>
-            <DocumentAuditReport
-              projectId={projectId!}
-              artifactId={activeArtifact?.id}
-              onClose={() => setActiveInspector(null)}
-              onOpenProvenance={openProvenance}
-              onOpenCompare={openCompare}
-              onExportAsArtifact={handleExportAudit}
-              exportingAudit={exportingAudit}
-            />
+          <DocumentAuditReport
+            projectId={projectId!}
+            artifactId={activeArtifact?.id}
+            onClose={() => setActiveInspector(null)}
+            onOpenProvenance={openProvenance}
+            onOpenCompare={openCompare}
+            onExportAsArtifact={handleExportAudit}
+            exportingAudit={exportingAudit}
+          />
         </InspectorDrawer>
         <InspectorDrawer visible={activeInspector === 'proof' && !!projectId && !!activeArtifact}>
-            <ArtifactProofPanel projectId={projectId!} artifact={activeArtifact!} />
+          <ArtifactProofPanel projectId={projectId!} artifact={activeArtifact!} />
         </InspectorDrawer>
         <InspectorDrawer visible={activeInspector === 'dataroom' && !!projectId}>
-            <DataRoomPanel
-              projectId={projectId!}
-              onSourceSelect={source => {
-                pushToast(`Viewing source: ${source.title}`, 'info');
-              }}
-              onUpload={() => {
-                pushToast('Upload source files from the Project sidebar', 'info');
-              }}
-            />
+          <DataRoomPanel
+            projectId={projectId!}
+            onSourceSelect={source => {
+              pushToast(`Viewing source: ${source.title}`, 'info');
+            }}
+            onUpload={() => {
+              pushToast('Upload source files from the Project sidebar', 'info');
+            }}
+          />
         </InspectorDrawer>
-        <InspectorDrawer visible={activeInspector === 'inconsistency' && !!projectId && !!activeArtifact}>
-            <InconsistencyPanel
-              projectId={projectId}
-              activeArtifactId={activeArtifact.id}
-              activeArtifactTitle={activeArtifact.title}
-              activeContent={activeArtifact.content}
-              onNavigateToArtifact={artifactId => {
-                const target = artifacts.find(a => a.id === artifactId);
-                if (target) {
-                  setActiveArtifact(target);
-                  pushToast(`Navigated to: ${target.title}`, 'info');
-                }
-              }}
-            />
+        <InspectorDrawer
+          visible={activeInspector === 'inconsistency' && !!projectId && !!activeArtifact}
+        >
+          <InconsistencyPanel
+            projectId={projectId}
+            activeArtifactId={activeArtifact.id}
+            activeArtifactTitle={activeArtifact.title}
+            activeContent={activeArtifact.content}
+            onNavigateToArtifact={artifactId => {
+              const target = artifacts.find(a => a.id === artifactId);
+              if (target) {
+                setActiveArtifact(target);
+                pushToast(`Navigated to: ${target.title}`, 'info');
+              }
+            }}
+          />
         </InspectorDrawer>
         <InspectorDrawer visible={activeInspector === 'health' && !!activeArtifact}>
-            <DocumentHealth
-              content={activeArtifact.content || ''}
-              documentType={activeArtifact.type}
-              submissionType={submissionType}
-              ctdSection={activeArtifact.ctdSection}
-              onFixIssue={async (dimId, idx) => {
-                if (!activeArtifact) return;
-                const fixActions: Record<string, string> = {
-                  language: 'regulatory-tone',
-                  readability: 'rewrite',
-                  completeness: 'expand',
-                  citations: 'add-references',
-                  formatting: 'rewrite',
-                };
-                const action = fixActions[dimId] || 'rewrite';
-                pushToast(`Applying AI fix for ${dimId} issue #${idx + 1}…`, 'info');
-                handleAIEdit(
-                  action as
-                    | 'rewrite'
-                    | 'expand'
-                    | 'summarize'
-                    | 'regulatory-tone'
-                    | 'add-references'
-                );
-              }}
-            />
+          <DocumentHealth
+            content={activeArtifact.content || ''}
+            documentType={activeArtifact.type}
+            submissionType={submissionType}
+            ctdSection={activeArtifact.ctdSection}
+            onFixIssue={async (dimId, idx) => {
+              if (!activeArtifact) return;
+              const fixActions: Record<string, string> = {
+                language: 'regulatory-tone',
+                readability: 'rewrite',
+                completeness: 'expand',
+                citations: 'add-references',
+                formatting: 'rewrite',
+              };
+              const action = fixActions[dimId] || 'rewrite';
+              pushToast(`Applying AI fix for ${dimId} issue #${idx + 1}…`, 'info');
+              handleAIEdit(
+                action as 'rewrite' | 'expand' | 'summarize' | 'regulatory-tone' | 'add-references'
+              );
+            }}
+          />
         </InspectorDrawer>
         <InspectorDrawer visible={activeInspector === 'versions' && !!activeArtifact}>
-            <VersionTimeline
-              versions={(activeArtifact.versions || []).map((v, i) => ({
-                id: `v-${v.version || i}`,
-                version: v.version || i + 1,
-                content: v.content || '',
-                createdAt: v.createdAt || activeArtifact.createdAt,
-              }))}
-              currentContent={activeArtifact.content || ''}
-              currentVersion={activeArtifact.version || 1}
-              onRestore={version => {
-                setActiveArtifact(prev => (prev ? { ...prev, content: version.content } : null));
-                pushToast(`Restored to version ${version.version}`, 'success');
-              }}
-              onClose={() => setActiveInspector(null)}
-            />
+          <VersionTimeline
+            versions={(activeArtifact.versions || []).map((v, i) => ({
+              id: `v-${v.version || i}`,
+              version: v.version || i + 1,
+              content: v.content || '',
+              createdAt: v.createdAt || activeArtifact.createdAt,
+            }))}
+            currentContent={activeArtifact.content || ''}
+            currentVersion={activeArtifact.version || 1}
+            onRestore={version => {
+              setActiveArtifact(prev => (prev ? { ...prev, content: version.content } : null));
+              pushToast(`Restored to version ${version.version}`, 'success');
+            }}
+            onClose={() => setActiveInspector(null)}
+          />
         </InspectorDrawer>
         <InspectorDrawer visible={activeInspector === 'batch-ai' && !!activeArtifact} width="w-96">
-            <BatchAIPanel
-              content={activeArtifact.content || ''}
-              submissionType={submissionType}
-              onApply={newContent => {
-                setActiveArtifact(prev => (prev ? { ...prev, content: newContent } : null));
-                pushToast('Batch AI changes applied', 'success');
-              }}
-              onClose={() => setActiveInspector(null)}
-            />
+          <BatchAIPanel
+            content={activeArtifact.content || ''}
+            submissionType={submissionType}
+            onApply={newContent => {
+              setActiveArtifact(prev => (prev ? { ...prev, content: newContent } : null));
+              pushToast('Batch AI changes applied', 'success');
+            }}
+            onClose={() => setActiveInspector(null)}
+          />
         </InspectorDrawer>
         <InspectorDrawer visible={activeInspector === 'crossref' && !!activeArtifact}>
-            <CrossReferencePanel
-              content={activeArtifact.content || ''}
-              projectId={projectId}
-              artifacts={artifacts.map(a => ({
-                id: a.id,
-                title: a.title,
-                ctdSection: a.ctdSection,
-                content: a.content,
-              }))}
-              onInsertReference={refText => {
-                pushToast(`Reference inserted: ${refText}`, 'success');
-              }}
-              onNavigateToSection={sectionId => {
-                const target = artifacts.find(a => a.id === sectionId);
-                if (target) {
-                  setActiveArtifact(target);
-                  pushToast(`Navigated to: ${target.title}`, 'info');
-                }
-              }}
-              onClose={() => setActiveInspector(null)}
-            />
+          <CrossReferencePanel
+            content={activeArtifact.content || ''}
+            projectId={projectId}
+            artifacts={artifacts.map(a => ({
+              id: a.id,
+              title: a.title,
+              ctdSection: a.ctdSection,
+              content: a.content,
+            }))}
+            onInsertReference={refText => {
+              pushToast(`Reference inserted: ${refText}`, 'success');
+            }}
+            onNavigateToSection={sectionId => {
+              const target = artifacts.find(a => a.id === sectionId);
+              if (target) {
+                setActiveArtifact(target);
+                pushToast(`Navigated to: ${target.title}`, 'info');
+              }
+            }}
+            onClose={() => setActiveInspector(null)}
+          />
         </InspectorDrawer>
         <InspectorDrawer visible={activeInspector === 'comments' && !!activeArtifact}>
-            <CommentThreadPanel
-              comments={comments}
-              currentUserId={getCurrentUser().id}
-              onResolve={commentId => {
-                setComments(prev =>
-                  prev.map(c => (c.id === commentId ? { ...c, resolved: true } : c))
-                );
-                updateCommentOnServer(commentId, { status: 'resolved' });
-                pushToast('Comment resolved', 'success');
-              }}
-              onReopen={commentId => {
-                setComments(prev =>
-                  prev.map(c => (c.id === commentId ? { ...c, resolved: false } : c))
-                );
-                updateCommentOnServer(commentId, { status: 'open' });
-              }}
-              onReply={(commentId, text) => {
-                const user = getCurrentUser();
-                setComments(prev =>
-                  prev.map(c =>
-                    c.id === commentId
-                      ? {
-                          ...c,
-                          replies: [
-                            ...c.replies,
-                            {
-                              id: `reply-${Date.now()}`,
-                              text,
-                              authorId: user.id,
-                              authorName: user.name,
-                              createdAt: new Date().toISOString(),
-                            },
-                          ],
-                        }
-                      : c
-                  )
-                );
-                addReplyOnServer(commentId, text);
-              }}
-              onDelete={commentId => {
-                setComments(prev => prev.filter(c => c.id !== commentId));
-                deleteCommentOnServer(commentId);
-                pushToast('Comment deleted', 'success');
-              }}
-              onNavigateToComment={commentId => {
-                // Find the comment mark in the editor DOM and scroll to it
-                const commentEl = document.querySelector(`[data-comment-id="${commentId}"]`);
-                if (commentEl) {
-                  commentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  // Flash highlight
-                  commentEl.classList.add('ring-2', 'ring-blue-400', 'ring-offset-1');
-                  setTimeout(() => {
-                    commentEl.classList.remove('ring-2', 'ring-blue-400', 'ring-offset-1');
-                  }, 2000);
-                } else {
-                  pushToast('Comment location not found in document', 'info');
-                }
-              }}
-              onClose={() => setActiveInspector(null)}
-            />
+          <CommentThreadPanel
+            comments={comments}
+            currentUserId={getCurrentUser().id}
+            onResolve={commentId => {
+              setComments(prev =>
+                prev.map(c => (c.id === commentId ? { ...c, resolved: true } : c))
+              );
+              updateCommentOnServer(commentId, { status: 'resolved' });
+              pushToast('Comment resolved', 'success');
+            }}
+            onReopen={commentId => {
+              setComments(prev =>
+                prev.map(c => (c.id === commentId ? { ...c, resolved: false } : c))
+              );
+              updateCommentOnServer(commentId, { status: 'open' });
+            }}
+            onReply={(commentId, text) => {
+              const user = getCurrentUser();
+              setComments(prev =>
+                prev.map(c =>
+                  c.id === commentId
+                    ? {
+                        ...c,
+                        replies: [
+                          ...c.replies,
+                          {
+                            id: `reply-${Date.now()}`,
+                            text,
+                            authorId: user.id,
+                            authorName: user.name,
+                            createdAt: new Date().toISOString(),
+                          },
+                        ],
+                      }
+                    : c
+                )
+              );
+              addReplyOnServer(commentId, text);
+            }}
+            onDelete={commentId => {
+              setComments(prev => prev.filter(c => c.id !== commentId));
+              deleteCommentOnServer(commentId);
+              pushToast('Comment deleted', 'success');
+            }}
+            onNavigateToComment={commentId => {
+              // Find the comment mark in the editor DOM and scroll to it
+              const commentEl = document.querySelector(`[data-comment-id="${commentId}"]`);
+              if (commentEl) {
+                commentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Flash highlight
+                commentEl.classList.add('ring-2', 'ring-blue-400', 'ring-offset-1');
+                setTimeout(() => {
+                  commentEl.classList.remove('ring-2', 'ring-blue-400', 'ring-offset-1');
+                }, 2000);
+              } else {
+                pushToast('Comment location not found in document', 'info');
+              }
+            }}
+            onClose={() => setActiveInspector(null)}
+          />
         </InspectorDrawer>
-        <InspectorDrawer visible={activeInspector === 'reviewers' && !!activeArtifact} className="overflow-y-auto">
-            <ReviewerAssignment
-              documentId={activeArtifact.id}
-              documentTitle={activeArtifact.title}
-              currentStatus={activeArtifact.status}
-              reviewers={[]}
-              teamMembers={[]}
-              onSubmitForReview={async () => {
-                await handleStatusChange('review');
-                pushToast('Document submitted for review', 'success');
-              }}
-              onClose={() => setActiveInspector(null)}
-            />
+        <InspectorDrawer
+          visible={activeInspector === 'reviewers' && !!activeArtifact}
+          className="overflow-y-auto"
+        >
+          <ReviewerAssignment
+            documentId={activeArtifact.id}
+            documentTitle={activeArtifact.title}
+            currentStatus={activeArtifact.status}
+            reviewers={[]}
+            teamMembers={[]}
+            onSubmitForReview={async () => {
+              await handleStatusChange('review');
+              pushToast('Document submitted for review', 'success');
+            }}
+            onClose={() => setActiveInspector(null)}
+          />
         </InspectorDrawer>
         <InspectorDrawer visible={activeInspector === 'review' && !!activeArtifact}>
-            <ReviewModePanel
-              isReviewMode={isReviewMode}
-              onToggleReviewMode={handleToggleReviewMode}
-              changes={trackedChanges}
-              onAcceptChange={changeId => {
-                setTrackedChanges(prev =>
-                  prev.map(c => (c.id === changeId ? { ...c, accepted: true } : c))
-                );
-              }}
-              onRejectChange={changeId => {
-                setTrackedChanges(prev =>
-                  prev.map(c => (c.id === changeId ? { ...c, rejected: true } : c))
-                );
-              }}
-              onAcceptAll={() => {
-                setTrackedChanges(prev => prev.map(c => ({ ...c, accepted: true })));
-                pushToast('All changes accepted', 'success');
-              }}
-              onRejectAll={() => {
-                setTrackedChanges(prev => prev.map(c => ({ ...c, rejected: true })));
-                pushToast('All changes rejected', 'info');
-              }}
-              onCompleteReview={async (status, reviewComments) => {
-                // Map review outcome to artifact status
-                const newStatus = status === 'approved' ? 'approved' : 'review';
-                await handleStatusChange(newStatus, reviewComments);
-                setIsReviewMode(false);
-                pushToast(
-                  status === 'approved'
-                    ? 'Review approved — document status updated'
-                    : 'Changes requested — returned to review',
-                  'success'
-                );
-              }}
-              onClose={() => setActiveInspector(null)}
-            />
+          <ReviewModePanel
+            isReviewMode={isReviewMode}
+            onToggleReviewMode={handleToggleReviewMode}
+            changes={trackedChanges}
+            onAcceptChange={changeId => {
+              setTrackedChanges(prev =>
+                prev.map(c => (c.id === changeId ? { ...c, accepted: true } : c))
+              );
+            }}
+            onRejectChange={changeId => {
+              setTrackedChanges(prev =>
+                prev.map(c => (c.id === changeId ? { ...c, rejected: true } : c))
+              );
+            }}
+            onAcceptAll={() => {
+              setTrackedChanges(prev => prev.map(c => ({ ...c, accepted: true })));
+              pushToast('All changes accepted', 'success');
+            }}
+            onRejectAll={() => {
+              setTrackedChanges(prev => prev.map(c => ({ ...c, rejected: true })));
+              pushToast('All changes rejected', 'info');
+            }}
+            onCompleteReview={async (status, reviewComments) => {
+              // Map review outcome to artifact status
+              const newStatus = status === 'approved' ? 'approved' : 'review';
+              await handleStatusChange(newStatus, reviewComments);
+              setIsReviewMode(false);
+              pushToast(
+                status === 'approved'
+                  ? 'Review approved — document status updated'
+                  : 'Changes requested — returned to review',
+                'success'
+              );
+            }}
+            onClose={() => setActiveInspector(null)}
+          />
         </InspectorDrawer>
-        <InspectorDrawer visible={activeInspector === 'submission-readiness' && !!projectId} width="w-96">
-            <SubmissionReadinessValidator
-              projectId={projectId}
-              submissionType={submissionType}
-              artifacts={artifacts.map(a => ({
-                id: a.id,
-                title: a.title,
-                status: a.status,
-                ctdSection: a.ctdSection,
-                content: a.content,
-                type: a.type,
-              }))}
-              onNavigateToArtifact={artifactId => {
-                const target = artifacts.find(a => a.id === artifactId);
-                if (target) {
-                  setActiveArtifact(target);
-                  setActiveInspector(null);
-                }
-              }}
-              onClose={() => setActiveInspector(null)}
-            />
+        <InspectorDrawer
+          visible={activeInspector === 'submission-readiness' && !!projectId}
+          width="w-96"
+        >
+          <SubmissionReadinessValidator
+            projectId={projectId}
+            submissionType={submissionType}
+            artifacts={artifacts.map(a => ({
+              id: a.id,
+              title: a.title,
+              status: a.status,
+              ctdSection: a.ctdSection,
+              content: a.content,
+              type: a.type,
+            }))}
+            onNavigateToArtifact={artifactId => {
+              const target = artifacts.find(a => a.id === artifactId);
+              if (target) {
+                setActiveArtifact(target);
+                setActiveInspector(null);
+              }
+            }}
+            onClose={() => setActiveInspector(null)}
+          />
         </InspectorDrawer>
         <InspectorDrawer visible={activeInspector === 'compliance-scanner'} width="w-96">
-            <ComplianceScannerPanel
-              issues={[]}
-              isScanning={false}
-              lastScanTime={Date.now()}
-              onNavigateToIssue={() => {}}
-              onFixIssue={() => {}}
-              onRescan={() => {}}
-              onClose={() => setActiveInspector(null)}
-            />
+          <ComplianceScannerPanel
+            issues={[]}
+            isScanning={false}
+            lastScanTime={Date.now()}
+            onNavigateToIssue={() => {}}
+            onFixIssue={() => {}}
+            onRescan={() => {}}
+            onClose={() => setActiveInspector(null)}
+          />
         </InspectorDrawer>
         <InspectorDrawer visible={activeInspector === 'ana-memory' && !!projectId} width="w-96">
-            <AnAMemory
-              projectId={projectId!}
-              projectName={projectName}
-              onClose={() => setActiveInspector(null)}
-            />
+          <AnAMemory
+            projectId={projectId!}
+            projectName={projectName}
+            onClose={() => setActiveInspector(null)}
+          />
         </InspectorDrawer>
         <InspectorDrawer visible={activeInspector === 'ga-readiness'} width="w-96">
           <EditorGAReadinessPanel
