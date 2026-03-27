@@ -1286,7 +1286,7 @@ export const ZenApp: React.FC = () => {
       });
       if (!res.ok) return [];
       const data = await res.json();
-      return Array.isArray(data) ? data : (data?.data ?? data?.artifacts ?? []);
+      return Array.isArray(data) ? data : data?.data ?? data?.artifacts ?? [];
     },
     enabled: !!activeProjectId,
     staleTime: 30_000,
@@ -1710,8 +1710,8 @@ export const ZenApp: React.FC = () => {
     const lastActivity = ownershipActivity
       ? `${ownershipActivity.action} · ${new Date(ownershipActivity.timestamp).toLocaleString()}`
       : taskSummary.total > 0
-        ? `${taskSummary.completed}/${taskSummary.total} tasks complete`
-        : 'No tasks yet';
+      ? `${taskSummary.completed}/${taskSummary.total} tasks complete`
+      : 'No tasks yet';
     return {
       deadlineDays,
       complianceScore,
@@ -2901,8 +2901,8 @@ export const ZenApp: React.FC = () => {
                 layoutMode === 'deep-research'
                   ? "What would you like to research? I'll search across ClinicalTrials.gov, PubMed, FDA, EMA, and more."
                   : layoutMode === 'project-home' && activeProject
-                    ? `Working on ${activeProject.name}. What would you like to do?`
-                    : platformGreeting?.text
+                  ? `Working on ${activeProject.name}. What would you like to do?`
+                  : platformGreeting?.text
               }
               suggestedActions={
                 layoutMode === 'projects' || layoutMode === 'project-home'
@@ -3066,4 +3066,3 @@ const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
   dossier: 'dossier-map',
   'project-home': 'project-home',
 };
-

@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mockDb, mockRequest, mockResponse, createTestDocument } from '../setup';
+import { mockDb, createTestDocument } from '../setup';
 
 // Mock the database
 vi.mock('../../server/db', () => ({
