@@ -18,6 +18,16 @@ const router = Router();
 
 const ragService = new ForesightRAGService();
 
+// ── Response envelope helpers (per UI standards skill §6) ─────────────────────
+
+function sendSuccess(res: Response, data: unknown, meta?: Record<string, unknown>) {
+  return res.json({ success: true, data, ...(meta || {}) });
+}
+
+function sendError(res: Response, status: number, message: string, details?: unknown, code?: string) {
+  return res.status(status).json({ success: false, error: message, details, code });
+}
+
 // Rate limit: 15 ask queries per minute per user
 const askRateLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -25,8 +35,8 @@ const askRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many Data Room queries — please wait.' },
-  keyGenerator: (req: any) => {
-    const userId = req.userId || req.user?.id || 'anon';
+  keyGenerator: (req: Request) => {
+    const userId = (req as Record<string, unknown>).userId as string || 'anon';
     const orgId = req.header('x-organization-id') || 'unknown';
     return `evidence-ask:${orgId}:${userId}`;
   },
@@ -40,19 +50,16 @@ const askRateLimiter = rateLimit({
  *   projectId?: string
  *   context?: string (optional additional context)
  *
- * Response:
- *   answer: string
- *   sources: Array<{ docId, docTitle, text, score }>
- *   confidence: number
+ * Response (envelope):
+ *   success: true
+ *   data: { answer, sources, confidence, question }
  */
 router.post('/ask', authMiddleware, askRateLimiter, async (req: Request, res: Response) => {
   try {
     const { question, projectId, context } = req.body;
 
     if (!question || typeof question !== 'string' || question.trim().length < 3) {
-      return res.status(400).json({
-        error: 'Question is required (minimum 3 characters)',
-      });
+      return sendError(res, 400, 'Question is required (minimum 3 characters)', null, 'VALIDATION_ERROR');
     }
 
     // Build context prefix with project info if available
@@ -71,7 +78,7 @@ router.post('/ask', authMiddleware, askRateLimiter, async (req: Request, res: Re
       temperature: 0.2,
     });
 
-    return res.json({
+    return sendSuccess(res, {
       answer: result.answer,
       sources: result.sources.map(source => ({
         docId: source.docId,
@@ -82,17 +89,11 @@ router.post('/ask', authMiddleware, askRateLimiter, async (req: Request, res: Re
       confidence: Math.round(result.confidence * 100) / 100,
       question: question.trim(),
     });
-  } catch (error: any) {
-    console.error('[Evidence Ask] Query failed:', error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[Evidence Ask] Query failed:', message);
 
-    // Graceful degradation: return a structured error the UI can display
-    return res.status(502).json({
-      error: 'Data Room search is temporarily unavailable',
-      message: error.message || 'Please try again later',
-      answer: null,
-      sources: [],
-      confidence: 0,
-    });
+    return sendError(res, 502, 'Data Room search is temporarily unavailable', { message }, 'RAG_UNAVAILABLE');
   }
 });
 

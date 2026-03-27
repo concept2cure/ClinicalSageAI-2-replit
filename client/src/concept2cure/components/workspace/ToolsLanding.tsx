@@ -11,7 +11,13 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { WorkspaceCanvas } from '@/components/ui/workspace-primitives';
+import {
+  WorkspaceCanvas,
+  PageTitleHeader,
+  WorkspaceStatusBadge,
+} from '@/components/ui/workspace-primitives';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/design-system/patterns/EmptyState';
 import {
   FileText,
   FilePlus,
@@ -39,7 +45,6 @@ interface ToolCard {
 
 interface ToolsLandingProps {
   projectName?: string;
-  /** Recent artifacts for the resume card — pass top 3 sorted by updatedAt */
   recentArtifacts?: Array<{
     id: string;
     title: string;
@@ -53,16 +58,12 @@ interface ToolsLandingProps {
 // ─── Tool definitions ──────────────────────────────────────────────────────────
 
 const TOOLS: ToolCard[] = [
-  // Resume / Continue
   { id: 'recent', label: 'Recent Documents', description: 'Resume where you left off', icon: <Clock className="w-4 h-4" />, group: 'resume' },
-  // Create
   { id: 'create', label: 'New Document', description: 'Start a blank or template-based document', icon: <FilePlus className="w-4 h-4" />, group: 'create' },
   { id: 'builder', label: 'Document Builder', description: 'Multi-step guided generation (CSR, CTD, IND)', icon: <Sparkles className="w-4 h-4" />, group: 'create' },
   { id: 'templates', label: 'Templates', description: 'Browse regulatory document templates', icon: <LayoutTemplate className="w-4 h-4" />, group: 'create' },
-  // Manage
   { id: 'dossier', label: 'Dossier Map', description: 'CTD section structure and placement', icon: <Map className="w-4 h-4" />, group: 'manage' },
   { id: 'vault', label: 'Vault / Data Room', description: 'Upload evidence, search, ask questions', icon: <Archive className="w-4 h-4" />, group: 'manage' },
-  // Finalize
   { id: 'review', label: 'Review', description: 'Quality, compliance, approval readiness', icon: <ShieldCheck className="w-4 h-4" />, group: 'finalize' },
   { id: 'submit', label: 'Submit', description: 'Submission readiness and export', icon: <Send className="w-4 h-4" />, group: 'finalize' },
   { id: 'haq', label: 'HAQ Response', description: 'Draft responses to Health Authority Questions', icon: <MessageSquareMore className="w-4 h-4" />, group: 'finalize' },
@@ -73,6 +74,13 @@ const GROUP_LABELS: Record<string, string> = {
   create: 'Create',
   manage: 'Manage',
   finalize: 'Finalize',
+};
+
+const STATUS_TO_BADGE: Record<string, string> = {
+  draft: 'drafting',
+  review: 'in-review',
+  approved: 'approved',
+  locked: 'locked',
 };
 
 // ─── Component ──────────────────────────────────────────────────────────────────
@@ -87,25 +95,26 @@ export const ToolsLanding: React.FC<ToolsLandingProps> = ({
 
   return (
     <WorkspaceCanvas maxWidth="2xl" testId="tools-landing">
-      <div className="py-6">
-        <h1 className="text-lg font-semibold text-zinc-900">Tools</h1>
-        {projectName && (
-          <p className="text-sm text-zinc-400 mt-0.5">{projectName}</p>
-        )}
-      </div>
+      <PageTitleHeader
+        title="Tools"
+        subtitle={projectName || undefined}
+      />
 
       {/* ── Resume card: show recent artifacts if available ── */}
       {recentArtifacts && recentArtifacts.length > 0 && (
-        <div className="mb-6">
+        <div className="mb-6 mt-4" role="region" aria-label="Recent documents">
           <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">Continue</h2>
           <div className="space-y-1">
             {recentArtifacts.slice(0, 3).map(artifact => (
-              <button
+              <Button
                 key={artifact.id}
+                variant="ghost"
+                size="sm"
                 onClick={() => onResumeArtifact?.(artifact.id)}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-zinc-50 transition-colors group"
+                aria-label={`Resume ${artifact.title}`}
+                className="w-full justify-start text-left h-auto py-2.5 px-3 group"
               >
-                <FileText className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+                <FileText className="w-4 h-4 text-zinc-400 flex-shrink-0 mr-3" />
                 <div className="flex-1 min-w-0">
                   <span className="text-sm font-medium text-zinc-800 block truncate">
                     {artifact.title}
@@ -117,55 +126,61 @@ export const ToolsLanding: React.FC<ToolsLandingProps> = ({
                   )}
                 </div>
                 {artifact.status && (
-                  <span
-                    className={cn(
-                      'text-[10px] font-medium px-1.5 py-0.5 rounded',
-                      artifact.status === 'draft' && 'bg-zinc-100 text-zinc-600',
-                      artifact.status === 'review' && 'bg-amber-50 text-amber-700',
-                      artifact.status === 'approved' && 'bg-emerald-50 text-emerald-700',
-                      artifact.status === 'locked' && 'bg-blue-50 text-blue-700'
-                    )}
-                  >
-                    {artifact.status}
-                  </span>
+                  <WorkspaceStatusBadge status={STATUS_TO_BADGE[artifact.status] || 'not-started'} />
                 )}
-                <ArrowRight className="w-3.5 h-3.5 text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-              </button>
+                <ArrowRight className="w-3.5 h-3.5 text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2" />
+              </Button>
             ))}
           </div>
         </div>
       )}
 
+      {/* ── No recent artifacts ── */}
+      {(!recentArtifacts || recentArtifacts.length === 0) && (
+        <div className="mb-6 mt-4">
+          <EmptyState
+            title="No recent documents"
+            description="Create a new document or use the Document Builder to get started."
+            testId="tools-no-recent"
+          />
+        </div>
+      )}
+
       {/* ── Tool groups ── */}
-      {groups.filter(g => g !== 'resume').map(groupKey => {
-        const groupTools = TOOLS.filter(t => t.group === groupKey);
-        if (groupTools.length === 0) return null;
-        return (
-          <div key={groupKey} className="mb-5">
-            <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">
-              {GROUP_LABELS[groupKey]}
-            </h2>
-            <div className="space-y-0.5">
-              {groupTools.map(tool => (
-                <button
-                  key={tool.id}
-                  onClick={() => onAction(tool.id)}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-zinc-50 transition-colors group"
-                >
-                  <div className="w-8 h-8 rounded-md bg-zinc-100 flex items-center justify-center flex-shrink-0">
-                    <span className="text-zinc-500">{tool.icon}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-zinc-800 block">{tool.label}</span>
-                    <span className="text-[11px] text-zinc-400 block">{tool.description}</span>
-                  </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-                </button>
-              ))}
+      <nav aria-label="Tools workbench">
+        {groups.filter(g => g !== 'resume').map(groupKey => {
+          const groupTools = TOOLS.filter(t => t.group === groupKey);
+          if (groupTools.length === 0) return null;
+          return (
+            <div key={groupKey} className="mb-5" role="group" aria-label={GROUP_LABELS[groupKey]}>
+              <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">
+                {GROUP_LABELS[groupKey]}
+              </h2>
+              <div className="space-y-0.5">
+                {groupTools.map(tool => (
+                  <Button
+                    key={tool.id}
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onAction(tool.id)}
+                    aria-label={`${tool.label}: ${tool.description}`}
+                    className="w-full justify-start text-left h-auto py-2.5 px-3 group"
+                  >
+                    <div className="w-8 h-8 rounded-md bg-zinc-100 flex items-center justify-center flex-shrink-0 mr-3">
+                      <span className="text-zinc-500">{tool.icon}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium text-zinc-800 block">{tool.label}</span>
+                      <span className="text-[11px] text-zinc-400 block">{tool.description}</span>
+                    </div>
+                    <ArrowRight className="w-3.5 h-3.5 text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                  </Button>
+                ))}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </nav>
     </WorkspaceCanvas>
   );
 };
