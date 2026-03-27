@@ -523,6 +523,10 @@ router.post('/chat', async (req: Request, res: Response) => {
       provider: response.provider,
       model: response.model,
       usage: response.usage,
+      persistenceFailed,
+      _meta: {
+        ...(persistenceFailed && { persistenceWarning: 'Messages may not have been saved' }),
+      },
     });
   } catch (error: any) {
     console.error('[AnA RI] Chat error:', error);
@@ -674,6 +678,7 @@ router.post('/stream', async (req: Request, res: Response) => {
 
     // Thread resolution (before message building so we can load server history)
     let threadId = thread_id;
+    let persistenceFailed = false;
     if (orgId) {
       try {
         threadId = await getOrCreateThread(
@@ -684,6 +689,7 @@ router.post('/stream', async (req: Request, res: Response) => {
         await saveMessage(threadId, 'user', message);
       } catch (e: any) {
         console.error('[AnA RI Stream] Thread persistence failed:', e?.message);
+        persistenceFailed = true;
       }
     }
 
@@ -811,6 +817,7 @@ router.post('/stream', async (req: Request, res: Response) => {
         await saveMessage(threadId, 'assistant', fullContent);
       } catch (e: any) {
         console.error('[AnA RI Stream] Assistant persist failed:', e?.message);
+        persistenceFailed = true;
       }
     }
 
@@ -869,6 +876,11 @@ router.post('/stream', async (req: Request, res: Response) => {
       } catch (e: any) {
         console.warn('[AnA RI Stream] Command executor failed:', e?.message);
       }
+    }
+
+    // Warn client if thread persistence failed
+    if (persistenceFailed) {
+      res.write(`data: ${JSON.stringify({ type: 'warning', message: 'Thread persistence failed' })}\n\n`);
     }
 
     // Send done event
