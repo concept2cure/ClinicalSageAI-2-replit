@@ -1,5 +1,12 @@
 # BETA INTEGRITY REPORT
 
+Status: ACTIVE
+Canonical: Yes
+Supersedes: BETA_INTEGRITY_BASELINE.md
+Superseded By: —
+Related Reports: LAUNCH_GATE_DOCUMENT_CONSEQUENCE_REPORT.md
+
+
 <<<<<<< codex/execute-beta-integrity-sprint-plan
 Date: 2026-03-26
 Sprint mode: **Beta Integrity Sprint**

@@ -71,6 +71,20 @@ export interface DeliverableResult {
   data?: unknown;
 }
 
+type GovernedDownloadRef = {
+  encoding: 'base64';
+  mime_type: string;
+  filename: string;
+  data: string;
+};
+
+type GovernedExportResponse = {
+  governed?: boolean;
+  artifact_id?: string;
+  source_type?: string;
+  downloadable_output_ref?: GovernedDownloadRef;
+};
+
 const MIME_TYPES: Record<DeliverableFormat, string> = {
   pdf: 'application/pdf',
   docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -95,6 +109,18 @@ function triggerDownload(blob: Blob, filename: string) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+function tryDownloadFromGovernedRef(data: GovernedExportResponse, fallbackFilename: string): boolean {
+  const ref = data?.downloadable_output_ref;
+  if (!ref || ref.encoding !== 'base64' || !ref.data) return false;
+
+  const bytes = atob(ref.data);
+  const arr = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+  const blob = new Blob([arr], { type: ref.mime_type || 'application/octet-stream' });
+  triggerDownload(blob, ref.filename || fallbackFilename);
+  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -170,7 +196,11 @@ export function useDeliverable() {
 
       try {
         // Make the API call
-        const response = await apiRequest(method, endpoint, body);
+        const requestBody =
+          method === 'POST' && request.projectId && body && !Object.prototype.hasOwnProperty.call(body, 'projectId')
+            ? { ...body, projectId: Number(request.projectId) }
+            : body;
+        const response = await apiRequest(method, endpoint, requestBody);
 
         // If the response is a file (binary), download it
         const contentType = response.headers.get('Content-Type') || '';
@@ -201,7 +231,23 @@ export function useDeliverable() {
         }
 
         // JSON response — could be a record creation or a download URL
-        const data = await response.json().catch(() => ({}));
+        const data = (await response.json().catch(() => ({}))) as GovernedExportResponse & Record<string, any>;
+
+        if (!saveOnly && tryDownloadFromGovernedRef(data, filename)) {
+          const result: DeliverableResult = {
+            success: true,
+            recordId: data.artifact_id,
+            data,
+          };
+          setLastResult(result);
+          registerInVaultAndPM(request, result, queryClient);
+          queryClient.invalidateQueries({ queryKey: ['project-workspace-artifacts', request.projectId] });
+          toast({
+            title: `${title} ready`,
+            description: `${filename} has been downloaded from governed export.`,
+          });
+          return result;
+        }
 
         if (data.downloadUrl) {
           // Fetch the file from the download URL
