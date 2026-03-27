@@ -2647,8 +2647,40 @@ export const ZenApp: React.FC = () => {
               />
             ))}
 
-          {/* ── Project Home: AnA is the full-screen interface (ChatGPT/Claude style) ── */}
-          {/* ProjectHomeDashboard removed — AnA handles everything via chat */}
+          {/* ── Project Overview: real dashboard with readiness, pipeline, recent artifacts ── */}
+          {!embeddedModule && layoutMode === 'project-home' && activeProject && (
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" data-testid="workspace-overview">
+              <ErrorBoundary>
+                <Suspense fallback={<ModuleLoadingFallback />}>
+                  <ProjectHomeDashboard
+                    project={{
+                      id: Number(activeProjectId) || 0,
+                      name: activeProject.name,
+                      type: activeProject.type,
+                      description: activeProject.description ?? null,
+                      sponsor: (activeProject as Record<string, unknown>).sponsor as string | null ?? null,
+                      product: (activeProject as Record<string, unknown>).product as string | null ?? null,
+                      region: (activeProject as Record<string, unknown>).region as string | null ?? null,
+                    }}
+                    onNavigate={(mode, sectionCode) => {
+                      if (sectionCode) {
+                        setActiveSectionCode(sectionCode);
+                        setLayoutMode('section-workspace');
+                      } else {
+                        // Use SIDEBAR_NAV_TO_LAYOUT for new tab IDs (work, vault, review-tab, submit)
+                        const mapped = SIDEBAR_NAV_TO_LAYOUT[mode];
+                        if (mapped) {
+                          setLayoutMode(mapped);
+                        } else {
+                          setLayoutMode(mode as LayoutMode);
+                        }
+                      }
+                    }}
+                  />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
 
           {/* ── Unified Workflow: Dossier Map ────────────────────────────── */}
           {!embeddedModule && layoutMode === 'dossier-map' && (
@@ -3049,7 +3081,6 @@ export const ZenApp: React.FC = () => {
             <AnaPersistentPanel
               mode={
                 layoutMode === 'projects' ||
-                layoutMode === 'project-home' ||
                 layoutMode === 'deep-research'
                   ? 'full'
                   : 'compact'

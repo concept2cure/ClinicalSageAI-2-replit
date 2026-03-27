@@ -257,7 +257,7 @@ function deriveReadinessModules(artifacts: any[], projects: any[]): ReadinessMod
   const completenessProj = projects.length > 0 ? Math.round((projectCompleted / projects.length) * 100) : 0;
 
   return [
-    { module: 'Documents', name: 'Approved Documents', completeness: completenessDoc, status: completenessDoc >= 85 ? 'ready' : completenessDoc >= 50 ? 'in-progress' : 'blocked' },
+    { module: 'Artifacts', name: 'Approved Artifacts', completeness: completenessDoc, status: completenessDoc >= 85 ? 'ready' : completenessDoc >= 50 ? 'in-progress' : 'blocked' },
     { module: 'Reviews', name: 'Under Review', completeness: completenessReview, status: review === 0 ? 'ready' : 'in-progress' },
     { module: 'Drafts', name: 'Drafts Remaining', completeness: completenessDraft, status: draft === 0 ? 'ready' : draft <= 3 ? 'in-progress' : 'blocked' },
     { module: 'Projects', name: 'Project Completion', completeness: completenessProj, status: completenessProj >= 85 ? 'ready' : completenessProj >= 50 ? 'in-progress' : 'blocked' },
