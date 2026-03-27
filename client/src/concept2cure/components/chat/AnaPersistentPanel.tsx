@@ -482,6 +482,11 @@ interface AnaPersistentPanelProps {
     signalCount: number;
     readinessScore: number | null;
     memoryAtomCount: number;
+    /** Enriched from useProjectIntelligence + useNextBestActions */
+    recommendations?: Array<{ id: string; title: string; severity: string; category: string }>;
+    nextActions?: Array<{ id: string; title: string; priority: string; reason: string }>;
+    riskFactors?: Array<{ description: string; likelihood: string; impact: string }>;
+    openQuestions?: Array<{ question: string; priority: string; context: string }>;
   };
 }
 
@@ -813,16 +818,72 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     return actions;
   }, [authoringContext]);
 
-  // Merge parent-provided actions with authoring-aware actions
+  // Intelligence-driven suggested actions from nextActions + riskFactors
+  const intelligenceSuggestedActions = useMemo<SuggestedAction[]>(() => {
+    if (!projectIntelligence) return [];
+    const actions: SuggestedAction[] = [];
+
+    // Surface next best actions as suggested action chips
+    if (projectIntelligence.nextActions?.length) {
+      for (const na of projectIntelligence.nextActions) {
+        actions.push({
+          id: `intel-nba-${na.id}`,
+          label: na.title,
+          intent: 'next-action',
+          description: na.reason,
+        });
+      }
+    }
+
+    // Surface high-priority risk factors as prompts
+    if (projectIntelligence.riskFactors?.length) {
+      const highRisks = projectIntelligence.riskFactors.filter(
+        rf => rf.likelihood === 'high' || rf.impact === 'high'
+      );
+      for (const rf of highRisks.slice(0, 2)) {
+        actions.push({
+          id: `intel-risk-${rf.description.slice(0, 20).replace(/\s+/g, '-')}`,
+          label: `Assess risk: ${rf.description.length > 50 ? rf.description.slice(0, 47) + '...' : rf.description}`,
+          intent: 'risk-assessment',
+          description: `${rf.likelihood} likelihood, ${rf.impact} impact`,
+        });
+      }
+    }
+
+    // Surface top open question as a prompt
+    if (projectIntelligence.openQuestions?.length) {
+      const topQ = projectIntelligence.openQuestions[0];
+      actions.push({
+        id: `intel-oq-${topQ.question.slice(0, 20).replace(/\s+/g, '-')}`,
+        label: topQ.question.length > 60 ? topQ.question.slice(0, 57) + '...' : topQ.question,
+        intent: 'open-question',
+        description: topQ.context || `Priority: ${topQ.priority}`,
+      });
+    }
+
+    return actions;
+  }, [projectIntelligence]);
+
+  // Merge parent-provided actions with authoring-aware + intelligence actions
   const effectiveSuggestedActions = useMemo(() => {
     const parent = suggestedActions || [];
     if (authoringSuggestedActions.length > 0) {
       // Show up to 5 authoring actions, rotate based on context richness
       const limit = authoringSuggestedActions.length > 5 ? 5 : authoringSuggestedActions.length;
-      return [...authoringSuggestedActions.slice(0, limit), ...parent.slice(0, 1)];
+      const base = [...authoringSuggestedActions.slice(0, limit), ...parent.slice(0, 1)];
+      // Append intelligence actions if there's room (up to 6 total)
+      const remaining = 6 - base.length;
+      if (remaining > 0 && intelligenceSuggestedActions.length > 0) {
+        return [...base, ...intelligenceSuggestedActions.slice(0, remaining)];
+      }
+      return base;
+    }
+    // No authoring context — lead with intelligence actions, then parent
+    if (intelligenceSuggestedActions.length > 0) {
+      return [...intelligenceSuggestedActions.slice(0, 4), ...parent.slice(0, 2)];
     }
     return parent;
-  }, [suggestedActions, authoringSuggestedActions]);
+  }, [suggestedActions, authoringSuggestedActions, intelligenceSuggestedActions]);
 
   // Close mode dropdown on outside click
   useEffect(() => {
@@ -3208,10 +3269,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   )}
               </div>
 
-              {/* Suggested actions */}
+              {/* Suggested actions — up to 6 chips (authoring + intelligence + parent) */}
               {effectiveSuggestedActions && effectiveSuggestedActions.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg mx-auto">
-                  {effectiveSuggestedActions.slice(0, 5).map(action => (
+                  {effectiveSuggestedActions.slice(0, 6).map(action => (
                     <button
                       key={action.id}
                       onClick={() => handleSuggestedAction(action)}

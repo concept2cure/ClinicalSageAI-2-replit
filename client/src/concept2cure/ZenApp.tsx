@@ -50,6 +50,7 @@ import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import { usePlatformContext } from './hooks/useLicense';
 import { useWorkspaceSummary } from './hooks/useWorkspaceSummary';
 import { useReadinessAssessment } from './hooks/useOrchestration';
+import { useProjectIntelligence, useNextBestActions } from './hooks/useIntelligence';
 
 import { WorkspaceReadinessStrip } from './components/workspace/WorkspaceReadinessStrip';
 import { ProjectWorkspaceShell } from './components/workspace/ProjectWorkspaceShell';
@@ -1050,16 +1051,48 @@ export const ZenApp: React.FC = () => {
   );
   const projectReadinessScore = readinessData?.metrics?.readinessScore;
 
+  // Intelligence profile + next best actions for enriched AnaPersistentPanel
+  const { data: intelligenceProfile } = useProjectIntelligence(
+    activeProjectId ? Number(activeProjectId) : null
+  );
+  const { data: nextActionsData } = useNextBestActions(
+    activeProjectId ? Number(activeProjectId) : null,
+    5
+  );
+
   // Project intelligence stats for AnaPersistentPanel greeting enrichment
   const projectIntelligenceStats = useMemo(() => {
-    if (!readinessData) return undefined;
+    if (!readinessData && !intelligenceProfile) return undefined;
     return {
       documentCount: readinessData?.metrics?.artifactCount ?? 0,
       signalCount: readinessData?.metrics?.signalCount ?? 0,
       readinessScore: projectReadinessScore ?? null,
       memoryAtomCount: readinessData?.metrics?.memoryAtomCount ?? 0,
+      // Enriched from intelligence profile
+      recommendations: intelligenceProfile?.learnedInsights?.slice(0, 5).map((ins, i) => ({
+        id: `insight-${i}`,
+        title: ins.insight,
+        severity: ins.confidence >= 0.8 ? 'high' : ins.confidence >= 0.5 ? 'medium' : 'low',
+        category: ins.source,
+      })),
+      nextActions: nextActionsData?.actions?.slice(0, 3).map(a => ({
+        id: a.actionId,
+        title: a.title,
+        priority: a.urgency,
+        reason: a.description,
+      })),
+      riskFactors: intelligenceProfile?.riskFactors?.slice(0, 5).map(rf => ({
+        description: rf.risk,
+        likelihood: rf.likelihood,
+        impact: rf.impact,
+      })),
+      openQuestions: intelligenceProfile?.openQuestions?.slice(0, 5).map(oq => ({
+        question: oq.question,
+        priority: oq.priority ?? 'medium',
+        context: oq.context ?? '',
+      })),
     };
-  }, [readinessData, projectReadinessScore]);
+  }, [readinessData, projectReadinessScore, intelligenceProfile, nextActionsData]);
 
   // ── Canonical AuthoringContextPack — derived from all available state ──────
   const authoringContext = useMemo<AuthoringContextPack | null>(() => {

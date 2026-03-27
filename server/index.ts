@@ -7128,6 +7128,15 @@ async function startServer() {
     console.error('Failed to initialize sentinel scheduler:', error);
   }
 
+  // Start Memory Consolidation nightly scheduler (E8)
+  try {
+    const { initMemoryConsolidationScheduler } = await import('./services/memory-consolidation-job');
+    initMemoryConsolidationScheduler();
+    console.log('✅ Memory consolidation scheduler initialized');
+  } catch (error) {
+    console.error('Failed to initialize memory consolidation scheduler:', error);
+  }
+
   // Mount project-module integration routes (Pillar 4: Full module integration)
   try {
     const moduleRoutes = await import('./routes/project-modules');
