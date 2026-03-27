@@ -17,7 +17,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { useProjectKnowledge } from '../../hooks/useProjectKnowledge';
-import { useProjectIntelligence, useIntelligenceDashboard } from '../../hooks/useIntelligence';
+import { useProjectIntelligence, useIntelligenceDashboard, useEnrichIntelligence } from '../../hooks/useIntelligence';
 import { useProject } from '../../context/ProjectContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -267,6 +267,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
     projectId ? Number(projectId) : 0
   );
   const { data: dashboard } = useIntelligenceDashboard(projectId);
+  const enrichIntelligence = useEnrichIntelligence(projectId ? Number(projectId) : null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Add text content state
@@ -347,9 +348,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
             placeholder="Describe the regulatory strategy for this project..."
             emptyText="Not set — AnA will build this as you work"
             onSave={async (val) => {
-              // Strategy is stored in projectIntelligenceProfiles via the intelligence hook
-              // For now, save as custom instructions prefix
-              await updateCustomInstructions(val);
+              await enrichIntelligence.mutateAsync({ regulatoryStrategy: val });
             }}
           />
         </Section>

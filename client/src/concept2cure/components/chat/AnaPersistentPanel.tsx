@@ -420,6 +420,75 @@ const DOCUMENT_ACTION_CONFIGS: DocumentActionConfig[] = [
   },
 ];
 
+// ─── Slash Command Autocomplete — 43 AnA 1.0 RI commands ──────────────────────
+
+interface SlashCommand {
+  command: string;
+  description: string;
+  category: string;
+}
+
+const SLASH_COMMANDS: SlashCommand[] = [
+  // Intelligence
+  { command: '/assess', description: 'Full project assessment', category: 'Intelligence' },
+  { command: '/readiness', description: 'Readiness score + dimensions + gaps', category: 'Intelligence' },
+  { command: '/risk', description: 'Risk profile with predictions', category: 'Intelligence' },
+  { command: '/recommend', description: 'Prioritized action list', category: 'Intelligence' },
+  { command: '/next', description: 'What should I do next?', category: 'Intelligence' },
+  { command: '/signals', description: 'Accumulated intelligence signals', category: 'Intelligence' },
+  { command: '/status', description: 'Quick 5-line project briefing', category: 'Intelligence' },
+  // Analysis
+  { command: '/twin', description: 'Submission twin analysis', category: 'Analysis' },
+  { command: '/consistency', description: 'Cross-module consistency check', category: 'Analysis' },
+  { command: '/claims', description: 'Evidence chain strength + confidence', category: 'Analysis' },
+  { command: '/deficiencies', description: 'Known deficiency patterns', category: 'Analysis' },
+  { command: '/simulate', description: 'Simulate reviewer challenges', category: 'Analysis' },
+  { command: '/precedent', description: 'Similar products / predicates', category: 'Analysis' },
+  // Biostatistics
+  { command: '/sap', description: 'Generate Statistical Analysis Plan', category: 'Biostatistics' },
+  { command: '/power', description: 'Sample size and power calculation', category: 'Biostatistics' },
+  { command: '/dose', description: 'Dose escalation design', category: 'Biostatistics' },
+  { command: '/defensibility', description: 'Statistical defensibility audit', category: 'Biostatistics' },
+  { command: '/design', description: 'Clinical trial design', category: 'Biostatistics' },
+  // Subspecialties
+  { command: '/safety', description: 'TEAE, SAE, benefit-risk analysis', category: 'Subspecialties' },
+  { command: '/cmc', description: 'Manufacturing / Module 3', category: 'Subspecialties' },
+  { command: '/csr', description: 'Clinical study report analysis', category: 'Subspecialties' },
+  { command: '/device', description: '510(k), PMA, De Novo intelligence', category: 'Subspecialties' },
+  { command: '/ectd', description: 'Module structure / artifact placement', category: 'Subspecialties' },
+  // Document Authoring
+  { command: '/draft', description: 'Draft submission-ready CTD section', category: 'Authoring' },
+  { command: '/audit', description: 'Hostile reviewer audit', category: 'Authoring' },
+  { command: '/amend', description: 'Change tracking with impact analysis', category: 'Authoring' },
+  { command: '/review', description: 'Regulatory review from reviewer perspective', category: 'Authoring' },
+  { command: '/scan', description: 'Deficiency scanning', category: 'Authoring' },
+  { command: '/memo', description: 'Risk assessment memo (go/no-go)', category: 'Authoring' },
+  { command: '/brief', description: 'Reviewer question anticipation brief', category: 'Authoring' },
+  { command: '/strategy', description: 'Regulatory strategy note', category: 'Authoring' },
+  // Document Lifecycle
+  { command: '/checklist', description: 'Compliance checklist generation', category: 'Lifecycle' },
+  { command: '/freeze', description: 'Freeze document (immutable snapshot)', category: 'Lifecycle' },
+  { command: '/sign', description: 'Electronic signature (21 CFR Part 11)', category: 'Lifecycle' },
+  { command: '/submit', description: 'Submit to regulatory workflow', category: 'Lifecycle' },
+  { command: '/preflight', description: 'Section/module/dossier preflight', category: 'Lifecycle' },
+  // Navigation & Meta
+  { command: '/workflow', description: 'Full submission workflow progress', category: 'Navigation' },
+  { command: '/knowledge', description: 'Search knowledge base', category: 'Navigation' },
+  { command: '/decisions', description: 'Decision audit trail', category: 'Navigation' },
+  { command: '/help', description: 'Show all capabilities', category: 'Navigation' },
+  { command: '/export', description: 'Download conversation as markdown', category: 'Navigation' },
+];
+
+const SLASH_CATEGORY_COLORS: Record<string, string> = {
+  Intelligence: 'text-violet-600',
+  Analysis: 'text-blue-600',
+  Biostatistics: 'text-emerald-600',
+  Subspecialties: 'text-amber-600',
+  Authoring: 'text-rose-600',
+  Lifecycle: 'text-teal-600',
+  Navigation: 'text-zinc-500',
+};
+
 // ─── Authoring context import ────────────────────────────────────────────────
 import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
 import {
@@ -555,12 +624,37 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const providerDropdownRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  // Slash command autocomplete
+  const [slashMenuOpen, setSlashMenuOpen] = useState(false);
+  const [slashMenuIndex, setSlashMenuIndex] = useState(0);
+  const slashMenuRef = useRef<HTMLDivElement>(null);
   const initialMessageSentRef = useRef(false);
   // Thread persistence — reuse thread_id across messages for continuous conversation
   const threadIdRef = useRef<string | null>(null);
 
   const screenName = contextProfile?.screenName || 'default';
   const screenLabel = SCREEN_LABELS[screenName] || '';
+
+  // ── Slash command autocomplete filtering ──────────────────────────────────
+  const filteredSlashCommands = useMemo(() => {
+    if (!slashMenuOpen) return [];
+    const trimmed = input.trim().toLowerCase();
+    if (!trimmed.startsWith('/')) return [];
+    const query = trimmed;
+    return SLASH_COMMANDS.filter(
+      (cmd) =>
+        cmd.command.startsWith(query) ||
+        cmd.description.toLowerCase().includes(query.slice(1))
+    ).slice(0, 10);
+  }, [input, slashMenuOpen]);
+
+  // Close slash menu when input no longer starts with /
+  useEffect(() => {
+    const trimmed = input.trim();
+    if (!trimmed.startsWith('/') || trimmed.includes(' ')) {
+      setSlashMenuOpen(false);
+    }
+  }, [input]);
 
   // ── Authoring-aware suggested actions (Wave 1) ─────────────────────────────
   const authoringSuggestedActions = useMemo<SuggestedAction[]>(() => {
@@ -1637,7 +1731,46 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     [input, isThinking, messages, contextProfile, chatMode, intentLens, selectedProvider]
   );
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setInput(val);
+    const trimmed = val.trim();
+    if (trimmed.startsWith('/') && !trimmed.includes(' ') && trimmed.length >= 1) {
+      setSlashMenuOpen(true);
+      setSlashMenuIndex(0);
+    }
+  };
+
+  const selectSlashCommand = (cmd: SlashCommand) => {
+    setInput(cmd.command + ' ');
+    setSlashMenuOpen(false);
+    inputRef.current?.focus();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Slash command navigation
+    if (slashMenuOpen && filteredSlashCommands.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSlashMenuIndex((prev) => Math.min(prev + 1, filteredSlashCommands.length - 1));
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSlashMenuIndex((prev) => Math.max(prev - 1, 0));
+        return;
+      }
+      if (e.key === 'Tab' || (e.key === 'Enter' && !e.shiftKey)) {
+        e.preventDefault();
+        selectSlashCommand(filteredSlashCommands[slashMenuIndex]);
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setSlashMenuOpen(false);
+        return;
+      }
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -3177,8 +3310,42 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         )}
 
         {/* Input bar */}
-        <div className="px-4 py-2.5 bg-white">
-          <div className="max-w-3xl mx-auto">
+        <div className="px-4 py-2.5 bg-white relative">
+          <div className="max-w-3xl mx-auto relative">
+            {/* Slash command autocomplete dropdown */}
+            {slashMenuOpen && filteredSlashCommands.length > 0 && (
+              <div
+                ref={slashMenuRef}
+                className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-[#E8E6DC] shadow-lg max-h-[280px] overflow-y-auto z-50"
+                role="listbox"
+                aria-label="Slash commands"
+              >
+                {filteredSlashCommands.map((cmd, i) => (
+                  <button
+                    key={cmd.command}
+                    type="button"
+                    role="option"
+                    aria-selected={i === slashMenuIndex}
+                    onMouseDown={(e) => { e.preventDefault(); selectSlashCommand(cmd); }}
+                    onMouseEnter={() => setSlashMenuIndex(i)}
+                    className={cn(
+                      'w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors',
+                      i === slashMenuIndex ? 'bg-[#FAF9F5]' : 'hover:bg-[#FAF9F5]/50'
+                    )}
+                  >
+                    <code className="text-xs font-mono font-semibold text-[#141413] min-w-[100px]">
+                      {cmd.command}
+                    </code>
+                    <span className="text-xs text-[#6B6962] flex-1 truncate">
+                      {cmd.description}
+                    </span>
+                    <span className={cn('text-[10px] font-medium', SLASH_CATEGORY_COLORS[cmd.category] || 'text-zinc-400')}>
+                      {cmd.category}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
             <div
               className={cn(
                 'flex items-end gap-2 px-3.5 py-2.5 bg-[#FAF9F5] border rounded-2xl transition-colors duration-150',
@@ -3198,11 +3365,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               <textarea
                 ref={inputRef}
                 value={input}
-                onChange={e => setInput(e.target.value)}
+                onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                placeholder="Message AnA..."
+                onBlur={() => { setIsFocused(false); setTimeout(() => setSlashMenuOpen(false), 150); }}
+                placeholder="Message AnA — type / for commands..."
                 rows={1}
                 className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"
               />
@@ -3892,7 +4059,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
       {/* ── Bottom input bar — always visible ── */}
       <div className="flex-shrink-0 px-4 py-3 border-t border-[#F5F4EF] bg-white">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto relative">
           {/* Clear conversation button */}
           {hasMessages && (
             <div className="flex justify-center mb-2">
@@ -3906,6 +4073,41 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 <RotateCcw className="w-3 h-3" />
                 New thread
               </button>
+            </div>
+          )}
+
+          {/* Slash command autocomplete dropdown (full mode) */}
+          {slashMenuOpen && filteredSlashCommands.length > 0 && (
+            <div
+              ref={slashMenuRef}
+              className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-[#E8E6DC] shadow-lg max-h-[280px] overflow-y-auto z-50"
+              role="listbox"
+              aria-label="Slash commands"
+            >
+              {filteredSlashCommands.map((cmd, i) => (
+                <button
+                  key={cmd.command}
+                  type="button"
+                  role="option"
+                  aria-selected={i === slashMenuIndex}
+                  onMouseDown={(e) => { e.preventDefault(); selectSlashCommand(cmd); }}
+                  onMouseEnter={() => setSlashMenuIndex(i)}
+                  className={cn(
+                    'w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors',
+                    i === slashMenuIndex ? 'bg-[#FAF9F5]' : 'hover:bg-[#FAF9F5]/50'
+                  )}
+                >
+                  <code className="text-xs font-mono font-semibold text-[#141413] min-w-[100px]">
+                    {cmd.command}
+                  </code>
+                  <span className="text-xs text-[#6B6962] flex-1 truncate">
+                    {cmd.description}
+                  </span>
+                  <span className={cn('text-[10px] font-medium', SLASH_CATEGORY_COLORS[cmd.category] || 'text-zinc-400')}>
+                    {cmd.category}
+                  </span>
+                </button>
+              ))}
             </div>
           )}
 
@@ -4146,10 +4348,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             <textarea
               ref={inputRef}
               value={input}
-              onChange={e => setInput(e.target.value)}
+              onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
+              onBlur={() => { setIsFocused(false); setTimeout(() => setSlashMenuOpen(false), 150); }}
               placeholder={
                 chatMode === 'deep-research'
                   ? 'Ask a deep research question...'
@@ -4157,7 +4359,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     ? 'Describe an image, infographic, or presentation...'
                     : intentLens !== 'auto'
                       ? `Message AnA (${intentLens} lens)...`
-                      : 'Message AnA...'
+                      : 'Message AnA — type / for commands...'
               }
               rows={1}
               className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"
