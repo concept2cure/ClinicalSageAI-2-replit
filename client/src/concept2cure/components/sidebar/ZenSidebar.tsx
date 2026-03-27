@@ -24,20 +24,18 @@ import {
   ChevronRight,
   ChevronDown,
   FileText,
-  LayoutGrid,
   PenLine,
   ShieldCheck,
-  Send,
   Search,
   Star,
-  MoreHorizontal,
   Archive,
   Beaker,
-  Pill,
-  Activity,
-  Heart,
   Microscope,
   FlaskConical,
+  Brain,
+  FileCheck,
+  Upload,
+  Shield,
 } from 'lucide-react';
 import logoSrc from '@/assets/concept2cure-logo.jpg';
 
@@ -490,24 +488,38 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         {/* Primary workflow icons */}
         <div className="w-8 border-t border-zinc-200 my-1" />
         <button
-          onClick={() => onNavigate?.('dossier')}
-          aria-label="Dossier"
+          onClick={() => onNavigate?.('ri-copilot')}
+          aria-label="RI Copilot"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'dossier' ? 'bg-blue-100 text-blue-500' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'ri-copilot'
+              ? 'bg-blue-100 text-blue-500'
+              : 'text-zinc-500 hover:bg-zinc-200'
           )}
         >
-          <LayoutGrid className="w-4 h-4" />
+          <Brain className="w-4 h-4" />
         </button>
         <button
-          onClick={() => onNavigate?.('documents')}
-          aria-label="Documents"
+          onClick={() => onNavigate?.('submission-builder')}
+          aria-label="Submission Builder"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'documents' ? 'bg-blue-100 text-blue-500' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'submission-builder'
+              ? 'bg-blue-100 text-blue-500'
+              : 'text-zinc-500 hover:bg-zinc-200'
           )}
         >
           <PenLine className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => onNavigate?.('verify')}
+          aria-label="Verify"
+          className={cn(
+            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
+            activeNavId === 'verify' ? 'bg-emerald-50 text-emerald-600' : 'text-zinc-500 hover:bg-zinc-200'
+          )}
+        >
+          <FileCheck className="w-4 h-4" />
         </button>
         <button
           onClick={() => onNavigate?.('review')}
@@ -520,14 +532,16 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <ShieldCheck className="w-4 h-4" />
         </button>
         <button
-          onClick={() => onNavigate?.('submissions')}
-          aria-label="Submissions"
+          onClick={() => onNavigate?.('publish')}
+          aria-label="Publish"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'submissions' ? 'bg-blue-100 text-blue-500' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'publish'
+              ? 'bg-blue-100 text-blue-500'
+              : 'text-zinc-500 hover:bg-zinc-200'
           )}
         >
-          <Send className="w-4 h-4" />
+          <Upload className="w-4 h-4" />
         </button>
 
         <button
@@ -679,25 +693,38 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
           {/* ── SUBMISSION WORKFLOW — secondary nav ────────────────── */}
           <div className="mx-2 my-1 border-t border-zinc-100" />
-          <WorkspaceGroup label="Global Operating Nav" defaultOpen={true}>
+          <WorkspaceGroup label="Biotech Hero Lane" defaultOpen={true}>
             <NavItem
-              icon={<LayoutGrid className="w-3.5 h-3.5" />}
-              label="Dossier Map"
-              active={activeNavId === 'dossier'}
+              icon={<Brain className="w-3.5 h-3.5" />}
+              label="RI Copilot"
+              active={activeNavId === 'ri-copilot'}
               accentColor="blue"
-              onClick={() => onNavigate?.('dossier')}
+              onClick={() => onNavigate?.('ri-copilot')}
             />
             <NavItem
               icon={<PenLine className="w-3.5 h-3.5" />}
-              label="Documents"
-              active={activeNavId === 'documents'}
-              onClick={() => onNavigate?.('documents')}
+              label="Submission Builder"
+              active={activeNavId === 'submission-builder'}
+              onClick={() => onNavigate?.('submission-builder')}
             />
             <NavItem
-              icon={<Archive className="w-3.5 h-3.5" />}
-              label="Vault"
-              active={activeNavId === 'vault'}
-              onClick={() => onNavigate?.('document-vault')}
+              icon={<FlaskConical className="w-3.5 h-3.5" />}
+              label="CMC"
+              active={activeNavId === 'cmc'}
+              onClick={() => onNavigate?.('cmc')}
+            />
+            <NavItem
+              icon={<Microscope className="w-3.5 h-3.5" />}
+              label="Clinical / Module 5"
+              active={activeNavId === 'clinical-module5'}
+              onClick={() => onNavigate?.('clinical-module5')}
+            />
+            <NavItem
+              icon={<FileCheck className="w-3.5 h-3.5" />}
+              label="Verify"
+              active={activeNavId === 'verify'}
+              accentColor="emerald"
+              onClick={() => onNavigate?.('verify')}
             />
             <NavItem
               icon={<ShieldCheck className="w-3.5 h-3.5" />}
@@ -707,24 +734,23 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               onClick={() => onNavigate?.('review')}
             />
             <NavItem
-              icon={<Activity className="w-3.5 h-3.5" />}
-              label="Reports"
-              active={activeNavId === 'reports'}
-              onClick={() => onNavigate?.('report-engine')}
+              icon={<Upload className="w-3.5 h-3.5" />}
+              label="Publish"
+              active={activeNavId === 'publish'}
+              onClick={() => onNavigate?.('publish')}
             />
             <NavItem
-              icon={<FlaskConical className="w-3.5 h-3.5" />}
-              label="Biostats"
-              active={activeNavId === 'biostatistics'}
+              icon={<Shield className="w-3.5 h-3.5" />}
+              label="HAQ"
+              active={activeNavId === 'haq'}
               accentColor="emerald"
-              onClick={() => onNavigate?.('biostatistics')}
+              onClick={() => onNavigate?.('haq')}
             />
             <NavItem
-              icon={<Send className="w-3.5 h-3.5" />}
-              label="Submissions"
-              active={activeNavId === 'submissions'}
-              accentColor="blue"
-              onClick={() => onNavigate?.('submissions')}
+              icon={<Archive className="w-3.5 h-3.5" />}
+              label="Vault"
+              active={activeNavId === 'vault'}
+              onClick={() => onNavigate?.('vault')}
             />
           </WorkspaceGroup>
         </div>
