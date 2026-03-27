@@ -879,6 +879,17 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     return actions;
   }, [projectIntelligence]);
 
+  // Default project-scoped suggested actions (shown when no other actions available)
+  const defaultProjectActions: SuggestedAction[] = useMemo(() => {
+    if (!contextProfile?.activeProject) return [];
+    return [
+      { id: 'default-ctd-map', label: 'Map my CTD structure', intent: 'ctd_map', description: 'Build your dossier map based on submission type' },
+      { id: 'default-find-predicates', label: 'Find predicates', intent: 'find_predicates', description: 'Search for predicate devices and comparisons' },
+      { id: 'default-check-readiness', label: 'Check readiness', intent: 'check_readiness', description: 'Assess your submission readiness score' },
+      { id: 'default-draft-section', label: 'Draft a section', intent: 'draft_section', description: 'Start drafting a submission section' },
+    ];
+  }, [contextProfile?.activeProject]);
+
   // Merge parent-provided actions with authoring-aware + intelligence actions
   const effectiveSuggestedActions = useMemo(() => {
     const parent = suggestedActions || [];
@@ -897,8 +908,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     if (intelligenceSuggestedActions.length > 0) {
       return [...intelligenceSuggestedActions.slice(0, 4), ...parent.slice(0, 2)];
     }
-    return parent;
-  }, [suggestedActions, authoringSuggestedActions, intelligenceSuggestedActions]);
+    // Fall back to parent actions if available
+    if (parent.length > 0) return parent;
+    // Fall back to default project actions when project is active but no other actions
+    return defaultProjectActions;
+  }, [suggestedActions, authoringSuggestedActions, intelligenceSuggestedActions, defaultProjectActions]);
 
   // Close mode dropdown on outside click
   useEffect(() => {
@@ -1010,7 +1024,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         parts.push('What would you like to work on?');
         return parts.join(' ');
       }
-      return `${timeGreeting}. Ready to work on **${contextProfile.activeProject}**. How can I help?`;
+      return `${timeGreeting}. Ready to work on **${contextProfile.activeProject}**. I have your project context loaded. What would you like to tackle?`;
     }
     return `${timeGreeting}. I'm AnA — your regulatory intelligence partner. What are you working on?`;
   }, [greeting, contextProfile?.activeProject, projectIntelligence]);

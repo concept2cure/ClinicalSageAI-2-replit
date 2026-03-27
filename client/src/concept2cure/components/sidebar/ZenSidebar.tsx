@@ -52,6 +52,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { EmptyState } from '@/design-system/patterns/EmptyState';
 import logoSrc from '@/assets/concept2cure-logo.jpg';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -993,6 +994,9 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
                   onToggleExpand={() => toggleProjectExpand(project.id)}
                   onSelectConversation={onSelectConversation}
                   onDeleteConversation={onDeleteConversation}
+                  onRenameConversation={onRenameConversation}
+                  onMoveConversation={onMoveConversation}
+                  allProjects={projects}
                   onNewChat={onNewChat}
                   onTogglePin={onTogglePin}
                   onArchiveProject={onArchiveProject}
@@ -1005,16 +1009,19 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           {/* Recent projects */}
           <WorkspaceGroup label={pinnedProjects.length > 0 ? 'Recent' : 'Projects'} defaultOpen={true}>
             {recentProjects.length === 0 && pinnedProjects.length === 0 && (
-              <div className="px-4 py-4 text-center">
-                <FolderOpen className="w-6 h-6 text-zinc-300 mx-auto mb-1.5" />
-                <p className="text-xs text-zinc-400 leading-relaxed">No projects yet</p>
-                <button
-                  onClick={onOpenProjects}
-                  className="mt-2 text-xs text-blue-600 hover:underline focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
-                >
-                  Create your first project
-                </button>
-              </div>
+              <EmptyState
+                icon={FolderOpen}
+                title="No projects yet"
+                description="Create your first regulatory project to unlock AnA's full intelligence, dossier mapping, and readiness scoring."
+                action={{
+                  label: '+ Create your first project',
+                  onClick: onOpenProjects,
+                  icon: Plus,
+                }}
+                size="sm"
+                variant="minimal"
+                className="mx-2"
+              />
             )}
 
             {recentProjects.map(project => (
@@ -1029,6 +1036,9 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
                 onToggleExpand={() => toggleProjectExpand(project.id)}
                 onSelectConversation={onSelectConversation}
                 onDeleteConversation={onDeleteConversation}
+                onRenameConversation={onRenameConversation}
+                onMoveConversation={onMoveConversation}
+                allProjects={projects}
                 onNewChat={onNewChat}
                 onTogglePin={onTogglePin}
                 onArchiveProject={onArchiveProject}
@@ -1049,6 +1059,9 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
                     isActive={c.id === activeConversationId}
                     onSelect={() => onSelectConversation(c.id)}
                     onDelete={() => onDeleteConversation(c.id)}
+                    onRename={onRenameConversation ? () => onRenameConversation(c.id) : undefined}
+                    onMoveToProject={onMoveConversation ? (targetProjectId: string) => onMoveConversation(c.id, targetProjectId) : undefined}
+                    availableProjects={projects}
                   />
                 ))}
               </WorkspaceGroup>

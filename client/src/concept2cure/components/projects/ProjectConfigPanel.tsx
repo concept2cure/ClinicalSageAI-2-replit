@@ -10,7 +10,7 @@
  * @version 1.0.0
  */
 
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -89,6 +89,7 @@ interface GeneralFormValues {
   targetAgency: string;
   targetSubmissionDate: string;
   status: ProjectStatus;
+  description: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -198,11 +199,15 @@ export const ProjectConfigPanel: React.FC<ProjectConfigPanelProps> = ({
   if (!project) return null;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={onOpenChange} modal={false}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-lg overflow-y-auto"
+        className="w-[440px] sm:max-w-[440px] overflow-y-auto"
         data-testid="project-config-panel"
+        onInteractOutside={(e) => {
+          // Prevent closing when clicking outside — stays open while chatting
+          e.preventDefault();
+        }}
       >
         <SheetHeader className="pb-4 border-b border-zinc-200">
           <SheetTitle className="flex items-center gap-2 text-zinc-900">
@@ -342,6 +347,20 @@ export const ProjectConfigPanel: React.FC<ProjectConfigPanelProps> = ({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Description */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-zinc-700">
+                Description <span className="text-zinc-400 font-normal">(optional)</span>
+              </label>
+              <Textarea
+                {...generalForm.register('description')}
+                placeholder="Brief description of the project..."
+                rows={3}
+                onBlur={() => handleBlur('description')}
+                data-testid="config-description"
+              />
             </div>
           </TabsContent>
 
@@ -530,6 +549,7 @@ function buildGeneralDefaults(project: Project | null): GeneralFormValues {
     targetAgency: project?.targetAgency ?? project?.region ?? 'FDA',
     targetSubmissionDate: project?.targetSubmissionDate ?? '',
     status: project?.status ?? 'draft',
+    description: project?.description ?? '',
   };
 }
 
@@ -543,6 +563,7 @@ function formatFieldLabel(fieldName: string): string {
     targetSubmissionDate: 'Target date',
     status: 'Status',
     customInstructions: 'Custom instructions',
+    description: 'Description',
   };
   return labels[fieldName] ?? fieldName;
 }

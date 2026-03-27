@@ -47,7 +47,9 @@ import {
   ShieldCheck,
   Target,
   Activity,
+  Plus,
 } from 'lucide-react';
+import { EmptyState } from '@/design-system/patterns/EmptyState';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
@@ -578,13 +580,18 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
                 <Loader2 className="w-4 h-4 text-zinc-400 animate-spin" />
               </div>
             ) : docs.length === 0 ? (
-              <div className="text-center py-4">
-                <p className="text-[11px] text-zinc-400 leading-relaxed">
-                  Add your clinical study reports, predicate comparisons, or
-                  performance data. AnA will index them and reference them in every
-                  conversation.
-                </p>
-              </div>
+              <EmptyState
+                icon={FileText}
+                title="No documents added yet"
+                description="Add your clinical study reports, predicate comparisons, or performance data. AnA will index them and reference them in every conversation."
+                action={{
+                  label: '+ Add content',
+                  onClick: () => fileInputRef.current?.click(),
+                  icon: Plus,
+                }}
+                size="sm"
+                variant="minimal"
+              />
             ) : (
               <ul className="space-y-0.5">
                 {docs.map((doc) => {

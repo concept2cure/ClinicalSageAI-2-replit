@@ -1602,6 +1602,19 @@ export const ZenApp: React.FC = () => {
     console.log('Toggle pin for conversation:', id);
   }, []);
 
+  const handleMoveConversation = useCallback(
+    async (conversationId: string, targetProjectId: string) => {
+      try {
+        await apiRequest('PATCH', `/api/chat/thread/${conversationId}`, {
+          project_id: targetProjectId,
+        });
+      } catch (error) {
+        console.error('Failed to move conversation:', error);
+      }
+    },
+    []
+  );
+
   const handleThreadChange = useCallback((threadId: string) => {
     setActiveThreadId(threadId);
     setActiveConversationId(threadId);
@@ -2094,6 +2107,7 @@ export const ZenApp: React.FC = () => {
         onTogglePin={handleToggleProjectPin}
         onArchiveProject={handleArchiveProject}
         onDeleteProject={handleDeleteProject}
+        onMoveConversation={handleMoveConversation}
         industryMode={industryMode}
         onNavigate={id => {
           switch (id) {
@@ -2124,6 +2138,9 @@ export const ZenApp: React.FC = () => {
               break;
             case 'evidence-search':
               setCommandPaletteOpen(true);
+              break;
+            case 'project-config':
+              setEditProjectOpen(true);
               break;
             // ── Product routes (external modules) ──
             case 'ai-copilot':
