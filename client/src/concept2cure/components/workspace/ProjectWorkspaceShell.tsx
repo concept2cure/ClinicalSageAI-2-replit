@@ -21,6 +21,8 @@ import React, { useState, useCallback, useEffect, useMemo, lazy, Suspense, useRe
 import { ProjectFileTree, type TreeArtifact } from './ProjectFileTree';
 import { DocumentListPane } from './DocumentListPane';
 import { DossierTree } from './DossierTree';
+import { useSubmissionSections, type SectionNode } from '../../hooks/useSubmissionSections';
+import type { DossierNode } from '../../models/ctdHierarchy';
 import { TemplateTree } from './TemplateTree';
 import { DocumentOutlineTree } from './DocumentOutlineTree';
 import {
@@ -305,6 +307,25 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const [activeLayer, setActiveLayer] = useState<OperatingLayer>('document_studio');
   const [activeWorkbench, setActiveWorkbench] = useState<WorkspaceWorkbench>('clinical');
   const [activeRegistry, setActiveRegistry] = useState<RegistryKind>('documents');
+
+  // Submission-type-aware section tree for dossier mode
+  const { sections: submissionSections, readinessPercent } = useSubmissionSections(projectId, submissionType || projectType);
+
+  // Convert SectionNode[] to DossierNode[] for DossierTree when submission-specific sections are available
+  const submissionDossierHierarchy = useMemo<DossierNode[] | undefined>(() => {
+    if (!submissionSections || submissionSections.length === 0) return undefined;
+    function convertToDossierNode(node: SectionNode): DossierNode {
+      return {
+        nodeId: `${node.module.toLowerCase()}-${node.code}`,
+        parentNodeId: null,
+        label: node.title,
+        ctdSection: node.code,
+        nodeType: node.depth === 0 ? 'module' : node.depth === 1 ? 'section' : 'subsection',
+        children: node.children ? node.children.map(convertToDossierNode) : [],
+      };
+    }
+    return submissionSections.map(convertToDossierNode);
+  }, [submissionSections]);
   // operatingLayer maps 'document_studio' -> 'documents' for OperatingSystemRegistryPanel compatibility
   const operatingLayer = activeLayer === 'document_studio' ? 'documents' : activeLayer;
   const setOperatingLayer = (layer: string) => {
@@ -1894,6 +1915,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   selectedSection={selectedCtdSection}
                   onSelectSection={handleSelectSection}
                   onPlaceArtifact={selectedDocId || pendingMove ? handlePlaceArtifact : undefined}
+                  customHierarchy={submissionDossierHierarchy}
                   metrics={dossierMetrics}
                   pendingMove={pendingMove}
                   onPasteHere={pendingMove ? handlePasteHere : undefined}

@@ -2131,6 +2131,7 @@ export const ZenApp: React.FC = () => {
         }}
         onSelectProject={id => {
           setActiveProjectId(id);
+          setLayoutMode('project-home');
         }}
         onNewChat={handleNewChat}
         onOpenProjects={() => setProjectSwitcherOpen(true)}

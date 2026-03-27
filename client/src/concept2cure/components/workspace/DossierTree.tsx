@@ -48,6 +48,8 @@ interface DossierTreeProps {
   selectedSection?: string;
   onSelectSection: (ctdSection: string, nodeLabel: string) => void;
   onPlaceArtifact?: (ctdSection: string) => void;
+  /** Override the default CTD hierarchy with submission-type-specific sections */
+  customHierarchy?: DossierNode[];
   /** Per-section metrics from backend */
   metrics?: Record<
     string,
@@ -433,6 +435,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
   selectedSection,
   onSelectSection,
   onPlaceArtifact,
+  customHierarchy,
   metrics,
   pendingMove,
   onPasteHere,
@@ -442,6 +445,8 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
   onOpenSubmissionApps,
   className,
 }) => {
+  // Use custom hierarchy when provided (submission-type-specific), otherwise default CTD
+  const hierarchy = customHierarchy ?? CTD_HIERARCHY;
   // Default: expand Module roots
   const [expanded, setExpanded] = useState<Set<string>>(
     () => new Set(['m1', 'm2', 'm3', 'm4', 'm5'])
@@ -497,7 +502,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
       </div>
       {/* Tree body */}
       <div className="flex-1 overflow-y-auto py-1 zen-scroll" data-testid="dossier-tree-body">
-        {CTD_HIERARCHY.map(module => (
+        {hierarchy.map(module => (
           <DossierNodeRow
             key={module.nodeId}
             node={module}
