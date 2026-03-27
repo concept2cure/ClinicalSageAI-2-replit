@@ -2133,7 +2133,7 @@ export const ZenApp: React.FC = () => {
               setLayoutMode(SIDEBAR_NAV_TO_LAYOUT[id] ?? 'projects');
               break;
             case 'tools':
-              setActiveToolPanel('intelligence');
+              setLayoutMode(SIDEBAR_NAV_TO_LAYOUT['tools'] ?? 'documents');
               break;
             case 'agents':
               setLayoutMode('regulatory-workspace');
@@ -2721,8 +2721,9 @@ export const ZenApp: React.FC = () => {
             ))}
 
           {/* ── Project Home: AnA-first with light context strip ── */}
+          {/* Strip is flex-shrink-0; AnA (rendered separately below) takes flex-1 */}
           {!embeddedModule && layoutMode === 'project-home' && activeProject && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-overview">
+            <div className="flex-shrink-0" data-testid="workspace-overview">
               <ProjectHomeDashboard
                 project={{
                   id: Number(activeProjectId) || 0,
@@ -2742,7 +2743,6 @@ export const ZenApp: React.FC = () => {
                   }
                 }}
               />
-              {/* AnA takes the rest of the space — this is the primary interface */}
             </div>
           )}
 

@@ -84,6 +84,7 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
         {/* Open Tools */}
         <button
           onClick={() => onNavigate('tools')}
+          aria-label="Open Tools"
           className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50 hover:text-zinc-800 transition-colors flex-shrink-0 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
         >
           <Wrench className="w-3.5 h-3.5" />

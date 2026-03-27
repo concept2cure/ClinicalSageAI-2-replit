@@ -6,7 +6,7 @@
  *   New → Search → Projects → Apps → Artifacts → Setup
  *
  * Project shell (5 tabs, shown when project is active):
- *   Overview → Work → Vault → Review → Submit
+ *   Overview → Tools → Vault → Review → Submit
  *
  * Below: Pinned + Recent project list with nested conversations.
  * Account/profile at bottom.
