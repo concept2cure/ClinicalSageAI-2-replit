@@ -53,10 +53,10 @@ export const zenColors = {
   // ACCENT - Single brand color family (like Claude's orange-brown)
   // ─────────────────────────────────────────────────────────────────────────────
   accent: {
-    DEFAULT: '#d97757',     // Primary action blue - clean, professional
+    DEFAULT: '#d97757',     // Primary action - warm terracotta (Claude-inspired)
     hover: '#c15f3c',       // Hover state
-    muted: '#DBEAFE',       // Light background tint
-    subtle: '#EFF6FF',      // Very light tint
+    muted: '#FDE8E0',       // Light warm background tint
+    subtle: '#FFF5F2',      // Very light warm tint
   },
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -173,7 +173,7 @@ export const zenShadows = {
   md: '0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
   lg: '0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05)',
   xl: '0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05)',
-  glow: '0 0 20px rgb(37 99 235 / 0.1)', // Focus glow
+  glow: '0 0 20px rgb(217 119 87 / 0.1)', // Focus glow (warm accent)
 } as const;
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -61,9 +61,6 @@ export interface ProjectHeaderBarProps {
   projectName: string;
   submissionType: string;
   projectColor?: string;
-  productName?: string;
-  targetAgency?: string;
-  readinessScore?: number;
   onOpenConfig?: () => void;
   onSwitchProject?: () => void;
   className?: string;

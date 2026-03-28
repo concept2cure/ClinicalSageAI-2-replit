@@ -34,8 +34,11 @@ import {
   FlaskConical,
   Brain,
   FileCheck,
+  FileStack,
   Upload,
   Shield,
+  Pin,
+  PinOff,
 } from 'lucide-react';
 import {
   DropdownMenu,

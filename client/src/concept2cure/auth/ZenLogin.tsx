@@ -31,8 +31,6 @@ import {
 
 import { computeRedirect } from './redirectUtils';
 
-// Brand logo
-import { C2CLogo } from '@/concept2cure/components/brand/C2CLogo';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -56,8 +54,6 @@ interface AuthError {
 // ICONS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Logo rendered from original uploaded brand asset with gradient soft blend
-const BrandLogo = () => <C2CLogo variant="login" />;
 
 const MicrosoftIcon = () => (
   <svg viewBox="0 0 21 21" className="w-5 h-5">

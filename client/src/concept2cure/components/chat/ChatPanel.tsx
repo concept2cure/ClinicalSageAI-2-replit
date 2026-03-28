@@ -13,7 +13,6 @@ import type { Message } from '../../types';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Send,
   Paperclip,
@@ -26,10 +25,6 @@ import {
   MoreHorizontal,
   Loader2,
   FileText,
-  Image,
-  Mic,
-  MicOff,
-  ChevronDown,
   GitBranch,
   Check,
   X,
@@ -463,7 +458,7 @@ export const ChatPanel: React.FC = () => {
     createArtifact,
   } = useProject();
 
-  const { sendMessageAsync, isLoading: isApiLoading } = useChat();
+  const { sendMessageAsync } = useChat();
   const [isTyping, setIsTyping] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
