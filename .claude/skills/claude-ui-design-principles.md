@@ -18,6 +18,21 @@ This skill activates when:
 
 Anthropic's Claude interface succeeds because it trusts the user. It doesn't shout, decorate, or overwhelm. It presents information with quiet confidence and gets out of the way. Every pixel earns its place.
 
+### The Honest Lesson (Learned the Hard Way)
+
+The default instinct when building is **dashboard-first, not conversation-first.** Every surface will accumulate analytics widgets, scorecards, progress bars, readiness percentages, and control density that violates every principle listed below. This instinct must be fought relentlessly.
+
+**The rule:** If data can surface through the conversation, it MUST NOT be plastered on a dashboard or toolbar. Intelligence informs the conversation — it does not replace it. Readiness scores, recommendations, risk signals, next-best-actions — all of these belong IN the chat response, not ABOVE it as permanent UI widgets.
+
+**Signs you are building dashboard-first:**
+- You are adding a "section" or "row" to a page that shows data
+- You are rendering percentages, scores, or metrics as permanent UI elements
+- You have multiple competing "what to do next" signals (recommendations AND next actions AND suggested prompts)
+- You are adding controls (toggles, dropdowns, pill strips) around an input area
+- You are showing system vocabulary ("Submission readiness", "Approval probability") instead of human questions ("Am I on track?", "What should I work on?")
+
+**The fix:** Delete the widget. Put the intelligence into the conversation. Let the user ask.
+
 ## The 12 Principles
 
 ### 1. Calm Over Loud

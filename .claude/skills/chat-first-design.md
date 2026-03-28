@@ -17,6 +17,10 @@ This skill activates when:
 
 **The chat is the product.** Every capability — predictions, comparisons, exports, analysis, navigation, document authoring, biostatistics, compliance scanning — is accessed by talking to AnA or selecting inline options within the conversation. Think Claude, not Salesforce.
 
+### The Honest Lesson
+
+The default instinct is to build dashboard-first, not conversation-first. Every surface will accumulate analytics widgets, scorecards, and control density that violate this principle. If data can surface through the conversation, it MUST NOT be plastered on a dashboard or toolbar. Intelligence informs the conversation — it does not replace it. Fight the dashboard instinct relentlessly.
+
 ## Rules
 
 ### 1. No New UI Surfaces

@@ -211,6 +211,12 @@ Set `FIGMA_ACCESS_TOKEN` environment variable before use.
 
 > Skill file: `.claude/skills/claude-ui-design-principles.md`
 
+**CORE LESSON (learned the hard way):** The default instinct is to build dashboard-first, not
+conversation-first. Every surface will accumulate analytics widgets, scorecards, and control
+density that violate the principles below. Fight this instinct relentlessly. If data can surface
+through the conversation, it MUST NOT be plastered on a dashboard. Intelligence informs the
+conversation — it does not replace it.
+
 **Every UI element must embody the Anthropic Claude design philosophy: calm, intelligent, restrained.**
 All UI work — new components, modifications, layouts — MUST follow these 12 principles:
 
