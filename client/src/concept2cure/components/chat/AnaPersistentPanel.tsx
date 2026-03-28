@@ -555,6 +555,8 @@ interface AnaPersistentPanelProps {
   greeting?: string;
   /** Initial message to auto-send on mount */
   initialMessage?: string | null;
+  /** External message to auto-send (change value to trigger). Use {text, ts} to resend same text. */
+  externalMessage?: { text: string; ts: number } | null;
   /** Callback when user triggers a suggested action */
   onActionRun?: (entry: {
     id: string;
@@ -626,6 +628,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   suggestedActions,
   greeting,
   initialMessage,
+  externalMessage,
   onActionRun,
   onNavigate,
   onDraftInsert,
@@ -1239,6 +1242,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialMessage]);
+
+  // Handle external message (auto-send whenever value changes, supports resend)
+  const lastExternalTsRef = useRef(0);
+  useEffect(() => {
+    if (externalMessage && externalMessage.ts !== lastExternalTsRef.current) {
+      lastExternalTsRef.current = externalMessage.ts;
+      setTimeout(() => handleSend(externalMessage.text), 100);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalMessage]);
 
   // ── Stop generating ──────────────────────────────────────────────────────────
   const handleStop = useCallback(() => {

@@ -2699,59 +2699,90 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           {activeArtifact &&
             (!activeArtifact.content ||
               activeArtifact.content.replace(/<[^>]*>/g, '').trim().length < 10) &&
-            activeArtifact.status !== 'locked' && (
-              <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-center pt-20 pointer-events-none">
-                <div className="pointer-events-auto bg-white/95 backdrop-blur-sm border border-stone-200 rounded-xl shadow-lg p-5 max-w-md w-full mx-4">
-                  <div className="text-center mb-4">
-                    <PenTool className="w-6 h-6 text-violet-500 mx-auto mb-2" />
-                    <h3 className="text-sm font-semibold text-stone-900">
-                      Get started with your document
-                    </h3>
-                    <p className="text-xs text-stone-500 mt-1">
-                      Choose a quick action or just start typing below
+            activeArtifact.status !== 'locked' && (() => {
+              // Context-aware outline templates based on submission type and CTD section
+              const uType = (submissionType || '').toUpperCase();
+              const section = activeArtifact.ctdSection || ctdSection || '';
+              const docTitle = activeArtifact.title || 'Document Title';
+
+              const getOutlineTemplate = (): string => {
+                // CTD Module 2 sections
+                if (section.startsWith('2.4') || section.startsWith('2.5') || uType === 'IND' || uType === 'NDA' || uType === 'BLA') {
+                  return `<h1>${docTitle}</h1><h2>1. Overview</h2><p></p><h2>2. Pharmacology</h2><p></p><h2>3. Pharmacokinetics</h2><p></p><h2>4. Toxicology</h2><p></p><h2>5. Clinical Efficacy</h2><p></p><h2>6. Clinical Safety</h2><p></p><h2>7. Benefit-Risk Assessment</h2><p></p><h2>8. References</h2><p></p>`;
+                }
+                // Device submissions
+                if (uType === '510K' || uType === 'PMA' || uType === 'DE_NOVO') {
+                  return `<h1>${docTitle}</h1><h2>1. Device Description</h2><p></p><h2>2. Intended Use / Indications for Use</h2><p></p><h2>3. Predicate Device Comparison</h2><p></p><h2>4. Substantial Equivalence Discussion</h2><p></p><h2>5. Performance Testing</h2><p></p><h2>6. Biocompatibility</h2><p></p><h2>7. Sterilization & Shelf Life</h2><p></p><h2>8. Labeling</h2><p></p>`;
+                }
+                // CSR
+                if (section.includes('csr') || docTitle.toLowerCase().includes('clinical study report')) {
+                  return `<h1>${docTitle}</h1><h2>1. Synopsis</h2><p></p><h2>2. Study Design</h2><p></p><h2>3. Study Objectives</h2><p></p><h2>4. Investigational Plan</h2><p></p><h2>5. Study Participants</h2><p></p><h2>6. Efficacy Evaluation</h2><p></p><h2>7. Safety Evaluation</h2><p></p><h2>8. Discussion & Conclusions</h2><p></p>`;
+                }
+                // Default
+                return `<h1>${docTitle}</h1><h2>1. Introduction</h2><p></p><h2>2. Background</h2><p></p><h2>3. Methods</h2><p></p><h2>4. Results</h2><p></p><h2>5. Discussion</h2><p></p><h2>6. Conclusions</h2><p></p><h2>7. References</h2><p></p>`;
+              };
+
+              const outlineLabel = uType === '510K' || uType === 'PMA' || uType === 'DE_NOVO'
+                ? 'Device Outline'
+                : section.startsWith('2.') || uType === 'IND' || uType === 'NDA' || uType === 'BLA'
+                  ? 'CTD Outline'
+                  : 'Standard Outline';
+
+              return (
+                <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-center pt-20 pointer-events-none">
+                  <div className="pointer-events-auto bg-white/95 backdrop-blur-sm border border-stone-200 rounded-xl shadow-lg p-5 max-w-md w-full mx-4">
+                    <div className="text-center mb-4">
+                      <PenTool className="w-6 h-6 text-stone-400 mx-auto mb-2" />
+                      <h3 className="text-sm font-semibold text-stone-900">
+                        {docTitle}
+                      </h3>
+                      <p className="text-xs text-stone-500 mt-1">
+                        {section
+                          ? `CTD ${section} — choose how to begin`
+                          : 'Choose a starting point or just begin typing'}
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => handleAIEdit('expand')}
+                        className="flex items-center gap-2 px-3 py-2.5 text-xs font-medium text-stone-700 bg-stone-50 border border-stone-200 rounded-lg hover:bg-stone-100 hover:border-stone-300 transition-colors text-left"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 shrink-0 text-stone-500" />
+                        AI Generate Draft
+                      </button>
+                      <button
+                        onClick={() => {
+                          setActiveArtifact({ ...activeArtifact, content: getOutlineTemplate() });
+                          setIsDirty(true);
+                        }}
+                        className="flex items-center gap-2 px-3 py-2.5 text-xs font-medium text-stone-700 bg-stone-50 border border-stone-200 rounded-lg hover:bg-stone-100 hover:border-stone-300 transition-colors text-left"
+                      >
+                        <FileText className="w-3.5 h-3.5 shrink-0 text-stone-500" />
+                        {outlineLabel}
+                      </button>
+                      <button
+                        onClick={() => toggleInspector('templates')}
+                        className="flex items-center gap-2 px-3 py-2.5 text-xs font-medium text-stone-700 bg-stone-50 border border-stone-200 rounded-lg hover:bg-stone-100 hover:border-stone-300 transition-colors text-left"
+                      >
+                        <Layers className="w-3.5 h-3.5 shrink-0 text-stone-500" />
+                        From Template
+                      </button>
+                      <button
+                        onClick={() => toggleInspector('dataroom')}
+                        className="flex items-center gap-2 px-3 py-2.5 text-xs font-medium text-stone-700 bg-stone-50 border border-stone-200 rounded-lg hover:bg-stone-100 hover:border-stone-300 transition-colors text-left"
+                      >
+                        <Database className="w-3.5 h-3.5 shrink-0 text-stone-500" />
+                        Browse Sources
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-stone-400 text-center mt-3">
+                      Type <kbd className="px-1 py-0.5 bg-stone-100 rounded text-stone-500">/</kbd>{' '}
+                      anywhere for AI commands
                     </p>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => handleAIEdit('expand')}
-                      className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-violet-100 transition-colors text-left"
-                    >
-                      <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                      AI Generate Draft
-                    </button>
-                    <button
-                      onClick={() => {
-                        const template = `<h1>${activeArtifact.title || 'Document Title'}</h1><h2>1. Introduction</h2><p></p><h2>2. Background</h2><p></p><h2>3. Methods</h2><p></p><h2>4. Results</h2><p></p><h2>5. Discussion</h2><p></p><h2>6. Conclusions</h2><p></p>`;
-                        setActiveArtifact({ ...activeArtifact, content: template });
-                        setIsDirty(true);
-                      }}
-                      className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors text-left"
-                    >
-                      <FileText className="w-3.5 h-3.5 shrink-0" />
-                      Standard Outline
-                    </button>
-                    <button
-                      onClick={() => toggleInspector('intelligence')}
-                      className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors text-left"
-                    >
-                      <Brain className="w-3.5 h-3.5 shrink-0" />
-                      Ask AnA RI
-                    </button>
-                    <button
-                      onClick={() => toggleInspector('health')}
-                      className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors text-left"
-                    >
-                      <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-                      Check Health
-                    </button>
-                  </div>
-                  <p className="text-[10px] text-stone-400 text-center mt-3">
-                    Tip: Type <kbd className="px-1 py-0.5 bg-stone-100 rounded text-stone-500">/</kbd>{' '}
-                    for slash commands
-                  </p>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           <UnifiedDocumentEditor
             key={activeArtifact?.id}
             documentId={activeArtifact?.id}

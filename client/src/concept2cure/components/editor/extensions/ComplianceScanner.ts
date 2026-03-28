@@ -281,6 +281,125 @@ const COMPLIANCE_RULES: ComplianceRule[] = [
       'CTD documents use "drug product" (finished form) or "drug substance" (API). Specify which is meant.',
   },
 
+  // ── Evidence & Citation Gaps ──────────────────────────────────────────────
+
+  {
+    id: 'claim-significant-no-pvalue',
+    category: 'unsupported-claim',
+    severity: 'warning',
+    pattern: /\b(?:statistically\s+)?significant\s+(?:improvement|reduction|increase|decrease|difference|change)\b(?!.*(?:p\s*[<=<]|p-value|CI\s|confidence interval))/gi,
+    message:
+      'Quantitative claim without statistical evidence. Include p-value, confidence interval, or effect size.',
+  },
+  {
+    id: 'claim-well-tolerated-no-ref',
+    category: 'unsupported-claim',
+    severity: 'warning',
+    pattern: /\bwell[- ]tolerated\b(?!.*(?:\[(?:Ref|Study|Source|Table)|See\s+(?:Section|Table)))/gi,
+    message:
+      'Safety claim "well-tolerated" requires supporting data reference. Cite the relevant safety table or study.',
+  },
+  {
+    id: 'claim-favorable-safety',
+    category: 'unsupported-claim',
+    severity: 'warning',
+    pattern: /\bfavorable\s+(?:safety|tolerability|benefit[- ]risk)\s+profile\b/gi,
+    message:
+      'Evaluative safety claim — reviewers expect quantitative support. Cite discontinuation rates, SAE incidence, or benefit-risk framework.',
+  },
+  {
+    id: 'claim-first-in-class',
+    category: 'unsupported-claim',
+    severity: 'warning',
+    pattern: /\b(?:first[- ]in[- ]class|novel|unique|breakthrough)\b/gi,
+    message:
+      'Marketing-style language in regulatory context. Use factual description of mechanism or regulatory designation if applicable.',
+  },
+  {
+    id: 'claim-no-interaction',
+    category: 'unsupported-claim',
+    severity: 'error',
+    pattern: /\bno\s+(?:drug[- ]drug\s+)?(?:interactions?|contraindications?)\b/gi,
+    message:
+      'Absolute interaction/contraindication claim. Use "no clinically meaningful interactions were observed in [Study X]" with citation.',
+  },
+
+  // ── Abbreviation & Consistency ──────────────────────────────────────────
+
+  {
+    id: 'abbrev-undefined',
+    category: 'terminology',
+    severity: 'warning',
+    pattern: /\b(?:AE|SAE|TEAE|DLT|MTD|RP2D|PK|PD|ADME|CMC|GMP|GLP|GCP|ICH|eCTD|IB|IMPD)\b/g,
+    message:
+      'Abbreviation should be defined at first use. Ensure the full term appears earlier in the document.',
+  },
+  {
+    id: 'term-inconsistent-endpoint',
+    category: 'terminology',
+    severity: 'info',
+    pattern: /\b(?:primary\s+)?end[- ]?point\b/gi,
+    message:
+      'ICH E9 uses "endpoint" (one word). Ensure consistent usage throughout the document.',
+    suggestion: 'endpoint',
+  },
+  {
+    id: 'term-adverse-event-inconsistent',
+    category: 'terminology',
+    severity: 'info',
+    pattern: /\bside\s+effects?\b/gi,
+    message:
+      'Regulatory documents use "adverse event" (AE) or "adverse reaction" rather than "side effect."',
+    suggestion: 'adverse event',
+  },
+
+  // ── CTD Structure Rules ─────────────────────────────────────────────────
+
+  {
+    id: 'ctd-missing-objective',
+    category: 'structure',
+    severity: 'warning',
+    pattern: /^(?:(?!(?:objective|purpose|aim|goal)\b).)*$/gis,
+    message:
+      'No objectives section detected. CTD clinical sections should state the study objective(s) explicitly.',
+    applicableTo: ['ctd-clinical', 'csr', 'protocol'],
+  },
+  {
+    id: 'ctd-regulatory-reference',
+    category: 'structure',
+    severity: 'info',
+    pattern: /\b(?:per\s+(?:FDA|EMA|ICH)\s+guidance|as\s+(?:required|recommended)\s+by)\b(?!.*(?:\(.*\)|21\s+CFR|ICH\s+[A-Z]\d|EU\s+\d))/gi,
+    message:
+      'Regulatory reference without specific citation. Include the guidance document number (e.g., ICH E6(R2), 21 CFR 312).',
+  },
+
+  // ── Quantitative Precision ──────────────────────────────────────────────
+
+  {
+    id: 'vague-majority',
+    category: 'language',
+    severity: 'warning',
+    pattern: /\b(?:the\s+)?majority\s+of\s+(?:patients|subjects|participants)\b/gi,
+    message:
+      'Vague quantification. Specify the exact percentage or proportion (e.g., "72% of subjects").',
+  },
+  {
+    id: 'vague-approximately',
+    category: 'language',
+    severity: 'info',
+    pattern: /\bapproximately\s+\d/gi,
+    message:
+      'Consider providing the exact value when available. "Approximately" is acceptable for estimates only.',
+  },
+  {
+    id: 'vague-several-studies',
+    category: 'language',
+    severity: 'warning',
+    pattern: /\b(?:several|multiple|various|numerous)\s+(?:studies|trials|investigations)\b/gi,
+    message:
+      'Specify the number of studies and provide citations. Vague references weaken evidentiary support.',
+  },
+
   // ── Formatting Issues ─────────────────────────────────────────────────────
 
   {

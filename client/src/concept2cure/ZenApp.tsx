@@ -1406,6 +1406,9 @@ export const ZenApp: React.FC = () => {
     title: string;
   } | null>(null);
 
+  // External message to send into AnA chat (triggered by suggested prompts, dashboard actions)
+  const [externalChatMessage, setExternalChatMessage] = useState<{ text: string; ts: number } | null>(null);
+
   // Project-scoped artifacts for the Outputs tab (must come after activeProjectId is declared)
   const { data: projectArtifacts = [] } = useQuery({
     queryKey: ['project-artifacts', activeProjectId],
@@ -2904,6 +2907,9 @@ export const ZenApp: React.FC = () => {
                   }
                 }}
                 onOpenConfig={() => setEditProjectOpen(true)}
+                onSuggestedPrompt={prompt => {
+                  setExternalChatMessage({ text: prompt, ts: Date.now() });
+                }}
               />
             </div>
           )}
@@ -3613,6 +3619,7 @@ export const ZenApp: React.FC = () => {
                   ? `Working on ${activeProject.name}. What would you like to do?`
                   : platformGreeting?.text
               }
+              externalMessage={externalChatMessage}
               suggestedActions={workspaceSuggestedActions}
               onActionRun={handleActionRun}
               onNavigate={path => setLayoutMode(path as LayoutMode)}
