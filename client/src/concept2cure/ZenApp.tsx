@@ -2914,8 +2914,21 @@ export const ZenApp: React.FC = () => {
                 projectName={activeProject?.name}
                 projectType={activeProject?.type}
                 onSectionClick={sectionCode => {
-                  setActiveSectionCode(sectionCode);
-                  setLayoutMode('section-workspace');
+                  // Smart routing: if artifact exists, go straight to editor
+                  const moduleNum = sectionCode.charAt(0);
+                  const match = projectArtifacts.find((a: any) =>
+                    a.ctdSection === sectionCode ||
+                    a.ctdSection === `csr-${sectionCode}` ||
+                    a.ctdSection === `m${moduleNum}-${sectionCode}`
+                  );
+                  if (match) {
+                    setOpenArtifactId(match.id);
+                    setRiViewMode('editor');
+                    setLayoutMode('regulatory-workspace');
+                  } else {
+                    setActiveSectionCode(sectionCode);
+                    setLayoutMode('section-workspace');
+                  }
                 }}
                 onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
               />
@@ -3152,12 +3165,31 @@ export const ZenApp: React.FC = () => {
                 projectId={activeProjectId}
                 projectName={activeProject?.name}
                 onSectionClick={sectionCode => {
-                  setActiveSectionCode(sectionCode);
-                  setLayoutMode('section-workspace');
+                  // Smart routing: if artifact exists for this section, go straight to editor
+                  const moduleNum = sectionCode.charAt(0);
+                  const match = projectArtifacts.find((a: any) =>
+                    a.ctdSection === sectionCode ||
+                    a.ctdSection === `csr-${sectionCode}` ||
+                    a.ctdSection === `m${moduleNum}-${sectionCode}`
+                  );
+                  if (match) {
+                    setOpenArtifactId(match.id);
+                    setRiViewMode('editor');
+                    setLayoutMode('regulatory-workspace');
+                  } else {
+                    setActiveSectionCode(sectionCode);
+                    setLayoutMode('section-workspace');
+                  }
                 }}
                 onAIDraft={async (sectionCode, sectionTitle) => {
-                  setActiveSectionCode(sectionCode);
-                  setLayoutMode('section-workspace');
+                  // Create a new draft and open in editor
+                  setPendingEditorContent({
+                    title: sectionTitle,
+                    content: '',
+                    ctdSection: sectionCode,
+                  });
+                  setRiViewMode('editor');
+                  setLayoutMode('regulatory-workspace');
                 }}
                 onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
               />
@@ -3171,12 +3203,31 @@ export const ZenApp: React.FC = () => {
                 projectId={activeProjectId}
                 projectName={activeProject?.name}
                 onSectionClick={sectionCode => {
-                  setActiveSectionCode(sectionCode);
-                  setLayoutMode('section-workspace');
+                  // Smart routing: if artifact exists for this section, go straight to editor
+                  const moduleNum = sectionCode.charAt(0);
+                  const match = projectArtifacts.find((a: any) =>
+                    a.ctdSection === sectionCode ||
+                    a.ctdSection === `csr-${sectionCode}` ||
+                    a.ctdSection === `m${moduleNum}-${sectionCode}`
+                  );
+                  if (match) {
+                    setOpenArtifactId(match.id);
+                    setRiViewMode('editor');
+                    setLayoutMode('regulatory-workspace');
+                  } else {
+                    setActiveSectionCode(sectionCode);
+                    setLayoutMode('section-workspace');
+                  }
                 }}
                 onAIDraft={async (sectionCode, sectionTitle) => {
-                  setActiveSectionCode(sectionCode);
-                  setLayoutMode('section-workspace');
+                  // Create a new draft and open in editor
+                  setPendingEditorContent({
+                    title: sectionTitle,
+                    content: '',
+                    ctdSection: sectionCode,
+                  });
+                  setRiViewMode('editor');
+                  setLayoutMode('regulatory-workspace');
                 }}
                 onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
               />
