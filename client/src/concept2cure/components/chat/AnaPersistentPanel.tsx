@@ -4403,9 +4403,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       {/* ── Bottom input bar — always visible ── */}
       <div className="flex-shrink-0 px-4 py-3 border-t border-[#F5F4EF] bg-white">
         <div className="max-w-3xl mx-auto relative">
-          {/* Clear conversation button */}
+          {/* Clear conversation + browse capabilities */}
           {hasMessages && (
-            <div className="flex justify-center mb-2">
+            <div className="flex justify-center gap-3 mb-2">
               <button
                 onClick={() => {
                   setMessages([]);
@@ -4416,6 +4416,46 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 <RotateCcw className="w-3 h-3" />
                 New thread
               </button>
+              <button
+                onClick={() => setShowDomainPrompts(prev => !prev)}
+                className="flex items-center gap-1.5 px-3 py-1 text-xs text-[#B0AEA5] hover:text-[#6B6962] hover:bg-[#F5F4EF] rounded-full transition-colors"
+              >
+                <Sparkles className="w-3 h-3" />
+                {showDomainPrompts ? 'Hide prompts' : 'Browse prompts'}
+              </button>
+            </div>
+          )}
+
+          {/* Domain prompts — available mid-conversation */}
+          {hasMessages && showDomainPrompts && (
+            <div className="mb-3 max-h-[300px] overflow-y-auto rounded-xl border border-stone-100 bg-stone-50/50 p-2 space-y-1">
+              {domainPrompts.primary.map(group => (
+                <DomainPromptSection
+                  key={group.domain}
+                  group={group}
+                  expanded={expandedDomain === group.domain}
+                  onToggle={() => setExpandedDomain(prev => prev === group.domain ? null : group.domain)}
+                  onSelect={prompt => {
+                    handleSend(prompt.label);
+                    setShowDomainPrompts(false);
+                    setExpandedDomain(null);
+                  }}
+                  isPrimary
+                />
+              ))}
+              {domainPrompts.more.map(group => (
+                <DomainPromptSection
+                  key={group.domain}
+                  group={group}
+                  expanded={expandedDomain === group.domain}
+                  onToggle={() => setExpandedDomain(prev => prev === group.domain ? null : group.domain)}
+                  onSelect={prompt => {
+                    handleSend(prompt.label);
+                    setShowDomainPrompts(false);
+                    setExpandedDomain(null);
+                  }}
+                />
+              ))}
             </div>
           )}
 
