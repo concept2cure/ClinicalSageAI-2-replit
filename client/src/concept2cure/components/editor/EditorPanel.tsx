@@ -2877,6 +2877,22 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             onSourceSelect={source => {
               pushToast(`Viewing source: ${source.title}`, 'info');
             }}
+            onSourceDrag={source => {
+              // Persist citation link when source is dragged into editor
+              if (activeArtifact?.id) {
+                apiRequest('POST', `/api/documents/${activeArtifact.id}/sources`, {
+                  sentenceIndex: 0,
+                  sentenceText: `[Cited from Data Room: ${source.title}]`,
+                  sourceType: 'internal_data',
+                  sourceId: source.id || `dr-${Date.now()}`,
+                  sourceTitle: source.title,
+                  confidence: 0.9,
+                }).catch(() => {
+                  // Non-blocking — citation persistence is best-effort
+                });
+              }
+              pushToast(`Citing: ${source.title}`, 'info');
+            }}
             onUpload={() => {
               pushToast('Upload source files from the Project sidebar', 'info');
             }}
