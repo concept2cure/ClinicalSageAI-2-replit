@@ -20,7 +20,6 @@ import {
   ChevronDown,
   Check,
   AlertCircle,
-  Shield,
   ShieldCheck,
   AlertTriangle,
   CheckCircle,
@@ -34,9 +33,6 @@ import {
   PenTool,
   Filter,
   Database,
-  Zap,
-  ArrowRight,
-  Rocket,
   Users,
   MessageSquare,
   Eye,
@@ -708,10 +704,6 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     humanJourneySteps.find(step => !step.done) || humanJourneySteps[humanJourneySteps.length - 1];
   const completedJourneySteps = humanJourneySteps.filter(step => step.done).length;
   const journeyProgress = Math.round((completedJourneySteps / humanJourneySteps.length) * 100);
-  const gaSnoozeKey = useMemo(
-    () => `editor-ga-snooze-${projectId || 'global'}-${activeArtifact?.id || 'none'}`,
-    [projectId, activeArtifact?.id]
-  );
   const openInspectorById = useCallback(
     (id: string) => {
       const validInspectors: InspectorPanel[] = [
@@ -738,12 +730,6 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     },
     [toggleInspector]
   );
-  const snoozeGaReadiness = useCallback(() => {
-    const until = Date.now() + 24 * 60 * 60 * 1000;
-    localStorage.setItem(gaSnoozeKey, String(until));
-    setActiveInspector(null);
-  }, [gaSnoozeKey]);
-
   useEffect(() => {
     if (modeCtx && activeArtifact?.status) {
       modeCtx.setArtifactStatus(activeArtifact.status);
