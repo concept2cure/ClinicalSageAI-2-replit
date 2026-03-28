@@ -1147,13 +1147,22 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           text: activeArtifact.content,
           sectionTitle: activeArtifact.title,
           submissionType: submissionType || undefined,
+          projectId: projectId || undefined,
+          artifactId: activeArtifact.id || undefined,
+          ctdSection: ctdSection || (activeArtifact as any).ctdSection || undefined,
         });
         if (res.ok) {
           const payload = await res.json();
           const result = payload.data?.result ?? payload.result;
+          const provenance = payload.data?.provenance ?? payload.provenance;
           if (result) {
             setAiResult(result);
-            pushToast('AI suggestion ready — review below', 'success');
+            const srcCount = provenance?.sourcesRetrieved || 0;
+            const claimCount = provenance?.claims?.length || 0;
+            const msg = srcCount > 0
+              ? `AI suggestion ready — ${srcCount} source${srcCount !== 1 ? 's' : ''} cited, ${claimCount} claim${claimCount !== 1 ? 's' : ''} traced`
+              : 'AI suggestion ready — review below';
+            pushToast(msg, 'success');
           } else {
             pushToast('AI returned empty result', 'error');
           }
@@ -1166,7 +1175,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         setAiLoading(false);
       }
     },
-    [activeArtifact, submissionType]
+    [activeArtifact, submissionType, projectId, ctdSection]
   );
 
   // ── Accept AI result ─────────────────────────────────────────────────────

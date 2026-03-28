@@ -1915,6 +1915,30 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
 
     const section = sectionResult.rows[0];
 
+    // ── Retrieve Data Room evidence for section context ───────────────
+    let evidenceBlock = '';
+    let sourcesRetrieved = 0;
+    try {
+      const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
+      const embeddingService = getEmbeddingService(pool);
+      const searchQuery = `${section.module} ${section.code} ${section.title} ${section.product_code || ''}`.trim();
+      const searchResults = await embeddingService.searchHybrid(searchQuery, 5, 0.65);
+      if (searchResults.length > 0) {
+        sourcesRetrieved = searchResults.length;
+        evidenceBlock =
+          '\n\n--- RETRIEVED EVIDENCE FROM DATA ROOM (cite as [SRC-n]) ---\n' +
+          searchResults.map((r: any, i: number) => {
+            const content = r.content.length > 600 ? r.content.substring(0, 600) + '…' : r.content;
+            return `[SRC-${i + 1}] "${r.title}"\n${content}`;
+          }).join('\n\n') +
+          '\n--- END EVIDENCE ---\n\n' +
+          'When your content relies on evidence above, cite it inline using [SRC-n]. ' +
+          'Do NOT fabricate citations for evidence not provided.';
+      }
+    } catch (e: any) {
+      console.warn('[Authoring] Data Room retrieval failed (non-fatal):', e.message);
+    }
+
     // Generate with AI Gateway (Claude primary)
     try {
       const { getGateway } = await import('../services/ai-gateway/gateway.js');
@@ -1927,13 +1951,14 @@ Product: ${section.product_code || 'Medical Product'}
 Tone: ${tone}
 ${context ? `Context: ${context}` : ''}
 ${requirements ? `Requirements: ${requirements}` : ''}
+${evidenceBlock}
 
 Provide detailed, compliance-ready content following ${region} guidelines.`;
 
         const gwResponse = await gw.route({
           taskType: 'document_drafting',
           messages: [{ role: 'user', content: prompt }],
-          maxTokens: 2000,
+          maxTokens: 3000,
           temperature: 0.3,
           callerModule: 'authoring-router/generate-draft',
         });
@@ -1950,9 +1975,12 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
                 generated_at: new Date().toISOString(),
                 model: gwResponse.model,
                 provider: gwResponse.provider,
+                sourcesRetrieved,
               },
             },
-            message: 'AI draft generated successfully',
+            message: sourcesRetrieved > 0
+              ? `AI draft generated with ${sourcesRetrieved} Data Room source${sourcesRetrieved !== 1 ? 's' : ''}`
+              : 'AI draft generated successfully',
           });
         }
       }

@@ -221,6 +221,7 @@ router.get('/usage', async (req: Request, res: Response) => {
  * Used by FullDocumentBuilder to create CSR, CTD, and other submissions.
  */
 router.post('/document/generate', requireTier('standard'), async (req: Request, res: Response) => {
+  const generationStartMs = Date.now();
   try {
     const { documentType, targetAgencies, studyInfo } = req.body;
 
@@ -319,6 +320,28 @@ router.post('/document/generate', requireTier('standard'), async (req: Request, 
 
     const templates = sectionTemplates[documentType] || sectionTemplates.csr;
 
+    // ── Retrieve Data Room evidence for richer generation context ──────
+    let dataRoomEvidence = new Map<string, string>();
+    try {
+      const { pool } = await import('../db.js');
+      const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
+      const embeddingService = getEmbeddingService(pool);
+      // Retrieve evidence once for the study, indexed by section relevance
+      for (const tmpl of templates) {
+        const searchQuery = `${tmpl.title} ${studyInfo.title} ${studyInfo.indication || ''}`.trim();
+        const results = await embeddingService.searchHybrid(searchQuery, 3, 0.65);
+        if (results.length > 0) {
+          const block = results.map((r: any, i: number) => {
+            const content = r.content.length > 400 ? r.content.substring(0, 400) + '…' : r.content;
+            return `[SRC-${i + 1}] "${r.title}"\n${content}`;
+          }).join('\n\n');
+          dataRoomEvidence.set(tmpl.number, block);
+        }
+      }
+    } catch (e: any) {
+      console.warn('[DeepResearch] Data Room retrieval failed (non-fatal):', e.message);
+    }
+
     // Generate content for each section using Claude
     const sections = await Promise.all(
       templates.map(async (tmpl) => {
@@ -329,6 +352,12 @@ router.post('/document/generate', requireTier('standard'), async (req: Request, 
             : moduleNum === '3' ? 'This is a Quality/CMC section. Use precise scientific language. Reference ICH Q guidelines. Include specifications, methods, and acceptance criteria.'
             : moduleNum === '4' ? 'This is a Nonclinical section. Reference ICH M3(R2) and S guidelines. Describe study design, results, and conclusions.'
             : 'This is a Clinical section. Follow ICH E3 structure. Present data systematically with statistical context.';
+
+          // Inject Data Room evidence if available for this section
+          const sectionEvidence = dataRoomEvidence.get(tmpl.number);
+          const evidenceInstruction = sectionEvidence
+            ? `\n\n--- RETRIEVED EVIDENCE FROM DATA ROOM (cite as [SRC-n]) ---\n${sectionEvidence}\n--- END EVIDENCE ---\n\nWhen your content relies on evidence above, cite it inline using [SRC-n]. Do NOT fabricate citations.`
+            : '';
 
           const result = await ai.chat(
             [
@@ -345,7 +374,7 @@ Writing standards:
 - Never use promotional language, unsupported claims, or superlatives
 - Structure with clear subheadings where the section warrants them
 
-${sectionGuidance}
+${sectionGuidance}${evidenceInstruction}
 
 Output 300-600 words of publication-ready regulatory prose. Include proper CTD-style subheadings as H3 tags.`,
               },
@@ -380,6 +409,7 @@ Generate the section content with proper regulatory structure and cross-referenc
             status: content.length > 50 ? 'drafted' : 'template_only',
             wordCount: content.split(/\s+/).length,
             agency: agencies[0],
+            sourcesUsed: dataRoomEvidence.has(tmpl.number) ? true : false,
           };
         } catch {
           return {
@@ -423,7 +453,24 @@ Generate the section content with proper regulatory structure and cross-referenc
       }
     }
 
-    res.json({ sections, validationResults });
+    const totalLatencyMs = Date.now() - generationStartMs;
+    const totalWordCount = sections.reduce((sum, s) => sum + s.wordCount, 0);
+    const draftedCount = sections.filter(s => s.status === 'drafted').length;
+    const sourcedCount = sections.filter(s => s.sourcesUsed).length;
+
+    res.json({
+      sections,
+      validationResults,
+      metrics: {
+        totalLatencyMs,
+        totalWordCount,
+        sectionsGenerated: draftedCount,
+        sectionsTotal: sections.length,
+        sectionsWithSources: sourcedCount,
+        avgMsPerSection: draftedCount > 0 ? Math.round(totalLatencyMs / draftedCount) : 0,
+        wordsPerMinute: totalLatencyMs > 0 ? Math.round((totalWordCount / (totalLatencyMs / 60000))) : 0,
+      },
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error('Document generation error:', message);

@@ -2439,15 +2439,60 @@ const aiEditSchema = z.object({
   sectionTitle: z.string().optional(),
   submissionType: z.string().optional(),
   context: z.string().optional(),
+  projectId: z.union([z.string(), z.number()]).optional(),
+  artifactId: z.union([z.string(), z.number()]).optional(),
+  ctdSection: z.string().optional(),
 });
+
+// ── Source traceability helpers for ai/edit-section ──────────────────────────
+
+/** SHA-256 hash helper */
+function aiEditSha256(data: string): string {
+  return crypto.createHash('sha256').update(data, 'utf8').digest('hex');
+}
+
+/** Split AI-generated text into sentences for claim analysis */
+function splitSentences(text: string): string[] {
+  const cleaned = text
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\b(Dr|Mr|Mrs|Ms|Prof|Inc|Ltd|Corp|vs|etc|al|Fig|Sec|Vol|No)\./gi, '$1\u2024')
+    .replace(/\b(\d+)\./g, '$1\u2024');
+  return cleaned
+    .split(/(?<=[.!?])\s+/)
+    .map(s => s.replace(/\u2024/g, '.').trim())
+    .filter(s => s.length > 20);
+}
+
+/** Patterns indicating verifiable claims needing source attribution */
+const CLAIM_PATTERNS_EDIT = [
+  /\b\d+(\.\d+)?%\s+(of\s+)?(patients?|subjects?|participants?)/i,
+  /\bp[\s<>=]+0?\.\d+/i,
+  /\b(hazard ratio|odds ratio|relative risk|confidence interval|CI)\b/i,
+  /\b(statistically significant|clinically significant)\b/i,
+  /\b(study|trial|investigation)\s+(showed?|demonstrated?|found|indicated)\b/i,
+  /\b(phase\s+[I1-4]{1,3})\b/i,
+  /\bNCT\d{8}\b/i,
+  /\b(FDA|EMA|ICH|21\s*CFR)\b/i,
+  /\b(guidance|guideline|regulation)\s+(states?|requires?|recommends?)\b/i,
+  /\b(et\s+al\.?|published|peer-reviewed|meta-analysis|systematic review)\b/i,
+  /\b(adverse events?|AE|SAE)\b/i,
+  /\b(efficacy|safety|bioequivalence|pharmacokinetic)\b/i,
+  /\b(primary endpoint|secondary endpoint|outcome measure)\b/i,
+];
 
 /**
  * POST /api/concept2cure/ai/edit-section
- * AI-powered section editing for regulatory documents.
+ * AI-powered section editing with sentence-level source traceability.
+ *
+ * When projectId is provided, retrieves Data Room evidence via pgvector
+ * hybrid search, injects it as an evidence block, and persists the full
+ * provenance chain: retrieval_run → retrieval_chunks → claims → citations.
  */
 router.post('/ai/edit-section', async (req: Request, res: Response) => {
+  const startMs = Date.now();
   try {
     const userId = getUserId(req);
+    const organizationId = getOrganizationId(req);
     const data = aiEditSchema.parse(req.body);
 
     const { getGateway } = await import('../services/ai-gateway/gateway.js');
@@ -2456,6 +2501,110 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
       return sendError(res, 503, 'AI service not configured — set ANTHROPIC_API_KEY');
     }
 
+    // ── STEP 1: RETRIEVE Data Room evidence (org-scoped pgvector) ─────────
+    const RETRIEVAL_TOP_K = 5;
+    const RETRIEVAL_THRESHOLD = 0.65;
+    let sources: Array<{ id: string; title: string; content: string; score: number }> = [];
+    let retrievalRunId: string | null = null;
+    const chunkRows: Array<{ id: string; rank: number; atomId: string; score: number }> = [];
+    let evidenceBlock = '';
+
+    if (data.projectId) {
+      try {
+        const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
+        const embeddingService = getEmbeddingService(pool);
+        const orgUuid =
+          (req as any).tenantContext?.organizationUuid ||
+          (req.headers['x-org-uuid'] as string | undefined);
+
+        // Build search query from section title + first 200 chars of content
+        const searchQuery = [
+          data.sectionTitle || '',
+          data.ctdSection ? `CTD section ${data.ctdSection}` : '',
+          data.text.substring(0, 200),
+        ].filter(Boolean).join(' ');
+
+        const searchResults = await embeddingService.searchHybrid(
+          searchQuery,
+          RETRIEVAL_TOP_K,
+          RETRIEVAL_THRESHOLD,
+          orgUuid
+        );
+        sources = searchResults.map((r: any) => ({
+          id: r.id,
+          title: r.title,
+          content: r.content.length > 600 ? r.content.substring(0, 600) + '…' : r.content,
+          score: r.score,
+        }));
+
+        // Persist retrieval run + chunks for provenance chain
+        if (sources.length > 0) {
+          try {
+            const queryHash = aiEditSha256(searchQuery);
+            const snapshotData = sources.map((s, i) => ({
+              rank: i + 1,
+              sourceType: 'atom' as const,
+              sourceRefId: s.id,
+              score: s.score,
+            }));
+            const snapshotHash = aiEditSha256(JSON.stringify(snapshotData));
+
+            const rrResult = await pool.query(
+              `INSERT INTO ai_retrieval_runs
+                 (organization_id, project_id, user_id, scope, embedding_model,
+                  query_text, query_hash_sha256, snapshot_hash_sha256, top_k, threshold, result_count)
+               VALUES ($1, $2, $3, 'org', 'text-embedding-3-small', $4, $5, $6, $7, $8, $9)
+               RETURNING id`,
+              [
+                organizationId,
+                data.projectId,
+                userId,
+                searchQuery,
+                queryHash,
+                snapshotHash,
+                RETRIEVAL_TOP_K,
+                RETRIEVAL_THRESHOLD,
+                sources.length,
+              ]
+            );
+            retrievalRunId = rrResult.rows[0].id;
+
+            for (let i = 0; i < sources.length; i++) {
+              const s = sources[i];
+              const excerptHash = aiEditSha256(s.content);
+              const crResult = await pool.query(
+                `INSERT INTO ai_retrieval_chunks
+                   (retrieval_run_id, rank, source_type, atom_id, title,
+                    excerpt_hash_sha256, excerpt_preview, score)
+                 VALUES ($1, $2, 'atom', $3, $4, $5, $6, $7)
+                 RETURNING id`,
+                [retrievalRunId, i + 1, s.id, s.title, excerptHash, s.content.substring(0, 500), s.score]
+              );
+              chunkRows.push({
+                id: crResult.rows[0].id,
+                rank: i + 1,
+                atomId: s.id,
+                score: s.score,
+              });
+            }
+          } catch (e: any) {
+            if (e?.code !== '42P01') logger.warn('Retrieval persist failed', { error: e.message });
+          }
+
+          // Build evidence block for injection into prompt
+          evidenceBlock =
+            '\n\n--- RETRIEVED EVIDENCE (cite as [SRC-n]) ---\n' +
+            sources.map((s, i) => `[SRC-${i + 1}] "${s.title}"\n${s.content}`).join('\n\n') +
+            '\n--- END EVIDENCE ---\n\n' +
+            'When your output relies on evidence above, cite it inline using [SRC-n]. ' +
+            'If a claim is not supported by retrieved evidence, do NOT fabricate citations.';
+        }
+      } catch (srcErr: any) {
+        logger.warn('Source retrieval failed (non-fatal)', { error: srcErr.message });
+      }
+    }
+
+    // ── STEP 2: BUILD PROMPT with evidence context ────────────────────────
     const actionPrompts: Record<string, string> = {
       rewrite:
         'Rewrite the following regulatory document section to improve clarity, precision, and readability while preserving all factual claims and regulatory language. Return only the rewritten text.',
@@ -2473,12 +2622,15 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
       'You are a senior regulatory medical writer with expertise in FDA and EMA submissions.',
       data.submissionType ? `This is for a ${data.submissionType} submission.` : '',
       data.sectionTitle ? `Section: "${data.sectionTitle}".` : '',
+      data.ctdSection ? `CTD section: ${data.ctdSection}.` : '',
       data.context || '',
+      evidenceBlock,
       actionPrompts[data.action],
     ]
       .filter(Boolean)
       .join(' ');
 
+    // ── STEP 3: AI GENERATION ─────────────────────────────────────────────
     const gwResponse = await gw.route({
       taskType: 'document_drafting',
       messages: [
@@ -2491,6 +2643,146 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
     });
 
     const result = gwResponse.content || '';
+    const latencyMs = Date.now() - startMs;
+
+    // ── STEP 4: PERSIST GENERATION RUN (provenance chain) ─────────────────
+    let generationRunId: string | null = null;
+    if (retrievalRunId) {
+      try {
+        const answerHash = aiEditSha256(result);
+        const genResult = await pool.query(
+          `INSERT INTO ai_generation_runs
+             (retrieval_run_id, model, provider, answer_hash_sha256,
+              prompt_tokens, completion_tokens, total_tokens, latency_ms, is_demo)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, false)
+           RETURNING id`,
+          [
+            retrievalRunId,
+            gwResponse.model || 'unknown',
+            gwResponse.provider || 'unknown',
+            answerHash,
+            gwResponse.usage?.prompt_tokens || 0,
+            gwResponse.usage?.completion_tokens || 0,
+            gwResponse.usage?.total_tokens || 0,
+            latencyMs,
+          ]
+        );
+        generationRunId = genResult.rows[0].id;
+      } catch (e: any) {
+        if (e?.code !== '42P01') logger.warn('Generation run persist failed', { error: e.message });
+      }
+    }
+
+    // ── STEP 5: CLAIM EXTRACTION + CITATION LINKAGE ───────────────────────
+    interface SourceCitation {
+      sentenceIndex: number;
+      sentenceText: string;
+      sourceRefs: Array<{ chunkId: string; sourceId: string; title: string; score: number }>;
+      status: 'SUPPORTED' | 'WEAK' | 'UNSUPPORTED';
+    }
+    const sourceCitationResults: SourceCitation[] = [];
+
+    if (sources.length > 0) {
+      const sentences = splitSentences(result);
+      for (let si = 0; si < sentences.length; si++) {
+        const sentence = sentences[si];
+        const isClaim = CLAIM_PATTERNS_EDIT.some(p => p.test(sentence));
+
+        // Find [SRC-n] references in this sentence
+        const refPattern = /\[SRC-(\d+)\]/g;
+        const refs = new Set<number>();
+        let m;
+        while ((m = refPattern.exec(sentence)) !== null) {
+          const idx = parseInt(m[1], 10) - 1;
+          if (idx >= 0 && idx < sources.length) refs.add(idx);
+        }
+
+        if (isClaim || refs.size > 0) {
+          const citLinks: SourceCitation['sourceRefs'] = [];
+          for (const refIdx of refs) {
+            const chunk = chunkRows[refIdx];
+            if (chunk) {
+              citLinks.push({
+                chunkId: chunk.id,
+                sourceId: chunk.atomId,
+                title: sources[refIdx]?.title || '',
+                score: chunk.score,
+              });
+            }
+          }
+
+          const status: SourceCitation['status'] =
+            refs.size > 0 ? 'SUPPORTED' : (isClaim ? 'UNSUPPORTED' : 'SUPPORTED');
+
+          // Persist claim + citation linkages
+          if (generationRunId) {
+            try {
+              const claimHash = aiEditSha256(sentence);
+              const bestScore = citLinks.length > 0 ? Math.max(...citLinks.map(c => c.score)) : null;
+              const claimResult = await pool.query(
+                `INSERT INTO ai_claims
+                   (generation_run_id, claim_index, claim_text, claim_hash_sha256, confidence, status)
+                 VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+                [generationRunId, si, sentence, claimHash, bestScore, status]
+              );
+              const claimId = claimResult.rows[0].id;
+
+              for (const link of citLinks) {
+                await pool.query(
+                  `INSERT INTO ai_claim_citations (claim_id, retrieval_chunk_id, relevance_score)
+                   VALUES ($1, $2, $3)`,
+                  [claimId, link.chunkId, link.score]
+                );
+              }
+            } catch (e: any) {
+              if (e?.code !== '42P01') logger.warn('Claim persist failed', { error: e.message });
+            }
+          }
+
+          sourceCitationResults.push({
+            sentenceIndex: si,
+            sentenceText: sentence.substring(0, 500),
+            sourceRefs: citLinks,
+            status,
+          });
+        }
+      }
+    }
+
+    // ── STEP 6: AUTO-PERSIST source links for artifact ────────────────────
+    if (data.artifactId && sourceCitationResults.length > 0) {
+      try {
+        const artifactIdNum = typeof data.artifactId === 'string'
+          ? parseInt(data.artifactId, 10) : data.artifactId;
+        if (!isNaN(artifactIdNum)) {
+          for (const cit of sourceCitationResults) {
+            if (cit.sourceRefs.length > 0) {
+              const bestRef = cit.sourceRefs.reduce((a, b) => a.score > b.score ? a : b);
+              await pool.query(
+                `INSERT INTO source_citations
+                   (document_id, organization_id, sentence_index, sentence_text,
+                    source_type, source_id, source_title, confidence, created_by)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                 ON CONFLICT DO NOTHING`,
+                [
+                  artifactIdNum,
+                  organizationId,
+                  cit.sentenceIndex,
+                  cit.sentenceText.substring(0, 1000),
+                  'internal_data',
+                  bestRef.sourceId,
+                  bestRef.title.substring(0, 500),
+                  bestRef.score,
+                  userId,
+                ]
+              );
+            }
+          }
+        }
+      } catch (e: any) {
+        if (e?.code !== '42P01') logger.warn('Source link persist failed', { error: e.message });
+      }
+    }
 
     // Audit log
     await logAuditEntry(req, 'AI_EDIT', 'document_section', `ai-edit-${Date.now()}`, null, {
@@ -2499,16 +2791,393 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
       inputLength: data.text.length,
       outputLength: result.length,
       model: gwResponse.model,
+      sourcesRetrieved: sources.length,
+      claimsExtracted: sourceCitationResults.length,
+      latencyMs,
     });
 
-    logger.info('AI edit completed', { action: data.action, userId });
-    return sendSuccess(res, { result, action: data.action });
+    logger.info('AI edit completed with source traceability', {
+      action: data.action,
+      userId,
+      sourcesRetrieved: sources.length,
+      claimsExtracted: sourceCitationResults.length,
+      latencyMs,
+    });
+
+    return sendSuccess(res, {
+      result,
+      action: data.action,
+      provenance: {
+        retrievalRunId,
+        generationRunId,
+        sourcesRetrieved: sources.length,
+        sources: sources.map((s, i) => ({
+          ref: `SRC-${i + 1}`,
+          id: s.id,
+          title: s.title,
+          score: s.score,
+        })),
+        claims: sourceCitationResults,
+        latencyMs,
+      },
+    });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
     }
     logger.error('AI edit failed', { error: error.message });
     return sendError(res, 500, 'AI editing failed');
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TEMPLATE PROMPT BLOCKS — AI templates with variable insertion
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Regulatory writing templates with variable slots.
+ * Each template has:
+ * - `id`: unique identifier
+ * - `name`: display name
+ * - `category`: grouping (ctd, csr, ind, regulatory, safety)
+ * - `variables`: array of variable slots with name, label, placeholder, required flag
+ * - `systemPrompt`: the AI prompt template with {{VARIABLE}} placeholders
+ * - `outputGuidance`: instructions for output structure
+ */
+interface PromptVariable {
+  name: string;
+  label: string;
+  placeholder: string;
+  required: boolean;
+  type: 'text' | 'textarea' | 'select';
+  options?: string[];
+}
+
+interface PromptTemplate {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  variables: PromptVariable[];
+  systemPrompt: string;
+  outputGuidance: string;
+  estimatedWords: number;
+}
+
+const PROMPT_TEMPLATES: PromptTemplate[] = [
+  {
+    id: 'ctd-clinical-overview',
+    name: 'Clinical Overview (2.5)',
+    category: 'ctd',
+    description: 'Generate a comprehensive CTD Module 2.5 Clinical Overview with proper regulatory structure.',
+    variables: [
+      { name: 'PRODUCT_NAME', label: 'Product Name', placeholder: 'e.g., Pembrolizumab', required: true, type: 'text' },
+      { name: 'INDICATION', label: 'Indication', placeholder: 'e.g., Non-small cell lung cancer', required: true, type: 'text' },
+      { name: 'MECHANISM', label: 'Mechanism of Action', placeholder: 'e.g., PD-1 checkpoint inhibitor', required: false, type: 'text' },
+      { name: 'PHASE', label: 'Development Phase', placeholder: 'e.g., Phase III', required: true, type: 'select', options: ['Phase I', 'Phase II', 'Phase III', 'Phase IV'] },
+      { name: 'KEY_STUDIES', label: 'Pivotal Studies', placeholder: 'e.g., KEYNOTE-024, KEYNOTE-189', required: false, type: 'textarea' },
+      { name: 'REGION', label: 'Target Agency', placeholder: 'FDA', required: true, type: 'select', options: ['FDA', 'EMA', 'PMDA', 'Health Canada'] },
+    ],
+    systemPrompt: `You are a senior regulatory medical writer drafting CTD Module 2.5 (Clinical Overview) for {{PRODUCT_NAME}} for the treatment of {{INDICATION}}.
+Target agency: {{REGION}}.
+Product mechanism: {{MECHANISM}}.
+Development phase: {{PHASE}}.
+{{KEY_STUDIES}}
+
+Follow ICH M4E(R2) guidelines. Structure the overview as:
+1. Product Development Rationale
+2. Overview of Biopharmaceutics
+3. Overview of Clinical Pharmacology
+4. Overview of Efficacy
+5. Overview of Safety
+6. Benefits and Risks Conclusions
+
+Use formal regulatory language, third-person passive voice, and cite pivotal study data where provided.`,
+    outputGuidance: 'Output publication-ready regulatory prose with proper CTD subheadings. 800-1500 words.',
+    estimatedWords: 1200,
+  },
+  {
+    id: 'ctd-quality-summary',
+    name: 'Quality Overall Summary (2.3)',
+    category: 'ctd',
+    description: 'Generate CTD Module 2.3 Quality Overall Summary for drug substance and product.',
+    variables: [
+      { name: 'PRODUCT_NAME', label: 'Product Name', placeholder: 'e.g., Amlodipine Besylate', required: true, type: 'text' },
+      { name: 'DOSAGE_FORM', label: 'Dosage Form', placeholder: 'e.g., Tablets, 5mg and 10mg', required: true, type: 'text' },
+      { name: 'ROUTE', label: 'Route of Administration', placeholder: 'e.g., Oral', required: true, type: 'select', options: ['Oral', 'Intravenous', 'Subcutaneous', 'Intramuscular', 'Topical', 'Inhalation', 'Ophthalmic'] },
+      { name: 'MANUFACTURER', label: 'Manufacturer', placeholder: 'e.g., PharmaCo Manufacturing LLC', required: false, type: 'text' },
+      { name: 'REGION', label: 'Target Agency', placeholder: 'FDA', required: true, type: 'select', options: ['FDA', 'EMA', 'PMDA', 'Health Canada'] },
+    ],
+    systemPrompt: `You are drafting CTD Module 2.3 (Quality Overall Summary) for {{PRODUCT_NAME}} ({{DOSAGE_FORM}}, {{ROUTE}}).
+Manufacturer: {{MANUFACTURER}}.
+Target agency: {{REGION}}.
+
+Follow ICH Q guidelines. Cover:
+1. Drug Substance (S): general info, manufacture, characterization, control, stability
+2. Drug Product (P): description, pharmaceutical development, manufacture, control, stability
+3. Appendices: facilities, adventitious agents, novel excipients
+
+Reference ICH Q1A-Q1F for stability, Q3A/Q3B for impurities, Q6A/Q6B for specifications.`,
+    outputGuidance: 'Structured regulatory prose with CMC detail. 600-1000 words.',
+    estimatedWords: 800,
+  },
+  {
+    id: 'csr-synopsis',
+    name: 'CSR Synopsis',
+    category: 'csr',
+    description: 'Generate a Clinical Study Report synopsis per ICH E3 guidelines.',
+    variables: [
+      { name: 'STUDY_TITLE', label: 'Study Title', placeholder: 'A Phase III, Randomized, Double-Blind...', required: true, type: 'textarea' },
+      { name: 'PROTOCOL', label: 'Protocol Number', placeholder: 'e.g., ABC-123-001', required: true, type: 'text' },
+      { name: 'PRODUCT_NAME', label: 'Investigational Product', placeholder: 'e.g., Drug X 100mg', required: true, type: 'text' },
+      { name: 'INDICATION', label: 'Indication', placeholder: 'e.g., Major depressive disorder', required: true, type: 'text' },
+      { name: 'DESIGN', label: 'Study Design', placeholder: 'e.g., Randomized, double-blind, placebo-controlled', required: true, type: 'text' },
+      { name: 'SAMPLE_SIZE', label: 'Sample Size', placeholder: 'e.g., N=450', required: false, type: 'text' },
+      { name: 'PRIMARY_ENDPOINT', label: 'Primary Endpoint', placeholder: 'e.g., Change from baseline in MADRS', required: true, type: 'text' },
+      { name: 'DURATION', label: 'Treatment Duration', placeholder: 'e.g., 8 weeks', required: false, type: 'text' },
+    ],
+    systemPrompt: `You are writing a CSR Synopsis per ICH E3 for:
+Study: {{STUDY_TITLE}}
+Protocol: {{PROTOCOL}}
+Product: {{PRODUCT_NAME}}
+Indication: {{INDICATION}}
+Design: {{DESIGN}}
+Sample size: {{SAMPLE_SIZE}}
+Primary endpoint: {{PRIMARY_ENDPOINT}}
+Duration: {{DURATION}}
+
+Structure per ICH E3:
+- Name of Sponsor, Product, Protocol
+- Study Title, Phase, Indication
+- Study Design, Objectives
+- Test Product/Dose/Mode/Batch
+- Duration of Treatment
+- Criteria for Inclusion/Exclusion (summarize)
+- Number of Patients (planned/randomized/completed)
+- Efficacy Results (primary and key secondary)
+- Safety Results (AEs, SAEs, deaths, discontinuations)
+- Conclusions`,
+    outputGuidance: 'Structured synopsis with all ICH E3 required elements. Use [brackets] for missing data. 500-800 words.',
+    estimatedWords: 700,
+  },
+  {
+    id: 'safety-narrative',
+    name: 'Individual Safety Narrative',
+    category: 'safety',
+    description: 'Generate an individual patient safety narrative for serious adverse events.',
+    variables: [
+      { name: 'PRODUCT_NAME', label: 'Product Name', placeholder: 'e.g., Drug X', required: true, type: 'text' },
+      { name: 'PROTOCOL', label: 'Protocol Number', placeholder: 'e.g., ABC-123-001', required: true, type: 'text' },
+      { name: 'SUBJECT_ID', label: 'Subject ID', placeholder: 'e.g., 001-0042', required: true, type: 'text' },
+      { name: 'EVENT', label: 'Adverse Event', placeholder: 'e.g., Hepatotoxicity, Grade 3', required: true, type: 'text' },
+      { name: 'DEMOGRAPHICS', label: 'Demographics', placeholder: 'e.g., 58-year-old male, 82kg', required: false, type: 'text' },
+      { name: 'MEDICAL_HISTORY', label: 'Relevant Medical History', placeholder: 'e.g., Hypertension, Type 2 diabetes', required: false, type: 'textarea' },
+      { name: 'OUTCOME', label: 'Outcome', placeholder: 'e.g., Resolved with dose reduction', required: false, type: 'text' },
+    ],
+    systemPrompt: `You are writing an individual patient safety narrative for a regulatory submission.
+Product: {{PRODUCT_NAME}}
+Protocol: {{PROTOCOL}}
+Subject: {{SUBJECT_ID}}
+Event: {{EVENT}}
+Demographics: {{DEMOGRAPHICS}}
+Medical History: {{MEDICAL_HISTORY}}
+Outcome: {{OUTCOME}}
+
+Follow CIOMS/ICH E2B(R3) format. Include:
+1. Patient demographics and baseline characteristics
+2. Relevant medical history and concomitant medications
+3. Study drug administration details
+4. Description of the event (onset, course, severity, treatment)
+5. Laboratory/diagnostic findings
+6. Outcome and follow-up
+7. Investigator's assessment of causality
+8. Sponsor's assessment (if applicable)
+
+Use [brackets] for any missing data elements.`,
+    outputGuidance: 'Clinical safety narrative in formal medical writing style. 300-500 words.',
+    estimatedWords: 400,
+  },
+  {
+    id: 'ind-cover-letter',
+    name: 'IND Cover Letter',
+    category: 'ind',
+    description: 'Generate an IND cover letter for FDA submission.',
+    variables: [
+      { name: 'PRODUCT_NAME', label: 'Product Name', placeholder: 'e.g., ABC-1234', required: true, type: 'text' },
+      { name: 'INDICATION', label: 'Indication', placeholder: 'e.g., Advanced melanoma', required: true, type: 'text' },
+      { name: 'SPONSOR', label: 'Sponsor Name', placeholder: 'e.g., BioPharma Inc.', required: true, type: 'text' },
+      { name: 'IND_NUMBER', label: 'IND Number', placeholder: 'e.g., IND 123456 (or New)', required: false, type: 'text' },
+      { name: 'SUBMISSION_TYPE', label: 'Submission Type', placeholder: 'Initial IND', required: true, type: 'select', options: ['Initial IND', 'IND Amendment', 'IND Annual Report', 'IND Safety Report'] },
+      { name: 'DIVISION', label: 'FDA Review Division', placeholder: 'e.g., Division of Oncology Products 1', required: false, type: 'text' },
+    ],
+    systemPrompt: `You are drafting an IND cover letter for FDA.
+Product: {{PRODUCT_NAME}}
+Indication: {{INDICATION}}
+Sponsor: {{SPONSOR}}
+IND Number: {{IND_NUMBER}}
+Submission Type: {{SUBMISSION_TYPE}}
+Review Division: {{DIVISION}}
+
+Follow 21 CFR 312.23 requirements. Include:
+1. Formal address to FDA CDER/CBER
+2. Reference to IND number and serial number
+3. Purpose of submission
+4. Summary of contents
+5. Highlight any urgent safety information
+6. Regulatory history if applicable
+7. Contact information placeholder
+8. Signature block placeholder
+
+Use formal regulatory correspondence language.`,
+    outputGuidance: 'Formal FDA correspondence. 200-400 words.',
+    estimatedWords: 300,
+  },
+];
+
+/**
+ * GET /api/concept2cure/ai/templates
+ * Returns available prompt templates with their variable schemas.
+ */
+router.get('/ai/templates', (_req: Request, res: Response) => {
+  const templates = PROMPT_TEMPLATES.map(t => ({
+    id: t.id,
+    name: t.name,
+    category: t.category,
+    description: t.description,
+    variables: t.variables,
+    estimatedWords: t.estimatedWords,
+  }));
+  return sendSuccess(res, { templates });
+});
+
+/**
+ * POST /api/concept2cure/ai/templates/:templateId/generate
+ * Generate content from a template with variable values filled in.
+ */
+const templateGenerateSchema = z.object({
+  variables: z.record(z.string(), z.string()),
+  projectId: z.union([z.string(), z.number()]).optional(),
+  artifactId: z.union([z.string(), z.number()]).optional(),
+});
+
+router.post('/ai/templates/:templateId/generate', async (req: Request, res: Response) => {
+  const startMs = Date.now();
+  try {
+    const { templateId } = req.params;
+    const userId = getUserId(req);
+    const organizationId = getOrganizationId(req);
+    const data = templateGenerateSchema.parse(req.body);
+
+    const template = PROMPT_TEMPLATES.find(t => t.id === templateId);
+    if (!template) {
+      return sendError(res, 404, `Template '${templateId}' not found`);
+    }
+
+    // Validate required variables
+    const missingVars = template.variables
+      .filter(v => v.required && (!data.variables[v.name] || data.variables[v.name].trim() === ''))
+      .map(v => v.label);
+    if (missingVars.length > 0) {
+      return sendError(res, 400, `Missing required variables: ${missingVars.join(', ')}`);
+    }
+
+    // Replace {{VARIABLE}} placeholders with provided values
+    let prompt = template.systemPrompt;
+    for (const [key, value] of Object.entries(data.variables)) {
+      prompt = prompt.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value || `[${key}]`);
+    }
+    // Replace any remaining unset variables with bracket placeholders
+    prompt = prompt.replace(/\{\{([A-Z_]+)\}\}/g, '[$1]');
+
+    // ── Retrieve Data Room evidence if project context available ─────
+    let evidenceBlock = '';
+    let sourcesRetrieved = 0;
+    if (data.projectId) {
+      try {
+        const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
+        const embeddingService = getEmbeddingService(pool);
+        const orgUuid =
+          (req as any).tenantContext?.organizationUuid ||
+          (req.headers['x-org-uuid'] as string | undefined);
+
+        const searchQuery = Object.values(data.variables).filter(Boolean).join(' ').substring(0, 300);
+        const searchResults = await embeddingService.searchHybrid(searchQuery, 5, 0.65, orgUuid);
+        if (searchResults.length > 0) {
+          sourcesRetrieved = searchResults.length;
+          evidenceBlock =
+            '\n\n--- RETRIEVED EVIDENCE FROM DATA ROOM (cite as [SRC-n]) ---\n' +
+            searchResults.map((r: any, i: number) => {
+              const content = r.content.length > 500 ? r.content.substring(0, 500) + '…' : r.content;
+              return `[SRC-${i + 1}] "${r.title}"\n${content}`;
+            }).join('\n\n') +
+            '\n--- END EVIDENCE ---\n\n' +
+            'Cite evidence inline using [SRC-n] where supported. Do NOT fabricate citations.';
+        }
+      } catch (e: any) {
+        logger.warn('Template generation: Data Room retrieval failed', { error: e.message });
+      }
+    }
+
+    // ── Generate with AI Gateway ────────────────────────────────────────
+    const { getGateway } = await import('../services/ai-gateway/gateway.js');
+    const gw = getGateway();
+    if (gw.getEnabledProviders().length === 0) {
+      return sendError(res, 503, 'AI service not configured — set ANTHROPIC_API_KEY');
+    }
+
+    const gwResponse = await gw.route({
+      taskType: 'document_drafting',
+      messages: [
+        { role: 'system', content: prompt + evidenceBlock + '\n\n' + template.outputGuidance },
+        { role: 'user', content: 'Generate the document content now.' },
+      ],
+      temperature: 0.35,
+      maxTokens: 4000,
+      callerModule: 'concept2cure/ai-template-generate',
+    });
+
+    const result = gwResponse.content || '';
+    const latencyMs = Date.now() - startMs;
+    const wordCount = result.split(/\s+/).length;
+
+    await logAuditEntry(req, 'AI_TEMPLATE_GENERATE', 'prompt_template', templateId, null, {
+      templateName: template.name,
+      variablesFilled: Object.keys(data.variables).length,
+      outputLength: result.length,
+      wordCount,
+      sourcesRetrieved,
+      latencyMs,
+      model: gwResponse.model,
+    });
+
+    logger.info('Template generation completed', {
+      templateId,
+      userId,
+      wordCount,
+      sourcesRetrieved,
+      latencyMs,
+    });
+
+    return sendSuccess(res, {
+      result,
+      template: {
+        id: template.id,
+        name: template.name,
+        category: template.category,
+      },
+      metrics: {
+        wordCount,
+        latencyMs,
+        sourcesRetrieved,
+        wordsPerMinute: latencyMs > 0 ? Math.round((wordCount / (latencyMs / 60000))) : 0,
+      },
+    });
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+    }
+    logger.error('Template generation failed', { error: error.message });
+    return sendError(res, 500, 'Template generation failed');
   }
 });
 
