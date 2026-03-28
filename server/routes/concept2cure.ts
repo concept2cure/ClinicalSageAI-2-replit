@@ -1995,9 +1995,40 @@ router.patch('/projects/:projectId/knowledge', async (req: Request, res: Respons
 // PROJECT CONNECTED APPS ROUTES
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Known app IDs — server-side allowlist prevents arbitrary injection */
+const KNOWN_APP_IDS = new Set([
+  'deep-research', 'precedent-intelligence', '510k-workspace', 'pma-workspace',
+  'cer-generator', 'safety-narrative', 'biostatistics', 'csr-builder',
+  'cmc-platform', 'compliance-monitor', 'evidence-engine',
+]);
+
+const MAX_CONNECTED_APPS = 20;
+
+const connectAppSchema = z.object({
+  appId: z.string().min(1).max(80),
+  memoryRole: z.string().max(1000).optional(),
+});
+
+/** Build the aggregated memory context string from all active connected apps */
+function buildAppMemoryContext(apps: ConnectedAppRecord[]): string {
+  return apps
+    .filter(a => a.status === 'active' && a.memoryRole)
+    .map(a => a.memoryRole)
+    .join('\n');
+}
+
+/** Merge appContext into the project settings.knowledge object */
+function syncKnowledgeAppContext(settings: Record<string, unknown>, appContext: string): Record<string, unknown> {
+  const knowledge = settings.knowledge && typeof settings.knowledge === 'object'
+    ? { ...(settings.knowledge as Record<string, unknown>) }
+    : {};
+  knowledge.appContext = appContext;
+  return { ...settings, knowledge };
+}
+
 /**
  * GET /api/concept2cure/projects/:projectId/apps
- * List apps connected to this project.
+ * List apps connected to this project with metadata.
  */
 router.get('/projects/:projectId/apps', async (req: Request, res: Response) => {
   try {
@@ -2021,7 +2052,11 @@ router.get('/projects/:projectId/apps', async (req: Request, res: Response) => {
 
     const settings = normalizeProjectSettings(project.settings);
     const apps = normalizeConnectedApps(settings);
-    return sendSuccess(res, { apps });
+    return sendSuccess(res, {
+      apps,
+      totalConnected: apps.length,
+      maxAllowed: MAX_CONNECTED_APPS,
+    });
   } catch (error: any) {
     logger.error('Failed to fetch project apps', { error: error.message });
     return sendError(res, 500, 'Failed to fetch project apps');
@@ -2030,7 +2065,8 @@ router.get('/projects/:projectId/apps', async (req: Request, res: Response) => {
 
 /**
  * POST /api/concept2cure/projects/:projectId/apps
- * Connect an app to the project. Stores connection and initializes memory role.
+ * Connect an app to the project. Validates against known catalog, stores connection,
+ * and initializes app's memory role in the project context for AnA.
  */
 router.post('/projects/:projectId/apps', async (req: Request, res: Response) => {
   try {
@@ -2042,9 +2078,12 @@ router.post('/projects/:projectId/apps', async (req: Request, res: Response) => 
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
-    const { appId, memoryRole } = req.body as { appId?: string; memoryRole?: string };
-    if (!appId || typeof appId !== 'string') {
-      return sendError(res, 400, 'appId is required');
+    const body = connectAppSchema.parse(req.body);
+    const { appId } = body;
+
+    // Validate against known catalog
+    if (!KNOWN_APP_IDS.has(appId)) {
+      return sendError(res, 400, `Unknown app ID: ${appId}`, undefined, 'UNKNOWN_APP');
     }
 
     const [project] = await db
@@ -2065,38 +2104,51 @@ router.post('/projects/:projectId/apps', async (req: Request, res: Response) => 
       return sendError(res, 409, 'App is already connected to this project');
     }
 
+    // Enforce max connected apps
+    if (apps.length >= MAX_CONNECTED_APPS) {
+      return sendError(res, 400, `Maximum of ${MAX_CONNECTED_APPS} connected apps reached. Disconnect one first.`);
+    }
+
+    // Sanitize memoryRole if provided
+    const sanitizedRole = body.memoryRole ? sanitizeContent(body.memoryRole) : undefined;
+
     const newApp: ConnectedAppRecord = {
       appId,
       connectedAt: new Date().toISOString(),
       status: 'active',
-      ...(memoryRole ? { memoryRole } : {}),
+      ...(sanitizedRole ? { memoryRole: sanitizedRole } : {}),
     };
 
     const updatedApps = [...apps, newApp];
-    const updatedSettings = { ...settings, connectedApps: updatedApps };
+    let updatedSettings: Record<string, unknown> = { ...settings, connectedApps: updatedApps };
 
-    // Build app memory roles context string for AnA
-    const activeMemoryRoles = updatedApps
-      .filter(a => a.status === 'active' && a.memoryRole)
-      .map(a => a.memoryRole)
-      .join('\n');
-
-    if (activeMemoryRoles) {
-      const knowledge = settings.knowledge && typeof settings.knowledge === 'object'
-        ? { ...(settings.knowledge as Record<string, unknown>) }
-        : {};
-      knowledge.appContext = activeMemoryRoles;
-      updatedSettings.knowledge = knowledge;
-    }
+    // Rebuild and sync aggregated memory context
+    const appContext = buildAppMemoryContext(updatedApps);
+    updatedSettings = syncKnowledgeAppContext(updatedSettings, appContext);
 
     await db
       .update(projects)
       .set({ settings: updatedSettings, updatedAt: new Date() })
       .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)));
 
-    await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, { action: 'connect_app', appId });
-    return sendSuccess(res, { app: newApp, totalConnected: updatedApps.length });
+    await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, {
+      action: 'connect_app',
+      appId,
+      totalConnected: updatedApps.length,
+      hasMemoryRole: !!sanitizedRole,
+    });
+
+    logger.info('App connected to project', { projectId: numericId, appId, totalConnected: updatedApps.length });
+
+    return sendSuccess(res, {
+      app: newApp,
+      totalConnected: updatedApps.length,
+      maxAllowed: MAX_CONNECTED_APPS,
+    });
   } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+    }
     logger.error('Failed to connect app to project', { error: error.message });
     return sendError(res, 500, 'Failed to connect app to project');
   }
@@ -2104,7 +2156,7 @@ router.post('/projects/:projectId/apps', async (req: Request, res: Response) => 
 
 /**
  * DELETE /api/concept2cure/projects/:projectId/apps/:appId
- * Disconnect an app from the project.
+ * Disconnect an app from the project. Removes its memory role from context.
  */
 router.delete('/projects/:projectId/apps/:appId', async (req: Request, res: Response) => {
   try {
@@ -2117,7 +2169,7 @@ router.delete('/projects/:projectId/apps/:appId', async (req: Request, res: Resp
     }
 
     const { appId } = req.params;
-    if (!appId) {
+    if (!appId || typeof appId !== 'string') {
       return sendError(res, 400, 'appId is required');
     }
 
@@ -2133,33 +2185,37 @@ router.delete('/projects/:projectId/apps/:appId', async (req: Request, res: Resp
 
     const settings = normalizeProjectSettings(project.settings);
     const apps = normalizeConnectedApps(settings);
-    const updatedApps = apps.filter(a => a.appId !== appId);
+    const removedApp = apps.find(a => a.appId === appId);
 
-    if (updatedApps.length === apps.length) {
+    if (!removedApp) {
       return sendError(res, 404, 'App not found in project connections');
     }
 
-    const updatedSettings = { ...settings, connectedApps: updatedApps };
+    const updatedApps = apps.filter(a => a.appId !== appId);
+    let updatedSettings: Record<string, unknown> = { ...settings, connectedApps: updatedApps };
 
-    // Rebuild app memory roles context
-    const activeMemoryRoles = updatedApps
-      .filter(a => a.status === 'active' && a.memoryRole)
-      .map(a => a.memoryRole)
-      .join('\n');
-
-    const knowledge = settings.knowledge && typeof settings.knowledge === 'object'
-      ? { ...(settings.knowledge as Record<string, unknown>) }
-      : {};
-    knowledge.appContext = activeMemoryRoles || '';
-    updatedSettings.knowledge = knowledge;
+    // Rebuild and sync aggregated memory context (removes this app's role)
+    const appContext = buildAppMemoryContext(updatedApps);
+    updatedSettings = syncKnowledgeAppContext(updatedSettings, appContext);
 
     await db
       .update(projects)
       .set({ settings: updatedSettings, updatedAt: new Date() })
       .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)));
 
-    await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, { action: 'disconnect_app', appId });
-    return sendSuccess(res, { disconnected: appId, totalConnected: updatedApps.length });
+    await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, {
+      action: 'disconnect_app',
+      appId,
+      totalConnected: updatedApps.length,
+    });
+
+    logger.info('App disconnected from project', { projectId: numericId, appId, totalConnected: updatedApps.length });
+
+    return sendSuccess(res, {
+      disconnected: appId,
+      totalConnected: updatedApps.length,
+      maxAllowed: MAX_CONNECTED_APPS,
+    });
   } catch (error: any) {
     logger.error('Failed to disconnect app from project', { error: error.message });
     return sendError(res, 500, 'Failed to disconnect app from project');

@@ -11,7 +11,8 @@ import React, { useState, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { useProjectKnowledge } from '../../hooks/useProjectKnowledge';
 import { useProjectIntelligence } from '../../hooks/useIntelligence';
-import { useProjectApps, APP_CATALOG } from '../../hooks/useProjectApps';
+import { useProjectApps, APP_CATALOG, CATEGORY_META } from '../../hooks/useProjectApps';
+import type { AppCategory } from '../../hooks/useProjectApps';
 import { useProject } from '../../context/ProjectContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -116,6 +117,8 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
   const {
     connectedApps,
     availableApps,
+    availableByCategory,
+    connectingAppId,
     connectApp,
     disconnectApp,
   } = useProjectApps(projectId, activeProject?.type);
@@ -128,6 +131,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
   const [isAddingText, setIsAddingText] = useState(false);
   const [textTitle, setTextTitle] = useState('');
   const [textContent, setTextContent] = useState('');
+  const [appBrowserOpen, setAppBrowserOpen] = useState(false);
 
   const docs = knowledge?.documents ?? [];
   const totalBytes = docs.reduce((sum: number, d: any) => sum + (d.size || 0), 0);
@@ -430,86 +434,147 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
           )}
         </div>
 
-        {/* ── 3. Activity (collapsible, minimal) ─�� */}
         {/* ── 3. Connected Apps ── */}
         <div className="px-5 py-4 border-b border-stone-100">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium text-stone-700">
-              Connected apps {connectedApps.length > 0 && <span className="text-stone-400">({connectedApps.length})</span>}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <Blocks className="w-3.5 h-3.5 text-stone-400" />
+              <span className="text-xs font-medium text-stone-700">
+                Connected apps
+              </span>
+              {connectedApps.length > 0 && (
+                <span className="ml-1 text-[10px] font-medium text-white bg-stone-500 rounded-full w-4 h-4 flex items-center justify-center">
+                  {connectedApps.length}
+                </span>
+              )}
+            </div>
+            {availableApps.length > 0 && (
+              <button
+                onClick={() => setAppBrowserOpen(o => !o)}
+                className="p-1 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded transition-colors"
+                title={appBrowserOpen ? 'Close app browser' : 'Browse apps'}
+              >
+                {appBrowserOpen ? <X className="w-3.5 h-3.5" /> : <Plus className="w-4 h-4" />}
+              </button>
+            )}
           </div>
 
           {/* Connected apps list */}
           {connectedApps.length > 0 && (
-            <ul className="space-y-1 mb-3">
+            <ul className="space-y-0.5 mb-3">
               {connectedApps.map((ca) => {
                 const def = APP_CATALOG.find(a => a.id === ca.appId);
                 if (!def) return null;
                 const Icon = getAppIcon(def.icon);
+                const catMeta = CATEGORY_META[def.category];
                 return (
                   <li
                     key={ca.appId}
                     className="group flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-stone-50 transition-colors"
                   >
-                    <div className="w-6 h-6 rounded-md bg-stone-100 flex items-center justify-center flex-shrink-0">
-                      <Icon className="w-3.5 h-3.5 text-stone-600" />
+                    <div
+                      className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: `${catMeta.color}12` }}
+                    >
+                      <Icon className="w-3.5 h-3.5" style={{ color: catMeta.color }} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] text-stone-700 truncate">{def.name}</p>
-                      <p className="text-[11px] text-stone-400 truncate">{def.description}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-[13px] font-medium text-stone-700 truncate">{def.name}</p>
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" title="Active" />
+                      </div>
+                      <p className="text-[11px] text-stone-400 truncate leading-tight">{def.description}</p>
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Active" />
-                      <button
-                        onClick={() => disconnectApp(ca.appId)}
-                        className="opacity-0 group-hover:opacity-100 p-1 rounded text-stone-400 hover:text-red-500 hover:bg-red-50 transition-all"
-                        title="Disconnect app"
-                        aria-label={`Disconnect ${def.name}`}
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => disconnectApp(ca.appId)}
+                      className="flex-shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded text-stone-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                      title="Disconnect app"
+                      aria-label={`Disconnect ${def.name}`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
                   </li>
                 );
               })}
             </ul>
           )}
 
-          {/* Available apps to connect */}
-          {availableApps.length > 0 && (
-            <div className="space-y-1">
-              <p className="text-[11px] text-stone-400 mb-1.5">
-                {connectedApps.length === 0 ? 'Connect apps to make them project-aware' : 'Add more'}
-              </p>
-              {availableApps.slice(0, connectedApps.length === 0 ? 6 : 3).map((app) => {
-                const Icon = getAppIcon(app.icon);
-                return (
-                  <button
-                    key={app.id}
-                    onClick={() => connectApp(app.id)}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left hover:bg-stone-50 transition-colors group"
-                  >
-                    <div className="w-6 h-6 rounded-md bg-stone-50 border border-stone-200 flex items-center justify-center flex-shrink-0 group-hover:bg-white group-hover:border-stone-300 transition-colors">
-                      <Icon className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-600 transition-colors" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] text-stone-600 truncate">{app.name}</p>
-                    </div>
-                    <Plus className="w-3.5 h-3.5 text-stone-300 group-hover:text-stone-500 transition-colors flex-shrink-0" />
-                  </button>
-                );
-              })}
-              {availableApps.length > (connectedApps.length === 0 ? 6 : 3) && (
-                <p className="text-[11px] text-stone-400 text-center pt-1">
-                  +{availableApps.length - (connectedApps.length === 0 ? 6 : 3)} more apps available
+          {/* Empty state */}
+          {connectedApps.length === 0 && !appBrowserOpen && (
+            <button
+              onClick={() => setAppBrowserOpen(true)}
+              className="w-full flex flex-col items-center gap-2 py-4 px-3 rounded-lg border border-dashed border-stone-200 hover:border-stone-300 hover:bg-stone-50/50 transition-colors text-center"
+            >
+              <Blocks className="w-5 h-5 text-stone-300" />
+              <div>
+                <p className="text-[12px] text-stone-500 font-medium">No apps connected</p>
+                <p className="text-[11px] text-stone-400 mt-0.5 leading-relaxed">
+                  Connect apps to make them project-aware. They&apos;ll use all project data to inform their behavior.
                 </p>
-              )}
+              </div>
+            </button>
+          )}
+
+          {/* App browser — category-grouped list */}
+          {appBrowserOpen && availableApps.length > 0 && (
+            <div className="mt-1 space-y-3 animate-in slide-in-from-top-2 duration-200">
+              {availableByCategory.map(({ category, label, color, apps }) => (
+                <div key={category}>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <span
+                      className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: color }}
+                    />
+                    <span className="text-[11px] font-medium text-stone-500 uppercase tracking-wider">{label}</span>
+                  </div>
+                  <div className="space-y-0.5">
+                    {apps.map((app) => {
+                      const Icon = getAppIcon(app.icon);
+                      const isConnecting = connectingAppId === app.id;
+                      return (
+                        <button
+                          key={app.id}
+                          onClick={() => !isConnecting && connectApp(app.id)}
+                          disabled={isConnecting}
+                          className={cn(
+                            'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-all group',
+                            isConnecting
+                              ? 'bg-stone-50 opacity-70 cursor-wait'
+                              : 'hover:bg-stone-50'
+                          )}
+                        >
+                          <div
+                            className="w-7 h-7 rounded-lg border flex items-center justify-center flex-shrink-0 transition-colors"
+                            style={{
+                              borderColor: `${color}30`,
+                              backgroundColor: `${color}08`,
+                            }}
+                          >
+                            {isConnecting ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color }} />
+                            ) : (
+                              <Icon className="w-3.5 h-3.5 transition-colors" style={{ color: `${color}99` }} />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] text-stone-600 group-hover:text-stone-800 truncate transition-colors">{app.name}</p>
+                            <p className="text-[11px] text-stone-400 truncate leading-tight">{app.description}</p>
+                          </div>
+                          {!isConnecting && (
+                            <Plus className="w-3.5 h-3.5 text-stone-300 group-hover:text-stone-500 transition-colors flex-shrink-0" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
-          {connectedApps.length === 0 && availableApps.length === 0 && (
-            <p className="text-[11px] text-stone-400 text-center py-3">
-              No apps available for this submission type.
+          {appBrowserOpen && availableApps.length === 0 && connectedApps.length > 0 && (
+            <p className="text-[11px] text-stone-400 text-center py-2">
+              All relevant apps are connected.
             </p>
           )}
         </div>

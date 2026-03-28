@@ -22,6 +22,9 @@ export const queryKeys = {
     /** Overview tab: project artifact pipeline stats */
     overviewArtifacts: (projectId: number | string) =>
       ['concept2cure', 'projects', projectId, 'overview-artifacts'] as const,
+    /** Connected apps for a project */
+    apps: (projectId: number | string) =>
+      ['concept2cure', 'projects', projectId, 'apps'] as const,
   },
 
   // ── Artifacts ──────────────────────────────────────────────────────────────

@@ -9,21 +9,32 @@
  * @module concept2cure/hooks/useProjectApps
  */
 
-import { useState, useCallback, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useState, useCallback, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { queryKeys } from './queryKeys';
+import { useToast } from '@/hooks/use-toast';
 
 // ─── App Catalog ────────────────────────────────────────────────────────────
+
+export type AppCategory = 'strategy' | 'builder' | 'studio' | 'intelligence';
 
 export interface AppDefinition {
   id: string;
   name: string;
   description: string;
-  category: 'strategy' | 'builder' | 'studio' | 'intelligence';
+  category: AppCategory;
   icon: string; // lucide icon name
   tracks: string[]; // submission types this app is relevant for
   memoryRole: string; // role description injected into project memory when connected
 }
+
+export const CATEGORY_META: Record<AppCategory, { label: string; color: string }> = {
+  strategy: { label: 'Strategy', color: '#6366f1' },    // indigo
+  builder: { label: 'Builders', color: '#0891b2' },     // cyan
+  studio: { label: 'Studio', color: '#7c3aed' },        // violet
+  intelligence: { label: 'Intelligence', color: '#059669' }, // emerald
+};
 
 export const APP_CATALOG: AppDefinition[] = [
   {
@@ -138,7 +149,11 @@ export interface ConnectedApp {
 interface UseProjectAppsReturn {
   connectedApps: ConnectedApp[];
   availableApps: AppDefinition[];
+  /** Available apps grouped by category (only categories with apps) */
+  availableByCategory: Array<{ category: AppCategory; label: string; color: string; apps: AppDefinition[] }>;
   isLoading: boolean;
+  /** ID of app currently being connected (for loading indicator) */
+  connectingAppId: string | null;
   connectApp: (appId: string) => Promise<void>;
   disconnectApp: (appId: string) => Promise<void>;
 }
@@ -150,97 +165,164 @@ export function useProjectApps(
   submissionType?: string
 ): UseProjectAppsReturn {
   const queryClient = useQueryClient();
-  const [connectedApps, setConnectedApps] = useState<ConnectedApp[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  const [connectingAppId, setConnectingAppId] = useState<string | null>(null);
 
-  // Load connected apps when project changes
-  useEffect(() => {
-    if (!projectId) {
-      setConnectedApps([]);
-      return;
-    }
-
-    const load = async () => {
-      setIsLoading(true);
+  // ── Query: load connected apps ──
+  const { data: connectedApps = [], isLoading } = useQuery<ConnectedApp[]>({
+    queryKey: queryKeys.projects.apps(projectId ?? ''),
+    queryFn: async () => {
+      if (!projectId) return [];
       try {
         const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/apps`);
         const payload = await res.json().catch(() => ({}));
-        const apps = payload?.data ?? payload?.apps ?? [];
-        setConnectedApps(Array.isArray(apps) ? apps : []);
+        const apps = payload?.data?.apps ?? payload?.data ?? payload?.apps ?? [];
+        const result = Array.isArray(apps) ? apps : [];
+        // Sync to localStorage as backup
+        if (result.length > 0) {
+          localStorage.setItem(`c2c_project_apps_${projectId}`, JSON.stringify(result));
+        }
+        return result;
       } catch {
         // Fallback to localStorage
         const stored = localStorage.getItem(`c2c_project_apps_${projectId}`);
         if (stored) {
-          try { setConnectedApps(JSON.parse(stored)); } catch { setConnectedApps([]); }
+          try { return JSON.parse(stored); } catch { return []; }
         }
-      } finally {
-        setIsLoading(false);
+        return [];
       }
-    };
-
-    load();
-  }, [projectId]);
-
-  // Persist to localStorage as backup
-  useEffect(() => {
-    if (projectId && connectedApps.length > 0) {
-      localStorage.setItem(`c2c_project_apps_${projectId}`, JSON.stringify(connectedApps));
-    }
-  }, [projectId, connectedApps]);
-
-  // Filter available apps by submission type relevance
-  const availableApps = APP_CATALOG.filter(app => {
-    const isConnected = connectedApps.some(ca => ca.appId === app.id);
-    if (isConnected) return false;
-    if (!submissionType) return true;
-    return app.tracks.includes(submissionType);
+    },
+    enabled: !!projectId,
+    staleTime: 30_000,
   });
 
-  const connectApp = useCallback(async (appId: string) => {
-    if (!projectId) return;
+  // ── Filter available apps by submission type relevance ──
+  const availableApps = useMemo(() => {
+    return APP_CATALOG.filter(app => {
+      const isConnected = connectedApps.some(ca => ca.appId === app.id);
+      if (isConnected) return false;
+      if (!submissionType) return true;
+      return app.tracks.includes(submissionType);
+    });
+  }, [connectedApps, submissionType]);
 
-    const newApp: ConnectedApp = {
-      appId,
-      connectedAt: new Date().toISOString(),
-      status: 'active',
+  // ── Group available apps by category ──
+  const availableByCategory = useMemo(() => {
+    const groups: Record<AppCategory, AppDefinition[]> = {
+      strategy: [],
+      builder: [],
+      studio: [],
+      intelligence: [],
     };
+    for (const app of availableApps) {
+      groups[app.category].push(app);
+    }
+    return (Object.keys(groups) as AppCategory[])
+      .filter(cat => groups[cat].length > 0)
+      .map(cat => ({
+        category: cat,
+        label: CATEGORY_META[cat].label,
+        color: CATEGORY_META[cat].color,
+        apps: groups[cat],
+      }));
+  }, [availableApps]);
 
-    // Optimistic update
-    setConnectedApps(prev => [...prev, newApp]);
-
-    try {
+  // ── Mutation: connect app ──
+  const connectMutation = useMutation({
+    mutationFn: async (appId: string) => {
+      if (!projectId) throw new Error('No project');
       const appDef = APP_CATALOG.find(a => a.id === appId);
-      await apiRequest('POST', `/api/concept2cure/projects/${projectId}/apps`, {
+      const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/apps`, {
         appId,
         memoryRole: appDef?.memoryRole,
       });
-      // Invalidate project intelligence to reflect new memory entry
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.message || 'Failed to connect app');
+      }
+      return { appId, appDef };
+    },
+    onMutate: async (appId) => {
+      setConnectingAppId(appId);
+      // Cancel outgoing fetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.projects.apps(projectId ?? '') });
+      // Snapshot previous
+      const previous = queryClient.getQueryData<ConnectedApp[]>(queryKeys.projects.apps(projectId ?? ''));
+      // Optimistic update
+      const newApp: ConnectedApp = { appId, connectedAt: new Date().toISOString(), status: 'active' };
+      queryClient.setQueryData<ConnectedApp[]>(
+        queryKeys.projects.apps(projectId ?? ''),
+        old => [...(old ?? []), newApp],
+      );
+      return { previous };
+    },
+    onError: (_err, _appId, context) => {
+      // Rollback
+      if (context?.previous) {
+        queryClient.setQueryData(queryKeys.projects.apps(projectId ?? ''), context.previous);
+      }
+      toast({ title: 'Connection failed', description: 'Could not connect the app. Try again.', variant: 'destructive' });
+    },
+    onSuccess: ({ appDef }) => {
+      toast({ title: `${appDef?.name ?? 'App'} connected`, description: 'Now project-aware and initialized in memory.' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.apps(projectId ?? '') });
       queryClient.invalidateQueries({ queryKey: ['project-intelligence'] });
       queryClient.invalidateQueries({ queryKey: ['project-knowledge'] });
-    } catch {
-      // API failed but keep local state — localStorage backup handles persistence
-    }
-  }, [projectId, queryClient]);
+    },
+    onSettled: () => {
+      setConnectingAppId(null);
+    },
+  });
+
+  // ── Mutation: disconnect app ──
+  const disconnectMutation = useMutation({
+    mutationFn: async (appId: string) => {
+      if (!projectId) throw new Error('No project');
+      const res = await apiRequest('DELETE', `/api/concept2cure/projects/${projectId}/apps/${appId}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.message || 'Failed to disconnect app');
+      }
+      return appId;
+    },
+    onMutate: async (appId) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.projects.apps(projectId ?? '') });
+      const previous = queryClient.getQueryData<ConnectedApp[]>(queryKeys.projects.apps(projectId ?? ''));
+      queryClient.setQueryData<ConnectedApp[]>(
+        queryKeys.projects.apps(projectId ?? ''),
+        old => (old ?? []).filter(a => a.appId !== appId),
+      );
+      return { previous };
+    },
+    onError: (_err, _appId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKeys.projects.apps(projectId ?? ''), context.previous);
+      }
+      toast({ title: 'Disconnect failed', description: 'Could not remove the app. Try again.', variant: 'destructive' });
+    },
+    onSuccess: (appId) => {
+      const appDef = APP_CATALOG.find(a => a.id === appId);
+      toast({ title: `${appDef?.name ?? 'App'} disconnected`, description: 'Removed from project context.' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.apps(projectId ?? '') });
+      queryClient.invalidateQueries({ queryKey: ['project-intelligence'] });
+      queryClient.invalidateQueries({ queryKey: ['project-knowledge'] });
+    },
+  });
+
+  const connectApp = useCallback(async (appId: string) => {
+    await connectMutation.mutateAsync(appId);
+  }, [connectMutation]);
 
   const disconnectApp = useCallback(async (appId: string) => {
-    if (!projectId) return;
-
-    // Optimistic update
-    setConnectedApps(prev => prev.filter(a => a.appId !== appId));
-
-    try {
-      await apiRequest('DELETE', `/api/concept2cure/projects/${projectId}/apps/${appId}`);
-      queryClient.invalidateQueries({ queryKey: ['project-intelligence'] });
-      queryClient.invalidateQueries({ queryKey: ['project-knowledge'] });
-    } catch {
-      // API failed but keep local state
-    }
-  }, [projectId, queryClient]);
+    await disconnectMutation.mutateAsync(appId);
+  }, [disconnectMutation]);
 
   return {
     connectedApps,
     availableApps,
+    availableByCategory,
     isLoading,
+    connectingAppId,
     connectApp,
     disconnectApp,
   };
