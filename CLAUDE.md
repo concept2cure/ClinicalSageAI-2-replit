@@ -542,7 +542,7 @@ The project has gone through systematic consolidation:
 
 1. **Cleanup** — Eliminated alternate product universes, collapsed SaaS catalog traces
 2. **Dead Code Removal** — Deleted orphaned pages, stale imports, dead routes (Batches 1-6)
-3. **Sidebar Consolidation** — Collapsed from 12 items to 5
+3. **Sidebar Consolidation** — Collapsed to 6 global + 4 workspace items, Intelligence section from 11 → 4
 4. **Authoring Hardening** — Wave 1 + Wave 2 governed actions, escalation gating
 5. **AnA 1.0 RI** — Regulatory intelligence orchestration, persona routing
 6. **Kernel Architecture** — Control plane, goal planner, decision records, adaptive policy
