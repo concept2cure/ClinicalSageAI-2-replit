@@ -1021,6 +1021,15 @@ try {
   console.error('❌ Failed to mount AnA Intelligence routes:', error);
 }
 
+// Mount CSR Search routes (fast in-memory search across 779 CSR documents)
+try {
+  const { csrSearchRouter } = await import('./routes/csr_search_routes');
+  app.use('/api/csr-search', csrSearchRouter);
+  console.log('✅ CSR Search routes mounted (/api/csr-search)');
+} catch (error) {
+  console.error('❌ Failed to mount CSR Search routes:', error);
+}
+
 // Mount Nano Banana (Gemini image generation) routes
 try {
   const nanoBananaRoutes = await import('./routes/nanoBanana');

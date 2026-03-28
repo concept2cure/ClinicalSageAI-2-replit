@@ -2939,12 +2939,31 @@ If no sections are affected, return an empty array []. Only return the JSON arra
       callerModule: 'concept2cure/inconsistency-check',
     });
 
-    let sections = [];
+    let sections: Array<Record<string, unknown>> = [];
     try {
       const content = gwResponse.content || '[]';
-      const jsonMatch = content.match(/\[[\s\S]*\]/);
-      sections = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+      // Try multiple extraction strategies for robustness
+      // 1. Direct JSON array match
+      const jsonMatch = content.match(/\[[\s\S]*?\](?=[^[\]]*$)/);
+      if (jsonMatch) {
+        sections = JSON.parse(jsonMatch[0]);
+      } else {
+        // 2. Try parsing within markdown code fence
+        const fenceMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (fenceMatch) {
+          sections = JSON.parse(fenceMatch[1].trim());
+        } else {
+          // 3. Try parsing entire content as JSON
+          const trimmed = content.trim();
+          if (trimmed.startsWith('[')) {
+            sections = JSON.parse(trimmed);
+          }
+        }
+      }
+      // Validate array shape
+      if (!Array.isArray(sections)) sections = [];
     } catch {
+      logger.warn('Inconsistency check: AI returned unparseable response, returning empty');
       sections = [];
     }
 
