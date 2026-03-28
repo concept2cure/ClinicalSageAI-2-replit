@@ -259,13 +259,13 @@ const ConvoRow: React.FC<{
       className={cn(
         'group relative flex items-center gap-2 mx-1 px-2.5 py-1.5 rounded-lg cursor-pointer select-none transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
         isActive
-          ? 'bg-zinc-200/80 text-zinc-900 font-medium'
-          : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+          ? 'bg-stone-200/80 text-stone-900 font-medium'
+          : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
       )}
     >
       <MessageSquare className="w-3.5 h-3.5 flex-shrink-0 opacity-40" />
       <span className="flex-1 text-[13px] truncate leading-5">{convo.title || 'New conversation'}</span>
-      <span className="text-[10px] text-zinc-400 flex-shrink-0 tabular-nums">
+      <span className="text-[10px] text-stone-400 flex-shrink-0 tabular-nums">
         {relativeTime(convo.timestamp)}
       </span>
 
@@ -376,8 +376,8 @@ const ProjectRow: React.FC<{
         className={cn(
           'group relative flex items-center gap-2 mx-1 px-2.5 py-2 rounded-lg cursor-pointer select-none transition-all duration-150',
           isActive
-            ? 'bg-zinc-900 text-white border-l-2 border-zinc-800'
-            : 'text-zinc-700 hover:bg-zinc-100'
+            ? 'bg-stone-200/80 text-stone-900'
+            : 'text-stone-700 hover:bg-stone-100'
         )}
       >
         {/* Expand chevron — toggles expand independently */}
@@ -387,27 +387,23 @@ const ProjectRow: React.FC<{
             onToggleExpand();
           }}
           aria-label={isExpanded ? 'Collapse project' : 'Expand project'}
-          className="flex-shrink-0 p-0.5 rounded hover:bg-zinc-200/50 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+          className="flex-shrink-0 p-0.5 rounded hover:bg-stone-200/50 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
         >
           <ChevronDown
             className={cn(
               'w-3 h-3 transition-transform duration-150',
-              isActive ? 'text-white/60' : 'text-zinc-400',
+              isActive ? 'text-stone-500' : 'text-stone-400',
               !isExpanded && '-rotate-90'
             )}
           />
         </button>
 
-        {/* Submission type badge pill */}
+        {/* Colored project dot (Claude.ai style) */}
         <span
           onClick={onSelect}
-          className={cn(
-            'inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide leading-none flex-shrink-0 min-w-[32px]',
-            isActive ? 'bg-white/20 text-white' : `${badge.bg} ${badge.color}`
-          )}
-        >
-          {badge.label}
-        </span>
+          className="w-2 h-2 rounded-full flex-shrink-0"
+          style={{ backgroundColor: project.color || '#6366f1' }}
+        />
 
         {/* Project name — clicking selects the project */}
         <span
@@ -422,21 +418,15 @@ const ProjectRow: React.FC<{
           }}
           className={cn(
             'flex-1 text-[13px] font-medium truncate leading-5 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded',
-            isActive && 'text-white'
+            isActive ? 'text-stone-900' : 'text-stone-700'
           )}
         >
           {project.name}
         </span>
 
-        {/* Status dot */}
-        <span
-          className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', statusDotColor(project.status))}
-          title={project.status || 'draft'}
-        />
-
         {/* Starred indicator */}
         {isPinned && (
-          <Star className={cn('w-3 h-3 flex-shrink-0 fill-current', isActive ? 'text-amber-300' : 'text-amber-400')} />
+          <Star className="w-3 h-3 flex-shrink-0 fill-current text-amber-400" />
         )}
 
         {/* Three-dot menu — visible on hover */}
@@ -448,8 +438,8 @@ const ProjectRow: React.FC<{
               className={cn(
                 'flex-shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
                 isActive
-                  ? 'text-white/60 hover:text-white hover:bg-white/10'
-                  : 'text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200'
+                  ? 'text-stone-500 hover:text-stone-700 hover:bg-stone-300/50'
+                  : 'text-stone-400 hover:text-stone-600 hover:bg-stone-200'
               )}
             >
               <MoreHorizontal className="w-3.5 h-3.5" />
@@ -511,21 +501,21 @@ const ProjectRow: React.FC<{
 
       {/* Expanded: nested conversations */}
       {isExpanded && (
-        <div className="ml-3 pl-3 border-l-2 border-zinc-200 mt-0.5 space-y-0.5 pb-1">
+        <div className="ml-3 pl-3 border-l border-stone-200 mt-0.5 space-y-0.5 pb-1">
           {/* New conversation within project */}
           <button
             onClick={e => {
               e.stopPropagation();
               onNewChat();
             }}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-stone-500 hover:text-stone-700 hover:bg-stone-50 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
           >
             <Plus className="w-3 h-3" />
             New chat
           </button>
 
           {conversations.length === 0 && (
-            <p className="px-2.5 py-2 text-[11px] text-zinc-400">No conversations yet</p>
+            <p className="px-2.5 py-2 text-[11px] text-stone-400">No conversations yet</p>
           )}
 
           {conversations.map(c => (

@@ -2859,6 +2859,7 @@ export const ZenApp: React.FC = () => {
                     console.warn(`[ProjectHomeDashboard] Unknown nav mode: ${mode}`);
                   }
                 }}
+                onOpenConfig={() => setEditProjectOpen(true)}
               />
             </div>
           )}
