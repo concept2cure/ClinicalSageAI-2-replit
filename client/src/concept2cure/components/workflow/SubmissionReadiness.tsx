@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Send } from 'lucide-react';
+import { Send, PenLine, Check } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { queryKeys } from '@/concept2cure/hooks/queryKeys';
@@ -41,10 +41,10 @@ function sectionsToReadiness(sections: Array<{ code: string; title: string; stat
       issues.push('Section is blocked — resolve blockers before proceeding');
     } else if (sec.status === 'drafting' || sec.status === 'data_gathering' || sec.status === 'revision') {
       status = 'needs-work';
-      issues.push(`Section is in ${sec.status.replace('_', ' ')} status`);
+      issues.push('Continue drafting to complete this section');
     } else if (sec.status === 'internal_review' || sec.status === 'qa_review') {
       status = 'needs-work';
-      issues.push('Pending review approval');
+      issues.push('Awaiting reviewer approval — check with assigned reviewer');
     }
 
     return { section: sec.code, title: sec.title, status, issues: issues.length > 0 ? issues : undefined };
@@ -139,10 +139,10 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
               {items.map(item => {
                 const statusInfo = STATUS_ICON_MAP[item.status] || STATUS_ICON_MAP['not-started'];
                 const Icon = statusInfo.icon;
+                const isReady = item.status === 'ready';
                 return (
-                  <button
+                  <div
                     key={item.section}
-                    onClick={() => onSectionClick(item.section)}
                     className="w-full flex items-start gap-3 px-4 py-3 hover:bg-stone-50 transition-colors text-left"
                   >
                     <Icon className={`w-4 h-4 mt-0.5 ${statusInfo.color}`} />
@@ -161,8 +161,24 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
                         </div>
                       )}
                     </div>
-                    <WorkspaceStatusBadge status={item.status} />
-                  </button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {isReady ? (
+                        <span className="flex items-center gap-1 text-xs text-emerald-600">
+                          <Check className="w-3.5 h-3.5" />
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => onSectionClick(item.section)}
+                          className="text-xs font-medium text-violet-600 hover:text-violet-800 flex items-center gap-1"
+                          data-testid={`fix-now-${item.section}`}
+                        >
+                          <PenLine className="w-3 h-3" />
+                          Fix Now
+                        </button>
+                      )}
+                      <WorkspaceStatusBadge status={item.status} />
+                    </div>
+                  </div>
                 );
               })}
             </div>
