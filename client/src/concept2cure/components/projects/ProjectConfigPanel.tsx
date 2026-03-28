@@ -209,12 +209,12 @@ export const ProjectConfigPanel: React.FC<ProjectConfigPanelProps> = ({
           e.preventDefault();
         }}
       >
-        <SheetHeader className="pb-4 border-b border-zinc-200">
-          <SheetTitle className="flex items-center gap-2 text-zinc-900">
-            <Settings className="h-5 w-5 text-zinc-500" />
+        <SheetHeader className="pb-4 border-b border-stone-200">
+          <SheetTitle className="flex items-center gap-2 text-stone-900">
+            <Settings className="h-5 w-5 text-stone-500" />
             Project Configuration
           </SheetTitle>
-          <SheetDescription className="text-sm text-zinc-500">
+          <SheetDescription className="text-sm text-stone-500">
             Configure project settings, instructions, and compliance.
           </SheetDescription>
         </SheetHeader>
@@ -243,7 +243,7 @@ export const ProjectConfigPanel: React.FC<ProjectConfigPanelProps> = ({
           <TabsContent value="general" className="mt-4 space-y-5" data-testid="config-tab-general">
             {/* Project Name */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-700">Project Name</label>
+              <label className="text-sm font-medium text-stone-700">Project Name</label>
               <Input
                 {...generalForm.register('name', { required: true })}
                 placeholder="e.g., CardioFlow Heart Monitor"
@@ -254,7 +254,7 @@ export const ProjectConfigPanel: React.FC<ProjectConfigPanelProps> = ({
 
             {/* Submission Type */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-700">Submission Type</label>
+              <label className="text-sm font-medium text-stone-700">Submission Type</label>
               <Select
                 value={generalForm.watch('submissionType')}
                 onValueChange={(v) => handleSelectChange('submissionType', v)}
@@ -274,7 +274,7 @@ export const ProjectConfigPanel: React.FC<ProjectConfigPanelProps> = ({
 
             {/* Product / Device Name */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-700">Product / Device Name</label>
+              <label className="text-sm font-medium text-stone-700">Product / Device Name</label>
               <Input
                 {...generalForm.register('product')}
                 placeholder="e.g., CardioFlow, Atorvastatin 20 mg"
@@ -285,7 +285,7 @@ export const ProjectConfigPanel: React.FC<ProjectConfigPanelProps> = ({
 
             {/* Sponsor */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-700">Sponsor</label>
+              <label className="text-sm font-medium text-stone-700">Sponsor</label>
               <Input
                 {...generalForm.register('sponsor')}
                 placeholder="e.g., Acme Biotech, Inc."
@@ -296,7 +296,7 @@ export const ProjectConfigPanel: React.FC<ProjectConfigPanelProps> = ({
 
             {/* Target Agency */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-700">Target Agency</label>
+              <label className="text-sm font-medium text-stone-700">Target Agency</label>
               <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Target agency">
                 {TARGET_AGENCIES.map((agency) => {
                   const isSelected = generalForm.watch('targetAgency') === agency;
@@ -320,7 +320,7 @@ export const ProjectConfigPanel: React.FC<ProjectConfigPanelProps> = ({
 
             {/* Target Submission Date */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-700">Target Submission Date</label>
+              <label className="text-sm font-medium text-stone-700">Target Submission Date</label>
               <Input
                 type="date"
                 {...generalForm.register('targetSubmissionDate')}
@@ -331,7 +331,7 @@ export const ProjectConfigPanel: React.FC<ProjectConfigPanelProps> = ({
 
             {/* Status */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-700">Status</label>
+              <label className="text-sm font-medium text-stone-700">Status</label>
               <Select
                 value={generalForm.watch('status')}
                 onValueChange={(v) => handleSelectChange('status', v)}
@@ -351,8 +351,8 @@ export const ProjectConfigPanel: React.FC<ProjectConfigPanelProps> = ({
 
             {/* Description */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-700">
-                Description <span className="text-zinc-400 font-normal">(optional)</span>
+              <label className="text-sm font-medium text-stone-700">
+                Description <span className="text-stone-400 font-normal">(optional)</span>
               </label>
               <Textarea
                 {...generalForm.register('description')}
@@ -372,8 +372,8 @@ export const ProjectConfigPanel: React.FC<ProjectConfigPanelProps> = ({
           >
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-zinc-900">Custom Instructions</h3>
-                <p className="text-xs text-zinc-500 mt-0.5">
+                <h3 className="text-sm font-medium text-stone-900">Custom Instructions</h3>
+                <p className="text-xs text-stone-500 mt-0.5">
                   Project-specific guidance injected into every AnA conversation.
                 </p>
               </div>
@@ -401,7 +401,7 @@ export const ProjectConfigPanel: React.FC<ProjectConfigPanelProps> = ({
             />
 
             <div className="flex items-center justify-between">
-              <span className="text-xs text-zinc-400">
+              <span className="text-xs text-stone-400">
                 {instructionsLength.toLocaleString()} / {MAX_INSTRUCTIONS_LENGTH.toLocaleString()} characters
               </span>
               <Button
@@ -409,7 +409,7 @@ export const ProjectConfigPanel: React.FC<ProjectConfigPanelProps> = ({
                 size="sm"
                 onClick={handleResetInstructions}
                 disabled={!customInstructions}
-                className="text-xs text-zinc-500 hover:text-zinc-700"
+                className="text-xs text-stone-500 hover:text-stone-700"
                 data-testid="config-reset-instructions"
               >
                 <RotateCcw className="h-3 w-3 mr-1" />
@@ -417,8 +417,8 @@ export const ProjectConfigPanel: React.FC<ProjectConfigPanelProps> = ({
               </Button>
             </div>
 
-            <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-3">
-              <p className="text-xs text-blue-700">
+            <div className="rounded-lg border border-stone-200 bg-stone-50/50 p-3">
+              <p className="text-xs text-stone-600">
                 These instructions are injected into every AnA 1.0 RI conversation within this
                 project. They help AnA understand your regulatory context, product specifics, and
                 preferred output style.
@@ -429,11 +429,11 @@ export const ProjectConfigPanel: React.FC<ProjectConfigPanelProps> = ({
           {/* ── Team Tab ─────────────────────────────────────────────── */}
           <TabsContent value="team" className="mt-4 space-y-4" data-testid="config-tab-team">
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="rounded-full bg-zinc-100 p-3 mb-4">
-                <Users className="h-6 w-6 text-zinc-400" />
+              <div className="rounded-full bg-stone-100 p-3 mb-4">
+                <Users className="h-6 w-6 text-stone-400" />
               </div>
-              <h3 className="text-sm font-medium text-zinc-900 mb-1">Team Management</h3>
-              <p className="text-xs text-zinc-500 max-w-xs mb-4">
+              <h3 className="text-sm font-medium text-stone-900 mb-1">Team Management</h3>
+              <p className="text-xs text-stone-500 max-w-xs mb-4">
                 Invite team members, assign roles, and manage permissions for this project.
               </p>
               <Badge variant="outline" className="text-xs border-amber-200 text-amber-700 bg-amber-50">
@@ -455,9 +455,9 @@ export const ProjectConfigPanel: React.FC<ProjectConfigPanelProps> = ({
             data-testid="config-tab-compliance"
           >
             {/* 21 CFR Part 11 Status */}
-            <div className="rounded-lg border border-zinc-200 p-4 space-y-3">
+            <div className="rounded-lg border border-stone-200 p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-zinc-900 flex items-center gap-2">
+                <h3 className="text-sm font-medium text-stone-900 flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4 text-emerald-600" />
                   21 CFR Part 11 Compliance
                 </h3>
@@ -468,20 +468,20 @@ export const ProjectConfigPanel: React.FC<ProjectConfigPanelProps> = ({
                   Enabled
                 </Badge>
               </div>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-stone-500">
                 Electronic records and signatures comply with FDA 21 CFR Part 11 requirements.
                 Audit trails, access controls, and data integrity measures are enforced.
               </p>
               <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="rounded-md bg-zinc-50 p-2.5">
-                  <span className="text-zinc-500 block mb-0.5">Audit Trail</span>
-                  <span className="font-medium text-zinc-800">
+                <div className="rounded-md bg-stone-50 p-2.5">
+                  <span className="text-stone-500 block mb-0.5">Audit Trail</span>
+                  <span className="font-medium text-stone-800">
                     {project.auditTrail?.length ?? 0} entries
                   </span>
                 </div>
-                <div className="rounded-md bg-zinc-50 p-2.5">
-                  <span className="text-zinc-500 block mb-0.5">E-Signatures</span>
-                  <span className="font-medium text-zinc-800">
+                <div className="rounded-md bg-stone-50 p-2.5">
+                  <span className="text-stone-500 block mb-0.5">E-Signatures</span>
+                  <span className="font-medium text-stone-800">
                     {project.signatures?.length ?? 0} recorded
                   </span>
                 </div>
@@ -489,9 +489,9 @@ export const ProjectConfigPanel: React.FC<ProjectConfigPanelProps> = ({
             </div>
 
             {/* Audit Trail Info */}
-            <div className="rounded-lg border border-zinc-200 p-4 space-y-2">
-              <h3 className="text-sm font-medium text-zinc-900">Audit Trail</h3>
-              <p className="text-xs text-zinc-500">
+            <div className="rounded-lg border border-stone-200 p-4 space-y-2">
+              <h3 className="text-sm font-medium text-stone-900">Audit Trail</h3>
+              <p className="text-xs text-stone-500">
                 All project changes are automatically tracked with user identity, timestamp, and
                 action details. The audit trail is append-only and tamper-evident.
               </p>
@@ -509,9 +509,9 @@ export const ProjectConfigPanel: React.FC<ProjectConfigPanelProps> = ({
             </div>
 
             {/* Regulatory Lead Assignment */}
-            <div className="rounded-lg border border-zinc-200 p-4 space-y-2">
+            <div className="rounded-lg border border-stone-200 p-4 space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-zinc-900">Regulatory Lead</h3>
+                <h3 className="text-sm font-medium text-stone-900">Regulatory Lead</h3>
                 <Badge
                   variant="outline"
                   className="text-xs border-amber-200 text-amber-700 bg-amber-50"
@@ -520,7 +520,7 @@ export const ProjectConfigPanel: React.FC<ProjectConfigPanelProps> = ({
                   Not assigned
                 </Badge>
               </div>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-stone-500">
                 Assign a regulatory lead responsible for submission oversight, review approvals,
                 and compliance sign-off.
               </p>

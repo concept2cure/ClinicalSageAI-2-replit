@@ -72,8 +72,8 @@ type SubmissionTypeKey = SubmissionType | string;
 const SUBMISSION_TYPE_FALLBACK = {
   label: 'Project',
   icon: FileText,
-  color: 'text-zinc-600',
-  bgColor: 'bg-zinc-50',
+  color: 'text-stone-600',
+  bgColor: 'bg-stone-50',
 };
 
 const SUBMISSION_TYPES: Record<
@@ -88,8 +88,8 @@ const SUBMISSION_TYPES: Record<
   '510K': {
     label: '510(k)',
     icon: FileText,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
+    color: 'text-stone-700',
+    bgColor: 'bg-stone-50',
   },
   IND: {
     label: 'IND',
@@ -142,8 +142,8 @@ const SUBMISSION_TYPES: Record<
   regulatory_submission: {
     label: 'Regulatory',
     icon: FileText,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
+    color: 'text-stone-700',
+    bgColor: 'bg-stone-50',
   },
   medical_device: {
     label: 'Medical Device',
@@ -184,8 +184,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   const typeConfig = SUBMISSION_TYPES[project.type] ?? {
     label: project.type || 'Project',
     icon: FileText,
-    color: 'text-zinc-600',
-    bgColor: 'bg-zinc-50',
+    color: 'text-stone-600',
+    bgColor: 'bg-stone-50',
   };
   const TypeIcon = typeConfig.icon;
 
@@ -208,15 +208,15 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
       className={cn(
         'group relative p-4 rounded-xl border transition-all cursor-pointer',
         isActive
-          ? 'border-blue-200 bg-blue-50/50 ring-2 ring-blue-500/20'
-          : 'border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-sm'
+          ? 'border-stone-300 bg-stone-50/50 ring-2 ring-stone-300/30'
+          : 'border-stone-200 bg-white hover:border-stone-300 hover:shadow-sm'
       )}
       onClick={onSelect}
     >
       {/* Active indicator */}
       {isActive && (
         <div className="absolute -right-px -top-px">
-          <div className="w-6 h-6 rounded-bl-xl rounded-tr-xl bg-blue-500 flex items-center justify-center">
+          <div className="w-6 h-6 rounded-bl-xl rounded-tr-xl bg-stone-800 flex items-center justify-center">
             <Check className="w-3.5 h-3.5 text-white" />
           </div>
         </div>
@@ -232,7 +232,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           'absolute top-3 left-3 p-1 rounded-md transition-all duration-150',
           project.starred
             ? 'text-amber-500'
-            : 'text-zinc-400 opacity-0 group-hover:opacity-100 hover:text-amber-500'
+            : 'text-stone-400 opacity-0 group-hover:opacity-100 hover:text-amber-500'
         )}
       >
         <Star className={cn('w-4 h-4', project.starred && 'fill-current')} />
@@ -245,7 +245,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             e.stopPropagation();
             setShowMenu(!showMenu);
           }}
-          className="p-1 rounded-md text-zinc-400 opacity-0 group-hover:opacity-100 hover:text-zinc-600 hover:bg-zinc-100 transition-all duration-150"
+          className="p-1 rounded-md text-stone-400 opacity-0 group-hover:opacity-100 hover:text-stone-600 hover:bg-stone-100 transition-all duration-150"
         >
           <MoreHorizontal className="w-4 h-4" />
         </button>
@@ -260,14 +260,14 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
                 setShowMenu(false);
               }}
             />
-            <div className="absolute right-0 top-8 z-20 w-40 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 animate-in fade-in zoom-in-95 duration-100">
+            <div className="absolute right-0 top-8 z-20 w-40 bg-white rounded-lg shadow-lg border border-stone-200 py-1 animate-in fade-in zoom-in-95 duration-100">
               <button
                 onClick={e => {
                   e.stopPropagation();
                   onArchive();
                   setShowMenu(false);
                 }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50"
               >
                 <Archive className="w-4 h-4" />
                 Archive
@@ -303,15 +303,15 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
 
         {/* Name */}
-        <h3 className="text-base font-semibold text-zinc-900 mb-1 line-clamp-1">{project.name}</h3>
+        <h3 className="text-base font-semibold text-stone-900 mb-1 line-clamp-1">{project.name}</h3>
 
         {/* Description */}
         {project.description && (
-          <p className="text-sm text-zinc-500 mb-3 line-clamp-2">{project.description}</p>
+          <p className="text-sm text-stone-500 mb-3 line-clamp-2">{project.description}</p>
         )}
 
         {/* Meta */}
-        <div className="flex items-center gap-4 text-xs text-zinc-400">
+        <div className="flex items-center gap-4 text-xs text-stone-400">
           <span className="flex items-center gap-1">
             <Clock className="w-3.5 h-3.5" />
             {formatRelativeTime(project.lastUpdated)}
@@ -697,14 +697,14 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
         className="fixed inset-4 sm:inset-auto sm:top-[6%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-[560px] bg-white rounded-xl shadow-lg z-50 flex flex-col max-h-[80vh]"
       >
         {/* Header */}
-        <div className="flex-shrink-0 px-4 py-3 border-b border-zinc-200">
+        <div className="flex-shrink-0 px-4 py-3 border-b border-stone-200">
           <div className="flex items-center justify-between mb-2">
-            <h2 id="project-switcher-title" className="text-sm font-semibold text-zinc-900">
+            <h2 id="project-switcher-title" className="text-sm font-semibold text-stone-900">
               Switch Project
             </h2>
             <button
               onClick={onCreateProject}
-              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors duration-150"
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-white bg-stone-900 hover:bg-stone-800 rounded-md transition-colors duration-150"
             >
               <Plus className="w-3 h-3" />
               New
@@ -713,13 +713,13 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
 
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search projects..."
-              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-md border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-150"
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-md border border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/30 outline-none transition-all duration-150"
               autoFocus
             />
           </div>
@@ -731,8 +731,8 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                 key={tab}
                 onClick={() => setFilter(tab)}
                 className={cn(
-                  'px-2.5 py-1 text-xs font-medium rounded transition-colors capitalize focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
-                  filter === tab ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-zinc-100'
+                  'px-2.5 py-1 text-xs font-medium rounded transition-colors capitalize focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none',
+                  filter === tab ? 'bg-stone-900 text-white' : 'text-stone-500 hover:bg-stone-100'
                 )}
                 aria-pressed={filter === tab}
               >
@@ -746,18 +746,18 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
         <div className="flex-1 overflow-y-auto">
           {filteredProjects.length === 0 ? (
             <div className="text-center py-8 px-4">
-              <FileText className="w-5 h-5 mx-auto mb-2 text-zinc-400" />
-              <p className="text-xs text-zinc-500">
+              <FileText className="w-5 h-5 mx-auto mb-2 text-stone-400" />
+              <p className="text-xs text-stone-500">
                 {searchQuery ? 'No projects match your search' : 'No projects yet'}
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-zinc-50">
+            <div className="divide-y divide-stone-50">
               {/* Starred section */}
               {starredProjects.length > 0 && (
                 <>
                   <div className="px-4 pt-2 pb-1">
-                    <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                    <span className="text-xs font-semibold text-stone-400 uppercase tracking-wider">
                       Starred
                     </span>
                   </div>
@@ -773,24 +773,24 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                         }}
                         className={cn(
                           'w-full flex items-center gap-3 px-4 py-2 text-left transition-colors duration-150',
-                          project.id === activeProjectId ? 'bg-blue-50' : 'hover:bg-zinc-50'
+                          project.id === activeProjectId ? 'bg-stone-50' : 'hover:bg-stone-50'
                         )}
                       >
                         <TypeIcon className={cn('w-4 h-4 shrink-0', tc.color)} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-sm font-medium text-zinc-900 truncate">
+                            <span className="text-sm font-medium text-stone-900 truncate">
                               {project.name}
                             </span>
                             {project.starred && (
                               <Star className="w-3 h-3 text-amber-400 fill-amber-400 shrink-0" />
                             )}
                             {project.id === activeProjectId && (
-                              <Check className="w-3 h-3 text-blue-600 shrink-0" />
+                              <Check className="w-3 h-3 text-stone-700 shrink-0" />
                             )}
                           </div>
                           {project.description && (
-                            <span className="text-xs text-zinc-400 truncate block">
+                            <span className="text-xs text-stone-400 truncate block">
                               {project.description}
                             </span>
                           )}
@@ -804,7 +804,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                         >
                           {tc.label}
                         </span>
-                        <ChevronRight className="w-3 h-3 text-zinc-400 shrink-0" />
+                        <ChevronRight className="w-3 h-3 text-stone-400 shrink-0" />
                       </button>
                     );
                   })}
@@ -816,7 +816,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                 <>
                   {starredProjects.length > 0 && (
                     <div className="px-4 pt-2 pb-1">
-                      <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                      <span className="text-xs font-semibold text-stone-400 uppercase tracking-wider">
                         All Projects
                       </span>
                     </div>
@@ -833,21 +833,21 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                         }}
                         className={cn(
                           'w-full flex items-center gap-3 px-4 py-2 text-left transition-colors duration-150',
-                          project.id === activeProjectId ? 'bg-blue-50' : 'hover:bg-zinc-50'
+                          project.id === activeProjectId ? 'bg-stone-50' : 'hover:bg-stone-50'
                         )}
                       >
                         <TypeIcon className={cn('w-4 h-4 shrink-0', tc.color)} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-sm font-medium text-zinc-900 truncate">
+                            <span className="text-sm font-medium text-stone-900 truncate">
                               {project.name}
                             </span>
                             {project.id === activeProjectId && (
-                              <Check className="w-3 h-3 text-blue-600 shrink-0" />
+                              <Check className="w-3 h-3 text-stone-700 shrink-0" />
                             )}
                           </div>
                           {project.description && (
-                            <span className="text-xs text-zinc-400 truncate block">
+                            <span className="text-xs text-stone-400 truncate block">
                               {project.description}
                             </span>
                           )}
@@ -861,7 +861,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                         >
                           {tc.label}
                         </span>
-                        <ChevronRight className="w-3 h-3 text-zinc-400 shrink-0" />
+                        <ChevronRight className="w-3 h-3 text-stone-400 shrink-0" />
                       </button>
                     );
                   })}
@@ -969,24 +969,24 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
       >
         <form onSubmit={handleSubmit}>
           {/* Header */}
-          <div className="px-6 py-4 border-b border-zinc-200">
-            <h2 id="edit-project-title" className="text-lg font-semibold text-zinc-900">
+          <div className="px-6 py-4 border-b border-stone-200">
+            <h2 id="edit-project-title" className="text-lg font-semibold text-stone-900">
               Edit Project
             </h2>
-            <p className="text-sm text-zinc-500 mt-1">Update project metadata</p>
+            <p className="text-sm text-stone-500 mt-1">Update project metadata</p>
           </div>
 
           {/* Content */}
           <div className="px-6 py-4 space-y-4">
             {/* Project name */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1.5">Project Name</label>
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">Project Name</label>
               <input
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder="e.g., CardioFlow Heart Monitor"
-                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-150"
+                className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/30 outline-none transition-all duration-150"
                 autoFocus
                 required
               />
@@ -994,55 +994,55 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
-                Description <span className="text-zinc-400">(optional)</span>
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                Description <span className="text-stone-400">(optional)</span>
               </label>
               <textarea
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 placeholder="Brief description of the project..."
                 rows={2}
-                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all resize-none"
+                className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/30 outline-none transition-all resize-none"
               />
             </div>
 
             {/* Sponsor */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
-                Sponsor / Client <span className="text-zinc-400">(optional)</span>
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                Sponsor / Client <span className="text-stone-400">(optional)</span>
               </label>
               <input
                 type="text"
                 value={sponsor}
                 onChange={e => setSponsor(e.target.value)}
                 placeholder="e.g., Acme Biotech, Inc."
-                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-150"
+                className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/30 outline-none transition-all duration-150"
               />
             </div>
 
             {/* Product */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
-                Product / Device / Molecule <span className="text-zinc-400">(optional)</span>
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                Product / Device / Molecule <span className="text-stone-400">(optional)</span>
               </label>
               <input
                 type="text"
                 value={product}
                 onChange={e => setProduct(e.target.value)}
                 placeholder="e.g., CardioFlow™, Atorvastatin 20 mg"
-                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-150"
+                className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/30 outline-none transition-all duration-150"
               />
             </div>
 
             {/* Region */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">
                 Region / Agency
               </label>
               <select
                 value={region}
                 onChange={e => setRegion(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-150"
+                className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/30 outline-none transition-all duration-150"
               >
                 {['FDA', 'EMA', 'MHRA', 'TGA', 'Health Canada', 'PMDA', 'ANVISA', 'Other'].map(
                   r => (
@@ -1056,18 +1056,18 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-zinc-200 flex justify-end gap-3">
+          <div className="px-6 py-4 border-t border-stone-200 flex justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-zinc-700 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
+              className="px-4 py-2 text-sm font-medium text-stone-700 hover:text-stone-900 rounded-lg hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors duration-150"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!name.trim()}
-              className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
+              className="px-5 py-2 text-sm font-semibold text-white bg-stone-900 rounded-lg hover:bg-stone-800 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors duration-150"
             >
               Save Changes
             </button>

@@ -79,7 +79,7 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
             <button
               onClick={() => onNavigate('tools')}
               aria-label="Open Tools"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone-600 border border-stone-200 rounded-lg hover:bg-stone-50 hover:text-stone-800 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone-600 border border-stone-200 rounded-lg hover:bg-stone-50 hover:text-stone-800 transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
             >
               <Wrench className="w-3.5 h-3.5" />
               Tools
@@ -88,7 +88,7 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
               <button
                 onClick={onOpenConfig}
                 aria-label="Project settings"
-                className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
               >
                 <Settings2 className="w-4 h-4" />
               </button>
