@@ -2833,7 +2833,14 @@ export const ZenApp: React.FC = () => {
                     setActiveArtifactStatus(undefined);
                   }
                 }}
-                onNavigate={mode => setLayoutMode(mode as LayoutMode)}
+                onNavigate={mode => {
+                  if (mode === 'haq') {
+                    setLayoutMode('documents');
+                    setToolsSubView('haq');
+                    return;
+                  }
+                  setLayoutMode(mode as LayoutMode);
+                }}
               />
             ))}
 

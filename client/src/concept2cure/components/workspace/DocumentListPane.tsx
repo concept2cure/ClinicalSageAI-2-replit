@@ -38,6 +38,10 @@ interface DocumentListPaneProps {
   onCreateNew?: () => void;
   /** When provided, shows "Draft with AI" button for AI-draftable sections */
   onAIDraft?: () => void;
+  /** Creates a governed artifact from a section template and opens canonical editor */
+  onStartFromTemplate?: () => void;
+  /** Creates a governed blank artifact and opens canonical editor */
+  onWriteManually?: () => void;
   /** Whether this section supports AI drafting */
   sectionAIDraftable?: boolean;
   /** Regulatory reference for context (e.g., "21 CFR 312.23(a)(1)") */
@@ -84,6 +88,8 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
   onSelect,
   onCreateNew,
   onAIDraft,
+  onStartFromTemplate,
+  onWriteManually,
   sectionAIDraftable,
   sectionRegRef,
   onCutDocument,
@@ -191,14 +197,37 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                   <Button
                     size="sm"
                     onClick={onAIDraft}
-                    aria-label="Draft this section with AI"
+                    aria-label="Draft this section with RI"
                     data-testid="ai-draft-section"
                   >
                     <Sparkles className="w-3 h-3 mr-1.5" />
-                    Draft with AI
+                    Draft with RI
                   </Button>
                 )}
-                {onCreateNew && (
+                {onStartFromTemplate && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={onStartFromTemplate}
+                    aria-label="Start from template"
+                    data-testid="start-from-template"
+                  >
+                    <Layers className="w-3 h-3 mr-1.5" />
+                    Start from template
+                  </Button>
+                )}
+                {onWriteManually ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={onWriteManually}
+                    aria-label="Write manually"
+                    data-testid="write-manually"
+                  >
+                    <Plus className="w-3 h-3 mr-1.5" />
+                    Write manually
+                  </Button>
+                ) : onCreateNew && (
                   <Button
                     size="sm"
                     variant="outline"

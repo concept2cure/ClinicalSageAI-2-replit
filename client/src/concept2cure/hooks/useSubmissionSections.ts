@@ -134,9 +134,16 @@ export function useSubmissionSections(
   const isPharma = ['IND', 'NDA', 'BLA', 'MAA'].includes(submissionType || '');
 
   const indSectionsQuery = useQuery({
-    queryKey: ['concept2cure', 'ind-sections'] as const,
+    queryKey: ['concept2cure', 'ind-sections', projectId] as const,
     queryFn: async () => {
-      const res = await apiRequest('GET', '/api/ind-sections');
+      const organizationId =
+        localStorage.getItem('organizationId') ||
+        localStorage.getItem('currentOrganizationId') ||
+        '1';
+      const qs = projectId
+        ? `?project_id=${encodeURIComponent(projectId)}&organization_id=${encodeURIComponent(organizationId)}`
+        : '';
+      const res = await apiRequest('GET', `/api/ind-sections${qs}`);
       const json = await res.json();
       return json as { modules: INDSectionRaw[] };
     },
