@@ -3389,17 +3389,90 @@ export const ZenApp: React.FC = () => {
           </div>
         )}
 
+        {/* ── Project Home: AnA chat + Knowledge sidebar (Claude.ai layout) ── */}
+        {layoutMode === 'project-home' && (
+          <div className="flex-1 flex min-h-0">
+            {/* Center: AnA chat */}
+            <AnaPersistentPanel
+              mode="full"
+              authoringContext={authoringContext}
+              contextProfile={{
+                productType: activeProject?.type,
+                userRole: userRole,
+                screenName: 'project-home',
+                activeProject: activeProject?.name,
+                projectId: activeProjectId,
+                moduleContext,
+                customInstructions,
+              }}
+              projectIntelligence={projectIntelligenceStats}
+              greeting={
+                activeProject
+                  ? `Working on ${activeProject.name}. What would you like to do?`
+                  : platformGreeting?.text
+              }
+              suggestedActions={workspaceSuggestedActions}
+              onActionRun={handleActionRun}
+              onNavigate={path => setLayoutMode(path as LayoutMode)}
+              onDraftInsert={handleDraftInsert}
+              onNavigateToSection={handleNavigateToSection}
+              onOpenArtifact={handleOpenArtifact}
+              onRequestPromotion={handleRequestPromotion}
+              onRefreshIntelligence={authoringIntelligence.refetch}
+            />
+
+            {/* Right sidebar: Project Knowledge (Claude.ai style — always visible) */}
+            {!activeArtifactId && (
+              <div className="w-72 xl:w-80 border-l border-stone-150 bg-white flex-shrink-0 hidden lg:flex">
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center py-12 w-full">
+                      <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
+                    </div>
+                  }
+                >
+                  <ProjectKnowledgePanel projectId={activeProjectId ?? null} className="w-full" />
+                </Suspense>
+              </div>
+            )}
+
+            {/* Document Canvas: replaces knowledge panel when an artifact is active */}
+            {activeArtifactId && (
+              <div className="w-[45%] xl:w-[50%] flex-shrink-0 hidden lg:block">
+                <ErrorBoundary>
+                  <Suspense fallback={<ModuleLoadingFallback />}>
+                    <DocumentCanvasPanel
+                      artifactId={activeArtifactId}
+                      projectId={activeProjectId}
+                      onClose={() => setActiveArtifactId(undefined)}
+                      onOpenFullEditor={(id) => {
+                        setOpenArtifactId(id);
+                        setRiViewMode('editor');
+                        setLayoutMode('regulatory-workspace');
+                      }}
+                      onSaveToVault={(id) => {
+                        setActiveArtifactId(undefined);
+                        setLayoutMode('vault');
+                      }}
+                    />
+                  </Suspense>
+                </ErrorBoundary>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* AnA — THE single chat surface (ChatGPT/Claude style)
-            projects/project-home/deep-research: full screen — AnA IS the interface
+            projects/deep-research: full screen — AnA IS the interface
             workspace/regulatory-workspace: rendered inline above (mode="full")
             module pages (dossier, documents, etc.): compact input bar at bottom */}
         {layoutMode !== 'workspace' &&
           layoutMode !== 'regulatory-workspace' &&
-          layoutMode !== 'section-workspace' && (
+          layoutMode !== 'section-workspace' &&
+          layoutMode !== 'project-home' && (
             <AnaPersistentPanel
               mode={
                 layoutMode === 'projects' ||
-                layoutMode === 'project-home' ||
                 layoutMode === 'deep-research'
                   ? 'full'
                   : 'compact'
@@ -3419,12 +3492,10 @@ export const ZenApp: React.FC = () => {
               greeting={
                 layoutMode === 'deep-research'
                   ? "What would you like to research? I'll search across ClinicalTrials.gov, PubMed, FDA, EMA, and more."
-                  : layoutMode === 'project-home' && activeProject
-                    ? `Working on ${activeProject.name}. What would you like to do?`
-                    : platformGreeting?.text
+                  : platformGreeting?.text
               }
               suggestedActions={
-                layoutMode === 'projects' || layoutMode === 'project-home'
+                layoutMode === 'projects'
                   ? workspaceSuggestedActions
                   : undefined
               }
@@ -3436,32 +3507,6 @@ export const ZenApp: React.FC = () => {
               onRequestPromotion={handleRequestPromotion}
               onRefreshIntelligence={authoringIntelligence.refetch}
             />
-          )}
-
-          {/* ── Document Canvas: Claude-style right-side artifact preview ── */}
-          {/* Shows when on project-home and an artifact is active */}
-          {layoutMode === 'project-home' && activeArtifactId && (
-            <div className="w-[45%] xl:w-[50%] flex-shrink-0 hidden lg:block">
-              <ErrorBoundary>
-                <Suspense fallback={<ModuleLoadingFallback />}>
-                  <DocumentCanvasPanel
-                    artifactId={activeArtifactId}
-                    projectId={activeProjectId}
-                    onClose={() => setActiveArtifactId(undefined)}
-                    onOpenFullEditor={(id) => {
-                      setOpenArtifactId(id);
-                      setRiViewMode('editor');
-                      setLayoutMode('regulatory-workspace');
-                    }}
-                    onSaveToVault={(id) => {
-                      // Artifact is already in the project — just confirm
-                      setActiveArtifactId(undefined);
-                      setLayoutMode('vault');
-                    }}
-                  />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
           )}
       </GlobalOperatingShell>
 
