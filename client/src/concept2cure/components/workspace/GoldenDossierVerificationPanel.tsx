@@ -207,20 +207,20 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
           );
 
           return (
-            <div key={key} className="border border-zinc-200 rounded-lg">
+            <div key={key} className="border border-stone-200 rounded-lg">
               <button
                 onClick={() => toggleSection(key)}
-                className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-zinc-50 transition-colors rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-stone-50 transition-colors rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
                 aria-expanded={expanded}
               >
                 {expanded ? (
-                  <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+                  <ChevronDown className="w-3.5 h-3.5 text-stone-400" />
                 ) : (
-                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
+                  <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
                 )}
                 {sectionIcon}
-                <span className="text-xs font-semibold text-zinc-700 flex-1">{label}</span>
-                <span className="text-xs text-zinc-400">{findings.length} check(s)</span>
+                <span className="text-xs font-semibold text-stone-700 flex-1">{label}</span>
+                <span className="text-xs text-stone-400">{findings.length} check(s)</span>
               </button>
               {expanded && (
                 <div className="px-3 pb-2 space-y-1">
@@ -235,11 +235,11 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
 
         {/* Recommended actions */}
         {result.recommendedActions.length > 0 && (
-          <div className="border border-zinc-200 rounded-lg p-3">
-            <p className="text-xs font-semibold text-zinc-700 mb-2">Recommended Actions</p>
+          <div className="border border-stone-200 rounded-lg p-3">
+            <p className="text-xs font-semibold text-stone-700 mb-2">Recommended Actions</p>
             <ul className="space-y-1.5">
               {result.recommendedActions.map((action, i) => (
-                <li key={i} className="flex items-center gap-2 text-xs text-zinc-600">
+                <li key={i} className="flex items-center gap-2 text-xs text-stone-600">
                   <span className="w-4 h-4 rounded-full bg-blue-100 text-blue-600 text-xs font-semibold flex items-center justify-center shrink-0">
                     {i + 1}
                   </span>
@@ -251,8 +251,8 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
         )}
 
         {/* Quick actions */}
-        <div className="border border-zinc-200 rounded-lg p-3">
-          <p className="text-xs font-semibold text-zinc-700 mb-2">Quick Actions</p>
+        <div className="border border-stone-200 rounded-lg p-3">
+          <p className="text-xs font-semibold text-stone-700 mb-2">Quick Actions</p>
           <div className="flex flex-wrap gap-1.5">
             {onOpenEditor && artifactId && (
               <QuickActionBtn
@@ -307,12 +307,12 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
 
 function PanelHeader({ onClose, title }: { onClose: () => void; title: string }) {
   return (
-    <div className="flex items-center gap-2 px-4 h-10 border-b border-zinc-200 shrink-0">
+    <div className="flex items-center gap-2 px-4 h-10 border-b border-stone-200 shrink-0">
       <ShieldCheck className="w-4 h-4 text-emerald-500" />
-      <h2 className="text-sm font-semibold text-zinc-900">{title}</h2>
+      <h2 className="text-sm font-semibold text-stone-900">{title}</h2>
       <button
         onClick={onClose}
-        className="ml-auto p-1 rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+        className="ml-auto p-1 rounded hover:bg-stone-100 text-stone-400 hover:text-stone-600 transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
         aria-label="Close panel"
       >
         <X className="w-4 h-4" />
@@ -331,8 +331,8 @@ function FindingRow({ finding }: { finding: Finding }) {
   return (
     <div className="flex items-start gap-1.5 py-0.5">
       {icon[finding.status]}
-      <span className="text-xs text-zinc-600 flex-1">{finding.message}</span>
-      <span className="text-xs px-1 py-0.5 rounded bg-zinc-50 text-zinc-400 shrink-0">
+      <span className="text-xs text-stone-600 flex-1">{finding.message}</span>
+      <span className="text-xs px-1 py-0.5 rounded bg-stone-50 text-stone-400 shrink-0">
         {finding.confidence}
       </span>
     </div>
@@ -351,7 +351,7 @@ function QuickActionBtn({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-zinc-50 text-zinc-600 hover:bg-zinc-100 border border-zinc-200 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+      className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-stone-50 text-stone-600 hover:bg-stone-100 border border-stone-200 transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
     >
       {icon}
       {label}

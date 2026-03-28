@@ -43,11 +43,11 @@ export function HowItWorksSection() {
   const [, setLocation] = useLocation();
 
   return (
-    <Section id="how-it-works" className="py-24 px-6 bg-zinc-50/50">
+    <Section id="how-it-works" className="py-24 px-6 bg-stone-50/50">
       <div className="max-w-4xl mx-auto">
         <motion.div variants={fadeUp} className="text-center mb-14">
-          <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">How it works</h2>
-          <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl font-bold text-stone-900 mb-4">How it works</h2>
+          <p className="text-lg text-stone-600 max-w-2xl mx-auto">
             From data ingestion to gateway submission in four steps.
           </p>
         </motion.div>
@@ -61,8 +61,8 @@ export function HowItWorksSection() {
                 {step.step}
               </div>
               <div className="pt-1">
-                <h3 className="text-lg font-semibold text-zinc-900 mb-1">{step.title}</h3>
-                <p className="text-zinc-600 leading-relaxed">{step.description}</p>
+                <h3 className="text-lg font-semibold text-stone-900 mb-1">{step.title}</h3>
+                <p className="text-stone-600 leading-relaxed">{step.description}</p>
               </div>
             </motion.div>
           ))}

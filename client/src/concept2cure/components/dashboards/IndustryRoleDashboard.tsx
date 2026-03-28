@@ -177,13 +177,13 @@ const MetricCard: React.FC<{
       'hover:shadow-md transition-shadow cursor-pointer'
     )}>
       <div className="flex items-start justify-between mb-2">
-        <span className="text-sm text-zinc-500">{metric.label}</span>
+        <span className="text-sm text-stone-500">{metric.label}</span>
         {metric.trend && (
           <TrendIcon className={cn(
             'w-4 h-4',
             metric.trend === 'up' && metric.status !== 'critical' && 'text-emerald-500',
             metric.trend === 'down' && metric.status !== 'good' && 'text-red-500',
-            metric.trend === 'stable' && 'text-zinc-400'
+            metric.trend === 'stable' && 'text-stone-400'
           )} />
         )}
       </div>
@@ -193,7 +193,7 @@ const MetricCard: React.FC<{
           metric.status === 'good' && 'text-emerald-600',
           metric.status === 'warning' && 'text-amber-600',
           metric.status === 'critical' && 'text-red-600',
-          !metric.status && 'text-zinc-900'
+          !metric.status && 'text-stone-900'
         )}>
           {metric.value}
         </span>
@@ -244,7 +244,7 @@ const ActionItemCard: React.FC<{
         
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h4 className="font-medium text-zinc-900 truncate">{item.title}</h4>
+            <h4 className="font-medium text-stone-900 truncate">{item.title}</h4>
             {item.priority === 'critical' && (
               <span className="text-xs font-medium text-red-700 bg-red-100 px-1.5 py-0.5 rounded">
                 Critical
@@ -253,19 +253,19 @@ const ActionItemCard: React.FC<{
           </div>
           
           {item.description && (
-            <p className="text-sm text-zinc-500 truncate mb-2">{item.description}</p>
+            <p className="text-sm text-stone-500 truncate mb-2">{item.description}</p>
           )}
           
           <div className="flex items-center gap-3 text-xs">
             {item.project && (
-              <span className="text-zinc-500 flex items-center gap-1">
+              <span className="text-stone-500 flex items-center gap-1">
                 <Folder className="w-3 h-3" />
                 {item.project}
               </span>
             )}
             <span className={cn(
               'flex items-center gap-1',
-              isOverdue ? 'text-red-600 font-medium' : isUrgent ? 'text-amber-600' : 'text-zinc-500'
+              isOverdue ? 'text-red-600 font-medium' : isUrgent ? 'text-amber-600' : 'text-stone-500'
             )}>
               <Clock className="w-3 h-3" />
               {isOverdue ? `${Math.abs(daysUntil)} days overdue` : daysUntil === 0 ? 'Due today' : `${daysUntil} days`}
@@ -273,7 +273,7 @@ const ActionItemCard: React.FC<{
           </div>
         </div>
         
-        <ChevronRight className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+        <ChevronRight className="w-4 h-4 text-stone-400 flex-shrink-0" />
       </div>
     </button>
   );
@@ -300,8 +300,8 @@ const PDUFACard: React.FC<{
     >
       <div className="flex items-start justify-between mb-2">
         <div>
-          <h4 className="font-medium text-zinc-900">{pdufa.productName}</h4>
-          <p className="text-sm text-zinc-500">{pdufa.submissionType}</p>
+          <h4 className="font-medium text-stone-900">{pdufa.productName}</h4>
+          <p className="text-sm text-stone-500">{pdufa.submissionType}</p>
         </div>
         <span className={cn(
           'text-lg font-semibold',
@@ -313,7 +313,7 @@ const PDUFACard: React.FC<{
         </span>
       </div>
       
-      <div className="flex items-center justify-between text-xs text-zinc-500">
+      <div className="flex items-center justify-between text-xs text-stone-500">
         <span>PDUFA: {new Date(pdufa.pdufa_date).toLocaleDateString()}</span>
         <span className={cn(
           'px-2 py-0.5 rounded-full',
@@ -345,19 +345,19 @@ const CommitmentCard: React.FC<{
       )}
     >
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-medium text-zinc-500 uppercase">{commitment.type}</span>
+        <span className="text-xs font-medium text-stone-500 uppercase">{commitment.type}</span>
         <span className={cn(
           'text-xs px-1.5 py-0.5 rounded',
           commitment.status === 'on_track' && 'bg-emerald-100 text-emerald-700',
           commitment.status === 'at_risk' && 'bg-amber-100 text-amber-700',
           commitment.status === 'overdue' && 'bg-red-100 text-red-700',
-          commitment.status === 'completed' && 'bg-zinc-100 text-zinc-600'
+          commitment.status === 'completed' && 'bg-stone-100 text-stone-600'
         )}>
           {commitment.status}
         </span>
       </div>
-      <p className="text-sm text-zinc-900 line-clamp-2">{commitment.description}</p>
-      <div className="mt-2 flex items-center gap-2 text-xs text-zinc-500">
+      <p className="text-sm text-stone-900 line-clamp-2">{commitment.description}</p>
+      <div className="mt-2 flex items-center gap-2 text-xs text-stone-500">
         <Clock className="w-3 h-3" />
         <span>Due: {new Date(commitment.dueDate).toLocaleDateString()}</span>
         {daysUntil > 0 && <span>({daysUntil} days)</span>}
@@ -406,8 +406,8 @@ const CROProjectManagerView: React.FC<{
       {/* Kanban-style board */}
       <div className="grid grid-cols-4 gap-4">
         {/* Drafting */}
-        <div className="bg-zinc-50 rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-zinc-700 mb-3 flex items-center gap-2">
+        <div className="bg-stone-50 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-stone-700 mb-3 flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-blue-500" />
             Drafting ({grouped.drafting.length})
           </h3>
@@ -416,10 +416,10 @@ const CROProjectManagerView: React.FC<{
               <button
                 key={d.id}
                 onClick={() => onDeliverableClick?.(d.id)}
-                className="w-full p-3 bg-white rounded-lg border border-zinc-200 text-left hover:border-blue-300 transition-colors duration-150"
+                className="w-full p-3 bg-white rounded-lg border border-stone-200 text-left hover:border-blue-300 transition-colors duration-150"
               >
-                <p className="text-sm font-medium text-zinc-900 line-clamp-2">{d.name}</p>
-                <div className="mt-2 flex items-center justify-between text-xs text-zinc-500">
+                <p className="text-sm font-medium text-stone-900 line-clamp-2">{d.name}</p>
+                <div className="mt-2 flex items-center justify-between text-xs text-stone-500">
                   <span>{d.assignedTo}</span>
                   <span>{new Date(d.dueDate).toLocaleDateString()}</span>
                 </div>
@@ -429,8 +429,8 @@ const CROProjectManagerView: React.FC<{
         </div>
         
         {/* Internal QC */}
-        <div className="bg-zinc-50 rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-zinc-700 mb-3 flex items-center gap-2">
+        <div className="bg-stone-50 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-stone-700 mb-3 flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-amber-500" />
             Internal QC ({grouped.internal_qc.length})
           </h3>
@@ -441,8 +441,8 @@ const CROProjectManagerView: React.FC<{
                 onClick={() => onDeliverableClick?.(d.id)}
                 className="w-full p-3 bg-white rounded-lg border border-amber-200 text-left hover:border-amber-300 transition-colors duration-150"
               >
-                <p className="text-sm font-medium text-zinc-900 line-clamp-2">{d.name}</p>
-                <div className="mt-2 flex items-center justify-between text-xs text-zinc-500">
+                <p className="text-sm font-medium text-stone-900 line-clamp-2">{d.name}</p>
+                <div className="mt-2 flex items-center justify-between text-xs text-stone-500">
                   <span>{d.reviewer}</span>
                   <span>{new Date(d.dueDate).toLocaleDateString()}</span>
                 </div>
@@ -452,8 +452,8 @@ const CROProjectManagerView: React.FC<{
         </div>
         
         {/* Client Review */}
-        <div className="bg-zinc-50 rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-zinc-700 mb-3 flex items-center gap-2">
+        <div className="bg-stone-50 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-stone-700 mb-3 flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-violet-500" />
             Client Review ({grouped.client_review.length})
           </h3>
@@ -464,8 +464,8 @@ const CROProjectManagerView: React.FC<{
                 onClick={() => onDeliverableClick?.(d.id)}
                 className="w-full p-3 bg-white rounded-lg border border-blue-200 text-left hover:border-blue-200 transition-colors duration-150"
               >
-                <p className="text-sm font-medium text-zinc-900 line-clamp-2">{d.name}</p>
-                <div className="mt-2 flex items-center justify-between text-xs text-zinc-500">
+                <p className="text-sm font-medium text-stone-900 line-clamp-2">{d.name}</p>
+                <div className="mt-2 flex items-center justify-between text-xs text-stone-500">
                   <span>Client review due</span>
                   <span>{d.clientReviewDue ? new Date(d.clientReviewDue).toLocaleDateString() : '-'}</span>
                 </div>
@@ -475,9 +475,9 @@ const CROProjectManagerView: React.FC<{
         </div>
         
         {/* Upcoming */}
-        <div className="bg-zinc-50 rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-zinc-700 mb-3 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-zinc-400" />
+        <div className="bg-stone-50 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-stone-700 mb-3 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-stone-400" />
             Upcoming ({grouped.upcoming.length})
           </h3>
           <div className="space-y-2">
@@ -485,10 +485,10 @@ const CROProjectManagerView: React.FC<{
               <button
                 key={d.id}
                 onClick={() => onDeliverableClick?.(d.id)}
-                className="w-full p-3 bg-white rounded-lg border border-zinc-200 text-left hover:border-zinc-300 transition-colors duration-150"
+                className="w-full p-3 bg-white rounded-lg border border-stone-200 text-left hover:border-stone-300 transition-colors duration-150"
               >
-                <p className="text-sm font-medium text-zinc-900 line-clamp-2">{d.name}</p>
-                <div className="mt-2 text-xs text-zinc-500">
+                <p className="text-sm font-medium text-stone-900 line-clamp-2">{d.name}</p>
+                <div className="mt-2 text-xs text-stone-500">
                   <span>Start: {new Date(d.dueDate).toLocaleDateString()}</span>
                 </div>
               </button>
@@ -528,10 +528,10 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
     return (
       <div className={cn('p-6', className)}>
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-zinc-900">
+          <h1 className="text-2xl font-semibold text-stone-900">
             {config.greeting}
           </h1>
-          <p className="text-zinc-500">
+          <p className="text-stone-500">
             Welcome back, {firstName}. Here's your delivery pipeline.
           </p>
         </div>
@@ -549,8 +549,8 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
       <div className={cn('p-6 space-y-6', className)}>
         {/* Header */}
         <div className="mb-2">
-          <h1 className="text-2xl font-semibold text-zinc-900">{config.greeting}</h1>
-          <p className="text-zinc-500">Welcome back, {firstName}</p>
+          <h1 className="text-2xl font-semibold text-stone-900">{config.greeting}</h1>
+          <p className="text-stone-500">Welcome back, {firstName}</p>
         </div>
         
         {/* Key Metrics */}
@@ -563,7 +563,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
         <div className="grid grid-cols-3 gap-6">
           {/* PDUFA Dates */}
           <div className="col-span-1">
-            <h2 className="text-lg font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-stone-900 mb-4 flex items-center gap-2">
               <Calendar className="w-5 h-5 text-blue-500" />
               PDUFA Dates
             </h2>
@@ -572,14 +572,14 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
                 <PDUFACard key={p.id} pdufa={p} />
               ))}
               {pdufa_dates.length === 0 && (
-                <p className="text-sm text-zinc-500 italic">No active PDUFA dates</p>
+                <p className="text-sm text-stone-500 italic">No active PDUFA dates</p>
               )}
             </div>
           </div>
           
           {/* Action Items */}
           <div className="col-span-1">
-            <h2 className="text-lg font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-stone-900 mb-4 flex items-center gap-2">
               <Flag className="w-5 h-5 text-amber-500" />
               Action Items
             </h2>
@@ -592,14 +592,14 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
                 />
               ))}
               {actionItems.length === 0 && (
-                <p className="text-sm text-zinc-500 italic">No pending actions</p>
+                <p className="text-sm text-stone-500 italic">No pending actions</p>
               )}
             </div>
           </div>
           
           {/* Commitments */}
           <div className="col-span-1">
-            <h2 className="text-lg font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-stone-900 mb-4 flex items-center gap-2">
               <ClipboardCheck className="w-5 h-5 text-emerald-500" />
               Regulatory Commitments
             </h2>
@@ -608,7 +608,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
                 <CommitmentCard key={c.id} commitment={c} />
               ))}
               {commitments.length === 0 && (
-                <p className="text-sm text-zinc-500 italic">No active commitments</p>
+                <p className="text-sm text-stone-500 italic">No active commitments</p>
               )}
             </div>
           </div>
@@ -622,8 +622,8 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
     <div className={cn('p-6 space-y-6', className)}>
       {/* Header */}
       <div className="mb-2">
-        <h1 className="text-2xl font-semibold text-zinc-900">{config.greeting}</h1>
-        <p className="text-zinc-500">Welcome back, {firstName}</p>
+        <h1 className="text-2xl font-semibold text-stone-900">{config.greeting}</h1>
+        <p className="text-stone-500">Welcome back, {firstName}</p>
       </div>
       
       {/* Metrics */}
@@ -636,7 +636,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
       <div className="grid grid-cols-2 gap-6">
         {/* Action Items */}
         <div>
-          <h2 className="text-lg font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-stone-900 mb-4 flex items-center gap-2">
             <Flag className="w-5 h-5 text-amber-500" />
             Your Action Items
           </h2>
@@ -653,7 +653,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
         
         {/* Watchlist */}
         <div>
-          <h2 className="text-lg font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-stone-900 mb-4 flex items-center gap-2">
             <Bell className="w-5 h-5 text-blue-500" />
             Watchlist
           </h2>
@@ -662,16 +662,16 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
               <button
                 key={item.id}
                 onClick={() => onWatchlistClick?.(item)}
-                className="w-full p-3 rounded-lg border border-zinc-200 text-left hover:border-blue-200 transition-colors flex items-center justify-between"
+                className="w-full p-3 rounded-lg border border-stone-200 text-left hover:border-blue-200 transition-colors flex items-center justify-between"
               >
                 <div>
-                  <p className="text-sm font-medium text-zinc-900">{item.title}</p>
-                  <p className="text-xs text-zinc-500">{item.status}</p>
+                  <p className="text-sm font-medium text-stone-900">{item.title}</p>
+                  <p className="text-xs text-stone-500">{item.status}</p>
                 </div>
                 {item.daysRemaining !== undefined && (
                   <span className={cn(
                     'text-sm font-medium',
-                    item.daysRemaining <= 7 ? 'text-red-600' : 'text-zinc-600'
+                    item.daysRemaining <= 7 ? 'text-red-600' : 'text-stone-600'
                   )}>
                     {item.daysRemaining}d
                   </span>

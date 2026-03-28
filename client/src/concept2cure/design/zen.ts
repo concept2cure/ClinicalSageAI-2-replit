@@ -42,10 +42,10 @@ export const zenColors = {
   // INK - Text colors with clear hierarchy
   // ─────────────────────────────────────────────────────────────────────────────
   ink: {
-    DEFAULT: '#18181B',     // Primary text - zinc-900
-    muted: '#71717A',       // Secondary text - zinc-500
-    subtle: '#A1A1AA',      // Tertiary text - zinc-400
-    disabled: '#D4D4D8',    // Disabled state - zinc-300
+    DEFAULT: '#18181B',     // Primary text - stone-900
+    muted: '#71717A',       // Secondary text - stone-500
+    subtle: '#A1A1AA',      // Tertiary text - stone-400
+    disabled: '#D4D4D8',    // Disabled state - stone-300
     inverse: '#FAFAFA',     // Text on dark
   },
 
@@ -87,8 +87,8 @@ export const zenColors = {
   // BORDER - Minimal, purposeful borders
   // ─────────────────────────────────────────────────────────────────────────────
   border: {
-    DEFAULT: '#E4E4E7',     // Standard border - zinc-200
-    subtle: '#F4F4F5',      // Very light border - zinc-100
+    DEFAULT: '#E4E4E7',     // Standard border - stone-200
+    subtle: '#F4F4F5',      // Very light border - stone-100
     focus: '#d97757',       // Focus ring
   },
 } as const;
@@ -380,38 +380,38 @@ export const zenClasses = {
 
   // ─── Typography Hierarchy ────────────────────────────────────────────────────
   // RULE: Always use these — never ad-hoc font-size + weight combos
-  heading1: 'text-xl font-semibold tracking-tight text-zinc-900',
-  heading2: 'text-lg font-semibold text-zinc-900',
-  heading3: 'text-base font-semibold text-zinc-900',
-  heading4: 'text-sm font-medium text-zinc-700',
-  body: 'text-sm text-zinc-600 leading-relaxed',
-  bodyLg: 'text-base text-zinc-600 leading-relaxed',
-  caption: 'text-xs text-zinc-500',
-  label: 'text-sm font-medium text-zinc-700',
-  meta: 'text-xs text-zinc-500',
-  overline: 'text-xs font-medium text-zinc-400 uppercase tracking-wider',
+  heading1: 'text-xl font-semibold tracking-tight text-stone-900',
+  heading2: 'text-lg font-semibold text-stone-900',
+  heading3: 'text-base font-semibold text-stone-900',
+  heading4: 'text-sm font-medium text-stone-700',
+  body: 'text-sm text-stone-600 leading-relaxed',
+  bodyLg: 'text-base text-stone-600 leading-relaxed',
+  caption: 'text-xs text-stone-500',
+  label: 'text-sm font-medium text-stone-700',
+  meta: 'text-xs text-stone-500',
+  overline: 'text-xs font-medium text-stone-400 uppercase tracking-wider',
 
   // ─── Interactive ─────────────────────────────────────────────────────────────
   // RULE: All buttons use buttonBase + a variant. Never build buttons from scratch.
-  buttonBase: 'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none disabled:opacity-50 disabled:pointer-events-none',
+  buttonBase: 'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none disabled:opacity-50 disabled:pointer-events-none',
   buttonPrimary: 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm px-4 py-2 text-sm',
-  buttonSecondary: 'bg-white text-zinc-700 border border-zinc-200 hover:bg-zinc-50 hover:border-zinc-300 px-4 py-2 text-sm',
-  buttonGhost: 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 px-3 py-2 text-sm',
+  buttonSecondary: 'bg-white text-stone-700 border border-stone-200 hover:bg-stone-50 hover:border-stone-300 px-4 py-2 text-sm',
+  buttonGhost: 'text-stone-600 hover:text-stone-900 hover:bg-stone-100 px-3 py-2 text-sm',
   buttonDanger: 'bg-red-600 text-white hover:bg-red-700 shadow-sm px-4 py-2 text-sm',
   buttonSuccess: 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm px-4 py-2 text-sm',
   buttonWarning: 'bg-amber-500 text-white hover:bg-amber-600 shadow-sm px-4 py-2 text-sm',
-  buttonIcon: 'p-2 text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg',
+  buttonIcon: 'p-2 text-stone-500 hover:text-stone-700 hover:bg-stone-100 rounded-lg',
   // Size modifiers (combine with variant)
   buttonSm: 'px-3 py-1.5 text-xs gap-1.5',
   buttonLg: 'px-5 py-2.5 text-sm gap-2',
 
   // ─── Cards ───────────────────────────────────────────────────────────────────
-  // RULE: rounded-xl, border-zinc-200, shadow-sm. Never rounded-2xl or border-2.
-  card: 'bg-white rounded-xl border border-zinc-200 shadow-sm',
-  cardHover: 'bg-white rounded-xl border border-zinc-200 shadow-sm hover:shadow-md hover:border-zinc-300 transition-all duration-150 cursor-pointer',
+  // RULE: rounded-xl, border-stone-200, shadow-sm. Never rounded-2xl or border-2.
+  card: 'bg-white rounded-xl border border-stone-200 shadow-sm',
+  cardHover: 'bg-white rounded-xl border border-stone-200 shadow-sm hover:shadow-md hover:border-stone-300 transition-all duration-150 cursor-pointer',
   cardPadding: 'p-5',
-  cardSection: 'px-5 py-4 border-t border-zinc-100',
-  cardSectionMuted: 'px-5 py-4 border-t border-zinc-100 bg-zinc-50',
+  cardSection: 'px-5 py-4 border-t border-stone-100',
+  cardSectionMuted: 'px-5 py-4 border-t border-stone-100 bg-stone-50',
 
   // ─── Icon Boxes ──────────────────────────────────────────────────────────────
   // RULE: 3 sizes only. rounded-md (sm), rounded-lg (md, lg). Never rounded-xl.
@@ -424,13 +424,13 @@ export const zenClasses = {
   pillBase: 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium',
 
   // ─── Input ───────────────────────────────────────────────────────────────────
-  input: 'w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors duration-150',
-  textarea: 'w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors duration-150 resize-none',
+  input: 'w-full rounded-lg border border-stone-200 bg-white px-4 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-400/20 focus:outline-none transition-colors duration-150',
+  textarea: 'w-full rounded-lg border border-stone-200 bg-white px-4 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-400/20 focus:outline-none transition-colors duration-150 resize-none',
 
   // ─── States ──────────────────────────────────────────────────────────────────
-  focusRing: 'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none',
-  hoverLight: 'hover:bg-zinc-50 transition-colors duration-150',
-  hoverDark: 'hover:bg-zinc-100 transition-colors duration-150',
+  focusRing: 'focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none',
+  hoverLight: 'hover:bg-stone-50 transition-colors duration-150',
+  hoverDark: 'hover:bg-stone-100 transition-colors duration-150',
   active: 'bg-blue-50 text-blue-700 border-blue-200',
 
   // ─── Animation ───────────────────────────────────────────────────────────────
@@ -439,8 +439,8 @@ export const zenClasses = {
   scaleIn: 'animate-in zoom-in-95 duration-200',
 
   // ─── Dividers ────────────────────────────────────────────────────────────────
-  divider: 'h-px bg-zinc-100',
-  dividerStrong: 'h-px bg-zinc-200',
+  divider: 'h-px bg-stone-100',
+  dividerStrong: 'h-px bg-stone-200',
 } as const;
 
 // ═══════════════════════════════════════════════════════════════════════════════

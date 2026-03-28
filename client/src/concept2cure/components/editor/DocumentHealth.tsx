@@ -253,11 +253,11 @@ export const DocumentHealth: React.FC<DocumentHealthProps> = ({
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Overall Score Header */}
-      <div className={cn('px-5 py-4 border-b border-zinc-100', getScoreBg(overallScore))}>
+      <div className={cn('px-5 py-4 border-b border-stone-100', getScoreBg(overallScore))}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <TrendingUp className={cn('w-5 h-5', getScoreColor(overallScore))} />
-            <span className="text-sm font-semibold text-zinc-900">Document Health</span>
+            <span className="text-sm font-semibold text-stone-900">Document Health</span>
           </div>
           <span className={cn('text-2xl font-semibold', getScoreColor(overallScore))}>
             {overallScore}
@@ -269,7 +269,7 @@ export const DocumentHealth: React.FC<DocumentHealthProps> = ({
             style={{ width: `${overallScore}%` }}
           />
         </div>
-        <div className="flex items-center justify-between mt-2 text-xs text-zinc-500">
+        <div className="flex items-center justify-between mt-2 text-xs text-stone-500">
           <span>{totalIssues} issue{totalIssues !== 1 ? 's' : ''} found</span>
           <span>
             {documentType && <span className="mr-2">{documentType}</span>}
@@ -285,15 +285,15 @@ export const DocumentHealth: React.FC<DocumentHealthProps> = ({
           const hasIssues = dim.issues.length > 0;
 
           return (
-            <div key={dim.id} className="border-b border-zinc-100">
+            <div key={dim.id} className="border-b border-stone-100">
               {/* Dimension header */}
               <div className="flex items-center gap-2 px-5 py-3">
                 <Icon className={cn('w-4 h-4 shrink-0', getScoreColor(dim.score))} />
-                <span className="text-xs font-semibold text-zinc-700 flex-1">{dim.label}</span>
+                <span className="text-xs font-semibold text-stone-700 flex-1">{dim.label}</span>
                 <span className={cn('text-sm font-semibold', getScoreColor(dim.score))}>
                   {dim.score}
                 </span>
-                <div className="w-16 bg-zinc-200 rounded-full h-1.5 ml-1">
+                <div className="w-16 bg-stone-200 rounded-full h-1.5 ml-1">
                   <div
                     className={cn('h-1.5 rounded-full', getBarColor(dim.score))}
                     style={{ width: `${dim.score}%` }}
@@ -308,9 +308,9 @@ export const DocumentHealth: React.FC<DocumentHealthProps> = ({
                     <div key={i} className="flex items-start gap-2 text-xs">
                       <AlertTriangle className="w-3 h-3 text-amber-500 mt-0.5 shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <span className="text-zinc-600">{issue}</span>
+                        <span className="text-stone-600">{issue}</span>
                         {dim.suggestions[i] && (
-                          <p className="text-zinc-400 mt-0.5">{dim.suggestions[i]}</p>
+                          <p className="text-stone-400 mt-0.5">{dim.suggestions[i]}</p>
                         )}
                       </div>
                       {onFixIssue && (

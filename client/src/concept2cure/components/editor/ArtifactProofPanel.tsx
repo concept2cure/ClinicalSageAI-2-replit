@@ -180,19 +180,19 @@ const ArtifactProofPanel: React.FC<ArtifactProofPanelProps> = ({ projectId, arti
       case 'pass': return <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />;
       case 'fail': return <XCircle className="w-3.5 h-3.5 text-red-500" />;
       case 'warn': return <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />;
-      default: return <Hash className="w-3.5 h-3.5 text-zinc-400" />;
+      default: return <Hash className="w-3.5 h-3.5 text-stone-400" />;
     }
   };
 
   return (
     <div className="h-full flex flex-col bg-white">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
+      <div className="px-4 py-3 border-b border-stone-200 bg-stone-50">
         <div className="flex items-center gap-2">
           <Shield className="w-4 h-4 text-blue-600" />
-          <h3 className="text-sm font-semibold text-zinc-900">Document Loop Proof</h3>
+          <h3 className="text-sm font-semibold text-stone-900">Document Loop Proof</h3>
         </div>
-        <p className="text-xs text-zinc-500 mt-0.5">Internal QA — artifact truth inspector</p>
+        <p className="text-xs text-stone-500 mt-0.5">Internal QA — artifact truth inspector</p>
         <div className="flex items-center gap-3 mt-2">
           <span className="text-xs font-medium text-emerald-600">{passCount} pass</span>
           {failCount > 0 && <span className="text-xs font-medium text-red-600">{failCount} fail</span>}
@@ -201,10 +201,10 @@ const ArtifactProofPanel: React.FC<ArtifactProofPanelProps> = ({ projectId, arti
       </div>
 
       {/* Title */}
-      <div className="px-4 py-2 border-b border-zinc-100">
+      <div className="px-4 py-2 border-b border-stone-100">
         <div className="flex items-center gap-2">
-          <FileText className="w-3.5 h-3.5 text-zinc-400" />
-          <span className="text-sm font-medium text-zinc-800 truncate">{artifact.title}</span>
+          <FileText className="w-3.5 h-3.5 text-stone-400" />
+          <span className="text-sm font-medium text-stone-800 truncate">{artifact.title}</span>
         </div>
         {artifact.status === 'locked' ? (
           <div className="flex items-center gap-1 mt-1">
@@ -213,27 +213,27 @@ const ArtifactProofPanel: React.FC<ArtifactProofPanelProps> = ({ projectId, arti
           </div>
         ) : (
           <div className="flex items-center gap-1 mt-1">
-            <Unlock className="w-3 h-3 text-zinc-400" />
-            <span className="text-xs text-zinc-500">{artifact.status || 'draft'}</span>
+            <Unlock className="w-3 h-3 text-stone-400" />
+            <span className="text-xs text-stone-500">{artifact.status || 'draft'}</span>
           </div>
         )}
       </div>
 
       {/* Proof items */}
       <div className="flex-1 overflow-y-auto">
-        <div className="divide-y divide-zinc-100">
+        <div className="divide-y divide-stone-100">
           {proofItems.map((item, i) => (
             <div key={i} className="px-4 py-2 flex items-center justify-between">
               <div className="flex items-center gap-2 min-w-0">
                 <StatusIcon status={item.status} />
-                <span className="text-xs text-zinc-600">{item.label}</span>
+                <span className="text-xs text-stone-600">{item.label}</span>
               </div>
               <span className={cn(
                 'text-xs font-mono truncate max-w-[180px]',
                 item.status === 'pass' ? 'text-emerald-700' :
                 item.status === 'fail' ? 'text-red-700' :
                 item.status === 'warn' ? 'text-amber-700' :
-                'text-zinc-500'
+                'text-stone-500'
               )}>
                 {item.value}
               </span>
@@ -243,8 +243,8 @@ const ArtifactProofPanel: React.FC<ArtifactProofPanelProps> = ({ projectId, arti
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-2 border-t border-zinc-200 bg-zinc-50">
-        <p className="text-[10px] text-zinc-400">
+      <div className="px-4 py-2 border-t border-stone-200 bg-stone-50">
+        <p className="text-[10px] text-stone-400">
           {artifact.createdAt && `Created: ${new Date(artifact.createdAt).toLocaleString()}`}
         </p>
       </div>

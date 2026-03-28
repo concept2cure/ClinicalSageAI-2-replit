@@ -47,14 +47,14 @@ const ErrorLayout: React.FC<{
 
     {/* Title */}
     <h1
-      className="text-2xl font-semibold text-zinc-900 mb-3 text-center"
+      className="text-2xl font-semibold text-stone-900 mb-3 text-center"
       style={{ fontFamily: "'Poppins', Arial, sans-serif" }}
     >
       {title}
     </h1>
 
     {/* Description */}
-    <p className="text-sm text-zinc-500 max-w-md text-center mb-8 leading-relaxed">
+    <p className="text-sm text-stone-500 max-w-md text-center mb-8 leading-relaxed">
       {description}
     </p>
 
@@ -77,13 +77,13 @@ const ErrorLayout: React.FC<{
 
     {/* Footer */}
     <div className="mt-16 text-center">
-      <p className="text-xs text-zinc-400" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>
+      <p className="text-xs text-stone-400" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>
         © {new Date().getFullYear()} Concept2Cure, Inc. — AI-Powered Regulatory Intelligence
       </p>
       <div className="flex gap-4 justify-center mt-2">
-        <a href="/concept2cure/legal/terms" className="text-[11px] text-zinc-400 hover:text-zinc-600 transition-colors">Terms</a>
-        <a href="/concept2cure/legal/privacy" className="text-[11px] text-zinc-400 hover:text-zinc-600 transition-colors">Privacy</a>
-        <a href="mailto:support@concept2cure.com" className="text-[11px] text-zinc-400 hover:text-zinc-600 transition-colors">Support</a>
+        <a href="/concept2cure/legal/terms" className="text-[11px] text-stone-400 hover:text-stone-600 transition-colors">Terms</a>
+        <a href="/concept2cure/legal/privacy" className="text-[11px] text-stone-400 hover:text-stone-600 transition-colors">Privacy</a>
+        <a href="mailto:support@concept2cure.com" className="text-[11px] text-stone-400 hover:text-stone-600 transition-colors">Support</a>
       </div>
     </div>
   </div>
@@ -128,13 +128,13 @@ export const MaintenancePage: React.FC = () => (
       className="mb-8 px-6 py-4 rounded-xl border max-w-md text-center"
       style={{ background: 'white', borderColor: '#e8e6dc' }}
     >
-      <p className="text-xs font-medium text-zinc-700" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>
+      <p className="text-xs font-medium text-stone-700" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>
         Expected completion
       </p>
-      <p className="text-lg font-semibold text-zinc-900 mt-1" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>
+      <p className="text-lg font-semibold text-stone-900 mt-1" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>
         Within 4 hours
       </p>
-      <p className="text-xs text-zinc-500 mt-2">
+      <p className="text-xs text-stone-500 mt-2">
         For urgent matters, contact support@concept2cure.com
       </p>
     </div>

@@ -186,14 +186,14 @@ const STATUS_CONFIG: Record<RegistrationStatus, {
   color: string;
   bgColor: string;
 }> = {
-  not_applicable: { label: 'N/A', color: 'text-zinc-400', bgColor: 'bg-zinc-100' },
-  not_started: { label: 'Not Started', color: 'text-zinc-500', bgColor: 'bg-zinc-100' },
+  not_applicable: { label: 'N/A', color: 'text-stone-400', bgColor: 'bg-stone-100' },
+  not_started: { label: 'Not Started', color: 'text-stone-500', bgColor: 'bg-stone-100' },
   dossier_prep: { label: 'Dossier Prep', color: 'text-blue-600', bgColor: 'bg-blue-100' },
   submitted: { label: 'Submitted', color: 'text-amber-600', bgColor: 'bg-amber-100' },
   under_review: { label: 'Under Review', color: 'text-violet-600', bgColor: 'bg-violet-100' },
   approved: { label: 'Approved', color: 'text-green-600', bgColor: 'bg-green-100' },
   rejected: { label: 'Rejected', color: 'text-red-600', bgColor: 'bg-red-100' },
-  withdrawn: { label: 'Withdrawn', color: 'text-zinc-500', bgColor: 'bg-zinc-100' },
+  withdrawn: { label: 'Withdrawn', color: 'text-stone-500', bgColor: 'bg-stone-100' },
 };
 
 const COMMITMENT_CONFIG: Record<CommitmentType, {
@@ -254,8 +254,8 @@ const PDUFACalendar: React.FC<{
   }, [pdufaDates]);
   
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 p-4">
-      <h3 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+    <div className="bg-white rounded-xl border border-stone-200 p-4">
+      <h3 className="text-sm font-semibold text-stone-900 mb-4 flex items-center gap-2">
         <Calendar className="w-4 h-4 text-red-600" />
         PDUFA Dates
       </h3>
@@ -263,7 +263,7 @@ const PDUFACalendar: React.FC<{
       <div className="space-y-4 max-h-[400px] overflow-y-auto">
         {Object.entries(byMonth).map(([month, dates]) => (
           <div key={month}>
-            <p className="text-xs font-medium text-zinc-500 mb-2">{month}</p>
+            <p className="text-xs font-medium text-stone-500 mb-2">{month}</p>
             <div className="space-y-2">
               {dates.map(pdufa => {
                 const daysUntil = getDaysUntil(pdufa.pdfuaDate);
@@ -279,22 +279,22 @@ const PDUFACalendar: React.FC<{
                         ? 'border-l-red-500 bg-red-50 hover:bg-red-100'
                         : isUrgent
                           ? 'border-l-amber-500 bg-amber-50 hover:bg-amber-100'
-                          : 'border-l-blue-500 bg-zinc-50 hover:bg-zinc-100'
+                          : 'border-l-blue-500 bg-stone-50 hover:bg-stone-100'
                     )}
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-semibold text-zinc-900">{pdufa.productName}</p>
-                        <p className="text-xs text-zinc-500">{pdufa.submissionType} • {pdufa.applicationNumber}</p>
+                        <p className="text-sm font-semibold text-stone-900">{pdufa.productName}</p>
+                        <p className="text-xs text-stone-500">{pdufa.submissionType} • {pdufa.applicationNumber}</p>
                       </div>
                       <div className="text-right">
                         <p className={cn(
                           'text-lg font-semibold',
-                          isUrgent ? 'text-red-600' : 'text-zinc-900'
+                          isUrgent ? 'text-red-600' : 'text-stone-900'
                         )}>
                           {daysUntil}d
                         </p>
-                        <p className="text-xs text-zinc-500">{formatDate(pdufa.pdfuaDate)}</p>
+                        <p className="text-xs text-stone-500">{formatDate(pdufa.pdfuaDate)}</p>
                       </div>
                     </div>
                     {pdufa.priority && (
@@ -310,7 +310,7 @@ const PDUFACalendar: React.FC<{
         ))}
         
         {Object.keys(byMonth).length === 0 && (
-          <p className="text-sm text-zinc-500 italic text-center py-4">No upcoming PDUFA dates</p>
+          <p className="text-sm text-stone-500 italic text-center py-4">No upcoming PDUFA dates</p>
         )}
       </div>
     </div>
@@ -329,9 +329,9 @@ const CommitmentTracker: React.FC<{
   const atRisk = commitments.filter(c => getDaysUntil(c.dueDate) <= 30 && c.status !== 'fulfilled' && c.status !== 'submitted');
   
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 p-4">
+    <div className="bg-white rounded-xl border border-stone-200 p-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-zinc-900 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-stone-900 flex items-center gap-2">
           <Flag className="w-4 h-4 text-amber-600" />
           Regulatory Commitments
         </h3>
@@ -361,7 +361,7 @@ const CommitmentTracker: React.FC<{
                   'w-full p-3 rounded-lg border text-left transition-colors duration-150',
                   isOverdue && 'border-red-300 bg-red-50',
                   isUrgent && !isOverdue && 'border-amber-300 bg-amber-50',
-                  !isOverdue && !isUrgent && 'border-zinc-200 hover:bg-zinc-50'
+                  !isOverdue && !isUrgent && 'border-stone-200 hover:bg-stone-50'
                 )}
               >
                 <div className="flex items-start justify-between">
@@ -372,21 +372,21 @@ const CommitmentTracker: React.FC<{
                         config.severity === 'critical' && 'bg-red-100 text-red-700',
                         config.severity === 'high' && 'bg-amber-100 text-amber-700',
                         config.severity === 'medium' && 'bg-blue-100 text-blue-700',
-                        config.severity === 'low' && 'bg-zinc-100 text-zinc-600'
+                        config.severity === 'low' && 'bg-stone-100 text-stone-600'
                       )}>
                         {config.shortLabel}
                       </span>
-                      <span className="text-xs text-zinc-500">{REGION_CONFIG[commitment.region].flag}</span>
+                      <span className="text-xs text-stone-500">{REGION_CONFIG[commitment.region].flag}</span>
                     </div>
-                    <p className="text-sm font-medium text-zinc-900 truncate">{commitment.productName}</p>
-                    <p className="text-xs text-zinc-500 truncate">{commitment.description}</p>
+                    <p className="text-sm font-medium text-stone-900 truncate">{commitment.productName}</p>
+                    <p className="text-xs text-stone-500 truncate">{commitment.description}</p>
                   </div>
                   
                   <div className={cn(
                     'text-right ml-3',
                     isOverdue && 'text-red-600',
                     isUrgent && !isOverdue && 'text-amber-600',
-                    !isOverdue && !isUrgent && 'text-zinc-600'
+                    !isOverdue && !isUrgent && 'text-stone-600'
                   )}>
                     <p className="text-sm font-semibold">
                       {isOverdue ? `${Math.abs(daysUntil)}d overdue` : `${daysUntil}d`}
@@ -413,9 +413,9 @@ const GlobalRegistrationMatrix: React.FC<{
   const regions: RegulatoryRegion[] = ['us', 'eu', 'jp', 'cn', 'ca', 'au'];
   
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-      <div className="p-4 border-b border-zinc-200">
-        <h3 className="text-sm font-semibold text-zinc-900 flex items-center gap-2">
+    <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
+      <div className="p-4 border-b border-stone-200">
+        <h3 className="text-sm font-semibold text-stone-900 flex items-center gap-2">
           <Globe className="w-4 h-4 text-blue-600" />
           Global Registration Status
         </h3>
@@ -424,10 +424,10 @@ const GlobalRegistrationMatrix: React.FC<{
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="bg-zinc-50">
-              <th className="text-left text-xs font-medium text-zinc-500 px-4 py-2 sticky left-0 bg-zinc-50">Product</th>
+            <tr className="bg-stone-50">
+              <th className="text-left text-xs font-medium text-stone-500 px-4 py-2 sticky left-0 bg-stone-50">Product</th>
               {regions.map(region => (
-                <th key={region} className="text-center text-xs font-medium text-zinc-500 px-2 py-2 min-w-[80px]">
+                <th key={region} className="text-center text-xs font-medium text-stone-500 px-2 py-2 min-w-[80px]">
                   <span className="block text-lg">{REGION_CONFIG[region].flag}</span>
                   {REGION_CONFIG[region].agency}
                 </th>
@@ -438,12 +438,12 @@ const GlobalRegistrationMatrix: React.FC<{
             {products.map(product => (
               <tr
                 key={product.id}
-                className="border-t border-zinc-200 hover:bg-zinc-50 cursor-pointer"
+                className="border-t border-stone-200 hover:bg-stone-50 cursor-pointer"
                 onClick={() => onProductClick?.(product)}
               >
                 <td className="px-4 py-3 sticky left-0 bg-white">
-                  <p className="text-sm font-medium text-zinc-900">{product.brandName}</p>
-                  <p className="text-xs text-zinc-500">{product.genericName}</p>
+                  <p className="text-sm font-medium text-stone-900">{product.brandName}</p>
+                  <p className="text-xs text-stone-500">{product.genericName}</p>
                 </td>
                 {regions.map(region => {
                   const reg = product.registrations.find(r => r.region === region);
@@ -487,27 +487,27 @@ const TherapeuticAreaCard: React.FC<{
   const [expanded, setExpanded] = useState(false);
   
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+    <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
       {/* Header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between p-4 hover:bg-zinc-50 transition-colors duration-150"
+        className="w-full flex items-center justify-between p-4 hover:bg-stone-50 transition-colors duration-150"
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
             <Pill className="w-5 h-5 text-white" />
           </div>
           <div className="text-left">
-            <h3 className="text-lg font-semibold text-zinc-900">{portfolio.name}</h3>
-            <p className="text-sm text-zinc-500">{portfolio.products.length} products</p>
+            <h3 className="text-lg font-semibold text-stone-900">{portfolio.name}</h3>
+            <p className="text-sm text-stone-500">{portfolio.products.length} products</p>
           </div>
         </div>
         
         <div className="flex items-center gap-6">
           {/* Revenue */}
           <div className="text-right">
-            <p className="text-xs text-zinc-500">Revenue</p>
-            <p className="text-lg font-semibold text-zinc-900">{formatCurrency(portfolio.totalRevenue)}</p>
+            <p className="text-xs text-stone-500">Revenue</p>
+            <p className="text-lg font-semibold text-stone-900">{formatCurrency(portfolio.totalRevenue)}</p>
           </div>
           
           {/* Health Score */}
@@ -535,26 +535,26 @@ const TherapeuticAreaCard: React.FC<{
           </div>
           
           {expanded ? (
-            <ChevronDown className="w-5 h-5 text-zinc-400" />
+            <ChevronDown className="w-5 h-5 text-stone-400" />
           ) : (
-            <ChevronRight className="w-5 h-5 text-zinc-400" />
+            <ChevronRight className="w-5 h-5 text-stone-400" />
           )}
         </div>
       </button>
       
       {/* Expanded Products */}
       {expanded && (
-        <div className="border-t border-zinc-200 bg-zinc-50 p-4">
+        <div className="border-t border-stone-200 bg-stone-50 p-4">
           <div className="grid grid-cols-2 gap-3">
             {portfolio.products.map(product => (
               <button
                 key={product.id}
                 onClick={() => onProductClick?.(product)}
-                className="flex items-center justify-between p-3 bg-white rounded-lg border border-zinc-200 hover:border-blue-300 transition-colors text-left"
+                className="flex items-center justify-between p-3 bg-white rounded-lg border border-stone-200 hover:border-blue-300 transition-colors text-left"
               >
                 <div>
-                  <p className="text-sm font-medium text-zinc-900">{product.brandName}</p>
-                  <p className="text-xs text-zinc-500">{product.indication}</p>
+                  <p className="text-sm font-medium text-stone-900">{product.brandName}</p>
+                  <p className="text-xs text-stone-500">{product.indication}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   {product.hasRems && (
@@ -618,13 +618,13 @@ export const PharmaPortfolioDashboard: React.FC<PharmaPortfolioDashboardProps> =
   }, [portfolios]);
   
   return (
-    <div className={cn('flex flex-col h-full bg-zinc-50', className)}>
+    <div className={cn('flex flex-col h-full bg-stone-50', className)}>
       {/* Header */}
-      <div className="flex-shrink-0 bg-white border-b border-zinc-200 p-4">
+      <div className="flex-shrink-0 bg-white border-b border-stone-200 p-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-semibold text-zinc-900">Global Regulatory Portfolio</h1>
-            <p className="text-sm text-zinc-500">Enterprise-wide view across therapeutic areas</p>
+            <h1 className="text-xl font-semibold text-stone-900">Global Regulatory Portfolio</h1>
+            <p className="text-sm text-stone-500">Enterprise-wide view across therapeutic areas</p>
           </div>
           
           <div className="flex items-center gap-2">
@@ -632,7 +632,7 @@ export const PharmaPortfolioDashboard: React.FC<PharmaPortfolioDashboardProps> =
               onClick={() => setView('portfolio')}
               className={cn(
                 'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors duration-150',
-                view === 'portfolio' ? 'bg-blue-600 text-white' : 'text-zinc-600 hover:bg-zinc-100'
+                view === 'portfolio' ? 'bg-blue-600 text-white' : 'text-stone-600 hover:bg-stone-100'
               )}
             >
               <LayoutGrid className="w-4 h-4 inline mr-1" />
@@ -642,7 +642,7 @@ export const PharmaPortfolioDashboard: React.FC<PharmaPortfolioDashboardProps> =
               onClick={() => setView('matrix')}
               className={cn(
                 'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors duration-150',
-                view === 'matrix' ? 'bg-blue-600 text-white' : 'text-zinc-600 hover:bg-zinc-100'
+                view === 'matrix' ? 'bg-blue-600 text-white' : 'text-stone-600 hover:bg-stone-100'
               )}
             >
               <Globe className="w-4 h-4 inline mr-1" />
@@ -657,29 +657,29 @@ export const PharmaPortfolioDashboard: React.FC<PharmaPortfolioDashboardProps> =
             <p className="text-xs text-blue-600">Total Revenue</p>
             <p className="text-xl font-semibold text-blue-700">{formatCurrency(metrics.totalRevenue)}</p>
           </div>
-          <div className="p-3 bg-zinc-100 rounded-lg">
-            <p className="text-xs text-zinc-500">Products</p>
-            <p className="text-xl font-semibold text-zinc-900">{metrics.totalProducts}</p>
+          <div className="p-3 bg-stone-100 rounded-lg">
+            <p className="text-xs text-stone-500">Products</p>
+            <p className="text-xl font-semibold text-stone-900">{metrics.totalProducts}</p>
           </div>
           <div className={cn(
             'p-3 rounded-lg',
-            metrics.upcomingPDUFAs > 0 ? 'bg-amber-50' : 'bg-zinc-100'
+            metrics.upcomingPDUFAs > 0 ? 'bg-amber-50' : 'bg-stone-100'
           )}>
-            <p className={cn('text-xs', metrics.upcomingPDUFAs > 0 ? 'text-amber-600' : 'text-zinc-500')}>
+            <p className={cn('text-xs', metrics.upcomingPDUFAs > 0 ? 'text-amber-600' : 'text-stone-500')}>
               PDUFA (90d)
             </p>
-            <p className={cn('text-xl font-semibold', metrics.upcomingPDUFAs > 0 ? 'text-amber-700' : 'text-zinc-900')}>
+            <p className={cn('text-xl font-semibold', metrics.upcomingPDUFAs > 0 ? 'text-amber-700' : 'text-stone-900')}>
               {metrics.upcomingPDUFAs}
             </p>
           </div>
           <div className={cn(
             'p-3 rounded-lg',
-            metrics.overdueCommitments > 0 ? 'bg-red-50' : 'bg-zinc-100'
+            metrics.overdueCommitments > 0 ? 'bg-red-50' : 'bg-stone-100'
           )}>
-            <p className={cn('text-xs', metrics.overdueCommitments > 0 ? 'text-red-600' : 'text-zinc-500')}>
+            <p className={cn('text-xs', metrics.overdueCommitments > 0 ? 'text-red-600' : 'text-stone-500')}>
               Overdue Commitments
             </p>
-            <p className={cn('text-xl font-semibold', metrics.overdueCommitments > 0 ? 'text-red-700' : 'text-zinc-900')}>
+            <p className={cn('text-xl font-semibold', metrics.overdueCommitments > 0 ? 'text-red-700' : 'text-stone-900')}>
               {metrics.overdueCommitments}
             </p>
           </div>

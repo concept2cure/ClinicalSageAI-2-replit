@@ -59,7 +59,7 @@ export const INDRightRail: React.FC<INDRightRailProps> = ({
       <div className="flex-1 overflow-y-auto p-3 text-sm">
         {activeTab === 'guidance' && (
           <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-zinc-600 uppercase tracking-wider">
+            <h3 className="text-xs font-semibold text-stone-600 uppercase tracking-wider">
               Section Guidance
             </h3>
             <div className="space-y-2">
@@ -85,13 +85,13 @@ export const INDRightRail: React.FC<INDRightRailProps> = ({
 
         {activeTab === 'basis' && (
           <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-zinc-600 uppercase tracking-wider">
+            <h3 className="text-xs font-semibold text-stone-600 uppercase tracking-wider">
               Historical Basis
             </h3>
             {csrLoading || precedentLoading ? (
               <div className="flex items-center gap-2 py-4 justify-center">
                 <Loader2 className="w-4 h-4 animate-spin text-violet-500" />
-                <span className="text-xs text-zinc-500">Loading evidence…</span>
+                <span className="text-xs text-stone-500">Loading evidence…</span>
               </div>
             ) : (
               <>
@@ -110,13 +110,13 @@ export const INDRightRail: React.FC<INDRightRailProps> = ({
                   />
                 </div>
                 {csrResults.length > 0 && (
-                  <div className="space-y-1.5 pt-2 border-t border-zinc-200">
-                    <span className="text-xs font-semibold text-zinc-500 uppercase">
+                  <div className="space-y-1.5 pt-2 border-t border-stone-200">
+                    <span className="text-xs font-semibold text-stone-500 uppercase">
                       Top CSR Matches
                     </span>
                     {csrResults.slice(0, 5).map((csr: any, i: number) => (
-                      <div key={i} className="rounded border border-zinc-200 bg-white p-2">
-                        <span className="text-xs font-medium text-zinc-700 line-clamp-1 block">
+                      <div key={i} className="rounded border border-stone-200 bg-white p-2">
+                        <span className="text-xs font-medium text-stone-700 line-clamp-1 block">
                           {csr.title || `Study ${i + 1}`}
                         </span>
                         <div className="flex items-center gap-2 mt-0.5">
@@ -138,7 +138,7 @@ export const INDRightRail: React.FC<INDRightRailProps> = ({
                             </span>
                           )}
                           {csr.sponsor && (
-                            <span className="text-xs text-zinc-400">{csr.sponsor}</span>
+                            <span className="text-xs text-stone-400">{csr.sponsor}</span>
                           )}
                         </div>
                       </div>
@@ -146,7 +146,7 @@ export const INDRightRail: React.FC<INDRightRailProps> = ({
                   </div>
                 )}
                 {!indication && (
-                  <p className="text-xs text-zinc-400 italic">
+                  <p className="text-xs text-stone-400 italic">
                     Select a project with an indication to see matched evidence.
                   </p>
                 )}
@@ -157,7 +157,7 @@ export const INDRightRail: React.FC<INDRightRailProps> = ({
 
         {activeTab === 'inputs' && (
           <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-zinc-600 uppercase tracking-wider">
+            <h3 className="text-xs font-semibold text-stone-600 uppercase tracking-wider">
               Required Inputs
             </h3>
             <div className="space-y-2">
@@ -175,10 +175,10 @@ export const INDRightRail: React.FC<INDRightRailProps> = ({
 
         {activeTab === 'reviewer' && (
           <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-zinc-600 uppercase tracking-wider">
+            <h3 className="text-xs font-semibold text-stone-600 uppercase tracking-wider">
               Reviewer State
             </h3>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-stone-500">
               Track section review progress and approval states across the dossier.
             </p>
             <div className="space-y-2">
@@ -193,10 +193,10 @@ export const INDRightRail: React.FC<INDRightRailProps> = ({
 
         {activeTab === 'placement' && (
           <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-zinc-600 uppercase tracking-wider">
+            <h3 className="text-xs font-semibold text-stone-600 uppercase tracking-wider">
               CTD Placement
             </h3>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-stone-500">
               Common Technical Document module structure for {submissionType || 'IND'} filing.
             </p>
             <div className="space-y-1.5">
@@ -240,25 +240,25 @@ export const INDRightRail: React.FC<INDRightRailProps> = ({
 };
 
 const GuidanceItem: React.FC<{ title: string; body: string }> = ({ title, body }) => (
-  <div className="rounded-lg border border-zinc-200 bg-white p-2.5">
-    <span className="text-xs font-semibold text-zinc-700 block mb-1">{title}</span>
-    <span className="text-xs text-zinc-500 leading-relaxed">{body}</span>
+  <div className="rounded-lg border border-stone-200 bg-white p-2.5">
+    <span className="text-xs font-semibold text-stone-700 block mb-1">{title}</span>
+    <span className="text-xs text-stone-500 leading-relaxed">{body}</span>
   </div>
 );
 
 const BasisItem: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="flex items-center justify-between py-1.5 border-b border-zinc-200 last:border-0">
-    <span className="text-xs text-zinc-700">{label}</span>
-    <span className="text-xs text-zinc-400">{value}</span>
+  <div className="flex items-center justify-between py-1.5 border-b border-stone-200 last:border-0">
+    <span className="text-xs text-stone-700">{label}</span>
+    <span className="text-xs text-stone-400">{value}</span>
   </div>
 );
 
 const InputItem: React.FC<{ label: string; required?: boolean }> = ({ label, required }) => (
   <div className="flex items-center gap-2 py-1">
     <div
-      className={cn('w-2 h-2 rounded-full flex-shrink-0', required ? 'bg-red-400' : 'bg-zinc-300')}
+      className={cn('w-2 h-2 rounded-full flex-shrink-0', required ? 'bg-red-400' : 'bg-stone-300')}
     />
-    <span className="text-xs text-zinc-700">{label}</span>
+    <span className="text-xs text-stone-700">{label}</span>
     {required && <span className="text-xs text-red-500 font-medium ml-auto">Required</span>}
   </div>
 );
@@ -276,8 +276,8 @@ const ReviewItem: React.FC<{
   };
   const cfg = statusConfig[status];
   return (
-    <div className="flex items-center justify-between py-1.5 border-b border-zinc-200 last:border-0">
-      <span className="text-xs text-zinc-700">{label}</span>
+    <div className="flex items-center justify-between py-1.5 border-b border-stone-200 last:border-0">
+      <span className="text-xs text-stone-700">{label}</span>
       <span className={cn('text-xs px-1.5 py-0.5 rounded font-medium', cfg.bg, cfg.text)}>
         {cfg.label}
       </span>
@@ -292,24 +292,24 @@ const PlacementItem: React.FC<{ module: string; label: string; sections: string[
 }) => {
   const [open, setOpen] = useState(false);
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white">
+    <div className="rounded-lg border border-stone-200 bg-white">
       <button
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className="w-full flex items-center gap-2 px-2.5 py-2 text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded"
+        className="w-full flex items-center gap-2 px-2.5 py-2 text-left focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none rounded"
       >
         <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-semibold leading-none flex-shrink-0">
           M{module}
         </span>
-        <span className="text-xs font-medium text-zinc-700 flex-1">{label}</span>
-        <span className="text-xs text-zinc-400">{sections.length}</span>
+        <span className="text-xs font-medium text-stone-700 flex-1">{label}</span>
+        <span className="text-xs text-stone-400">{sections.length}</span>
       </button>
       {open && (
-        <div className="border-t border-zinc-200 px-2.5 py-1.5">
+        <div className="border-t border-stone-200 px-2.5 py-1.5">
           {sections.map(s => (
             <div
               key={s}
-              className="text-xs text-zinc-500 py-0.5 pl-3 border-l-2 border-zinc-200"
+              className="text-xs text-stone-500 py-0.5 pl-3 border-l-2 border-stone-200"
             >
               {s}
             </div>

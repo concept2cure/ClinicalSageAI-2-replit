@@ -82,9 +82,9 @@ const StatusIcon: React.FC<{ status: WorkflowStep['status']; size?: number }> = 
     case 'FAILED':
       return <AlertTriangle {...iconProps} className="text-red-500" />;
     case 'SKIPPED':
-      return <CheckCircle2 {...iconProps} className="text-zinc-400" />;
+      return <CheckCircle2 {...iconProps} className="text-stone-400" />;
     default:
-      return <Circle {...iconProps} className="text-zinc-400" />;
+      return <Circle {...iconProps} className="text-stone-400" />;
   }
 };
 
@@ -106,7 +106,7 @@ const TimelineStep: React.FC<{
       className={cn(
         "flex items-start gap-4 group text-left w-full",
         isClickable
-          ? "cursor-pointer hover:bg-zinc-50 rounded-lg -mx-2 px-2 py-2 transition-colors duration-150"
+          ? "cursor-pointer hover:bg-stone-50 rounded-lg -mx-2 px-2 py-2 transition-colors duration-150"
           : "cursor-not-allowed opacity-80"
       )}
       onClick={isClickable ? onClick : undefined}
@@ -119,12 +119,12 @@ const TimelineStep: React.FC<{
       <div className="flex flex-col items-center">
         <div className={cn(
           "flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-150",
-          isActive && "ring-2 ring-blue-200 ring-offset-2",
+          isActive && "ring-2 ring-stone-300 ring-offset-2",
           step.status === 'COMPLETED' && "border-green-500 bg-green-50",
           step.status === 'IN_PROGRESS' && "border-blue-500 bg-blue-50",
           step.status === 'AWAITING_APPROVAL' && "border-amber-500 bg-amber-50",
           step.status === 'BLOCKED' && "border-red-500 bg-red-50",
-          step.status === 'PENDING' && "border-zinc-200 bg-white",
+          step.status === 'PENDING' && "border-stone-200 bg-white",
           step.status === 'READY' && "border-blue-300 bg-blue-50"
         )}>
           <StatusIcon status={step.status} size={18} />
@@ -134,7 +134,7 @@ const TimelineStep: React.FC<{
         {!isLast && (
           <div className={cn(
             "w-0.5 h-12 mt-2",
-            step.status === 'COMPLETED' ? 'bg-emerald-300' : 'bg-zinc-200'
+            step.status === 'COMPLETED' ? 'bg-emerald-300' : 'bg-stone-200'
           )} />
         )}
       </div>
@@ -153,7 +153,7 @@ const TimelineStep: React.FC<{
           </h4>
           
           {step.isRequired && (
-            <span className="text-xs px-1.5 py-0.5 bg-zinc-100 text-zinc-600 rounded">
+            <span className="text-xs px-1.5 py-0.5 bg-stone-100 text-stone-600 rounded">
               Required
             </span>
           )}
@@ -166,13 +166,13 @@ const TimelineStep: React.FC<{
         </div>
         
         {step.description && (
-          <p className="text-sm text-zinc-500 mt-1">
+          <p className="text-sm text-stone-500 mt-1">
             {step.description}
           </p>
         )}
         
         {/* Metadata row */}
-        <div className="flex items-center gap-4 mt-2 text-xs text-zinc-400">
+        <div className="flex items-center gap-4 mt-2 text-xs text-stone-400">
           {step.stepType && (
             <span className="capitalize">{step.stepType.toLowerCase()}</span>
           )}
@@ -194,7 +194,7 @@ const TimelineStep: React.FC<{
           {canShowProof && (
             <a
               href={`/concept2cure/proofs/${workflowRunId}`}
-              className="text-xs text-blue-600 hover:text-blue-700"
+              className="text-xs text-stone-600 hover:text-stone-700"
               onClick={(event) => event.stopPropagation()}
             >
               • View Proof
@@ -223,35 +223,35 @@ const PhaseGroup: React.FC<{
       {/* Phase Header */}
       <button
         onClick={onToggle}
-        className="flex items-center gap-3 w-full p-3 rounded-lg bg-zinc-50 hover:bg-zinc-100 transition-colors duration-150"
+        className="flex items-center gap-3 w-full p-3 rounded-lg bg-stone-50 hover:bg-stone-100 transition-colors duration-150"
         aria-expanded={phase.isExpanded}
         aria-controls={`phase-${phase.id}`}
         data-testid={`button-phase-toggle-${phase.id}`}
       >
         {phase.isExpanded ? (
-          <ChevronDown size={18} className="text-zinc-500" />
+          <ChevronDown size={18} className="text-stone-500" />
         ) : (
-          <ChevronRight size={18} className="text-zinc-500" />
+          <ChevronRight size={18} className="text-stone-500" />
         )}
         
         <div className="flex-1 text-left">
-          <h3 className="font-semibold text-zinc-900">
+          <h3 className="font-semibold text-stone-900">
             {phase.name}
           </h3>
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-stone-500">
             {completedCount} of {totalCount} steps complete
           </p>
         </div>
         
         {/* Phase Progress */}
         <div className="flex items-center gap-2">
-          <div className="w-24 h-1.5 bg-zinc-200 rounded-full overflow-hidden">
+          <div className="w-24 h-1.5 bg-stone-200 rounded-full overflow-hidden">
             <div 
               className="h-full bg-green-500 transition-all duration-500"
               style={{ width: `${phaseProgress}%` }}
             />
           </div>
-          <span className="text-xs font-medium text-zinc-600 w-8">
+          <span className="text-xs font-medium text-stone-600 w-8">
             {phaseProgress}%
           </span>
         </div>
@@ -260,7 +260,7 @@ const PhaseGroup: React.FC<{
       {phase.isExpanded && (
         <div
           id={`phase-${phase.id}`}
-          className="mt-4 pl-4 border-l-2 border-zinc-200 ml-4"
+          className="mt-4 pl-4 border-l-2 border-stone-200 ml-4"
         >
           {phase.steps.map((step, idx) => (
             <TimelineStep
@@ -326,13 +326,13 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
   // Asset state badge color
   const assetStateBadgeClass = useMemo(() => {
     switch (assetState) {
-      case 'DRAFT': return 'bg-zinc-100 text-zinc-700';
+      case 'DRAFT': return 'bg-stone-100 text-stone-700';
       case 'REVIEW': return 'bg-amber-100 text-amber-700';
       case 'APPROVED': return 'bg-green-100 text-green-700';
       case 'SUBMITTED': return 'bg-blue-100 text-blue-700';
       case 'ACCEPTED': return 'bg-emerald-100 text-emerald-700';
       case 'DEFICIENCY': return 'bg-red-100 text-red-700';
-      default: return 'bg-zinc-100 text-zinc-700';
+      default: return 'bg-stone-100 text-stone-700';
     }
   }, [assetState]);
 
@@ -342,7 +342,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
         {/* Horizontal Progress Bar */}
         <div className="mb-6">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-zinc-700">
+            <span className="text-sm font-medium text-stone-700">
               Progress
             </span>
             <div className="flex items-center gap-2">
@@ -352,12 +352,12 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
               )}>
                 {assetState}
               </span>
-              <span className="text-sm font-medium text-zinc-900">
+              <span className="text-sm font-medium text-stone-900">
                 {progressPercent}%
               </span>
             </div>
           </div>
-          <div className="w-full h-2 bg-zinc-200 rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-stone-200 rounded-full overflow-hidden">
             <div 
               className="h-full bg-blue-500 transition-all duration-700"
               style={{ width: `${progressPercent}%` }}
@@ -378,10 +378,10 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
               >
                 <div className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-150",
-                  step.id === currentStepId && "ring-2 ring-blue-200",
+                  step.id === currentStepId && "ring-2 ring-stone-300",
                   step.status === 'COMPLETED' && "border-green-500 bg-green-50",
                   step.status === 'IN_PROGRESS' && "border-blue-500 bg-blue-50",
-                  step.status === 'PENDING' && "border-zinc-200"
+                  step.status === 'PENDING' && "border-stone-200"
                 )}>
                   <StatusIcon status={step.status} size={14} />
                 </div>
@@ -389,14 +389,14 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
                   "text-xs text-center max-w-[80px] truncate",
                   step.status === 'COMPLETED' && "text-green-600",
                   step.status === 'IN_PROGRESS' && "text-blue-600",
-                  step.status === 'PENDING' && "text-zinc-400"
+                  step.status === 'PENDING' && "text-stone-400"
                 )}>
                   {step.name}
                 </span>
               </div>
               
               {idx < steps.length - 1 && (
-                <div className="flex-1 h-0.5 mx-2 bg-zinc-200">
+                <div className="flex-1 h-0.5 mx-2 bg-stone-200">
                   <div 
                     className={cn(
                       "h-full transition-all duration-500",
@@ -417,12 +417,12 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
   return (
     <div className={cn("w-full", className)}>
       {/* Header with Progress */}
-      <div className="flex justify-between items-center mb-6 pb-4 border-b border-zinc-200">
+      <div className="flex justify-between items-center mb-6 pb-4 border-b border-stone-200">
         <div>
-          <h2 className="text-lg font-semibold text-zinc-900">
+          <h2 className="text-lg font-semibold text-stone-900">
             Workflow Progress
           </h2>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-stone-500">
             {steps.filter(s => s.status === 'COMPLETED').length} of {steps.length} steps complete
           </p>
         </div>
@@ -435,7 +435,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
             {assetState}
           </span>
           <div
-            className="text-2xl font-semibold text-zinc-900"
+            className="text-2xl font-semibold text-stone-900"
             aria-label={`Workflow progress ${progressPercent}%`}
           >
             {progressPercent}%
@@ -445,7 +445,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
       
       {/* Progress Bar */}
       <div className="mb-6">
-        <div className="w-full h-2 bg-zinc-100 rounded-full overflow-hidden">
+        <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden">
           <div 
             className="h-full bg-blue-500 transition-all duration-700 ease-out"
             style={{ width: `${progressPercent}%` }}

@@ -43,7 +43,7 @@ export function CollaborationPresence({
 
   if (others.length === 0 && isConnected) {
     return (
-      <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+      <div className="flex items-center gap-1.5 text-xs text-stone-400">
         <Wifi className="w-3 h-3 text-emerald-500" />
         <span>Live</span>
       </div>
@@ -52,8 +52,8 @@ export function CollaborationPresence({
 
   if (!isConnected) {
     return (
-      <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-        <WifiOff className="w-3 h-3 text-zinc-400" />
+      <div className="flex items-center gap-1.5 text-xs text-stone-400">
+        <WifiOff className="w-3 h-3 text-stone-400" />
         <span>Offline</span>
       </div>
     );
@@ -109,11 +109,11 @@ export function CollaborationPresence({
               )}
 
               {/* Hover tooltip */}
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-zinc-800 text-white text-[10px] rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-stone-800 text-white text-[10px] rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
                 {collab.name}
                 {isTyping && ' — typing...'}
                 {isEditing && !isTyping && ' — editing'}
-                <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-zinc-800" />
+                <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-stone-800" />
               </div>
             </div>
           );
@@ -121,14 +121,14 @@ export function CollaborationPresence({
 
         {/* Overflow count */}
         {overflow > 0 && (
-          <div className="w-6 h-6 rounded-full bg-zinc-200 flex items-center justify-center text-[9px] font-semibold text-zinc-600 ring-2 ring-white">
+          <div className="w-6 h-6 rounded-full bg-stone-200 flex items-center justify-center text-[9px] font-semibold text-stone-600 ring-2 ring-white">
             +{overflow}
           </div>
         )}
       </div>
 
       {/* Collaborator count */}
-      <span className="text-[10px] text-zinc-400 font-medium tabular-nums">
+      <span className="text-[10px] text-stone-400 font-medium tabular-nums">
         {others.length + 1} editing
       </span>
     </div>

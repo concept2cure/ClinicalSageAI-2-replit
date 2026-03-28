@@ -471,7 +471,7 @@ export function SubmissionBuilder({
             Generate Package
           </button>
           {onClose && (
-            <button onClick={onClose} aria-label="Close submission builder" title="Close" className="p-1.5 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none">
+            <button onClick={onClose} aria-label="Close submission builder" title="Close" className="p-1.5 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none">
               <X className="h-4 w-4" />
             </button>
           )}

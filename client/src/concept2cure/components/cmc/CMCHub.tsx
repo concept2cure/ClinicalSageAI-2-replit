@@ -153,7 +153,7 @@ const FormField: React.FC<{
   multiline?: boolean;
 }> = ({ label, value, onChange, placeholder, hint, required, multiline }) => (
   <div>
-    <label className="block text-sm font-medium text-zinc-700 mb-1">
+    <label className="block text-sm font-medium text-stone-700 mb-1">
       {label}
       {required && <span className="text-red-500 ml-0.5">*</span>}
     </label>
@@ -163,7 +163,7 @@ const FormField: React.FC<{
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={3}
-        className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 outline-none resize-none bg-white"
+        className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-1 outline-none resize-none bg-white"
       />
     ) : (
       <input
@@ -171,10 +171,10 @@ const FormField: React.FC<{
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 outline-none bg-white"
+        className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-1 outline-none bg-white"
       />
     )}
-    {hint && <p className="mt-1 text-xs text-zinc-400">{hint}</p>}
+    {hint && <p className="mt-1 text-xs text-stone-400">{hint}</p>}
   </div>
 );
 
@@ -206,17 +206,17 @@ const DocumentUploadPanel: React.FC<{
           'border border-dashed rounded-xl p-8 text-center transition-colors duration-150',
           isDragOver
             ? 'border-violet-400 bg-violet-50'
-            : 'border-zinc-200 hover:border-zinc-300 bg-zinc-50/50'
+            : 'border-stone-200 hover:border-stone-300 bg-stone-50/50'
         )}
       >
-        <FileUp className="w-10 h-10 text-zinc-400 mx-auto mb-3" />
-        <p className="text-sm font-medium text-zinc-700 mb-1">
+        <FileUp className="w-10 h-10 text-stone-400 mx-auto mb-3" />
+        <p className="text-sm font-medium text-stone-700 mb-1">
           Drop CMC documents here to auto-populate
         </p>
-        <p className="text-xs text-zinc-500 mb-3">
+        <p className="text-xs text-stone-500 mb-3">
           Supports CoA, batch records, stability reports, analytical methods (PDF, DOCX, CSV)
         </p>
-        <label className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-zinc-200 rounded-lg text-sm font-medium text-zinc-700 hover:bg-zinc-50 cursor-pointer transition-colors duration-150">
+        <label className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-stone-200 rounded-lg text-sm font-medium text-stone-700 hover:bg-stone-50 cursor-pointer transition-colors duration-150">
           <Upload className="w-4 h-4" />
           Browse Files
           <input
@@ -232,9 +232,9 @@ const DocumentUploadPanel: React.FC<{
       {uploadedFiles.length > 0 && (
         <div className="space-y-2">
           {uploadedFiles.map((file, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-zinc-200">
-              <FileText className="w-4 h-4 text-zinc-500" />
-              <span className="flex-1 text-sm text-zinc-700 truncate">{file.name}</span>
+            <div key={i} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-stone-200">
+              <FileText className="w-4 h-4 text-stone-500" />
+              <span className="flex-1 text-sm text-stone-700 truncate">{file.name}</span>
               {file.status === 'processing' && (
                 <span className="flex items-center gap-1.5 text-xs text-violet-600">
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -276,7 +276,7 @@ const GuardrailStatusCard: React.FC<{
     status === 'pass' && 'border-l-emerald-500',
     status === 'warn' && 'border-l-amber-500',
     status === 'fail' && 'border-l-red-500',
-    status === 'pending' && 'border-l-zinc-300',
+    status === 'pending' && 'border-l-stone-300',
   )}>
     <div className="flex items-center justify-between mb-1">
       <span className="text-xs font-semibold text-violet-600">ICH {guideline}</span>
@@ -285,7 +285,7 @@ const GuardrailStatusCard: React.FC<{
         status === 'pass' && 'bg-emerald-50 text-emerald-700',
         status === 'warn' && 'bg-amber-50 text-amber-700',
         status === 'fail' && 'bg-red-50 text-red-700',
-        status === 'pending' && 'bg-zinc-50 text-zinc-500',
+        status === 'pending' && 'bg-stone-50 text-stone-500',
       )}>
         {status === 'pass' && <CheckCircle2 className="w-3 h-3" />}
         {status === 'warn' && <AlertTriangle className="w-3 h-3" />}
@@ -294,8 +294,8 @@ const GuardrailStatusCard: React.FC<{
         {status === 'pass' ? 'Compliant' : status === 'warn' ? 'Review' : status === 'fail' ? 'Non-compliant' : 'Pending'}
       </span>
     </div>
-    <p className="text-sm font-medium text-zinc-900">{title}</p>
-    {message && <p className="text-xs text-zinc-500 mt-0.5">{message}</p>}
+    <p className="text-sm font-medium text-stone-900">{title}</p>
+    {message && <p className="text-xs text-stone-500 mt-0.5">{message}</p>}
   </div>
 );
 
@@ -466,15 +466,15 @@ export const CMCHub: React.FC<CMCHubProps> = ({
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#faf9f5]">
       {/* Header */}
-      <div className="flex-shrink-0 border-b border-zinc-200 bg-white/80 backdrop-blur-sm px-6 py-4">
+      <div className="flex-shrink-0 border-b border-stone-200 bg-white/80 backdrop-blur-sm px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center shadow-sm">
               <Beaker className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-zinc-900">CMC Module 3</h1>
-              <p className="text-xs text-zinc-500">
+              <h1 className="text-lg font-semibold text-stone-900">CMC Module 3</h1>
+              <p className="text-xs text-stone-500">
                 {projectName || 'No project selected'} {submissionType ? `• ${submissionType}` : ''}
               </p>
             </div>
@@ -513,7 +513,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                 'flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-t-lg border-b-2 transition-colors whitespace-nowrap',
                 activeTab === tab.id
                   ? 'border-violet-500 text-violet-700 bg-white'
-                  : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50'
+                  : 'border-transparent text-stone-500 hover:text-stone-700 hover:bg-stone-50'
               )}
             >
               <tab.icon className="w-3.5 h-3.5" />
@@ -535,38 +535,38 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                 <div className="bg-white rounded-xl border p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <FlaskConical className="w-4 h-4 text-violet-500" />
-                    <span className="text-xs font-medium text-zinc-500">Drug Substance (3.2.S)</span>
+                    <span className="text-xs font-medium text-stone-500">Drug Substance (3.2.S)</span>
                   </div>
-                  <div className="text-2xl font-semibold text-zinc-900">{dsCompletion}%</div>
-                  <div className="mt-2 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+                  <div className="text-2xl font-semibold text-stone-900">{dsCompletion}%</div>
+                  <div className="mt-2 h-1.5 bg-stone-100 rounded-full overflow-hidden">
                     <div className="h-full bg-violet-500 rounded-full transition-all duration-150" style={{ width: `${dsCompletion}%` }} />
                   </div>
                 </div>
                 <div className="bg-white rounded-xl border p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Pill className="w-4 h-4 text-emerald-500" />
-                    <span className="text-xs font-medium text-zinc-500">Drug Product (3.2.P)</span>
+                    <span className="text-xs font-medium text-stone-500">Drug Product (3.2.P)</span>
                   </div>
-                  <div className="text-2xl font-semibold text-zinc-900">{dpCompletion}%</div>
-                  <div className="mt-2 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+                  <div className="text-2xl font-semibold text-stone-900">{dpCompletion}%</div>
+                  <div className="mt-2 h-1.5 bg-stone-100 rounded-full overflow-hidden">
                     <div className="h-full bg-emerald-500 rounded-full transition-all duration-150" style={{ width: `${dpCompletion}%` }} />
                   </div>
                 </div>
                 <div className="bg-white rounded-xl border p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Shield className="w-4 h-4 text-blue-500" />
-                    <span className="text-xs font-medium text-zinc-500">ICH Compliance</span>
+                    <span className="text-xs font-medium text-stone-500">ICH Compliance</span>
                   </div>
-                  <div className="text-2xl font-semibold text-zinc-900">
+                  <div className="text-2xl font-semibold text-stone-900">
                     {guardrails.filter(g => g.status === 'pass').length}/{guardrails.length}
                   </div>
-                  <p className="text-xs text-zinc-400 mt-1">guidelines checked</p>
+                  <p className="text-xs text-stone-400 mt-1">guidelines checked</p>
                 </div>
               </div>
 
               {/* ICH Guardrails */}
               <div>
-                <h2 className="text-sm font-semibold text-zinc-900 mb-3 flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-stone-900 mb-3 flex items-center gap-2">
                   <Shield className="w-4 h-4 text-violet-500" />
                   ICH Quality Guardrails
                 </h2>
@@ -579,7 +579,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
 
               {/* Document Upload */}
               <div>
-                <h2 className="text-sm font-semibold text-zinc-900 mb-3 flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-stone-900 mb-3 flex items-center gap-2">
                   <Upload className="w-4 h-4 text-violet-500" />
                   Upload Documents to Auto-Populate
                 </h2>
@@ -588,7 +588,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
 
               {/* Quick actions */}
               <div>
-                <h2 className="text-sm font-semibold text-zinc-900 mb-3">Quick Actions</h2>
+                <h2 className="text-sm font-semibold text-stone-900 mb-3">Quick Actions</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <button
                     onClick={() => setActiveTab('drug-substance')}
@@ -596,10 +596,10 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                   >
                     <FlaskConical className="w-5 h-5 text-violet-500" />
                     <div>
-                      <p className="text-sm font-medium text-zinc-900">Enter Drug Substance Data</p>
-                      <p className="text-xs text-zinc-500">CTD Section 3.2.S</p>
+                      <p className="text-sm font-medium text-stone-900">Enter Drug Substance Data</p>
+                      <p className="text-xs text-stone-500">CTD Section 3.2.S</p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-zinc-400 ml-auto" />
+                    <ChevronRight className="w-4 h-4 text-stone-400 ml-auto" />
                   </button>
                   <button
                     onClick={() => setActiveTab('drug-product')}
@@ -607,10 +607,10 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                   >
                     <Pill className="w-5 h-5 text-emerald-500" />
                     <div>
-                      <p className="text-sm font-medium text-zinc-900">Enter Drug Product Data</p>
-                      <p className="text-xs text-zinc-500">CTD Section 3.2.P</p>
+                      <p className="text-sm font-medium text-stone-900">Enter Drug Product Data</p>
+                      <p className="text-xs text-stone-500">CTD Section 3.2.P</p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-zinc-400 ml-auto" />
+                    <ChevronRight className="w-4 h-4 text-stone-400 ml-auto" />
                   </button>
                   <button
                     onClick={() => setActiveTab('generate')}
@@ -618,10 +618,10 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                   >
                     <Sparkles className="w-5 h-5 text-blue-500" />
                     <div>
-                      <p className="text-sm font-medium text-zinc-900">Generate Module 3 Documents</p>
-                      <p className="text-xs text-zinc-500">AI-powered eCTD drafting</p>
+                      <p className="text-sm font-medium text-stone-900">Generate Module 3 Documents</p>
+                      <p className="text-xs text-stone-500">AI-powered eCTD drafting</p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-zinc-400 ml-auto" />
+                    <ChevronRight className="w-4 h-4 text-stone-400 ml-auto" />
                   </button>
                   <button
                     onClick={() => setActiveTab('stability')}
@@ -629,10 +629,10 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                   >
                     <ThermometerSun className="w-5 h-5 text-amber-500" />
                     <div>
-                      <p className="text-sm font-medium text-zinc-900">Stability Studies</p>
-                      <p className="text-xs text-zinc-500">ICH Q1A compliance</p>
+                      <p className="text-sm font-medium text-stone-900">Stability Studies</p>
+                      <p className="text-xs text-stone-500">ICH Q1A compliance</p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-zinc-400 ml-auto" />
+                    <ChevronRight className="w-4 h-4 text-stone-400 ml-auto" />
                   </button>
                 </div>
               </div>
@@ -644,13 +644,13 @@ export const CMCHub: React.FC<CMCHubProps> = ({
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-zinc-900">Drug Substance (3.2.S)</h2>
-                  <p className="text-sm text-zinc-500">
+                  <h2 className="text-lg font-semibold text-stone-900">Drug Substance (3.2.S)</h2>
+                  <p className="text-sm text-stone-500">
                     Enter the drug substance information per ICH M4Q(R1)
                   </p>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-zinc-500">
-                  <div className="w-20 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+                <div className="flex items-center gap-2 text-xs text-stone-500">
+                  <div className="w-20 h-1.5 bg-stone-100 rounded-full overflow-hidden">
                     <div className="h-full bg-violet-500 rounded-full" style={{ width: `${dsCompletion}%` }} />
                   </div>
                   {dsCompletion}% complete
@@ -659,7 +659,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
 
               {/* 3.2.S.1 General Information */}
               <div className="bg-white rounded-xl border p-5">
-                <h3 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-stone-900 mb-4 flex items-center gap-2">
                   <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded font-semibold">3.2.S.1</span>
                   General Information
                 </h3>
@@ -675,7 +675,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
 
               {/* 3.2.S.1 Physical Properties */}
               <div className="bg-white rounded-xl border p-5">
-                <h3 className="text-sm font-semibold text-zinc-900 mb-4">Physical Properties</h3>
+                <h3 className="text-sm font-semibold text-stone-900 mb-4">Physical Properties</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField label="Solubility" value={dsForm.solubility} onChange={v => updateDsField('solubility', v)} placeholder="e.g., Freely soluble in methanol, sparingly soluble in water" />
                   <FormField label="Melting Point" value={dsForm.meltingPoint} onChange={v => updateDsField('meltingPoint', v)} placeholder="e.g., 159.2-160.7°C" />
@@ -685,7 +685,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
 
               {/* 3.2.S.2 Manufacture */}
               <div className="bg-white rounded-xl border p-5">
-                <h3 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-stone-900 mb-4 flex items-center gap-2">
                   <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded font-semibold">3.2.S.2</span>
                   Manufacture
                 </h3>
@@ -697,11 +697,11 @@ export const CMCHub: React.FC<CMCHubProps> = ({
 
               {/* Upload section */}
               <div className="bg-white rounded-xl border p-5">
-                <h3 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-stone-900 mb-4 flex items-center gap-2">
                   <Upload className="w-4 h-4 text-violet-500" />
                   Upload Drug Substance Documents
                 </h3>
-                <p className="text-xs text-zinc-500 mb-3">
+                <p className="text-xs text-stone-500 mb-3">
                   Upload CoA, batch records, or characterization reports to auto-populate fields
                 </p>
                 <DocumentUploadPanel onUpload={handleUpload} uploadedFiles={uploadedFiles} />
@@ -714,13 +714,13 @@ export const CMCHub: React.FC<CMCHubProps> = ({
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-zinc-900">Drug Product (3.2.P)</h2>
-                  <p className="text-sm text-zinc-500">
+                  <h2 className="text-lg font-semibold text-stone-900">Drug Product (3.2.P)</h2>
+                  <p className="text-sm text-stone-500">
                     Enter the drug product information per ICH M4Q(R1)
                   </p>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-zinc-500">
-                  <div className="w-20 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+                <div className="flex items-center gap-2 text-xs text-stone-500">
+                  <div className="w-20 h-1.5 bg-stone-100 rounded-full overflow-hidden">
                     <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${dpCompletion}%` }} />
                   </div>
                   {dpCompletion}% complete
@@ -729,7 +729,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
 
               {/* 3.2.P.1 Description and Composition */}
               <div className="bg-white rounded-xl border p-5">
-                <h3 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-stone-900 mb-4 flex items-center gap-2">
                   <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs rounded font-semibold">3.2.P.1</span>
                   Description and Composition
                 </h3>
@@ -743,7 +743,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
 
               {/* 3.2.P.1 Composition */}
               <div className="bg-white rounded-xl border p-5">
-                <h3 className="text-sm font-semibold text-zinc-900 mb-4">Composition</h3>
+                <h3 className="text-sm font-semibold text-stone-900 mb-4">Composition</h3>
                 <div className="grid grid-cols-1 gap-4">
                   <FormField label="Composition / Formula" value={dpForm.composition} onChange={v => updateDpField('composition', v)} placeholder="List all components and their quantities per unit dose..." multiline hint="Include active ingredient, excipients, coating materials" />
                   <FormField label="Excipients" value={dpForm.excipients} onChange={v => updateDpField('excipients', v)} placeholder="e.g., Calcium carbonate, Microcrystalline cellulose, Croscarmellose sodium..." multiline />
@@ -753,7 +753,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
 
               {/* 3.2.P.7 Container Closure & Storage */}
               <div className="bg-white rounded-xl border p-5">
-                <h3 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-stone-900 mb-4 flex items-center gap-2">
                   <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs rounded font-semibold">3.2.P.7-P.8</span>
                   Container Closure & Stability
                 </h3>
@@ -771,29 +771,29 @@ export const CMCHub: React.FC<CMCHubProps> = ({
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-zinc-900">Specifications</h2>
-                  <p className="text-sm text-zinc-500">ICH Q6A/Q6B compliant quality specifications</p>
+                  <h2 className="text-lg font-semibold text-stone-900">Specifications</h2>
+                  <p className="text-sm text-stone-500">ICH Q6A/Q6B compliant quality specifications</p>
                 </div>
-                <button className="flex items-center gap-2 px-3 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none">
+                <button className="flex items-center gap-2 px-3 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none">
                   <Plus className="w-4 h-4" />
                   Add Specification
                 </button>
               </div>
 
               <div className="bg-white rounded-xl border p-6 text-center">
-                <ClipboardCheck className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
-                <h3 className="text-sm font-medium text-zinc-700 mb-1">No specifications yet</h3>
-                <p className="text-xs text-zinc-500 max-w-md mx-auto mb-4">
+                <ClipboardCheck className="w-12 h-12 text-stone-400 mx-auto mb-3" />
+                <h3 className="text-sm font-medium text-stone-700 mb-1">No specifications yet</h3>
+                <p className="text-xs text-stone-500 max-w-md mx-auto mb-4">
                   Add quality specifications for drug substance and drug product, or upload a CoA to auto-generate.
                 </p>
                 <div className="flex items-center justify-center gap-3">
-                  <button className="flex items-center gap-2 px-4 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none">
+                  <button className="flex items-center gap-2 px-4 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none">
                     <Plus className="w-4 h-4" />
                     Add Manually
                   </button>
                   <button
                     onClick={() => setActiveTab('overview')}
-                    className="flex items-center gap-2 px-4 py-2 text-sm border border-zinc-200 text-zinc-700 rounded-lg hover:bg-zinc-50"
+                    className="flex items-center gap-2 px-4 py-2 text-sm border border-stone-200 text-stone-700 rounded-lg hover:bg-stone-50"
                   >
                     <Upload className="w-4 h-4" />
                     Upload CoA
@@ -808,10 +808,10 @@ export const CMCHub: React.FC<CMCHubProps> = ({
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-zinc-900">Stability Studies</h2>
-                  <p className="text-sm text-zinc-500">ICH Q1A(R2) stability data management</p>
+                  <h2 className="text-lg font-semibold text-stone-900">Stability Studies</h2>
+                  <p className="text-sm text-stone-500">ICH Q1A(R2) stability data management</p>
                 </div>
-                <button className="flex items-center gap-2 px-3 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none">
+                <button className="flex items-center gap-2 px-3 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none">
                   <Plus className="w-4 h-4" />
                   New Study
                 </button>
@@ -819,7 +819,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
 
               {/* Study conditions reference */}
               <div className="bg-white rounded-xl border p-5">
-                <h3 className="text-sm font-semibold text-zinc-900 mb-3">ICH Storage Conditions Reference</h3>
+                <h3 className="text-sm font-semibold text-stone-900 mb-3">ICH Storage Conditions Reference</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                   <div className="p-3 bg-blue-50 rounded-lg">
                     <p className="font-medium text-blue-700 mb-1">Long-term</p>
@@ -840,12 +840,12 @@ export const CMCHub: React.FC<CMCHubProps> = ({
               </div>
 
               <div className="bg-white rounded-xl border p-6 text-center">
-                <ThermometerSun className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
-                <h3 className="text-sm font-medium text-zinc-700 mb-1">No stability studies yet</h3>
-                <p className="text-xs text-zinc-500 max-w-md mx-auto mb-4">
+                <ThermometerSun className="w-12 h-12 text-stone-400 mx-auto mb-3" />
+                <h3 className="text-sm font-medium text-stone-700 mb-1">No stability studies yet</h3>
+                <p className="text-xs text-stone-500 max-w-md mx-auto mb-4">
                   Create a stability study or upload stability data to track time-point results.
                 </p>
-                <button className="flex items-center gap-2 px-4 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none mx-auto">
+                <button className="flex items-center gap-2 px-4 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none mx-auto">
                   <Plus className="w-4 h-4" />
                   Create Stability Protocol
                 </button>
@@ -858,10 +858,10 @@ export const CMCHub: React.FC<CMCHubProps> = ({
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-zinc-900">Impurity Profile</h2>
-                  <p className="text-sm text-zinc-500">ICH Q3A/Q3B/Q3C/Q3D impurity management</p>
+                  <h2 className="text-lg font-semibold text-stone-900">Impurity Profile</h2>
+                  <p className="text-sm text-stone-500">ICH Q3A/Q3B/Q3C/Q3D impurity management</p>
                 </div>
-                <button className="flex items-center gap-2 px-3 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none">
+                <button className="flex items-center gap-2 px-3 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none">
                   <Plus className="w-4 h-4" />
                   Add Impurity
                 </button>
@@ -869,19 +869,19 @@ export const CMCHub: React.FC<CMCHubProps> = ({
 
               {/* ICH thresholds reference */}
               <div className="bg-white rounded-xl border p-5">
-                <h3 className="text-sm font-semibold text-zinc-900 mb-3">ICH Q3A(R2) Thresholds — Drug Substances</h3>
+                <h3 className="text-sm font-semibold text-stone-900 mb-3">ICH Q3A(R2) Thresholds — Drug Substances</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="border-b border-zinc-200">
-                        <th className="px-3 py-2 text-left font-medium text-zinc-600">Max Daily Dose</th>
-                        <th className="px-3 py-2 text-right font-medium text-zinc-600">Reporting</th>
-                        <th className="px-3 py-2 text-right font-medium text-zinc-600">Identification</th>
-                        <th className="px-3 py-2 text-right font-medium text-zinc-600">Qualification</th>
+                      <tr className="border-b border-stone-200">
+                        <th className="px-3 py-2 text-left font-medium text-stone-600">Max Daily Dose</th>
+                        <th className="px-3 py-2 text-right font-medium text-stone-600">Reporting</th>
+                        <th className="px-3 py-2 text-right font-medium text-stone-600">Identification</th>
+                        <th className="px-3 py-2 text-right font-medium text-stone-600">Qualification</th>
                       </tr>
                     </thead>
-                    <tbody className="text-zinc-700">
-                      <tr className="border-b border-zinc-50">
+                    <tbody className="text-stone-700">
+                      <tr className="border-b border-stone-50">
                         <td className="px-3 py-2">≤ 2g/day</td>
                         <td className="px-3 py-2 text-right font-mono">0.05%</td>
                         <td className="px-3 py-2 text-right font-mono">0.10% or 1.0 mg/day</td>
@@ -899,12 +899,12 @@ export const CMCHub: React.FC<CMCHubProps> = ({
               </div>
 
               <div className="bg-white rounded-xl border p-6 text-center">
-                <Beaker className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
-                <h3 className="text-sm font-medium text-zinc-700 mb-1">No impurities recorded yet</h3>
-                <p className="text-xs text-zinc-500 max-w-md mx-auto mb-4">
+                <Beaker className="w-12 h-12 text-stone-400 mx-auto mb-3" />
+                <h3 className="text-sm font-medium text-stone-700 mb-1">No impurities recorded yet</h3>
+                <p className="text-xs text-stone-500 max-w-md mx-auto mb-4">
                   Add impurities manually or upload analytical data (HPLC chromatograms, CoA) to auto-detect.
                 </p>
-                <button className="flex items-center gap-2 px-4 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none mx-auto">
+                <button className="flex items-center gap-2 px-4 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none mx-auto">
                   <Plus className="w-4 h-4" />
                   Add Impurity
                 </button>
@@ -916,8 +916,8 @@ export const CMCHub: React.FC<CMCHubProps> = ({
           {activeTab === 'generate' && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-lg font-semibold text-zinc-900">Generate Module 3 Documents</h2>
-                <p className="text-sm text-zinc-500">
+                <h2 className="text-lg font-semibold text-stone-900">Generate Module 3 Documents</h2>
+                <p className="text-sm text-stone-500">
                   AI-powered eCTD Module 3 drafting based on your CMC data. Each section is generated
                   using your drug substance and drug product data with ICH M4Q(R1) compliance.
                 </p>
@@ -925,7 +925,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
 
               {/* Data readiness check */}
               <div className="bg-white rounded-xl border p-4">
-                <h3 className="text-sm font-semibold text-zinc-900 mb-3">Data Readiness</h3>
+                <h3 className="text-sm font-semibold text-stone-900 mb-3">Data Readiness</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div className={cn(
                     'p-3 rounded-lg text-center',
@@ -934,7 +934,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                     <p className={cn('text-lg font-semibold', dsCompletion > 50 ? 'text-emerald-700' : 'text-amber-700')}>
                       {dsCompletion}%
                     </p>
-                    <p className="text-xs text-zinc-600">Drug Substance</p>
+                    <p className="text-xs text-stone-600">Drug Substance</p>
                   </div>
                   <div className={cn(
                     'p-3 rounded-lg text-center',
@@ -943,22 +943,22 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                     <p className={cn('text-lg font-semibold', dpCompletion > 50 ? 'text-emerald-700' : 'text-amber-700')}>
                       {dpCompletion}%
                     </p>
-                    <p className="text-xs text-zinc-600">Drug Product</p>
+                    <p className="text-xs text-stone-600">Drug Product</p>
                   </div>
-                  <div className="p-3 rounded-lg bg-zinc-50 text-center">
-                    <p className="text-lg font-semibold text-zinc-500">0</p>
-                    <p className="text-xs text-zinc-600">Specifications</p>
+                  <div className="p-3 rounded-lg bg-stone-50 text-center">
+                    <p className="text-lg font-semibold text-stone-500">0</p>
+                    <p className="text-xs text-stone-600">Specifications</p>
                   </div>
-                  <div className="p-3 rounded-lg bg-zinc-50 text-center">
-                    <p className="text-lg font-semibold text-zinc-500">0</p>
-                    <p className="text-xs text-zinc-600">Stability Studies</p>
+                  <div className="p-3 rounded-lg bg-stone-50 text-center">
+                    <p className="text-lg font-semibold text-stone-500">0</p>
+                    <p className="text-xs text-stone-600">Stability Studies</p>
                   </div>
                 </div>
               </div>
 
               {/* Drug Substance sections */}
               <div>
-                <h3 className="text-sm font-semibold text-zinc-900 mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-stone-900 mb-3 flex items-center gap-2">
                   <FlaskConical className="w-4 h-4 text-violet-500" />
                   Drug Substance Sections (3.2.S)
                 </h3>
@@ -970,7 +970,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                       <div key={section.code} className="flex items-center gap-3 p-3 bg-white rounded-lg border hover:border-blue-200 transition-colors duration-150">
                         <Icon className="w-4 h-4 text-violet-500 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-zinc-900">{section.code} — {section.title}</p>
+                          <p className="text-sm font-medium text-stone-900">{section.code} — {section.title}</p>
                         </div>
                         <button
                           onClick={() => handleGenerateSection(section.code, section.title)}
@@ -992,7 +992,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
 
               {/* Drug Product sections */}
               <div>
-                <h3 className="text-sm font-semibold text-zinc-900 mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-stone-900 mb-3 flex items-center gap-2">
                   <Pill className="w-4 h-4 text-emerald-500" />
                   Drug Product Sections (3.2.P)
                 </h3>
@@ -1004,7 +1004,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                       <div key={section.code} className="flex items-center gap-3 p-3 bg-white rounded-lg border hover:border-emerald-200 transition-colors duration-150">
                         <Icon className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-zinc-900">{section.code} — {section.title}</p>
+                          <p className="text-sm font-medium text-stone-900">{section.code} — {section.title}</p>
                         </div>
                         <button
                           onClick={() => handleGenerateSection(section.code, section.title)}
@@ -1026,16 +1026,16 @@ export const CMCHub: React.FC<CMCHubProps> = ({
 
               {/* Export section */}
               <div className="bg-white rounded-xl border p-5">
-                <h3 className="text-sm font-semibold text-zinc-900 mb-2">Export Complete Module 3</h3>
-                <p className="text-xs text-zinc-500 mb-4">
+                <h3 className="text-sm font-semibold text-stone-900 mb-2">Export Complete Module 3</h3>
+                <p className="text-xs text-stone-500 mb-4">
                   Generate all Module 3 sections as a complete package for eCTD submission.
                 </p>
                 <div className="flex items-center gap-3">
-                  <button className="flex items-center gap-2 px-4 py-2 text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-800">
+                  <button className="flex items-center gap-2 px-4 py-2 text-sm bg-stone-900 text-white rounded-lg hover:bg-stone-800">
                     <Download className="w-4 h-4" />
                     Export as DOCX
                   </button>
-                  <button className="flex items-center gap-2 px-4 py-2 text-sm border border-zinc-200 text-zinc-700 rounded-lg hover:bg-zinc-50">
+                  <button className="flex items-center gap-2 px-4 py-2 text-sm border border-stone-200 text-stone-700 rounded-lg hover:bg-stone-50">
                     <Download className="w-4 h-4" />
                     Export as PDF
                   </button>

@@ -205,7 +205,7 @@ function PriorityBadge({ priority }: { priority: AlertPriority }) {
     critical: { bg: 'bg-red-100 text-red-700', icon: AlertCircle },
     high: { bg: 'bg-amber-100 text-amber-700', icon: AlertTriangle },
     medium: { bg: 'bg-blue-100 text-blue-700', icon: Info },
-    low: { bg: 'bg-zinc-100 text-zinc-600', icon: Info },
+    low: { bg: 'bg-stone-100 text-stone-600', icon: Info },
   }[priority];
 
   const Icon = config.icon;
@@ -225,7 +225,7 @@ function SourceBadge({ source }: { source: AlertSource }) {
     'Health Canada': 'bg-red-50 text-red-700 border-red-200',
     ICH: 'bg-violet-50 text-violet-700 border-blue-200',
     WHO: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    Internal: 'bg-zinc-50 text-zinc-600 border-zinc-200',
+    Internal: 'bg-stone-50 text-stone-600 border-stone-200',
   };
 
   return (
@@ -297,7 +297,7 @@ export function AlertFeed({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12 text-zinc-400">
+      <div className="flex items-center justify-center py-12 text-stone-400">
         <Loader2 className="w-5 h-5 animate-spin mr-2" />
         <span className="text-sm">Loading regulatory alerts...</span>
       </div>
@@ -307,13 +307,13 @@ export function AlertFeed({
   return (
     <div className={cn('flex flex-col h-full bg-white', compact && 'text-xs')}>
       {/* Header */}
-      <div className="px-4 py-3 border-b border-zinc-200 bg-amber-50">
+      <div className="px-4 py-3 border-b border-stone-200 bg-amber-50">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <BellRing className="w-5 h-5 text-amber-600" />
             <div>
-              <h2 className="text-sm font-semibold text-zinc-900">Regulatory Alerts</h2>
-              <p className="text-[10px] text-zinc-500">
+              <h2 className="text-sm font-semibold text-stone-900">Regulatory Alerts</h2>
+              <p className="text-[10px] text-stone-500">
                 {stats.unacknowledged} unread{stats.critical > 0 && ` · ${stats.critical} critical`}
               </p>
             </div>
@@ -324,11 +324,11 @@ export function AlertFeed({
               className="p-1.5 rounded-md hover:bg-white/60 transition-colors duration-150"
               title="Refresh alerts"
             >
-              <RefreshCw className="w-3.5 h-3.5 text-zinc-500" />
+              <RefreshCw className="w-3.5 h-3.5 text-stone-500" />
             </button>
             {onClose && (
-              <button onClick={onClose} aria-label="Close alert feed" title="Close" className="p-1.5 rounded-md hover:bg-white/60 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none">
-                <X className="w-3.5 h-3.5 text-zinc-500" />
+              <button onClick={onClose} aria-label="Close alert feed" title="Close" className="p-1.5 rounded-md hover:bg-white/60 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none">
+                <X className="w-3.5 h-3.5 text-stone-500" />
               </button>
             )}
           </div>
@@ -346,7 +346,7 @@ export function AlertFeed({
               <AlertTriangle className="w-3 h-3" /> {stats.high} High
             </span>
           )}
-          <span className="text-zinc-400">{stats.total} total</span>
+          <span className="text-stone-400">{stats.total} total</span>
         </div>
 
         {/* Filters */}
@@ -354,7 +354,7 @@ export function AlertFeed({
           <select
             value={filterPriority}
             onChange={e => setFilterPriority(e.target.value as AlertPriority | 'all')}
-            className="text-[10px] px-2 py-1 border border-zinc-200 rounded-md bg-white text-zinc-600"
+            className="text-[10px] px-2 py-1 border border-stone-200 rounded-md bg-white text-stone-600"
           >
             <option value="all">All priorities</option>
             <option value="critical">Critical</option>
@@ -365,7 +365,7 @@ export function AlertFeed({
           <select
             value={filterSource}
             onChange={e => setFilterSource(e.target.value as AlertSource | 'all')}
-            className="text-[10px] px-2 py-1 border border-zinc-200 rounded-md bg-white text-zinc-600"
+            className="text-[10px] px-2 py-1 border border-stone-200 rounded-md bg-white text-stone-600"
           >
             <option value="all">All sources</option>
             <option value="FDA">FDA</option>
@@ -375,12 +375,12 @@ export function AlertFeed({
             <option value="WHO">WHO</option>
             <option value="Internal">Internal</option>
           </select>
-          <label className="flex items-center gap-1 text-[10px] text-zinc-500 cursor-pointer ml-auto">
+          <label className="flex items-center gap-1 text-[10px] text-stone-500 cursor-pointer ml-auto">
             <input
               type="checkbox"
               checked={showAcknowledged}
               onChange={e => setShowAcknowledged(e.target.checked)}
-              className="rounded border-zinc-300 text-amber-600 w-3 h-3"
+              className="rounded border-stone-300 text-amber-600 w-3 h-3"
             />
             Show read
           </label>
@@ -391,11 +391,11 @@ export function AlertFeed({
       <div className="flex-1 overflow-y-auto">
         {filteredAlerts.length === 0 ? (
           <div className="text-center py-12">
-            <Bell className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
-            <p className="text-xs text-zinc-400">No alerts matching filters</p>
+            <Bell className="w-8 h-8 text-stone-300 mx-auto mb-2" />
+            <p className="text-xs text-stone-400">No alerts matching filters</p>
           </div>
         ) : (
-          <div className="divide-y divide-zinc-100">
+          <div className="divide-y divide-stone-100">
             {filteredAlerts.map(alert => {
               const isExpanded = expandedAlert === alert.id;
 
@@ -405,7 +405,7 @@ export function AlertFeed({
                   className={cn(
                     'px-4 py-3 transition-colors duration-150',
                     !alert.acknowledged && 'bg-amber-50/30',
-                    isExpanded && 'bg-zinc-50',
+                    isExpanded && 'bg-stone-50',
                   )}
                 >
                   {/* Alert header */}
@@ -414,9 +414,9 @@ export function AlertFeed({
                     className="w-full text-left flex items-start gap-2"
                   >
                     {isExpanded ? (
-                      <ChevronDown className="w-3.5 h-3.5 text-zinc-400 mt-0.5 shrink-0" />
+                      <ChevronDown className="w-3.5 h-3.5 text-stone-400 mt-0.5 shrink-0" />
                     ) : (
-                      <ChevronRight className="w-3.5 h-3.5 text-zinc-400 mt-0.5 shrink-0" />
+                      <ChevronRight className="w-3.5 h-3.5 text-stone-400 mt-0.5 shrink-0" />
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -426,10 +426,10 @@ export function AlertFeed({
                           <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
                         )}
                       </div>
-                      <h3 className="text-xs font-medium text-zinc-900 leading-snug">
+                      <h3 className="text-xs font-medium text-stone-900 leading-snug">
                         {alert.title}
                       </h3>
-                      <div className="flex items-center gap-2 mt-1 text-[10px] text-zinc-400">
+                      <div className="flex items-center gap-2 mt-1 text-[10px] text-stone-400">
                         <Clock className="w-3 h-3" />
                         {timeAgo(alert.publishedAt)}
                       </div>
@@ -439,7 +439,7 @@ export function AlertFeed({
                   {/* Expanded details */}
                   {isExpanded && (
                     <div className="mt-3 ml-5.5 space-y-3 text-xs">
-                      <p className="text-zinc-600 leading-relaxed">{alert.summary}</p>
+                      <p className="text-stone-600 leading-relaxed">{alert.summary}</p>
 
                       {/* Impact analysis */}
                       {alert.impactAnalysis && (
@@ -457,7 +457,7 @@ export function AlertFeed({
                       {/* Affected sections */}
                       {alert.affectedSections && alert.affectedSections.length > 0 && (
                         <div>
-                          <span className="text-zinc-500 font-medium">Affected CTD Sections: </span>
+                          <span className="text-stone-500 font-medium">Affected CTD Sections: </span>
                           <div className="flex flex-wrap gap-1 mt-1">
                             {alert.affectedSections.map(section => (
                               <span
@@ -500,7 +500,7 @@ export function AlertFeed({
                             href={alert.sourceUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-medium text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-md hover:bg-zinc-100 transition-colors duration-150"
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-medium text-stone-600 bg-stone-50 border border-stone-200 rounded-md hover:bg-stone-100 transition-colors duration-150"
                           >
                             <ExternalLink className="w-3 h-3" />
                             View Source
@@ -527,7 +527,7 @@ export function AlertFeed({
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-2 border-t border-zinc-200 bg-zinc-50 text-[10px] text-zinc-400 flex items-center justify-between">
+      <div className="px-4 py-2 border-t border-stone-200 bg-stone-50 text-[10px] text-stone-400 flex items-center justify-between">
         <span>
           {filteredAlerts.length} of {alerts.length} alerts shown
         </span>

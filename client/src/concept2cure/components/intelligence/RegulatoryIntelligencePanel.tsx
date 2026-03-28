@@ -78,10 +78,10 @@ function ScoreBar({ value, label, color }: { value: number; label: string; color
   return (
     <div className="mb-2">
       <div className="flex justify-between text-xs mb-1">
-        <span className="text-zinc-600">{label}</span>
-        <span className="font-semibold text-zinc-900">{pct}%</span>
+        <span className="text-stone-600">{label}</span>
+        <span className="font-semibold text-stone-900">{pct}%</span>
       </div>
-      <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
+      <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-500 ${color}`}
           style={{ width: `${pct}%` }}
@@ -101,7 +101,7 @@ function RiskBadge({ level }: { level: string }) {
   };
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${colors[level?.toLowerCase()] || 'bg-zinc-100 text-zinc-600'}`}
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${colors[level?.toLowerCase()] || 'bg-stone-100 text-stone-600'}`}
     >
       {level}
     </span>
@@ -227,24 +227,24 @@ export function RegulatoryIntelligencePanel({
   }, [submissionType, indication, deviceName]);
 
   return (
-    <div className="flex flex-col h-full bg-white border-l border-zinc-200">
+    <div className="flex flex-col h-full bg-white border-l border-stone-200">
       {/* Header */}
-      <div className="flex items-center justify-between px-2 sm:px-3 py-2 border-b border-zinc-200 bg-zinc-50 shrink-0">
+      <div className="flex items-center justify-between px-2 sm:px-3 py-2 border-b border-stone-200 bg-stone-50 shrink-0">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           <Brain className="w-4 h-4 text-blue-600 shrink-0" />
-          <span className="text-xs sm:text-sm font-semibold text-zinc-900 truncate">
+          <span className="text-xs sm:text-sm font-semibold text-stone-900 truncate">
             Regulatory Intelligence
           </span>
         </div>
         {onClose && (
-          <button onClick={onClose} aria-label="Close regulatory intelligence" title="Close" className="p-1 rounded hover:bg-zinc-200/50 text-zinc-400 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none">
+          <button onClick={onClose} aria-label="Close regulatory intelligence" title="Close" className="p-1 rounded hover:bg-stone-200/50 text-stone-400 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none">
             <X className="w-3.5 h-3.5" />
           </button>
         )}
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-zinc-200 shrink-0">
+      <div className="flex border-b border-stone-200 shrink-0">
         {TABS.map(tab => {
           const Icon = tab.icon;
           return (
@@ -254,7 +254,7 @@ export function RegulatoryIntelligencePanel({
               className={`flex-1 flex items-center justify-center gap-1 px-1 sm:px-2 py-2 text-xs font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
                   ? 'border-blue-500 text-blue-700 bg-blue-50/50'
-                  : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50'
+                  : 'border-transparent text-stone-500 hover:text-stone-700 hover:bg-stone-50'
               }`}
             >
               <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -306,7 +306,7 @@ export function RegulatoryIntelligencePanel({
                     color="bg-blue-500"
                   />
                   {analysisResult.regulatory_impact_summary && (
-                    <p className="text-xs text-zinc-700 leading-relaxed mt-2">
+                    <p className="text-xs text-stone-700 leading-relaxed mt-2">
                       {analysisResult.regulatory_impact_summary}
                     </p>
                   )}
@@ -320,7 +320,7 @@ export function RegulatoryIntelligencePanel({
                     </span>
                     <ul className="mt-1.5 space-y-1">
                       {analysisResult.ana_1_0_ri_recommendations.map((rec, i) => (
-                        <li key={i} className="flex items-start gap-1.5 text-xs text-zinc-700">
+                        <li key={i} className="flex items-start gap-1.5 text-xs text-stone-700">
                           <Lightbulb className="w-3 h-3 flex-shrink-0 mt-0.5 text-violet-500" />
                           {rec}
                         </li>
@@ -335,7 +335,7 @@ export function RegulatoryIntelligencePanel({
             <div>
               <div className="flex items-center gap-1.5 mb-2">
                 <BookOpen className="w-3.5 h-3.5 text-teal-600" />
-                <span className="text-xs font-semibold text-zinc-700">CSR Learnings</span>
+                <span className="text-xs font-semibold text-stone-700">CSR Learnings</span>
                 {csrSearch.isLoading && <Spinner size="sm" />}
               </div>
               {csrSearch.isError && (
@@ -352,15 +352,15 @@ export function RegulatoryIntelligencePanel({
                       className="p-2 bg-teal-50/60 border border-teal-100 rounded-lg"
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-medium text-zinc-900 truncate">
+                        <span className="text-xs font-medium text-stone-900 truncate">
                           {csr.title}
                         </span>
                         <span className="text-xs px-1.5 py-0.5 bg-teal-100 text-teal-700 rounded-full">
                           {csr.phase}
                         </span>
                       </div>
-                      <p className="text-xs text-zinc-600 line-clamp-2">{csr.summary}</p>
-                      <div className="flex items-center gap-2 mt-1 text-xs text-zinc-400">
+                      <p className="text-xs text-stone-600 line-clamp-2">{csr.summary}</p>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-stone-400">
                         <span>{csr.indication}</span>
                         <span>&middot;</span>
                         <span>n={csr.sample_size}</span>
@@ -371,7 +371,7 @@ export function RegulatoryIntelligencePanel({
                   ))}
                 </div>
               ) : !csrSearch.isLoading ? (
-                <p className="text-xs text-zinc-400 italic">
+                <p className="text-xs text-stone-400 italic">
                   {indication
                     ? 'No CSR data found for this indication.'
                     : 'Set indication to load CSR insights.'}
@@ -404,12 +404,12 @@ export function RegulatoryIntelligencePanel({
                     className={`p-2.5 border rounded-lg cursor-pointer transition-colors ${
                       selectedPrecedent?.id === p.id
                         ? 'border-blue-300 bg-blue-50/50'
-                        : 'border-zinc-200 hover:border-zinc-300 bg-white'
+                        : 'border-stone-200 hover:border-stone-300 bg-white'
                     }`}
                     onClick={() => handleComparePrecedent(p)}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium text-zinc-900">
+                      <span className="text-xs font-medium text-stone-900">
                         {p.deviceName || p.applicantName || 'Unknown Device'}
                       </span>
                       <span className="text-xs font-mono text-blue-600">
@@ -426,15 +426,15 @@ export function RegulatoryIntelligencePanel({
                       >
                         {p.decisionOutcome}
                       </span>
-                      <span className="text-zinc-400">{p.submissionType}</span>
+                      <span className="text-stone-400">{p.submissionType}</span>
                       {p.similarity != null && (
-                        <span className="text-zinc-500 ml-auto">
+                        <span className="text-stone-500 ml-auto">
                           {Math.round(p.similarity * 100)}% similar
                         </span>
                       )}
                     </div>
                     {p.indication && (
-                      <p className="text-xs text-zinc-500 mt-1 truncate">{p.indication}</p>
+                      <p className="text-xs text-stone-500 mt-1 truncate">{p.indication}</p>
                     )}
                     <div className="flex items-center gap-1 mt-1.5 text-xs text-blue-600">
                       <ArrowRight className="w-3 h-3" />
@@ -447,7 +447,7 @@ export function RegulatoryIntelligencePanel({
 
             {/* Empty state */}
             {precedentSearch.data?.length === 0 && !precedentSearch.isLoading && (
-              <p className="text-xs text-zinc-400 italic text-center py-4">
+              <p className="text-xs text-stone-400 italic text-center py-4">
                 No precedents found. Set submission type and indication.
               </p>
             )}
@@ -476,7 +476,7 @@ export function RegulatoryIntelligencePanel({
                 )}
                 {compareResult.riskLevel && (
                   <div className="flex items-center gap-2 text-xs">
-                    <span className="text-zinc-600">Risk Level:</span>
+                    <span className="text-stone-600">Risk Level:</span>
                     <RiskBadge level={compareResult.riskLevel} />
                   </div>
                 )}
@@ -485,7 +485,7 @@ export function RegulatoryIntelligencePanel({
                     <span className="text-xs font-medium text-emerald-700">Similarities</span>
                     <ul className="mt-1 space-y-0.5">
                       {compareResult.similarities.map((s, i) => (
-                        <li key={i} className="flex items-start gap-1 text-xs text-zinc-600">
+                        <li key={i} className="flex items-start gap-1 text-xs text-stone-600">
                           <CheckCircle className="w-3 h-3 flex-shrink-0 mt-0.5 text-emerald-500" />
                           {typeof s === 'string' ? s : s.description || s.area}
                         </li>
@@ -498,7 +498,7 @@ export function RegulatoryIntelligencePanel({
                     <span className="text-xs font-medium text-amber-700">Differences</span>
                     <ul className="mt-1 space-y-0.5">
                       {compareResult.differences.map((d, i) => (
-                        <li key={i} className="flex items-start gap-1 text-xs text-zinc-600">
+                        <li key={i} className="flex items-start gap-1 text-xs text-stone-600">
                           <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5 text-amber-500" />
                           {typeof d === 'string' ? d : d.description || d.area}
                         </li>
@@ -511,7 +511,7 @@ export function RegulatoryIntelligencePanel({
                     <span className="text-xs font-medium text-violet-700">Recommendations</span>
                     <ul className="mt-1 space-y-0.5">
                       {compareResult.recommendations.map((r, i) => (
-                        <li key={i} className="flex items-start gap-1 text-xs text-zinc-600">
+                        <li key={i} className="flex items-start gap-1 text-xs text-stone-600">
                           <Lightbulb className="w-3 h-3 flex-shrink-0 mt-0.5 text-violet-500" />
                           {r}
                         </li>
@@ -584,7 +584,7 @@ export function RegulatoryIntelligencePanel({
                   color="bg-amber-500"
                 />
                 {predictionResult.confidenceInterval && (
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-stone-500">
                     Confidence interval: {predictionResult.confidenceInterval.low}% –{' '}
                     {predictionResult.confidenceInterval.high}%
                   </p>
@@ -598,7 +598,7 @@ export function RegulatoryIntelligencePanel({
                     </span>
                     <ul className="mt-1 space-y-0.5">
                       {predictionResult.riskFactors.map((rf, i) => (
-                        <li key={i} className="flex items-start gap-1 text-xs text-zinc-600">
+                        <li key={i} className="flex items-start gap-1 text-xs text-stone-600">
                           <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5 text-red-400" />
                           <span>
                             <strong>{rf.factor}</strong>
@@ -613,16 +613,16 @@ export function RegulatoryIntelligencePanel({
                 {/* Similar trials */}
                 {predictionResult.similarTrials?.length > 0 && (
                   <div>
-                    <span className="text-xs font-medium text-zinc-600">Similar Trials</span>
+                    <span className="text-xs font-medium text-stone-600">Similar Trials</span>
                     <div className="mt-1 space-y-1">
                       {predictionResult.similarTrials.slice(0, 3).map((t, i) => (
                         <div
                           key={i}
-                          className="flex items-center justify-between text-xs px-2 py-1 bg-white rounded border border-zinc-200"
+                          className="flex items-center justify-between text-xs px-2 py-1 bg-white rounded border border-stone-200"
                         >
-                          <span className="text-zinc-700 truncate">{t.name}</span>
+                          <span className="text-stone-700 truncate">{t.name}</span>
                           <div className="flex items-center gap-2">
-                            <span className="text-zinc-400">{Math.round(t.similarity * 100)}%</span>
+                            <span className="text-stone-400">{Math.round(t.similarity * 100)}%</span>
                             <span
                               className={`px-1 py-0.5 rounded-full text-xs font-medium ${
                                 t.outcome === 'success'
@@ -662,7 +662,7 @@ export function RegulatoryIntelligencePanel({
                     {riskResult.mitigationPlan.goNoGoRecommendation && (
                       <div className="p-2 bg-white rounded border border-orange-200">
                         <span className="text-xs font-semibold text-orange-700">Go/No-Go:</span>
-                        <p className="text-xs text-zinc-700 mt-0.5">
+                        <p className="text-xs text-stone-700 mt-0.5">
                           {riskResult.mitigationPlan.goNoGoRecommendation}
                         </p>
                       </div>
@@ -675,11 +675,11 @@ export function RegulatoryIntelligencePanel({
                         </span>
                         <ul className="mt-1 space-y-1">
                           {riskResult.mitigationPlan.highRisks.map((r, i) => (
-                            <li key={i} className="text-xs text-zinc-600 pl-3 relative">
+                            <li key={i} className="text-xs text-stone-600 pl-3 relative">
                               <span className="absolute left-0 text-red-400">●</span>
                               <strong>{r.risk}</strong>
                               {r.mitigation && (
-                                <span className="text-zinc-500"> → {r.mitigation}</span>
+                                <span className="text-stone-500"> → {r.mitigation}</span>
                               )}
                             </li>
                           ))}
@@ -719,7 +719,7 @@ export function RegulatoryIntelligencePanel({
                   </div>
                   {precedentStrategy.data.recommendedStrategy && (
                     <div className="p-2 bg-white rounded border border-blue-200 mb-2">
-                      <span className="text-xs font-medium text-zinc-900">
+                      <span className="text-xs font-medium text-stone-900">
                         {precedentStrategy.data.recommendedStrategy.pathway ||
                           precedentStrategy.data.recommendedStrategy.name ||
                           'Recommended Pathway'}
@@ -734,7 +734,7 @@ export function RegulatoryIntelligencePanel({
                         </div>
                       )}
                       {precedentStrategy.data.recommendedStrategy.rationale && (
-                        <p className="text-xs text-zinc-600 mt-1">
+                        <p className="text-xs text-stone-600 mt-1">
                           {precedentStrategy.data.recommendedStrategy.rationale}
                         </p>
                       )}
@@ -750,7 +750,7 @@ export function RegulatoryIntelligencePanel({
                     </span>
                     <ul className="mt-1.5 space-y-0.5">
                       {precedentStrategy.data.testingRequirements.map((t, i) => (
-                        <li key={i} className="flex items-start gap-1 text-xs text-zinc-600">
+                        <li key={i} className="flex items-start gap-1 text-xs text-stone-600">
                           <CheckCircle className="w-3 h-3 flex-shrink-0 mt-0.5 text-blue-500" />
                           {typeof t === 'string' ? t : t.requirement || t.name}
                         </li>
@@ -788,7 +788,7 @@ export function RegulatoryIntelligencePanel({
                     </span>
                     <ul className="mt-1.5 space-y-0.5">
                       {precedentStrategy.data.keyRisks.map((r, i) => (
-                        <li key={i} className="flex items-start gap-1 text-xs text-zinc-600">
+                        <li key={i} className="flex items-start gap-1 text-xs text-stone-600">
                           <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5 text-red-400" />
                           {typeof r === 'string' ? r : r.description || r.risk}
                         </li>
@@ -800,20 +800,20 @@ export function RegulatoryIntelligencePanel({
                 {/* Alternative strategies */}
                 {precedentStrategy.data.alternativeStrategies?.length > 0 && (
                   <div>
-                    <span className="text-xs font-medium text-zinc-600">
+                    <span className="text-xs font-medium text-stone-600">
                       Alternative Strategies
                     </span>
                     <div className="mt-1 space-y-1">
                       {precedentStrategy.data.alternativeStrategies.map((alt, i) => (
                         <div
                           key={i}
-                          className="flex items-center justify-between px-2 py-1.5 bg-zinc-50 rounded border border-zinc-200 text-xs"
+                          className="flex items-center justify-between px-2 py-1.5 bg-stone-50 rounded border border-stone-200 text-xs"
                         >
-                          <span className="text-zinc-700">
+                          <span className="text-stone-700">
                             {typeof alt === 'string' ? alt : alt.pathway || alt.name}
                           </span>
                           {typeof alt !== 'string' && alt.confidence != null && (
-                            <span className="text-zinc-500">
+                            <span className="text-stone-500">
                               {Math.round(alt.confidence * 100)}%
                             </span>
                           )}
@@ -862,7 +862,7 @@ export function RegulatoryIntelligencePanel({
             )}
 
             {!precedentStrategy.data && !precedentStrategy.isLoading && (
-              <p className="text-xs text-zinc-400 italic text-center py-4">
+              <p className="text-xs text-stone-400 italic text-center py-4">
                 Set submission type and indication to generate strategy recommendations.
               </p>
             )}
@@ -922,7 +922,7 @@ export function RegulatoryIntelligencePanel({
               return (
                 <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-zinc-900 flex items-center gap-1">
+                    <span className="text-xs font-semibold text-stone-900 flex items-center gap-1">
                       <FileCheck className="w-3.5 h-3.5 text-blue-600" />
                       Evidence Coverage ({submissionType || 'General'})
                     </span>
@@ -938,7 +938,7 @@ export function RegulatoryIntelligencePanel({
                       {coverageLabel}
                     </span>
                   </div>
-                  <div className="h-2 bg-zinc-200 rounded-full overflow-hidden mb-2">
+                  <div className="h-2 bg-stone-200 rounded-full overflow-hidden mb-2">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${coverageColor}`}
                       style={{ width: `${Math.round(coverageRatio * 100)}%` }}
@@ -959,7 +959,7 @@ export function RegulatoryIntelligencePanel({
                             <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
                           )}
                           <span
-                            className={matched ? 'text-zinc-600' : 'text-amber-700 font-medium'}
+                            className={matched ? 'text-stone-600' : 'text-amber-700 font-medium'}
                           >
                             {req}
                           </span>
@@ -972,30 +972,30 @@ export function RegulatoryIntelligencePanel({
             })()}
             {/* Evidence search */}
             <div className="relative">
-              <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-zinc-400" />
+              <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-stone-400" />
               <input
                 type="text"
                 value={evidenceQuery}
                 onChange={e => setEvidenceQuery(e.target.value)}
                 placeholder="Search clinical evidence (CSRs, studies)..."
-                className="w-full pl-8 pr-3 py-1.5 text-xs border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 bg-white"
+                className="w-full pl-8 pr-3 py-1.5 text-xs border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none/30 bg-white"
               />
             </div>
 
             {/* CSR search results from auto-query (indication-based) */}
             {csrSearch.data && csrSearch.data.length > 0 && !evidenceQuery && (
               <div>
-                <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+                <span className="text-xs font-medium text-stone-500 uppercase tracking-wide">
                   Relevant CSR Evidence ({csrSearch.data.length})
                 </span>
                 <div className="mt-1.5 space-y-1.5">
                   {csrSearch.data.map((csr, i) => (
                     <div
                       key={csr.id || i}
-                      className="p-2.5 border border-zinc-200 rounded-lg bg-zinc-50/50 hover:bg-zinc-50 transition-colors duration-150"
+                      className="p-2.5 border border-stone-200 rounded-lg bg-stone-50/50 hover:bg-stone-50 transition-colors duration-150"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <span className="text-xs font-semibold text-zinc-900 leading-tight">
+                        <span className="text-xs font-semibold text-stone-900 leading-tight">
                           {csr.title}
                         </span>
                         {csr.relevance_score != null && (
@@ -1004,7 +1004,7 @@ export function RegulatoryIntelligencePanel({
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 mt-1 text-xs text-zinc-500">
+                      <div className="flex items-center gap-2 mt-1 text-xs text-stone-500">
                         {csr.phase && <span>Phase {csr.phase}</span>}
                         {csr.indication && <span>· {csr.indication}</span>}
                         {csr.outcome && (
@@ -1021,10 +1021,10 @@ export function RegulatoryIntelligencePanel({
                         )}
                       </div>
                       {csr.sponsor && (
-                        <div className="text-xs text-zinc-400 mt-1">{csr.sponsor}</div>
+                        <div className="text-xs text-stone-400 mt-1">{csr.sponsor}</div>
                       )}
                       {csr.summary && (
-                        <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{csr.summary}</p>
+                        <p className="text-xs text-stone-500 mt-1 line-clamp-2">{csr.summary}</p>
                       )}
                     </div>
                   ))}
@@ -1046,17 +1046,17 @@ export function RegulatoryIntelligencePanel({
                 )}
                 {evidenceSearch.data && evidenceSearch.data.length > 0 && (
                   <>
-                    <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+                    <span className="text-xs font-medium text-stone-500 uppercase tracking-wide">
                       Search Results ({evidenceSearch.data.length})
                     </span>
                     <div className="mt-1.5 space-y-1.5">
                       {evidenceSearch.data.map((csr, i) => (
                         <div
                           key={csr.id || i}
-                          className="p-2.5 border border-zinc-200 rounded-lg bg-zinc-50/50 hover:bg-zinc-50 transition-colors duration-150"
+                          className="p-2.5 border border-stone-200 rounded-lg bg-stone-50/50 hover:bg-stone-50 transition-colors duration-150"
                         >
                           <div className="flex items-start justify-between gap-2">
-                            <span className="text-xs font-semibold text-zinc-900 leading-tight">
+                            <span className="text-xs font-semibold text-stone-900 leading-tight">
                               {csr.title}
                             </span>
                             {csr.relevance_score != null && (
@@ -1065,7 +1065,7 @@ export function RegulatoryIntelligencePanel({
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-2 mt-1 text-xs text-zinc-500">
+                          <div className="flex items-center gap-2 mt-1 text-xs text-stone-500">
                             {csr.phase && <span>Phase {csr.phase}</span>}
                             {csr.indication && <span>· {csr.indication}</span>}
                             {csr.outcome && (
@@ -1082,12 +1082,12 @@ export function RegulatoryIntelligencePanel({
                             )}
                           </div>
                           {csr.sample_size && (
-                            <div className="text-xs text-zinc-400 mt-1">
+                            <div className="text-xs text-stone-400 mt-1">
                               N={csr.sample_size} {csr.sponsor ? `· ${csr.sponsor}` : ''}
                             </div>
                           )}
                           {csr.summary && (
-                            <p className="text-xs text-zinc-500 mt-1 line-clamp-2">
+                            <p className="text-xs text-stone-500 mt-1 line-clamp-2">
                               {csr.summary}
                             </p>
                           )}
@@ -1099,7 +1099,7 @@ export function RegulatoryIntelligencePanel({
                 {evidenceSearch.data &&
                   evidenceSearch.data.length === 0 &&
                   !evidenceSearch.isLoading && (
-                    <p className="text-xs text-zinc-400 italic text-center py-4">
+                    <p className="text-xs text-stone-400 italic text-center py-4">
                       No evidence found for "{evidenceQuery}"
                     </p>
                   )}
@@ -1139,8 +1139,8 @@ export function RegulatoryIntelligencePanel({
             {/* Empty state */}
             {!evidenceQuery && (!csrSearch.data || csrSearch.data.length === 0) && (
               <div className="text-center py-6">
-                <BookOpen className="w-8 h-8 mx-auto text-zinc-400 mb-2" />
-                <p className="text-xs text-zinc-400">
+                <BookOpen className="w-8 h-8 mx-auto text-stone-400 mb-2" />
+                <p className="text-xs text-stone-400">
                   Search 779+ clinical study reports or set an indication to auto-discover evidence.
                 </p>
               </div>

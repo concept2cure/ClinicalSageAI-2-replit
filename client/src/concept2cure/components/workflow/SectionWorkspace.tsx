@@ -234,7 +234,7 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
         status={statusConfig}
         secondaryInfo={
           <>
-            <span className="text-[11px] text-zinc-400">{section.module}</span>
+            <span className="text-[11px] text-stone-400">{section.module}</span>
             {projectName && <SecondaryInfoItem>{projectName}</SecondaryInfoItem>}
             {readinessScore != null && (
               <SecondaryInfoItem
@@ -291,7 +291,7 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
               onChange={e => setEditorContent(e.target.value)}
               readOnly={section.status === 'locked' || section.status === 'approved'}
               placeholder={`Begin drafting ${section.title}...\n\nAnA can help — ask her to "draft section ${section.code}" or "explain what blocks promotion".`}
-              className="w-full min-h-[400px] p-4 text-sm text-zinc-800 bg-white border border-zinc-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-zinc-300 font-serif leading-relaxed"
+              className="w-full min-h-[400px] p-4 text-sm text-stone-800 bg-white border border-stone-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-stone-300 font-serif leading-relaxed"
             />
           </div>
         )}
@@ -299,7 +299,7 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
         {activeTab === 'issues' && (
           <div className="p-6 space-y-3">
             {isLoadingIssues && (
-              <div className="flex items-center gap-2 text-xs text-zinc-400 py-4">
+              <div className="flex items-center gap-2 text-xs text-stone-400 py-4">
                 <Spinner size="sm" />
                 Loading issues from contradiction engine...
               </div>
@@ -320,7 +320,7 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
                     ? 'border-red-200 bg-red-50'
                     : issue.severity === 'warning'
                       ? 'border-amber-200 bg-amber-50'
-                      : 'border-zinc-200 bg-zinc-50'
+                      : 'border-stone-200 bg-stone-50'
                 )}
               >
                 <div className="flex items-center gap-2 mb-1">
@@ -331,22 +331,22 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
                         ? 'bg-red-200 text-red-800'
                         : issue.severity === 'warning'
                           ? 'bg-amber-200 text-amber-800'
-                          : 'bg-zinc-200 text-zinc-700'
+                          : 'bg-stone-200 text-stone-700'
                     )}
                   >
                     {issue.severity}
                   </span>
-                  <span className="text-[10px] text-zinc-400 font-mono">{issue.type}</span>
+                  <span className="text-[10px] text-stone-400 font-mono">{issue.type}</span>
                   {issue.source && (
-                    <span className="text-[10px] text-zinc-400 ml-auto">via {issue.source}</span>
+                    <span className="text-[10px] text-stone-400 ml-auto">via {issue.source}</span>
                   )}
                 </div>
-                <p className="text-xs text-zinc-700">{issue.description}</p>
+                <p className="text-xs text-stone-700">{issue.description}</p>
               </div>
             ))}
             {readiness?.blockers && readiness.blockers.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-zinc-200">
-                <h4 className="text-xs font-semibold text-zinc-600 mb-2">Readiness Blockers</h4>
+              <div className="mt-4 pt-4 border-t border-stone-200">
+                <h4 className="text-xs font-semibold text-stone-600 mb-2">Readiness Blockers</h4>
                 {readiness.blockers.map((b, i) => (
                   <div key={i} className="flex items-start gap-2 py-1.5">
                     <XCircle
@@ -356,9 +356,9 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
                       )}
                     />
                     <div>
-                      <span className="text-xs text-zinc-700">{b.message}</span>
+                      <span className="text-xs text-stone-700">{b.message}</span>
                       {b.source && (
-                        <span className="text-[10px] text-zinc-400 ml-1">({b.source})</span>
+                        <span className="text-[10px] text-stone-400 ml-1">({b.source})</span>
                       )}
                     </div>
                   </div>
@@ -380,16 +380,16 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
             {evidence.map(ev => (
               <div
                 key={ev.id}
-                className="border border-zinc-200 rounded-lg p-3 hover:border-zinc-300 transition-colors"
+                className="border border-stone-200 rounded-lg p-3 hover:border-stone-300 transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <BookOpen className="w-3.5 h-3.5 text-zinc-400" />
-                  <span className="text-xs font-medium text-zinc-800">{ev.title}</span>
-                  <span className="text-[10px] px-1.5 py-0.5 bg-zinc-100 text-zinc-500 rounded font-mono">
+                  <BookOpen className="w-3.5 h-3.5 text-stone-400" />
+                  <span className="text-xs font-medium text-stone-800">{ev.title}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 bg-stone-100 text-stone-500 rounded font-mono">
                     {ev.type}
                   </span>
                 </div>
-                <p className="text-[11px] text-zinc-500 mt-1 ml-5">{ev.source}</p>
+                <p className="text-[11px] text-stone-500 mt-1 ml-5">{ev.source}</p>
               </div>
             ))}
           </div>
@@ -407,15 +407,15 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
             {versions.map(v => (
               <div
                 key={v.version}
-                className="border border-zinc-200 rounded-lg p-3 hover:border-zinc-300 transition-colors"
+                className="border border-stone-200 rounded-lg p-3 hover:border-stone-300 transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <History className="w-3.5 h-3.5 text-zinc-400" />
-                  <span className="text-xs font-semibold text-zinc-800">v{v.version}</span>
-                  <span className="text-[10px] text-zinc-400">{v.author}</span>
-                  <span className="text-[10px] text-zinc-400 ml-auto">{v.timestamp}</span>
+                  <History className="w-3.5 h-3.5 text-stone-400" />
+                  <span className="text-xs font-semibold text-stone-800">v{v.version}</span>
+                  <span className="text-[10px] text-stone-400">{v.author}</span>
+                  <span className="text-[10px] text-stone-400 ml-auto">{v.timestamp}</span>
                 </div>
-                <p className="text-[11px] text-zinc-600 mt-1 ml-5">{v.summary}</p>
+                <p className="text-[11px] text-stone-600 mt-1 ml-5">{v.summary}</p>
               </div>
             ))}
           </div>

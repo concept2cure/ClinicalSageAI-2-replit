@@ -567,7 +567,7 @@ function InspectionList({
                   <div
                     className={`p-2 rounded-lg ${
                       inspection.status === 'completed' || inspection.status === 'follow_up'
-                        ? 'bg-zinc-100'
+                        ? 'bg-stone-100'
                         : 'bg-blue-100'
                     }`}
                   >
@@ -1054,7 +1054,7 @@ export function InspectionReadiness() {
       </Tabs>
 
       {/* RI Assistance */}
-      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-zinc-50">
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-stone-50">
         <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-100 rounded-full">

@@ -396,7 +396,7 @@ const DesignSelector: React.FC<DesignSelectorProps> = ({ selectedDesign, onSelec
                 <div
                   className={cn(
                     'w-10 h-10 rounded-lg flex items-center justify-center',
-                    isSelected ? 'bg-blue-100 text-blue-600' : 'bg-zinc-100 text-zinc-600'
+                    isSelected ? 'bg-blue-100 text-blue-600' : 'bg-stone-100 text-stone-600'
                   )}
                 >
                   <Icon className="h-5 w-5" />
@@ -405,12 +405,12 @@ const DesignSelector: React.FC<DesignSelectorProps> = ({ selectedDesign, onSelec
                   <h3
                     className={cn(
                       'font-medium text-sm',
-                      isSelected ? 'text-blue-900' : 'text-zinc-900'
+                      isSelected ? 'text-blue-900' : 'text-stone-900'
                     )}
                   >
                     {design.name}
                   </h3>
-                  <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{design.description}</p>
+                  <p className="text-xs text-stone-500 mt-1 line-clamp-2">{design.description}</p>
                 </div>
               </div>
             </div>
@@ -451,24 +451,24 @@ const EndpointSelector: React.FC<EndpointSelectorProps> = ({
               'flex items-center gap-3 p-3 rounded-lg border transition-colors duration-150',
               isSelected
                 ? 'bg-blue-50 border-blue-200'
-                : 'bg-white border-zinc-200 hover:border-zinc-300'
+                : 'bg-white border-stone-200 hover:border-stone-300'
             )}
           >
             <input
               type="checkbox"
               checked={isSelected}
               onChange={() => onToggle(endpoint)}
-              className="h-4 w-4 rounded border-zinc-300 text-blue-600"
+              className="h-4 w-4 rounded border-stone-300 text-blue-600"
             />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-zinc-900">{endpoint.name}</span>
+                <span className="text-sm font-medium text-stone-900">{endpoint.name}</span>
                 {isPrimary && <Badge className="bg-blue-600 text-white text-xs">Primary</Badge>}
                 <Badge variant="outline" className="text-xs">
                   {endpoint.measureType.replace('_', ' ')}
                 </Badge>
               </div>
-              <p className="text-xs text-zinc-500 mt-0.5">{endpoint.description}</p>
+              <p className="text-xs text-stone-500 mt-0.5">{endpoint.description}</p>
             </div>
             {isSelected && !isPrimary && (
               <Button
@@ -516,8 +516,8 @@ const SampleSizePanel: React.FC<SampleSizePanelProps> = ({
 }) => {
   if (!endpoint) {
     return (
-      <div className="text-center py-8 text-zinc-500">
-        <Calculator className="h-12 w-12 mx-auto mb-3 text-zinc-400" />
+      <div className="text-center py-8 text-stone-500">
+        <Calculator className="h-12 w-12 mx-auto mb-3 text-stone-400" />
         <p className="text-sm">Select a primary endpoint to calculate sample size</p>
       </div>
     );
@@ -538,7 +538,7 @@ const SampleSizePanel: React.FC<SampleSizePanelProps> = ({
           step={5}
           onValueChange={([v]) => onPowerChange(v / 100)}
         />
-        <p className="text-xs text-zinc-500">Probability of detecting a true effect</p>
+        <p className="text-xs text-stone-500">Probability of detecting a true effect</p>
       </div>
 
       {/* Effect size slider */}
@@ -558,7 +558,7 @@ const SampleSizePanel: React.FC<SampleSizePanelProps> = ({
           step={5}
           onValueChange={([v]) => onEffectChange(v / 100)}
         />
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-stone-500">
           {endpoint.measureType === 'binary'
             ? 'Absolute difference in rates'
             : 'Standardized difference'}
@@ -593,20 +593,20 @@ const SampleSizePanel: React.FC<SampleSizePanelProps> = ({
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
                 <p className="text-2xl font-semibold text-blue-700">{result.perArm}</p>
-                <p className="text-xs text-zinc-500">Per Arm</p>
+                <p className="text-xs text-stone-500">Per Arm</p>
               </div>
               <div>
                 <p className="text-2xl font-semibold text-blue-700">{result.total}</p>
-                <p className="text-xs text-zinc-500">Total</p>
+                <p className="text-xs text-stone-500">Total</p>
               </div>
               <div>
                 <p className="text-2xl font-semibold text-green-700">{result.adjustedForDropout}</p>
-                <p className="text-xs text-zinc-500">With Dropout</p>
+                <p className="text-xs text-stone-500">With Dropout</p>
               </div>
             </div>
             <div className="mt-4 pt-4 border-t border-blue-100">
-              <p className="text-xs font-medium text-zinc-700 mb-2">Assumptions:</p>
-              <ul className="text-xs text-zinc-500 space-y-1">
+              <p className="text-xs font-medium text-stone-700 mb-2">Assumptions:</p>
+              <ul className="text-xs text-stone-500 space-y-1">
                 {result.assumptions.map((assumption, idx) => (
                   <li key={idx} className="flex items-center gap-1">
                     <CheckCircle2 className="h-3 w-3 text-green-500" />
@@ -712,8 +712,8 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
             <Beaker className="h-5 w-5 text-purple-600" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-zinc-900">Study Protocol Designer</h1>
-            <p className="text-xs text-zinc-500">RI-powered clinical protocol development</p>
+            <h1 className="text-lg font-semibold text-stone-900">Study Protocol Designer</h1>
+            <p className="text-xs text-stone-500">RI-powered clinical protocol development</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -784,7 +784,7 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
                       <SelectItem key={p.value} value={p.value}>
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{p.label}</span>
-                          <span className="text-xs text-zinc-500">- {p.description}</span>
+                          <span className="text-xs text-stone-500">- {p.description}</span>
                         </div>
                       </SelectItem>
                     ))}
@@ -903,7 +903,7 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
                       .map(endpoint => (
                         <div
                           key={endpoint.id}
-                          className="flex items-center gap-2 p-2 bg-zinc-50 rounded-lg"
+                          className="flex items-center gap-2 p-2 bg-stone-50 rounded-lg"
                         >
                           <Badge variant="outline">Secondary</Badge>
                           <span className="text-sm">{endpoint.name}</span>
@@ -938,16 +938,16 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
               <div key={section.id} className="border border-border/40 rounded-sm bg-background">
                 <div className="px-3 py-2 p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="w-6 h-6 rounded-full bg-zinc-100 text-zinc-600 text-xs font-medium flex items-center justify-center">
+                    <span className="w-6 h-6 rounded-full bg-stone-100 text-stone-600 text-xs font-medium flex items-center justify-center">
                       {idx + 1}
                     </span>
                     <div>
-                      <p className="font-medium text-zinc-900">{section.title}</p>
+                      <p className="font-medium text-stone-900">{section.title}</p>
                       <Badge
                         variant="outline"
                         className={cn(
                           'text-xs mt-1',
-                          section.status === 'not_started' && 'bg-zinc-100 text-zinc-600',
+                          section.status === 'not_started' && 'bg-stone-100 text-stone-600',
                           section.status === 'ai_draft' && 'bg-blue-100 text-blue-700',
                           section.status === 'in_review' && 'bg-amber-100 text-amber-700',
                           section.status === 'approved' && 'bg-green-100 text-green-700'

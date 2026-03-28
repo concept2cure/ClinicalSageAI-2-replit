@@ -301,12 +301,12 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                     'flex flex-col items-start p-3.5 rounded-lg border transition-all text-left',
                     option.bgColor,
                     selectedType === option.type &&
-                      'ring-2 ring-offset-1 ring-zinc-900'
+                      'ring-2 ring-offset-1 ring-stone-900'
                   )}
                 >
                   <div className="flex items-center gap-2 mb-1.5">
                     <Icon className={cn('h-4 w-4', option.color)} />
-                    <span className="font-semibold text-sm text-zinc-900">
+                    <span className="font-semibold text-sm text-stone-900">
                       {option.name}
                     </span>
                     {option.earlyAccess && (
@@ -315,7 +315,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                       </span>
                     )}
                   </div>
-                  <span className="text-[11px] text-zinc-600 leading-relaxed line-clamp-2">
+                  <span className="text-[11px] text-stone-600 leading-relaxed line-clamp-2">
                     {option.description}
                   </span>
                 </button>
@@ -338,10 +338,10 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 className={cn('h-4 w-4', selectedTypeOption.color)}
               />
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm text-zinc-900">
+                <div className="font-medium text-sm text-stone-900">
                   {selectedTypeOption.name}
                 </div>
-                <div className="text-[11px] text-zinc-500">
+                <div className="text-[11px] text-stone-500">
                   {selectedTypeOption.fullName}
                 </div>
               </div>
@@ -349,7 +349,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={handleBack}
-                className="text-xs text-zinc-500 hover:text-zinc-700 h-7"
+                className="text-xs text-stone-500 hover:text-stone-700 h-7"
               >
                 Change
               </Button>
@@ -403,8 +403,8 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                     className={cn(
                       'flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-all',
                       targetAgency === agency.value
-                        ? 'bg-zinc-900 text-white border-zinc-900'
-                        : 'bg-white text-zinc-700 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+                        ? 'bg-stone-900 text-white border-stone-900'
+                        : 'bg-white text-stone-700 border-stone-200 hover:border-stone-300 hover:bg-stone-50'
                     )}
                   >
                     <span className="text-xs">{agency.flag}</span>
@@ -455,7 +455,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 rows={3}
                 className="text-[13px] resize-y"
               />
-              <p className="text-[11px] text-zinc-400">
+              <p className="text-[11px] text-stone-400">
                 These instructions are injected into every conversation in this
                 project.
               </p>
@@ -470,10 +470,10 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-50 mb-3">
                 <CheckCircle2 className="h-6 w-6 text-emerald-600" />
               </div>
-              <h3 className="text-base font-semibold text-zinc-900">
+              <h3 className="text-base font-semibold text-stone-900">
                 {projectName} is ready
               </h3>
-              <p className="text-sm text-zinc-500 mt-1">
+              <p className="text-sm text-stone-500 mt-1">
                 Your {selectedTypeOption.fullName} project has been created.
               </p>
             </div>
@@ -486,16 +486,16 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                   <button
                     key={action.label}
                     onClick={handleOpenProject}
-                    className="flex items-center gap-2.5 p-3 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors text-left"
+                    className="flex items-center gap-2.5 p-3 rounded-lg border border-stone-200 bg-white hover:bg-stone-50 transition-colors text-left"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center flex-shrink-0">
-                      <Icon className="w-4 h-4 text-zinc-600" />
+                    <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-4 h-4 text-stone-600" />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-[13px] font-medium text-zinc-900">
+                      <div className="text-[13px] font-medium text-stone-900">
                         {action.label}
                       </div>
-                      <div className="text-[11px] text-zinc-500">
+                      <div className="text-[11px] text-stone-500">
                         {action.description}
                       </div>
                     </div>

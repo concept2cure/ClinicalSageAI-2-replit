@@ -7,13 +7,13 @@
  * Design system: Zen (Claude.ai-inspired minimalism)
  *
  * RULES:
- * - Cards: rounded-xl, border border-zinc-200, shadow-sm, bg-white
- * - Headings: text-zinc-900, font-semibold (h2=text-lg, h3=text-base, h4=text-sm)
- * - Body text: text-zinc-600, text-sm
- * - Muted text: text-zinc-500, text-xs
+ * - Cards: rounded-xl, border border-stone-200, shadow-sm, bg-white
+ * - Headings: text-stone-900, font-semibold (h2=text-lg, h3=text-base, h4=text-sm)
+ * - Body text: text-stone-600, text-sm
+ * - Muted text: text-stone-500, text-xs
  * - Icons inline: w-4 h-4, in boxes: w-5 h-5 inside w-10 h-10 container
  * - Spacing: p-5 card padding, gap-4 between sections, gap-2 between items
- * - Focus: focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2
+ * - Focus: focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2
  * - Transitions: transition-colors duration-150
  * - Buttons: rounded-lg, px-4 py-2, text-sm font-medium
  */
@@ -48,10 +48,10 @@ export function EnterpriseCard({
     <Component
       onClick={onClick}
       className={cn(
-        'bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden',
+        'bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden',
         !noPadding && 'p-5',
-        interactive && 'hover:shadow-md hover:border-zinc-300 transition-all duration-150 cursor-pointer',
-        onClick && 'w-full text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none',
+        interactive && 'hover:shadow-md hover:border-stone-300 transition-all duration-150 cursor-pointer',
+        onClick && 'w-full text-left focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none',
         className,
       )}
     >
@@ -98,9 +98,9 @@ export function CardHeader({
           <IconBox icon={Icon} className={iconClassName} />
         )}
         <div className="min-w-0">
-          <h3 className={cn(titleSize, 'text-zinc-900 truncate')}>{title}</h3>
+          <h3 className={cn(titleSize, 'text-stone-900 truncate')}>{title}</h3>
           {subtitle && (
-            <p className="text-sm text-zinc-500 mt-0.5 truncate">{subtitle}</p>
+            <p className="text-sm text-stone-500 mt-0.5 truncate">{subtitle}</p>
           )}
         </div>
       </div>
@@ -124,7 +124,7 @@ interface CardSectionProps {
 
 const tintMap = {
   none: '',
-  muted: 'bg-zinc-50',
+  muted: 'bg-stone-50',
   accent: 'bg-blue-50',
   success: 'bg-emerald-50',
   warning: 'bg-amber-50',
@@ -135,7 +135,7 @@ export function CardSection({ children, className, tint = 'none', border = true 
   return (
     <div className={cn(
       'px-5 py-4',
-      border && 'border-t border-zinc-100',
+      border && 'border-t border-stone-100',
       tintMap[tint],
       className,
     )}>
@@ -179,9 +179,9 @@ export function SectionHeader({
       <div className="flex items-center gap-3 min-w-0">
         {Icon && <IconBox icon={Icon} size="lg" className={iconClassName} />}
         <div className="min-w-0">
-          <div className={cn(headingStyle, 'text-zinc-900')}>{title}</div>
+          <div className={cn(headingStyle, 'text-stone-900')}>{title}</div>
           {subtitle && (
-            <p className="text-sm text-zinc-500 mt-0.5">{subtitle}</p>
+            <p className="text-sm text-stone-500 mt-0.5">{subtitle}</p>
           )}
         </div>
       </div>
@@ -235,7 +235,7 @@ interface StatusPillProps {
 }
 
 const statusVariants: Record<StatusVariant, string> = {
-  default: 'bg-zinc-100 text-zinc-600',
+  default: 'bg-stone-100 text-stone-600',
   info: 'bg-blue-100 text-blue-700',
   success: 'bg-emerald-100 text-emerald-700',
   warning: 'bg-amber-100 text-amber-700',
@@ -259,7 +259,7 @@ export function StatusPill({ label, variant = 'default', className, dot }: Statu
           variant === 'warning' && 'bg-amber-500',
           variant === 'info' && 'bg-blue-500',
           variant === 'active' && 'bg-blue-500 animate-pulse',
-          variant === 'default' && 'bg-zinc-400',
+          variant === 'default' && 'bg-stone-400',
           variant === 'purple' && 'bg-purple-500',
         )} />
       )}
@@ -286,8 +286,8 @@ interface EnterpriseButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEle
 
 const buttonVariantStyles: Record<ButtonVariant, string> = {
   primary: 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm',
-  secondary: 'bg-white text-zinc-700 border border-zinc-200 hover:bg-zinc-50 hover:border-zinc-300',
-  ghost: 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100',
+  secondary: 'bg-white text-stone-700 border border-stone-200 hover:bg-stone-50 hover:border-stone-300',
+  ghost: 'text-stone-600 hover:text-stone-900 hover:bg-stone-100',
   danger: 'bg-red-600 text-white hover:bg-red-700 shadow-sm',
   success: 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm',
   warning: 'bg-amber-500 text-white hover:bg-amber-600 shadow-sm',
@@ -319,7 +319,7 @@ export function EnterpriseButton({
       disabled={disabled || loading}
       className={cn(
         'inline-flex items-center justify-center font-medium rounded-lg transition-colors duration-150',
-        'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none',
+        'focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none',
         'disabled:opacity-50 disabled:pointer-events-none',
         buttonVariantStyles[variant],
         buttonSizeStyles[size],
@@ -360,8 +360,8 @@ export function MetricCard({ label, value, icon: Icon, iconClassName, change, cl
     <EnterpriseCard className={cn('flex items-start gap-4', className)}>
       {Icon && <IconBox icon={Icon} className={iconClassName} />}
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-zinc-500">{label}</p>
-        <p className="text-2xl font-semibold text-zinc-900 mt-1">{value}</p>
+        <p className="text-sm text-stone-500">{label}</p>
+        <p className="text-2xl font-semibold text-stone-900 mt-1">{value}</p>
         {change && (
           <p className={cn(
             'text-xs font-medium mt-1',
@@ -388,8 +388,8 @@ interface DataRowProps {
 export function DataRow({ label, value, className }: DataRowProps) {
   return (
     <div className={cn('flex items-baseline justify-between gap-4 py-2', className)}>
-      <dt className="text-sm text-zinc-500 flex-shrink-0">{label}</dt>
-      <dd className="text-sm font-medium text-zinc-900 text-right truncate">{value}</dd>
+      <dt className="text-sm text-stone-500 flex-shrink-0">{label}</dt>
+      <dd className="text-sm font-medium text-stone-900 text-right truncate">{value}</dd>
     </div>
   );
 }
@@ -409,12 +409,12 @@ interface EmptyStateProps {
 export function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
   return (
     <div className={cn('flex flex-col items-center justify-center py-16 px-6 text-center', className)}>
-      <div className="w-14 h-14 rounded-lg bg-zinc-100 flex items-center justify-center mb-4">
-        <Icon size={24} className="text-zinc-400" />
+      <div className="w-14 h-14 rounded-lg bg-stone-100 flex items-center justify-center mb-4">
+        <Icon size={24} className="text-stone-400" />
       </div>
-      <h3 className="text-base font-semibold text-zinc-900 mb-1">{title}</h3>
+      <h3 className="text-base font-semibold text-stone-900 mb-1">{title}</h3>
       {description && (
-        <p className="text-sm text-zinc-500 max-w-sm leading-relaxed">{description}</p>
+        <p className="text-sm text-stone-500 max-w-sm leading-relaxed">{description}</p>
       )}
       {action && <div className="mt-4">{action}</div>}
     </div>
@@ -435,7 +435,7 @@ interface ActionBarProps {
 export function ActionBar({ children, left, className }: ActionBarProps) {
   return (
     <div className={cn(
-      'flex items-center justify-between gap-3 pt-4 border-t border-zinc-100',
+      'flex items-center justify-between gap-3 pt-4 border-t border-stone-100',
       className,
     )}>
       <div className="flex items-center gap-2">{left}</div>
@@ -480,18 +480,18 @@ export function ListItem({
       onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
       className={cn(
         'flex items-center gap-3 px-4 py-3 rounded-lg',
-        onClick && 'cursor-pointer hover:bg-zinc-50 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none',
+        onClick && 'cursor-pointer hover:bg-stone-50 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none',
         className,
       )}
     >
       {Icon && <IconBox icon={Icon} size="sm" className={iconClassName} />}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-zinc-900 truncate">{title}</p>
-        {subtitle && <p className="text-xs text-zinc-500 truncate mt-0.5">{subtitle}</p>}
+        <p className="text-sm font-medium text-stone-900 truncate">{title}</p>
+        {subtitle && <p className="text-xs text-stone-500 truncate mt-0.5">{subtitle}</p>}
       </div>
       {meta && <div className="flex-shrink-0">{meta}</div>}
       {actions && <div className="flex items-center gap-2 flex-shrink-0">{actions}</div>}
-      {chevron && <ChevronRight size={16} className="text-zinc-400 flex-shrink-0" />}
+      {chevron && <ChevronRight size={16} className="text-stone-400 flex-shrink-0" />}
     </div>
   );
 }
@@ -509,13 +509,13 @@ export function Divider({ label, className }: DividerProps) {
   if (label) {
     return (
       <div className={cn('flex items-center gap-3 py-3', className)}>
-        <div className="flex-1 h-px bg-zinc-200" />
-        <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">{label}</span>
-        <div className="flex-1 h-px bg-zinc-200" />
+        <div className="flex-1 h-px bg-stone-200" />
+        <span className="text-xs font-medium text-stone-400 uppercase tracking-wider">{label}</span>
+        <div className="flex-1 h-px bg-stone-200" />
       </div>
     );
   }
-  return <div className={cn('h-px bg-zinc-100 my-4', className)} />;
+  return <div className={cn('h-px bg-stone-100 my-4', className)} />;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -550,7 +550,7 @@ export function ProgressBar({
   return (
     <div className={cn('flex items-center gap-3', className)}>
       <div className={cn(
-        'flex-1 rounded-full bg-zinc-100 overflow-hidden',
+        'flex-1 rounded-full bg-stone-100 overflow-hidden',
         size === 'sm' ? 'h-1.5' : 'h-2.5',
       )}>
         <div
@@ -559,7 +559,7 @@ export function ProgressBar({
         />
       </div>
       {showLabel && (
-        <span className="text-xs font-medium text-zinc-600 tabular-nums w-10 text-right">
+        <span className="text-xs font-medium text-stone-600 tabular-nums w-10 text-right">
           {Math.round(pct)}%
         </span>
       )}
@@ -577,7 +577,7 @@ interface SkeletonProps {
 
 export function Skeleton({ className }: SkeletonProps) {
   return (
-    <div role="status" aria-label="Loading" className={cn('animate-pulse rounded-md bg-zinc-200', className)} />
+    <div role="status" aria-label="Loading" className={cn('animate-pulse rounded-md bg-stone-200', className)} />
   );
 }
 
@@ -593,37 +593,37 @@ interface TextProps {
 
 /** Page title — text-xl font-semibold tracking-tight */
 export function PageTitle({ children, className }: TextProps) {
-  return <h1 className={cn('text-xl font-semibold tracking-tight text-zinc-900', className)}>{children}</h1>;
+  return <h1 className={cn('text-xl font-semibold tracking-tight text-stone-900', className)}>{children}</h1>;
 }
 
 /** Section heading — text-lg font-semibold. Defaults to h2 for proper document outline. */
 export function Heading({ children, className, as: Tag = 'h2' }: TextProps) {
-  return <Tag className={cn('text-lg font-semibold text-zinc-900', className)}>{children}</Tag>;
+  return <Tag className={cn('text-lg font-semibold text-stone-900', className)}>{children}</Tag>;
 }
 
 /** Sub heading — text-base font-semibold. Defaults to h3 for proper document outline. */
 export function SubHeading({ children, className, as: Tag = 'h3' }: TextProps) {
-  return <Tag className={cn('text-base font-semibold text-zinc-900', className)}>{children}</Tag>;
+  return <Tag className={cn('text-base font-semibold text-stone-900', className)}>{children}</Tag>;
 }
 
-/** Label — text-sm font-medium text-zinc-700 */
+/** Label — text-sm font-medium text-stone-700 */
 export function Label({ children, className, as: Tag = 'label' }: TextProps) {
-  return <Tag className={cn('text-sm font-medium text-zinc-700', className)}>{children}</Tag>;
+  return <Tag className={cn('text-sm font-medium text-stone-700', className)}>{children}</Tag>;
 }
 
-/** Body — text-sm text-zinc-600 */
+/** Body — text-sm text-stone-600 */
 export function Body({ children, className, as: Tag = 'p' }: TextProps) {
-  return <Tag className={cn('text-sm text-zinc-600 leading-relaxed', className)}>{children}</Tag>;
+  return <Tag className={cn('text-sm text-stone-600 leading-relaxed', className)}>{children}</Tag>;
 }
 
-/** Caption — text-xs text-zinc-500 */
+/** Caption — text-xs text-stone-500 */
 export function Caption({ children, className, as: Tag = 'p' }: TextProps) {
-  return <Tag className={cn('text-xs text-zinc-500', className)}>{children}</Tag>;
+  return <Tag className={cn('text-xs text-stone-500', className)}>{children}</Tag>;
 }
 
-/** Overline — text-xs uppercase tracking-wider. Uses zinc-500 for WCAG AA contrast. */
+/** Overline — text-xs uppercase tracking-wider. Uses stone-500 for WCAG AA contrast. */
 export function Overline({ children, className, as: Tag = 'span' }: TextProps) {
-  return <Tag className={cn('text-xs font-medium text-zinc-500 uppercase tracking-wider', className)}>{children}</Tag>;
+  return <Tag className={cn('text-xs font-medium text-stone-500 uppercase tracking-wider', className)}>{children}</Tag>;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -643,20 +643,20 @@ export function Input({ icon: Icon, error, className, id: providedId, ...props }
   return (
     <div className="relative">
       {Icon && (
-        <Icon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+        <Icon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
       )}
       <input
         id={inputId}
         aria-invalid={error ? true : undefined}
         aria-describedby={errorId}
         className={cn(
-          'w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-zinc-900',
-          'placeholder:text-zinc-400',
-          'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 outline-none',
+          'w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-stone-900',
+          'placeholder:text-stone-400',
+          'focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-1 outline-none',
           'transition-colors duration-150',
-          'disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-zinc-50',
+          'disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-stone-50',
           Icon && 'pl-10',
-          error ? 'border-red-300 focus-visible:ring-red-500' : 'border-zinc-200',
+          error ? 'border-red-300 focus-visible:ring-red-500' : 'border-stone-200',
           className,
         )}
         {...props}
@@ -750,7 +750,7 @@ export function ModalOverlay({ children, onClose, size = 'md', ariaLabel, classN
         aria-label={ariaLabel}
         tabIndex={-1}
         className={cn(
-          'relative w-full bg-white rounded-xl shadow-lg border border-zinc-200 overflow-hidden',
+          'relative w-full bg-white rounded-xl shadow-lg border border-stone-200 overflow-hidden',
           'animate-in fade-in zoom-in-95 duration-150',
           modalSizes[size],
           className,
@@ -803,8 +803,8 @@ export function PageHeader({ title, subtitle, actions, className }: PageHeaderPr
   return (
     <div className={cn('flex items-start justify-between gap-4', className)}>
       <div>
-        <h1 className="text-xl font-semibold text-zinc-900 tracking-tight">{title}</h1>
-        {subtitle && <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>}
+        <h1 className="text-xl font-semibold text-stone-900 tracking-tight">{title}</h1>
+        {subtitle && <p className="mt-1 text-sm text-stone-500">{subtitle}</p>}
       </div>
       {actions && <div className="flex items-center gap-2 flex-shrink-0">{actions}</div>}
     </div>
@@ -841,12 +841,12 @@ export function StatRow({ stats, columns = 4, className }: StatRowProps) {
   return (
     <div className={cn('grid gap-4', colMap[columns], className)}>
       {stats.map((s) => (
-        <div key={s.label} className="rounded-xl border border-zinc-200 bg-white px-5 py-4 shadow-sm">
+        <div key={s.label} className="rounded-xl border border-stone-200 bg-white px-5 py-4 shadow-sm">
           <div className="flex items-center gap-2">
-            {s.icon && <s.icon className={cn('h-4 w-4', s.iconClassName || 'text-zinc-500')} />}
-            <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">{s.label}</span>
+            {s.icon && <s.icon className={cn('h-4 w-4', s.iconClassName || 'text-stone-500')} />}
+            <span className="text-xs font-medium text-stone-500 uppercase tracking-wide">{s.label}</span>
           </div>
-          <span className={cn('text-2xl font-semibold mt-1 block', s.valueClassName || 'text-zinc-900')}>
+          <span className={cn('text-2xl font-semibold mt-1 block', s.valueClassName || 'text-stone-900')}>
             {s.value}
           </span>
         </div>
@@ -875,7 +875,7 @@ interface TabBarProps {
 
 export function TabBar({ tabs, activeTab, onTabChange, className }: TabBarProps) {
   return (
-    <div className={cn('flex items-center gap-1 border-b border-zinc-200', className)}>
+    <div className={cn('flex items-center gap-1 border-b border-stone-200', className)}>
       {tabs.map((tab) => {
         const active = tab.id === activeTab;
         const Icon = tab.icon;
@@ -885,10 +885,10 @@ export function TabBar({ tabs, activeTab, onTabChange, className }: TabBarProps)
             onClick={() => onTabChange(tab.id)}
             className={cn(
               'inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium -mb-px border-b-2 transition-colors duration-150',
-              'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none',
+              'focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none',
               active
                 ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300',
+                : 'border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300',
             )}
           >
             {Icon && <Icon size={16} />}
@@ -896,7 +896,7 @@ export function TabBar({ tabs, activeTab, onTabChange, className }: TabBarProps)
             {tab.count != null && (
               <span className={cn(
                 'text-xs rounded-full px-1.5 py-0.5 font-medium',
-                active ? 'bg-blue-100 text-blue-700' : 'bg-zinc-100 text-zinc-500',
+                active ? 'bg-blue-100 text-blue-700' : 'bg-stone-100 text-stone-500',
               )}>
                 {tab.count}
               </span>
@@ -944,10 +944,10 @@ export const LIFECYCLE: Record<ArtifactLifecycleStage, LifecycleStageConfig> = {
   not_started: {
     label: 'Not Started',
     variant: 'default',
-    bg: 'bg-zinc-50',
-    text: 'text-zinc-600',
-    dot: 'bg-zinc-400',
-    border: 'border-zinc-200',
+    bg: 'bg-stone-50',
+    text: 'text-stone-600',
+    dot: 'bg-stone-400',
+    border: 'border-stone-200',
     order: 0,
   },
   draft: {
@@ -998,10 +998,10 @@ export const LIFECYCLE: Record<ArtifactLifecycleStage, LifecycleStageConfig> = {
   archived: {
     label: 'Archived',
     variant: 'default',
-    bg: 'bg-zinc-50',
-    text: 'text-zinc-500',
-    dot: 'bg-zinc-400',
-    border: 'border-zinc-200',
+    bg: 'bg-stone-50',
+    text: 'text-stone-500',
+    dot: 'bg-stone-400',
+    border: 'border-stone-200',
     order: 6,
   },
 };
@@ -1110,8 +1110,8 @@ interface LoadingStateProps {
 export function LoadingState({ label = 'Loading', size = 'section', className }: LoadingStateProps) {
   if (size === 'compact') {
     return (
-      <span role="status" className={cn('inline-flex items-center gap-2 text-xs text-zinc-500', className)}>
-        <span className="w-3.5 h-3.5 rounded-full border-2 border-zinc-200 border-t-zinc-500 animate-spin" />
+      <span role="status" className={cn('inline-flex items-center gap-2 text-xs text-stone-500', className)}>
+        <span className="w-3.5 h-3.5 rounded-full border-2 border-stone-200 border-t-stone-500 animate-spin" />
         <span>{label}</span>
       </span>
     );
@@ -1120,8 +1120,8 @@ export function LoadingState({ label = 'Loading', size = 'section', className }:
   if (size === 'page') {
     return (
       <div role="status" className={cn('flex-1 flex flex-col items-center justify-center bg-white gap-3 min-h-[300px]', className)}>
-        <div className="w-6 h-6 rounded-full border-2 border-zinc-200 border-t-zinc-500 animate-spin" />
-        <span className="text-sm text-zinc-500">{label}</span>
+        <div className="w-6 h-6 rounded-full border-2 border-stone-200 border-t-stone-500 animate-spin" />
+        <span className="text-sm text-stone-500">{label}</span>
       </div>
     );
   }
@@ -1129,8 +1129,8 @@ export function LoadingState({ label = 'Loading', size = 'section', className }:
   // section (default)
   return (
     <div role="status" className={cn('flex flex-col items-center justify-center py-12 gap-3', className)}>
-      <div className="w-5 h-5 rounded-full border-2 border-zinc-200 border-t-zinc-500 animate-spin" />
-      <span className="text-sm text-zinc-500">{label}</span>
+      <div className="w-5 h-5 rounded-full border-2 border-stone-200 border-t-stone-500 animate-spin" />
+      <span className="text-sm text-stone-500">{label}</span>
     </div>
   );
 }

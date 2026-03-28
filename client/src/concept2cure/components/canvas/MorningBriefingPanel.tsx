@@ -81,9 +81,9 @@ const AlertCard: React.FC<AlertCardProps> = ({
       badge: 'bg-blue-600 text-white',
     },
     INFO: {
-      bg: 'bg-zinc-50 border-zinc-200',
-      icon: 'bg-zinc-100 text-zinc-600',
-      badge: 'bg-zinc-600 text-white',
+      bg: 'bg-stone-50 border-stone-200',
+      icon: 'bg-stone-100 text-stone-600',
+      badge: 'bg-stone-600 text-white',
     },
   };
 
@@ -100,12 +100,12 @@ const AlertCard: React.FC<AlertCardProps> = ({
             <span className={cn("text-xs font-semibold px-1.5 py-0.5 rounded", config.badge)}>
               {priority}
             </span>
-            <span className="text-xs text-zinc-500">{source}</span>
+            <span className="text-xs text-stone-500">{source}</span>
           </div>
-          <h4 className="font-medium text-zinc-900 text-sm mb-1">{title}</h4>
-          <p className="text-xs text-zinc-600 line-clamp-2">{message}</p>
+          <h4 className="font-medium text-stone-900 text-sm mb-1">{title}</h4>
+          <p className="text-xs text-stone-600 line-clamp-2">{message}</p>
           <div className="flex items-center justify-between mt-3">
-            <span className="text-xs text-zinc-400">{timestamp}</span>
+            <span className="text-xs text-stone-400">{timestamp}</span>
             {actionLabel && (
               <button
                 onClick={onAction}
@@ -152,12 +152,12 @@ const PriorityItem: React.FC<PriorityItemProps> = ({
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 p-3 rounded-xl bg-white border border-zinc-200 hover:border-zinc-300 hover:shadow-sm transition-all text-left group"
+      className="w-full flex items-center gap-3 p-3 rounded-xl bg-white border border-stone-200 hover:border-stone-300 hover:shadow-sm transition-all text-left group"
     >
       <div className={cn("w-2 h-2 rounded-full flex-shrink-0", config.color)} />
       <div className="flex-1 min-w-0">
-        <h4 className="font-medium text-zinc-900 text-sm truncate">{title}</h4>
-        <div className="flex items-center gap-2 text-xs text-zinc-500">
+        <h4 className="font-medium text-stone-900 text-sm truncate">{title}</h4>
+        <div className="flex items-center gap-2 text-xs text-stone-500">
           {project && <span>{project}</span>}
           {deadline && (
             <>
@@ -205,13 +205,13 @@ const StatWidget: React.FC<StatWidgetProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 p-4">
+    <div className="bg-white rounded-xl border border-stone-200 p-4">
       <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center mb-3", colorConfig[color])}>
         <Icon className="w-5 h-5" />
       </div>
-      <div className="text-2xl font-semibold text-zinc-900">{value}</div>
+      <div className="text-2xl font-semibold text-stone-900">{value}</div>
       <div className="flex items-center justify-between">
-        <span className="text-sm text-zinc-500">{label}</span>
+        <span className="text-sm text-stone-500">{label}</span>
         {change && (
           <span className={cn(
             "text-xs font-medium",
@@ -249,7 +249,7 @@ export const MorningBriefingPanel: React.FC<MorningBriefingPanelProps> = ({
   if (isLoading) {
     return (
       <div className={cn("flex items-center justify-center h-64", className)}>
-        <div className="animate-pulse text-zinc-400">Loading briefing...</div>
+        <div className="animate-pulse text-stone-400">Loading briefing...</div>
       </div>
     );
   }
@@ -270,8 +270,8 @@ export const MorningBriefingPanel: React.FC<MorningBriefingPanelProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-semibold text-zinc-900">Morning Briefing</h2>
-          <p className="text-sm text-zinc-500">
+          <h2 className="text-xl font-semibold text-stone-900">Morning Briefing</h2>
+          <p className="text-sm text-stone-500">
             {new Date().toLocaleDateString('en-US', {
               weekday: 'long',
               month: 'long',
@@ -284,7 +284,7 @@ export const MorningBriefingPanel: React.FC<MorningBriefingPanelProps> = ({
             "w-2 h-2 rounded-full",
             connectionStatus === 'connected' ? 'bg-emerald-500' : 'bg-red-500'
           )} />
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-stone-500">
             {connectionStatus === 'connected' ? 'Live' : 'Offline'}
           </span>
         </div>
@@ -324,8 +324,8 @@ export const MorningBriefingPanel: React.FC<MorningBriefingPanelProps> = ({
       <div className="flex-1 grid grid-cols-2 gap-6 min-h-0">
         {/* Left: Alerts */}
         <div className="flex flex-col min-h-0">
-          <h3 className="font-semibold text-zinc-900 mb-3 flex items-center gap-2">
-            <Bell className="w-4 h-4 text-zinc-400" />
+          <h3 className="font-semibold text-stone-900 mb-3 flex items-center gap-2">
+            <Bell className="w-4 h-4 text-stone-400" />
             Overnight Alerts
           </h3>
           <div className="flex-1 space-y-3 overflow-y-auto pr-2">
@@ -343,7 +343,7 @@ export const MorningBriefingPanel: React.FC<MorningBriefingPanelProps> = ({
                 />
               ))
             ) : (
-              <div className="text-center py-8 text-zinc-500">
+              <div className="text-center py-8 text-stone-500">
                 <CheckCircle2 className="w-10 h-10 mx-auto mb-2 text-emerald-500" />
                 <p className="font-medium">All Clear</p>
                 <p className="text-sm">No overnight alerts</p>
@@ -354,8 +354,8 @@ export const MorningBriefingPanel: React.FC<MorningBriefingPanelProps> = ({
 
         {/* Right: Priorities */}
         <div className="flex flex-col min-h-0">
-          <h3 className="font-semibold text-zinc-900 mb-3 flex items-center gap-2">
-            <Target className="w-4 h-4 text-zinc-400" />
+          <h3 className="font-semibold text-stone-900 mb-3 flex items-center gap-2">
+            <Target className="w-4 h-4 text-stone-400" />
             Today's Priorities
           </h3>
           <div className="flex-1 space-y-2 overflow-y-auto pr-2">
@@ -371,7 +371,7 @@ export const MorningBriefingPanel: React.FC<MorningBriefingPanelProps> = ({
                 />
               ))
             ) : (
-              <div className="text-center py-8 text-zinc-500">
+              <div className="text-center py-8 text-stone-500">
                 <Sparkles className="w-10 h-10 mx-auto mb-2 text-amber-500" />
                 <p className="font-medium">You're Ahead</p>
                 <p className="text-sm">No urgent priorities</p>

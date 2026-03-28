@@ -83,7 +83,7 @@ const FORMATS: ExportOption[] = [
     label: 'Markdown (.md)',
     description: 'Plain text with formatting for technical docs',
     icon: Code,
-    iconColor: 'text-zinc-600 bg-zinc-100',
+    iconColor: 'text-stone-600 bg-stone-100',
     available: true,
   },
 ];
@@ -136,19 +136,19 @@ export function ExportDialog({
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" onClick={onClose} />
       <div className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-xl shadow-lg overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200">
           <div>
-            <h2 className="text-sm font-semibold text-zinc-900">Export Document</h2>
-            <p className="text-xs text-zinc-500 mt-0.5 truncate max-w-[300px]">{documentTitle}</p>
+            <h2 className="text-sm font-semibold text-stone-900">Export Document</h2>
+            <p className="text-xs text-stone-500 mt-0.5 truncate max-w-[300px]">{documentTitle}</p>
           </div>
-          <button onClick={onClose} aria-label="Close export dialog" title="Close" className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded-md hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none">
+          <button onClick={onClose} aria-label="Close export dialog" title="Close" className="p-1.5 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Document info */}
-        <div className="px-5 py-3 bg-zinc-50 border-b border-zinc-100 flex items-center gap-4">
-          <span className="text-xs text-zinc-500">{wordCount.toLocaleString()} words</span>
+        <div className="px-5 py-3 bg-stone-50 border-b border-stone-100 flex items-center gap-4">
+          <span className="text-xs text-stone-500">{wordCount.toLocaleString()} words</span>
           {ctdSection && (
             <span className="text-xs text-violet-600 font-medium">CTD {ctdSection}</span>
           )}
@@ -156,7 +156,7 @@ export function ExportDialog({
 
         {/* Format selection */}
         <div className="px-5 py-4">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">Select Format</h3>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-3">Select Format</h3>
           <div className="grid grid-cols-2 gap-2">
             {FORMATS.map(fmt => {
               const Icon = fmt.icon;
@@ -170,7 +170,7 @@ export function ExportDialog({
                     'flex items-start gap-3 p-3 rounded-xl border text-left transition-all duration-150',
                     isSelected
                       ? 'border-blue-500 bg-blue-50/50 shadow-sm'
-                      : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50',
+                      : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50',
                     !fmt.available && 'opacity-40 cursor-not-allowed',
                   )}
                 >
@@ -178,8 +178,8 @@ export function ExportDialog({
                     <Icon className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-medium text-zinc-900">{fmt.label}</p>
-                    <p className="text-[10px] text-zinc-500 mt-0.5 leading-snug">{fmt.description}</p>
+                    <p className="text-xs font-medium text-stone-900">{fmt.label}</p>
+                    <p className="text-[10px] text-stone-500 mt-0.5 leading-snug">{fmt.description}</p>
                   </div>
                 </button>
               );
@@ -188,34 +188,34 @@ export function ExportDialog({
         </div>
 
         {/* Options */}
-        <div className="px-5 py-3 border-t border-zinc-100">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">Options</h3>
+        <div className="px-5 py-3 border-t border-stone-100">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2">Options</h3>
           <div className="space-y-2">
             <label className="flex items-center gap-2.5 cursor-pointer">
               <input
                 type="checkbox"
                 checked={options.includeMetadata}
                 onChange={e => setOptions(prev => ({ ...prev, includeMetadata: e.target.checked }))}
-                className="w-3.5 h-3.5 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                className="w-3.5 h-3.5 rounded border-stone-300 text-blue-600 focus:ring-stone-400"
               />
-              <span className="text-xs text-zinc-700">Include document metadata (author, date, version)</span>
+              <span className="text-xs text-stone-700">Include document metadata (author, date, version)</span>
             </label>
             <label className="flex items-center gap-2.5 cursor-pointer">
               <input
                 type="checkbox"
                 checked={options.headerFooter}
                 onChange={e => setOptions(prev => ({ ...prev, headerFooter: e.target.checked }))}
-                className="w-3.5 h-3.5 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                className="w-3.5 h-3.5 rounded border-stone-300 text-blue-600 focus:ring-stone-400"
               />
-              <span className="text-xs text-zinc-700">Add header & footer (document title, page numbers)</span>
+              <span className="text-xs text-stone-700">Add header & footer (document title, page numbers)</span>
             </label>
             {(selectedFormat === 'docx' || selectedFormat === 'pdf') && (
               <div className="flex items-center gap-3 mt-1">
-                <span className="text-xs text-zinc-500">Page size:</span>
+                <span className="text-xs text-stone-500">Page size:</span>
                 <select
                   value={options.pageSize}
                   onChange={e => setOptions(prev => ({ ...prev, pageSize: e.target.value as 'letter' | 'a4' }))}
-                  className="text-xs border border-zinc-200 rounded-md px-2 py-1 bg-white focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30"
+                  className="text-xs border border-stone-200 rounded-md px-2 py-1 bg-white focus-visible:ring-2 focus-visible:ring-stone-400 outline-none/30"
                 >
                   <option value="letter">US Letter</option>
                   <option value="a4">A4</option>
@@ -226,10 +226,10 @@ export function ExportDialog({
         </div>
 
         {/* Footer with export button */}
-        <div className="flex items-center justify-between px-5 py-4 border-t border-zinc-200 bg-zinc-50">
+        <div className="flex items-center justify-between px-5 py-4 border-t border-stone-200 bg-stone-50">
           <button
             onClick={onClose}
-            className="px-3 py-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 transition-colors duration-150"
+            className="px-3 py-1.5 text-xs font-medium text-stone-600 hover:text-stone-900 transition-colors duration-150"
           >
             Cancel
           </button>

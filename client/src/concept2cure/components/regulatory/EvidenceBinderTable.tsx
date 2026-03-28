@@ -220,7 +220,7 @@ export default function EvidenceBinderTable({ projectId }: EvidenceBinderTablePr
 
   if (isLoading) {
     return (
-      <div className="border border-zinc-200 rounded-md">
+      <div className="border border-stone-200 rounded-md">
         <div className="flex items-center justify-center p-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           <span className="ml-2 text-muted-foreground">Loading evidence binder…</span>
@@ -231,7 +231,7 @@ export default function EvidenceBinderTable({ projectId }: EvidenceBinderTablePr
 
   if (error) {
     return (
-      <div className="border border-zinc-200 rounded-md">
+      <div className="border border-stone-200 rounded-md">
         <div className="p-6">
           <div className="flex items-center gap-2 text-destructive">
             <AlertTriangle className="h-5 w-5" />
@@ -244,8 +244,8 @@ export default function EvidenceBinderTable({ projectId }: EvidenceBinderTablePr
 
   return (
     <div className="space-y-4">
-      <div className="border border-zinc-200 rounded-md">
-        <div className="flex flex-row items-center justify-between px-4 py-3 border-b border-zinc-200">
+      <div className="border border-stone-200 rounded-md">
+        <div className="flex flex-row items-center justify-between px-4 py-3 border-b border-stone-200">
           <div>
             <h3 className="text-lg font-semibold">Evidence Binder</h3>
             <p className="text-sm text-muted-foreground">

@@ -375,20 +375,20 @@ export function ReviewThreadsPanel({
 
             {/* New thread form */}
             {showNewThread && (
-              <div className="mb-3 p-2 bg-zinc-50 rounded-lg border border-zinc-200 space-y-2">
+              <div className="mb-3 p-2 bg-stone-50 rounded-lg border border-stone-200 space-y-2">
                 <input
                   type="text"
                   value={newThreadTitle}
                   onChange={e => setNewThreadTitle(e.target.value)}
                   placeholder="Thread title..."
-                  className="w-full px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+                  className="w-full px-2 py-1 text-xs bg-white border border-stone-200 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
                   maxLength={500}
                 />
                 <div className="flex gap-1.5">
                   <select
                     value={newThreadPriority}
                     onChange={e => setNewThreadPriority(e.target.value)}
-                    className="flex-1 px-1.5 py-1 text-xs bg-white border border-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+                    className="flex-1 px-1.5 py-1 text-xs bg-white border border-stone-200 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
                   >
                     <option value="">Priority...</option>
                     {Object.entries(tailoring.priorityLabels).map(([val, label]) => (
@@ -400,7 +400,7 @@ export function ReviewThreadsPanel({
                   <select
                     value={newThreadAnchorType}
                     onChange={e => setNewThreadAnchorType(e.target.value)}
-                    className="flex-1 px-1.5 py-1 text-xs bg-white border border-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+                    className="flex-1 px-1.5 py-1 text-xs bg-white border border-stone-200 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
                   >
                     <option value="">Anchor...</option>
                     {tailoring.anchorTypes.map(a => (
@@ -416,23 +416,23 @@ export function ReviewThreadsPanel({
                     value={newThreadAnchorLabel}
                     onChange={e => setNewThreadAnchorLabel(e.target.value)}
                     placeholder="Anchor label (e.g. section name)..."
-                    className="w-full px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+                    className="w-full px-2 py-1 text-xs bg-white border border-stone-200 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
                   />
                 )}
                 <div className="flex items-center gap-1.5">
-                  <label className="text-xs text-zinc-400 shrink-0">Due</label>
+                  <label className="text-xs text-stone-400 shrink-0">Due</label>
                   <input
                     type="date"
                     value={newThreadDueAt}
                     onChange={e => setNewThreadDueAt(e.target.value)}
-                    className="flex-1 px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+                    className="flex-1 px-2 py-1 text-xs bg-white border border-stone-200 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
                   />
                 </div>
                 <textarea
                   value={newThreadComment}
                   onChange={e => setNewThreadComment(e.target.value)}
                   placeholder={tailoring.threadPlaceholder}
-                  className="w-full px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none resize-none"
+                  className="w-full px-2 py-1 text-xs bg-white border border-stone-200 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none resize-none"
                   rows={2}
                   maxLength={10000}
                 />
@@ -447,7 +447,7 @@ export function ReviewThreadsPanel({
                       setNewThreadAnchorLabel('');
                       setNewThreadDueAt('');
                     }}
-                    className="px-2 py-0.5 text-xs text-zinc-500 hover:bg-zinc-200 rounded"
+                    className="px-2 py-0.5 text-xs text-stone-500 hover:bg-stone-200 rounded"
                   >
                     Cancel
                   </button>
@@ -465,7 +465,7 @@ export function ReviewThreadsPanel({
 
             {/* Open threads */}
             {openThreads.length === 0 && resolvedThreads.length === 0 && (
-              <p className="text-xs text-zinc-400 text-center py-4">No review threads yet</p>
+              <p className="text-xs text-stone-400 text-center py-4">No review threads yet</p>
             )}
 
             {openThreads.map(thread => (
@@ -502,7 +502,7 @@ export function ReviewThreadsPanel({
             {/* Resolved threads section */}
             {resolvedThreads.length > 0 && (
               <div className="mt-3">
-                <p className="text-xs text-zinc-400 font-medium mb-1.5 px-1">
+                <p className="text-xs text-stone-400 font-medium mb-1.5 px-1">
                   Resolved ({resolvedThreads.length})
                 </p>
                 {resolvedThreads.map(thread => (
@@ -542,7 +542,7 @@ export function ReviewThreadsPanel({
           /* Tasks sub-tab */
           <div className="p-2">
             {openTasks.length === 0 && closedTasks.length === 0 && (
-              <p className="text-xs text-zinc-400 text-center py-4">No review tasks yet</p>
+              <p className="text-xs text-stone-400 text-center py-4">No review tasks yet</p>
             )}
 
             {openTasks.map(task => (
@@ -556,7 +556,7 @@ export function ReviewThreadsPanel({
 
             {closedTasks.length > 0 && (
               <div className="mt-3">
-                <p className="text-xs text-zinc-400 font-medium mb-1.5 px-1">
+                <p className="text-xs text-stone-400 font-medium mb-1.5 px-1">
                   Resolved ({closedTasks.length})
                 </p>
                 {closedTasks.map(task => (
@@ -648,34 +648,34 @@ function ThreadCard({
     <div
       className={cn(
         'mb-2 rounded-lg border transition-colors duration-150',
-        isOpen ? 'border-zinc-200 bg-white' : 'border-zinc-200 bg-zinc-50/50'
+        isOpen ? 'border-stone-200 bg-white' : 'border-stone-200 bg-stone-50/50'
       )}
     >
       {/* Header */}
       <button onClick={onToggle} className="w-full flex items-start gap-1.5 p-2 text-left">
         {expanded ? (
-          <ChevronDown className="w-3 h-3 text-zinc-400 mt-0.5 shrink-0" />
+          <ChevronDown className="w-3 h-3 text-stone-400 mt-0.5 shrink-0" />
         ) : (
-          <ChevronRight className="w-3 h-3 text-zinc-400 mt-0.5 shrink-0" />
+          <ChevronRight className="w-3 h-3 text-stone-400 mt-0.5 shrink-0" />
         )}
         <div className="flex-1 min-w-0">
           <p
             className={cn(
               'text-xs font-medium truncate',
-              isOpen ? 'text-zinc-900' : 'text-zinc-500 line-through'
+              isOpen ? 'text-stone-900' : 'text-stone-500 line-through'
             )}
           >
             {thread.title}
           </p>
           <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-            <span className="text-xs text-zinc-400">{thread.createdByName}</span>
+            <span className="text-xs text-stone-400">{thread.createdByName}</span>
             {thread.priority && thread.priority !== 'medium' && (
               <span
                 className={cn(
                   'text-[7px] px-1 rounded font-medium',
                   thread.priority === 'high'
                     ? 'bg-red-100 text-red-700'
-                    : 'bg-zinc-100 text-zinc-500'
+                    : 'bg-stone-100 text-stone-500'
                 )}
               >
                 {priorityLabels?.[thread.priority] || thread.priority.toUpperCase()}
@@ -694,14 +694,14 @@ function ThreadCard({
                     ? 'text-red-600 font-medium'
                     : isDueSoon
                       ? 'text-amber-600'
-                      : 'text-zinc-400'
+                      : 'text-stone-400'
                 )}
               >
                 <Clock className="w-2.5 h-2.5" />
                 {isDueOverdue ? 'Overdue' : formatTime(thread.dueAt)}
               </span>
             )}
-            <span className="text-xs text-zinc-400">
+            <span className="text-xs text-stone-400">
               {thread.commentCount} {thread.commentCount === 1 ? 'comment' : 'comments'}
             </span>
           </div>
@@ -714,10 +714,10 @@ function ThreadCard({
 
       {/* Expanded content */}
       {expanded && (
-        <div className="px-2 pb-2 border-t border-zinc-200">
+        <div className="px-2 pb-2 border-t border-stone-200">
           {loadingComments ? (
             <div className="py-3 flex justify-center">
-              <Loader2 className="w-3 h-3 animate-spin text-zinc-400" />
+              <Loader2 className="w-3 h-3 animate-spin text-stone-400" />
             </div>
           ) : (
             <>
@@ -729,30 +729,30 @@ function ThreadCard({
                     className={cn(
                       'rounded p-1.5',
                       c.kind === 'system'
-                        ? 'bg-zinc-50 border border-zinc-200'
+                        ? 'bg-stone-50 border border-stone-200'
                         : c.kind === 'request_changes'
                           ? 'bg-amber-50 border border-amber-100'
-                          : 'bg-white border border-zinc-200'
+                          : 'bg-white border border-stone-200'
                     )}
                   >
                     <div className="flex items-center gap-1 mb-0.5">
-                      <User className="w-2.5 h-2.5 text-zinc-400" />
-                      <span className="text-xs font-medium text-zinc-700">{c.authorName}</span>
+                      <User className="w-2.5 h-2.5 text-stone-400" />
+                      <span className="text-xs font-medium text-stone-700">{c.authorName}</span>
                       {c.kind === 'request_changes' && (
                         <span className="text-[7px] bg-amber-200 text-amber-800 px-1 rounded font-medium">
                           CHANGES REQUESTED
                         </span>
                       )}
                       {c.kind === 'system' && (
-                        <span className="text-[7px] bg-zinc-200 text-zinc-600 px-1 rounded font-medium">
+                        <span className="text-[7px] bg-stone-200 text-stone-600 px-1 rounded font-medium">
                           SYSTEM
                         </span>
                       )}
-                      <span className="text-xs text-zinc-400 ml-auto">
+                      <span className="text-xs text-stone-400 ml-auto">
                         {formatTime(c.createdAt)}
                       </span>
                     </div>
-                    <p className="text-xs text-zinc-600 whitespace-pre-wrap">{c.body}</p>
+                    <p className="text-xs text-stone-600 whitespace-pre-wrap">{c.body}</p>
                   </div>
                 ))}
               </div>
@@ -767,7 +767,7 @@ function ThreadCard({
                         value={replyBody}
                         onChange={e => onSetReplyBody(e.target.value)}
                         placeholder="Reply..."
-                        className="flex-1 px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+                        className="flex-1 px-2 py-1 text-xs bg-white border border-stone-200 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
                         maxLength={10000}
                         onKeyDown={e => {
                           if (e.key === 'Enter' && !e.shiftKey) {
@@ -792,7 +792,7 @@ function ThreadCard({
                           onSetReplyTarget(null);
                           onSetReplyBody('');
                         }}
-                        className="px-1 py-1 text-zinc-400 hover:bg-zinc-100 rounded"
+                        className="px-1 py-1 text-stone-400 hover:bg-stone-100 rounded"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -810,7 +810,7 @@ function ThreadCard({
               )}
 
               {/* Actions */}
-              <div className="flex gap-1.5 mt-2 pt-1.5 border-t border-zinc-200 flex-wrap">
+              <div className="flex gap-1.5 mt-2 pt-1.5 border-t border-stone-200 flex-wrap">
                 {isOpen && onResolve && (
                   <button
                     onClick={onResolve}
@@ -860,7 +860,7 @@ function ThreadCard({
                     value={newTaskTitle || ''}
                     onChange={e => onSetNewTaskTitle?.(e.target.value)}
                     placeholder="Task title..."
-                    className="w-full px-1.5 py-0.5 text-xs bg-white border border-blue-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+                    className="w-full px-1.5 py-0.5 text-xs bg-white border border-blue-200 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
                     maxLength={500}
                   />
                   <div className="flex gap-1">
@@ -892,7 +892,7 @@ function ThreadCard({
                   <div className="flex gap-1 justify-end">
                     <button
                       onClick={() => onShowNewTask?.(null)}
-                      className="px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-100 rounded"
+                      className="px-1.5 py-0.5 text-xs text-stone-500 hover:bg-stone-100 rounded"
                     >
                       Cancel
                     </button>
@@ -926,7 +926,7 @@ function ThreadCard({
                         setShowRequestChanges(false);
                         setRequestChangesBody('');
                       }}
-                      className="px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-100 rounded"
+                      className="px-1.5 py-0.5 text-xs text-stone-500 hover:bg-stone-100 rounded"
                     >
                       Cancel
                     </button>
@@ -980,8 +980,8 @@ function TaskCard({ task, onResolve, onReopen, taskTypeOptions }: TaskCardProps)
         isActive
           ? isOverdue
             ? 'border-red-200 bg-red-50/30'
-            : 'border-zinc-200 bg-white'
-          : 'border-zinc-200 bg-zinc-50/50'
+            : 'border-stone-200 bg-white'
+          : 'border-stone-200 bg-stone-50/50'
       )}
     >
       <div className="flex items-start gap-1.5">
@@ -992,21 +992,21 @@ function TaskCard({ task, onResolve, onReopen, taskTypeOptions }: TaskCardProps)
           <p
             className={cn(
               'text-xs font-medium',
-              isActive ? 'text-zinc-900' : 'text-zinc-500 line-through'
+              isActive ? 'text-stone-900' : 'text-stone-500 line-through'
             )}
           >
             {task.title}
           </p>
           <div className="flex items-center gap-1.5 mt-0.5">
-            <span className="text-xs bg-zinc-100 text-zinc-500 px-1 rounded">{typeLabel}</span>
+            <span className="text-xs bg-stone-100 text-stone-500 px-1 rounded">{typeLabel}</span>
             {task.assignedToName && (
-              <span className="text-xs text-zinc-400">→ {task.assignedToName}</span>
+              <span className="text-xs text-stone-400">→ {task.assignedToName}</span>
             )}
             {task.dueAt && (
               <span
                 className={cn(
                   'text-xs flex items-center gap-0.5',
-                  isOverdue ? 'text-red-600 font-medium' : 'text-zinc-400'
+                  isOverdue ? 'text-red-600 font-medium' : 'text-stone-400'
                 )}
               >
                 <Clock className="w-2.5 h-2.5" />
@@ -1014,7 +1014,7 @@ function TaskCard({ task, onResolve, onReopen, taskTypeOptions }: TaskCardProps)
               </span>
             )}
           </div>
-          {task.description && <p className="text-xs text-zinc-500 mt-1">{task.description}</p>}
+          {task.description && <p className="text-xs text-stone-500 mt-1">{task.description}</p>}
         </div>
       </div>
       <div className="flex gap-1.5 mt-1.5 pl-4">

@@ -322,7 +322,7 @@ export const ZenSignup: React.FC = () => {
             className={`
               w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
               transition-all duration-300
-              ${index <= currentStepIndex ? 'bg-blue-600 text-white' : 'bg-zinc-200 text-zinc-500'}
+              ${index <= currentStepIndex ? 'bg-blue-600 text-white' : 'bg-stone-200 text-stone-500'}
             `}
           >
             {index < currentStepIndex ? <CheckIcon /> : index + 1}
@@ -331,7 +331,7 @@ export const ZenSignup: React.FC = () => {
             <div
               className={`
                 w-12 h-0.5 transition-all duration-300
-                ${index < currentStepIndex ? 'bg-blue-600' : 'bg-zinc-200'}
+                ${index < currentStepIndex ? 'bg-blue-600' : 'bg-stone-200'}
               `}
             />
           )}
@@ -351,7 +351,7 @@ export const ZenSignup: React.FC = () => {
     placeholder?: string;
   }> = ({ label, field, type = 'text', placeholder }) => (
     <div className="space-y-1">
-      <label htmlFor={field} className="block text-sm font-medium text-zinc-700">
+      <label htmlFor={field} className="block text-sm font-medium text-stone-700">
         {label}
       </label>
       <input
@@ -368,7 +368,7 @@ export const ZenSignup: React.FC = () => {
           ${
             errors[field]
               ? 'border-red-300 bg-red-50 focus:border-red-500'
-              : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(217,119,87,0.1)]'
+              : 'border-stone-200 bg-white focus:border-stone-400 focus:shadow-[0_0_0_3px_rgba(217,119,87,0.1)]'
           }
         `}
       />
@@ -383,7 +383,7 @@ export const ZenSignup: React.FC = () => {
     placeholder?: string;
   }> = ({ label, field, options, placeholder }) => (
     <div className="space-y-1">
-      <label htmlFor={field} className="block text-sm font-medium text-zinc-700">
+      <label htmlFor={field} className="block text-sm font-medium text-stone-700">
         {label}
       </label>
       <select
@@ -400,7 +400,7 @@ export const ZenSignup: React.FC = () => {
           ${
             errors[field]
               ? 'border-red-300 bg-red-50 focus:border-red-500'
-              : 'border-zinc-200 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(217,119,87,0.1)]'
+              : 'border-stone-200 focus:border-stone-400 focus:shadow-[0_0_0_3px_rgba(217,119,87,0.1)]'
           }
         `}
         style={{
@@ -462,7 +462,7 @@ export const ZenSignup: React.FC = () => {
           bg-blue-600 hover:bg-blue-700
           rounded-xl
           transition-all duration-150
-          focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
+          focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none
         `}
       >
         Continue
@@ -482,7 +482,7 @@ export const ZenSignup: React.FC = () => {
     >
       <button
         onClick={handleBack}
-        className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900 mb-2"
+        className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900 mb-2"
       >
         <ArrowLeftIcon />
         Back
@@ -512,7 +512,7 @@ export const ZenSignup: React.FC = () => {
           bg-blue-600 hover:bg-blue-700
           rounded-xl
           transition-all duration-150
-          focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
+          focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none
         `}
       >
         Continue
@@ -560,7 +560,7 @@ export const ZenSignup: React.FC = () => {
     >
       <button
         onClick={handleBack}
-        className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900 mb-2"
+        className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900 mb-2"
       >
         <ArrowLeftIcon />
         Back
@@ -576,7 +576,7 @@ export const ZenSignup: React.FC = () => {
               ${
                 formData.selectedPlan === plan.id
                   ? 'border-blue-500 bg-blue-50/50 shadow-sm'
-                  : 'border-zinc-200 hover:border-zinc-300'
+                  : 'border-stone-200 hover:border-stone-300'
               }
             `}
           >
@@ -587,11 +587,11 @@ export const ZenSignup: React.FC = () => {
             )}
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-semibold text-zinc-900">{plan.name}</div>
-                <div className="text-sm text-zinc-500 mt-0.5">{plan.desc}</div>
+                <div className="font-semibold text-stone-900">{plan.name}</div>
+                <div className="text-sm text-stone-500 mt-0.5">{plan.desc}</div>
               </div>
               <div className="text-right">
-                <div className="font-semibold text-zinc-900">{plan.price}</div>
+                <div className="font-semibold text-stone-900">{plan.price}</div>
                 {plan.id !== 'free' && (
                   <div className="text-xs text-green-600">14-day free trial</div>
                 )}
@@ -601,7 +601,7 @@ export const ZenSignup: React.FC = () => {
         ))}
       </div>
 
-      <p className="text-xs text-zinc-400 text-center">
+      <p className="text-xs text-stone-400 text-center">
         All paid plans include a 14-day free trial. No credit card required for the free plan.
       </p>
 
@@ -614,7 +614,7 @@ export const ZenSignup: React.FC = () => {
           bg-blue-600 hover:bg-blue-700
           rounded-xl
           transition-all duration-150
-          focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
+          focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none
         `}
       >
         Continue
@@ -647,15 +647,15 @@ export const ZenSignup: React.FC = () => {
     >
       <button
         onClick={handleBack}
-        className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900 mb-2"
+        className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900 mb-2"
       >
         <ArrowLeftIcon />
         Back
       </button>
 
-      <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-200">
-        <h4 className="font-medium text-zinc-900 mb-1 text-sm">Legal Agreements</h4>
-        <p className="text-xs text-zinc-500">
+      <div className="p-3 bg-stone-50 rounded-xl border border-stone-200">
+        <h4 className="font-medium text-stone-900 mb-1 text-sm">Legal Agreements</h4>
+        <p className="text-xs text-stone-500">
           Please read and accept each agreement below. Scroll to the bottom of each document to
           enable acceptance.
         </p>
@@ -668,10 +668,10 @@ export const ZenSignup: React.FC = () => {
       )}
       {/* ── Terms of Service — Scroll to Accept ── */}
       <div
-        className={`rounded-xl border ${errors.acceptedTerms ? 'border-red-300 bg-red-50/30' : 'border-zinc-200'}`}
+        className={`rounded-xl border ${errors.acceptedTerms ? 'border-red-300 bg-red-50/30' : 'border-stone-200'}`}
       >
-        <div className="px-4 py-2 border-b border-zinc-100 flex items-center justify-between">
-          <span className="text-xs font-semibold text-zinc-700">Terms of Service</span>
+        <div className="px-4 py-2 border-b border-stone-100 flex items-center justify-between">
+          <span className="text-xs font-semibold text-stone-700">Terms of Service</span>
           {scrolledTerms ? (
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">
               Read
@@ -683,10 +683,10 @@ export const ZenSignup: React.FC = () => {
           )}
         </div>
         <div
-          className="h-40 overflow-y-auto px-4 py-3 text-[11px] text-zinc-600 leading-relaxed"
+          className="h-40 overflow-y-auto px-4 py-3 text-[11px] text-stone-600 leading-relaxed"
           onScroll={e => handleLegalScroll(e, 'terms')}
         >
-          <p className="font-semibold text-zinc-800 mb-2">Concept2Cure, Inc. — Terms of Service</p>
+          <p className="font-semibold text-stone-800 mb-2">Concept2Cure, Inc. — Terms of Service</p>
           <p className="mb-2">
             By accessing or using the Concept2Cure platform, you agree to be bound by these Terms.
             If you are using the Platform on behalf of an organization, you represent that you have
@@ -717,11 +717,11 @@ export const ZenSignup: React.FC = () => {
             damages arising from use of the Platform, including damages from regulatory submissions
             or compliance decisions.
           </p>
-          <p className="text-zinc-400 mt-4">
+          <p className="text-stone-400 mt-4">
             Full terms available at concept2cure.com/concept2cure/legal/terms
           </p>
         </div>
-        <div className="px-4 py-2 border-t border-zinc-100">
+        <div className="px-4 py-2 border-t border-stone-100">
           <label
             className={`flex items-center gap-2 cursor-pointer ${!scrolledTerms ? 'opacity-50 pointer-events-none' : ''}`}
           >
@@ -730,19 +730,19 @@ export const ZenSignup: React.FC = () => {
               checked={formData.acceptedTerms}
               onChange={e => updateField('acceptedTerms', e.target.checked)}
               disabled={!scrolledTerms}
-              className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+              className="w-4 h-4 rounded border-stone-300 text-blue-600 focus:ring-stone-400"
             />
-            <span className="text-xs text-zinc-700">I accept the Terms of Service</span>
+            <span className="text-xs text-stone-700">I accept the Terms of Service</span>
           </label>
         </div>
       </div>
 
       {/* ── Privacy & Data Rights — Scroll to Accept ── */}
       <div
-        className={`rounded-xl border ${errors.acceptedPrivacy ? 'border-red-300 bg-red-50/30' : 'border-zinc-200'}`}
+        className={`rounded-xl border ${errors.acceptedPrivacy ? 'border-red-300 bg-red-50/30' : 'border-stone-200'}`}
       >
-        <div className="px-4 py-2 border-b border-zinc-100 flex items-center justify-between">
-          <span className="text-xs font-semibold text-zinc-700">Privacy Policy & Data Rights</span>
+        <div className="px-4 py-2 border-b border-stone-100 flex items-center justify-between">
+          <span className="text-xs font-semibold text-stone-700">Privacy Policy & Data Rights</span>
           {scrolledPrivacy ? (
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">
               Read
@@ -754,10 +754,10 @@ export const ZenSignup: React.FC = () => {
           )}
         </div>
         <div
-          className="h-40 overflow-y-auto px-4 py-3 text-[11px] text-zinc-600 leading-relaxed"
+          className="h-40 overflow-y-auto px-4 py-3 text-[11px] text-stone-600 leading-relaxed"
           onScroll={e => handleLegalScroll(e, 'privacy')}
         >
-          <p className="font-semibold text-zinc-800 mb-2">
+          <p className="font-semibold text-stone-800 mb-2">
             Concept2Cure, Inc. — Privacy Policy & Data Rights
           </p>
           <p className="mb-2">
@@ -793,11 +793,11 @@ export const ZenSignup: React.FC = () => {
             You have the right to access, rectify, delete, port, and restrict processing of your
             data. Audit logs are retained for 7 years per 21 CFR Part 11.
           </p>
-          <p className="text-zinc-400 mt-4">
+          <p className="text-stone-400 mt-4">
             Full policy at concept2cure.com/concept2cure/legal/privacy
           </p>
         </div>
-        <div className="px-4 py-2 border-t border-zinc-100 space-y-2">
+        <div className="px-4 py-2 border-t border-stone-100 space-y-2">
           <label
             className={`flex items-center gap-2 cursor-pointer ${!scrolledPrivacy ? 'opacity-50 pointer-events-none' : ''}`}
           >
@@ -806,23 +806,23 @@ export const ZenSignup: React.FC = () => {
               checked={formData.acceptedPrivacy}
               onChange={e => updateField('acceptedPrivacy', e.target.checked)}
               disabled={!scrolledPrivacy}
-              className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+              className="w-4 h-4 rounded border-stone-300 text-blue-600 focus:ring-stone-400"
             />
-            <span className="text-xs text-zinc-700">
+            <span className="text-xs text-stone-700">
               I accept the Privacy Policy and consent to data processing
             </span>
           </label>
           {/* AI Learning opt-in toggle */}
-          <div className="flex items-center justify-between p-2 bg-zinc-50 rounded-lg">
+          <div className="flex items-center justify-between p-2 bg-stone-50 rounded-lg">
             <div>
-              <p className="text-xs font-medium text-zinc-700">AI Model Improvement</p>
-              <p className="text-[10px] text-zinc-500">
+              <p className="text-xs font-medium text-stone-700">AI Model Improvement</p>
+              <p className="text-[10px] text-stone-500">
                 Allow anonymized data to improve AI (you can change this anytime in Settings)
               </p>
             </div>
             <button
               onClick={() => setAiLearningOptIn(!aiLearningOptIn)}
-              className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${aiLearningOptIn ? 'bg-blue-600' : 'bg-zinc-300'}`}
+              className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${aiLearningOptIn ? 'bg-blue-600' : 'bg-stone-300'}`}
             >
               <span
                 className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${aiLearningOptIn ? 'translate-x-5' : ''}`}
@@ -834,15 +834,15 @@ export const ZenSignup: React.FC = () => {
 
       {/* ── Regulatory Compliance ── */}
       <label
-        className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors hover:bg-zinc-50 ${errors.acceptedCompliance ? 'border-red-300 bg-red-50/30' : 'border-zinc-200'}`}
+        className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors hover:bg-stone-50 ${errors.acceptedCompliance ? 'border-red-300 bg-red-50/30' : 'border-stone-200'}`}
       >
         <input
           type="checkbox"
           checked={formData.acceptedCompliance}
           onChange={e => updateField('acceptedCompliance', e.target.checked)}
-          className="w-4 h-4 mt-0.5 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+          className="w-4 h-4 mt-0.5 rounded border-stone-300 text-blue-600 focus:ring-stone-400"
         />
-        <span className="text-xs text-zinc-700">
+        <span className="text-xs text-stone-700">
           I acknowledge that my use will comply with applicable regulatory requirements (FDA 21 CFR
           Part 11, HIPAA, GDPR, ICH GCP) and my organization's policies. I understand AI-generated
           content requires qualified human review before regulatory submission.
@@ -873,7 +873,7 @@ export const ZenSignup: React.FC = () => {
           rounded-xl
           transition-all duration-150
           disabled:opacity-60 disabled:cursor-not-allowed
-          focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
+          focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none
         `}
       >
         {isLoading ? (
@@ -886,7 +886,7 @@ export const ZenSignup: React.FC = () => {
         {isLoading ? <SpinnerIcon /> : 'Create Account'}
       </button>
 
-      <p className="text-[10px] text-zinc-400 text-center mt-2">
+      <p className="text-[10px] text-stone-400 text-center mt-2">
         3-month minimum subscription · Pricing based on your organization type
       </p>
     </motion.div>
@@ -918,8 +918,8 @@ export const ZenSignup: React.FC = () => {
       </motion.div>
 
       <div className="space-y-2">
-        <h3 className="text-xl font-semibold text-zinc-900">Account Created!</h3>
-        <p className="text-zinc-600">
+        <h3 className="text-xl font-semibold text-stone-900">Account Created!</h3>
+        <p className="text-stone-600">
           Welcome to Concept2Cure. Your workspace is ready at <strong>{formData.email}</strong>.
         </p>
       </div>
@@ -958,11 +958,11 @@ export const ZenSignup: React.FC = () => {
             <div className="inline-flex items-center justify-center mb-4">
               <LogoIcon />
             </div>
-            <h1 className="text-2xl font-semibold text-zinc-900">
+            <h1 className="text-2xl font-semibold text-stone-900">
               {step === 'submitted' ? '' : 'Create your account'}
             </h1>
             {step !== 'submitted' && (
-              <p className="mt-2 text-sm text-zinc-600">
+              <p className="mt-2 text-sm text-stone-600">
                 Start using Concept2Cure in minutes. No sales calls required.
               </p>
             )}
@@ -972,7 +972,7 @@ export const ZenSignup: React.FC = () => {
           {step !== 'submitted' && renderProgress()}
 
           {/* Form card */}
-          <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-8">
+          <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-8">
             <AnimatePresence mode="wait">
               {step === 'info' && renderInfoStep()}
               {step === 'organization' && renderOrganizationStep()}
@@ -984,7 +984,7 @@ export const ZenSignup: React.FC = () => {
 
           {/* Sign in link */}
           {step !== 'submitted' && (
-            <p className="mt-6 text-center text-sm text-zinc-600">
+            <p className="mt-6 text-center text-sm text-stone-600">
               Already have an account?{' '}
               <button
                 onClick={() => setLocation('/login')}
@@ -1000,11 +1000,11 @@ export const ZenSignup: React.FC = () => {
       {/* Footer */}
       <footer className="py-6 px-4">
         <div className="max-w-md mx-auto">
-          <div className="flex items-center justify-center gap-2 text-xs text-zinc-400 mb-2">
+          <div className="flex items-center justify-center gap-2 text-xs text-stone-400 mb-2">
             <ShieldIcon />
             <span>FDA 21 CFR Part 11 Compliant</span>
           </div>
-          <p className="text-center text-xs text-zinc-400">
+          <p className="text-center text-xs text-stone-400">
             © {new Date().getFullYear()} Concept2Cure. All rights reserved.
           </p>
         </div>

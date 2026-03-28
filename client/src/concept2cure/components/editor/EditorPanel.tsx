@@ -1453,17 +1453,17 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   // ── No project selected ─────────────────────────────────────────────────
   if (!projectId) {
     return (
-      <div className="flex items-center justify-center h-full text-zinc-400">
+      <div className="flex items-center justify-center h-full text-stone-400">
         <div className="text-center max-w-[320px]">
-          <FileText className="w-10 h-10 mx-auto mb-3 text-zinc-300" />
-          <p className="text-sm font-medium text-zinc-600 mb-1">No project selected</p>
-          <p className="text-xs text-zinc-500 leading-relaxed mb-4">
+          <FileText className="w-10 h-10 mx-auto mb-3 text-stone-300" />
+          <p className="text-sm font-medium text-stone-600 mb-1">No project selected</p>
+          <p className="text-xs text-stone-500 leading-relaxed mb-4">
             Select a project to access its regulatory documents, version history, and audit trail.
           </p>
           {onNavigateToProject && (
             <button
               onClick={onNavigateToProject}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none"
             >
               Go to Projects
             </button>
@@ -1479,10 +1479,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       <div className="flex items-center justify-center h-full bg-white">
         <div className="text-center max-w-md px-6">
           <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto mb-4" />
-          <p className="text-sm font-semibold text-zinc-700 mb-2">
+          <p className="text-sm font-semibold text-stone-700 mb-2">
             Saved document was created, but the editor could not load that artifact automatically.
           </p>
-          <p className="text-xs text-zinc-400 mb-6">
+          <p className="text-xs text-stone-400 mb-6">
             The artifact may still be processing or the ID could not be matched.
           </p>
           <div className="flex items-center justify-center gap-3">
@@ -1491,7 +1491,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 setOpenArtifactNotFound(false);
                 loadArtifacts();
               }}
-              className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none shadow-sm"
+              className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none shadow-sm"
             >
               Refresh documents
             </button>
@@ -1500,7 +1500,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 setOpenArtifactNotFound(false);
                 setShowArtifactList(true);
               }}
-              className="px-4 py-2 text-sm font-medium border border-zinc-200 text-zinc-700 rounded-lg hover:bg-zinc-50 hover:border-zinc-300 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none"
+              className="px-4 py-2 text-sm font-medium border border-stone-200 text-stone-700 rounded-lg hover:bg-stone-50 hover:border-stone-300 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none"
             >
               Open artifact list
             </button>
@@ -1531,11 +1531,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     return (
       <div className="flex flex-col h-full bg-white">
         {/* Header */}
-        <div className="flex items-center justify-between h-14 px-5 border-b border-zinc-200/80 bg-zinc-50">
+        <div className="flex items-center justify-between h-14 px-5 border-b border-stone-200/80 bg-stone-50">
           <div className="flex items-baseline gap-2">
-            <h3 className="text-base font-semibold text-zinc-900 tracking-tight">Documents</h3>
+            <h3 className="text-base font-semibold text-stone-900 tracking-tight">Documents</h3>
             {artifacts.length > 0 && (
-              <span className="text-xs text-zinc-400 font-medium tabular-nums">
+              <span className="text-xs text-stone-400 font-medium tabular-nums">
                 {artifacts.length}
               </span>
             )}
@@ -1545,7 +1545,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               onClick={() => setShowFilters(!showFilters)}
               className={cn(
                 'flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors duration-150',
-                showFilters ? 'bg-blue-100 text-blue-700' : 'text-zinc-500 hover:bg-zinc-100'
+                showFilters ? 'bg-blue-100 text-blue-700' : 'text-stone-500 hover:bg-stone-100'
               )}
             >
               <Filter className="w-3 h-3" />
@@ -1560,13 +1560,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         {/* Filter controls (P5) */}
         {showFilters && artifacts.length > 0 && (
           <div
-            className="flex items-center gap-2 px-4 py-2 border-b border-zinc-200 bg-zinc-50/20 flex-wrap"
+            className="flex items-center gap-2 px-4 py-2 border-b border-stone-200 bg-stone-50/20 flex-wrap"
             data-testid="artifact-filters"
           >
             <select
               value={filterStatus}
               onChange={e => setFilterStatus(e.target.value)}
-              className="px-2 py-1 text-xs border border-zinc-200 rounded-md bg-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 outline-none"
+              className="px-2 py-1 text-xs border border-stone-200 rounded-md bg-white focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-1 outline-none"
             >
               {statusOptions.map(s => (
                 <option key={s} value={s}>
@@ -1577,7 +1577,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <select
               value={filterType}
               onChange={e => setFilterType(e.target.value)}
-              className="px-2 py-1 text-xs border border-zinc-200 rounded-md bg-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 outline-none"
+              className="px-2 py-1 text-xs border border-stone-200 rounded-md bg-white focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-1 outline-none"
             >
               {typeOptions.map(t => (
                 <option key={t} value={t}>
@@ -1588,7 +1588,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <select
               value={filterCtd}
               onChange={e => setFilterCtd(e.target.value)}
-              className="px-2 py-1 text-xs border border-zinc-200 rounded-md bg-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 outline-none"
+              className="px-2 py-1 text-xs border border-stone-200 rounded-md bg-white focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-1 outline-none"
             >
               {ctdOptions.map(c => (
                 <option key={c} value={c}>
@@ -1603,19 +1603,19 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   setFilterType('all');
                   setFilterCtd('all');
                 }}
-                className="text-xs text-zinc-400 hover:text-zinc-600"
+                className="text-xs text-stone-400 hover:text-stone-600"
               >
                 Clear
               </button>
             )}
-            <span className="text-xs text-zinc-400 ml-auto">
+            <span className="text-xs text-stone-400 ml-auto">
               {filtered.length} of {artifacts.length}
             </span>
           </div>
         )}
 
         {/* New doc creation — enhanced with quick templates */}
-        <div className="p-3 border-b border-zinc-200 space-y-2.5">
+        <div className="p-3 border-b border-stone-200 space-y-2.5">
           <div className="flex gap-2">
             <input
               type="text"
@@ -1623,7 +1623,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               onChange={e => setNewDocTitle(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleCreateNew()}
               placeholder="New document title..."
-              className="flex-1 px-3 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+              className="flex-1 px-3 py-2 text-sm border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
             />
             <button
               onClick={handleCreateNew}
@@ -1650,7 +1650,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               <button
                 key={tpl.prefix}
                 onClick={() => setNewDocTitle(tpl.label)}
-                className="text-xs px-2.5 py-1 rounded-md border border-zinc-200 text-zinc-500 hover:border-blue-200 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-150"
+                className="text-xs px-2.5 py-1 rounded-md border border-stone-200 text-stone-500 hover:border-blue-200 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-150"
               >
                 {tpl.prefix}: {tpl.label}
               </button>
@@ -1663,30 +1663,30 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           {loading ? (
             <div className="space-y-2 px-4 py-4">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="animate-pulse rounded-lg border border-zinc-200 p-3">
+                <div key={i} className="animate-pulse rounded-lg border border-stone-200 p-3">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="h-3.5 bg-zinc-200 rounded w-3/5" />
-                    <div className="h-4 bg-zinc-200 rounded-full w-16" />
+                    <div className="h-3.5 bg-stone-200 rounded w-3/5" />
+                    <div className="h-4 bg-stone-200 rounded-full w-16" />
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="h-2.5 bg-zinc-100 rounded w-12" />
-                    <div className="h-2.5 bg-zinc-100 rounded w-16" />
-                    <div className="h-2.5 bg-zinc-100 rounded w-20" />
+                    <div className="h-2.5 bg-stone-100 rounded w-12" />
+                    <div className="h-2.5 bg-stone-100 rounded w-16" />
+                    <div className="h-2.5 bg-stone-100 rounded w-20" />
                   </div>
                 </div>
               ))}
             </div>
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-              <div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center mb-4">
-                <FileText className="w-6 h-6 text-zinc-400" />
+              <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center mb-4">
+                <FileText className="w-6 h-6 text-stone-400" />
               </div>
-              <p className="text-sm font-medium text-zinc-600 mb-1">
+              <p className="text-sm font-medium text-stone-600 mb-1">
                 {artifacts.length === 0
                   ? 'Start your submission dossier'
                   : 'No documents match your filters'}
               </p>
-              <p className="text-xs text-zinc-500 max-w-[260px] leading-relaxed">
+              <p className="text-xs text-stone-500 max-w-[260px] leading-relaxed">
                 {artifacts.length === 0
                   ? 'Create your first regulatory document above, or use Intelligence to generate one from precedent data.'
                   : `${artifacts.length} document${artifacts.length !== 1 ? 's' : ''} hidden by filters.`}
@@ -1698,7 +1698,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                     setFilterType('all');
                     setFilterCtd('all');
                   }}
-                  className="mt-3 px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+                  className="mt-3 px-3 py-1.5 text-xs font-medium text-stone-600 bg-stone-100 rounded-lg hover:bg-stone-200 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
                 >
                   Clear all filters
                 </button>
@@ -1732,11 +1732,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                       status: a.status,
                     });
                   }}
-                  className="w-full text-left px-4 py-3 rounded-lg border border-transparent hover:border-zinc-200 hover:bg-zinc-50/80 hover:shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all group relative"
+                  className="w-full text-left px-4 py-3 rounded-lg border border-transparent hover:border-stone-200 hover:bg-stone-50/80 hover:shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all group relative"
                 >
                   {/* Title row */}
                   <div className="flex items-start justify-between gap-2">
-                    <span className="text-sm font-semibold text-zinc-900 leading-snug line-clamp-2">
+                    <span className="text-sm font-semibold text-stone-900 leading-snug line-clamp-2">
                       {a.title}
                     </span>
                     <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
@@ -1749,7 +1749,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                               ? 'bg-red-50 text-red-700 ring-1 ring-red-200'
                               : a.status === 'review'
                                 ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
-                                : 'bg-zinc-100 text-zinc-500 ring-1 ring-zinc-200'
+                                : 'bg-stone-100 text-stone-500 ring-1 ring-stone-200'
                         )}
                       >
                         {a.status === 'approved' && <CheckCircle className="w-2.5 h-2.5" />}
@@ -1765,11 +1765,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                         CTD {a.ctdSection}
                       </span>
                     )}
-                    <span className="text-xs text-zinc-400">{a.type?.replace(/_/g, ' ')}</span>
-                    <span className="text-zinc-400">&middot;</span>
-                    <span className="text-xs text-zinc-400 tabular-nums">v{a.version}</span>
-                    <span className="text-zinc-400">&middot;</span>
-                    <span className="text-xs text-zinc-400 tabular-nums">
+                    <span className="text-xs text-stone-400">{a.type?.replace(/_/g, ' ')}</span>
+                    <span className="text-stone-400">&middot;</span>
+                    <span className="text-xs text-stone-400 tabular-nums">v{a.version}</span>
+                    <span className="text-stone-400">&middot;</span>
+                    <span className="text-xs text-stone-400 tabular-nums">
                       {new Date(a.updatedAt || a.createdAt).toLocaleDateString()}
                     </span>
                   </div>
@@ -1786,19 +1786,19 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   return (
     <div className="flex flex-col h-full bg-white">
       {/* ── Document toolbar ───────────────────────────────────────────── */}
-      <div className="flex items-center h-12 px-4 border-b border-zinc-200 bg-white shrink-0 gap-2.5">
+      <div className="flex items-center h-12 px-4 border-b border-stone-200 bg-white shrink-0 gap-2.5">
         {/* Left: breadcrumb navigation */}
         <nav className="flex items-center gap-1 text-xs min-w-0" aria-label="Breadcrumb">
           {projectName && onNavigateToProject && (
             <>
               <button
                 onClick={onNavigateToProject}
-                className="text-zinc-400 hover:text-zinc-700 shrink-0 px-1.5 py-0.5 rounded hover:bg-zinc-100 transition-colors truncate max-w-[120px]"
+                className="text-stone-400 hover:text-stone-700 shrink-0 px-1.5 py-0.5 rounded hover:bg-stone-100 transition-colors truncate max-w-[120px]"
                 title={projectName}
               >
                 {projectName}
               </button>
-              <ChevronDown className="w-3 h-3 text-zinc-300 shrink-0 -rotate-90" />
+              <ChevronDown className="w-3 h-3 text-stone-300 shrink-0 -rotate-90" />
             </>
           )}
           <button
@@ -1807,12 +1807,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               setShowArtifactList(true);
               setAiResult(null);
             }}
-            className="text-zinc-500 hover:text-zinc-900 shrink-0 px-1.5 py-0.5 rounded hover:bg-zinc-100 transition-colors duration-150"
+            className="text-stone-500 hover:text-stone-900 shrink-0 px-1.5 py-0.5 rounded hover:bg-stone-100 transition-colors duration-150"
           >
             Documents
           </button>
-          <ChevronDown className="w-3 h-3 text-zinc-300 shrink-0 -rotate-90" />
-          <span className="text-sm font-semibold text-zinc-900 truncate max-w-[280px]">
+          <ChevronDown className="w-3 h-3 text-stone-300 shrink-0 -rotate-90" />
+          <span className="text-sm font-semibold text-stone-900 truncate max-w-[280px]">
             {activeArtifact?.title}
           </span>
         </nav>
@@ -1902,7 +1902,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           <div className="flex items-center gap-1.5 ml-3">
             <button
               onClick={() => toggleInspector('compare')}
-              className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-zinc-100 text-zinc-600 font-medium tabular-nums hover:bg-zinc-200 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-stone-100 text-stone-600 font-medium tabular-nums hover:bg-stone-200 transition-colors cursor-pointer"
               title="Open version compare — click to see all versions"
             >
               <GitCompare className="w-3 h-3" />v{activeArtifact.version}
@@ -1983,13 +1983,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         </button>
         <button
           onClick={() => setShowShortcuts(true)}
-          className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors duration-150"
+          className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors duration-150"
           title="Keyboard shortcuts (Ctrl+Shift+/)"
         >
           <Keyboard className="w-4 h-4" />
         </button>
 
-        <span className="w-px h-5 bg-zinc-200 mx-0.5" />
+        <span className="w-px h-5 bg-stone-200 mx-0.5" />
 
         {/* Overflow: Save, Export, Sign, Review, CTD, Audit export */}
         <div className="relative">
@@ -1997,7 +1997,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             onClick={() => setOverflowOpen(!overflowOpen)}
             aria-label="More actions"
             aria-expanded={overflowOpen}
-            className="px-2 py-1.5 text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
+            className="px-2 py-1.5 text-stone-500 hover:text-stone-700 hover:bg-stone-100 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors duration-150"
           >
             <ChevronDown className="w-4 h-4" />
           </button>
@@ -2010,7 +2010,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   setOverflowOpen(false);
                 }
               }}
-              className="absolute right-0 top-full mt-1 w-48 bg-white border border-zinc-200 rounded-lg shadow-lg z-50 py-1"
+              className="absolute right-0 top-full mt-1 w-48 bg-white border border-stone-200 rounded-lg shadow-lg z-50 py-1"
             >
               {/* Save */}
               <button
@@ -2019,9 +2019,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   activeArtifact && handleSave(activeArtifact.content, {});
                   setOverflowOpen(false);
                 }}
-                className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                className="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-xs text-stone-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
               >
-                <Check className="w-3 h-3 text-zinc-400" />
+                <Check className="w-3 h-3 text-stone-400" />
                 Save
               </button>
               {/* Export */}
@@ -2031,9 +2031,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   setShowExportDialog(true);
                   setOverflowOpen(false);
                 }}
-                className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                className="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-xs text-stone-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
               >
-                <Download className="w-3 h-3 text-zinc-400" />
+                <Download className="w-3 h-3 text-stone-400" />
                 Export…
               </button>
               <button
@@ -2042,9 +2042,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   handleExportMarkdown();
                   setOverflowOpen(false);
                 }}
-                className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                className="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-xs text-stone-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
               >
-                <Download className="w-3 h-3 text-zinc-400" />
+                <Download className="w-3 h-3 text-stone-400" />
                 Markdown (.md)
               </button>
               <button
@@ -2053,12 +2053,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   handleExportLaunchChecklist();
                   setOverflowOpen(false);
                 }}
-                className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                className="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-xs text-stone-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
               >
-                <ClipboardList className="w-3 h-3 text-zinc-400" />
+                <ClipboardList className="w-3 h-3 text-stone-400" />
                 Launch Checklist (.md)
               </button>
-              <div className="border-t border-zinc-200 my-1" />
+              <div className="border-t border-stone-200 my-1" />
               {/* Sign — opens Part 11 compliant dialog */}
               <button
                 role="menuitem"
@@ -2067,9 +2067,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   setOverflowOpen(false);
                 }}
                 disabled={!activeArtifact}
-                className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-60 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                className="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-xs text-stone-700 disabled:opacity-60 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
               >
-                <PenTool className="w-3 h-3 text-zinc-400" />
+                <PenTool className="w-3 h-3 text-stone-400" />
                 Sign & Approve (Part 11)
               </button>
               {/* Status change — forward transitions only; regressions use lock overlay / GovernedDocumentPanel */}
@@ -2088,9 +2088,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                     setOverflowOpen(false);
                   }}
                   disabled={changingStatus || !activeArtifact}
-                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-60 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                  className="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-xs text-stone-700 disabled:opacity-60 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
                 >
-                  <Lock className="w-3 h-3 text-zinc-400" />
+                  <Lock className="w-3 h-3 text-stone-400" />
                   {activeArtifact?.status === 'approved'
                     ? 'Lock'
                     : activeArtifact?.status === 'review'
@@ -2098,14 +2098,14 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                       : 'Submit for Review'}
                 </button>
               )}
-              <div className="border-t border-zinc-200 my-1" />
+              <div className="border-t border-stone-200 my-1" />
               <button
                 onClick={() => {
                   handleClaimCheck();
                   setOverflowOpen(false);
                 }}
                 disabled={claimCheckMutation.isPending || !activeArtifact?.content}
-                className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-60"
+                className="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-xs text-stone-700 disabled:opacity-60"
               >
                 <ShieldCheck className="w-3 h-3 inline mr-1.5 text-amber-500" />
                 Check Claims
@@ -2115,9 +2115,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   setShowCtdInput(!showCtdInput);
                   setOverflowOpen(false);
                 }}
-                className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700"
+                className="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-xs text-stone-700"
               >
-                <MapPin className="w-3 h-3 inline mr-1.5 text-zinc-400" />
+                <MapPin className="w-3 h-3 inline mr-1.5 text-stone-400" />
                 Set CTD Section
               </button>
               <button
@@ -2126,9 +2126,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   setOverflowOpen(false);
                 }}
                 disabled={exportingAudit}
-                className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-60"
+                className="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-xs text-stone-700 disabled:opacity-60"
               >
-                <ClipboardList className="w-3 h-3 inline mr-1.5 text-zinc-400" />
+                <ClipboardList className="w-3 h-3 inline mr-1.5 text-stone-400" />
                 Export Audit
               </button>
             </div>
@@ -2138,8 +2138,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
       {/* Human-first journey guidance strip */}
       {activeArtifact && (
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-200 bg-gradient-to-r from-blue-50/70 to-violet-50/70 overflow-x-auto">
-          <span className="text-xs font-semibold text-zinc-700 shrink-0">
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-stone-200 bg-gradient-to-r from-blue-50/70 to-violet-50/70 overflow-x-auto">
+          <span className="text-xs font-semibold text-stone-700 shrink-0">
             Human workflow ({completedJourneySteps}/{humanJourneySteps.length} · {journeyProgress}
             %):
           </span>
@@ -2153,7 +2153,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                     ? 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200'
                     : nextJourneyStep.id === step.id
                       ? 'bg-blue-100 text-blue-700 ring-1 ring-blue-200'
-                      : 'bg-white text-zinc-600 ring-1 ring-zinc-200 hover:bg-zinc-50'
+                      : 'bg-white text-stone-600 ring-1 ring-stone-200 hover:bg-stone-50'
                 )}
                 title={`Open ${step.label} workflow`}
               >
@@ -2161,7 +2161,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 {step.label}
               </button>
               {idx < humanJourneySteps.length - 1 && (
-                <ArrowRight className="w-3 h-3 text-zinc-400 shrink-0" />
+                <ArrowRight className="w-3 h-3 text-stone-400 shrink-0" />
               )}
             </React.Fragment>
           ))}
@@ -2264,7 +2264,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
       {/* ── AI Suggestion Diff Panel ──────────────────────────────────────── */}
       {aiResult && (
-        <div className="border-b border-blue-200 bg-zinc-50">
+        <div className="border-b border-blue-200 bg-stone-50">
           {/* Header bar */}
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-violet-100">
             <div className="flex items-center gap-2">
@@ -2277,7 +2277,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setAiResult(null)}
-                className="px-3 py-1.5 text-xs font-medium text-zinc-600 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors duration-150"
+                className="px-3 py-1.5 text-xs font-medium text-stone-600 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors duration-150"
               >
                 Dismiss
               </button>
@@ -2299,7 +2299,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   <span className="w-2 h-2 rounded-full bg-red-400" /> Current
                 </span>
               </div>
-              <div className="px-4 py-3 text-sm text-zinc-700 overflow-y-auto max-h-48 zen-scroll leading-relaxed">
+              <div className="px-4 py-3 text-sm text-stone-700 overflow-y-auto max-h-48 zen-scroll leading-relaxed">
                 {activeArtifact?.content
                   ? activeArtifact.content
                       .replace(/<[^>]+>/g, ' ')
@@ -2308,7 +2308,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                       .slice(0, 800)
                   : 'No content yet'}
                 {(activeArtifact?.content?.length ?? 0) > 800 && (
-                  <span className="text-zinc-400"> ...</span>
+                  <span className="text-stone-400"> ...</span>
                 )}
               </div>
             </div>
@@ -2319,13 +2319,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   <span className="w-2 h-2 rounded-full bg-emerald-400" /> Suggested
                 </span>
               </div>
-              <div className="px-4 py-3 text-sm text-zinc-700 overflow-y-auto max-h-48 zen-scroll leading-relaxed">
+              <div className="px-4 py-3 text-sm text-stone-700 overflow-y-auto max-h-48 zen-scroll leading-relaxed">
                 {aiResult
                   .replace(/<[^>]+>/g, ' ')
                   .replace(/\s+/g, ' ')
                   .trim()
                   .slice(0, 800)}
-                {aiResult.length > 800 && <span className="text-zinc-400"> ...</span>}
+                {aiResult.length > 800 && <span className="text-stone-400"> ...</span>}
               </div>
             </div>
           </div>
@@ -2391,7 +2391,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           )}
           <button
             onClick={() => setClaimResult(null)}
-            className="ml-auto text-zinc-400 hover:text-zinc-600"
+            className="ml-auto text-stone-400 hover:text-stone-600"
           >
             <XCircle className="w-3 h-3" />
           </button>
@@ -2400,15 +2400,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
       {/* CTD section inline input (from overflow) */}
       {showCtdInput && (
-        <div className="flex items-center gap-2 px-3 py-1.5 border-b border-zinc-200 bg-zinc-50/50">
-          <MapPin className="w-3.5 h-3.5 text-zinc-400" />
+        <div className="flex items-center gap-2 px-3 py-1.5 border-b border-stone-200 bg-stone-50/50">
+          <MapPin className="w-3.5 h-3.5 text-stone-400" />
           <input
             type="text"
             value={ctdSectionInput}
             onChange={e => setCtdSectionInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleCtdSection()}
             placeholder="e.g. 3.2.S"
-            className="w-28 px-2 py-1 text-xs border border-zinc-200 rounded bg-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 outline-none"
+            className="w-28 px-2 py-1 text-xs border border-stone-200 rounded bg-white focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-1 outline-none"
           />
           <button
             onClick={handleCtdSection}
@@ -2418,7 +2418,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           </button>
           <button
             onClick={() => setShowCtdInput(false)}
-            className="text-xs text-zinc-400 hover:text-zinc-600"
+            className="text-xs text-stone-400 hover:text-stone-600"
           >
             Cancel
           </button>
@@ -2427,7 +2427,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
       {/* ── Document Lifecycle Pipeline ──────────────────────────────── */}
       {activeArtifact && (
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-200 bg-zinc-50/30">
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-stone-200 bg-stone-50/30">
           {(['draft', 'review', 'approved', 'locked'] as const).map((stage, idx, arr) => {
             const currentStatus = activeArtifact.status || 'draft';
             const stageOrder = { draft: 0, review: 1, approved: 2, locked: 3 };
@@ -2448,7 +2448,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               locked: 'Locked for submission — read only',
             };
             const stageColors: Record<string, string> = {
-              draft: 'bg-zinc-100 text-zinc-700 border-zinc-200',
+              draft: 'bg-stone-100 text-stone-700 border-stone-200',
               review: 'bg-amber-50 text-amber-700 border-amber-200',
               approved: 'bg-emerald-50 text-emerald-700 border-emerald-200',
               locked: 'bg-blue-50 text-blue-700 border-blue-200',
@@ -2477,7 +2477,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                       ? `${stageColors[stage]} shadow-sm`
                       : isCompleted
                         ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                        : 'bg-white text-zinc-400 border-zinc-200 hover:bg-zinc-50 hover:text-zinc-600'
+                        : 'bg-white text-stone-400 border-stone-200 hover:bg-stone-50 hover:text-stone-600'
                   )}
                 >
                   {isCompleted ? (
@@ -2490,13 +2490,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   {stageLabels[stage]}
                 </button>
                 {idx < arr.length - 1 && (
-                  <div className={cn('w-6 h-px', isCompleted ? 'bg-emerald-300' : 'bg-zinc-200')} />
+                  <div className={cn('w-6 h-px', isCompleted ? 'bg-emerald-300' : 'bg-stone-200')} />
                 )}
               </React.Fragment>
             );
           })}
           {/* Claim status + last updated */}
-          <div className="flex items-center gap-3 ml-auto text-xs text-zinc-400">
+          <div className="flex items-center gap-3 ml-auto text-xs text-stone-400">
             {claimStatus === 'checking' && (
               <span className="text-blue-500 flex items-center gap-1.5 bg-blue-50 px-2.5 py-1 rounded-md">
                 <Loader2 className="w-3 h-3 animate-spin" /> Checking claims
@@ -2512,7 +2512,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 <AlertTriangle className="w-3 h-3" /> Needs evidence
               </span>
             )}
-            <span className="tabular-nums text-zinc-500">
+            <span className="tabular-nums text-stone-500">
               {new Date(activeArtifact.updatedAt || activeArtifact.createdAt).toLocaleString(
                 undefined,
                 { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }
@@ -2578,13 +2578,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               activeArtifact.content.replace(/<[^>]*>/g, '').trim().length < 10) &&
             activeArtifact.status !== 'locked' && (
               <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-center pt-20 pointer-events-none">
-                <div className="pointer-events-auto bg-white/95 backdrop-blur-sm border border-zinc-200 rounded-xl shadow-lg p-5 max-w-md w-full mx-4">
+                <div className="pointer-events-auto bg-white/95 backdrop-blur-sm border border-stone-200 rounded-xl shadow-lg p-5 max-w-md w-full mx-4">
                   <div className="text-center mb-4">
                     <PenTool className="w-6 h-6 text-violet-500 mx-auto mb-2" />
-                    <h3 className="text-sm font-semibold text-zinc-900">
+                    <h3 className="text-sm font-semibold text-stone-900">
                       Get started with your document
                     </h3>
-                    <p className="text-xs text-zinc-500 mt-1">
+                    <p className="text-xs text-stone-500 mt-1">
                       Choose a quick action or just start typing below
                     </p>
                   </div>
@@ -2622,8 +2622,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                       Check Health
                     </button>
                   </div>
-                  <p className="text-[10px] text-zinc-400 text-center mt-3">
-                    Tip: Type <kbd className="px-1 py-0.5 bg-zinc-100 rounded text-zinc-500">/</kbd>{' '}
+                  <p className="text-[10px] text-stone-400 text-center mt-3">
+                    Tip: Type <kbd className="px-1 py-0.5 bg-stone-100 rounded text-stone-500">/</kbd>{' '}
                     for slash commands
                   </p>
                 </div>
@@ -3048,11 +3048,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-5">
             <div className="flex items-center gap-2 mb-3">
               <AlertTriangle className="w-5 h-5 text-amber-500" />
-              <h3 className="text-sm font-semibold text-zinc-900">
+              <h3 className="text-sm font-semibold text-stone-900">
                 Quality Check — Review Before Proceeding
               </h3>
             </div>
-            <p className="text-xs text-zinc-500 mb-3">
+            <p className="text-xs text-stone-500 mb-3">
               The following issues were detected. You can proceed anyway or go back to fix them.
             </p>
             <ul className="space-y-2 mb-4">
@@ -3071,7 +3071,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 onClick={() =>
                   setQualityGateDialog({ show: false, targetStatus: '', warnings: [] })
                 }
-                className="px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors duration-150"
+                className="px-3 py-1.5 text-xs font-medium text-stone-600 bg-stone-100 rounded-lg hover:bg-stone-200 transition-colors duration-150"
               >
                 Go Back & Fix
               </button>
@@ -3096,10 +3096,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-4">
             <div className="flex items-center gap-2 mb-3">
               <MessageSquare className="w-4 h-4 text-blue-500" />
-              <h3 className="text-sm font-semibold text-zinc-900">Add Comment</h3>
+              <h3 className="text-sm font-semibold text-stone-900">Add Comment</h3>
             </div>
             {pendingCommentHighlight && (
-              <div className="border-l-2 border-blue-300 pl-2 py-1 bg-blue-50 rounded-r text-xs text-zinc-500 italic mb-3 truncate">
+              <div className="border-l-2 border-blue-300 pl-2 py-1 bg-blue-50 rounded-r text-xs text-stone-500 italic mb-3 truncate">
                 &ldquo;{pendingCommentHighlight.slice(0, 100)}
                 {pendingCommentHighlight.length > 100 ? '…' : ''}&rdquo;
               </div>
@@ -3119,14 +3119,14 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               }}
               placeholder="Type your comment…"
               rows={3}
-              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none resize-none"
+              className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none resize-none"
             />
             <div className="flex items-center justify-between mt-3">
-              <span className="text-[10px] text-zinc-400">Ctrl+Enter to submit</span>
+              <span className="text-[10px] text-stone-400">Ctrl+Enter to submit</span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleCancelComment}
-                  className="px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-700 rounded-md hover:bg-zinc-100"
+                  className="px-3 py-1.5 text-xs text-stone-500 hover:text-stone-700 rounded-md hover:bg-stone-100"
                 >
                   Cancel
                 </button>
@@ -3170,7 +3170,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 'pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-lg shadow-lg text-xs font-medium animate-in slide-in-from-bottom-2 fade-in duration-200',
                 t.type === 'success' && 'bg-emerald-600 text-white',
                 t.type === 'error' && 'bg-red-600 text-white',
-                t.type === 'info' && 'bg-zinc-700 text-white'
+                t.type === 'info' && 'bg-stone-700 text-white'
               )}
             >
               {t.type === 'success' && <CheckCircle className="w-3.5 h-3.5 shrink-0" />}

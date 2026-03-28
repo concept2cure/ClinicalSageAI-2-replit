@@ -126,7 +126,7 @@ const getSeverityColor = (severity: string): string => {
     case 'info':
       return 'text-blue-700 bg-blue-50 border-blue-200';
     default:
-      return 'text-zinc-700 bg-zinc-50 border-zinc-200';
+      return 'text-stone-700 bg-stone-50 border-stone-200';
   }
 };
 
@@ -199,10 +199,10 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onResolve }) => {
                 {CATEGORY_LABELS[issue.category]}
               </Badge>
             </div>
-            <p className="text-xs text-zinc-500 mt-1">{issue.description}</p>
+            <p className="text-xs text-stone-500 mt-1">{issue.description}</p>
           </div>
           <ChevronRight
-            className={cn('h-4 w-4 text-zinc-400 transition-transform duration-150', isExpanded && 'rotate-90')}
+            className={cn('h-4 w-4 text-stone-400 transition-transform duration-150', isExpanded && 'rotate-90')}
           />
         </div>
       </div>
@@ -213,21 +213,21 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onResolve }) => {
             {/* Source comparison */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <div className="flex items-center gap-1 text-xs font-medium text-zinc-700">
+                <div className="flex items-center gap-1 text-xs font-medium text-stone-700">
                   <FileText className="h-3 w-3" />
                   {issue.sourceDocument}
                 </div>
-                <div className="p-2 bg-white rounded border text-xs text-zinc-600 font-mono">
+                <div className="p-2 bg-white rounded border text-xs text-stone-600 font-mono">
                   "{issue.sourceText}"
                 </div>
               </div>
               {issue.ifuText && (
                 <div className="space-y-2">
-                  <div className="flex items-center gap-1 text-xs font-medium text-zinc-700">
+                  <div className="flex items-center gap-1 text-xs font-medium text-stone-700">
                     <FileCheck className="h-3 w-3" />
                     IFU Document
                   </div>
-                  <div className="p-2 bg-white rounded border text-xs text-zinc-600 font-mono">
+                  <div className="p-2 bg-white rounded border text-xs text-stone-600 font-mono">
                     "{issue.ifuText}"
                   </div>
                 </div>
@@ -245,7 +245,7 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onResolve }) => {
 
             {/* Regulatory reference */}
             {issue.regulatoryReference && (
-              <div className="flex items-center gap-2 text-xs text-zinc-500">
+              <div className="flex items-center gap-2 text-xs text-stone-500">
                 <Scale className="h-3 w-3" />
                 <span>Reference: {issue.regulatoryReference}</span>
               </div>
@@ -253,7 +253,7 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onResolve }) => {
 
             {/* Resolution input */}
             <div className="space-y-2">
-              <label className="text-xs font-medium text-zinc-700">Resolution Notes</label>
+              <label className="text-xs font-medium text-stone-700">Resolution Notes</label>
               <Textarea
                 value={resolution}
                 onChange={e => setResolution(e.target.value)}
@@ -300,10 +300,10 @@ interface ScoreCardProps {
 
 const ScoreCard: React.FC<ScoreCardProps> = ({ result }) => {
   return (
-    <div className="p-4 bg-white rounded-lg border border-zinc-200">
+    <div className="p-4 bg-white rounded-lg border border-stone-200">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <div className="text-sm text-zinc-500">Consistency Score</div>
+          <div className="text-sm text-stone-500">Consistency Score</div>
           <div className={cn('text-3xl font-semibold', getScoreColor(result.overallScore))}>
             {result.overallScore}%
           </div>
@@ -312,7 +312,7 @@ const ScoreCard: React.FC<ScoreCardProps> = ({ result }) => {
           </div>
         </div>
         <div className="text-right">
-          <div className="text-sm text-zinc-500 mb-1">Issues Found</div>
+          <div className="text-sm text-stone-500 mb-1">Issues Found</div>
           <div className="flex items-center gap-2">
             {result.criticalCount > 0 && (
               <Badge className="bg-red-100 text-red-700 border-red-200">
@@ -343,7 +343,7 @@ const ScoreCard: React.FC<ScoreCardProps> = ({ result }) => {
         )}
       />
 
-      <div className="mt-3 text-xs text-zinc-500">
+      <div className="mt-3 text-xs text-stone-500">
         Checked {result.checkedDocuments.length} documents ·{' '}
         {new Date(result.timestamp).toLocaleString()}
       </div>
@@ -412,10 +412,10 @@ export const IFUConsistencyChecker: React.FC<IFUConsistencyCheckerProps> = ({
 
         <div className="space-y-4 mt-4">
           {/* Document selection info */}
-          <div className="p-3 bg-zinc-50 rounded-lg">
+          <div className="p-3 bg-stone-50 rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-zinc-700">Documents to Check</span>
-              <span className="text-xs text-zinc-500">
+              <span className="text-sm font-medium text-stone-700">Documents to Check</span>
+              <span className="text-xs text-stone-500">
                 {relatedArtifacts.length + (ifuArtifact ? 1 : 0)} documents selected
               </span>
             </div>
@@ -438,8 +438,8 @@ export const IFUConsistencyChecker: React.FC<IFUConsistencyCheckerProps> = ({
           {/* Run check button */}
           {!result && (
             <div className="text-center py-8">
-              <FileCheck className="h-12 w-12 mx-auto text-zinc-400 mb-4" />
-              <p className="text-sm text-zinc-600 mb-4">
+              <FileCheck className="h-12 w-12 mx-auto text-stone-400 mb-4" />
+              <p className="text-sm text-stone-600 mb-4">
                 Run a consistency check to identify discrepancies between your IFU and other
                 regulatory documents.
               </p>
@@ -502,7 +502,7 @@ export const IFUConsistencyChecker: React.FC<IFUConsistencyCheckerProps> = ({
                   <div className="text-center py-8">
                     <CheckCircle2 className="h-12 w-12 mx-auto text-green-500 mb-4" />
                     <p className="text-lg font-medium text-green-700">All Clear!</p>
-                    <p className="text-sm text-zinc-600 mt-1">
+                    <p className="text-sm text-stone-600 mt-1">
                       No consistency issues found between documents.
                     </p>
                   </div>

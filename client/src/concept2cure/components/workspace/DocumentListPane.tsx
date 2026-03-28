@@ -70,7 +70,7 @@ function statusBadge(status?: string) {
       );
     default:
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-zinc-50 text-zinc-500 ring-1 ring-zinc-200">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-stone-50 text-stone-500 ring-1 ring-stone-200">
           <Clock className="w-3 h-3" /> Draft
         </span>
       );
@@ -117,10 +117,10 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
       data-testid="document-list-pane"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 h-11 border-b border-zinc-200 bg-zinc-50/60 shrink-0">
+      <div className="flex items-center justify-between px-4 h-11 border-b border-stone-200 bg-stone-50/60 shrink-0">
         <div className="flex items-baseline gap-2">
-          <h3 className="text-sm font-semibold text-zinc-900">{folderLabel}</h3>
-          <span className="text-xs text-zinc-400 tabular-nums">{filteredDocs.length} of {documents.length}</span>
+          <h3 className="text-sm font-semibold text-stone-900">{folderLabel}</h3>
+          <span className="text-xs text-stone-400 tabular-nums">{filteredDocs.length} of {documents.length}</span>
         </div>
         {onCreateNew && (
           <button
@@ -134,20 +134,20 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
 
       {/* Search + Filter bar */}
       {documents.length > 0 && (
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-100 bg-white shrink-0">
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-stone-100 bg-white shrink-0">
           <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search documents..."
-              className="w-full pl-8 pr-7 py-1.5 text-xs border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 focus:border-blue-300"
+              className="w-full pl-8 pr-7 py-1.5 text-xs border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none/30 focus:border-blue-300"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -156,7 +156,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
-            className="px-2.5 py-1.5 text-xs border border-zinc-200 rounded-lg bg-white focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30"
+            className="px-2.5 py-1.5 text-xs border border-stone-200 rounded-lg bg-white focus-visible:ring-2 focus-visible:ring-stone-400 outline-none/30"
           >
             <option value="all">All Status</option>
             <option value="draft">Draft</option>
@@ -171,11 +171,11 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
       <div className="flex-1 overflow-y-auto zen-scroll">
         {filteredDocs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-6 text-center" data-testid="document-list-empty">
-            <FileText className="w-8 h-8 text-zinc-200 mb-3" />
-            <p className="text-sm font-medium text-zinc-500 mb-1">
+            <FileText className="w-8 h-8 text-stone-200 mb-3" />
+            <p className="text-sm font-medium text-stone-500 mb-1">
               {documents.length === 0 ? 'No documents in this section' : 'No matching documents'}
             </p>
-            <p className="text-xs text-zinc-400 max-w-[300px] mb-4">
+            <p className="text-xs text-stone-400 max-w-[300px] mb-4">
               {documents.length === 0
                 ? sectionAIDraftable
                   ? 'This section can be AI-drafted from your project data, or you can start from scratch.'
@@ -183,7 +183,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                 : 'Try broadening your search or adjusting filters.'}
             </p>
             {sectionRegRef && documents.length === 0 && (
-              <p className="text-[10px] text-zinc-400 mb-3 font-mono">{sectionRegRef}</p>
+              <p className="text-[10px] text-stone-400 mb-3 font-mono">{sectionRegRef}</p>
             )}
             {documents.length === 0 && (
               <div className="flex items-center gap-2">
@@ -216,17 +216,17 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
         ) : (
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-zinc-200 bg-zinc-50/30 sticky top-0">
-                <th className="px-4 py-2.5 font-medium text-zinc-400 text-xs uppercase tracking-wider">
+              <tr className="border-b border-stone-200 bg-stone-50/30 sticky top-0">
+                <th className="px-4 py-2.5 font-medium text-stone-400 text-xs uppercase tracking-wider">
                   Document
                 </th>
-                <th className="px-3 py-2.5 font-medium text-zinc-400 text-xs uppercase tracking-wider w-24">
+                <th className="px-3 py-2.5 font-medium text-stone-400 text-xs uppercase tracking-wider w-24">
                   Status
                 </th>
-                <th className="px-3 py-2.5 font-medium text-zinc-400 text-xs uppercase tracking-wider w-16 hidden sm:table-cell">
+                <th className="px-3 py-2.5 font-medium text-stone-400 text-xs uppercase tracking-wider w-16 hidden sm:table-cell">
                   Ver
                 </th>
-                <th className="px-3 py-2.5 font-medium text-zinc-400 text-xs uppercase tracking-wider w-24 text-right hidden md:table-cell">
+                <th className="px-3 py-2.5 font-medium text-stone-400 text-xs uppercase tracking-wider w-24 text-right hidden md:table-cell">
                   Updated
                 </th>
                 {(onCutDocument || onOpenPlacement || onCopyCtdPath) && (
@@ -234,7 +234,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-50">
+            <tbody className="divide-y divide-stone-50">
               {filteredDocs.map(doc => {
                 const isExpanded = expandedRows.has(doc.id);
                 return (
@@ -243,7 +243,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                       onClick={() => onSelect(doc)}
                       className={cn(
                         'cursor-pointer transition-colors duration-150',
-                        doc.id === selectedId ? 'bg-blue-50/60' : 'hover:bg-zinc-50'
+                        doc.id === selectedId ? 'bg-blue-50/60' : 'hover:bg-stone-50'
                       )}
                       data-testid="document-list-row"
                     >
@@ -256,7 +256,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                             }}
                             className={cn(
                               'p-0.5 shrink-0 transition-transform duration-150',
-                              isExpanded ? 'text-zinc-500' : 'text-zinc-400 hover:text-zinc-500'
+                              isExpanded ? 'text-stone-500' : 'text-stone-400 hover:text-stone-500'
                             )}
                             title="Toggle details"
                           >
@@ -267,9 +267,9 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                               )}
                             />
                           </button>
-                          <FileText className="w-4 h-4 text-zinc-400 shrink-0" />
+                          <FileText className="w-4 h-4 text-stone-400 shrink-0" />
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-zinc-900 truncate leading-snug">
+                            <p className="text-sm font-medium text-stone-900 truncate leading-snug">
                               {doc.title}
                             </p>
                             {doc.ctdSection && (
@@ -281,10 +281,10 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                         </div>
                       </td>
                       <td className="px-3 py-2">{statusBadge(doc.status)}</td>
-                      <td className="px-3 py-2 text-zinc-400 tabular-nums hidden sm:table-cell">
+                      <td className="px-3 py-2 text-stone-400 tabular-nums hidden sm:table-cell">
                         v{doc.version}
                       </td>
-                      <td className="px-3 py-2 text-zinc-400 text-right tabular-nums hidden md:table-cell">
+                      <td className="px-3 py-2 text-stone-400 text-right tabular-nums hidden md:table-cell">
                         {new Date(doc.updatedAt).toLocaleDateString(undefined, {
                           month: 'short',
                           day: 'numeric',
@@ -299,7 +299,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                                   e.stopPropagation();
                                   onCutDocument(doc);
                                 }}
-                                className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded-md hover:bg-zinc-100"
+                                className="p-1.5 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100"
                                 title="Cut — move to another section"
                               >
                                 <Scissors className="w-3.5 h-3.5" />
@@ -311,7 +311,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                                   e.stopPropagation();
                                   onOpenPlacement(doc, doc.ctdSection ? 'relocate' : 'place');
                                 }}
-                                className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded-md hover:bg-zinc-100"
+                                className="p-1.5 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100"
                                 title={doc.ctdSection ? 'Relocate' : 'Place in dossier'}
                               >
                                 <MapPin className="w-3.5 h-3.5" />
@@ -323,7 +323,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                                   e.stopPropagation();
                                   onCopyCtdPath(doc);
                                 }}
-                                className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded-md hover:bg-zinc-100"
+                                className="p-1.5 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100"
                                 title="Copy CTD path"
                               >
                                 <Copy className="w-3.5 h-3.5" />
@@ -344,9 +344,9 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                     </tr>
                     {/* Expanded detail band */}
                     {isExpanded && (
-                      <tr className="bg-zinc-50/60 animate-in fade-in slide-in-from-top-1 duration-150">
+                      <tr className="bg-stone-50/60 animate-in fade-in slide-in-from-top-1 duration-150">
                         <td colSpan={5} className="px-4 py-2">
-                          <div className="flex items-center gap-4 text-xs text-zinc-500">
+                          <div className="flex items-center gap-4 text-xs text-stone-500">
                             {doc.ctdSection && (
                               <span className="flex items-center gap-1.5">
                                 <MapPin className="w-3 h-3" />
@@ -359,7 +359,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                                 {doc.templateId.replace('tpl-', '')}
                               </span>
                             )}
-                            <span className="text-zinc-400">
+                            <span className="text-stone-400">
                               Updated{' '}
                               {new Date(doc.updatedAt).toLocaleString(undefined, {
                                 month: 'short',

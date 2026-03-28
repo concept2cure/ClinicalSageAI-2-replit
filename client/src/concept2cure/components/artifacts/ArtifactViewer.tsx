@@ -221,7 +221,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 bg-zinc-50">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 bg-stone-50">
         <div className="flex items-center gap-3 min-w-0">
           {/* Type Icon */}
           <div className={cn(
@@ -245,14 +245,14 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
           
           {/* Title & Meta */}
           <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-zinc-900 truncate">
+            <h2 className="text-sm font-semibold text-stone-900 truncate">
               {artifact.name}
             </h2>
-            <div className="flex items-center gap-2 text-xs text-zinc-500">
+            <div className="flex items-center gap-2 text-xs text-stone-500">
               {artifact.projectName && (
                 <>
                   <span>{artifact.projectName}</span>
-                  <span className="text-zinc-400">•</span>
+                  <span className="text-stone-400">•</span>
                 </>
               )}
               <span>Updated {formatDate(artifact.updatedAt)}</span>
@@ -281,7 +281,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
                   key={collab.id}
                   className={cn(
                     'w-7 h-7 rounded-full border-2 border-white flex items-center justify-center text-xs font-medium',
-                    collab.status === 'editing' ? 'bg-emerald-500 text-white' : 'bg-zinc-200 text-zinc-600'
+                    collab.status === 'editing' ? 'bg-emerald-500 text-white' : 'bg-stone-200 text-stone-600'
                   )}
                   title={`${collab.name} (${collab.status})`}
                 >
@@ -289,7 +289,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
                 </div>
               ))}
               {artifact.collaborators.length > 3 && (
-                <div className="w-7 h-7 rounded-full border-2 border-white bg-zinc-100 flex items-center justify-center text-xs text-zinc-600">
+                <div className="w-7 h-7 rounded-full border-2 border-white bg-stone-100 flex items-center justify-center text-xs text-stone-600">
                   +{artifact.collaborators.length - 3}
                 </div>
               )}
@@ -302,7 +302,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
               onClick={() => setShowVersions(!showVersions)}
               className={cn(
                 'p-2 rounded-lg transition-colors duration-150',
-                showVersions ? 'bg-blue-100 text-blue-700' : 'hover:bg-zinc-100 text-zinc-500'
+                showVersions ? 'bg-blue-100 text-blue-700' : 'hover:bg-stone-100 text-stone-500'
               )}
               title="Version history"
             >
@@ -313,7 +313,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
           {/* Copy */}
           <button
             onClick={handleCopy}
-            className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-500 transition-colors duration-150"
+            className="p-2 rounded-lg hover:bg-stone-100 text-stone-500 transition-colors duration-150"
             title="Copy to clipboard"
           >
             {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
@@ -323,33 +323,33 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
           <div className="relative">
             <button
               onClick={() => setShowExportMenu(!showExportMenu)}
-              className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-500 transition-colors duration-150"
+              className="p-2 rounded-lg hover:bg-stone-100 text-stone-500 transition-colors duration-150"
               title="Export"
             >
               <Download className="w-4 h-4" />
             </button>
             
             {showExportMenu && (
-              <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 z-10">
+              <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-stone-200 py-1 z-10">
                 <button
                   onClick={() => { onExport?.(artifact, 'docx'); setShowExportMenu(false); }}
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-zinc-50 flex items-center gap-2"
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-stone-50 flex items-center gap-2"
                 >
                   <FileText className="w-4 h-4 text-blue-600" />
                   Export as DOCX
                 </button>
                 <button
                   onClick={() => { onExport?.(artifact, 'pdf'); setShowExportMenu(false); }}
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-zinc-50 flex items-center gap-2"
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-stone-50 flex items-center gap-2"
                 >
                   <FileText className="w-4 h-4 text-red-600" />
                   Export as PDF
                 </button>
                 <button
                   onClick={() => { onExport?.(artifact, 'md'); setShowExportMenu(false); }}
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-zinc-50 flex items-center gap-2"
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-stone-50 flex items-center gap-2"
                 >
-                  <Code className="w-4 h-4 text-zinc-600" />
+                  <Code className="w-4 h-4 text-stone-600" />
                   Export as Markdown
                 </button>
               </div>
@@ -360,7 +360,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
           {onShare && (
             <button
               onClick={() => onShare(artifact)}
-              className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-500 transition-colors duration-150"
+              className="p-2 rounded-lg hover:bg-stone-100 text-stone-500 transition-colors duration-150"
               title="Share"
             >
               <Share2 className="w-4 h-4" />
@@ -373,7 +373,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
               onClick={() => setIsEditing(!isEditing)}
               className={cn(
                 'p-2 rounded-lg transition-colors duration-150',
-                isEditing ? 'bg-blue-100 text-blue-700' : 'hover:bg-zinc-100 text-zinc-500'
+                isEditing ? 'bg-blue-100 text-blue-700' : 'hover:bg-stone-100 text-stone-500'
               )}
               title={isEditing ? 'View mode' : 'Edit'}
             >
@@ -384,7 +384,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
           {/* Fullscreen */}
           <button
             onClick={() => setIsFullscreen(!isFullscreen)}
-            className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-500 transition-colors duration-150"
+            className="p-2 rounded-lg hover:bg-stone-100 text-stone-500 transition-colors duration-150"
             title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -393,7 +393,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
           {/* Close */}
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-500 transition-colors duration-150"
+            className="p-2 rounded-lg hover:bg-stone-100 text-stone-500 transition-colors duration-150"
             title="Close"
           >
             <X className="w-4 h-4" />
@@ -412,7 +412,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
               onChange={(e) => setEditContent(e.target.value)}
               className={cn(
                 'w-full h-full p-6 resize-none',
-                'font-mono text-sm text-zinc-900',
+                'font-mono text-sm text-stone-900',
                 'outline-none'
               )}
               spellCheck={artifact.type !== 'code'}
@@ -420,7 +420,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
           ) : (
             <div className="p-6">
               {artifact.type === 'code' ? (
-                <pre className="font-mono text-sm text-zinc-900 whitespace-pre-wrap">
+                <pre className="font-mono text-sm text-stone-900 whitespace-pre-wrap">
                   <code>{artifact.content}</code>
                 </pre>
               ) : artifact.type === 'markdown' ? (
@@ -429,7 +429,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
                   <pre className="whitespace-pre-wrap">{artifact.content}</pre>
                 </div>
               ) : (
-                <div className="whitespace-pre-wrap text-sm text-zinc-900">
+                <div className="whitespace-pre-wrap text-sm text-stone-900">
                   {artifact.content}
                 </div>
               )}
@@ -439,9 +439,9 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
         
         {/* Version Sidebar */}
         {showVersions && artifact.versions && (
-          <div className="w-72 border-l border-zinc-200 bg-zinc-50 overflow-y-auto">
-            <div className="p-4 border-b border-zinc-200">
-              <h3 className="text-sm font-medium text-zinc-900 flex items-center gap-2">
+          <div className="w-72 border-l border-stone-200 bg-stone-50 overflow-y-auto">
+            <div className="p-4 border-b border-stone-200">
+              <h3 className="text-sm font-medium text-stone-900 flex items-center gap-2">
                 <GitBranch className="w-4 h-4" />
                 Version History
               </h3>
@@ -455,19 +455,19 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
                   className="w-full p-3 rounded-lg hover:bg-white text-left transition-colors duration-150"
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-zinc-900">
+                    <span className="text-sm font-medium text-stone-900">
                       v{version.version}
                     </span>
-                    <span className="text-xs text-zinc-500">
+                    <span className="text-xs text-stone-500">
                       {formatDate(version.createdAt)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-zinc-500">
+                  <div className="flex items-center gap-2 text-xs text-stone-500">
                     <User className="w-3 h-3" />
                     {version.createdBy}
                   </div>
                   {version.changes && (
-                    <p className="mt-1 text-xs text-zinc-500 line-clamp-2">
+                    <p className="mt-1 text-xs text-stone-500 line-clamp-2">
                       {version.changes}
                     </p>
                   )}
@@ -480,15 +480,15 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
       
       {/* Footer - Edit Mode */}
       {isEditing && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-200 bg-zinc-50">
-          <p className="text-xs text-zinc-500">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-stone-200 bg-stone-50">
+          <p className="text-xs text-stone-500">
             Editing as {artifact.createdBy}
           </p>
           
           <div className="flex items-center gap-2">
             <button
               onClick={handleCancel}
-              className="px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors duration-150"
+              className="px-3 py-1.5 text-sm text-stone-600 hover:bg-stone-100 rounded-lg transition-colors duration-150"
             >
               Cancel
             </button>
@@ -520,7 +520,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
       
       {/* Footer - View Mode with Sign — capability-gated, status for eligibility only */}
       {!isEditing && (modeCaps ? modeCaps.canSign : true) && artifact.status === 'review' && onSign && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-200 bg-amber-50">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-stone-200 bg-amber-50">
           <div className="flex items-center gap-2 text-amber-700">
             <AlertCircle className="w-4 h-4" />
             <span className="text-sm">This document requires your approval</span>

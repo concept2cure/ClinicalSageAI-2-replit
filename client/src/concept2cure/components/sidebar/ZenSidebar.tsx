@@ -108,7 +108,7 @@ export interface ZenSidebarProps {
 
 // ─── Submission type badge config ────────────────────────────────────────────
 
-// 3-color palette: zinc (default), blue (device/diagnostics), violet (pharma/biotech)
+// 3-color palette: stone (default), blue (device/diagnostics), violet (pharma/biotech)
 const SUBMISSION_BADGE: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; color: string; bg: string }> = {
   '510K': { label: '510(k)', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
   IND: { label: 'IND', icon: Beaker, color: 'text-violet-600', bg: 'bg-violet-50' },
@@ -121,7 +121,7 @@ const SUBMISSION_BADGE: Record<string, { label: string; icon: React.ComponentTyp
   IVDR: { label: 'IVDR', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
 };
 
-const FALLBACK_BADGE = { label: 'PRJ', icon: FolderOpen, color: 'text-zinc-500', bg: 'bg-zinc-100' };
+const FALLBACK_BADGE = { label: 'PRJ', icon: FolderOpen, color: 'text-stone-500', bg: 'bg-stone-100' };
 
 // ─── Status dot colors ──────────────────────────────────────────────────────
 
@@ -131,9 +131,9 @@ function statusDotColor(status?: string): string {
     case 'in_review': return 'bg-amber-400';
     case 'submitted': return 'bg-blue-400';
     case 'approved': return 'bg-emerald-500';
-    case 'archived': return 'bg-zinc-300';
+    case 'archived': return 'bg-stone-300';
     case 'draft':
-    default: return 'bg-zinc-300';
+    default: return 'bg-stone-300';
   }
 }
 
@@ -165,7 +165,7 @@ const WorkspaceGroup: React.FC<{
       <button
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
-        className="w-full flex items-center gap-1 px-3 py-1.5 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest hover:text-zinc-500 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded transition-colors"
+        className="w-full flex items-center gap-1 px-3 py-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest hover:text-stone-500 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none rounded transition-colors"
       >
         <ChevronDown
           className={cn(
@@ -203,24 +203,24 @@ const NavItem: React.FC<{
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'w-full flex items-center gap-2 mx-1 pl-5 pr-3 py-[5px] text-xs transition-all duration-150 rounded-md focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
+        'w-full flex items-center gap-2 mx-1 pl-5 pr-3 py-[5px] text-xs transition-all duration-150 rounded-md focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none',
         active
           ? accent
             ? `${accent.bg} ${accent.text} font-medium`
-            : 'bg-zinc-200/80 text-zinc-900 font-medium'
+            : 'bg-stone-200/80 text-stone-900 font-medium'
           : accent
             ? cn(
-                'text-zinc-600',
+                'text-stone-600',
                 accent.bg === 'bg-blue-100' && 'hover:bg-blue-100 hover:text-blue-600',
                 accent.bg === 'bg-emerald-50' && 'hover:bg-emerald-50 hover:text-emerald-700'
               )
-            : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+            : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
       )}
     >
       <span
         className={cn(
           'flex-shrink-0',
-          active ? (accent ? accent.iconColor : 'text-zinc-700') : 'text-zinc-400'
+          active ? (accent ? accent.iconColor : 'text-stone-700') : 'text-stone-400'
         )}
       >
         {icon}
@@ -228,7 +228,7 @@ const NavItem: React.FC<{
       <div className="flex-1 min-w-0 text-left">
         <span className="block truncate">{label}</span>
         {subtitle && (
-          <span className="block text-[10px] text-zinc-400 truncate leading-tight">{subtitle}</span>
+          <span className="block text-[10px] text-stone-400 truncate leading-tight">{subtitle}</span>
         )}
       </div>
       {badge && (
@@ -263,7 +263,7 @@ const ConvoRow: React.FC<{
         }
       }}
       className={cn(
-        'group relative flex items-center gap-2 mx-1 px-2.5 py-1.5 rounded-lg cursor-pointer select-none transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
+        'group relative flex items-center gap-2 mx-1 px-2.5 py-1.5 rounded-lg cursor-pointer select-none transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none',
         isActive
           ? 'bg-stone-200/80 text-stone-900 font-medium'
           : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
@@ -281,7 +281,7 @@ const ConvoRow: React.FC<{
           <button
             onClick={e => e.stopPropagation()}
             aria-label={`Actions for conversation: ${convo.title}`}
-            className="flex-shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            className="flex-shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-stone-400 hover:text-stone-600 hover:bg-stone-200 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
           >
             <MoreHorizontal className="w-3.5 h-3.5" />
           </button>
@@ -393,7 +393,7 @@ const ProjectRow: React.FC<{
             onToggleExpand();
           }}
           aria-label={isExpanded ? 'Collapse project' : 'Expand project'}
-          className="flex-shrink-0 p-0.5 rounded hover:bg-stone-200/50 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+          className="flex-shrink-0 p-0.5 rounded hover:bg-stone-200/50 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors"
         >
           <ChevronDown
             className={cn(
@@ -423,7 +423,7 @@ const ProjectRow: React.FC<{
             }
           }}
           className={cn(
-            'flex-1 text-[13px] font-medium truncate leading-5 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded',
+            'flex-1 text-[13px] font-medium truncate leading-5 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none rounded',
             isActive ? 'text-stone-900' : 'text-stone-700'
           )}
         >
@@ -449,7 +449,7 @@ const ProjectRow: React.FC<{
               onClick={e => e.stopPropagation()}
               aria-label={`Actions for ${project.name}`}
               className={cn(
-                'flex-shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
+                'flex-shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none',
                 isActive
                   ? 'text-stone-500 hover:text-stone-700 hover:bg-stone-300/50'
                   : 'text-stone-400 hover:text-stone-600 hover:bg-stone-200'
@@ -521,7 +521,7 @@ const ProjectRow: React.FC<{
               e.stopPropagation();
               onNewChat();
             }}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-stone-500 hover:text-stone-700 hover:bg-stone-50 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-stone-500 hover:text-stone-700 hover:bg-stone-50 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
           >
             <Plus className="w-3 h-3" />
             New chat
@@ -563,8 +563,8 @@ const IconBtn: React.FC<{
     onClick={onClick}
     aria-label={label}
     className={cn(
-      'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-      active ? `${accentBg} ${accentText}` : 'text-zinc-500 hover:bg-zinc-200'
+      'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors',
+      active ? `${accentBg} ${accentText}` : 'text-stone-500 hover:bg-stone-200'
     )}
   >
     {children}
@@ -609,36 +609,36 @@ const NewDropdown: React.FC<{
         onClick={() => setOpen(o => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-200 text-zinc-700 text-[13px] font-medium hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-stone-200 text-stone-700 text-[13px] font-medium hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors"
       >
         <Plus className="w-4 h-4 flex-shrink-0" />
         New
-        <ChevronDown className={cn('w-3 h-3 ml-auto text-zinc-400 transition-transform', open && 'rotate-180')} />
+        <ChevronDown className={cn('w-3 h-3 ml-auto text-stone-400 transition-transform', open && 'rotate-180')} />
       </button>
       {open && (
-        <div role="menu" className="absolute left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg z-50 py-1">
+        <div role="menu" className="absolute left-0 right-0 mt-1 bg-white border border-stone-200 rounded-lg shadow-lg z-50 py-1">
           <button
             role="menuitem"
             onClick={() => { onNewChat(); setOpen(false); }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50 transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
           >
-            <MessageSquare className="w-3.5 h-3.5 text-zinc-400" />
+            <MessageSquare className="w-3.5 h-3.5 text-stone-400" />
             New Chat
           </button>
           <button
             role="menuitem"
             onClick={() => { onNewProject(); setOpen(false); }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50 transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
           >
-            <FolderOpen className="w-3.5 h-3.5 text-zinc-400" />
+            <FolderOpen className="w-3.5 h-3.5 text-stone-400" />
             New Project
           </button>
           <button
             role="menuitem"
             onClick={() => { onNewArtifact(); setOpen(false); }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50 transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
           >
-            <FileStack className="w-3.5 h-3.5 text-zinc-400" />
+            <FileStack className="w-3.5 h-3.5 text-stone-400" />
             New Artifact
           </button>
         </div>
@@ -752,7 +752,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
     return (
       <aside
-        className="flex flex-col h-full w-14 bg-zinc-50 border-r border-zinc-200 items-center py-3 gap-1 flex-shrink-0"
+        className="flex flex-col h-full w-14 bg-stone-50 border-r border-stone-200 items-center py-3 gap-1 flex-shrink-0"
         role="navigation"
         aria-label="Main sidebar"
       >
@@ -783,15 +783,15 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         </IconBtn>
 
         {/* Primary workflow icons */}
-        <div className="w-8 border-t border-zinc-200 my-1" />
+        <div className="w-8 border-t border-stone-200 my-1" />
         <button
           onClick={() => onNavigate?.('ri-copilot')}
           aria-label="RI Copilot"
           className={cn(
-            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
+            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors',
             activeNavId === 'ri-copilot'
               ? 'bg-blue-100 text-blue-500'
-              : 'text-zinc-500 hover:bg-zinc-200'
+              : 'text-stone-500 hover:bg-stone-200'
           )}
         >
           <Brain className="w-4 h-4" />
@@ -800,10 +800,10 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           onClick={() => onNavigate?.('submission-builder')}
           aria-label="Submission Builder"
           className={cn(
-            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
+            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors',
             activeNavId === 'submission-builder'
               ? 'bg-blue-100 text-blue-500'
-              : 'text-zinc-500 hover:bg-zinc-200'
+              : 'text-stone-500 hover:bg-stone-200'
           )}
         >
           <PenLine className="w-4 h-4" />
@@ -812,8 +812,8 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           onClick={() => onNavigate?.('verify')}
           aria-label="Verify"
           className={cn(
-            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'verify' ? 'bg-emerald-50 text-emerald-600' : 'text-zinc-500 hover:bg-zinc-200'
+            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors',
+            activeNavId === 'verify' ? 'bg-emerald-50 text-emerald-600' : 'text-stone-500 hover:bg-stone-200'
           )}
         >
           <FileCheck className="w-4 h-4" />
@@ -822,8 +822,8 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           onClick={() => onNavigate?.('review')}
           aria-label="Review"
           className={cn(
-            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'review' ? 'bg-emerald-50 text-emerald-600' : 'text-zinc-500 hover:bg-zinc-200'
+            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors',
+            activeNavId === 'review' ? 'bg-emerald-50 text-emerald-600' : 'text-stone-500 hover:bg-stone-200'
           )}
         >
           <ShieldCheck className="w-4 h-4" />
@@ -832,10 +832,10 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           onClick={() => onNavigate?.('publish')}
           aria-label="Publish"
           className={cn(
-            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
+            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors',
             activeNavId === 'publish'
               ? 'bg-blue-100 text-blue-500'
-              : 'text-zinc-500 hover:bg-zinc-200'
+              : 'text-stone-500 hover:bg-stone-200'
           )}
         >
           <Upload className="w-4 h-4" />
@@ -846,7 +846,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <button
             onClick={onToggleCollapse}
             aria-label="Expand sidebar"
-            className="w-9 h-9 rounded-xl text-zinc-400 flex items-center justify-center hover:bg-zinc-200 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+            className="w-9 h-9 rounded-xl text-stone-400 flex items-center justify-center hover:bg-stone-200 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -866,7 +866,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
       {/* Mobile backdrop */}
       <div className="fixed inset-0 z-40 bg-black/30 md:hidden" onClick={onToggleCollapse} />
       <aside
-        className="flex flex-col h-full w-[260px] bg-zinc-50/80 border-r border-zinc-100 flex-shrink-0 fixed z-50 md:static md:z-auto"
+        className="flex flex-col h-full w-[260px] bg-stone-50/80 border-r border-stone-100 flex-shrink-0 fixed z-50 md:static md:z-auto"
         role="navigation"
         aria-label="Main sidebar"
       >
@@ -877,12 +877,12 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               <img src={logoSrc} alt="Concept2Cure" className="w-full h-full object-cover object-center" />
               <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at center, transparent 40%, var(--color-bg, #faf9f5) 100%)' }} />
             </div>
-            <span className="font-semibold text-zinc-800 text-[13px]">Concept2Cure</span>
+            <span className="font-semibold text-stone-800 text-[13px]">Concept2Cure</span>
           </div>
           <button
             onClick={onToggleCollapse}
             aria-label="Collapse sidebar"
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+            className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-200 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -934,7 +934,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         {/* ── Current Project Block (only when project active) ──────── */}
         {activeProject && (
           <>
-            <div className="mx-2 border-t border-zinc-200 flex-shrink-0" />
+            <div className="mx-2 border-t border-stone-200 flex-shrink-0" />
             <div className="px-2 py-2 flex-shrink-0">
               {/* Project identity */}
               <div className="flex items-center gap-2 px-2 mb-1.5">
@@ -943,7 +943,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
                     {activeBadge.label}
                   </span>
                 )}
-                <span className="text-[12px] font-semibold text-zinc-800 truncate flex-1">
+                <span className="text-[12px] font-semibold text-stone-800 truncate flex-1">
                   {activeProject.name}
                 </span>
               </div>
@@ -988,12 +988,12 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           </>
         )}
 
-        <div className="mx-2 border-t border-zinc-100 flex-shrink-0" />
+        <div className="mx-2 border-t border-stone-100 flex-shrink-0" />
 
         {/* ── Search ──────────────────────────────────────────────────── */}
         <div className="px-2 py-1.5 flex-shrink-0">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
             <Input
               type="text"
               value={searchQuery}
@@ -1081,7 +1081,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           {/* General conversations (no project) */}
           {unscopedConversations.length > 0 && (
             <>
-              <div className="mx-2 my-1 border-t border-zinc-100" />
+              <div className="mx-2 my-1 border-t border-stone-100" />
               <WorkspaceGroup label="General" defaultOpen={!activeProjectId}>
                 {unscopedConversations.map(c => (
                   <ConvoRow
@@ -1100,7 +1100,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           )}
 
           {/* ── SUBMISSION WORKFLOW — secondary nav ────────────────── */}
-          <div className="mx-2 my-1 border-t border-zinc-100" />
+          <div className="mx-2 my-1 border-t border-stone-100" />
           <WorkspaceGroup label="Biotech Hero Lane" defaultOpen={true}>
             <NavItem
               icon={<Brain className="w-3.5 h-3.5" />}
@@ -1164,10 +1164,10 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         </div>
 
         {/* User / account footer */}
-        <div className="flex-shrink-0 border-t border-zinc-100 p-2">
+        <div className="flex-shrink-0 border-t border-stone-100 p-2">
           <button
             onClick={onOpenSettings}
-            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 text-xs focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-stone-500 hover:bg-stone-100 hover:text-stone-800 text-xs focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors"
           >
             <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
               <span className="text-[10px] font-bold text-blue-600 leading-none">
@@ -1175,11 +1175,11 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               </span>
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-xs font-medium text-zinc-700 truncate leading-tight">
+              <p className="text-xs font-medium text-stone-700 truncate leading-tight">
                 {displayName}
               </p>
               {userEmail && (
-                <p className="text-[10px] text-zinc-400 truncate leading-tight">{userEmail}</p>
+                <p className="text-[10px] text-stone-400 truncate leading-tight">{userEmail}</p>
               )}
             </div>
           </button>

@@ -140,10 +140,10 @@ export const DossierMap: React.FC<DossierMapProps> = ({
   }, [sections]);
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-zinc-50/50">
+    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-stone-50/50">
       <WorkspaceHeader
         title="Dossier Map"
-        titleIcon={<FolderOpen className="w-3.5 h-3.5 text-blue-500" />}
+        titleIcon={<FolderOpen className="w-3.5 h-3.5 text-stone-500" />}
         onBack={onBack}
         typeBadge={projectType}
         subtitle={projectName}
@@ -164,12 +164,12 @@ export const DossierMap: React.FC<DossierMapProps> = ({
                 <SectionPanel
                   key={mod.code}
                   title={`${mod.code} — ${mod.title}`}
-                  titleIcon={<span className="text-xs font-bold text-zinc-400">{mod.code}</span>}
+                  titleIcon={<span className="text-xs font-bold text-stone-400">{mod.code}</span>}
                   headerRight={
                     <WorkspaceStatusBadge status={mod.status} />
                   }
                 >
-                  <div className="divide-y divide-zinc-100 -mx-5 -mb-5">
+                  <div className="divide-y divide-stone-100 -mx-5 -mb-5">
                     {mod.children?.map(sec => {
                       const statusInfo = STATUS_ICON_MAP[sec.status] || STATUS_ICON_MAP['not-started'];
                       const Icon = statusInfo.icon;
@@ -177,11 +177,11 @@ export const DossierMap: React.FC<DossierMapProps> = ({
                         <button
                           key={sec.code}
                           onClick={() => onSectionClick(sec.code)}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 transition-colors text-left"
+                          className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-stone-50 transition-colors text-left"
                         >
                           <Icon className={`w-3.5 h-3.5 ${statusInfo.color}`} />
-                          <span className="text-xs font-mono text-zinc-400 w-10">{sec.code}</span>
-                          <span className="text-sm text-zinc-800">{sec.title}</span>
+                          <span className="text-xs font-mono text-stone-400 w-10">{sec.code}</span>
+                          <span className="text-sm text-stone-800">{sec.title}</span>
                           <WorkspaceStatusBadge
                             status={sec.status}
                             className="ml-auto"

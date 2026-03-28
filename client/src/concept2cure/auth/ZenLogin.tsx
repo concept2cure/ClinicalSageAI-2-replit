@@ -223,7 +223,7 @@ const MfaCodeInput: React.FC<MfaInputProps> = ({ value, onChange, error }) => {
               ${
                 error
                   ? 'border-red-300 bg-red-50 focus:border-red-500'
-                  : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(217,119,87,0.1)]'
+                  : 'border-stone-200 bg-white focus:border-stone-400 focus:shadow-[0_0_0_3px_rgba(217,119,87,0.1)]'
               }
             `}
             autoComplete="one-time-code"
@@ -654,7 +654,7 @@ export const ZenLogin: React.FC = () => {
       className="space-y-6"
     >
       <div className="space-y-2">
-        <label htmlFor="email" className="block text-sm font-medium text-zinc-700">
+        <label htmlFor="email" className="block text-sm font-medium text-stone-700">
           Email address
         </label>
         <input
@@ -674,7 +674,7 @@ export const ZenLogin: React.FC = () => {
             ${
               error?.field === 'email'
                 ? 'border-red-300 bg-red-50 focus:border-red-500'
-                : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(217,119,87,0.1)]'
+                : 'border-stone-200 bg-white focus:border-stone-400 focus:shadow-[0_0_0_3px_rgba(217,119,87,0.1)]'
             }
           `}
         />
@@ -696,13 +696,13 @@ export const ZenLogin: React.FC = () => {
           w-full py-3.5 px-4
           flex items-center justify-center gap-2
           text-base font-semibold text-white
-          bg-zinc-900
-          hover:bg-zinc-800
+          bg-stone-900
+          hover:bg-stone-800
           shadow-sm hover:shadow-md
           rounded-xl
           transition-all duration-150
           disabled:opacity-60 disabled:cursor-not-allowed
-          focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
+          focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none
         `}
       >
         {isLoading ? <SpinnerIcon /> : 'Continue'}
@@ -711,10 +711,10 @@ export const ZenLogin: React.FC = () => {
       {/* SSO Divider */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-zinc-200" />
+          <div className="w-full border-t border-stone-200" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-4 bg-white text-zinc-400 text-sm">or continue with</span>
+          <span className="px-4 bg-white text-stone-400 text-sm">or continue with</span>
         </div>
       </div>
 
@@ -781,12 +781,12 @@ export const ZenLogin: React.FC = () => {
                 >
                   <span className="text-xl">{persona.icon}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-zinc-900 truncate">{persona.name}</p>
-                    <p className="text-xs text-zinc-500 truncate">
+                    <p className="text-sm font-medium text-stone-900 truncate">{persona.name}</p>
+                    <p className="text-xs text-stone-500 truncate">
                       {persona.title} · {persona.role}
                     </p>
                   </div>
-                  <span className="text-xs font-mono text-zinc-400 hidden sm:block">
+                  <span className="text-xs font-mono text-stone-400 hidden sm:block">
                     {persona.email}
                   </span>
                 </button>
@@ -803,9 +803,9 @@ export const ZenLogin: React.FC = () => {
           disabled={isLoading}
           className={`
             flex items-center justify-center gap-2 px-4 py-3
-            text-sm font-medium text-zinc-700
-            bg-white border-2 border-zinc-200 rounded-xl
-            hover:bg-zinc-50 hover:border-zinc-300
+            text-sm font-medium text-stone-700
+            bg-white border-2 border-stone-200 rounded-xl
+            hover:bg-stone-50 hover:border-stone-300
             transition-all duration-150
             disabled:opacity-60 disabled:cursor-not-allowed
           `}
@@ -818,9 +818,9 @@ export const ZenLogin: React.FC = () => {
           disabled={isLoading}
           className={`
             flex items-center justify-center gap-2 px-4 py-3
-            text-sm font-medium text-zinc-700
-            bg-white border-2 border-zinc-200 rounded-xl
-            hover:bg-zinc-50 hover:border-zinc-300
+            text-sm font-medium text-stone-700
+            bg-white border-2 border-stone-200 rounded-xl
+            hover:bg-stone-50 hover:border-stone-300
             transition-all duration-150
             disabled:opacity-60 disabled:cursor-not-allowed
           `}
@@ -845,16 +845,16 @@ export const ZenLogin: React.FC = () => {
       <div className="flex items-center gap-3">
         <button
           onClick={() => setStep('email')}
-          className="p-2 rounded-lg hover:bg-zinc-100 transition-colors duration-150"
+          className="p-2 rounded-lg hover:bg-stone-100 transition-colors duration-150"
           aria-label="Go back"
         >
           <ArrowLeftIcon />
         </button>
-        <span className="text-sm text-zinc-600">{email}</span>
+        <span className="text-sm text-stone-600">{email}</span>
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="password" className="block text-sm font-medium text-zinc-700">
+        <label htmlFor="password" className="block text-sm font-medium text-stone-700">
           Password
         </label>
         <div className="relative">
@@ -875,14 +875,14 @@ export const ZenLogin: React.FC = () => {
               ${
                 error?.field === 'password'
                   ? 'border-red-300 bg-red-50 focus:border-red-500'
-                  : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(217,119,87,0.1)]'
+                  : 'border-stone-200 bg-white focus:border-stone-400 focus:shadow-[0_0_0_3px_rgba(217,119,87,0.1)]'
               }
             `}
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-600"
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-stone-400 hover:text-stone-600"
             aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
             {showPassword ? (
@@ -930,9 +930,9 @@ export const ZenLogin: React.FC = () => {
             type="checkbox"
             checked={rememberMe}
             onChange={e => setRememberMe(e.target.checked)}
-            className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+            className="w-4 h-4 rounded border-stone-300 text-blue-600 focus:ring-stone-400"
           />
-          <span className="text-sm text-zinc-600">Remember me</span>
+          <span className="text-sm text-stone-600">Remember me</span>
         </label>
         <button
           type="button"
@@ -950,13 +950,13 @@ export const ZenLogin: React.FC = () => {
           w-full py-3.5 px-4
           flex items-center justify-center gap-2
           text-base font-semibold text-white
-          bg-zinc-900
-          hover:bg-zinc-800
+          bg-stone-900
+          hover:bg-stone-800
           shadow-sm hover:shadow-md
           rounded-xl
           transition-all duration-150
           disabled:opacity-60 disabled:cursor-not-allowed
-          focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
+          focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none
         `}
       >
         {isLoading ? <SpinnerIcon /> : 'Sign in'}
@@ -976,7 +976,7 @@ export const ZenLogin: React.FC = () => {
       {/* Back button */}
       <button
         onClick={() => setStep('password')}
-        className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900"
+        className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900"
       >
         <ArrowLeftIcon />
         Back
@@ -986,10 +986,10 @@ export const ZenLogin: React.FC = () => {
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 mb-2">
           <ShieldIcon />
         </div>
-        <h3 className="text-lg font-semibold text-zinc-900">
+        <h3 className="text-lg font-semibold text-stone-900">
           {useRecoveryCode ? 'Recovery code' : 'Two-factor authentication'}
         </h3>
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-stone-600">
           {useRecoveryCode
             ? 'Enter one of the recovery codes you saved when setting up MFA'
             : 'Enter the 6-digit code from your authenticator app'}
@@ -998,7 +998,7 @@ export const ZenLogin: React.FC = () => {
 
       {useRecoveryCode ? (
         <div className="space-y-2">
-          <label htmlFor="recovery-code" className="block text-sm font-medium text-zinc-700">
+          <label htmlFor="recovery-code" className="block text-sm font-medium text-stone-700">
             Recovery code
           </label>
           <input
@@ -1012,9 +1012,9 @@ export const ZenLogin: React.FC = () => {
             className={`
               w-full px-4 py-3 text-center text-base font-mono tracking-wider
               border rounded-xl bg-white
-              focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
+              focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none
               transition-colors duration-150
-              ${error?.field === 'mfa' ? 'border-red-300' : 'border-zinc-200'}
+              ${error?.field === 'mfa' ? 'border-red-300' : 'border-stone-200'}
             `}
           />
           {error?.field === 'mfa' && <p className="text-sm text-red-600">{error.message}</p>}
@@ -1023,7 +1023,7 @@ export const ZenLogin: React.FC = () => {
         <>
           {availableMfaMethods.length > 0 && (
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-zinc-700">Verification method</label>
+              <label className="block text-sm font-medium text-stone-700">Verification method</label>
               <div className="flex flex-wrap gap-2">
                 {availableMfaMethods.map(method => (
                   <button
@@ -1036,7 +1036,7 @@ export const ZenLogin: React.FC = () => {
                       ${
                         mfaMethod === method.type
                           ? 'border-blue-500 bg-blue-50 text-blue-700'
-                          : 'border-zinc-200 text-zinc-600 hover:border-zinc-300'
+                          : 'border-stone-200 text-stone-600 hover:border-stone-300'
                       }
                     `}
                   >
@@ -1070,7 +1070,7 @@ export const ZenLogin: React.FC = () => {
           rounded-xl
           transition-all duration-150
           disabled:opacity-60 disabled:cursor-not-allowed
-          focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
+          focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none
         `}
       >
         {isLoading ? <SpinnerIcon /> : 'Verify'}
@@ -1078,10 +1078,10 @@ export const ZenLogin: React.FC = () => {
 
       {mfaMethod === 'email' ? (
         <div className="text-center space-y-2">
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-stone-500">
             Didn't receive the code?{' '}
             {resendCountdown > 0 ? (
-              <span className="text-zinc-400">Resend in {resendCountdown}s</span>
+              <span className="text-stone-400">Resend in {resendCountdown}s</span>
             ) : (
               <button
                 onClick={handleResendOtp}
@@ -1091,10 +1091,10 @@ export const ZenLogin: React.FC = () => {
               </button>
             )}
           </p>
-          <p className="text-xs text-zinc-400">Check your spam folder if you don't see it</p>
+          <p className="text-xs text-stone-400">Check your spam folder if you don't see it</p>
         </div>
       ) : (
-        <p className="text-center text-sm text-zinc-500">
+        <p className="text-center text-sm text-stone-500">
           Having trouble?{' '}
           <button
             onClick={() => {
@@ -1125,7 +1125,7 @@ export const ZenLogin: React.FC = () => {
           setRecoveryCode('');
           setStep('mfa');
         }}
-        className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-800"
+        className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-800"
       >
         <ArrowLeftIcon />
         Back to authenticator
@@ -1135,14 +1135,14 @@ export const ZenLogin: React.FC = () => {
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-amber-100 mb-2">
           <ShieldIcon />
         </div>
-        <h3 className="text-lg font-semibold text-zinc-900">Recovery code</h3>
-        <p className="text-sm text-zinc-600">
+        <h3 className="text-lg font-semibold text-stone-900">Recovery code</h3>
+        <p className="text-sm text-stone-600">
           Enter one of the recovery codes you saved when setting up two-factor authentication.
         </p>
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="recovery-code" className="block text-sm font-medium text-zinc-700">
+        <label htmlFor="recovery-code" className="block text-sm font-medium text-stone-700">
           Recovery code
         </label>
         <input
@@ -1161,7 +1161,7 @@ export const ZenLogin: React.FC = () => {
             ${
               error?.field === 'mfa'
                 ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                : 'border-zinc-200 focus:ring-blue-500 focus:border-blue-500'
+                : 'border-stone-200 focus:ring-stone-400 focus:border-stone-400'
             }
             focus:outline-none focus:ring-2
           `}
@@ -1180,13 +1180,13 @@ export const ZenLogin: React.FC = () => {
           rounded-xl
           transition-all duration-200
           disabled:opacity-50 disabled:cursor-not-allowed
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+          focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-2
         `}
       >
         {isLoading ? <SpinnerIcon /> : 'Verify recovery code'}
       </button>
 
-      <p className="text-center text-sm text-zinc-500">
+      <p className="text-center text-sm text-stone-500">
         {useRecoveryCode ? (
           <button
             type="button"
@@ -1195,7 +1195,7 @@ export const ZenLogin: React.FC = () => {
               setMfaCode('');
               setError(null);
             }}
-            className="text-blue-600 hover:text-blue-700 font-medium focus-visible:ring-2 focus-visible:ring-blue-500 rounded outline-none"
+            className="text-blue-600 hover:text-blue-700 font-medium focus-visible:ring-2 focus-visible:ring-stone-400 rounded outline-none"
           >
             Use authenticator app instead
           </button>
@@ -1209,7 +1209,7 @@ export const ZenLogin: React.FC = () => {
                 setMfaCode('');
                 setError(null);
               }}
-              className="text-blue-600 hover:text-blue-700 font-medium focus-visible:ring-2 focus-visible:ring-blue-500 rounded outline-none"
+              className="text-blue-600 hover:text-blue-700 font-medium focus-visible:ring-2 focus-visible:ring-stone-400 rounded outline-none"
             >
               Use a recovery code
             </button>
@@ -1231,15 +1231,15 @@ export const ZenLogin: React.FC = () => {
       {/* Back button */}
       <button
         onClick={() => setStep('password')}
-        className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900"
+        className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900"
       >
         <ArrowLeftIcon />
         Back to sign in
       </button>
 
       <div className="text-center space-y-2">
-        <h3 className="text-lg font-semibold text-zinc-900">Reset your password</h3>
-        <p className="text-sm text-zinc-600">
+        <h3 className="text-lg font-semibold text-stone-900">Reset your password</h3>
+        <p className="text-sm text-stone-600">
           We'll send a password reset link to <strong>{email}</strong>
         </p>
       </div>
@@ -1255,7 +1255,7 @@ export const ZenLogin: React.FC = () => {
           rounded-xl
           transition-all duration-150
           disabled:opacity-60 disabled:cursor-not-allowed
-          focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
+          focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none
         `}
       >
         {isLoading ? <SpinnerIcon /> : 'Send reset link'}
@@ -1275,8 +1275,8 @@ export const ZenLogin: React.FC = () => {
       <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-green-100 mb-2">
         <MailIcon />
       </div>
-      <h3 className="text-lg font-semibold text-zinc-900">Check your email</h3>
-      <p className="text-sm text-zinc-600">
+      <h3 className="text-lg font-semibold text-stone-900">Check your email</h3>
+      <p className="text-sm text-stone-600">
         We've sent a password reset link to <strong>{email}</strong>. The link will expire in 1
         hour.
       </p>
@@ -1285,9 +1285,9 @@ export const ZenLogin: React.FC = () => {
         onClick={() => setStep('email')}
         className={`
           w-full py-3 px-4
-          text-base font-medium text-zinc-700
-          bg-white border-2 border-zinc-200 rounded-xl
-          hover:bg-zinc-50 hover:border-zinc-300
+          text-base font-medium text-stone-700
+          bg-white border-2 border-stone-200 rounded-xl
+          hover:bg-stone-50 hover:border-stone-300
           transition-all duration-150
         `}
       >
@@ -1320,8 +1320,8 @@ export const ZenLogin: React.FC = () => {
           <CheckIcon />
         </motion.div>
       </motion.div>
-      <h3 className="text-xl font-semibold text-zinc-900">Welcome back!</h3>
-      <p className="text-sm text-zinc-600">Redirecting you to Concept2Cure...</p>
+      <h3 className="text-xl font-semibold text-stone-900">Welcome back!</h3>
+      <p className="text-sm text-stone-600">Redirecting you to Concept2Cure...</p>
 
       <motion.div
         initial={{ width: 0 }}
@@ -1341,14 +1341,14 @@ export const ZenLogin: React.FC = () => {
       <div className="w-full max-w-sm px-6">
         {/* AnA 1.0 RI branding */}
         <div className="mb-10 text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900">
+          <h1 className="text-3xl font-bold tracking-tight text-stone-900">
             AnA 1.0 RI
           </h1>
         </div>
 
         {/* Title */}
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-zinc-900">
+          <h2 className="text-2xl font-semibold text-stone-900">
             {step === 'success' ? '' : 'Sign in'}
           </h2>
         </div>

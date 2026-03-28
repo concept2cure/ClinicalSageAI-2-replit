@@ -174,7 +174,7 @@ const ClientBrandingSettings: React.FC = () => {
   if (brandingLoading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-stone-400" />
       </div>
     );
   }
@@ -185,9 +185,9 @@ const ClientBrandingSettings: React.FC = () => {
       <div className="mb-6">
         <div className="flex items-center gap-2.5 mb-1">
           <Building2 className="w-5 h-5 text-blue-500" />
-          <h1 className="text-base font-semibold text-zinc-900">Brand & Template Settings</h1>
+          <h1 className="text-base font-semibold text-stone-900">Brand & Template Settings</h1>
         </div>
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-stone-500">
           Configure your organization's branding, document templates, and letterhead for use across all generated documents.
         </p>
       </div>
@@ -204,8 +204,8 @@ const ClientBrandingSettings: React.FC = () => {
                 className={cn(
                   'flex items-center gap-1.5 pb-2 text-xs font-medium border-b-2 transition-colors',
                   activeTab === t.key
-                    ? 'border-zinc-900 text-zinc-900'
-                    : 'border-transparent text-zinc-400 hover:text-zinc-600',
+                    ? 'border-stone-900 text-stone-900'
+                    : 'border-transparent text-stone-400 hover:text-stone-600',
                 )}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -221,16 +221,16 @@ const ClientBrandingSettings: React.FC = () => {
         <div className="space-y-6">
           {/* Logo upload */}
           <div className="bg-white rounded-xl border p-5">
-            <h3 className="text-sm font-semibold text-zinc-800 mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-stone-800 mb-3 flex items-center gap-2">
               <Image className="w-4 h-4 text-blue-500" />
               Company Logo
             </h3>
             <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-lg border-2 border-dashed border-zinc-200 flex items-center justify-center bg-zinc-50 overflow-hidden">
+              <div className="w-20 h-20 rounded-lg border-2 border-dashed border-stone-200 flex items-center justify-center bg-stone-50 overflow-hidden">
                 {branding.logoUrl ? (
                   <img src={branding.logoUrl} alt="Logo" className="w-full h-full object-contain p-2" />
                 ) : (
-                  <Upload className="w-6 h-6 text-zinc-300" />
+                  <Upload className="w-6 h-6 text-stone-300" />
                 )}
               </div>
               <div>
@@ -248,14 +248,14 @@ const ClientBrandingSettings: React.FC = () => {
                 >
                   {uploadLogo.isPending ? 'Uploading...' : branding.logoUrl ? 'Replace Logo' : 'Upload Logo'}
                 </button>
-                <p className="text-[10px] text-zinc-400 mt-1">PNG, JPEG, or SVG. Max 2MB. Used in all generated documents.</p>
+                <p className="text-[10px] text-stone-400 mt-1">PNG, JPEG, or SVG. Max 2MB. Used in all generated documents.</p>
               </div>
             </div>
           </div>
 
           {/* Colors */}
           <div className="bg-white rounded-xl border p-5">
-            <h3 className="text-sm font-semibold text-zinc-800 mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-stone-800 mb-3 flex items-center gap-2">
               <Paintbrush className="w-4 h-4 text-violet-500" />
               Brand Colors
             </h3>
@@ -266,7 +266,7 @@ const ClientBrandingSettings: React.FC = () => {
                 { key: 'accentColor', label: 'Accent' },
               ].map(({ key, label }) => (
                 <div key={key}>
-                  <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">{label}</label>
+                  <label className="text-[10px] font-medium text-stone-500 uppercase tracking-wide">{label}</label>
                   <div className="flex items-center gap-2 mt-1">
                     <input
                       type="color"
@@ -288,12 +288,12 @@ const ClientBrandingSettings: React.FC = () => {
 
           {/* Typography */}
           <div className="bg-white rounded-xl border p-5">
-            <h3 className="text-sm font-semibold text-zinc-800 mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-stone-800 mb-3 flex items-center gap-2">
               <Type className="w-4 h-4 text-emerald-500" />
               Typography
             </h3>
             <div>
-              <label className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">Font Family</label>
+              <label className="text-[10px] font-medium text-stone-500 uppercase tracking-wide">Font Family</label>
               <select
                 value={branding.fontFamily}
                 onChange={e => updateBranding.mutate({ fontFamily: e.target.value })}
@@ -311,7 +311,7 @@ const ClientBrandingSettings: React.FC = () => {
 
           {/* Watermark */}
           <div className="bg-white rounded-xl border p-5">
-            <h3 className="text-sm font-semibold text-zinc-800 mb-3">Watermark</h3>
+            <h3 className="text-sm font-semibold text-stone-800 mb-3">Watermark</h3>
             <input
               type="text"
               value={branding.watermarkText || ''}
@@ -319,7 +319,7 @@ const ClientBrandingSettings: React.FC = () => {
               placeholder="e.g., CONFIDENTIAL, DRAFT, COMPANY PROPRIETARY"
               className="w-full text-xs px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
             />
-            <p className="text-[10px] text-zinc-400 mt-1">Applied as a diagonal watermark on all exported PDFs.</p>
+            <p className="text-[10px] text-stone-400 mt-1">Applied as a diagonal watermark on all exported PDFs.</p>
           </div>
         </div>
       )}
@@ -328,7 +328,7 @@ const ClientBrandingSettings: React.FC = () => {
       {activeTab === 'templates' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-stone-500">
               Custom templates used by AnA, eCTD CoAuthor, and the Document Editor when generating or exporting documents.
             </p>
             <button
@@ -344,21 +344,21 @@ const ClientBrandingSettings: React.FC = () => {
           <div className="space-y-2">
             {templates.map(tmpl => (
               <div key={tmpl.id} className="bg-white rounded-xl border p-4 flex items-start gap-4">
-                <div className="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center flex-shrink-0">
-                  <FileText className="w-5 h-5 text-zinc-400" />
+                <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0">
+                  <FileText className="w-5 h-5 text-stone-400" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h4 className="text-xs font-semibold text-zinc-800">{tmpl.name}</h4>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500">
+                    <h4 className="text-xs font-semibold text-stone-800">{tmpl.name}</h4>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">
                       {CATEGORY_LABELS[tmpl.category] || tmpl.category}
                     </span>
                     <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600">
                       {tmpl.fileType.toUpperCase()}
                     </span>
                   </div>
-                  <p className="text-[11px] text-zinc-500 mt-0.5">{tmpl.description}</p>
-                  <div className="flex items-center gap-3 mt-1.5 text-[10px] text-zinc-400">
+                  <p className="text-[11px] text-stone-500 mt-0.5">{tmpl.description}</p>
+                  <div className="flex items-center gap-3 mt-1.5 text-[10px] text-stone-400">
                     <span>Used {tmpl.usageCount} times</span>
                     <span>&middot;</span>
                     <span>{Object.keys(tmpl.placeholders).length} placeholders</span>
@@ -369,14 +369,14 @@ const ClientBrandingSettings: React.FC = () => {
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <button
                     onClick={() => setEditingTemplate(tmpl)}
-                    className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded hover:bg-zinc-100"
+                    className="p-1.5 text-stone-400 hover:text-stone-600 rounded hover:bg-stone-100"
                     title="Edit"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => deleteTemplate.mutate(tmpl.id)}
-                    className="p-1.5 text-zinc-400 hover:text-red-500 rounded hover:bg-red-50"
+                    className="p-1.5 text-stone-400 hover:text-red-500 rounded hover:bg-red-50"
                     title="Delete"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -387,9 +387,9 @@ const ClientBrandingSettings: React.FC = () => {
 
             {templates.length === 0 && !templatesLoading && (
               <div className="text-center py-8 bg-white rounded-xl border">
-                <FileText className="w-8 h-8 text-zinc-200 mx-auto mb-2" />
-                <p className="text-xs text-zinc-500">No custom templates yet</p>
-                <p className="text-[10px] text-zinc-400 mt-0.5">Create templates that match your organization's document standards.</p>
+                <FileText className="w-8 h-8 text-stone-200 mx-auto mb-2" />
+                <p className="text-xs text-stone-500">No custom templates yet</p>
+                <p className="text-[10px] text-stone-400 mt-0.5">Create templates that match your organization's document standards.</p>
               </div>
             )}
           </div>
@@ -409,11 +409,11 @@ const ClientBrandingSettings: React.FC = () => {
       {activeTab === 'letterhead' && branding && (
         <div className="space-y-6">
           <div className="bg-white rounded-xl border p-5">
-            <h3 className="text-sm font-semibold text-zinc-800 mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-stone-800 mb-3 flex items-center gap-2">
               <Layout className="w-4 h-4 text-blue-500" />
               Document Header
             </h3>
-            <p className="text-xs text-zinc-500 mb-3">
+            <p className="text-xs text-stone-500 mb-3">
               Custom HTML for document headers. Uses your brand colors and logo automatically.
               Available variables: {'{{companyName}}'}, {'{{logoUrl}}'}, {'{{primaryColor}}'}, {'{{date}}'}.
             </p>
@@ -427,8 +427,8 @@ const ClientBrandingSettings: React.FC = () => {
           </div>
 
           <div className="bg-white rounded-xl border p-5">
-            <h3 className="text-sm font-semibold text-zinc-800 mb-3">Document Footer</h3>
-            <p className="text-xs text-zinc-500 mb-3">
+            <h3 className="text-sm font-semibold text-stone-800 mb-3">Document Footer</h3>
+            <p className="text-xs text-stone-500 mb-3">
               Custom HTML for document footers. Common uses: page numbers, confidentiality notices, company info.
             </p>
             <textarea
@@ -442,9 +442,9 @@ const ClientBrandingSettings: React.FC = () => {
 
           {/* Preview */}
           <div className="bg-white rounded-xl border overflow-hidden">
-            <div className="px-5 py-3 border-b bg-zinc-50/50 flex items-center gap-2">
-              <Eye className="w-3.5 h-3.5 text-zinc-500" />
-              <span className="text-xs font-medium text-zinc-700">Preview</span>
+            <div className="px-5 py-3 border-b bg-stone-50/50 flex items-center gap-2">
+              <Eye className="w-3.5 h-3.5 text-stone-500" />
+              <span className="text-xs font-medium text-stone-700">Preview</span>
             </div>
             <div className="p-6" style={{ fontFamily: branding.fontFamily }}>
               {/* Header preview */}
@@ -457,18 +457,18 @@ const ClientBrandingSettings: React.FC = () => {
                     <div className="text-sm font-bold" style={{ color: branding.primaryColor }}>
                       {branding.companyName}
                     </div>
-                    <div className="text-[10px] text-zinc-400">123 Biotech Parkway, Cambridge, MA</div>
+                    <div className="text-[10px] text-stone-400">123 Biotech Parkway, Cambridge, MA</div>
                   </div>
                 </div>
               </div>
               {/* Body preview */}
-              <div className="space-y-2 text-xs text-zinc-600 mb-8">
+              <div className="space-y-2 text-xs text-stone-600 mb-8">
                 <p>March 20, 2026</p>
                 <p>Subject: IND Application — ProductName (Indication)</p>
-                <p className="text-zinc-400 italic">[ Document body content will appear here ]</p>
+                <p className="text-stone-400 italic">[ Document body content will appear here ]</p>
               </div>
               {/* Footer preview */}
-              <div className="border-t pt-2 text-[9px] text-zinc-400 flex justify-between">
+              <div className="border-t pt-2 text-[9px] text-stone-400 flex justify-between">
                 <span>{branding.companyName} — Confidential</span>
                 <span>Page 1 of 1</span>
               </div>
@@ -499,14 +499,14 @@ function NewTemplateForm({
   return (
     <div className="bg-white rounded-xl border p-5 space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold text-zinc-800">New Template</h4>
-        <button onClick={onCancel} className="p-1 text-zinc-400 hover:text-zinc-600">
+        <h4 className="text-sm font-semibold text-stone-800">New Template</h4>
+        <button onClick={onCancel} className="p-1 text-stone-400 hover:text-stone-600">
           <X className="w-4 h-4" />
         </button>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-[10px] font-medium text-zinc-500 uppercase">Name</label>
+          <label className="text-[10px] font-medium text-stone-500 uppercase">Name</label>
           <input
             type="text"
             value={name}
@@ -516,7 +516,7 @@ function NewTemplateForm({
           />
         </div>
         <div>
-          <label className="text-[10px] font-medium text-zinc-500 uppercase">Category</label>
+          <label className="text-[10px] font-medium text-stone-500 uppercase">Category</label>
           <select
             value={category}
             onChange={e => setCategory(e.target.value)}
@@ -529,7 +529,7 @@ function NewTemplateForm({
         </div>
       </div>
       <div>
-        <label className="text-[10px] font-medium text-zinc-500 uppercase">Description</label>
+        <label className="text-[10px] font-medium text-stone-500 uppercase">Description</label>
         <input
           type="text"
           value={description}
@@ -539,7 +539,7 @@ function NewTemplateForm({
         />
       </div>
       <div>
-        <label className="text-[10px] font-medium text-zinc-500 uppercase">Template Content (HTML)</label>
+        <label className="text-[10px] font-medium text-stone-500 uppercase">Template Content (HTML)</label>
         <textarea
           value={content}
           onChange={e => setContent(e.target.value)}
@@ -557,7 +557,7 @@ function NewTemplateForm({
           <Save className="w-3.5 h-3.5" />
           Create Template
         </button>
-        <button onClick={onCancel} className="px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-700">
+        <button onClick={onCancel} className="px-3 py-1.5 text-xs text-stone-500 hover:text-stone-700">
           Cancel
         </button>
       </div>

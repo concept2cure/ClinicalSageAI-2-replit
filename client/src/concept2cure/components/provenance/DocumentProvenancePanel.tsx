@@ -192,7 +192,7 @@ const statusColor = (s: string) => {
     case 'locked':
       return 'bg-red-100 text-red-800';
     default:
-      return 'bg-zinc-100 text-zinc-700';
+      return 'bg-stone-100 text-stone-700';
   }
 };
 
@@ -220,22 +220,22 @@ const Section: React.FC<{
 }> = ({ icon, title, badge, defaultOpen = true, children }) => {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border-b border-zinc-200 last:border-b-0">
+    <div className="border-b border-stone-200 last:border-b-0">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-zinc-50/50 transition-colors duration-150"
+        className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-stone-50/50 transition-colors duration-150"
       >
-        <span className="text-zinc-500">{icon}</span>
-        <span className="text-xs font-semibold text-zinc-700 flex-1">{title}</span>
+        <span className="text-stone-500">{icon}</span>
+        <span className="text-xs font-semibold text-stone-700 flex-1">{title}</span>
         {badge !== undefined && (
-          <span className="text-xs px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-500 font-medium">
+          <span className="text-xs px-1.5 py-0.5 rounded-full bg-stone-100 text-stone-500 font-medium">
             {badge}
           </span>
         )}
         {open ? (
-          <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+          <ChevronDown className="w-3.5 h-3.5 text-stone-400" />
         ) : (
-          <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
+          <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
         )}
       </button>
       {open && <div className="px-3 pb-3">{children}</div>}
@@ -250,8 +250,8 @@ const Row: React.FC<{ label: string; value: React.ReactNode; mono?: boolean }> =
   mono,
 }) => (
   <div className="flex items-start gap-2 py-1">
-    <span className="text-xs text-zinc-400 w-24 shrink-0">{label}</span>
-    <span className={`text-xs text-zinc-700 break-all ${mono ? 'font-mono' : ''}`}>
+    <span className="text-xs text-stone-400 w-24 shrink-0">{label}</span>
+    <span className={`text-xs text-stone-700 break-all ${mono ? 'font-mono' : ''}`}>
       {value || '—'}
     </span>
   </div>
@@ -397,10 +397,10 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
   // ── Loading / Error states ──
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center bg-white border-l border-zinc-200">
+      <div className="h-full flex items-center justify-center bg-white border-l border-stone-200">
         <div className="text-center">
-          <Loader2 className="w-5 h-5 animate-spin text-zinc-400 mx-auto mb-2" />
-          <p className="text-xs text-zinc-400">Loading provenance…</p>
+          <Loader2 className="w-5 h-5 animate-spin text-stone-400 mx-auto mb-2" />
+          <p className="text-xs text-stone-400">Loading provenance…</p>
         </div>
       </div>
     );
@@ -408,17 +408,17 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
 
   if (error || !data) {
     return (
-      <div className="h-full flex flex-col bg-white border-l border-zinc-200">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200">
-          <span className="text-xs font-semibold text-zinc-700">Document Provenance</span>
-          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600">
+      <div className="h-full flex flex-col bg-white border-l border-stone-200">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-stone-200">
+          <span className="text-xs font-semibold text-stone-700">Document Provenance</span>
+          <button onClick={onClose} className="text-stone-400 hover:text-stone-600">
             <X className="w-4 h-4" />
           </button>
         </div>
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="text-center">
             <AlertTriangle className="w-5 h-5 text-amber-400 mx-auto mb-2" />
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-stone-500">
               {error ||
                 'No provenance data recorded yet. Provenance tracking begins when the document is created, edited, or signed.'}
             </p>
@@ -438,20 +438,20 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
   } = data;
 
   return (
-    <div className="h-full flex flex-col bg-white border-l border-zinc-200">
+    <div className="h-full flex flex-col bg-white border-l border-stone-200">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-zinc-50 shrink-0">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-stone-200 bg-stone-50 shrink-0">
         <div className="flex items-center gap-2">
           <Fingerprint className="w-4 h-4 text-blue-500" />
-          <span className="text-xs font-semibold text-zinc-900">Document Provenance</span>
+          <span className="text-xs font-semibold text-stone-900">Document Provenance</span>
         </div>
-        <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600">
+        <button onClick={onClose} className="text-stone-400 hover:text-stone-600">
           <X className="w-4 h-4" />
         </button>
       </div>
 
       {/* Integrity badge */}
-      <div className="px-3 py-2 border-b border-zinc-200 bg-emerald-50/30">
+      <div className="px-3 py-2 border-b border-stone-200 bg-emerald-50/30">
         <div className="flex items-center gap-2">
           <Shield className="w-3.5 h-3.5 text-emerald-600" />
           <span className="text-xs font-semibold text-emerald-800">Integrity Verified</span>
@@ -460,7 +460,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
           </span>
         </div>
         <div className="flex items-center gap-3 mt-1">
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-stone-500">
             v{editHistory.currentVersion} · {editHistory.totalVersions} version
             {editHistory.totalVersions !== 1 ? 's' : ''}
           </span>
@@ -515,30 +515,30 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
           defaultOpen={sourceInputs.length > 0}
         >
           {sourceInputs.length === 0 ? (
-            <p className="text-xs text-zinc-400">
+            <p className="text-xs text-stone-400">
               No source inputs recorded. Source data (CSR references, prior submissions) will appear
               here once linked.
             </p>
           ) : (
             <div className="space-y-2">
               {sourceInputs.map(si => (
-                <div key={si.eventId} className="bg-zinc-50 rounded-md p-2">
+                <div key={si.eventId} className="bg-stone-50 rounded-md p-2">
                   <div className="flex items-center gap-1.5 mb-1">
                     <Database className="w-3 h-3 text-blue-500" />
-                    <span className="text-xs font-medium text-zinc-700">
+                    <span className="text-xs font-medium text-stone-700">
                       {actionLabel(si.action)}
                     </span>
-                    <span className="text-xs text-zinc-400 ml-auto">
+                    <span className="text-xs text-stone-400 ml-auto">
                       {formatRelative(si.timestamp)}
                     </span>
                   </div>
-                  {si.description && <p className="text-xs text-zinc-500">{si.description}</p>}
+                  {si.description && <p className="text-xs text-stone-500">{si.description}</p>}
                   {si.details && Object.keys(si.details).length > 0 && (
                     <details className="mt-1">
                       <summary className="text-xs text-blue-500 cursor-pointer">
                         View data fields
                       </summary>
-                      <div className="mt-1 text-xs font-mono text-zinc-500 bg-white rounded p-1.5 max-h-24 overflow-y-auto">
+                      <div className="mt-1 text-xs font-mono text-stone-500 bg-white rounded p-1.5 max-h-24 overflow-y-auto">
                         {JSON.stringify(si.details, null, 2)}
                       </div>
                     </details>
@@ -558,7 +558,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
         >
           {generationLineage.events.length === 0 &&
           generationLineage.transformations.length === 0 ? (
-            <p className="text-xs text-zinc-400">
+            <p className="text-xs text-stone-400">
               No generation events recorded. AI-assisted edits, template expansions, and content
               transforms will be logged here.
             </p>
@@ -572,23 +572,23 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
                     ) : (
                       <PenTool className="w-3 h-3 text-blue-500" />
                     )}
-                    <span className="text-xs font-medium text-zinc-700">
+                    <span className="text-xs font-medium text-stone-700">
                       {actionLabel(ge.action)}
                     </span>
-                    <span className="text-xs text-zinc-400 ml-auto">
+                    <span className="text-xs text-stone-400 ml-auto">
                       {formatRelative(ge.timestamp)}
                     </span>
                   </div>
                   {ge.actorName && (
-                    <div className="flex items-center gap-1 text-xs text-zinc-500">
+                    <div className="flex items-center gap-1 text-xs text-stone-500">
                       <User className="w-3 h-3" /> {ge.actorName}
                     </div>
                   )}
                   {ge.description && (
-                    <p className="text-xs text-zinc-500 mt-0.5">{ge.description}</p>
+                    <p className="text-xs text-stone-500 mt-0.5">{ge.description}</p>
                   )}
                   {ge.backendRoute && (
-                    <div className="flex items-center gap-1 text-xs text-zinc-400 mt-0.5 font-mono">
+                    <div className="flex items-center gap-1 text-xs text-stone-400 mt-0.5 font-mono">
                       <Server className="w-3 h-3" /> {ge.backendRoute}
                     </div>
                   )}
@@ -597,7 +597,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
                       <summary className="text-xs text-violet-500 cursor-pointer">
                         View generation details
                       </summary>
-                      <div className="mt-1 text-xs font-mono text-zinc-500 bg-white rounded p-1.5 max-h-32 overflow-y-auto">
+                      <div className="mt-1 text-xs font-mono text-stone-500 bg-white rounded p-1.5 max-h-32 overflow-y-auto">
                         {JSON.stringify(ge.details, null, 2)}
                       </div>
                     </details>
@@ -608,15 +608,15 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
                 <div key={t.eventId} className="bg-amber-50/50 rounded-md p-2">
                   <div className="flex items-center gap-1.5">
                     <Activity className="w-3 h-3 text-amber-500" />
-                    <span className="text-xs font-medium text-zinc-700">
+                    <span className="text-xs font-medium text-stone-700">
                       {actionLabel(t.action)}
                     </span>
-                    <span className="text-xs text-zinc-400 ml-auto">
+                    <span className="text-xs text-stone-400 ml-auto">
                       {formatRelative(t.timestamp)}
                     </span>
                   </div>
                   {t.description && (
-                    <p className="text-xs text-zinc-500 mt-0.5">{t.description}</p>
+                    <p className="text-xs text-stone-500 mt-0.5">{t.description}</p>
                   )}
                 </div>
               ))}
@@ -637,13 +637,13 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
                 className={`flex items-start gap-2 py-1.5 px-2 rounded ${
                   v.version === editHistory.currentVersion
                     ? 'bg-blue-50 border border-blue-100'
-                    : 'bg-zinc-50'
+                    : 'bg-stone-50'
                 }`}
               >
                 <div className="flex flex-col items-center">
                   <span
                     className={`text-xs font-semibold ${
-                      v.version === editHistory.currentVersion ? 'text-blue-600' : 'text-zinc-400'
+                      v.version === editHistory.currentVersion ? 'text-blue-600' : 'text-stone-400'
                     }`}
                   >
                     v{v.version}
@@ -653,13 +653,13 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs font-mono text-zinc-500">
+                  <div className="text-xs font-mono text-stone-500">
                     {truncHash(v.contentHash)}
                   </div>
                   {v.changeDescription && (
-                    <p className="text-xs text-zinc-600 mt-0.5">{v.changeDescription}</p>
+                    <p className="text-xs text-stone-600 mt-0.5">{v.changeDescription}</p>
                   )}
-                  <div className="text-xs text-zinc-400 flex items-center gap-1 mt-0.5">
+                  <div className="text-xs text-stone-400 flex items-center gap-1 mt-0.5">
                     <Clock className="w-3 h-3" /> {formatRelative(v.createdAt)}
                   </div>
                 </div>
@@ -678,7 +678,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
         >
           {/* Integrity */}
           <div className="mb-2">
-            <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-1">
+            <div className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-1">
               Integrity
             </div>
             <Row
@@ -693,7 +693,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
                     <Lock className="w-3 h-3" /> Locked {formatDate(compliance.lockStatus.lockedAt)}
                   </span>
                 ) : (
-                  <span className="flex items-center gap-1 text-zinc-400">
+                  <span className="flex items-center gap-1 text-stone-400">
                     <Unlock className="w-3 h-3" /> Unlocked
                   </span>
                 )
@@ -729,7 +729,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
                       {integrityResult.verified ? 'Integrity Verified' : 'Integrity Check Failed'}
                     </span>
                   </div>
-                  <div className="mt-1 space-y-0.5 text-zinc-600">
+                  <div className="mt-1 space-y-0.5 text-stone-600">
                     <div>Chain intact: {integrityResult.chainIntact ? '✓ Yes' : '✗ No'}</div>
                     <div>
                       Current hash verified:{' '}
@@ -746,16 +746,16 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
 
           {/* Version Chain */}
           <div className="mb-2">
-            <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-1">
+            <div className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-1">
               Hash Chain
             </div>
             <div className="space-y-0.5">
               {compliance.versionChain.map((vc, i) => (
                 <div key={i} className="flex items-center gap-1.5 text-xs">
-                  <Hash className="w-3 h-3 text-zinc-400" />
-                  <span className="font-mono text-zinc-500">{truncHash(vc.hash)}</span>
-                  <span className="text-zinc-400">→</span>
-                  <span className="text-zinc-400">v{vc.version}</span>
+                  <Hash className="w-3 h-3 text-stone-400" />
+                  <span className="font-mono text-stone-500">{truncHash(vc.hash)}</span>
+                  <span className="text-stone-400">→</span>
+                  <span className="text-stone-400">v{vc.version}</span>
                 </div>
               ))}
             </div>
@@ -764,7 +764,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
           {/* Signatures */}
           {compliance.signatures.length > 0 && (
             <div className="mb-2">
-              <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-1">
+              <div className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-1">
                 Electronic Signatures
               </div>
               <div className="space-y-1.5">
@@ -772,15 +772,15 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
                   <div key={sig.signatureId} className="bg-blue-50/50 rounded-md p-2">
                     <div className="flex items-center gap-1.5">
                       <CheckCircle className="w-3 h-3 text-blue-500" />
-                      <span className="text-xs font-medium text-zinc-700">
+                      <span className="text-xs font-medium text-stone-700">
                         {sig.signerName}
                       </span>
                       <span className={`text-xs px-1 rounded ${statusColor(sig.type)}`}>
                         {sig.type}
                       </span>
                     </div>
-                    <p className="text-xs text-zinc-500 mt-0.5">{sig.purpose}</p>
-                    <div className="text-xs text-zinc-400 mt-0.5">
+                    <p className="text-xs text-stone-500 mt-0.5">{sig.purpose}</p>
+                    <div className="text-xs text-stone-400 mt-0.5">
                       {sig.authenticationMethod}
                       {sig.secondFactorVerified && ' + 2FA'}
                       {' · '}
@@ -795,18 +795,18 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
           {/* Export Events */}
           {compliance.exportEvents.length > 0 && (
             <div>
-              <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-1">
+              <div className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-1">
                 Exports
               </div>
               {compliance.exportEvents.map(exp => (
                 <div
                   key={exp.eventId}
-                  className="flex items-center gap-1.5 text-xs text-zinc-500 py-0.5"
+                  className="flex items-center gap-1.5 text-xs text-stone-500 py-0.5"
                 >
-                  <Download className="w-3 h-3 text-zinc-400" />
+                  <Download className="w-3 h-3 text-stone-400" />
                   {actionLabel(exp.action)}
                   {exp.actorName && ` by ${exp.actorName}`}
-                  <span className="ml-auto text-zinc-400">{formatRelative(exp.timestamp)}</span>
+                  <span className="ml-auto text-stone-400">{formatRelative(exp.timestamp)}</span>
                 </div>
               ))}
             </div>
@@ -831,24 +831,24 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
                     {placement.ctdSection}
                   </span>
                 ) : (
-                  <span className="text-zinc-400 italic">Not placed</span>
+                  <span className="text-stone-400 italic">Not placed</span>
                 )
               }
             />
           </div>
           {placement.events.length > 0 && (
             <div>
-              <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-1">
+              <div className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-1">
                 Placement Events
               </div>
               {placement.events.map(pe => (
                 <div
                   key={pe.eventId}
-                  className="flex items-center gap-1.5 text-xs text-zinc-500 py-0.5"
+                  className="flex items-center gap-1.5 text-xs text-stone-500 py-0.5"
                 >
-                  <Layers className="w-3 h-3 text-zinc-400" />
+                  <Layers className="w-3 h-3 text-stone-400" />
                   {pe.description || actionLabel(pe.action)}
-                  <span className="ml-auto text-zinc-400">{formatRelative(pe.timestamp)}</span>
+                  <span className="ml-auto text-stone-400">{formatRelative(pe.timestamp)}</span>
                 </div>
               ))}
             </div>
@@ -869,7 +869,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
               onChange={e => setNewComment(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleAddComment()}
               placeholder="Add a review comment..."
-              className="flex-1 px-2 py-1 text-xs border border-zinc-200 rounded focus-visible:ring-2 outline-none focus:ring-blue-300"
+              className="flex-1 px-2 py-1 text-xs border border-stone-200 rounded focus-visible:ring-2 outline-none focus:ring-blue-300"
             />
             <button
               onClick={handleAddComment}
@@ -885,11 +885,11 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
           </div>
 
           {commentsLoading ? (
-            <div className="flex items-center gap-1 text-xs text-zinc-400">
+            <div className="flex items-center gap-1 text-xs text-stone-400">
               <Loader2 className="w-3 h-3 animate-spin" /> Loading comments…
             </div>
           ) : comments.length === 0 ? (
-            <p className="text-xs text-zinc-400">
+            <p className="text-xs text-stone-400">
               No review comments yet. Add a comment to initiate the regulatory review workflow.
             </p>
           ) : (
@@ -897,14 +897,14 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
               {comments.map(c => (
                 <div
                   key={c.commentId}
-                  className={`p-2 rounded text-xs ${c.status === 'resolved' ? 'bg-zinc-50' : 'bg-amber-50 border border-amber-100'}`}
+                  className={`p-2 rounded text-xs ${c.status === 'resolved' ? 'bg-stone-50' : 'bg-amber-50 border border-amber-100'}`}
                 >
                   <div className="flex items-start justify-between gap-1">
                     <div className="flex-1 min-w-0">
-                      <span className="font-medium text-zinc-700">{c.userName}</span>
-                      <span className="text-zinc-400 ml-1">v{c.version}</span>
-                      <p className="text-zinc-600 mt-0.5">{c.comment}</p>
-                      <div className="text-zinc-400 mt-0.5">{formatRelative(c.createdAt)}</div>
+                      <span className="font-medium text-stone-700">{c.userName}</span>
+                      <span className="text-stone-400 ml-1">v{c.version}</span>
+                      <p className="text-stone-600 mt-0.5">{c.comment}</p>
+                      <div className="text-stone-400 mt-0.5">{formatRelative(c.createdAt)}</div>
                     </div>
                     <div className="shrink-0 flex items-center gap-1">
                       {c.status === 'resolved' ? (
@@ -930,7 +930,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
 
       {/* Cross-panel actions */}
       {(onOpenCompare || onOpenAudit) && (
-        <div className="px-3 py-2 border-t border-zinc-200 bg-zinc-50/50 flex gap-2 shrink-0">
+        <div className="px-3 py-2 border-t border-stone-200 bg-stone-50/50 flex gap-2 shrink-0">
           {onOpenCompare && (
             <button
               onClick={onOpenCompare}
@@ -953,8 +953,8 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
       )}
 
       {/* Footer */}
-      <div className="px-3 py-2 border-t border-zinc-200 bg-zinc-50/30 shrink-0">
-        <p className="text-xs text-zinc-400 text-center">
+      <div className="px-3 py-2 border-t border-stone-200 bg-stone-50/30 shrink-0">
+        <p className="text-xs text-stone-400 text-center">
           21 CFR Part 11 Compliant · Append-only audit trail · SHA-256 integrity
         </p>
       </div>

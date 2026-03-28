@@ -55,7 +55,7 @@ function getSeverityColor(severity: string) {
     case 'low':
       return 'text-blue-600 bg-blue-50 border-blue-200';
     default:
-      return 'text-zinc-600 bg-zinc-50 border-zinc-200';
+      return 'text-stone-600 bg-stone-50 border-stone-200';
   }
 }
 
@@ -68,7 +68,7 @@ function getSeverityIcon(severity: string) {
     case 'low':
       return <Link2 className="w-3.5 h-3.5 text-blue-500" />;
     default:
-      return <Link2 className="w-3.5 h-3.5 text-zinc-500" />;
+      return <Link2 className="w-3.5 h-3.5 text-stone-500" />;
   }
 }
 
@@ -164,16 +164,16 @@ const InconsistencyPanel: React.FC<InconsistencyPanelProps> = ({
   const lowCount = visibleAffected.filter((a) => a.severity === 'low').length;
 
   return (
-    <div className={cn('flex flex-col h-full bg-white border-l border-zinc-200', className)}>
+    <div className={cn('flex flex-col h-full bg-white border-l border-stone-200', className)}>
       {/* Header */}
-      <div className="p-3 border-b border-zinc-200 bg-zinc-50">
+      <div className="p-3 border-b border-stone-200 bg-stone-50">
         <div className="flex items-center gap-2 mb-1">
           <Sparkles className="w-4 h-4 text-amber-500" />
-          <span className="font-semibold text-sm text-zinc-900">
+          <span className="font-semibold text-sm text-stone-900">
             Inconsistency Intelligence
           </span>
         </div>
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-stone-500">
           Detects cross-section impacts when content changes
         </p>
         {/* Summary badges */}
@@ -200,7 +200,7 @@ const InconsistencyPanel: React.FC<InconsistencyPanelProps> = ({
         <button
           onClick={checkInconsistencies}
           disabled={loading}
-          className="mt-2 flex items-center gap-1 text-xs text-zinc-600 hover:text-zinc-900"
+          className="mt-2 flex items-center gap-1 text-xs text-stone-600 hover:text-stone-900"
         >
           {loading ? (
             <Loader2 className="w-3 h-3 animate-spin" />
@@ -214,18 +214,18 @@ const InconsistencyPanel: React.FC<InconsistencyPanelProps> = ({
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {loading && visibleAffected.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-zinc-500">
+          <div className="flex flex-col items-center justify-center py-8 text-stone-500">
             <Loader2 className="w-6 h-6 animate-spin text-amber-500 mb-2" />
             <p className="text-xs">Analyzing cross-section impacts...</p>
-            <p className="text-xs text-zinc-400 mt-1">
+            <p className="text-xs text-stone-400 mt-1">
               Comparing with other project documents
             </p>
           </div>
         ) : visibleAffected.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-zinc-500">
+          <div className="flex flex-col items-center justify-center py-8 text-stone-500">
             <CheckCircle className="w-8 h-8 text-emerald-400 mb-2" />
             <p className="text-xs font-medium">No inconsistencies detected</p>
-            <p className="text-xs text-zinc-400 mt-1">
+            <p className="text-xs text-stone-400 mt-1">
               {lastCheckedContent
                 ? 'All sections appear consistent'
                 : 'Edit content to trigger analysis'}
@@ -234,11 +234,11 @@ const InconsistencyPanel: React.FC<InconsistencyPanelProps> = ({
         ) : (
           <div className="p-2 space-y-2">
             {/* Change summary */}
-            <div className="px-3 py-2 bg-zinc-50 rounded-lg text-xs text-zinc-600">
+            <div className="px-3 py-2 bg-stone-50 rounded-lg text-xs text-stone-600">
               <span className="font-medium">Changes detected in:</span>{' '}
               {activeArtifactTitle || 'current section'}
               <br />
-              <span className="text-zinc-400">
+              <span className="text-stone-400">
                 {visibleAffected.length} section{visibleAffected.length !== 1 ? 's' : ''} may
                 need updating
               </span>
@@ -319,8 +319,8 @@ const InconsistencyPanel: React.FC<InconsistencyPanelProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="p-2 border-t border-zinc-200 bg-zinc-50">
-        <p className="text-xs text-zinc-400 text-center">
+      <div className="p-2 border-t border-stone-200 bg-stone-50">
+        <p className="text-xs text-stone-400 text-center">
           Powered by AI cross-reference analysis
         </p>
       </div>

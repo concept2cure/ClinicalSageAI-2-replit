@@ -294,8 +294,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`p-1.5 rounded hover:bg-zinc-200 transition-colors
-        ${isActive ? 'bg-zinc-200 text-blue-600' : 'text-zinc-600'}
+      className={`p-1.5 rounded hover:bg-stone-200 transition-colors
+        ${isActive ? 'bg-stone-200 text-blue-600' : 'text-stone-600'}
         ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       {children}
@@ -303,7 +303,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   );
 
   return (
-    <div className="flex items-center gap-0.5 px-2 py-1 border-b border-zinc-200 bg-zinc-50/80">
+    <div className="flex items-center gap-0.5 px-2 py-1 border-b border-stone-200 bg-stone-50/80">
       {/* History */}
       <ToolButton
         onClick={() => editor.chain().focus().undo().run()}
@@ -320,7 +320,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <Redo className="w-4 h-4" />
       </ToolButton>
 
-      <div className="w-px h-5 bg-zinc-200 mx-0.5" />
+      <div className="w-px h-5 bg-stone-200 mx-0.5" />
 
       {/* Headings */}
       <ToolButton
@@ -345,7 +345,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <Heading3 className="w-4 h-4" />
       </ToolButton>
 
-      <div className="w-px h-5 bg-zinc-200 mx-0.5" />
+      <div className="w-px h-5 bg-stone-200 mx-0.5" />
 
       {/* Text Formatting */}
       <ToolButton
@@ -379,7 +379,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         </span>
       </ToolButton>
 
-      <div className="w-px h-5 bg-zinc-200 mx-0.5" />
+      <div className="w-px h-5 bg-stone-200 mx-0.5" />
 
       {/* Lists */}
       <ToolButton
@@ -404,7 +404,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <FileCheck className="w-4 h-4" />
       </ToolButton>
 
-      <div className="w-px h-5 bg-zinc-200 mx-0.5" />
+      <div className="w-px h-5 bg-stone-200 mx-0.5" />
 
       {/* Block Elements */}
       <ToolButton
@@ -430,7 +430,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <TableIcon className="w-4 h-4" />
       </ToolButton>
 
-      <div className="w-px h-5 bg-zinc-200 mx-0.5" />
+      <div className="w-px h-5 bg-stone-200 mx-0.5" />
 
       {/* Find & Replace toggle */}
       <ToolButton
@@ -459,7 +459,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <ChevronDown className="w-3 h-3" />
           </button>
           {aiDropdownOpen && (
-            <div className="absolute left-0 top-full mt-1 w-52 bg-white border border-zinc-200 rounded-lg shadow-lg z-50 py-1">
+            <div className="absolute left-0 top-full mt-1 w-52 bg-white border border-stone-200 rounded-lg shadow-lg z-50 py-1">
               {AI_TOOLBAR_ACTIONS.map(action => (
                 <button
                   key={action.id}
@@ -467,12 +467,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
                     onAIAction(action.id, '');
                     setAiDropdownOpen(false);
                   }}
-                  className="w-full text-left px-3 py-2 hover:bg-purple-50 text-sm text-zinc-700 flex items-center gap-2.5 transition-colors duration-150"
+                  className="w-full text-left px-3 py-2 hover:bg-purple-50 text-sm text-stone-700 flex items-center gap-2.5 transition-colors duration-150"
                 >
                   <action.icon className="w-4 h-4 text-purple-500 shrink-0" />
                   <div>
                     <div className="font-medium text-xs">{action.label}</div>
-                    <div className="text-xs text-zinc-400">{action.description}</div>
+                    <div className="text-xs text-stone-400">{action.description}</div>
                   </div>
                 </button>
               ))}
@@ -531,7 +531,7 @@ interface SmartToolbarProps {
 }
 
 const SmartToolbar: React.FC<SmartToolbarProps> = ({ onAIAction, disabled }) => (
-  <div className="flex items-center gap-1 px-2 py-1.5 border-b border-zinc-200 bg-zinc-50">
+  <div className="flex items-center gap-1 px-2 py-1.5 border-b border-stone-200 bg-stone-50">
     <Sparkles className="w-3.5 h-3.5 text-purple-500 mr-1" />
     <span className="text-xs font-semibold text-purple-600 mr-2 uppercase tracking-wider">AI</span>
     {AI_TOOLBAR_ACTIONS.map(action => (
@@ -540,7 +540,7 @@ const SmartToolbar: React.FC<SmartToolbarProps> = ({ onAIAction, disabled }) => 
         onClick={() => onAIAction?.(action.id, '')}
         disabled={disabled}
         title={action.description}
-        className="flex items-center gap-1 px-2 py-1 text-xs rounded-md hover:bg-purple-100 text-zinc-600 hover:text-purple-700 transition-colors disabled:opacity-40"
+        className="flex items-center gap-1 px-2 py-1 text-xs rounded-md hover:bg-purple-100 text-stone-600 hover:text-purple-700 transition-colors disabled:opacity-40"
       >
         <action.icon className="w-3.5 h-3.5" />
         {action.label}
@@ -595,55 +595,55 @@ const FindReplaceBar: React.FC<FindReplaceBarProps> = ({ editor, onClose }) => {
   const currentIndex = editor?.storage?.searchAndReplace?.currentIndex ?? -1;
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2 border-b border-zinc-200 bg-amber-50/50">
-      <Search className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+    <div className="flex items-center gap-2 px-3 py-2 border-b border-stone-200 bg-amber-50/50">
+      <Search className="w-4 h-4 text-stone-400 flex-shrink-0" />
       <input
         ref={findInputRef}
         type="text"
         value={findText}
         onChange={e => handleFind(e.target.value)}
         placeholder="Find..."
-        className="w-40 px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+        className="w-40 px-2 py-1 text-xs bg-white border border-stone-200 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
         onKeyDown={e => {
           if (e.key === 'Enter') (editor?.commands as Record<string, () => boolean>)?.nextMatch?.();
           if (e.key === 'Escape') onClose();
         }}
       />
-      <span className="text-xs text-zinc-500 min-w-[50px]">
+      <span className="text-xs text-stone-500 min-w-[50px]">
         {results.length > 0 ? `${currentIndex + 1}/${results.length}` : 'No results'}
       </span>
       <button
         onClick={() => (editor?.commands as Record<string, () => boolean>)?.prevMatch?.()}
-        className="p-1 hover:bg-zinc-200 rounded"
+        className="p-1 hover:bg-stone-200 rounded"
         title="Previous"
       >
-        <ChevronDown className="w-3.5 h-3.5 rotate-180 text-zinc-600" />
+        <ChevronDown className="w-3.5 h-3.5 rotate-180 text-stone-600" />
       </button>
       <button
         onClick={() => (editor?.commands as Record<string, () => boolean>)?.nextMatch?.()}
-        className="p-1 hover:bg-zinc-200 rounded"
+        className="p-1 hover:bg-stone-200 rounded"
         title="Next"
       >
-        <ChevronDown className="w-3.5 h-3.5 text-zinc-600" />
+        <ChevronDown className="w-3.5 h-3.5 text-stone-600" />
       </button>
-      <div className="w-px h-5 bg-zinc-300" />
-      <Replace className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+      <div className="w-px h-5 bg-stone-300" />
+      <Replace className="w-4 h-4 text-stone-400 flex-shrink-0" />
       <input
         type="text"
         value={replaceText}
         onChange={e => setReplaceText(e.target.value)}
         placeholder="Replace..."
-        className="w-32 px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+        className="w-32 px-2 py-1 text-xs bg-white border border-stone-200 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
       />
       <button
         onClick={handleReplace}
-        className="px-2 py-1 text-xs bg-white border border-zinc-200 rounded hover:bg-zinc-100"
+        className="px-2 py-1 text-xs bg-white border border-stone-200 rounded hover:bg-stone-100"
       >
         Replace
       </button>
       <button
         onClick={handleReplaceAll}
-        className="px-2 py-1 text-xs bg-white border border-zinc-200 rounded hover:bg-zinc-100"
+        className="px-2 py-1 text-xs bg-white border border-stone-200 rounded hover:bg-stone-100"
       >
         All
       </button>
@@ -651,9 +651,9 @@ const FindReplaceBar: React.FC<FindReplaceBarProps> = ({ editor, onClose }) => {
         onClick={onClose}
         aria-label="Close find and replace"
         title="Close"
-        className="p-1 hover:bg-zinc-200 rounded ml-auto focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+        className="p-1 hover:bg-stone-200 rounded ml-auto focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
       >
-        <X className="w-3.5 h-3.5 text-zinc-500" />
+        <X className="w-3.5 h-3.5 text-stone-500" />
       </button>
     </div>
   );
@@ -685,19 +685,19 @@ const SourceTracerPopover: React.FC<SourceTracerPopoverProps> = ({
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
           <FileText className="w-4 h-4 text-blue-500" />
-          <span className="text-xs font-semibold text-zinc-900">{source.title}</span>
+          <span className="text-xs font-semibold text-stone-900">{source.title}</span>
         </div>
         <button
           onClick={onClose}
           aria-label="Close source details"
           title="Close"
-          className="p-1.5 hover:bg-zinc-100 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+          className="p-1.5 hover:bg-stone-100 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
         >
-          <X className="w-3 h-3 text-zinc-400" />
+          <X className="w-3 h-3 text-stone-400" />
         </button>
       </div>
-      <div className="flex items-center gap-2 text-xs text-zinc-500 mb-2">
-        <span className="px-1.5 py-0.5 bg-zinc-100 rounded">{source.documentType}</span>
+      <div className="flex items-center gap-2 text-xs text-stone-500 mb-2">
+        <span className="px-1.5 py-0.5 bg-stone-100 rounded">{source.documentType}</span>
         <span>v{source.version}</span>
         <span className="flex items-center gap-1">
           <CheckCircle className="w-3 h-3 text-emerald-500" />
@@ -705,7 +705,7 @@ const SourceTracerPopover: React.FC<SourceTracerPopoverProps> = ({
         </span>
       </div>
       {source.excerpt && (
-        <p className="text-xs text-zinc-600 bg-zinc-50 p-2 rounded mb-2 line-clamp-3">
+        <p className="text-xs text-stone-600 bg-stone-50 p-2 rounded mb-2 line-clamp-3">
           {source.excerpt}
         </p>
       )}
@@ -751,7 +751,7 @@ const StatusBar: React.FC<StatusBarProps> = ({ editor, complianceScore, collabor
   const pages = Math.max(1, Math.ceil(words / 250));
 
   return (
-    <div className="flex items-center gap-4 px-4 py-1.5 border-t border-zinc-200 bg-zinc-50 text-xs text-zinc-500">
+    <div className="flex items-center gap-4 px-4 py-1.5 border-t border-stone-200 bg-stone-50 text-xs text-stone-500">
       <span>{words.toLocaleString()} words</span>
       <span>{chars.toLocaleString()} chars</span>
       <span>
@@ -792,7 +792,7 @@ const StatusBar: React.FC<StatusBarProps> = ({ editor, complianceScore, collabor
               </div>
             ))}
             {collaborators.length > 4 && (
-              <div className="w-5 h-5 rounded-full bg-zinc-300 border-2 border-white flex items-center justify-center text-xs font-semibold text-zinc-600">
+              <div className="w-5 h-5 rounded-full bg-stone-300 border-2 border-white flex items-center justify-center text-xs font-semibold text-stone-600">
                 +{collaborators.length - 4}
               </div>
             )}
@@ -825,14 +825,14 @@ const CompliancePanel: React.FC<CompliancePanelProps> = ({ score, issues, onIssu
   const infoCount = issues.filter(i => i.type === 'info').length;
 
   return (
-    <div className="border-l border-zinc-200 w-72 flex flex-col bg-zinc-50">
+    <div className="border-l border-stone-200 w-72 flex flex-col bg-stone-50">
       {/* Score Header */}
-      <div className="p-4 border-b border-zinc-200">
+      <div className="p-4 border-b border-stone-200">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-zinc-600">Compliance Score</span>
+          <span className="text-sm font-medium text-stone-600">Compliance Score</span>
           <span className={`text-2xl font-semibold ${getScoreColor(score)}`}>{score}%</span>
         </div>
-        <div className="w-full bg-zinc-200 rounded-full h-2">
+        <div className="w-full bg-stone-200 rounded-full h-2">
           <div
             className={`h-2 rounded-full transition-all ${
               score >= 90 ? 'bg-green-500' : score >= 70 ? 'bg-yellow-500' : 'bg-red-500'
@@ -856,7 +856,7 @@ const CompliancePanel: React.FC<CompliancePanelProps> = ({ score, issues, onIssu
       {/* Issues List */}
       <div className="flex-1 overflow-y-auto">
         {issues.length === 0 ? (
-          <div className="p-4 text-center text-zinc-500">
+          <div className="p-4 text-center text-stone-500">
             <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" />
             <p className="text-sm">No compliance issues found!</p>
           </div>
@@ -883,10 +883,10 @@ const CompliancePanel: React.FC<CompliancePanelProps> = ({ score, issues, onIssu
                     <FileText className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-zinc-500">{issue.rule}</p>
-                    <p className="text-sm text-zinc-700">{issue.message}</p>
+                    <p className="text-xs font-medium text-stone-500">{issue.rule}</p>
+                    <p className="text-sm text-stone-700">{issue.message}</p>
                     {issue.suggestion && (
-                      <p className="text-xs text-zinc-500 mt-1 italic">
+                      <p className="text-xs text-stone-500 mt-1 italic">
                         Suggestion: {issue.suggestion}
                       </p>
                     )}
@@ -921,20 +921,20 @@ const TraceabilityPanel: React.FC<TraceabilityPanelProps> = ({
   const getSourceById = (sourceId: string) => sources.find(s => s.id === sourceId);
 
   return (
-    <div className="border-l border-zinc-200 w-72 flex flex-col bg-zinc-50">
+    <div className="border-l border-stone-200 w-72 flex flex-col bg-stone-50">
       {/* Header */}
-      <div className="p-4 border-b border-zinc-200">
+      <div className="p-4 border-b border-stone-200">
         <div className="flex items-center gap-2">
           <BookOpen className="w-5 h-5 text-blue-500" />
-          <span className="font-medium text-zinc-700">Traceability Links</span>
+          <span className="font-medium text-stone-700">Traceability Links</span>
         </div>
-        <p className="text-xs text-zinc-500 mt-1">{links.length} source links in document</p>
+        <p className="text-xs text-stone-500 mt-1">{links.length} source links in document</p>
       </div>
 
       {/* Links List */}
       <div className="flex-1 overflow-y-auto">
         {links.length === 0 ? (
-          <div className="p-4 text-center text-zinc-500">
+          <div className="p-4 text-center text-stone-500">
             <Link className="w-8 h-8 mx-auto mb-2 opacity-50" />
             <p className="text-sm">No traceability links yet</p>
             <p className="text-xs mt-1">Select text and link to a source</p>
@@ -944,31 +944,31 @@ const TraceabilityPanel: React.FC<TraceabilityPanelProps> = ({
             {links.map(link => {
               const source = getSourceById(link.sourceId);
               return (
-                <div key={link.id} className="p-3 bg-white rounded-lg border border-zinc-200">
+                <div key={link.id} className="p-3 bg-white rounded-lg border border-stone-200">
                   <div className="flex items-start justify-between gap-2">
                     <button
                       onClick={() => onLinkClick?.(link)}
                       className="flex-1 text-left hover:text-blue-600 transition-colors duration-150"
                     >
-                      <p className="text-sm font-medium text-zinc-700 line-clamp-2">
+                      <p className="text-sm font-medium text-stone-700 line-clamp-2">
                         "{link.linkedText}"
                       </p>
                     </button>
                     <button
                       onClick={() => onRemoveLink?.(link.id)}
-                      className="p-1 hover:bg-red-100 rounded text-zinc-400 hover:text-red-500"
+                      className="p-1 hover:bg-red-100 rounded text-stone-400 hover:text-red-500"
                     >
                       <X className="w-3 h-3" />
                     </button>
                   </div>
                   {source && (
-                    <div className="mt-2 flex items-center gap-2 text-xs text-zinc-500">
+                    <div className="mt-2 flex items-center gap-2 text-xs text-stone-500">
                       <FileText className="w-3 h-3" />
                       <span className="truncate">{source.title}</span>
-                      <span className="text-zinc-400">v{source.version}</span>
+                      <span className="text-stone-400">v{source.version}</span>
                     </div>
                   )}
-                  <div className="mt-1 text-xs text-zinc-400">
+                  <div className="mt-1 text-xs text-stone-400">
                     Hash: {link.sourceHash.slice(0, 12)}...
                   </div>
                 </div>
@@ -1016,29 +1016,29 @@ const LinkSourceModal: React.FC<LinkSourceModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col">
         {/* Header */}
-        <div className="p-4 border-b border-zinc-200">
+        <div className="p-4 border-b border-stone-200">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-zinc-900">Link to Source</h3>
-            <button onClick={onClose} className="p-1 hover:bg-zinc-100 rounded">
+            <h3 className="font-semibold text-stone-900">Link to Source</h3>
+            <button onClick={onClose} className="p-1 hover:bg-stone-100 rounded">
               <X className="w-5 h-5" />
             </button>
           </div>
-          <p className="text-sm text-zinc-500 mt-1">
+          <p className="text-sm text-stone-500 mt-1">
             Link "{selectedText.slice(0, 50)}
             {selectedText.length > 50 ? '...' : ''}" to a source document
           </p>
         </div>
 
         {/* Search */}
-        <div className="p-4 border-b border-zinc-200">
+        <div className="p-4 border-b border-stone-200">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
             <input
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search sources..."
-              className="w-full pl-10 pr-4 py-2 bg-zinc-100 border-0 rounded-lg text-zinc-900 placeholder:text-zinc-400"
+              className="w-full pl-10 pr-4 py-2 bg-stone-100 border-0 rounded-lg text-stone-900 placeholder:text-stone-400"
             />
           </div>
         </div>
@@ -1046,31 +1046,31 @@ const LinkSourceModal: React.FC<LinkSourceModalProps> = ({
         {/* Sources List */}
         <div className="flex-1 overflow-y-auto p-2">
           {filteredSources.length === 0 ? (
-            <div className="p-4 text-center text-zinc-500">No sources found</div>
+            <div className="p-4 text-center text-stone-500">No sources found</div>
           ) : (
             <div className="space-y-2">
               {filteredSources.map(source => (
                 <button
                   key={source.id}
                   onClick={() => onLink(source)}
-                  className="w-full p-3 text-left bg-zinc-50 hover:bg-blue-50 rounded-lg border border-zinc-200 transition-colors duration-150"
+                  className="w-full p-3 text-left bg-stone-50 hover:bg-blue-50 rounded-lg border border-stone-200 transition-colors duration-150"
                 >
                   <div className="flex items-start gap-3">
                     <FileText className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-zinc-900">{source.title}</p>
-                      <div className="flex items-center gap-2 mt-1 text-xs text-zinc-500">
-                        <span className="px-2 py-0.5 bg-zinc-200 rounded">
+                      <p className="font-medium text-stone-900">{source.title}</p>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-stone-500">
+                        <span className="px-2 py-0.5 bg-stone-200 rounded">
                           {source.documentType}
                         </span>
                         <span>v{source.version}</span>
-                        <span className="text-zinc-400">Hash: {source.hash.slice(0, 8)}...</span>
+                        <span className="text-stone-400">Hash: {source.hash.slice(0, 8)}...</span>
                       </div>
                       {source.excerpt && (
-                        <p className="text-xs text-zinc-500 mt-2 line-clamp-2">{source.excerpt}</p>
+                        <p className="text-xs text-stone-500 mt-2 line-clamp-2">{source.excerpt}</p>
                       )}
                     </div>
-                    <ExternalLink className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+                    <ExternalLink className="w-4 h-4 text-stone-400 flex-shrink-0" />
                   </div>
                 </button>
               ))}
@@ -1402,13 +1402,13 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
     <div className={`flex flex-col h-full bg-white ${className}`}>
       {/* Document Header — hidden when embedded in EditorPanel (which provides its own) */}
       {!embedded && (
-        <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-200 bg-zinc-50">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-stone-200 bg-stone-50">
           <div className="flex items-center gap-3">
             <FileText className="w-5 h-5 text-blue-500" />
             <div>
-              <h1 className="font-semibold text-zinc-900">{documentTitle}</h1>
-              <div className="flex items-center gap-2 text-xs text-zinc-500">
-                <span className="px-2 py-0.5 bg-zinc-200 rounded">{documentType}</span>
+              <h1 className="font-semibold text-stone-900">{documentTitle}</h1>
+              <div className="flex items-center gap-2 text-xs text-stone-500">
+                <span className="px-2 py-0.5 bg-stone-200 rounded">{documentType}</span>
                 {submissionType && (
                   <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded">
                     {submissionType}
@@ -1420,13 +1420,13 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
           <div className="flex items-center gap-2">
             {/* Template/Content Toggle (Weave-inspired) */}
             {templateStructure && templateStructure.length > 0 && (
-              <div className="flex items-center bg-zinc-100 rounded-lg p-0.5">
+              <div className="flex items-center bg-stone-100 rounded-lg p-0.5">
                 <button
                   onClick={() => setViewMode('content')}
                   className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
                     viewMode === 'content'
-                      ? 'bg-white text-zinc-900 shadow-sm'
-                      : 'text-zinc-500 hover:text-zinc-700'
+                      ? 'bg-white text-stone-900 shadow-sm'
+                      : 'text-stone-500 hover:text-stone-700'
                   }`}
                 >
                   <Eye className="w-3.5 h-3.5 inline mr-1" />
@@ -1436,8 +1436,8 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                   onClick={() => setViewMode('template')}
                   className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
                     viewMode === 'template'
-                      ? 'bg-white text-zinc-900 shadow-sm'
-                      : 'text-zinc-500 hover:text-zinc-700'
+                      ? 'bg-white text-stone-900 shadow-sm'
+                      : 'text-stone-500 hover:text-stone-700'
                   }`}
                 >
                   <Layers className="w-3.5 h-3.5 inline mr-1" />
@@ -1459,7 +1459,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                   </div>
                 ))}
                 {collaborators.length > 3 && (
-                  <div className="w-6 h-6 rounded-full bg-zinc-300 border-2 border-white flex items-center justify-center text-xs font-semibold text-zinc-600">
+                  <div className="w-6 h-6 rounded-full bg-stone-300 border-2 border-white flex items-center justify-center text-xs font-semibold text-stone-600">
                     +{collaborators.length - 3}
                   </div>
                 )}
@@ -1474,7 +1474,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                 className={`p-2 rounded transition-colors ${
                   activePanel === 'traceability'
                     ? 'bg-blue-100 text-blue-600'
-                    : 'hover:bg-zinc-100 text-zinc-600'
+                    : 'hover:bg-stone-100 text-stone-600'
                 }`}
                 title="Traceability Links"
               >
@@ -1487,7 +1487,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                 className={`p-2 rounded transition-colors ${
                   activePanel === 'compliance'
                     ? 'bg-blue-100 text-blue-600'
-                    : 'hover:bg-zinc-100 text-zinc-600'
+                    : 'hover:bg-stone-100 text-stone-600'
                 }`}
                 title="Compliance Score"
               >
@@ -1524,40 +1524,40 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
             <BubbleMenu
               editor={editor}
               tippyOptions={{ duration: 100 }}
-              className="bg-zinc-800 rounded-lg shadow-xl px-1.5 py-1 flex items-center gap-0.5 flex-wrap max-w-md"
+              className="bg-stone-800 rounded-lg shadow-xl px-1.5 py-1 flex items-center gap-0.5 flex-wrap max-w-md"
             >
               {/* Formatting */}
               <button
                 onClick={() => editor.chain().focus().toggleBold().run()}
-                className={`p-1.5 rounded hover:bg-zinc-700 ${editor.isActive('bold') ? 'text-blue-400' : 'text-white'}`}
+                className={`p-1.5 rounded hover:bg-stone-700 ${editor.isActive('bold') ? 'text-blue-400' : 'text-white'}`}
                 title="Bold"
               >
                 <Bold className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => editor.chain().focus().toggleItalic().run()}
-                className={`p-1.5 rounded hover:bg-zinc-700 ${editor.isActive('italic') ? 'text-blue-400' : 'text-white'}`}
+                className={`p-1.5 rounded hover:bg-stone-700 ${editor.isActive('italic') ? 'text-blue-400' : 'text-white'}`}
                 title="Italic"
               >
                 <Italic className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => editor.chain().focus().toggleUnderline().run()}
-                className={`p-1.5 rounded hover:bg-zinc-700 ${editor.isActive('underline') ? 'text-blue-400' : 'text-white'}`}
+                className={`p-1.5 rounded hover:bg-stone-700 ${editor.isActive('underline') ? 'text-blue-400' : 'text-white'}`}
                 title="Underline"
               >
                 <Underline className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => editor.chain().focus().toggleStrike().run()}
-                className={`p-1.5 rounded hover:bg-zinc-700 ${editor.isActive('strike') ? 'text-blue-400' : 'text-white'}`}
+                className={`p-1.5 rounded hover:bg-stone-700 ${editor.isActive('strike') ? 'text-blue-400' : 'text-white'}`}
                 title="Strikethrough"
               >
                 <Strikethrough className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => editor.chain().focus().toggleHighlight().run()}
-                className={`p-1.5 rounded hover:bg-zinc-700 ${editor.isActive('highlight') ? 'text-blue-400' : 'text-white'}`}
+                className={`p-1.5 rounded hover:bg-stone-700 ${editor.isActive('highlight') ? 'text-blue-400' : 'text-white'}`}
                 title="Highlight"
               >
                 <span className="w-3.5 h-3.5 bg-yellow-400 rounded text-xs flex items-center justify-center font-semibold text-black">
@@ -1569,7 +1569,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                 <button
                   key={color}
                   onClick={() => editor.chain().focus().setColor(color).run()}
-                  className="p-1 rounded hover:bg-zinc-700"
+                  className="p-1 rounded hover:bg-stone-700"
                   title={`Text color`}
                 >
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
@@ -1577,22 +1577,22 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
               ))}
               <button
                 onClick={() => editor.chain().focus().unsetColor().run()}
-                className="p-1 rounded hover:bg-zinc-700 text-zinc-400"
+                className="p-1 rounded hover:bg-stone-700 text-stone-400"
                 title="Reset color"
               >
                 <X className="w-3 h-3" />
               </button>
-              <div className="w-px h-4 bg-zinc-600 mx-0.5" />
+              <div className="w-px h-4 bg-stone-600 mx-0.5" />
               {/* Source link */}
               <button
                 onClick={handleLinkToSource}
-                className="p-1.5 rounded hover:bg-zinc-700 text-white flex items-center gap-1"
+                className="p-1.5 rounded hover:bg-stone-700 text-white flex items-center gap-1"
                 title="Link to Source"
               >
                 <Link className="w-3.5 h-3.5" />
                 <span className="text-xs">Source</span>
               </button>
-              <div className="w-px h-4 bg-zinc-600 mx-0.5" />
+              <div className="w-px h-4 bg-stone-600 mx-0.5" />
               {/* AI Actions on selection */}
               <button
                 onClick={() => {
@@ -1639,20 +1639,20 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
               >
                 <span className="text-[10px] font-semibold">Σ</span>
               </button>
-              <div className="w-px h-4 bg-zinc-600 mx-0.5" />
+              <div className="w-px h-4 bg-stone-600 mx-0.5" />
               {/* Comment */}
               <button
                 onClick={handleAddComment}
-                className="p-1.5 rounded hover:bg-zinc-700 text-amber-300 flex items-center gap-1"
+                className="p-1.5 rounded hover:bg-stone-700 text-amber-300 flex items-center gap-1"
                 title="Add Comment"
               >
                 <MessageSquare className="w-3.5 h-3.5" />
                 <span className="text-xs">Comment</span>
               </button>
-              <div className="w-px h-4 bg-zinc-600 mx-1" />
+              <div className="w-px h-4 bg-stone-600 mx-1" />
               <button
                 onClick={handleRequestApproval}
-                className="p-1.5 rounded hover:bg-zinc-700 text-white flex items-center gap-1"
+                className="p-1.5 rounded hover:bg-stone-700 text-white flex items-center gap-1"
                 title="Request Approval / Annotate"
               >
                 <Shield className="w-4 h-4" />
@@ -1660,7 +1660,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
               </button>
               <button
                 onClick={handleRequestApproval}
-                className="p-1.5 rounded hover:bg-zinc-700 text-white flex items-center gap-1"
+                className="p-1.5 rounded hover:bg-stone-700 text-white flex items-center gap-1"
                 title="Comment on Selection"
               >
                 <MessageSquareIcon className="w-4 h-4" />
@@ -1674,8 +1674,8 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
               <div className="max-w-3xl mx-auto">
                 <div className="flex items-center gap-2 mb-4">
                   <Layers className="w-5 h-5 text-blue-500" />
-                  <h2 className="font-semibold text-zinc-900">Template Structure</h2>
-                  <span className="text-xs text-zinc-500 ml-auto">
+                  <h2 className="font-semibold text-stone-900">Template Structure</h2>
+                  <span className="text-xs text-stone-500 ml-auto">
                     {
                       templateStructure.filter(s => {
                         const html = editor?.getHTML() || '';
@@ -1695,7 +1695,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                         className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
                           isFilled
                             ? 'bg-emerald-50 border-emerald-200'
-                            : 'bg-zinc-50 border-zinc-200 hover:border-blue-300'
+                            : 'bg-stone-50 border-stone-200 hover:border-blue-300'
                         }`}
                         onClick={() => {
                           setViewMode('content');
@@ -1709,10 +1709,10 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                         {isFilled ? (
                           <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                         ) : (
-                          <div className="w-4 h-4 rounded-full border-2 border-zinc-300 flex-shrink-0" />
+                          <div className="w-4 h-4 rounded-full border-2 border-stone-300 flex-shrink-0" />
                         )}
                         <div className="flex-1">
-                          <span className="text-sm font-medium text-zinc-900">{section.label}</span>
+                          <span className="text-sm font-medium text-stone-900">{section.label}</span>
                           {section.required && (
                             <span className="ml-2 text-xs text-red-500 font-medium">Required</span>
                           )}

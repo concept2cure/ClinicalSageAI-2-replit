@@ -82,8 +82,8 @@ function formatRelativeTime(dateStr?: string): string {
 }
 
 function getTypeColor(type?: string) {
-  if (!type) return { bg: 'bg-zinc-100', text: 'text-zinc-600' };
-  return TYPE_COLORS[type.toUpperCase().trim()] ?? { bg: 'bg-zinc-100', text: 'text-zinc-600' };
+  if (!type) return { bg: 'bg-stone-100', text: 'text-stone-600' };
+  return TYPE_COLORS[type.toUpperCase().trim()] ?? { bg: 'bg-stone-100', text: 'text-stone-600' };
 }
 
 function getStatusVariant(status?: string): 'success' | 'default' | 'warning' | 'info' {
@@ -126,10 +126,10 @@ export function OperationsCommandCenter({
     const currentYear = now.getFullYear();
 
     return [
-      { label: 'Total', value: projects.length, icon: FolderKanban, iconClassName: 'text-zinc-500' },
+      { label: 'Total', value: projects.length, icon: FolderKanban, iconClassName: 'text-stone-500' },
       { label: 'Active', value: projects.filter((p) => p.status?.toLowerCase() === 'active').length, icon: Briefcase, iconClassName: 'text-emerald-600', valueClassName: 'text-emerald-600' },
       { label: 'In Review', value: projects.filter((p) => p.status?.toLowerCase().includes('review')).length, icon: FileSearch, iconClassName: 'text-amber-600', valueClassName: 'text-amber-600' },
-      { label: 'Completed', value: projects.filter((p) => p.status?.toLowerCase() === 'completed').length, icon: CheckCircle2, iconClassName: 'text-zinc-400' },
+      { label: 'Completed', value: projects.filter((p) => p.status?.toLowerCase() === 'completed').length, icon: CheckCircle2, iconClassName: 'text-stone-400' },
       { label: 'This Month', value: projects.filter((p) => { if (!p.createdAt) return false; const d = new Date(p.createdAt); return d.getMonth() === currentMonth && d.getFullYear() === currentYear; }).length, icon: CalendarDays, iconClassName: 'text-sky-600', valueClassName: 'text-sky-600' },
     ];
   }, [projects]);
@@ -148,7 +148,7 @@ export function OperationsCommandCenter({
         title={`${getGreeting()}, ${userName || 'there'}`}
         subtitle={formatDate()}
         actions={
-          <EnterpriseButton variant="primary" icon={Plus} size="lg" onClick={onCreateProject} className="bg-zinc-900 hover:bg-zinc-800">
+          <EnterpriseButton variant="primary" icon={Plus} size="lg" onClick={onCreateProject} className="bg-stone-900 hover:bg-stone-800">
             New Project
           </EnterpriseButton>
         }
@@ -166,7 +166,7 @@ export function OperationsCommandCenter({
             title="No projects yet"
             description="Create your first project to get started."
             action={
-              <EnterpriseButton variant="primary" icon={Plus} onClick={onCreateProject} className="bg-zinc-900 hover:bg-zinc-800">
+              <EnterpriseButton variant="primary" icon={Plus} onClick={onCreateProject} className="bg-stone-900 hover:bg-stone-800">
                 New Project
               </EnterpriseButton>
             }
@@ -183,10 +183,10 @@ export function OperationsCommandCenter({
                     ) : (
                       <span />
                     )}
-                    <ArrowRight className="h-4 w-4 text-zinc-300 group-hover:text-zinc-500 transition-colors duration-150" />
+                    <ArrowRight className="h-4 w-4 text-stone-300 group-hover:text-stone-500 transition-colors duration-150" />
                   </div>
 
-                  <h3 className="text-sm font-semibold text-zinc-900 leading-snug line-clamp-2 mb-2">
+                  <h3 className="text-sm font-semibold text-stone-900 leading-snug line-clamp-2 mb-2">
                     {project.name}
                   </h3>
 
@@ -200,7 +200,7 @@ export function OperationsCommandCenter({
                   </div>
 
                   {project.updatedAt && (
-                    <div className="mt-3 flex items-center gap-1.5 text-xs text-zinc-400">
+                    <div className="mt-3 flex items-center gap-1.5 text-xs text-stone-400">
                       <Clock className="h-3 w-3" />
                       <span>Updated {formatRelativeTime(project.updatedAt)}</span>
                     </div>
@@ -221,9 +221,9 @@ export function OperationsCommandCenter({
               <IconBox
                 icon={link.icon}
                 size="sm"
-                className="bg-zinc-100 text-zinc-600 group-hover:bg-zinc-200 transition-colors duration-150 mb-3"
+                className="bg-stone-100 text-stone-600 group-hover:bg-stone-200 transition-colors duration-150 mb-3"
               />
-              <p className="text-sm font-semibold text-zinc-900">{link.label}</p>
+              <p className="text-sm font-semibold text-stone-900">{link.label}</p>
               <Caption className="mt-0.5">{link.description}</Caption>
             </EnterpriseCard>
           ))}

@@ -156,7 +156,7 @@ function ProgressDots({ current, total }: { current: number; total: number }) {
           key={i}
           className={cn(
             "block h-1.5 w-1.5 rounded-full transition-colors duration-150",
-            i < current ? "bg-zinc-900" : i === current ? "bg-zinc-500" : "bg-zinc-200"
+            i < current ? "bg-stone-900" : i === current ? "bg-stone-500" : "bg-stone-200"
           )}
         />
       ))}
@@ -183,17 +183,17 @@ function StepSubmissionType({
             className={cn(
               "w-full text-left px-3 py-2.5 rounded transition-colors duration-100",
               selected === opt.id
-                ? "bg-zinc-50 border-l-2 border-zinc-900"
-                : "border-l-2 border-transparent hover:bg-zinc-50/60"
+                ? "bg-stone-50 border-l-2 border-stone-900"
+                : "border-l-2 border-transparent hover:bg-stone-50/60"
             )}
           >
-            <span className="text-sm font-medium text-zinc-900">{opt.label}</span>
-            <p className="text-xs text-zinc-500 mt-0.5">{opt.description}</p>
+            <span className="text-sm font-medium text-stone-900">{opt.label}</span>
+            <p className="text-xs text-stone-500 mt-0.5">{opt.description}</p>
           </button>
         ))}
       </div>
       {selected && (
-        <motion.p {...fade} className="text-xs text-zinc-400">
+        <motion.p {...fade} className="text-xs text-stone-400">
           {count} agents available for this pathway
         </motion.p>
       )}
@@ -223,7 +223,7 @@ function StepAgentTeam({
     <div className="space-y-5">
       {grouped.map((group) => (
         <div key={group.phase}>
-          <p className="text-xs font-medium text-zinc-400 uppercase tracking-wide mb-2">
+          <p className="text-xs font-medium text-stone-400 uppercase tracking-wide mb-2">
             {group.phase}
           </p>
           <div className="space-y-1">
@@ -231,16 +231,16 @@ function StepAgentTeam({
               <button
                 key={agent.id}
                 onClick={() => onToggle(agent.id)}
-                className="w-full flex items-center justify-between px-3 py-2 rounded hover:bg-zinc-50 transition-colors duration-100"
+                className="w-full flex items-center justify-between px-3 py-2 rounded hover:bg-stone-50 transition-colors duration-100"
               >
                 <div className="text-left">
-                  <span className="text-sm text-zinc-900">{agent.name}</span>
-                  <p className="text-xs text-zinc-500">{agent.description}</p>
+                  <span className="text-sm text-stone-900">{agent.name}</span>
+                  <p className="text-xs text-stone-500">{agent.description}</p>
                 </div>
                 <span
                   className={cn(
                     "flex-shrink-0 ml-3 h-4 w-7 rounded-full transition-colors duration-100 relative",
-                    enabledAgents.has(agent.id) ? "bg-zinc-900" : "bg-zinc-200"
+                    enabledAgents.has(agent.id) ? "bg-stone-900" : "bg-stone-200"
                   )}
                 >
                   <span
@@ -275,15 +275,15 @@ function StepAutomation({
           className={cn(
             "w-full text-left px-3 py-3 rounded transition-colors duration-100",
             level === opt.id
-              ? "bg-zinc-50 border-l-2 border-zinc-900"
-              : "border-l-2 border-transparent hover:bg-zinc-50/60"
+              ? "bg-stone-50 border-l-2 border-stone-900"
+              : "border-l-2 border-transparent hover:bg-stone-50/60"
           )}
         >
-          <span className="text-sm font-medium text-zinc-900">{opt.label}</span>
+          <span className="text-sm font-medium text-stone-900">{opt.label}</span>
           {level === opt.id && opt.id === "guided" && (
-            <span className="ml-2 text-xs text-zinc-400">Recommended</span>
+            <span className="ml-2 text-xs text-stone-400">Recommended</span>
           )}
-          <p className="text-xs text-zinc-500 mt-0.5">{opt.description}</p>
+          <p className="text-xs text-stone-500 mt-0.5">{opt.description}</p>
         </button>
       ))}
     </div>
@@ -303,21 +303,21 @@ function StepReviewGates({
         <button
           key={gate.id}
           onClick={() => onToggle(gate.id)}
-          className="w-full flex items-start gap-3 px-3 py-2.5 rounded hover:bg-zinc-50 transition-colors duration-100 text-left"
+          className="w-full flex items-start gap-3 px-3 py-2.5 rounded hover:bg-stone-50 transition-colors duration-100 text-left"
         >
           <span
             className={cn(
               "mt-0.5 flex-shrink-0 h-4 w-4 rounded border transition-colors duration-100 flex items-center justify-center",
               gates[gate.id]
-                ? "bg-zinc-900 border-zinc-900"
-                : "bg-white border-zinc-300"
+                ? "bg-stone-900 border-stone-900"
+                : "bg-white border-stone-300"
             )}
           >
             {gates[gate.id] && <Check className="h-3 w-3 text-white" strokeWidth={2.5} />}
           </span>
           <div>
-            <span className="text-sm text-zinc-900">{gate.label}</span>
-            <p className="text-xs text-zinc-500 mt-0.5">{gate.explanation}</p>
+            <span className="text-sm text-stone-900">{gate.label}</span>
+            <p className="text-xs text-stone-500 mt-0.5">{gate.explanation}</p>
           </div>
         </button>
       ))}
@@ -380,7 +380,7 @@ function StepDemo({ submissionType }: { submissionType: SubmissionType }) {
         if (!isComplete && !isCurrent) {
           return (
             <div key={i} className="px-3 py-2 rounded">
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-stone-400">
                 {step.agent} — {step.action}
               </p>
             </div>
@@ -391,14 +391,14 @@ function StepDemo({ submissionType }: { submissionType: SubmissionType }) {
           <motion.div
             key={i}
             {...fade}
-            className={cn("px-3 py-2 rounded", isComplete ? "bg-zinc-50" : "")}
+            className={cn("px-3 py-2 rounded", isComplete ? "bg-stone-50" : "")}
           >
             <div className="flex items-center gap-2">
-              {isComplete && <Check className="h-3 w-3 text-zinc-400" />}
-              <p className="text-xs font-medium text-zinc-900">{step.agent}</p>
-              <span className="text-xs text-zinc-400">— {step.action}</span>
+              {isComplete && <Check className="h-3 w-3 text-stone-400" />}
+              <p className="text-xs font-medium text-stone-900">{step.agent}</p>
+              <span className="text-xs text-stone-400">— {step.action}</span>
             </div>
-            <p className="text-xs text-zinc-600 mt-1">
+            <p className="text-xs text-stone-600 mt-1">
               {isComplete ? step.result : typedText}
               {isCurrent && <span className="animate-pulse">|</span>}
             </p>
@@ -435,43 +435,43 @@ function StepConnect({
   return (
     <div className="space-y-5">
       <div className="space-y-2">
-        <div className="flex items-center justify-between px-3 py-2 rounded bg-zinc-50">
-          <span className="text-xs text-zinc-500">Project</span>
-          <span className="text-xs text-zinc-900">Select a project</span>
+        <div className="flex items-center justify-between px-3 py-2 rounded bg-stone-50">
+          <span className="text-xs text-stone-500">Project</span>
+          <span className="text-xs text-stone-900">Select a project</span>
         </div>
       </div>
 
       <div className="space-y-1 px-3">
-        <p className="text-xs text-zinc-400">Configuration summary</p>
+        <p className="text-xs text-stone-400">Configuration summary</p>
         <div className="flex justify-between text-xs py-1">
-          <span className="text-zinc-500">Submission type</span>
-          <span className="text-zinc-900">{label}</span>
+          <span className="text-stone-500">Submission type</span>
+          <span className="text-stone-900">{label}</span>
         </div>
         <div className="flex justify-between text-xs py-1">
-          <span className="text-zinc-500">Active agents</span>
-          <span className="text-zinc-900">{enabledAgentCount}</span>
+          <span className="text-stone-500">Active agents</span>
+          <span className="text-stone-900">{enabledAgentCount}</span>
         </div>
         <div className="flex justify-between text-xs py-1">
-          <span className="text-zinc-500">Automation</span>
-          <span className="text-zinc-900">{levelLabel}</span>
+          <span className="text-stone-500">Automation</span>
+          <span className="text-stone-900">{levelLabel}</span>
         </div>
         <div className="flex justify-between text-xs py-1">
-          <span className="text-zinc-500">Review gates</span>
-          <span className="text-zinc-900">{gateCount} active</span>
+          <span className="text-stone-500">Review gates</span>
+          <span className="text-stone-900">{gateCount} active</span>
         </div>
       </div>
 
       {!activated ? (
         <button
           onClick={onActivate}
-          className="text-sm text-white bg-zinc-900 rounded px-4 py-2 hover:bg-zinc-800 transition-colors duration-100"
+          className="text-sm text-white bg-stone-900 rounded px-4 py-2 hover:bg-stone-800 transition-colors duration-100"
         >
           Activate AI Agents
         </button>
       ) : (
-        <motion.div {...fade} className="flex items-center gap-2 px-3 py-2 rounded bg-zinc-50">
-          <Check className="h-3.5 w-3.5 text-zinc-600" />
-          <span className="text-sm text-zinc-900">AI agents configured for your project</span>
+        <motion.div {...fade} className="flex items-center gap-2 px-3 py-2 rounded bg-stone-50">
+          <Check className="h-3.5 w-3.5 text-stone-600" />
+          <span className="text-sm text-stone-900">AI agents configured for your project</span>
         </motion.div>
       )}
     </div>
@@ -558,12 +558,12 @@ export function AgentSetupWizard({ onSkip, onComplete }: { onSkip?: () => void; 
     <div className="bg-white w-full max-w-lg mx-auto py-8 px-6">
       {/* Header */}
       <div className="mb-6">
-        <p className="text-xs text-zinc-400 mb-1">Step {step + 1} of {totalSteps}</p>
+        <p className="text-xs text-stone-400 mb-1">Step {step + 1} of {totalSteps}</p>
         <AnimatePresence mode="wait">
           <motion.h2
             key={step}
             {...fade}
-            className="text-lg font-medium text-zinc-900"
+            className="text-lg font-medium text-stone-900"
           >
             {STEP_TITLES[step]}
           </motion.h2>
@@ -616,7 +616,7 @@ export function AgentSetupWizard({ onSkip, onComplete }: { onSkip?: () => void; 
           {step > 0 ? (
             <button
               onClick={handleBack}
-              className="flex items-center gap-1 text-sm text-zinc-600 hover:text-zinc-900 transition-colors duration-100"
+              className="flex items-center gap-1 text-sm text-stone-600 hover:text-stone-900 transition-colors duration-100"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               Back
@@ -637,7 +637,7 @@ export function AgentSetupWizard({ onSkip, onComplete }: { onSkip?: () => void; 
                 "flex items-center gap-1 text-sm transition-colors duration-100",
                 canContinue()
                   ? "text-blue-600 hover:text-blue-700"
-                  : "text-zinc-400 cursor-not-allowed"
+                  : "text-stone-400 cursor-not-allowed"
               )}
             >
               Continue
@@ -651,7 +651,7 @@ export function AgentSetupWizard({ onSkip, onComplete }: { onSkip?: () => void; 
       <div className="mt-4 text-center">
         <button
           onClick={onSkip}
-          className="text-xs text-zinc-400 hover:text-zinc-500 transition-colors duration-100"
+          className="text-xs text-stone-400 hover:text-stone-500 transition-colors duration-100"
         >
           Skip setup
         </button>

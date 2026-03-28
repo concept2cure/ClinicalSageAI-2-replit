@@ -313,7 +313,7 @@ const ComplianceScoreRing: React.FC<{
           fill="none"
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          className="text-zinc-200"
+          className="text-stone-200"
         />
         <circle
           cx={size / 2}
@@ -330,7 +330,7 @@ const ComplianceScoreRing: React.FC<{
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className={`text-3xl font-semibold ${colors.text}`}>{score}</span>
-        <span className="text-xs text-zinc-500">Compliance</span>
+        <span className="text-xs text-stone-500">Compliance</span>
       </div>
     </div>
   );
@@ -380,7 +380,7 @@ const IssueCard: React.FC<IssueCardProps> = ({ guard, onAction, onAutoFix }) => 
         <Icon className={`w-5 h-5 flex-shrink-0 mt-0.5 ${config.iconColor}`} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h4 className="font-medium text-zinc-900">
+            <h4 className="font-medium text-stone-900">
               {guard.title}
             </h4>
             <span className={`px-2 py-0.5 rounded text-xs font-medium ${
@@ -392,18 +392,18 @@ const IssueCard: React.FC<IssueCardProps> = ({ guard, onAction, onAutoFix }) => 
             </span>
           </div>
           
-          <p className="text-sm text-zinc-600">
+          <p className="text-sm text-stone-600">
             {guard.description}
           </p>
           
           {guard.affectedText && (
-            <div className="mt-2 p-2 bg-white/50 rounded text-sm italic text-zinc-600">
+            <div className="mt-2 p-2 bg-white/50 rounded text-sm italic text-stone-600">
               "{guard.affectedText}"
             </div>
           )}
           
           {guard.regulatoryRef && (
-            <p className="mt-2 text-xs text-zinc-500 flex items-center gap-1">
+            <p className="mt-2 text-xs text-stone-500 flex items-center gap-1">
               <FileText className="w-3 h-3" />
               {guard.regulatoryRef}
             </p>
@@ -426,7 +426,7 @@ const IssueCard: React.FC<IssueCardProps> = ({ guard, onAction, onAutoFix }) => 
           onClick={onAction}
           className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-colors
             ${guard.action.autoFixAvailable 
-              ? 'text-zinc-600 hover:bg-zinc-100' 
+              ? 'text-stone-600 hover:bg-stone-100' 
               : `text-white ${config.buttonColor}`
             }`}
           data-testid={`button-guard-action-${guard.id}`}
@@ -579,22 +579,22 @@ export const ComplianceGuardian: React.FC<ComplianceGuardianProps> = ({
       <div className={`${className}`}>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full flex items-center justify-between p-3 bg-white rounded-lg border border-zinc-200 hover:border-blue-300 transition-colors duration-150"
+          className="w-full flex items-center justify-between p-3 bg-white rounded-lg border border-stone-200 hover:border-blue-300 transition-colors duration-150"
           data-testid="button-compliance-compact-toggle"
           aria-expanded={isExpanded}
         >
           <div className="flex items-center gap-3">
             <StatusIcon className={`w-5 h-5 ${status.color}`} />
             <div className="text-left">
-              <p className="font-medium text-zinc-900">
+              <p className="font-medium text-stone-900">
                 Compliance: {complianceScore}%
               </p>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-stone-500">
                 {errorCount} errors, {warningCount} warnings
               </p>
             </div>
           </div>
-          {isExpanded ? <ChevronUp className="w-4 h-4 text-zinc-400" /> : <ChevronDown className="w-4 h-4 text-zinc-400" />}
+          {isExpanded ? <ChevronUp className="w-4 h-4 text-stone-400" /> : <ChevronDown className="w-4 h-4 text-stone-400" />}
         </button>
         
         {isExpanded && complianceIssues.length > 0 && (
@@ -608,7 +608,7 @@ export const ComplianceGuardian: React.FC<ComplianceGuardianProps> = ({
               />
             ))}
             {complianceIssues.length > 3 && (
-              <p className="text-sm text-center text-zinc-500 py-2">
+              <p className="text-sm text-center text-stone-500 py-2">
                 +{complianceIssues.length - 3} more issues
               </p>
             )}
@@ -622,13 +622,13 @@ export const ComplianceGuardian: React.FC<ComplianceGuardianProps> = ({
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Header with Score */}
-      <div className="flex items-center gap-6 p-4 rounded-xl border border-zinc-200/70 bg-white shadow-sm">
+      <div className="flex items-center gap-6 p-4 rounded-xl border border-stone-200/70 bg-white shadow-sm">
         <ComplianceScoreRing score={complianceScore} />
         
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <StatusIcon className={`w-6 h-6 ${status.color}`} />
-            <h3 className="text-lg font-semibold text-zinc-900">
+            <h3 className="text-lg font-semibold text-stone-900">
               {status.label}
             </h3>
           </div>
@@ -675,7 +675,7 @@ export const ComplianceGuardian: React.FC<ComplianceGuardianProps> = ({
       
       {/* Category Tabs */}
       {complianceIssues.length > 0 && (
-        <div className="flex gap-1 p-1 bg-zinc-100/80 rounded-xl border border-zinc-200/60">
+        <div className="flex gap-1 p-1 bg-stone-100/80 rounded-xl border border-stone-200/60">
           {CATEGORY_TABS.map(tab => {
             const count = tab.id === 'all' 
               ? complianceIssues.length 
@@ -687,8 +687,8 @@ export const ComplianceGuardian: React.FC<ComplianceGuardianProps> = ({
                 onClick={() => setSelectedCategory(tab.id)}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-colors
                   ${selectedCategory === tab.id
-                    ? 'bg-white text-zinc-900 shadow-sm'
-                    : 'text-zinc-600 hover:text-zinc-900'
+                    ? 'bg-white text-stone-900 shadow-sm'
+                    : 'text-stone-600 hover:text-stone-900'
                   }`}
                 data-testid={`button-category-tab-${tab.id}`}
                 aria-current={selectedCategory === tab.id ? 'page' : undefined}
@@ -699,7 +699,7 @@ export const ComplianceGuardian: React.FC<ComplianceGuardianProps> = ({
                   <span className={`px-1.5 py-0.5 rounded-full text-xs
                     ${selectedCategory === tab.id
                       ? 'bg-blue-100 text-blue-600'
-                      : 'bg-zinc-200 text-zinc-600'
+                      : 'bg-stone-200 text-stone-600'
                     }`}
                   >
                     {count}
@@ -715,8 +715,8 @@ export const ComplianceGuardian: React.FC<ComplianceGuardianProps> = ({
       {filteredIssues.length === 0 ? (
         <div className="text-center py-8">
           <ShieldCheck className="w-12 h-12 mx-auto mb-3 text-green-500" />
-          <h4 className="font-semibold text-zinc-900">All Clear!</h4>
-          <p className="text-sm text-zinc-600 mt-1">
+          <h4 className="font-semibold text-stone-900">All Clear!</h4>
+          <p className="text-sm text-stone-600 mt-1">
             {selectedCategory === 'all' 
               ? 'No compliance issues found. Your document is ready.'
               : `No ${selectedCategory} issues found.`

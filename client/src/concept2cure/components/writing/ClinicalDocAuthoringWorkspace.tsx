@@ -212,7 +212,7 @@ const DOC_TYPE_CONFIG: Record<DocumentType, { label: string; shortLabel: string;
 };
 
 const STATUS_CONFIG: Record<AuthoringStatus, { label: string; color: string; bgColor: string; step: number }> = {
-  not_started: { label: 'Not Started', color: 'text-zinc-500', bgColor: 'bg-zinc-100', step: 0 },
+  not_started: { label: 'Not Started', color: 'text-stone-500', bgColor: 'bg-stone-100', step: 0 },
   outline: { label: 'Outline', color: 'text-blue-600', bgColor: 'bg-blue-100', step: 1 },
   first_draft: { label: 'First Draft', color: 'text-amber-600', bgColor: 'bg-amber-100', step: 2 },
   internal_review: { label: 'Internal Review', color: 'text-violet-600', bgColor: 'bg-violet-100', step: 3 },
@@ -220,14 +220,14 @@ const STATUS_CONFIG: Record<AuthoringStatus, { label: string; color: string; bgC
   revision: { label: 'Revision', color: 'text-orange-600', bgColor: 'bg-orange-100', step: 5 },
   final_qc: { label: 'Final QC', color: 'text-cyan-600', bgColor: 'bg-cyan-100', step: 6 },
   approved: { label: 'Approved', color: 'text-green-600', bgColor: 'bg-green-100', step: 7 },
-  locked: { label: 'Locked', color: 'text-zinc-600', bgColor: 'bg-zinc-200', step: 8 },
+  locked: { label: 'Locked', color: 'text-stone-600', bgColor: 'bg-stone-200', step: 8 },
 };
 
 const PRIORITY_CONFIG: Record<string, { label: string; color: string }> = {
   critical: { label: 'Critical', color: 'bg-red-100 text-red-700' },
   major: { label: 'Major', color: 'bg-amber-100 text-amber-700' },
   minor: { label: 'Minor', color: 'bg-blue-100 text-blue-700' },
-  editorial: { label: 'Editorial', color: 'bg-zinc-100 text-zinc-600' },
+  editorial: { label: 'Editorial', color: 'bg-stone-100 text-stone-600' },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -266,16 +266,16 @@ const SectionTreeItem: React.FC<{
       <button
         onClick={() => hasChildren ? setExpanded(!expanded) : onSelect?.(section)}
         className={cn(
-          'w-full flex items-center gap-2 px-2 py-1.5 text-left hover:bg-zinc-100 rounded transition-colors duration-150',
+          'w-full flex items-center gap-2 px-2 py-1.5 text-left hover:bg-stone-100 rounded transition-colors duration-150',
           level === 0 && 'font-medium'
         )}
         style={{ paddingLeft: `${level * 16 + 8}px` }}
       >
         {hasChildren ? (
           expanded ? (
-            <ChevronDown className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+            <ChevronDown className="w-4 h-4 text-stone-400 flex-shrink-0" />
           ) : (
-            <ChevronRight className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+            <ChevronRight className="w-4 h-4 text-stone-400 flex-shrink-0" />
           )
         ) : (
           <span className="w-4" />
@@ -283,11 +283,11 @@ const SectionTreeItem: React.FC<{
         
         <span className={cn('w-2 h-2 rounded-full flex-shrink-0', statusColors[section.status])} />
         
-        <span className="text-xs text-zinc-400 font-mono flex-shrink-0">{section.number}</span>
+        <span className="text-xs text-stone-400 font-mono flex-shrink-0">{section.number}</span>
         
         <span className={cn(
           'text-sm truncate flex-1',
-          section.status === 'complete' ? 'text-zinc-500' : 'text-zinc-900'
+          section.status === 'complete' ? 'text-stone-500' : 'text-stone-900'
         )}>
           {section.title}
         </span>
@@ -322,20 +322,20 @@ const DocumentOutlineTree: React.FC<{
   const [searchQuery, setSearchQuery] = useState('');
   
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden h-full flex flex-col">
-      <div className="p-3 border-b border-zinc-200">
-        <h3 className="text-sm font-semibold text-zinc-900 mb-2 flex items-center gap-2">
+    <div className="bg-white rounded-xl border border-stone-200 overflow-hidden h-full flex flex-col">
+      <div className="p-3 border-b border-stone-200">
+        <h3 className="text-sm font-semibold text-stone-900 mb-2 flex items-center gap-2">
           <BookOpen className="w-4 h-4 text-blue-600" />
           Document Structure
         </h3>
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
           <input
             type="text"
             placeholder="Search sections..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+            className="w-full pl-8 pr-3 py-1.5 text-sm border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
           />
         </div>
       </div>
@@ -352,23 +352,23 @@ const DocumentOutlineTree: React.FC<{
       </div>
       
       {/* Legend */}
-      <div className="p-3 border-t border-zinc-200 bg-zinc-50">
+      <div className="p-3 border-t border-stone-200 bg-stone-50">
         <div className="flex items-center gap-4 text-xs">
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-zinc-200" />
-            <span className="text-zinc-500">Not Started</span>
+            <span className="w-2 h-2 rounded-full bg-stone-200" />
+            <span className="text-stone-500">Not Started</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-blue-400" />
-            <span className="text-zinc-500">Draft</span>
+            <span className="text-stone-500">Draft</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-amber-400" />
-            <span className="text-zinc-500">Review</span>
+            <span className="text-stone-500">Review</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-green-400" />
-            <span className="text-zinc-500">Complete</span>
+            <span className="text-stone-500">Complete</span>
           </div>
         </div>
       </div>
@@ -411,14 +411,14 @@ const ReviewCommentsPanel: React.FC<{
   };
   
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-      <div className="p-3 border-b border-zinc-200">
+    <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
+      <div className="p-3 border-b border-stone-200">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-zinc-900 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-stone-900 flex items-center gap-2">
             <MessageSquare className="w-4 h-4 text-amber-600" />
             Review Comments
           </h3>
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-stone-500">
             {allComments.filter(c => c.status === 'open').length} open
           </span>
         </div>
@@ -430,7 +430,7 @@ const ReviewCommentsPanel: React.FC<{
               onClick={() => setFilter(f)}
               className={cn(
                 'px-2 py-1 text-xs font-medium rounded transition-colors capitalize',
-                filter === f ? 'bg-blue-100 text-blue-700' : 'text-zinc-500 hover:bg-zinc-100'
+                filter === f ? 'bg-blue-100 text-blue-700' : 'text-stone-500 hover:bg-stone-100'
               )}
             >
               {f}
@@ -445,26 +445,26 @@ const ReviewCommentsPanel: React.FC<{
           const config = PRIORITY_CONFIG[priority];
           
           return (
-            <div key={priority} className="border-b border-zinc-200 last:border-0">
-              <div className="px-3 py-2 bg-zinc-50 flex items-center gap-2">
+            <div key={priority} className="border-b border-stone-200 last:border-0">
+              <div className="px-3 py-2 bg-stone-50 flex items-center gap-2">
                 <span className={cn('px-2 py-0.5 text-xs font-medium rounded', config.color)}>
                   {config.label}
                 </span>
-                <span className="text-xs text-zinc-500">({comments.length})</span>
+                <span className="text-xs text-stone-500">({comments.length})</span>
               </div>
               
               {comments.slice(0, 5).map((comment: any) => (
-                <div key={comment.id} className="p-3 border-t border-zinc-200 hover:bg-zinc-50">
+                <div key={comment.id} className="p-3 border-t border-stone-200 hover:bg-stone-50">
                   <div className="flex items-start justify-between mb-1">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-medium text-blue-600">{comment.sectionNumber}</span>
-                      <span className="text-xs text-zinc-400">•</span>
-                      <span className="text-xs text-zinc-500">{comment.author}</span>
+                      <span className="text-xs text-stone-400">•</span>
+                      <span className="text-xs text-stone-500">{comment.author}</span>
                     </div>
                     {comment.status === 'open' && (
                       <button
                         onClick={() => onCommentResolve?.(comment)}
-                        className="p-1 text-zinc-400 hover:text-green-600 transition-colors duration-150"
+                        className="p-1 text-stone-400 hover:text-green-600 transition-colors duration-150"
                         title="Resolve"
                       >
                         <CheckCircle className="w-4 h-4" />
@@ -472,7 +472,7 @@ const ReviewCommentsPanel: React.FC<{
                     )}
                   </div>
                   
-                  <p className="text-sm text-zinc-700">{comment.commentText}</p>
+                  <p className="text-sm text-stone-700">{comment.commentText}</p>
                   
                   {comment.suggestedChange && (
                     <div className="mt-2 p-2 bg-green-50 rounded text-xs text-green-700">
@@ -487,7 +487,7 @@ const ReviewCommentsPanel: React.FC<{
         })}
         
         {filtered.length === 0 && (
-          <p className="p-4 text-sm text-zinc-500 text-center italic">No comments</p>
+          <p className="p-4 text-sm text-stone-500 text-center italic">No comments</p>
         )}
       </div>
     </div>
@@ -537,9 +537,9 @@ const SourceDocumentsPanel: React.FC<{
   };
   
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-      <div className="p-3 border-b border-zinc-200">
-        <h3 className="text-sm font-semibold text-zinc-900 flex items-center gap-2">
+    <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
+      <div className="p-3 border-b border-stone-200">
+        <h3 className="text-sm font-semibold text-stone-900 flex items-center gap-2">
           <Link2 className="w-4 h-4 text-violet-600" />
           Source Documents
         </h3>
@@ -550,21 +550,21 @@ const SourceDocumentsPanel: React.FC<{
           const config = typeLabels[type] || typeLabels.other;
           
           return (
-            <div key={type} className="border-b border-zinc-200 last:border-0">
-              <div className="px-3 py-2 bg-zinc-50 flex items-center gap-2 text-zinc-600">
+            <div key={type} className="border-b border-stone-200 last:border-0">
+              <div className="px-3 py-2 bg-stone-50 flex items-center gap-2 text-stone-600">
                 {config.icon}
                 <span className="text-xs font-medium">{config.label}</span>
-                <span className="text-xs text-zinc-400">({sources.length})</span>
+                <span className="text-xs text-stone-400">({sources.length})</span>
               </div>
               
               {sources.slice(0, 5).map(source => (
                 <button
                   key={source.id}
-                  className="w-full px-3 py-2 text-left hover:bg-zinc-50 transition-colors border-t border-zinc-200"
+                  className="w-full px-3 py-2 text-left hover:bg-stone-50 transition-colors border-t border-stone-200"
                 >
-                  <p className="text-sm text-zinc-900 truncate">{source.title}</p>
+                  <p className="text-sm text-stone-900 truncate">{source.title}</p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-zinc-400">v{source.version}</span>
+                    <span className="text-xs text-stone-400">v{source.version}</span>
                     {source.studyId && (
                       <span className="text-xs text-blue-600">{source.studyId}</span>
                     )}
@@ -576,7 +576,7 @@ const SourceDocumentsPanel: React.FC<{
         })}
         
         {allSources.length === 0 && (
-          <p className="p-4 text-sm text-zinc-500 text-center italic">No source documents linked</p>
+          <p className="p-4 text-sm text-stone-500 text-center italic">No source documents linked</p>
         )}
       </div>
     </div>
@@ -607,9 +607,9 @@ const DocumentList: React.FC<{
   }, [documents, filter]);
   
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-      <div className="p-3 border-b border-zinc-200">
-        <h3 className="text-sm font-semibold text-zinc-900 mb-2 flex items-center gap-2">
+    <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
+      <div className="p-3 border-b border-stone-200">
+        <h3 className="text-sm font-semibold text-stone-900 mb-2 flex items-center gap-2">
           <FileText className="w-4 h-4 text-blue-600" />
           Documents
         </h3>
@@ -621,7 +621,7 @@ const DocumentList: React.FC<{
               onClick={() => setFilter(f)}
               className={cn(
                 'px-2 py-1 text-xs font-medium rounded transition-colors capitalize',
-                filter === f ? 'bg-blue-100 text-blue-700' : 'text-zinc-500 hover:bg-zinc-100'
+                filter === f ? 'bg-blue-100 text-blue-700' : 'text-stone-500 hover:bg-stone-100'
               )}
             >
               {f}
@@ -642,8 +642,8 @@ const DocumentList: React.FC<{
               key={doc.id}
               onClick={() => onDocumentSelect?.(doc)}
               className={cn(
-                'w-full p-3 text-left border-b border-zinc-200 transition-colors duration-150',
-                isActive ? 'bg-blue-50' : 'hover:bg-zinc-50'
+                'w-full p-3 text-left border-b border-stone-200 transition-colors duration-150',
+                isActive ? 'bg-blue-50' : 'hover:bg-stone-50'
               )}
             >
               <div className="flex items-start justify-between mb-1">
@@ -651,23 +651,23 @@ const DocumentList: React.FC<{
                   {typeConfig.shortLabel}
                 </span>
                 <div className="flex items-center gap-1">
-                  {doc.isLocked && <Lock className="w-3 h-3 text-zinc-400" />}
+                  {doc.isLocked && <Lock className="w-3 h-3 text-stone-400" />}
                   <span className={cn('px-2 py-0.5 text-xs font-medium rounded', statusConfig.bgColor, statusConfig.color)}>
                     {statusConfig.label}
                   </span>
                 </div>
               </div>
               
-              <p className="text-sm font-medium text-zinc-900 truncate">{doc.title}</p>
-              <p className="text-xs text-zinc-500">{doc.productName}</p>
+              <p className="text-sm font-medium text-stone-900 truncate">{doc.title}</p>
+              <p className="text-xs text-stone-500">{doc.productName}</p>
               
               {/* Progress */}
               <div className="mt-2">
-                <div className="flex justify-between text-xs text-zinc-500 mb-1">
+                <div className="flex justify-between text-xs text-stone-500 mb-1">
                   <span>{doc.completedSections}/{doc.totalSections} sections</span>
                   <span>{progress}%</span>
                 </div>
-                <div className="h-1 bg-zinc-200 rounded-full overflow-hidden">
+                <div className="h-1 bg-stone-200 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-blue-500 rounded-full transition-all duration-150"
                     style={{ width: `${progress}%` }}
@@ -687,7 +687,7 @@ const DocumentList: React.FC<{
         })}
         
         {filtered.length === 0 && (
-          <p className="p-4 text-sm text-zinc-500 text-center italic">No documents</p>
+          <p className="p-4 text-sm text-stone-500 text-center italic">No documents</p>
         )}
       </div>
     </div>
@@ -706,7 +706,7 @@ const DocumentHeader: React.FC<{
   const progress = document.totalSections > 0 ? Math.round((document.completedSections / document.totalSections) * 100) : 0;
   
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 p-4">
+    <div className="bg-white rounded-xl border border-stone-200 p-4">
       <div className="flex items-start justify-between mb-4">
         <div>
           <div className="flex items-center gap-2 mb-2">
@@ -717,22 +717,22 @@ const DocumentHeader: React.FC<{
               {statusConfig.label}
             </span>
             {document.isLocked && (
-              <span className="px-2 py-1 text-xs font-medium bg-zinc-200 text-zinc-600 rounded flex items-center gap-1">
+              <span className="px-2 py-1 text-xs font-medium bg-stone-200 text-stone-600 rounded flex items-center gap-1">
                 <Lock className="w-3 h-3" />
                 Locked by {document.lockedBy}
               </span>
             )}
           </div>
-          <h2 className="text-xl font-semibold text-zinc-900">{document.title}</h2>
-          <p className="text-sm text-zinc-500">{document.productName} • v{document.currentVersion}</p>
+          <h2 className="text-xl font-semibold text-stone-900">{document.title}</h2>
+          <p className="text-sm text-stone-500">{document.productName} • v{document.currentVersion}</p>
         </div>
         
         <div className="flex gap-2">
-          <button className="px-4 py-2 text-sm font-medium text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50 flex items-center gap-2">
+          <button className="px-4 py-2 text-sm font-medium text-stone-600 border border-stone-200 rounded-lg hover:bg-stone-50 flex items-center gap-2">
             <History className="w-4 h-4" />
             History
           </button>
-          <button className="px-4 py-2 text-sm font-medium text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50 flex items-center gap-2">
+          <button className="px-4 py-2 text-sm font-medium text-stone-600 border border-stone-200 rounded-lg hover:bg-stone-50 flex items-center gap-2">
             <Eye className="w-4 h-4" />
             Preview
           </button>
@@ -744,33 +744,33 @@ const DocumentHeader: React.FC<{
       </div>
       
       {/* Metadata */}
-      <div className="grid grid-cols-5 gap-4 pt-4 border-t border-zinc-200">
+      <div className="grid grid-cols-5 gap-4 pt-4 border-t border-stone-200">
         <div>
-          <p className="text-xs text-zinc-500">Lead Writer</p>
-          <p className="text-sm font-medium text-zinc-900">{document.leadWriter}</p>
+          <p className="text-xs text-stone-500">Lead Writer</p>
+          <p className="text-sm font-medium text-stone-900">{document.leadWriter}</p>
         </div>
         <div>
-          <p className="text-xs text-zinc-500">Template</p>
-          <p className="text-sm font-medium text-zinc-900">{document.templateVersion}</p>
+          <p className="text-xs text-stone-500">Template</p>
+          <p className="text-sm font-medium text-stone-900">{document.templateVersion}</p>
         </div>
         <div>
-          <p className="text-xs text-zinc-500">Due Date</p>
-          <p className="text-sm font-medium text-zinc-900">
+          <p className="text-xs text-stone-500">Due Date</p>
+          <p className="text-sm font-medium text-stone-900">
             {document.dueDate ? formatDate(document.dueDate) : 'TBD'}
           </p>
         </div>
         <div>
-          <p className="text-xs text-zinc-500">Progress</p>
+          <p className="text-xs text-stone-500">Progress</p>
           <div className="flex items-center gap-2">
-            <div className="flex-1 h-2 bg-zinc-200 rounded-full overflow-hidden">
+            <div className="flex-1 h-2 bg-stone-200 rounded-full overflow-hidden">
               <div className="h-full bg-blue-500 rounded-full" style={{ width: `${progress}%` }} />
             </div>
-            <span className="text-sm font-medium text-zinc-900">{progress}%</span>
+            <span className="text-sm font-medium text-stone-900">{progress}%</span>
           </div>
         </div>
         <div>
-          <p className="text-xs text-zinc-500">Open Comments</p>
-          <p className={cn('text-sm font-medium', document.openComments > 0 ? 'text-amber-600' : 'text-zinc-900')}>
+          <p className="text-xs text-stone-500">Open Comments</p>
+          <p className={cn('text-sm font-medium', document.openComments > 0 ? 'text-amber-600' : 'text-stone-900')}>
             {document.openComments}
           </p>
         </div>
@@ -812,13 +812,13 @@ export const ClinicalDocAuthoringWorkspace: React.FC<ClinicalDocAuthoringWorkspa
   }, [documents]);
   
   return (
-    <div className={cn('flex flex-col h-full bg-zinc-50', className)}>
+    <div className={cn('flex flex-col h-full bg-stone-50', className)}>
       {/* Header */}
-      <div className="flex-shrink-0 bg-white border-b border-zinc-200 p-4">
+      <div className="flex-shrink-0 bg-white border-b border-stone-200 p-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-semibold text-zinc-900">Clinical Document Authoring</h1>
-            <p className="text-sm text-zinc-500">Regulatory document workspace</p>
+            <h1 className="text-xl font-semibold text-stone-900">Clinical Document Authoring</h1>
+            <p className="text-sm text-stone-500">Regulatory document workspace</p>
           </div>
           
           <button className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
@@ -829,9 +829,9 @@ export const ClinicalDocAuthoringWorkspace: React.FC<ClinicalDocAuthoringWorkspa
         
         {/* Metrics */}
         <div className="grid grid-cols-5 gap-4">
-          <div className="p-3 bg-zinc-100 rounded-lg">
-            <p className="text-xs text-zinc-500">Documents</p>
-            <p className="text-xl font-semibold text-zinc-900">{metrics.totalDocuments}</p>
+          <div className="p-3 bg-stone-100 rounded-lg">
+            <p className="text-xs text-stone-500">Documents</p>
+            <p className="text-xl font-semibold text-stone-900">{metrics.totalDocuments}</p>
           </div>
           <div className="p-3 bg-blue-50 rounded-lg">
             <p className="text-xs text-blue-600">In Draft</p>
@@ -841,9 +841,9 @@ export const ClinicalDocAuthoringWorkspace: React.FC<ClinicalDocAuthoringWorkspa
             <p className="text-xs text-violet-600">In Review</p>
             <p className="text-xl font-semibold text-violet-700">{metrics.inReview}</p>
           </div>
-          <div className={cn('p-3 rounded-lg', metrics.openComments > 0 ? 'bg-amber-50' : 'bg-zinc-100')}>
-            <p className={cn('text-xs', metrics.openComments > 0 ? 'text-amber-600' : 'text-zinc-500')}>Open Comments</p>
-            <p className={cn('text-xl font-semibold', metrics.openComments > 0 ? 'text-amber-700' : 'text-zinc-900')}>
+          <div className={cn('p-3 rounded-lg', metrics.openComments > 0 ? 'bg-amber-50' : 'bg-stone-100')}>
+            <p className={cn('text-xs', metrics.openComments > 0 ? 'text-amber-600' : 'text-stone-500')}>Open Comments</p>
+            <p className={cn('text-xl font-semibold', metrics.openComments > 0 ? 'text-amber-700' : 'text-stone-900')}>
               {metrics.openComments}
             </p>
           </div>
@@ -889,10 +889,10 @@ export const ClinicalDocAuthoringWorkspace: React.FC<ClinicalDocAuthoringWorkspa
                 </div>
               </div>
             ) : (
-              <div className="h-full flex items-center justify-center bg-white rounded-xl border border-zinc-200">
+              <div className="h-full flex items-center justify-center bg-white rounded-xl border border-stone-200">
                 <div className="text-center">
-                  <FileText className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
-                  <p className="text-sm text-zinc-500">Select a document to begin authoring</p>
+                  <FileText className="w-12 h-12 text-stone-400 mx-auto mb-3" />
+                  <p className="text-sm text-stone-500">Select a document to begin authoring</p>
                 </div>
               </div>
             )}

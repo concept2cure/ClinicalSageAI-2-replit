@@ -129,7 +129,7 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
             <button
               onClick={fetchQueue}
               disabled={loading}
-              className="p-1 text-zinc-400 hover:text-zinc-600 rounded hover:bg-zinc-100"
+              className="p-1 text-stone-400 hover:text-stone-600 rounded hover:bg-stone-100"
             >
               <RefreshCw className={cn('w-3 h-3', loading && 'animate-spin')} />
             </button>
@@ -142,13 +142,13 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
         {loading ? (
           <LoadingState message="Loading queue…" size="sm" />
         ) : error ? (
-          <div className="flex flex-col items-center justify-center py-8 text-zinc-400">
+          <div className="flex flex-col items-center justify-center py-8 text-stone-400">
             <AlertTriangle className="w-6 h-6 mb-1 text-red-400" />
             <p className="text-[10px] text-red-500">{error}</p>
             <button onClick={fetchQueue} className="text-[10px] text-blue-600 hover:underline mt-1">Retry</button>
           </div>
         ) : totalItems === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-zinc-400">
+          <div className="flex flex-col items-center justify-center py-8 text-stone-400">
             <Inbox className="w-6 h-6 mb-1" />
             <p className="text-[10px]">Queue is empty</p>
           </div>
@@ -185,7 +185,7 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
             {/* Threads */}
             {threads.length > 0 && (
               <div className="mb-3">
-                <p className="text-[9px] text-zinc-400 font-medium mb-1 px-1 flex items-center gap-1">
+                <p className="text-[9px] text-stone-400 font-medium mb-1 px-1 flex items-center gap-1">
                   <MessageSquare className="w-3 h-3" />
                   Threads ({threads.length})
                 </p>
@@ -193,15 +193,15 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
                   <button
                     key={t.threadId}
                     onClick={() => onNavigateToArtifact?.(t.projectId, t.artifactId)}
-                    className="w-full mb-1.5 p-2 bg-white border border-zinc-200 rounded-lg text-left hover:border-blue-200 hover:bg-blue-50/30 transition-colors"
+                    className="w-full mb-1.5 p-2 bg-white border border-stone-200 rounded-lg text-left hover:border-blue-200 hover:bg-blue-50/30 transition-colors"
                   >
-                    <p className="text-[10px] font-medium text-zinc-800 truncate">{t.title}</p>
+                    <p className="text-[10px] font-medium text-stone-800 truncate">{t.title}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-[8px] text-zinc-400 truncate">{t.artifactTitle}</span>
+                      <span className="text-[8px] text-stone-400 truncate">{t.artifactTitle}</span>
                       {t.priority === 'high' && (
                         <AlertTriangle className="w-2.5 h-2.5 text-amber-500 shrink-0" />
                       )}
-                      <span className="text-[8px] text-zinc-400 ml-auto shrink-0">
+                      <span className="text-[8px] text-stone-400 ml-auto shrink-0">
                         {formatTime(t.updatedAt)}
                       </span>
                       <span className="flex items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
@@ -220,7 +220,7 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
                           size="sm"
                         />
                       </span>
-                      <ChevronRight className="w-3 h-3 text-zinc-300 shrink-0" />
+                      <ChevronRight className="w-3 h-3 text-stone-300 shrink-0" />
                     </div>
                   </button>
                 ))}
@@ -230,7 +230,7 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
             {/* Tasks */}
             {tasks.length > 0 && (
               <div>
-                <p className="text-[9px] text-zinc-400 font-medium mb-1 px-1 flex items-center gap-1">
+                <p className="text-[9px] text-stone-400 font-medium mb-1 px-1 flex items-center gap-1">
                   <ListTodo className="w-3 h-3" />
                   Tasks ({tasks.length})
                 </p>
@@ -238,18 +238,18 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
                   <button
                     key={t.taskId}
                     onClick={() => onNavigateToArtifact?.(t.projectId, t.artifactId)}
-                    className="w-full mb-1.5 p-2 bg-white border border-zinc-200 rounded-lg text-left hover:border-blue-200 hover:bg-blue-50/30 transition-colors"
+                    className="w-full mb-1.5 p-2 bg-white border border-stone-200 rounded-lg text-left hover:border-blue-200 hover:bg-blue-50/30 transition-colors"
                   >
-                    <p className="text-[10px] font-medium text-zinc-800 truncate">{t.title}</p>
+                    <p className="text-[10px] font-medium text-stone-800 truncate">{t.title}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-[8px] text-zinc-400 truncate">{t.artifactTitle}</span>
+                      <span className="text-[8px] text-stone-400 truncate">{t.artifactTitle}</span>
                       {t.dueAt && (
-                        <span className="text-[8px] text-zinc-400 flex items-center gap-0.5">
+                        <span className="text-[8px] text-stone-400 flex items-center gap-0.5">
                           <Clock className="w-2.5 h-2.5" />
                           {formatTime(t.dueAt)}
                         </span>
                       )}
-                      <span className="text-[8px] text-zinc-400 ml-auto shrink-0">
+                      <span className="text-[8px] text-stone-400 ml-auto shrink-0">
                         {formatTime(t.updatedAt)}
                       </span>
                       <span className="flex items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
@@ -268,7 +268,7 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
                           size="sm"
                         />
                       </span>
-                      <ChevronRight className="w-3 h-3 text-zinc-300 shrink-0" />
+                      <ChevronRight className="w-3 h-3 text-stone-300 shrink-0" />
                     </div>
                   </button>
                 ))}

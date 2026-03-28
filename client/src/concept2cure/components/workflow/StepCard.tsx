@@ -101,13 +101,13 @@ const STATUS_CONFIG: Record<string, {
   iconBoxClass: string;
   borderClass: string;
 }> = {
-  PENDING: { pillVariant: 'default', pillLabel: 'Pending', iconBoxClass: 'bg-zinc-100 text-zinc-400', borderClass: 'border-zinc-200' },
+  PENDING: { pillVariant: 'default', pillLabel: 'Pending', iconBoxClass: 'bg-stone-100 text-stone-400', borderClass: 'border-stone-200' },
   READY: { pillVariant: 'info', pillLabel: 'Ready', iconBoxClass: 'bg-blue-50 text-blue-500', borderClass: 'border-blue-200' },
   IN_PROGRESS: { pillVariant: 'active', pillLabel: 'In Progress', iconBoxClass: 'bg-blue-100 text-blue-600', borderClass: 'border-blue-300' },
   AWAITING_APPROVAL: { pillVariant: 'warning', pillLabel: 'Awaiting Approval', iconBoxClass: 'bg-amber-100 text-amber-600', borderClass: 'border-amber-300' },
   AWAITING_SIGNATURE: { pillVariant: 'purple', pillLabel: 'Awaiting Signature', iconBoxClass: 'bg-purple-100 text-purple-600', borderClass: 'border-purple-300' },
   COMPLETED: { pillVariant: 'success', pillLabel: 'Completed', iconBoxClass: 'bg-emerald-100 text-emerald-600', borderClass: 'border-emerald-300' },
-  SKIPPED: { pillVariant: 'default', pillLabel: 'Skipped', iconBoxClass: 'bg-zinc-100 text-zinc-400', borderClass: 'border-zinc-200' },
+  SKIPPED: { pillVariant: 'default', pillLabel: 'Skipped', iconBoxClass: 'bg-stone-100 text-stone-400', borderClass: 'border-stone-200' },
   BLOCKED: { pillVariant: 'danger', pillLabel: 'Blocked', iconBoxClass: 'bg-red-100 text-red-600', borderClass: 'border-red-300' },
   FAILED: { pillVariant: 'danger', pillLabel: 'Failed', iconBoxClass: 'bg-red-100 text-red-600', borderClass: 'border-red-300' },
 };
@@ -142,7 +142,7 @@ const SLAIndicator: React.FC<{
   }
 
   return (
-    <div className="flex items-center gap-1.5 text-zinc-500 text-xs">
+    <div className="flex items-center gap-1.5 text-stone-500 text-xs">
       <Clock size={14} />
       <span>Due: {dueDate.toLocaleDateString()}</span>
     </div>
@@ -191,7 +191,7 @@ export const StepCard: React.FC<StepCardProps> = ({
       {/* Header */}
       <button
         type="button"
-        className="w-full text-left px-5 py-4 hover:bg-zinc-50 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+        className="w-full text-left px-5 py-4 hover:bg-stone-50 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
         onClick={onToggleExpand}
         aria-expanded={isExpanded}
         aria-controls={expandedId}
@@ -202,13 +202,13 @@ export const StepCard: React.FC<StepCardProps> = ({
             <IconBox icon={StepIcon} className={config.iconBoxClass} />
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-semibold text-zinc-900">{step.name}</h3>
+                <h3 className="text-base font-semibold text-stone-900">{step.name}</h3>
                 {step.isRequired && <span className="text-xs text-red-500">*</span>}
               </div>
               {step.description && (
-                <p className="text-sm text-zinc-500 mt-1 line-clamp-2">{step.description}</p>
+                <p className="text-sm text-stone-500 mt-1 line-clamp-2">{step.description}</p>
               )}
-              <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-zinc-500">
+              <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-stone-500">
                 {step.phaseName && <span>{step.phaseName}</span>}
                 {(step.assigneeName || step.assigneeRole) && (
                   <span className="flex items-center gap-1">
@@ -216,8 +216,8 @@ export const StepCard: React.FC<StepCardProps> = ({
                     {step.assigneeName || step.assigneeRole}
                   </span>
                 )}
-                <span className="text-zinc-300">&middot;</span>
-                <span className="uppercase tracking-wider font-medium text-zinc-400">Step {step.order}</span>
+                <span className="text-stone-300">&middot;</span>
+                <span className="uppercase tracking-wider font-medium text-stone-400">Step {step.order}</span>
               </div>
             </div>
           </div>
@@ -226,9 +226,9 @@ export const StepCard: React.FC<StepCardProps> = ({
             <StatusPill label={config.pillLabel} variant={config.pillVariant} dot />
             <SLAIndicator slaDueAt={step.slaDueAt} slaBreached={step.slaBreached} status={step.status} />
             {isExpanded ? (
-              <ChevronUp size={16} className="text-zinc-400" />
+              <ChevronUp size={16} className="text-stone-400" />
             ) : (
-              <ChevronDown size={16} className="text-zinc-400" />
+              <ChevronDown size={16} className="text-stone-400" />
             )}
           </div>
         </div>
@@ -240,7 +240,7 @@ export const StepCard: React.FC<StepCardProps> = ({
           {/* Preconditions */}
           {step.preconditions && step.preconditions.length > 0 && (
             <CardSection tint="muted">
-              <h4 className="text-sm font-medium text-zinc-700 mb-2">Preconditions</h4>
+              <h4 className="text-sm font-medium text-stone-700 mb-2">Preconditions</h4>
               <PreconditionBadges preconditions={step.preconditions} compact={false} />
             </CardSection>
           )}
@@ -268,13 +268,13 @@ export const StepCard: React.FC<StepCardProps> = ({
           {/* Linked Artifacts */}
           {step.linkedArtifactIds && step.linkedArtifactIds.length > 0 && (
             <CardSection>
-              <h4 className="text-sm font-medium text-zinc-700 mb-2">Linked Documents</h4>
+              <h4 className="text-sm font-medium text-stone-700 mb-2">Linked Documents</h4>
               <div className="flex flex-wrap gap-2">
                 {step.linkedArtifactIds.map((artifactId) => (
                   <a
                     key={artifactId}
                     href={`/documents/${artifactId}`}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-100 transition-colors duration-150"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 bg-stone-50 text-stone-700 rounded-lg text-xs font-medium hover:bg-stone-100 transition-colors duration-150"
                   >
                     <FileText size={14} />
                     {artifactId.substring(0, 8)}...
@@ -301,14 +301,14 @@ export const StepCard: React.FC<StepCardProps> = ({
           {/* Rejection Input */}
           {showRejectInput && (
             <CardSection tint="warning">
-              <label htmlFor={`reject-${step.id}`} className="block text-sm font-medium text-zinc-700 mb-2">
+              <label htmlFor={`reject-${step.id}`} className="block text-sm font-medium text-stone-700 mb-2">
                 Rejection Reason
               </label>
               <textarea
                 id={`reject-${step.id}`}
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
-                className="w-full px-4 py-2.5 border border-zinc-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-colors duration-150"
+                className="w-full px-4 py-2.5 border border-stone-200 rounded-lg text-sm focus:ring-2 focus:ring-stone-300/20 focus:border-stone-400 outline-none transition-colors duration-150"
                 rows={3}
                 placeholder="Please provide a reason for rejection..."
               />
@@ -337,7 +337,7 @@ export const StepCard: React.FC<StepCardProps> = ({
             <div className="flex flex-wrap items-center gap-2">
               {workflowRunId && (
                 <Link href={`/concept2cure/proofs/${workflowRunId}`}>
-                  <a className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium border border-blue-200 text-blue-700 hover:bg-blue-50 transition-colors duration-150">
+                  <a className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium border border-stone-200 text-stone-700 hover:bg-stone-50 transition-colors duration-150">
                     <ShieldCheck size={16} />
                     View Proof
                   </a>

@@ -150,20 +150,20 @@ export function ReviewerAssignment({
   const isDraft = !currentStatus || currentStatus === 'draft';
 
   return (
-    <div className="flex flex-col bg-white rounded-lg border border-zinc-200 shadow-sm overflow-hidden">
+    <div className="flex flex-col bg-white rounded-lg border border-stone-200 shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-100">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4 text-blue-500" />
-          <h3 className="text-sm font-semibold text-zinc-900">Review Team</h3>
+          <h3 className="text-sm font-semibold text-stone-900">Review Team</h3>
           {reviewers.length > 0 && (
-            <span className="text-[10px] font-medium text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded">
+            <span className="text-[10px] font-medium text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded">
               {progress.completed}/{progress.total}
             </span>
           )}
         </div>
         {onClose && (
-          <button onClick={onClose} className="p-1 text-zinc-400 hover:text-zinc-600">
+          <button onClick={onClose} className="p-1 text-stone-400 hover:text-stone-600">
             <X className="h-3.5 w-3.5" />
           </button>
         )}
@@ -171,17 +171,17 @@ export function ReviewerAssignment({
 
       {/* Review progress bar */}
       {reviewers.length > 0 && (
-        <div className="px-4 py-2 bg-zinc-50 border-b border-zinc-100">
+        <div className="px-4 py-2 bg-stone-50 border-b border-stone-100">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-medium text-zinc-500">Review Progress</span>
+            <span className="text-[10px] font-medium text-stone-500">Review Progress</span>
             <span className={cn(
               'text-[10px] font-semibold',
-              progress.allApproved ? 'text-emerald-600' : 'text-zinc-500',
+              progress.allApproved ? 'text-emerald-600' : 'text-stone-500',
             )}>
               {progress.allApproved ? 'All Approved' : `${progress.completed} of ${progress.total} complete`}
             </span>
           </div>
-          <div className="h-1.5 bg-zinc-200 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-stone-200 rounded-full overflow-hidden">
             <div
               className={cn(
                 'h-full rounded-full transition-all duration-150',
@@ -197,9 +197,9 @@ export function ReviewerAssignment({
       <div className="px-3 py-2 space-y-1.5 max-h-60 overflow-y-auto">
         {reviewers.length === 0 ? (
           <div className="py-6 text-center">
-            <Users className="h-8 w-8 text-zinc-300 mx-auto mb-2" />
-            <p className="text-xs font-medium text-zinc-500">No reviewers assigned</p>
-            <p className="text-[10px] text-zinc-400 mt-0.5">Add team members to start the review process</p>
+            <Users className="h-8 w-8 text-stone-300 mx-auto mb-2" />
+            <p className="text-xs font-medium text-stone-500">No reviewers assigned</p>
+            <p className="text-[10px] text-stone-400 mt-0.5">Add team members to start the review process</p>
           </div>
         ) : (
           reviewers.map(reviewer => {
@@ -209,7 +209,7 @@ export function ReviewerAssignment({
             return (
               <div
                 key={reviewer.id}
-                className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-zinc-50 transition-colors group"
+                className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-stone-50 transition-colors group"
               >
                 {/* Avatar */}
                 <div className={cn(
@@ -222,9 +222,9 @@ export function ReviewerAssignment({
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-xs font-medium text-zinc-900 truncate">{reviewer.name}</p>
+                    <p className="text-xs font-medium text-stone-900 truncate">{reviewer.name}</p>
                     {reviewer.role && (
-                      <span className="text-[9px] text-zinc-400">{reviewer.role}</span>
+                      <span className="text-[9px] text-stone-400">{reviewer.role}</span>
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
@@ -232,13 +232,13 @@ export function ReviewerAssignment({
                     <span className={cn('text-[10px] font-medium', config.color)}>
                       {config.label}
                     </span>
-                    <span className="text-[10px] text-zinc-300">·</span>
-                    <span className="text-[10px] text-zinc-400">
+                    <span className="text-[10px] text-stone-300">·</span>
+                    <span className="text-[10px] text-stone-400">
                       {relativeTime(reviewer.completedAt || reviewer.assignedAt)}
                     </span>
                   </div>
                   {reviewer.comment && (
-                    <p className="text-[10px] text-zinc-500 mt-0.5 truncate italic">
+                    <p className="text-[10px] text-stone-500 mt-0.5 truncate italic">
                       "{reviewer.comment}"
                     </p>
                   )}
@@ -249,7 +249,7 @@ export function ReviewerAssignment({
                   {reviewer.status === 'pending' && onSendReminder && (
                     <button
                       onClick={() => onSendReminder(reviewer.id)}
-                      className="p-1 text-zinc-400 hover:text-blue-600 rounded"
+                      className="p-1 text-stone-400 hover:text-blue-600 rounded"
                       title="Send reminder"
                     >
                       <Send className="h-3 w-3" />
@@ -258,7 +258,7 @@ export function ReviewerAssignment({
                   {onRemoveReviewer && (
                     <button
                       onClick={() => onRemoveReviewer(reviewer.id)}
-                      className="p-1 text-zinc-400 hover:text-red-500 rounded"
+                      className="p-1 text-stone-400 hover:text-red-500 rounded"
                       title="Remove reviewer"
                     >
                       <X className="h-3 w-3" />
@@ -272,7 +272,7 @@ export function ReviewerAssignment({
       </div>
 
       {/* Add reviewer */}
-      <div className="px-3 py-2 border-t border-zinc-100">
+      <div className="px-3 py-2 border-t border-stone-100">
         <div className="relative">
           <button
             onClick={() => setShowAddDropdown(!showAddDropdown)}
@@ -284,20 +284,20 @@ export function ReviewerAssignment({
           </button>
 
           {showAddDropdown && (
-            <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-zinc-200 rounded-lg shadow-lg z-10 overflow-hidden">
-              <div className="p-2 border-b border-zinc-100">
+            <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-stone-200 rounded-lg shadow-lg z-10 overflow-hidden">
+              <div className="p-2 border-b border-stone-100">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Search team members..."
-                  className="w-full px-2 py-1.5 text-xs rounded border border-zinc-200 focus-visible:ring-2 outline-none focus:ring-blue-300"
+                  className="w-full px-2 py-1.5 text-xs rounded border border-stone-200 focus-visible:ring-2 outline-none focus:ring-blue-300"
                   autoFocus
                 />
               </div>
               <div className="max-h-36 overflow-y-auto py-1">
                 {availableMembers.length === 0 ? (
-                  <p className="text-xs text-zinc-400 text-center py-3">
+                  <p className="text-xs text-stone-400 text-center py-3">
                     {teamMembers.length === 0 ? 'No team members configured' : 'All members assigned'}
                   </p>
                 ) : (
@@ -309,7 +309,7 @@ export function ReviewerAssignment({
                         setShowAddDropdown(false);
                         setSearchQuery('');
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-zinc-50 transition-colors duration-150"
+                      className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-stone-50 transition-colors duration-150"
                     >
                       <div className={cn(
                         'h-6 w-6 rounded-full flex items-center justify-center text-white text-[9px] font-semibold shrink-0',
@@ -318,11 +318,11 @@ export function ReviewerAssignment({
                         {getInitials(m.name)}
                       </div>
                       <div className="flex-1 min-w-0 text-left">
-                        <p className="text-xs font-medium text-zinc-700 truncate">{m.name}</p>
-                        <p className="text-[10px] text-zinc-400 truncate">{m.email}</p>
+                        <p className="text-xs font-medium text-stone-700 truncate">{m.name}</p>
+                        <p className="text-[10px] text-stone-400 truncate">{m.email}</p>
                       </div>
                       {m.role && (
-                        <span className="text-[9px] text-zinc-400 shrink-0">{m.role}</span>
+                        <span className="text-[9px] text-stone-400 shrink-0">{m.role}</span>
                       )}
                     </button>
                   ))
@@ -335,7 +335,7 @@ export function ReviewerAssignment({
 
       {/* Submit for review */}
       {isDraft && reviewers.length > 0 && onSubmitForReview && (
-        <div className="px-3 py-2 border-t border-zinc-100 bg-zinc-50">
+        <div className="px-3 py-2 border-t border-stone-100 bg-stone-50">
           <button
             onClick={onSubmitForReview}
             disabled={isSubmitting}

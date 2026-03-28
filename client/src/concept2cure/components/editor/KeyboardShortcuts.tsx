@@ -244,7 +244,7 @@ export function KeyboardShortcutsOverlay({ isOpen, onClose }: KeyboardShortcutsO
                 'w-full pl-9 pr-4 py-2 rounded-lg',
                 'bg-white/5 border border-white/10',
                 'text-sm text-white placeholder:text-white/30',
-                'focus-visible:ring-2 outline-none focus:ring-blue-500/50 focus:border-blue-500/50',
+                'focus-visible:ring-2 outline-none focus:ring-stone-400/50 focus:border-stone-400/50',
                 'transition-colors duration-150',
               )}
             />

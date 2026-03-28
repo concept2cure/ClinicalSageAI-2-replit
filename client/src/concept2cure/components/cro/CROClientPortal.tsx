@@ -290,12 +290,12 @@ const DeliverablesDuePanel: React.FC<{
           'w-full p-3 rounded-lg border text-left transition-colors duration-150',
           isOverdue && 'border-red-300 bg-red-50',
           isUrgent && !isOverdue && 'border-amber-300 bg-amber-50',
-          !isOverdue && !isUrgent && 'border-zinc-200 bg-white hover:bg-zinc-50'
+          !isOverdue && !isUrgent && 'border-stone-200 bg-white hover:bg-stone-50'
         )}
       >
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 text-xs font-medium rounded bg-zinc-100 text-zinc-600">
+            <span className="px-2 py-0.5 text-xs font-medium rounded bg-stone-100 text-stone-600">
               {typeConfig.shortLabel}
             </span>
             <span className={cn('px-2 py-0.5 text-xs font-medium rounded', statusConfig.bgColor, statusConfig.color)}>
@@ -306,22 +306,22 @@ const DeliverablesDuePanel: React.FC<{
             'text-sm font-semibold',
             isOverdue && 'text-red-600',
             isUrgent && !isOverdue && 'text-amber-600',
-            !isOverdue && !isUrgent && 'text-zinc-600'
+            !isOverdue && !isUrgent && 'text-stone-600'
           )}>
             {isOverdue ? `${Math.abs(daysUntil)}d late` : `${daysUntil}d`}
           </div>
         </div>
         
-        <p className="text-sm font-medium text-zinc-900 truncate">{item.deliverable.title}</p>
-        <p className="text-xs text-zinc-500">{item.client.name} • {item.program.compoundName}</p>
+        <p className="text-sm font-medium text-stone-900 truncate">{item.deliverable.title}</p>
+        <p className="text-xs text-stone-500">{item.client.name} • {item.program.compoundName}</p>
         
         {/* Progress Bar */}
         <div className="mt-2">
-          <div className="flex justify-between text-xs text-zinc-500 mb-1">
+          <div className="flex justify-between text-xs text-stone-500 mb-1">
             <span>Progress</span>
             <span>{item.deliverable.completionPct}%</span>
           </div>
-          <div className="h-1.5 bg-zinc-200 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-stone-200 rounded-full overflow-hidden">
             <div
               className={cn(
                 'h-full rounded-full transition-all duration-150',
@@ -338,8 +338,8 @@ const DeliverablesDuePanel: React.FC<{
   };
   
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 p-4">
-      <h3 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+    <div className="bg-white rounded-xl border border-stone-200 p-4">
+      <h3 className="text-sm font-semibold text-stone-900 mb-4 flex items-center gap-2">
         <FileText className="w-4 h-4 text-blue-600" />
         Deliverables Pipeline
       </h3>
@@ -368,7 +368,7 @@ const DeliverablesDuePanel: React.FC<{
         
         {nextTwoWeeks.length > 0 && (
           <div>
-            <p className="text-xs font-semibold text-zinc-500 mb-2">NEXT 2 WEEKS ({nextTwoWeeks.length})</p>
+            <p className="text-xs font-semibold text-stone-500 mb-2">NEXT 2 WEEKS ({nextTwoWeeks.length})</p>
             <div className="space-y-2">
               {nextTwoWeeks.slice(0, 5).map(renderDeliverable)}
             </div>
@@ -410,9 +410,9 @@ const ResourceUtilizationPanel: React.FC<{
   const underUtilized = resources.filter(r => r.currentUtilization < 60);
   
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 p-4">
+    <div className="bg-white rounded-xl border border-stone-200 p-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-zinc-900 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-stone-900 flex items-center gap-2">
           <Users className="w-4 h-4 text-violet-600" />
           Resource Utilization
         </h3>
@@ -452,14 +452,14 @@ const ResourceUtilizationPanel: React.FC<{
           return (
             <div key={role}>
               <div className="flex items-center justify-between text-xs mb-2">
-                <span className="font-medium text-zinc-700">{roleLabels[role] || role}</span>
-                <span className="text-zinc-500">{avgRoleUtil}% avg</span>
+                <span className="font-medium text-stone-700">{roleLabels[role] || role}</span>
+                <span className="text-stone-500">{avgRoleUtil}% avg</span>
               </div>
               <div className="space-y-1.5">
                 {members.map(resource => (
                   <div key={resource.id} className="flex items-center gap-3">
-                    <span className="w-20 text-xs text-zinc-600 truncate">{resource.name.split(' ')[0]}</span>
-                    <div className="flex-1 h-3 bg-zinc-100 rounded-full overflow-hidden">
+                    <span className="w-20 text-xs text-stone-600 truncate">{resource.name.split(' ')[0]}</span>
+                    <div className="flex-1 h-3 bg-stone-100 rounded-full overflow-hidden">
                       <div
                         className={cn(
                           'h-full rounded-full transition-all duration-150',
@@ -474,7 +474,7 @@ const ResourceUtilizationPanel: React.FC<{
                     <span className={cn(
                       'w-10 text-xs font-medium text-right',
                       resource.currentUtilization > 90 && 'text-red-600',
-                      resource.currentUtilization <= 90 && 'text-zinc-600'
+                      resource.currentUtilization <= 90 && 'text-stone-600'
                     )}>
                       {resource.currentUtilization}%
                     </span>
@@ -521,9 +521,9 @@ const ChangeOrdersPanel: React.FC<{
   const totalPendingValue = pending.reduce((sum, c) => sum + c.co.additionalFees, 0);
   
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 p-4">
+    <div className="bg-white rounded-xl border border-stone-200 p-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-zinc-900 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-stone-900 flex items-center gap-2">
           <FileEdit className="w-4 h-4 text-amber-600" />
           Change Orders
         </h3>
@@ -541,27 +541,27 @@ const ChangeOrdersPanel: React.FC<{
             className={cn(
               'p-3 rounded-lg border',
               co.status === 'submitted' && 'border-amber-200 bg-amber-50',
-              co.status === 'draft' && 'border-zinc-200 bg-zinc-50',
+              co.status === 'draft' && 'border-stone-200 bg-stone-50',
               co.status === 'approved' && 'border-green-200 bg-green-50'
             )}
           >
             <div className="flex items-start justify-between mb-1">
               <div>
-                <span className="text-xs font-medium text-zinc-500">{co.number}</span>
-                <p className="text-sm font-medium text-zinc-900">{co.title}</p>
+                <span className="text-xs font-medium text-stone-500">{co.number}</span>
+                <p className="text-sm font-medium text-stone-900">{co.title}</p>
               </div>
               <span className={cn(
                 'px-2 py-0.5 text-xs font-medium rounded-full',
                 co.status === 'submitted' && 'bg-amber-200 text-amber-700',
-                co.status === 'draft' && 'bg-zinc-200 text-zinc-600',
+                co.status === 'draft' && 'bg-stone-200 text-stone-600',
                 co.status === 'approved' && 'bg-green-200 text-green-700'
               )}>
                 {co.status}
               </span>
             </div>
-            <p className="text-xs text-zinc-500">{client.name} • {sow.sowNumber}</p>
+            <p className="text-xs text-stone-500">{client.name} • {sow.sowNumber}</p>
             <div className="mt-2 flex items-center gap-3 text-xs">
-              <span className="text-zinc-600">
+              <span className="text-stone-600">
                 <Clock className="w-3 h-3 inline mr-1" />
                 +{co.additionalHours}h
               </span>
@@ -574,7 +574,7 @@ const ChangeOrdersPanel: React.FC<{
         ))}
         
         {changeOrders.length === 0 && (
-          <p className="text-sm text-zinc-500 text-center py-4 italic">No change orders</p>
+          <p className="text-sm text-stone-500 text-center py-4 italic">No change orders</p>
         )}
       </div>
     </div>
@@ -612,11 +612,11 @@ const ClientCard: React.FC<{
   }, [client]);
   
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+    <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
       {/* Header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between p-4 hover:bg-zinc-50 transition-colors duration-150"
+        className="w-full flex items-center justify-between p-4 hover:bg-stone-50 transition-colors duration-150"
       >
         <div className="flex items-center gap-3">
           <div className={cn(
@@ -635,8 +635,8 @@ const ClientCard: React.FC<{
             )} />
           </div>
           <div className="text-left">
-            <h3 className="text-lg font-semibold text-zinc-900">{client.name}</h3>
-            <p className="text-sm text-zinc-500 capitalize">{client.type} • {client.programs.length} programs</p>
+            <h3 className="text-lg font-semibold text-stone-900">{client.name}</h3>
+            <p className="text-sm text-stone-500 capitalize">{client.type} • {client.programs.length} programs</p>
           </div>
         </div>
         
@@ -651,13 +651,13 @@ const ClientCard: React.FC<{
           
           {/* Active SOWs */}
           <div className="text-right">
-            <p className="text-xs text-zinc-500">Active SOWs</p>
-            <p className="text-lg font-semibold text-zinc-900">{metrics.activeSOWs}</p>
+            <p className="text-xs text-stone-500">Active SOWs</p>
+            <p className="text-lg font-semibold text-stone-900">{metrics.activeSOWs}</p>
           </div>
           
           {/* Contract Value */}
           <div className="text-right">
-            <p className="text-xs text-zinc-500">Contract Value</p>
+            <p className="text-xs text-stone-500">Contract Value</p>
             <p className="text-lg font-semibold text-blue-600">{formatCurrency(metrics.totalContractValue)}</p>
           </div>
           
@@ -669,20 +669,20 @@ const ClientCard: React.FC<{
           )}
           
           {expanded ? (
-            <ChevronDown className="w-5 h-5 text-zinc-400" />
+            <ChevronDown className="w-5 h-5 text-stone-400" />
           ) : (
-            <ChevronRight className="w-5 h-5 text-zinc-400" />
+            <ChevronRight className="w-5 h-5 text-stone-400" />
           )}
         </div>
       </button>
       
       {/* Expanded SOWs */}
       {expanded && (
-        <div className="border-t border-zinc-200 bg-zinc-50 p-4">
+        <div className="border-t border-stone-200 bg-stone-50 p-4">
           <div className="space-y-3">
             {client.programs.map(program => (
               <div key={program.id}>
-                <p className="text-xs font-medium text-zinc-500 mb-2">
+                <p className="text-xs font-medium text-stone-500 mb-2">
                   {program.compoundName} • {program.indication} • {program.developmentPhase}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
@@ -695,13 +695,13 @@ const ClientCard: React.FC<{
                         onClick={() => onSOWClick?.(sow, client)}
                         className={cn(
                           'p-3 rounded-lg border text-left transition-colors duration-150',
-                          sow.status === 'active' && 'bg-white border-zinc-200 hover:border-blue-300',
+                          sow.status === 'active' && 'bg-white border-stone-200 hover:border-blue-300',
                           sow.status === 'complete' && 'bg-green-50 border-green-200',
                           sow.status === 'on_hold' && 'bg-amber-50 border-amber-200'
                         )}
                       >
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-medium text-zinc-500">{sow.sowNumber}</span>
+                          <span className="text-xs font-medium text-stone-500">{sow.sowNumber}</span>
                           <span className={cn(
                             'px-2 py-0.5 text-xs font-medium rounded-full',
                             sow.status === 'active' && 'bg-blue-100 text-blue-700',
@@ -711,14 +711,14 @@ const ClientCard: React.FC<{
                             {sow.status}
                           </span>
                         </div>
-                        <p className="text-sm font-medium text-zinc-900 truncate">{sow.title}</p>
-                        <div className="mt-2 flex items-center gap-3 text-xs text-zinc-500">
+                        <p className="text-sm font-medium text-stone-900 truncate">{sow.title}</p>
+                        <div className="mt-2 flex items-center gap-3 text-xs text-stone-500">
                           <span>{sow.deliverables.length} deliverables</span>
                           <span>{hoursUsed}% hours used</span>
                         </div>
                         
                         {/* Budget Bar */}
-                        <div className="mt-2 h-1 bg-zinc-200 rounded-full overflow-hidden">
+                        <div className="mt-2 h-1 bg-stone-200 rounded-full overflow-hidden">
                           <div
                             className={cn(
                               'h-full rounded-full',
@@ -782,17 +782,17 @@ export const CROClientPortal: React.FC<CROClientPortalProps> = ({
   }, [clients, resources]);
   
   return (
-    <div className={cn('flex flex-col h-full bg-zinc-50', className)}>
+    <div className={cn('flex flex-col h-full bg-stone-50', className)}>
       {/* Header */}
-      <div className="flex-shrink-0 bg-white border-b border-zinc-200 p-4">
+      <div className="flex-shrink-0 bg-white border-b border-stone-200 p-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-semibold text-zinc-900">Client Engagement Portal</h1>
-            <p className="text-sm text-zinc-500">CRO operations dashboard</p>
+            <h1 className="text-xl font-semibold text-stone-900">Client Engagement Portal</h1>
+            <p className="text-sm text-stone-500">CRO operations dashboard</p>
           </div>
           
           <div className="flex items-center gap-2">
-            <button className="px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg">
+            <button className="px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-100 rounded-lg">
               <Filter className="w-4 h-4 inline mr-1" />
               Filter
             </button>
@@ -805,9 +805,9 @@ export const CROClientPortal: React.FC<CROClientPortalProps> = ({
         
         {/* Metrics Bar */}
         <div className="grid grid-cols-6 gap-4">
-          <div className="p-3 bg-zinc-100 rounded-lg">
-            <p className="text-xs text-zinc-500">Clients</p>
-            <p className="text-xl font-semibold text-zinc-900">{metrics.totalClients}</p>
+          <div className="p-3 bg-stone-100 rounded-lg">
+            <p className="text-xs text-stone-500">Clients</p>
+            <p className="text-xl font-semibold text-stone-900">{metrics.totalClients}</p>
           </div>
           <div className="p-3 bg-blue-50 rounded-lg">
             <p className="text-xs text-blue-600">Active SOWs</p>
@@ -817,15 +817,15 @@ export const CROClientPortal: React.FC<CROClientPortalProps> = ({
             <p className="text-xs text-green-600">Contract Value</p>
             <p className="text-xl font-semibold text-green-700">{formatCurrency(metrics.totalContractValue)}</p>
           </div>
-          <div className={cn('p-3 rounded-lg', metrics.overdueDeliverables > 0 ? 'bg-red-50' : 'bg-zinc-100')}>
-            <p className={cn('text-xs', metrics.overdueDeliverables > 0 ? 'text-red-600' : 'text-zinc-500')}>Overdue</p>
-            <p className={cn('text-xl font-semibold', metrics.overdueDeliverables > 0 ? 'text-red-700' : 'text-zinc-900')}>
+          <div className={cn('p-3 rounded-lg', metrics.overdueDeliverables > 0 ? 'bg-red-50' : 'bg-stone-100')}>
+            <p className={cn('text-xs', metrics.overdueDeliverables > 0 ? 'text-red-600' : 'text-stone-500')}>Overdue</p>
+            <p className={cn('text-xl font-semibold', metrics.overdueDeliverables > 0 ? 'text-red-700' : 'text-stone-900')}>
               {metrics.overdueDeliverables}
             </p>
           </div>
-          <div className={cn('p-3 rounded-lg', metrics.pendingCOs > 0 ? 'bg-amber-50' : 'bg-zinc-100')}>
-            <p className={cn('text-xs', metrics.pendingCOs > 0 ? 'text-amber-600' : 'text-zinc-500')}>Pending COs</p>
-            <p className={cn('text-xl font-semibold', metrics.pendingCOs > 0 ? 'text-amber-700' : 'text-zinc-900')}>
+          <div className={cn('p-3 rounded-lg', metrics.pendingCOs > 0 ? 'bg-amber-50' : 'bg-stone-100')}>
+            <p className={cn('text-xs', metrics.pendingCOs > 0 ? 'text-amber-600' : 'text-stone-500')}>Pending COs</p>
+            <p className={cn('text-xl font-semibold', metrics.pendingCOs > 0 ? 'text-amber-700' : 'text-stone-900')}>
               {metrics.pendingCOs}
             </p>
           </div>

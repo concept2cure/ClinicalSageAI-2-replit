@@ -128,7 +128,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   const descId = useId();
 
   const actionVariantClasses = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
+    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-stone-400',
     secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-500',
     destructive: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
   };
@@ -294,7 +294,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
           className="text-xs text-gray-400 mb-4 max-w-md"
           data-testid={`${testId}-details`}
         >
-          <summary className="cursor-pointer hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded">
+          <summary className="cursor-pointer hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-2 rounded">
             Technical details
           </summary>
           <pre
@@ -996,7 +996,7 @@ export const MissingConfigurationState: React.FC<MissingConfigurationStateProps>
       {action && (
         <button
           onClick={action.onClick}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-400"
           type="button"
           data-testid={`${testId}-action`}
         >

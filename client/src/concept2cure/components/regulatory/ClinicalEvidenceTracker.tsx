@@ -638,35 +638,35 @@ export default function ClinicalEvidenceTracker() {
                     </p>
 
                     <div className="overflow-x-auto">
-                      <table className="border-collapse border border-zinc-300 mx-auto">
+                      <table className="border-collapse border border-stone-300 mx-auto">
                         <thead>
                           <tr>
-                            <th className="border border-zinc-300 p-3 bg-muted/50" />
+                            <th className="border border-stone-300 p-3 bg-muted/50" />
                             <th
-                              className="border border-zinc-300 p-3 bg-muted/50 font-semibold text-center"
+                              className="border border-stone-300 p-3 bg-muted/50 font-semibold text-center"
                               colSpan={2}
                             >
                               Reference Standard
                             </th>
                           </tr>
                           <tr>
-                            <th className="border border-zinc-300 p-3 bg-muted/50 font-semibold">
+                            <th className="border border-stone-300 p-3 bg-muted/50 font-semibold">
                               Index Test
                             </th>
-                            <th className="border border-zinc-300 p-3 bg-green-50 font-medium text-center w-[160px]">
+                            <th className="border border-stone-300 p-3 bg-green-50 font-medium text-center w-[160px]">
                               Condition +
                             </th>
-                            <th className="border border-zinc-300 p-3 bg-red-50 font-medium text-center w-[160px]">
+                            <th className="border border-stone-300 p-3 bg-red-50 font-medium text-center w-[160px]">
                               Condition −
                             </th>
                           </tr>
                         </thead>
                         <tbody>
                           <tr>
-                            <td className="border border-zinc-300 p-3 bg-green-50 font-medium">
+                            <td className="border border-stone-300 p-3 bg-green-50 font-medium">
                               Test +
                             </td>
-                            <td className="border border-zinc-300 p-2 bg-green-50/50">
+                            <td className="border border-stone-300 p-2 bg-green-50/50">
                               <div className="text-center">
                                 <Label className="text-xs text-green-700 font-semibold">
                                   True Positive (TP)
@@ -685,7 +685,7 @@ export default function ClinicalEvidenceTracker() {
                                 />
                               </div>
                             </td>
-                            <td className="border border-zinc-300 p-2 bg-red-50/30">
+                            <td className="border border-stone-300 p-2 bg-red-50/30">
                               <div className="text-center">
                                 <Label className="text-xs text-red-700 font-semibold">
                                   False Positive (FP)
@@ -706,10 +706,10 @@ export default function ClinicalEvidenceTracker() {
                             </td>
                           </tr>
                           <tr>
-                            <td className="border border-zinc-300 p-3 bg-red-50 font-medium">
+                            <td className="border border-stone-300 p-3 bg-red-50 font-medium">
                               Test −
                             </td>
-                            <td className="border border-zinc-300 p-2 bg-red-50/30">
+                            <td className="border border-stone-300 p-2 bg-red-50/30">
                               <div className="text-center">
                                 <Label className="text-xs text-red-700 font-semibold">
                                   False Negative (FN)
@@ -728,7 +728,7 @@ export default function ClinicalEvidenceTracker() {
                                 />
                               </div>
                             </td>
-                            <td className="border border-zinc-300 p-2 bg-green-50/50">
+                            <td className="border border-stone-300 p-2 bg-green-50/50">
                               <div className="text-center">
                                 <Label className="text-xs text-green-700 font-semibold">
                                   True Negative (TN)
@@ -751,13 +751,13 @@ export default function ClinicalEvidenceTracker() {
                         </tbody>
                         <tfoot>
                           <tr>
-                            <td className="border border-zinc-300 p-2 bg-muted/50 font-medium text-sm">
+                            <td className="border border-stone-300 p-2 bg-muted/50 font-medium text-sm">
                               Total
                             </td>
-                            <td className="border border-zinc-300 p-2 bg-muted/50 text-center font-mono text-sm">
+                            <td className="border border-stone-300 p-2 bg-muted/50 text-center font-mono text-sm">
                               {table.tp + table.fn}
                             </td>
-                            <td className="border border-zinc-300 p-2 bg-muted/50 text-center font-mono text-sm">
+                            <td className="border border-stone-300 p-2 bg-muted/50 text-center font-mono text-sm">
                               {table.fp + table.tn}
                             </td>
                           </tr>

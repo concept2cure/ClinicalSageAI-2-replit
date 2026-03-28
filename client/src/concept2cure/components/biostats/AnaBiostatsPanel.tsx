@@ -500,7 +500,7 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
         <div className="px-4 pt-3 pb-0">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-zinc-300">AnA Biostats</h3>
+            <h3 className="text-sm font-semibold text-stone-300">AnA Biostats</h3>
             <Badge variant="outline" className="text-xs">{track.replace('_', ' / ')}</Badge>
           </div>
           <TabsList className="grid w-full grid-cols-3 h-8">
@@ -535,7 +535,7 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
           )}
           {/* Track */}
           <div>
-            <Label className="text-xs text-zinc-400">Domain Track</Label>
+            <Label className="text-xs text-stone-400">Domain Track</Label>
             <Select value={track} onValueChange={(v) => { setTrack(v as ClientTrack); setStudyType(STUDY_TYPE_OPTIONS[v as ClientTrack][0].value); setEndpointType(ENDPOINT_OPTIONS[v as ClientTrack][0].value); }}>
               <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -546,7 +546,7 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
 
           {/* Regulatory body */}
           <div>
-            <Label className="text-xs text-zinc-400">Regulatory Body</Label>
+            <Label className="text-xs text-stone-400">Regulatory Body</Label>
             <Select value={regulatoryBody} onValueChange={(v) => setRegulatoryBody(v as RegulatoryBody)}>
               <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -565,7 +565,7 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
 
           {/* Study type */}
           <div>
-            <Label className="text-xs text-zinc-400">Study Type</Label>
+            <Label className="text-xs text-stone-400">Study Type</Label>
             <Select value={studyType} onValueChange={(v) => setStudyType(v as StudyType)}>
               <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -576,7 +576,7 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
 
           {/* Endpoint type */}
           <div>
-            <Label className="text-xs text-zinc-400">Endpoint Type</Label>
+            <Label className="text-xs text-stone-400">Endpoint Type</Label>
             <Select value={endpointType} onValueChange={(v) => setEndpointType(v as EndpointType)}>
               <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -585,9 +585,9 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
             </Select>
           </div>
 
-          <div className="space-y-2 rounded-md border border-zinc-700/60 bg-zinc-900/30 p-3">
-            <p className="text-xs font-medium text-zinc-300">Biostats SME Templates</p>
-            <p className="text-[11px] text-zinc-400">Load regulator-grade defaults for common SAP scenarios.</p>
+          <div className="space-y-2 rounded-md border border-stone-700/60 bg-stone-900/30 p-3">
+            <p className="text-xs font-medium text-stone-300">Biostats SME Templates</p>
+            <p className="text-[11px] text-stone-400">Load regulator-grade defaults for common SAP scenarios.</p>
             <div className="space-y-1">
               {BIOSTATS_TEMPLATES.map(template => (
                 <Button
@@ -608,18 +608,18 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
           {/* Core parameters */}
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label className="text-xs text-zinc-400">Alpha (α)</Label>
+              <Label className="text-xs text-stone-400">Alpha (α)</Label>
               <Input type="number" step="0.01" value={alpha} onChange={e => setAlpha(parseFloat(e.target.value) || 0.05)} className="h-8 text-xs" />
             </div>
             <div>
-              <Label className="text-xs text-zinc-400">Power Target</Label>
+              <Label className="text-xs text-stone-400">Power Target</Label>
               <Input type="number" step="0.05" value={powerTarget} onChange={e => setPowerTarget(parseFloat(e.target.value) || 0.80)} className="h-8 text-xs" />
             </div>
           </div>
 
           {!showDiagnosticFields && (
             <div>
-              <Label className="text-xs text-zinc-400">Effect Size</Label>
+              <Label className="text-xs text-stone-400">Effect Size</Label>
               <Input type="number" step="0.1" value={effectSize} onChange={e => setEffectSize(parseFloat(e.target.value) || 0)} className="h-8 text-xs" />
             </div>
           )}
@@ -627,11 +627,11 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
           {showBinaryFields && (
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label className="text-xs text-zinc-400">Control Rate</Label>
+                <Label className="text-xs text-stone-400">Control Rate</Label>
                 <Input type="number" step="0.05" value={controlRate ?? ''} onChange={e => setControlRate(parseFloat(e.target.value) || undefined)} className="h-8 text-xs" />
               </div>
               <div>
-                <Label className="text-xs text-zinc-400">Treatment Rate</Label>
+                <Label className="text-xs text-stone-400">Treatment Rate</Label>
                 <Input type="number" step="0.05" value={treatmentRate ?? ''} onChange={e => setTreatmentRate(parseFloat(e.target.value) || undefined)} className="h-8 text-xs" />
               </div>
             </div>
@@ -641,16 +641,16 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
             <>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label className="text-xs text-zinc-400">Sensitivity Target</Label>
+                  <Label className="text-xs text-stone-400">Sensitivity Target</Label>
                   <Input type="number" step="0.05" value={sensitivity ?? 0.90} onChange={e => setSensitivity(parseFloat(e.target.value) || undefined)} className="h-8 text-xs" />
                 </div>
                 <div>
-                  <Label className="text-xs text-zinc-400">Specificity Target</Label>
+                  <Label className="text-xs text-stone-400">Specificity Target</Label>
                   <Input type="number" step="0.05" value={specificity ?? 0.90} onChange={e => setSpecificity(parseFloat(e.target.value) || undefined)} className="h-8 text-xs" />
                 </div>
               </div>
               <div>
-                <Label className="text-xs text-zinc-400">Prevalence</Label>
+                <Label className="text-xs text-stone-400">Prevalence</Label>
                 <Input type="number" step="0.05" value={prevalence ?? 0.50} onChange={e => setPrevalence(parseFloat(e.target.value) || undefined)} className="h-8 text-xs" />
               </div>
             </>
@@ -658,18 +658,18 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
 
           {showNIMargin && (
             <div>
-              <Label className="text-xs text-zinc-400">Non-inferiority Margin</Label>
+              <Label className="text-xs text-stone-400">Non-inferiority Margin</Label>
               <Input type="number" step="0.05" value={nonInferiorityMargin ?? ''} onChange={e => setNonInferiorityMargin(parseFloat(e.target.value) || undefined)} className="h-8 text-xs" />
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label className="text-xs text-zinc-400">Attrition Rate</Label>
+              <Label className="text-xs text-stone-400">Attrition Rate</Label>
               <Input type="number" step="0.05" value={attritionRate} onChange={e => setAttritionRate(parseFloat(e.target.value) || 0.15)} className="h-8 text-xs" />
             </div>
             <div>
-              <Label className="text-xs text-zinc-400">Allocation Ratio</Label>
+              <Label className="text-xs text-stone-400">Allocation Ratio</Label>
               <Input type="number" step="0.5" value={allocationRatio} onChange={e => setAllocationRatio(parseFloat(e.target.value) || 1)} className="h-8 text-xs" />
             </div>
           </div>
@@ -677,11 +677,11 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
           {track === 'biotech_pharma' && (
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label className="text-xs text-zinc-400">Indication</Label>
+                <Label className="text-xs text-stone-400">Indication</Label>
                 <Input value={indication} onChange={e => setIndication(e.target.value)} className="h-8 text-xs" placeholder="e.g. NSCLC" />
               </div>
               <div>
-                <Label className="text-xs text-zinc-400">Phase</Label>
+                <Label className="text-xs text-stone-400">Phase</Label>
                 <Select value={phase} onValueChange={setPhase}>
                   <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
                   <SelectContent>
@@ -697,20 +697,20 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
 
           <Separator />
 
-          <div className="space-y-2 rounded-md border border-zinc-700/60 bg-zinc-900/30 p-3">
-            <p className="text-xs font-medium text-zinc-300">SAP Strategy Controls</p>
+          <div className="space-y-2 rounded-md border border-stone-700/60 bg-stone-900/30 p-3">
+            <p className="text-xs font-medium text-stone-300">SAP Strategy Controls</p>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label className="text-xs text-zinc-400">Number of Endpoints</Label>
+                <Label className="text-xs text-stone-400">Number of Endpoints</Label>
                 <Input type="number" min={1} max={10} value={numberOfEndpoints} onChange={e => setNumberOfEndpoints(Math.max(1, Number(e.target.value) || 1))} className="h-8 text-xs" />
               </div>
               <div>
-                <Label className="text-xs text-zinc-400">Expected Missing Rate</Label>
+                <Label className="text-xs text-stone-400">Expected Missing Rate</Label>
                 <Input type="number" step="0.01" min={0} max={0.8} value={expectedMissingRate} onChange={e => setExpectedMissingRate(Math.max(0, Number(e.target.value) || 0))} className="h-8 text-xs" />
               </div>
             </div>
             <div>
-              <Label className="text-xs text-zinc-400">Multiplicity Method</Label>
+              <Label className="text-xs text-stone-400">Multiplicity Method</Label>
               <Select value={multiplicityMethod ?? 'none'} onValueChange={(v) => setMultiplicityMethod(v as StatisticalInput['multiplicityMethod'])}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -723,7 +723,7 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
               </Select>
             </div>
             <div>
-              <Label className="text-xs text-zinc-400">Estimand Strategy</Label>
+              <Label className="text-xs text-stone-400">Estimand Strategy</Label>
               <Select value={estimandStrategy ?? 'treatment_policy'} onValueChange={(v) => setEstimandStrategy(v as StatisticalInput['estimandStrategy'])}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -736,7 +736,7 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
               </Select>
             </div>
             <div>
-              <Label className="text-xs text-zinc-400">Missing Data Method</Label>
+              <Label className="text-xs text-stone-400">Missing Data Method</Label>
               <Select value={missingDataMethod ?? 'MMRM'} onValueChange={(v) => setMissingDataMethod(v as StatisticalInput['missingDataMethod'])}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -749,7 +749,7 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
               </Select>
             </div>
             <div>
-              <Label className="text-xs text-zinc-400">Comparator Type</Label>
+              <Label className="text-xs text-stone-400">Comparator Type</Label>
               <Select value={comparatorType ?? 'active'} onValueChange={(v) => setComparatorType(v as StatisticalInput['comparatorType'])}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -762,22 +762,22 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
             </div>
           </div>
 
-          <div className="space-y-2 rounded-md border border-zinc-700/60 bg-zinc-900/40 p-3">
-            <p className="text-xs font-medium text-zinc-300">Activation & Project Linking</p>
+          <div className="space-y-2 rounded-md border border-stone-700/60 bg-stone-900/40 p-3">
+            <p className="text-xs font-medium text-stone-300">Activation & Project Linking</p>
             <div className="flex items-center justify-between">
-              <Label className="text-xs text-zinc-400">Bind to active project</Label>
+              <Label className="text-xs text-stone-400">Bind to active project</Label>
               <Switch checked={attachToProject} onCheckedChange={setAttachToProject} />
             </div>
             <div className="flex items-center justify-between">
-              <Label className="text-xs text-zinc-400">Require review thread</Label>
+              <Label className="text-xs text-stone-400">Require review thread</Label>
               <Switch checked={reviewRequired} onCheckedChange={setReviewRequired} />
             </div>
             <div className="flex items-center justify-between">
-              <Label className="text-xs text-zinc-400">Auto-attach to dossier when section is available</Label>
+              <Label className="text-xs text-stone-400">Auto-attach to dossier when section is available</Label>
               <Switch checked={autoAttachToDossier} onCheckedChange={setAutoAttachToDossier} />
             </div>
             <div className="flex items-center justify-between">
-              <Label className="text-xs text-zinc-400">Full SAP package mode</Label>
+              <Label className="text-xs text-stone-400">Full SAP package mode</Label>
               <Switch checked={fullSapMode} onCheckedChange={(next) => {
                 const enabled = Boolean(next);
                 setFullSapMode(enabled);
@@ -806,7 +806,7 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
         {/* RESULTS TAB */}
         <TabsContent value="results" className="flex-1 overflow-y-auto px-4 pb-4 space-y-3">
           {!results ? (
-            <div className="text-center text-zinc-500 text-sm py-8">Run a computation to see results</div>
+            <div className="text-center text-stone-500 text-sm py-8">Run a computation to see results</div>
           ) : results.validation && !results.validation.valid ? (
             <Alert variant="destructive">
               <AlertDescription>
@@ -820,32 +820,32 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
             <>
               {/* AnA Interpretation */}
               {results.interpretation && (
-                <Card className="border-zinc-700 bg-zinc-800/50">
+                <Card className="border-stone-700 bg-stone-800/50">
                   <CardContent className="p-3">
-                    <p className="text-sm text-zinc-200">{results.interpretation.summary}</p>
-                    <p className="text-xs text-zinc-400 mt-2">{results.interpretation.confidenceStatement}</p>
+                    <p className="text-sm text-stone-200">{results.interpretation.summary}</p>
+                    <p className="text-xs text-stone-400 mt-2">{results.interpretation.confidenceStatement}</p>
                   </CardContent>
                 </Card>
               )}
 
               {/* Computation Results */}
               {results.computation && (
-                <Card className="border-zinc-700">
+                <Card className="border-stone-700">
                   <CardHeader className="py-2 px-3">
                     <CardTitle className="text-xs font-medium">Computation</CardTitle>
                   </CardHeader>
                   <CardContent className="px-3 pb-3 space-y-1 text-xs">
-                    <div className="flex justify-between"><span className="text-zinc-400">Method</span><span>{results.computation.method}</span></div>
-                    <div className="flex justify-between"><span className="text-zinc-400">Sample Size (total)</span><span className="font-mono font-bold">{results.computation.adjustedTotal ?? results.computation.sampleSize?.total}</span></div>
-                    <div className="flex justify-between"><span className="text-zinc-400">Per Group</span><span className="font-mono">{results.computation.sampleSize?.perGroup}</span></div>
-                    <div className="flex justify-between"><span className="text-zinc-400">Power</span><span className="font-mono">{results.computation.power ? (results.computation.power * 100).toFixed(1) + '%' : 'N/A'}</span></div>
+                    <div className="flex justify-between"><span className="text-stone-400">Method</span><span>{results.computation.method}</span></div>
+                    <div className="flex justify-between"><span className="text-stone-400">Sample Size (total)</span><span className="font-mono font-bold">{results.computation.adjustedTotal ?? results.computation.sampleSize?.total}</span></div>
+                    <div className="flex justify-between"><span className="text-stone-400">Per Group</span><span className="font-mono">{results.computation.sampleSize?.perGroup}</span></div>
+                    <div className="flex justify-between"><span className="text-stone-400">Power</span><span className="font-mono">{results.computation.power ? (results.computation.power * 100).toFixed(1) + '%' : 'N/A'}</span></div>
                   </CardContent>
                 </Card>
               )}
 
               {/* Judgment Summary */}
               {results.judgment && (
-                <Card className="border-zinc-700">
+                <Card className="border-stone-700">
                   <CardHeader className="py-2 px-3">
                     <CardTitle className="text-xs font-medium flex items-center gap-2">
                       Judgment
@@ -853,23 +853,23 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="px-3 pb-3 space-y-1 text-xs">
-                    <div className="flex justify-between"><span className="text-zinc-400">Risk</span><RiskBadge risk={results.judgment.overallRisk} /></div>
-                    <div className="flex justify-between"><span className="text-zinc-400">Action</span><span>{results.judgment.actionRecommendation}</span></div>
-                    <div className="flex justify-between"><span className="text-zinc-400">Fragility</span><span>{results.judgment.fragility?.category} ({results.judgment.fragility?.fragilityIndex})</span></div>
-                    <div className="flex justify-between"><span className="text-zinc-400">Confidence</span><span>{results.judgment.confidence?.level} ({results.judgment.confidence?.score}/100)</span></div>
+                    <div className="flex justify-between"><span className="text-stone-400">Risk</span><RiskBadge risk={results.judgment.overallRisk} /></div>
+                    <div className="flex justify-between"><span className="text-stone-400">Action</span><span>{results.judgment.actionRecommendation}</span></div>
+                    <div className="flex justify-between"><span className="text-stone-400">Fragility</span><span>{results.judgment.fragility?.category} ({results.judgment.fragility?.fragilityIndex})</span></div>
+                    <div className="flex justify-between"><span className="text-stone-400">Confidence</span><span>{results.judgment.confidence?.level} ({results.judgment.confidence?.score}/100)</span></div>
                   </CardContent>
                 </Card>
               )}
 
               {/* Scenarios */}
               {results.computation?.scenarios && results.computation.scenarios.length > 0 && (
-                <Card className="border-zinc-700">
+                <Card className="border-stone-700">
                   <CardHeader className="py-2 px-3">
                     <CardTitle className="text-xs font-medium">Scenarios</CardTitle>
                   </CardHeader>
                   <CardContent className="px-3 pb-3">
                     <table className="w-full text-xs">
-                      <thead><tr className="text-zinc-400"><th className="text-left">Scenario</th><th className="text-right">N</th><th className="text-right">Power</th></tr></thead>
+                      <thead><tr className="text-stone-400"><th className="text-left">Scenario</th><th className="text-right">N</th><th className="text-right">Power</th></tr></thead>
                       <tbody>
                         {results.computation.scenarios.map((s: any, i: number) => (
                           <tr key={i}><td>{s.label}</td><td className="text-right font-mono">{s.sampleSize.total}</td><td className="text-right font-mono">{(s.power * 100).toFixed(0)}%</td></tr>
@@ -882,13 +882,13 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
 
               {/* Suggested next steps */}
               {results.interpretation?.suggestedNextSteps && (
-                <Card className="border-zinc-700">
+                <Card className="border-stone-700">
                   <CardHeader className="py-2 px-3">
                     <CardTitle className="text-xs font-medium">Next Steps</CardTitle>
                   </CardHeader>
                   <CardContent className="px-3 pb-3 space-y-1">
                     {results.interpretation.suggestedNextSteps.map((step: string, i: number) => (
-                      <p key={i} className="text-xs text-zinc-300">{step}</p>
+                      <p key={i} className="text-xs text-stone-300">{step}</p>
                     ))}
                   </CardContent>
                 </Card>
@@ -896,13 +896,13 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
 
               {/* Document generation buttons */}
               <div className="space-y-2">
-                <p className="text-xs text-zinc-400 font-medium">Generate Governed Documents (AnA Biostats)</p>
-                <div className="space-y-1 rounded-md border border-zinc-700/60 bg-zinc-900/40 p-2">
+                <p className="text-xs text-stone-400 font-medium">Generate Governed Documents (AnA Biostats)</p>
+                <div className="space-y-1 rounded-md border border-stone-700/60 bg-stone-900/40 p-2">
                   {DOCUMENT_TYPE_OPTIONS.map(option => {
                     const checked = selectedDocumentTypes.includes(option.value);
                     return (
                       <label key={option.value} className={`flex items-center justify-between gap-2 rounded px-2 py-1 ${fullSapMode ? 'opacity-70' : ''}`}>
-                        <span className="text-xs text-zinc-200">{option.label}</span>
+                        <span className="text-xs text-stone-200">{option.label}</span>
                         <span className="sr-only">{DOCUMENT_TEMPLATE_NOTES[option.value]}</span>
                         <Switch
                           checked={fullSapMode ? SAP_DOCUMENT_TYPES.includes(option.value) : checked}
@@ -913,7 +913,7 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
                     );
                   })}
                 </div>
-                <p className="text-[11px] text-zinc-500">
+                <p className="text-[11px] text-stone-500">
                   {fullSapMode
                     ? 'Full SAP mode generates all SAP-class templates in a governed sequence.'
                     : 'Selected template(s): governed drafts are generated with provenance and workflow actions.'}
@@ -946,14 +946,14 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
         {/* DOCUMENT TAB */}
         <TabsContent value="document" className="flex-1 overflow-y-auto px-4 pb-4">
           {generationHistory.length > 0 && (
-            <div className="mb-3 rounded-md border border-zinc-700/60 bg-zinc-900/40 p-3">
-              <p className="text-xs font-medium text-zinc-300 mb-1">Recent Generated Packages</p>
+            <div className="mb-3 rounded-md border border-stone-700/60 bg-stone-900/40 p-3">
+              <p className="text-xs font-medium text-stone-300 mb-1">Recent Generated Packages</p>
               <div className="space-y-1">
                 {generationHistory.map((item, idx) => (
-                  <div key={`${item.generatedAt}-${idx}`} className="flex items-center justify-between text-[11px] text-zinc-400 gap-2">
+                  <div key={`${item.generatedAt}-${idx}`} className="flex items-center justify-between text-[11px] text-stone-400 gap-2">
                     <div className="min-w-0">
                       <span className="truncate block max-w-[260px]">{item.title}</span>
-                      <span className="text-[10px] text-zinc-500">{item.documentType}{item.artifactId ? ` · Artifact #${item.artifactId}` : ''}</span>
+                      <span className="text-[10px] text-stone-500">{item.documentType}{item.artifactId ? ` · Artifact #${item.artifactId}` : ''}</span>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <span>{new Date(item.generatedAt).toLocaleTimeString()}</span>
@@ -971,15 +971,15 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
           {results?.document ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium text-zinc-200">{results.document.title}</h4>
+                <h4 className="text-sm font-medium text-stone-200">{results.document.title}</h4>
                 <Badge variant="outline" className="text-xs">{results.document.status}</Badge>
               </div>
-              <div className="prose prose-invert prose-sm max-w-none text-xs leading-relaxed whitespace-pre-wrap border border-zinc-700 rounded-md p-3 bg-zinc-900/50">
+              <div className="prose prose-invert prose-sm max-w-none text-xs leading-relaxed whitespace-pre-wrap border border-stone-700 rounded-md p-3 bg-stone-900/50">
                 {results.document.content}
               </div>
               {results.workflowActions && results.workflowActions.length > 0 && (
                 <div className="space-y-1">
-                  <p className="text-xs text-zinc-400 font-medium">Workflow Actions</p>
+                  <p className="text-xs text-stone-400 font-medium">Workflow Actions</p>
                   {results.workflowActions.map((action: any, i: number) => (
                     <div key={i} className="flex items-center gap-2 text-xs">
                       <span className={action.success ? 'text-emerald-400' : 'text-red-400'}>
@@ -1000,7 +1000,7 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated }:
               )}
             </div>
           ) : (
-            <div className="text-center text-zinc-500 text-sm py-8">Generate a document from the Results tab</div>
+            <div className="text-center text-stone-500 text-sm py-8">Generate a document from the Results tab</div>
           )}
         </TabsContent>
       </Tabs>
@@ -1013,7 +1013,7 @@ function VerdictBadge({ verdict }: { verdict: string }) {
     adequate: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
     marginal: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
     inadequate: 'bg-red-500/20 text-red-300 border-red-500/30',
-    insufficient_information: 'bg-zinc-500/20 text-zinc-300 border-zinc-500/30',
+    insufficient_information: 'bg-stone-500/20 text-stone-300 border-stone-500/30',
   };
   return <Badge variant="outline" className={`text-[10px] ${colorMap[verdict] ?? ''}`}>{verdict}</Badge>;
 }

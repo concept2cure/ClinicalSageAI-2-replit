@@ -409,7 +409,7 @@ const AdminHeader: React.FC<HeaderProps> = ({ breadcrumbs }) => (
           <input
             type="text"
             placeholder="Search..."
-            className="pl-9 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="pl-9 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-400"
           />
         </div>
         <Button variant="ghost" size="sm" className="relative">

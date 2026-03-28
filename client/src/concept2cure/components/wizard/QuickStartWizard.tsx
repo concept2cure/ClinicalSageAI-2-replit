@@ -282,8 +282,8 @@ const IndustryStep: React.FC<{
   
   return (
     <div>
-      <h3 className="text-lg font-semibold text-zinc-900 mb-2">Which industry mode fits your team?</h3>
-      <p className="text-sm text-zinc-500 mb-6">This helps us configure the right workflow for your needs.</p>
+      <h3 className="text-lg font-semibold text-stone-900 mb-2">Which industry mode fits your team?</h3>
+      <p className="text-sm text-stone-500 mb-6">This helps us configure the right workflow for your needs.</p>
       
       <div className="grid grid-cols-3 gap-4">
         {options.map(option => {
@@ -298,20 +298,20 @@ const IndustryStep: React.FC<{
                 'p-5 rounded-xl border text-left transition-all duration-150',
                 isSelected
                   ? 'border-blue-500 bg-blue-50'
-                  : 'border-zinc-200 hover:border-blue-300'
+                  : 'border-stone-200 hover:border-blue-300'
               )}
             >
               <Icon className={cn(
                 'w-8 h-8 mb-3',
-                isSelected ? 'text-blue-600' : 'text-zinc-400'
+                isSelected ? 'text-blue-600' : 'text-stone-400'
               )} />
               <h4 className={cn(
                 'font-semibold mb-1',
-                isSelected ? 'text-blue-900' : 'text-zinc-900'
+                isSelected ? 'text-blue-900' : 'text-stone-900'
               )}>
                 {option.label}
               </h4>
-              <p className="text-sm text-zinc-500">{option.description}</p>
+              <p className="text-sm text-stone-500">{option.description}</p>
             </button>
           );
         })}
@@ -338,8 +338,8 @@ const SubmissionTypeStep: React.FC<{
   
   return (
     <div>
-      <h3 className="text-lg font-semibold text-zinc-900 mb-2">What type of submission?</h3>
-      <p className="text-sm text-zinc-500 mb-6">Select the regulatory submission type you're preparing.</p>
+      <h3 className="text-lg font-semibold text-stone-900 mb-2">What type of submission?</h3>
+      <p className="text-sm text-stone-500 mb-6">Select the regulatory submission type you're preparing.</p>
       
       <div className="grid grid-cols-2 gap-3 max-h-[400px] overflow-y-auto">
         {relevantSubmissions.map(([key, config]) => {
@@ -353,13 +353,13 @@ const SubmissionTypeStep: React.FC<{
                 'p-4 rounded-lg border text-left transition-all duration-150',
                 isSelected
                   ? 'border-blue-500 bg-blue-50'
-                  : 'border-zinc-200 hover:border-blue-300'
+                  : 'border-stone-200 hover:border-blue-300'
               )}
             >
               <div className="flex items-start justify-between">
                 <h4 className={cn(
                   'font-medium text-sm',
-                  isSelected ? 'text-blue-900' : 'text-zinc-900'
+                  isSelected ? 'text-blue-900' : 'text-stone-900'
                 )}>
                   {config.label}
                 </h4>
@@ -367,12 +367,12 @@ const SubmissionTypeStep: React.FC<{
                   <Check className="w-4 h-4 text-blue-600 flex-shrink-0" />
                 )}
               </div>
-              <p className="text-xs text-zinc-500 mt-1">{config.description}</p>
+              <p className="text-xs text-stone-500 mt-1">{config.description}</p>
               <div className="flex items-center gap-2 mt-2">
                 {config.regions.map(r => (
                   <span key={r} className="text-sm">{REGION_CONFIG[r].flag}</span>
                 ))}
-                <span className="text-xs text-zinc-400 ml-auto">{config.avgTimeline}</span>
+                <span className="text-xs text-stone-400 ml-auto">{config.avgTimeline}</span>
               </div>
             </button>
           );
@@ -402,12 +402,12 @@ const ProductStep: React.FC<{
 }) => {
   return (
     <div>
-      <h3 className="text-lg font-semibold text-zinc-900 mb-2">Product Information</h3>
-      <p className="text-sm text-zinc-500 mb-6">Tell us about the product for this submission.</p>
+      <h3 className="text-lg font-semibold text-stone-900 mb-2">Product Information</h3>
+      <p className="text-sm text-stone-500 mb-6">Tell us about the product for this submission.</p>
       
       {/* Product Name */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-zinc-700 mb-2">
+        <label className="block text-sm font-medium text-stone-700 mb-2">
           Product Name
         </label>
         <input
@@ -415,13 +415,13 @@ const ProductStep: React.FC<{
           value={productName || ''}
           onChange={(e) => onProductChange(e.target.value)}
           placeholder="e.g., ABC-123, Investigational Drug X"
-          className="w-full px-4 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+          className="w-full px-4 py-2 border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
         />
       </div>
       
       {/* Project Name */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-zinc-700 mb-2">
+        <label className="block text-sm font-medium text-stone-700 mb-2">
           Project Name
         </label>
         <input
@@ -429,13 +429,13 @@ const ProductStep: React.FC<{
           value={projectName || ''}
           onChange={(e) => onProjectChange(e.target.value)}
           placeholder="e.g., ABC-123 IND Filing, Phase 2 Study"
-          className="w-full px-4 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+          className="w-full px-4 py-2 border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
         />
       </div>
       
       {/* Therapeutic Area */}
       <div>
-        <label className="block text-sm font-medium text-zinc-700 mb-2">
+        <label className="block text-sm font-medium text-stone-700 mb-2">
           Therapeutic Area
         </label>
         <div className="grid grid-cols-4 gap-2">
@@ -451,10 +451,10 @@ const ProductStep: React.FC<{
                   'p-3 rounded-lg border text-center transition-all duration-150',
                   isSelected
                     ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-zinc-200 hover:border-blue-300 text-zinc-600'
+                    : 'border-stone-200 hover:border-blue-300 text-stone-600'
                 )}
               >
-                <Icon className={cn('w-5 h-5 mx-auto mb-1', isSelected ? 'text-blue-600' : 'text-zinc-400')} />
+                <Icon className={cn('w-5 h-5 mx-auto mb-1', isSelected ? 'text-blue-600' : 'text-stone-400')} />
                 <span className="text-xs font-medium">{ta.label}</span>
               </button>
             );
@@ -495,12 +495,12 @@ const TimelineStep: React.FC<{
   
   return (
     <div>
-      <h3 className="text-lg font-semibold text-zinc-900 mb-2">Regions & Timeline</h3>
-      <p className="text-sm text-zinc-500 mb-6">Select target regions and your submission date.</p>
+      <h3 className="text-lg font-semibold text-stone-900 mb-2">Regions & Timeline</h3>
+      <p className="text-sm text-stone-500 mb-6">Select target regions and your submission date.</p>
       
       {/* Regions */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-zinc-700 mb-2">
+        <label className="block text-sm font-medium text-stone-700 mb-2">
           Target Regions
         </label>
         <div className="grid grid-cols-3 gap-2">
@@ -515,14 +515,14 @@ const TimelineStep: React.FC<{
                   'p-3 rounded-lg border text-left transition-all duration-150',
                   isSelected
                     ? 'border-blue-500 bg-blue-50'
-                    : 'border-zinc-200 hover:border-blue-300'
+                    : 'border-stone-200 hover:border-blue-300'
                 )}
               >
                 <div className="flex items-center gap-2">
                   <span className="text-xl">{config.flag}</span>
                   <span className={cn(
                     'text-sm font-medium',
-                    isSelected ? 'text-blue-700' : 'text-zinc-700'
+                    isSelected ? 'text-blue-700' : 'text-stone-700'
                   )}>
                     {config.label}
                   </span>
@@ -535,17 +535,17 @@ const TimelineStep: React.FC<{
       
       {/* Target Date */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-zinc-700 mb-2">
+        <label className="block text-sm font-medium text-stone-700 mb-2">
           Target Submission Date
         </label>
         <input
           type="date"
           value={targetDate || ''}
           onChange={(e) => onTargetDateChange(e.target.value)}
-          className="w-full px-4 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+          className="w-full px-4 py-2 border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
         />
         {suggestedTimeline && (
-          <p className="text-xs text-zinc-500 mt-2 flex items-center gap-1">
+          <p className="text-xs text-stone-500 mt-2 flex items-center gap-1">
             <Info className="w-3.5 h-3.5" />
             Typical timeline: {suggestedTimeline}
           </p>
@@ -565,27 +565,27 @@ const SummaryStep: React.FC<{
   
   return (
     <div>
-      <h3 className="text-lg font-semibold text-zinc-900 mb-2">Review & Create</h3>
-      <p className="text-sm text-zinc-500 mb-6">Review your project configuration before creating.</p>
+      <h3 className="text-lg font-semibold text-stone-900 mb-2">Review & Create</h3>
+      <p className="text-sm text-stone-500 mb-6">Review your project configuration before creating.</p>
       
-      <div className="bg-zinc-50 rounded-xl p-6 space-y-4">
-        <div className="flex items-center justify-between pb-4 border-b border-zinc-200">
-          <span className="text-sm text-zinc-500">Project Name</span>
-          <span className="text-sm font-semibold text-zinc-900">{data.projectName || '-'}</span>
+      <div className="bg-stone-50 rounded-xl p-6 space-y-4">
+        <div className="flex items-center justify-between pb-4 border-b border-stone-200">
+          <span className="text-sm text-stone-500">Project Name</span>
+          <span className="text-sm font-semibold text-stone-900">{data.projectName || '-'}</span>
         </div>
         
-        <div className="flex items-center justify-between pb-4 border-b border-zinc-200">
-          <span className="text-sm text-zinc-500">Product</span>
-          <span className="text-sm font-medium text-zinc-900">{data.productName || '-'}</span>
+        <div className="flex items-center justify-between pb-4 border-b border-stone-200">
+          <span className="text-sm text-stone-500">Product</span>
+          <span className="text-sm font-medium text-stone-900">{data.productName || '-'}</span>
         </div>
         
-        <div className="flex items-center justify-between pb-4 border-b border-zinc-200">
-          <span className="text-sm text-zinc-500">Submission Type</span>
+        <div className="flex items-center justify-between pb-4 border-b border-stone-200">
+          <span className="text-sm text-stone-500">Submission Type</span>
           <span className="text-sm font-medium text-blue-600">{submissionConfig?.label || '-'}</span>
         </div>
         
-        <div className="flex items-center justify-between pb-4 border-b border-zinc-200">
-          <span className="text-sm text-zinc-500">Regions</span>
+        <div className="flex items-center justify-between pb-4 border-b border-stone-200">
+          <span className="text-sm text-stone-500">Regions</span>
           <div className="flex items-center gap-1">
             {data.regions?.map(r => (
               <span key={r} className="text-lg">{REGION_CONFIG[r].flag}</span>
@@ -593,19 +593,19 @@ const SummaryStep: React.FC<{
           </div>
         </div>
         
-        <div className="flex items-center justify-between pb-4 border-b border-zinc-200">
-          <span className="text-sm text-zinc-500">Target Date</span>
-          <span className="text-sm font-medium text-zinc-900">
+        <div className="flex items-center justify-between pb-4 border-b border-stone-200">
+          <span className="text-sm text-stone-500">Target Date</span>
+          <span className="text-sm font-medium text-stone-900">
             {data.targetDate ? new Date(data.targetDate).toLocaleDateString() : '-'}
           </span>
         </div>
         
         {submissionConfig && (
           <div className="flex items-center justify-between">
-            <span className="text-sm text-zinc-500">CTD Modules</span>
+            <span className="text-sm text-stone-500">CTD Modules</span>
             <div className="flex items-center gap-1">
               {submissionConfig.modules.map(m => (
-                <span key={m} className="px-2 py-0.5 text-xs font-medium bg-zinc-200 rounded">
+                <span key={m} className="px-2 py-0.5 text-xs font-medium bg-stone-200 rounded">
                   M{m}
                 </span>
               ))}
@@ -683,14 +683,14 @@ export const QuickStartWizard: React.FC<QuickStartWizardProps> = ({
                 'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors duration-150',
                 i + 1 < step && 'bg-blue-600 text-white',
                 i + 1 === step && 'bg-blue-600 text-white ring-4 ring-blue-200',
-                i + 1 > step && 'bg-zinc-200 text-zinc-500'
+                i + 1 > step && 'bg-stone-200 text-stone-500'
               )}>
                 {i + 1 < step ? <Check className="w-4 h-4" /> : i + 1}
               </div>
               {i < totalSteps - 1 && (
                 <div className={cn(
                   'flex-1 h-0.5 transition-colors duration-150',
-                  i + 1 < step ? 'bg-blue-600' : 'bg-zinc-200'
+                  i + 1 < step ? 'bg-blue-600' : 'bg-stone-200'
                 )} />
               )}
             </React.Fragment>
@@ -738,10 +738,10 @@ export const QuickStartWizard: React.FC<QuickStartWizardProps> = ({
       </div>
       
       {/* Footer */}
-      <div className="flex-shrink-0 px-8 py-6 border-t border-zinc-200 flex items-center justify-between">
+      <div className="flex-shrink-0 px-8 py-6 border-t border-stone-200 flex items-center justify-between">
         <button
           onClick={step === 1 ? onCancel : handleBack}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors duration-150"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-stone-600 hover:text-stone-900 transition-colors duration-150"
         >
           <ChevronLeft className="w-4 h-4" />
           {step === 1 ? 'Cancel' : 'Back'}
@@ -754,7 +754,7 @@ export const QuickStartWizard: React.FC<QuickStartWizardProps> = ({
             'flex items-center gap-2 px-6 py-2 text-sm font-medium rounded-lg transition-colors duration-150',
             canProceed()
               ? 'bg-blue-600 text-white hover:bg-blue-700'
-              : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
+              : 'bg-stone-200 text-stone-400 cursor-not-allowed'
           )}
         >
           {step === totalSteps ? 'Create Project' : 'Continue'}

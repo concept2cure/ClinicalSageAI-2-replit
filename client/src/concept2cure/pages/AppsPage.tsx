@@ -101,13 +101,13 @@ export const AppsPage: React.FC<AppsPageProps> = ({
       />
 
       {noProject && (
-        <p className="mt-3 text-sm text-zinc-400">
+        <p className="mt-3 text-sm text-stone-400">
           Select a project to launch apps.
         </p>
       )}
 
       {/* ── Group tabs ─────────────────────────────────────────────── */}
-      <div className="flex items-center gap-1 mt-6 mb-6 border-b border-zinc-100 pb-2">
+      <div className="flex items-center gap-1 mt-6 mb-6 border-b border-stone-100 pb-2">
         {GROUPS.map(group => (
           <button
             key={group.key}
@@ -115,8 +115,8 @@ export const AppsPage: React.FC<AppsPageProps> = ({
             className={cn(
               'px-3 py-1.5 text-xs rounded-md transition-colors',
               activeGroup === group.key
-                ? 'bg-zinc-200 text-zinc-900 font-medium'
-                : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
+                ? 'bg-stone-200 text-stone-900 font-medium'
+                : 'text-stone-500 hover:bg-stone-100 hover:text-stone-700'
             )}
           >
             {group.label}
@@ -139,18 +139,18 @@ export const AppsPage: React.FC<AppsPageProps> = ({
               'w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-colors',
               noProject
                 ? 'opacity-40 cursor-not-allowed'
-                : 'hover:bg-zinc-50 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none'
+                : 'hover:bg-stone-50 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none'
             )}
           >
-            <div className="w-9 h-9 rounded-lg bg-zinc-100 flex items-center justify-center flex-shrink-0">
-              <span className="text-zinc-500">{app.icon}</span>
+            <div className="w-9 h-9 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0">
+              <span className="text-stone-500">{app.icon}</span>
             </div>
             <div className="flex-1 min-w-0">
-              <span className="text-sm font-medium text-zinc-800 block">{app.label}</span>
-              <span className="text-xs text-zinc-400 block mt-0.5">{app.description}</span>
+              <span className="text-sm font-medium text-stone-800 block">{app.label}</span>
+              <span className="text-xs text-stone-400 block mt-0.5">{app.description}</span>
             </div>
             {!noProject && (
-              <ArrowRight className="w-4 h-4 text-zinc-300 flex-shrink-0" />
+              <ArrowRight className="w-4 h-4 text-stone-300 flex-shrink-0" />
             )}
           </button>
         ))}

@@ -88,21 +88,21 @@ function SectionPicker({ selected, onSelect }: SectionPickerProps) {
           }}
           className={cn(
             'w-full flex items-center gap-1 py-[3px] pr-2 text-left transition-colors duration-150',
-            isSelected ? 'bg-blue-100 text-blue-700 font-medium' : 'text-zinc-600 hover:bg-zinc-50'
+            isSelected ? 'bg-blue-100 text-blue-700 font-medium' : 'text-stone-600 hover:bg-stone-50'
           )}
           style={{ paddingLeft: `${4 + depth * 12}px` }}
         >
           {hasChildren ? (
             <ChevronRight
               className={cn(
-                'w-3 h-3 shrink-0 text-zinc-400 transition-transform duration-150',
+                'w-3 h-3 shrink-0 text-stone-400 transition-transform duration-150',
                 isExpanded && 'rotate-90'
               )}
             />
           ) : (
             <span className="w-3 h-3 shrink-0" />
           )}
-          <span className="text-xs text-zinc-400 font-mono shrink-0">{node.ctdSection}</span>
+          <span className="text-xs text-stone-400 font-mono shrink-0">{node.ctdSection}</span>
           <span className="text-xs truncate flex-1">
             {node.label.replace(/^Module \d+ — /, '')}
           </span>
@@ -113,16 +113,16 @@ function SectionPicker({ selected, onSelect }: SectionPickerProps) {
   };
 
   return (
-    <div className="border border-zinc-200 rounded-lg overflow-hidden">
+    <div className="border border-stone-200 rounded-lg overflow-hidden">
       {/* Search */}
-      <div className="flex items-center gap-2 px-2 py-1.5 border-b border-zinc-200 bg-zinc-50/60">
-        <Search className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+      <div className="flex items-center gap-2 px-2 py-1.5 border-b border-stone-200 bg-stone-50/60">
+        <Search className="w-3.5 h-3.5 text-stone-400 shrink-0" />
         <input
           type="text"
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search sections…"
-          className="flex-1 text-xs bg-transparent outline-none placeholder:text-zinc-400"
+          className="flex-1 text-xs bg-transparent outline-none placeholder:text-stone-400"
         />
       </div>
 
@@ -130,7 +130,7 @@ function SectionPicker({ selected, onSelect }: SectionPickerProps) {
       <div className="max-h-[240px] overflow-y-auto">
         {filteredNodes ? (
           filteredNodes.length === 0 ? (
-            <p className="px-3 py-4 text-xs text-zinc-400 text-center">No matching sections</p>
+            <p className="px-3 py-4 text-xs text-stone-400 text-center">No matching sections</p>
           ) : (
             filteredNodes.map(n => (
               <button
@@ -140,10 +140,10 @@ function SectionPicker({ selected, onSelect }: SectionPickerProps) {
                   'w-full flex items-center gap-1.5 px-3 py-1.5 text-left transition-colors duration-150',
                   selected === n.ctdSection
                     ? 'bg-blue-100 text-blue-700'
-                    : 'text-zinc-600 hover:bg-zinc-50'
+                    : 'text-stone-600 hover:bg-stone-50'
                 )}
               >
-                <span className="text-xs text-zinc-400 font-mono shrink-0">{n.ctdSection}</span>
+                <span className="text-xs text-stone-400 font-mono shrink-0">{n.ctdSection}</span>
                 <span className="text-xs truncate flex-1">{n.label}</span>
               </button>
             ))
@@ -267,36 +267,36 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
             ) : (
               <ShieldCheck className="w-4 h-4 text-blue-600" />
             )}
-            <h3 id="placement-dialog-title" className="text-[14px] font-semibold text-zinc-900">
+            <h3 id="placement-dialog-title" className="text-[14px] font-semibold text-stone-900">
               {config.label}
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded hover:bg-white/60 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            className="p-1.5 rounded hover:bg-white/60 transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
             aria-label="Close dialog"
           >
-            <X className="w-4 h-4 text-zinc-500" />
+            <X className="w-4 h-4 text-stone-500" />
           </button>
         </div>
 
         {/* Body */}
         <div className="px-5 py-4 space-y-4">
-          <p className="text-sm text-zinc-500 leading-relaxed">{config.description}</p>
+          <p className="text-sm text-stone-500 leading-relaxed">{config.description}</p>
 
           {/* Document info */}
-          <div className="bg-zinc-50 rounded-lg px-3 py-2">
-            <p className="text-xs text-zinc-400">Document</p>
-            <p className="text-sm font-medium text-zinc-900 truncate">{artifact.title}</p>
+          <div className="bg-stone-50 rounded-lg px-3 py-2">
+            <p className="text-xs text-stone-400">Document</p>
+            <p className="text-sm font-medium text-stone-900 truncate">{artifact.title}</p>
             {currentSection && (
-              <p className="text-xs text-zinc-400 mt-0.5">
+              <p className="text-xs text-stone-400 mt-0.5">
                 Currently at: <span className="font-mono">{currentSection}</span> —{' '}
                 {getSectionLabel(currentSection)}
               </p>
             )}
             {artifact.status && (
-              <p className="text-xs text-zinc-400 mt-0.5">
-                Status: <span className="font-medium text-zinc-600">{artifact.status}</span>
+              <p className="text-xs text-stone-400 mt-0.5">
+                Status: <span className="font-medium text-stone-600">{artifact.status}</span>
                 {artifact.version ? ` · v${artifact.version}` : ''}
               </p>
             )}
@@ -365,19 +365,19 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
             >
               {currentSection && (
                 <div className="flex-1 text-center">
-                  <p className="text-xs text-zinc-400">From</p>
-                  <p className="text-xs font-mono font-medium text-zinc-700">
+                  <p className="text-xs text-stone-400">From</p>
+                  <p className="text-xs font-mono font-medium text-stone-700">
                     {currentSection}
                   </p>
-                  <p className="text-xs text-zinc-400 truncate">
+                  <p className="text-xs text-stone-400 truncate">
                     {getSectionLabel(currentSection)}
                   </p>
                 </div>
               )}
               {!currentSection && (
                 <div className="flex-1 text-center">
-                  <p className="text-xs text-zinc-400">From</p>
-                  <p className="text-xs font-medium text-zinc-400 italic">Unplaced</p>
+                  <p className="text-xs text-stone-400">From</p>
+                  <p className="text-xs font-medium text-stone-400 italic">Unplaced</p>
                 </div>
               )}
               <ArrowRight
@@ -387,9 +387,9 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
                 )}
               />
               <div className="flex-1 text-center">
-                <p className="text-xs text-zinc-400">To</p>
+                <p className="text-xs text-stone-400">To</p>
                 <p className="text-xs font-mono font-medium text-blue-700">{selectedSection}</p>
-                <p className="text-xs text-zinc-400 truncate">
+                <p className="text-xs text-stone-400 truncate">
                   {getSectionLabel(selectedSection)}
                 </p>
               </div>
@@ -398,7 +398,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
 
           {/* Target section picker */}
           <div>
-            <label className="text-xs font-medium text-zinc-600 mb-1.5 block">
+            <label className="text-xs font-medium text-stone-600 mb-1.5 block">
               Target CTD Section
             </label>
             <SectionPicker selected={selectedSection} onSelect={setSelectedSection} />
@@ -406,7 +406,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
 
           {/* Reason */}
           <div>
-            <label className="text-xs font-medium text-zinc-600 mb-1.5 block">
+            <label className="text-xs font-medium text-stone-600 mb-1.5 block">
               Reason for {operation === 'relocate' ? 'relocation' : 'placement'}
               <span className="text-red-500"> *</span>
             </label>
@@ -414,23 +414,23 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
               value={reason}
               onChange={e => setReason(e.target.value)}
               placeholder="Provide justification (min 5 characters)…"
-              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg resize-none h-16 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 transition-shadow duration-150"
+              className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg resize-none h-16 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none/30 transition-shadow duration-150"
             />
             <div className="flex items-center justify-between mt-1">
               <span
                 className={cn(
                   'text-xs tabular-nums',
-                  reason.trim().length < 5 ? 'text-zinc-400' : 'text-emerald-500'
+                  reason.trim().length < 5 ? 'text-stone-400' : 'text-emerald-500'
                 )}
               >
                 {reason.trim().length}/5 min
               </span>
-              <span className="text-xs text-zinc-400">⌘Enter to confirm</span>
+              <span className="text-xs text-stone-400">⌘Enter to confirm</span>
             </div>
           </div>
 
           {/* Audit notice */}
-          <div className="flex items-start gap-2 text-xs text-zinc-400 leading-relaxed">
+          <div className="flex items-start gap-2 text-xs text-stone-400 leading-relaxed">
             <ShieldCheck className="w-3.5 h-3.5 shrink-0 mt-0.5" />
             <span>
               This action will be recorded in the provenance audit trail with your identity,
@@ -440,10 +440,10 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-zinc-200 bg-zinc-50/60">
+        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-stone-200 bg-stone-50/60">
           <button
             onClick={onClose}
-            className="px-3 py-1.5 text-sm text-zinc-600 rounded-lg hover:bg-zinc-100 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            className="px-3 py-1.5 text-sm text-stone-600 rounded-lg hover:bg-stone-100 transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
           >
             Cancel
           </button>
@@ -453,8 +453,8 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
             className={cn(
               'px-4 py-1.5 text-sm font-medium rounded-lg transition-colors duration-150',
               canConfirm && !loading
-                ? 'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none'
-                : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
+                ? 'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 focus-visible:outline-none'
+                : 'bg-stone-200 text-stone-400 cursor-not-allowed'
             )}
           >
             {loading ? 'Processing…' : `Confirm ${config.label}`}

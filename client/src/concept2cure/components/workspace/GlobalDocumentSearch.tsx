@@ -182,37 +182,37 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
         transition={{ duration: 0.15, ease: [0.2, 0, 0, 1] }}
         className="fixed top-[10%] left-1/2 -translate-x-1/2 w-full max-w-2xl bg-white rounded-xl shadow-lg overflow-hidden z-50">
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-4 border-b border-zinc-200">
-          <Search className="w-5 h-5 text-zinc-400 shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-4 border-b border-stone-200">
+          <Search className="w-5 h-5 text-stone-400 shrink-0" />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Search all documents across projects..."
-            className="flex-1 text-base bg-transparent border-none outline-none text-zinc-900 placeholder:text-zinc-400"
+            className="flex-1 text-base bg-transparent border-none outline-none text-stone-900 placeholder:text-stone-400"
           />
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
               'p-1.5 rounded-md transition-colors duration-150',
-              showFilters ? 'bg-blue-100 text-blue-600' : 'text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100'
+              showFilters ? 'bg-blue-100 text-blue-600' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100'
             )}
           >
             <Filter className="w-4 h-4" />
           </button>
-          <kbd className="hidden sm:flex items-center px-2 py-1 text-xs text-zinc-400 bg-zinc-100 rounded-md">
+          <kbd className="hidden sm:flex items-center px-2 py-1 text-xs text-stone-400 bg-stone-100 rounded-md">
             ESC
           </kbd>
         </div>
 
         {/* Filters */}
         {showFilters && (
-          <div className="flex items-center gap-3 px-4 py-2.5 border-b border-zinc-100 bg-zinc-50/60">
+          <div className="flex items-center gap-3 px-4 py-2.5 border-b border-stone-100 bg-stone-50/60">
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
-              className="px-2.5 py-1.5 text-xs border border-zinc-200 rounded-lg bg-white focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30"
+              className="px-2.5 py-1.5 text-xs border border-stone-200 rounded-lg bg-white focus-visible:ring-2 focus-visible:ring-stone-400 outline-none/30"
             >
               <option value="all">All Status</option>
               <option value="draft">Draft</option>
@@ -223,7 +223,7 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
             <select
               value={projectFilter}
               onChange={e => setProjectFilter(e.target.value)}
-              className="px-2.5 py-1.5 text-xs border border-zinc-200 rounded-lg bg-white focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 max-w-[200px]"
+              className="px-2.5 py-1.5 text-xs border border-stone-200 rounded-lg bg-white focus-visible:ring-2 focus-visible:ring-stone-400 outline-none/30 max-w-[200px]"
             >
               <option value="all">All Projects</option>
               {projects.map(([id, name]) => (
@@ -233,7 +233,7 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
             {(statusFilter !== 'all' || projectFilter !== 'all') && (
               <button
                 onClick={() => { setStatusFilter('all'); setProjectFilter('all'); }}
-                className="text-xs text-zinc-500 hover:text-zinc-700"
+                className="text-xs text-stone-500 hover:text-stone-700"
               >
                 Clear filters
               </button>
@@ -247,18 +247,18 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
             <LoadingState message="Searching documents…" size="sm" />
           ) : results.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center px-6">
-              <Search className="w-10 h-10 text-zinc-300 mb-3" />
-              <p className="text-sm font-medium text-zinc-500">
+              <Search className="w-10 h-10 text-stone-300 mb-3" />
+              <p className="text-sm font-medium text-stone-500">
                 {allDocs.length === 0 ? 'No documents found' : `No results for "${query}"`}
               </p>
-              <p className="text-xs text-zinc-400 mt-1">
+              <p className="text-xs text-stone-400 mt-1">
                 {allDocs.length === 0 ? 'Create documents in a project to search them here.' : 'Try a different search term or adjust filters.'}
               </p>
             </div>
           ) : (
             <div className="py-1">
               <div className="px-4 py-2">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">
                   {results.length} result{results.length !== 1 ? 's' : ''}
                   {allDocs.length > results.length && ` of ${allDocs.length}`}
                 </span>
@@ -272,15 +272,15 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
                   <button
                     key={doc.id}
                     onClick={() => handleSelect(doc)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-zinc-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-inset"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-stone-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40 focus-visible:ring-inset"
                   >
-                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center">
-                      <FileText className="w-4 h-4 text-zinc-500" />
+                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center">
+                      <FileText className="w-4 h-4 text-stone-500" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-zinc-900 truncate">{doc.title}</p>
+                      <p className="text-sm font-medium text-stone-900 truncate">{doc.title}</p>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="flex items-center gap-1 text-[10px] text-zinc-400">
+                        <span className="flex items-center gap-1 text-[10px] text-stone-400">
                           <FolderOpen className="w-2.5 h-2.5" />
                           {doc.projectName}
                         </span>
@@ -290,7 +290,7 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
                           </span>
                         )}
                         {doc.version != null && (
-                          <span className="text-[10px] text-zinc-400 tabular-nums">v{doc.version}</span>
+                          <span className="text-[10px] text-stone-400 tabular-nums">v{doc.version}</span>
                         )}
                       </div>
                     </div>
@@ -298,7 +298,7 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
                       <StatusIcon className="w-2.5 h-2.5" />
                       {status.charAt(0).toUpperCase() + status.slice(1)}
                     </span>
-                    <ChevronRight className="w-4 h-4 text-zinc-300 shrink-0" />
+                    <ChevronRight className="w-4 h-4 text-stone-300 shrink-0" />
                   </button>
                 );
               })}
@@ -307,12 +307,12 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-200 bg-zinc-50">
-          <span className="text-xs text-zinc-500">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-stone-200 bg-stone-50">
+          <span className="text-xs text-stone-500">
             {allDocs.length} total document{allDocs.length !== 1 ? 's' : ''} across {projects.length} project{projects.length !== 1 ? 's' : ''}
           </span>
-          <div className="flex items-center gap-1 text-xs text-zinc-400">
-            <kbd className="px-1.5 py-0.5 bg-zinc-200 rounded text-zinc-600">↵</kbd>
+          <div className="flex items-center gap-1 text-xs text-stone-400">
+            <kbd className="px-1.5 py-0.5 bg-stone-200 rounded text-stone-600">↵</kbd>
             <span>Open</span>
           </div>
         </div>

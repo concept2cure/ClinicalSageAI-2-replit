@@ -54,13 +54,13 @@ const FEATURES = [
 
 export function FeaturesSection() {
   return (
-    <Section id="features" className="py-24 px-6 bg-white border-t border-zinc-200/60">
+    <Section id="features" className="py-24 px-6 bg-white border-t border-stone-200/60">
       <div className="max-w-6xl mx-auto">
         <motion.div variants={fadeUp} className="text-center mb-14">
-          <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
+          <h2 className="text-3xl sm:text-4xl font-bold text-stone-900 mb-4">
             Everything you need for regulatory submissions
           </h2>
-          <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
+          <p className="text-lg text-stone-600 max-w-2xl mx-auto">
             Six integrated capabilities that replace the fragmented toolchain most teams struggle
             with today.
           </p>
@@ -71,7 +71,7 @@ export function FeaturesSection() {
             <motion.div
               key={f.title}
               variants={fadeUp}
-              className="group p-6 rounded-2xl bg-zinc-50 border border-zinc-100 hover:bg-white hover:border-blue-200 hover:shadow-lg hover:shadow-blue-600/5 transition-all duration-200"
+              className="group p-6 rounded-2xl bg-stone-50 border border-stone-100 hover:bg-white hover:border-blue-200 hover:shadow-lg hover:shadow-blue-600/5 transition-all duration-200"
             >
               <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center mb-4 group-hover:bg-blue-600 transition-colors">
                 <svg
@@ -85,8 +85,8 @@ export function FeaturesSection() {
                   <path strokeLinecap="round" strokeLinejoin="round" d={f.iconPath} />
                 </svg>
               </div>
-              <h3 className="text-base font-semibold text-zinc-900 mb-2">{f.title}</h3>
-              <p className="text-sm text-zinc-600 leading-relaxed">{f.description}</p>
+              <h3 className="text-base font-semibold text-stone-900 mb-2">{f.title}</h3>
+              <p className="text-sm text-stone-600 leading-relaxed">{f.description}</p>
             </motion.div>
           ))}
         </div>

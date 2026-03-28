@@ -170,12 +170,12 @@ function NodeIcon({ nodeType, isExpanded }: { nodeType: string; isExpanded: bool
   if (nodeType === 'module') return <Package className="w-3.5 h-3.5 text-blue-500 shrink-0" />;
   if (nodeType === 'section') {
     return isExpanded ? (
-      <FolderOpen className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+      <FolderOpen className="w-3.5 h-3.5 text-stone-400 shrink-0" />
     ) : (
-      <Folder className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+      <Folder className="w-3.5 h-3.5 text-stone-400 shrink-0" />
     );
   }
-  return <FileText className="w-3.5 h-3.5 text-zinc-400 shrink-0" />;
+  return <FileText className="w-3.5 h-3.5 text-stone-400 shrink-0" />;
 }
 
 // ── Context menu ─────────────────────────────────────────────────────────────
@@ -249,10 +249,10 @@ function DossierNodeRow({
         }}
         onContextMenu={e => onContextMenu(e, node)}
         className={cn(
-          'w-full flex items-center gap-1 py-[4px] pr-2 text-left transition-all duration-150 group focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 focus-visible:outline-none',
+          'w-full flex items-center gap-1 py-[4px] pr-2 text-left transition-all duration-150 group focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-400 focus-visible:outline-none',
           isSelected
             ? 'bg-blue-50 text-blue-700'
-            : 'text-zinc-600 hover:bg-zinc-50 hover:translate-x-px'
+            : 'text-stone-600 hover:bg-stone-50 hover:translate-x-px'
         )}
         style={{ paddingLeft: `${8 + depth * 14}px` }}
         data-testid={`dossier-node-${node.ctdSection}`}
@@ -263,7 +263,7 @@ function DossierNodeRow({
         {hasChildren ? (
           <ChevronRight
             className={cn(
-              'w-3 h-3 shrink-0 text-zinc-400 transition-transform duration-150',
+              'w-3 h-3 shrink-0 text-stone-400 transition-transform duration-150',
               isExpanded && 'rotate-90'
             )}
           />
@@ -274,7 +274,7 @@ function DossierNodeRow({
         <NodeIcon nodeType={node.nodeType} isExpanded={isExpanded} />
 
         {/* Section number */}
-        <span className="text-xs text-zinc-400 font-mono shrink-0 min-w-[28px]">
+        <span className="text-xs text-stone-400 font-mono shrink-0 min-w-[28px]">
           {node.ctdSection}
         </span>
 
@@ -285,7 +285,7 @@ function DossierNodeRow({
 
         {/* Count badge */}
         {docCount > 0 && (
-          <span className="text-xs tabular-nums text-zinc-400 shrink-0 bg-zinc-100 rounded px-1">
+          <span className="text-xs tabular-nums text-stone-400 shrink-0 bg-stone-100 rounded px-1">
             {docCount}
           </span>
         )}
@@ -343,7 +343,7 @@ function DossierNodeRow({
           return (
             <span className="flex items-center gap-1 shrink-0" title={`${pct}% complete — ${approved}/${total} approved`}>
               <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', dotColor)} />
-              <span className="w-[28px] h-[4px] bg-zinc-100 rounded-full overflow-hidden">
+              <span className="w-[28px] h-[4px] bg-stone-100 rounded-full overflow-hidden">
                 <span
                   className={cn('block h-full rounded-full', barColor)}
                   style={{ width: `${pct}%` }}
@@ -404,7 +404,7 @@ function DossierNodeRow({
 
         {/* Action dot */}
         <span className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-          <MoreHorizontal className="w-3 h-3 text-zinc-400" />
+          <MoreHorizontal className="w-3 h-3 text-stone-400" />
         </span>
       </button>
 
@@ -494,11 +494,11 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
       onClick={closeContextMenu}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-3 h-8 border-b border-zinc-200 bg-zinc-50/60 shrink-0">
-        <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+      <div className="flex items-center justify-between px-3 h-8 border-b border-stone-200 bg-stone-50/60 shrink-0">
+        <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
           eCTD Dossier
         </span>
-        <span className="text-xs text-zinc-400 tabular-nums">{artifacts.length} docs</span>
+        <span className="text-xs text-stone-400 tabular-nums">{artifacts.length} docs</span>
       </div>
       {/* Tree body */}
       <div className="flex-1 overflow-y-auto py-1 zen-scroll" data-testid="dossier-tree-body">
@@ -520,21 +520,21 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
       {/* Context menu overlay */}
       {contextMenu && (
         <div
-          className="fixed z-50 bg-white border border-zinc-200 rounded-lg shadow-lg py-1 min-w-[180px] animate-in fade-in slide-in-from-top-1 duration-150"
+          className="fixed z-50 bg-white border border-stone-200 rounded-lg shadow-lg py-1 min-w-[180px] animate-in fade-in slide-in-from-top-1 duration-150"
           style={{ left: contextMenu.x, top: contextMenu.y }}
           onClick={e => e.stopPropagation()}
           role="menu"
           aria-label="Section actions"
         >
-          <div className="px-3 py-1.5 border-b border-zinc-200">
-            <p className="text-xs text-zinc-400 font-mono">{contextMenu.ctdSection}</p>
-            <p className="text-xs text-zinc-600 truncate">{contextMenu.label}</p>
+          <div className="px-3 py-1.5 border-b border-stone-200">
+            <p className="text-xs text-stone-400 font-mono">{contextMenu.ctdSection}</p>
+            <p className="text-xs text-stone-600 truncate">{contextMenu.label}</p>
             {metrics?.[contextMenu.ctdSection] && (
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs text-zinc-400">
+                <span className="text-xs text-stone-400">
                   {metrics[contextMenu.ctdSection].completionPercent}% complete
                 </span>
-                <span className="w-[40px] h-[3px] bg-zinc-100 rounded-full overflow-hidden">
+                <span className="w-[40px] h-[3px] bg-stone-100 rounded-full overflow-hidden">
                   <span
                     className="block h-full bg-blue-500 rounded-full"
                     style={{
@@ -551,7 +551,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 onPlaceArtifact(contextMenu.ctdSection);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-zinc-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-2 focus-visible:bg-blue-50 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-2 focus-visible:bg-blue-50 focus-visible:outline-none"
               role="menuitem"
             >
               <MapPin className="w-3 h-3" />
@@ -576,7 +576,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
               onSelectSection(contextMenu.ctdSection, contextMenu.label);
               closeContextMenu();
             }}
-            className="w-full text-left px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 transition-colors flex items-center gap-2 focus-visible:bg-zinc-50 focus-visible:outline-none"
+            className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-stone-50 transition-colors flex items-center gap-2 focus-visible:bg-stone-50 focus-visible:outline-none"
             role="menuitem"
           >
             <FileText className="w-3 h-3" />
@@ -588,7 +588,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 onViewRequirements(contextMenu.ctdSection);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 transition-colors flex items-center gap-2 focus-visible:bg-zinc-50 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-stone-50 transition-colors flex items-center gap-2 focus-visible:bg-stone-50 focus-visible:outline-none"
               role="menuitem"
             >
               <Info className="w-3 h-3" />
@@ -636,7 +636,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
           )}
           <button
             onClick={closeContextMenu}
-            className="w-full text-left px-3 py-1.5 text-sm text-zinc-400 hover:bg-zinc-50 transition-colors focus-visible:bg-zinc-50 focus-visible:outline-none"
+            className="w-full text-left px-3 py-1.5 text-sm text-stone-400 hover:bg-stone-50 transition-colors focus-visible:bg-stone-50 focus-visible:outline-none"
             role="menuitem"
           >
             Cancel

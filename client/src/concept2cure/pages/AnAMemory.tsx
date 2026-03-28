@@ -258,14 +258,14 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">
+                <h1 className="text-2xl font-semibold text-stone-900 tracking-tight">
                   AnA Memory
                 </h1>
                 <span className="inline-flex items-center rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-700 border border-blue-200">
                   AnA v1.0
                 </span>
               </div>
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-stone-500">
                 What AnA remembers about your project
               </p>
             </div>
@@ -283,7 +283,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
         {loading && (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-6 w-6 animate-spin text-violet-500" />
-            <span className="ml-3 text-sm text-zinc-500">
+            <span className="ml-3 text-sm text-stone-500">
               Loading memories...
             </span>
           </div>
@@ -292,10 +292,10 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
         {!loading && (
           <div className="space-y-6">
             {/* Project Context Card */}
-            <div className="rounded-xl border border-zinc-200 bg-white p-5">
+            <div className="rounded-xl border border-stone-200 bg-white p-5">
               <div className="flex items-center gap-2 mb-5">
-                <Tag className="h-4 w-4 text-zinc-500" />
-                <h2 className="text-sm font-semibold text-zinc-900">
+                <Tag className="h-4 w-4 text-stone-500" />
+                <h2 className="text-sm font-semibold text-stone-900">
                   Project Context
                 </h2>
               </div>
@@ -303,9 +303,9 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                 {contextFields.map(({ key, label }) => (
                   <div
                     key={key}
-                    className="group rounded-lg border border-zinc-200 bg-zinc-50/50 px-4 py-3"
+                    className="group rounded-lg border border-stone-200 bg-stone-50/50 px-4 py-3"
                   >
-                    <p className="text-xs font-medium text-zinc-500 mb-1">
+                    <p className="text-xs font-medium text-stone-500 mb-1">
                       {label}
                     </p>
                     {editingField === key ? (
@@ -319,7 +319,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                             if (e.key === 'Escape') cancelEdit();
                           }}
                           autoFocus
-                          className="flex-1 rounded border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-900 focus:border-blue-400 focus-visible:ring-2 outline-none focus:ring-blue-100"
+                          className="flex-1 rounded border border-stone-300 bg-white px-2 py-1 text-sm text-stone-900 focus:border-blue-400 focus-visible:ring-2 outline-none focus:ring-blue-100"
                         />
                         <button
                           onClick={saveEdit}
@@ -329,23 +329,23 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                         </button>
                         <button
                           onClick={cancelEdit}
-                          className="rounded p-1 text-zinc-400 hover:bg-zinc-100 transition-colors duration-150"
+                          className="rounded p-1 text-stone-400 hover:bg-stone-100 transition-colors duration-150"
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     ) : (
                       <div className="flex items-center justify-between">
-                        <p className="text-sm text-zinc-900">
+                        <p className="text-sm text-stone-900">
                           {projectContext[key] || (
-                            <span className="italic text-zinc-400">
+                            <span className="italic text-stone-400">
                               Not set
                             </span>
                           )}
                         </p>
                         <button
                           onClick={() => startEditing(key)}
-                          className="opacity-0 group-hover:opacity-100 rounded p-1 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-all duration-150"
+                          className="opacity-0 group-hover:opacity-100 rounded p-1 text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-all duration-150"
                           title={`Edit ${label}`}
                         >
                           <Pencil className="h-3.5 w-3.5" />
@@ -366,8 +366,8 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                   className={cn(
                     'inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all border',
                     activeCategory === cat
-                      ? 'bg-zinc-900 text-white border-zinc-900'
-                      : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+                      ? 'bg-stone-900 text-white border-stone-900'
+                      : 'bg-white text-stone-600 border-stone-200 hover:border-stone-300 hover:bg-stone-50'
                   )}
                 >
                   {cat === 'All' ? (
@@ -394,17 +394,17 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
             {/* Memory List */}
             {filteredMemories.length === 0 && memories.length === 0 ? (
               /* Empty State */
-              <div className="rounded-xl border border-zinc-200 bg-white p-10 text-center">
-                <Brain className="mx-auto h-10 w-10 text-zinc-400 mb-4" />
-                <p className="text-sm text-zinc-600 max-w-md mx-auto leading-relaxed">
+              <div className="rounded-xl border border-stone-200 bg-white p-10 text-center">
+                <Brain className="mx-auto h-10 w-10 text-stone-400 mb-4" />
+                <p className="text-sm text-stone-600 max-w-md mx-auto leading-relaxed">
                   AnA doesn't have any memories for this project yet. As you
                   work together, she'll learn your preferences and project
                   context.
                 </p>
               </div>
             ) : filteredMemories.length === 0 ? (
-              <div className="rounded-xl border border-zinc-200 bg-white p-5 text-center">
-                <p className="text-sm text-zinc-500">
+              <div className="rounded-xl border border-stone-200 bg-white p-5 text-center">
+                <p className="text-sm text-stone-500">
                   No memories in the "{activeCategory}" category.
                 </p>
               </div>
@@ -422,7 +422,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                         'group rounded-xl border bg-white p-4 transition-all duration-150',
                         isDeleting
                           ? 'border-red-200 bg-red-50/30 opacity-60'
-                          : 'border-zinc-200 hover:border-zinc-300'
+                          : 'border-stone-200 hover:border-stone-300'
                       )}
                     >
                       <div className="flex items-start gap-3">
@@ -439,7 +439,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
 
                         {/* Content */}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-zinc-900 leading-relaxed">
+                          <p className="text-sm text-stone-900 leading-relaxed">
                             {memory.content}
                           </p>
                           <div className="mt-2 flex items-center gap-3">
@@ -452,7 +452,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                             >
                               {memory.category}
                             </span>
-                            <span className="text-xs text-zinc-400">
+                            <span className="text-xs text-stone-400">
                               {relativeTime(memory.createdAt)}
                             </span>
                           </div>
@@ -466,7 +466,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                             }
                           }}
                           disabled={isDeleting}
-                          className="opacity-0 group-hover:opacity-100 rounded-lg p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-all disabled:opacity-60"
+                          className="opacity-0 group-hover:opacity-100 rounded-lg p-1.5 text-stone-400 hover:text-red-500 hover:bg-red-50 transition-all disabled:opacity-60"
                           title="Remove memory"
                           aria-label="Delete memory entry"
                         >
@@ -484,10 +484,10 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
             )}
 
             {/* Add Memory */}
-            <div className="rounded-xl border border-zinc-200 bg-white p-5">
+            <div className="rounded-xl border border-stone-200 bg-white p-5">
               <div className="flex items-center gap-2 mb-3">
-                <Plus className="h-4 w-4 text-zinc-500" />
-                <h3 className="text-sm font-medium text-zinc-700">
+                <Plus className="h-4 w-4 text-stone-500" />
+                <h3 className="text-sm font-medium text-stone-700">
                   Add Memory
                 </h3>
               </div>
@@ -500,7 +500,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                       e.target.value as Exclude<MemoryCategory, 'All'>
                     )
                   }
-                  className="rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-700 focus:border-blue-400 focus-visible:ring-2 outline-none focus:ring-blue-100 sm:w-36"
+                  className="rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-700 focus:border-blue-400 focus-visible:ring-2 outline-none focus:ring-blue-100 sm:w-36"
                 >
                   <option value="Preferences">Preferences</option>
                   <option value="Facts">Facts</option>
@@ -520,7 +520,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                     }
                   }}
                   placeholder="e.g., Prefers Module 2.5 summaries under 15 pages..."
-                  className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-400 focus-visible:ring-2 outline-none focus:ring-blue-100"
+                  className="flex-1 rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:border-blue-400 focus-visible:ring-2 outline-none focus:ring-blue-100"
                 />
 
                 {/* Add button */}
@@ -530,7 +530,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                   className={cn(
                     'inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all shrink-0',
                     !newMemory.trim() || adding
-                      ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
+                      ? 'bg-stone-100 text-stone-400 cursor-not-allowed'
                       : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 shadow-sm'
                   )}
                 >

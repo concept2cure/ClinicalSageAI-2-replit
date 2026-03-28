@@ -698,7 +698,7 @@ const categoryIcons: Record<ArtifactCategory, React.ElementType> = {
 };
 
 const typeColors: Record<ArtifactCategory, string> = {
-  document: 'bg-zinc-100 text-zinc-700',
+  document: 'bg-stone-100 text-stone-700',
   interactive: 'bg-blue-50 text-blue-700',
   visualization: 'bg-emerald-50 text-emerald-700',
 };
@@ -717,20 +717,20 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onUse, onPreview 
   const Icon = categoryIcons[template.category];
 
   return (
-    <div className="group p-4 bg-white rounded-lg border border-zinc-200 hover:border-zinc-300 transition-all duration-150">
+    <div className="group p-4 bg-white rounded-lg border border-stone-200 hover:border-stone-300 transition-all duration-150">
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
         <div className={cn('p-2 rounded-lg', typeColors[template.category])}>
           <Icon className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-medium text-zinc-900 truncate">{template.name}</h3>
-          <p className="text-xs text-zinc-500 line-clamp-2 mt-0.5">
+          <h3 className="text-sm font-medium text-stone-900 truncate">{template.name}</h3>
+          <p className="text-xs text-stone-500 line-clamp-2 mt-0.5">
             {template.description}
           </p>
         </div>
         {template.isOfficial && (
-          <Badge variant="secondary" className="text-xs flex-shrink-0 bg-zinc-100 text-zinc-600 border-0">
+          <Badge variant="secondary" className="text-xs flex-shrink-0 bg-stone-100 text-stone-600 border-0">
             Official
           </Badge>
         )}
@@ -742,7 +742,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onUse, onPreview 
           <Badge
             key={type}
             variant="outline"
-            className="text-xs px-1.5 py-0 border-zinc-200 text-zinc-500"
+            className="text-xs px-1.5 py-0 border-stone-200 text-stone-500"
           >
             {type}
           </Badge>
@@ -755,7 +755,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onUse, onPreview 
       </div>
 
       {/* Stats */}
-      <div className="flex items-center gap-4 text-xs text-zinc-400 mb-3">
+      <div className="flex items-center gap-4 text-xs text-stone-400 mb-3">
         <span className="flex items-center gap-1">
           <Download className="h-3 w-3" />
           {template.usageCount.toLocaleString()}
@@ -772,7 +772,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onUse, onPreview 
       <div className="flex items-center gap-2">
         <Button
           size="sm"
-          className="flex-1 bg-zinc-900 text-white hover:bg-zinc-800 text-xs h-8"
+          className="flex-1 bg-stone-900 text-white hover:bg-stone-800 text-xs h-8"
           onClick={onUse}
         >
           Use Template
@@ -780,7 +780,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onUse, onPreview 
         <Button
           size="sm"
           variant="outline"
-          className="text-xs h-8 border-zinc-200"
+          className="text-xs h-8 border-stone-200"
           onClick={onPreview}
         >
           Preview
@@ -830,15 +830,15 @@ const TemplatePreview: React.FC<TemplatePreviewProps> = ({
         </DialogHeader>
 
         <ScrollArea className="max-h-[400px] mt-4">
-          <div className="bg-zinc-50 rounded-lg p-4">
-            <pre className="text-sm whitespace-pre-wrap font-mono text-zinc-700">
+          <div className="bg-stone-50 rounded-lg p-4">
+            <pre className="text-sm whitespace-pre-wrap font-mono text-stone-700">
               {content}
             </pre>
           </div>
         </ScrollArea>
 
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-zinc-200">
-          <div className="flex items-center gap-4 text-sm text-zinc-400">
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-stone-200">
+          <div className="flex items-center gap-4 text-sm text-stone-400">
             <span className="flex items-center gap-1">
               <Download className="h-4 w-4" />
               {template.usageCount.toLocaleString()} uses
@@ -860,7 +860,7 @@ const TemplatePreview: React.FC<TemplatePreviewProps> = ({
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
-          <Button className="bg-zinc-900 text-white hover:bg-zinc-800" onClick={onUse}>
+          <Button className="bg-stone-900 text-white hover:bg-stone-800" onClick={onUse}>
             Use This Template
           </Button>
         </DialogFooter>
@@ -973,8 +973,8 @@ export const ArtifactsCatalog: React.FC<ArtifactsCatalogProps> = ({ open, onClos
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-zinc-900">
-              <FileText className="h-5 w-5 text-zinc-500" />
+            <DialogTitle className="flex items-center gap-2 text-stone-900">
+              <FileText className="h-5 w-5 text-stone-500" />
               Template Library
             </DialogTitle>
             <DialogDescription>
@@ -983,15 +983,15 @@ export const ArtifactsCatalog: React.FC<ArtifactsCatalogProps> = ({ open, onClos
           </DialogHeader>
 
           {/* Filters */}
-          <div className="flex items-center gap-3 py-4 border-b border-zinc-200">
+          <div className="flex items-center gap-3 py-4 border-b border-stone-200">
             {/* Search */}
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
               <Input
                 placeholder="Search templates, CTD sections..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 border-zinc-200"
+                className="pl-9 border-stone-200"
               />
             </div>
 
@@ -1000,7 +1000,7 @@ export const ArtifactsCatalog: React.FC<ArtifactsCatalogProps> = ({ open, onClos
               value={selectedCategory}
               onValueChange={(value) => setSelectedCategory(value as ArtifactCategory | 'all')}
             >
-              <SelectTrigger className="w-[150px] border-zinc-200">
+              <SelectTrigger className="w-[150px] border-stone-200">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
@@ -1018,7 +1018,7 @@ export const ArtifactsCatalog: React.FC<ArtifactsCatalogProps> = ({ open, onClos
                 setSelectedSubmissionType(value as SubmissionType | 'all')
               }
             >
-              <SelectTrigger className="w-[140px] border-zinc-200">
+              <SelectTrigger className="w-[140px] border-stone-200">
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
               <SelectContent>
@@ -1031,7 +1031,7 @@ export const ArtifactsCatalog: React.FC<ArtifactsCatalogProps> = ({ open, onClos
 
             {/* Clear filters */}
             {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-zinc-500">
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-stone-500">
                 <X className="h-4 w-4 mr-1" />
                 Clear
               </Button>
@@ -1039,7 +1039,7 @@ export const ArtifactsCatalog: React.FC<ArtifactsCatalogProps> = ({ open, onClos
           </div>
 
           {/* Results count */}
-          <div className="text-xs text-zinc-400 py-2">
+          <div className="text-xs text-stone-400 py-2">
             {filteredTemplates.length} of {TEMPLATES.length} templates
           </div>
 
@@ -1058,14 +1058,14 @@ export const ArtifactsCatalog: React.FC<ArtifactsCatalogProps> = ({ open, onClos
 
             {filteredTemplates.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Filter className="h-12 w-12 text-zinc-200 mb-4" />
-                <h3 className="text-sm font-medium text-zinc-900 mb-2">
+                <Filter className="h-12 w-12 text-stone-200 mb-4" />
+                <h3 className="text-sm font-medium text-stone-900 mb-2">
                   No templates found
                 </h3>
-                <p className="text-xs text-zinc-500 mb-4">
+                <p className="text-xs text-stone-500 mb-4">
                   Try adjusting your filters or search query.
                 </p>
-                <Button variant="outline" size="sm" onClick={clearFilters} className="border-zinc-200">
+                <Button variant="outline" size="sm" onClick={clearFilters} className="border-stone-200">
                   Clear all filters
                 </Button>
               </div>

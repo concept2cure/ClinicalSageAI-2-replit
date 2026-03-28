@@ -180,7 +180,7 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
           <img
             src={`data:${generatedImages[0].mimeType};base64,${generatedImages[0].base64}`}
             alt="Generated"
-            className="w-10 h-10 rounded border border-zinc-200 object-cover cursor-pointer"
+            className="w-10 h-10 rounded border border-stone-200 object-cover cursor-pointer"
             onClick={() => setExpandedImage(0)}
           />
         )}
@@ -190,20 +190,20 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
 
   // ── Full variant ──
   return (
-    <div className={cn('rounded-xl border border-zinc-200 bg-white overflow-hidden', className)}>
+    <div className={cn('rounded-xl border border-stone-200 bg-white overflow-hidden', className)}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 bg-gradient-to-r from-amber-50 to-orange-50">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 bg-gradient-to-r from-amber-50 to-orange-50">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center">
             <ImageIcon className="w-4 h-4 text-amber-600" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-zinc-900">AnA Visual</h3>
-            <p className="text-[11px] text-zinc-500">Powered by Google Gemini</p>
+            <h3 className="text-sm font-semibold text-stone-900">AnA Visual</h3>
+            <p className="text-[11px] text-stone-500">Powered by Google Gemini</p>
           </div>
         </div>
         {/* Mode tabs */}
-        <div className="flex gap-1 bg-white rounded-lg border border-zinc-200 p-0.5">
+        <div className="flex gap-1 bg-white rounded-lg border border-stone-200 p-0.5">
           {(['image', 'infographic', 'presentation'] as const).map(m => (
             <button
               key={m}
@@ -212,7 +212,7 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
                 'px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors',
                 activeMode === m
                   ? 'bg-amber-100 text-amber-700'
-                  : 'text-zinc-500 hover:text-zinc-700'
+                  : 'text-stone-500 hover:text-stone-700'
               )}
             >
               {m === 'image' ? 'Image' : m === 'infographic' ? 'Infographic' : 'Deck'}
@@ -232,7 +232,7 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
               : 'Describe the image you want to generate...'
           }
           rows={2}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 focus:border-amber-300 focus:ring-2 focus:ring-amber-100 outline-none resize-none bg-zinc-50"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 focus:border-amber-300 focus:ring-2 focus:ring-amber-100 outline-none resize-none bg-stone-50"
         />
 
         {/* Style selector (for image/infographic only) */}
@@ -246,7 +246,7 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
                   'px-2.5 py-1 text-[11px] font-medium rounded-full border transition-colors',
                   style === opt.value
                     ? 'bg-amber-100 border-amber-300 text-amber-700'
-                    : 'bg-white border-zinc-200 text-zinc-500 hover:border-zinc-300'
+                    : 'bg-white border-stone-200 text-stone-500 hover:border-stone-300'
                 )}
                 title={opt.desc}
               >
@@ -289,7 +289,7 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
         <div className="px-4 pb-4">
           <div className="grid grid-cols-1 gap-3">
             {generatedImages.map((img, idx) => (
-              <div key={idx} className="relative group rounded-lg overflow-hidden border border-zinc-200">
+              <div key={idx} className="relative group rounded-lg overflow-hidden border border-stone-200">
                 <img
                   src={`data:${img.mimeType};base64,${img.base64}`}
                   alt={`Generated ${idx + 1}`}

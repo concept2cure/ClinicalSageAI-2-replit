@@ -167,7 +167,7 @@ export const ZenAppWithSession: React.FC<ZenAppWithSessionProps> = ({
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
             </svg>
           </div>
-          <p className="text-sm text-zinc-500">Loading your workspace...</p>
+          <p className="text-sm text-stone-500">Loading your workspace...</p>
         </div>
       </div>
     );

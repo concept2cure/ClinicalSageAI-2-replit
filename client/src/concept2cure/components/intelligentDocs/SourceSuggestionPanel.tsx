@@ -51,7 +51,7 @@ const getConfidenceColor = (confidence: number): string => {
   if (confidence >= 90) return 'text-green-600 bg-green-100';
   if (confidence >= 70) return 'text-blue-600 bg-blue-100';
   if (confidence >= 50) return 'text-amber-600 bg-amber-100';
-  return 'text-zinc-600 bg-zinc-100';
+  return 'text-stone-600 bg-stone-100';
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -62,12 +62,12 @@ const SourceCard: React.FC<SourceCardProps> = ({ suggestion, onLink, isLinking }
   const [isExpanded, setIsExpanded] = useState(false);
   
   return (
-    <div className="border border-zinc-200 rounded-lg overflow-hidden hover:border-blue-400 transition-colors duration-150">
+    <div className="border border-stone-200 rounded-lg overflow-hidden hover:border-blue-400 transition-colors duration-150">
       <div className="p-3">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-2">
             <span className="text-lg">{getSourceIcon(suggestion.sourceType)}</span>
-            <span className="text-sm font-medium text-zinc-900 line-clamp-1">
+            <span className="text-sm font-medium text-stone-900 line-clamp-1">
               {suggestion.sourceTitle}
             </span>
           </div>
@@ -76,7 +76,7 @@ const SourceCard: React.FC<SourceCardProps> = ({ suggestion, onLink, isLinking }
           </span>
         </div>
         
-        <p className="text-sm text-zinc-600 line-clamp-2 mb-2">
+        <p className="text-sm text-stone-600 line-clamp-2 mb-2">
           {suggestion.relevantExcerpt}
         </p>
         
@@ -100,23 +100,23 @@ const SourceCard: React.FC<SourceCardProps> = ({ suggestion, onLink, isLinking }
         </div>
         
         {isExpanded && (
-          <div className="mt-3 pt-3 border-t border-zinc-200">
-            <div className="space-y-2 text-xs text-zinc-500">
+          <div className="mt-3 pt-3 border-t border-stone-200">
+            <div className="space-y-2 text-xs text-stone-500">
               <div className="flex items-center justify-between">
                 <span>Source Type:</span>
-                <span className="font-medium text-zinc-700 capitalize">
+                <span className="font-medium text-stone-700 capitalize">
                   {suggestion.sourceType.replace(/_/g, ' ')}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Match Reason:</span>
-                <span className="font-medium text-zinc-700">
+                <span className="font-medium text-stone-700">
                   {suggestion.matchReason}
                 </span>
               </div>
             </div>
             
-            <div className="mt-2 p-2 bg-zinc-50 rounded text-xs text-zinc-600">
+            <div className="mt-2 p-2 bg-stone-50 rounded text-xs text-stone-600">
               <p className="font-medium mb-1">Full Excerpt:</p>
               <p>{suggestion.relevantExcerpt}</p>
             </div>
@@ -138,12 +138,12 @@ const EmptyState: React.FC<{
   actionLabel?: string;
 }> = ({ message, suggestion, onAction, actionLabel }) => (
   <div className="text-center py-8">
-    <div className="w-12 h-12 mx-auto mb-4 bg-zinc-100 rounded-full flex items-center justify-center">
+    <div className="w-12 h-12 mx-auto mb-4 bg-stone-100 rounded-full flex items-center justify-center">
       <span className="text-2xl">🔎</span>
     </div>
-    <p className="text-zinc-600 mb-2">{message}</p>
+    <p className="text-stone-600 mb-2">{message}</p>
     {suggestion && (
-      <p className="text-sm text-zinc-500 mb-4">{suggestion}</p>
+      <p className="text-sm text-stone-500 mb-4">{suggestion}</p>
     )}
     {onAction && actionLabel && (
       <button
@@ -164,14 +164,14 @@ const EmptyState: React.FC<{
 const LoadingState: React.FC = () => (
   <div className="space-y-3 animate-pulse">
     {[1, 2, 3].map((i) => (
-      <div key={i} className="border border-zinc-200 rounded-lg p-3">
+      <div key={i} className="border border-stone-200 rounded-lg p-3">
         <div className="flex items-center gap-2 mb-2">
-          <div className="w-6 h-6 bg-zinc-200 rounded" />
-          <div className="h-4 w-32 bg-zinc-200 rounded" />
-          <div className="ml-auto h-4 w-12 bg-zinc-200 rounded-full" />
+          <div className="w-6 h-6 bg-stone-200 rounded" />
+          <div className="h-4 w-32 bg-stone-200 rounded" />
+          <div className="ml-auto h-4 w-12 bg-stone-200 rounded-full" />
         </div>
-        <div className="h-3 w-full bg-zinc-200 rounded mb-1" />
-        <div className="h-3 w-3/4 bg-zinc-200 rounded" />
+        <div className="h-3 w-full bg-stone-200 rounded mb-1" />
+        <div className="h-3 w-3/4 bg-stone-200 rounded" />
       </div>
     ))}
   </div>
@@ -221,8 +221,8 @@ export const SourceSuggestionPanel: React.FC<SourceSuggestionPanelProps> = ({
   if (!claim) {
     return (
       <div className="h-full flex flex-col bg-white">
-        <div className="p-4 border-b border-zinc-200">
-          <h3 className="font-semibold text-zinc-900">
+        <div className="p-4 border-b border-stone-200">
+          <h3 className="font-semibold text-stone-900">
             Source Suggestions
           </h3>
         </div>
@@ -239,14 +239,14 @@ export const SourceSuggestionPanel: React.FC<SourceSuggestionPanelProps> = ({
   return (
     <div className="h-full flex flex-col bg-white">
       {/* Header */}
-      <div className="p-4 border-b border-zinc-200 bg-zinc-50/60">
+      <div className="p-4 border-b border-stone-200 bg-stone-50/60">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-zinc-900">
+          <h3 className="font-semibold text-stone-900">
             Source Suggestions
           </h3>
           <button
             onClick={onClose}
-            className="p-1 text-zinc-400 hover:text-zinc-600"
+            className="p-1 text-stone-400 hover:text-stone-600"
             data-testid="button-close-source-panel"
             aria-label="Close source suggestions"
           >
@@ -275,7 +275,7 @@ export const SourceSuggestionPanel: React.FC<SourceSuggestionPanelProps> = ({
               className={`px-3 py-1 text-xs font-medium rounded-full whitespace-nowrap transition-colors ${
                 filterType === type
                   ? 'bg-blue-600 text-white'
-                  : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                  : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               }`}
               data-testid={`button-source-filter-${type}`}
               aria-current={filterType === type ? 'page' : undefined}
@@ -316,8 +316,8 @@ export const SourceSuggestionPanel: React.FC<SourceSuggestionPanelProps> = ({
       </div>
       
       {/* Footer - Data bridge status */}
-      <div className="p-4 border-t border-zinc-200 bg-zinc-50">
-        <div className="flex items-center justify-between text-xs text-zinc-500">
+      <div className="p-4 border-t border-stone-200 bg-stone-50">
+        <div className="flex items-center justify-between text-xs text-stone-500">
           <span>
             Searching {connectedBridges.length} connected source{connectedBridges.length !== 1 ? 's' : ''}
           </span>
@@ -350,7 +350,7 @@ export const InlineSuggestionTooltip: React.FC<{
   onDismiss: () => void;
 }> = ({ suggestion, position, onLink, onDismiss }) => (
   <div
-    className="fixed z-50 w-64 p-3 bg-white rounded-lg shadow-xl border border-zinc-200"
+    className="fixed z-50 w-64 p-3 bg-white rounded-lg shadow-xl border border-stone-200"
     style={{
       left: position.x,
       top: position.y,
@@ -366,7 +366,7 @@ export const InlineSuggestionTooltip: React.FC<{
       </div>
       <button
         onClick={onDismiss}
-        className="p-1 text-zinc-400 hover:text-zinc-600"
+        className="p-1 text-stone-400 hover:text-stone-600"
         data-testid={`button-dismiss-inline-suggestion-${suggestion.sourceId}`}
         aria-label="Dismiss suggestion"
       >
@@ -374,11 +374,11 @@ export const InlineSuggestionTooltip: React.FC<{
       </button>
     </div>
     
-    <p className="text-sm font-medium text-zinc-900 mb-1 line-clamp-1">
+    <p className="text-sm font-medium text-stone-900 mb-1 line-clamp-1">
       {suggestion.sourceTitle}
     </p>
     
-    <p className="text-xs text-zinc-600 mb-3 line-clamp-2">
+    <p className="text-xs text-stone-600 mb-3 line-clamp-2">
       {suggestion.relevantExcerpt}
     </p>
     

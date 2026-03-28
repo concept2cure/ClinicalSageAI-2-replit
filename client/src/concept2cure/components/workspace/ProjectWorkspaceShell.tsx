@@ -1275,15 +1275,15 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   if (!projectId) {
     return (
       <div
-        className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8"
+        className="flex-1 flex items-center justify-center bg-stone-50/30 p-8"
         data-testid="no-project-selected"
       >
         <div className="max-w-sm text-center">
           <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-blue-50 flex items-center justify-center">
             <FolderOpen className="w-7 h-7 text-blue-600" />
           </div>
-          <h2 className="text-lg font-semibold text-zinc-900 mb-2">Select a Project</h2>
-          <p className="text-sm text-zinc-500 mb-5">
+          <h2 className="text-lg font-semibold text-stone-900 mb-2">Select a Project</h2>
+          <p className="text-sm text-stone-500 mb-5">
             Choose a project from the sidebar to access its documents, version history, and audit
             trail.
           </p>
@@ -1303,26 +1303,26 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     <DocumentModeProvider initialStage={workflowStage} key={workflowStage}>
       <div className="flex-1 flex flex-col min-h-0" data-testid="project-workspace-shell">
         {/* ── Compact breadcrumb bar ────────────────────────────────────────── */}
-        <div className="flex items-center gap-3 px-4 h-11 border-b border-zinc-200 bg-white shrink-0">
+        <div className="flex items-center gap-3 px-4 h-11 border-b border-stone-200 bg-white shrink-0">
           <button
             onClick={onBackToProjects}
-            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-900 transition-colors duration-150"
+            className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-900 transition-colors duration-150"
           >
             <ChevronLeft className="w-4 h-4" />
             <span>Projects</span>
           </button>
-          <span className="text-zinc-300">/</span>
+          <span className="text-stone-300">/</span>
           {projectType && (
-            <span className="text-xs px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 font-semibold">
+            <span className="text-xs px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 font-semibold">
               {projectType}
             </span>
           )}
-          <span className="text-sm font-semibold text-zinc-900 truncate">
+          <span className="text-sm font-semibold text-stone-900 truncate">
             {projectName || 'Untitled Project'}
           </span>
           {(mode === 'edit' || mode === 'browse') && (
             <>
-              <span className="text-zinc-300">/</span>
+              <span className="text-stone-300">/</span>
               <button
                 onClick={() => {
                   setSelectedDocId(undefined);
@@ -1334,7 +1334,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               </button>
               {mode === 'edit' && selectedDocId && (
                 <>
-                  <span className="text-zinc-300">/</span>
+                  <span className="text-stone-300">/</span>
                   <button
                     onClick={() => setMode('browse')}
                     className="text-xs text-blue-600 hover:text-blue-800 font-medium"
@@ -1347,15 +1347,15 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           )}
           {/* View toggle — push to right */}
           {onSwitchToIntelligence && (
-            <div className="ml-auto flex items-center rounded-lg border border-zinc-200 overflow-hidden">
+            <div className="ml-auto flex items-center rounded-lg border border-stone-200 overflow-hidden">
               <button
                 onClick={onSwitchToIntelligence}
-                className="px-3 py-1.5 text-xs font-medium text-zinc-500 hover:bg-zinc-50 transition-colors flex items-center gap-1.5"
+                className="px-3 py-1.5 text-xs font-medium text-stone-500 hover:bg-stone-50 transition-colors flex items-center gap-1.5"
               >
                 <Brain className="w-3.5 h-3.5" />
                 Intelligence
               </button>
-              <button className="px-3 py-1.5 text-xs font-medium bg-zinc-900 text-white transition-colors duration-150">
+              <button className="px-3 py-1.5 text-xs font-medium bg-stone-900 text-white transition-colors duration-150">
                 Work
               </button>
             </div>
@@ -1363,8 +1363,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         </div>
 
         {/* ── AnA 1.0 controlled shell layer/workbench bar ─────────────────── */}
-        <div className="flex items-center gap-3 px-4 h-11 border-b border-zinc-200 bg-zinc-50/70 shrink-0 overflow-x-auto">
-          <div className="text-[11px] font-semibold tracking-wide text-zinc-500 uppercase whitespace-nowrap">
+        <div className="flex items-center gap-3 px-4 h-11 border-b border-stone-200 bg-stone-50/70 shrink-0 overflow-x-auto">
+          <div className="text-[11px] font-semibold tracking-wide text-stone-500 uppercase whitespace-nowrap">
             AnA 1.0 Shell
           </div>
           <div className="flex items-center gap-1.5">
@@ -1378,8 +1378,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   className={cn(
                     'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors',
                     selected
-                      ? 'bg-zinc-900 text-white'
-                      : 'bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-100'
+                      ? 'bg-stone-900 text-white'
+                      : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-100'
                   )}
                   title={layer.description}
                 >
@@ -1389,8 +1389,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               );
             })}
           </div>
-          <span className="text-zinc-300">|</span>
-          <div className="text-[11px] font-semibold tracking-wide text-zinc-500 uppercase whitespace-nowrap">
+          <span className="text-stone-300">|</span>
+          <div className="text-[11px] font-semibold tracking-wide text-stone-500 uppercase whitespace-nowrap">
             Workbenches
           </div>
           <div className="flex items-center gap-1.5">
@@ -1405,7 +1405,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     'inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors',
                     selected
                       ? 'bg-blue-600 text-white'
-                      : 'bg-white text-zinc-600 border border-zinc-200 hover:bg-blue-50'
+                      : 'bg-white text-stone-600 border border-stone-200 hover:bg-blue-50'
                   )}
                   title={workbench.description}
                 >
@@ -1418,18 +1418,18 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         </div>
 
         {/* ── Canonical shell context band ─────────────────────────────────────────── */}
-        <div className="flex items-center gap-2 px-4 h-9 border-b border-zinc-200 bg-white/95 shrink-0">
-          <span className="text-[11px] font-semibold text-zinc-700">Project</span>
-          <span className="text-[11px] text-zinc-900 font-medium truncate max-w-[240px]">
+        <div className="flex items-center gap-2 px-4 h-9 border-b border-stone-200 bg-white/95 shrink-0">
+          <span className="text-[11px] font-semibold text-stone-700">Project</span>
+          <span className="text-[11px] text-stone-900 font-medium truncate max-w-[240px]">
             {projectName || 'Untitled Project'}
           </span>
-          <span className="text-zinc-300">/</span>
-          <span className="text-[11px] text-zinc-600">
+          <span className="text-stone-300">/</span>
+          <span className="text-[11px] text-stone-600">
             Doc:{' '}
             {activeArtifact?.title ? activeArtifact.title.slice(0, 44) : 'No document selected'}
           </span>
-          <span className="text-zinc-300">/</span>
-          <span className="text-[11px] text-zinc-600">Reviews in flight: {reviewInFlight}</span>
+          <span className="text-stone-300">/</span>
+          <span className="text-[11px] text-stone-600">Reviews in flight: {reviewInFlight}</span>
           <div className="ml-auto flex items-center gap-1">
             <button
               onClick={() => {
@@ -1460,7 +1460,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 px-4 h-9 border-b border-zinc-200 bg-emerald-50/40 shrink-0 overflow-x-auto">
+        <div className="flex items-center gap-2 px-4 h-9 border-b border-stone-200 bg-emerald-50/40 shrink-0 overflow-x-auto">
           <span className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wide whitespace-nowrap">
             Guided CTD Flow
           </span>
@@ -1482,7 +1482,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           ))}
         </div>
 
-        <div className="flex items-center gap-1 px-4 h-9 border-b border-zinc-200 bg-zinc-50/70 shrink-0 overflow-x-auto">
+        <div className="flex items-center gap-1 px-4 h-9 border-b border-stone-200 bg-stone-50/70 shrink-0 overflow-x-auto">
           {PROJECT_NAV_ITEMS.map(item => (
             <button
               key={item.id}
@@ -1533,8 +1533,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               className={cn(
                 'px-2.5 py-1 text-xs rounded-md border whitespace-nowrap transition-colors',
                 projectNav === item.id
-                  ? 'bg-zinc-900 text-white border-zinc-900'
-                  : 'bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-100'
+                  ? 'bg-stone-900 text-white border-stone-900'
+                  : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-100'
               )}
             >
               {item.label}
@@ -1610,7 +1610,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   ? 'bg-red-100/60 text-red-600'
                   : activeArtifact.status === 'approved'
                     ? 'bg-green-100/60 text-green-600'
-                    : 'bg-zinc-100 text-zinc-500'
+                    : 'bg-stone-100 text-stone-500'
               )}
             >
               {activeArtifact.status || 'draft'}
@@ -1628,14 +1628,14 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
         {/* ── Doc-aware header (shown when editing) ─────────────────────────── */}
         {mode === 'edit' && activeArtifact && (
-          <div className="flex items-center gap-2.5 px-4 h-10 border-b border-zinc-200 bg-zinc-50/60 shrink-0">
-            <FileText className="w-4 h-4 text-zinc-500" />
-            <span className="text-xs font-semibold text-zinc-900 truncate">
+          <div className="flex items-center gap-2.5 px-4 h-10 border-b border-stone-200 bg-stone-50/60 shrink-0">
+            <FileText className="w-4 h-4 text-stone-500" />
+            <span className="text-xs font-semibold text-stone-900 truncate">
               {activeArtifact.title}
             </span>
             {activeArtifact.ctdSection && (
               <>
-                <span className="text-zinc-300">/</span>
+                <span className="text-stone-300">/</span>
                 <span className="text-xs px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-medium">
                   {activeArtifact.ctdSection} — {getSectionLabel(activeArtifact.ctdSection)}
                 </span>
@@ -1643,13 +1643,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             )}
             {activeArtifact.templateId && (
               <>
-                <span className="text-zinc-200 text-xs">·</span>
+                <span className="text-stone-200 text-xs">·</span>
                 <span className="text-xs px-2 py-0.5 rounded-md bg-violet-50 text-violet-700">
                   Template: {activeArtifact.templateId}
                 </span>
               </>
             )}
-            <span className="text-zinc-200 text-xs">·</span>
+            <span className="text-stone-200 text-xs">·</span>
             <span
               className={cn(
                 'text-xs px-1.5 py-0.5 rounded font-medium',
@@ -1659,20 +1659,20 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     ? 'bg-green-50 text-green-700'
                     : activeArtifact.status === 'review'
                       ? 'bg-yellow-50 text-yellow-700'
-                      : 'bg-zinc-100 text-zinc-500'
+                      : 'bg-stone-100 text-stone-500'
               )}
             >
               {activeArtifact.status || 'draft'}
             </span>
             {activeArtifact.version && (
-              <span className="text-xs text-zinc-400 ml-0.5">v{activeArtifact.version}</span>
+              <span className="text-xs text-stone-400 ml-0.5">v{activeArtifact.version}</span>
             )}
             {/* Doc-level actions */}
             <div className="ml-auto flex items-center gap-1">
               {activeArtifact.status !== 'locked' && (
                 <button
                   onClick={() => handleCutDocument(activeArtifact)}
-                  className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded-md hover:bg-zinc-100"
+                  className="p-1.5 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100"
                   title="Cut — move to another section"
                 >
                   <Scissors className="w-3.5 h-3.5" />
@@ -1685,22 +1685,22 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     activeArtifact.ctdSection ? 'relocate' : 'place'
                   )
                 }
-                className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded-md hover:bg-zinc-100"
+                className="p-1.5 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100"
                 title={activeArtifact.ctdSection ? 'Relocate in dossier' : 'Place in dossier'}
               >
                 <MapPin className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => handleCopyCtdPath(activeArtifact)}
-                className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded-md hover:bg-zinc-100"
+                className="p-1.5 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100"
                 title="Copy CTD path"
               >
                 <Copy className="w-3.5 h-3.5" />
               </button>
-              <span className="w-px h-4 bg-zinc-200 mx-1" />
+              <span className="w-px h-4 bg-stone-200 mx-1" />
               <button
                 onClick={() => openVerification(activeArtifact.id)}
-                className="p-1.5 text-zinc-400 hover:text-emerald-600 rounded-md hover:bg-emerald-50"
+                className="p-1.5 text-stone-400 hover:text-emerald-600 rounded-md hover:bg-emerald-50"
                 title="Verify document"
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
@@ -1714,14 +1714,14 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     activeArtifact.title
                   )
                 }
-                className="p-1.5 text-zinc-400 hover:text-violet-600 rounded-md hover:bg-blue-50"
+                className="p-1.5 text-stone-400 hover:text-violet-600 rounded-md hover:bg-blue-50"
                 title="Transform Canvas"
               >
                 <Sparkles className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={openProgramTwin}
-                className="p-1.5 text-zinc-400 hover:text-blue-600 rounded-md hover:bg-blue-50"
+                className="p-1.5 text-stone-400 hover:text-blue-600 rounded-md hover:bg-blue-50"
                 title="Program Twin"
               >
                 <Target className="w-3.5 h-3.5" />
@@ -1730,7 +1730,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 onClick={() =>
                   openSubmissionApps(activeArtifact.ctdSection, activeArtifact.templateId)
                 }
-                className="p-1.5 text-zinc-400 hover:text-orange-600 rounded-md hover:bg-orange-50"
+                className="p-1.5 text-stone-400 hover:text-orange-600 rounded-md hover:bg-orange-50"
                 title="Submission Apps"
               >
                 <AppWindow className="w-3.5 h-3.5" />
@@ -1741,7 +1741,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   'p-1.5 rounded-md',
                   phase4Panel === 'pulse'
                     ? 'text-rose-600 bg-rose-50'
-                    : 'text-zinc-400 hover:text-rose-600 hover:bg-rose-50'
+                    : 'text-stone-400 hover:text-rose-600 hover:bg-rose-50'
                 )}
                 title="Review Pulse"
               >
@@ -1753,7 +1753,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         )}
 
         {mode === 'edit' && activeArtifact && (
-          <div className="flex items-center gap-1 px-4 h-9 border-b border-zinc-200 bg-white shrink-0 overflow-x-auto">
+          <div className="flex items-center gap-1 px-4 h-9 border-b border-stone-200 bg-white shrink-0 overflow-x-auto">
             {DOCUMENT_TAB_ITEMS.map(tab => (
               <button
                 key={tab.id}
@@ -1762,7 +1762,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   'px-2.5 py-1 text-xs rounded-md border whitespace-nowrap transition-colors',
                   documentTab === tab.id
                     ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white text-zinc-600 border-zinc-200 hover:bg-blue-50'
+                    : 'bg-white text-stone-600 border-stone-200 hover:bg-blue-50'
                 )}
               >
                 {tab.label}
@@ -1775,8 +1775,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         <div className="flex-1 flex min-h-0">
           {/* Left: Tree panel with mode toggle — hidden in dashboard mode for full-width layout */}
           {mode !== 'dashboard' && (
-            <div className="w-[200px] 2xl:w-[240px] border-r border-zinc-200 shrink-0 flex flex-col bg-white">
-              <div className="grid grid-cols-3 gap-1 p-1.5 border-b border-zinc-200 bg-white">
+            <div className="w-[200px] 2xl:w-[240px] border-r border-stone-200 shrink-0 flex flex-col bg-white">
+              <div className="grid grid-cols-3 gap-1 p-1.5 border-b border-stone-200 bg-white">
                 {[
                   { key: 'documents' as OperatingLayer, label: 'Docs' },
                   { key: 'vault' as OperatingLayer, label: 'Vault' },
@@ -1795,8 +1795,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     className={cn(
                       'rounded-md px-2 py-1 text-[11px] font-medium transition-colors',
                       operatingLayer === layer.key
-                        ? 'bg-zinc-900 text-white'
-                        : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                        ? 'bg-stone-900 text-white'
+                        : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
                     )}
                   >
                     {layer.label}
@@ -1804,7 +1804,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 ))}
               </div>
               {/* Mode toggle tabs */}
-              <div className="flex border-b border-zinc-200 shrink-0 bg-zinc-50/60">
+              <div className="flex border-b border-stone-200 shrink-0 bg-stone-50/60">
                 {[
                   { key: 'files' as LeftRailMode, icon: Files, label: 'Files', disabled: false },
                   {
@@ -1839,10 +1839,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     className={cn(
                       'flex-1 flex items-center justify-center gap-1 py-2.5 text-xs font-medium transition-colors duration-150',
                       leftRailMode === tab.key
-                        ? 'text-zinc-900 bg-white border-b-2 border-zinc-900'
+                        ? 'text-stone-900 bg-white border-b-2 border-stone-900'
                         : tab.disabled
-                          ? 'text-zinc-400 cursor-not-allowed'
-                          : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/60'
+                          ? 'text-stone-400 cursor-not-allowed'
+                          : 'text-stone-500 hover:text-stone-700 hover:bg-stone-100/60'
                     )}
                     data-testid={`rail-mode-${tab.key}`}
                     title={tab.disabled ? 'Open a document to use Outline' : tab.label}
@@ -1856,12 +1856,12 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               {/* ── Active document context band ──────────────────────────────── */}
               {activeArtifact && (
                 <div
-                  className="border-b border-zinc-200 bg-zinc-50/60 px-2.5 py-2 shrink-0"
+                  className="border-b border-stone-200 bg-stone-50/60 px-2.5 py-2 shrink-0"
                   data-testid="active-doc-context"
                 >
                   <div className="flex items-center gap-1.5 mb-0.5">
-                    <FileText className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                    <span className="text-xs font-medium text-zinc-700 truncate flex-1">
+                    <FileText className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+                    <span className="text-xs font-medium text-stone-700 truncate flex-1">
                       {activeArtifact.title}
                     </span>
                   </div>
@@ -1885,13 +1885,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                             ? 'bg-green-50 text-green-700'
                             : activeArtifact.status === 'review'
                               ? 'bg-yellow-50 text-yellow-700'
-                              : 'bg-zinc-100 text-zinc-500'
+                              : 'bg-stone-100 text-stone-500'
                       )}
                     >
                       {activeArtifact.status || 'draft'}
                     </span>
                     {activeArtifact.version && (
-                      <span className="text-xs text-zinc-400">v{activeArtifact.version}</span>
+                      <span className="text-xs text-stone-400">v{activeArtifact.version}</span>
                     )}
                   </div>
                 </div>
@@ -1945,7 +1945,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   />
                 ) : (
                   <div className="flex-1 flex items-center justify-center p-4">
-                    <p className="text-xs text-zinc-400 text-center">
+                    <p className="text-xs text-stone-400 text-center">
                       Open a document to view its outline
                     </p>
                   </div>
@@ -1968,14 +1968,14 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               )}
 
               {/* Project-level Review Pulse button */}
-              <div className="shrink-0 border-t border-zinc-200 p-2">
+              <div className="shrink-0 border-t border-stone-200 p-2">
                 <button
                   onClick={openReviewPulse}
                   className={cn(
                     'w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-xs font-medium transition-colors duration-150',
                     phase4Panel === 'pulse'
                       ? 'text-rose-700 bg-rose-50'
-                      : 'text-zinc-500 hover:text-rose-600 hover:bg-rose-50'
+                      : 'text-stone-500 hover:text-rose-600 hover:bg-rose-50'
                   )}
                   title="Review Pulse — project-wide review status"
                 >
@@ -1990,8 +1990,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           <div className="flex-1 flex flex-col min-w-0 min-h-0">
             {/* New document input strip */}
             {showNewDoc && (
-              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-zinc-200 bg-zinc-50/60 shrink-0">
-                <FileText className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-stone-200 bg-stone-50/60 shrink-0">
+                <FileText className="w-3.5 h-3.5 text-stone-400 shrink-0" />
                 <input
                   type="text"
                   value={newDocTitle}
@@ -2004,7 +2004,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     }
                   }}
                   placeholder="New document title..."
-                  className="flex-1 px-2 py-1 text-sm border border-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30"
+                  className="flex-1 px-2 py-1 text-sm border border-stone-200 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none/30"
                   autoFocus
                 />
                 <button
@@ -2024,7 +2024,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     setShowNewDoc(false);
                     setNewDocTitle('');
                   }}
-                  className="px-2 py-1 text-xs text-zinc-500 hover:text-zinc-700"
+                  className="px-2 py-1 text-xs text-stone-500 hover:text-stone-700"
                 >
                   Cancel
                 </button>
@@ -2586,7 +2586,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   'pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-lg shadow-lg text-xs font-medium',
                   t.type === 'success' && 'bg-emerald-600 text-white',
                   t.type === 'error' && 'bg-red-600 text-white',
-                  t.type === 'info' && 'bg-zinc-700 text-white'
+                  t.type === 'info' && 'bg-stone-700 text-white'
                 )}
               >
                 <span>{t.message}</span>
@@ -2617,15 +2617,15 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
   const [showChildren, setShowChildren] = useState(false);
 
   return (
-    <div className="w-[200px] 2xl:w-[240px] border-l border-zinc-200 shrink-0 flex flex-col bg-white overflow-y-auto">
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-zinc-200 bg-zinc-50/60">
+    <div className="w-[200px] 2xl:w-[240px] border-l border-stone-200 shrink-0 flex flex-col bg-white overflow-y-auto">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-stone-200 bg-stone-50/60">
         <div className="flex items-center gap-1.5">
           <Info className="w-3 h-3 text-blue-600" />
-          <span className="text-xs font-semibold text-zinc-700">Section Requirements</span>
+          <span className="text-xs font-semibold text-stone-700">Section Requirements</span>
         </div>
         <button
           onClick={onClose}
-          className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+          className="p-1.5 text-stone-400 hover:text-stone-600 rounded hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
           aria-label="Close panel"
           title="Close"
         >
@@ -2635,26 +2635,26 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
       <div className="p-2.5 space-y-2.5 text-xs">
         {/* Section */}
         <div>
-          <div className="text-xs text-zinc-400 uppercase tracking-wide mb-0.5">Section</div>
-          <div className="font-semibold text-zinc-900">{reqs.ctdSection}</div>
-          <div className="text-zinc-600 mt-0.5">{reqs.label}</div>
+          <div className="text-xs text-stone-400 uppercase tracking-wide mb-0.5">Section</div>
+          <div className="font-semibold text-stone-900">{reqs.ctdSection}</div>
+          <div className="text-stone-600 mt-0.5">{reqs.label}</div>
         </div>
 
         {/* Description */}
         <div>
-          <div className="text-xs text-zinc-400 uppercase tracking-wide mb-0.5">Description</div>
-          <p className="text-zinc-600 leading-relaxed">{reqs.description}</p>
+          <div className="text-xs text-stone-400 uppercase tracking-wide mb-0.5">Description</div>
+          <p className="text-stone-600 leading-relaxed">{reqs.description}</p>
         </div>
 
         {/* Expected doc types */}
         <div>
-          <div className="text-xs text-zinc-400 uppercase tracking-wide mb-0.5">
+          <div className="text-xs text-stone-400 uppercase tracking-wide mb-0.5">
             Expected Documents
           </div>
           <ul className="space-y-0.5">
             {reqs.requiredDocTypes.map((dt, i) => (
-              <li key={i} className="text-zinc-700 flex items-center gap-1">
-                <FileText className="w-2.5 h-2.5 text-zinc-400" />
+              <li key={i} className="text-stone-700 flex items-center gap-1">
+                <FileText className="w-2.5 h-2.5 text-stone-400" />
                 {dt}
               </li>
             ))}
@@ -2662,7 +2662,7 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
         </div>
 
         {/* Required / Optional */}
-        <div className="flex items-center gap-1 px-2 py-1 rounded bg-zinc-50">
+        <div className="flex items-center gap-1 px-2 py-1 rounded bg-stone-50">
           {reqs.optional ? (
             <>
               <Info className="w-3 h-3 text-blue-500" />
@@ -2679,11 +2679,11 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
         {/* Templates available */}
         {reqs.starterTemplatesAvailable.length > 0 && (
           <div>
-            <div className="text-xs text-zinc-400 uppercase tracking-wide mb-0.5">
+            <div className="text-xs text-stone-400 uppercase tracking-wide mb-0.5">
               Starter Templates
             </div>
             {reqs.starterTemplatesAvailable.map((t, i) => (
-              <div key={i} className="text-zinc-600 flex items-center gap-1 py-0.5">
+              <div key={i} className="text-stone-600 flex items-center gap-1 py-0.5">
                 <Layers className="w-2.5 h-2.5 text-violet-500" />
                 {t}
               </div>
@@ -2694,11 +2694,11 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
         {/* Common missing blocks */}
         {reqs.commonMissingBlocks.length > 0 && (
           <div>
-            <div className="text-xs text-zinc-400 uppercase tracking-wide mb-0.5">
+            <div className="text-xs text-stone-400 uppercase tracking-wide mb-0.5">
               Expected Content Blocks
             </div>
             {reqs.commonMissingBlocks.map((b, i) => (
-              <div key={i} className="text-zinc-500 text-xs py-0.5">
+              <div key={i} className="text-stone-500 text-xs py-0.5">
                 • {b}
               </div>
             ))}
@@ -2710,7 +2710,7 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
           <div>
             <button
               onClick={() => setShowChildren(!showChildren)}
-              className="flex items-center gap-1 text-xs text-zinc-400 uppercase tracking-wide mb-0.5 hover:text-zinc-600"
+              className="flex items-center gap-1 text-xs text-stone-400 uppercase tracking-wide mb-0.5 hover:text-stone-600"
             >
               {showChildren ? (
                 <ChevronDown className="w-2.5 h-2.5" />
@@ -2722,12 +2722,12 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
             {showChildren && (
               <div className="space-y-0.5 mt-0.5">
                 {reqs.requiredChildren.map((c, i) => (
-                  <div key={i} className="text-zinc-600 text-xs">
+                  <div key={i} className="text-stone-600 text-xs">
                     ▸ {c}
                   </div>
                 ))}
                 {reqs.optionalChildren.map((c, i) => (
-                  <div key={i} className="text-zinc-400 text-xs italic">
+                  <div key={i} className="text-stone-400 text-xs italic">
                     ▹ {c}
                   </div>
                 ))}
@@ -2739,19 +2739,19 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
         {/* Current metrics */}
         {metrics && (
           <div>
-            <div className="text-xs text-zinc-400 uppercase tracking-wide mb-0.5">
+            <div className="text-xs text-stone-400 uppercase tracking-wide mb-0.5">
               Current Status
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-zinc-500">Artifacts</span>
-                <span className="font-medium text-zinc-700">{metrics.artifactCount}</span>
+                <span className="text-stone-500">Artifacts</span>
+                <span className="font-medium text-stone-700">{metrics.artifactCount}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-zinc-500">Completion</span>
-                <span className="font-medium text-zinc-700">{metrics.completionPercent}%</span>
+                <span className="text-stone-500">Completion</span>
+                <span className="font-medium text-stone-700">{metrics.completionPercent}%</span>
               </div>
-              <div className="w-full bg-zinc-100 rounded-full h-1.5">
+              <div className="w-full bg-stone-100 rounded-full h-1.5">
                 <div
                   className={cn(
                     'h-1.5 rounded-full transition-all duration-150',
@@ -2765,12 +2765,12 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
                 />
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-zinc-500">Evidence</span>
-                <span className="font-medium text-zinc-700">{metrics.evidenceCount}</span>
+                <span className="text-stone-500">Evidence</span>
+                <span className="font-medium text-stone-700">{metrics.evidenceCount}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-zinc-500">Precedents</span>
-                <span className="font-medium text-zinc-700">{metrics.precedentCount}</span>
+                <span className="text-stone-500">Precedents</span>
+                <span className="font-medium text-stone-700">{metrics.precedentCount}</span>
               </div>
               {/* Warning signals */}
               {metrics.artifactCount > 0 && metrics.evidenceCount === 0 && (

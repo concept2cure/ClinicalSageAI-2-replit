@@ -118,7 +118,7 @@ function StatusIcon({ status }: { status?: string }) {
       return <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />;
     case 'draft':
     default:
-      return <Clock className="w-3 h-3 text-zinc-400 shrink-0" />;
+      return <Clock className="w-3 h-3 text-stone-400 shrink-0" />;
   }
 }
 
@@ -207,14 +207,14 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
   return (
     <div className={cn('flex flex-col h-full', className)} data-testid="project-file-tree">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 h-8 border-b border-zinc-200 bg-zinc-50/60 shrink-0">
-        <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+      <div className="flex items-center justify-between px-3 h-8 border-b border-stone-200 bg-stone-50/60 shrink-0">
+        <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
           Explorer
         </span>
         {onCreateNew && (
           <button
             onClick={onCreateNew}
-            className="p-1.5 rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
+            className="p-1.5 rounded text-stone-400 hover:text-stone-700 hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors duration-150"
             title="New document"
             aria-label="New document"
           >
@@ -240,32 +240,32 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                 }}
                 aria-expanded={isExpanded}
                 className={cn(
-                  'w-full flex items-center gap-1.5 px-2 py-[5px] text-left transition-all duration-150 group focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded',
+                  'w-full flex items-center gap-1.5 px-2 py-[5px] text-left transition-all duration-150 group focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none rounded',
                   isFolderSelected
                     ? 'bg-blue-50 text-blue-700'
-                    : 'text-zinc-600 hover:bg-zinc-50 hover:translate-x-px'
+                    : 'text-stone-600 hover:bg-stone-50 hover:translate-x-px'
                 )}
                 data-testid={`folder-${folder.key}`}
               >
                 {isExpanded ? (
-                  <ChevronRight className="w-3 h-3 shrink-0 text-zinc-400 transition-transform duration-150 rotate-90" />
+                  <ChevronRight className="w-3 h-3 shrink-0 text-stone-400 transition-transform duration-150 rotate-90" />
                 ) : (
-                  <ChevronRight className="w-3 h-3 shrink-0 text-zinc-400 transition-transform duration-150" />
+                  <ChevronRight className="w-3 h-3 shrink-0 text-stone-400 transition-transform duration-150" />
                 )}
                 {isExpanded ? (
-                  <FolderOpen className="w-3.5 h-3.5 shrink-0 text-zinc-400" />
+                  <FolderOpen className="w-3.5 h-3.5 shrink-0 text-stone-400" />
                 ) : (
-                  <Folder className="w-3.5 h-3.5 shrink-0 text-zinc-400" />
+                  <Folder className="w-3.5 h-3.5 shrink-0 text-stone-400" />
                 )}
                 <span className="text-sm font-medium truncate flex-1">{folder.label}</span>
                 {count > 0 && (
-                  <span className="text-xs text-zinc-400 tabular-nums shrink-0">{count}</span>
+                  <span className="text-xs text-stone-400 tabular-nums shrink-0">{count}</span>
                 )}
               </button>
 
               {/* Children (files) */}
               {isExpanded && folder.children.length === 0 && (
-                <p className="pl-7 pr-2 py-1.5 text-xs text-zinc-400 italic">No documents</p>
+                <p className="pl-7 pr-2 py-1.5 text-xs text-stone-400 italic">No documents</p>
               )}
               {isExpanded &&
                 folder.children.map(a => {
@@ -276,10 +276,10 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                       onClick={() => onSelect(a)}
                       onContextMenu={e => handleFileContextMenu(e, a)}
                       className={cn(
-                        'w-full flex items-center gap-1.5 pl-7 pr-2 py-[4px] text-left transition-all duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded',
+                        'w-full flex items-center gap-1.5 pl-7 pr-2 py-[4px] text-left transition-all duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none rounded',
                         isSelected
                           ? 'bg-blue-100/70 text-blue-800'
-                          : 'text-zinc-600 hover:bg-zinc-50 hover:translate-x-px'
+                          : 'text-stone-600 hover:bg-stone-50 hover:translate-x-px'
                       )}
                       data-testid="tree-file-node"
                       title={a.title}
@@ -287,7 +287,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                       <FileText
                         className={cn(
                           'w-3.5 h-3.5 shrink-0',
-                          isSelected ? 'text-blue-600' : 'text-zinc-400'
+                          isSelected ? 'text-blue-600' : 'text-stone-400'
                         )}
                       />
                       <span className="text-sm truncate flex-1 leading-snug">{a.title}</span>
@@ -302,8 +302,8 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
         {/* Empty state */}
         {artifacts.length === 0 && (
           <div className="px-4 py-6 text-center">
-            <FileText className="w-5 h-5 text-zinc-200 mx-auto mb-2" />
-            <p className="text-xs text-zinc-400">No documents yet.</p>
+            <FileText className="w-5 h-5 text-stone-200 mx-auto mb-2" />
+            <p className="text-xs text-stone-400">No documents yet.</p>
             {onCreateNew && (
               <button
                 onClick={onCreateNew}
@@ -327,7 +327,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
       {/* File context menu */}
       {contextMenu && (
         <div
-          className="fixed z-50 bg-white border border-zinc-200 rounded-lg shadow-lg py-1 min-w-[180px] animate-in fade-in slide-in-from-top-1 duration-150"
+          className="fixed z-50 bg-white border border-stone-200 rounded-lg shadow-lg py-1 min-w-[180px] animate-in fade-in slide-in-from-top-1 duration-150"
           style={{ left: contextMenu.x, top: contextMenu.y }}
           onClick={e => {
             e.stopPropagation();
@@ -336,10 +336,10 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
           role="menu"
           aria-label="File actions"
         >
-          <div className="px-3 py-1.5 border-b border-zinc-200">
-            <p className="text-xs text-zinc-600 truncate">{contextMenu.artifact.title}</p>
+          <div className="px-3 py-1.5 border-b border-stone-200">
+            <p className="text-xs text-stone-600 truncate">{contextMenu.artifact.title}</p>
             {contextMenu.artifact.ctdSection && (
-              <p className="text-xs text-zinc-400 font-mono">
+              <p className="text-xs text-stone-400 font-mono">
                 {contextMenu.artifact.ctdSection}
               </p>
             )}
@@ -350,7 +350,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                 onCutDocument(contextMenu.artifact);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 transition-colors flex items-center gap-2 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-stone-50 transition-colors flex items-center gap-2 focus-visible:outline-none"
               role="menuitem"
             >
               <Scissors className="w-3 h-3" />
@@ -363,7 +363,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                 onOpenPlacement(contextMenu.artifact);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-zinc-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-2 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-2 focus-visible:outline-none"
               role="menuitem"
             >
               <MapPin className="w-3 h-3" />
@@ -376,7 +376,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                 onCopyCtdPath(contextMenu.artifact);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 transition-colors flex items-center gap-2 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-stone-50 transition-colors flex items-center gap-2 focus-visible:outline-none"
               role="menuitem"
             >
               <Copy className="w-3 h-3" />

@@ -109,12 +109,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       <div className={cn(
         "max-w-[80%] rounded-xl px-4 py-3",
         isUser
-          ? "bg-zinc-900 text-white"
-          : "bg-white border border-zinc-200"
+          ? "bg-stone-900 text-white"
+          : "bg-white border border-stone-200"
       )}>
         {/* Persona name */}
         {!isUser && persona && (
-          <div className="text-xs font-medium text-zinc-500 mb-1">
+          <div className="text-xs font-medium text-stone-500 mb-1">
             {persona.name}
           </div>
         )}
@@ -122,7 +122,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         {/* Message content */}
         <div className={cn(
           "text-sm leading-relaxed whitespace-pre-wrap",
-          isUser ? "text-white" : "text-zinc-700"
+          isUser ? "text-white" : "text-stone-700"
         )}>
           {message.content}
           {message.isStreaming && (
@@ -132,8 +132,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
         {/* Citations */}
         {message.citations && message.citations.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-zinc-200 space-y-2">
-            <div className="text-xs font-medium text-zinc-500 flex items-center gap-1">
+          <div className="mt-3 pt-3 border-t border-stone-200 space-y-2">
+            <div className="text-xs font-medium text-stone-500 flex items-center gap-1">
               <Quote className="w-3 h-3" />
               Sources
             </div>
@@ -154,31 +154,31 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
         {/* Actions (for assistant messages) */}
         {!isUser && !message.isStreaming && (
-          <div className="flex items-center gap-1 mt-3 pt-2 border-t border-zinc-200">
+          <div className="flex items-center gap-1 mt-3 pt-2 border-t border-stone-200">
             <button
               onClick={() => onCopy?.(message.content)}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 transition-colors duration-150"
+              className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-50 transition-colors duration-150"
               title="Copy"
             >
               <Copy className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => onFeedback?.(message.id, 'up')}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors duration-150"
+              className="p-1.5 rounded-lg text-stone-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors duration-150"
               title="Good response"
             >
               <ThumbsUp className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => onFeedback?.(message.id, 'down')}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors duration-150"
+              className="p-1.5 rounded-lg text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors duration-150"
               title="Poor response"
             >
               <ThumbsDown className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => onRegenerate?.(message.id)}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 transition-colors duration-150"
+              className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-50 transition-colors duration-150"
               title="Regenerate"
             >
               <RefreshCw className="w-3.5 h-3.5" />
@@ -189,8 +189,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
       {/* User avatar */}
       {isUser && (
-        <div className="w-10 h-10 rounded-lg bg-zinc-200 flex items-center justify-center flex-shrink-0">
-          <span className="text-sm font-medium text-zinc-600">You</span>
+        <div className="w-10 h-10 rounded-lg bg-stone-200 flex items-center justify-center flex-shrink-0">
+          <span className="text-sm font-medium text-stone-600">You</span>
         </div>
       )}
     </div>
@@ -255,7 +255,7 @@ const SuggestedPrompts: React.FC<SuggestedPromptsProps> = ({ persona, onSelect }
         <button
           key={index}
           onClick={() => onSelect(prompt)}
-          className="px-3 py-2 text-sm bg-zinc-50 hover:bg-zinc-100 text-zinc-700 rounded-xl border border-zinc-200 hover:border-zinc-300 transition-colors duration-150"
+          className="px-3 py-2 text-sm bg-stone-50 hover:bg-stone-100 text-stone-700 rounded-xl border border-stone-200 hover:border-stone-300 transition-colors duration-150"
         >
           {prompt}
         </button>
@@ -312,20 +312,20 @@ const ChatInput: React.FC<ChatInputProps> = ({
   }, []);
 
   return (
-    <div className="bg-white border border-zinc-200 rounded-xl p-3 shadow-sm">
+    <div className="bg-white border border-stone-200 rounded-xl p-3 shadow-sm">
       {/* Attachments preview */}
       {attachments.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-3 pb-3 border-b border-zinc-200">
+        <div className="flex flex-wrap gap-2 mb-3 pb-3 border-b border-stone-200">
           {attachments.map((file, index) => (
             <div
               key={index}
-              className="flex items-center gap-2 px-3 py-1.5 bg-zinc-50 rounded-lg text-sm"
+              className="flex items-center gap-2 px-3 py-1.5 bg-stone-50 rounded-lg text-sm"
             >
-              <FileText className="w-4 h-4 text-zinc-400" />
-              <span className="text-zinc-700 truncate max-w-[150px]">{file.name}</span>
+              <FileText className="w-4 h-4 text-stone-400" />
+              <span className="text-stone-700 truncate max-w-[150px]">{file.name}</span>
               <button
                 onClick={() => setAttachments(prev => prev.filter((_, i) => i !== index))}
-                className="text-zinc-400 hover:text-zinc-600"
+                className="text-stone-400 hover:text-stone-600"
               >
                 ×
               </button>
@@ -343,7 +343,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled}
-          className="flex-1 resize-none outline-none text-sm text-zinc-700 placeholder:text-zinc-400 bg-transparent min-h-[24px] max-h-[200px]"
+          className="flex-1 resize-none outline-none text-sm text-stone-700 placeholder:text-stone-400 bg-transparent min-h-[24px] max-h-[200px]"
           rows={1}
         />
 
@@ -358,7 +358,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="p-2 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 transition-colors duration-150"
+            className="p-2 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-50 transition-colors duration-150"
             title="Attach file"
           >
             <Paperclip className="w-5 h-5" />
@@ -369,8 +369,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
             className={cn(
               "p-2 rounded-lg transition-colors duration-150",
               input.trim() || attachments.length > 0
-                ? "bg-zinc-900 text-white hover:bg-zinc-800"
-                : "bg-zinc-100 text-zinc-400 cursor-not-allowed"
+                ? "bg-stone-900 text-white hover:bg-stone-800"
+                : "bg-stone-100 text-stone-400 cursor-not-allowed"
             )}
           >
             <Send className="w-5 h-5" />
@@ -465,7 +465,7 @@ export const CouncilThreadPanel: React.FC<CouncilThreadPanelProps> = ({
   return (
     <div className={cn("flex flex-col h-full", className)}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-zinc-200">
+      <div className="flex items-center justify-between p-4 border-b border-stone-200">
         <div className="flex items-center gap-3">
           <div className={cn(
             "w-12 h-12 rounded-lg flex items-center justify-center text-2xl",
@@ -474,8 +474,8 @@ export const CouncilThreadPanel: React.FC<CouncilThreadPanelProps> = ({
             {persona.avatar}
           </div>
           <div>
-            <h3 className="font-semibold text-zinc-900">{persona.name}</h3>
-            <p className="text-sm text-zinc-500">{persona.role}</p>
+            <h3 className="font-semibold text-stone-900">{persona.name}</h3>
+            <p className="text-sm text-stone-500">{persona.role}</p>
           </div>
         </div>
         <button
@@ -496,10 +496,10 @@ export const CouncilThreadPanel: React.FC<CouncilThreadPanelProps> = ({
             )}>
               {persona.avatar}
             </div>
-            <h3 className="text-lg font-semibold text-zinc-900 mb-2">
+            <h3 className="text-lg font-semibold text-stone-900 mb-2">
               Talk to {persona.name}
             </h3>
-            <p className="text-sm text-zinc-500 mb-6 max-w-md">
+            <p className="text-sm text-stone-500 mb-6 max-w-md">
               {persona.capabilities.join(', ')}
             </p>
             <SuggestedPrompts
@@ -523,7 +523,7 @@ export const CouncilThreadPanel: React.FC<CouncilThreadPanelProps> = ({
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-zinc-200">
+      <div className="p-4 border-t border-stone-200">
         <ChatInput
           onSend={handleSend}
           disabled={isLoading}

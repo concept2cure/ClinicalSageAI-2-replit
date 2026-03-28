@@ -127,15 +127,15 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
   // ── Loading ─────────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="flex flex-col h-full border-l border-zinc-200 bg-white">
-        <div className="h-11 px-4 flex items-center border-b border-zinc-100">
-          <div className="h-3.5 w-48 bg-zinc-100 rounded animate-pulse" />
+      <div className="flex flex-col h-full border-l border-stone-200 bg-white">
+        <div className="h-11 px-4 flex items-center border-b border-stone-100">
+          <div className="h-3.5 w-48 bg-stone-100 rounded animate-pulse" />
         </div>
-        <div className="flex-1 overflow-y-auto bg-zinc-50 p-6">
-          <div className="bg-white mx-auto shadow-lg border border-zinc-200 rounded-sm px-12 py-8">
+        <div className="flex-1 overflow-y-auto bg-stone-50 p-6">
+          <div className="bg-white mx-auto shadow-lg border border-stone-200 rounded-sm px-12 py-8">
             <div className="space-y-3">
               {Array.from({ length: 15 }, (_, i) => (
-                <div key={i} className="h-4 bg-zinc-100 rounded animate-pulse" style={{ width: `${85 - i * 3}%` }} />
+                <div key={i} className="h-4 bg-stone-100 rounded animate-pulse" style={{ width: `${85 - i * 3}%` }} />
               ))}
             </div>
           </div>
@@ -146,20 +146,20 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
 
   if (!artifact) {
     return (
-      <div className="flex flex-col h-full border-l border-zinc-200 bg-white items-center justify-center">
-        <FileText className="w-8 h-8 text-zinc-300 mb-3" />
-        <p className="text-sm font-medium text-zinc-500">No content yet</p>
+      <div className="flex flex-col h-full border-l border-stone-200 bg-white items-center justify-center">
+        <FileText className="w-8 h-8 text-stone-300 mb-3" />
+        <p className="text-sm font-medium text-stone-500">No content yet</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full border-l border-zinc-200 bg-white">
+    <div className="flex flex-col h-full border-l border-stone-200 bg-white">
       {/* ── Title bar ── */}
-      <div className="flex-shrink-0 h-11 px-4 flex items-center justify-between border-b border-zinc-100">
+      <div className="flex-shrink-0 h-11 px-4 flex items-center justify-between border-b border-stone-100">
         <div className="flex items-center gap-2.5 min-w-0">
-          <span className="text-sm font-medium text-zinc-800 truncate">{artifact.title}</span>
-          <span className="text-[10px] px-2 py-0.5 rounded-md bg-zinc-200 text-zinc-600 font-semibold flex-shrink-0 uppercase tracking-tight">
+          <span className="text-sm font-medium text-stone-800 truncate">{artifact.title}</span>
+          <span className="text-[10px] px-2 py-0.5 rounded-md bg-stone-200 text-stone-600 font-semibold flex-shrink-0 uppercase tracking-tight">
             {formatBadge}
           </span>
         </div>
@@ -168,7 +168,7 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
           {isEditing ? (
             <button
               onClick={handleSaveEdit}
-              className="flex items-center gap-1 px-2 py-1 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              className="flex items-center gap-1 px-2 py-1 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
             >
               <Save className="w-3.5 h-3.5" />
               Save
@@ -177,7 +177,7 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
             <button
               onClick={handleStartEdit}
               aria-label="Edit inline"
-              className="flex items-center gap-1 px-2 py-1 text-xs text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              className="flex items-center gap-1 px-2 py-1 text-xs text-stone-500 hover:text-stone-700 hover:bg-stone-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
             >
               <Edit3 className="w-3.5 h-3.5" />
               Edit
@@ -188,7 +188,7 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
           <button
             onClick={() => onOpenFullEditor(artifactId)}
             aria-label="Open in Full Editor"
-            className="flex items-center gap-1 px-2 py-1 text-xs text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            className="flex items-center gap-1 px-2 py-1 text-xs text-stone-500 hover:text-stone-700 hover:bg-stone-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
           >
             <PenLine className="w-3.5 h-3.5" />
             Full Editor
@@ -199,7 +199,7 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
             <button
               onClick={() => onSaveToVault(artifactId)}
               aria-label="Save to Vault"
-              className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
               title="Save to Vault"
             >
               <Archive className="w-3.5 h-3.5" />
@@ -213,30 +213,30 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
               aria-label="Download document"
               aria-haspopup="menu"
               aria-expanded={showDownloadMenu}
-              className="flex items-center gap-1 px-2 py-1 text-xs text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              className="flex items-center gap-1 px-2 py-1 text-xs text-stone-500 hover:text-stone-700 hover:bg-stone-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
             >
               <Download className="w-3.5 h-3.5" />
               <ChevronDown className="w-3 h-3" />
             </button>
             {showDownloadMenu && (
-              <div className="absolute right-0 mt-1 w-36 bg-white border border-zinc-200 rounded-lg shadow-lg z-50 py-1" role="menu">
+              <div className="absolute right-0 mt-1 w-36 bg-white border border-stone-200 rounded-lg shadow-lg z-50 py-1" role="menu">
                 <button
                   role="menuitem"
-                  className="w-full text-left px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50"
+                  className="w-full text-left px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50"
                   onClick={() => { setShowDownloadMenu(false); }}
                 >
                   Download as PDF
                 </button>
                 <button
                   role="menuitem"
-                  className="w-full text-left px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50"
+                  className="w-full text-left px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50"
                   onClick={() => { setShowDownloadMenu(false); }}
                 >
                   Download as DOCX
                 </button>
                 <button
                   role="menuitem"
-                  className="w-full text-left px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50"
+                  className="w-full text-left px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50"
                   onClick={() => { setShowDownloadMenu(false); }}
                 >
                   Download as XML
@@ -249,7 +249,7 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
             <button
               onClick={onToggleFullscreen}
               aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-              className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
             >
               {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
             </button>
@@ -257,7 +257,7 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
           <button
             onClick={onClose}
             aria-label="Close"
-            className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -265,35 +265,35 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
       </div>
 
       {/* ── Document content ── */}
-      <div className="flex-1 overflow-y-auto bg-zinc-100" role="region" aria-label="Document preview">
-        <div className="bg-white mx-auto mt-4 mb-8 shadow-lg border border-zinc-200" style={{ maxWidth: '8.5in' }}>
+      <div className="flex-1 overflow-y-auto bg-stone-100" role="region" aria-label="Document preview">
+        <div className="bg-white mx-auto mt-4 mb-8 shadow-lg border border-stone-200" style={{ maxWidth: '8.5in' }}>
           <div className="flex min-h-[11in]">
             {/* Line numbers */}
-            <div className="w-10 flex-shrink-0 pt-12 pr-2 text-right select-none border-r border-zinc-200" aria-hidden="true">
+            <div className="w-10 flex-shrink-0 pt-12 pr-2 text-right select-none border-r border-stone-200" aria-hidden="true">
               {Array.from({ length: lineCount || 30 }, (_, i) => (
-                <div key={i} className="text-[11px] text-zinc-300 leading-7 tabular-nums font-mono">{i + 1}</div>
+                <div key={i} className="text-[11px] text-stone-300 leading-7 tabular-nums font-mono">{i + 1}</div>
               ))}
             </div>
 
             {/* Content / Editor */}
-            <div className="flex-1 px-12 py-12 text-sm text-zinc-800 leading-7">
+            <div className="flex-1 px-12 py-12 text-sm text-stone-800 leading-7">
               {isEditing ? (
                 <textarea
                   value={editContent}
                   onChange={e => setEditContent(e.target.value)}
-                  className="w-full h-full min-h-[600px] text-sm leading-7 text-zinc-800 bg-transparent border-none outline-none resize-none font-serif"
+                  className="w-full h-full min-h-[600px] text-sm leading-7 text-stone-800 bg-transparent border-none outline-none resize-none font-serif"
                   autoFocus
                 />
               ) : sanitizedContent ? (
                 <div
-                  className="prose prose-sm prose-zinc max-w-none"
+                  className="prose prose-sm prose-stone max-w-none"
                   dangerouslySetInnerHTML={{ __html: sanitizedContent }}
                 />
               ) : (
-                <div className="text-center py-16 text-zinc-400">
-                  <FileText className="w-8 h-8 mx-auto mb-3 text-zinc-300" />
-                  <p className="text-sm font-medium text-zinc-500">No content yet</p>
-                  <p className="text-xs text-zinc-400 mt-1.5">Generate content with AnA to see it here</p>
+                <div className="text-center py-16 text-stone-400">
+                  <FileText className="w-8 h-8 mx-auto mb-3 text-stone-300" />
+                  <p className="text-sm font-medium text-stone-500">No content yet</p>
+                  <p className="text-xs text-stone-400 mt-1.5">Generate content with AnA to see it here</p>
                 </div>
               )}
             </div>

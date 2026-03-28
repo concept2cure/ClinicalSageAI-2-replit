@@ -155,8 +155,8 @@ const STAGE_CONFIG: Record<DevelopmentStage, {
   color: string;
   phase: 'preclinical' | 'clinical' | 'regulatory';
 }> = {
-  discovery: { label: 'Discovery', shortLabel: 'Disc', color: 'bg-zinc-400', phase: 'preclinical' },
-  lead_optimization: { label: 'Lead Optimization', shortLabel: 'Lead Opt', color: 'bg-zinc-500', phase: 'preclinical' },
+  discovery: { label: 'Discovery', shortLabel: 'Disc', color: 'bg-stone-400', phase: 'preclinical' },
+  lead_optimization: { label: 'Lead Optimization', shortLabel: 'Lead Opt', color: 'bg-stone-500', phase: 'preclinical' },
   preclinical: { label: 'Preclinical', shortLabel: 'Preclin', color: 'bg-purple-500', phase: 'preclinical' },
   ind_enabling: { label: 'IND-Enabling Studies', shortLabel: 'IND-En', color: 'bg-violet-500', phase: 'preclinical' },
   pre_ind_meeting: { label: 'Pre-IND Meeting', shortLabel: 'Pre-IND', color: 'bg-blue-400', phase: 'regulatory' },
@@ -246,13 +246,13 @@ const DevelopmentPipeline: React.FC<{
                 'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-150',
                 isCompleted && 'bg-green-500 text-white',
                 isCurrent && cn(config.color, 'text-white ring-4 ring-offset-2'),
-                !isCompleted && !isCurrent && 'bg-zinc-200 text-zinc-400'
+                !isCompleted && !isCurrent && 'bg-stone-200 text-stone-400'
               )}>
                 {isCompleted ? <CheckCircle className="w-4 h-4" /> : i + 1}
               </div>
               <span className={cn(
                 'text-xs mt-1 font-medium',
-                isCurrent ? 'text-zinc-900' : 'text-zinc-500'
+                isCurrent ? 'text-stone-900' : 'text-stone-500'
               )}>
                 {config.shortLabel}
               </span>
@@ -260,7 +260,7 @@ const DevelopmentPipeline: React.FC<{
             {i < stages.length - 1 && (
               <div className={cn(
                 'flex-1 h-0.5 min-w-[20px]',
-                isCompleted ? 'bg-green-500' : 'bg-zinc-200'
+                isCompleted ? 'bg-green-500' : 'bg-stone-200'
               )} />
             )}
           </React.Fragment>
@@ -282,9 +282,9 @@ const CriticalPathTracker: React.FC<{
   const atRisk = criticalPath.filter(d => d.status === 'at_risk' || d.status === 'delayed');
   
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 p-4">
+    <div className="bg-white rounded-xl border border-stone-200 p-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-zinc-900">Critical Path Deliverables</h3>
+        <h3 className="text-sm font-semibold text-stone-900">Critical Path Deliverables</h3>
         {atRisk.length > 0 && (
           <span className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full">
             <AlertTriangle className="w-3 h-3" />
@@ -308,33 +308,33 @@ const CriticalPathTracker: React.FC<{
                 'w-full flex items-center gap-3 p-3 rounded-lg border transition-colors text-left',
                 d.status === 'at_risk' || d.status === 'delayed'
                   ? 'border-red-200 bg-red-50 hover:bg-red-100'
-                  : 'border-zinc-200 hover:bg-zinc-50'
+                  : 'border-stone-200 hover:bg-stone-50'
               )}
             >
               <div className={cn(
                 'w-8 h-8 rounded-lg flex items-center justify-center',
-                d.status === 'delivered' ? 'bg-green-100' : 'bg-zinc-100'
+                d.status === 'delivered' ? 'bg-green-100' : 'bg-stone-100'
               )}>
                 <VendorIcon className={cn(
                   'w-4 h-4',
-                  d.status === 'delivered' ? 'text-green-600' : 'text-zinc-500'
+                  d.status === 'delivered' ? 'text-green-600' : 'text-stone-500'
                 )} />
               </div>
               
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-zinc-900 truncate">{d.deliverableName}</p>
-                <p className="text-xs text-zinc-500">{d.vendorName} • {vendorConfig.label}</p>
+                <p className="text-sm font-medium text-stone-900 truncate">{d.deliverableName}</p>
+                <p className="text-xs text-stone-500">{d.vendorName} • {vendorConfig.label}</p>
               </div>
               
               {d.percentComplete !== undefined && d.status !== 'delivered' && (
                 <div className="w-16">
-                  <div className="h-1.5 bg-zinc-200 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-stone-200 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-blue-500 rounded-full"
                       style={{ width: `${d.percentComplete}%` }}
                     />
                   </div>
-                  <p className="text-xs text-zinc-500 text-center mt-0.5">{d.percentComplete}%</p>
+                  <p className="text-xs text-stone-500 text-center mt-0.5">{d.percentComplete}%</p>
                 </div>
               )}
               
@@ -344,7 +344,7 @@ const CriticalPathTracker: React.FC<{
                 d.status === 'at_risk' && 'text-red-600',
                 d.status === 'delayed' && 'text-red-700',
                 d.status === 'on_track' && isUrgent && 'text-amber-600',
-                d.status === 'on_track' && !isUrgent && 'text-zinc-600'
+                d.status === 'on_track' && !isUrgent && 'text-stone-600'
               )}>
                 {d.status === 'delivered' ? (
                   <CheckCircle className="w-4 h-4" />
@@ -382,8 +382,8 @@ const FDAInteractionTimeline: React.FC<{
   };
   
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 p-4">
-      <h3 className="text-sm font-semibold text-zinc-900 mb-4">FDA Interactions</h3>
+    <div className="bg-white rounded-xl border border-stone-200 p-4">
+      <h3 className="text-sm font-semibold text-stone-900 mb-4">FDA Interactions</h3>
       
       <div className="space-y-3">
         {upcoming.map(interaction => (
@@ -393,22 +393,22 @@ const FDAInteractionTimeline: React.FC<{
               'p-3 rounded-lg border-l-4',
               interaction.status === 'scheduled' && 'border-l-blue-500 bg-blue-50',
               interaction.status === 'submitted' && 'border-l-amber-500 bg-amber-50',
-              interaction.status === 'planning' && 'border-l-zinc-400 bg-zinc-50'
+              interaction.status === 'planning' && 'border-l-stone-400 bg-stone-50'
             )}
           >
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-zinc-900">{typeLabels[interaction.type]}</span>
+              <span className="text-sm font-medium text-stone-900">{typeLabels[interaction.type]}</span>
               <span className={cn(
                 'text-xs font-medium px-2 py-0.5 rounded-full',
                 interaction.status === 'scheduled' && 'bg-blue-100 text-blue-700',
                 interaction.status === 'submitted' && 'bg-amber-100 text-amber-700',
-                interaction.status === 'planning' && 'bg-zinc-100 text-zinc-600'
+                interaction.status === 'planning' && 'bg-stone-100 text-stone-600'
               )}>
                 {interaction.status}
               </span>
             </div>
             {interaction.scheduledDate && (
-              <p className="text-xs text-zinc-600 mt-1">
+              <p className="text-xs text-stone-600 mt-1">
                 <Calendar className="w-3 h-3 inline mr-1" />
                 {formatDate(interaction.scheduledDate)}
               </p>
@@ -417,17 +417,17 @@ const FDAInteractionTimeline: React.FC<{
         ))}
         
         {completed.length > 0 && (
-          <div className="pt-2 border-t border-zinc-200">
-            <p className="text-xs text-zinc-500 mb-2">Completed ({completed.length})</p>
+          <div className="pt-2 border-t border-stone-200">
+            <p className="text-xs text-stone-500 mb-2">Completed ({completed.length})</p>
             {completed.slice(0, 2).map(interaction => (
-              <div key={interaction.id} className="flex items-center gap-2 text-xs text-zinc-500 py-1">
+              <div key={interaction.id} className="flex items-center gap-2 text-xs text-stone-500 py-1">
                 <CheckCircle className="w-3 h-3 text-green-500" />
                 <span>{typeLabels[interaction.type]}</span>
                 {interaction.outcome && (
                   <span className={cn(
                     'px-1.5 py-0.5 rounded text-xs',
                     interaction.outcome === 'favorable' && 'bg-green-100 text-green-700',
-                    interaction.outcome === 'neutral' && 'bg-zinc-100 text-zinc-600',
+                    interaction.outcome === 'neutral' && 'bg-stone-100 text-stone-600',
                     interaction.outcome === 'unfavorable' && 'bg-red-100 text-red-700'
                   )}>
                     {interaction.outcome}
@@ -460,7 +460,7 @@ const FundingMilestoneCard: React.FC<{
         milestone.status === 'achieved' && 'border-green-300 bg-green-50',
         milestone.status === 'on_track' && 'border-blue-300 bg-blue-50',
         milestone.status === 'at_risk' && 'border-red-300 bg-red-50',
-        milestone.status === 'upcoming' && 'border-zinc-200 bg-white hover:border-blue-300'
+        milestone.status === 'upcoming' && 'border-stone-200 bg-white hover:border-blue-300'
       )}
     >
       <div className="flex items-start justify-between mb-2">
@@ -470,7 +470,7 @@ const FundingMilestoneCard: React.FC<{
             milestone.status === 'achieved' && 'text-green-600',
             milestone.status === 'on_track' && 'text-blue-600',
             milestone.status === 'at_risk' && 'text-red-600',
-            milestone.status === 'upcoming' && 'text-zinc-400'
+            milestone.status === 'upcoming' && 'text-stone-400'
           )} />
           <span className={cn(
             'text-xs font-medium px-2 py-0.5 rounded-full',
@@ -489,18 +489,18 @@ const FundingMilestoneCard: React.FC<{
         )}
       </div>
       
-      <h4 className="text-sm font-semibold text-zinc-900 mb-1">{milestone.name}</h4>
-      <p className="text-xs text-zinc-500 mb-3">{milestone.description}</p>
+      <h4 className="text-sm font-semibold text-stone-900 mb-1">{milestone.name}</h4>
+      <p className="text-xs text-stone-500 mb-3">{milestone.description}</p>
       
       <div className="flex items-center justify-between">
-        <span className="text-xs text-zinc-600">
+        <span className="text-xs text-stone-600">
           <Calendar className="w-3 h-3 inline mr-1" />
           {formatDate(milestone.targetDate)}
         </span>
         {milestone.status !== 'achieved' && (
           <span className={cn(
             'text-xs font-medium',
-            daysUntil <= 30 && milestone.status !== 'achieved' ? 'text-amber-600' : 'text-zinc-500'
+            daysUntil <= 30 && milestone.status !== 'achieved' ? 'text-amber-600' : 'text-stone-500'
           )}>
             {daysUntil}d remaining
           </span>
@@ -543,13 +543,13 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
   }, [programs]);
   
   return (
-    <div className={cn('flex flex-col h-full bg-zinc-50', className)}>
+    <div className={cn('flex flex-col h-full bg-stone-50', className)}>
       {/* Header with company runway */}
-      <div className="flex-shrink-0 bg-white border-b border-zinc-200 p-4">
+      <div className="flex-shrink-0 bg-white border-b border-stone-200 p-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-zinc-900">Program Dashboard</h1>
-            <p className="text-sm text-zinc-500">Track your pipeline from discovery to approval</p>
+            <h1 className="text-xl font-semibold text-stone-900">Program Dashboard</h1>
+            <p className="text-sm text-stone-500">Track your pipeline from discovery to approval</p>
           </div>
           
           {/* Key Metrics */}
@@ -559,7 +559,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
                 'px-4 py-2 rounded-lg',
                 companyRunway <= 12 ? 'bg-red-100' : companyRunway <= 18 ? 'bg-amber-100' : 'bg-green-100'
               )}>
-                <p className="text-xs text-zinc-600">Runway</p>
+                <p className="text-xs text-stone-600">Runway</p>
                 <p className={cn(
                   'text-lg font-semibold',
                   companyRunway <= 12 ? 'text-red-700' : companyRunway <= 18 ? 'text-amber-700' : 'text-green-700'
@@ -569,9 +569,9 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
               </div>
             )}
             
-            <div className="px-4 py-2 bg-zinc-100 rounded-lg">
-              <p className="text-xs text-zinc-600">Active Programs</p>
-              <p className="text-lg font-semibold text-zinc-900">{metrics.activePrograms}</p>
+            <div className="px-4 py-2 bg-stone-100 rounded-lg">
+              <p className="text-xs text-stone-600">Active Programs</p>
+              <p className="text-lg font-semibold text-stone-900">{metrics.activePrograms}</p>
             </div>
             
             {metrics.criticalAtRisk > 0 && (
@@ -591,7 +591,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
       
       {/* Program Selector (if multiple programs) */}
       {programs.length > 1 && (
-        <div className="flex-shrink-0 bg-white border-b border-zinc-200 px-4 py-2">
+        <div className="flex-shrink-0 bg-white border-b border-stone-200 px-4 py-2">
           <div className="flex gap-2">
             {programs.map(program => {
               const stageConfig = STAGE_CONFIG[program.currentStage];
@@ -605,7 +605,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
                     'px-4 py-2 rounded-lg transition-colors duration-150',
                     isSelected
                       ? 'bg-blue-600 text-white'
-                      : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                      : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
                   )}
                 >
                   <div className="flex items-center gap-2">
@@ -613,7 +613,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
                     <span className="text-sm font-medium">{program.programName}</span>
                     <span className={cn(
                       'text-xs px-1.5 py-0.5 rounded',
-                      isSelected ? 'bg-blue-500 text-blue-100' : 'bg-zinc-200 text-zinc-600'
+                      isSelected ? 'bg-blue-500 text-blue-100' : 'bg-stone-200 text-stone-600'
                     )}>
                       {stageConfig.shortLabel}
                     </span>
@@ -629,11 +629,11 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
       {selectedProgram && (
         <div className="flex-1 p-6 overflow-auto">
           {/* Program Header */}
-          <div className="bg-white rounded-xl border border-zinc-200 p-6 mb-6">
+          <div className="bg-white rounded-xl border border-stone-200 p-6 mb-6">
             <div className="flex items-start justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-semibold text-zinc-900 mb-1">{selectedProgram.programName}</h2>
-                <p className="text-sm text-zinc-500">
+                <h2 className="text-2xl font-semibold text-stone-900 mb-1">{selectedProgram.programName}</h2>
+                <p className="text-sm text-stone-500">
                   {selectedProgram.therapeuticArea} • {selectedProgram.indication} • {selectedProgram.modality.replace('_', ' ')}
                 </p>
                 {selectedProgram.indNumber && (
@@ -642,7 +642,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
               </div>
               
               <div className="text-right">
-                <p className="text-xs text-zinc-500">Current Stage</p>
+                <p className="text-xs text-stone-500">Current Stage</p>
                 <span className={cn(
                   'inline-block px-3 py-1 text-sm font-semibold text-white rounded-full',
                   STAGE_CONFIG[selectedProgram.currentStage].color
@@ -657,19 +657,19 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
             
             {/* Projected Timeline */}
             {(selectedProgram.projectedNDAFiling || selectedProgram.projectedApproval) && (
-              <div className="mt-6 pt-6 border-t border-zinc-200 flex items-center gap-8">
+              <div className="mt-6 pt-6 border-t border-stone-200 flex items-center gap-8">
                 {selectedProgram.projectedNDAFiling && (
                   <div>
-                    <p className="text-xs text-zinc-500">Projected NDA Filing</p>
-                    <p className="text-sm font-semibold text-zinc-900">
+                    <p className="text-xs text-stone-500">Projected NDA Filing</p>
+                    <p className="text-sm font-semibold text-stone-900">
                       {formatDate(selectedProgram.projectedNDAFiling)}
                     </p>
                   </div>
                 )}
                 {selectedProgram.projectedApproval && (
                   <div>
-                    <p className="text-xs text-zinc-500">Projected Approval</p>
-                    <p className="text-sm font-semibold text-zinc-900">
+                    <p className="text-xs text-stone-500">Projected Approval</p>
+                    <p className="text-sm font-semibold text-stone-900">
                       {formatDate(selectedProgram.projectedApproval)}
                     </p>
                   </div>
@@ -690,8 +690,8 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
             <FDAInteractionTimeline interactions={selectedProgram.fdaInteractions} />
             
             {/* Column 3: Funding Milestones */}
-            <div className="bg-white rounded-xl border border-zinc-200 p-4">
-              <h3 className="text-sm font-semibold text-zinc-900 mb-4">Key Milestones</h3>
+            <div className="bg-white rounded-xl border border-stone-200 p-4">
+              <h3 className="text-sm font-semibold text-stone-900 mb-4">Key Milestones</h3>
               <div className="space-y-3">
                 {selectedProgram.fundingMilestones.slice(0, 3).map(milestone => (
                   <FundingMilestoneCard

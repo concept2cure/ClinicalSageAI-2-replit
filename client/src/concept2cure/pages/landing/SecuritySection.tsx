@@ -16,14 +16,14 @@ const BADGES = [
 
 export function SecuritySection() {
   return (
-    <Section id="security" className="py-24 px-6 bg-zinc-900 text-white">
+    <Section id="security" className="py-24 px-6 bg-stone-900 text-white">
       <div className="max-w-5xl mx-auto">
         <motion.div variants={fadeUp} className="text-center mb-14">
           <h2 className="text-3xl sm:text-4xl font-bold mb-4">
             Enterprise security. Regulatory compliance.{' '}
             <span className="text-blue-400">Built in.</span>
           </h2>
-          <p className="text-zinc-400 text-lg max-w-2xl mx-auto">
+          <p className="text-stone-400 text-lg max-w-2xl mx-auto">
             Every feature is designed from the ground up for GxP compliance — not bolted on as an
             afterthought.
           </p>
@@ -39,7 +39,7 @@ export function SecuritySection() {
                 <CheckIcon className="w-4 h-4 text-blue-400" />
               </div>
               <div className="text-sm font-semibold text-white mb-1">{b.label}</div>
-              <div className="text-xs text-zinc-400">{b.desc}</div>
+              <div className="text-xs text-stone-400">{b.desc}</div>
             </div>
           ))}
         </motion.div>

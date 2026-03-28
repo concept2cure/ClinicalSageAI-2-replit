@@ -209,8 +209,8 @@ const IndustryStep: React.FC<{
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-semibold text-zinc-900">Welcome to Concept2Cure</h2>
-        <p className="mt-2 text-zinc-600">
+        <h2 className="text-2xl font-semibold text-stone-900">Welcome to Concept2Cure</h2>
+        <p className="mt-2 text-stone-600">
           Let's personalize your workspace. What type of organization are you?
         </p>
       </div>
@@ -224,16 +224,16 @@ const IndustryStep: React.FC<{
               'p-5 rounded-xl border text-left transition-all duration-150',
               selected === industry.id
                 ? `${industry.bgColor} border-current ${industry.color} ring-2 ring-offset-2`
-                : 'bg-white border-zinc-200 hover:border-zinc-300 hover:shadow-md'
+                : 'bg-white border-stone-200 hover:border-stone-300 hover:shadow-md'
             )}
           >
             <div className={cn('mb-4', industry.color)}>{industry.icon}</div>
-            <h3 className="text-lg font-semibold text-zinc-900">{industry.label}</h3>
-            <p className="text-sm text-zinc-500 mt-1">{industry.description}</p>
+            <h3 className="text-lg font-semibold text-stone-900">{industry.label}</h3>
+            <p className="text-sm text-stone-500 mt-1">{industry.description}</p>
             
             <ul className="mt-4 space-y-1">
               {industry.features.map(feature => (
-                <li key={feature} className="text-xs text-zinc-500 flex items-center gap-2">
+                <li key={feature} className="text-xs text-stone-500 flex items-center gap-2">
                   <CheckCircle className="w-3 h-3 text-green-500" />
                   {feature}
                 </li>
@@ -265,8 +265,8 @@ const RoleStep: React.FC<{
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-semibold text-zinc-900">What's your primary role?</h2>
-        <p className="mt-2 text-zinc-600">
+        <h2 className="text-2xl font-semibold text-stone-900">What's your primary role?</h2>
+        <p className="mt-2 text-stone-600">
           This helps us show you the most relevant tools and views.
         </p>
       </div>
@@ -283,26 +283,26 @@ const RoleStep: React.FC<{
                 'p-4 rounded-lg border text-left transition-all flex items-start gap-4',
                 selected === role.id
                   ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-200'
-                  : 'bg-white border-zinc-200 hover:border-zinc-300'
+                  : 'bg-white border-stone-200 hover:border-stone-300'
               )}
             >
               <div className={cn(
                 'p-2 rounded-lg',
-                selected === role.id ? 'bg-blue-100 text-blue-600' : 'bg-zinc-100 text-zinc-600'
+                selected === role.id ? 'bg-blue-100 text-blue-600' : 'bg-stone-100 text-stone-600'
               )}>
                 {role.icon}
               </div>
               
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-zinc-900">{role.label}</h3>
+                  <h3 className="font-semibold text-stone-900">{role.label}</h3>
                   {isRecommended && (
                     <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">
                       Recommended
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-zinc-500">{role.description}</p>
+                <p className="text-sm text-stone-500">{role.description}</p>
               </div>
             </button>
           );
@@ -330,8 +330,8 @@ const ConfirmationStep: React.FC<{
       </div>
       
       <div>
-        <h2 className="text-2xl font-semibold text-zinc-900">You're all set!</h2>
-        <p className="mt-2 text-zinc-600">
+        <h2 className="text-2xl font-semibold text-stone-900">You're all set!</h2>
+        <p className="mt-2 text-stone-600">
           Your workspace is configured for optimal productivity.
         </p>
       </div>
@@ -346,7 +346,7 @@ const ConfirmationStep: React.FC<{
         </div>
         
         <div className="flex items-center">
-          <ArrowRight className="w-6 h-6 text-zinc-400" />
+          <ArrowRight className="w-6 h-6 text-stone-400" />
         </div>
         
         <div className="px-6 py-4 rounded-xl bg-blue-50">
@@ -355,7 +355,7 @@ const ConfirmationStep: React.FC<{
         </div>
       </div>
       
-      <div className="text-sm text-zinc-500">
+      <div className="text-sm text-stone-500">
         You can always change these settings later in your profile.
       </div>
     </div>
@@ -396,7 +396,7 @@ export const IndustryModeSelector: React.FC<IndustryModeSelectorProps> = ({
   
   return (
     <div className={cn(
-      'min-h-screen bg-zinc-50 flex items-center justify-center p-8',
+      'min-h-screen bg-stone-50 flex items-center justify-center p-8',
       className
     )}>
       <div className="w-full max-w-4xl">
@@ -407,14 +407,14 @@ export const IndustryModeSelector: React.FC<IndustryModeSelectorProps> = ({
               <React.Fragment key={s}>
                 <div className={cn(
                   'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors duration-150',
-                  step >= s ? 'bg-blue-600 text-white' : 'bg-zinc-200 text-zinc-500'
+                  step >= s ? 'bg-blue-600 text-white' : 'bg-stone-200 text-stone-500'
                 )}>
                   {step > s ? <CheckCircle className="w-4 h-4" /> : s}
                 </div>
                 {s < 3 && (
                   <div className={cn(
                     'w-12 h-1 rounded-full transition-colors duration-150',
-                    step > s ? 'bg-blue-600' : 'bg-zinc-200'
+                    step > s ? 'bg-blue-600' : 'bg-stone-200'
                   )} />
                 )}
               </React.Fragment>
@@ -447,12 +447,12 @@ export const IndustryModeSelector: React.FC<IndustryModeSelectorProps> = ({
           )}
           
           {/* Navigation */}
-          <div className="flex justify-between mt-8 pt-6 border-t border-zinc-200">
+          <div className="flex justify-between mt-8 pt-6 border-t border-stone-200">
             <button
               onClick={() => setStep(Math.max(1, step - 1) as 1 | 2 | 3)}
               className={cn(
                 'px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-150',
-                step === 1 ? 'invisible' : 'text-zinc-600 hover:bg-zinc-100'
+                step === 1 ? 'invisible' : 'text-stone-600 hover:bg-stone-100'
               )}
             >
               Back
@@ -474,7 +474,7 @@ export const IndustryModeSelector: React.FC<IndustryModeSelectorProps> = ({
                   'px-6 py-2 text-sm font-medium rounded-lg flex items-center gap-2',
                   ((step === 1 && industry) || (step === 2 && role))
                     ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
+                    : 'bg-stone-100 text-stone-400 cursor-not-allowed'
                 )}
               >
                 Continue

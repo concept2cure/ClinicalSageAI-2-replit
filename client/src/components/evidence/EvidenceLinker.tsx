@@ -440,7 +440,7 @@ export const EvidenceLinker: React.FC<EvidenceLinkerProps> = ({
             placeholder="Search evidence..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-stone-400 focus:border-stone-400"
           />
           <svg
             className="absolute left-3 top-2.5 w-4 h-4 text-gray-400"
@@ -495,7 +495,7 @@ export const EvidenceLinker: React.FC<EvidenceLinkerProps> = ({
               value={rationale}
               onChange={e => setRationale(e.target.value)}
               placeholder="Explain why this evidence supports the claim..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none focus:ring-stone-400 focus:border-stone-400"
               rows={2}
             />
           </div>

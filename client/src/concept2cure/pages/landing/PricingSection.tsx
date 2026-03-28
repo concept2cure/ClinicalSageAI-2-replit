@@ -87,18 +87,18 @@ export function PricingSection() {
   }
 
   return (
-    <Section id="pricing" className="py-24 px-6 bg-white border-t border-zinc-200/60">
+    <Section id="pricing" className="py-24 px-6 bg-white border-t border-stone-200/60">
       <div className="max-w-6xl mx-auto">
         <motion.div variants={fadeUp} className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
+          <h2 className="text-3xl sm:text-4xl font-bold text-stone-900 mb-4">
             Simple, transparent pricing
           </h2>
-          <p className="text-lg text-zinc-600 mb-8">
+          <p className="text-lg text-stone-600 mb-8">
             Start free. Upgrade when you're ready. No surprises.
           </p>
 
           <div
-            className="inline-flex items-center gap-1 p-1 bg-zinc-100 rounded-lg"
+            className="inline-flex items-center gap-1 p-1 bg-stone-100 rounded-lg"
             role="radiogroup"
             aria-label="Billing cycle"
           >
@@ -107,7 +107,7 @@ export function PricingSection() {
               aria-checked={billing === 'monthly'}
               onClick={() => setBilling('monthly')}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                billing === 'monthly' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-600'
+                billing === 'monthly' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600'
               }`}
             >
               Monthly
@@ -117,7 +117,7 @@ export function PricingSection() {
               aria-checked={billing === 'annual'}
               onClick={() => setBilling('annual')}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                billing === 'annual' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-600'
+                billing === 'annual' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600'
               }`}
             >
               Annual <span className="text-green-600 text-xs ml-1">Save 15%</span>
@@ -133,7 +133,7 @@ export function PricingSection() {
               className={`relative p-6 rounded-2xl border-2 transition-all ${
                 tier.highlighted
                   ? 'border-blue-600 bg-blue-50/30 shadow-xl shadow-blue-600/10'
-                  : 'border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-md'
+                  : 'border-stone-200 bg-white hover:border-stone-300 hover:shadow-md'
               }`}
             >
               {tier.highlighted && (
@@ -142,19 +142,19 @@ export function PricingSection() {
                 </div>
               )}
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-zinc-900">{tier.name}</h3>
+                <h3 className="text-lg font-semibold text-stone-900">{tier.name}</h3>
                 <div className="mt-2 flex items-baseline gap-1">
-                  <span className="text-3xl font-bold text-zinc-900">
+                  <span className="text-3xl font-bold text-stone-900">
                     {getDisplayPrice(tier.price)}
                   </span>
-                  {tier.period && <span className="text-sm text-zinc-500">{tier.period}</span>}
+                  {tier.period && <span className="text-sm text-stone-500">{tier.period}</span>}
                 </div>
-                <p className="mt-2 text-sm text-zinc-600">{tier.description}</p>
+                <p className="mt-2 text-sm text-stone-600">{tier.description}</p>
               </div>
 
               <ul className="space-y-2.5 mb-8">
                 {tier.features.map(f => (
-                  <li key={f} className="flex items-start gap-2 text-sm text-zinc-700">
+                  <li key={f} className="flex items-start gap-2 text-sm text-stone-700">
                     <CheckIcon className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
                     {f}
                   </li>
@@ -173,7 +173,7 @@ export function PricingSection() {
                 className={`w-full py-2.5 px-4 text-sm font-medium rounded-xl transition-all ${
                   tier.highlighted
                     ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md'
-                    : 'bg-zinc-100 text-zinc-800 hover:bg-zinc-200'
+                    : 'bg-stone-100 text-stone-800 hover:bg-stone-200'
                 }`}
               >
                 {tier.cta}

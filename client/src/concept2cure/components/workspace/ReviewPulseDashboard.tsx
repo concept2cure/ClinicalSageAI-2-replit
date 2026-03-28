@@ -108,11 +108,11 @@ const StatCard: React.FC<{
   color: string;
   subtext?: string;
 }> = ({ icon: Icon, label, value, color, subtext }) => (
-  <div className="flex items-center gap-2 px-3 py-1.5 border border-zinc-200 rounded bg-zinc-50/50 min-w-0">
+  <div className="flex items-center gap-2 px-3 py-1.5 border border-stone-200 rounded bg-stone-50/50 min-w-0">
     <Icon className={cn('w-3.5 h-3.5 shrink-0', color)} />
-    <span className="text-sm font-semibold tabular-nums text-zinc-900">{value}</span>
-    <span className="text-xs text-zinc-500 truncate">{label}</span>
-    {subtext && <span className="text-xs text-zinc-400 ml-auto">{subtext}</span>}
+    <span className="text-sm font-semibold tabular-nums text-stone-900">{value}</span>
+    <span className="text-xs text-stone-500 truncate">{label}</span>
+    {subtext && <span className="text-xs text-stone-400 ml-auto">{subtext}</span>}
   </div>
 );
 
@@ -198,7 +198,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
         actions={
           <button
             onClick={fetchPulse}
-            className="p-1.5 rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition"
+            className="p-1.5 rounded hover:bg-stone-100 text-stone-400 hover:text-stone-600 transition"
             title="Refresh"
           >
             <RefreshCw className="w-4 h-4" />
@@ -230,7 +230,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
           icon={Clock}
           label="Overdue Tasks"
           value={s.overdueTasks}
-          color={s.overdueTasks > 0 ? 'text-red-500' : 'text-zinc-400'}
+          color={s.overdueTasks > 0 ? 'text-red-500' : 'text-stone-400'}
         />
         <StatCard
           icon={Target}
@@ -242,7 +242,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
           icon={Users}
           label="Unassigned"
           value={s.unassignedThreads + s.unassignedTasks}
-          color={s.unassignedThreads + s.unassignedTasks > 0 ? 'text-amber-500' : 'text-zinc-400'}
+          color={s.unassignedThreads + s.unassignedTasks > 0 ? 'text-amber-500' : 'text-stone-400'}
         />
         <StatCard
           icon={UserCheck}
@@ -255,7 +255,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
       {/* ── Risk signals ───────────────────────────────────────────────── */}
       {riskSignals.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-zinc-700 flex items-center gap-1.5">
+          <h3 className="text-sm font-semibold text-stone-700 flex items-center gap-1.5">
             <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
             Risk Signals
           </h3>
@@ -280,7 +280,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
 
       {/* ── Artifact readiness table ───────────────────────────────────── */}
       <div className="space-y-2">
-        <h3 className="text-sm font-semibold text-zinc-700 flex items-center gap-1.5">
+        <h3 className="text-sm font-semibold text-stone-700 flex items-center gap-1.5">
           <FileText className="w-3.5 h-3.5 text-blue-500" />
           Artifact Review Readiness
           {blockedArtifacts.length > 0 && (
@@ -290,22 +290,22 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
           )}
         </h3>
         {artifactReadiness.length === 0 ? (
-          <p className="text-xs text-zinc-400 italic">No artifacts in project</p>
+          <p className="text-xs text-stone-400 italic">No artifacts in project</p>
         ) : (
           <div className="border rounded-lg overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-zinc-50 border-b text-left">
-                  <th className="px-3 py-2 font-medium text-zinc-600 text-xs">Document</th>
-                  <th className="px-3 py-2 font-medium text-zinc-600 text-xs">Section</th>
-                  <th className="px-3 py-2 font-medium text-zinc-600 text-xs text-center">
+                <tr className="bg-stone-50 border-b text-left">
+                  <th className="px-3 py-2 font-medium text-stone-600 text-xs">Document</th>
+                  <th className="px-3 py-2 font-medium text-stone-600 text-xs">Section</th>
+                  <th className="px-3 py-2 font-medium text-stone-600 text-xs text-center">
                     Threads
                   </th>
-                  <th className="px-3 py-2 font-medium text-zinc-600 text-xs text-center">Tasks</th>
-                  <th className="px-3 py-2 font-medium text-zinc-600 text-xs text-center">
+                  <th className="px-3 py-2 font-medium text-stone-600 text-xs text-center">Tasks</th>
+                  <th className="px-3 py-2 font-medium text-stone-600 text-xs text-center">
                     Overdue
                   </th>
-                  <th className="px-3 py-2 font-medium text-zinc-600 text-xs text-center">
+                  <th className="px-3 py-2 font-medium text-stone-600 text-xs text-center">
                     Status
                   </th>
                 </tr>
@@ -315,37 +315,37 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
                   <tr
                     key={a.artifactId}
                     className={cn(
-                      'border-b last:border-0 hover:bg-zinc-50/50 transition-colors duration-150',
+                      'border-b last:border-0 hover:bg-stone-50/50 transition-colors duration-150',
                       a.reviewStatus === 'blocked' && 'bg-red-50/30',
                       onNavigateToArtifact && 'cursor-pointer'
                     )}
                     onClick={() => onNavigateToArtifact?.(a.artifactId)}
                   >
-                    <td className="px-3 py-2 text-zinc-900 font-medium truncate max-w-[200px]">
+                    <td className="px-3 py-2 text-stone-900 font-medium truncate max-w-[200px]">
                       {a.title}
                     </td>
-                    <td className="px-3 py-2 text-zinc-500 text-xs font-mono">
+                    <td className="px-3 py-2 text-stone-500 text-xs font-mono">
                       {a.ctdSection || '—'}
                     </td>
                     <td className="px-3 py-2 text-center tabular-nums">
                       {a.openThreads > 0 ? (
                         <span className="text-blue-600 font-medium">{a.openThreads}</span>
                       ) : (
-                        <span className="text-zinc-400">0</span>
+                        <span className="text-stone-400">0</span>
                       )}
                     </td>
                     <td className="px-3 py-2 text-center tabular-nums">
                       {a.activeTasks > 0 ? (
                         <span className="text-violet-600 font-medium">{a.activeTasks}</span>
                       ) : (
-                        <span className="text-zinc-400">0</span>
+                        <span className="text-stone-400">0</span>
                       )}
                     </td>
                     <td className="px-3 py-2 text-center tabular-nums">
                       {a.overdueTasks > 0 ? (
                         <span className="text-red-600 font-semibold">{a.overdueTasks}</span>
                       ) : (
-                        <span className="text-zinc-400">0</span>
+                        <span className="text-stone-400">0</span>
                       )}
                     </td>
                     <td className="px-3 py-2 text-center">
@@ -362,7 +362,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
       {/* ── Assignee workload ──────────────────────────────────────────── */}
       {assigneeWorkload.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-zinc-700 flex items-center gap-1.5">
+          <h3 className="text-sm font-semibold text-stone-700 flex items-center gap-1.5">
             <Users className="w-3.5 h-3.5 text-violet-500" />
             Team Workload
           </h3>
@@ -375,8 +375,8 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
                   aw.overdue > 0 && 'border-red-200'
                 )}
               >
-                <p className="text-sm font-medium text-zinc-900 truncate">{aw.name}</p>
-                <div className="flex items-center gap-3 text-xs text-zinc-500">
+                <p className="text-sm font-medium text-stone-900 truncate">{aw.name}</p>
+                <div className="flex items-center gap-3 text-xs text-stone-500">
                   <span>{aw.threads} threads</span>
                   <span>{aw.tasks} tasks</span>
                   {aw.overdue > 0 && (
@@ -392,11 +392,11 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
       {/* ── Recent activity ────────────────────────────────────────────── */}
       {recentActivity.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-zinc-700">Recent Review Activity</h3>
+          <h3 className="text-sm font-semibold text-stone-700">Recent Review Activity</h3>
           <div className="space-y-1">
             {recentActivity.slice(0, 10).map((a, i) => (
-              <div key={i} className="flex items-start gap-2 px-3 py-1.5 text-xs text-zinc-600">
-                <span className="text-zinc-400 tabular-nums whitespace-nowrap">
+              <div key={i} className="flex items-start gap-2 px-3 py-1.5 text-xs text-stone-600">
+                <span className="text-stone-400 tabular-nums whitespace-nowrap">
                   {new Date(a.createdAt).toLocaleDateString()}
                 </span>
                 <span className="truncate">{a.description}</span>

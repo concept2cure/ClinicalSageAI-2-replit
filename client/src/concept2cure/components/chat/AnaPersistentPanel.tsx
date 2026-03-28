@@ -525,7 +525,7 @@ const SLASH_CATEGORY_COLORS: Record<string, string> = {
   Subspecialties: 'text-amber-600',
   Authoring: 'text-rose-600',
   Lifecycle: 'text-teal-600',
-  Navigation: 'text-zinc-500',
+  Navigation: 'text-stone-500',
 };
 
 // ─── Authoring context import ────────────────────────────────────────────────
@@ -3499,7 +3499,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     <span className="text-xs text-[#6B6962] flex-1 truncate">
                       {cmd.description}
                     </span>
-                    <span className={cn('text-[10px] font-medium', SLASH_CATEGORY_COLORS[cmd.category] || 'text-zinc-400')}>
+                    <span className={cn('text-[10px] font-medium', SLASH_CATEGORY_COLORS[cmd.category] || 'text-stone-400')}>
                       {cmd.category}
                     </span>
                   </button>
@@ -3571,7 +3571,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       {/* ── E3: Persistent project context banner ── */}
       {contextProfile?.activeProject && (
         <div
-          className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800 px-4 py-2 shrink-0 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-900/70 transition-colors"
+          className="flex items-center justify-between bg-stone-50 dark:bg-stone-900/50 border-b border-stone-200 dark:border-stone-800 px-4 py-2 shrink-0 cursor-pointer hover:bg-stone-100 dark:hover:bg-stone-900/70 transition-colors"
           onClick={() => onNavigate?.('project-config')}
           role="button"
           tabIndex={0}
@@ -3579,13 +3579,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           aria-label={`Active project: ${contextProfile.activeProject}. Click to open project config.`}
         >
           <div className="flex items-center gap-2 min-w-0">
-            <FolderOpen className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-            <span className="text-[13px] font-semibold text-zinc-700 dark:text-zinc-300 truncate">
+            <FolderOpen className="w-3.5 h-3.5 text-stone-500 shrink-0" />
+            <span className="text-[13px] font-semibold text-stone-700 dark:text-stone-300 truncate">
               {contextProfile.activeProject}
             </span>
             {contextProfile.productType && (
               <>
-                <span className="text-zinc-300 dark:text-zinc-600">·</span>
+                <span className="text-stone-300 dark:text-stone-600">·</span>
                 <span className={cn(
                   'text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded',
                   contextProfile.productType.includes('510') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' :
@@ -3594,14 +3594,14 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   contextProfile.productType.includes('BLA') ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' :
                   contextProfile.productType.includes('IND') ? 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300' :
                   contextProfile.productType.includes('ANDA') ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' :
-                  'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
+                  'bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-400'
                 )}>
                   {contextProfile.productType}
                 </span>
               </>
             )}
           </div>
-          <span className="text-[11px] text-zinc-400 dark:text-zinc-500 whitespace-nowrap ml-3">
+          <span className="text-[11px] text-stone-400 dark:text-stone-500 whitespace-nowrap ml-3">
             Quick project switch ←
           </span>
         </div>
@@ -3735,7 +3735,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             <textarea
                               value={editText}
                               onChange={e => setEditText(e.target.value)}
-                              className="w-full text-sm text-[#2D2C28] leading-relaxed border border-zinc-300 rounded-lg px-3 py-2 resize-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                              className="w-full text-sm text-[#2D2C28] leading-relaxed border border-stone-300 rounded-lg px-3 py-2 resize-none focus:border-stone-400 focus:ring-1 focus:ring-stone-400 outline-none"
                               rows={3}
                               autoFocus
                             />
@@ -3749,13 +3749,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                     handleSend(editText.trim());
                                   }
                                 }}
-                                className="px-3 py-1 text-xs font-medium text-white bg-zinc-900 rounded-md hover:bg-zinc-800"
+                                className="px-3 py-1 text-xs font-medium text-white bg-stone-900 rounded-md hover:bg-stone-800"
                               >
                                 Send
                               </button>
                               <button
                                 onClick={() => setEditingMsgId(null)}
-                                className="px-3 py-1 text-xs text-zinc-500 hover:text-zinc-700"
+                                className="px-3 py-1 text-xs text-stone-500 hover:text-stone-700"
                               >
                                 Cancel
                               </button>
@@ -3768,7 +3768,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             </p>
                             <button
                               onClick={() => { setEditingMsgId(msg.id); setEditText(msg.content); }}
-                              className="opacity-0 group-hover/user:opacity-100 p-1 text-zinc-400 hover:text-zinc-600 rounded transition-opacity flex-shrink-0"
+                              className="opacity-0 group-hover/user:opacity-100 p-1 text-stone-400 hover:text-stone-600 rounded transition-opacity flex-shrink-0"
                               title="Edit message"
                             >
                               <Pencil className="w-3 h-3" />
@@ -3778,13 +3778,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       ) : (
                         <>
                           <div
-                            className="prose prose-sm prose-zinc max-w-none mt-0.5
-                              prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1.5
-                              prose-strong:text-zinc-900
+                            className="prose prose-sm prose-stone max-w-none mt-0.5
+                              prose-p:text-stone-700 prose-p:leading-relaxed prose-p:my-1.5
+                              prose-strong:text-stone-900
                               prose-code:text-violet-700 prose-code:bg-violet-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
-                              prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3 prose-pre:text-xs
-                              prose-blockquote:border-l-violet-400 prose-blockquote:text-zinc-600
-                              prose-ul:text-zinc-700 prose-ol:text-zinc-700
+                              prose-pre:bg-stone-900 prose-pre:text-stone-100 prose-pre:rounded-xl prose-pre:p-3 prose-pre:text-xs
+                              prose-blockquote:border-l-violet-400 prose-blockquote:text-stone-600
+                              prose-ul:text-stone-700 prose-ol:text-stone-700
                               prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
                               [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                             dangerouslySetInnerHTML={{ __html: htmlContent }}
@@ -3797,7 +3797,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                   key={idx}
                                   src={`data:${img.mimeType};base64,${img.base64}`}
                                   alt={`Generated image ${idx + 1}`}
-                                  className="rounded-lg border border-zinc-200 max-w-sm shadow-sm"
+                                  className="rounded-lg border border-stone-200 max-w-sm shadow-sm"
                                 />
                               ))}
                             </div>
@@ -3914,7 +3914,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                     ? 'text-[#10A37F] bg-emerald-50'
                                     : msg.modelProvider === 'moonshot'
                                       ? 'text-[#6366F1] bg-indigo-50'
-                                      : 'text-zinc-500 bg-zinc-50'
+                                      : 'text-stone-500 bg-stone-50'
                               )}
                             >
                               {msg.modelProvider === 'anthropic'
@@ -3928,7 +3928,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           )}
                           {/* Claude-style: token usage */}
                           {msg.tokenUsage && (
-                            <span className="text-[10px] text-zinc-400 mr-1 tabular-nums">
+                            <span className="text-[10px] text-stone-400 mr-1 tabular-nums">
                               {msg.tokenUsage.inputTokens ? `${msg.tokenUsage.inputTokens} in` : ''}
                               {msg.tokenUsage.inputTokens && msg.tokenUsage.outputTokens ? ' · ' : ''}
                               {msg.tokenUsage.outputTokens ? `${msg.tokenUsage.outputTokens} out` : ''}
@@ -3940,7 +3940,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 'text-[10px] font-medium px-1.5 py-0.5 rounded mr-1',
                                 msg.evidenceUsage.firecrawlUsed
                                   ? 'text-[#D97757] bg-[#FBF0EB]'
-                                  : 'text-zinc-500 bg-zinc-50'
+                                  : 'text-stone-500 bg-stone-50'
                               )}
                               title="External evidence usage"
                             >
@@ -3975,7 +3975,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 positive: true,
                               }).catch(() => {});
                             }}
-                            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
+                            className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded transition-colors"
                             title="Good"
                           >
                             <ThumbsUp className="w-3 h-3" />
@@ -3987,7 +3987,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 positive: false,
                               }).catch(() => {});
                             }}
-                            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
+                            className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded transition-colors"
                             title="Bad"
                           >
                             <ThumbsDown className="w-3 h-3" />
@@ -4024,7 +4024,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                     /* non-blocking */
                                   }
                                 }}
-                                className="p-1 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                                className="p-1 text-stone-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
                                 title="Save to Vault"
                               >
                                 <Download className="w-3 h-3" />
@@ -4072,7 +4072,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                     )
                                   );
                                 }}
-                                className="p-1 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                className="p-1 text-stone-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                                 title="Insert into Editor"
                               >
                                 <FileEdit className="w-3 h-3" />
@@ -4332,7 +4332,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   <span className="text-xs text-[#6B6962] flex-1 truncate">
                     {cmd.description}
                   </span>
-                  <span className={cn('text-[10px] font-medium', SLASH_CATEGORY_COLORS[cmd.category] || 'text-zinc-400')}>
+                  <span className={cn('text-[10px] font-medium', SLASH_CATEGORY_COLORS[cmd.category] || 'text-stone-400')}>
                     {cmd.category}
                   </span>
                 </button>
@@ -4359,7 +4359,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     ? 'bg-violet-50 text-violet-700 hover:bg-violet-100'
                     : chatMode === 'nano-banana'
                       ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
-                      : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
+                      : 'text-stone-500 hover:bg-stone-100 hover:text-stone-700'
                 )}
               >
                 {chatMode === 'deep-research' ? (
@@ -4426,7 +4426,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5 flex-shrink-0" />
                     )}
                   </button>
-                  <div className="mx-2 my-0.5 border-t border-zinc-100" />
+                  <div className="mx-2 my-0.5 border-t border-stone-100" />
                   <button
                     type="button"
                     onClick={() => {
@@ -4434,14 +4434,14 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       setShowModeDropdown(false);
                     }}
                     className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-zinc-50 transition-colors',
+                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-stone-50 transition-colors',
                       chatMode === 'nano-banana' && 'bg-amber-50'
                     )}
                   >
                     <ImageIcon className="w-4 h-4 mt-0.5 text-amber-600 flex-shrink-0" />
                     <div>
-                      <div className="text-sm font-medium text-zinc-900">Nano Banana</div>
-                      <div className="text-[11px] text-zinc-400 leading-tight">
+                      <div className="text-sm font-medium text-stone-900">Nano Banana</div>
+                      <div className="text-[11px] text-stone-400 leading-tight">
                         AI image generation, presentations &amp; visual design via Gemini
                       </div>
                     </div>
@@ -4567,7 +4567,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 'flex-shrink-0 px-2 py-1 text-[10px] rounded border transition-colors',
                 useExtendedThinking
                   ? 'bg-violet-50 border-violet-200 text-violet-700'
-                  : 'border-zinc-200 text-zinc-400 hover:text-zinc-600'
+                  : 'border-stone-200 text-stone-400 hover:text-stone-600'
               )}
               title={useExtendedThinking ? 'Extended thinking enabled' : 'Enable extended thinking'}
             >

@@ -102,9 +102,9 @@ function CapabilityItem({
     <div>
       <button
         onClick={onToggle}
-        className="w-full text-left py-1.5 px-2 rounded hover:bg-zinc-50 transition-colors duration-150"
+        className="w-full text-left py-1.5 px-2 rounded hover:bg-stone-50 transition-colors duration-150"
       >
-        <span className="text-sm text-zinc-700">{node.label}</span>
+        <span className="text-sm text-stone-700">{node.label}</span>
       </button>
 
       <AnimatePresence>
@@ -117,14 +117,14 @@ function CapabilityItem({
             className="overflow-hidden"
           >
             <div className="pl-4 pr-2 pb-3 space-y-2">
-              <p className="text-xs text-zinc-500 leading-relaxed">
+              <p className="text-xs text-stone-500 leading-relaxed">
                 {node.description}
               </p>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-stone-400">
                 Powered by {poweredByLabel(node.poweredBy)}
               </p>
               {connectedNodes.length > 0 && (
-                <p className="text-xs text-zinc-400">
+                <p className="text-xs text-stone-400">
                   Connected to: {connectedNodes.map((n) => n.label).join(', ')}
                 </p>
               )}
@@ -189,7 +189,7 @@ export function CapabilityConstellation({
   );
 
   return (
-    <div className={cn('w-full bg-white border border-zinc-200 rounded-lg p-6', className)}>
+    <div className={cn('w-full bg-white border border-stone-200 rounded-lg p-6', className)}>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {clusterOrder.map((cluster) => {
           const nodes = clusters[cluster];
@@ -197,7 +197,7 @@ export function CapabilityConstellation({
 
           return (
             <div key={cluster}>
-              <h3 className="text-xs uppercase tracking-wider text-zinc-400 mb-2">
+              <h3 className="text-xs uppercase tracking-wider text-stone-400 mb-2">
                 {CLUSTER_LABELS[cluster]}
               </h3>
               <div className="space-y-0.5">

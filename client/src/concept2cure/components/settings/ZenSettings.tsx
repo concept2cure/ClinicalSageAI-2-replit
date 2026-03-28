@@ -83,10 +83,10 @@ interface SettingRowProps {
 }
 
 const SettingRow: React.FC<SettingRowProps> = ({ label, description, children }) => (
-  <div className="flex items-center justify-between py-4 border-b border-zinc-200 last:border-b-0">
+  <div className="flex items-center justify-between py-4 border-b border-stone-200 last:border-b-0">
     <div className="flex-1 pr-4">
-      <div className="text-sm font-medium text-zinc-900">{label}</div>
-      {description && <div className="text-xs text-zinc-500 mt-0.5">{description}</div>}
+      <div className="text-sm font-medium text-stone-900">{label}</div>
+      {description && <div className="text-xs text-stone-500 mt-0.5">{description}</div>}
     </div>
     <div className="flex-shrink-0">{children}</div>
   </div>
@@ -106,7 +106,7 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ enabled, onChange, label })
     onClick={() => onChange(!enabled)}
     className={cn(
       'relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:ring-offset-2',
-      enabled ? 'bg-blue-600' : 'bg-zinc-300'
+      enabled ? 'bg-blue-600' : 'bg-stone-300'
     )}
   >
     <span
@@ -125,8 +125,8 @@ interface SectionHeaderProps {
 
 const SectionHeader: React.FC<SectionHeaderProps> = ({ title, description }) => (
   <div className="mb-6">
-    <h2 className="text-lg font-semibold text-zinc-900">{title}</h2>
-    {description && <p className="text-sm text-zinc-500 mt-1">{description}</p>}
+    <h2 className="text-lg font-semibold text-stone-900">{title}</h2>
+    {description && <p className="text-sm text-stone-500 mt-1">{description}</p>}
   </div>
 );
 
@@ -202,7 +202,7 @@ const ProfileSection: React.FC = () => {
       />
 
       {/* Avatar */}
-      <div className="flex items-center gap-4 mb-6 pb-6 border-b border-zinc-200">
+      <div className="flex items-center gap-4 mb-6 pb-6 border-b border-stone-200">
         <div className="relative">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-2xl font-semibold">
             {initials}
@@ -210,67 +210,67 @@ const ProfileSection: React.FC = () => {
           <button
             aria-label="Change profile picture"
             title="Change profile picture"
-            className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white border border-zinc-200 shadow-sm flex items-center justify-center hover:bg-zinc-50 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+            className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white border border-stone-200 shadow-sm flex items-center justify-center hover:bg-stone-50 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
           >
-            <Camera className="w-4 h-4 text-zinc-600" />
+            <Camera className="w-4 h-4 text-stone-600" />
           </button>
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-zinc-900">{name || 'Your Name'}</h3>
-          <p className="text-sm text-zinc-500">{title || 'Your Title'}</p>
+          <h3 className="text-lg font-semibold text-stone-900">{name || 'Your Name'}</h3>
+          <p className="text-sm text-stone-500">{title || 'Your Title'}</p>
         </div>
       </div>
 
       {/* Form */}
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Full Name</label>
+          <label className="block text-sm font-medium text-stone-700 mb-1.5">Full Name</label>
           <input
             type="text"
             value={name}
             onChange={e => setName(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-150"
+            className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 focus:border-stone-400 focus:ring-2 focus:ring-stone-400/20 outline-none transition-all duration-150"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Email Address</label>
+          <label className="block text-sm font-medium text-stone-700 mb-1.5">Email Address</label>
           <input
             type="email"
             value={email}
             disabled
-            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-500 bg-zinc-50 cursor-not-allowed"
+            className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-500 bg-stone-50 cursor-not-allowed"
           />
-          <p className="text-xs text-zinc-400 mt-1">
+          <p className="text-xs text-stone-400 mt-1">
             Contact your administrator to change your email
           </p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Title / Role</label>
+          <label className="block text-sm font-medium text-stone-700 mb-1.5">Title / Role</label>
           <input
             type="text"
             value={title}
             onChange={e => setTitle(e.target.value)}
             placeholder="e.g., Regulatory Affairs Lead"
-            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+            className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 focus:border-stone-400 focus:ring-2 focus:ring-stone-400/20 outline-none transition-all"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Department</label>
+          <label className="block text-sm font-medium text-stone-700 mb-1.5">Department</label>
           <input
             type="text"
             value={department}
             onChange={e => setDepartment(e.target.value)}
             placeholder="e.g., Regulatory, Clinical, CMC"
-            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+            className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 focus:border-stone-400 focus:ring-2 focus:ring-stone-400/20 outline-none transition-all"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Bio</label>
+          <label className="block text-sm font-medium text-stone-700 mb-1.5">Bio</label>
           <textarea
             value={bio}
             onChange={e => setBio(e.target.value)}
             rows={3}
-            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+            className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 focus:border-stone-400 focus:ring-2 focus:ring-stone-400/20 outline-none transition-all"
             placeholder="A short bio visible to your team"
           />
         </div>
@@ -328,15 +328,15 @@ const OrganizationSection: React.FC = () => {
         description="Manage your organization settings and team"
       />
 
-      <div className="bg-white rounded-xl border border-zinc-200 divide-y divide-zinc-100">
+      <div className="bg-white rounded-xl border border-stone-200 divide-y divide-stone-100">
         <div className="p-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
               <Building2 className="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-zinc-900">{orgData.name}</h3>
-              <p className="text-sm text-zinc-500">{orgData.plan} Plan</p>
+              <h3 className="text-base font-semibold text-stone-900">{orgData.name}</h3>
+              <p className="text-sm text-stone-500">{orgData.plan} Plan</p>
             </div>
           </div>
         </div>
@@ -419,8 +419,8 @@ const NotificationsSection: React.FC = () => {
     <div>
       <SectionHeader title="Notifications" description="Choose what notifications you receive" />
 
-      <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Email</h3>
-      <div className="bg-white rounded-xl border border-zinc-200 mb-4">
+      <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2">Email</h3>
+      <div className="bg-white rounded-xl border border-stone-200 mb-4">
         <SettingRow label="Mentions" description="When someone @mentions you">
           <ToggleSwitch enabled={prefs.emailMentions} onChange={() => toggle('emailMentions')} />
         </SettingRow>
@@ -438,8 +438,8 @@ const NotificationsSection: React.FC = () => {
         </SettingRow>
       </div>
 
-      <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">In-App</h3>
-      <div className="bg-white rounded-xl border border-zinc-200 mb-4">
+      <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2">In-App</h3>
+      <div className="bg-white rounded-xl border border-stone-200 mb-4">
         <SettingRow label="Mentions" description="In-app mention notifications">
           <ToggleSwitch enabled={prefs.inAppMentions} onChange={() => toggle('inAppMentions')} />
         </SettingRow>
@@ -477,7 +477,7 @@ const SecuritySection: React.FC = () => {
     <div>
       <SectionHeader title="Security" description="Protect your account and data" />
 
-      <div className="bg-white rounded-xl border border-zinc-200 mb-6">
+      <div className="bg-white rounded-xl border border-stone-200 mb-6">
         <SettingRow label="Two-Factor Authentication" description="Add an extra layer of security">
           <ToggleSwitch enabled={twoFactor} onChange={setTwoFactor} />
         </SettingRow>
@@ -534,7 +534,7 @@ const AppearanceSection: React.FC = () => {
 
       {/* Theme selector */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-zinc-700 mb-3">Theme</label>
+        <label className="block text-sm font-medium text-stone-700 mb-3">Theme</label>
         <div className="flex gap-3">
           {themes.map(({ id, label, icon: Icon }) => (
             <button
@@ -544,14 +544,14 @@ const AppearanceSection: React.FC = () => {
                 'flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border transition-all duration-150',
                 theme === id
                   ? 'border-blue-500 bg-blue-50'
-                  : 'border-zinc-200 hover:border-zinc-300'
+                  : 'border-stone-200 hover:border-stone-300'
               )}
             >
-              <Icon className={cn('w-6 h-6', theme === id ? 'text-blue-600' : 'text-zinc-400')} />
+              <Icon className={cn('w-6 h-6', theme === id ? 'text-blue-600' : 'text-stone-400')} />
               <span
                 className={cn(
                   'text-sm font-medium',
-                  theme === id ? 'text-blue-600' : 'text-zinc-600'
+                  theme === id ? 'text-blue-600' : 'text-stone-600'
                 )}
               >
                 {label}
@@ -561,7 +561,7 @@ const AppearanceSection: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-zinc-200">
+      <div className="bg-white rounded-xl border border-stone-200">
         <SettingRow label="Compact Mode" description="Reduce spacing for denser layouts">
           <ToggleSwitch enabled={compactMode} onChange={setCompactMode} />
         </SettingRow>
@@ -966,7 +966,7 @@ const IntegrationsSection: React.FC = () => {
             'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
             filterCategory === 'all'
               ? 'bg-blue-600 text-white'
-              : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+              : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
           )}
         >
           All ({ENTERPRISE_INTEGRATIONS.length})
@@ -981,7 +981,7 @@ const IntegrationsSection: React.FC = () => {
                 'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
                 filterCategory === cat
                   ? 'bg-blue-600 text-white'
-                  : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                  : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               )}
             >
               {CATEGORY_ICONS[cat]} {CATEGORY_LABELS[cat]} ({count})
@@ -1003,7 +1003,7 @@ const IntegrationsSection: React.FC = () => {
               key={integration.id}
               className={cn(
                 'rounded-xl border transition-all duration-200',
-                isConnected ? 'border-green-200 bg-green-50/50' : 'border-zinc-200 bg-white',
+                isConnected ? 'border-green-200 bg-green-50/50' : 'border-stone-200 bg-white',
                 isConfiguring && 'ring-2 ring-blue-200'
               )}
             >
@@ -1013,15 +1013,15 @@ const IntegrationsSection: React.FC = () => {
                   <div
                     className={cn(
                       'w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold',
-                      isConnected ? 'bg-green-100 text-green-700' : 'bg-zinc-100 text-zinc-600'
+                      isConnected ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-600'
                     )}
                   >
                     {integration.icon}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-medium text-zinc-900">{integration.name}</h3>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-400 font-medium">
+                      <h3 className="text-sm font-medium text-stone-900">{integration.name}</h3>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-stone-100 text-stone-400 font-medium">
                         {AUTH_TYPE_LABELS[integration.authType]}
                       </span>
                       {isConnected && (
@@ -1030,14 +1030,14 @@ const IntegrationsSection: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-zinc-500 mt-0.5">{integration.description}</p>
+                    <p className="text-xs text-stone-500 mt-0.5">{integration.description}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   {isConnected && (
                     <button
                       onClick={() => setConfiguring(isConfiguring ? null : integration.id)}
-                      className="px-3 py-1.5 text-xs font-medium rounded-lg text-zinc-600 bg-zinc-100 hover:bg-zinc-200 transition-colors"
+                      className="px-3 py-1.5 text-xs font-medium rounded-lg text-stone-600 bg-stone-100 hover:bg-stone-200 transition-colors"
                     >
                       {isConfiguring ? 'Close' : 'Manage'}
                     </button>
@@ -1053,7 +1053,7 @@ const IntegrationsSection: React.FC = () => {
                       isConnected
                         ? 'text-red-600 bg-red-50 hover:bg-red-100'
                         : isConfiguring
-                          ? 'text-zinc-600 bg-zinc-100 hover:bg-zinc-200'
+                          ? 'text-stone-600 bg-stone-100 hover:bg-stone-200'
                           : 'text-white bg-blue-600 hover:bg-blue-700'
                     )}
                   >
@@ -1064,11 +1064,11 @@ const IntegrationsSection: React.FC = () => {
 
               {/* Configuration panel */}
               {isConfiguring && (
-                <div className="px-4 pb-4 border-t border-zinc-100 pt-4">
+                <div className="px-4 pb-4 border-t border-stone-100 pt-4">
                   <div className="space-y-3">
                     {integration.configFields.map(field => (
                       <div key={field.key}>
-                        <label className="block text-xs font-medium text-zinc-700 mb-1">
+                        <label className="block text-xs font-medium text-stone-700 mb-1">
                           {field.label}
                         </label>
                         <input
@@ -1078,7 +1078,7 @@ const IntegrationsSection: React.FC = () => {
                           onChange={e =>
                             handleConfigChange(integration.id, field.key, e.target.value)
                           }
-                          className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
+                          className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg bg-stone-50 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
                         />
                       </div>
                     ))}
@@ -1089,7 +1089,7 @@ const IntegrationsSection: React.FC = () => {
                     <button
                       onClick={() => handleTestConnection(integration.id)}
                       disabled={isTesting}
-                      className="px-4 py-2 text-xs font-medium rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-50"
+                      className="px-4 py-2 text-xs font-medium rounded-lg border border-stone-200 text-stone-700 hover:bg-stone-50 transition-colors disabled:opacity-50"
                     >
                       {isTesting ? 'Testing...' : 'Test Connection'}
                     </button>
@@ -1112,7 +1112,7 @@ const IntegrationsSection: React.FC = () => {
                   </div>
 
                   {/* Auth type info */}
-                  <p className="text-[11px] text-zinc-400 mt-3">
+                  <p className="text-[11px] text-stone-400 mt-3">
                     {integration.authType === 'oauth' &&
                       "Uses OAuth 2.0 for secure authentication. You can also use your organization's SSO provider for pass-through sign-on."}
                     {integration.authType === 'api_key' &&
@@ -1172,24 +1172,24 @@ const HelpSection: React.FC = () => {
             onClick={id === 'shortcuts' ? () => setShowShortcuts(!showShortcuts) : undefined}
             target={href?.startsWith('http') || href?.startsWith('mailto') ? '_blank' : undefined}
             rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
-            className="flex items-center justify-between p-4 bg-white rounded-xl border border-zinc-200 hover:bg-zinc-50 transition-colors cursor-pointer"
+            className="flex items-center justify-between p-4 bg-white rounded-xl border border-stone-200 hover:bg-stone-50 transition-colors cursor-pointer"
           >
             <div className="flex items-center gap-3">
-              <Icon className="w-5 h-5 text-zinc-500" />
+              <Icon className="w-5 h-5 text-stone-500" />
               <div>
-                <span className="text-sm font-medium text-zinc-900 block">{label}</span>
-                {desc && <span className="text-xs text-zinc-500">{desc}</span>}
+                <span className="text-sm font-medium text-stone-900 block">{label}</span>
+                {desc && <span className="text-xs text-stone-500">{desc}</span>}
               </div>
             </div>
-            <ChevronRight className="w-4 h-4 text-zinc-400" />
+            <ChevronRight className="w-4 h-4 text-stone-400" />
           </a>
         ))}
       </div>
 
       {/* Keyboard Shortcuts */}
       {showShortcuts && (
-        <div className="mb-6 p-4 bg-zinc-50 rounded-xl border border-zinc-200">
-          <h4 className="text-sm font-medium text-zinc-900 mb-3">Keyboard Shortcuts</h4>
+        <div className="mb-6 p-4 bg-stone-50 rounded-xl border border-stone-200">
+          <h4 className="text-sm font-medium text-stone-900 mb-3">Keyboard Shortcuts</h4>
           <div className="space-y-2">
             {[
               { keys: '⌘ K', desc: 'Open command palette' },
@@ -1200,8 +1200,8 @@ const HelpSection: React.FC = () => {
               { keys: 'Esc', desc: 'Close modal / panel' },
             ].map(s => (
               <div key={s.keys} className="flex items-center justify-between">
-                <span className="text-xs text-zinc-600">{s.desc}</span>
-                <kbd className="text-[11px] px-1.5 py-0.5 rounded bg-white border border-zinc-200 text-zinc-500 font-mono">
+                <span className="text-xs text-stone-600">{s.desc}</span>
+                <kbd className="text-[11px] px-1.5 py-0.5 rounded bg-white border border-stone-200 text-stone-500 font-mono">
                   {s.keys}
                 </kbd>
               </div>
@@ -1210,33 +1210,33 @@ const HelpSection: React.FC = () => {
         </div>
       )}
 
-      <div className="text-center py-6 border-t border-zinc-200">
-        <p className="text-xs text-zinc-400 mb-2">Concept2Cure v3.0.0 • © 2026 Concept2Cure</p>
+      <div className="text-center py-6 border-t border-stone-200">
+        <p className="text-xs text-stone-400 mb-2">Concept2Cure v3.0.0 • © 2026 Concept2Cure</p>
         <div className="flex justify-center gap-4 text-xs">
           <a
             href="/concept2cure/legal/terms"
-            className="text-zinc-400 hover:text-zinc-600 transition-colors"
+            className="text-stone-400 hover:text-stone-600 transition-colors"
             target="_blank"
           >
             Terms
           </a>
           <a
             href="/concept2cure/legal/privacy"
-            className="text-zinc-400 hover:text-zinc-600 transition-colors"
+            className="text-stone-400 hover:text-stone-600 transition-colors"
             target="_blank"
           >
             Privacy
           </a>
           <a
             href="/concept2cure/legal/sla"
-            className="text-zinc-400 hover:text-zinc-600 transition-colors"
+            className="text-stone-400 hover:text-stone-600 transition-colors"
             target="_blank"
           >
             SLA
           </a>
           <a
             href="/concept2cure/legal/baa"
-            className="text-zinc-400 hover:text-zinc-600 transition-colors"
+            className="text-stone-400 hover:text-stone-600 transition-colors"
             target="_blank"
           >
             BAA
@@ -1292,10 +1292,10 @@ export const ZenSettings: React.FC<ZenSettingsProps> = ({ isOpen, onClose }) => 
             className="fixed inset-4 sm:inset-auto sm:top-[5%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-4xl sm:h-[90vh] bg-white rounded-xl shadow-lg overflow-hidden z-50 flex"
           >
             {/* Sidebar */}
-            <div className="w-56 bg-zinc-50 border-r border-zinc-200 flex flex-col">
+            <div className="w-56 bg-stone-50 border-r border-stone-200 flex flex-col">
               {/* Header */}
-              <div className="p-4 border-b border-zinc-200">
-                <h1 className="text-lg font-semibold text-zinc-900">Settings</h1>
+              <div className="p-4 border-b border-stone-200">
+                <h1 className="text-lg font-semibold text-stone-900">Settings</h1>
               </div>
 
               {/* Navigation */}
@@ -1307,8 +1307,8 @@ export const ZenSettings: React.FC<ZenSettingsProps> = ({ isOpen, onClose }) => 
                     className={cn(
                       'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150',
                       activeSection === id
-                        ? 'bg-white text-zinc-900 shadow-sm'
-                        : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
+                        ? 'bg-white text-stone-900 shadow-sm'
+                        : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
                     )}
                   >
                     <Icon className="w-4 h-4" />
@@ -1318,7 +1318,7 @@ export const ZenSettings: React.FC<ZenSettingsProps> = ({ isOpen, onClose }) => 
               </nav>
 
               {/* Sign out */}
-              <div className="p-2 border-t border-zinc-200">
+              <div className="p-2 border-t border-stone-200">
                 <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors duration-150">
                   <LogOut className="w-4 h-4" />
                   Sign Out
@@ -1329,11 +1329,11 @@ export const ZenSettings: React.FC<ZenSettingsProps> = ({ isOpen, onClose }) => 
             {/* Content */}
             <div className="flex-1 flex flex-col">
               {/* Content header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200">
                 <div />
                 <button
                   onClick={onClose}
-                  className="p-2 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 transition-colors duration-150"
+                  className="p-2 rounded-lg text-stone-500 hover:text-stone-700 hover:bg-stone-100 transition-colors duration-150"
                 >
                   <X className="w-5 h-5" />
                 </button>

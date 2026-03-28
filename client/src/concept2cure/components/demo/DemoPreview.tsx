@@ -26,12 +26,12 @@ const MockCard: React.FC<{
   icon?: React.ReactNode;
 }> = ({ title, children, className, icon }) => (
   <div className={cn(
-    'rounded-xl border border-zinc-200/60 bg-white/90 backdrop-blur-sm p-4 shadow-sm',
+    'rounded-xl border border-stone-200/60 bg-white/90 backdrop-blur-sm p-4 shadow-sm',
     className,
   )}>
     <div className="flex items-center gap-2 mb-3">
       {icon}
-      <h4 className="text-sm font-semibold text-zinc-900">{title}</h4>
+      <h4 className="text-sm font-semibold text-stone-900">{title}</h4>
     </div>
     {children}
   </div>
@@ -51,19 +51,19 @@ const ProgressBar: React.FC<{ label: string; value: number; color?: string }> = 
 }) => (
   <div className="space-y-1">
     <div className="flex justify-between text-xs">
-      <span className="text-zinc-600">{label}</span>
-      <span className="font-medium text-zinc-900">{value}%</span>
+      <span className="text-stone-600">{label}</span>
+      <span className="font-medium text-stone-900">{value}%</span>
     </div>
-    <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+    <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
       <div className={cn('h-full rounded-full transition-all duration-150', color)} style={{ width: `${value}%` }} />
     </div>
   </div>
 );
 
 const MetricBox: React.FC<{ label: string; value: string; trend?: string }> = ({ label, value, trend }) => (
-  <div className="bg-zinc-50 rounded-lg p-3 text-center">
-    <p className="text-lg font-semibold text-zinc-900">{value}</p>
-    <p className="text-xs text-zinc-500 mt-0.5">{label}</p>
+  <div className="bg-stone-50 rounded-lg p-3 text-center">
+    <p className="text-lg font-semibold text-stone-900">{value}</p>
+    <p className="text-xs text-stone-500 mt-0.5">{label}</p>
     {trend && <p className="text-xs text-emerald-600 mt-0.5">{trend}</p>}
   </div>
 );
@@ -71,7 +71,7 @@ const MetricBox: React.FC<{ label: string; value: string; trend?: string }> = ({
 const TableRow: React.FC<{ cells: string[]; highlight?: boolean }> = ({ cells, highlight }) => (
   <tr className={highlight ? 'bg-violet-50/50' : ''}>
     {cells.map((c, i) => (
-      <td key={i} className="px-3 py-2 text-xs text-zinc-700 border-b border-zinc-200">{c}</td>
+      <td key={i} className="px-3 py-2 text-xs text-stone-700 border-b border-stone-200">{c}</td>
     ))}
   </tr>
 );
@@ -83,14 +83,14 @@ const HeroPreview: React.FC = () => (
     <div className="w-14 h-14 rounded-lg bg-blue-600 flex items-center justify-center mb-6 shadow-sm">
       <Sparkles className="w-10 h-10 text-white" />
     </div>
-    <h2 className="text-2xl font-bold text-zinc-900 mb-2">Concept2Cure.RI</h2>
-    <h2 className="text-2xl font-semibold text-zinc-900 mb-2">ClinicalSageAI</h2>
-    <p className="text-sm text-zinc-500 max-w-md">
+    <h2 className="text-2xl font-bold text-stone-900 mb-2">Concept2Cure.RI</h2>
+    <h2 className="text-2xl font-semibold text-stone-900 mb-2">ClinicalSageAI</h2>
+    <p className="text-sm text-stone-500 max-w-md">
       The unified regulatory intelligence platform. One AI co-pilot replacing 10-15 disconnected tools.
     </p>
     <div className="grid grid-cols-4 gap-3 mt-8 w-full max-w-lg">
       {['FDA', 'EMA', 'PMDA', 'NMPA'].map((a) => (
-        <div key={a} className="bg-zinc-50 rounded-lg py-2 px-3 text-xs font-medium text-zinc-700 flex items-center justify-center gap-1">
+        <div key={a} className="bg-stone-50 rounded-lg py-2 px-3 text-xs font-medium text-stone-700 flex items-center justify-center gap-1">
           <Globe className="w-3 h-3" /> {a}
         </div>
       ))}
@@ -108,8 +108,8 @@ const HeroPreview: React.FC = () => (
 const CTAPreview: React.FC = () => (
   <div className="flex flex-col items-center justify-center h-full text-center px-8">
     <Award className="w-16 h-16 text-violet-500 mb-6" />
-    <h2 className="text-2xl font-semibold text-zinc-900 mb-2">Ready to Transform Your Workflow?</h2>
-    <p className="text-sm text-zinc-500 max-w-md mb-6">
+    <h2 className="text-2xl font-semibold text-stone-900 mb-2">Ready to Transform Your Workflow?</h2>
+    <p className="text-sm text-stone-500 max-w-md mb-6">
       Join teams at leading biotech, pharma, and CRO organizations who have consolidated their regulatory workflows into one platform.
     </p>
     <div className="grid grid-cols-2 gap-4 w-full max-w-md">
@@ -132,14 +132,14 @@ const SubPortfolioPreview: React.FC = () => (
         <MetricBox label="Approved" value="23" />
         <MetricBox label="Pipeline" value="8" />
       </div>
-      <div className="overflow-hidden rounded-lg border border-zinc-200">
+      <div className="overflow-hidden rounded-lg border border-stone-200">
         <table className="w-full text-left">
-          <thead><tr className="bg-zinc-50">
-            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Submission</th>
-            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Type</th>
-            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Agency</th>
-            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Status</th>
-            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Readiness</th>
+          <thead><tr className="bg-stone-50">
+            <th className="px-3 py-2 text-xs font-medium text-stone-500">Submission</th>
+            <th className="px-3 py-2 text-xs font-medium text-stone-500">Type</th>
+            <th className="px-3 py-2 text-xs font-medium text-stone-500">Agency</th>
+            <th className="px-3 py-2 text-xs font-medium text-stone-500">Status</th>
+            <th className="px-3 py-2 text-xs font-medium text-stone-500">Readiness</th>
           </tr></thead>
           <tbody>
             <TableRow cells={['NeuroStim Pro', '510(k)', 'FDA', 'Drafting', '72%']} highlight />
@@ -159,9 +159,9 @@ const Sub510kPreview: React.FC = () => (
   <div className="space-y-4">
     <MockCard title="510(k) Predicate Research" icon={<Search className="w-4 h-4 text-blue-500" />}>
       <div className="space-y-2 mb-3">
-        <div className="flex items-center gap-2 px-3 py-2 bg-zinc-50 rounded-lg text-xs">
-          <Search className="w-3 h-3 text-zinc-400" />
-          <span className="text-zinc-500">Search: "transcutaneous electrical nerve stimulator"</span>
+        <div className="flex items-center gap-2 px-3 py-2 bg-stone-50 rounded-lg text-xs">
+          <Search className="w-3 h-3 text-stone-400" />
+          <span className="text-stone-500">Search: "transcutaneous electrical nerve stimulator"</span>
         </div>
       </div>
       <div className="space-y-2">
@@ -170,10 +170,10 @@ const Sub510kPreview: React.FC = () => (
           { name: 'PainFree TENS', code: 'QBF', match: '87%', manufacturer: 'MediPulse Ltd.' },
           { name: 'StimWave Pro', code: 'QBF', match: '82%', manufacturer: 'WaveTherapy Corp.' },
         ].map((p) => (
-          <div key={p.name} className="flex items-center justify-between p-3 bg-white border border-zinc-200 rounded-lg">
+          <div key={p.name} className="flex items-center justify-between p-3 bg-white border border-stone-200 rounded-lg">
             <div>
-              <p className="text-xs font-medium text-zinc-900">{p.name}</p>
-              <p className="text-xs text-zinc-500">{p.manufacturer} — Product Code: {p.code}</p>
+              <p className="text-xs font-medium text-stone-900">{p.name}</p>
+              <p className="text-xs text-stone-500">{p.manufacturer} — Product Code: {p.code}</p>
             </div>
             <StatusBadge status={`${p.match} match`} color="bg-emerald-50 text-emerald-700" />
           </div>
@@ -183,7 +183,7 @@ const Sub510kPreview: React.FC = () => (
     <MockCard title="SE Comparison Matrix" icon={<Layers className="w-4 h-4 text-violet-500" />}>
       <div className="grid grid-cols-3 gap-2">
         {['Intended Use', 'Technology', 'Performance', 'Biocompat.', 'Software', 'Labeling'].map((d) => (
-          <div key={d} className="flex items-center gap-1 text-xs text-zinc-600">
+          <div key={d} className="flex items-center gap-1 text-xs text-stone-600">
             <CheckCircle className="w-3 h-3 text-emerald-500" /> {d}
           </div>
         ))}
@@ -204,7 +204,7 @@ const SubINDPreview: React.FC = () => (
       ].map((m) => (
         <div key={m.mod} className="mb-3">
           <ProgressBar label={`${m.mod}: ${m.name}`} value={m.progress} />
-          <p className="text-xs text-zinc-400 mt-0.5 pl-1">{m.items}</p>
+          <p className="text-xs text-stone-400 mt-0.5 pl-1">{m.items}</p>
         </div>
       ))}
     </MockCard>
@@ -221,12 +221,12 @@ const SubGlobalPreview: React.FC = () => (
           { agency: 'PMDA (Japan)', type: 'CTN', status: 'Planning', color: 'bg-blue-50 text-blue-700' },
           { agency: 'NMPA (China)', type: 'NDA', status: 'Translation', color: 'bg-violet-50 text-violet-700' },
         ].map((a) => (
-          <div key={a.agency} className="p-3 bg-zinc-50 rounded-lg">
+          <div key={a.agency} className="p-3 bg-stone-50 rounded-lg">
             <div className="flex justify-between items-start mb-2">
-              <p className="text-xs font-medium text-zinc-900">{a.agency}</p>
+              <p className="text-xs font-medium text-stone-900">{a.agency}</p>
               <StatusBadge status={a.status} color={a.color} />
             </div>
-            <p className="text-xs text-zinc-500">{a.type} — Region-specific Module 1</p>
+            <p className="text-xs text-stone-500">{a.type} — Region-specific Module 1</p>
           </div>
         ))}
       </div>
@@ -242,15 +242,15 @@ const SubMeetingsPreview: React.FC = () => (
         { type: 'EOP2', date: 'Jul 22, 2026', status: 'Drafting Package', icon: <Clock className="w-3 h-3 text-amber-500" /> },
         { type: 'Pre-NDA', date: 'Nov 10, 2026', status: 'Scheduled', icon: <Target className="w-3 h-3 text-blue-500" /> },
       ].map((m) => (
-        <div key={m.type} className="flex items-center justify-between p-3 border border-zinc-200 rounded-lg mb-2">
+        <div key={m.type} className="flex items-center justify-between p-3 border border-stone-200 rounded-lg mb-2">
           <div className="flex items-center gap-2">
             {m.icon}
             <div>
-              <p className="text-xs font-medium text-zinc-900">{m.type} Meeting</p>
-              <p className="text-xs text-zinc-500">{m.date}</p>
+              <p className="text-xs font-medium text-stone-900">{m.type} Meeting</p>
+              <p className="text-xs text-stone-500">{m.date}</p>
             </div>
           </div>
-          <span className="text-xs text-zinc-600">{m.status}</span>
+          <span className="text-xs text-stone-600">{m.status}</span>
         </div>
       ))}
     </MockCard>
@@ -262,9 +262,9 @@ const SubMeetingsPreview: React.FC = () => (
 const ResSearchPreview: React.FC = () => (
   <div className="space-y-4">
     <MockCard title="AnA Research" icon={<Search className="w-4 h-4 text-blue-500" />}>
-      <div className="flex items-center gap-2 px-3 py-2 bg-zinc-50 rounded-lg text-xs mb-3">
+      <div className="flex items-center gap-2 px-3 py-2 bg-stone-50 rounded-lg text-xs mb-3">
         <Brain className="w-3 h-3 text-violet-500" />
-        <span className="text-zinc-600">"What are the latest Phase 3 trials for GLP-1 agonists in obesity?"</span>
+        <span className="text-stone-600">"What are the latest Phase 3 trials for GLP-1 agonists in obesity?"</span>
       </div>
       <div className="flex gap-2 mb-3">
         {['ClinicalTrials.gov', 'PubMed', 'FDA', 'EMA'].map((s) => (
@@ -281,13 +281,13 @@ const ResSearchPreview: React.FC = () => (
 const ResResultsPreview: React.FC = () => (
   <div className="space-y-4">
     <MockCard title="Structured Trial Results" icon={<Database className="w-4 h-4 text-blue-500" />}>
-      <div className="overflow-hidden rounded-lg border border-zinc-200">
+      <div className="overflow-hidden rounded-lg border border-stone-200">
         <table className="w-full text-left">
-          <thead><tr className="bg-zinc-50">
-            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Trial</th>
-            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Phase</th>
-            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Enrollment</th>
-            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Primary Endpoint</th>
+          <thead><tr className="bg-stone-50">
+            <th className="px-3 py-2 text-xs font-medium text-stone-500">Trial</th>
+            <th className="px-3 py-2 text-xs font-medium text-stone-500">Phase</th>
+            <th className="px-3 py-2 text-xs font-medium text-stone-500">Enrollment</th>
+            <th className="px-3 py-2 text-xs font-medium text-stone-500">Primary Endpoint</th>
           </tr></thead>
           <tbody>
             <TableRow cells={['NCT05678901', 'Phase 3', '3,200', '% weight reduction at 68 wk']} highlight />
@@ -309,12 +309,12 @@ const ResIntelligencePreview: React.FC = () => (
         { title: 'Warning Letter: CMC Deficiencies — BioPharm Inc', type: 'Enforcement', date: '5 days ago', severity: 'bg-red-50 text-red-700' },
         { title: 'PMDA Science Board: Real-World Evidence', type: 'Advisory', date: '1 week ago', severity: 'bg-amber-50 text-amber-700' },
       ].map((a) => (
-        <div key={a.title} className="flex items-start gap-2 p-2 border-b border-zinc-50 last:border-0">
+        <div key={a.title} className="flex items-start gap-2 p-2 border-b border-stone-50 last:border-0">
           <div className="flex-1">
-            <p className="text-xs font-medium text-zinc-900">{a.title}</p>
+            <p className="text-xs font-medium text-stone-900">{a.title}</p>
             <div className="flex gap-2 mt-1">
               <StatusBadge status={a.type} color={a.severity} />
-              <span className="text-xs text-zinc-400">{a.date}</span>
+              <span className="text-xs text-stone-400">{a.date}</span>
             </div>
           </div>
         </div>
@@ -331,10 +331,10 @@ const ResPrecedentPreview: React.FC = () => (
         { name: 'Wegovy (semaglutide)', pathway: 'NDA — Priority', timeline: '6 months', outcome: 'Approved' },
         { name: 'Mounjaro (tirzepatide)', pathway: 'NDA — Priority', timeline: '8 months', outcome: 'Approved' },
       ].map((p) => (
-        <div key={p.name} className="flex items-center justify-between p-3 border border-zinc-200 rounded-lg mb-2">
+        <div key={p.name} className="flex items-center justify-between p-3 border border-stone-200 rounded-lg mb-2">
           <div>
-            <p className="text-xs font-medium text-zinc-900">{p.name}</p>
-            <p className="text-xs text-zinc-500">{p.pathway} — {p.timeline} review</p>
+            <p className="text-xs font-medium text-stone-900">{p.name}</p>
+            <p className="text-xs text-stone-500">{p.pathway} — {p.timeline} review</p>
           </div>
           <StatusBadge status={p.outcome} color="bg-emerald-50 text-emerald-700" />
         </div>
@@ -353,8 +353,8 @@ const ResEvidencePreview: React.FC = () => (
       </div>
       <div className="space-y-2">
         {['Module 2.5 — Clinical Overview', 'Module 2.7 — Clinical Summary', 'Module 5.3 — Study Reports'].map((s) => (
-          <div key={s} className="flex items-center justify-between p-2 bg-zinc-50 rounded-lg text-xs">
-            <span className="text-zinc-700">{s}</span>
+          <div key={s} className="flex items-center justify-between p-2 bg-stone-50 rounded-lg text-xs">
+            <span className="text-stone-700">{s}</span>
             <CheckCircle className="w-3 h-3 text-emerald-500" />
           </div>
         ))}
@@ -368,15 +368,15 @@ const ResEvidencePreview: React.FC = () => (
 const DocEditorPreview: React.FC = () => (
   <div className="space-y-4">
     <MockCard title="eCTD Co-Author" icon={<FileText className="w-4 h-4 text-blue-500" />}>
-      <div className="bg-zinc-50 rounded-lg p-4 font-mono text-xs text-zinc-700 space-y-2 mb-3">
-        <p className="font-semibold text-zinc-900">2.7.4 Summary of Clinical Safety</p>
+      <div className="bg-stone-50 rounded-lg p-4 font-mono text-xs text-stone-700 space-y-2 mb-3">
+        <p className="font-semibold text-stone-900">2.7.4 Summary of Clinical Safety</p>
         <p>The safety profile of [compound] was evaluated across <span className="bg-blue-100 text-blue-700 px-1 rounded">3 pivotal trials</span> enrolling a total of <span className="bg-blue-100 text-blue-700 px-1 rounded">4,200 subjects</span>.</p>
-        <p className="text-zinc-400 italic">AI suggestion: "Consider adding the treatment-emergent adverse events table reference (Table 14.3.1.1)..."</p>
+        <p className="text-stone-400 italic">AI suggestion: "Consider adding the treatment-emergent adverse events table reference (Table 14.3.1.1)..."</p>
       </div>
       <div className="flex gap-2">
         <StatusBadge status="Auto-Saved" color="bg-emerald-50 text-emerald-700" />
         <StatusBadge status="Compliance: OK" color="bg-blue-50 text-blue-700" />
-        <StatusBadge status="v3.2" color="bg-zinc-100 text-zinc-600" />
+        <StatusBadge status="v3.2" color="bg-stone-100 text-stone-600" />
       </div>
     </MockCard>
   </div>
@@ -410,9 +410,9 @@ const DocTemplatesPreview: React.FC = () => (
           { agency: 'PMDA', types: 'CTN, MAA (Japan)' },
           { agency: 'NMPA', types: 'IND, NDA (China)' },
         ].map((t) => (
-          <div key={t.agency} className="p-3 bg-zinc-50 rounded-lg">
-            <p className="text-xs font-semibold text-zinc-900 mb-1">{t.agency}</p>
-            <p className="text-xs text-zinc-500">{t.types}</p>
+          <div key={t.agency} className="p-3 bg-stone-50 rounded-lg">
+            <p className="text-xs font-semibold text-stone-900 mb-1">{t.agency}</p>
+            <p className="text-xs text-stone-500">{t.types}</p>
           </div>
         ))}
       </div>
@@ -434,12 +434,12 @@ const DocVaultPreview: React.FC = () => (
           { name: 'CMC Section 3.2.S.pdf', date: 'Yesterday', status: 'In Review' },
           { name: 'Protocol Amendment #3.docx', date: '3 days ago', status: 'Draft' },
         ].map((d) => (
-          <div key={d.name} className="flex items-center justify-between p-2 bg-zinc-50 rounded-lg text-xs">
+          <div key={d.name} className="flex items-center justify-between p-2 bg-stone-50 rounded-lg text-xs">
             <div>
-              <span className="text-zinc-700">{d.name}</span>
-              <span className="text-zinc-400 ml-2">{d.date}</span>
+              <span className="text-stone-700">{d.name}</span>
+              <span className="text-stone-400 ml-2">{d.date}</span>
             </div>
-            <StatusBadge status={d.status} color={d.status === 'Approved' ? 'bg-emerald-50 text-emerald-700' : d.status === 'In Review' ? 'bg-amber-50 text-amber-700' : 'bg-zinc-100 text-zinc-600'} />
+            <StatusBadge status={d.status} color={d.status === 'Approved' ? 'bg-emerald-50 text-emerald-700' : d.status === 'In Review' ? 'bg-amber-50 text-amber-700' : 'bg-stone-100 text-stone-600'} />
           </div>
         ))}
       </div>
@@ -458,12 +458,12 @@ const DocSherpaPreview: React.FC = () => (
           { check: 'Formatting (agency specs)', status: 'Passed', icon: <CheckCircle className="w-3 h-3 text-emerald-500" /> },
           { check: 'eCTD structure valid', status: 'Passed', icon: <CheckCircle className="w-3 h-3 text-emerald-500" /> },
         ].map((c) => (
-          <div key={c.check} className="flex items-center justify-between p-2 bg-zinc-50 rounded-lg text-xs">
+          <div key={c.check} className="flex items-center justify-between p-2 bg-stone-50 rounded-lg text-xs">
             <div className="flex items-center gap-2">
               {c.icon}
-              <span className="text-zinc-700">{c.check}</span>
+              <span className="text-stone-700">{c.check}</span>
             </div>
-            <span className="text-zinc-500">{c.status}</span>
+            <span className="text-stone-500">{c.status}</span>
           </div>
         ))}
       </div>
@@ -498,12 +498,12 @@ const CMCBlueprintPreview: React.FC = () => (
 const CMCAnalyticalPreview: React.FC = () => (
   <div className="space-y-4">
     <MockCard title="Analytical Methods & Validation" icon={<Microscope className="w-4 h-4 text-blue-500" />}>
-      <div className="overflow-hidden rounded-lg border border-zinc-200">
+      <div className="overflow-hidden rounded-lg border border-stone-200">
         <table className="w-full text-left">
-          <thead><tr className="bg-zinc-50">
-            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Method</th>
-            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Status</th>
-            <th className="px-3 py-2 text-xs font-medium text-zinc-500">ICH Q2</th>
+          <thead><tr className="bg-stone-50">
+            <th className="px-3 py-2 text-xs font-medium text-stone-500">Method</th>
+            <th className="px-3 py-2 text-xs font-medium text-stone-500">Status</th>
+            <th className="px-3 py-2 text-xs font-medium text-stone-500">ICH Q2</th>
           </tr></thead>
           <tbody>
             <TableRow cells={['HPLC Assay', 'Validated', 'Compliant']} />
@@ -526,10 +526,10 @@ const CMCManufacturingPreview: React.FC = () => (
         { step: 'Formulation — Lyophilization', status: 'Development', scale: 'Lab' },
         { step: 'Fill/Finish — Aseptic Processing', status: 'Planning', scale: 'Pre-clinical' },
       ].map((s) => (
-        <div key={s.step} className="flex items-center justify-between p-2 border-b border-zinc-50 last:border-0">
+        <div key={s.step} className="flex items-center justify-between p-2 border-b border-stone-50 last:border-0">
           <div>
-            <p className="text-xs text-zinc-900">{s.step}</p>
-            <p className="text-xs text-zinc-500">Scale: {s.scale}</p>
+            <p className="text-xs text-stone-900">{s.step}</p>
+            <p className="text-xs text-stone-500">Scale: {s.scale}</p>
           </div>
           <StatusBadge status={s.status} color={s.status === 'Production' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'} />
         </div>
@@ -552,9 +552,9 @@ const CMCReadinessPreview: React.FC = () => (
           { gap: 'Impurity B characterization pending NMR', critical: false },
           { gap: 'Process validation protocol — draft only', critical: false },
         ].map((g) => (
-          <div key={g.gap} className="flex items-start gap-2 p-2 bg-zinc-50 rounded-lg">
+          <div key={g.gap} className="flex items-start gap-2 p-2 bg-stone-50 rounded-lg">
             <AlertTriangle className={cn('w-3 h-3 mt-0.5', g.critical ? 'text-red-500' : 'text-amber-500')} />
-            <span className="text-xs text-zinc-700">{g.gap}</span>
+            <span className="text-xs text-stone-700">{g.gap}</span>
           </div>
         ))}
       </div>
@@ -579,10 +579,10 @@ const AISwarmPreview: React.FC = () => (
           { name: 'Translator', status: 'Idle', phase: 'Drafting' },
           { name: 'Compiler', status: 'Queued', phase: 'Assembly' },
         ].map((a) => (
-          <div key={a.name} className="p-2 bg-zinc-50 rounded-lg text-center">
-            <Bot className={cn('w-4 h-4 mx-auto mb-1', a.status === 'Running' ? 'text-violet-500' : a.status === 'Complete' ? 'text-emerald-500' : 'text-zinc-400')} />
-            <p className="text-xs font-medium text-zinc-700 truncate">{a.name}</p>
-            <StatusBadge status={a.status} color={a.status === 'Running' ? 'bg-violet-50 text-violet-700' : a.status === 'Complete' ? 'bg-emerald-50 text-emerald-700' : 'bg-zinc-100 text-zinc-500'} />
+          <div key={a.name} className="p-2 bg-stone-50 rounded-lg text-center">
+            <Bot className={cn('w-4 h-4 mx-auto mb-1', a.status === 'Running' ? 'text-violet-500' : a.status === 'Complete' ? 'text-emerald-500' : 'text-stone-400')} />
+            <p className="text-xs font-medium text-stone-700 truncate">{a.name}</p>
+            <StatusBadge status={a.status} color={a.status === 'Running' ? 'bg-violet-50 text-violet-700' : a.status === 'Complete' ? 'bg-emerald-50 text-emerald-700' : 'bg-stone-100 text-stone-500'} />
           </div>
         ))}
       </div>
@@ -598,12 +598,12 @@ const AISnowglobePreview: React.FC = () => (
           { scenario: 'Baseline Filing', probability: '72%', timeline: '10 months', risk: 'Medium' },
           { scenario: 'With Additional Data', probability: '89%', timeline: '14 months', risk: 'Low' },
         ].map((s) => (
-          <div key={s.scenario} className="p-3 border border-zinc-200 rounded-lg">
-            <p className="text-xs font-medium text-zinc-900 mb-2">{s.scenario}</p>
+          <div key={s.scenario} className="p-3 border border-stone-200 rounded-lg">
+            <p className="text-xs font-medium text-stone-900 mb-2">{s.scenario}</p>
             <div className="space-y-1">
-              <p className="text-xs text-zinc-600">Approval probability: <span className="font-semibold text-violet-700">{s.probability}</span></p>
-              <p className="text-xs text-zinc-600">Est. timeline: {s.timeline}</p>
-              <p className="text-xs text-zinc-600">Risk: {s.risk}</p>
+              <p className="text-xs text-stone-600">Approval probability: <span className="font-semibold text-violet-700">{s.probability}</span></p>
+              <p className="text-xs text-stone-600">Est. timeline: {s.timeline}</p>
+              <p className="text-xs text-stone-600">Risk: {s.risk}</p>
             </div>
           </div>
         ))}
@@ -626,9 +626,9 @@ const AIReviewPulsePreview: React.FC = () => (
           { finding: 'Cross-reference mismatch in Section 2.7', severity: 'Medium' },
           { finding: 'Biostatistics SAP needs update for endpoint change', severity: 'High' },
         ].map((f) => (
-          <div key={f.finding} className="flex items-center gap-2 p-2 bg-zinc-50 rounded-lg text-xs">
+          <div key={f.finding} className="flex items-center gap-2 p-2 bg-stone-50 rounded-lg text-xs">
             <AlertTriangle className={cn('w-3 h-3', f.severity === 'High' ? 'text-red-500' : 'text-amber-500')} />
-            <span className="text-zinc-700 flex-1">{f.finding}</span>
+            <span className="text-stone-700 flex-1">{f.finding}</span>
             <StatusBadge status={f.severity} color={f.severity === 'High' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'} />
           </div>
         ))}
@@ -641,20 +641,20 @@ const AIDualPreview: React.FC = () => (
   <div className="space-y-4">
     <div className="grid grid-cols-2 gap-4">
       <MockCard title="AnA 1.0" icon={<Sparkles className="w-4 h-4 text-violet-500" />}>
-        <p className="text-xs text-zinc-600 mb-2">Regulatory strategy & authoring co-pilot</p>
+        <p className="text-xs text-stone-600 mb-2">Regulatory strategy & authoring co-pilot</p>
         <div className="space-y-1">
           {['Submission strategy', 'Document co-writing', 'Regulatory Q&A', 'Compliance checking'].map((f) => (
-            <div key={f} className="flex items-center gap-1 text-xs text-zinc-600">
+            <div key={f} className="flex items-center gap-1 text-xs text-stone-600">
               <CheckCircle className="w-3 h-3 text-violet-500" /> {f}
             </div>
           ))}
         </div>
       </MockCard>
       <MockCard title="Dr. Sage" icon={<BookOpen className="w-4 h-4 text-emerald-500" />}>
-        <p className="text-xs text-zinc-600 mb-2">Contextual training & enablement</p>
+        <p className="text-xs text-stone-600 mb-2">Contextual training & enablement</p>
         <div className="space-y-1">
           {['Just-in-time training', 'Contextual help', 'Certification programs', 'Role-specific guides'].map((f) => (
-            <div key={f} className="flex items-center gap-1 text-xs text-zinc-600">
+            <div key={f} className="flex items-center gap-1 text-xs text-stone-600">
               <CheckCircle className="w-3 h-3 text-emerald-500" /> {f}
             </div>
           ))}
@@ -681,8 +681,8 @@ const PMMissionPreview: React.FC = () => (
           { name: 'CNS Program', projects: 3, status: 'At Risk' },
           { name: 'Metabolic Program', projects: 5, status: 'On Track' },
         ].map((p) => (
-          <div key={p.name} className="flex items-center justify-between p-2 bg-zinc-50 rounded-lg text-xs">
-            <span className="text-zinc-700">{p.name} ({p.projects} projects)</span>
+          <div key={p.name} className="flex items-center justify-between p-2 bg-stone-50 rounded-lg text-xs">
+            <span className="text-stone-700">{p.name} ({p.projects} projects)</span>
             <StatusBadge status={p.status} color={p.status === 'On Track' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'} />
           </div>
         ))}
@@ -702,10 +702,10 @@ const PMTimelinesPreview: React.FC = () => (
         { milestone: 'PDUFA Date', date: 'Dec 2027', status: 'upcoming' },
       ].map((m) => (
         <div key={m.milestone} className="flex items-center gap-3 py-2">
-          <div className={cn('w-3 h-3 rounded-full border-2', m.status === 'complete' ? 'bg-emerald-500 border-emerald-500' : m.status === 'current' ? 'bg-violet-500 border-violet-500' : 'bg-white border-zinc-300')} />
+          <div className={cn('w-3 h-3 rounded-full border-2', m.status === 'complete' ? 'bg-emerald-500 border-emerald-500' : m.status === 'current' ? 'bg-violet-500 border-violet-500' : 'bg-white border-stone-300')} />
           <div className="flex-1 flex justify-between">
-            <span className="text-xs text-zinc-700">{m.milestone}</span>
-            <span className="text-xs text-zinc-500">{m.date}</span>
+            <span className="text-xs text-stone-700">{m.milestone}</span>
+            <span className="text-xs text-stone-500">{m.date}</span>
           </div>
         </div>
       ))}
@@ -722,10 +722,10 @@ const PMTasksPreview: React.FC = () => (
           { col: 'In Progress', items: ['CMC stability report', 'Protocol amendment'] },
           { col: 'Done', items: ['Cover letter', 'Form 1571'] },
         ].map((c) => (
-          <div key={c.col} className="bg-zinc-50 rounded-lg p-2">
-            <p className="text-xs font-semibold text-zinc-600 mb-2">{c.col}</p>
+          <div key={c.col} className="bg-stone-50 rounded-lg p-2">
+            <p className="text-xs font-semibold text-stone-600 mb-2">{c.col}</p>
             {c.items.map((item) => (
-              <div key={item} className="bg-white rounded p-1.5 mb-1 text-xs text-zinc-700 border border-zinc-200 shadow-sm">{item}</div>
+              <div key={item} className="bg-white rounded p-1.5 mb-1 text-xs text-stone-700 border border-stone-200 shadow-sm">{item}</div>
             ))}
           </div>
         ))}
@@ -742,10 +742,10 @@ const PMDecisionsPreview: React.FC = () => (
         { decision: 'Changed primary endpoint to ORR', date: 'Mar 8', signers: 5 },
         { decision: 'Approved CMO selection — BioContract Inc', date: 'Mar 1', signers: 4 },
       ].map((d) => (
-        <div key={d.decision} className="p-2 border-b border-zinc-50 last:border-0">
-          <p className="text-xs text-zinc-900">{d.decision}</p>
+        <div key={d.decision} className="p-2 border-b border-stone-50 last:border-0">
+          <p className="text-xs text-stone-900">{d.decision}</p>
           <div className="flex gap-2 mt-1">
-            <span className="text-xs text-zinc-400">{d.date}</span>
+            <span className="text-xs text-stone-400">{d.date}</span>
             <span className="text-xs text-emerald-600">{d.signers} sign-offs</span>
           </div>
         </div>
@@ -766,10 +766,10 @@ const PMGapsPreview: React.FC = () => (
         { module: 'Module 5', gap: 'Study report #3 — tables incomplete', severity: 'Critical' },
         { module: 'Module 1', gap: 'Patent cert letter pending', severity: 'Medium' },
       ].map((g) => (
-        <div key={g.gap} className="flex items-start gap-2 p-2 bg-zinc-50 rounded-lg mb-1">
+        <div key={g.gap} className="flex items-start gap-2 p-2 bg-stone-50 rounded-lg mb-1">
           <AlertTriangle className={cn('w-3 h-3 mt-0.5', g.severity === 'Critical' ? 'text-red-500' : 'text-amber-500')} />
           <div>
-            <p className="text-xs font-medium text-zinc-700">{g.module}: {g.gap}</p>
+            <p className="text-xs font-medium text-stone-700">{g.module}: {g.gap}</p>
             <StatusBadge status={g.severity} color={g.severity === 'Critical' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'} />
           </div>
         </div>
@@ -783,13 +783,13 @@ const PMGapsPreview: React.FC = () => (
 const SecAuditPreview: React.FC = () => (
   <div className="space-y-4">
     <MockCard title="21 CFR Part 11 — Audit Trail" icon={<Shield className="w-4 h-4 text-blue-500" />}>
-      <div className="overflow-hidden rounded-lg border border-zinc-200">
+      <div className="overflow-hidden rounded-lg border border-stone-200">
         <table className="w-full text-left">
-          <thead><tr className="bg-zinc-50">
-            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Action</th>
-            <th className="px-3 py-2 text-xs font-medium text-zinc-500">User</th>
-            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Timestamp</th>
-            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Hash</th>
+          <thead><tr className="bg-stone-50">
+            <th className="px-3 py-2 text-xs font-medium text-stone-500">Action</th>
+            <th className="px-3 py-2 text-xs font-medium text-stone-500">User</th>
+            <th className="px-3 py-2 text-xs font-medium text-stone-500">Timestamp</th>
+            <th className="px-3 py-2 text-xs font-medium text-stone-500">Hash</th>
           </tr></thead>
           <tbody>
             <TableRow cells={['Document approved', 'Dr. Smith', '14:32:01 UTC', 'a7f3...8c21']} />
@@ -814,12 +814,12 @@ const SecRBACPreview: React.FC = () => (
           { role: 'Executive', access: 'Dashboards, Reports (Read-only)', count: 3 },
           { role: 'External (CRO)', access: 'Project-scoped Read/Write', count: 8 },
         ].map((r) => (
-          <div key={r.role} className="flex items-center justify-between p-2 bg-zinc-50 rounded-lg">
+          <div key={r.role} className="flex items-center justify-between p-2 bg-stone-50 rounded-lg">
             <div>
-              <p className="text-xs font-medium text-zinc-900">{r.role}</p>
-              <p className="text-xs text-zinc-500">{r.access}</p>
+              <p className="text-xs font-medium text-stone-900">{r.role}</p>
+              <p className="text-xs text-stone-500">{r.access}</p>
             </div>
-            <span className="text-xs text-zinc-400">{r.count} users</span>
+            <span className="text-xs text-stone-400">{r.count} users</span>
           </div>
         ))}
       </div>
@@ -840,10 +840,10 @@ const SecInspectionPreview: React.FC = () => (
         { item: 'E-signature log', status: 'Ready', icon: <CheckCircle className="w-3 h-3 text-emerald-500" /> },
         { item: 'Training records', status: 'Pending', icon: <Clock className="w-3 h-3 text-amber-500" /> },
       ].map((i) => (
-        <div key={i.item} className="flex items-center gap-2 p-2 bg-zinc-50 rounded-lg mb-1 text-xs">
+        <div key={i.item} className="flex items-center gap-2 p-2 bg-stone-50 rounded-lg mb-1 text-xs">
           {i.icon}
-          <span className="text-zinc-700 flex-1">{i.item}</span>
-          <span className="text-zinc-500">{i.status}</span>
+          <span className="text-stone-700 flex-1">{i.item}</span>
+          <span className="text-stone-500">{i.status}</span>
         </div>
       ))}
     </MockCard>
@@ -860,10 +860,10 @@ const SecGovernancePreview: React.FC = () => (
           { standard: 'GDPR', status: 'Compliant' },
           { standard: 'SOC 2 Type II', status: 'Certified' },
         ].map((s) => (
-          <div key={s.standard} className="flex items-center gap-2 p-2 bg-zinc-50 rounded-lg">
+          <div key={s.standard} className="flex items-center gap-2 p-2 bg-stone-50 rounded-lg">
             <CheckCircle className="w-3 h-3 text-emerald-500" />
             <div>
-              <p className="text-xs font-medium text-zinc-900">{s.standard}</p>
+              <p className="text-xs font-medium text-stone-900">{s.standard}</p>
               <p className="text-xs text-emerald-600">{s.status}</p>
             </div>
           </div>
@@ -883,15 +883,15 @@ const CollabHubPreview: React.FC = () => (
         { thread: 'Protocol Amendment Review', replies: 8, last: '5h ago', unread: true },
         { thread: 'Module 2 Clinical Overview', replies: 23, last: '1d ago', unread: false },
       ].map((t) => (
-        <div key={t.thread} className="flex items-center justify-between p-2 border-b border-zinc-50 last:border-0">
+        <div key={t.thread} className="flex items-center justify-between p-2 border-b border-stone-50 last:border-0">
           <div className="flex items-center gap-2">
             {t.unread && <div className="w-2 h-2 rounded-full bg-violet-500" />}
             <div>
-              <p className="text-xs text-zinc-900">{t.thread}</p>
-              <p className="text-xs text-zinc-400">{t.replies} replies — {t.last}</p>
+              <p className="text-xs text-stone-900">{t.thread}</p>
+              <p className="text-xs text-stone-400">{t.replies} replies — {t.last}</p>
             </div>
           </div>
-          <ArrowRight className="w-3 h-3 text-zinc-400" />
+          <ArrowRight className="w-3 h-3 text-stone-400" />
         </div>
       ))}
     </MockCard>
@@ -906,10 +906,10 @@ const CollabReviewPreview: React.FC = () => (
         { doc: 'CMC Section 3.2.S', reviewer: 'J. Chen', due: '3 days', sla: 'On Track' },
         { doc: 'Protocol Synopsis', reviewer: 'M. Patel', due: 'Overdue', sla: 'Escalated' },
       ].map((r) => (
-        <div key={r.doc} className="flex items-center justify-between p-2 border-b border-zinc-50 last:border-0">
+        <div key={r.doc} className="flex items-center justify-between p-2 border-b border-stone-50 last:border-0">
           <div>
-            <p className="text-xs text-zinc-900">{r.doc}</p>
-            <p className="text-xs text-zinc-500">{r.reviewer} — Due: {r.due}</p>
+            <p className="text-xs text-stone-900">{r.doc}</p>
+            <p className="text-xs text-stone-500">{r.reviewer} — Due: {r.due}</p>
           </div>
           <StatusBadge status={r.sla} color={r.sla === 'Escalated' ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'} />
         </div>
@@ -923,7 +923,7 @@ const CollabReportsPreview: React.FC = () => (
     <MockCard title="Report Center" icon={<BarChart3 className="w-4 h-4 text-violet-500" />}>
       <div className="grid grid-cols-3 gap-2 mb-3">
         {['PDF', 'Word', 'eCTD XML'].map((f) => (
-          <div key={f} className="bg-zinc-50 rounded-lg py-2 text-center text-xs font-medium text-zinc-600">{f} Export</div>
+          <div key={f} className="bg-stone-50 rounded-lg py-2 text-center text-xs font-medium text-stone-600">{f} Export</div>
         ))}
       </div>
       <div className="space-y-1">
@@ -933,8 +933,8 @@ const CollabReportsPreview: React.FC = () => (
           'Risk Assessment Summary',
           'Team Productivity Metrics',
         ].map((r) => (
-          <div key={r} className="flex items-center gap-2 p-2 bg-zinc-50 rounded-lg text-xs text-zinc-700">
-            <FileText className="w-3 h-3 text-zinc-400" /> {r}
+          <div key={r} className="flex items-center gap-2 p-2 bg-stone-50 rounded-lg text-xs text-stone-700">
+            <FileText className="w-3 h-3 text-stone-400" /> {r}
           </div>
         ))}
       </div>
@@ -957,8 +957,8 @@ const CollabPostmarketPreview: React.FC = () => (
           { item: 'Complaint Handling', status: 'Active' },
           { item: 'Post-Market Clinical Follow-Up', status: 'Scheduled' },
         ].map((i) => (
-          <div key={i.item} className="flex items-center justify-between p-2 bg-zinc-50 rounded-lg text-xs">
-            <span className="text-zinc-700">{i.item}</span>
+          <div key={i.item} className="flex items-center justify-between p-2 bg-stone-50 rounded-lg text-xs">
+            <span className="text-stone-700">{i.item}</span>
             <StatusBadge status={i.status} color="bg-blue-50 text-blue-700" />
           </div>
         ))}
@@ -982,8 +982,8 @@ const CollabAcademyPreview: React.FC = () => (
       ].map((c) => (
         <div key={c.course} className="mb-2">
           <div className="flex justify-between text-xs mb-0.5">
-            <span className="text-zinc-700">{c.course}</span>
-            <span className="text-zinc-400">{c.duration}</span>
+            <span className="text-stone-700">{c.course}</span>
+            <span className="text-stone-400">{c.duration}</span>
           </div>
           <ProgressBar label="" value={c.progress} color={c.progress === 100 ? 'bg-emerald-500' : 'bg-violet-500'} />
         </div>
@@ -998,8 +998,8 @@ const NanoBananaOverviewPreview: React.FC = () => (
   <div className="space-y-4">
     <div className="text-center mb-6">
       <div className="text-5xl mb-2">🍌</div>
-      <h3 className="text-lg font-semibold text-zinc-900">AnA Visual</h3>
-      <p className="text-xs text-zinc-500">Powered by Google Gemini</p>
+      <h3 className="text-lg font-semibold text-stone-900">AnA Visual</h3>
+      <p className="text-xs text-stone-500">Powered by Google Gemini</p>
     </div>
     <div className="grid grid-cols-3 gap-3">
       {[
@@ -1008,9 +1008,9 @@ const NanoBananaOverviewPreview: React.FC = () => (
         { title: 'Diagrams', metric: '<12s', desc: 'Per image', color: 'bg-yellow-50 border-yellow-200' },
       ].map(c => (
         <div key={c.title} className={cn('rounded-xl border p-3 text-center', c.color)}>
-          <div className="text-lg font-semibold text-zinc-900">{c.metric}</div>
-          <div className="text-xs font-medium text-zinc-700">{c.title}</div>
-          <div className="text-xs text-zinc-500">{c.desc}</div>
+          <div className="text-lg font-semibold text-stone-900">{c.metric}</div>
+          <div className="text-xs font-medium text-stone-700">{c.title}</div>
+          <div className="text-xs text-stone-500">{c.desc}</div>
         </div>
       ))}
     </div>
@@ -1025,7 +1025,7 @@ const NanoBananaOverviewPreview: React.FC = () => (
       {['AnA Chat', 'Report Center', 'Document Builder', 'Program Analytics', 'Training'].map(m => (
         <div key={m} className="flex items-center gap-2 py-1">
           <CheckCircle className="w-3 h-3 text-emerald-500" />
-          <span className="text-xs text-zinc-700">{m}</span>
+          <span className="text-xs text-stone-700">{m}</span>
         </div>
       ))}
     </MockCard>
@@ -1035,9 +1035,9 @@ const NanoBananaOverviewPreview: React.FC = () => (
 const NanoBananaGeneratePreview: React.FC = () => (
   <div className="space-y-4">
     <MockCard title="Image Generation" icon={<Sparkles className="w-4 h-4 text-amber-500" />}>
-      <div className="bg-zinc-50 rounded-lg p-3 mb-3">
-        <div className="text-xs text-zinc-400 mb-1">Prompt</div>
-        <div className="text-xs text-zinc-700 italic">"Infographic showing IND submission timeline with Phase 1-3 milestones, FDA review gates, and approval pathway"</div>
+      <div className="bg-stone-50 rounded-lg p-3 mb-3">
+        <div className="text-xs text-stone-400 mb-1">Prompt</div>
+        <div className="text-xs text-stone-700 italic">"Infographic showing IND submission timeline with Phase 1-3 milestones, FDA review gates, and approval pathway"</div>
       </div>
       <div className="bg-amber-50 rounded-lg p-6 flex items-center justify-center border border-amber-200">
         <div className="text-center">
@@ -1056,8 +1056,8 @@ const NanoBananaGeneratePreview: React.FC = () => (
         <div key={c.label} className="flex items-start gap-2 py-1.5">
           <Lock className="w-3 h-3 text-blue-500 mt-0.5 shrink-0" />
           <div>
-            <div className="text-xs font-medium text-zinc-900">{c.label}</div>
-            <div className="text-xs text-zinc-500">{c.desc}</div>
+            <div className="text-xs font-medium text-stone-900">{c.label}</div>
+            <div className="text-xs text-stone-500">{c.desc}</div>
           </div>
         </div>
       ))}
@@ -1076,7 +1076,7 @@ const NanoBananaIntegrationsPreview: React.FC = () => (
       { name: 'PPTX Export', desc: 'Any export enhanced with AI cover images automatically', icon: <FolderOpen className="w-4 h-4 text-amber-500" />, color: 'border-amber-200' },
     ].map(item => (
       <MockCard key={item.name} title={item.name} icon={item.icon} className={cn('border', item.color)}>
-        <p className="text-xs text-zinc-600">{item.desc}</p>
+        <p className="text-xs text-stone-600">{item.desc}</p>
       </MockCard>
     ))}
   </div>
@@ -1148,7 +1148,7 @@ export const DemoPreview: React.FC<DemoPreviewProps> = ({ previewType }) => {
   const PreviewComponent = PREVIEW_MAP[previewType] || HeroPreview;
 
   return (
-    <div className="flex flex-col h-full bg-zinc-50 overflow-y-auto">
+    <div className="flex flex-col h-full bg-stone-50 overflow-y-auto">
       <AnimatePresence mode="wait">
         <motion.div
           key={previewType}

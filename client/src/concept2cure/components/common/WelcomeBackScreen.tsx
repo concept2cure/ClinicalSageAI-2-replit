@@ -199,21 +199,21 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
   return (
     <div className="fixed inset-0 z-50 bg-white flex flex-col animate-in fade-in duration-300">
       {/* Header */}
-      <header className="flex-shrink-0 border-b border-zinc-200 bg-white/80 backdrop-blur">
+      <header className="flex-shrink-0 border-b border-stone-200 bg-white/80 backdrop-blur">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-zinc-900">Concept2Cure</h1>
-              <p className="text-xs text-zinc-500">Regulatory Intelligence Platform</p>
+              <h1 className="text-lg font-semibold text-stone-900">Concept2Cure</h1>
+              <p className="text-xs text-stone-500">Regulatory Intelligence Platform</p>
             </div>
           </div>
 
           <button
             onClick={onDismiss}
-            className="text-sm text-zinc-500 hover:text-zinc-700 px-3 py-1.5 rounded-lg hover:bg-zinc-100 transition-colors duration-150"
+            className="text-sm text-stone-500 hover:text-stone-700 px-3 py-1.5 rounded-lg hover:bg-stone-100 transition-colors duration-150"
           >
             Skip to Dashboard
           </button>
@@ -225,10 +225,10 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
         <div className="max-w-5xl mx-auto px-6 py-12">
           {/* Greeting */}
           <div className="mb-10">
-            <h2 className="text-2xl font-semibold text-zinc-900 mb-2">
+            <h2 className="text-2xl font-semibold text-stone-900 mb-2">
               {getGreeting()}, {firstName}!
             </h2>
-            <p className="text-zinc-500 text-lg">
+            <p className="text-stone-500 text-lg">
               {lastProject
                 ? 'Ready to continue where you left off?'
                 : 'What would you like to work on today?'}
@@ -238,16 +238,16 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
           {/* Continue Section */}
           {lastProject && (
             <section className="mb-12">
-              <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider mb-4">
+              <h3 className="text-sm font-medium text-stone-500 uppercase tracking-wider mb-4">
                 Continue where you left off
               </h3>
 
               <button
                 onClick={() => onContinue(lastProject.id, lastConversation?.id)}
                 className={cn(
-                  'w-full text-left p-5 rounded-xl border border-zinc-200 bg-white shadow-sm',
+                  'w-full text-left p-5 rounded-xl border border-stone-200 bg-white shadow-sm',
                   'hover:border-blue-200 hover:shadow-md',
-                  'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none',
+                  'focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none',
                   'transition-all duration-150 group'
                 )}
               >
@@ -285,10 +285,10 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                         {lastProject.type}
                       </span>
                     </div>
-                    <h4 className="text-lg font-semibold text-zinc-900 mb-1 truncate">
+                    <h4 className="text-lg font-semibold text-stone-900 mb-1 truncate">
                       {lastProject.name}
                     </h4>
-                    <p className="text-sm text-zinc-500 flex items-center gap-4">
+                    <p className="text-sm text-stone-500 flex items-center gap-4">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" />
                         Last active 2 hours ago
@@ -311,7 +311,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
 
           {/* Quick Actions */}
           <section className="mb-12">
-            <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider mb-4">
+            <h3 className="text-sm font-medium text-stone-500 uppercase tracking-wider mb-4">
               Start a new project
             </h3>
 
@@ -325,7 +325,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                     className={cn(
                       'p-5 rounded-xl border text-left transition-all duration-150',
                       'hover:shadow-md shadow-sm',
-                      'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none',
+                      'focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none',
                       action.color === 'blue' &&
                         'border-blue-200 bg-blue-50/50 hover:border-blue-300',
                       action.color === 'purple' &&
@@ -345,8 +345,8 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                         action.color === 'amber' && 'text-amber-600'
                       )}
                     />
-                    <h4 className="font-semibold text-zinc-900 mb-0.5">{action.label}</h4>
-                    <p className="text-xs text-zinc-500">{action.description}</p>
+                    <h4 className="font-semibold text-stone-900 mb-0.5">{action.label}</h4>
+                    <p className="text-xs text-stone-500">{action.description}</p>
                   </button>
                 );
               })}
@@ -356,7 +356,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
           {/* Pending Items */}
           {pendingItems.length > 0 && (
             <section>
-              <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider mb-4">
+              <h3 className="text-sm font-medium text-stone-500 uppercase tracking-wider mb-4">
                 Needs your attention
               </h3>
 
@@ -369,7 +369,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                       'flex items-center gap-4',
                       item.priority === 'high' && 'border-amber-200',
                       item.priority === 'critical' && 'border-red-200',
-                      !item.priority && 'border-zinc-200'
+                      !item.priority && 'border-stone-200'
                     )}
                   >
                     <div
@@ -390,14 +390,14 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-zinc-900 truncate">{item.title}</h4>
+                      <h4 className="font-medium text-stone-900 truncate">{item.title}</h4>
                       {item.description && (
-                        <p className="text-sm text-zinc-500">{item.description}</p>
+                        <p className="text-sm text-stone-500">{item.description}</p>
                       )}
                     </div>
 
                     {item.dueDate && (
-                      <span className="text-xs text-zinc-500 flex items-center gap-1">
+                      <span className="text-xs text-stone-500 flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {getTimeAgo(item.dueDate)}
                       </span>
@@ -422,15 +422,15 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
       </main>
 
       {/* Footer */}
-      <footer className="flex-shrink-0 border-t border-zinc-200 bg-zinc-50/50">
+      <footer className="flex-shrink-0 border-t border-stone-200 bg-stone-50/50">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-stone-500">
             {projects.length} projects • Last login: Today at 9:14 AM
           </p>
 
           <button
             onClick={onViewDashboard}
-            className="text-sm text-zinc-600 hover:text-zinc-900 px-4 py-2 rounded-lg hover:bg-zinc-100 transition-colors duration-150"
+            className="text-sm text-stone-600 hover:text-stone-900 px-4 py-2 rounded-lg hover:bg-stone-100 transition-colors duration-150"
           >
             View Full Dashboard
           </button>

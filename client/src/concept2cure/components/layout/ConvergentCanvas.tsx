@@ -182,24 +182,24 @@ const Sidebar: React.FC<{
 }> = ({ currentView, onViewChange, collapsed, onCollapsedChange }) => {
   return (
     <div className={cn(
-      'flex flex-col bg-zinc-900 text-white transition-all duration-300',
+      'flex flex-col bg-stone-900 text-white transition-all duration-300',
       collapsed ? 'w-16' : 'w-64'
     )}>
       {/* Logo */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-zinc-800">
+      <div className="h-16 flex items-center justify-between px-4 border-b border-stone-800">
         {!collapsed && (
           <div className="flex items-center gap-3">
             <Mountain className="w-8 h-8 text-blue-400" />
             <div>
               <h1 className="font-semibold text-sm tracking-tight">CONCEPT2CURE</h1>
-              <p className="text-xs text-zinc-400">Regulatory Sherpa</p>
+              <p className="text-xs text-stone-400">Regulatory Sherpa</p>
             </div>
           </div>
         )}
         {collapsed && <Mountain className="w-8 h-8 text-blue-400 mx-auto" />}
         <button
           onClick={() => onCollapsedChange(!collapsed)}
-          className="p-1.5 rounded-lg hover:bg-zinc-800 transition-colors duration-150"
+          className="p-1.5 rounded-lg hover:bg-stone-800 transition-colors duration-150"
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
@@ -218,7 +218,7 @@ const Sidebar: React.FC<{
                   'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-left',
                   isActive 
                     ? 'bg-blue-600 text-white' 
-                    : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                    : 'text-stone-400 hover:bg-stone-800 hover:text-white'
                 )}
                 title={collapsed ? item.label : undefined}
               >
@@ -228,7 +228,7 @@ const Sidebar: React.FC<{
                 {!collapsed && (
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{item.label}</p>
-                    <p className="text-xs text-zinc-500 truncate">{item.description}</p>
+                    <p className="text-xs text-stone-500 truncate">{item.description}</p>
                   </div>
                 )}
               </button>
@@ -238,9 +238,9 @@ const Sidebar: React.FC<{
       </nav>
       
       {/* User */}
-      <div className="p-2 border-t border-zinc-800">
+      <div className="p-2 border-t border-stone-800">
         <button className={cn(
-          'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors duration-150',
+          'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-stone-400 hover:bg-stone-800 hover:text-white transition-colors duration-150',
           collapsed && 'justify-center'
         )}>
           <Settings className="w-5 h-5" />
@@ -273,9 +273,9 @@ const CortexSidecar: React.FC<{
   if (!open) return null;
   
   return (
-    <div className="w-96 flex flex-col bg-white border-l border-zinc-200 shadow-xl">
+    <div className="w-96 flex flex-col bg-white border-l border-stone-200 shadow-xl">
       {/* Header */}
-      <div className="h-14 flex items-center justify-between px-4 border-b border-zinc-200 bg-zinc-900">
+      <div className="h-14 flex items-center justify-between px-4 border-b border-stone-200 bg-stone-900">
         <div className="flex items-center gap-2 text-white">
           <Sparkles className="w-5 h-5" />
           <span className="font-semibold">Cortex Companion</span>
@@ -295,25 +295,25 @@ const CortexSidecar: React.FC<{
             <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-blue-600 flex items-center justify-center">
               <Mountain className="w-8 h-8 text-white" />
             </div>
-            <h3 className="text-lg font-semibold text-zinc-900 mb-2">Your Sherpa is Ready</h3>
-            <p className="text-sm text-zinc-500 mb-4">
+            <h3 className="text-lg font-semibold text-stone-900 mb-2">Your Sherpa is Ready</h3>
+            <p className="text-sm text-stone-500 mb-4">
               I'll help you draft documents, verify claims, navigate regulations, 
               and ensure you reach the summit safely.
             </p>
-            <div className="text-xs text-zinc-400 italic">
+            <div className="text-xs text-stone-400 italic">
               "Just as Sherpas make Everest attainable, I make regulatory success repeatable."
             </div>
             
             {/* Quick Actions */}
             <div className="mt-6 space-y-2">
-              <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Quick Start</p>
-              <button className="w-full px-4 py-2 text-sm text-left bg-zinc-50 hover:bg-blue-50 rounded-lg border border-zinc-200 hover:border-blue-300 transition-colors duration-150">
+              <p className="text-xs font-medium text-stone-500 uppercase tracking-wider">Quick Start</p>
+              <button className="w-full px-4 py-2 text-sm text-left bg-stone-50 hover:bg-blue-50 rounded-lg border border-stone-200 hover:border-blue-300 transition-colors duration-150">
                 📝 Draft a Clinical Overview
               </button>
-              <button className="w-full px-4 py-2 text-sm text-left bg-zinc-50 hover:bg-blue-50 rounded-lg border border-zinc-200 hover:border-blue-300 transition-colors duration-150">
+              <button className="w-full px-4 py-2 text-sm text-left bg-stone-50 hover:bg-blue-50 rounded-lg border border-stone-200 hover:border-blue-300 transition-colors duration-150">
                 🔍 Find a predicate device
               </button>
-              <button className="w-full px-4 py-2 text-sm text-left bg-zinc-50 hover:bg-blue-50 rounded-lg border border-zinc-200 hover:border-blue-300 transition-colors duration-150">
+              <button className="w-full px-4 py-2 text-sm text-left bg-stone-50 hover:bg-blue-50 rounded-lg border border-stone-200 hover:border-blue-300 transition-colors duration-150">
                 ⚗️ Check CMC guardrails
               </button>
             </div>
@@ -324,7 +324,7 @@ const CortexSidecar: React.FC<{
       </div>
       
       {/* Input */}
-      <div className="p-3 border-t border-zinc-200 bg-zinc-50">
+      <div className="p-3 border-t border-stone-200 bg-stone-50">
         <div className="flex items-center gap-2">
           <input
             type="text"
@@ -332,7 +332,7 @@ const CortexSidecar: React.FC<{
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Ask your Sherpa..."
-            className="flex-1 px-4 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none focus:border-transparent"
+            className="flex-1 px-4 py-2 text-sm border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none focus:border-transparent"
           />
           <button
             onClick={handleSend}
@@ -341,7 +341,7 @@ const CortexSidecar: React.FC<{
               'p-2 rounded-lg transition-colors duration-150',
               input.trim()
                 ? 'bg-blue-600 text-white hover:bg-blue-700'
-                : 'bg-zinc-200 text-zinc-400'
+                : 'bg-stone-200 text-stone-400'
             )}
           >
             <Send className="w-4 h-4" />
@@ -362,17 +362,17 @@ const Header: React.FC<{
   cortexOpen: boolean;
   notificationCount?: number;
 }> = ({ userName, onCortexToggle, cortexOpen, notificationCount = 0 }) => (
-  <div className="h-14 flex items-center justify-between px-6 bg-white border-b border-zinc-200">
+  <div className="h-14 flex items-center justify-between px-6 bg-white border-b border-stone-200">
     {/* Search */}
     <div className="flex items-center gap-4">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
         <input
           type="text"
           placeholder="Search documents, projects, guidance..."
-          className="w-80 pl-10 pr-4 py-2 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none focus:border-transparent"
+          className="w-80 pl-10 pr-4 py-2 text-sm bg-stone-50 border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none focus:border-transparent"
         />
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400 bg-zinc-200 px-1.5 py-0.5 rounded">
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-stone-400 bg-stone-200 px-1.5 py-0.5 rounded">
           ⌘K
         </span>
       </div>
@@ -381,7 +381,7 @@ const Header: React.FC<{
     {/* Actions */}
     <div className="flex items-center gap-2">
       {/* Notifications */}
-      <button className="relative p-2 rounded-lg hover:bg-zinc-100 text-zinc-600 transition-colors duration-150">
+      <button className="relative p-2 rounded-lg hover:bg-stone-100 text-stone-600 transition-colors duration-150">
         <Bell className="w-5 h-5" />
         {notificationCount > 0 && (
           <span className="absolute top-1 right-1 w-4 h-4 text-xs font-semibold bg-red-500 text-white rounded-full flex items-center justify-center">
@@ -397,7 +397,7 @@ const Header: React.FC<{
           'flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-150',
           cortexOpen
             ? 'bg-blue-100 text-blue-700'
-            : 'hover:bg-zinc-100 text-zinc-600'
+            : 'hover:bg-stone-100 text-stone-600'
         )}
       >
         <Sparkles className="w-5 h-5" />
@@ -405,10 +405,10 @@ const Header: React.FC<{
       </button>
       
       {/* User */}
-      <div className="ml-2 flex items-center gap-3 pl-4 border-l border-zinc-200">
+      <div className="ml-2 flex items-center gap-3 pl-4 border-l border-stone-200">
         <div className="text-right">
-          <p className="text-sm font-medium text-zinc-900">{userName || 'User'}</p>
-          <p className="text-xs text-zinc-500">Regulatory Lead</p>
+          <p className="text-sm font-medium text-stone-900">{userName || 'User'}</p>
+          <p className="text-xs text-stone-500">Regulatory Lead</p>
         </div>
         <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
           {(userName || 'U')[0].toUpperCase()}
@@ -478,7 +478,7 @@ export const ConvergentCanvas: React.FC<ConvergentCanvasProps> = ({
   }, [onSendMessage]);
   
   return (
-    <div className={cn('flex h-screen w-screen bg-zinc-100 overflow-hidden', className)}>
+    <div className={cn('flex h-screen w-screen bg-stone-100 overflow-hidden', className)}>
       {/* Sidebar */}
       <Sidebar
         currentView={currentView}

@@ -155,10 +155,10 @@ export const SplitScreenLayout: React.FC = () => {
         {artifactPanelVisible && (
           <div className="fixed inset-0 z-30 flex flex-col bg-white animate-in slide-in-from-right duration-200">
             {/* Mobile artifact header */}
-            <div className="flex h-12 items-center justify-between border-b border-zinc-200 px-4">
+            <div className="flex h-12 items-center justify-between border-b border-stone-200 px-4">
               <button
                 onClick={() => setArtifactPanelWidth(0)} // This will hide the panel
-                className="flex items-center gap-1 text-sm text-zinc-600 hover:text-zinc-900"
+                className="flex items-center gap-1 text-sm text-stone-600 hover:text-stone-900"
               >
                 <ChevronLeft className="h-4 w-4" />
                 Back to chat
@@ -191,19 +191,19 @@ export const SplitScreenLayout: React.FC = () => {
           onMouseDown={handleMouseDown}
           className={cn(
             'relative flex w-1 cursor-col-resize items-center justify-center',
-            'bg-zinc-200 hover:bg-blue-400 transition-colors duration-150',
+            'bg-stone-200 hover:bg-blue-400 transition-colors duration-150',
             isDragging && 'bg-blue-500'
           )}
         >
           <div
             className={cn(
               'absolute z-10 flex h-12 w-5 items-center justify-center rounded',
-              'bg-zinc-100 border border-zinc-300 shadow-sm',
-              'hover:bg-zinc-200 transition-colors duration-150',
+              'bg-stone-100 border border-stone-300 shadow-sm',
+              'hover:bg-stone-200 transition-colors duration-150',
               isDragging && 'bg-blue-100 border-blue-400'
             )}
           >
-            <GripVertical className="h-4 w-4 text-zinc-400" />
+            <GripVertical className="h-4 w-4 text-stone-400" />
           </div>
         </div>
       )}
@@ -211,7 +211,7 @@ export const SplitScreenLayout: React.FC = () => {
       {/* Artifact Panel (Right) */}
       {artifactPanelVisible && (
         <div
-          className="flex flex-col h-full overflow-hidden border-l border-zinc-200 bg-zinc-50 transition-all duration-150"
+          className="flex flex-col h-full overflow-hidden border-l border-stone-200 bg-stone-50 transition-all duration-150"
           style={{ width: `${artifactWidth}%` }}
         >
           <ArtifactPanel artifact={activeArtifact} />
@@ -219,20 +219,20 @@ export const SplitScreenLayout: React.FC = () => {
       )}
 
       {!artifactPanelVisible && (
-        <div className="hidden lg:flex w-[360px] flex-col border-l border-zinc-200 bg-white animate-in fade-in slide-in-from-right-4">
-          <div className="border-b border-zinc-200 px-4 py-3">
-            <div className="flex items-center gap-2 text-sm font-medium text-zinc-900">
-              <Users className="h-4 w-4 text-zinc-500" />
+        <div className="hidden lg:flex w-[360px] flex-col border-l border-stone-200 bg-white animate-in fade-in slide-in-from-right-4">
+          <div className="border-b border-stone-200 px-4 py-3">
+            <div className="flex items-center gap-2 text-sm font-medium text-stone-900">
+              <Users className="h-4 w-4 text-stone-500" />
               Agent Workspace
             </div>
-            <p className="mt-1 text-xs text-zinc-500">
+            <p className="mt-1 text-xs text-stone-500">
               Active agents and priority actions across projects.
             </p>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            <section className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
-              <div className="flex items-center gap-2 text-xs font-semibold text-zinc-600">
+            <section className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+              <div className="flex items-center gap-2 text-xs font-semibold text-stone-600">
                 <ClipboardCheck className="h-3.5 w-3.5" />
                 Active Agents
               </div>
@@ -244,8 +244,8 @@ export const SplitScreenLayout: React.FC = () => {
                   >
                     <div className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
                     <div className="min-w-0">
-                      <p className="font-medium text-zinc-900 truncate">{agent.name}</p>
-                      <p className="text-xs text-zinc-500 truncate">
+                      <p className="font-medium text-stone-900 truncate">{agent.name}</p>
+                      <p className="text-xs text-stone-500 truncate">
                         {agent.status} • {agent.focus}
                       </p>
                     </div>

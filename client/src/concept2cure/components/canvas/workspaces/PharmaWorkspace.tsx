@@ -19,9 +19,9 @@ export const PharmaWorkspace: React.FC<PharmaWorkspaceProps> = ({
 }) => {
   return (
     <div className="h-full flex flex-col">
-      <div className="bg-white border-b border-zinc-200 px-6 py-4">
-        <h2 className="text-xl font-semibold text-zinc-900">Pharma Workspace</h2>
-        <p className="text-sm text-zinc-500">IND, NDA, BLA & Global Regulatory Tools</p>
+      <div className="bg-white border-b border-stone-200 px-6 py-4">
+        <h2 className="text-xl font-semibold text-stone-900">Pharma Workspace</h2>
+        <p className="text-sm text-stone-500">IND, NDA, BLA & Global Regulatory Tools</p>
       </div>
       
       <div className="flex-1 p-6">
@@ -35,13 +35,13 @@ export const PharmaWorkspace: React.FC<PharmaWorkspaceProps> = ({
           ].map((item, index) => (
             <div
               key={index}
-              className="bg-white rounded-xl border border-zinc-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
+              className="bg-white rounded-xl border border-stone-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
             >
               <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center mb-4">
                 <item.icon className="w-6 h-6 text-purple-600" />
               </div>
-              <h3 className="font-semibold text-zinc-900 mb-1">{item.title}</h3>
-              <p className="text-sm text-zinc-500">{item.description}</p>
+              <h3 className="font-semibold text-stone-900 mb-1">{item.title}</h3>
+              <p className="text-sm text-stone-500">{item.description}</p>
             </div>
           ))}
         </div>

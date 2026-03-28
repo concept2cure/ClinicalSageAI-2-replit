@@ -76,7 +76,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
   const readinessPercent = totalCount > 0 ? Math.round((readyCount / totalCount) * 100) : 0;
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-zinc-50/50">
+    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-stone-50/50">
       <WorkspaceHeader
         title="Submission Readiness"
         titleIcon={<Send className="w-3.5 h-3.5 text-violet-500" />}
@@ -99,7 +99,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
               summary={`${readyCount} of ${totalCount} sections ready`}
             >
               <div>
-                <h2 className="text-lg font-semibold text-zinc-900">
+                <h2 className="text-lg font-semibold text-stone-900">
                   {projectName || 'Submission'} — Readiness
                 </h2>
               </div>
@@ -114,7 +114,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
             </WorkspaceStatusStrip>
 
             {/* Section checklist */}
-            <div className="rounded-xl border border-zinc-200 bg-white overflow-hidden divide-y divide-zinc-100">
+            <div className="rounded-xl border border-stone-200 bg-white overflow-hidden divide-y divide-stone-100">
               {items.map(item => {
                 const statusInfo = STATUS_ICON_MAP[item.status] || STATUS_ICON_MAP['not-started'];
                 const Icon = statusInfo.icon;
@@ -122,18 +122,18 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
                   <button
                     key={item.section}
                     onClick={() => onSectionClick(item.section)}
-                    className="w-full flex items-start gap-3 px-4 py-3 hover:bg-zinc-50 transition-colors text-left"
+                    className="w-full flex items-start gap-3 px-4 py-3 hover:bg-stone-50 transition-colors text-left"
                   >
                     <Icon className={`w-4 h-4 mt-0.5 ${statusInfo.color}`} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono text-zinc-400">{item.section}</span>
-                        <span className="text-sm font-medium text-zinc-900">{item.title}</span>
+                        <span className="text-xs font-mono text-stone-400">{item.section}</span>
+                        <span className="text-sm font-medium text-stone-900">{item.title}</span>
                       </div>
                       {item.issues && item.issues.length > 0 && (
                         <div className="mt-1 space-y-0.5">
                           {item.issues.map((issue, i) => (
-                            <p key={i} className="text-xs text-zinc-500">
+                            <p key={i} className="text-xs text-stone-500">
                               • {issue}
                             </p>
                           ))}

@@ -113,7 +113,7 @@ function ThinkingLine({ texts }: { texts: string[] }) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
-          className="text-xs text-zinc-400 italic"
+          className="text-xs text-stone-400 italic"
         >
           {texts[idx]}
         </motion.span>
@@ -166,13 +166,13 @@ function TranscriptMessage({
         transition={{ duration: 0.15 }}
         className={cn(
           'py-2 text-center',
-          isResult && 'border-l-2 border-zinc-900 pl-4 text-left',
+          isResult && 'border-l-2 border-stone-900 pl-4 text-left',
         )}
       >
-        <p className="text-xs text-zinc-400 italic">{text}</p>
+        <p className="text-xs text-stone-400 italic">{text}</p>
         {isActive && !done && (
           <motion.span
-            className="inline-block text-zinc-400"
+            className="inline-block text-stone-400"
             animate={{ opacity: [1, 0, 1] }}
             transition={{ duration: 0.8, repeat: Infinity }}
           >
@@ -190,8 +190,8 @@ function TranscriptMessage({
       transition={{ duration: 0.15 }}
       className={cn(
         'py-4',
-        !isLast && 'border-b border-zinc-50',
-        isResult && 'border-l-2 border-zinc-900 pl-4',
+        !isLast && 'border-b border-stone-50',
+        isResult && 'border-l-2 border-stone-900 pl-4',
       )}
     >
       {/* Header: actor name + type tag */}
@@ -199,22 +199,22 @@ function TranscriptMessage({
         <span
           className={cn(
             'text-xs font-medium',
-            isSage ? 'text-zinc-900' : 'text-zinc-600',
+            isSage ? 'text-stone-900' : 'text-stone-600',
           )}
         >
           {isSage ? 'Dr. Sage' : 'AnA 1.0'}
         </span>
-        <span className="text-xs text-zinc-400">
+        <span className="text-xs text-stone-400">
           {TYPE_LABELS[message.type]}
         </span>
       </div>
 
       {/* Message body */}
-      <p className="text-sm text-zinc-700 leading-relaxed whitespace-pre-wrap">
+      <p className="text-sm text-stone-700 leading-relaxed whitespace-pre-wrap">
         {text}
         {isActive && !done && (
           <motion.span
-            className="inline-block text-zinc-400 ml-px"
+            className="inline-block text-stone-400 ml-px"
             animate={{ opacity: [1, 0, 1] }}
             transition={{ duration: 0.8, repeat: Infinity }}
           >
@@ -360,14 +360,14 @@ export function DualAITheater({
   return (
     <div
       className={cn(
-        'bg-white rounded-lg shadow-sm border border-zinc-200 overflow-hidden',
+        'bg-white rounded-lg shadow-sm border border-stone-200 overflow-hidden',
         className,
       )}
     >
       {/* Header */}
-      <div className="px-6 py-4 border-b border-zinc-200">
-        <h3 className="text-sm font-medium text-zinc-900">{scenario.title}</h3>
-        <p className="text-xs text-zinc-400 mt-0.5">{scenario.description}</p>
+      <div className="px-6 py-4 border-b border-stone-200">
+        <h3 className="text-sm font-medium text-stone-900">{scenario.title}</h3>
+        <p className="text-xs text-stone-400 mt-0.5">{scenario.description}</p>
       </div>
 
       {/* Transcript area */}
@@ -384,7 +384,7 @@ export function DualAITheater({
               exit={{ opacity: 0 }}
               className="flex items-center justify-center py-16"
             >
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-stone-400">
                 {autoPlay ? 'Starting...' : 'Press play to begin'}
               </p>
             </motion.div>
@@ -435,7 +435,7 @@ export function DualAITheater({
               transition={{ duration: 0.15, delay: 0.2 }}
               className="py-4 text-center"
             >
-              <span className="text-xs text-zinc-400 italic">
+              <span className="text-xs text-stone-400 italic">
                 Collaboration complete
               </span>
             </motion.div>
@@ -445,9 +445,9 @@ export function DualAITheater({
 
       {/* Progress bar */}
       <div className="mx-6 mt-2">
-        <div className="h-px bg-zinc-100 w-full relative">
+        <div className="h-px bg-stone-100 w-full relative">
           <motion.div
-            className="absolute inset-y-0 left-0 bg-zinc-900"
+            className="absolute inset-y-0 left-0 bg-stone-900"
             animate={{ width: `${progressPct}%` }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
           />
@@ -460,30 +460,30 @@ export function DualAITheater({
           {finished ? (
             <button
               onClick={replay}
-              className="text-zinc-900 font-medium hover:text-blue-600 transition-colors duration-150"
+              className="text-stone-900 font-medium hover:text-blue-600 transition-colors duration-150"
             >
               Replay
             </button>
           ) : (
             <button
               onClick={togglePlay}
-              className="text-zinc-900 font-medium hover:text-blue-600 transition-colors duration-150"
+              className="text-stone-900 font-medium hover:text-blue-600 transition-colors duration-150"
             >
               {playing ? 'Pause' : 'Play'}
             </button>
           )}
-          <span className="text-zinc-200">·</span>
+          <span className="text-stone-200">·</span>
           <button
             onClick={cycleSpeed}
             className={cn(
               'transition-colors hover:text-blue-600',
-              currentSpeed === 'normal' ? 'text-zinc-900 font-medium' : 'text-zinc-400',
+              currentSpeed === 'normal' ? 'text-stone-900 font-medium' : 'text-stone-400',
             )}
           >
             {speedLabel}
           </button>
         </div>
-        <span className="text-xs text-zinc-400">
+        <span className="text-xs text-stone-400">
           {Math.max(0, messageIndex + 1)} of {messages.length}
         </span>
       </div>

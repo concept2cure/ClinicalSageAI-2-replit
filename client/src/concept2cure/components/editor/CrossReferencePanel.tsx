@@ -348,12 +348,12 @@ export function CrossReferencePanel({
   }, [insertModule, insertSection, artifacts, onInsertReference]);
 
   return (
-    <div className="flex flex-col h-full bg-white border-l border-zinc-200">
+    <div className="flex flex-col h-full bg-white border-l border-stone-200">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 bg-zinc-50">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 bg-stone-50">
         <div className="flex items-center gap-2">
           <Link2 className="w-4 h-4 text-blue-600" />
-          <span className="text-sm font-semibold text-zinc-900">
+          <span className="text-sm font-semibold text-stone-900">
             Cross-Reference Manager
           </span>
         </div>
@@ -361,7 +361,7 @@ export function CrossReferencePanel({
           <button
             onClick={() => setShowInsertForm((v) => !v)}
             className={cn(
-              'p-1.5 rounded-md text-zinc-500 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-150',
+              'p-1.5 rounded-md text-stone-500 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-150',
               showInsertForm && 'text-blue-600 bg-blue-50'
             )}
             title="Insert Reference"
@@ -371,7 +371,7 @@ export function CrossReferencePanel({
           <button
             onClick={scanDocument}
             disabled={isScanning}
-            className="p-1.5 rounded-md text-zinc-500 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
+            className="p-1.5 rounded-md text-stone-500 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
             title="Scan Document"
           >
             <RefreshCw
@@ -381,7 +381,7 @@ export function CrossReferencePanel({
           {onClose && (
             <button
               onClick={onClose}
-              className="p-1.5 rounded-md text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 transition-colors duration-150"
+              className="p-1.5 rounded-md text-stone-500 hover:text-stone-700 hover:bg-stone-100 transition-colors duration-150"
               title="Close"
             >
               <XCircle className="w-4 h-4" />
@@ -392,13 +392,13 @@ export function CrossReferencePanel({
 
       {/* Insert Reference Form */}
       {showInsertForm && (
-        <div className="px-4 py-3 border-b border-zinc-200 bg-blue-50/50 space-y-2">
-          <div className="text-xs font-medium text-zinc-700">
+        <div className="px-4 py-3 border-b border-stone-200 bg-blue-50/50 space-y-2">
+          <div className="text-xs font-medium text-stone-700">
             Insert Cross-Reference
           </div>
           <div className="flex gap-2">
             <div className="flex-1">
-              <label className="text-[10px] uppercase tracking-wider text-zinc-500 block mb-1">
+              <label className="text-[10px] uppercase tracking-wider text-stone-500 block mb-1">
                 CTD Module
               </label>
               <select
@@ -407,7 +407,7 @@ export function CrossReferencePanel({
                   setInsertModule(e.target.value);
                   setInsertSection('');
                 }}
-                className="w-full text-xs border border-zinc-300 rounded-md px-2 py-1.5 bg-white focus-visible:ring-2 focus-visible:ring-blue-500 outline-none focus:border-blue-400"
+                className="w-full text-xs border border-stone-300 rounded-md px-2 py-1.5 bg-white focus-visible:ring-2 focus-visible:ring-stone-400 outline-none focus:border-blue-400"
               >
                 <option value="">Select module...</option>
                 <option value="1">Module 1 — Administrative</option>
@@ -418,7 +418,7 @@ export function CrossReferencePanel({
               </select>
             </div>
             <div className="flex-1">
-              <label className="text-[10px] uppercase tracking-wider text-zinc-500 block mb-1">
+              <label className="text-[10px] uppercase tracking-wider text-stone-500 block mb-1">
                 Section (optional)
               </label>
               <input
@@ -426,14 +426,14 @@ export function CrossReferencePanel({
                 value={insertSection}
                 onChange={(e) => setInsertSection(e.target.value)}
                 placeholder="e.g. 3.2"
-                className="w-full text-xs border border-zinc-300 rounded-md px-2 py-1.5 bg-white focus-visible:ring-2 focus-visible:ring-blue-500 outline-none focus:border-blue-400"
+                className="w-full text-xs border border-stone-300 rounded-md px-2 py-1.5 bg-white focus-visible:ring-2 focus-visible:ring-stone-400 outline-none focus:border-blue-400"
               />
             </div>
           </div>
           {insertModule && (
-            <div className="text-[11px] text-zinc-500 italic">
+            <div className="text-[11px] text-stone-500 italic">
               Preview:{' '}
-              <span className="text-zinc-700 not-italic">
+              <span className="text-stone-700 not-italic">
                 {(() => {
                   const sNum = insertSection
                     ? `${insertModule}.${insertSection}`
@@ -461,15 +461,15 @@ export function CrossReferencePanel({
 
       {/* Summary Stats */}
       {hasScanned && (
-        <div className="px-4 py-2.5 border-b border-zinc-200 bg-zinc-50/50">
+        <div className="px-4 py-2.5 border-b border-stone-200 bg-stone-50/50">
           <div className="flex items-center gap-3 text-[11px]">
             <button
               onClick={() => setFilterStatus('all')}
               className={cn(
                 'flex items-center gap-1 px-2 py-0.5 rounded-full transition-colors duration-150',
                 filterStatus === 'all'
-                  ? 'bg-zinc-200 text-zinc-900 font-medium'
-                  : 'text-zinc-500 hover:text-zinc-700'
+                  ? 'bg-stone-200 text-stone-900 font-medium'
+                  : 'text-stone-500 hover:text-stone-700'
               )}
             >
               <MapPin className="w-3 h-3" />
@@ -517,15 +517,15 @@ export function CrossReferencePanel({
 
       {/* Search */}
       {hasScanned && references.length > 0 && (
-        <div className="px-4 py-2 border-b border-zinc-200">
+        <div className="px-4 py-2 border-b border-stone-200">
           <div className="relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Filter references..."
-              className="w-full text-xs border border-zinc-200 rounded-md pl-7 pr-2 py-1.5 bg-zinc-50 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none focus:border-blue-400"
+              className="w-full text-xs border border-stone-200 rounded-md pl-7 pr-2 py-1.5 bg-stone-50 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none focus:border-blue-400"
             />
           </div>
         </div>
@@ -535,11 +535,11 @@ export function CrossReferencePanel({
       <div className="flex-1 overflow-y-auto">
         {!hasScanned ? (
           <div className="flex flex-col items-center justify-center h-full px-6 text-center">
-            <Link2 className="w-10 h-10 text-zinc-300 mb-3" />
-            <p className="text-sm text-zinc-500 mb-1">
+            <Link2 className="w-10 h-10 text-stone-300 mb-3" />
+            <p className="text-sm text-stone-500 mb-1">
               No scan performed yet
             </p>
-            <p className="text-xs text-zinc-400 mb-4">
+            <p className="text-xs text-stone-400 mb-4">
               Scan the document to detect cross-references, validate links, and
               find broken references.
             </p>
@@ -557,34 +557,34 @@ export function CrossReferencePanel({
         ) : isScanning ? (
           <div className="flex flex-col items-center justify-center h-full">
             <RefreshCw className="w-8 h-8 text-blue-400 animate-spin mb-3" />
-            <p className="text-sm text-zinc-500">Scanning document...</p>
+            <p className="text-sm text-stone-500">Scanning document...</p>
           </div>
         ) : filteredReferences.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full px-6 text-center">
-            <CheckCircle className="w-10 h-10 text-zinc-300 mb-3" />
-            <p className="text-sm text-zinc-500 mb-1">
+            <CheckCircle className="w-10 h-10 text-stone-300 mb-3" />
+            <p className="text-sm text-stone-500 mb-1">
               {references.length === 0
                 ? 'No cross-references detected'
                 : 'No references match the current filter'}
             </p>
-            <p className="text-xs text-zinc-400">
+            <p className="text-xs text-stone-400">
               {references.length === 0
                 ? 'The document does not contain recognizable eCTD cross-references.'
                 : 'Try adjusting the filter or search query.'}
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-zinc-100">
+          <div className="divide-y divide-stone-100">
             {filteredReferences.map((ref) => (
               <div
                 key={ref.id}
-                className="px-4 py-3 hover:bg-zinc-50/80 transition-colors group"
+                className="px-4 py-3 hover:bg-stone-50/80 transition-colors group"
               >
                 {/* Matched text */}
                 <div className="flex items-start justify-between gap-2 mb-1.5">
                   <div className="flex items-center gap-1.5 min-w-0">
                     {getStatusIcon(ref.status)}
-                    <span className="text-xs font-medium text-zinc-900 truncate">
+                    <span className="text-xs font-medium text-stone-900 truncate">
                       {ref.matchedText}
                     </span>
                   </div>
@@ -600,14 +600,14 @@ export function CrossReferencePanel({
 
                 {/* Target info */}
                 <div className="ml-5 space-y-1">
-                  <div className="text-[11px] text-zinc-500">
-                    <span className="font-medium text-zinc-600">Target:</span>{' '}
+                  <div className="text-[11px] text-stone-500">
+                    <span className="font-medium text-stone-600">Target:</span>{' '}
                     Section {ref.targetSection}
                     {ref.targetArtifactTitle && (
                       <>
                         {' '}
                         &mdash;{' '}
-                        <span className="text-zinc-700">
+                        <span className="text-stone-700">
                           {ref.targetArtifactTitle}
                         </span>
                       </>
@@ -675,8 +675,8 @@ export function CrossReferencePanel({
 
       {/* Footer */}
       {hasScanned && references.length > 0 && (
-        <div className="px-4 py-2 border-t border-zinc-200 bg-zinc-50">
-          <div className="flex items-center justify-between text-[11px] text-zinc-400">
+        <div className="px-4 py-2 border-t border-stone-200 bg-stone-50">
+          <div className="flex items-center justify-between text-[11px] text-stone-400">
             <span>
               {filteredReferences.length} of {references.length} references shown
             </span>

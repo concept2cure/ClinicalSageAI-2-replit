@@ -9,7 +9,7 @@ export function NavHeader() {
   const [, setLocation] = useLocation();
 
   return (
-    <header className="sticky top-0 z-50 bg-[#FAFAF9]/80 backdrop-blur-xl border-b border-zinc-200/60">
+    <header className="sticky top-0 z-50 bg-[#FAFAF9]/80 backdrop-blur-xl border-b border-stone-200/60">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
@@ -17,23 +17,23 @@ export function NavHeader() {
           aria-label="Scroll to top"
         >
           <Logo />
-          <span className="text-xl font-semibold text-zinc-900">Concept2Cure</span>
+          <span className="text-xl font-semibold text-stone-900">Concept2Cure</span>
         </button>
 
         <nav
-          className="hidden md:flex items-center gap-8 text-sm text-zinc-600"
+          className="hidden md:flex items-center gap-8 text-sm text-stone-600"
           aria-label="Main navigation"
         >
-          <a href="#platform" className="hover:text-zinc-900 transition-colors">
+          <a href="#platform" className="hover:text-stone-900 transition-colors">
             Platform
           </a>
-          <a href="#how-it-works" className="hover:text-zinc-900 transition-colors">
+          <a href="#how-it-works" className="hover:text-stone-900 transition-colors">
             How It Works
           </a>
-          <a href="#security" className="hover:text-zinc-900 transition-colors">
+          <a href="#security" className="hover:text-stone-900 transition-colors">
             Security
           </a>
-          <a href="#pricing" className="hover:text-zinc-900 transition-colors">
+          <a href="#pricing" className="hover:text-stone-900 transition-colors">
             Pricing
           </a>
         </nav>
@@ -51,7 +51,7 @@ export function NavHeader() {
           </button>
           <button
             onClick={() => setLocation('/concept2cure/login')}
-            className="px-4 py-2 text-sm font-medium text-zinc-700 hover:text-zinc-900 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-stone-700 hover:text-stone-900 transition-colors"
           >
             Sign in
           </button>

@@ -125,9 +125,9 @@ const getStatusIcon = (status: PhaseStatus, progress: number) => {
     case 'blocked':
       return <Lock className="w-4 h-4 text-white" />;
     case 'skipped':
-      return <ChevronRight className="w-4 h-4 text-zinc-400" />;
+      return <ChevronRight className="w-4 h-4 text-stone-400" />;
     default:
-      return <Circle className="w-4 h-4 text-zinc-400" strokeWidth={2} />;
+      return <Circle className="w-4 h-4 text-stone-400" strokeWidth={2} />;
   }
 };
 
@@ -156,17 +156,17 @@ const getStatusColors = (status: PhaseStatus) => {
       };
     case 'skipped':
       return {
-        bg: 'bg-zinc-200',
-        border: 'border-zinc-300',
-        text: 'text-zinc-500',
-        line: 'bg-zinc-200',
+        bg: 'bg-stone-200',
+        border: 'border-stone-300',
+        text: 'text-stone-500',
+        line: 'bg-stone-200',
       };
     default:
       return {
         bg: 'bg-white',
-        border: 'border-zinc-300',
-        text: 'text-zinc-500',
-        line: 'bg-zinc-200',
+        border: 'border-stone-300',
+        text: 'text-stone-500',
+        line: 'bg-stone-200',
       };
   }
 };
@@ -184,13 +184,13 @@ const MiniTimeline: React.FC<{
   
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-2 bg-zinc-100 rounded-full overflow-hidden">
+      <div className="flex-1 h-2 bg-stone-100 rounded-full overflow-hidden">
         <div
           className="h-full bg-blue-500 transition-all duration-500"
           style={{ width: `${progress}%` }}
         />
       </div>
-      <span className="text-xs font-medium text-zinc-600">{progress}%</span>
+      <span className="text-xs font-medium text-stone-600">{progress}%</span>
     </div>
   );
 };
@@ -234,7 +234,7 @@ const CompactTimeline: React.FC<{
               </div>
               
               {/* Tooltip */}
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-zinc-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-stone-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
                 {phase.name}
               </div>
             </button>
@@ -281,21 +281,21 @@ const FullTimeline: React.FC<{
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-zinc-900">{projectType} Submission Timeline</h3>
-          <p className="text-sm text-zinc-500">{projectName}</p>
+          <h3 className="text-lg font-semibold text-stone-900">{projectType} Submission Timeline</h3>
+          <p className="text-sm text-stone-500">{projectName}</p>
         </div>
         
         <div className="text-right">
           <div className="flex items-center gap-2 text-sm">
-            <CalendarClock className="w-4 h-4 text-zinc-500" />
+            <CalendarClock className="w-4 h-4 text-stone-500" />
             {estimatedCompletionDays && (
-              <span className="font-medium text-zinc-700">
+              <span className="font-medium text-stone-700">
                 {estimatedCompletionDays} days to target
               </span>
             )}
           </div>
           {targetDate && (
-            <p className="text-xs text-zinc-500 mt-1">
+            <p className="text-xs text-stone-500 mt-1">
               Target: {new Date(targetDate).toLocaleDateString()}
             </p>
           )}
@@ -303,12 +303,12 @@ const FullTimeline: React.FC<{
       </div>
       
       {/* Overall Progress */}
-      <div className="p-4 bg-zinc-50 rounded-xl">
+      <div className="p-4 bg-stone-50 rounded-xl">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-zinc-700">Overall Progress</span>
-          <span className="text-sm font-semibold text-zinc-900">{overallProgress}%</span>
+          <span className="text-sm font-medium text-stone-700">Overall Progress</span>
+          <span className="text-sm font-semibold text-stone-900">{overallProgress}%</span>
         </div>
-        <div className="h-3 bg-zinc-200 rounded-full overflow-hidden">
+        <div className="h-3 bg-stone-200 rounded-full overflow-hidden">
           <div
             className="h-full bg-blue-500 transition-all duration-500 rounded-full"
             style={{ width: `${overallProgress}%` }}
@@ -329,7 +329,7 @@ const FullTimeline: React.FC<{
                 <div
                   className={cn(
                     'absolute left-4 top-8 w-0.5 h-full -ml-px',
-                    phase.status === 'completed' ? LIFECYCLE.approved.dot : 'bg-zinc-200'
+                    phase.status === 'completed' ? LIFECYCLE.approved.dot : 'bg-stone-200'
                   )}
                 />
               )}
@@ -340,7 +340,7 @@ const FullTimeline: React.FC<{
                   'w-full flex items-start gap-4 p-4 rounded-xl transition-all duration-150',
                   'text-left',
                   isCurrent && 'bg-blue-50 border border-blue-200',
-                  !isCurrent && 'hover:bg-zinc-50',
+                  !isCurrent && 'hover:bg-stone-50',
                   onPhaseClick && 'cursor-pointer'
                 )}
               >
@@ -361,7 +361,7 @@ const FullTimeline: React.FC<{
                   <div className="flex items-center gap-2">
                     <h4 className={cn(
                       'font-medium',
-                      phase.status === 'completed' ? 'text-zinc-600' : 'text-zinc-900'
+                      phase.status === 'completed' ? 'text-stone-600' : 'text-stone-900'
                     )}>
                       {phase.name}
                     </h4>
@@ -378,13 +378,13 @@ const FullTimeline: React.FC<{
                   </div>
                   
                   {phase.description && (
-                    <p className="text-sm text-zinc-500 mt-0.5">{phase.description}</p>
+                    <p className="text-sm text-stone-500 mt-0.5">{phase.description}</p>
                   )}
                   
                   {/* Progress bar for current phase */}
                   {isCurrent && phase.progress > 0 && phase.progress < 100 && (
                     <div className="mt-2">
-                      <div className="flex items-center justify-between text-xs text-zinc-500 mb-1">
+                      <div className="flex items-center justify-between text-xs text-stone-500 mb-1">
                         <span>Progress</span>
                         <span>{phase.progress}%</span>
                       </div>
@@ -420,7 +420,7 @@ const FullTimeline: React.FC<{
                             'border transition-colors duration-150',
                             doc.status === 'approved' && 'bg-emerald-50 border-emerald-200 text-emerald-700',
                             doc.status === 'review' && 'bg-amber-50 border-amber-200 text-amber-700',
-                            doc.status === 'draft' && 'bg-zinc-50 border-zinc-200 text-zinc-700',
+                            doc.status === 'draft' && 'bg-stone-50 border-stone-200 text-stone-700',
                             'hover:opacity-80'
                           )}
                         >
@@ -432,7 +432,7 @@ const FullTimeline: React.FC<{
                   )}
                   
                   {/* Meta info */}
-                  <div className="mt-2 flex items-center gap-4 text-xs text-zinc-500">
+                  <div className="mt-2 flex items-center gap-4 text-xs text-stone-500">
                     {phase.assignee && (
                       <span className="flex items-center gap-1">
                         <User className="w-3 h-3" />
@@ -455,7 +455,7 @@ const FullTimeline: React.FC<{
                 </div>
                 
                 {/* Chevron */}
-                <ChevronRight className="w-5 h-5 text-zinc-400 flex-shrink-0" />
+                <ChevronRight className="w-5 h-5 text-stone-400 flex-shrink-0" />
               </button>
             </div>
           );

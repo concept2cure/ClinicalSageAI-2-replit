@@ -187,11 +187,11 @@ function fuzzyMatch(a: string, b: string): boolean {
 function OutlineIcon({ type }: { type: OutlineNodeType }) {
   switch (type) {
     case 'h1':
-      return <Heading1 className="w-3.5 h-3.5 text-zinc-600 shrink-0" />;
+      return <Heading1 className="w-3.5 h-3.5 text-stone-600 shrink-0" />;
     case 'h2':
-      return <Heading2 className="w-3.5 h-3.5 text-zinc-500 shrink-0" />;
+      return <Heading2 className="w-3.5 h-3.5 text-stone-500 shrink-0" />;
     case 'h3':
-      return <Heading3 className="w-3.5 h-3.5 text-zinc-400 shrink-0" />;
+      return <Heading3 className="w-3.5 h-3.5 text-stone-400 shrink-0" />;
     case 'table':
       return <Table2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />;
     case 'evidence':
@@ -243,7 +243,7 @@ function OutlineNodeRow({ node, activeId, onNavigate }: OutlineNodeRowProps) {
           'w-full flex items-center gap-1 py-[3px] pr-2 text-left transition-all duration-150',
           isActive
             ? 'bg-blue-50 text-blue-700'
-            : 'text-zinc-600 hover:bg-zinc-50 hover:translate-x-px'
+            : 'text-stone-600 hover:bg-stone-50 hover:translate-x-px'
         )}
         style={{ paddingLeft: `${8 + node.depth * 12}px` }}
         title={node.label}
@@ -251,7 +251,7 @@ function OutlineNodeRow({ node, activeId, onNavigate }: OutlineNodeRowProps) {
         {hasChildren ? (
           <ChevronRight
             className={cn(
-              'w-3 h-3 shrink-0 text-zinc-400 transition-transform duration-150',
+              'w-3 h-3 shrink-0 text-stone-400 transition-transform duration-150',
               expanded && 'rotate-90'
             )}
           />
@@ -292,8 +292,8 @@ function TemplateStructureView({
     return (
       <div className="flex-1 flex items-center justify-center px-4">
         <div className="text-center">
-          <FileSearch className="w-5 h-5 text-zinc-200 mx-auto mb-2" />
-          <p className="text-xs text-zinc-400">No template structure defined</p>
+          <FileSearch className="w-5 h-5 text-stone-200 mx-auto mb-2" />
+          <p className="text-xs text-stone-400">No template structure defined</p>
         </div>
       </div>
     );
@@ -302,9 +302,9 @@ function TemplateStructureView({
   return (
     <div className="flex-1 overflow-y-auto py-1 zen-scroll">
       {templateNode && (
-        <div className="px-3 py-1.5 border-b border-zinc-200 bg-violet-50/30">
+        <div className="px-3 py-1.5 border-b border-stone-200 bg-violet-50/30">
           <p className="text-xs text-violet-600 font-medium">{templateNode.label}</p>
-          <p className="text-xs text-zinc-400">{templateNode.ctdSection}</p>
+          <p className="text-xs text-stone-400">{templateNode.ctdSection}</p>
         </div>
       )}
       {structure.map(item => {
@@ -314,7 +314,7 @@ function TemplateStructureView({
             key={item.key}
             className={cn(
               'flex items-center gap-1.5 py-[4px] px-3 text-left transition-colors duration-150',
-              present ? 'text-zinc-700' : 'text-zinc-400'
+              present ? 'text-stone-700' : 'text-stone-400'
             )}
           >
             {present ? (
@@ -322,7 +322,7 @@ function TemplateStructureView({
             ) : item.required ? (
               <AlertCircle className="w-3 h-3 text-amber-500 shrink-0" />
             ) : (
-              <Circle className="w-3 h-3 text-zinc-400 shrink-0" />
+              <Circle className="w-3 h-3 text-stone-400 shrink-0" />
             )}
             <span className="text-xs flex-1 truncate leading-snug">{item.label}</span>
             {item.required && !present && (
@@ -331,14 +331,14 @@ function TemplateStructureView({
               </span>
             )}
             {!item.required && !present && (
-              <span className="text-xs px-1 rounded bg-zinc-50 text-zinc-400 font-medium shrink-0">
+              <span className="text-xs px-1 rounded bg-stone-50 text-stone-400 font-medium shrink-0">
                 Optional
               </span>
             )}
             {!present && onCreateSubsection && (
               <button
                 onClick={() => onCreateSubsection(item.key, item.label)}
-                className="p-1.5 text-zinc-400 hover:text-violet-600 rounded hover:bg-blue-50 shrink-0 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+                className="p-1.5 text-stone-400 hover:text-violet-600 rounded hover:bg-blue-50 shrink-0 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
                 title={`Create "${item.label}" section`}
                 aria-label={`Create "${item.label}" section`}
               >
@@ -349,16 +349,16 @@ function TemplateStructureView({
         );
       })}
       {/* Summary */}
-      <div className="px-3 py-2 border-t border-zinc-200 mt-1">
+      <div className="px-3 py-2 border-t border-stone-200 mt-1">
         <div className="flex items-center justify-between text-xs">
-          <span className="text-zinc-400">Present</span>
+          <span className="text-stone-400">Present</span>
           <span className="font-medium text-emerald-600">
             {structure.filter(s => isSubsectionPresent(s.label, outlineLabels)).length}/
             {structure.length}
           </span>
         </div>
         <div className="flex items-center justify-between text-xs mt-0.5">
-          <span className="text-zinc-400">Required missing</span>
+          <span className="text-stone-400">Required missing</span>
           <span className="font-medium text-amber-600">
             {
               structure.filter(s => s.required && !isSubsectionPresent(s.label, outlineLabels))
@@ -427,15 +427,15 @@ export const DocumentOutlineTree: React.FC<DocumentOutlineTreeProps> = ({
   if (outlineNodes.length === 0 && !hasTemplateStructure) {
     return (
       <div className={cn('flex flex-col h-full', className)} data-testid="document-outline-tree">
-        <div className="flex items-center px-3 h-8 border-b border-zinc-200 bg-zinc-50/60 shrink-0">
-          <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+        <div className="flex items-center px-3 h-8 border-b border-stone-200 bg-stone-50/60 shrink-0">
+          <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
             Outline
           </span>
         </div>
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="text-center">
-            <FileSearch className="w-5 h-5 text-zinc-200 mx-auto mb-2" />
-            <p className="text-xs text-zinc-400">
+            <FileSearch className="w-5 h-5 text-stone-200 mx-auto mb-2" />
+            <p className="text-xs text-stone-400">
               {content ? 'No headings found' : 'Open a document to see its outline'}
             </p>
           </div>
@@ -448,14 +448,14 @@ export const DocumentOutlineTree: React.FC<DocumentOutlineTreeProps> = ({
     <div className={cn('flex flex-col h-full', className)} data-testid="document-outline-tree">
       {/* Segmented mode toggle */}
       {hasTemplateStructure && (
-        <div className="flex border-b border-zinc-200 shrink-0 bg-zinc-50/60">
+        <div className="flex border-b border-stone-200 shrink-0 bg-stone-50/60">
           <button
             onClick={() => setSubview('outline')}
             className={cn(
               'flex-1 py-1.5 text-xs font-semibold transition-colors text-center',
               subview === 'outline'
                 ? 'text-blue-700 bg-white border-b-2 border-blue-600'
-                : 'text-zinc-400 hover:text-zinc-600'
+                : 'text-stone-400 hover:text-stone-600'
             )}
             data-testid="outline-subview-outline"
           >
@@ -467,7 +467,7 @@ export const DocumentOutlineTree: React.FC<DocumentOutlineTreeProps> = ({
               'flex-1 py-1.5 text-xs font-semibold transition-colors text-center',
               subview === 'structure'
                 ? 'text-violet-700 bg-white border-b-2 border-violet-600'
-                : 'text-zinc-400 hover:text-zinc-600'
+                : 'text-stone-400 hover:text-stone-600'
             )}
             data-testid="outline-subview-structure"
           >
@@ -477,19 +477,19 @@ export const DocumentOutlineTree: React.FC<DocumentOutlineTreeProps> = ({
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between px-3 h-8 border-b border-zinc-200 bg-zinc-50/60 shrink-0">
-        <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+      <div className="flex items-center justify-between px-3 h-8 border-b border-stone-200 bg-stone-50/60 shrink-0">
+        <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
           {subview === 'structure' ? 'Template Structure' : 'Document Outline'}
         </span>
         {subview === 'outline' && (
-          <span className="text-xs text-zinc-400 tabular-nums">{outlineNodes.length}</span>
+          <span className="text-xs text-stone-400 tabular-nums">{outlineNodes.length}</span>
         )}
       </div>
 
       {/* Document title */}
       {title && subview === 'outline' && (
-        <div className="px-3 py-1 border-b border-zinc-200">
-          <p className="text-xs font-medium text-zinc-700 truncate">{title}</p>
+        <div className="px-3 py-1 border-b border-stone-200">
+          <p className="text-xs font-medium text-stone-700 truncate">{title}</p>
         </div>
       )}
 

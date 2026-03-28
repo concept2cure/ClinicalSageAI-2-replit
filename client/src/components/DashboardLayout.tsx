@@ -86,24 +86,24 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   ];
 
   return (
-    <div className="flex h-screen bg-zinc-50 dark:bg-slate-900">
+    <div className="flex h-screen bg-stone-50 dark:bg-slate-900">
       {/* Sidebar */}
       <div
-        className={`fixed h-full bg-white/80 dark:bg-gray-900 border-r border-zinc-200/50 dark:border-gray-800 transition-all duration-normal ease-standard z-20 backdrop-blur ${
+        className={`fixed h-full bg-white/80 dark:bg-gray-900 border-r border-stone-200/50 dark:border-gray-800 transition-all duration-normal ease-standard z-20 backdrop-blur ${
           sidebarCollapsed ? 'w-16' : 'w-64'
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Sidebar header */}
-          <div className="h-14 flex items-center justify-between px-4 border-b border-zinc-200/50 dark:border-gray-800">
+          <div className="h-14 flex items-center justify-between px-4 border-b border-stone-200/50 dark:border-gray-800">
             {!sidebarCollapsed && (
               <Link href="/">
-                <a className="text-zinc-900 dark:text-white font-semibold text-sm">Concept2Cure</a>
+                <a className="text-stone-900 dark:text-white font-semibold text-sm">Concept2Cure</a>
               </Link>
             )}
             {sidebarCollapsed && (
               <Link href="/">
-                <a className="text-zinc-900 dark:text-white font-semibold text-sm">C2C</a>
+                <a className="text-stone-900 dark:text-white font-semibold text-sm">C2C</a>
               </Link>
             )}
             <Button
@@ -118,7 +118,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
           {/* Navigation links */}
           <div className="flex-1 overflow-y-auto py-4">
-            <div className="px-4 text-[11px] uppercase tracking-wider text-zinc-400 mb-2">
+            <div className="px-4 text-[11px] uppercase tracking-wider text-stone-400 mb-2">
               Access
             </div>
             <nav className="space-y-1 px-2">
@@ -129,8 +129,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                       sidebarCollapsed ? 'justify-center' : 'justify-start'
                     } px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       isActive(item.path)
-                        ? 'bg-zinc-900 text-white'
-                        : 'text-zinc-600 hover:bg-zinc-200/50 dark:text-gray-200 dark:hover:bg-gray-800'
+                        ? 'bg-stone-900 text-white'
+                        : 'text-stone-600 hover:bg-stone-200/50 dark:text-gray-200 dark:hover:bg-gray-800'
                     }`}
                   >
                     <span className="flex-shrink-0">{item.icon}</span>
@@ -142,13 +142,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           </div>
 
           {/* Bottom actions */}
-          <div className="p-4 border-t border-zinc-200/50 dark:border-gray-800">
+          <div className="p-4 border-t border-stone-200/50 dark:border-gray-800">
             <div className="space-y-3">
               <Link href="/settings">
                 <a
                   className={`flex items-center ${
                     sidebarCollapsed ? 'justify-center' : 'justify-start'
-                  } px-3 py-2 rounded-lg text-sm font-medium text-zinc-600 hover:bg-zinc-200/50 dark:text-gray-200 dark:hover:bg-gray-800 transition-colors`}
+                  } px-3 py-2 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-200/50 dark:text-gray-200 dark:hover:bg-gray-800 transition-colors`}
                 >
                   <Settings size={20} />
                   {!sidebarCollapsed && <span className="ml-3">Settings</span>}
@@ -158,7 +158,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                 onClick={toggleTheme}
                 className={`flex items-center ${
                   sidebarCollapsed ? 'justify-center w-full' : 'justify-start'
-                } px-3 py-2 rounded-lg text-sm font-medium text-zinc-600 hover:bg-zinc-200/50 dark:text-gray-200 dark:hover:bg-gray-800 transition-colors`}
+                } px-3 py-2 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-200/50 dark:text-gray-200 dark:hover:bg-gray-800 transition-colors`}
               >
                 {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                 {!sidebarCollapsed && (
@@ -177,7 +177,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         }`}
       >
         {/* Top navbar */}
-        <header className="h-14 bg-white/80 dark:bg-gray-900 border-b border-zinc-200/50 dark:border-gray-800 flex items-center justify-between px-6 z-10 backdrop-blur">
+        <header className="h-14 bg-white/80 dark:bg-gray-900 border-b border-stone-200/50 dark:border-gray-800 flex items-center justify-between px-6 z-10 backdrop-blur">
           <div className="flex items-center">
             <button
               className="lg:hidden mr-4 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
@@ -185,7 +185,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             >
               <Menu size={20} />
             </button>
-            <h1 className="text-lg font-semibold text-zinc-900 dark:text-gray-200">
+            <h1 className="text-lg font-semibold text-stone-900 dark:text-gray-200">
               {menuItems.find(item => isActive(item.path))?.name || 'Dashboard'}
             </h1>
           </div>

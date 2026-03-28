@@ -36,9 +36,9 @@ interface Artifact {
   updatedAt?: string;
 }
 
-// Monochrome status — zinc background, semantic text color only
+// Monochrome status — stone background, semantic text color only
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  draft: { label: 'Draft', color: 'text-zinc-500' },
+  draft: { label: 'Draft', color: 'text-stone-500' },
   review: { label: 'In Review', color: 'text-amber-600' },
   approved: { label: 'Approved', color: 'text-emerald-600' },
   locked: { label: 'Submission Ready', color: 'text-blue-600' },
@@ -104,11 +104,11 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onOpenArtifact }) 
       <PageTitleHeader
         title="Artifacts"
         subtitle="Governed outputs across all projects"
-        icon={<FileStack className="w-5 h-5 text-zinc-500" />}
+        icon={<FileStack className="w-5 h-5 text-stone-500" />}
       />
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 mt-4 mb-3 border-b border-zinc-100 pb-2">
+      <div className="flex items-center gap-1 mt-4 mb-3 border-b border-stone-100 pb-2">
         {TABS.map(tab => (
           <button
             key={tab.key}
@@ -116,8 +116,8 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onOpenArtifact }) 
             className={cn(
               'px-3 py-1.5 text-xs rounded-md transition-colors',
               activeTab === tab.key
-                ? 'bg-zinc-200 text-zinc-900 font-medium'
-                : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
+                ? 'bg-stone-200 text-stone-900 font-medium'
+                : 'text-stone-500 hover:bg-stone-100 hover:text-stone-700'
             )}
           >
             {tab.label}
@@ -128,7 +128,7 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onOpenArtifact }) 
 
       {/* Search */}
       <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
         <Input
           type="text"
           value={searchQuery}
@@ -160,13 +160,13 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onOpenArtifact }) 
                 <button
                   key={artifact.id}
                   onClick={() => artifact.projectId && onOpenArtifact?.(artifact.projectId, artifact.id)}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-zinc-50 transition-colors text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-stone-50 transition-colors text-left focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
                 >
-                  <FileText className="w-4 h-4 text-zinc-300 flex-shrink-0" />
+                  <FileText className="w-4 h-4 text-stone-300 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm text-zinc-800 truncate block">{artifact.title}</span>
+                    <span className="text-sm text-stone-800 truncate block">{artifact.title}</span>
                     {meta && (
-                      <span className="text-[11px] text-zinc-400 truncate block mt-0.5">{meta}</span>
+                      <span className="text-[11px] text-stone-400 truncate block mt-0.5">{meta}</span>
                     )}
                   </div>
                   <span className={cn('text-[11px] font-medium flex-shrink-0', statusCfg.color)}>

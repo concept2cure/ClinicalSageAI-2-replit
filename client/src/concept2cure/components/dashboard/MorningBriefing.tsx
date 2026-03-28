@@ -112,7 +112,7 @@ const SOURCE_CONFIG: Record<AlertSource, {
   PROJECT: { label: 'PROJECT UPDATE', color: 'text-green-600 bg-green-50', icon: <TrendingUp className="w-3 h-3" /> },
   DEADLINE: { label: 'DEADLINE', color: 'text-orange-600 bg-orange-50', icon: <Calendar className="w-3 h-3" /> },
   REVIEW: { label: 'REVIEW REQUIRED', color: 'text-amber-600 bg-amber-50', icon: <CheckCircle className="w-3 h-3" /> },
-  SYSTEM: { label: 'SYSTEM', color: 'text-zinc-600 bg-zinc-50', icon: <Bell className="w-3 h-3" /> },
+  SYSTEM: { label: 'SYSTEM', color: 'text-stone-600 bg-stone-50', icon: <Bell className="w-3 h-3" /> },
 };
 
 const PRIORITY_CONFIG: Record<AlertPriority, {
@@ -124,7 +124,7 @@ const PRIORITY_CONFIG: Record<AlertPriority, {
   HIGH: { indicator: 'bg-orange-500', border: 'border-l-orange-500', icon: <Zap className="w-3 h-3 text-orange-500" /> },
   MEDIUM: { indicator: 'bg-amber-500', border: 'border-l-amber-500' },
   LOW: { indicator: 'bg-blue-500', border: 'border-l-blue-500' },
-  INFO: { indicator: 'bg-zinc-400', border: 'border-l-slate-400' },
+  INFO: { indicator: 'bg-stone-400', border: 'border-l-slate-400' },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -142,8 +142,8 @@ const AlertCard: React.FC<{
     <button
       onClick={onClick}
       className={cn(
-        'w-full flex gap-4 p-4 rounded-xl bg-white border border-zinc-200 shadow-sm',
-        'hover:shadow-sm hover:border-zinc-300 transition-all cursor-pointer group text-left',
+        'w-full flex gap-4 p-4 rounded-xl bg-white border border-stone-200 shadow-sm',
+        'hover:shadow-sm hover:border-stone-300 transition-all cursor-pointer group text-left',
         'border-l-4',
         priority.border
       )}
@@ -163,20 +163,20 @@ const AlertCard: React.FC<{
             {source.label}
           </span>
           {alert.timestamp && (
-            <span className="text-xs text-zinc-400 font-mono">{alert.timestamp}</span>
+            <span className="text-xs text-stone-400 font-mono">{alert.timestamp}</span>
           )}
         </div>
         
         {/* Title */}
         <div className="flex items-start gap-2 mb-1">
           {priority.icon}
-          <h4 className="text-sm font-semibold text-zinc-900 leading-snug group-hover:text-blue-700 transition-colors duration-150">
+          <h4 className="text-sm font-semibold text-stone-900 leading-snug group-hover:text-blue-700 transition-colors duration-150">
             {alert.title}
           </h4>
         </div>
         
         {/* Message */}
-        <p className="text-xs text-zinc-600 line-clamp-2">{alert.message}</p>
+        <p className="text-xs text-stone-600 line-clamp-2">{alert.message}</p>
         
         {/* Action */}
         {alert.actionLabel && (
@@ -188,7 +188,7 @@ const AlertCard: React.FC<{
       </div>
       
       {/* Arrow */}
-      <div className="flex items-center text-zinc-400 group-hover:text-blue-500 transition-transform group-hover:translate-x-1">
+      <div className="flex items-center text-stone-400 group-hover:text-blue-500 transition-transform group-hover:translate-x-1">
         <ArrowRight size={18} />
       </div>
     </button>
@@ -200,18 +200,18 @@ const PriorityItem: React.FC<{ priority: TodaysPriority }> = ({ priority }) => (
     'flex items-center gap-3 p-3 rounded-lg',
     priority.urgency === 'now' && 'bg-red-50 border border-red-100',
     priority.urgency === 'today' && 'bg-amber-50 border border-amber-100',
-    priority.urgency === 'this_week' && 'bg-zinc-50 border border-zinc-200'
+    priority.urgency === 'this_week' && 'bg-stone-50 border border-stone-200'
   )}>
     <div className={cn(
       'w-2 h-2 rounded-full flex-shrink-0',
       priority.urgency === 'now' && 'bg-red-500 animate-pulse',
       priority.urgency === 'today' && 'bg-amber-500',
-      priority.urgency === 'this_week' && 'bg-zinc-400'
+      priority.urgency === 'this_week' && 'bg-stone-400'
     )} />
     <div className="flex-1 min-w-0">
-      <p className="text-sm font-medium text-zinc-900 truncate">{priority.title}</p>
+      <p className="text-sm font-medium text-stone-900 truncate">{priority.title}</p>
       {priority.project && (
-        <p className="text-xs text-zinc-500">{priority.project}</p>
+        <p className="text-xs text-stone-500">{priority.project}</p>
       )}
     </div>
     {priority.deadline && (
@@ -219,7 +219,7 @@ const PriorityItem: React.FC<{ priority: TodaysPriority }> = ({ priority }) => (
         'text-xs font-mono font-semibold',
         priority.urgency === 'now' && 'text-red-600',
         priority.urgency === 'today' && 'text-amber-600',
-        priority.urgency === 'this_week' && 'text-zinc-500'
+        priority.urgency === 'this_week' && 'text-stone-500'
       )}>
         {priority.deadline}
       </span>
@@ -254,12 +254,12 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
   return (
     <div className={cn(
       'fixed inset-0 z-[200] flex items-center justify-center p-4',
-      'bg-zinc-900/60 backdrop-blur-sm animate-in fade-in duration-500',
+      'bg-stone-900/60 backdrop-blur-sm animate-in fade-in duration-500',
       className
     )}>
-      <div className="bg-white w-full max-w-2xl rounded-xl shadow-lg overflow-hidden border border-zinc-200 transform transition-all scale-100 max-h-[90vh] flex flex-col">
+      <div className="bg-white w-full max-w-2xl rounded-xl shadow-lg overflow-hidden border border-stone-200 transform transition-all scale-100 max-h-[90vh] flex flex-col">
         {/* ═══════ HEADER ═══════ */}
-        <div className="h-44 bg-zinc-900 relative p-8 flex flex-col justify-end flex-shrink-0">
+        <div className="h-44 bg-stone-900 relative p-8 flex flex-col justify-end flex-shrink-0">
           {/* Close Button */}
           <button
             onClick={onClose}
@@ -280,15 +280,15 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
         
         {/* ═══════ STATS SNAPSHOT ═══════ */}
         {statsSnapshot && (
-          <div className="grid grid-cols-4 gap-3 p-4 bg-zinc-50 border-b border-zinc-200 flex-shrink-0">
+          <div className="grid grid-cols-4 gap-3 p-4 bg-stone-50 border-b border-stone-200 flex-shrink-0">
             <div className="text-center p-2">
-              <p className="text-2xl font-semibold text-zinc-900">{statsSnapshot.projectsActive}</p>
+              <p className="text-2xl font-semibold text-stone-900">{statsSnapshot.projectsActive}</p>
               <Caption as="p" className="uppercase tracking-wide">Active Projects</Caption>
             </div>
             <div className="text-center p-2">
               <p className={cn(
                 'text-2xl font-semibold',
-                statsSnapshot.deadlinesThisWeek > 2 ? 'text-amber-600' : 'text-zinc-900'
+                statsSnapshot.deadlinesThisWeek > 2 ? 'text-amber-600' : 'text-stone-900'
               )}>
                 {statsSnapshot.deadlinesThisWeek}
               </p>
@@ -297,7 +297,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
             <div className="text-center p-2">
               <p className={cn(
                 'text-2xl font-semibold',
-                statsSnapshot.pendingReviews > 0 ? 'text-blue-600' : 'text-zinc-900'
+                statsSnapshot.pendingReviews > 0 ? 'text-blue-600' : 'text-stone-900'
               )}>
                 {statsSnapshot.pendingReviews}
               </p>
@@ -306,7 +306,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
             <div className="text-center p-2">
               <p className={cn(
                 'text-2xl font-semibold',
-                statsSnapshot.riskItems > 0 ? 'text-red-600' : 'text-zinc-900'
+                statsSnapshot.riskItems > 0 ? 'text-red-600' : 'text-stone-900'
               )}>
                 {statsSnapshot.riskItems}
               </p>
@@ -362,7 +362,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
             {otherAlerts.length > 0 && (
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <Bell className="w-4 h-4 text-zinc-500" />
+                  <Bell className="w-4 h-4 text-stone-500" />
                   <Overline>Other Updates</Overline>
                 </div>
                 <div className="space-y-3">
@@ -384,16 +384,16 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
             {alerts.length === 0 && priorities.length === 0 && (
               <div className="text-center py-8">
                 <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-3" />
-                <h3 className="text-lg font-semibold text-zinc-900">All Clear</h3>
-                <p className="text-sm text-zinc-500">No critical updates while you were away.</p>
+                <h3 className="text-lg font-semibold text-stone-900">All Clear</h3>
+                <p className="text-sm text-stone-500">No critical updates while you were away.</p>
               </div>
             )}
           </div>
         </div>
         
         {/* ═══════ FOOTER ═══════ */}
-        <div className="p-4 bg-white border-t border-zinc-200 flex justify-center flex-shrink-0">
-          <EnterpriseButton variant="primary" size="lg" onClick={onClose} className="bg-zinc-900 hover:bg-zinc-800 px-6">
+        <div className="p-4 bg-white border-t border-stone-200 flex justify-center flex-shrink-0">
+          <EnterpriseButton variant="primary" size="lg" onClick={onClose} className="bg-stone-900 hover:bg-stone-800 px-6">
             Enter Workspace
           </EnterpriseButton>
         </div>

@@ -94,7 +94,7 @@ const ZenHeader: React.FC<ZenHeaderProps> = ({
   isSidebarOpen,
   rightDrawerOpen,
 }) => (
-  <header className="h-12 flex items-center justify-between px-3 border-b border-zinc-200 bg-white/80 backdrop-blur-sm">
+  <header className="h-12 flex items-center justify-between px-3 border-b border-stone-200 bg-white/80 backdrop-blur-sm">
     {/* Left section */}
     <div className="flex items-center gap-2">
       <button
@@ -112,7 +112,7 @@ const ZenHeader: React.FC<ZenHeaderProps> = ({
           <select
             value={activeProjectId}
             onChange={e => onProjectChange(e.target.value)}
-            className="appearance-none bg-transparent pr-5 text-sm font-medium text-zinc-700 truncate max-w-[220px] outline-none"
+            className="appearance-none bg-transparent pr-5 text-sm font-medium text-stone-700 truncate max-w-[220px] outline-none"
             aria-label="Project switcher"
           >
             {projects.map(project => (
@@ -121,7 +121,7 @@ const ZenHeader: React.FC<ZenHeaderProps> = ({
               </option>
             ))}
           </select>
-          <ChevronsUpDown className="w-3.5 h-3.5 text-zinc-400 pointer-events-none absolute right-2" />
+          <ChevronsUpDown className="w-3.5 h-3.5 text-stone-400 pointer-events-none absolute right-2" />
         </label>
       )}
     </div>
@@ -130,7 +130,7 @@ const ZenHeader: React.FC<ZenHeaderProps> = ({
     {!projectName && (
       <div className="flex items-center gap-2 md:hidden">
         <Sparkles className="w-5 h-5 text-violet-500" />
-        <span className="font-semibold text-zinc-900">Concept2Cure</span>
+        <span className="font-semibold text-stone-900">Concept2Cure</span>
       </div>
     )}
 
@@ -168,15 +168,15 @@ interface ContextHeaderProps {
 }
 
 const ContextHeader: React.FC<ContextHeaderProps> = ({ projectName, projectType }) => (
-  <div className="flex items-center justify-between gap-3 border-b border-zinc-200 bg-white px-4 py-2.5">
+  <div className="flex items-center justify-between gap-3 border-b border-stone-200 bg-white px-4 py-2.5">
     <div>
-      <p className="text-xs uppercase tracking-wide text-zinc-500">Context Header</p>
-      <p className="text-sm font-medium text-zinc-900">
+      <p className="text-xs uppercase tracking-wide text-stone-500">Context Header</p>
+      <p className="text-sm font-medium text-stone-900">
         {projectName || 'No active project'}
-        {projectType ? <span className="ml-2 rounded bg-zinc-100 px-1.5 py-0.5 text-xs">{projectType}</span> : null}
+        {projectType ? <span className="ml-2 rounded bg-stone-100 px-1.5 py-0.5 text-xs">{projectType}</span> : null}
       </p>
     </div>
-    <div className="hidden md:flex items-center gap-2 text-xs text-zinc-500">
+    <div className="hidden md:flex items-center gap-2 text-xs text-stone-500">
       <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">
         <Activity className="w-3 h-3" /> Live Sync
       </span>
@@ -192,15 +192,15 @@ interface CommandBarProps {
 }
 
 const CommandBar: React.FC<CommandBarProps> = ({ onOpenCommandPalette }) => (
-  <div className="border-b border-zinc-200 bg-zinc-50 px-4 py-2">
+  <div className="border-b border-stone-200 bg-stone-50 px-4 py-2">
     <button
       onClick={onOpenCommandPalette}
-      className="group flex w-full items-center gap-3 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-left transition hover:border-zinc-300"
+      className="group flex w-full items-center gap-3 rounded-lg border border-stone-200 bg-white px-3 py-2 text-left transition hover:border-stone-300"
       aria-label="Open command bar"
     >
-      <Search className="w-4 h-4 text-zinc-400" />
-      <span className="flex-1 text-sm text-zinc-500">Command Bar: Search actions, projects, and workflows…</span>
-      <kbd className="rounded border bg-zinc-50 px-1.5 py-0.5 text-xs text-zinc-500">⌘K</kbd>
+      <Search className="w-4 h-4 text-stone-400" />
+      <span className="flex-1 text-sm text-stone-500">Command Bar: Search actions, projects, and workflows…</span>
+      <kbd className="rounded border bg-stone-50 px-1.5 py-0.5 text-xs text-stone-500">⌘K</kbd>
     </button>
   </div>
 );
@@ -213,19 +213,19 @@ const RightDrawer: React.FC<RightDrawerProps> = ({ isOpen }) => {
   if (!isOpen) return null;
 
   return (
-    <aside className="hidden xl:flex w-[300px] border-l border-zinc-200 bg-white flex-col">
-      <div className="h-12 border-b border-zinc-200 px-4 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-zinc-800">Right Drawer Framework</h2>
-        <MoreHorizontal className="w-4 h-4 text-zinc-400" />
+    <aside className="hidden xl:flex w-[300px] border-l border-stone-200 bg-white flex-col">
+      <div className="h-12 border-b border-stone-200 px-4 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-stone-800">Right Drawer Framework</h2>
+        <MoreHorizontal className="w-4 h-4 text-stone-400" />
       </div>
       <div className="p-4 space-y-3">
-        <div className="rounded-lg border border-zinc-200 p-3">
-          <p className="text-xs text-zinc-500 mb-1">Active workflow</p>
-          <p className="text-sm font-medium text-zinc-900 inline-flex items-center gap-2"><Workflow className="w-4 h-4 text-blue-600" /> Draft to Submission</p>
+        <div className="rounded-lg border border-stone-200 p-3">
+          <p className="text-xs text-stone-500 mb-1">Active workflow</p>
+          <p className="text-sm font-medium text-stone-900 inline-flex items-center gap-2"><Workflow className="w-4 h-4 text-blue-600" /> Draft to Submission</p>
         </div>
-        <div className="rounded-lg border border-zinc-200 p-3">
-          <p className="text-xs text-zinc-500 mb-1">AnA focus</p>
-          <p className="text-sm font-medium text-zinc-900">Risk signal triage in progress</p>
+        <div className="rounded-lg border border-stone-200 p-3">
+          <p className="text-xs text-stone-500 mb-1">AnA focus</p>
+          <p className="text-sm font-medium text-stone-900">Risk signal triage in progress</p>
         </div>
       </div>
     </aside>
@@ -284,7 +284,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
     return (
       <div className="mb-4">
         {!isCollapsed && (
-          <h3 className="px-3 mb-1 text-xs font-medium text-zinc-400 uppercase tracking-wider">
+          <h3 className="px-3 mb-1 text-xs font-medium text-stone-400 uppercase tracking-wider">
             {title}
           </h3>
         )}
@@ -298,7 +298,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
                 isCollapsed ? 'justify-center p-2' : 'px-3 py-2',
                 activeProjectId === project.id
                   ? 'bg-blue-50 text-blue-700'
-                  : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
+                  : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
               )}
               title={isCollapsed ? project.name : undefined}
             >
@@ -307,7 +307,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
                   'flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold',
                   activeProjectId === project.id
                     ? 'bg-blue-100 text-blue-700'
-                    : 'bg-zinc-100 text-zinc-600'
+                    : 'bg-stone-100 text-stone-600'
                 )}
               >
                 {project.name.charAt(0).toUpperCase()}
@@ -315,7 +315,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
               {!isCollapsed && (
                 <div className="flex-1 min-w-0 text-left">
                   <div className="text-sm font-medium truncate">{project.name}</div>
-                  <div className="text-xs text-zinc-400 truncate">
+                  <div className="text-xs text-stone-400 truncate">
                     {project.conversationCount} conversations
                   </div>
                 </div>
@@ -328,18 +328,18 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
   };
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-zinc-50">
+    <div className="flex flex-col h-full bg-stone-50">
       {/* Sidebar header */}
       <div
         className={cn(
-          'flex items-center h-12 border-b border-zinc-200',
+          'flex items-center h-12 border-b border-stone-200',
           isCollapsed ? 'justify-center px-2' : 'justify-between px-3'
         )}
       >
         {!isCollapsed && (
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-violet-500" />
-            <span className="font-semibold text-zinc-900">Concept2Cure</span>
+            <span className="font-semibold text-stone-900">Concept2Cure</span>
           </div>
         )}
         <button
@@ -378,11 +378,11 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <button
           onClick={onNewProject}
           className={cn(
-            'w-full flex items-center gap-3 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 transition-colors duration-150',
+            'w-full flex items-center gap-3 rounded-lg text-stone-500 hover:bg-stone-100 hover:text-stone-700 transition-colors duration-150',
             isCollapsed ? 'justify-center p-2' : 'px-3 py-2'
           )}
         >
-          <div className="w-8 h-8 rounded-lg border border-dashed border-zinc-300 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg border border-dashed border-stone-300 flex items-center justify-center">
             <Plus className="w-4 h-4" />
           </div>
           {!isCollapsed && <span className="text-sm font-medium">New project</span>}
@@ -391,11 +391,11 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
       {/* Sidebar footer */}
       <div
-        className={cn('border-t border-zinc-200 p-2', isCollapsed && 'flex flex-col items-center')}
+        className={cn('border-t border-stone-200 p-2', isCollapsed && 'flex flex-col items-center')}
       >
         <button
           className={cn(
-            'w-full flex items-center gap-3 rounded-lg text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors duration-150',
+            'w-full flex items-center gap-3 rounded-lg text-stone-600 hover:bg-stone-100 hover:text-stone-900 transition-colors duration-150',
             isCollapsed ? 'justify-center p-2' : 'px-3 py-2'
           )}
         >
@@ -419,7 +419,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
       {/* Sidebar */}
       <aside
         className={cn(
-          'bg-zinc-50 border-r border-zinc-200 h-full transition-all duration-150 ease-in-out',
+          'bg-stone-50 border-r border-stone-200 h-full transition-all duration-150 ease-in-out',
           // Desktop
           'hidden md:block',
           isCollapsed ? 'w-[60px]' : 'w-[260px]'
@@ -583,17 +583,17 @@ const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({ isOpen, onClose }
         className="fixed top-[20%] left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-xl shadow-lg overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150"
       >
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-200">
-          <Search className="w-5 h-5 text-zinc-400" />
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-stone-200">
+          <Search className="w-5 h-5 text-stone-400" />
           <input
             type="text"
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Search commands..."
-            className="flex-1 text-base bg-transparent border-none outline-none text-zinc-900 placeholder:text-zinc-400"
+            className="flex-1 text-base bg-transparent border-none outline-none text-stone-900 placeholder:text-stone-400"
             autoFocus
           />
-          <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-1 text-xs text-zinc-400 bg-zinc-100 rounded">
+          <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-1 text-xs text-stone-400 bg-stone-100 rounded">
             ESC
           </kbd>
         </div>
@@ -601,7 +601,7 @@ const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({ isOpen, onClose }
         {/* Results */}
         <div className="max-h-80 overflow-y-auto py-2">
           {filteredCommands.length === 0 ? (
-            <div className="px-4 py-8 text-center text-zinc-500">No commands found</div>
+            <div className="px-4 py-8 text-center text-stone-500">No commands found</div>
           ) : (
             filteredCommands.map((cmd, index) => (
               <button
@@ -611,15 +611,15 @@ const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({ isOpen, onClose }
                   onClose();
                 }}
                 className={cn(
-                  'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
+                  'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none',
                   index === selectedIndex
                     ? 'bg-blue-50 text-blue-700'
-                    : 'text-zinc-700 hover:bg-zinc-50'
+                    : 'text-stone-700 hover:bg-stone-50'
                 )}
               >
-                <span className="flex-shrink-0 text-zinc-500">{cmd.icon}</span>
+                <span className="flex-shrink-0 text-stone-500">{cmd.icon}</span>
                 <span className="flex-1 text-sm font-medium">{cmd.title}</span>
-                {cmd.shortcut && <kbd className="text-xs text-zinc-400">{cmd.shortcut}</kbd>}
+                {cmd.shortcut && <kbd className="text-xs text-stone-400">{cmd.shortcut}</kbd>}
               </button>
             ))
           )}

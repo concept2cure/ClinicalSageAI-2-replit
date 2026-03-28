@@ -71,7 +71,7 @@ interface InlineApprovalPanelProps {
 const ANNOTATION_TYPES = [
   { key: 'approval_request', label: 'Request Approval', icon: Shield, color: 'text-blue-600', bg: 'bg-blue-50' },
   { key: 'review_request', label: 'Request Review', icon: Eye, color: 'text-violet-600', bg: 'bg-violet-50' },
-  { key: 'comment', label: 'Comment', icon: MessageSquare, color: 'text-zinc-600', bg: 'bg-zinc-50' },
+  { key: 'comment', label: 'Comment', icon: MessageSquare, color: 'text-stone-600', bg: 'bg-stone-50' },
   { key: 'question', label: 'Question', icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50' },
   { key: 'suggestion', label: 'Suggestion', icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
 ] as const;
@@ -181,12 +181,12 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
   };
 
   return (
-    <div className="w-80 bg-white border border-zinc-200 rounded-xl shadow-lg overflow-hidden">
+    <div className="w-80 bg-white border border-stone-200 rounded-xl shadow-lg overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b bg-zinc-50/50">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b bg-stone-50/50">
         <div className="flex items-center gap-2">
           <Shield className="w-4 h-4 text-blue-500" />
-          <span className="text-xs font-semibold text-zinc-800">Inline Annotation</span>
+          <span className="text-xs font-semibold text-stone-800">Inline Annotation</span>
         </div>
         <div className="flex items-center gap-1">
           {overlappingAnnotations.length > 0 && (
@@ -194,13 +194,13 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
               onClick={() => setMode(mode === 'view' ? 'create' : 'view')}
               className={cn(
                 'px-2 py-0.5 text-[10px] font-medium rounded transition-colors',
-                mode === 'view' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-zinc-100',
+                mode === 'view' ? 'bg-stone-900 text-white' : 'text-stone-500 hover:bg-stone-100',
               )}
             >
               {mode === 'view' ? 'New' : `View (${overlappingAnnotations.length})`}
             </button>
           )}
-          <button onClick={onClose} className="p-0.5 text-zinc-400 hover:text-zinc-600">
+          <button onClick={onClose} className="p-0.5 text-stone-400 hover:text-stone-600">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -209,7 +209,7 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
       {/* Selected text preview */}
       <div className="px-4 py-2 bg-amber-50/50 border-b border-amber-100">
         <p className="text-[10px] text-amber-600 font-medium mb-0.5">Selected Text</p>
-        <p className="text-xs text-zinc-700 line-clamp-2 italic">
+        <p className="text-xs text-stone-700 line-clamp-2 italic">
           &ldquo;{selectedText.slice(0, 150)}{selectedText.length > 150 ? '...' : ''}&rdquo;
         </p>
       </div>
@@ -219,7 +219,7 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
         <div className="p-4 space-y-3">
           {/* Annotation type selector */}
           <div>
-            <p className="text-[10px] font-medium text-zinc-500 mb-1.5 uppercase tracking-wide">Type</p>
+            <p className="text-[10px] font-medium text-stone-500 mb-1.5 uppercase tracking-wide">Type</p>
             <div className="flex flex-wrap gap-1">
               {ANNOTATION_TYPES.map(t => (
                 <button
@@ -229,7 +229,7 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
                     'flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded-md transition-colors',
                     annotationType === t.key
                       ? `${t.bg} ${t.color} ring-1 ring-current/20`
-                      : 'text-zinc-500 hover:bg-zinc-100',
+                      : 'text-stone-500 hover:bg-stone-100',
                   )}
                 >
                   <t.icon className="w-3 h-3" />
@@ -252,7 +252,7 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
                     : 'Add your comment...'
               }
               rows={3}
-              className="w-full text-xs px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none"
+              className="w-full text-xs px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none"
             />
           </div>
 
@@ -264,21 +264,21 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
                 value={assignedTo}
                 onChange={e => setAssignedTo(e.target.value)}
                 placeholder="Assign to (name or email)..."
-                className="w-full text-xs px-3 py-1.5 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+                className="w-full text-xs px-3 py-1.5 border border-stone-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
               />
             </div>
           )}
 
           {/* Priority */}
           <div className="flex items-center gap-2">
-            <p className="text-[10px] font-medium text-zinc-500">Priority:</p>
+            <p className="text-[10px] font-medium text-stone-500">Priority:</p>
             {(['low', 'normal', 'high', 'critical'] as const).map(p => (
               <button
                 key={p}
                 onClick={() => setPriority(p)}
                 className={cn(
                   'px-2 py-0.5 text-[10px] font-medium rounded transition-colors capitalize',
-                  priority === p ? 'bg-zinc-900 text-white' : 'text-zinc-400 hover:bg-zinc-100',
+                  priority === p ? 'bg-stone-900 text-white' : 'text-stone-400 hover:bg-stone-100',
                 )}
               >
                 {p}
@@ -304,7 +304,7 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
         <div className="max-h-72 overflow-y-auto divide-y">
           {overlappingAnnotations.length === 0 ? (
             <div className="p-4 text-center">
-              <p className="text-xs text-zinc-400">No annotations on this selection</p>
+              <p className="text-xs text-stone-400">No annotations on this selection</p>
             </div>
           ) : (
             overlappingAnnotations.map(ann => {
@@ -322,16 +322,16 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
                         {statusConf.label}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-zinc-800">{ann.content}</p>
-                        <p className="text-[10px] text-zinc-400 mt-0.5">
+                        <p className="text-xs text-stone-800">{ann.content}</p>
+                        <p className="text-[10px] text-stone-400 mt-0.5">
                           {ann.createdBy} &middot; {new Date(ann.createdAt).toLocaleDateString()}
                           {ann.assignedTo && <> &middot; Assigned to: <span className="font-medium">{ann.assignedTo}</span></>}
                         </p>
                       </div>
                       {isExpanded ? (
-                        <ChevronUp className="w-3 h-3 text-zinc-400 flex-shrink-0" />
+                        <ChevronUp className="w-3 h-3 text-stone-400 flex-shrink-0" />
                       ) : (
-                        <ChevronDown className="w-3 h-3 text-zinc-400 flex-shrink-0" />
+                        <ChevronDown className="w-3 h-3 text-stone-400 flex-shrink-0" />
                       )}
                     </div>
                   </button>
@@ -342,9 +342,9 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
                       {ann.replies.length > 0 && (
                         <div className="space-y-1.5">
                           {ann.replies.map(reply => (
-                            <div key={reply.id} className="bg-zinc-50 rounded-lg p-2">
-                              <p className="text-[11px] text-zinc-700">{reply.content}</p>
-                              <p className="text-[9px] text-zinc-400 mt-0.5">
+                            <div key={reply.id} className="bg-stone-50 rounded-lg p-2">
+                              <p className="text-[11px] text-stone-700">{reply.content}</p>
+                              <p className="text-[9px] text-stone-400 mt-0.5">
                                 {reply.createdBy} &middot; {new Date(reply.createdAt).toLocaleDateString()}
                               </p>
                             </div>
@@ -360,7 +360,7 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
                             onChange={e => setReplyContent(e.target.value)}
                             placeholder="Write a reply..."
                             rows={2}
-                            className="w-full text-xs px-2 py-1.5 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none"
+                            className="w-full text-xs px-2 py-1.5 border border-stone-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none"
                           />
                           <div className="flex items-center gap-1">
                             <button
@@ -372,7 +372,7 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
                             </button>
                             <button
                               onClick={() => { setReplyingTo(null); setReplyContent(''); }}
-                              className="px-2 py-1 text-[10px] text-zinc-500 hover:text-zinc-700"
+                              className="px-2 py-1 text-[10px] text-stone-500 hover:text-stone-700"
                             >
                               Cancel
                             </button>
@@ -382,7 +382,7 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
                         <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => setReplyingTo(ann.id)}
-                            className="px-2 py-1 text-[10px] font-medium text-zinc-500 hover:bg-zinc-100 rounded-md"
+                            className="px-2 py-1 text-[10px] font-medium text-stone-500 hover:bg-stone-100 rounded-md"
                           >
                             Reply
                           </button>

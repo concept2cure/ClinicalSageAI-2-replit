@@ -221,7 +221,7 @@ function buildDefaultPhases(): PMAPhase[] {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG = {
-  not_started: { label: 'Not Started', color: 'text-zinc-400', bg: 'bg-zinc-100', icon: <Circle className="w-3.5 h-3.5" /> },
+  not_started: { label: 'Not Started', color: 'text-stone-400', bg: 'bg-stone-100', icon: <Circle className="w-3.5 h-3.5" /> },
   in_progress: { label: 'In Progress', color: 'text-blue-600', bg: 'bg-blue-100', icon: <Clock className="w-3.5 h-3.5 animate-pulse" /> },
   completed: { label: 'Completed', color: 'text-green-600', bg: 'bg-green-100', icon: <CheckCircle className="w-3.5 h-3.5" /> },
   blocked: { label: 'Blocked', color: 'text-red-600', bg: 'bg-red-100', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
@@ -293,15 +293,15 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
   };
 
   return (
-    <div className={cn('flex h-full bg-zinc-50', embedded && 'rounded-none')}>
+    <div className={cn('flex h-full bg-stone-50', embedded && 'rounded-none')}>
       {/* Left Sidebar — Phase Navigator */}
-      <div className="w-80 flex-shrink-0 bg-white border-r border-zinc-200 flex flex-col">
+      <div className="w-80 flex-shrink-0 bg-white border-r border-stone-200 flex flex-col">
         {/* Header */}
-        <div className="p-4 border-b border-zinc-200">
+        <div className="p-4 border-b border-stone-200">
           {onBackToProject && (
             <button
               onClick={onBackToProject}
-              className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 mb-3"
+              className="flex items-center gap-1 text-xs text-stone-500 hover:text-stone-700 mb-3"
             >
               <ArrowLeft className="w-3 h-3" />
               Back to Project
@@ -312,24 +312,24 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
               <ShieldCheck className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="font-semibold text-zinc-800 text-sm">PMA Submission</h2>
-              <p className="text-xs text-zinc-500">{projectName || 'Class III Device'}</p>
+              <h2 className="font-semibold text-stone-800 text-sm">PMA Submission</h2>
+              <p className="text-xs text-stone-500">{projectName || 'Class III Device'}</p>
             </div>
           </div>
 
           {/* Overall Progress */}
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
-              <span className="text-zinc-500">Overall Progress</span>
-              <span className="font-medium text-zinc-700">{overallProgress}%</span>
+              <span className="text-stone-500">Overall Progress</span>
+              <span className="font-medium text-stone-700">{overallProgress}%</span>
             </div>
-            <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
+            <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
               <div
                 className="h-full bg-red-500 rounded-full transition-all duration-300"
                 style={{ width: `${overallProgress}%` }}
               />
             </div>
-            <p className="text-[10px] text-zinc-400">{totalHours} estimated hours across 10 phases</p>
+            <p className="text-[10px] text-stone-400">{totalHours} estimated hours across 10 phases</p>
           </div>
         </div>
 
@@ -350,29 +350,29 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
                   }}
                   className={cn(
                     'w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors',
-                    'hover:bg-zinc-100',
+                    'hover:bg-stone-100',
                     isSelected && 'bg-red-50 ring-1 ring-red-200'
                   )}
                 >
                   <div className={cn(
                     'p-1 rounded',
                     phaseStatus === 'completed' ? 'text-green-600' :
-                    phaseStatus === 'in_progress' ? 'text-blue-600' : 'text-zinc-400'
+                    phaseStatus === 'in_progress' ? 'text-blue-600' : 'text-stone-400'
                   )}>
                     {phase.icon}
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono text-zinc-400">P{phase.order}</span>
+                      <span className="text-[10px] font-mono text-stone-400">P{phase.order}</span>
                       <span className={cn(
                         'text-xs truncate',
-                        isSelected ? 'font-medium text-red-700' : 'text-zinc-700'
+                        isSelected ? 'font-medium text-red-700' : 'text-stone-700'
                       )}>
                         {phase.name}
                       </span>
                     </div>
-                    <div className="h-1 bg-zinc-100 rounded-full mt-1 overflow-hidden">
+                    <div className="h-1 bg-stone-100 rounded-full mt-1 overflow-hidden">
                       <div
                         className={cn(
                           'h-full rounded-full transition-all',
@@ -383,12 +383,12 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
                     </div>
                   </div>
 
-                  <span className="text-[10px] text-zinc-400">{progress}%</span>
+                  <span className="text-[10px] text-stone-400">{progress}%</span>
 
                   {isExpanded ? (
-                    <ChevronDown className="w-3 h-3 text-zinc-400" />
+                    <ChevronDown className="w-3 h-3 text-stone-400" />
                   ) : (
-                    <ChevronRight className="w-3 h-3 text-zinc-400" />
+                    <ChevronRight className="w-3 h-3 text-stone-400" />
                   )}
                 </button>
 
@@ -400,12 +400,12 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
                       return (
                         <div
                           key={task.id}
-                          className="flex items-center gap-2 px-2 py-1 text-xs rounded hover:bg-zinc-50"
+                          className="flex items-center gap-2 px-2 py-1 text-xs rounded hover:bg-stone-50"
                         >
                           <span className={config.color}>{config.icon}</span>
                           <span className={cn(
                             'truncate',
-                            task.status === 'completed' ? 'text-zinc-400 line-through' : 'text-zinc-600'
+                            task.status === 'completed' ? 'text-stone-400 line-through' : 'text-stone-600'
                           )}>
                             {task.name}
                           </span>
@@ -428,23 +428,23 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
       {/* Right Panel — Phase Detail */}
       <div className="flex-1 flex flex-col p-4 overflow-auto">
         {selectedPhase ? (
-          <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+          <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
             {/* Phase Header */}
-            <div className="flex items-center justify-between p-4 border-b border-zinc-200 bg-zinc-50">
+            <div className="flex items-center justify-between p-4 border-b border-stone-200 bg-stone-50">
               <div className="flex items-center gap-3">
                 <div className={cn(
                   'p-2 rounded-lg',
                   getPhaseStatus(selectedPhase) === 'completed' ? 'bg-green-100 text-green-700' :
                   getPhaseStatus(selectedPhase) === 'in_progress' ? 'bg-blue-100 text-blue-700' :
-                  'bg-zinc-100 text-zinc-500'
+                  'bg-stone-100 text-stone-500'
                 )}>
                   {selectedPhase.icon}
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-zinc-800">
+                  <h2 className="text-lg font-semibold text-stone-800">
                     Phase {selectedPhase.order}: {selectedPhase.name}
                   </h2>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-stone-500">
                     {selectedPhase.tasks.filter(t => t.status === 'completed').length} of{' '}
                     {selectedPhase.tasks.length} tasks completed
                   </p>
@@ -460,14 +460,14 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
             </div>
 
             {/* Task List */}
-            <div className="divide-y divide-zinc-100">
+            <div className="divide-y divide-stone-100">
               {selectedPhase.tasks.map(task => {
                 const config = STATUS_CONFIG[task.status];
                 return (
                   <div
                     key={task.id}
                     className={cn(
-                      'flex items-center gap-4 p-4 hover:bg-zinc-50 transition-colors cursor-pointer',
+                      'flex items-center gap-4 p-4 hover:bg-stone-50 transition-colors cursor-pointer',
                       task.status === 'completed' && 'bg-green-50/30'
                     )}
                     onClick={() => toggleTaskStatus(selectedPhase.id, task.id)}
@@ -480,7 +480,7 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
                       <div className="flex items-center gap-2">
                         <span className={cn(
                           'text-sm font-medium',
-                          task.status === 'completed' ? 'text-zinc-400 line-through' : 'text-zinc-800'
+                          task.status === 'completed' ? 'text-stone-400 line-through' : 'text-stone-800'
                         )}>
                           {task.name}
                         </span>
@@ -491,9 +491,9 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
                         )}
                       </div>
                       {task.description && (
-                        <p className="text-xs text-zinc-500 mt-0.5">{task.description}</p>
+                        <p className="text-xs text-stone-500 mt-0.5">{task.description}</p>
                       )}
-                      <div className="flex items-center gap-3 mt-1 text-[10px] text-zinc-400">
+                      <div className="flex items-center gap-3 mt-1 text-[10px] text-stone-400">
                         {task.role && <span>{task.role}</span>}
                         <span>{task.estimatedHours}h estimated</span>
                         {task.completedAt && (
@@ -516,13 +516,13 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
             </div>
 
             {/* Phase Footer */}
-            <div className="p-4 bg-zinc-50 border-t border-zinc-200">
-              <div className="flex items-center justify-between text-xs text-zinc-500">
+            <div className="p-4 bg-stone-50 border-t border-stone-200">
+              <div className="flex items-center justify-between text-xs text-stone-500">
                 <span>
                   {selectedPhase.tasks.reduce((s, t) => s + t.estimatedHours, 0)} hours total •{' '}
                   {selectedPhase.tasks.filter(t => t.critical).length} critical path items
                 </span>
-                <span className="flex items-center gap-1 text-zinc-400">
+                <span className="flex items-center gap-1 text-stone-400">
                   <Sparkles className="w-3 h-3" />
                   Click tasks to advance status
                 </span>
@@ -532,8 +532,8 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
-              <ShieldCheck className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
-              <p className="text-zinc-500">Select a phase to view tasks</p>
+              <ShieldCheck className="w-12 h-12 text-stone-300 mx-auto mb-3" />
+              <p className="text-stone-500">Select a phase to view tasks</p>
             </div>
           </div>
         )}

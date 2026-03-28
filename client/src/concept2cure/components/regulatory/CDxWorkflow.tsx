@@ -307,7 +307,7 @@ export default function CDxWorkflow() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="border border-zinc-200 rounded-md">
+      <div className="border border-stone-200 rounded-md">
         <div className="px-4 py-3">
           <div className="flex items-center justify-between">
             <div>
@@ -330,8 +330,8 @@ export default function CDxWorkflow() {
 
       {/* Create Form */}
       {showCreate && (
-        <div className="border border-zinc-200 rounded-md">
-          <div className="px-4 py-3 border-b border-zinc-200">
+        <div className="border border-stone-200 rounded-md">
+          <div className="px-4 py-3 border-b border-stone-200">
             <h3 className="text-lg font-semibold">New CDx Pairing</h3>
             <p className="text-sm text-muted-foreground">
               Define the IVD — Medicinal Product pairing for companion diagnostic co-development
@@ -493,8 +493,8 @@ export default function CDxWorkflow() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Workflow List */}
-        <div className="border border-zinc-200 rounded-md lg:col-span-1">
-          <div className="px-4 py-3 border-b border-zinc-200">
+        <div className="border border-stone-200 rounded-md lg:col-span-1">
+          <div className="px-4 py-3 border-b border-stone-200">
             <h3 className="text-lg font-semibold">CDx Pairings</h3>
           </div>
           <div className="px-4 py-3">
@@ -542,8 +542,8 @@ export default function CDxWorkflow() {
         </div>
 
         {/* Workflow Detail */}
-        <div className="border border-zinc-200 rounded-md lg:col-span-2">
-          <div className="px-4 py-3 border-b border-zinc-200">
+        <div className="border border-stone-200 rounded-md lg:col-span-2">
+          <div className="px-4 py-3 border-b border-stone-200">
             <h3 className="text-lg font-semibold">
               {selected ? selected.medicinal_product_name : 'Select a CDx Pairing'}
             </h3>

@@ -202,13 +202,13 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
   const wordCount = artifact.content?.split(/\s+/).length || 0;
 
   return (
-    <div className="mt-2 p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
+    <div className="mt-2 p-3 bg-stone-50 border border-stone-200 rounded-xl">
       <div className="flex items-center gap-2 mb-2">
         <FileText className="w-4 h-4 text-violet-500" />
-        <span className="text-sm font-medium text-zinc-900 truncate flex-1">
+        <span className="text-sm font-medium text-stone-900 truncate flex-1">
           {artifact.title}
         </span>
-        <span className="text-xs text-zinc-400">{wordCount.toLocaleString()} words</span>
+        <span className="text-xs text-stone-400">{wordCount.toLocaleString()} words</span>
       </div>
       <div className="flex items-center gap-2 flex-wrap">
         <button
@@ -235,7 +235,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
         <div className="relative">
           <button
             onClick={() => setShowExportMenu(!showExportMenu)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors duration-150"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50 transition-colors duration-150"
           >
             <Download className="w-3.5 h-3.5" />
             Export
@@ -244,25 +244,25 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
           {showExportMenu && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowExportMenu(false)} />
-              <div className="absolute left-0 bottom-full mb-1 w-52 bg-white border border-zinc-200 rounded-lg shadow-lg z-50 py-1">
+              <div className="absolute left-0 bottom-full mb-1 w-52 bg-white border border-stone-200 rounded-lg shadow-lg z-50 py-1">
                 <button
                   onClick={() => { onExportDocx(artifact); setShowExportMenu(false); }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50"
                 >
                   <FileText className="w-4 h-4 text-violet-500" />
                   <div className="text-left">
                     <div className="font-medium text-xs">Word Document (.docx)</div>
-                    <div className="text-xs text-zinc-400">MS Word, Google Docs compatible</div>
+                    <div className="text-xs text-stone-400">MS Word, Google Docs compatible</div>
                   </div>
                 </button>
                 <button
                   onClick={() => { onExportPdf(artifact); setShowExportMenu(false); }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50"
                 >
                   <FileText className="w-4 h-4 text-red-500" />
                   <div className="text-left">
                     <div className="font-medium text-xs">PDF Document (.pdf)</div>
-                    <div className="text-xs text-zinc-400">Read-only, print-ready</div>
+                    <div className="text-xs text-stone-400">Read-only, print-ready</div>
                   </div>
                 </button>
               </div>
@@ -347,8 +347,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     <div
       className={cn(
         'group py-6 px-4 sm:px-6',
-        !isUser && 'bg-white border-b border-zinc-200/80',
-        isUser && 'bg-zinc-50/60'
+        !isUser && 'bg-white border-b border-stone-200/80',
+        isUser && 'bg-stone-50/60'
       )}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
@@ -359,7 +359,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           <div
             className={cn(
               'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm mt-0.5',
-              isUser ? 'bg-zinc-800 text-white' : 'bg-violet-600'
+              isUser ? 'bg-stone-800 text-white' : 'bg-violet-600'
             )}
           >
             {isUser ? (
@@ -373,7 +373,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           <div className="flex-1 min-w-0">
             {/* Role label */}
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-sm font-semibold text-zinc-900">{isUser ? 'You' : 'AnA'}</span>
+              <span className="text-sm font-semibold text-stone-900">{isUser ? 'You' : 'AnA'}</span>
               {message.isStreaming && message.content && (
                 <span className="inline-flex gap-0.5 items-center">
                   <span
@@ -397,23 +397,23 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               <TypingIndicator />
             ) : isUser ? (
               // User messages: plain text (preserving whitespace)
-              <p className="text-zinc-900 leading-relaxed whitespace-pre-wrap text-sm">
+              <p className="text-stone-900 leading-relaxed whitespace-pre-wrap text-sm">
                 {message.content}
               </p>
             ) : (
               // Assistant messages: rendered markdown
               <div
-                className="prose prose-sm prose-zinc max-w-none
-                  prose-headings:font-semibold prose-headings:text-zinc-900 prose-headings:leading-snug
+                className="prose prose-sm prose-stone max-w-none
+                  prose-headings:font-semibold prose-headings:text-stone-900 prose-headings:leading-snug
                   prose-h1:text-xl prose-h2:text-lg prose-h3:text-base
-                  prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-2
-                  prose-strong:text-zinc-900 prose-strong:font-semibold
+                  prose-p:text-stone-700 prose-p:leading-relaxed prose-p:my-2
+                  prose-strong:text-stone-900 prose-strong:font-semibold
                   prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono prose-code:before:content-none prose-code:after:content-none
-                  prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-4 prose-pre:text-xs
-                  prose-blockquote:border-l-violet-400 prose-blockquote:text-zinc-600 prose-blockquote:not-italic
-                  prose-ul:text-zinc-700 prose-ol:text-zinc-700
+                  prose-pre:bg-stone-900 prose-pre:text-stone-100 prose-pre:rounded-xl prose-pre:p-4 prose-pre:text-xs
+                  prose-blockquote:border-l-violet-400 prose-blockquote:text-stone-600 prose-blockquote:not-italic
+                  prose-ul:text-stone-700 prose-ol:text-stone-700
                   prose-li:my-0.5
-                  prose-table:text-sm prose-th:bg-zinc-50 prose-th:font-semibold prose-td:border-zinc-200
+                  prose-table:text-sm prose-th:bg-stone-50 prose-th:font-semibold prose-td:border-stone-200
                   prose-a:text-[#D97757] prose-a:no-underline hover:prose-a:underline
                   [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                 dangerouslySetInnerHTML={{ __html: htmlContent }}
@@ -426,7 +426,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 {message.attachments.map(attachment => (
                   <div
                     key={attachment.id}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-zinc-100 rounded-lg text-sm text-zinc-600"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-stone-100 rounded-lg text-sm text-stone-600"
                   >
                     <FileText className="w-3.5 h-3.5" />
                     <span className="truncate max-w-[150px]">{attachment.name}</span>
@@ -464,7 +464,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   <button
                     key={link.href}
                     onClick={() => onNavigate?.(link.href)}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50 transition-colors duration-150"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-white px-3 py-1 text-xs font-medium text-stone-600 hover:border-stone-300 hover:bg-stone-50 transition-colors duration-150"
                   >
                     <ExternalLink className="h-3 w-3" />
                     {link.label}
@@ -483,7 +483,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               >
                 <button
                   onClick={handleCopy}
-                  className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150"
+                  className="p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-md transition-colors duration-150"
                   title="Copy"
                 >
                   {copied ? (
@@ -496,21 +496,21 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   <>
                     <button
                       onClick={() => onFeedback?.(true)}
-                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150"
+                      className="p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-md transition-colors duration-150"
                       title="Good response"
                     >
                       <ThumbsUp className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => onFeedback?.(false)}
-                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150"
+                      className="p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-md transition-colors duration-150"
                       title="Bad response"
                     >
                       <ThumbsDown className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={onRegenerate}
-                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150"
+                      className="p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-md transition-colors duration-150"
                       title="Regenerate"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
@@ -643,10 +643,10 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       <div className="w-full max-w-2xl">
         {/* Greeting — warm, concise */}
         <div className="text-center mb-10">
-          <h1 className="text-2xl font-semibold text-zinc-900 mb-2">
+          <h1 className="text-2xl font-semibold text-stone-900 mb-2">
             {greeting?.text || 'Hi — what are you working on?'}
           </h1>
-          <p className="text-sm text-zinc-500 max-w-md mx-auto">
+          <p className="text-sm text-stone-500 max-w-md mx-auto">
             {greeting?.subtitle || 'I draft regulatory documents, assess submission defensibility, identify reviewer friction points, and guide your regulatory strategy.'}
           </p>
         </div>
@@ -681,7 +681,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         {/* Workspace-driven suggested actions */}
         {suggestedActions && suggestedActions.length > 0 && (
           <div className="mb-8">
-            <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
+            <div className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3">
               Suggested next steps
             </div>
             <div className="flex flex-wrap gap-2">
@@ -703,7 +703,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         {/* Smart suggestions based on submission type, OR general quick-starts */}
         <div className="mb-6">
           {hasSmartSuggestions && (
-            <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
+            <div className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3">
               For your {submissionType} submission
             </div>
           )}
@@ -712,21 +712,21 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               <button
                 key={i}
                 onClick={() => onSuggestionClick('prompt' in item ? (item as { prompt: string }).prompt : item.title)}
-                className="w-full group flex items-center gap-4 p-4 rounded-xl border border-zinc-200 bg-white hover:border-blue-200 hover:shadow-sm text-left transition-all duration-150"
+                className="w-full group flex items-center gap-4 p-4 rounded-xl border border-stone-200 bg-white hover:border-blue-200 hover:shadow-sm text-left transition-all duration-150"
               >
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-zinc-900 group-hover:text-blue-900">
+                  <div className="text-sm font-medium text-stone-900 group-hover:text-blue-900">
                     {item.title}
                   </div>
-                  <div className="text-xs text-zinc-500 mt-0.5">{item.description}</div>
+                  <div className="text-xs text-stone-500 mt-0.5">{item.description}</div>
                 </div>
-                <ArrowUp className="w-4 h-4 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 rotate-45" />
+                <ArrowUp className="w-4 h-4 text-stone-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 rotate-45" />
               </button>
             ))}
           </div>
         </div>
 
-        <p className="text-center text-xs text-zinc-400 mt-4">
+        <p className="text-center text-xs text-stone-400 mt-4">
           Or just type your question below
         </p>
       </div>
@@ -781,14 +781,14 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const canSend = value.trim().length > 0 && !isGenerating;
 
   return (
-    <div className="border-t border-zinc-200 bg-white px-4 py-4">
+    <div className="border-t border-stone-200 bg-white px-4 py-4">
       <div className="max-w-3xl mx-auto">
         <div
           className={cn(
             'flex items-end gap-2 px-4 py-3 bg-white border rounded-xl transition-all duration-150',
             isFocused
               ? 'border-blue-300 ring-4 ring-blue-50 shadow-sm'
-              : 'border-zinc-200 hover:border-zinc-300'
+              : 'border-stone-200 hover:border-stone-300'
           )}
         >
           {/* Textarea */}
@@ -802,14 +802,14 @@ const ChatInput: React.FC<ChatInputProps> = ({
             placeholder={placeholder}
             rows={1}
             autoFocus
-            className="flex-1 resize-none bg-transparent border-none outline-none text-zinc-900 placeholder:text-zinc-400 text-base leading-6 min-h-[24px] max-h-[200px]"
+            className="flex-1 resize-none bg-transparent border-none outline-none text-stone-900 placeholder:text-stone-400 text-base leading-6 min-h-[24px] max-h-[200px]"
           />
 
           {/* Send/Stop button */}
           {isGenerating ? (
             <button
               onClick={onStop}
-              className="flex-shrink-0 p-2 bg-zinc-900 text-white rounded-full hover:bg-zinc-800 transition-colors duration-150"
+              className="flex-shrink-0 p-2 bg-stone-900 text-white rounded-full hover:bg-stone-800 transition-colors duration-150"
               title="Stop generating"
             >
               <StopCircle className="w-5 h-5" />
@@ -821,8 +821,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
               className={cn(
                 'flex-shrink-0 p-2 rounded-full transition-all duration-150',
                 canSend
-                  ? 'bg-zinc-900 text-white hover:bg-zinc-800 hover:scale-105'
-                  : 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
+                  ? 'bg-stone-900 text-white hover:bg-stone-800 hover:scale-105'
+                  : 'bg-stone-100 text-stone-400 cursor-not-allowed'
               )}
               title="Send message"
             >
@@ -832,7 +832,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
         </div>
 
         {/* Disclaimer */}
-        <p className="text-center text-xs text-zinc-400 mt-2">
+        <p className="text-center text-xs text-stone-400 mt-2">
           AnA can make mistakes. Verify critical regulatory decisions with qualified experts.
         </p>
       </div>
@@ -853,7 +853,7 @@ const ScrollToBottomButton: React.FC<ScrollButtonProps> = ({ visible, onClick })
   <button
     onClick={onClick}
     className={cn(
-      'fixed bottom-24 left-1/2 -translate-x-1/2 px-4 py-2 bg-white border border-zinc-200 rounded-full shadow-lg flex items-center gap-2 text-sm text-zinc-600 hover:bg-zinc-50 transition-all duration-150',
+      'fixed bottom-24 left-1/2 -translate-x-1/2 px-4 py-2 bg-white border border-stone-200 rounded-full shadow-lg flex items-center gap-2 text-sm text-stone-600 hover:bg-stone-50 transition-all duration-150',
       visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
     )}
   >
@@ -1185,7 +1185,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
       <div
         ref={messagesContainerRef}
         onScroll={handleScroll}
-        className="flex-1 min-h-0 overflow-y-auto zen-scroll bg-zinc-50/30"
+        className="flex-1 min-h-0 overflow-y-auto zen-scroll bg-stone-50/30"
       >
         {showWelcome ? (
           <WelcomeScreen

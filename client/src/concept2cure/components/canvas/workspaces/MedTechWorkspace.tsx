@@ -84,13 +84,13 @@ const PredicatePathfinder: React.FC<PredicatePathfinderProps> = ({ onSelectPredi
   );
 
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+    <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-zinc-200">
+      <div className="p-4 border-b border-stone-200">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="font-semibold text-zinc-900">Predicate Pathfinder</h3>
-            <p className="text-sm text-zinc-500">Search FDA 510(k) database for predicates</p>
+            <h3 className="font-semibold text-stone-900">Predicate Pathfinder</h3>
+            <p className="text-sm text-stone-500">Search FDA 510(k) database for predicates</p>
           </div>
           <button className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
             <Filter className="w-4 h-4" />
@@ -100,13 +100,13 @@ const PredicatePathfinder: React.FC<PredicatePathfinderProps> = ({ onSelectPredi
         
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by device name, product code, or K number..."
-            className="w-full pl-10 pr-4 py-2.5 border border-zinc-200 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2.5 border border-stone-200 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-stone-400 outline-none focus:border-transparent"
           />
         </div>
       </div>
@@ -114,17 +114,17 @@ const PredicatePathfinder: React.FC<PredicatePathfinderProps> = ({ onSelectPredi
       {/* Results */}
       <div className="max-h-96 overflow-y-auto">
         {isLoading ? (
-          <div className="p-8 text-center text-zinc-500">
+          <div className="p-8 text-center text-stone-500">
             <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2" />
             <p className="text-sm">Searching FDA database...</p>
           </div>
         ) : predicates && predicates.length > 0 ? (
-          <div className="divide-y divide-zinc-100">
+          <div className="divide-y divide-stone-100">
             {predicates.map((predicate) => (
               <button
                 key={predicate.kNumber}
                 onClick={() => onSelectPredicate(predicate.kNumber)}
-                className="w-full p-4 hover:bg-zinc-50 transition-colors text-left group"
+                className="w-full p-4 hover:bg-stone-50 transition-colors text-left group"
               >
                 <div className="flex items-start justify-between">
                   <div>
@@ -144,25 +144,25 @@ const PredicatePathfinder: React.FC<PredicatePathfinderProps> = ({ onSelectPredi
                         </span>
                       )}
                     </div>
-                    <h4 className="text-sm font-medium text-zinc-900 mb-1">
+                    <h4 className="text-sm font-medium text-stone-900 mb-1">
                       {predicate.deviceName}
                     </h4>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-stone-500">
                       {predicate.applicant} • {predicate.productCode} • Class {predicate.deviceClass}
                     </p>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-zinc-400 group-hover:text-zinc-500 transition-colors duration-150" />
+                  <ChevronRight className="w-5 h-5 text-stone-400 group-hover:text-stone-500 transition-colors duration-150" />
                 </div>
               </button>
             ))}
           </div>
         ) : searchQuery.length >= 2 ? (
-          <div className="p-8 text-center text-zinc-500">
+          <div className="p-8 text-center text-stone-500">
             <p className="text-sm">No predicates found</p>
           </div>
         ) : (
-          <div className="p-8 text-center text-zinc-500">
-            <Search className="w-10 h-10 mx-auto mb-3 text-zinc-400" />
+          <div className="p-8 text-center text-stone-500">
+            <Search className="w-10 h-10 mx-auto mb-3 text-stone-400" />
             <p className="text-sm">Enter at least 2 characters to search</p>
           </div>
         )}
@@ -184,18 +184,18 @@ const MAUDEHazardMonitor: React.FC<MAUDEHazardMonitorProps> = ({ productCode }) 
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl border border-zinc-200 p-8 text-center">
-        <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-zinc-400" />
-        <p className="text-sm text-zinc-500">Analyzing MAUDE data...</p>
+      <div className="bg-white rounded-xl border border-stone-200 p-8 text-center">
+        <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-stone-400" />
+        <p className="text-sm text-stone-500">Analyzing MAUDE data...</p>
       </div>
     );
   }
 
   if (!hazardAnalysis) {
     return (
-      <div className="bg-white rounded-xl border border-zinc-200 p-8 text-center">
-        <AlertTriangle className="w-10 h-10 mx-auto mb-3 text-zinc-400" />
-        <p className="text-sm text-zinc-500">No hazard data available</p>
+      <div className="bg-white rounded-xl border border-stone-200 p-8 text-center">
+        <AlertTriangle className="w-10 h-10 mx-auto mb-3 text-stone-400" />
+        <p className="text-sm text-stone-500">No hazard data available</p>
       </div>
     );
   }
@@ -206,7 +206,7 @@ const MAUDEHazardMonitor: React.FC<MAUDEHazardMonitorProps> = ({ productCode }) 
       case 'HIGH': return 'bg-orange-100 text-orange-700 border-orange-200';
       case 'MEDIUM': return 'bg-amber-100 text-amber-700 border-amber-200';
       case 'LOW': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-      default: return 'bg-zinc-100 text-zinc-700 border-zinc-200';
+      default: return 'bg-stone-100 text-stone-700 border-stone-200';
     }
   };
 
@@ -214,18 +214,18 @@ const MAUDEHazardMonitor: React.FC<MAUDEHazardMonitorProps> = ({ productCode }) 
     switch (trend) {
       case 'UP': return <TrendingUp className="w-4 h-4 text-red-500" />;
       case 'DOWN': return <TrendingDown className="w-4 h-4 text-emerald-500" />;
-      default: return <Activity className="w-4 h-4 text-zinc-400" />;
+      default: return <Activity className="w-4 h-4 text-stone-400" />;
     }
   };
 
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+    <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-zinc-200">
+      <div className="p-4 border-b border-stone-200">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-semibold text-zinc-900">MAUDE Hazard Monitor</h3>
-            <p className="text-sm text-zinc-500">Product Code: {productCode}</p>
+            <h3 className="font-semibold text-stone-900">MAUDE Hazard Monitor</h3>
+            <p className="text-sm text-stone-500">Product Code: {productCode}</p>
           </div>
           <div className={cn(
             "px-3 py-1 rounded-full text-sm font-medium border",
@@ -237,50 +237,50 @@ const MAUDEHazardMonitor: React.FC<MAUDEHazardMonitorProps> = ({ productCode }) 
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-4 gap-4 p-4 border-b border-zinc-200">
+      <div className="grid grid-cols-4 gap-4 p-4 border-b border-stone-200">
         <div className="text-center">
-          <div className="text-2xl font-semibold text-zinc-900">
+          <div className="text-2xl font-semibold text-stone-900">
             {hazardAnalysis.summary.totalReports}
           </div>
-          <div className="text-xs text-zinc-500">Total Reports</div>
+          <div className="text-xs text-stone-500">Total Reports</div>
         </div>
         <div className="text-center">
           <div className="text-2xl font-semibold text-amber-600">
             {hazardAnalysis.summary.malfunctions}
           </div>
-          <div className="text-xs text-zinc-500">Malfunctions</div>
+          <div className="text-xs text-stone-500">Malfunctions</div>
         </div>
         <div className="text-center">
           <div className="text-2xl font-semibold text-orange-600">
             {hazardAnalysis.summary.injuries}
           </div>
-          <div className="text-xs text-zinc-500">Injuries</div>
+          <div className="text-xs text-stone-500">Injuries</div>
         </div>
         <div className="text-center">
           <div className="text-2xl font-semibold text-red-600">
             {hazardAnalysis.summary.deaths}
           </div>
-          <div className="text-xs text-zinc-500">Deaths</div>
+          <div className="text-xs text-stone-500">Deaths</div>
         </div>
       </div>
 
       {/* Top Issues */}
       <div className="p-4">
-        <h4 className="text-sm font-medium text-zinc-900 mb-3">Top Issues</h4>
+        <h4 className="text-sm font-medium text-stone-900 mb-3">Top Issues</h4>
         <div className="space-y-2">
           {hazardAnalysis.topIssues.slice(0, 5).map((issue, index) => (
             <div
               key={index}
-              className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg"
+              className="flex items-center justify-between p-3 bg-stone-50 rounded-lg"
             >
               <div className="flex items-center gap-3">
-                <div className="w-6 h-6 rounded bg-zinc-200 flex items-center justify-center text-xs font-semibold text-zinc-600">
+                <div className="w-6 h-6 rounded bg-stone-200 flex items-center justify-center text-xs font-semibold text-stone-600">
                   {index + 1}
                 </div>
-                <span className="text-sm text-zinc-700">{issue.issue}</span>
+                <span className="text-sm text-stone-700">{issue.issue}</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-zinc-900">{issue.count}</span>
+                <span className="text-sm font-medium text-stone-900">{issue.count}</span>
                 {getTrendIcon(issue.trend)}
               </div>
             </div>
@@ -290,7 +290,7 @@ const MAUDEHazardMonitor: React.FC<MAUDEHazardMonitorProps> = ({ productCode }) 
 
       {/* Recommendations */}
       {hazardAnalysis.recommendations.length > 0 && (
-        <div className="p-4 border-t border-zinc-200 bg-amber-50">
+        <div className="p-4 border-t border-stone-200 bg-amber-50">
           <h4 className="text-sm font-medium text-amber-900 mb-2">Recommendations</h4>
           <ul className="space-y-1">
             {hazardAnalysis.recommendations.map((rec, index) => (
@@ -316,7 +316,7 @@ const SubmissionTracker: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'DRAFT': return 'bg-zinc-100 text-zinc-600';
+      case 'DRAFT': return 'bg-stone-100 text-stone-600';
       case 'INTERNAL_REVIEW': return 'bg-blue-100 text-blue-600';
       case 'READY_FOR_SUBMISSION': return 'bg-emerald-100 text-emerald-600';
       case 'SUBMITTED': return 'bg-purple-100 text-purple-600';
@@ -324,18 +324,18 @@ const SubmissionTracker: React.FC = () => {
       case 'SUBSTANTIVE_REVIEW': return 'bg-blue-100 text-blue-600';
       case 'AI_REQUEST': return 'bg-orange-100 text-orange-600';
       case 'SE_DETERMINATION': return 'bg-emerald-100 text-emerald-600';
-      default: return 'bg-zinc-100 text-zinc-600';
+      default: return 'bg-stone-100 text-stone-600';
     }
   };
 
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-      <div className="p-4 border-b border-zinc-200 flex items-center justify-between">
+    <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
+      <div className="p-4 border-b border-stone-200 flex items-center justify-between">
         <div>
-          <h3 className="font-semibold text-zinc-900">Active Submissions</h3>
-          <p className="text-sm text-zinc-500">{submissions.length} total</p>
+          <h3 className="font-semibold text-stone-900">Active Submissions</h3>
+          <p className="text-sm text-stone-500">{submissions.length} total</p>
         </div>
-        <button className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors duration-150">
+        <button className="flex items-center gap-2 px-3 py-1.5 bg-stone-900 text-white rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors duration-150">
           <Plus className="w-4 h-4" />
           New 510(k)
         </button>
@@ -343,19 +343,19 @@ const SubmissionTracker: React.FC = () => {
 
       {isLoading ? (
         <div className="p-8 text-center">
-          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-zinc-400" />
+          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-stone-400" />
         </div>
       ) : submissions.length > 0 ? (
-        <div className="divide-y divide-zinc-100">
+        <div className="divide-y divide-stone-100">
           {submissions.map((submission) => (
             <div
               key={submission.id}
-              className="p-4 hover:bg-zinc-50 transition-colors cursor-pointer"
+              className="p-4 hover:bg-stone-50 transition-colors cursor-pointer"
             >
               <div className="flex items-start justify-between mb-2">
                 <div>
-                  <h4 className="font-medium text-zinc-900">{submission.deviceName}</h4>
-                  <p className="text-sm text-zinc-500">{submission.applicant}</p>
+                  <h4 className="font-medium text-stone-900">{submission.deviceName}</h4>
+                  <p className="text-sm text-stone-500">{submission.applicant}</p>
                 </div>
                 <span className={cn(
                   "px-2 py-1 rounded text-xs font-medium",
@@ -365,7 +365,7 @@ const SubmissionTracker: React.FC = () => {
                 </span>
               </div>
               {submission.targetDate && (
-                <div className="flex items-center gap-1 text-xs text-zinc-500">
+                <div className="flex items-center gap-1 text-xs text-stone-500">
                   <Clock className="w-3 h-3" />
                   Target: {new Date(submission.targetDate).toLocaleDateString()}
                 </div>
@@ -374,8 +374,8 @@ const SubmissionTracker: React.FC = () => {
           ))}
         </div>
       ) : (
-        <div className="p-8 text-center text-zinc-500">
-          <FileText className="w-10 h-10 mx-auto mb-3 text-zinc-400" />
+        <div className="p-8 text-center text-stone-500">
+          <FileText className="w-10 h-10 mx-auto mb-3 text-stone-400" />
           <p className="text-sm">No active submissions</p>
         </div>
       )}
@@ -406,17 +406,17 @@ export const MedTechWorkspace: React.FC<MedTechWorkspaceProps> = ({
   return (
     <div className="h-full flex flex-col">
       {/* Workspace Header */}
-      <div className="bg-white border-b border-zinc-200 px-6 py-4">
+      <div className="bg-white border-b border-stone-200 px-6 py-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-xl font-semibold text-zinc-900">MedTech Workspace</h2>
-            <p className="text-sm text-zinc-500">510(k), PMA, De Novo & EU MDR Tools</p>
+            <h2 className="text-xl font-semibold text-stone-900">MedTech Workspace</h2>
+            <p className="text-sm text-stone-500">510(k), PMA, De Novo & EU MDR Tools</p>
           </div>
           <div className="flex items-center gap-2">
-            <button className="p-2 rounded-lg hover:bg-zinc-100 transition-colors text-zinc-400">
+            <button className="p-2 rounded-lg hover:bg-stone-100 transition-colors text-stone-400">
               <RefreshCw className="w-5 h-5" />
             </button>
-            <button className="p-2 rounded-lg hover:bg-zinc-100 transition-colors text-zinc-400">
+            <button className="p-2 rounded-lg hover:bg-stone-100 transition-colors text-stone-400">
               <MoreHorizontal className="w-5 h-5" />
             </button>
           </div>
@@ -431,8 +431,8 @@ export const MedTechWorkspace: React.FC<MedTechWorkspaceProps> = ({
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150",
                 activeTab === tab.id
-                  ? "bg-zinc-900 text-white"
-                  : "text-zinc-600 hover:bg-zinc-100"
+                  ? "bg-stone-900 text-white"
+                  : "text-stone-600 hover:bg-stone-100"
               )}
             >
               <tab.icon className="w-4 h-4" />
@@ -463,22 +463,22 @@ export const MedTechWorkspace: React.FC<MedTechWorkspaceProps> = ({
         )}
 
         {activeTab === 'estar' && (
-          <div className="bg-white rounded-xl border border-zinc-200 p-8 text-center">
-            <ClipboardList className="w-16 h-16 mx-auto mb-4 text-zinc-400" />
-            <h3 className="text-lg font-semibold text-zinc-900 mb-2">eSTAR Package Manager</h3>
-            <p className="text-zinc-500 mb-4">FDA eSTAR template management and validation</p>
-            <button className="px-4 py-2 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors duration-150">
+          <div className="bg-white rounded-xl border border-stone-200 p-8 text-center">
+            <ClipboardList className="w-16 h-16 mx-auto mb-4 text-stone-400" />
+            <h3 className="text-lg font-semibold text-stone-900 mb-2">eSTAR Package Manager</h3>
+            <p className="text-stone-500 mb-4">FDA eSTAR template management and validation</p>
+            <button className="px-4 py-2 bg-stone-900 text-white rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors duration-150">
               Create eSTAR Package
             </button>
           </div>
         )}
 
         {activeTab === 'cer' && (
-          <div className="bg-white rounded-xl border border-zinc-200 p-8 text-center">
-            <Globe className="w-16 h-16 mx-auto mb-4 text-zinc-400" />
-            <h3 className="text-lg font-semibold text-zinc-900 mb-2">Clinical Evaluation Report</h3>
-            <p className="text-zinc-500 mb-4">EU MDR CER and PMCF planning</p>
-            <button className="px-4 py-2 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors duration-150">
+          <div className="bg-white rounded-xl border border-stone-200 p-8 text-center">
+            <Globe className="w-16 h-16 mx-auto mb-4 text-stone-400" />
+            <h3 className="text-lg font-semibold text-stone-900 mb-2">Clinical Evaluation Report</h3>
+            <p className="text-stone-500 mb-4">EU MDR CER and PMCF planning</p>
+            <button className="px-4 py-2 bg-stone-900 text-white rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors duration-150">
               Start New CER
             </button>
           </div>

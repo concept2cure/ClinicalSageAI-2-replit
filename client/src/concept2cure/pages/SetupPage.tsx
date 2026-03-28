@@ -65,51 +65,51 @@ export const SetupPage: React.FC<SetupPageProps> = ({ onOpenSettings }) => {
               key={section.id}
               onClick={() => onOpenSettings(section.id)}
               aria-label={`Open ${section.label} settings`}
-              className="w-full flex items-center gap-4 p-4 rounded-xl border border-zinc-100 hover:border-zinc-200 hover:bg-zinc-50/50 transition-all text-left group focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              className="w-full flex items-center gap-4 p-4 rounded-xl border border-stone-100 hover:border-stone-200 hover:bg-stone-50/50 transition-all text-left group focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
             >
-              <div className="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center flex-shrink-0 group-hover:bg-zinc-200 transition-colors">
-                <Icon className="w-5 h-5 text-zinc-500" />
+              <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0 group-hover:bg-stone-200 transition-colors">
+                <Icon className="w-5 h-5 text-stone-500" />
               </div>
               <div className="flex-1 min-w-0">
-                <span className="text-sm font-medium text-zinc-800 block">{section.label}</span>
-                <span className="text-xs text-zinc-500 block mt-0.5">{section.description}</span>
+                <span className="text-sm font-medium text-stone-800 block">{section.label}</span>
+                <span className="text-xs text-stone-500 block mt-0.5">{section.description}</span>
               </div>
-              <ChevronRight className="w-4 h-4 text-zinc-300 flex-shrink-0 group-hover:text-zinc-400 transition-colors" />
+              <ChevronRight className="w-4 h-4 text-stone-300 flex-shrink-0 group-hover:text-stone-400 transition-colors" />
             </button>
           );
         })}
       </div>
 
       {/* Quick links */}
-      <div className="mt-8 pt-6 border-t border-zinc-100">
-        <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">Quick Links</h3>
+      <div className="mt-8 pt-6 border-t border-stone-100">
+        <h3 className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3">Quick Links</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <button
             onClick={() => onOpenSettings('profile')}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-600 hover:text-zinc-800 hover:bg-zinc-50 rounded-lg transition-colors text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            className="flex items-center gap-2 px-3 py-2 text-sm text-stone-600 hover:text-stone-800 hover:bg-stone-50 rounded-lg transition-colors text-left focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
           >
-            <User className="w-4 h-4 text-zinc-400" />
+            <User className="w-4 h-4 text-stone-400" />
             Edit profile
           </button>
           <button
             onClick={() => onOpenSettings('security')}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-600 hover:text-zinc-800 hover:bg-zinc-50 rounded-lg transition-colors text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            className="flex items-center gap-2 px-3 py-2 text-sm text-stone-600 hover:text-stone-800 hover:bg-stone-50 rounded-lg transition-colors text-left focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
           >
-            <Shield className="w-4 h-4 text-zinc-400" />
+            <Shield className="w-4 h-4 text-stone-400" />
             Change password
           </button>
           <button
             onClick={() => onOpenSettings('integrations')}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-600 hover:text-zinc-800 hover:bg-zinc-50 rounded-lg transition-colors text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            className="flex items-center gap-2 px-3 py-2 text-sm text-stone-600 hover:text-stone-800 hover:bg-stone-50 rounded-lg transition-colors text-left focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
           >
-            <Link2 className="w-4 h-4 text-zinc-400" />
+            <Link2 className="w-4 h-4 text-stone-400" />
             Connect integrations
           </button>
           <button
             onClick={() => onOpenSettings('help')}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-600 hover:text-zinc-800 hover:bg-zinc-50 rounded-lg transition-colors text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            className="flex items-center gap-2 px-3 py-2 text-sm text-stone-600 hover:text-stone-800 hover:bg-stone-50 rounded-lg transition-colors text-left focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
           >
-            <ExternalLink className="w-4 h-4 text-zinc-400" />
+            <ExternalLink className="w-4 h-4 text-stone-400" />
             View documentation
           </button>
         </div>

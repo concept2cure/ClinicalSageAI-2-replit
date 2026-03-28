@@ -224,16 +224,16 @@ export function ProjectDashboard({
         type="button"
         onClick={onClick}
         className={cn(
-          'flex flex-col items-start gap-1.5 rounded-xl border border-zinc-200 bg-white p-4',
-          'text-left transition-all hover:border-zinc-300 hover:shadow-sm hover:bg-zinc-50/50',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40',
+          'flex flex-col items-start gap-1.5 rounded-xl border border-stone-200 bg-white p-4',
+          'text-left transition-all hover:border-stone-300 hover:shadow-sm hover:bg-stone-50/50',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40',
         )}
       >
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100 text-zinc-600">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-stone-100 text-stone-600">
           <Icon className="h-4.5 w-4.5" size={18} />
         </div>
-        <span className="text-sm font-semibold text-zinc-900">{title}</span>
-        <span className="text-xs text-zinc-500 leading-snug">{subtitle}</span>
+        <span className="text-sm font-semibold text-stone-900">{title}</span>
+        <span className="text-xs text-stone-500 leading-snug">{subtitle}</span>
       </button>
     );
   }
@@ -283,7 +283,7 @@ export function ProjectDashboard({
       <section className="space-y-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">
-            <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">{projectName}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-stone-900">{projectName}</h1>
             <div className="flex flex-wrap items-center gap-2">
               {projectType && (
                 <span className="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-200">
@@ -291,7 +291,7 @@ export function ProjectDashboard({
                 </span>
               )}
               {submissionType && (
-                <span className="inline-flex items-center rounded-md bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600 ring-1 ring-inset ring-zinc-200">
+                <span className="inline-flex items-center rounded-md bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-600 ring-1 ring-inset ring-stone-200">
                   {submissionType}
                 </span>
               )}
@@ -305,7 +305,7 @@ export function ProjectDashboard({
               onClick={onCreateDocument}
               className={cn(
                 'inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white',
-                'shadow-sm transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40',
+                'shadow-sm transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40',
               )}
             >
               <FilePlus size={16} />
@@ -315,8 +315,8 @@ export function ProjectDashboard({
               type="button"
               onClick={onOpenDossier}
               className={cn(
-                'inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700',
-                'shadow-sm transition-colors hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40',
+                'inline-flex items-center gap-2 rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700',
+                'shadow-sm transition-colors hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40',
               )}
             >
               <FolderOpen size={16} />
@@ -327,8 +327,8 @@ export function ProjectDashboard({
                 type="button"
                 onClick={onOpenIntelligence}
                 className={cn(
-                  'inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700',
-                  'shadow-sm transition-colors hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40',
+                  'inline-flex items-center gap-2 rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700',
+                  'shadow-sm transition-colors hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40',
                 )}
               >
                 <Brain size={16} />
@@ -340,15 +340,15 @@ export function ProjectDashboard({
 
         {/* Stat chips */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-3 py-1 text-xs font-medium text-stone-700">
             <FileText size={13} />
             {stats.total} document{stats.total !== 1 ? 's' : ''}
           </div>
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-3 py-1 text-xs font-medium text-stone-700">
             <BarChart3 size={13} />
             {stats.completionPct}% ready
           </div>
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-3 py-1 text-xs font-medium text-stone-700">
             <Activity size={13} />
             Last activity: {relativeTime(stats.lastActivity)}
           </div>
@@ -356,8 +356,8 @@ export function ProjectDashboard({
       </section>
 
       {/* ── 2. Document Pipeline ────────────────────────────────────────────── */}
-      <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <h2 className="mb-5 text-sm font-semibold uppercase tracking-wider text-zinc-500">
+      <section className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+        <h2 className="mb-5 text-sm font-semibold uppercase tracking-wider text-stone-500">
           Document Pipeline
         </h2>
 
@@ -371,7 +371,7 @@ export function ProjectDashboard({
 
         {/* Stacked progress bar */}
         <div className="mt-5">
-          <div className="flex h-3 w-full overflow-hidden rounded-full bg-zinc-100">
+          <div className="flex h-3 w-full overflow-hidden rounded-full bg-stone-100">
             {stats.counts.locked > 0 && (
               <div
                 className="bg-emerald-600 transition-all duration-150"
@@ -401,7 +401,7 @@ export function ProjectDashboard({
               />
             )}
           </div>
-          <p className="mt-2 text-xs text-zinc-500">
+          <p className="mt-2 text-xs text-stone-500">
             {stats.ready} of {stats.total} document{stats.total !== 1 ? 's' : ''} ready for submission
           </p>
         </div>
@@ -441,24 +441,24 @@ export function ProjectDashboard({
           </div>
 
           {/* CTD Coverage */}
-          <div className="flex flex-col items-center justify-center rounded-xl border border-zinc-200 bg-white p-5 hover:shadow-sm transition-shadow">
+          <div className="flex flex-col items-center justify-center rounded-xl border border-stone-200 bg-white p-5 hover:shadow-sm transition-shadow">
             <Layers size={18} className="text-blue-500" />
-            <span className="text-2xl font-semibold tabular-nums text-zinc-900 mt-1">{stats.ctdCoverage}%</span>
-            <span className="text-xs font-medium text-zinc-500 mt-0.5">CTD Coverage</span>
+            <span className="text-2xl font-semibold tabular-nums text-stone-900 mt-1">{stats.ctdCoverage}%</span>
+            <span className="text-xs font-medium text-stone-500 mt-0.5">CTD Coverage</span>
           </div>
 
           {/* Approval Rate */}
-          <div className="flex flex-col items-center justify-center rounded-xl border border-zinc-200 bg-white p-5 hover:shadow-sm transition-shadow">
+          <div className="flex flex-col items-center justify-center rounded-xl border border-stone-200 bg-white p-5 hover:shadow-sm transition-shadow">
             <TrendingUp size={18} className="text-green-500" />
-            <span className="text-2xl font-semibold tabular-nums text-zinc-900 mt-1">{stats.approvalRate}%</span>
-            <span className="text-xs font-medium text-zinc-500 mt-0.5">Approval Rate</span>
+            <span className="text-2xl font-semibold tabular-nums text-stone-900 mt-1">{stats.approvalRate}%</span>
+            <span className="text-xs font-medium text-stone-500 mt-0.5">Approval Rate</span>
           </div>
 
           {/* In Review */}
-          <div className="flex flex-col items-center justify-center rounded-xl border border-zinc-200 bg-white p-5 hover:shadow-sm transition-shadow">
+          <div className="flex flex-col items-center justify-center rounded-xl border border-stone-200 bg-white p-5 hover:shadow-sm transition-shadow">
             <AlertTriangle size={18} className={stats.reviewCycle > 30 ? 'text-amber-500' : 'text-blue-500'} />
-            <span className="text-2xl font-semibold tabular-nums text-zinc-900 mt-1">{stats.counts.review}</span>
-            <span className="text-xs font-medium text-zinc-500 mt-0.5">Awaiting Review</span>
+            <span className="text-2xl font-semibold tabular-nums text-stone-900 mt-1">{stats.counts.review}</span>
+            <span className="text-xs font-medium text-stone-500 mt-0.5">Awaiting Review</span>
           </div>
         </section>
       )}
@@ -467,15 +467,15 @@ export function ProjectDashboard({
       <section className="grid gap-6 lg:grid-cols-5">
 
         {/* Left — Recent Documents (3 cols) */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm lg:col-span-3">
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">
+        <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm lg:col-span-3">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-stone-500">
             Recent Documents
           </h2>
 
           {stats.recent.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <FileText className="mb-3 h-10 w-10 text-zinc-300" />
-              <p className="text-sm text-zinc-500">No documents yet</p>
+              <FileText className="mb-3 h-10 w-10 text-stone-300" />
+              <p className="text-sm text-stone-500">No documents yet</p>
               <button
                 type="button"
                 onClick={onCreateDocument}
@@ -485,7 +485,7 @@ export function ProjectDashboard({
               </button>
             </div>
           ) : (
-            <ul className="divide-y divide-zinc-100">
+            <ul className="divide-y divide-stone-100">
               {stats.recent.map((artifact) => {
                 const pStatus = normalizeStatus(artifact.status);
                 const cfg = STATUS_CONFIG[pStatus];
@@ -496,7 +496,7 @@ export function ProjectDashboard({
                       onClick={() => onOpenDocument(artifact.id)}
                       className={cn(
                         'group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left',
-                        'transition-colors hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40',
+                        'transition-colors hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40',
                       )}
                     >
                       {/* Status dot */}
@@ -504,27 +504,27 @@ export function ProjectDashboard({
 
                       {/* Title & metadata */}
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-zinc-900 group-hover:text-blue-700">
+                        <p className="truncate text-sm font-medium text-stone-900 group-hover:text-blue-700">
                           {artifact.title}
                         </p>
                         <div className="mt-0.5 flex items-center gap-2">
                           {artifact.ctdSection && (
-                            <span className="inline-flex items-center rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600">
+                            <span className="inline-flex items-center rounded bg-stone-100 px-1.5 py-0.5 text-[10px] font-medium text-stone-600">
                               {artifact.ctdSection}
                             </span>
                           )}
                           {artifact.version != null && (
-                            <span className="text-[10px] text-zinc-400">v{artifact.version}</span>
+                            <span className="text-[10px] text-stone-400">v{artifact.version}</span>
                           )}
                         </div>
                       </div>
 
                       {/* Relative time */}
-                      <span className="flex-shrink-0 text-xs text-zinc-400">
+                      <span className="flex-shrink-0 text-xs text-stone-400">
                         {relativeTime(artifact.updatedAt)}
                       </span>
 
-                      <ChevronRight size={14} className="flex-shrink-0 text-zinc-300 group-hover:text-zinc-500 transition-colors duration-150" />
+                      <ChevronRight size={14} className="flex-shrink-0 text-stone-300 group-hover:text-stone-500 transition-colors duration-150" />
                     </button>
                   </li>
                 );
@@ -534,8 +534,8 @@ export function ProjectDashboard({
         </div>
 
         {/* Right — Quick Actions (2 cols) */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm lg:col-span-2">
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">
+        <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm lg:col-span-2">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-stone-500">
             Quick Actions
           </h2>
           <div className="grid grid-cols-2 gap-3">
@@ -581,8 +581,8 @@ export function ProjectDashboard({
 
       {/* ── 3A. Activity Feed ─────────────────────────────────────────────── */}
       {stats.activityItems.length > 0 && (
-        <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">
+        <section className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-stone-500">
             Recent Activity
           </h2>
           <ActivityFeed
@@ -612,7 +612,7 @@ export function ProjectDashboard({
                   )}>
                     {isCompleted ? <CheckCircle2 size={14} /> : i + 1}
                   </span>
-                  <span className={cn('text-sm', isCompleted ? 'text-zinc-400 line-through' : 'text-zinc-700')}>
+                  <span className={cn('text-sm', isCompleted ? 'text-stone-400 line-through' : 'text-stone-700')}>
                     {step}
                   </span>
                 </li>
@@ -623,8 +623,8 @@ export function ProjectDashboard({
       )}
 
       {/* ── 4. Document Health Overview — CTD Coverage ──────────────────────── */}
-      <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <h2 className="mb-5 text-sm font-semibold uppercase tracking-wider text-zinc-500">
+      <section className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+        <h2 className="mb-5 text-sm font-semibold uppercase tracking-wider text-stone-500">
           CTD Section Coverage
         </h2>
 
@@ -643,7 +643,7 @@ export function ProjectDashboard({
                   <div className="flex items-center gap-1.5">
                     <p className={cn(
                       'text-sm font-medium',
-                      hasContent ? 'text-zinc-900' : 'text-zinc-400',
+                      hasContent ? 'text-stone-900' : 'text-stone-400',
                     )}>
                       {mod.label}
                     </p>
@@ -655,7 +655,7 @@ export function ProjectDashboard({
                   </div>
                   <p className={cn(
                     'text-xs',
-                    hasContent ? 'text-zinc-500' : 'text-zinc-300',
+                    hasContent ? 'text-stone-500' : 'text-stone-300',
                   )}>
                     {mod.description}
                   </p>
@@ -667,7 +667,7 @@ export function ProjectDashboard({
                     'inline-flex min-w-[1.5rem] items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums',
                     hasContent
                       ? 'bg-blue-50 text-blue-700'
-                      : 'bg-zinc-50 text-zinc-300',
+                      : 'bg-stone-50 text-stone-300',
                   )}>
                     {docCount}
                   </span>
@@ -675,11 +675,11 @@ export function ProjectDashboard({
 
                 {/* Progress bar */}
                 <div className="flex-1">
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-stone-100">
                     <div
                       className={cn(
                         'h-full rounded-full transition-all duration-150',
-                        hasContent ? 'bg-blue-500' : 'bg-zinc-100',
+                        hasContent ? 'bg-blue-500' : 'bg-stone-100',
                       )}
                       style={{ width: `${pct}%` }}
                     />
@@ -692,7 +692,7 @@ export function ProjectDashboard({
 
         {/* Empty state hint */}
         {stats.total === 0 && (
-          <p className="mt-4 text-center text-xs text-zinc-400">
+          <p className="mt-4 text-center text-xs text-stone-400">
             Assign CTD sections to documents to see coverage here.
           </p>
         )}

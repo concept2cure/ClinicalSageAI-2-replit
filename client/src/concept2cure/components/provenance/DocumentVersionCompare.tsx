@@ -133,10 +133,10 @@ const SideBySideView: React.FC<{ textA: string; textB: string }> = ({ textA, tex
   });
 
   return (
-    <div className="grid grid-cols-2 divide-x divide-zinc-200 font-mono text-xs">
+    <div className="grid grid-cols-2 divide-x divide-stone-200 font-mono text-xs">
       {/* Left side */}
       <div className="overflow-y-auto max-h-[60vh]">
-        <div className="px-1 py-0.5 text-xs font-semibold text-zinc-400 bg-zinc-50 border-b border-zinc-200 sticky top-0">
+        <div className="px-1 py-0.5 text-xs font-semibold text-stone-400 bg-stone-50 border-b border-stone-200 sticky top-0">
           OLDER VERSION
         </div>
         {pairs.map((p, i) => (
@@ -146,7 +146,7 @@ const SideBySideView: React.FC<{ textA: string; textB: string }> = ({ textA, tex
               p.type === 'removed'
                 ? 'bg-red-50 text-red-800'
                 : p.type === 'added'
-                  ? 'bg-zinc-50 text-zinc-400'
+                  ? 'bg-stone-50 text-stone-400'
                   : ''
             }`}
           >
@@ -156,7 +156,7 @@ const SideBySideView: React.FC<{ textA: string; textB: string }> = ({ textA, tex
       </div>
       {/* Right side */}
       <div className="overflow-y-auto max-h-[60vh]">
-        <div className="px-1 py-0.5 text-xs font-semibold text-zinc-400 bg-zinc-50 border-b border-zinc-200 sticky top-0">
+        <div className="px-1 py-0.5 text-xs font-semibold text-stone-400 bg-stone-50 border-b border-stone-200 sticky top-0">
           NEWER VERSION
         </div>
         {pairs.map((p, i) => (
@@ -166,7 +166,7 @@ const SideBySideView: React.FC<{ textA: string; textB: string }> = ({ textA, tex
               p.type === 'added'
                 ? 'bg-emerald-50 text-emerald-800'
                 : p.type === 'removed'
-                  ? 'bg-zinc-50 text-zinc-400'
+                  ? 'bg-stone-50 text-stone-400'
                   : ''
             }`}
           >
@@ -191,7 +191,7 @@ const DiffStats: React.FC<{ textA: string; textB: string }> = ({ textA, textB })
     <div className="flex items-center gap-3 text-xs">
       <span className="text-emerald-600">+{added} added</span>
       <span className="text-red-600">−{removed} removed</span>
-      <span className="text-zinc-400">{unchanged} unchanged</span>
+      <span className="text-stone-400">{unchanged} unchanged</span>
     </div>
   );
 };
@@ -329,10 +329,10 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
   // Loading
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center bg-white border-l border-zinc-200">
+      <div className="h-full flex items-center justify-center bg-white border-l border-stone-200">
         <div className="text-center">
-          <Loader2 className="w-5 h-5 animate-spin text-zinc-400 mx-auto mb-2" />
-          <p className="text-xs text-zinc-400">Loading versions…</p>
+          <Loader2 className="w-5 h-5 animate-spin text-stone-400 mx-auto mb-2" />
+          <p className="text-xs text-stone-400">Loading versions…</p>
         </div>
       </div>
     );
@@ -341,19 +341,19 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
   // Error
   if (error || versions.length === 0) {
     return (
-      <div className="h-full flex flex-col bg-white border-l border-zinc-200">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200">
-          <span className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
+      <div className="h-full flex flex-col bg-white border-l border-stone-200">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-stone-200">
+          <span className="text-xs font-semibold text-stone-700 flex items-center gap-1.5">
             <GitCompare className="w-4 h-4 text-purple-500" /> Version Compare
           </span>
-          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600">
+          <button onClick={onClose} className="text-stone-400 hover:text-stone-600">
             <X className="w-4 h-4" />
           </button>
         </div>
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="text-center">
             <AlertTriangle className="w-5 h-5 text-amber-400 mx-auto mb-2" />
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-stone-500">
               {error ||
                 'No versions available for comparison. Save document edits to create version history for regulatory change control.'}
             </p>
@@ -364,29 +364,29 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
   }
 
   return (
-    <div className="h-full flex flex-col bg-white border-l border-zinc-200">
+    <div className="h-full flex flex-col bg-white border-l border-stone-200">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-zinc-50 shrink-0">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-stone-200 bg-stone-50 shrink-0">
         <div className="flex items-center gap-2">
           <GitCompare className="w-4 h-4 text-purple-500" />
-          <span className="text-xs font-semibold text-zinc-900">Version Compare</span>
+          <span className="text-xs font-semibold text-stone-900">Version Compare</span>
         </div>
-        <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600">
+        <button onClick={onClose} className="text-stone-400 hover:text-stone-600">
           <X className="w-4 h-4" />
         </button>
       </div>
 
       {/* Version selectors */}
-      <div className="px-3 py-2 border-b border-zinc-200 bg-zinc-50/50">
-        <div className="text-xs text-zinc-500 mb-1 font-medium">{title}</div>
+      <div className="px-3 py-2 border-b border-stone-200 bg-stone-50/50">
+        <div className="text-xs text-stone-500 mb-1 font-medium">{title}</div>
         <div className="flex items-center gap-2">
           {/* Version A selector */}
           <div className="flex-1">
-            <label className="text-xs text-zinc-400 block mb-0.5">From (older)</label>
+            <label className="text-xs text-stone-400 block mb-0.5">From (older)</label>
             <select
               value={versionA ?? ''}
               onChange={e => setVersionA(Number(e.target.value))}
-              className="w-full text-xs border border-zinc-200 rounded px-2 py-1 bg-white"
+              className="w-full text-xs border border-stone-200 rounded px-2 py-1 bg-white"
             >
               {versions.map(v => (
                 <option key={v.version} value={v.version}>
@@ -396,15 +396,15 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
             </select>
           </div>
 
-          <ArrowLeftRight className="w-4 h-4 text-zinc-400 mt-3" />
+          <ArrowLeftRight className="w-4 h-4 text-stone-400 mt-3" />
 
           {/* Version B selector */}
           <div className="flex-1">
-            <label className="text-xs text-zinc-400 block mb-0.5">To (newer)</label>
+            <label className="text-xs text-stone-400 block mb-0.5">To (newer)</label>
             <select
               value={versionB ?? ''}
               onChange={e => setVersionB(Number(e.target.value))}
-              className="w-full text-xs border border-zinc-200 rounded px-2 py-1 bg-white"
+              className="w-full text-xs border border-stone-200 rounded px-2 py-1 bg-white"
             >
               {versions.map(v => (
                 <option key={v.version} value={v.version}>
@@ -419,36 +419,36 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
 
       {/* Metadata delta header */}
       {selectedA && selectedB && (
-        <div className="px-3 py-2 border-b border-zinc-200 bg-white">
+        <div className="px-3 py-2 border-b border-stone-200 bg-white">
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="space-y-0.5">
-              <div className="text-zinc-400 font-medium">Version A (v{selectedA.version})</div>
-              <div className="flex items-center gap-1 text-zinc-500">
+              <div className="text-stone-400 font-medium">Version A (v{selectedA.version})</div>
+              <div className="flex items-center gap-1 text-stone-500">
                 <Clock className="w-3 h-3" /> {formatDate(selectedA.createdAt)}
               </div>
-              <div className="flex items-center gap-1 text-zinc-500">
+              <div className="flex items-center gap-1 text-stone-500">
                 <Hash className="w-3 h-3" />
                 <span className="font-mono">{truncHash(selectedA.contentHash)}</span>
               </div>
               {selectedA.changeDescription && (
-                <div className="text-zinc-600 italic">{selectedA.changeDescription}</div>
+                <div className="text-stone-600 italic">{selectedA.changeDescription}</div>
               )}
             </div>
             <div className="space-y-0.5">
-              <div className="text-zinc-400 font-medium">Version B (v{selectedB.version})</div>
-              <div className="flex items-center gap-1 text-zinc-500">
+              <div className="text-stone-400 font-medium">Version B (v{selectedB.version})</div>
+              <div className="flex items-center gap-1 text-stone-500">
                 <Clock className="w-3 h-3" /> {formatDate(selectedB.createdAt)}
               </div>
-              <div className="flex items-center gap-1 text-zinc-500">
+              <div className="flex items-center gap-1 text-stone-500">
                 <Hash className="w-3 h-3" />
                 <span className="font-mono">{truncHash(selectedB.contentHash)}</span>
               </div>
               {selectedB.changeDescription && (
-                <div className="text-zinc-600 italic">{selectedB.changeDescription}</div>
+                <div className="text-stone-600 italic">{selectedB.changeDescription}</div>
               )}
             </div>
           </div>
-          <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-zinc-200">
+          <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-stone-200">
             <DiffStats textA={textA} textB={textB} />
             <div className="flex items-center gap-1">
               {/* Regulatory Impact Review button */}
@@ -486,7 +486,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
                 className={`px-2 py-0.5 text-xs rounded ${
                   viewMode === 'side-by-side'
                     ? 'bg-purple-100 text-purple-700'
-                    : 'text-zinc-400 hover:text-zinc-600'
+                    : 'text-stone-400 hover:text-stone-600'
                 }`}
               >
                 <Layers className="w-3 h-3 inline mr-0.5" />
@@ -497,7 +497,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
                 className={`px-2 py-0.5 text-xs rounded ${
                   viewMode === 'unified'
                     ? 'bg-purple-100 text-purple-700'
-                    : 'text-zinc-400 hover:text-zinc-600'
+                    : 'text-stone-400 hover:text-stone-600'
                 }`}
               >
                 <FileText className="w-3 h-3 inline mr-0.5" />
@@ -524,7 +524,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
 
       {/* Regulatory Impact Review result */}
       {impactResult && (
-        <div className="border-b border-zinc-200 bg-[#FAF9F5]">
+        <div className="border-b border-stone-200 bg-[#FAF9F5]">
           <div className="px-3 py-2 flex items-center justify-between border-b border-[#F5F4EF]">
             <span className="text-xs font-semibold text-[#D97757] flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5" />
@@ -542,13 +542,13 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
               )}
               <button
                 onClick={() => setImpactResult(null)}
-                className="text-zinc-400 hover:text-zinc-600 p-0.5"
+                className="text-stone-400 hover:text-stone-600 p-0.5"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
-          <div className="px-3 py-2 max-h-64 overflow-y-auto text-xs text-zinc-700 prose prose-xs prose-zinc max-w-none whitespace-pre-wrap">
+          <div className="px-3 py-2 max-h-64 overflow-y-auto text-xs text-stone-700 prose prose-xs prose-stone max-w-none whitespace-pre-wrap">
             {impactResult.content}
           </div>
           {impactResult.savedId && (
@@ -564,7 +564,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
       <div className="flex-1 min-h-0 overflow-y-auto">
         {selectedA && selectedB ? (
           versionA === versionB ? (
-            <div className="flex items-center justify-center h-full text-zinc-400 text-xs">
+            <div className="flex items-center justify-center h-full text-stone-400 text-xs">
               Same version selected — choose different versions to compare
             </div>
           ) : viewMode === 'side-by-side' ? (
@@ -573,7 +573,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
             <WordDiffView textA={textA} textB={textB} />
           )
         ) : (
-          <div className="flex items-center justify-center h-full text-zinc-400 text-xs">
+          <div className="flex items-center justify-center h-full text-stone-400 text-xs">
             Select two versions above to compare
           </div>
         )}
@@ -581,7 +581,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
 
       {/* Cross-panel actions */}
       {(onOpenAudit || onOpenProvenance) && (
-        <div className="px-3 py-1.5 border-t border-zinc-200 bg-zinc-50/50 flex gap-2 shrink-0">
+        <div className="px-3 py-1.5 border-t border-stone-200 bg-stone-50/50 flex gap-2 shrink-0">
           {onOpenProvenance && (
             <button
               onClick={onOpenProvenance}
@@ -602,8 +602,8 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
       )}
 
       {/* Footer */}
-      <div className="px-3 py-1.5 border-t border-zinc-200 bg-zinc-50/30 shrink-0">
-        <p className="text-xs text-zinc-400 text-center">
+      <div className="px-3 py-1.5 border-t border-stone-200 bg-stone-50/30 shrink-0">
+        <p className="text-xs text-stone-400 text-center">
           {versions.length} version{versions.length !== 1 ? 's' : ''} · Real diff comparison ·
           SHA-256 integrity chain
         </p>

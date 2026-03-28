@@ -88,10 +88,10 @@ const artifactTypeConfig: Record<
     color: 'text-emerald-600',
   },
   submission_progress: { icon: BarChart3, label: 'Submission Progress', color: 'text-sky-600' },
-  document: { icon: FileText, label: 'Document', color: 'text-zinc-600' },
-  code: { icon: FileText, label: 'Code', color: 'text-zinc-600' },
-  table: { icon: Table2, label: 'Table', color: 'text-zinc-600' },
-  chart: { icon: BarChart3, label: 'Chart', color: 'text-zinc-600' },
+  document: { icon: FileText, label: 'Document', color: 'text-stone-600' },
+  code: { icon: FileText, label: 'Code', color: 'text-stone-600' },
+  table: { icon: Table2, label: 'Table', color: 'text-stone-600' },
+  chart: { icon: BarChart3, label: 'Chart', color: 'text-stone-600' },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ const DocumentArtifact: React.FC<DocumentArtifactProps> = ({
 
   return (
     <div className="p-6 prose prose-sm max-w-none">
-      <pre className="whitespace-pre-wrap font-sans text-zinc-700 leading-relaxed">{content}</pre>
+      <pre className="whitespace-pre-wrap font-sans text-stone-700 leading-relaxed">{content}</pre>
     </div>
   );
 };
@@ -143,7 +143,7 @@ const InteractiveArtifact: React.FC<InteractiveArtifactProps> = ({ type, content
 
     return (
       <div className="p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-zinc-900">Risk Analysis</h3>
+        <h3 className="text-lg font-semibold text-stone-900">Risk Analysis</h3>
         <div className="space-y-3">
           {data.risks?.map(risk => (
             <div key={risk.id} className="flex items-center gap-4 p-3 bg-white rounded-lg border">
@@ -158,8 +158,8 @@ const InteractiveArtifact: React.FC<InteractiveArtifactProps> = ({ type, content
                 )}
               />
               <div className="flex-1">
-                <div className="font-medium text-zinc-900">{risk.label}</div>
-                <div className="text-xs text-zinc-500">{risk.category}</div>
+                <div className="font-medium text-stone-900">{risk.label}</div>
+                <div className="text-xs text-stone-500">{risk.category}</div>
               </div>
               <div className="text-sm font-medium">{Math.round(risk.severity * 100)}%</div>
             </div>
@@ -172,7 +172,7 @@ const InteractiveArtifact: React.FC<InteractiveArtifactProps> = ({ type, content
   // Default interactive view
   return (
     <div className="p-6">
-      <pre className="text-xs bg-zinc-100 p-4 rounded overflow-auto">
+      <pre className="text-xs bg-stone-100 p-4 rounded overflow-auto">
         {JSON.stringify(content, null, 2)}
       </pre>
     </div>
@@ -202,22 +202,22 @@ const VersionHistory: React.FC<VersionHistoryProps> = ({ artifact, onSelectVersi
               'w-full p-3 text-left rounded-lg border transition-colors duration-150',
               version.version === artifact.version
                 ? 'border-blue-300 bg-blue-50'
-                : 'border-zinc-200 hover:bg-zinc-50'
+                : 'border-stone-200 hover:bg-stone-50'
             )}
           >
             <div className="flex items-center justify-between">
-              <span className="font-medium text-zinc-900">Version {version.version}</span>
+              <span className="font-medium text-stone-900">Version {version.version}</span>
               {version.version === artifact.version && (
                 <Badge variant="secondary" className="text-xs">
                   Current
                 </Badge>
               )}
             </div>
-            <div className="text-xs text-zinc-500 mt-1">
+            <div className="text-xs text-stone-500 mt-1">
               {new Date(version.createdAt).toLocaleString()}
             </div>
             {version.changelog && (
-              <div className="text-sm text-zinc-600 mt-2">{version.changelog}</div>
+              <div className="text-sm text-stone-600 mt-2">{version.changelog}</div>
             )}
           </button>
         ))}
@@ -246,8 +246,8 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ artifact }) => {
   if (!artifact) {
     return (
       <div className="flex items-center justify-center h-full text-center p-8">
-        <div className="text-zinc-500">
-          <FileText className="h-12 w-12 mx-auto mb-4 text-zinc-400" />
+        <div className="text-stone-500">
+          <FileText className="h-12 w-12 mx-auto mb-4 text-stone-400" />
           <p className="text-sm">No artifact selected</p>
           <p className="text-xs mt-1">Artifacts will appear here when RI creates them</p>
         </div>
@@ -335,14 +335,14 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ artifact }) => {
   return (
     <div className={cn('flex flex-col h-full', isFullscreen && 'fixed inset-0 z-50 bg-white')}>
       {/* Header */}
-      <div className="flex-shrink-0 border-b border-zinc-200 bg-white px-4 py-3">
+      <div className="flex-shrink-0 border-b border-stone-200 bg-white px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           {/* Title */}
           <div className="flex items-center gap-3 min-w-0">
             <Icon className={cn('h-5 w-5 flex-shrink-0', config.color)} />
             <div className="min-w-0">
-              <h2 className="font-medium text-zinc-900 truncate">{artifact.title}</h2>
-              <div className="flex items-center gap-2 text-xs text-zinc-500">
+              <h2 className="font-medium text-stone-900 truncate">{artifact.title}</h2>
+              <div className="flex items-center gap-2 text-xs text-stone-500">
                 <span>{config.label}</span>
                 <span>•</span>
                 <span>v{artifact.version}</span>
@@ -366,7 +366,7 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ artifact }) => {
                 <TooltipTrigger asChild>
                   <button
                     onClick={handleCopy}
-                    className="p-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg"
+                    className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg"
                   >
                     {copied ? (
                       <Check className="h-4 w-4 text-green-500" />
@@ -383,7 +383,7 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ artifact }) => {
                 <TooltipTrigger asChild>
                   <button
                     onClick={handleDownload}
-                    className="p-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg"
+                    className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg"
                   >
                     <Download className="h-4 w-4" />
                   </button>
@@ -396,7 +396,7 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ artifact }) => {
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => setIsFullscreen(!isFullscreen)}
-                    className="p-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg"
+                    className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg"
                   >
                     {isFullscreen ? (
                       <Minimize2 className="h-4 w-4" />
@@ -412,7 +412,7 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ artifact }) => {
             {/* More actions dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="p-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg">
+                <button className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg">
                   <MoreHorizontal className="h-4 w-4" />
                 </button>
               </DropdownMenuTrigger>
@@ -442,7 +442,7 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ artifact }) => {
             {/* Close */}
             <button
               onClick={handleClose}
-              className="p-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg"
+              className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg"
             >
               <X className="h-4 w-4" />
             </button>

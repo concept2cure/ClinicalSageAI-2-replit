@@ -463,7 +463,7 @@ const STATUS_CONFIG: Record<
   DocumentStatus,
   { label: string; color: string; icon: React.ReactNode }
 > = {
-  draft: { label: 'Draft', color: 'bg-zinc-100 text-zinc-700', icon: <File className="w-4 h-4" /> },
+  draft: { label: 'Draft', color: 'bg-stone-100 text-stone-700', icon: <File className="w-4 h-4" /> },
   in_review: {
     label: 'In Review',
     color: 'bg-yellow-100 text-yellow-700',
@@ -481,7 +481,7 @@ const STATUS_CONFIG: Record<
   },
   not_applicable: {
     label: 'N/A',
-    color: 'bg-zinc-50 text-zinc-500',
+    color: 'bg-stone-50 text-stone-500',
     icon: <File className="w-4 h-4" />,
   },
   not_started: {
@@ -568,7 +568,7 @@ function SectionNode({
               <Folder className="h-4 w-4 text-blue-500" />
             )
           ) : (
-            <File className="h-4 w-4 text-zinc-400" />
+            <File className="h-4 w-4 text-stone-400" />
           )}
 
           <span
@@ -591,7 +591,7 @@ function SectionNode({
                 </Badge>
               )}
               {counts.draft > 0 && (
-                <Badge variant="outline" className="text-xs bg-zinc-50 text-zinc-600">
+                <Badge variant="outline" className="text-xs bg-stone-50 text-stone-600">
                   {counts.draft} ✎
                 </Badge>
               )}
@@ -940,9 +940,9 @@ export function ECTDNavigator() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Draft</p>
-                <p className="text-2xl font-semibold text-zinc-600">{overallStats.draft}</p>
+                <p className="text-2xl font-semibold text-stone-600">{overallStats.draft}</p>
               </div>
-              <File className="w-8 h-8 text-zinc-500" />
+              <File className="w-8 h-8 text-stone-500" />
             </div>
           </div>
         </div>
@@ -1024,7 +1024,7 @@ export function ECTDNavigator() {
       </Tabs>
 
       {/* RI Assistance */}
-      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-zinc-50">
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-stone-50">
         <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-100 rounded-full">

@@ -131,7 +131,7 @@ const MODULE_CATALOG = [
     label: 'Command Center',
     subtitle: 'Operations hub',
     icon: Building2,
-    color: 'text-zinc-700',
+    color: 'text-stone-700',
   },
   {
     id: 'legal-center',
@@ -223,15 +223,15 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
   const firstName = userName?.split(' ')[0];
 
   return (
-    <WorkspaceCanvas maxWidth="5xl" className="zen-scroll bg-zinc-50/30" testId="platform-home">
+    <WorkspaceCanvas maxWidth="5xl" className="zen-scroll bg-stone-50/30" testId="platform-home">
       <div className="py-4">
         {/* ── Greeting ─────────────────────────────────────────── */}
         <div className="mb-10">
-          <h1 className="text-3xl font-semibold text-zinc-900 tracking-tight">
+          <h1 className="text-3xl font-semibold text-stone-900 tracking-tight">
             {greeting}
             {firstName ? `, ${firstName}` : ''}
           </h1>
-          <p className="text-base text-zinc-500 mt-1.5">
+          <p className="text-base text-stone-500 mt-1.5">
             {activeProjects.length} active project{activeProjects.length !== 1 ? 's' : ''}
             {workspaceSummary?.counts?.documents
               ? ` \u00b7 ${workspaceSummary.counts.documents} documents`
@@ -241,7 +241,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
 
         {/* ── Quick Actions ────────────────────────────────────── */}
         <div className="mb-12">
-          <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">
+          <h2 className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-4">
             Quick Actions
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -251,7 +251,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
                 onClick={() =>
                   action.action === 'new-project' ? onNewProject() : onNavigate(action.action)
                 }
-                className="group flex items-center gap-3 p-4 rounded-xl bg-white border border-zinc-100 hover:border-zinc-200 hover:shadow-sm transition-all text-left"
+                className="group flex items-center gap-3 p-4 rounded-xl bg-white border border-stone-100 hover:border-stone-200 hover:shadow-sm transition-all text-left"
               >
                 <div
                   className={cn(
@@ -262,8 +262,8 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
                   <action.icon className={cn('w-5 h-5', action.color)} />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-sm font-medium text-zinc-900">{action.label}</div>
-                  <div className="text-xs text-zinc-400">{action.subtitle}</div>
+                  <div className="text-sm font-medium text-stone-900">{action.label}</div>
+                  <div className="text-xs text-stone-400">{action.subtitle}</div>
                 </div>
               </button>
             ))}
@@ -273,7 +273,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
         {/* ── Your Projects ────────────────────────────────────── */}
         <div className="mb-12">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+            <h2 className="text-xs font-semibold text-stone-400 uppercase tracking-wider">
               Your Projects
             </h2>
             <button
@@ -286,57 +286,57 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
           </div>
 
           {activeProjects.length > 0 ? (
-            <div className="border border-zinc-200 rounded-xl overflow-hidden bg-white">
+            <div className="border border-stone-200 rounded-xl overflow-hidden bg-white">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-100 bg-zinc-50/60">
-                    <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider">
+                  <tr className="border-b border-stone-100 bg-stone-50/60">
+                    <th className="px-4 py-2 font-medium text-stone-500 text-xs uppercase tracking-wider">
                       Type
                     </th>
-                    <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider">
+                    <th className="px-4 py-2 font-medium text-stone-500 text-xs uppercase tracking-wider">
                       Project
                     </th>
-                    <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider hidden sm:table-cell">
+                    <th className="px-4 py-2 font-medium text-stone-500 text-xs uppercase tracking-wider hidden sm:table-cell">
                       Chats
                     </th>
-                    <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider hidden sm:table-cell text-right">
+                    <th className="px-4 py-2 font-medium text-stone-500 text-xs uppercase tracking-wider hidden sm:table-cell text-right">
                       Updated
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100">
+                <tbody className="divide-y divide-stone-100">
                   {activeProjects.map(project => (
                     <tr
                       key={project.id}
                       onClick={() => onProjectClick(project.id)}
-                      className="cursor-pointer hover:bg-zinc-50 transition-colors"
+                      className="cursor-pointer hover:bg-stone-50 transition-colors"
                     >
                       <td className="px-4 py-2.5 whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-600">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-600">
                           <span
                             className={cn(
                               'w-1.5 h-1.5 rounded-full',
-                              TYPE_COLORS[project.type] ?? 'bg-zinc-400'
+                              TYPE_COLORS[project.type] ?? 'bg-stone-400'
                             )}
                           />
                           {project.type}
                         </span>
                       </td>
                       <td className="px-4 py-2.5">
-                        <span className="font-medium text-zinc-900">{project.name}</span>
+                        <span className="font-medium text-stone-900">{project.name}</span>
                         {project.starred && (
                           <Star className="w-3 h-3 text-amber-400 fill-amber-400 inline ml-1.5 -mt-0.5" />
                         )}
                         {project.description && (
-                          <span className="block text-xs text-zinc-400 truncate max-w-md">
+                          <span className="block text-xs text-stone-400 truncate max-w-md">
                             {project.description}
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-2.5 text-zinc-400 hidden sm:table-cell">
+                      <td className="px-4 py-2.5 text-stone-400 hidden sm:table-cell">
                         {project.conversationCount}
                       </td>
-                      <td className="px-4 py-2.5 text-zinc-400 text-right hidden sm:table-cell">
+                      <td className="px-4 py-2.5 text-stone-400 text-right hidden sm:table-cell">
                         {project.lastUpdated
                           ? new Date(project.lastUpdated).toLocaleDateString(undefined, {
                               month: 'short',
@@ -351,7 +351,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
             </div>
           ) : (
             <EmptyState
-              icon={<FolderOpen className="w-5 h-5 text-zinc-400" />}
+              icon={<FolderOpen className="w-5 h-5 text-stone-400" />}
               title="No projects yet"
               primaryAction={{ label: 'Create first project', onClick: onNewProject }}
               testId="platform-home-empty-projects"
@@ -361,7 +361,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
 
         {/* ── Platform Modules ─────────────────────────────────── */}
         <div className="mb-12">
-          <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">
+          <h2 className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-4">
             Platform Modules
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
@@ -369,14 +369,14 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
               <button
                 key={mod.id}
                 onClick={() => onNavigate(mod.id)}
-                className="group flex items-center gap-2.5 p-3 rounded-xl bg-white border border-zinc-100 hover:border-zinc-200 hover:shadow-sm transition-all text-left"
+                className="group flex items-center gap-2.5 p-3 rounded-xl bg-white border border-stone-100 hover:border-stone-200 hover:shadow-sm transition-all text-left"
               >
                 <mod.icon className={cn('w-4 h-4 flex-shrink-0', mod.color)} />
                 <div className="min-w-0 flex-1">
-                  <div className="text-[13px] font-medium text-zinc-800 truncate">{mod.label}</div>
-                  <div className="text-[11px] text-zinc-400 truncate">{mod.subtitle}</div>
+                  <div className="text-[13px] font-medium text-stone-800 truncate">{mod.label}</div>
+                  <div className="text-[11px] text-stone-400 truncate">{mod.subtitle}</div>
                 </div>
-                <ArrowRight className="w-3 h-3 text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                <ArrowRight className="w-3 h-3 text-stone-300 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
               </button>
             ))}
           </div>
@@ -385,20 +385,20 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
         {/* ── Recent Artifacts ─────────────────────────────────── */}
         {(workspaceSummary?.recent?.artifacts?.length ?? 0) > 0 && (
           <div className="mb-8">
-            <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
+            <h2 className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3">
               Recent Artifacts
             </h2>
-            <div className="divide-y divide-zinc-100 border border-zinc-200 rounded-xl overflow-hidden bg-white">
+            <div className="divide-y divide-stone-100 border border-stone-200 rounded-xl overflow-hidden bg-white">
               {workspaceSummary!.recent.artifacts!.slice(0, 4).map((a: any) => (
                 <div
                   key={a.id}
-                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 transition-colors"
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-stone-50 transition-colors"
                 >
                   <FileText className="w-3.5 h-3.5 text-violet-500 flex-shrink-0" />
-                  <span className="text-sm font-medium text-zinc-900 truncate flex-1">
+                  <span className="text-sm font-medium text-stone-900 truncate flex-1">
                     {a.title || a.type}
                   </span>
-                  <span className="text-xs text-zinc-400 flex-shrink-0">
+                  <span className="text-xs text-stone-400 flex-shrink-0">
                     {a.type} · {a.status} ·{' '}
                     {a.createdAt ? new Date(a.createdAt).toLocaleDateString() : ''}
                   </span>
@@ -411,18 +411,18 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
         {/* ── Recent Conversations ─────────────────────────────── */}
         {(workspaceSummary?.recent?.threads?.length ?? 0) > 0 && (
           <div className="mb-8">
-            <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
+            <h2 className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3">
               Recent Conversations
             </h2>
-            <div className="divide-y divide-zinc-100 border border-zinc-200 rounded-xl overflow-hidden bg-white">
+            <div className="divide-y divide-stone-100 border border-stone-200 rounded-xl overflow-hidden bg-white">
               {workspaceSummary!.recent.threads!.slice(0, 5).map((t: any) => (
                 <div
                   key={t.id}
-                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 transition-colors"
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-stone-50 transition-colors"
                 >
-                  <MessageSquare className="w-4 h-4 text-zinc-400 flex-shrink-0" />
-                  <span className="text-sm text-zinc-700 truncate flex-1">{t.title}</span>
-                  <span className="text-xs text-zinc-400 flex-shrink-0">
+                  <MessageSquare className="w-4 h-4 text-stone-400 flex-shrink-0" />
+                  <span className="text-sm text-stone-700 truncate flex-1">{t.title}</span>
+                  <span className="text-xs text-stone-400 flex-shrink-0">
                     {t.updatedAt
                       ? new Date(t.updatedAt).toLocaleDateString(undefined, {
                           month: 'short',

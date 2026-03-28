@@ -209,20 +209,20 @@ export function MissionCard({ mission, completed, completionTime, onStart }: Mis
   return (
     <motion.div
       {...fade}
-      className="bg-white rounded-lg border border-zinc-200 p-5"
+      className="bg-white rounded-lg border border-stone-200 p-5"
     >
-      <h3 className="text-base font-semibold text-zinc-900">{mission.title}</h3>
-      <p className="text-sm text-zinc-500 mt-1 leading-relaxed">{mission.description}</p>
-      <p className="text-xs text-zinc-400 mt-3">
+      <h3 className="text-base font-semibold text-stone-900">{mission.title}</h3>
+      <p className="text-sm text-stone-500 mt-1 leading-relaxed">{mission.description}</p>
+      <p className="text-xs text-stone-400 mt-3">
         {estimateLabel} &middot; {aiLabel}
       </p>
-      <p className="text-xs text-zinc-400 mt-1">
+      <p className="text-xs text-stone-400 mt-1">
         {mission.skills.join(', ')}
       </p>
 
       <div className="mt-4">
         {completed ? (
-          <span className="text-sm text-zinc-400">
+          <span className="text-sm text-stone-400">
             &#10003; Completed{completionTime !== undefined ? ` in ${completionTime}s` : ''}
           </span>
         ) : (
@@ -282,21 +282,21 @@ export function MissionRunner({ mission, onComplete, onCancel }: MissionRunnerPr
   return (
     <motion.div
       {...fade}
-      className="bg-white border border-zinc-200 rounded-lg overflow-hidden"
+      className="bg-white border border-stone-200 rounded-lg overflow-hidden"
     >
       {/* Header */}
-      <div className="px-5 py-4 border-b border-zinc-200 flex items-center justify-between">
+      <div className="px-5 py-4 border-b border-stone-200 flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-zinc-900">{mission.title}</h3>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <h3 className="text-sm font-semibold text-stone-900">{mission.title}</h3>
+          <p className="text-xs text-stone-400 mt-0.5">
             Step {currentStep + 1} of {mission.steps.length}
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-xs text-zinc-400 font-mono">{formatTime(elapsed)}</span>
+          <span className="text-xs text-stone-400 font-mono">{formatTime(elapsed)}</span>
           <button
             onClick={onCancel}
-            className="text-xs text-zinc-400 hover:text-zinc-600"
+            className="text-xs text-stone-400 hover:text-stone-600"
           >
             Cancel
           </button>
@@ -322,10 +322,10 @@ export function MissionRunner({ mission, onComplete, onCancel }: MissionRunnerPr
                     className={cn(
                       'text-sm',
                       idx < currentStep
-                        ? 'text-zinc-400'
+                        ? 'text-stone-400'
                         : idx === currentStep
-                        ? 'font-medium text-zinc-900'
-                        : 'text-zinc-400'
+                        ? 'font-medium text-stone-900'
+                        : 'text-stone-400'
                     )}
                   >
                     {idx + 1}. {s.title}
@@ -334,7 +334,7 @@ export function MissionRunner({ mission, onComplete, onCancel }: MissionRunnerPr
               </div>
 
               {/* Current step instruction */}
-              <p className="text-sm text-zinc-600 leading-relaxed mb-4">
+              <p className="text-sm text-stone-600 leading-relaxed mb-4">
                 {step.instruction}
               </p>
 
@@ -346,7 +346,7 @@ export function MissionRunner({ mission, onComplete, onCancel }: MissionRunnerPr
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.15 }}
-                    className="text-xs text-zinc-400 italic mb-4 leading-relaxed"
+                    className="text-xs text-stone-400 italic mb-4 leading-relaxed"
                   >
                     Tip: {step.tip}
                   </motion.p>
@@ -358,7 +358,7 @@ export function MissionRunner({ mission, onComplete, onCancel }: MissionRunnerPr
                 {step.tip && !showTip ? (
                   <button
                     onClick={() => setShowTip(true)}
-                    className="text-xs text-zinc-400 hover:text-zinc-600"
+                    className="text-xs text-stone-400 hover:text-stone-600"
                   >
                     Need help?
                   </button>
@@ -367,7 +367,7 @@ export function MissionRunner({ mission, onComplete, onCancel }: MissionRunnerPr
                 )}
                 <button
                   onClick={handleCompleteStep}
-                  className="text-sm text-zinc-900 font-medium hover:underline"
+                  className="text-sm text-stone-900 font-medium hover:underline"
                 >
                   {currentStep < mission.steps.length - 1
                     ? 'Complete step \u2192'
@@ -383,10 +383,10 @@ export function MissionRunner({ mission, onComplete, onCancel }: MissionRunnerPr
               transition={{ duration: 0.15 }}
               className="text-center py-8"
             >
-              <h3 className="text-base font-semibold text-zinc-900 mb-1">Mission complete</h3>
-              <p className="text-sm text-zinc-500 mb-6">
+              <h3 className="text-base font-semibold text-stone-900 mb-1">Mission complete</h3>
+              <p className="text-sm text-stone-500 mb-6">
                 You finished {mission.title} in{' '}
-                <span className="font-mono text-zinc-700">{formatTime(elapsed)}</span>
+                <span className="font-mono text-stone-700">{formatTime(elapsed)}</span>
               </p>
               <button
                 onClick={handleFinish}
@@ -463,8 +463,8 @@ export function MissionBrowser({
       className={cn(
         'text-xs px-2 py-1',
         active
-          ? 'font-medium text-zinc-900'
-          : 'text-zinc-400 hover:text-zinc-600'
+          ? 'font-medium text-stone-900'
+          : 'text-stone-400 hover:text-stone-600'
       )}
     >
       {label}
@@ -475,7 +475,7 @@ export function MissionBrowser({
     if (missions.length === 0) return null;
     return (
       <section>
-        <h3 className="text-sm font-medium text-zinc-900 mb-3">{title}</h3>
+        <h3 className="text-sm font-medium text-stone-900 mb-3">{title}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {missions.map((mission) => (
             <MissionCard
@@ -495,11 +495,11 @@ export function MissionBrowser({
     <div className={cn('space-y-10', className)}>
       {/* Header */}
       <div>
-        <h2 className="text-lg font-semibold text-zinc-900">Micro-Missions</h2>
-        <p className="text-sm text-zinc-500 mt-1">
+        <h2 className="text-lg font-semibold text-stone-900">Micro-Missions</h2>
+        <p className="text-sm text-stone-500 mt-1">
           60-second interactive challenges to master the platform
         </p>
-        <p className="text-xs text-zinc-400 mt-0.5">
+        <p className="text-xs text-stone-400 mt-0.5">
           {completedCount} of {MICRO_MISSIONS.length} completed
         </p>
       </div>
@@ -514,7 +514,7 @@ export function MissionBrowser({
             onClick={() => setDifficultyFilter(difficultyFilter === d ? null : d)}
           />
         ))}
-        <span className="text-zinc-200 mx-1">&middot;</span>
+        <span className="text-stone-200 mx-1">&middot;</span>
         {(['dr-sage', 'ana', 'both'] as const).map((a) => (
           <FilterToggle
             key={a}
@@ -526,7 +526,7 @@ export function MissionBrowser({
         {hasFilters && (
           <button
             onClick={clearFilters}
-            className="text-xs text-zinc-400 hover:text-zinc-600 ml-2"
+            className="text-xs text-stone-400 hover:text-stone-600 ml-2"
           >
             Clear
           </button>
@@ -545,7 +545,7 @@ export function MissionBrowser({
       {/* Filtered view */}
       {hasFilters && (
         <section>
-          <h3 className="text-sm font-medium text-zinc-900 mb-3">
+          <h3 className="text-sm font-medium text-stone-900 mb-3">
             {filteredMissions.length} mission{filteredMissions.length !== 1 ? 's' : ''} found
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -561,7 +561,7 @@ export function MissionBrowser({
           </div>
           {filteredMissions.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-sm text-zinc-500">No missions match your filters</p>
+              <p className="text-sm text-stone-500">No missions match your filters</p>
               <button
                 onClick={clearFilters}
                 className="text-xs text-blue-600 hover:underline mt-1"

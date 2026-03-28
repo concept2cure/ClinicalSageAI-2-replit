@@ -196,9 +196,9 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="py-6 px-5 border-t border-zinc-200 first:border-t-0 first:pt-2">
+    <div className="py-6 px-5 border-t border-stone-200 first:border-t-0 first:pt-2">
       {label && (
-        <p className="text-xs font-medium text-zinc-900 mb-3">{label}</p>
+        <p className="text-xs font-medium text-stone-900 mb-3">{label}</p>
       )}
       {children}
     </div>
@@ -215,22 +215,22 @@ function HelpContent() {
   return (
     <div>
       <div className="py-6 px-5">
-        <p className="text-xs uppercase tracking-wider text-zinc-400 mb-2">
+        <p className="text-xs uppercase tracking-wider text-stone-400 mb-2">
           Current Screen
         </p>
-        <h3 className="text-sm font-semibold text-zinc-900 mb-3">
+        <h3 className="text-sm font-semibold text-stone-900 mb-3">
           {ctx.screenName}
         </h3>
-        <p className="text-sm text-zinc-600 leading-relaxed mb-4">
+        <p className="text-sm text-stone-600 leading-relaxed mb-4">
           {ctx.whatIs}
         </p>
-        <p className="text-sm text-zinc-600 leading-relaxed">{ctx.whenToUse}</p>
+        <p className="text-sm text-stone-600 leading-relaxed">{ctx.whenToUse}</p>
       </div>
 
       <Section label="Key inputs">
         <ul className="space-y-1.5">
           {ctx.keyInputs.map((item) => (
-            <li key={item} className="text-sm text-zinc-600">
+            <li key={item} className="text-sm text-stone-600">
               {item}
             </li>
           ))}
@@ -240,7 +240,7 @@ function HelpContent() {
       <Section label="Expected outputs">
         <ul className="space-y-1.5">
           {ctx.expectedOutputs.map((item) => (
-            <li key={item} className="text-sm text-zinc-600">
+            <li key={item} className="text-sm text-stone-600">
               {item}
             </li>
           ))}
@@ -250,7 +250,7 @@ function HelpContent() {
       <Section label="Common mistakes to avoid">
         <ul className="space-y-1.5">
           {ctx.commonMistakes.map((item) => (
-            <li key={item} className="text-sm text-zinc-600">
+            <li key={item} className="text-sm text-stone-600">
               {item}
             </li>
           ))}
@@ -260,7 +260,7 @@ function HelpContent() {
       <Section label="Where AnA 1.0 helps">
         <ul className="space-y-1.5">
           {ctx.anaHelps.map((item) => (
-            <li key={item} className="text-sm text-zinc-600">
+            <li key={item} className="text-sm text-stone-600">
               {item}
             </li>
           ))}
@@ -274,35 +274,35 @@ function GuideContent() {
   return (
     <div className="py-6 px-5 space-y-4">
       <div>
-        <p className="text-xs uppercase tracking-wider text-zinc-400 mb-1">
+        <p className="text-xs uppercase tracking-wider text-stone-400 mb-1">
           Suggested next step
         </p>
-        <p className="text-sm font-semibold text-zinc-900">
+        <p className="text-sm font-semibold text-stone-900">
           {MOCK_GUIDE_ACTIONS[0].title}
         </p>
-        <p className="text-sm text-zinc-600 leading-relaxed mt-1">
+        <p className="text-sm text-stone-600 leading-relaxed mt-1">
           {MOCK_GUIDE_ACTIONS[0].why}
         </p>
       </div>
 
-      <div className="border-t border-zinc-200 pt-4 space-y-0">
+      <div className="border-t border-stone-200 pt-4 space-y-0">
         {MOCK_GUIDE_ACTIONS.map((action, idx) => (
           <button
             key={action.title}
             className={cn(
               "w-full flex items-start justify-between gap-3 py-3 text-left",
-              idx < MOCK_GUIDE_ACTIONS.length - 1 && "border-b border-zinc-50"
+              idx < MOCK_GUIDE_ACTIONS.length - 1 && "border-b border-stone-50"
             )}
           >
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-zinc-900">
+              <p className="text-sm font-semibold text-stone-900">
                 {action.title}
               </p>
-              <p className="text-sm text-zinc-500 mt-0.5 leading-relaxed">
+              <p className="text-sm text-stone-500 mt-0.5 leading-relaxed">
                 {action.why}
               </p>
             </div>
-            <ArrowRight className="h-4 w-4 text-zinc-400 shrink-0 mt-0.5" />
+            <ArrowRight className="h-4 w-4 text-stone-400 shrink-0 mt-0.5" />
           </button>
         ))}
       </div>
@@ -314,7 +314,7 @@ function DoItContent() {
   return (
     <div className="py-6 px-5 space-y-4">
       <div>
-        <p className="text-sm text-zinc-600 leading-relaxed">
+        <p className="text-sm text-stone-600 leading-relaxed">
           Follow along at your own pace. I will walk you through each step in
           real time.
         </p>
@@ -323,7 +323,7 @@ function DoItContent() {
         </button>
       </div>
 
-      <div className="border-t border-zinc-200 pt-4 space-y-3">
+      <div className="border-t border-stone-200 pt-4 space-y-3">
         {MOCK_WALKTHROUGH_STEPS.map((step, idx) => {
           const isDone = step.status === "done";
           const isActive = step.status === "active";
@@ -334,13 +334,13 @@ function DoItContent() {
               <span
                 className={cn(
                   "text-sm tabular-nums shrink-0 w-5 text-right",
-                  isDone && "text-zinc-400",
-                  isActive && "font-medium text-zinc-900",
-                  isPending && "text-zinc-400"
+                  isDone && "text-stone-400",
+                  isActive && "font-medium text-stone-900",
+                  isPending && "text-stone-400"
                 )}
               >
                 {isDone ? (
-                  <Check className="h-4 w-4 text-zinc-400 inline" />
+                  <Check className="h-4 w-4 text-stone-400 inline" />
                 ) : (
                   `${idx + 1}.`
                 )}
@@ -349,15 +349,15 @@ function DoItContent() {
                 <p
                   className={cn(
                     "text-sm",
-                    isDone && "text-zinc-400 line-through",
-                    isActive && "font-medium text-zinc-900",
-                    isPending && "text-zinc-400"
+                    isDone && "text-stone-400 line-through",
+                    isActive && "font-medium text-stone-900",
+                    isPending && "text-stone-400"
                   )}
                 >
                   {step.title}
                 </p>
                 {isActive && (
-                  <p className="text-sm text-zinc-500 mt-1 leading-relaxed">
+                  <p className="text-sm text-stone-500 mt-1 leading-relaxed">
                     {step.instruction}
                   </p>
                 )}
@@ -375,7 +375,7 @@ function AnaContent() {
 
   return (
     <div className="py-6 px-5 space-y-4">
-      <p className="text-sm text-zinc-600 leading-relaxed">
+      <p className="text-sm text-stone-600 leading-relaxed">
         AnA 1.0 understands your regulatory context, evidence base, and
         submission history. Ask anything about your current workspace.
       </p>
@@ -392,19 +392,19 @@ function AnaContent() {
         ))}
       </div>
 
-      <div className="border-t border-zinc-200 pt-4 space-y-3">
+      <div className="border-t border-stone-200 pt-4 space-y-3">
         <textarea
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Ask AnA 1.0 anything..."
-          className="w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none focus:border-zinc-300 resize-none h-20"
+          className="w-full rounded-lg border border-stone-200 bg-white p-3 text-sm text-stone-900 placeholder:text-stone-400 outline-none focus:border-stone-300 resize-none h-20"
         />
         <div className="flex items-center justify-between">
-          <button className="flex items-center gap-1.5 text-sm font-medium text-zinc-900 hover:text-zinc-600">
+          <button className="flex items-center gap-1.5 text-sm font-medium text-stone-900 hover:text-stone-600">
             <Send className="h-3.5 w-3.5" />
             Send
           </button>
-          <button className="text-sm text-zinc-400 hover:text-zinc-600">
+          <button className="text-sm text-stone-400 hover:text-stone-600">
             Open full workspace
           </button>
         </div>
@@ -446,7 +446,7 @@ function FixContent() {
 
   return (
     <div className="py-6 px-5 space-y-4">
-      <p className="text-sm text-zinc-600 leading-relaxed">
+      <p className="text-sm text-stone-600 leading-relaxed">
         I found a few issues in your current workspace that are worth
         addressing.
       </p>
@@ -457,7 +457,7 @@ function FixContent() {
             key={issue.title}
             className={cn(
               "py-4",
-              idx < MOCK_ISSUES.length - 1 && "border-b border-zinc-200"
+              idx < MOCK_ISSUES.length - 1 && "border-b border-stone-200"
             )}
           >
             <div className="flex items-start gap-3">
@@ -467,22 +467,22 @@ function FixContent() {
                     className={cn(
                       "text-sm",
                       issue.resolved || fixResults[idx]?.success
-                        ? "text-zinc-400"
+                        ? "text-stone-400"
                         : issue.severity === "critical"
-                          ? "font-semibold text-zinc-900"
-                          : "font-medium text-zinc-900"
+                          ? "font-semibold text-stone-900"
+                          : "font-medium text-stone-900"
                     )}
                   >
                     {issue.title}
                   </p>
                   {(issue.resolved || fixResults[idx]?.success) && (
-                    <Check className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                    <Check className="h-3.5 w-3.5 text-stone-400 shrink-0" />
                   )}
                 </div>
-                <p className="text-xs uppercase tracking-wider text-zinc-400 mb-1">
+                <p className="text-xs uppercase tracking-wider text-stone-400 mb-1">
                   {issue.severity}
                 </p>
-                <p className="text-sm text-zinc-500 leading-relaxed">
+                <p className="text-sm text-stone-500 leading-relaxed">
                   {issue.description}
                 </p>
                 {!issue.resolved && !fixResults[idx]?.success && (
@@ -535,7 +535,7 @@ export function DrSageButton({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{ duration: 0.15 }}
-      className="fixed right-6 bottom-6 z-50 flex items-center justify-center h-12 w-12 rounded-full bg-zinc-900 text-white hover:bg-zinc-800 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
+      className="fixed right-6 bottom-6 z-50 flex items-center justify-center h-12 w-12 rounded-full bg-stone-900 text-white hover:bg-stone-800 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2"
     >
       <Sparkles className="h-5 w-5" />
     </motion.button>
@@ -590,21 +590,21 @@ export function DrSagePanel({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 bottom-0 z-50 w-[400px] flex flex-col bg-white shadow-sm border-l border-zinc-200"
+            className="fixed right-0 top-0 bottom-0 z-50 w-[400px] flex flex-col bg-white shadow-sm border-l border-stone-200"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 shrink-0">
-              <h2 className="text-sm font-semibold text-zinc-900">Dr. Sage</h2>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200 shrink-0">
+              <h2 className="text-sm font-semibold text-stone-900">Dr. Sage</h2>
               <button
                 onClick={onToggle}
-                className="h-6 w-6 flex items-center justify-center text-zinc-400 hover:text-zinc-600 transition-colors duration-150"
+                className="h-6 w-6 flex items-center justify-center text-stone-400 hover:text-stone-600 transition-colors duration-150"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             {/* Tab navigation */}
-            <div className="px-5 border-b border-zinc-200 shrink-0 overflow-x-auto">
+            <div className="px-5 border-b border-stone-200 shrink-0 overflow-x-auto">
               <div className="flex gap-4 min-w-max">
                 {TABS.map((tab) => {
                   const active = activeTab === tab.id;
@@ -615,15 +615,15 @@ export function DrSagePanel({
                       className={cn(
                         "relative py-3 text-sm whitespace-nowrap transition-colors duration-150",
                         active
-                          ? "text-zinc-900"
-                          : "text-zinc-400 hover:text-zinc-600"
+                          ? "text-stone-900"
+                          : "text-stone-400 hover:text-stone-600"
                       )}
                     >
                       {tab.label}
                       {active && (
                         <motion.div
                           layoutId="dr-sage-tab-indicator"
-                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-zinc-900"
+                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-stone-900"
                           transition={{ duration: 0.15 }}
                         />
                       )}

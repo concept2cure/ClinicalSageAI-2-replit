@@ -98,20 +98,20 @@ export function BeforeAfterSlider({
   return (
     <div
       className={cn(
-        'w-full bg-white border border-zinc-200 rounded-lg overflow-hidden',
+        'w-full bg-white border border-stone-200 rounded-lg overflow-hidden',
         className
       )}
     >
       <div className="grid grid-cols-2 min-h-[320px]">
         {/* Before column */}
-        <div className="p-6 border-r border-zinc-200">
-          <h3 className="text-sm font-medium text-zinc-400 mb-4">
+        <div className="p-6 border-r border-stone-200">
+          <h3 className="text-sm font-medium text-stone-400 mb-4">
             Before
           </h3>
           <ul className="space-y-3">
             {comparison.before.map((item, i) => (
-              <li key={i} className="text-sm text-zinc-500 leading-relaxed">
-                <span className="text-zinc-400 mr-2">&middot;</span>
+              <li key={i} className="text-sm text-stone-500 leading-relaxed">
+                <span className="text-stone-400 mr-2">&middot;</span>
                 {item.text}
               </li>
             ))}
@@ -120,13 +120,13 @@ export function BeforeAfterSlider({
 
         {/* After column */}
         <div className="p-6">
-          <h3 className="text-sm font-medium text-zinc-900 mb-4">
+          <h3 className="text-sm font-medium text-stone-900 mb-4">
             With Concept2Cure
           </h3>
           <ul className="space-y-3">
             {comparison.after.map((item, i) => (
-              <li key={i} className="text-sm text-zinc-700 leading-relaxed">
-                <span className="text-zinc-400 mr-2">{'\u2713'}</span>
+              <li key={i} className="text-sm text-stone-700 leading-relaxed">
+                <span className="text-stone-400 mr-2">{'\u2713'}</span>
                 {item.text}
               </li>
             ))}

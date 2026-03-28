@@ -353,8 +353,8 @@ function CrossJurisdictionalPanel() {
               title={fw.frameworkName as string}
               actions={<StatusPill label={(fw.frameworkType as string).replace(/_/g, ' ')} variant="info" />}
             />
-            <p className="text-sm text-zinc-500 mt-3">{fw.description as string}</p>
-            <div className="flex items-center gap-4 mt-3 text-xs text-zinc-500">
+            <p className="text-sm text-stone-500 mt-3">{fw.description as string}</p>
+            <div className="flex items-center gap-4 mt-3 text-xs text-stone-500">
               <span>{(fw.memberAgencies as string[]).length} agencies</span>
               {fw.typicalTimelineDays && <span>{fw.typicalTimelineDays as number}d timeline</span>}
               {fw.parallelReviewSavingsDays && (
@@ -406,7 +406,7 @@ function CalibrationPanel() {
 
       <EnterpriseCard>
         <CardHeader icon={Zap} iconClassName="bg-blue-100 text-blue-600" title="Recommendation" />
-        <p className="text-sm text-zinc-600 mt-3">{data.recommendation}</p>
+        <p className="text-sm text-stone-600 mt-3">{data.recommendation}</p>
       </EnterpriseCard>
 
       {Object.keys(data.calibrationByBucket).length > 0 && (
@@ -417,8 +417,8 @@ function CalibrationPanel() {
           {Object.entries(data.calibrationByBucket).map(([bucket, vals]: [string, Record<string, number>]) => (
             <CardSection key={bucket}>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-mono text-zinc-700">{bucket}</span>
-                <div className="flex items-center gap-4 text-xs text-zinc-500">
+                <span className="text-sm font-mono text-stone-700">{bucket}</span>
+                <div className="flex items-center gap-4 text-xs text-stone-500">
                   <span>Predicted: {((vals.predicted ?? 0) * 100).toFixed(1)}%</span>
                   <span>Actual: {((vals.actual ?? 0) * 100).toFixed(1)}%</span>
                   <StatusPill label={`${vals.count ?? 0} samples`} variant="default" />
@@ -770,7 +770,7 @@ function OverlayRulesPanel() {
           <CardSection border={false}>
             <CardHeader
               icon={Globe}
-              iconClassName={bodyIcon[body] ?? 'bg-zinc-100 text-zinc-600'}
+              iconClassName={bodyIcon[body] ?? 'bg-stone-100 text-stone-600'}
               title={`${body} Overlay Rules`}
               subtitle={`${bodyRules.length} rule${bodyRules.length !== 1 ? 's' : ''} — adapts contradiction handling for ${body} submissions`}
             />
@@ -791,7 +791,7 @@ function OverlayRulesPanel() {
                 chevron
               />
               {r.description && (
-                <div className="text-xs text-zinc-500 mt-1 pl-9 leading-relaxed">{r.description as string}</div>
+                <div className="text-xs text-stone-500 mt-1 pl-9 leading-relaxed">{r.description as string}</div>
               )}
             </CardSection>
           ))}
@@ -918,7 +918,7 @@ function ImpactPanel() {
           {data.recentPropagations.slice(0, 8).map((p: Record<string, unknown>, i: number) => (
             <CardSection key={i}>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-zinc-700">{formatCategory(p.triggerType as string)}</span>
+                <span className="text-stone-700">{formatCategory(p.triggerType as string)}</span>
                 <StatusPill label={formatCategory(p.actionTaken as string)} variant="info" />
               </div>
             </CardSection>
@@ -937,7 +937,7 @@ function LoadingCards({ count }: { count: number }) {
   return (
     <div className={`grid grid-cols-2 md:grid-cols-${count} gap-4`}>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="h-28 bg-zinc-100 rounded-xl animate-pulse" />
+        <div key={i} className="h-28 bg-stone-100 rounded-xl animate-pulse" />
       ))}
     </div>
   );
@@ -998,14 +998,14 @@ export default function RegulatoryPrecedentIntelligence({ onClose, onContextChan
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-white">
       {/* ── Page header ── */}
-      <div className="flex items-center gap-4 px-6 py-4 border-b border-zinc-200 bg-white sticky top-0 z-10">
+      <div className="flex items-center gap-4 px-6 py-4 border-b border-stone-200 bg-white sticky top-0 z-10">
         {onClose && (
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-zinc-100 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-stone-100 transition-colors"
             aria-label="Go back"
           >
-            <ArrowLeft size={18} className="text-zinc-500" />
+            <ArrowLeft size={18} className="text-stone-500" />
           </button>
         )}
         <SectionHeader
@@ -1018,7 +1018,7 @@ export default function RegulatoryPrecedentIntelligence({ onClose, onContextChan
       </div>
 
       {/* ── Tab navigation ── */}
-      <div className="px-6 border-b border-zinc-200 bg-white overflow-x-auto">
+      <div className="px-6 border-b border-stone-200 bg-white overflow-x-auto">
         <div className="flex gap-1 min-w-max -mb-px">
           {tabs.map(tab => (
             <button
@@ -1028,7 +1028,7 @@ export default function RegulatoryPrecedentIntelligence({ onClose, onContextChan
                 'px-4 py-3 text-sm font-medium transition-colors border-b-2',
                 activeTab === tab.key
                   ? 'text-blue-600 border-blue-600'
-                  : 'text-zinc-500 border-transparent hover:text-zinc-700 hover:border-zinc-300'
+                  : 'text-stone-500 border-transparent hover:text-stone-700 hover:border-stone-300'
               )}
             >
               {tab.label}
@@ -1038,7 +1038,7 @@ export default function RegulatoryPrecedentIntelligence({ onClose, onContextChan
       </div>
 
       {/* ── Content ── */}
-      <div className="flex-1 overflow-y-auto p-6 bg-zinc-50">
+      <div className="flex-1 overflow-y-auto p-6 bg-stone-50">
         {renderPanel()}
       </div>
     </div>

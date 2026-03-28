@@ -104,7 +104,7 @@ const CONNECTION_STATUS_CONFIG: Record<
   OFFLINE: {
     key: 'offline',
     label: 'Offline',
-    color: 'bg-zinc-100 text-zinc-500',
+    color: 'bg-stone-100 text-stone-500',
     icon: <CloudLightning className="w-3 h-3" />,
   },
 };
@@ -130,7 +130,7 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
   return (
     <div
       className={cn(
-        'h-8 bg-white/80 backdrop-blur-sm border-b border-zinc-100 flex items-center justify-between px-4 text-xs z-30 select-none',
+        'h-8 bg-white/80 backdrop-blur-sm border-b border-stone-100 flex items-center justify-between px-4 text-xs z-30 select-none',
         className
       )}
     >
@@ -138,10 +138,10 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
       <div className="flex items-center gap-3">
         <button
           onClick={onProjectClick}
-          className="flex items-center gap-1.5 hover:bg-zinc-50 rounded px-1.5 py-0.5 -ml-1.5 transition-colors duration-150"
+          className="flex items-center gap-1.5 hover:bg-stone-50 rounded px-1.5 py-0.5 -ml-1.5 transition-colors duration-150"
         >
-          <span className="font-medium text-zinc-700 text-[11px]">{project}</span>
-          <span className="text-zinc-300">/</span>
+          <span className="font-medium text-stone-700 text-[11px]">{project}</span>
+          <span className="text-stone-300">/</span>
           <span className={cn('font-medium text-[11px] flex items-center gap-1', modeConfig.color)}>
             {modeConfig.icon}
             {status || modeConfig.label}
@@ -154,22 +154,22 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
         {/* Active Users */}
         {activeUsers > 0 && (
           <>
-            <div className="flex items-center gap-1 text-zinc-400">
+            <div className="flex items-center gap-1 text-stone-400">
               <Users className="w-3 h-3" />
               <span className="font-medium text-[11px]">{activeUsers}</span>
             </div>
-            <div className="h-3 w-px bg-zinc-200" />
+            <div className="h-3 w-px bg-stone-200" />
           </>
         )}
 
         {/* CORTEX Connection */}
         <button
           onClick={onConnectionClick}
-          className="flex items-center gap-1.5 px-1.5 py-0.5 rounded hover:bg-zinc-50 transition-colors duration-150"
+          className="flex items-center gap-1.5 px-1.5 py-0.5 rounded hover:bg-stone-50 transition-colors duration-150"
           title={`AnA Cortex: ${connConfig.label}${lastSyncTime ? ` \u2022 Last sync: ${lastSyncTime}` : ''}`}
         >
           <Zap className="w-3 h-3 text-blue-500" />
-          <span className="text-[10px] font-medium text-zinc-400 tracking-wide">CORTEX</span>
+          <span className="text-[10px] font-medium text-stone-400 tracking-wide">CORTEX</span>
           <WorkspaceStatusBadge status={connConfig.key} config={connConfig} />
         </button>
       </div>

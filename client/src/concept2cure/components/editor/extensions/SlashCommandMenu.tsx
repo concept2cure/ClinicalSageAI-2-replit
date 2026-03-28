@@ -119,7 +119,7 @@ export function getSlashCommands(
       id: 'heading-1',
       label: 'Heading 1',
       description: 'Large section heading',
-      icon: <Heading1 className="w-4 h-4 text-zinc-600" />,
+      icon: <Heading1 className="w-4 h-4 text-stone-600" />,
       category: 'format',
       action: (editor) => {
         editor.chain().focus().toggleHeading({ level: 1 }).run();
@@ -129,7 +129,7 @@ export function getSlashCommands(
       id: 'heading-2',
       label: 'Heading 2',
       description: 'Medium section heading',
-      icon: <Heading2 className="w-4 h-4 text-zinc-600" />,
+      icon: <Heading2 className="w-4 h-4 text-stone-600" />,
       category: 'format',
       action: (editor) => {
         editor.chain().focus().toggleHeading({ level: 2 }).run();
@@ -139,7 +139,7 @@ export function getSlashCommands(
       id: 'heading-3',
       label: 'Heading 3',
       description: 'Small section heading',
-      icon: <Heading3 className="w-4 h-4 text-zinc-600" />,
+      icon: <Heading3 className="w-4 h-4 text-stone-600" />,
       category: 'format',
       action: (editor) => {
         editor.chain().focus().toggleHeading({ level: 3 }).run();
@@ -213,11 +213,11 @@ export const SlashCommandList = React.forwardRef<
   return (
     <div
       ref={containerRef}
-      className="bg-white border border-zinc-200 rounded-xl shadow-xl overflow-hidden w-72 max-h-80 overflow-y-auto"
+      className="bg-white border border-stone-200 rounded-xl shadow-xl overflow-hidden w-72 max-h-80 overflow-y-auto"
     >
       {Object.entries(grouped).map(([category, categoryItems]) => (
         <div key={category}>
-          <div className="px-3 py-1.5 text-xs font-semibold text-zinc-400 uppercase tracking-wider bg-zinc-50">
+          <div className="px-3 py-1.5 text-xs font-semibold text-stone-400 uppercase tracking-wider bg-stone-50">
             {categoryLabels[category] || category}
           </div>
           {categoryItems.map((item) => {
@@ -230,13 +230,13 @@ export const SlashCommandList = React.forwardRef<
                 className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
                   idx === selectedIndex
                     ? 'bg-blue-50 text-blue-700'
-                    : 'hover:bg-zinc-50 text-zinc-700'
+                    : 'hover:bg-stone-50 text-stone-700'
                 }`}
               >
                 <span className="flex-shrink-0">{item.icon}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">{item.label}</p>
-                  <p className="text-xs text-zinc-500 truncate">{item.description}</p>
+                  <p className="text-xs text-stone-500 truncate">{item.description}</p>
                 </div>
               </button>
             );
@@ -244,7 +244,7 @@ export const SlashCommandList = React.forwardRef<
         </div>
       ))}
       {items.length === 0 && (
-        <div className="px-3 py-4 text-sm text-zinc-500 text-center">
+        <div className="px-3 py-4 text-sm text-stone-500 text-center">
           No commands found
         </div>
       )}

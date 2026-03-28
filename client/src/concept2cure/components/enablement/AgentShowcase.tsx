@@ -594,8 +594,8 @@ function FilterBar({
           className={cn(
             "px-3 py-1.5 text-sm rounded-md transition-colors duration-150",
             value === key
-              ? "bg-zinc-900 text-white"
-              : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50"
+              ? "bg-stone-900 text-white"
+              : "text-stone-500 hover:text-stone-900 hover:bg-stone-50"
           )}
         >
           {label}
@@ -614,20 +614,20 @@ function CapabilityCard({ cap }: { cap: AgentCapability }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 4 }}
       transition={{ duration: 0.15 }}
-      className="bg-white border border-zinc-200 rounded-lg p-5"
+      className="bg-white border border-stone-200 rounded-lg p-5"
     >
       {/* Header row */}
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="min-w-0">
-          <h3 className="text-base font-semibold text-zinc-900 leading-snug">
+          <h3 className="text-base font-semibold text-stone-900 leading-snug">
             {cap.name}
           </h3>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs text-zinc-400">
+            <span className="text-xs text-stone-400">
               {systemLabels[cap.system]}
             </span>
-            <span className="text-zinc-200">·</span>
-            <span className="text-xs text-zinc-400">
+            <span className="text-stone-200">·</span>
+            <span className="text-xs text-stone-400">
               {categoryLabels[cap.category]}
             </span>
           </div>
@@ -635,9 +635,9 @@ function CapabilityCard({ cap }: { cap: AgentCapability }) {
         <span
           className={cn(
             "text-xs shrink-0 mt-0.5",
-            cap.status === "active" && "text-zinc-900",
-            cap.status === "beta" && "text-zinc-400",
-            cap.status === "coming-soon" && "text-zinc-400"
+            cap.status === "active" && "text-stone-900",
+            cap.status === "beta" && "text-stone-400",
+            cap.status === "coming-soon" && "text-stone-400"
           )}
         >
           {statusLabel[cap.status]}
@@ -645,7 +645,7 @@ function CapabilityCard({ cap }: { cap: AgentCapability }) {
       </div>
 
       {/* Description */}
-      <p className="text-sm text-zinc-600 leading-relaxed line-clamp-2 mb-3">
+      <p className="text-sm text-stone-600 leading-relaxed line-clamp-2 mb-3">
         {cap.description}
       </p>
 
@@ -676,7 +676,7 @@ function CapabilityCard({ cap }: { cap: AgentCapability }) {
               {cap.whatItDoes.map((item, i) => (
                 <li
                   key={i}
-                  className="text-sm text-zinc-600 leading-relaxed pl-3 relative before:content-['·'] before:absolute before:left-0 before:text-zinc-400"
+                  className="text-sm text-stone-600 leading-relaxed pl-3 relative before:content-['·'] before:absolute before:left-0 before:text-stone-400"
                 >
                   {item}
                 </li>
@@ -687,14 +687,14 @@ function CapabilityCard({ cap }: { cap: AgentCapability }) {
       </AnimatePresence>
 
       {/* Powers workflows */}
-      <p className="text-xs text-zinc-400 leading-relaxed">
-        <span className="text-zinc-500">Powers:</span>{" "}
+      <p className="text-xs text-stone-400 leading-relaxed">
+        <span className="text-stone-500">Powers:</span>{" "}
         {cap.powersWorkflows.join(", ")}
       </p>
 
       {/* API endpoint */}
       {cap.apiEndpoint && (
-        <p className="text-xs text-zinc-400 font-mono mt-2">
+        <p className="text-xs text-stone-400 font-mono mt-2">
           {cap.apiEndpoint}
         </p>
       )}
@@ -733,14 +733,14 @@ export function AgentShowcase() {
       <div className="max-w-4xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="mb-10">
-          <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">
+          <h1 className="text-2xl font-semibold text-stone-900 tracking-tight">
             AI Capabilities
           </h1>
-          <p className="text-sm text-zinc-600 mt-1.5">
+          <p className="text-sm text-stone-600 mt-1.5">
             35 specialized AI agents and services power your regulatory
             workflows
           </p>
-          <p className="text-xs text-zinc-400 mt-3">
+          <p className="text-xs text-stone-400 mt-3">
             {counts.active} active · {counts.beta} in beta · {counts.coming}{" "}
             coming soon
           </p>
@@ -766,7 +766,7 @@ export function AgentShowcase() {
         </div>
 
         {/* Results count */}
-        <p className="text-xs text-zinc-400 mb-4">
+        <p className="text-xs text-stone-400 mb-4">
           {filtered.length} {filtered.length === 1 ? "capability" : "capabilities"}
         </p>
 
@@ -781,7 +781,7 @@ export function AgentShowcase() {
 
         {filtered.length === 0 && (
           <div className="text-center py-16">
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-stone-400">
               No capabilities match the selected filters.
             </p>
           </div>

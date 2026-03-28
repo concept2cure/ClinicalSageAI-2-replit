@@ -44,7 +44,7 @@ export const ZenLoader: React.FC<ZenLoaderProps> = ({
     <motion.div className={`relative ${sizes[size]}`}>
       {/* Outer ring */}
       <motion.div
-        className="absolute inset-0 border-2 border-zinc-200 rounded-full"
+        className="absolute inset-0 border-2 border-stone-200 rounded-full"
       />
       {/* Spinning arc */}
       <motion.div
@@ -75,7 +75,7 @@ export const ZenLoader: React.FC<ZenLoaderProps> = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="mt-4 text-sm text-zinc-500"
+            className="mt-4 text-sm text-stone-500"
           >
             {message}
           </motion.p>
@@ -87,7 +87,7 @@ export const ZenLoader: React.FC<ZenLoaderProps> = ({
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-8">
       <Spinner />
-      {message && <p className="text-sm text-zinc-500">{message}</p>}
+      {message && <p className="text-sm text-stone-500">{message}</p>}
     </div>
   );
 };
@@ -111,7 +111,7 @@ export const ZenSkeleton: React.FC<ZenSkeletonProps> = ({
   lines = 1,
   className = '',
 }) => {
-  const baseClass = 'animate-pulse bg-zinc-200 rounded';
+  const baseClass = 'animate-pulse bg-stone-200 rounded';
 
   const styles: React.CSSProperties = {
     width: width || (variant === 'text' ? '100%' : undefined),
@@ -131,9 +131,9 @@ export const ZenSkeleton: React.FC<ZenSkeletonProps> = ({
     return (
       <div className={`${baseClass} rounded-xl p-4 ${className}`} style={styles}>
         <div className="space-y-3">
-          <div className="h-4 bg-zinc-300 rounded w-3/4" />
-          <div className="h-3 bg-zinc-300 rounded w-full" />
-          <div className="h-3 bg-zinc-300 rounded w-5/6" />
+          <div className="h-4 bg-stone-300 rounded w-3/4" />
+          <div className="h-3 bg-stone-300 rounded w-full" />
+          <div className="h-3 bg-stone-300 rounded w-5/6" />
         </div>
       </div>
     );
@@ -202,11 +202,11 @@ export const ZenChatSkeleton: React.FC = () => (
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const ZenTypingIndicator: React.FC = () => (
-  <div className="flex items-center gap-1 p-3 bg-zinc-100 rounded-xl rounded-tl-none w-fit">
+  <div className="flex items-center gap-1 p-3 bg-stone-100 rounded-xl rounded-tl-none w-fit">
     {[0, 1, 2].map((i) => (
       <motion.div
         key={i}
-        className="w-2 h-2 bg-zinc-400 rounded-full"
+        className="w-2 h-2 bg-stone-400 rounded-full"
         animate={{ y: [0, -4, 0] }}
         transition={{
           duration: 0.6,
@@ -440,7 +440,7 @@ export const ZenProgress: React.FC<ZenProgressProps> = ({
 
   return (
     <div className={className}>
-      <div className={`w-full bg-zinc-200 rounded-full overflow-hidden ${heights[size]}`}>
+      <div className={`w-full bg-stone-200 rounded-full overflow-hidden ${heights[size]}`}>
         <motion.div
           className={`${heights[size]} ${colors[color]} rounded-full`}
           initial={{ width: 0 }}
@@ -449,7 +449,7 @@ export const ZenProgress: React.FC<ZenProgressProps> = ({
         />
       </div>
       {showLabel && (
-        <p className="mt-1 text-xs text-zinc-500 text-right">{Math.round(percentage)}%</p>
+        <p className="mt-1 text-xs text-stone-500 text-right">{Math.round(percentage)}%</p>
       )}
     </div>
   );
@@ -530,7 +530,7 @@ export const MotionPanel: React.FC<MotionPanelProps> = ({
             exit={{ x: slideFrom, opacity: 0.8 }}
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
             className={cn(
-              'fixed top-0 h-full bg-white shadow-xl z-50 overflow-y-auto border-zinc-200',
+              'fixed top-0 h-full bg-white shadow-xl z-50 overflow-y-auto border-stone-200',
               side === 'right' ? 'right-0 border-l' : 'left-0 border-r',
               width,
               className,
@@ -582,7 +582,7 @@ export const MotionModal: React.FC<MotionModalProps> = ({
           exit={{ opacity: 0, scale: 0.95, y: 8 }}
           transition={{ type: 'spring', damping: 25, stiffness: 350 }}
           className={cn(
-            'relative z-10 bg-white rounded-xl shadow-2xl border border-zinc-200',
+            'relative z-10 bg-white rounded-xl shadow-2xl border border-stone-200',
             className,
           )}
           role="dialog"
@@ -709,17 +709,17 @@ export const MotionShimmer: React.FC<MotionShimmerProps> = ({
   <div className={cn('space-y-3', className)} role="status" aria-label="Loading content">
     {avatar && (
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-zinc-200 animate-pulse" />
+        <div className="w-10 h-10 rounded-full bg-stone-200 animate-pulse" />
         <div className="flex-1 space-y-1.5">
-          <div className="h-3.5 bg-zinc-200 rounded w-1/3 animate-pulse" />
-          <div className="h-2.5 bg-zinc-100 rounded w-1/4 animate-pulse" />
+          <div className="h-3.5 bg-stone-200 rounded w-1/3 animate-pulse" />
+          <div className="h-2.5 bg-stone-100 rounded w-1/4 animate-pulse" />
         </div>
       </div>
     )}
     {Array.from({ length: lines }).map((_, i) => (
       <motion.div
         key={i}
-        className="h-3 bg-zinc-200 rounded"
+        className="h-3 bg-stone-200 rounded"
         style={{ width: i === lines - 1 ? '60%' : i === 0 ? '90%' : '100%' }}
         animate={{ opacity: [0.5, 1, 0.5] }}
         transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.1 }}

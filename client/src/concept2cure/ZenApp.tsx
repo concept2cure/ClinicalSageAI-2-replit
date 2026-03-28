@@ -623,35 +623,35 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-col h-full bg-white border-l border-zinc-200',
+        'flex flex-col h-full bg-white border-l border-stone-200',
         isFullscreen ? 'w-full' : 'w-full sm:w-80 md:w-96 lg:w-[600px]'
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between h-14 px-4 border-b border-zinc-100 bg-zinc-50/50">
+      <div className="flex items-center justify-between h-14 px-4 border-b border-stone-100 bg-stone-50/50">
         <div className="flex items-center gap-3">
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50 transition-colors"
+            className="p-1.5 rounded-lg text-stone-500 hover:text-stone-700 hover:bg-stone-200/50 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <div className="flex items-center gap-2">
-            <Icon className="w-4 h-4 text-zinc-600" />
-            <span className="font-medium text-zinc-900">{config.title}</span>
+            <Icon className="w-4 h-4 text-stone-600" />
+            <span className="font-medium text-stone-900">{config.title}</span>
           </div>
         </div>
         <div className="flex items-center gap-1">
           <button
             onClick={onToggleFullscreen}
-            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50 transition-colors"
+            className="p-1.5 rounded-lg text-stone-500 hover:text-stone-700 hover:bg-stone-200/50 transition-colors"
             title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50 transition-colors"
+            className="p-1.5 rounded-lg text-stone-500 hover:text-stone-700 hover:bg-stone-200/50 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -676,11 +676,11 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
             ) : (
               <div className="flex items-center justify-center h-full text-center p-8">
                 <div>
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-zinc-100 flex items-center justify-center">
-                    <Icon className="w-8 h-8 text-zinc-500" />
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-stone-100 flex items-center justify-center">
+                    <Icon className="w-8 h-8 text-stone-500" />
                   </div>
-                  <h3 className="text-lg font-semibold text-zinc-900 mb-2">{config.title}</h3>
-                  <p className="text-sm text-zinc-500 max-w-sm">{config.title} module loading...</p>
+                  <h3 className="text-lg font-semibold text-stone-900 mb-2">{config.title}</h3>
+                  <p className="text-sm text-stone-500 max-w-sm">{config.title} module loading...</p>
                 </div>
               </div>
             )}
@@ -2062,18 +2062,18 @@ export const ZenApp: React.FC = () => {
     onBack: () => void;
     backLabel?: string;
   }) => (
-    <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
+    <div className="flex items-center gap-3 px-4 h-12 border-b border-stone-100 bg-white flex-shrink-0">
       <button
         onClick={onBack}
-        className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
+        className="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-900 transition-colors"
       >
         <ChevronLeft className="w-4 h-4" />
         <span>{backLabel || 'Back'}</span>
       </button>
-      <div className="w-px h-4 bg-zinc-200" />
-      {icon && <span className="text-zinc-400">{icon}</span>}
-      <span className="text-sm font-medium text-zinc-900">{title}</span>
-      {subtitle && <span className="text-xs text-zinc-400 ml-1 hidden sm:inline">{subtitle}</span>}
+      <div className="w-px h-4 bg-stone-200" />
+      {icon && <span className="text-stone-400">{icon}</span>}
+      <span className="text-sm font-medium text-stone-900">{title}</span>
+      {subtitle && <span className="text-xs text-stone-400 ml-1 hidden sm:inline">{subtitle}</span>}
     </div>
   );
 
@@ -2346,13 +2346,13 @@ export const ZenApp: React.FC = () => {
               {!moduleAssistantOpen && (
                 <button
                   onClick={() => setModuleAssistantOpen(true)}
-                  className="flex-shrink-0 w-10 flex flex-col items-center justify-center gap-1 bg-zinc-50 hover:bg-zinc-100 border-l border-zinc-200 transition-colors"
+                  className="flex-shrink-0 w-10 flex flex-col items-center justify-center gap-1 bg-stone-50 hover:bg-stone-100 border-l border-stone-200 transition-colors"
                   title="Open AI Assistant"
                   data-testid="module-assistant-toggle"
                 >
-                  <MessageSquare className="w-4 h-4 text-zinc-500" />
+                  <MessageSquare className="w-4 h-4 text-stone-500" />
                   <span
-                    className="text-[10px] text-zinc-400 writing-mode-vertical"
+                    className="text-[10px] text-stone-400 writing-mode-vertical"
                     style={{ writingMode: 'vertical-rl' }}
                   >
                     Assistant
@@ -2363,14 +2363,14 @@ export const ZenApp: React.FC = () => {
               {/* Collapsible assistant drawer */}
               {moduleAssistantOpen && (
                 <div
-                  className="flex-shrink-0 w-[380px] flex flex-col border-l border-zinc-200 bg-white"
+                  className="flex-shrink-0 w-[380px] flex flex-col border-l border-stone-200 bg-white"
                   data-testid="module-assistant-panel"
                 >
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-zinc-50">
-                    <span className="text-sm font-medium text-zinc-700">AI Assistant</span>
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-stone-100 bg-stone-50">
+                    <span className="text-sm font-medium text-stone-700">AI Assistant</span>
                     <button
                       onClick={() => setModuleAssistantOpen(false)}
-                      className="p-1 rounded hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600"
+                      className="p-1 rounded hover:bg-stone-200 text-stone-400 hover:text-stone-600"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -2417,12 +2417,12 @@ export const ZenApp: React.FC = () => {
               {!moduleAssistantOpen && (
                 <button
                   onClick={() => setModuleAssistantOpen(true)}
-                  className="flex-shrink-0 w-10 flex flex-col items-center justify-center gap-1 bg-zinc-50 hover:bg-zinc-100 border-l border-zinc-200 transition-colors"
+                  className="flex-shrink-0 w-10 flex flex-col items-center justify-center gap-1 bg-stone-50 hover:bg-stone-100 border-l border-stone-200 transition-colors"
                   title="Open AI Assistant"
                 >
-                  <MessageSquare className="w-4 h-4 text-zinc-500" />
+                  <MessageSquare className="w-4 h-4 text-stone-500" />
                   <span
-                    className="text-[10px] text-zinc-400 writing-mode-vertical"
+                    className="text-[10px] text-stone-400 writing-mode-vertical"
                     style={{ writingMode: 'vertical-rl' }}
                   >
                     Assistant
@@ -2431,12 +2431,12 @@ export const ZenApp: React.FC = () => {
               )}
 
               {moduleAssistantOpen && (
-                <div className="flex-shrink-0 w-[380px] flex flex-col border-l border-zinc-200 bg-white">
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-zinc-50">
-                    <span className="text-sm font-medium text-zinc-700">AI Assistant</span>
+                <div className="flex-shrink-0 w-[380px] flex flex-col border-l border-stone-200 bg-white">
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-stone-100 bg-stone-50">
+                    <span className="text-sm font-medium text-stone-700">AI Assistant</span>
                     <button
                       onClick={() => setModuleAssistantOpen(false)}
-                      className="p-1 rounded hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600"
+                      className="p-1 rounded hover:bg-stone-200 text-stone-400 hover:text-stone-600"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -2482,13 +2482,13 @@ export const ZenApp: React.FC = () => {
               {!moduleAssistantOpen && (
                 <button
                   onClick={() => setModuleAssistantOpen(true)}
-                  className="flex-shrink-0 w-10 flex flex-col items-center justify-center gap-1 bg-zinc-50 hover:bg-zinc-100 border-l border-zinc-200 transition-colors"
+                  className="flex-shrink-0 w-10 flex flex-col items-center justify-center gap-1 bg-stone-50 hover:bg-stone-100 border-l border-stone-200 transition-colors"
                   title="Open AI Assistant"
                   data-testid="module-assistant-toggle-cer"
                 >
-                  <MessageSquare className="w-4 h-4 text-zinc-500" />
+                  <MessageSquare className="w-4 h-4 text-stone-500" />
                   <span
-                    className="text-[10px] text-zinc-400 writing-mode-vertical"
+                    className="text-[10px] text-stone-400 writing-mode-vertical"
                     style={{ writingMode: 'vertical-rl' }}
                   >
                     Assistant
@@ -2498,14 +2498,14 @@ export const ZenApp: React.FC = () => {
 
               {moduleAssistantOpen && (
                 <div
-                  className="flex-shrink-0 w-[380px] flex flex-col border-l border-zinc-200 bg-white"
+                  className="flex-shrink-0 w-[380px] flex flex-col border-l border-stone-200 bg-white"
                   data-testid="module-assistant-panel-cer"
                 >
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-zinc-50">
-                    <span className="text-sm font-medium text-zinc-700">AI Assistant</span>
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-stone-100 bg-stone-50">
+                    <span className="text-sm font-medium text-stone-700">AI Assistant</span>
                     <button
                       onClick={() => setModuleAssistantOpen(false)}
-                      className="p-1 rounded hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600"
+                      className="p-1 rounded hover:bg-stone-200 text-stone-400 hover:text-stone-600"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -2651,19 +2651,19 @@ export const ZenApp: React.FC = () => {
           {/* ── Biostatistics Platform — power, endpoints, design ── */}
           {!embeddedModule && layoutMode === 'biostatistics' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-biostatistics">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-stone-100 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                  className="flex items-center gap-1 text-xs text-stone-400 hover:text-stone-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
-                <span className="text-zinc-200">&middot;</span>
+                <span className="text-stone-200">&middot;</span>
                 <FlaskConical className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-xs font-medium text-zinc-800">Biostatistics</span>
+                <span className="text-xs font-medium text-stone-800">Biostatistics</span>
                 {activeProject && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 font-medium">
                     {activeProject.name}
                   </span>
                 )}
@@ -2745,24 +2745,24 @@ export const ZenApp: React.FC = () => {
             (riViewMode === 'intelligence' ? (
               <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ri-copilot">
                 {/* Intelligence mode header */}
-                <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+                <div className="flex items-center gap-2 px-3 h-9 border-b border-stone-100 bg-white flex-shrink-0">
                   <button
                     onClick={() => setLayoutMode('projects')}
-                    className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                    className="flex items-center gap-1 text-xs text-stone-400 hover:text-stone-700 transition-colors"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
                     <span>Home</span>
                   </button>
-                  <span className="text-zinc-200">·</span>
+                  <span className="text-stone-200">·</span>
                   <Brain className="w-3.5 h-3.5 text-blue-500" />
-                  <span className="text-xs font-medium text-zinc-800">RI Copilot</span>
+                  <span className="text-xs font-medium text-stone-800">RI Copilot</span>
                   {activeProject && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 font-medium">
                       {activeProject.name}
                     </span>
                   )}
                   <div className="ml-auto flex items-center gap-1">
-                    <div className="flex items-center rounded-md border border-zinc-200 overflow-hidden">
+                    <div className="flex items-center rounded-md border border-stone-200 overflow-hidden">
                       <button
                         data-testid="view-toggle-intelligence"
                         onClick={() => setRiViewMode('intelligence')}
@@ -2776,7 +2776,7 @@ export const ZenApp: React.FC = () => {
                       <button
                         data-testid="view-toggle-editor"
                         onClick={() => setRiViewMode('editor')}
-                        className="px-2 py-0.5 text-[11px] font-medium text-zinc-500 hover:bg-zinc-50 transition-colors"
+                        className="px-2 py-0.5 text-[11px] font-medium text-stone-500 hover:bg-stone-50 transition-colors"
                       >
                         Documents
                       </button>
@@ -3237,7 +3237,7 @@ export const ZenApp: React.FC = () => {
                   <Suspense
                     fallback={
                       <div className="flex items-center justify-center py-12 w-full">
-                        <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+                        <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
                       </div>
                     }
                   >
@@ -3251,20 +3251,20 @@ export const ZenApp: React.FC = () => {
                       className="fixed inset-0 bg-black/30 z-40 lg:hidden"
                       onClick={() => setWorkspacePanelOpen(false)}
                     />
-                    <div className="fixed right-0 top-0 bottom-0 w-80 bg-white border-l border-zinc-200 shadow-xl z-50 lg:hidden">
-                      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100">
-                        <span className="text-sm font-medium text-zinc-700">Project Context</span>
+                    <div className="fixed right-0 top-0 bottom-0 w-80 bg-white border-l border-stone-200 shadow-xl z-50 lg:hidden">
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-100">
+                        <span className="text-sm font-medium text-stone-700">Project Context</span>
                         <button
                           onClick={() => setWorkspacePanelOpen(false)}
-                          className="p-1 hover:bg-zinc-100 rounded"
+                          className="p-1 hover:bg-stone-100 rounded"
                         >
-                          <X className="w-4 h-4 text-zinc-400" />
+                          <X className="w-4 h-4 text-stone-400" />
                         </button>
                       </div>
                       <Suspense
                         fallback={
                           <div className="flex items-center justify-center py-12 w-full">
-                            <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+                            <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
                           </div>
                         }
                       >
@@ -3279,7 +3279,7 @@ export const ZenApp: React.FC = () => {
                 {/* Mobile toggle button */}
                 <button
                   onClick={() => setWorkspacePanelOpen(true)}
-                  className="fixed right-4 bottom-4 z-30 lg:hidden w-10 h-10 bg-zinc-900 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-zinc-800 transition-colors"
+                  className="fixed right-4 bottom-4 z-30 lg:hidden w-10 h-10 bg-stone-900 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-stone-800 transition-colors"
                   title="Project context"
                 >
                   <FileText className="w-4 h-4" />
@@ -3518,12 +3518,12 @@ export const ZenApp: React.FC = () => {
       {!embeddedModule && !activeToolPanel && (
         <button
           onClick={() => setActiveToolPanel('vault')}
-          className="fixed right-0 top-1/2 -translate-y-1/2 z-40 h-36 w-10 border border-zinc-200 border-r-0 rounded-l-xl bg-white/95 hover:bg-zinc-50 shadow-sm flex flex-col items-center justify-center gap-1"
+          className="fixed right-0 top-1/2 -translate-y-1/2 z-40 h-36 w-10 border border-stone-200 border-r-0 rounded-l-xl bg-white/95 hover:bg-stone-50 shadow-sm flex flex-col items-center justify-center gap-1"
           title="Open Vault drawer"
           aria-label="Open Vault drawer"
         >
-          <FileText className="w-4 h-4 text-zinc-600" />
-          <span className="text-[10px] tracking-wide text-zinc-600 [writing-mode:vertical-rl] rotate-180">
+          <FileText className="w-4 h-4 text-stone-600" />
+          <span className="text-[10px] tracking-wide text-stone-600 [writing-mode:vertical-rl] rotate-180">
             Vault
           </span>
         </button>

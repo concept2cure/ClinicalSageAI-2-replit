@@ -584,7 +584,7 @@ function RegulatoryAlerts({ alerts }: { alerts: RegulatoryAlert[] }) {
  */
 function CompetitiveIntelligence({ approvals }: { approvals: CompetitorApproval[] }) {
   const approvalTypeConfig: Record<string, { label: string; color: string }> = {
-    standard: { label: 'Standard', color: 'bg-zinc-100 text-zinc-900' },
+    standard: { label: 'Standard', color: 'bg-stone-100 text-stone-900' },
     priority: { label: 'Priority Review', color: 'bg-blue-100 text-blue-800' },
     accelerated: { label: 'Accelerated', color: 'bg-green-100 text-green-800' },
     breakthrough: { label: 'Breakthrough', color: 'bg-purple-100 text-purple-800' },
@@ -815,7 +815,7 @@ export function RegulatoryIntelligence() {
       </Tabs>
 
       {/* RI Assistance */}
-      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-zinc-50">
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-stone-50">
         <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-100 rounded-full">

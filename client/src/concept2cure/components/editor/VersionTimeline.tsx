@@ -104,20 +104,20 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
   if (sortedVersions.length === 0) {
     return (
       <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200">
           <div className="flex items-center gap-2">
             <History className="w-4 h-4 text-blue-500" />
-            <span className="text-sm font-semibold text-zinc-900">Version History</span>
+            <span className="text-sm font-semibold text-stone-900">Version History</span>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-zinc-100 rounded">
-            <X className="w-4 h-4 text-zinc-400" />
+          <button onClick={onClose} className="p-1 hover:bg-stone-100 rounded">
+            <X className="w-4 h-4 text-stone-400" />
           </button>
         </div>
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="text-center">
-            <History className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
-            <p className="text-sm text-zinc-500">No version history yet.</p>
-            <p className="text-xs text-zinc-400 mt-1">Versions are created each time you save.</p>
+            <History className="w-10 h-10 text-stone-300 mx-auto mb-3" />
+            <p className="text-sm text-stone-500">No version history yet.</p>
+            <p className="text-xs text-stone-400 mt-1">Versions are created each time you save.</p>
           </div>
         </div>
       </div>
@@ -127,14 +127,14 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 shrink-0">
         <div className="flex items-center gap-2">
           <History className="w-4 h-4 text-blue-500" />
-          <span className="text-sm font-semibold text-zinc-900">Version History</span>
-          <span className="text-xs text-zinc-400">{sortedVersions.length} versions</span>
+          <span className="text-sm font-semibold text-stone-900">Version History</span>
+          <span className="text-xs text-stone-400">{sortedVersions.length} versions</span>
         </div>
-        <button onClick={onClose} className="p-1 hover:bg-zinc-100 rounded">
-          <X className="w-4 h-4 text-zinc-400" />
+        <button onClick={onClose} className="p-1 hover:bg-stone-100 rounded">
+          <X className="w-4 h-4 text-stone-400" />
         </button>
       </div>
 
@@ -159,7 +159,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
                 </button>
                 <button
                   onClick={() => setConfirmRestore(null)}
-                  className="px-3 py-1 text-xs font-medium text-zinc-600 bg-white border border-zinc-200 rounded-md hover:bg-zinc-50"
+                  className="px-3 py-1 text-xs font-medium text-stone-600 bg-white border border-stone-200 rounded-md hover:bg-stone-50"
                 >
                   Cancel
                 </button>
@@ -191,11 +191,11 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
                         ? 'bg-blue-500 border-blue-500'
                         : iSelected
                           ? 'bg-violet-500 border-violet-500'
-                          : 'bg-white border-zinc-300'
+                          : 'bg-white border-stone-300'
                     )}
                   />
                   {i < sortedVersions.length - 1 && (
-                    <div className="w-px flex-1 bg-zinc-200 min-h-[32px]" />
+                    <div className="w-px flex-1 bg-stone-200 min-h-[32px]" />
                   )}
                 </div>
 
@@ -207,14 +207,14 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
                       ? 'border-violet-300 bg-violet-50 shadow-sm'
                       : isLatest
                         ? 'border-blue-200 bg-blue-50/50'
-                        : 'border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-sm'
+                        : 'border-stone-200 bg-white hover:border-stone-300 hover:shadow-sm'
                   )}
                   onClick={() => setPreviewVersion(iSelected ? null : version)}
                 >
                   {/* Top row: version + time */}
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-zinc-900">
+                      <span className="text-xs font-semibold text-stone-900">
                         v{version.version}
                       </span>
                       {isLatest && (
@@ -223,7 +223,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
                         </span>
                       )}
                     </div>
-                    <span className="text-xs text-zinc-400 flex items-center gap-1">
+                    <span className="text-xs text-stone-400 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {timeAgo(version.createdAt)}
                     </span>
@@ -231,7 +231,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
 
                   {/* Author */}
                   {version.createdBy && (
-                    <div className="flex items-center gap-1 text-xs text-zinc-500 mb-1">
+                    <div className="flex items-center gap-1 text-xs text-stone-500 mb-1">
                       <User className="w-3 h-3" />
                       {version.createdBy}
                     </div>
@@ -239,7 +239,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
 
                   {/* Change description */}
                   {version.changeDescription && (
-                    <p className="text-xs text-zinc-600 mb-1.5">{version.changeDescription}</p>
+                    <p className="text-xs text-stone-600 mb-1.5">{version.changeDescription}</p>
                   )}
 
                   {/* Diff stats */}
@@ -256,7 +256,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
 
                   {/* Actions — visible when selected */}
                   {iSelected && !isLatest && (
-                    <div className="flex items-center gap-2 mt-2 pt-2 border-t border-zinc-200">
+                    <div className="flex items-center gap-2 mt-2 pt-2 border-t border-stone-200">
                       <button
                         onClick={e => {
                           e.stopPropagation();
@@ -288,15 +288,15 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
 
       {/* Preview panel — shows when a version is selected */}
       {previewVersion && showDiff && (
-        <div className="border-t border-zinc-200 bg-zinc-50 max-h-64 overflow-y-auto shrink-0">
-          <div className="px-4 py-2 border-b border-zinc-200 flex items-center gap-2">
-            <Eye className="w-3.5 h-3.5 text-zinc-500" />
-            <span className="text-xs font-semibold text-zinc-600">
+        <div className="border-t border-stone-200 bg-stone-50 max-h-64 overflow-y-auto shrink-0">
+          <div className="px-4 py-2 border-b border-stone-200 flex items-center gap-2">
+            <Eye className="w-3.5 h-3.5 text-stone-500" />
+            <span className="text-xs font-semibold text-stone-600">
               Preview: v{previewVersion.version}
             </span>
           </div>
           <div
-            className="px-4 py-3 prose prose-xs prose-zinc max-w-none text-xs"
+            className="px-4 py-3 prose prose-xs prose-stone max-w-none text-xs"
             dangerouslySetInnerHTML={{
               __html: DOMPurify.sanitize(previewVersion.content.slice(0, 2000)),
             }}

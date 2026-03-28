@@ -303,7 +303,7 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
     <div
       className={cn(
         'group flex items-center gap-2 py-1.5 px-2 rounded-lg cursor-pointer transition-colors duration-150',
-        isSelected ? 'bg-blue-50' : 'hover:bg-zinc-50',
+        isSelected ? 'bg-blue-50' : 'hover:bg-stone-50',
         level > 0 && 'ml-4'
       )}
     >
@@ -314,12 +314,12 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
             e.stopPropagation();
             onToggle();
           }}
-          className="p-1 hover:bg-zinc-200 rounded"
+          className="p-1 hover:bg-stone-200 rounded"
         >
           {isExpanded ? (
-            <ChevronDown className="w-4 h-4 text-zinc-500" />
+            <ChevronDown className="w-4 h-4 text-stone-500" />
           ) : (
-            <ChevronRight className="w-4 h-4 text-zinc-500" />
+            <ChevronRight className="w-4 h-4 text-stone-500" />
           )}
         </button>
       ) : (
@@ -342,10 +342,10 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
         <span
           className={cn(
             'text-sm truncate',
-            node.type === 'module' ? 'font-semibold text-zinc-900' : 'text-zinc-700'
+            node.type === 'module' ? 'font-semibold text-stone-900' : 'text-stone-700'
           )}
         >
-          <span className="text-zinc-400 mr-1">{node.ectdPath}</span>
+          <span className="text-stone-400 mr-1">{node.ectdPath}</span>
           {node.name}
         </span>
 
@@ -381,14 +381,14 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
               e.stopPropagation();
               onUpload();
             }}
-            className="p-1 hover:bg-zinc-200 rounded"
+            className="p-1 hover:bg-stone-200 rounded"
             title="Upload document"
           >
-            <Upload className="w-3.5 h-3.5 text-zinc-500" />
+            <Upload className="w-3.5 h-3.5 text-stone-500" />
           </button>
         )}
-        <button className="p-1 hover:bg-zinc-200 rounded" title="More actions">
-          <MoreHorizontal className="w-3.5 h-3.5 text-zinc-500" />
+        <button className="p-1 hover:bg-stone-200 rounded" title="More actions">
+          <MoreHorizontal className="w-3.5 h-3.5 text-stone-500" />
         </button>
       </div>
     </div>
@@ -413,8 +413,8 @@ const ModuleHeader: React.FC<{
       onClick={onToggle}
       className={cn(
         'w-full flex items-center gap-3 p-3 rounded-xl transition-colors duration-150',
-        'border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50',
-        isExpanded && 'bg-zinc-50 border-zinc-300'
+        'border border-stone-200 hover:border-stone-300 hover:bg-stone-50',
+        isExpanded && 'bg-stone-50 border-stone-300'
       )}
     >
       {/* Module number */}
@@ -433,20 +433,20 @@ const ModuleHeader: React.FC<{
 
       {/* Module info */}
       <div className="flex-1 text-left min-w-0">
-        <h3 className="font-semibold text-zinc-900 text-sm">Module {moduleId}</h3>
-        <p className="text-xs text-zinc-500 truncate">{moduleName}</p>
+        <h3 className="font-semibold text-stone-900 text-sm">Module {moduleId}</h3>
+        <p className="text-xs text-stone-500 truncate">{moduleName}</p>
       </div>
 
       {/* Progress */}
       <div className="flex items-center gap-3 flex-shrink-0">
         <div className="w-24">
           <div className="flex items-center justify-between text-xs mb-1">
-            <span className="text-zinc-500">
+            <span className="text-stone-500">
               {progress.complete}/{progress.total}
             </span>
-            <span className="font-medium text-zinc-700">{progressPercent}%</span>
+            <span className="font-medium text-stone-700">{progressPercent}%</span>
           </div>
-          <div className="h-1.5 bg-zinc-200 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-stone-200 rounded-full overflow-hidden">
             <div
               className={cn(
                 'h-full rounded-full transition-all duration-150',
@@ -460,9 +460,9 @@ const ModuleHeader: React.FC<{
         </div>
 
         {isExpanded ? (
-          <ChevronDown className="w-5 h-5 text-zinc-400" />
+          <ChevronDown className="w-5 h-5 text-stone-400" />
         ) : (
-          <ChevronRight className="w-5 h-5 text-zinc-400" />
+          <ChevronRight className="w-5 h-5 text-stone-400" />
         )}
       </div>
     </button>
@@ -535,11 +535,11 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
   return (
     <div className={cn('flex flex-col h-full bg-white', className)}>
       {/* Header */}
-      <div className="flex-shrink-0 border-b border-zinc-200 p-4">
+      <div className="flex-shrink-0 border-b border-stone-200 p-4">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h2 className="text-lg font-semibold text-zinc-900">{dossier.name}</h2>
-            <div className="flex items-center gap-2 mt-1 text-sm text-zinc-500">
+            <h2 className="text-lg font-semibold text-stone-900">{dossier.name}</h2>
+            <div className="flex items-center gap-2 mt-1 text-sm text-stone-500">
               <span className="font-medium">{dossier.type}</span>
               <span>•</span>
               <span>Sequence {dossier.sequence}</span>
@@ -561,7 +561,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                 dossier.status.overall === 'internal_review' && 'bg-amber-100 text-amber-700',
                 dossier.status.overall === 'qc' && 'bg-blue-100 text-blue-700',
                 dossier.status.overall === 'ready' && 'bg-emerald-100 text-emerald-700',
-                dossier.status.overall === 'submitted' && 'bg-zinc-100 text-zinc-700'
+                dossier.status.overall === 'submitted' && 'bg-stone-100 text-stone-700'
               )}
             >
               {dossier.status.overall === 'drafting' && <Edit3 className="w-3.5 h-3.5" />}
@@ -575,16 +575,16 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
         {/* Overall Progress Bar */}
         <div className="mb-4">
           <div className="flex items-center justify-between text-sm mb-1.5">
-            <span className="text-zinc-500">Dossier Completion</span>
-            <span className="font-medium text-zinc-900">{overallProgress.percent}%</span>
+            <span className="text-stone-500">Dossier Completion</span>
+            <span className="font-medium text-stone-900">{overallProgress.percent}%</span>
           </div>
-          <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
+          <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
             <div
               className="h-full bg-blue-600 rounded-full transition-all duration-150"
               style={{ width: `${overallProgress.percent}%` }}
             />
           </div>
-          <div className="flex items-center justify-between text-xs text-zinc-500 mt-1">
+          <div className="flex items-center justify-between text-xs text-stone-500 mt-1">
             <span>{overallProgress.complete} sections complete</span>
             <span>{overallProgress.total - overallProgress.complete} remaining</span>
           </div>
@@ -593,16 +593,16 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
         {/* Search & Filter */}
         <div className="flex items-center gap-2">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
             <input
               type="text"
               placeholder="Search sections..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
             />
           </div>
-          <button className="flex items-center gap-1.5 px-3 py-2 text-sm border border-zinc-200 rounded-lg hover:bg-zinc-50">
+          <button className="flex items-center gap-1.5 px-3 py-2 text-sm border border-stone-200 rounded-lg hover:bg-stone-50">
             <Filter className="w-4 h-4" />
             Filter
           </button>
@@ -627,7 +627,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
 
               {/* Module contents */}
               {isExpanded && module.children && (
-                <div className="mt-2 ml-4 pl-4 border-l border-zinc-200">
+                <div className="mt-2 ml-4 pl-4 border-l border-stone-200">
                   {Object.entries(module.children).map(([sectionId, section]) => {
                     const sectionExpanded = expandedSections.has(sectionId);
                     const hasSubsections = typeof section === 'object' && 'children' in section;
@@ -705,7 +705,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                                   <div
                                     key={art.id}
                                     onClick={() => onOpenArtifact?.(art.id)}
-                                    className="ml-12 flex items-center gap-2 py-1 px-2 text-xs text-zinc-600 hover:bg-blue-50 rounded cursor-pointer group"
+                                    className="ml-12 flex items-center gap-2 py-1 px-2 text-xs text-stone-600 hover:bg-blue-50 rounded cursor-pointer group"
                                   >
                                     <FileText className="w-3 h-3 text-blue-400" />
                                     <span className="truncate flex-1">{art.title}</span>
@@ -717,7 +717,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                                     )}>
                                       {art.status}
                                     </span>
-                                    <span className="text-xs text-zinc-400">v{art.version}</span>
+                                    <span className="text-xs text-stone-400">v{art.version}</span>
                                   </div>
                                 ))}
                               </React.Fragment>
@@ -735,9 +735,9 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
       </div>
 
       {/* Footer Actions */}
-      <div className="flex-shrink-0 border-t border-zinc-200 p-4">
+      <div className="flex-shrink-0 border-t border-stone-200 p-4">
         <div className="flex items-center gap-2">
-          <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-zinc-700 border border-zinc-200 rounded-lg hover:bg-zinc-50">
+          <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-stone-700 border border-stone-200 rounded-lg hover:bg-stone-50">
             <Download className="w-4 h-4" />
             Export eCTD
           </button>

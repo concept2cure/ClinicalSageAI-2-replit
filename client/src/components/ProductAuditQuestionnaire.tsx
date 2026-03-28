@@ -324,7 +324,7 @@ export default function ProductAuditQuestionnaire({ projectId }: { projectId?: s
       const inProgress = answered > 0 && answered < total;
       const notStarted = answered === 0;
       
-      let statusColor = 'bg-zinc-200'; // not started
+      let statusColor = 'bg-stone-200'; // not started
       if (allYes) statusColor = 'bg-emerald-500';
       else if (hasP0 || hasP1) statusColor = 'bg-red-500';
       else if (inProgress) statusColor = 'bg-amber-500';
@@ -368,24 +368,24 @@ export default function ProductAuditQuestionnaire({ projectId }: { projectId?: s
   }, [stats]);
 
   return (
-    <div className="flex flex-col h-full bg-zinc-50">
+    <div className="flex flex-col h-full bg-stone-50">
       {/* Header */}
-      <div className="bg-white border-b border-zinc-200 px-6 py-4">
+      <div className="bg-white border-b border-stone-200 px-6 py-4">
         <div className="flex items-center justify-between mb-2">
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900">C2C Product Audit Questionnaire</h1>
-            <p className="text-sm text-zinc-500 mt-1">
+            <h1 className="text-2xl font-bold text-stone-900">C2C Product Audit Questionnaire</h1>
+            <p className="text-sm text-stone-500 mt-1">
               Full Product Audit & Gap Analysis Framework · {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
           <div className="text-right">
             <div className="text-3xl font-bold text-emerald-600">{stats.answeredPercent}%</div>
-            <div className="text-xs text-zinc-500">{stats.answered} of {stats.totalQuestions} answered</div>
+            <div className="text-xs text-stone-500">{stats.answered} of {stats.totalQuestions} answered</div>
           </div>
         </div>
         
         {/* Progress Bar */}
-        <div className="w-full h-2 bg-zinc-200 rounded-full overflow-hidden mt-3">
+        <div className="w-full h-2 bg-stone-200 rounded-full overflow-hidden mt-3">
           <div 
             className="h-full bg-emerald-500 transition-all duration-300"
             style={{ width: `${stats.answeredPercent}%` }}
@@ -398,8 +398,8 @@ export default function ProductAuditQuestionnaire({ projectId }: { projectId?: s
             onClick={() => setViewMode('questionnaire')}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               viewMode === 'questionnaire' 
-                ? 'bg-zinc-900 text-white' 
-                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                ? 'bg-stone-900 text-white' 
+                : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
             }`}
           >
             Questionnaire
@@ -408,8 +408,8 @@ export default function ProductAuditQuestionnaire({ projectId }: { projectId?: s
             onClick={() => setViewMode('summary')}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               viewMode === 'summary' 
-                ? 'bg-zinc-900 text-white' 
-                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                ? 'bg-stone-900 text-white' 
+                : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
             }`}
           >
             Gap Summary
@@ -421,7 +421,7 @@ export default function ProductAuditQuestionnaire({ projectId }: { projectId?: s
       {viewMode === 'questionnaire' ? (
         <div className="flex flex-1 overflow-hidden">
           {/* Sidebar */}
-          <div className="w-80 bg-zinc-50 border-r border-zinc-200 overflow-y-auto">
+          <div className="w-80 bg-stone-50 border-r border-stone-200 overflow-y-auto">
             <div className="p-4 space-y-1">
               {AUDIT_SECTIONS.map((section, idx) => {
                 const sectionStat = sectionStats[idx];
@@ -431,22 +431,22 @@ export default function ProductAuditQuestionnaire({ projectId }: { projectId?: s
                     onClick={() => setSelectedSectionId(section.id)}
                     className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
                       selectedSectionId === section.id
-                        ? 'bg-white shadow-sm border border-zinc-200'
+                        ? 'bg-white shadow-sm border border-stone-200'
                         : 'hover:bg-white/50'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-2 h-2 rounded-full ${sectionStat.statusColor}`} />
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-zinc-900 text-sm truncate">
+                        <div className="font-medium text-stone-900 text-sm truncate">
                           {section.id}. {section.title}
                         </div>
-                        <div className="text-xs text-zinc-500 mt-0.5">
+                        <div className="text-xs text-stone-500 mt-0.5">
                           {sectionStat.answered}/{sectionStat.total} · {sectionStat.percent}%
                         </div>
                       </div>
                       {selectedSectionId === section.id && (
-                        <ChevronRight className="w-4 h-4 text-zinc-400" />
+                        <ChevronRight className="w-4 h-4 text-stone-400" />
                       )}
                     </div>
                   </button>
@@ -458,7 +458,7 @@ export default function ProductAuditQuestionnaire({ projectId }: { projectId?: s
           {/* Questions Panel */}
           <div className="flex-1 overflow-y-auto p-6">
             <div className="max-w-5xl mx-auto">
-              <h2 className="text-xl font-bold text-zinc-900 mb-6">
+              <h2 className="text-xl font-bold text-stone-900 mb-6">
                 {selectedSection.id}. {selectedSection.title}
               </h2>
               
@@ -468,12 +468,12 @@ export default function ProductAuditQuestionnaire({ projectId }: { projectId?: s
                   const isNotesExpanded = expandedNotes.has(question.id);
                   
                   return (
-                    <div key={question.id} className="bg-white rounded-lg border border-zinc-200 p-4">
+                    <div key={question.id} className="bg-white rounded-lg border border-stone-200 p-4">
                       {/* Question Header */}
                       <div className="flex items-start gap-4 mb-3">
-                        <div className="text-sm font-mono text-zinc-500 mt-1">{question.id}</div>
+                        <div className="text-sm font-mono text-stone-500 mt-1">{question.id}</div>
                         <div className="flex-1">
-                          <div className="text-zinc-900">{question.question}</div>
+                          <div className="text-stone-900">{question.question}</div>
                         </div>
                       </div>
 
@@ -484,7 +484,7 @@ export default function ProductAuditQuestionnaire({ projectId }: { projectId?: s
                           className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                             response?.status === 'yes'
                               ? 'bg-emerald-100 text-emerald-700 border-2 border-emerald-300'
-                              : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 border-2 border-transparent'
+                              : 'bg-stone-100 text-stone-600 hover:bg-stone-200 border-2 border-transparent'
                           }`}
                         >
                           <CheckCircle2 className="w-4 h-4 inline mr-1" />
@@ -495,7 +495,7 @@ export default function ProductAuditQuestionnaire({ projectId }: { projectId?: s
                           className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                             response?.status === 'no'
                               ? 'bg-red-100 text-red-700 border-2 border-red-300'
-                              : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 border-2 border-transparent'
+                              : 'bg-stone-100 text-stone-600 hover:bg-stone-200 border-2 border-transparent'
                           }`}
                         >
                           <AlertTriangle className="w-4 h-4 inline mr-1" />
@@ -506,7 +506,7 @@ export default function ProductAuditQuestionnaire({ projectId }: { projectId?: s
                           className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                             response?.status === 'partial'
                               ? 'bg-amber-100 text-amber-700 border-2 border-amber-300'
-                              : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 border-2 border-transparent'
+                              : 'bg-stone-100 text-stone-600 hover:bg-stone-200 border-2 border-transparent'
                           }`}
                         >
                           <Circle className="w-4 h-4 inline mr-1" />
@@ -517,11 +517,11 @@ export default function ProductAuditQuestionnaire({ projectId }: { projectId?: s
                       {/* Severity Dropdown (only shown if status is no or partial) */}
                       {(response?.status === 'no' || response?.status === 'partial') && (
                         <div className="ml-14 mb-3">
-                          <label className="block text-xs font-medium text-zinc-700 mb-1">Gap Severity</label>
+                          <label className="block text-xs font-medium text-stone-700 mb-1">Gap Severity</label>
                           <select
                             value={response?.severity || ''}
                             onChange={(e) => updateResponse(question.id, { severity: (e.target.value || null) as GapSeverity })}
-                            className="w-64 px-3 py-1.5 text-sm border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                            className="w-64 px-3 py-1.5 text-sm border border-stone-300 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-900"
                           >
                             <option value="">Select severity...</option>
                             <option value="p0">🔴 P0 - Critical (Must Fix)</option>
@@ -537,7 +537,7 @@ export default function ProductAuditQuestionnaire({ projectId }: { projectId?: s
                       <div className="ml-14">
                         <button
                           onClick={() => toggleNotes(question.id)}
-                          className="text-xs text-zinc-600 hover:text-zinc-900 font-medium mb-2"
+                          className="text-xs text-stone-600 hover:text-stone-900 font-medium mb-2"
                         >
                           {isNotesExpanded ? '▼' : '▶'} Notes
                         </button>
@@ -546,7 +546,7 @@ export default function ProductAuditQuestionnaire({ projectId }: { projectId?: s
                             value={response?.notes || ''}
                             onChange={(e) => updateResponse(question.id, { notes: e.target.value })}
                             placeholder="Add notes, evidence, or action items..."
-                            className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-zinc-900 resize-none"
+                            className="w-full px-3 py-2 text-sm border border-stone-300 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-900 resize-none"
                             rows={3}
                           />
                         )}
@@ -564,25 +564,25 @@ export default function ProductAuditQuestionnaire({ projectId }: { projectId?: s
           <div className="max-w-7xl mx-auto space-y-6">
             {/* Stats Bar */}
             <div className="grid grid-cols-4 gap-4">
-              <div className="bg-white rounded-lg border border-zinc-200 p-4">
-                <div className="text-sm text-zinc-600 mb-1">Total Questions</div>
-                <div className="text-3xl font-bold text-zinc-900">{stats.totalQuestions}</div>
-                <div className="text-xs text-zinc-500 mt-1">{stats.answeredPercent}% answered</div>
+              <div className="bg-white rounded-lg border border-stone-200 p-4">
+                <div className="text-sm text-stone-600 mb-1">Total Questions</div>
+                <div className="text-3xl font-bold text-stone-900">{stats.totalQuestions}</div>
+                <div className="text-xs text-stone-500 mt-1">{stats.answeredPercent}% answered</div>
               </div>
-              <div className="bg-white rounded-lg border border-zinc-200 p-4">
-                <div className="text-sm text-zinc-600 mb-1">Critical Gaps (P0)</div>
+              <div className="bg-white rounded-lg border border-stone-200 p-4">
+                <div className="text-sm text-stone-600 mb-1">Critical Gaps (P0)</div>
                 <div className="text-3xl font-bold text-red-700">{stats.p0Count}</div>
-                <div className="text-xs text-zinc-500 mt-1">Must resolve</div>
+                <div className="text-xs text-stone-500 mt-1">Must resolve</div>
               </div>
-              <div className="bg-white rounded-lg border border-zinc-200 p-4">
-                <div className="text-sm text-zinc-600 mb-1">High Priority (P1)</div>
+              <div className="bg-white rounded-lg border border-stone-200 p-4">
+                <div className="text-sm text-stone-600 mb-1">High Priority (P1)</div>
                 <div className="text-3xl font-bold text-orange-700">{stats.p1Count}</div>
-                <div className="text-xs text-zinc-500 mt-1">Should address</div>
+                <div className="text-xs text-stone-500 mt-1">Should address</div>
               </div>
-              <div className="bg-white rounded-lg border border-zinc-200 p-4">
-                <div className="text-sm text-zinc-600 mb-1">Readiness</div>
+              <div className="bg-white rounded-lg border border-stone-200 p-4">
+                <div className="text-sm text-stone-600 mb-1">Readiness</div>
                 <div className="text-3xl font-bold text-emerald-600">{stats.readinessPercent}%</div>
-                <div className="text-xs text-zinc-500 mt-1">{stats.yesCount} verified yes</div>
+                <div className="text-xs text-stone-500 mt-1">{stats.yesCount} verified yes</div>
               </div>
             </div>
 
@@ -597,75 +597,75 @@ export default function ProductAuditQuestionnaire({ projectId }: { projectId?: s
                   {goNoGo.status}
                 </div>
                 <div className="flex-1">
-                  <div className="text-sm text-zinc-900 font-medium">{goNoGo.reason}</div>
+                  <div className="text-sm text-stone-900 font-medium">{goNoGo.reason}</div>
                 </div>
                 {goNoGo.status === 'GO' && <TrendingUp className="w-8 h-8 text-emerald-600" />}
               </div>
             </div>
 
             {/* Section Summary Table */}
-            <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-zinc-200">
-                <h3 className="text-lg font-bold text-zinc-900">Section Gap Analysis</h3>
+            <div className="bg-white rounded-lg border border-stone-200 overflow-hidden">
+              <div className="px-6 py-4 border-b border-stone-200">
+                <h3 className="text-lg font-bold text-stone-900">Section Gap Analysis</h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-zinc-50 border-b border-zinc-200">
+                  <thead className="bg-stone-50 border-b border-stone-200">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-zinc-700 uppercase tracking-wider">Section</th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-zinc-700 uppercase tracking-wider">P0</th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-zinc-700 uppercase tracking-wider">P1</th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-zinc-700 uppercase tracking-wider">P2</th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-zinc-700 uppercase tracking-wider">P3</th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-zinc-700 uppercase tracking-wider">Verified</th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-zinc-700 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-zinc-700 uppercase tracking-wider">Complete</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-stone-700 uppercase tracking-wider">Section</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-stone-700 uppercase tracking-wider">P0</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-stone-700 uppercase tracking-wider">P1</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-stone-700 uppercase tracking-wider">P2</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-stone-700 uppercase tracking-wider">P3</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-stone-700 uppercase tracking-wider">Verified</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-stone-700 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-stone-700 uppercase tracking-wider">Complete</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-200">
+                  <tbody className="divide-y divide-stone-200">
                     {AUDIT_SECTIONS.map((section, idx) => {
                       const stat = sectionStats[idx];
                       return (
-                        <tr key={section.id} className="hover:bg-zinc-50">
+                        <tr key={section.id} className="hover:bg-stone-50">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center gap-2">
                               <div className={`w-2 h-2 rounded-full ${stat.statusColor}`} />
-                              <div className="text-sm font-medium text-zinc-900">
+                              <div className="text-sm font-medium text-stone-900">
                                 {section.id}. {section.title}
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${
-                              stat.p0 > 0 ? 'bg-red-100 text-red-700' : 'text-zinc-400'
+                              stat.p0 > 0 ? 'bg-red-100 text-red-700' : 'text-stone-400'
                             }`}>
                               {stat.p0 || '—'}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${
-                              stat.p1 > 0 ? 'bg-orange-100 text-orange-700' : 'text-zinc-400'
+                              stat.p1 > 0 ? 'bg-orange-100 text-orange-700' : 'text-stone-400'
                             }`}>
                               {stat.p1 || '—'}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${
-                              stat.p2 > 0 ? 'bg-yellow-100 text-yellow-700' : 'text-zinc-400'
+                              stat.p2 > 0 ? 'bg-yellow-100 text-yellow-700' : 'text-stone-400'
                             }`}>
                               {stat.p2 || '—'}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${
-                              stat.p3 > 0 ? 'bg-blue-100 text-blue-700' : 'text-zinc-400'
+                              stat.p3 > 0 ? 'bg-blue-100 text-blue-700' : 'text-stone-400'
                             }`}>
                               {stat.p3 || '—'}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${
-                              stat.verified > 0 ? 'bg-emerald-100 text-emerald-700' : 'text-zinc-400'
+                              stat.verified > 0 ? 'bg-emerald-100 text-emerald-700' : 'text-stone-400'
                             }`}>
                               {stat.verified || '—'}
                             </span>
@@ -674,8 +674,8 @@ export default function ProductAuditQuestionnaire({ projectId }: { projectId?: s
                             {stat.allYes ? '🟢' : stat.p0 > 0 ? '🔴' : stat.p1 > 0 ? '🟠' : stat.answered > 0 ? '🟡' : '⚪'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
-                            <div className="text-sm font-medium text-zinc-900">{stat.percent}%</div>
-                            <div className="text-xs text-zinc-500">{stat.answered}/{stat.total}</div>
+                            <div className="text-sm font-medium text-stone-900">{stat.percent}%</div>
+                            <div className="text-xs text-stone-500">{stat.answered}/{stat.total}</div>
                           </td>
                         </tr>
                       );
@@ -686,14 +686,14 @@ export default function ProductAuditQuestionnaire({ projectId }: { projectId?: s
             </div>
 
             {/* Executive Summary */}
-            <div className="bg-white rounded-lg border border-zinc-200 p-6">
-              <h3 className="text-lg font-bold text-zinc-900 mb-4">Executive Summary</h3>
+            <div className="bg-white rounded-lg border border-stone-200 p-6">
+              <h3 className="text-lg font-bold text-stone-900 mb-4">Executive Summary</h3>
               
               <div className="space-y-4">
                 <div>
-                  <div className="text-sm font-medium text-zinc-700 mb-2">Overall Readiness</div>
+                  <div className="text-sm font-medium text-stone-700 mb-2">Overall Readiness</div>
                   <div className="flex items-center gap-4">
-                    <div className="flex-1 h-4 bg-zinc-200 rounded-full overflow-hidden">
+                    <div className="flex-1 h-4 bg-stone-200 rounded-full overflow-hidden">
                       <div 
                         className="h-full bg-emerald-500 transition-all duration-300"
                         style={{ width: `${stats.readinessPercent}%` }}
@@ -719,15 +719,15 @@ export default function ProductAuditQuestionnaire({ projectId }: { projectId?: s
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-zinc-200">
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-stone-200">
                   <div>
-                    <div className="text-sm text-zinc-600 mb-1">Gaps Identified</div>
-                    <div className="text-xl font-bold text-zinc-900">
+                    <div className="text-sm text-stone-600 mb-1">Gaps Identified</div>
+                    <div className="text-xl font-bold text-stone-900">
                       {stats.p0Count + stats.p1Count + stats.p2Count + stats.p3Count}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-zinc-600 mb-1">Verified Complete</div>
+                    <div className="text-sm text-stone-600 mb-1">Verified Complete</div>
                     <div className="text-xl font-bold text-emerald-600">
                       {stats.yesCount}
                     </div>

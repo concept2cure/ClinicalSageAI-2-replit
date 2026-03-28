@@ -1,7 +1,7 @@
 /**
  * ActionButton — Universal deliverable-producing button
  *
- * Claude design system: zinc-900 primary, blue-600 accent for generation,
+ * Claude design system: stone-900 primary, blue-600 accent for generation,
  * minimal border, fade animation, no gradients.
  *
  * Every ActionButton in the platform produces a tangible deliverable:
@@ -58,16 +58,16 @@ const INTENT_CONFIG: Record<ActionIntent, {
   generate: {
     icon: FileText,
     loadingText: 'Generating...',
-    bgClass: 'bg-zinc-900',
+    bgClass: 'bg-stone-900',
     textClass: 'text-white',
-    hoverClass: 'hover:bg-zinc-800',
+    hoverClass: 'hover:bg-stone-800',
   },
   export: {
     icon: Download,
     loadingText: 'Exporting...',
-    bgClass: 'bg-white border border-zinc-200',
-    textClass: 'text-zinc-900',
-    hoverClass: 'hover:bg-zinc-50',
+    bgClass: 'bg-white border border-stone-200',
+    textClass: 'text-stone-900',
+    hoverClass: 'hover:bg-stone-50',
   },
   run: {
     icon: Play,
@@ -79,16 +79,16 @@ const INTENT_CONFIG: Record<ActionIntent, {
   save: {
     icon: Save,
     loadingText: 'Saving...',
-    bgClass: 'bg-white border border-zinc-200',
-    textClass: 'text-zinc-900',
-    hoverClass: 'hover:bg-zinc-50',
+    bgClass: 'bg-white border border-stone-200',
+    textClass: 'text-stone-900',
+    hoverClass: 'hover:bg-stone-50',
   },
   submit: {
     icon: Send,
     loadingText: 'Submitting...',
-    bgClass: 'bg-zinc-900',
+    bgClass: 'bg-stone-900',
     textClass: 'text-white',
-    hoverClass: 'hover:bg-zinc-800',
+    hoverClass: 'hover:bg-stone-800',
   },
 };
 

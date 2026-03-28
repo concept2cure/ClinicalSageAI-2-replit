@@ -66,7 +66,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
 }) => (
   <div
     className={cn(
-      'flex items-center gap-3 px-4 h-11 border-b border-zinc-200 bg-white shrink-0',
+      'flex items-center gap-3 px-4 h-11 border-b border-stone-200 bg-white shrink-0',
       className
     )}
     data-testid={testId}
@@ -74,29 +74,29 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
     {onBack && (
       <button
         onClick={onBack}
-        className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-900 transition-colors"
+        className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-900 transition-colors"
         aria-label="Go back"
       >
         <ChevronLeft className="w-4 h-4" />
         <span>Back</span>
       </button>
     )}
-    {onBack && <span className="text-zinc-300">/</span>}
+    {onBack && <span className="text-stone-300">/</span>}
     {titleIcon}
     {breadcrumb && (
       <>
-        <span className="text-xs font-mono text-zinc-400">{breadcrumb}</span>
-        <span className="text-zinc-300">/</span>
+        <span className="text-xs font-mono text-stone-400">{breadcrumb}</span>
+        <span className="text-stone-300">/</span>
       </>
     )}
-    <span className="text-sm font-semibold text-zinc-900 truncate">{title}</span>
+    <span className="text-sm font-semibold text-stone-900 truncate">{title}</span>
     {status && <WorkspaceStatusBadge status={status.key} config={status} />}
     {typeBadge && (
-      <span className="text-xs px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 font-medium ml-2">
+      <span className="text-xs px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 font-medium ml-2">
         {typeBadge}
       </span>
     )}
-    {subtitle && <span className="text-xs text-zinc-500 ml-1">{subtitle}</span>}
+    {subtitle && <span className="text-xs text-stone-500 ml-1">{subtitle}</span>}
     {meta && <div className="flex items-center gap-2 ml-2">{meta}</div>}
     {actions && <div className="flex items-center gap-2 ml-auto">{actions}</div>}
   </div>
@@ -134,14 +134,14 @@ export const WorkspaceHeaderRich: React.FC<WorkspaceHeaderRichProps> = ({
   testId = 'workspace-header-rich',
 }) => (
   <div
-    className={cn('border-b border-zinc-100 bg-white px-6 py-3', className)}
+    className={cn('border-b border-stone-100 bg-white px-6 py-3', className)}
     data-testid={testId}
   >
     <div className="flex items-center gap-3">
       {onBack && (
         <button
           onClick={onBack}
-          className="p-1.5 hover:bg-zinc-100 rounded-lg transition-colors text-zinc-400 hover:text-zinc-700"
+          className="p-1.5 hover:bg-stone-100 rounded-lg transition-colors text-stone-400 hover:text-stone-700"
           aria-label="Go back"
         >
           <ChevronLeft className="w-4 h-4" />
@@ -151,11 +151,11 @@ export const WorkspaceHeaderRich: React.FC<WorkspaceHeaderRichProps> = ({
         <div className="flex items-center gap-2">
           {breadcrumb && (
             <>
-              <span className="text-xs font-mono text-zinc-400">{breadcrumb}</span>
-              <span className="text-zinc-300">/</span>
+              <span className="text-xs font-mono text-stone-400">{breadcrumb}</span>
+              <span className="text-stone-300">/</span>
             </>
           )}
-          <h2 className="text-sm font-semibold text-zinc-900 truncate">{title}</h2>
+          <h2 className="text-sm font-semibold text-stone-900 truncate">{title}</h2>
           {status && <WorkspaceStatusBadge status={status.key} config={status} />}
         </div>
         {secondaryInfo && (
@@ -192,20 +192,20 @@ export const PageTitleHeader: React.FC<PageTitleHeaderProps> = ({
   <div className={cn('mb-8', className)} data-testid={testId}>
     <div className="flex items-start justify-between">
       <div>
-        <h1 className="text-2xl font-semibold text-zinc-900">{title}</h1>
+        <h1 className="text-2xl font-semibold text-stone-900">{title}</h1>
         {badges && badges.length > 0 && (
           <div className="flex items-center gap-3 mt-2">
             {badges.map((b, i) => (
               <span
                 key={i}
-                className="text-xs px-2 py-0.5 rounded-md bg-zinc-200 text-zinc-700 font-medium"
+                className="text-xs px-2 py-0.5 rounded-md bg-stone-200 text-stone-700 font-medium"
               >
                 {b.value ?? b.label}
               </span>
             ))}
           </div>
         )}
-        {description && <p className="text-sm text-zinc-500 mt-2">{description}</p>}
+        {description && <p className="text-sm text-stone-500 mt-2">{description}</p>}
       </div>
       {actions && <div className="flex items-center gap-2">{actions}</div>}
     </div>
@@ -229,9 +229,9 @@ export const WORKFLOW_STATUS_CONFIG: Record<string, StatusBadgeConfig> = {
   'not-started': {
     key: 'not-started',
     label: 'Not Started',
-    color: 'bg-zinc-100 text-zinc-600',
+    color: 'bg-stone-100 text-stone-600',
     icon: <Clock className="w-3 h-3" />,
-    bg: 'bg-zinc-50',
+    bg: 'bg-stone-50',
   },
   drafting: {
     key: 'drafting',
@@ -340,7 +340,7 @@ const MAX_WIDTH_MAP = {
 };
 
 const BG_MAP = {
-  default: 'bg-zinc-50/50',
+  default: 'bg-stone-50/50',
   white: 'bg-white',
   none: '',
 };
@@ -395,13 +395,13 @@ export const SectionPanel: React.FC<SectionPanelProps> = ({
   testId,
 }) => (
   <div
-    className={cn('rounded-xl border border-zinc-200 bg-white overflow-hidden', className)}
+    className={cn('rounded-xl border border-stone-200 bg-white overflow-hidden', className)}
     data-testid={testId}
   >
     {title && (
-      <div className="flex items-center gap-3 px-4 py-3 bg-zinc-50 border-b border-zinc-100">
+      <div className="flex items-center gap-3 px-4 py-3 bg-stone-50 border-b border-stone-100">
         {titleIcon}
-        <span className="text-sm font-semibold text-zinc-900">{title}</span>
+        <span className="text-sm font-semibold text-stone-900">{title}</span>
         {headerRight && <div className="ml-auto">{headerRight}</div>}
       </div>
     )}
@@ -436,7 +436,7 @@ export const WorkspaceTabBar: React.FC<WorkspaceTabBarProps> = ({
   testId = 'workspace-tab-bar',
 }) => (
   <div
-    className={cn('border-b border-zinc-100 bg-zinc-50/50 px-6', className)}
+    className={cn('border-b border-stone-100 bg-stone-50/50 px-6', className)}
     data-testid={testId}
   >
     <div className="flex gap-1" role="tablist">
@@ -450,8 +450,8 @@ export const WorkspaceTabBar: React.FC<WorkspaceTabBarProps> = ({
           className={cn(
             'flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors -mb-px',
             activeTab === tab.id
-              ? 'border-zinc-900 text-zinc-900'
-              : 'border-transparent text-zinc-400 hover:text-zinc-600'
+              ? 'border-stone-900 text-stone-900'
+              : 'border-transparent text-stone-400 hover:text-stone-600'
           )}
         >
           {tab.icon}
@@ -460,7 +460,7 @@ export const WorkspaceTabBar: React.FC<WorkspaceTabBarProps> = ({
             <span
               className={cn(
                 'ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium',
-                activeTab === tab.id ? 'bg-zinc-200 text-zinc-700' : 'bg-zinc-100 text-zinc-500'
+                activeTab === tab.id ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-500'
               )}
             >
               {tab.count}
@@ -489,7 +489,7 @@ export const WorkspaceActionBar: React.FC<WorkspaceActionBarProps> = ({
   children,
   className,
 }) => (
-  <div className={cn('flex items-center justify-between gap-4 px-4 py-2 border-b border-zinc-100 bg-white', className)}>
+  <div className={cn('flex items-center justify-between gap-4 px-4 py-2 border-b border-stone-100 bg-white', className)}>
     {left && <div className="flex items-center gap-2">{left}</div>}
     <div className="flex items-center gap-2 ml-auto">{children}</div>
   </div>
@@ -524,16 +524,16 @@ export const WorkspaceStatusStrip: React.FC<WorkspaceStatusStripProps> = ({
         ? 'bg-amber-500'
         : variant === 'danger' || (progress != null && progress < 50)
           ? 'bg-red-400'
-          : 'bg-zinc-300';
+          : 'bg-stone-300';
 
   return (
-    <div className={cn('rounded-xl border border-zinc-200 bg-white p-5', className)}>
+    <div className={cn('rounded-xl border border-stone-200 bg-white p-5', className)}>
       <div className="flex items-center justify-between mb-3">
-        {summary && <p className="text-xs text-zinc-500">{summary}</p>}
+        {summary && <p className="text-xs text-stone-500">{summary}</p>}
         {children}
       </div>
       {progress != null && (
-        <div className="w-full bg-zinc-100 rounded-full h-2">
+        <div className="w-full bg-stone-100 rounded-full h-2">
           <div
             className={cn('h-2 rounded-full transition-all', progressColor)}
             style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
@@ -555,8 +555,8 @@ interface SecondaryInfoItemProps {
 
 export const SecondaryInfoItem: React.FC<SecondaryInfoItemProps> = ({ children, className }) => (
   <>
-    <span className="text-zinc-300">·</span>
-    <span className={cn('text-[11px] text-zinc-400', className)}>{children}</span>
+    <span className="text-stone-300">·</span>
+    <span className={cn('text-[11px] text-stone-400', className)}>{children}</span>
   </>
 );
 
@@ -568,9 +568,9 @@ export const STATUS_ICON_MAP: Record<string, { icon: LucideIcon; color: string }
   approved: { icon: CheckCircle2, color: 'text-emerald-500' },
   'in-review': { icon: Clock, color: 'text-amber-500' },
   drafting: { icon: FileText, color: 'text-blue-500' },
-  'not-started': { icon: Clock, color: 'text-zinc-300' },
+  'not-started': { icon: Clock, color: 'text-stone-300' },
   blocked: { icon: AlertTriangle, color: 'text-red-500' },
-  locked: { icon: Lock, color: 'text-zinc-400' },
+  locked: { icon: Lock, color: 'text-stone-400' },
   ready: { icon: CheckCircle2, color: 'text-emerald-500' },
   'needs-work': { icon: AlertTriangle, color: 'text-amber-500' },
 };
@@ -596,18 +596,18 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
 }) => (
   <div
     className={cn(
-      'w-72 shrink-0 border-l border-zinc-200 bg-white flex flex-col min-h-0',
+      'w-72 shrink-0 border-l border-stone-200 bg-white flex flex-col min-h-0',
       className
     )}
     data-testid={testId}
   >
     {title && (
-      <div className="flex items-center justify-between px-3 h-11 border-b border-zinc-200 shrink-0">
-        <span className="text-xs font-semibold text-zinc-700">{title}</span>
+      <div className="flex items-center justify-between px-3 h-11 border-b border-stone-200 shrink-0">
+        <span className="text-xs font-semibold text-stone-700">{title}</span>
         {onClose && (
           <button
             onClick={onClose}
-            className="text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+            className="text-xs text-stone-400 hover:text-stone-700 transition-colors"
             aria-label="Close inspector"
           >
             ×
@@ -668,7 +668,7 @@ export const InspectorRibbon: React.FC<InspectorRibbonProps> = ({
 
   return (
     <div
-      className={cn('flex items-stretch px-3 border-b border-zinc-100 bg-zinc-50/40 shrink-0 overflow-x-auto', className)}
+      className={cn('flex items-stretch px-3 border-b border-stone-100 bg-stone-50/40 shrink-0 overflow-x-auto', className)}
       data-testid={testId}
       role="toolbar"
       aria-label="Inspector panel toggles"
@@ -685,7 +685,7 @@ export const InspectorRibbon: React.FC<InspectorRibbonProps> = ({
             key={group.label}
             className={cn(
               'flex flex-col items-center py-1',
-              gi < groups.length - 1 && 'pr-3 mr-3 border-r border-zinc-200'
+              gi < groups.length - 1 && 'pr-3 mr-3 border-r border-stone-200'
             )}
           >
             {showExpanded ? (
@@ -702,7 +702,7 @@ export const InspectorRibbon: React.FC<InspectorRibbonProps> = ({
                           'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
                           isActive
                             ? (item.activeColor || 'bg-blue-600 text-white font-medium shadow-sm')
-                            : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+                            : 'text-stone-600 hover:bg-white hover:shadow-sm'
                         )}
                       >
                         {item.icon}
@@ -724,7 +724,7 @@ export const InspectorRibbon: React.FC<InspectorRibbonProps> = ({
                     );
                   })}
                 </div>
-                <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">
+                <span className="text-[9px] font-medium uppercase tracking-widest text-stone-400 mt-0.5">
                   {group.label}
                 </span>
               </>
@@ -736,7 +736,7 @@ export const InspectorRibbon: React.FC<InspectorRibbonProps> = ({
                   'px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider rounded-md transition-all whitespace-nowrap',
                   hasActiveItem
                     ? 'bg-blue-50 text-blue-700'
-                    : 'text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100'
+                    : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100'
                 )}
                 aria-label={`Open ${group.label} panels`}
                 data-testid={`ribbon-group-${group.label.toLowerCase()}`}
@@ -778,7 +778,7 @@ export const InspectorDrawer: React.FC<InspectorDrawerProps> = ({
   if (!visible) return null;
   return (
     <div
-      className={cn(width, 'shrink-0 border-l border-zinc-200 h-full transition-all duration-150', className)}
+      className={cn(width, 'shrink-0 border-l border-stone-200 h-full transition-all duration-150', className)}
       data-testid={testId}
     >
       {children}

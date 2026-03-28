@@ -105,10 +105,10 @@ function HeroSection() {
 
   return (
     <motion.section className="py-12 px-8" {...fade}>
-      <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight mb-3">
+      <h1 className="text-2xl font-semibold text-stone-900 tracking-tight mb-3">
         Your intelligent guide to regulatory excellence
       </h1>
-      <p className="text-base text-zinc-500 max-w-2xl leading-relaxed mb-6">
+      <p className="text-base text-stone-500 max-w-2xl leading-relaxed mb-6">
         Dr. Sage guides your workflow. AnA 1.0 powers your intelligence.
         Together, they help you produce better, faster, more defensible outcomes
         across the entire regulatory lifecycle.
@@ -116,7 +116,7 @@ function HeroSection() {
       <button className="text-blue-600 font-medium hover:underline text-sm mb-8 inline-block">
         Start my path &rarr;
       </button>
-      <p className="text-sm text-zinc-400">
+      <p className="text-sm text-stone-400">
         {pathCount} learning paths &middot; {moduleCount} modules &middot;{' '}
         {certCount} certifications
       </p>
@@ -139,28 +139,28 @@ function LearningPathsView() {
           return (
             <motion.div
               key={path.id || idx}
-              className="py-6 border-b border-zinc-200"
+              className="py-6 border-b border-stone-200"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.15, delay: idx * 0.04 }}
             >
-              <p className="text-xs text-zinc-400 uppercase tracking-wide mb-1.5">
+              <p className="text-xs text-stone-400 uppercase tracking-wide mb-1.5">
                 {path.role}
               </p>
-              <h3 className="text-lg font-semibold text-zinc-900 mb-1">
+              <h3 className="text-lg font-semibold text-stone-900 mb-1">
                 {path.title}
               </h3>
-              <p className="text-sm text-zinc-600 leading-relaxed max-w-xl mb-2">
+              <p className="text-sm text-stone-600 leading-relaxed max-w-xl mb-2">
                 {path.promise}
               </p>
-              <p className="text-xs text-zinc-400 mb-2">
+              <p className="text-xs text-stone-400 mb-2">
                 {moduleCount} modules &middot; ~{path.estimatedTime}
               </p>
               <button className="text-sm text-blue-600 hover:underline">
                 Start path &rarr;
               </button>
               {path.aiHighlight && (
-                <p className="text-xs text-zinc-400 italic mt-2">
+                <p className="text-xs text-stone-400 italic mt-2">
                   Includes AnA 1.0 intelligence modules
                 </p>
               )}
@@ -200,8 +200,8 @@ function AllModulesView() {
 
   return (
     <div className="px-8 py-8">
-      <h2 className="text-2xl font-semibold text-zinc-900 mb-1">Modules</h2>
-      <p className="text-sm text-zinc-600 mb-8">
+      <h2 className="text-2xl font-semibold text-stone-900 mb-1">Modules</h2>
+      <p className="text-sm text-stone-600 mb-8">
         Browse and launch any module across all learning paths
       </p>
 
@@ -212,7 +212,7 @@ function AllModulesView() {
           placeholder="Search modules..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full max-w-md rounded-md border border-zinc-200 bg-white py-2 px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-300 outline-none transition-colors duration-150"
+          className="w-full max-w-md rounded-md border border-stone-200 bg-white py-2 px-3 text-sm text-stone-900 placeholder:text-stone-400 focus:border-stone-300 outline-none transition-colors duration-150"
         />
       </div>
 
@@ -225,8 +225,8 @@ function AllModulesView() {
             className={cn(
               'text-sm transition-colors duration-150',
               activeCategory === cat
-                ? 'font-medium text-zinc-900'
-                : 'text-zinc-400 hover:text-zinc-600'
+                ? 'font-medium text-stone-900'
+                : 'text-stone-400 hover:text-stone-600'
             )}
           >
             {cat === 'all' ? 'All' : formatCategory(cat)}
@@ -234,7 +234,7 @@ function AllModulesView() {
         ))}
       </div>
 
-      <p className="text-xs text-zinc-400 mb-6">
+      <p className="text-xs text-stone-400 mb-6">
         Showing {filteredModules.length} of {LEARNING_MODULES.length} modules
       </p>
 
@@ -250,25 +250,25 @@ function AllModulesView() {
               transition={{ duration: 0.15, delay: idx * 0.03 }}
             >
               <div
-                className="bg-white rounded-lg border border-zinc-200 p-5 cursor-pointer shadow-sm"
+                className="bg-white rounded-lg border border-stone-200 p-5 cursor-pointer shadow-sm"
                 onClick={() =>
                   setExpandedModule(isExpanded ? null : mod.id || String(idx))
                 }
               >
-                <p className="text-xs text-zinc-400 uppercase tracking-wide mb-1.5">
+                <p className="text-xs text-stone-400 uppercase tracking-wide mb-1.5">
                   {formatCategory(mod.category || 'general')}
                 </p>
-                <h4 className="text-base font-semibold text-zinc-900 mb-1">
+                <h4 className="text-base font-semibold text-stone-900 mb-1">
                   {mod.title}
                 </h4>
-                <p className="text-sm text-zinc-500 leading-relaxed mb-3">
+                <p className="text-sm text-stone-500 leading-relaxed mb-3">
                   {mod.description}
                 </p>
                 <div className="flex items-center justify-between">
-                  <p className="text-xs text-zinc-400">
+                  <p className="text-xs text-stone-400">
                     {aiModeLabel(mod.aiMode)}
                   </p>
-                  <p className="text-xs text-zinc-400 flex items-center gap-1">
+                  <p className="text-xs text-stone-400 flex items-center gap-1">
                     <Clock className="h-3 w-3" />~{mod.estimatedMinutes} min
                   </p>
                 </div>
@@ -283,7 +283,7 @@ function AllModulesView() {
                       transition={{ duration: 0.15 }}
                       className="overflow-hidden"
                     >
-                      <div className="mt-4 pt-4 border-t border-zinc-200 space-y-2">
+                      <div className="mt-4 pt-4 border-t border-stone-200 space-y-2">
                         {(mod.lessons || []).map(
                           (
                             lesson: { title: string; description: string } | string,
@@ -291,9 +291,9 @@ function AllModulesView() {
                           ) => (
                             <p
                               key={li}
-                              className="text-sm text-zinc-600"
+                              className="text-sm text-stone-600"
                             >
-                              <span className="text-zinc-400 mr-2">
+                              <span className="text-stone-400 mr-2">
                                 {li + 1}.
                               </span>
                               {typeof lesson === 'string'
@@ -332,7 +332,7 @@ function AllModulesView() {
 
       {filteredModules.length === 0 && (
         <div className="py-20 text-center">
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-stone-400">
             No modules found. Try adjusting your search or filters.
           </p>
         </div>
@@ -348,10 +348,10 @@ function AllModulesView() {
 function CertificationsView() {
   return (
     <div className="px-8 py-8">
-      <h2 className="text-2xl font-semibold text-zinc-900 mb-1">
+      <h2 className="text-2xl font-semibold text-stone-900 mb-1">
         Certifications
       </h2>
-      <p className="text-sm text-zinc-600 mb-8">
+      <p className="text-sm text-stone-600 mb-8">
         Prove your mastery and earn recognized credentials
       </p>
 
@@ -362,26 +362,26 @@ function CertificationsView() {
         return (
           <motion.div
             key={cert.id || idx}
-            className="py-6 border-b border-zinc-200"
+            className="py-6 border-b border-stone-200"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.15, delay: idx * 0.04 }}
           >
-            <h3 className="text-lg font-semibold text-zinc-900 mb-1">
+            <h3 className="text-lg font-semibold text-stone-900 mb-1">
               {cert.title}
             </h3>
-            <p className="text-sm text-zinc-600 leading-relaxed mb-2">
+            <p className="text-sm text-stone-600 leading-relaxed mb-2">
               {cert.competence}
             </p>
-            <p className="text-xs text-zinc-400 mb-3">
+            <p className="text-xs text-stone-400 mb-3">
               Requires {requiredCount} modules
             </p>
 
             {/* Progress bar */}
             <div className="flex items-center gap-3 mb-2">
-              <div className="flex-1 max-w-xs h-1 bg-zinc-100 rounded-full overflow-hidden">
+              <div className="flex-1 max-w-xs h-1 bg-stone-100 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-zinc-900 rounded-full transition-all duration-500"
+                  className="h-full bg-stone-900 rounded-full transition-all duration-500"
                   style={{
                     width: `${
                       requiredCount > 0
@@ -391,12 +391,12 @@ function CertificationsView() {
                   }}
                 />
               </div>
-              <span className="text-xs text-zinc-400">
+              <span className="text-xs text-stone-400">
                 {completedCount} of {requiredCount} complete
               </span>
             </div>
 
-            <p className="text-xs text-zinc-400">
+            <p className="text-xs text-stone-400">
               Focus: {focusLabel(cert.focus)}
             </p>
           </motion.div>
@@ -420,19 +420,19 @@ function AboutView() {
 
   return (
     <div className="px-8 py-8 max-w-3xl">
-      <h2 className="text-2xl font-semibold text-zinc-900 mb-1">
+      <h2 className="text-2xl font-semibold text-stone-900 mb-1">
         About Concept2Cure
       </h2>
-      <p className="text-sm text-zinc-600 mb-10">
+      <p className="text-sm text-stone-600 mb-10">
         Why we exist and how our dual-AI system transforms regulatory work
       </p>
 
       {/* Why Concept2Cure exists */}
       <section className="mb-12">
-        <h3 className="text-lg font-semibold text-zinc-900 mb-4">
+        <h3 className="text-lg font-semibold text-stone-900 mb-4">
           Why Concept2Cure exists
         </h3>
-        <div className="space-y-4 text-sm text-zinc-600 leading-relaxed">
+        <div className="space-y-4 text-sm text-stone-600 leading-relaxed">
           <p>
             Regulatory complexity keeps growing. Global requirements shift
             constantly, and teams struggle to stay current across FDA, EMA, PMDA,
@@ -457,17 +457,17 @@ function AboutView() {
 
       {/* The dual-AI system */}
       <section className="mb-12">
-        <h3 className="text-lg font-semibold text-zinc-900 mb-6">
+        <h3 className="text-lg font-semibold text-stone-900 mb-6">
           The dual-AI system
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Dr. Sage */}
           <div>
-            <h4 className="text-base font-semibold text-zinc-900 mb-1">
+            <h4 className="text-base font-semibold text-stone-900 mb-1">
               Dr. Sage
             </h4>
-            <p className="text-xs text-zinc-400 mb-3">Your Workflow Guide</p>
-            <ul className="space-y-2 text-sm text-zinc-600">
+            <p className="text-xs text-stone-400 mb-3">Your Workflow Guide</p>
+            <ul className="space-y-2 text-sm text-stone-600">
               <li>Contextual workflow guidance</li>
               <li>Risk identification and mitigation</li>
               <li>Smart document recommendations</li>
@@ -477,13 +477,13 @@ function AboutView() {
 
           {/* AnA 1.0 */}
           <div>
-            <h4 className="text-base font-semibold text-zinc-900 mb-1">
+            <h4 className="text-base font-semibold text-stone-900 mb-1">
               AnA 1.0
             </h4>
-            <p className="text-xs text-zinc-400 mb-3">
+            <p className="text-xs text-stone-400 mb-3">
               Your Intelligence Engine
             </p>
-            <ul className="space-y-2 text-sm text-zinc-600">
+            <ul className="space-y-2 text-sm text-stone-600">
               <li>Deep regulatory data analysis</li>
               <li>Cross-reference and gap detection</li>
               <li>Intelligent document generation</li>
@@ -495,11 +495,11 @@ function AboutView() {
 
       {/* Timeline */}
       <section>
-        <h3 className="text-lg font-semibold text-zinc-900 mb-6">
+        <h3 className="text-lg font-semibold text-stone-900 mb-6">
           Our journey
         </h3>
         <div className="relative">
-          <div className="absolute left-[3px] top-2 bottom-2 w-px bg-zinc-100" />
+          <div className="absolute left-[3px] top-2 bottom-2 w-px bg-stone-100" />
           {timelineEvents.map((evt, idx) => (
             <motion.div
               key={idx}
@@ -508,9 +508,9 @@ function AboutView() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.15, delay: idx * 0.05 }}
             >
-              <div className="absolute left-0 top-2 h-[7px] w-[7px] rounded-full bg-zinc-300" />
-              <p className="text-xs text-zinc-400 mb-0.5">{evt.year}</p>
-              <p className="text-sm text-zinc-900">{evt.event}</p>
+              <div className="absolute left-0 top-2 h-[7px] w-[7px] rounded-full bg-stone-300" />
+              <p className="text-xs text-stone-400 mb-0.5">{evt.year}</p>
+              <p className="text-sm text-stone-900">{evt.event}</p>
             </motion.div>
           ))}
         </div>
@@ -530,17 +530,17 @@ function AiAgentsView() {
     <div className="py-12 px-6">
       {/* Header */}
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold text-zinc-900 tracking-tight">
+        <h2 className="text-2xl font-semibold text-stone-900 tracking-tight">
           AI Agents
         </h2>
-        <p className="text-base text-zinc-500 mt-2 max-w-2xl leading-relaxed">
+        <p className="text-base text-stone-500 mt-2 max-w-2xl leading-relaxed">
           35 specialized AI agents and services power your regulatory workflows.
           Explore capabilities, configure your AI team, and monitor agent execution in real time.
         </p>
       </div>
 
       {/* Sub-navigation */}
-      <div className="flex items-center gap-6 mb-8 border-b border-zinc-200 pb-3">
+      <div className="flex items-center gap-6 mb-8 border-b border-stone-200 pb-3">
         {([
           { key: 'showcase' as const, label: 'All Capabilities' },
           { key: 'setup' as const, label: 'Setup Wizard' },
@@ -552,8 +552,8 @@ function AiAgentsView() {
             className={cn(
               'text-sm transition-colors duration-150',
               subView === item.key
-                ? 'text-zinc-900 font-medium'
-                : 'text-zinc-400 hover:text-zinc-600'
+                ? 'text-stone-900 font-medium'
+                : 'text-stone-400 hover:text-stone-600'
             )}
           >
             {item.label}
@@ -564,7 +564,7 @@ function AiAgentsView() {
       {/* Content */}
       <React.Suspense
         fallback={
-          <p className="text-sm text-zinc-400 py-12">Loading...</p>
+          <p className="text-sm text-stone-400 py-12">Loading...</p>
         }
       >
         <AnimatePresence mode="wait">
@@ -621,17 +621,17 @@ export function EnablementCenter({
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[#faf9f5]">
       {/* Top bar */}
-      <header className="flex-shrink-0 h-12 border-b border-zinc-200 bg-white">
+      <header className="flex-shrink-0 h-12 border-b border-stone-200 bg-white">
         <div className="flex items-center h-full px-6">
           {/* Back */}
           <button
             onClick={onClose}
-            className="flex items-center gap-1.5 text-zinc-400 hover:text-zinc-600 transition-colors mr-4"
+            className="flex items-center gap-1.5 text-stone-400 hover:text-stone-600 transition-colors mr-4"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
 
-          <span className="text-sm font-medium text-zinc-900 mr-8">
+          <span className="text-sm font-medium text-stone-900 mr-8">
             Enablement Center
           </span>
 
@@ -646,14 +646,14 @@ export function EnablementCenter({
                   className={cn(
                     'relative text-sm h-full flex items-center transition-colors whitespace-nowrap',
                     isActive
-                      ? 'text-zinc-900'
-                      : 'text-zinc-400 hover:text-zinc-600'
+                      ? 'text-stone-900'
+                      : 'text-stone-400 hover:text-stone-600'
                   )}
                 >
                   {tab.label}
                   {isActive && (
                     <motion.div
-                      className="absolute inset-x-0 bottom-0 h-0.5 bg-zinc-900"
+                      className="absolute inset-x-0 bottom-0 h-0.5 bg-stone-900"
                       layoutId="activeTab"
                       transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                     />

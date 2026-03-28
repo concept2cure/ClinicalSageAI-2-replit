@@ -189,31 +189,31 @@ Component Stack: ${errorInfo?.componentStack}
 
       // Default error UI (panel-safe — no min-h-screen so it works inside panels)
       return (
-        <div className="flex-1 flex items-center justify-center bg-zinc-50 p-4 min-h-[200px]">
-          <div className="max-w-lg w-full border border-zinc-200 rounded-xl bg-white shadow-sm">
+        <div className="flex-1 flex items-center justify-center bg-stone-50 p-4 min-h-[200px]">
+          <div className="max-w-lg w-full border border-stone-200 rounded-xl bg-white shadow-sm">
             <div className="text-center px-6 pt-6 pb-3">
               <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
                 <AlertTriangle className="h-8 w-8 text-red-600" />
               </div>
-              <h3 className="text-xl font-semibold text-zinc-900">Something went wrong</h3>
-              <p className="text-sm text-zinc-600 mt-1">
+              <h3 className="text-xl font-semibold text-stone-900">Something went wrong</h3>
+              <p className="text-sm text-stone-600 mt-1">
                 We've logged this error for investigation. Your work has been preserved.
               </p>
             </div>
             <div className="px-6 pb-6 space-y-4">
               {/* Error ID for support reference */}
-              <div className="text-center text-sm text-zinc-500">
-                Error Reference: <code className="bg-zinc-100 px-2 py-1 rounded">{errorId}</code>
+              <div className="text-center text-sm text-stone-500">
+                Error Reference: <code className="bg-stone-100 px-2 py-1 rounded">{errorId}</code>
               </div>
 
               {/* Technical details (dev mode only) */}
               {showDetails && error && (
-                <div className="bg-zinc-100 rounded-lg p-4 max-h-48 overflow-auto">
+                <div className="bg-stone-100 rounded-lg p-4 max-h-48 overflow-auto">
                   <p className="font-mono text-xs text-red-600 whitespace-pre-wrap">
                     {error.message}
                   </p>
                   {errorInfo?.componentStack && (
-                    <p className="font-mono text-xs text-zinc-500 mt-2 whitespace-pre-wrap">
+                    <p className="font-mono text-xs text-stone-500 mt-2 whitespace-pre-wrap">
                       {errorInfo.componentStack}
                     </p>
                   )}
@@ -237,7 +237,7 @@ Component Stack: ${errorInfo?.componentStack}
                 onClick={this.handleCopyError}
                 variant="ghost"
                 size="sm"
-                className="w-full text-zinc-500"
+                className="w-full text-stone-500"
               >
                 <Bug className="h-3 w-3 mr-2" />
                 Copy Error Details

@@ -45,7 +45,7 @@ const FOLDER_LABELS: Record<string, string> = {
 
 // Monochrome status labels — semantic text color, no background
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
-  draft: { label: 'Draft', color: 'text-zinc-400' },
+  draft: { label: 'Draft', color: 'text-stone-400' },
   review: { label: 'In Review', color: 'text-amber-600' },
   approved: { label: 'Approved', color: 'text-emerald-600' },
   locked: { label: 'Ready', color: 'text-blue-600' },
@@ -102,8 +102,8 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
     return (
       <WorkspaceCanvas maxWidth="4xl" testId="vault-page">
         <div className="flex flex-col items-center justify-center py-20">
-          <Archive className="w-10 h-10 text-zinc-300 mb-3" />
-          <p className="text-sm text-zinc-500">Select a project to view its vault</p>
+          <Archive className="w-10 h-10 text-stone-300 mb-3" />
+          <p className="text-sm text-stone-500">Select a project to view its vault</p>
         </div>
       </WorkspaceCanvas>
     );
@@ -119,7 +119,7 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
       {/* Toolbar: search + upload */}
       <div className="flex items-center gap-3 mt-4 mb-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
           <Input
             type="text"
             value={searchQuery}
@@ -143,10 +143,10 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
             {Array.from(grouped.entries()).map(([folder, items]) => (
               <div key={folder}>
                 <div className="flex items-center gap-2 px-2 py-2 mb-0.5">
-                  <span className="text-xs font-medium text-zinc-500">
+                  <span className="text-xs font-medium text-stone-500">
                     {FOLDER_LABELS[folder] || folder}
                   </span>
-                  <span className="text-[10px] text-zinc-300">{items.length}</span>
+                  <span className="text-[10px] text-stone-300">{items.length}</span>
                 </div>
                 <div className="space-y-0.5">
                   {items.map(item => {
@@ -160,12 +160,12 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
                     <button
                       key={item.id}
                       onClick={() => onOpenDocument?.(item.id)}
-                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-zinc-50 transition-colors text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-stone-50 transition-colors text-left focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
                     >
-                      <FileText className="w-4 h-4 text-zinc-300 flex-shrink-0" />
+                      <FileText className="w-4 h-4 text-stone-300 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <span className="text-sm text-zinc-700 truncate block">{item.title}</span>
-                        {meta && <span className="text-[11px] text-zinc-400 truncate block mt-0.5">{meta}</span>}
+                        <span className="text-sm text-stone-700 truncate block">{item.title}</span>
+                        {meta && <span className="text-[11px] text-stone-400 truncate block mt-0.5">{meta}</span>}
                       </div>
                     </button>
                     );

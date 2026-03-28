@@ -401,9 +401,9 @@ const DocumentsView: React.FC<{ user: CurrentUser }> = ({ user }) => (
 
 const TeamView: React.FC<{ user: CurrentUser }> = ({ user }) => (
   <div className="flex h-full">
-    <div className="flex-1 p-6 bg-zinc-50">
-      <h2 className="text-xl font-semibold text-zinc-900 mb-4">Team Workspace</h2>
-      <p className="text-zinc-500">Select a team member to collaborate or view activity.</p>
+    <div className="flex-1 p-6 bg-stone-50">
+      <h2 className="text-xl font-semibold text-stone-900 mb-4">Team Workspace</h2>
+      <p className="text-stone-500">Select a team member to collaborate or view activity.</p>
     </div>
     <TeamCollaborationPanel
       teamMembers={MOCK_TEAM}
@@ -489,14 +489,14 @@ export const UnifiedWorkspaceDemo: React.FC = () => {
         return (
           <div className="p-6">
             <h2 className="text-xl font-semibold">Projects View</h2>
-            <p className="text-zinc-500 mt-2">Product/portfolio management view</p>
+            <p className="text-stone-500 mt-2">Product/portfolio management view</p>
           </div>
         );
       default:
         return (
           <div className="p-6">
             <h2 className="text-xl font-semibold">{currentView} View</h2>
-            <p className="text-zinc-500 mt-2">Coming soon...</p>
+            <p className="text-stone-500 mt-2">Coming soon...</p>
           </div>
         );
     }
@@ -505,7 +505,7 @@ export const UnifiedWorkspaceDemo: React.FC = () => {
   return (
     <div className="h-screen">
       {/* Mode Switcher (Demo Only) */}
-      <div className="fixed top-4 right-4 z-50 bg-white rounded-lg shadow-lg border border-zinc-200 p-2 flex gap-2">
+      <div className="fixed top-4 right-4 z-50 bg-white rounded-lg shadow-lg border border-stone-200 p-2 flex gap-2">
         {([
           'biotech',
           'pharma',
@@ -522,7 +522,7 @@ export const UnifiedWorkspaceDemo: React.FC = () => {
               'px-3 py-1.5 text-sm font-medium rounded-md transition-colors capitalize',
               currentUser.industryMode === mode
                 ? 'bg-blue-600 text-white'
-                : 'text-zinc-600 hover:bg-zinc-100'
+                : 'text-stone-600 hover:bg-stone-100'
             )}
           >
             {mode}

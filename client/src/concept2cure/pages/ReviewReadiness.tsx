@@ -7,7 +7,7 @@
  * tab navigation: Quality Center, Compliance, AnA Predictions, Readiness Score,
  * Evidence Confidence, Audit Trail, and Traceability.
  *
- * Design: Claude-style — warm white bg, clean zinc typography, generous whitespace.
+ * Design: Claude-style — warm white bg, clean stone typography, generous whitespace.
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
@@ -307,7 +307,7 @@ function strengthColor(s: EvidenceStrength): string {
   if (s === 'strong') return 'text-green-700';
   if (s === 'adequate') return 'text-amber-600';
   if (s === 'weak') return 'text-red-500';
-  return 'text-zinc-400';
+  return 'text-stone-400';
 }
 
 function strengthLabel(s: EvidenceStrength): string {
@@ -326,10 +326,10 @@ function riskColor(score: number): string {
 
 function EmptyState({ icon: Icon, message, detail }: { icon: React.ElementType; message: string; detail: string }) {
   return (
-    <div className="bg-white border border-zinc-200 rounded-lg py-12 text-center">
-      <Icon className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
-      <p className="text-sm text-zinc-500">{message}</p>
-      <p className="text-xs text-zinc-400 mt-1">{detail}</p>
+    <div className="bg-white border border-stone-200 rounded-lg py-12 text-center">
+      <Icon className="w-8 h-8 text-stone-400 mx-auto mb-2" />
+      <p className="text-sm text-stone-500">{message}</p>
+      <p className="text-xs text-stone-400 mt-1">{detail}</p>
     </div>
   );
 }
@@ -347,8 +347,8 @@ function QualityCenterView({ qcSections }: { qcSections: QCSection[] }) {
     <div className="px-8 py-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-medium text-zinc-900">Quality Center</h2>
-          <p className="text-sm text-zinc-600 mt-1">
+          <h2 className="text-lg font-medium text-stone-900">Quality Center</h2>
+          <p className="text-sm text-stone-600 mt-1">
             Does this pass quality checks? Section-by-section QC results across the submission.
           </p>
         </div>
@@ -392,46 +392,46 @@ function QualityCenterView({ qcSections }: { qcSections: QCSection[] }) {
       ) : (
         <>
           {/* Summary */}
-          <div className="bg-white border border-zinc-200 rounded-lg p-5">
+          <div className="bg-white border border-stone-200 rounded-lg p-5">
             <div className="flex items-center gap-8">
               <div>
-                <p className="text-xs text-zinc-400 uppercase tracking-wide">Sections Checked</p>
-                <p className="text-2xl font-semibold text-zinc-900 mt-1">{qcSections.length}</p>
+                <p className="text-xs text-stone-400 uppercase tracking-wide">Sections Checked</p>
+                <p className="text-2xl font-semibold text-stone-900 mt-1">{qcSections.length}</p>
               </div>
               <div>
-                <p className="text-xs text-zinc-400 uppercase tracking-wide">Issues Found</p>
-                <p className="text-2xl font-semibold text-zinc-900 mt-1">{totalIssues}</p>
+                <p className="text-xs text-stone-400 uppercase tracking-wide">Issues Found</p>
+                <p className="text-2xl font-semibold text-stone-900 mt-1">{totalIssues}</p>
               </div>
               <div>
-                <p className="text-xs text-zinc-400 uppercase tracking-wide">Critical</p>
+                <p className="text-xs text-stone-400 uppercase tracking-wide">Critical</p>
                 <p className="text-2xl font-semibold text-red-600 mt-1">{critical}</p>
               </div>
             </div>
-            <p className="text-xs text-zinc-400 mt-4">
+            <p className="text-xs text-stone-400 mt-4">
               Powered by QC Routes, Section Quality Gating, Real-time Validation
             </p>
           </div>
 
           {/* Table */}
-          <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
+          <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-200">
-                  <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Section</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Status</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Issues</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Last Checked</th>
+                <tr className="border-b border-stone-200">
+                  <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Section</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Status</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Issues</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Last Checked</th>
                 </tr>
               </thead>
               <tbody>
                 {qcSections.map((section, i) => (
-                  <tr key={i} className="border-b border-zinc-50 last:border-0">
-                    <td className="px-5 py-3 text-zinc-900">{section.name}</td>
+                  <tr key={i} className="border-b border-stone-50 last:border-0">
+                    <td className="px-5 py-3 text-stone-900">{section.name}</td>
                     <td className={cn('px-5 py-3 font-medium', statusColor(section.status))}>
                       {statusLabel(section.status)}
                     </td>
-                    <td className="px-5 py-3 text-zinc-600">{section.issuesFound}</td>
-                    <td className="px-5 py-3 text-zinc-400">{formatTimestamp(section.lastChecked)}</td>
+                    <td className="px-5 py-3 text-stone-600">{section.issuesFound}</td>
+                    <td className="px-5 py-3 text-stone-400">{formatTimestamp(section.lastChecked)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -456,8 +456,8 @@ function ComplianceView({ complianceRules }: { complianceRules: ComplianceRule[]
     <div className="px-8 py-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-medium text-zinc-900">Compliance</h2>
-          <p className="text-sm text-zinc-600 mt-1">
+          <h2 className="text-lg font-medium text-stone-900">Compliance</h2>
+          <p className="text-sm text-stone-600 mt-1">
             Is this compliant? 21 CFR Part 11, multi-agency requirements, and guardrail results.
           </p>
         </div>
@@ -492,48 +492,48 @@ function ComplianceView({ complianceRules }: { complianceRules: ComplianceRule[]
       </div>
 
       {/* Summary */}
-      <div className="bg-white border border-zinc-200 rounded-lg p-5">
+      <div className="bg-white border border-stone-200 rounded-lg p-5">
         <div className="flex items-center gap-8">
           <div>
-            <p className="text-xs text-zinc-400 uppercase tracking-wide">Rules Evaluated</p>
-            <p className="text-2xl font-semibold text-zinc-900 mt-1">{complianceRules.length}</p>
+            <p className="text-xs text-stone-400 uppercase tracking-wide">Rules Evaluated</p>
+            <p className="text-2xl font-semibold text-stone-900 mt-1">{complianceRules.length}</p>
           </div>
           <div>
-            <p className="text-xs text-zinc-400 uppercase tracking-wide">Passed</p>
+            <p className="text-xs text-stone-400 uppercase tracking-wide">Passed</p>
             <p className="text-2xl font-semibold text-green-700 mt-1">{passed}</p>
           </div>
           <div>
-            <p className="text-xs text-zinc-400 uppercase tracking-wide">Warnings</p>
+            <p className="text-xs text-stone-400 uppercase tracking-wide">Warnings</p>
             <p className="text-2xl font-semibold text-amber-600 mt-1">{warnings}</p>
           </div>
         </div>
-        <p className="text-xs text-zinc-400 mt-4">
+        <p className="text-xs text-stone-400 mt-4">
           Powered by Part 11 Compliance, Compliance Guardrails SDK, Multi-Agency Validation, FHIR Validation
         </p>
       </div>
 
       {/* Compliance Rules */}
-      <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
-        <div className="px-5 py-3 border-b border-zinc-200">
-          <h3 className="text-sm font-medium text-zinc-900">Compliance Rules</h3>
+      <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
+        <div className="px-5 py-3 border-b border-stone-200">
+          <h3 className="text-sm font-medium text-stone-900">Compliance Rules</h3>
         </div>
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-200">
-              <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">ID</th>
-              <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Category</th>
-              <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Rule</th>
-              <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Status</th>
+            <tr className="border-b border-stone-200">
+              <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">ID</th>
+              <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Category</th>
+              <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Rule</th>
+              <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Status</th>
             </tr>
           </thead>
           <tbody>
             {complianceRules.map((rule) => (
-              <tr key={rule.id} className="border-b border-zinc-50 last:border-0">
-                <td className="px-5 py-3 text-zinc-400 font-mono text-xs">{rule.id}</td>
-                <td className="px-5 py-3 text-zinc-600">{rule.category}</td>
-                <td className="px-5 py-3 text-zinc-900">
+              <tr key={rule.id} className="border-b border-stone-50 last:border-0">
+                <td className="px-5 py-3 text-stone-400 font-mono text-xs">{rule.id}</td>
+                <td className="px-5 py-3 text-stone-600">{rule.category}</td>
+                <td className="px-5 py-3 text-stone-900">
                   <div>{rule.description}</div>
-                  <div className="text-xs text-zinc-400 mt-0.5">{rule.details}</div>
+                  <div className="text-xs text-stone-400 mt-0.5">{rule.details}</div>
                 </td>
                 <td className={cn('px-5 py-3 font-medium capitalize', complianceColor(rule.status))}>
                   {rule.status}
@@ -545,31 +545,31 @@ function ComplianceView({ complianceRules }: { complianceRules: ComplianceRule[]
       </div>
 
       {/* Multi-Agency Matrix */}
-      <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
-        <div className="px-5 py-3 border-b border-zinc-200">
-          <h3 className="text-sm font-medium text-zinc-900">Multi-Agency Compliance Matrix</h3>
+      <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
+        <div className="px-5 py-3 border-b border-stone-200">
+          <h3 className="text-sm font-medium text-stone-900">Multi-Agency Compliance Matrix</h3>
         </div>
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-200">
-              <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Requirement</th>
-              <th className="text-center px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">FDA</th>
-              <th className="text-center px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">EMA</th>
-              <th className="text-center px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">PMDA</th>
+            <tr className="border-b border-stone-200">
+              <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Requirement</th>
+              <th className="text-center px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">FDA</th>
+              <th className="text-center px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">EMA</th>
+              <th className="text-center px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">PMDA</th>
             </tr>
           </thead>
           <tbody>
             {AGENCY_MATRIX.map((row, i) => (
-              <tr key={i} className="border-b border-zinc-50 last:border-0">
-                <td className="px-5 py-3 text-zinc-900">{row.requirement}</td>
+              <tr key={i} className="border-b border-stone-50 last:border-0">
+                <td className="px-5 py-3 text-stone-900">{row.requirement}</td>
                 <td className="px-5 py-3 text-center">
-                  <span className={row.fda ? 'text-green-700' : 'text-zinc-400'}>{row.fda ? 'Met' : '\u2014'}</span>
+                  <span className={row.fda ? 'text-green-700' : 'text-stone-400'}>{row.fda ? 'Met' : '\u2014'}</span>
                 </td>
                 <td className="px-5 py-3 text-center">
-                  <span className={row.ema ? 'text-green-700' : 'text-zinc-400'}>{row.ema ? 'Met' : '\u2014'}</span>
+                  <span className={row.ema ? 'text-green-700' : 'text-stone-400'}>{row.ema ? 'Met' : '\u2014'}</span>
                 </td>
                 <td className="px-5 py-3 text-center">
-                  <span className={row.pmda ? 'text-green-700' : 'text-zinc-400'}>{row.pmda ? 'Met' : '\u2014'}</span>
+                  <span className={row.pmda ? 'text-green-700' : 'text-stone-400'}>{row.pmda ? 'Met' : '\u2014'}</span>
                 </td>
               </tr>
             ))}
@@ -603,8 +603,8 @@ function _removed() { // eslint-disable-line
     <div className="px-8 py-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-medium text-zinc-900">AnA Predictions</h2>
-          <p className="text-sm text-zinc-600 mt-1">
+          <h2 className="text-lg font-medium text-stone-900">AnA Predictions</h2>
+          <p className="text-sm text-stone-600 mt-1">
             Unified prediction engine. Stress-test submissions, forecast trial outcomes, and model regulatory risk.
           </p>
         </div>
@@ -652,26 +652,26 @@ function _removed() { // eslint-disable-line
       </div>
 
       {/* Aggregate Summary */}
-      <div className="bg-white border border-zinc-200 rounded-lg p-5">
+      <div className="bg-white border border-stone-200 rounded-lg p-5">
         <div className="flex items-center gap-8">
           <div>
-            <p className="text-xs text-zinc-400 uppercase tracking-wide">Aggregate Risk</p>
+            <p className="text-xs text-stone-400 uppercase tracking-wide">Aggregate Risk</p>
             <p className={cn('text-2xl font-semibold mt-1', riskColor(avgRisk))}>{avgRisk}/100</p>
           </div>
           <div>
-            <p className="text-xs text-zinc-400 uppercase tracking-wide">Engines Run</p>
-            <p className="text-2xl font-semibold text-zinc-900 mt-1">{simulations.filter((s) => s.status === 'completed').length}/{simulations.length}</p>
+            <p className="text-xs text-stone-400 uppercase tracking-wide">Engines Run</p>
+            <p className="text-2xl font-semibold text-stone-900 mt-1">{simulations.filter((s) => s.status === 'completed').length}/{simulations.length}</p>
           </div>
           <div>
-            <p className="text-xs text-zinc-400 uppercase tracking-wide">Trial Success</p>
-            <p className="text-2xl font-semibold text-zinc-900 mt-1">{(ANA_PREDICTION.successProbability * 100).toFixed(0)}%</p>
+            <p className="text-xs text-stone-400 uppercase tracking-wide">Trial Success</p>
+            <p className="text-2xl font-semibold text-stone-900 mt-1">{(ANA_PREDICTION.successProbability * 100).toFixed(0)}%</p>
           </div>
           <div>
-            <p className="text-xs text-zinc-400 uppercase tracking-wide">Statistical Power</p>
-            <p className="text-2xl font-semibold text-zinc-900 mt-1">{(ANA_PREDICTION.monteCarlo.power * 100).toFixed(0)}%</p>
+            <p className="text-xs text-stone-400 uppercase tracking-wide">Statistical Power</p>
+            <p className="text-2xl font-semibold text-stone-900 mt-1">{(ANA_PREDICTION.monteCarlo.power * 100).toFixed(0)}%</p>
           </div>
         </div>
-        <p className="text-xs text-zinc-400 mt-4">
+        <p className="text-xs text-stone-400 mt-4">
           Powered by AnA Predictions — 6-engine simulation + Monte Carlo + AnA Predictions + Endpoint Recommender
         </p>
       </div>
@@ -679,11 +679,11 @@ function _removed() { // eslint-disable-line
       {/* Engine Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {simulations.map((engine, i) => (
-          <div key={i} className="bg-white border border-zinc-200 rounded-lg p-5">
+          <div key={i} className="bg-white border border-stone-200 rounded-lg p-5">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="text-sm font-medium text-zinc-900">{engine.name}</h3>
-                <p className="text-xs text-zinc-400 mt-1">{engine.description}</p>
+                <h3 className="text-sm font-medium text-stone-900">{engine.name}</h3>
+                <p className="text-xs text-stone-400 mt-1">{engine.description}</p>
               </div>
               <span className={cn('text-lg font-semibold', riskColor(engine.riskScore))}>
                 {engine.riskScore}
@@ -692,8 +692,8 @@ function _removed() { // eslint-disable-line
 
             <ul className="mt-3 space-y-1">
               {engine.findings.map((f, j) => (
-                <li key={j} className="text-xs text-zinc-600 flex items-start gap-1.5">
-                  <span className="text-zinc-400 mt-0.5">-</span>
+                <li key={j} className="text-xs text-stone-600 flex items-start gap-1.5">
+                  <span className="text-stone-400 mt-0.5">-</span>
                   {f}
                 </li>
               ))}
@@ -711,11 +711,11 @@ function _removed() { // eslint-disable-line
       </div>
 
       {/* Trial Prediction (merged from ForesightAI) */}
-      <div className="bg-white border border-zinc-200 rounded-lg p-5 space-y-4">
+      <div className="bg-white border border-stone-200 rounded-lg p-5 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-medium text-zinc-900">Trial Prediction</h3>
-            <p className="text-xs text-zinc-400 mt-0.5">{ANA_PREDICTION.trialName}</p>
+            <h3 className="text-sm font-medium text-stone-900">Trial Prediction</h3>
+            <p className="text-xs text-stone-400 mt-0.5">{ANA_PREDICTION.trialName}</p>
           </div>
           <span className={cn(
             'text-2xl font-semibold',
@@ -728,18 +728,18 @@ function _removed() { // eslint-disable-line
 
         {/* Risk Factors */}
         <div>
-          <p className="text-xs text-zinc-400 uppercase tracking-wide mb-2">Risk Factors</p>
+          <p className="text-xs text-stone-400 uppercase tracking-wide mb-2">Risk Factors</p>
           <div className="space-y-1.5">
             {ANA_PREDICTION.riskFactors.map((rf, i) => (
               <div key={i} className="flex items-start gap-2">
                 <span className={cn(
                   'mt-0.5 w-1.5 h-1.5 rounded-full shrink-0',
-                  rf.impact === 'high' ? 'bg-red-400' : rf.impact === 'medium' ? 'bg-amber-400' : 'bg-zinc-300',
+                  rf.impact === 'high' ? 'bg-red-400' : rf.impact === 'medium' ? 'bg-amber-400' : 'bg-stone-300',
                 )} />
-                <span className="text-xs text-zinc-600">{rf.factor}</span>
+                <span className="text-xs text-stone-600">{rf.factor}</span>
                 <span className={cn(
                   'text-xs font-medium uppercase ml-auto shrink-0',
-                  rf.impact === 'high' ? 'text-red-500' : rf.impact === 'medium' ? 'text-amber-500' : 'text-zinc-400',
+                  rf.impact === 'high' ? 'text-red-500' : rf.impact === 'medium' ? 'text-amber-500' : 'text-stone-400',
                 )}>{rf.impact}</span>
               </div>
             ))}
@@ -748,31 +748,31 @@ function _removed() { // eslint-disable-line
       </div>
 
       {/* Monte Carlo Simulation */}
-      <div className="bg-white border border-zinc-200 rounded-lg p-5 space-y-4">
-        <h3 className="text-sm font-medium text-zinc-900">Monte Carlo Simulation</h3>
+      <div className="bg-white border border-stone-200 rounded-lg p-5 space-y-4">
+        <h3 className="text-sm font-medium text-stone-900">Monte Carlo Simulation</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
-            <p className="text-xs text-zinc-400">Simulations</p>
-            <p className="text-sm font-medium text-zinc-900">{ANA_PREDICTION.monteCarlo.simulations.toLocaleString()}</p>
+            <p className="text-xs text-stone-400">Simulations</p>
+            <p className="text-sm font-medium text-stone-900">{ANA_PREDICTION.monteCarlo.simulations.toLocaleString()}</p>
           </div>
           <div>
-            <p className="text-xs text-zinc-400">Sample Size</p>
-            <p className="text-sm font-medium text-zinc-900">N={ANA_PREDICTION.monteCarlo.sampleSize}</p>
+            <p className="text-xs text-stone-400">Sample Size</p>
+            <p className="text-sm font-medium text-stone-900">N={ANA_PREDICTION.monteCarlo.sampleSize}</p>
           </div>
           <div>
-            <p className="text-xs text-zinc-400">Statistical Power</p>
-            <p className="text-sm font-medium text-zinc-900">{(ANA_PREDICTION.monteCarlo.power * 100).toFixed(0)}%</p>
+            <p className="text-xs text-stone-400">Statistical Power</p>
+            <p className="text-sm font-medium text-stone-900">{(ANA_PREDICTION.monteCarlo.power * 100).toFixed(0)}%</p>
           </div>
           <div>
-            <p className="text-xs text-zinc-400">Hazard Ratio</p>
-            <p className="text-sm font-medium text-zinc-900">{ANA_PREDICTION.monteCarlo.hazardRatio}</p>
+            <p className="text-xs text-stone-400">Hazard Ratio</p>
+            <p className="text-sm font-medium text-stone-900">{ANA_PREDICTION.monteCarlo.hazardRatio}</p>
           </div>
         </div>
-        <div className="bg-zinc-50 rounded p-3">
-          <p className="text-xs text-zinc-400 mb-1">Median OS Estimate</p>
-          <p className="text-sm font-medium text-zinc-900">
+        <div className="bg-stone-50 rounded p-3">
+          <p className="text-xs text-stone-400 mb-1">Median OS Estimate</p>
+          <p className="text-sm font-medium text-stone-900">
             {ANA_PREDICTION.monteCarlo.medianOS}{' '}
-            <span className="text-xs text-zinc-400 font-normal">
+            <span className="text-xs text-stone-400 font-normal">
               (95% CI: {ANA_PREDICTION.monteCarlo.ciLower} \u2013 {ANA_PREDICTION.monteCarlo.ciUpper})
             </span>
           </p>
@@ -780,20 +780,20 @@ function _removed() { // eslint-disable-line
       </div>
 
       {/* Recommended Endpoints */}
-      <div className="bg-white border border-zinc-200 rounded-lg p-5 space-y-3">
-        <h3 className="text-sm font-medium text-zinc-900">Recommended Endpoints</h3>
-        <div className="divide-y divide-zinc-50">
+      <div className="bg-white border border-stone-200 rounded-lg p-5 space-y-3">
+        <h3 className="text-sm font-medium text-stone-900">Recommended Endpoints</h3>
+        <div className="divide-y divide-stone-50">
           {ANA_PREDICTION.endpoints.map((ep, i) => (
             <div key={i} className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
               <div>
-                <p className="text-xs font-medium text-zinc-900">{ep.name}</p>
-                <p className="text-xs text-zinc-400">{ep.recommendation}</p>
+                <p className="text-xs font-medium text-stone-900">{ep.name}</p>
+                <p className="text-xs text-stone-400">{ep.recommendation}</p>
               </div>
               <span className={cn(
                 'text-xs font-medium px-2 py-0.5 rounded-full',
                 ep.type === 'Primary' ? 'bg-blue-50 text-blue-600' :
                 ep.type === 'Co-primary' ? 'bg-blue-50 text-blue-600' :
-                'bg-zinc-100 text-zinc-500',
+                'bg-stone-100 text-stone-500',
               )}>{ep.type}</span>
             </div>
           ))}
@@ -801,11 +801,11 @@ function _removed() { // eslint-disable-line
       </div>
 
       {/* Protocol Optimization */}
-      <div className="bg-white border border-zinc-200 rounded-lg p-5 space-y-3">
-        <h3 className="text-sm font-medium text-zinc-900">Protocol Optimization</h3>
+      <div className="bg-white border border-stone-200 rounded-lg p-5 space-y-3">
+        <h3 className="text-sm font-medium text-stone-900">Protocol Optimization</h3>
         <ul className="space-y-2">
           {ANA_PREDICTION.protocolFindings.map((finding, i) => (
-            <li key={i} className="text-xs text-zinc-600 flex items-start gap-2">
+            <li key={i} className="text-xs text-stone-600 flex items-start gap-2">
               <span className="text-blue-500 mt-0.5 shrink-0">{'\u2192'}</span>
               {finding}
             </li>
@@ -841,8 +841,8 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
     <div className="px-8 py-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-medium text-zinc-900">Readiness Score</h2>
-          <p className="text-sm text-zinc-600 mt-1">
+          <h2 className="text-lg font-medium text-stone-900">Readiness Score</h2>
+          <p className="text-sm text-stone-600 mt-1">
             Are we ready to file? Comprehensive readiness assessment with approval probability modeling.
           </p>
         </div>
@@ -885,30 +885,30 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
       ) : (
         <>
           {/* Main Score */}
-          <div className="bg-white border border-zinc-200 rounded-lg p-8 text-center">
-            <p className="text-xs text-zinc-400 uppercase tracking-wide">Submission Readiness</p>
-            <p className="text-6xl font-semibold text-zinc-900 mt-2">{overallReadiness}%</p>
-            <p className="text-sm text-zinc-400 mt-2">
-              Predicted approval probability: <span className="text-zinc-900 font-medium">{approvalProbability}%</span>
+          <div className="bg-white border border-stone-200 rounded-lg p-8 text-center">
+            <p className="text-xs text-stone-400 uppercase tracking-wide">Submission Readiness</p>
+            <p className="text-6xl font-semibold text-stone-900 mt-2">{overallReadiness}%</p>
+            <p className="text-sm text-stone-400 mt-2">
+              Predicted approval probability: <span className="text-stone-900 font-medium">{approvalProbability}%</span>
             </p>
             <div className="flex items-center justify-center gap-8 mt-6">
               <div>
-                <p className="text-xs text-zinc-400">Review Time</p>
-                <p className="text-sm font-medium text-zinc-900">{predictedReviewWeeks} weeks</p>
+                <p className="text-xs text-stone-400">Review Time</p>
+                <p className="text-sm font-medium text-stone-900">{predictedReviewWeeks} weeks</p>
               </div>
               <div>
-                <p className="text-xs text-zinc-400">Predicted Deficiencies</p>
-                <p className="text-sm font-medium text-zinc-900">{predictedDeficiencies}</p>
+                <p className="text-xs text-stone-400">Predicted Deficiencies</p>
+                <p className="text-sm font-medium text-stone-900">{predictedDeficiencies}</p>
               </div>
             </div>
-            <p className="text-xs text-zinc-400 mt-6">
+            <p className="text-xs text-stone-400 mt-6">
               Powered by Submission Readiness Twin
               {trendDirection && (
                 <span className={cn(
                   'ml-2 font-medium capitalize',
                   trendDirection === 'improving' ? 'text-emerald-600'
                     : trendDirection === 'declining' ? 'text-red-600'
-                    : 'text-zinc-500'
+                    : 'text-stone-500'
                 )}>
                   • Trend: {trendDirection}
                 </span>
@@ -920,8 +920,8 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
           {dimensions && (
             <div className="grid grid-cols-4 gap-4">
               {(['completeness', 'quality', 'consistency', 'compliance'] as const).map(dim => (
-                <div key={dim} className="bg-white border border-zinc-200 rounded-lg p-4 text-center">
-                  <p className="text-xs text-zinc-400 uppercase tracking-wide capitalize">{dim}</p>
+                <div key={dim} className="bg-white border border-stone-200 rounded-lg p-4 text-center">
+                  <p className="text-xs text-stone-400 uppercase tracking-wide capitalize">{dim}</p>
                   <p className={cn(
                     'text-2xl font-semibold mt-1',
                     dimensions[dim] >= 75 ? 'text-green-600'
@@ -930,7 +930,7 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
                   )}>
                     {dimensions[dim]}%
                   </p>
-                  <div className="w-full h-1.5 bg-zinc-100 rounded-full mt-2 overflow-hidden">
+                  <div className="w-full h-1.5 bg-stone-100 rounded-full mt-2 overflow-hidden">
                     <div
                       className={cn(
                         'h-full rounded-full',
@@ -948,11 +948,11 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
 
           {/* Readiness Gaps (from intelligence API) */}
           {liveReadiness && liveReadiness.gaps.length > 0 && (
-            <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
-              <div className="px-5 py-3 border-b border-zinc-200">
-                <h3 className="text-sm font-medium text-zinc-900">Readiness Gaps ({liveReadiness.gaps.length})</h3>
+            <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
+              <div className="px-5 py-3 border-b border-stone-200">
+                <h3 className="text-sm font-medium text-stone-900">Readiness Gaps ({liveReadiness.gaps.length})</h3>
               </div>
-              <div className="divide-y divide-zinc-100">
+              <div className="divide-y divide-stone-100">
                 {liveReadiness.gaps.map(gap => (
                   <div key={gap.id} className="px-5 py-3 flex items-start gap-3">
                     <span className={cn(
@@ -962,8 +962,8 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
                         : 'bg-blue-500'
                     )} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-zinc-900">{gap.description}</p>
-                      <p className="text-xs text-zinc-500 mt-0.5">{gap.remediation}</p>
+                      <p className="text-sm text-stone-900">{gap.description}</p>
+                      <p className="text-xs text-stone-500 mt-0.5">{gap.remediation}</p>
                     </div>
                     <span className={cn(
                       'text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 capitalize',
@@ -980,27 +980,27 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
           )}
 
           {/* Module Breakdown */}
-          <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
-            <div className="px-5 py-3 border-b border-zinc-200">
-              <h3 className="text-sm font-medium text-zinc-900">Module-by-Module Readiness</h3>
+          <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
+            <div className="px-5 py-3 border-b border-stone-200">
+              <h3 className="text-sm font-medium text-stone-900">Module-by-Module Readiness</h3>
             </div>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-200">
-                  <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Module</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Name</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Completeness</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Status</th>
+                <tr className="border-b border-stone-200">
+                  <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Module</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Name</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Completeness</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {readinessModules.map((mod) => (
-                  <tr key={mod.module} className="border-b border-zinc-50 last:border-0">
-                    <td className="px-5 py-3 text-zinc-900 font-medium">{mod.module}</td>
-                    <td className="px-5 py-3 text-zinc-600">{mod.name}</td>
+                  <tr key={mod.module} className="border-b border-stone-50 last:border-0">
+                    <td className="px-5 py-3 text-stone-900 font-medium">{mod.module}</td>
+                    <td className="px-5 py-3 text-stone-600">{mod.name}</td>
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-24 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+                        <div className="w-24 h-1.5 bg-stone-100 rounded-full overflow-hidden">
                           <div
                             className={cn(
                               'h-full rounded-full',
@@ -1009,7 +1009,7 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
                             style={{ width: `${mod.completeness}%` }}
                           />
                         </div>
-                        <span className="text-xs text-zinc-600">{mod.completeness}%</span>
+                        <span className="text-xs text-stone-600">{mod.completeness}%</span>
                       </div>
                     </td>
                     <td className={cn(
@@ -1025,23 +1025,23 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
           </div>
 
           {/* Prediction Detail */}
-          <div className="bg-white border border-zinc-200 rounded-lg p-5">
-            <h3 className="text-sm font-medium text-zinc-900">Filing Probability Model</h3>
-            <p className="text-xs text-zinc-400 mt-1 mb-3">
+          <div className="bg-white border border-stone-200 rounded-lg p-5">
+            <h3 className="text-sm font-medium text-stone-900">Filing Probability Model</h3>
+            <p className="text-xs text-stone-400 mt-1 mb-3">
               Predicted outcomes based on historical approval data for similar submissions.
             </p>
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <p className="text-xs text-zinc-400">First-cycle approval</p>
-                <p className="text-sm font-medium text-zinc-900">{Math.min(90, Math.round(approvalProbability * 0.95))}%</p>
+                <p className="text-xs text-stone-400">First-cycle approval</p>
+                <p className="text-sm font-medium text-stone-900">{Math.min(90, Math.round(approvalProbability * 0.95))}%</p>
               </div>
               <div>
-                <p className="text-xs text-zinc-400">Major amendment needed</p>
-                <p className="text-sm font-medium text-zinc-900">{Math.max(5, Math.round((100 - approvalProbability) * 0.7))}%</p>
+                <p className="text-xs text-stone-400">Major amendment needed</p>
+                <p className="text-sm font-medium text-stone-900">{Math.max(5, Math.round((100 - approvalProbability) * 0.7))}%</p>
               </div>
               <div>
-                <p className="text-xs text-zinc-400">Refuse to file risk</p>
-                <p className="text-sm font-medium text-zinc-900">{Math.max(2, Math.round((100 - approvalProbability) * 0.3))}%</p>
+                <p className="text-xs text-stone-400">Refuse to file risk</p>
+                <p className="text-sm font-medium text-stone-900">{Math.max(2, Math.round((100 - approvalProbability) * 0.3))}%</p>
               </div>
             </div>
           </div>
@@ -1062,8 +1062,8 @@ function EvidenceConfidenceView({ evidenceSections }: { evidenceSections: Eviden
     <div className="px-8 py-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-medium text-zinc-900">Evidence Confidence</h2>
-          <p className="text-sm text-zinc-600 mt-1">
+          <h2 className="text-lg font-medium text-stone-900">Evidence Confidence</h2>
+          <p className="text-sm text-stone-600 mt-1">
             Claim-to-citation coverage. Are key regulatory claims backed by sufficient, traceable evidence?
           </p>
         </div>
@@ -1099,8 +1099,8 @@ function EvidenceConfidenceView({ evidenceSections }: { evidenceSections: Eviden
       </div>
 
       {/* Powered By */}
-      <div className="bg-white border border-zinc-200 rounded-lg p-5">
-        <p className="text-xs text-zinc-400">
+      <div className="bg-white border border-stone-200 rounded-lg p-5">
+        <p className="text-xs text-stone-400">
           Powered by Evidence Confidence Heatmap, Confidence Scoring Engine
         </p>
       </div>
@@ -1113,27 +1113,27 @@ function EvidenceConfidenceView({ evidenceSections }: { evidenceSections: Eviden
         />
       ) : (
         /* Evidence Grid */
-        <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
+        <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-zinc-200">
-                <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Section</th>
-                <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Strength</th>
-                <th className="text-center px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Claims</th>
-                <th className="text-center px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Citations</th>
-                <th className="text-center px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Confidence</th>
-                <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Gaps</th>
+              <tr className="border-b border-stone-200">
+                <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Section</th>
+                <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Strength</th>
+                <th className="text-center px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Claims</th>
+                <th className="text-center px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Citations</th>
+                <th className="text-center px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Confidence</th>
+                <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Gaps</th>
               </tr>
             </thead>
             <tbody>
               {evidenceSections.map((section, i) => (
-                <tr key={i} className="border-b border-zinc-50 last:border-0">
-                  <td className="px-5 py-3 text-zinc-900">{section.section}</td>
+                <tr key={i} className="border-b border-stone-50 last:border-0">
+                  <td className="px-5 py-3 text-stone-900">{section.section}</td>
                   <td className={cn('px-5 py-3 font-medium', strengthColor(section.strength))}>
                     {strengthLabel(section.strength)}
                   </td>
-                  <td className="px-5 py-3 text-center text-zinc-600">{section.claims}</td>
-                  <td className="px-5 py-3 text-center text-zinc-600">{section.citations}</td>
+                  <td className="px-5 py-3 text-center text-stone-600">{section.claims}</td>
+                  <td className="px-5 py-3 text-center text-stone-600">{section.citations}</td>
                   <td className="px-5 py-3 text-center">
                     <span className={cn(
                       'font-medium',
@@ -1142,7 +1142,7 @@ function EvidenceConfidenceView({ evidenceSections }: { evidenceSections: Eviden
                       {section.confidence}%
                     </span>
                   </td>
-                  <td className="px-5 py-3 text-zinc-400 text-xs">
+                  <td className="px-5 py-3 text-stone-400 text-xs">
                     {section.gaps.length === 0 ? (
                       <span className="text-green-700">None</span>
                     ) : (
@@ -1187,8 +1187,8 @@ function AuditTrailView({ auditEntries }: { auditEntries: AuditEntry[] }) {
     <div className="px-8 py-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-medium text-zinc-900">Audit Trail</h2>
-          <p className="text-sm text-zinc-600 mt-1">
+          <h2 className="text-lg font-medium text-stone-900">Audit Trail</h2>
+          <p className="text-sm text-stone-600 mt-1">
             Full compliance history. Immutable, chronological record of all system actions.
           </p>
         </div>
@@ -1210,8 +1210,8 @@ function AuditTrailView({ auditEntries }: { auditEntries: AuditEntry[] }) {
       </div>
 
       {/* Powered By */}
-      <div className="bg-white border border-zinc-200 rounded-lg p-5">
-        <p className="text-xs text-zinc-400">
+      <div className="bg-white border border-stone-200 rounded-lg p-5">
+        <p className="text-xs text-stone-400">
           Powered by Cognitive Audit Service, Provenance Trail
         </p>
       </div>
@@ -1227,11 +1227,11 @@ function AuditTrailView({ auditEntries }: { auditEntries: AuditEntry[] }) {
           {/* Filters */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-zinc-400" />
+              <Filter className="w-4 h-4 text-stone-400" />
               <select
                 value={filterUser}
                 onChange={(e) => setFilterUser(e.target.value)}
-                className="text-sm border border-zinc-200 rounded-md px-3 py-1.5 text-zinc-700 bg-white focus-visible:ring-2 outline-none focus:ring-zinc-300"
+                className="text-sm border border-stone-200 rounded-md px-3 py-1.5 text-stone-700 bg-white focus-visible:ring-2 outline-none focus:ring-stone-300"
               >
                 <option value="">All users</option>
                 {users.map((u) => (
@@ -1242,7 +1242,7 @@ function AuditTrailView({ auditEntries }: { auditEntries: AuditEntry[] }) {
             <select
               value={filterAction}
               onChange={(e) => setFilterAction(e.target.value)}
-              className="text-sm border border-zinc-200 rounded-md px-3 py-1.5 text-zinc-700 bg-white focus-visible:ring-2 outline-none focus:ring-zinc-300"
+              className="text-sm border border-stone-200 rounded-md px-3 py-1.5 text-stone-700 bg-white focus-visible:ring-2 outline-none focus:ring-stone-300"
             >
               <option value="">All actions</option>
               {actions.map((a) => (
@@ -1252,35 +1252,35 @@ function AuditTrailView({ auditEntries }: { auditEntries: AuditEntry[] }) {
           </div>
 
           {/* Audit Feed */}
-          <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
+          <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-200">
-                  <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Timestamp</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">User</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Action</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Section</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Hash</th>
+                <tr className="border-b border-stone-200">
+                  <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Timestamp</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">User</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Action</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Section</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Hash</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((entry) => (
-                  <tr key={entry.id} className="border-b border-zinc-50 last:border-0">
-                    <td className="px-5 py-3 text-zinc-400 text-xs whitespace-nowrap">
+                  <tr key={entry.id} className="border-b border-stone-50 last:border-0">
+                    <td className="px-5 py-3 text-stone-400 text-xs whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
                         <Clock className="w-3 h-3" />
                         {formatTimestamp(entry.timestamp)}
                       </div>
                     </td>
-                    <td className="px-5 py-3 text-zinc-900">{entry.user}</td>
-                    <td className="px-5 py-3 text-zinc-600">{entry.action}</td>
-                    <td className="px-5 py-3 text-zinc-600">{entry.section}</td>
-                    <td className="px-5 py-3 text-zinc-400 font-mono text-xs">{entry.hash}</td>
+                    <td className="px-5 py-3 text-stone-900">{entry.user}</td>
+                    <td className="px-5 py-3 text-stone-600">{entry.action}</td>
+                    <td className="px-5 py-3 text-stone-600">{entry.section}</td>
+                    <td className="px-5 py-3 text-stone-400 font-mono text-xs">{entry.hash}</td>
                   </tr>
                 ))}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-5 py-8 text-center text-zinc-400 text-sm">
+                    <td colSpan={5} className="px-5 py-8 text-center text-stone-400 text-sm">
                       No audit entries match the current filters.
                     </td>
                   </tr>
@@ -1309,8 +1309,8 @@ function TraceabilityView({ traceability }: { traceability: TraceabilityClaim[] 
     <div className="px-8 py-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-medium text-zinc-900">Traceability</h2>
-          <p className="text-sm text-zinc-600 mt-1">
+          <h2 className="text-lg font-medium text-stone-900">Traceability</h2>
+          <p className="text-sm text-stone-600 mt-1">
             Is every claim backed by evidence? Full traceability matrix from requirements to claims to evidence.
           </p>
         </div>
@@ -1354,34 +1354,34 @@ function TraceabilityView({ traceability }: { traceability: TraceabilityClaim[] 
       ) : (
         <>
           {/* Summary */}
-          <div className="bg-white border border-zinc-200 rounded-lg p-5">
+          <div className="bg-white border border-stone-200 rounded-lg p-5">
             <div className="flex items-center gap-8">
               <div>
-                <p className="text-xs text-zinc-400 uppercase tracking-wide">Coverage</p>
-                <p className="text-2xl font-semibold text-zinc-900 mt-1">{coverage}%</p>
-                <p className="text-xs text-zinc-400 mt-0.5">{traced} of {total} claims traced</p>
+                <p className="text-xs text-stone-400 uppercase tracking-wide">Coverage</p>
+                <p className="text-2xl font-semibold text-stone-900 mt-1">{coverage}%</p>
+                <p className="text-xs text-stone-400 mt-0.5">{traced} of {total} claims traced</p>
               </div>
               <div>
-                <p className="text-xs text-zinc-400 uppercase tracking-wide">Orphaned Claims</p>
+                <p className="text-xs text-stone-400 uppercase tracking-wide">Orphaned Claims</p>
                 <p className="text-2xl font-semibold text-red-600 mt-1">{orphaned.length}</p>
               </div>
             </div>
-            <p className="text-xs text-zinc-400 mt-4">
+            <p className="text-xs text-stone-400 mt-4">
               Powered by Auto-Traceability Engine, Citation Enforcement
             </p>
           </div>
 
           {/* Orphaned Claims */}
           {orphaned.length > 0 && (
-            <div className="bg-white border border-zinc-200 rounded-lg p-5">
-              <h3 className="text-sm font-medium text-zinc-900">Orphaned Claims</h3>
-              <p className="text-xs text-zinc-400 mt-1">Claims without supporting evidence links.</p>
+            <div className="bg-white border border-stone-200 rounded-lg p-5">
+              <h3 className="text-sm font-medium text-stone-900">Orphaned Claims</h3>
+              <p className="text-xs text-stone-400 mt-1">Claims without supporting evidence links.</p>
               <ul className="mt-3 space-y-2">
                 {orphaned.map((claim) => (
-                  <li key={claim.id} className="text-sm text-zinc-600 flex items-start gap-2">
+                  <li key={claim.id} className="text-sm text-stone-600 flex items-start gap-2">
                     <XCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
                     <div>
-                      <span className="font-mono text-xs text-zinc-400 mr-2">{claim.requirement}</span>
+                      <span className="font-mono text-xs text-stone-400 mr-2">{claim.requirement}</span>
                       {claim.claim}
                     </div>
                   </li>
@@ -1391,30 +1391,30 @@ function TraceabilityView({ traceability }: { traceability: TraceabilityClaim[] 
           )}
 
           {/* Full Matrix */}
-          <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
-            <div className="px-5 py-3 border-b border-zinc-200">
-              <h3 className="text-sm font-medium text-zinc-900">Traceability Matrix</h3>
+          <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
+            <div className="px-5 py-3 border-b border-stone-200">
+              <h3 className="text-sm font-medium text-stone-900">Traceability Matrix</h3>
             </div>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-200">
-                  <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Req ID</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Claim</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Evidence Links</th>
-                  <th className="text-center px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Traced</th>
+                <tr className="border-b border-stone-200">
+                  <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Req ID</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Claim</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Evidence Links</th>
+                  <th className="text-center px-5 py-3 text-xs font-medium text-stone-400 uppercase tracking-wide">Traced</th>
                 </tr>
               </thead>
               <tbody>
                 {traceability.map((claim) => (
-                  <tr key={claim.id} className="border-b border-zinc-50 last:border-0">
-                    <td className="px-5 py-3 text-zinc-400 font-mono text-xs whitespace-nowrap">{claim.requirement}</td>
-                    <td className="px-5 py-3 text-zinc-900 text-xs">{claim.claim}</td>
-                    <td className="px-5 py-3 text-zinc-600 text-xs">
+                  <tr key={claim.id} className="border-b border-stone-50 last:border-0">
+                    <td className="px-5 py-3 text-stone-400 font-mono text-xs whitespace-nowrap">{claim.requirement}</td>
+                    <td className="px-5 py-3 text-stone-900 text-xs">{claim.claim}</td>
+                    <td className="px-5 py-3 text-stone-600 text-xs">
                       {claim.evidenceLinks.length > 0 ? (
                         <ul className="space-y-0.5">
                           {claim.evidenceLinks.map((link, j) => (
                             <li key={j} className="flex items-center gap-1">
-                              <Link2 className="w-3 h-3 text-zinc-400" />
+                              <Link2 className="w-3 h-3 text-stone-400" />
                               {link}
                             </li>
                           ))}
@@ -1496,7 +1496,7 @@ export function ReviewReadiness({ onClose, projectId }: { onClose: () => void; p
         return <SnowGlobeView />;
       case 'readiness':
         return projectId
-          ? <React.Suspense fallback={<div className="flex items-center justify-center py-12 text-zinc-400 text-sm">Loading readiness dashboard...</div>}>
+          ? <React.Suspense fallback={<div className="flex items-center justify-center py-12 text-stone-400 text-sm">Loading readiness dashboard...</div>}>
               <ProjectReadinessDashboardLazy projectId={projectId} />
             </React.Suspense>
           : <ReadinessScoreView readinessModules={readinessModules} summary={summary} projectId={projectId} />;
@@ -1514,12 +1514,12 @@ export function ReviewReadiness({ onClose, projectId }: { onClose: () => void; p
   return (
     <div className="flex-1 flex flex-col min-h-0">
       {/* Tab bar — compact, inline */}
-      <div className="flex-shrink-0 border-b border-zinc-100 bg-white px-6">
+      <div className="flex-shrink-0 border-b border-stone-100 bg-white px-6">
         <div className="flex items-center h-11">
           <button
             onClick={onClose}
             aria-label="Back to Overview"
-            className="flex items-center gap-1.5 text-zinc-400 hover:text-zinc-600 transition-colors mr-6 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded"
+            className="flex items-center gap-1.5 text-stone-400 hover:text-stone-600 transition-colors mr-6 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none rounded"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
@@ -1534,8 +1534,8 @@ export function ReviewReadiness({ onClose, projectId }: { onClose: () => void; p
                   className={cn(
                     'px-3 py-1.5 text-xs rounded-md transition-colors whitespace-nowrap',
                     isActive
-                      ? 'bg-zinc-200 text-zinc-900 font-medium'
-                      : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
+                      ? 'bg-stone-200 text-stone-900 font-medium'
+                      : 'text-stone-500 hover:bg-stone-100 hover:text-stone-700'
                   )}
                 >
                   {tab.label}

@@ -109,7 +109,7 @@ const PreconditionBadge: React.FC<{
           "w-2 h-2 rounded-full cursor-pointer transition-transform hover:scale-150",
           isPassed && "bg-green-500",
           isFailed && "bg-red-500",
-          isPending && "bg-zinc-300"
+          isPending && "bg-stone-300"
         )}
         onClick={onClick}
         title={getPreconditionLabel(precondition)}
@@ -124,14 +124,14 @@ const PreconditionBadge: React.FC<{
         "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors cursor-pointer",
         isPassed && "bg-green-50 text-green-700 hover:bg-green-100",
         isFailed && "bg-red-50 text-red-700 hover:bg-red-100",
-        isPending && "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+        isPending && "bg-stone-100 text-stone-600 hover:bg-stone-200"
       )}
       onClick={onClick}
     >
       {/* Status icon */}
       {isPassed && <CheckCircle2 size={14} className="text-green-500" />}
       {isFailed && <XCircle size={14} className="text-red-500" />}
-      {isPending && <Circle size={14} className="text-zinc-400" />}
+      {isPending && <Circle size={14} className="text-stone-400" />}
       
       {/* Type icon */}
       <PreconditionIcon type={precondition.type} />
@@ -163,7 +163,7 @@ const PreconditionSummary: React.FC<{
         "flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors duration-150",
         allPassed && "bg-green-100 text-green-700 hover:bg-green-200",
         hasFailed && "bg-red-100 text-red-700 hover:bg-red-200",
-        !allPassed && !hasFailed && "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+        !allPassed && !hasFailed && "bg-stone-100 text-stone-600 hover:bg-stone-200"
       )}
     >
       {allPassed ? (
@@ -188,7 +188,7 @@ export const PreconditionBadges: React.FC<PreconditionBadgesProps> = ({
 }) => {
   if (!preconditions || preconditions.length === 0) {
     return (
-      <div className={cn("text-sm text-zinc-400 italic", className)}>
+      <div className={cn("text-sm text-stone-400 italic", className)}>
         No preconditions
       </div>
     );
@@ -218,7 +218,7 @@ export const PreconditionBadges: React.FC<PreconditionBadgesProps> = ({
             />
           ))}
           {preconditions.length > 5 && (
-            <span className="text-xs text-zinc-400 ml-1">
+            <span className="text-xs text-stone-400 ml-1">
               +{preconditions.length - 5}
             </span>
           )}
@@ -263,7 +263,7 @@ export const PreconditionBadges: React.FC<PreconditionBadgesProps> = ({
       {/* Pending preconditions */}
       {pending.length > 0 && showAll && (
         <div className="space-y-2">
-          <div className="text-xs font-medium text-zinc-500 uppercase tracking-wide flex items-center gap-1">
+          <div className="text-xs font-medium text-stone-500 uppercase tracking-wide flex items-center gap-1">
             <Clock size={12} />
             Pending ({pending.length})
           </div>
@@ -300,7 +300,7 @@ export const PreconditionBadges: React.FC<PreconditionBadgesProps> = ({
       
       {/* Summary when not showing all */}
       {!showAll && passed.length > 0 && (
-        <div className="text-xs text-zinc-500">
+        <div className="text-xs text-stone-500">
           + {passed.length} met precondition{passed.length > 1 ? 's' : ''}
         </div>
       )}

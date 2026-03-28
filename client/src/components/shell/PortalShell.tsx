@@ -518,7 +518,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, user, notifications }) => 
               <input
                 type="search"
                 placeholder="Search programs, evidence, documents..."
-                className="w-80 pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-80 pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
                 aria-label="Global search"
               />
               <span
@@ -671,7 +671,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, user, notifications }) => 
           <input
             type="search"
             placeholder="Search..."
-            className="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
             aria-label="Search"
             autoFocus
           />

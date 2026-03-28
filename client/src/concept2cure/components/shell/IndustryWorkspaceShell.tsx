@@ -279,11 +279,11 @@ const Sidebar: React.FC<{
   
   return (
     <div className={cn(
-      'flex flex-col h-full bg-zinc-900 text-white transition-all duration-300',
+      'flex flex-col h-full bg-stone-900 text-white transition-all duration-300',
       collapsed ? 'w-16' : 'w-64'
     )}>
       {/* Logo */}
-      <div className="flex items-center gap-3 p-4 border-b border-zinc-800">
+      <div className="flex items-center gap-3 p-4 border-b border-stone-800">
         <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
           <Sparkles className="w-5 h-5 text-white" />
         </div>
@@ -318,7 +318,7 @@ const Sidebar: React.FC<{
                 'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-150',
                 isActive
                   ? 'bg-blue-600 text-white'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                  : 'text-stone-400 hover:text-white hover:bg-stone-800'
               )}
               title={collapsed ? item.label : undefined}
             >
@@ -332,12 +332,12 @@ const Sidebar: React.FC<{
       </nav>
       
       {/* Footer */}
-      <div className="p-4 border-t border-zinc-800 space-y-1">
-        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors duration-150">
+      <div className="p-4 border-t border-stone-800 space-y-1">
+        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 transition-colors duration-150">
           <Settings className="w-5 h-5 flex-shrink-0" />
           {!collapsed && <span className="text-sm">Settings</span>}
         </button>
-        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors duration-150">
+        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 transition-colors duration-150">
           <HelpCircle className="w-5 h-5 flex-shrink-0" />
           {!collapsed && <span className="text-sm">Help</span>}
         </button>
@@ -346,7 +346,7 @@ const Sidebar: React.FC<{
       {/* Collapse Toggle */}
       <button
         onClick={() => onCollapse(!collapsed)}
-        className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-zinc-700 text-zinc-400 hover:bg-zinc-600 flex items-center justify-center shadow-lg"
+        className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-stone-700 text-stone-400 hover:bg-stone-600 flex items-center justify-center shadow-lg"
       >
         {collapsed ? '→' : '←'}
       </button>
@@ -371,17 +371,17 @@ const Header: React.FC<{
   const roleConfig = ROLE_CONFIG[currentUser.role];
   
   return (
-    <header className="h-16 bg-white border-b border-zinc-200 flex items-center justify-between px-6">
+    <header className="h-16 bg-white border-b border-stone-200 flex items-center justify-between px-6">
       {/* Search */}
       <div className="relative w-96">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
         <input
           type="text"
           placeholder="Search projects, documents, submissions..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && onSearch?.(searchQuery)}
-          className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+          className="w-full pl-10 pr-4 py-2 text-sm border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
         />
       </div>
       
@@ -393,7 +393,7 @@ const Header: React.FC<{
           return (
             <button
               key={i}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors duration-150"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition-colors duration-150"
             >
               <Icon className="w-4 h-4" />
               {action.label}
@@ -414,7 +414,7 @@ const Header: React.FC<{
         <div className="relative">
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors duration-150"
+            className="relative p-2 text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition-colors duration-150"
           >
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
@@ -425,9 +425,9 @@ const Header: React.FC<{
           </button>
           
           {showNotifications && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-xl border border-zinc-200 z-50">
-              <div className="p-3 border-b border-zinc-200">
-                <h4 className="text-sm font-semibold text-zinc-900">Notifications</h4>
+            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-xl border border-stone-200 z-50">
+              <div className="p-3 border-b border-stone-200">
+                <h4 className="text-sm font-semibold text-stone-900">Notifications</h4>
               </div>
               <div className="max-h-80 overflow-y-auto">
                 {notifications.slice(0, 5).map(notification => (
@@ -435,12 +435,12 @@ const Header: React.FC<{
                     key={notification.id}
                     onClick={() => onNotificationClick?.(notification)}
                     className={cn(
-                      'w-full p-3 text-left hover:bg-zinc-50 border-b border-zinc-200 last:border-b-0',
+                      'w-full p-3 text-left hover:bg-stone-50 border-b border-stone-200 last:border-b-0',
                       !notification.read && 'bg-blue-50'
                     )}
                   >
-                    <p className="text-sm font-medium text-zinc-900">{notification.title}</p>
-                    <p className="text-xs text-zinc-500 mt-0.5">{notification.message}</p>
+                    <p className="text-sm font-medium text-stone-900">{notification.title}</p>
+                    <p className="text-xs text-stone-500 mt-0.5">{notification.message}</p>
                   </button>
                 ))}
               </div>
@@ -449,15 +449,15 @@ const Header: React.FC<{
         </div>
         
         {/* User Menu */}
-        <button className="flex items-center gap-2 px-2 py-1 hover:bg-zinc-100 rounded-lg transition-colors duration-150">
+        <button className="flex items-center gap-2 px-2 py-1 hover:bg-stone-100 rounded-lg transition-colors duration-150">
           <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium">
             {currentUser.name.split(' ').map(n => n[0]).join('')}
           </div>
           <div className="text-left">
-            <p className="text-sm font-medium text-zinc-900">{currentUser.name}</p>
-            <p className="text-xs text-zinc-500">{roleConfig.label}</p>
+            <p className="text-sm font-medium text-stone-900">{currentUser.name}</p>
+            <p className="text-xs text-stone-500">{roleConfig.label}</p>
           </div>
-          <ChevronDown className="w-4 h-4 text-zinc-400" />
+          <ChevronDown className="w-4 h-4 text-stone-400" />
         </button>
       </div>
     </header>
@@ -487,7 +487,7 @@ export const IndustryWorkspaceShell: React.FC<IndustryWorkspaceShellProps> = ({
   }, [onViewChange]);
   
   return (
-    <div className={cn('flex h-screen bg-zinc-100', className)}>
+    <div className={cn('flex h-screen bg-stone-100', className)}>
       {/* Sidebar */}
       <div className="relative">
         <Sidebar

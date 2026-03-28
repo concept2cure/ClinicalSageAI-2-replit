@@ -123,7 +123,7 @@ export function DrSageGreeting({
   const [message] = useState(() => getGreetingMessage(currentContext, userProgress));
 
   return (
-    <p className={cn('text-sm text-zinc-500 leading-relaxed', className)}>
+    <p className={cn('text-sm text-stone-500 leading-relaxed', className)}>
       {message}
     </p>
   );
@@ -161,10 +161,10 @@ export function MessageBubble({ text, typing, actions, className }: MessageBubbl
   }, [text, typing]);
 
   return (
-    <div className={cn('border-l-2 border-zinc-200 pl-3', className)}>
-      <p className="text-sm text-zinc-600 leading-relaxed">
+    <div className={cn('border-l-2 border-stone-200 pl-3', className)}>
+      <p className="text-sm text-stone-600 leading-relaxed">
         {displayText}
-        {!typingDone && <span className="text-zinc-400">|</span>}
+        {!typingDone && <span className="text-stone-400">|</span>}
       </p>
       {typingDone && actions && actions.length > 0 && (
         <div className="flex gap-3 mt-2">
@@ -195,7 +195,7 @@ const STATUS_TEXT: Record<DrSageStatusIndicatorProps['status'], string> = {
 
 export function DrSageStatusIndicator({ status, message }: DrSageStatusIndicatorProps) {
   return (
-    <p className="text-xs text-zinc-400">
+    <p className="text-xs text-stone-400">
       {message || STATUS_TEXT[status]}
     </p>
   );
@@ -217,10 +217,10 @@ export function ContextualTip({ tip, onDismiss, onExpand, autoHide = 10000 }: Co
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 4 }}
       transition={{ duration: 0.15 }}
-      className="text-xs text-zinc-400 italic"
+      className="text-xs text-stone-400 italic"
     >
       Tip: {tip}{' '}
-      <button onClick={onDismiss} className="text-zinc-400 hover:text-zinc-500 ml-1">
+      <button onClick={onDismiss} className="text-stone-400 hover:text-stone-500 ml-1">
         Dismiss
       </button>
       {onExpand && (

@@ -128,9 +128,9 @@ const EVENT_CONFIG: Record<EventType, {
   },
   internal: {
     icon: Clock,
-    color: 'text-zinc-700',
-    bgColor: 'bg-zinc-100',
-    borderColor: 'border-zinc-300',
+    color: 'text-stone-700',
+    bgColor: 'bg-stone-100',
+    borderColor: 'border-stone-300',
     label: 'Internal',
   },
   renewal: {
@@ -231,10 +231,10 @@ const EventBadge: React.FC<{
             {event.title}
           </p>
           {event.productName && (
-            <p className="text-xs text-zinc-500 truncate">{event.productName}</p>
+            <p className="text-xs text-stone-500 truncate">{event.productName}</p>
           )}
           {!event.allDay && (
-            <p className="text-xs text-zinc-500 mt-1">
+            <p className="text-xs text-stone-500 mt-1">
               {new Date(event.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </p>
           )}
@@ -285,11 +285,11 @@ const UpcomingEventsSidebar: React.FC<{
   }, [upcomingEvents]);
   
   return (
-    <div className="w-80 border-l border-zinc-200 bg-zinc-50 p-4 overflow-y-auto">
-      <h3 className="text-sm font-semibold text-zinc-900 mb-4">Upcoming Events</h3>
+    <div className="w-80 border-l border-stone-200 bg-stone-50 p-4 overflow-y-auto">
+      <h3 className="text-sm font-semibold text-stone-900 mb-4">Upcoming Events</h3>
       
       {Object.keys(groupedEvents).length === 0 ? (
-        <p className="text-sm text-zinc-500 italic">No upcoming events</p>
+        <p className="text-sm text-stone-500 italic">No upcoming events</p>
       ) : (
         <div className="space-y-4">
           {Object.entries(groupedEvents).slice(0, 10).map(([dateKey, dateEvents]) => {
@@ -302,7 +302,7 @@ const UpcomingEventsSidebar: React.FC<{
                   'text-xs font-medium mb-2 px-2 py-1 rounded',
                   isToday(date) && 'bg-blue-100 text-blue-700',
                   isSelectedDay && !isToday(date) && 'bg-blue-100 text-blue-700',
-                  !isToday(date) && !isSelectedDay && 'text-zinc-500'
+                  !isToday(date) && !isSelectedDay && 'text-stone-500'
                 )}>
                   {isToday(date) ? 'Today' : date.toLocaleDateString(undefined, {
                     weekday: 'short',
@@ -413,24 +413,24 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
       {/* Main Calendar */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <div className="flex-shrink-0 border-b border-zinc-200 p-4">
+        <div className="flex-shrink-0 border-b border-stone-200 p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
-              <h2 className="text-xl font-semibold text-zinc-900">
+              <h2 className="text-xl font-semibold text-stone-900">
                 {MONTHS[month]} {year}
               </h2>
               <div className="flex items-center gap-1">
                 <button
                   onClick={prevMonth}
-                  className="p-1.5 rounded-lg hover:bg-zinc-100 transition-colors duration-150"
+                  className="p-1.5 rounded-lg hover:bg-stone-100 transition-colors duration-150"
                 >
-                  <ChevronLeft className="w-5 h-5 text-zinc-600" />
+                  <ChevronLeft className="w-5 h-5 text-stone-600" />
                 </button>
                 <button
                   onClick={nextMonth}
-                  className="p-1.5 rounded-lg hover:bg-zinc-100 transition-colors duration-150"
+                  className="p-1.5 rounded-lg hover:bg-stone-100 transition-colors duration-150"
                 >
-                  <ChevronRight className="w-5 h-5 text-zinc-600" />
+                  <ChevronRight className="w-5 h-5 text-stone-600" />
                 </button>
               </div>
               <button
@@ -452,14 +452,14 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
                       onClick={() => toggleFilter(type as EventType)}
                       className={cn(
                         'px-2 py-1 text-xs rounded-full border transition-colors duration-150',
-                        isActive ? cn(config.bgColor, config.borderColor, config.color) : 'bg-zinc-100 border-zinc-200 text-zinc-400'
+                        isActive ? cn(config.bgColor, config.borderColor, config.color) : 'bg-stone-100 border-stone-200 text-stone-400'
                       )}
                     >
                       {config.label}
                     </button>
                   );
                 })}
-                <button className="px-2 py-1 text-xs text-zinc-500 hover:bg-zinc-100 rounded-full">
+                <button className="px-2 py-1 text-xs text-stone-500 hover:bg-stone-100 rounded-full">
                   More...
                 </button>
               </div>
@@ -484,7 +484,7 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
             {DAYS.map(day => (
               <div
                 key={day}
-                className="text-center text-xs font-medium text-zinc-500 py-2"
+                className="text-center text-xs font-medium text-stone-500 py-2"
               >
                 {day}
               </div>
@@ -514,7 +514,7 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
                   className={cn(
                     'min-h-[100px] p-1 text-left rounded-lg border transition-colors duration-150',
                     isSelected && 'border-blue-500 bg-blue-50',
-                    !isSelected && 'border-zinc-200 hover:border-zinc-200 hover:bg-zinc-50',
+                    !isSelected && 'border-stone-200 hover:border-stone-200 hover:bg-stone-50',
                     hasPdufa && !isSelected && 'border-red-200 bg-red-50/50'
                   )}
                 >
@@ -523,7 +523,7 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
                       'w-6 h-6 flex items-center justify-center text-sm rounded-full',
                       isTodayDate && 'bg-blue-600 text-white font-semibold',
                       !isTodayDate && isSelected && 'text-blue-700 font-medium',
-                      !isTodayDate && !isSelected && 'text-zinc-700'
+                      !isTodayDate && !isSelected && 'text-stone-700'
                     )}>
                       {date.getDate()}
                     </span>
@@ -543,7 +543,7 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
                       />
                     ))}
                     {dayEvents.length > 3 && (
-                      <span className="text-xs text-zinc-500 pl-1">
+                      <span className="text-xs text-stone-500 pl-1">
                         +{dayEvents.length - 3} more
                       </span>
                     )}

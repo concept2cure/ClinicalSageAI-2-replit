@@ -355,7 +355,7 @@ const createCommands = (onAction: (id: string) => void): CommandItem[] => [
     id: 'nav-provenance-trail',
     title: 'Provenance Trail',
     subtitle: '21 CFR Part 11 audit trail with hash verification',
-    icon: <Fingerprint className="w-4 h-4 text-zinc-600" />,
+    icon: <Fingerprint className="w-4 h-4 text-stone-600" />,
     category: 'tools',
     action: () => onAction('nav-provenance-trail'),
     keywords: ['provenance', 'audit', 'trail', 'cfr', 'part11', 'compliance', 'hash'],
@@ -683,8 +683,8 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
         className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150"
       >
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-4 border-b border-zinc-100">
-          <Search className="w-5 h-5 text-zinc-400 flex-shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-4 border-b border-stone-100">
+          <Search className="w-5 h-5 text-stone-400 flex-shrink-0" />
           <span id="command-palette-title" className="sr-only">
             Command Palette
           </span>
@@ -698,9 +698,9 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
             }}
             onKeyDown={handleKeyDown}
             placeholder="Search commands, tools, submissions..."
-            className="flex-1 text-base bg-transparent border-none outline-none text-zinc-900 placeholder:text-zinc-400"
+            className="flex-1 text-base bg-transparent border-none outline-none text-stone-900 placeholder:text-stone-400"
           />
-          <kbd className="hidden sm:flex items-center gap-1 px-2 py-1 text-xs text-zinc-400 bg-zinc-100 rounded-md">
+          <kbd className="hidden sm:flex items-center gap-1 px-2 py-1 text-xs text-stone-400 bg-stone-100 rounded-md">
             ESC
           </kbd>
         </div>
@@ -714,8 +714,8 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
         >
           {flatList.length === 0 ? (
             <div className="px-4 py-12 text-center" role="status">
-              <Search className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
-              <p className="text-sm text-zinc-500">No commands found for "{query}"</p>
+              <Search className="w-10 h-10 text-stone-300 mx-auto mb-3" />
+              <p className="text-sm text-stone-500">No commands found for "{query}"</p>
             </div>
           ) : (
             groupedCommands.map(group => {
@@ -725,7 +725,7 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
                 <div key={group.category} className="mb-2">
                   {/* Group header */}
                   <div className="px-4 py-2">
-                    <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                    <span className="text-xs font-semibold text-stone-400 uppercase tracking-wider">
                       {group.label}
                     </span>
                   </div>
@@ -744,15 +744,15 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
                         onClick={() => item.action()}
                         onMouseEnter={() => setSelectedIndex(absoluteIndex)}
                         className={cn(
-                          'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
-                          isSelected ? 'bg-zinc-100' : 'hover:bg-zinc-50'
+                          'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none',
+                          isSelected ? 'bg-stone-100' : 'hover:bg-stone-50'
                         )}
                       >
                         {/* Icon */}
                         <div
                           className={cn(
                             'flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center',
-                            isSelected ? 'bg-white shadow-sm' : 'bg-zinc-100'
+                            isSelected ? 'bg-white shadow-sm' : 'bg-stone-100'
                           )}
                         >
                           {item.icon}
@@ -760,17 +760,17 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
 
                         {/* Text */}
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-zinc-900 truncate">
+                          <div className="text-sm font-medium text-stone-900 truncate">
                             {item.title}
                           </div>
                           {item.subtitle && (
-                            <div className="text-xs text-zinc-500 truncate">{item.subtitle}</div>
+                            <div className="text-xs text-stone-500 truncate">{item.subtitle}</div>
                           )}
                         </div>
 
                         {/* Shortcut */}
                         {item.shortcut && (
-                          <kbd className="flex-shrink-0 text-xs text-zinc-400 bg-zinc-100 px-2 py-1 rounded">
+                          <kbd className="flex-shrink-0 text-xs text-stone-400 bg-stone-100 px-2 py-1 rounded">
                             {item.shortcut}
                           </kbd>
                         )}
@@ -779,7 +779,7 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
                         <ChevronRight
                           className={cn(
                             'w-4 h-4 flex-shrink-0 transition-opacity',
-                            isSelected ? 'opacity-100 text-zinc-600' : 'opacity-0'
+                            isSelected ? 'opacity-100 text-stone-600' : 'opacity-0'
                           )}
                         />
                       </button>
@@ -792,19 +792,19 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-100 bg-zinc-50">
-          <div className="flex items-center gap-4 text-xs text-zinc-500">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-stone-100 bg-stone-50">
+          <div className="flex items-center gap-4 text-xs text-stone-500">
             <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-zinc-200 rounded text-zinc-600">↑</kbd>
-              <kbd className="px-1.5 py-0.5 bg-zinc-200 rounded text-zinc-600">↓</kbd>
+              <kbd className="px-1.5 py-0.5 bg-stone-200 rounded text-stone-600">↑</kbd>
+              <kbd className="px-1.5 py-0.5 bg-stone-200 rounded text-stone-600">↓</kbd>
               <span>Navigate</span>
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-zinc-200 rounded text-zinc-600">↵</kbd>
+              <kbd className="px-1.5 py-0.5 bg-stone-200 rounded text-stone-600">↵</kbd>
               <span>Select</span>
             </span>
           </div>
-          <div className="flex items-center gap-1 text-xs text-zinc-400">
+          <div className="flex items-center gap-1 text-xs text-stone-400">
             <Command className="w-3 h-3" />
             <span>K to open</span>
           </div>

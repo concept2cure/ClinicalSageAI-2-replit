@@ -53,7 +53,7 @@ export function Footer() {
   const [, setLocation] = useLocation();
 
   return (
-    <footer className="py-12 px-6 bg-zinc-900 text-zinc-400" role="contentinfo">
+    <footer className="py-12 px-6 bg-stone-900 text-stone-400" role="contentinfo">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
           <div>
@@ -61,13 +61,13 @@ export function Footer() {
               <Logo />
               <span className="font-semibold text-white">Concept2Cure</span>
             </div>
-            <p className="text-sm text-zinc-500 leading-relaxed">
+            <p className="text-sm text-stone-500 leading-relaxed">
               AI-powered regulatory intelligence for life sciences. From concept to cure, faster.
             </p>
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold text-zinc-300 mb-3">Platform</h4>
+            <h4 className="text-sm font-semibold text-stone-300 mb-3">Platform</h4>
             <ul className="space-y-2 text-sm">
               <li>
                 <a href="#features" className="hover:text-white transition-colors">
@@ -96,7 +96,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold text-zinc-300 mb-3">Regulatory</h4>
+            <h4 className="text-sm font-semibold text-stone-300 mb-3">Regulatory</h4>
             <ul className="space-y-2 text-sm">
               <li>FDA (510(k), IND, NDA)</li>
               <li>EMA (MAA, CTA)</li>
@@ -106,7 +106,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold text-zinc-300 mb-3">Compliance</h4>
+            <h4 className="text-sm font-semibold text-stone-300 mb-3">Compliance</h4>
             <ul className="space-y-2 text-sm">
               <li>21 CFR Part 11</li>
               <li>SOC 2 Type II</li>
@@ -116,18 +116,18 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="pt-8 border-t border-zinc-800 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-zinc-500">
+        <div className="pt-8 border-t border-stone-800 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-stone-500">
             &copy; {new Date().getFullYear()} Concept2Cure, Inc. All rights reserved.
           </p>
           <nav className="flex items-center gap-6 text-sm" aria-label="Legal">
-            <a href="/terms" className="text-zinc-500 hover:text-white transition-colors">
+            <a href="/terms" className="text-stone-500 hover:text-white transition-colors">
               Terms of Service
             </a>
-            <a href="/privacy" className="text-zinc-500 hover:text-white transition-colors">
+            <a href="/privacy" className="text-stone-500 hover:text-white transition-colors">
               Privacy Policy
             </a>
-            <a href="#security" className="text-zinc-500 hover:text-white transition-colors">
+            <a href="#security" className="text-stone-500 hover:text-white transition-colors">
               Security
             </a>
           </nav>

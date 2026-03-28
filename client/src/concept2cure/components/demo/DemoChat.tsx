@@ -66,15 +66,15 @@ export const DemoChat: React.FC<DemoChatProps> = ({
   }, [messages.length, typedText]);
 
   return (
-    <div className="flex flex-col h-full bg-white/80 backdrop-blur-sm border-r border-zinc-200/60">
+    <div className="flex flex-col h-full bg-white/80 backdrop-blur-sm border-r border-stone-200/60">
       {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-200/60">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-stone-200/60">
         <div className="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center">
           <Sparkles className="w-4 h-4 text-white" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-zinc-900">AnA 1.0</p>
-          <p className="text-xs text-zinc-500">Regulatory Intelligence Co-Pilot</p>
+          <p className="text-sm font-semibold text-stone-900">AnA 1.0</p>
+          <p className="text-xs text-stone-500">Regulatory Intelligence Co-Pilot</p>
         </div>
       </div>
 
@@ -106,13 +106,13 @@ export const DemoChat: React.FC<DemoChatProps> = ({
                   className={cn(
                     'max-w-[85%] rounded-xl px-4 py-3 text-sm leading-relaxed',
                     msg.role === 'ana'
-                      ? 'bg-zinc-100 text-zinc-900'
+                      ? 'bg-stone-100 text-stone-900'
                       : 'bg-violet-600 text-white',
                   )}
                 >
                   {msg.role === 'ana' ? (
                     <div
-                      className="prose prose-sm prose-zinc max-w-none [&>p]:mb-2 [&>p:last-child]:mb-0 [&>ul]:mb-2 [&>ul]:pl-4"
+                      className="prose prose-sm prose-stone max-w-none [&>p]:mb-2 [&>p:last-child]:mb-0 [&>ul]:mb-2 [&>ul]:pl-4"
                       dangerouslySetInnerHTML={{
                         __html: renderMarkdown(
                           isAnaLastTyping ? typedText : msg.content,
@@ -159,13 +159,13 @@ export const DemoChat: React.FC<DemoChatProps> = ({
                   className={cn(
                     'text-left px-4 py-2.5 rounded-xl border text-sm transition-all duration-150',
                     'border-blue-200 bg-white hover:bg-blue-50 hover:border-violet-400',
-                    'text-zinc-700 hover:text-violet-700',
+                    'text-stone-700 hover:text-violet-700',
                     'shadow-sm hover:shadow-md',
                   )}
                 >
                   <span className="font-medium">{choice.label}</span>
                   {choice.description && (
-                    <span className="text-xs text-zinc-400 ml-2">{choice.description}</span>
+                    <span className="text-xs text-stone-400 ml-2">{choice.description}</span>
                   )}
                 </motion.button>
               ))}

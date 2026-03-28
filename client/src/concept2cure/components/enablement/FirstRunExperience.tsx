@@ -90,15 +90,15 @@ function WelcomeScreen({
 }) {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-8">
-      <h1 className="text-2xl font-semibold text-zinc-900">
+      <h1 className="text-2xl font-semibold text-stone-900">
         {userName ? `Welcome, ${userName}` : 'Welcome to Concept2Cure'}
       </h1>
-      <p className="text-sm text-zinc-500 mt-2 max-w-md">
+      <p className="text-sm text-stone-500 mt-2 max-w-md">
         Let's get you set up. This takes about a minute.
       </p>
 
       <div className="mt-10 max-w-sm w-full space-y-3">
-        <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider text-left">
+        <p className="text-xs font-medium text-stone-400 uppercase tracking-wider text-left">
           What do you work on?
         </p>
         {([
@@ -110,12 +110,12 @@ function WelcomeScreen({
             onClick={() => onSelectTrack(option.id)}
             className={`w-full text-left px-4 py-3 rounded-lg border transition-colors ${
               track === option.id
-                ? 'border-zinc-900 bg-zinc-50'
-                : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+                ? 'border-stone-900 bg-stone-50'
+                : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50'
             }`}
           >
-            <span className="text-sm font-medium text-zinc-900">{option.label}</span>
-            <span className="text-xs text-zinc-400 block mt-0.5">{option.description}</span>
+            <span className="text-sm font-medium text-stone-900">{option.label}</span>
+            <span className="text-xs text-stone-400 block mt-0.5">{option.description}</span>
           </button>
         ))}
       </div>
@@ -147,13 +147,13 @@ function SetupScreen({
 
   return (
     <div className="flex flex-col items-center h-full px-8 pt-16 overflow-y-auto">
-      <h2 className="text-xl font-semibold text-zinc-900 mb-1">Quick setup</h2>
-      <p className="text-sm text-zinc-500 mb-8">Three quick choices to personalize your experience.</p>
+      <h2 className="text-xl font-semibold text-stone-900 mb-1">Quick setup</h2>
+      <p className="text-sm text-stone-500 mb-8">Three quick choices to personalize your experience.</p>
 
       <div className="max-w-sm w-full space-y-6">
         {/* Role */}
         <div>
-          <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">Your role</p>
+          <p className="text-xs font-medium text-stone-400 uppercase tracking-wider mb-2">Your role</p>
           <div className="flex flex-wrap gap-2">
             {roles.map(r => (
               <button
@@ -161,8 +161,8 @@ function SetupScreen({
                 onClick={() => onSelectRole(r.id)}
                 className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
                   role === r.id
-                    ? 'border-zinc-900 bg-zinc-900 text-white'
-                    : 'border-zinc-200 text-zinc-600 hover:border-zinc-300'
+                    ? 'border-stone-900 bg-stone-900 text-white'
+                    : 'border-stone-200 text-stone-600 hover:border-stone-300'
                 }`}
               >
                 {r.label}
@@ -173,7 +173,7 @@ function SetupScreen({
 
         {/* Submission type */}
         <div>
-          <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">Submission type</p>
+          <p className="text-xs font-medium text-stone-400 uppercase tracking-wider mb-2">Submission type</p>
           <div className="flex flex-wrap gap-2">
             {types.map(t => (
               <button
@@ -181,8 +181,8 @@ function SetupScreen({
                 onClick={() => onSelectType(t.id)}
                 className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
                   submissionType === t.id
-                    ? 'border-zinc-900 bg-zinc-900 text-white'
-                    : 'border-zinc-200 text-zinc-600 hover:border-zinc-300'
+                    ? 'border-stone-900 bg-stone-900 text-white'
+                    : 'border-stone-200 text-stone-600 hover:border-stone-300'
                 }`}
               >
                 {t.label}
@@ -193,7 +193,7 @@ function SetupScreen({
 
         {/* Region */}
         <div>
-          <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">Target agency</p>
+          <p className="text-xs font-medium text-stone-400 uppercase tracking-wider mb-2">Target agency</p>
           <div className="flex flex-wrap gap-2">
             {REGIONS.map(r => (
               <button
@@ -201,8 +201,8 @@ function SetupScreen({
                 onClick={() => onSelectRegion(r.id)}
                 className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
                   region === r.id
-                    ? 'border-zinc-900 bg-zinc-900 text-white'
-                    : 'border-zinc-200 text-zinc-600 hover:border-zinc-300'
+                    ? 'border-stone-900 bg-stone-900 text-white'
+                    : 'border-stone-200 text-stone-600 hover:border-stone-300'
                 }`}
               >
                 {r.label}
@@ -235,8 +235,8 @@ function CreateProjectScreen({
 }) {
   return (
     <div className="flex flex-col items-center justify-center h-full px-8">
-      <h2 className="text-xl font-semibold text-zinc-900 mb-1">Create your first project</h2>
-      <p className="text-sm text-zinc-500 mb-8">
+      <h2 className="text-xl font-semibold text-stone-900 mb-1">Create your first project</h2>
+      <p className="text-sm text-stone-500 mb-8">
         {submissionType ? `A ${submissionType} project to get you started.` : 'Give your project a name.'}
       </p>
 
@@ -248,7 +248,7 @@ function CreateProjectScreen({
 
       <div className="max-w-sm w-full space-y-4">
         <div>
-          <label htmlFor="project-name" className="text-xs font-medium text-zinc-500 block mb-1.5">
+          <label htmlFor="project-name" className="text-xs font-medium text-stone-500 block mb-1.5">
             Project name
           </label>
           <Input
@@ -261,8 +261,8 @@ function CreateProjectScreen({
           />
         </div>
         <div>
-          <label htmlFor="product-name" className="text-xs font-medium text-zinc-500 block mb-1.5">
-            Product or device name <span className="text-zinc-300">(optional)</span>
+          <label htmlFor="product-name" className="text-xs font-medium text-stone-500 block mb-1.5">
+            Product or device name <span className="text-stone-300">(optional)</span>
           </label>
           <Input
             id="product-name"
@@ -275,7 +275,7 @@ function CreateProjectScreen({
       </div>
 
       {isCreating && (
-        <p className="text-xs text-zinc-400 mt-6">Creating project...</p>
+        <p className="text-xs text-stone-400 mt-6">Creating project...</p>
       )}
     </div>
   );
@@ -306,23 +306,23 @@ function ConfidenceScreen({
 
   return (
     <div className="flex flex-col items-center justify-center h-full px-8 text-center">
-      <h2 className="text-xl font-semibold text-zinc-900 mb-2">You're all set</h2>
-      <p className="text-sm text-zinc-500 max-w-md">
+      <h2 className="text-xl font-semibold text-stone-900 mb-2">You're all set</h2>
+      <p className="text-sm text-stone-500 max-w-md">
         Your project is ready. AnA is always available at the bottom of every page to help you.
       </p>
 
       <div className="mt-8 max-w-sm w-full space-y-2">
-        <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider text-left mb-2">
+        <p className="text-xs font-medium text-stone-400 uppercase tracking-wider text-left mb-2">
           What would you like to do first?
         </p>
         {suggestions.map(s => (
           <button
             key={s.id}
             onClick={() => onAction(s.id)}
-            className="w-full text-left px-4 py-3 rounded-lg border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            className="w-full text-left px-4 py-3 rounded-lg border border-stone-200 hover:border-stone-300 hover:bg-stone-50 transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
           >
-            <span className="text-sm font-medium text-zinc-800">{s.label}</span>
-            <span className="text-xs text-zinc-400 block mt-0.5">{s.description}</span>
+            <span className="text-sm font-medium text-stone-800">{s.label}</span>
+            <span className="text-xs text-stone-400 block mt-0.5">{s.description}</span>
           </button>
         ))}
       </div>
@@ -488,7 +488,7 @@ export default function FirstRunExperience({
           {screen > 0 && !isLastScreen && (
             <button
               onClick={goPrev}
-              className="text-sm text-zinc-500 hover:text-zinc-700 transition-colors"
+              className="text-sm text-stone-500 hover:text-stone-700 transition-colors"
             >
               Back
             </button>
@@ -501,7 +501,7 @@ export default function FirstRunExperience({
             <div
               key={i}
               className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                i === screen ? 'bg-zinc-900' : i < screen ? 'bg-zinc-400' : 'bg-zinc-200'
+                i === screen ? 'bg-stone-900' : i < screen ? 'bg-stone-400' : 'bg-stone-200'
               }`}
             />
           ))}
@@ -510,7 +510,7 @@ export default function FirstRunExperience({
         <div className="flex items-center gap-4">
           <button
             onClick={handleSkip}
-            className="text-sm text-zinc-400 hover:text-zinc-600 transition-colors"
+            className="text-sm text-stone-400 hover:text-stone-600 transition-colors"
           >
             Skip
           </button>
@@ -520,8 +520,8 @@ export default function FirstRunExperience({
               disabled={!canContinue() || isCreating}
               className={`text-sm font-medium transition-colors ${
                 canContinue() && !isCreating
-                  ? 'text-zinc-900 hover:underline'
-                  : 'text-zinc-300 cursor-not-allowed'
+                  ? 'text-stone-900 hover:underline'
+                  : 'text-stone-300 cursor-not-allowed'
               }`}
             >
               Continue

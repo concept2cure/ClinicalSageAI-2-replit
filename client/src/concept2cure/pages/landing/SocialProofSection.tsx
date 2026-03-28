@@ -64,10 +64,10 @@ export function SocialProofSection() {
     <Section className="py-24 px-6">
       <div className="max-w-6xl mx-auto">
         <motion.div variants={fadeUp} className="text-center mb-14">
-          <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
+          <h2 className="text-3xl sm:text-4xl font-bold text-stone-900 mb-4">
             Built for every stage of regulatory maturity
           </h2>
-          <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
+          <p className="text-lg text-stone-600 max-w-2xl mx-auto">
             Whether you're filing your first IND or managing a global submission portfolio,
             Concept2Cure adapts to your workflow.
           </p>
@@ -87,10 +87,10 @@ export function SocialProofSection() {
                 >
                   {a.persona}
                 </span>
-                <h3 className="text-lg font-bold text-zinc-900 mb-4">{a.tagline}</h3>
+                <h3 className="text-lg font-bold text-stone-900 mb-4">{a.tagline}</h3>
                 <ul className="space-y-3">
                   {a.points.map(point => (
-                    <li key={point} className="flex items-start gap-2.5 text-sm text-zinc-700">
+                    <li key={point} className="flex items-start gap-2.5 text-sm text-stone-700">
                       <CheckIcon className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                       <span>{point}</span>
                     </li>

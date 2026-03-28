@@ -436,7 +436,7 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
               <p className="text-sm text-muted-foreground">Avg Days Open</p>
               <p className="text-2xl font-semibold">{metrics.avgDaysOpen}</p>
             </div>
-            <Calendar className="w-8 h-8 text-zinc-500" />
+            <Calendar className="w-8 h-8 text-stone-500" />
           </div>
         </div>
       </div>
@@ -1239,7 +1239,7 @@ export function CAPAManagement() {
       </div>
 
       {/* RI Integration */}
-      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-zinc-50">
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-stone-50">
         <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-100 rounded-full">
@@ -1254,12 +1254,12 @@ export function CAPAManagement() {
             </div>
             <Button
               variant="outline"
-              className="border-purple-300 text-purple-700 hover:bg-purple-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none"
+              className="border-purple-300 text-purple-700 hover:bg-purple-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none"
             >
               <BarChart3 className="w-4 h-4 mr-2" />
               View Trends
             </Button>
-            <Button className="bg-purple-600 hover:bg-purple-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none">
+            <Button className="bg-purple-600 hover:bg-purple-700 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none">
               <Brain className="w-4 h-4 mr-2" />
               RI Analysis
             </Button>

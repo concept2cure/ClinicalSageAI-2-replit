@@ -65,7 +65,7 @@ function statusTone(status: ComputeStatus) {
     case 'running':
       return 'bg-blue-50 text-blue-700 border-blue-200';
     default:
-      return 'bg-zinc-50 text-zinc-700 border-zinc-200';
+      return 'bg-stone-50 text-stone-700 border-stone-200';
   }
 }
 
@@ -143,9 +143,9 @@ export function ComputeJobPanel({
   };
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-3 space-y-3">
+    <div className="rounded-lg border border-stone-200 bg-white p-3 space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-zinc-900">Artifact Compute Plane</h3>
+        <h3 className="text-sm font-semibold text-stone-900">Artifact Compute Plane</h3>
         <Badge variant="outline" className="text-xs">
           {activeCount} active
         </Badge>
@@ -172,13 +172,13 @@ export function ComputeJobPanel({
 
       <div className="space-y-2 max-h-80 overflow-auto">
         {jobs.map(job => (
-          <div key={job.job_id} className="rounded border border-zinc-100 px-2 py-1.5">
+          <div key={job.job_id} className="rounded border border-stone-100 px-2 py-1.5">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs font-medium text-zinc-800">
+                <div className="text-xs font-medium text-stone-800">
                   {job.surface_key} • {job.intent_type}
                 </div>
-                <div className="text-[11px] text-zinc-500">
+                <div className="text-[11px] text-stone-500">
                   {new Date(job.created_at).toLocaleString()}
                 </div>
               </div>
@@ -187,15 +187,15 @@ export function ComputeJobPanel({
               </Badge>
             </div>
             <div className="mt-1.5 flex items-center justify-between gap-2">
-              <div className="text-[11px] text-zinc-500">
+              <div className="text-[11px] text-stone-500">
                 Runtime:{' '}
-                <span className="font-medium text-zinc-700">
+                <span className="font-medium text-stone-700">
                   {job.runtime_profile_key || 'docx-python'}
                 </span>{' '}
                 · Format:{' '}
-                <span className="font-medium text-zinc-700">{job.output_format || 'docx'}</span> ·
+                <span className="font-medium text-stone-700">{job.output_format || 'docx'}</span> ·
                 Maturity:{' '}
-                <span className="font-medium text-zinc-700">
+                <span className="font-medium text-stone-700">
                   {job.runtime_maturity || 'seeded'}
                 </span>
               </div>
@@ -269,7 +269,7 @@ export function ComputeJobPanel({
               </div>
             )}
             {expandedJobId === job.job_id && (
-              <div className="mt-2 rounded border border-zinc-100 bg-zinc-50 p-2 text-[11px] space-y-1">
+              <div className="mt-2 rounded border border-stone-100 bg-stone-50 p-2 text-[11px] space-y-1">
                 {detailByJob[job.job_id]?.attempts?.[0] && (
                   <div>
                     Attempt #{detailByJob[job.job_id].attempts[0].attempt_number} · Runtime{' '}
@@ -292,12 +292,12 @@ export function ComputeJobPanel({
                         ? ` · ${job.artifact_ctd_section}`
                         : ' · placement suggested'}
                     </div>
-                    <div className="text-zinc-600">
+                    <div className="text-stone-600">
                       Placement: {detailByJob[job.job_id]?.placement_state || 'unplaced'} ·
                       Provenance ref: {detailByJob[job.job_id]?.provenance_ref || 'pending'} · Audit
                       ref: {detailByJob[job.job_id]?.audit_ref || 'pending'}
                     </div>
-                    <div className="text-zinc-600">
+                    <div className="text-stone-600">
                       Workflow impact:{' '}
                       {(job.artifact_status || 'draft') === 'draft'
                         ? 'Requires review assignment before submission.'
@@ -339,13 +339,13 @@ export function ComputeJobPanel({
                     </div>
                   </>
                 ) : (
-                  <div className="text-zinc-500">No governed artifact registered yet.</div>
+                  <div className="text-stone-500">No governed artifact registered yet.</div>
                 )}
               </div>
             )}
           </div>
         ))}
-        {jobs.length === 0 && <div className="text-xs text-zinc-500">No compute jobs yet.</div>}
+        {jobs.length === 0 && <div className="text-xs text-stone-500">No compute jobs yet.</div>}
       </div>
     </div>
   );

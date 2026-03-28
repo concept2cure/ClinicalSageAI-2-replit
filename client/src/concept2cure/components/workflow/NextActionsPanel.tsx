@@ -69,13 +69,13 @@ const PRIORITY_CONFIG: Record<string, {
 }> = {
   CRITICAL: { pillVariant: 'danger', label: 'Critical', timeColor: 'text-red-600' },
   HIGH: { pillVariant: 'warning', label: 'High', timeColor: 'text-amber-600' },
-  MEDIUM: { pillVariant: 'info', label: 'Medium', timeColor: 'text-blue-600' },
-  LOW: { pillVariant: 'default', label: 'Low', timeColor: 'text-zinc-500' },
+  MEDIUM: { pillVariant: 'info', label: 'Medium', timeColor: 'text-stone-600' },
+  LOW: { pillVariant: 'default', label: 'Low', timeColor: 'text-stone-500' },
 };
 
 // Status → IconBox color
 const STATUS_ICON_CLASS: Record<string, string> = {
-  READY: 'bg-blue-100 text-blue-600',
+  READY: 'bg-blue-100 text-stone-600',
   IN_PROGRESS: 'bg-emerald-100 text-emerald-600',
   AWAITING_APPROVAL: 'bg-amber-100 text-amber-600',
   AWAITING_SIGNATURE: 'bg-purple-100 text-purple-600',
@@ -145,8 +145,8 @@ const ActionItem: React.FC<{
     <div
       className={cn(
         'group relative p-4 rounded-xl border bg-white transition-all duration-150 hover:shadow-md cursor-pointer',
-        'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none',
-        priority === 'CRITICAL' ? 'border-red-200' : 'border-zinc-200',
+        'focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none',
+        priority === 'CRITICAL' ? 'border-red-200' : 'border-stone-200',
       )}
       onClick={onClick}
       role="button"
@@ -163,13 +163,13 @@ const ActionItem: React.FC<{
         <IconBox
           icon={StepIcon}
           size="sm"
-          className={STATUS_ICON_CLASS[action.status] || 'bg-zinc-100 text-zinc-500'}
+          className={STATUS_ICON_CLASS[action.status] || 'bg-stone-100 text-stone-500'}
         />
 
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-medium text-zinc-900 truncate">{action.name}</h4>
+          <h4 className="text-sm font-medium text-stone-900 truncate">{action.name}</h4>
           <div className="mt-1 flex flex-wrap items-center gap-2">
-            <span className="text-xs text-zinc-500 truncate">{action.workflowName}</span>
+            <span className="text-xs text-stone-500 truncate">{action.workflowName}</span>
             <StatusPill label={config.label} variant={config.pillVariant} />
           </div>
           {timeDisplay && (
@@ -195,7 +195,7 @@ const ActionItem: React.FC<{
           {action.workflowRunId && (
             <a
               href={`/concept2cure/proofs/${action.workflowRunId}`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-blue-200 text-blue-700 hover:bg-blue-50 transition-colors duration-150"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-stone-200 text-stone-700 hover:bg-stone-50 transition-colors duration-150"
               onClick={(event) => event.stopPropagation()}
               aria-label={`View proof for ${action.name}`}
             >
@@ -204,7 +204,7 @@ const ActionItem: React.FC<{
             </a>
           )}
 
-          <ChevronRight size={16} className="text-zinc-400 group-hover:text-zinc-600 transition-colors duration-150" />
+          <ChevronRight size={16} className="text-stone-400 group-hover:text-stone-600 transition-colors duration-150" />
         </div>
       </div>
     </div>
@@ -256,7 +256,7 @@ export const NextActionsPanel: React.FC<NextActionsPanelProps> = ({
   return (
     <EnterpriseCard noPadding className={className}>
       {/* Header */}
-      <div className="px-5 py-4 border-b border-zinc-100">
+      <div className="px-5 py-4 border-b border-stone-100">
         <SectionHeader
           icon={Zap}
           iconClassName="bg-gradient-to-br from-blue-500 to-purple-500 text-white"
@@ -285,8 +285,8 @@ export const NextActionsPanel: React.FC<NextActionsPanelProps> = ({
 
       {/* Footer */}
       {totalCount > maxItems && (
-        <div className="px-5 py-3 bg-zinc-50 border-t border-zinc-100">
-          <button className="w-full flex items-center justify-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors duration-150">
+        <div className="px-5 py-3 bg-stone-50 border-t border-stone-100">
+          <button className="w-full flex items-center justify-center gap-2 text-sm font-medium text-stone-600 hover:text-stone-700 transition-colors duration-150">
             <Target size={16} />
             View all {totalCount} actions
             <ChevronRight size={14} />
@@ -320,7 +320,7 @@ export const ActionStatsBar: React.FC<{
 
   return (
     <div className={cn('flex items-center gap-2 text-sm', className)}>
-      <span className="text-zinc-500">Actions:</span>
+      <span className="text-stone-500">Actions:</span>
       {stats.critical > 0 && <StatusPill label={String(stats.critical)} variant="danger" dot />}
       {stats.high > 0 && <StatusPill label={String(stats.high)} variant="warning" dot />}
       {stats.medium > 0 && <StatusPill label={String(stats.medium)} variant="info" dot />}

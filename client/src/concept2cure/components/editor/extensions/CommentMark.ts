@@ -63,7 +63,7 @@ export const CommentMark = Mark.create({
         'data-comment': 'true',
         'data-comment-id': HTMLAttributes.commentId,
         class: resolved
-          ? 'comment-mark comment-resolved bg-zinc-100 border-b border-dashed border-zinc-400 cursor-pointer'
+          ? 'comment-mark comment-resolved bg-stone-100 border-b border-dashed border-stone-400 cursor-pointer'
           : 'comment-mark bg-amber-100 border-b-2 border-amber-400 cursor-pointer hover:bg-amber-200',
       }),
       0,

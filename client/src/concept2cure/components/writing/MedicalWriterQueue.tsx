@@ -149,7 +149,7 @@ const STAGE_CONFIG: Record<ReviewStage, {
   color: string;
   bgColor: string;
 }> = {
-  draft: { label: 'Drafting', icon: PenTool, color: 'text-zinc-600', bgColor: 'bg-zinc-100' },
+  draft: { label: 'Drafting', icon: PenTool, color: 'text-stone-600', bgColor: 'bg-stone-100' },
   internal_review: { label: 'Internal Review', icon: Eye, color: 'text-blue-600', bgColor: 'bg-blue-100' },
   sme_review: { label: 'SME Review', icon: User, color: 'text-violet-600', bgColor: 'bg-violet-100' },
   qc: { label: 'QC', icon: FileCheck, color: 'text-amber-600', bgColor: 'bg-amber-100' },
@@ -207,7 +207,7 @@ const TaskCard: React.FC<{
           'flex items-center gap-4 p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md',
           task.isOverdue && 'border-red-300 bg-red-50',
           task.isBlocked && 'border-amber-300 bg-amber-50',
-          !task.isOverdue && !task.isBlocked && 'border-zinc-200 hover:border-blue-300'
+          !task.isOverdue && !task.isBlocked && 'border-stone-200 hover:border-blue-300'
         )}
       >
         {/* Document Type Badge */}
@@ -220,8 +220,8 @@ const TaskCard: React.FC<{
         
         {/* Title & Product */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-zinc-900 truncate">{task.title}</p>
-          <p className="text-xs text-zinc-500">{task.productName} {task.studyId && `• ${task.studyId}`}</p>
+          <p className="text-sm font-medium text-stone-900 truncate">{task.title}</p>
+          <p className="text-xs text-stone-500">{task.productName} {task.studyId && `• ${task.studyId}`}</p>
         </div>
         
         {/* Stage */}
@@ -233,9 +233,9 @@ const TaskCard: React.FC<{
         {/* Progress */}
         <div className="w-24">
           <div className="flex items-center justify-between text-xs mb-1">
-            <span className="text-zinc-500">{task.progress}%</span>
+            <span className="text-stone-500">{task.progress}%</span>
           </div>
-          <div className="h-1.5 bg-zinc-200 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-stone-200 rounded-full overflow-hidden">
             <div
               className={cn(
                 'h-full rounded-full transition-all',
@@ -251,7 +251,7 @@ const TaskCard: React.FC<{
           'text-xs font-medium',
           task.isOverdue && 'text-red-600',
           isUrgent && !task.isOverdue && 'text-amber-600',
-          !isUrgent && !task.isOverdue && 'text-zinc-500'
+          !isUrgent && !task.isOverdue && 'text-stone-500'
         )}>
           {formatDueDate(task.dueDate)}
         </div>
@@ -271,8 +271,8 @@ const TaskCard: React.FC<{
             actions={['summarize_selection', 'explain_selection', 'rewrite_selection']}
             variant="icon"
           />
-          <button className="p-1 rounded hover:bg-zinc-100">
-            <MoreHorizontal className="w-4 h-4 text-zinc-400" />
+          <button className="p-1 rounded hover:bg-stone-100">
+            <MoreHorizontal className="w-4 h-4 text-stone-400" />
           </button>
         </div>
       </div>
@@ -287,7 +287,7 @@ const TaskCard: React.FC<{
         'p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md',
         task.isOverdue && 'border-red-300 bg-red-50',
         task.isBlocked && 'border-amber-300 bg-amber-50',
-        !task.isOverdue && !task.isBlocked && 'border-zinc-200 hover:border-blue-300'
+        !task.isOverdue && !task.isBlocked && 'border-stone-200 hover:border-blue-300'
       )}
     >
       {/* Header */}
@@ -307,10 +307,10 @@ const TaskCard: React.FC<{
       </div>
       
       {/* Title */}
-      <h4 className="text-sm font-medium text-zinc-900 mb-1 line-clamp-2">
+      <h4 className="text-sm font-medium text-stone-900 mb-1 line-clamp-2">
         {task.title}
       </h4>
-      <p className="text-xs text-zinc-500 mb-3">
+      <p className="text-xs text-stone-500 mb-3">
         {task.productName} {task.studyId && `• ${task.studyId}`}
       </p>
       
@@ -326,10 +326,10 @@ const TaskCard: React.FC<{
       {/* Progress */}
       <div className="mb-3">
         <div className="flex items-center justify-between text-xs mb-1">
-          <span className="text-zinc-500">Progress</span>
+          <span className="text-stone-500">Progress</span>
           <span className="font-medium">{task.progress}%</span>
         </div>
-        <div className="h-2 bg-zinc-200 rounded-full overflow-hidden">
+        <div className="h-2 bg-stone-200 rounded-full overflow-hidden">
           <div
             className={cn(
               'h-full rounded-full transition-all',
@@ -341,7 +341,7 @@ const TaskCard: React.FC<{
       </div>
       
       {/* Metrics */}
-      <div className="flex items-center gap-3 text-xs text-zinc-500 mb-3">
+      <div className="flex items-center gap-3 text-xs text-stone-500 mb-3">
         {task.wordCount && (
           <span>{task.wordCount.toLocaleString()} words</span>
         )}
@@ -357,19 +357,19 @@ const TaskCard: React.FC<{
       </div>
       
       {/* Footer */}
-      <div className="flex items-center justify-between pt-3 border-t border-zinc-100">
+      <div className="flex items-center justify-between pt-3 border-t border-stone-100">
         <div className="flex items-center gap-1.5">
           <Calendar className={cn(
             'w-3.5 h-3.5',
             task.isOverdue && 'text-red-500',
             isUrgent && !task.isOverdue && 'text-amber-500',
-            !isUrgent && !task.isOverdue && 'text-zinc-400'
+            !isUrgent && !task.isOverdue && 'text-stone-400'
           )} />
           <span className={cn(
             'text-xs font-medium',
             task.isOverdue && 'text-red-600',
             isUrgent && !task.isOverdue && 'text-amber-600',
-            !isUrgent && !task.isOverdue && 'text-zinc-600'
+            !isUrgent && !task.isOverdue && 'text-stone-600'
           )}>
             {formatDueDate(task.dueDate)}
           </span>
@@ -436,7 +436,7 @@ const PipelineView: React.FC<{
             </div>
             
             {/* Tasks */}
-            <div className="bg-zinc-50 border border-t-0 border-zinc-200 rounded-b-lg p-2 min-h-[400px]">
+            <div className="bg-stone-50 border border-t-0 border-stone-200 rounded-b-lg p-2 min-h-[400px]">
               <div className="space-y-2">
                 {stageTasks.map(task => (
                   <TaskCard
@@ -447,7 +447,7 @@ const PipelineView: React.FC<{
                   />
                 ))}
                 {stageTasks.length === 0 && (
-                  <p className="text-xs text-zinc-400 text-center py-8">No documents</p>
+                  <p className="text-xs text-stone-400 text-center py-8">No documents</p>
                 )}
               </div>
             </div>
@@ -508,15 +508,15 @@ export const MedicalWriterQueue: React.FC<MedicalWriterQueueProps> = ({
   return (
     <div className={cn('flex flex-col h-full', className)}>
       {/* Header */}
-      <div className="flex-shrink-0 p-4 border-b border-zinc-200">
+      <div className="flex-shrink-0 p-4 border-b border-stone-200">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-zinc-900">Document Queue</h2>
+          <h2 className="text-xl font-semibold text-stone-900">Document Queue</h2>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setView('list')}
               className={cn(
                 'p-2 rounded transition-colors',
-                view === 'list' ? 'bg-blue-100 text-blue-600' : 'text-zinc-400 hover:bg-zinc-100'
+                view === 'list' ? 'bg-blue-100 text-blue-600' : 'text-stone-400 hover:bg-stone-100'
               )}
             >
               <List className="w-4 h-4" />
@@ -525,7 +525,7 @@ export const MedicalWriterQueue: React.FC<MedicalWriterQueueProps> = ({
               onClick={() => setView('pipeline')}
               className={cn(
                 'p-2 rounded transition-colors',
-                view === 'pipeline' ? 'bg-blue-100 text-blue-600' : 'text-zinc-400 hover:bg-zinc-100'
+                view === 'pipeline' ? 'bg-blue-100 text-blue-600' : 'text-stone-400 hover:bg-stone-100'
               )}
             >
               <Layout className="w-4 h-4" />
@@ -535,9 +535,9 @@ export const MedicalWriterQueue: React.FC<MedicalWriterQueueProps> = ({
         
         {/* Metrics */}
         <div className="flex items-center gap-4 mb-4">
-          <div className="px-3 py-2 bg-zinc-100 rounded-lg">
-            <p className="text-xs text-zinc-500">Total</p>
-            <p className="text-lg font-semibold text-zinc-900">{tasks.length}</p>
+          <div className="px-3 py-2 bg-stone-100 rounded-lg">
+            <p className="text-xs text-stone-500">Total</p>
+            <p className="text-lg font-semibold text-stone-900">{tasks.length}</p>
           </div>
           {metrics.overdue > 0 && (
             <div className="px-3 py-2 bg-red-100 rounded-lg">
@@ -558,20 +558,20 @@ export const MedicalWriterQueue: React.FC<MedicalWriterQueueProps> = ({
         {/* Filters */}
         <div className="flex items-center gap-3">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
             <input
               type="text"
               placeholder="Search documents..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
             />
           </div>
           
           <select
             value={filterDocType}
             onChange={(e) => setFilterDocType(e.target.value as DocumentType | 'all')}
-            className="px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
           >
             <option value="all">All Document Types</option>
             {Object.entries(DOCUMENT_TYPE_CONFIG).map(([type, config]) => (
@@ -582,7 +582,7 @@ export const MedicalWriterQueue: React.FC<MedicalWriterQueueProps> = ({
           <select
             value={filterStage}
             onChange={(e) => setFilterStage(e.target.value as ReviewStage | 'all')}
-            className="px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400"
           >
             <option value="all">All Stages</option>
             {Object.entries(STAGE_CONFIG).map(([stage, config]) => (
@@ -609,8 +609,8 @@ export const MedicalWriterQueue: React.FC<MedicalWriterQueueProps> = ({
             ))}
             {filteredTasks.length === 0 && (
               <div className="text-center py-12">
-                <FileText className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
-                <p className="text-zinc-500">No documents match your filters</p>
+                <FileText className="w-12 h-12 text-stone-300 mx-auto mb-3" />
+                <p className="text-stone-500">No documents match your filters</p>
               </div>
             )}
           </div>

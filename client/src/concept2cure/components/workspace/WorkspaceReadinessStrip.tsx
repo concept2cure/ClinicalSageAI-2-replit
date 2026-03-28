@@ -33,7 +33,7 @@ interface StatPillProps {
 }
 
 const ICON_COLOR_MAP: Record<string, string> = {
-  zinc: 'text-zinc-500',
+  stone: 'text-stone-500',
   blue: 'text-blue-500',
   violet: 'text-violet-500',
   amber: 'text-amber-500',
@@ -41,18 +41,18 @@ const ICON_COLOR_MAP: Record<string, string> = {
   red: 'text-red-500',
 };
 
-const StatPill: React.FC<StatPillProps> = ({ icon: Icon, label, value, color = 'zinc', pulse }) => (
+const StatPill: React.FC<StatPillProps> = ({ icon: Icon, label, value, color = 'stone', pulse }) => (
   <div
     className={cn(
       'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border',
-      'bg-white border-zinc-200 text-zinc-600 hover:border-zinc-300 transition-colors duration-150',
+      'bg-white border-stone-200 text-stone-600 hover:border-stone-300 transition-colors duration-150',
       pulse && 'animate-pulse'
     )}
     title={label}
   >
-    <Icon className={cn('w-3.5 h-3.5', ICON_COLOR_MAP[color] || 'text-zinc-500')} />
-    <span className="text-zinc-900 font-semibold tabular-nums">{value}</span>
-    <span className="text-zinc-400 hidden sm:inline">{label}</span>
+    <Icon className={cn('w-3.5 h-3.5', ICON_COLOR_MAP[color] || 'text-stone-500')} />
+    <span className="text-stone-900 font-semibold tabular-nums">{value}</span>
+    <span className="text-stone-400 hidden sm:inline">{label}</span>
   </div>
 );
 
@@ -65,8 +65,8 @@ export const WorkspaceReadinessStrip: React.FC<Props> = ({
   if (isLoading) {
     return (
       <div className={cn('flex items-center gap-2 py-2 px-1', className)}>
-        <Loader2 className="w-3.5 h-3.5 text-zinc-400 animate-spin" />
-        <span className="text-xs text-zinc-400">Loading workspace…</span>
+        <Loader2 className="w-3.5 h-3.5 text-stone-400 animate-spin" />
+        <span className="text-xs text-stone-400">Loading workspace…</span>
       </div>
     );
   }
@@ -79,14 +79,14 @@ export const WorkspaceReadinessStrip: React.FC<Props> = ({
     <div className={cn('flex flex-wrap items-center gap-2 py-2', className)}>
       {/* Org context label */}
       {orgName && (
-        <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mr-1 hidden sm:inline">
+        <span className="text-xs font-semibold text-stone-400 uppercase tracking-wider mr-1 hidden sm:inline">
           {orgName}
         </span>
       )}
 
       <StatPill icon={FolderOpen} label="projects" value={projects} color="blue" />
       <StatPill icon={FileText} label="docs" value={documents} color="violet" />
-      <StatPill icon={MessageSquare} label="threads" value={threads} color="zinc" />
+      <StatPill icon={MessageSquare} label="threads" value={threads} color="stone" />
 
       {pendingReviews > 0 && (
         <StatPill icon={AlertTriangle} label="pending" value={pendingReviews} color="amber" pulse />
@@ -112,7 +112,7 @@ export const WorkspaceReadinessStrip: React.FC<Props> = ({
 
       {/* Empty state coaching */}
       {projects === 0 && documents === 0 && (
-        <span className="text-xs text-zinc-400 italic ml-1">
+        <span className="text-xs text-stone-400 italic ml-1">
           No projects yet — create one to get started
         </span>
       )}

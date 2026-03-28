@@ -103,7 +103,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
   };
 
   return (
-    <div className={cn('group py-4', isUser ? 'bg-white' : 'bg-zinc-50')}>
+    <div className={cn('group py-4', isUser ? 'bg-white' : 'bg-stone-50')}>
       <div className="max-w-3xl mx-auto px-4">
         <div className="flex gap-4">
           {/* Avatar */}
@@ -124,11 +124,11 @@ const MessageItem: React.FC<MessageItemProps> = ({
           <div className="flex-1 min-w-0">
             {/* Header */}
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-sm font-medium text-zinc-900">
+              <span className="text-sm font-medium text-stone-900">
                 {isUser ? 'You' : 'AnA'}
               </span>
-              <span className="text-xs text-zinc-400">{formatTime(message.timestamp)}</span>
-              {message.edited && <span className="text-xs text-zinc-400 italic">(edited)</span>}
+              <span className="text-xs text-stone-400">{formatTime(message.timestamp)}</span>
+              {message.edited && <span className="text-xs text-stone-400 italic">(edited)</span>}
             </div>
 
             {/* Message body */}
@@ -138,7 +138,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                   ref={textareaRef}
                   value={editContent}
                   onChange={e => setEditContent(e.target.value)}
-                  className="w-full p-3 text-sm border border-blue-300 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none resize-none"
+                  className="w-full p-3 text-sm border border-blue-300 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none resize-none"
                   rows={4}
                 />
                 <div className="flex items-center gap-2">
@@ -153,7 +153,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="prose prose-sm max-w-none text-zinc-700">
+              <div className="prose prose-sm max-w-none text-stone-700">
                 <p className="whitespace-pre-wrap">{message.content}</p>
               </div>
             )}
@@ -164,7 +164,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                 {message.attachments.map(attachment => (
                   <div
                     key={attachment.id}
-                    className="flex items-center gap-2 px-2 py-1 bg-zinc-100 rounded text-xs text-zinc-600"
+                    className="flex items-center gap-2 px-2 py-1 bg-stone-100 rounded text-xs text-stone-600"
                   >
                     <FileText className="h-3 w-3" />
                     {attachment.name}
@@ -189,7 +189,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                     <TooltipTrigger asChild>
                       <button
                         onClick={() => onCopy(message.content)}
-                        className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded"
+                        className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded"
                       >
                         <Copy className="h-3.5 w-3.5" />
                       </button>
@@ -202,7 +202,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                       <TooltipTrigger asChild>
                         <button
                           onClick={handleStartEdit}
-                          className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded"
+                          className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded"
                         >
                           <Edit2 className="h-3.5 w-3.5" />
                         </button>
@@ -216,7 +216,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                       <TooltipTrigger asChild>
                         <button
                           onClick={() => onFork(message.id)}
-                          className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded"
+                          className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded"
                         >
                           <GitBranch className="h-3.5 w-3.5" />
                         </button>
@@ -229,7 +229,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                     <>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <button className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded" onClick={() => {
+                          <button className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded" onClick={() => {
                             apiRequest('POST', '/api/concept2cure/feedback', { messageId: message.id, positive: true, conversationId: activeConversation?.id }).catch(() => {});
                           }}>
                             <ThumbsUp className="h-3.5 w-3.5" />
@@ -240,7 +240,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
 
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <button className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded" onClick={() => {
+                          <button className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded" onClick={() => {
                             apiRequest('POST', '/api/concept2cure/feedback', { messageId: message.id, positive: false, conversationId: activeConversation?.id }).catch(() => {});
                           }}>
                             <ThumbsDown className="h-3.5 w-3.5" />
@@ -254,7 +254,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                           <TooltipTrigger asChild>
                             <button
                               onClick={onRegenerate}
-                              className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded"
+                              className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded"
                             >
                               <RotateCcw className="h-3.5 w-3.5" />
                             </button>
@@ -329,7 +329,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   }, [input]);
 
   return (
-    <div className="border-t border-zinc-200 bg-white p-4">
+    <div className="border-t border-stone-200 bg-white p-4">
       <div className="max-w-3xl mx-auto">
         {/* Attachments preview */}
         {attachments.length > 0 && (
@@ -337,17 +337,17 @@ const ChatInput: React.FC<ChatInputProps> = ({
             {attachments.map((file, index) => (
               <div
                 key={index}
-                className="flex items-center gap-2 px-2 py-1 bg-zinc-100 rounded text-sm"
+                className="flex items-center gap-2 px-2 py-1 bg-stone-100 rounded text-sm"
               >
-                <FileText className="h-4 w-4 text-zinc-500" />
+                <FileText className="h-4 w-4 text-stone-500" />
                 <span className="truncate max-w-[150px]">{file.name}</span>
                 <button
                   onClick={() => removeAttachment(index)}
-                  className="p-1.5 hover:bg-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+                  className="p-1.5 hover:bg-stone-200 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
                   aria-label="Remove attachment"
                   title="Remove"
                 >
-                  <X className="h-3.5 w-3.5 text-zinc-500" />
+                  <X className="h-3.5 w-3.5 text-stone-500" />
                 </button>
               </div>
             ))}
@@ -355,14 +355,14 @@ const ChatInput: React.FC<ChatInputProps> = ({
         )}
 
         {/* Input area */}
-        <div className="flex items-end gap-3 bg-zinc-50 rounded-xl border border-zinc-200 p-2 focus-within:border-blue-300 focus-within:ring-2 focus-within:ring-blue-100">
+        <div className="flex items-end gap-3 bg-stone-50 rounded-xl border border-stone-200 p-2 focus-within:border-blue-300 focus-within:ring-2 focus-within:ring-blue-100">
           {/* Attachment button */}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="p-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 rounded-lg transition-colors duration-150"
+                  className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-200 rounded-lg transition-colors duration-150"
                   disabled={disabled}
                 >
                   <Paperclip className="h-5 w-5" />
@@ -390,7 +390,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             placeholder={placeholder}
             disabled={disabled}
             rows={1}
-            className="flex-1 bg-transparent text-sm text-zinc-900 placeholder:text-zinc-400 outline-none resize-none max-h-[200px]"
+            className="flex-1 bg-transparent text-sm text-stone-900 placeholder:text-stone-400 outline-none resize-none max-h-[200px]"
           />
 
           {/* Send button */}
@@ -405,7 +405,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
         </div>
 
         {/* Hints */}
-        <div className="mt-2 flex items-center justify-center gap-4 text-xs text-zinc-400">
+        <div className="mt-2 flex items-center justify-center gap-4 text-xs text-stone-400">
           <span>Press Enter to send, Shift+Enter for new line</span>
         </div>
       </div>
@@ -423,10 +423,10 @@ const EmptyState: React.FC = () => {
       <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-6">
         <Sparkles className="h-8 w-8 text-purple-600" />
       </div>
-      <h2 className="text-xl font-semibold text-zinc-900 mb-2">
+      <h2 className="text-xl font-semibold text-stone-900 mb-2">
         Hello! I'm AnA
       </h2>
-      <p className="text-zinc-500 max-w-md mb-8">
+      <p className="text-stone-500 max-w-md mb-8">
         Your RI regulatory intelligence assistant. I can help you draft documents, analyze risks,
         navigate FDA requirements, and more.
       </p>
@@ -439,7 +439,7 @@ const EmptyState: React.FC = () => {
         ].map(suggestion => (
           <button
             key={suggestion}
-            className="px-4 py-3 text-sm text-left bg-zinc-50 hover:bg-zinc-100 rounded-xl border border-zinc-200 text-zinc-700 transition-colors duration-150"
+            className="px-4 py-3 text-sm text-left bg-stone-50 hover:bg-stone-100 rounded-xl border border-stone-200 text-stone-700 transition-colors duration-150"
           >
             {suggestion}
           </button>
@@ -581,11 +581,11 @@ export const ChatPanel: React.FC = () => {
   if (!activeProject) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center px-4">
-        <div className="w-12 h-12 bg-zinc-100 rounded-lg flex items-center justify-center mb-6">
-          <Sparkles className="h-8 w-8 text-zinc-400" />
+        <div className="w-12 h-12 bg-stone-100 rounded-lg flex items-center justify-center mb-6">
+          <Sparkles className="h-8 w-8 text-stone-400" />
         </div>
-        <h2 className="text-xl font-semibold text-zinc-900 mb-2">Select a Project</h2>
-        <p className="text-zinc-500 max-w-md">
+        <h2 className="text-xl font-semibold text-stone-900 mb-2">Select a Project</h2>
+        <p className="text-stone-500 max-w-md">
           Choose a project from the sidebar or create a new one to start
           working with AnA.
         </p>
@@ -596,11 +596,11 @@ export const ChatPanel: React.FC = () => {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex-shrink-0 border-b border-zinc-200 px-4 py-3">
+      <div className="flex-shrink-0 border-b border-stone-200 px-4 py-3">
         <div className="flex items-center justify-between max-w-3xl mx-auto">
           <div>
-            <h1 className="text-sm font-medium text-zinc-900">{activeProject.name}</h1>
-            <p className="text-xs text-zinc-500">
+            <h1 className="text-sm font-medium text-stone-900">{activeProject.name}</h1>
+            <p className="text-xs text-stone-500">
               {activeConversation?.title || 'New conversation'}
             </p>
           </div>
@@ -633,20 +633,20 @@ export const ChatPanel: React.FC = () => {
 
             {/* Typing indicator */}
             {isTyping && (
-              <div className="py-4 bg-zinc-50">
+              <div className="py-4 bg-stone-50">
                 <div className="max-w-3xl mx-auto px-4">
                   <div className="flex gap-4">
                     <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center">
                       <Sparkles className="h-4 w-4 text-white" />
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" />
+                      <div className="w-2 h-2 bg-stone-400 rounded-full animate-bounce" />
                       <div
-                        className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce"
+                        className="w-2 h-2 bg-stone-400 rounded-full animate-bounce"
                         style={{ animationDelay: '0.1s' }}
                       />
                       <div
-                        className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce"
+                        className="w-2 h-2 bg-stone-400 rounded-full animate-bounce"
                         style={{ animationDelay: '0.2s' }}
                       />
                     </div>

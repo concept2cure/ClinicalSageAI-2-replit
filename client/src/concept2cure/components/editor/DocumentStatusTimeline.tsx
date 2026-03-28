@@ -63,7 +63,7 @@ const STAGES: StageInfo[] = [
     stage: 'draft',
     label: LIFECYCLE.draft.label,
     icon: PenLine,
-    color: 'text-zinc-400',
+    color: 'text-stone-400',
     activeColor: LIFECYCLE.draft.text,
     activeBg: `${LIFECYCLE.draft.bg} ${LIFECYCLE.draft.border}`,
     completedColor: LIFECYCLE.approved.text,
@@ -72,7 +72,7 @@ const STAGES: StageInfo[] = [
     stage: 'in_review',
     label: LIFECYCLE.in_review.label,
     icon: Eye,
-    color: 'text-zinc-400',
+    color: 'text-stone-400',
     activeColor: LIFECYCLE.in_review.text,
     activeBg: `${LIFECYCLE.in_review.bg} ${LIFECYCLE.in_review.border}`,
     completedColor: LIFECYCLE.approved.text,
@@ -81,7 +81,7 @@ const STAGES: StageInfo[] = [
     stage: 'approved',
     label: LIFECYCLE.approved.label,
     icon: CheckCircle,
-    color: 'text-zinc-400',
+    color: 'text-stone-400',
     activeColor: LIFECYCLE.approved.text,
     activeBg: `${LIFECYCLE.approved.bg} ${LIFECYCLE.approved.border}`,
     completedColor: LIFECYCLE.approved.text,
@@ -90,7 +90,7 @@ const STAGES: StageInfo[] = [
     stage: 'published',
     label: LIFECYCLE.published.label,
     icon: Lock,
-    color: 'text-zinc-400',
+    color: 'text-stone-400',
     activeColor: LIFECYCLE.published.text,
     activeBg: `${LIFECYCLE.published.bg} ${LIFECYCLE.published.border}`,
     completedColor: LIFECYCLE.approved.text,
@@ -159,7 +159,7 @@ export function DocumentStatusTimeline({
               {idx > 0 && (
                 <div className={cn(
                   'w-4 h-px',
-                  isCompleted ? 'bg-emerald-400' : 'bg-zinc-200',
+                  isCompleted ? 'bg-emerald-400' : 'bg-stone-200',
                 )} />
               )}
               <div
@@ -187,7 +187,7 @@ export function DocumentStatusTimeline({
       {/* Inline bar */}
       <button
         onClick={() => setShowDetails(!showDetails)}
-        className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-zinc-50 transition-colors duration-150"
+        className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-stone-50 transition-colors duration-150"
       >
         {STAGES.map((stage, idx) => {
           const isActive = idx === currentIdx;
@@ -199,7 +199,7 @@ export function DocumentStatusTimeline({
               {idx > 0 && (
                 <div className={cn(
                   'w-6 h-px',
-                  isCompleted ? 'bg-emerald-400' : 'bg-zinc-200',
+                  isCompleted ? 'bg-emerald-400' : 'bg-stone-200',
                 )} />
               )}
               <div
@@ -218,20 +218,20 @@ export function DocumentStatusTimeline({
           );
         })}
         <ChevronDown className={cn(
-          'h-3 w-3 text-zinc-400 transition-transform ml-1',
+          'h-3 w-3 text-stone-400 transition-transform ml-1',
           showDetails && 'rotate-180',
         )} />
       </button>
 
       {/* Details popover */}
       {showDetails && (
-        <div className="absolute top-full left-0 mt-1 w-80 bg-white rounded-lg border border-zinc-200 shadow-lg z-50 py-3">
+        <div className="absolute top-full left-0 mt-1 w-80 bg-white rounded-lg border border-stone-200 shadow-lg z-50 py-3">
           {/* Header */}
-          <div className="px-4 pb-3 border-b border-zinc-100">
-            <p className="text-sm font-semibold text-zinc-900">
+          <div className="px-4 pb-3 border-b border-stone-100">
+            <p className="text-sm font-semibold text-stone-900">
               {documentTitle || 'Document'} — Status
             </p>
-            <div className="flex items-center gap-3 mt-1 text-[11px] text-zinc-400">
+            <div className="flex items-center gap-3 mt-1 text-[11px] text-stone-400">
               {author && (
                 <span className="flex items-center gap-1">
                   <User className="h-3 w-3" />
@@ -264,19 +264,19 @@ export function DocumentStatusTimeline({
                       'h-6 w-6 rounded-full flex items-center justify-center border-2',
                       isActive && 'border-current ' + stage.activeColor + ' bg-white',
                       isCompleted && 'border-emerald-400 bg-emerald-50',
-                      isFuture && 'border-zinc-200 bg-white',
+                      isFuture && 'border-stone-200 bg-white',
                     )}>
                       <Icon className={cn(
                         'h-3 w-3',
                         isActive && stage.activeColor,
                         isCompleted && 'text-emerald-500',
-                        isFuture && 'text-zinc-300',
+                        isFuture && 'text-stone-300',
                       )} />
                     </div>
                     {idx < STAGES.length - 1 && (
                       <div className={cn(
                         'w-px h-6',
-                        isCompleted ? 'bg-emerald-300' : 'bg-zinc-200',
+                        isCompleted ? 'bg-emerald-300' : 'bg-stone-200',
                       )} />
                     )}
                   </div>
@@ -287,8 +287,8 @@ export function DocumentStatusTimeline({
                       <p className={cn(
                         'text-xs font-medium',
                         isActive && stage.activeColor,
-                        isCompleted && 'text-zinc-700',
-                        isFuture && 'text-zinc-400',
+                        isCompleted && 'text-stone-700',
+                        isFuture && 'text-stone-400',
                       )}>
                         {stage.label}
                       </p>
@@ -302,13 +302,13 @@ export function DocumentStatusTimeline({
                       )}
                     </div>
                     {historyEvent?.timestamp && (
-                      <p className="text-[10px] text-zinc-400 mt-0.5">
+                      <p className="text-[10px] text-stone-400 mt-0.5">
                         {relativeTime(historyEvent.timestamp)}
                         {historyEvent.actor && ` by ${historyEvent.actor}`}
                       </p>
                     )}
                     {historyEvent?.note && (
-                      <p className="text-[10px] text-zinc-500 mt-0.5 italic">{historyEvent.note}</p>
+                      <p className="text-[10px] text-stone-500 mt-0.5 italic">{historyEvent.note}</p>
                     )}
                   </div>
                 </div>
@@ -318,7 +318,7 @@ export function DocumentStatusTimeline({
 
           {/* Quick actions */}
           {onChangeStatus && currentIdx < STAGES.length - 1 && (
-            <div className="px-4 pt-2 border-t border-zinc-100">
+            <div className="px-4 pt-2 border-t border-stone-100">
               <button
                 onClick={() => {
                   onChangeStatus(STAGES[currentIdx + 1].stage);

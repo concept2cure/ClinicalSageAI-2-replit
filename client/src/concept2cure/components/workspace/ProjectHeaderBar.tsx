@@ -51,8 +51,8 @@ const SUBMISSION_BADGE: Record<
 
 const FALLBACK_BADGE = {
   label: 'Project',
-  color: 'text-zinc-600',
-  bg: 'bg-zinc-100',
+  color: 'text-stone-600',
+  bg: 'bg-stone-100',
 };
 
 // ─── Component ──────────────────────────────────────────────────────────────

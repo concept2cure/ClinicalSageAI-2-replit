@@ -163,12 +163,12 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
     type?: 'text' | 'select' | 'textarea'; options?: string[];
   }> = ({ label, field, placeholder, type = 'text', options }) => (
     <div className="space-y-1">
-      <label className="text-sm font-medium text-zinc-700">{label}</label>
+      <label className="text-sm font-medium text-stone-700">{label}</label>
       {type === 'select' ? (
         <select
           value={studyInfo[field]}
           onChange={e => updateStudyInfo(field, e.target.value)}
-          className="w-full px-3 py-2.5 border border-zinc-200 rounded-lg text-sm bg-white outline-none focus:border-blue-500"
+          className="w-full px-3 py-2.5 border border-stone-200 rounded-lg text-sm bg-white outline-none focus:border-stone-400"
         >
           <option value="">Select...</option>
           {options?.map(o => <option key={o} value={o}>{o}</option>)}
@@ -179,14 +179,14 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
           onChange={e => updateStudyInfo(field, e.target.value)}
           placeholder={placeholder}
           rows={3}
-          className="w-full px-3 py-2.5 border border-zinc-200 rounded-lg text-sm outline-none focus:border-blue-500 resize-none"
+          className="w-full px-3 py-2.5 border border-stone-200 rounded-lg text-sm outline-none focus:border-stone-400 resize-none"
         />
       ) : (
         <input
           value={studyInfo[field]}
           onChange={e => updateStudyInfo(field, e.target.value)}
           placeholder={placeholder}
-          className="w-full px-3 py-2.5 border border-zinc-200 rounded-lg text-sm outline-none focus:border-blue-500"
+          className="w-full px-3 py-2.5 border border-stone-200 rounded-lg text-sm outline-none focus:border-stone-400"
         />
       )}
     </div>
@@ -199,8 +199,8 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
   const renderTypeStep = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-zinc-900">Select Document Type</h2>
-        <p className="text-sm text-zinc-500 mt-1">Choose the type of regulatory document to build</p>
+        <h2 className="text-xl font-semibold text-stone-900">Select Document Type</h2>
+        <p className="text-sm text-stone-500 mt-1">Choose the type of regulatory document to build</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {DOC_TYPES.map(dt => (
@@ -208,11 +208,11 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
             key={dt.type}
             onClick={() => { setSelectedType(dt.type); setStep('agencies'); }}
             className={`p-5 rounded-xl border text-left transition-all hover:shadow-md ${
-              selectedType === dt.type ? 'border-blue-500 bg-blue-50/50' : 'border-zinc-200 hover:border-zinc-300'
+              selectedType === dt.type ? 'border-blue-500 bg-blue-50/50' : 'border-stone-200 hover:border-stone-300'
             }`}
           >
-            <div className="font-semibold text-zinc-900">{dt.name}</div>
-            <div className="text-sm text-zinc-500 mt-1">{dt.description}</div>
+            <div className="font-semibold text-stone-900">{dt.name}</div>
+            <div className="text-sm text-stone-500 mt-1">{dt.description}</div>
             <div className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
               {dt.tier === 'standard' ? 'Starter+' : 'Growth+'}
             </div>
@@ -225,8 +225,8 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
   const renderAgenciesStep = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-zinc-900">Target Regulatory Agencies</h2>
-        <p className="text-sm text-zinc-500 mt-1">Select which agencies you're filing with (Module 1 will be customized per agency)</p>
+        <h2 className="text-xl font-semibold text-stone-900">Target Regulatory Agencies</h2>
+        <p className="text-sm text-stone-500 mt-1">Select which agencies you're filing with (Module 1 will be customized per agency)</p>
       </div>
       <div className="grid grid-cols-2 gap-4">
         {AGENCIES.map(a => (
@@ -236,13 +236,13 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
             className={`p-4 rounded-xl border flex items-center gap-3 transition-all ${
               selectedAgencies.includes(a.id)
                 ? 'border-blue-500 bg-blue-50/50'
-                : 'border-zinc-200 hover:border-zinc-300'
+                : 'border-stone-200 hover:border-stone-300'
             }`}
           >
             <span className="text-2xl">{a.flag}</span>
             <div className="text-left">
-              <div className="font-semibold text-zinc-900">{a.name}</div>
-              <div className="text-xs text-zinc-500">{a.country}</div>
+              <div className="font-semibold text-stone-900">{a.name}</div>
+              <div className="text-xs text-stone-500">{a.country}</div>
             </div>
             {selectedAgencies.includes(a.id) && (
               <svg className="w-5 h-5 text-blue-500 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -253,7 +253,7 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
         ))}
       </div>
       <div className="flex gap-3">
-        <button onClick={() => setStep('type')} className="px-4 py-2.5 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50">
+        <button onClick={() => setStep('type')} className="px-4 py-2.5 text-sm text-stone-600 border border-stone-200 rounded-lg hover:bg-stone-50">
           Back
         </button>
         <button
@@ -270,8 +270,8 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
   const renderStudyInfoStep = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-zinc-900">Study Information</h2>
-        <p className="text-sm text-zinc-500 mt-1">Provide study details for document generation</p>
+        <h2 className="text-xl font-semibold text-stone-900">Study Information</h2>
+        <p className="text-sm text-stone-500 mt-1">Provide study details for document generation</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input label="Study Title" field="title" placeholder="A Phase 3 Study of..." />
@@ -289,7 +289,7 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
       <Input label="Secondary Endpoints (one per line)" field="secondaryEndpoints" type="textarea" placeholder="Proportion achieving HbA1c <7%&#10;Change in fasting plasma glucose&#10;Change in body weight" />
 
       <div className="flex gap-3">
-        <button onClick={() => setStep('agencies')} className="px-4 py-2.5 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50">
+        <button onClick={() => setStep('agencies')} className="px-4 py-2.5 text-sm text-stone-600 border border-stone-200 rounded-lg hover:bg-stone-50">
           Back
         </button>
         <button
@@ -312,19 +312,19 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
         </svg>
       </div>
       <div className="text-center">
-        <h3 className="text-lg font-semibold text-zinc-900">Generating your document</h3>
-        <p className="text-sm text-zinc-500 mt-1">
+        <h3 className="text-lg font-semibold text-stone-900">Generating your document</h3>
+        <p className="text-sm text-stone-500 mt-1">
           Building {selectedType === 'csr' ? 'Clinical Study Report' : 'CTD'} for {selectedAgencies.join(', ')}
         </p>
       </div>
       <div className="w-64">
-        <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
+        <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
           <div
             className="h-full bg-blue-600 rounded-full transition-all duration-500"
             style={{ width: `${generateProgress}%` }}
           />
         </div>
-        <p className="text-xs text-zinc-400 text-center mt-2">{generateProgress}%</p>
+        <p className="text-xs text-stone-400 text-center mt-2">{generateProgress}%</p>
       </div>
     </div>
   );
@@ -339,8 +339,8 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-zinc-900">Document Generated</h2>
-            <p className="text-sm text-zinc-500 mt-1">
+            <h2 className="text-xl font-semibold text-stone-900">Document Generated</h2>
+            <p className="text-sm text-stone-500 mt-1">
               {buildResult.sections.length} sections | {draftedSections.length} drafted | Validation: {validationPasses}/{validationTotal} passed
             </p>
           </div>
@@ -356,30 +356,30 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
               onOpenInEditor(combinedContent, title, ctdSection);
             }}
             disabled={!onOpenInEditor}
-            className="px-4 py-2 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            className="px-4 py-2 text-sm font-medium text-white bg-stone-900 rounded-lg hover:bg-stone-800 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
           >
             Open in Editor
           </button>
         </div>
 
         {/* Sections list */}
-        <div className="border border-zinc-200 rounded-xl overflow-hidden">
-          <div className="bg-zinc-50 px-4 py-2.5 border-b border-zinc-200">
-            <h3 className="text-sm font-medium text-zinc-700">Document Sections</h3>
+        <div className="border border-stone-200 rounded-xl overflow-hidden">
+          <div className="bg-stone-50 px-4 py-2.5 border-b border-stone-200">
+            <h3 className="text-sm font-medium text-stone-700">Document Sections</h3>
           </div>
-          <div className="max-h-96 overflow-y-auto divide-y divide-zinc-100">
+          <div className="max-h-96 overflow-y-auto divide-y divide-stone-100">
             {buildResult.sections.map(section => (
-              <div key={`${section.number}-${section.agency || ''}`} className="px-4 py-3 flex items-center gap-3 hover:bg-zinc-50">
+              <div key={`${section.number}-${section.agency || ''}`} className="px-4 py-3 flex items-center gap-3 hover:bg-stone-50">
                 <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                   section.status === 'drafted' ? LIFECYCLE.approved.dot :
                   section.status === 'template_only' ? LIFECYCLE.draft.dot : LIFECYCLE.not_started.dot
                 }`} />
-                <span className="text-xs font-mono text-zinc-400 w-10">{section.number}</span>
-                <span className="text-sm text-zinc-900 flex-1">{section.title}</span>
+                <span className="text-xs font-mono text-stone-400 w-10">{section.number}</span>
+                <span className="text-sm text-stone-900 flex-1">{section.title}</span>
                 {section.agency && (
                   <span className="text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">{section.agency}</span>
                 )}
-                <span className="text-xs text-zinc-400">{section.wordCount} words</span>
+                <span className="text-xs text-stone-400">{section.wordCount} words</span>
               </div>
             ))}
           </div>
@@ -387,16 +387,16 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
 
         {/* Validation results */}
         {buildResult.validationResults && buildResult.validationResults.length > 0 && (
-          <div className="border border-zinc-200 rounded-xl overflow-hidden">
-            <div className="bg-zinc-50 px-4 py-2.5 border-b border-zinc-200">
-              <h3 className="text-sm font-medium text-zinc-700">Compliance Validation</h3>
+          <div className="border border-stone-200 rounded-xl overflow-hidden">
+            <div className="bg-stone-50 px-4 py-2.5 border-b border-stone-200">
+              <h3 className="text-sm font-medium text-stone-700">Compliance Validation</h3>
             </div>
-            <div className="max-h-48 overflow-y-auto divide-y divide-zinc-100">
+            <div className="max-h-48 overflow-y-auto divide-y divide-stone-100">
               {buildResult.validationResults.filter(v => v.status !== 'pass').map((v, i) => (
                 <div key={i} className="px-4 py-2 flex items-center gap-3">
                   <span className={`w-2 h-2 rounded-full ${v.status === 'fail' ? 'bg-red-500' : 'bg-yellow-500'}`} />
-                  <span className="text-xs font-medium text-zinc-500">{v.agency}</span>
-                  <span className="text-sm text-zinc-700 flex-1">{v.message}</span>
+                  <span className="text-xs font-medium text-stone-500">{v.agency}</span>
+                  <span className="text-sm text-stone-700 flex-1">{v.message}</span>
                 </div>
               ))}
             </div>
@@ -404,13 +404,13 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
         )}
 
         <div className="flex gap-3">
-          <button onClick={() => { setBuildResult(null); setStep('type'); }} className="px-4 py-2.5 text-sm text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50">
+          <button onClick={() => { setBuildResult(null); setStep('type'); }} className="px-4 py-2.5 text-sm text-stone-600 border border-stone-200 rounded-lg hover:bg-stone-50">
             Start New
           </button>
         </div>
 
         {/* Nano Banana — Generate visuals for this document */}
-        <div className="mt-6 pt-6 border-t border-zinc-200">
+        <div className="mt-6 pt-6 border-t border-stone-200">
           <NanoBananaImageGenerator
             context={`${selectedType === 'csr' ? 'Clinical Study Report' : 'CTD submission'} figures for ${studyInfo.indication || 'regulatory document'} — ${studyInfo.phase || ''} ${studyInfo.studyDesign || ''}`}
             mode="infographic"
@@ -436,11 +436,11 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
                   step === s ? 'bg-blue-600 text-white' :
                   (['type', 'agencies', 'study_info', 'review'].indexOf(step) > i) ? 'bg-blue-100 text-blue-600' :
-                  'bg-zinc-100 text-zinc-400'
+                  'bg-stone-100 text-stone-400'
                 }`}>
                   {i + 1}
                 </div>
-                {i < 3 && <div className={`flex-1 h-0.5 ${(['type', 'agencies', 'study_info', 'review'].indexOf(step) > i) ? 'bg-blue-200' : 'bg-zinc-100'}`} />}
+                {i < 3 && <div className={`flex-1 h-0.5 ${(['type', 'agencies', 'study_info', 'review'].indexOf(step) > i) ? 'bg-blue-200' : 'bg-stone-100'}`} />}
               </React.Fragment>
             ))}
           </div>

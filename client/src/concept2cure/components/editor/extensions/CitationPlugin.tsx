@@ -80,10 +80,10 @@ function sourceTypeBadgeClass(type: CitationResult['sourceType']): string {
   const classes: Record<CitationResult['sourceType'], string> = {
     csr: 'bg-blue-100 text-blue-700',
     artifact: 'bg-blue-100 text-blue-700',
-    literature: 'bg-zinc-100 text-zinc-700',
+    literature: 'bg-stone-100 text-stone-700',
     regulatory: 'bg-amber-100 text-amber-700',
   };
-  return classes[type] ?? 'bg-zinc-100 text-zinc-600';
+  return classes[type] ?? 'bg-stone-100 text-stone-600';
 }
 
 // ── Citation Mark ────────────────────────────────────────────────────────────
@@ -386,7 +386,7 @@ export function CitationSearchPanel({
   return (
     <div
       className={cn(
-        'fixed z-50 bg-white border border-zinc-200 rounded-xl shadow-lg',
+        'fixed z-50 bg-white border border-stone-200 rounded-xl shadow-lg',
         'w-[420px] max-h-[480px] flex flex-col overflow-hidden',
         'animate-in fade-in slide-in-from-top-2 duration-150'
       )}
@@ -397,9 +397,9 @@ export function CitationSearchPanel({
       onKeyDown={handleKeyDown}
     >
       {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-100 bg-zinc-50/50">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-stone-100 bg-stone-50/50">
         <BookOpen className="w-4 h-4 text-violet-600" />
-        <span className="text-sm font-semibold text-zinc-900">Insert Citation</span>
+        <span className="text-sm font-semibold text-stone-900">Insert Citation</span>
         <div className="flex-1" />
         <button
           onClick={() => {
@@ -409,7 +409,7 @@ export function CitationSearchPanel({
             );
             editor.commands.focus();
           }}
-          className="p-1 rounded-md hover:bg-zinc-200 transition-colors text-zinc-400 hover:text-zinc-600"
+          className="p-1 rounded-md hover:bg-stone-200 transition-colors text-stone-400 hover:text-stone-600"
           aria-label="Close citation search"
         >
           <X className="w-4 h-4" />
@@ -417,8 +417,8 @@ export function CitationSearchPanel({
       </div>
 
       {/* Search input */}
-      <div className="relative px-4 py-2 border-b border-zinc-100">
-        <Search className="absolute left-7 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+      <div className="relative px-4 py-2 border-b border-stone-100">
+        <Search className="absolute left-7 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
         <input
           ref={inputRef}
           type="text"
@@ -427,9 +427,9 @@ export function CitationSearchPanel({
           placeholder="Search citations, authors, studies..."
           className={cn(
             'w-full pl-8 pr-4 py-2 text-sm rounded-lg',
-            'bg-zinc-50 border border-zinc-200',
-            'focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 focus:border-blue-400',
-            'placeholder:text-zinc-400 text-zinc-900',
+            'bg-stone-50 border border-stone-200',
+            'focus-visible:ring-2 focus-visible:ring-stone-400 outline-none/30 focus:border-blue-400',
+            'placeholder:text-stone-400 text-stone-900',
             'transition-all duration-150'
           )}
           autoComplete="off"
@@ -455,9 +455,9 @@ export function CitationSearchPanel({
 
         {!error && !loading && query.trim() && results.length === 0 && (
           <div className="px-4 py-8 text-center">
-            <BookOpen className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
-            <p className="text-sm text-zinc-500">No citations found</p>
-            <p className="text-xs text-zinc-400 mt-1">
+            <BookOpen className="w-8 h-8 text-stone-300 mx-auto mb-2" />
+            <p className="text-sm text-stone-500">No citations found</p>
+            <p className="text-xs text-stone-400 mt-1">
               Try a different search term
             </p>
           </div>
@@ -465,13 +465,13 @@ export function CitationSearchPanel({
 
         {!error && !query.trim() && results.length === 0 && !loading && (
           <div className="px-4 py-8 text-center">
-            <Search className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
-            <p className="text-sm text-zinc-500">
+            <Search className="w-8 h-8 text-stone-300 mx-auto mb-2" />
+            <p className="text-sm text-stone-500">
               Type to search project artifacts and CSR data
             </p>
-            <p className="text-xs text-zinc-400 mt-1">
-              Trigger with <kbd className="px-1.5 py-0.5 bg-zinc-100 rounded text-zinc-600 font-mono">[@</kbd> or{' '}
-              <kbd className="px-1.5 py-0.5 bg-zinc-100 rounded text-zinc-600 font-mono">/cite</kbd>
+            <p className="text-xs text-stone-400 mt-1">
+              Trigger with <kbd className="px-1.5 py-0.5 bg-stone-100 rounded text-stone-600 font-mono">[@</kbd> or{' '}
+              <kbd className="px-1.5 py-0.5 bg-stone-100 rounded text-stone-600 font-mono">/cite</kbd>
             </p>
           </div>
         )}
@@ -482,28 +482,28 @@ export function CitationSearchPanel({
             data-selected={index === selectedIndex}
             onClick={() => insertCitation(result)}
             className={cn(
-              'w-full text-left px-4 py-3 border-b border-zinc-50 transition-colors duration-150',
+              'w-full text-left px-4 py-3 border-b border-stone-50 transition-colors duration-150',
               'outline-none',
               index === selectedIndex
                 ? 'bg-blue-50/80 border-l-2 border-l-blue-500'
-                : 'hover:bg-zinc-50 border-l-2 border-l-transparent'
+                : 'hover:bg-stone-50 border-l-2 border-l-transparent'
             )}
           >
             <div className="flex items-start gap-3">
               <div className="flex-1 min-w-0">
                 {/* Title */}
-                <p className="text-sm font-medium text-zinc-900 truncate">
+                <p className="text-sm font-medium text-stone-900 truncate">
                   {result.title}
                 </p>
 
                 {/* Authors */}
-                <p className="text-xs text-zinc-500 mt-0.5 truncate">
+                <p className="text-xs text-stone-500 mt-0.5 truncate">
                   {result.authors?.join(', ') || 'Unknown authors'}
                 </p>
 
                 {/* Year + Source type */}
                 <div className="flex items-center gap-2 mt-1.5">
-                  <span className="text-xs font-medium text-zinc-600">
+                  <span className="text-xs font-medium text-stone-600">
                     {result.year}
                   </span>
                   <span
@@ -515,7 +515,7 @@ export function CitationSearchPanel({
                     {sourceTypeLabel(result.sourceType)}
                   </span>
                   {result.doi && (
-                    <span className="inline-flex items-center gap-0.5 text-[10px] text-zinc-400">
+                    <span className="inline-flex items-center gap-0.5 text-[10px] text-stone-400">
                       <ExternalLink className="w-2.5 h-2.5" />
                       DOI
                     </span>
@@ -524,7 +524,7 @@ export function CitationSearchPanel({
 
                 {/* Snippet */}
                 {result.snippet && (
-                  <p className="text-xs text-zinc-400 mt-1 line-clamp-2">
+                  <p className="text-xs text-stone-400 mt-1 line-clamp-2">
                     {result.snippet}
                   </p>
                 )}
@@ -543,17 +543,17 @@ export function CitationSearchPanel({
 
       {/* Footer hint */}
       {results.length > 0 && (
-        <div className="px-4 py-2 border-t border-zinc-100 bg-zinc-50/50 flex items-center gap-3">
-          <span className="text-[10px] text-zinc-400">
-            <kbd className="px-1 py-0.5 bg-zinc-100 rounded text-zinc-500 font-mono">↑↓</kbd>{' '}
+        <div className="px-4 py-2 border-t border-stone-100 bg-stone-50/50 flex items-center gap-3">
+          <span className="text-[10px] text-stone-400">
+            <kbd className="px-1 py-0.5 bg-stone-100 rounded text-stone-500 font-mono">↑↓</kbd>{' '}
             navigate
           </span>
-          <span className="text-[10px] text-zinc-400">
-            <kbd className="px-1 py-0.5 bg-zinc-100 rounded text-zinc-500 font-mono">Enter</kbd>{' '}
+          <span className="text-[10px] text-stone-400">
+            <kbd className="px-1 py-0.5 bg-stone-100 rounded text-stone-500 font-mono">Enter</kbd>{' '}
             insert
           </span>
-          <span className="text-[10px] text-zinc-400">
-            <kbd className="px-1 py-0.5 bg-zinc-100 rounded text-zinc-500 font-mono">Esc</kbd>{' '}
+          <span className="text-[10px] text-stone-400">
+            <kbd className="px-1 py-0.5 bg-stone-100 rounded text-stone-500 font-mono">Esc</kbd>{' '}
             close
           </span>
         </div>

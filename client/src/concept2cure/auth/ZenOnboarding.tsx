@@ -280,7 +280,7 @@ export const ZenOnboarding: React.FC = () => {
           key={s}
           className={`
             w-2 h-2 rounded-full transition-all duration-300
-            ${index <= currentStepIndex ? 'bg-blue-600' : 'bg-zinc-300'}
+            ${index <= currentStepIndex ? 'bg-blue-600' : 'bg-stone-300'}
             ${index === currentStepIndex ? 'w-6' : ''}
           `}
         />
@@ -311,8 +311,8 @@ export const ZenOnboarding: React.FC = () => {
       </motion.div>
 
       <div className="space-y-4">
-        <h1 className="text-2xl font-semibold text-zinc-900">Welcome to Concept2Cure</h1>
-        <p className="text-lg text-zinc-600 max-w-md mx-auto">
+        <h1 className="text-2xl font-semibold text-stone-900">Welcome to Concept2Cure</h1>
+        <p className="text-lg text-stone-600 max-w-md mx-auto">
           The RI-powered regulatory intelligence platform that transforms how you create and manage
           submissions.
         </p>
@@ -329,10 +329,10 @@ export const ZenOnboarding: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 + index * 0.1 }}
-            className="p-4 bg-zinc-50 rounded-xl"
+            className="p-4 bg-stone-50 rounded-xl"
           >
             <div className="text-2xl mb-2">{item.icon}</div>
-            <div className="text-sm font-medium text-zinc-700">{item.label}</div>
+            <div className="text-sm font-medium text-stone-700">{item.label}</div>
           </motion.div>
         ))}
       </div>
@@ -347,7 +347,7 @@ export const ZenOnboarding: React.FC = () => {
         </button>
         <button
           onClick={handleSkip}
-          className="block mx-auto mt-4 text-sm text-zinc-500 hover:text-zinc-700"
+          className="block mx-auto mt-4 text-sm text-stone-500 hover:text-stone-700"
         >
           Skip setup
         </button>
@@ -368,24 +368,24 @@ export const ZenOnboarding: React.FC = () => {
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 mb-2">
           <FolderIcon />
         </div>
-        <h2 className="text-2xl font-semibold text-zinc-900">Create Your First Project</h2>
-        <p className="text-zinc-600">Set up your workspace to get started</p>
+        <h2 className="text-2xl font-semibold text-stone-900">Create Your First Project</h2>
+        <p className="text-stone-600">Set up your workspace to get started</p>
       </div>
 
       <div className="space-y-4">
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-zinc-700">Project Name</label>
+          <label className="block text-sm font-medium text-stone-700">Project Name</label>
           <input
             type="text"
             value={preferences.projectName}
             onChange={e => setPreferences(p => ({ ...p, projectName: e.target.value }))}
             placeholder="e.g., CardioMonitor 510(k)"
-            className="w-full px-4 py-3 border-2 border-zinc-200 rounded-xl focus:border-blue-500 outline-none transition-colors duration-150"
+            className="w-full px-4 py-3 border-2 border-stone-200 rounded-xl focus:border-stone-400 outline-none transition-colors duration-150"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-zinc-700">Submission Type</label>
+          <label className="block text-sm font-medium text-stone-700">Submission Type</label>
           <div className="grid grid-cols-2 gap-3">
             {SUBMISSION_TYPES.map(type => (
               <button
@@ -396,13 +396,13 @@ export const ZenOnboarding: React.FC = () => {
                   ${
                     preferences.submissionType === type.value
                       ? 'border-blue-500 bg-blue-50'
-                      : 'border-zinc-200 hover:border-zinc-300'
+                      : 'border-stone-200 hover:border-stone-300'
                   }
                 `}
               >
                 <div className="text-xl mb-1">{type.icon}</div>
-                <div className="font-medium text-zinc-900 text-sm">{type.label}</div>
-                <div className="text-xs text-zinc-500">{type.description}</div>
+                <div className="font-medium text-stone-900 text-sm">{type.label}</div>
+                <div className="text-xs text-stone-500">{type.description}</div>
               </button>
             ))}
           </div>
@@ -412,7 +412,7 @@ export const ZenOnboarding: React.FC = () => {
       <div className="flex gap-3 pt-4">
         <button
           onClick={handleBack}
-          className="flex-1 py-3 px-4 text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors duration-150"
+          className="flex-1 py-3 px-4 text-stone-700 bg-stone-100 hover:bg-stone-200 rounded-xl transition-colors duration-150"
         >
           Back
         </button>
@@ -440,8 +440,8 @@ export const ZenOnboarding: React.FC = () => {
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 mb-2">
           <CogIcon />
         </div>
-        <h2 className="text-2xl font-semibold text-zinc-900">Your Preferences</h2>
-        <p className="text-zinc-600">Customize your experience</p>
+        <h2 className="text-2xl font-semibold text-stone-900">Your Preferences</h2>
+        <p className="text-stone-600">Customize your experience</p>
       </div>
 
       <div className="space-y-4">
@@ -464,11 +464,11 @@ export const ZenOnboarding: React.FC = () => {
         ].map(pref => (
           <label
             key={pref.key}
-            className="flex items-center justify-between p-4 bg-zinc-50 rounded-xl cursor-pointer hover:bg-zinc-100 transition-colors duration-150"
+            className="flex items-center justify-between p-4 bg-stone-50 rounded-xl cursor-pointer hover:bg-stone-100 transition-colors duration-150"
           >
             <div>
-              <div className="font-medium text-zinc-900">{pref.label}</div>
-              <div className="text-sm text-zinc-500">{pref.description}</div>
+              <div className="font-medium text-stone-900">{pref.label}</div>
+              <div className="text-sm text-stone-500">{pref.description}</div>
             </div>
             <button
               onClick={() =>
@@ -482,7 +482,7 @@ export const ZenOnboarding: React.FC = () => {
                 ${
                   preferences[pref.key as keyof OnboardingPreferences]
                     ? 'bg-blue-600'
-                    : 'bg-zinc-300'
+                    : 'bg-stone-300'
                 }
               `}
             >
@@ -501,7 +501,7 @@ export const ZenOnboarding: React.FC = () => {
       <div className="flex gap-3 pt-4">
         <button
           onClick={handleBack}
-          className="flex-1 py-3 px-4 text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors duration-150"
+          className="flex-1 py-3 px-4 text-stone-700 bg-stone-100 hover:bg-stone-200 rounded-xl transition-colors duration-150"
         >
           Back
         </button>
@@ -528,8 +528,8 @@ export const ZenOnboarding: React.FC = () => {
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 mb-2">
           <MapIcon />
         </div>
-        <h2 className="text-2xl font-semibold text-zinc-900">Key Features</h2>
-        <p className="text-zinc-600">Here's what you can do with Concept2Cure</p>
+        <h2 className="text-2xl font-semibold text-stone-900">Key Features</h2>
+        <p className="text-stone-600">Here's what you can do with Concept2Cure</p>
       </div>
 
       <div className="space-y-3">
@@ -539,12 +539,12 @@ export const ZenOnboarding: React.FC = () => {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="flex items-start gap-4 p-4 bg-zinc-50 rounded-xl"
+            className="flex items-start gap-4 p-4 bg-stone-50 rounded-xl"
           >
             <div className="text-2xl">{feature.icon}</div>
             <div>
-              <div className="font-medium text-zinc-900">{feature.title}</div>
-              <div className="text-sm text-zinc-600">{feature.description}</div>
+              <div className="font-medium text-stone-900">{feature.title}</div>
+              <div className="text-sm text-stone-600">{feature.description}</div>
             </div>
           </motion.div>
         ))}
@@ -553,7 +553,7 @@ export const ZenOnboarding: React.FC = () => {
       <div className="flex gap-3 pt-4">
         <button
           onClick={handleBack}
-          className="flex-1 py-3 px-4 text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors duration-150"
+          className="flex-1 py-3 px-4 text-stone-700 bg-stone-100 hover:bg-stone-200 rounded-xl transition-colors duration-150"
         >
           Back
         </button>
@@ -595,8 +595,8 @@ export const ZenOnboarding: React.FC = () => {
       </motion.div>
 
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold text-zinc-900">You're All Set!</h2>
-        <p className="text-lg text-zinc-600 max-w-md mx-auto">
+        <h2 className="text-2xl font-semibold text-stone-900">You're All Set!</h2>
+        <p className="text-lg text-stone-600 max-w-md mx-auto">
           Your workspace "{preferences.projectName}" is ready. Let's start building your{' '}
           {SUBMISSION_TYPES.find(t => t.value === preferences.submissionType)?.label ||
             'submission'}
@@ -650,7 +650,7 @@ export const ZenOnboarding: React.FC = () => {
       <div className="w-full max-w-xl">
         {renderProgress()}
 
-        <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-8">
+        <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-8">
           <AnimatePresence mode="wait">
             {step === 'welcome' && renderWelcomeStep()}
             {step === 'workspace' && renderWorkspaceStep()}

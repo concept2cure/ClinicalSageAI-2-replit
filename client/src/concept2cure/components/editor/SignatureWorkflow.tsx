@@ -484,9 +484,9 @@ export function SignatureWorkflow({
       unsigned: {
         label: 'Unsigned',
         icon: ShieldAlert,
-        color: 'text-zinc-500',
-        bg: 'bg-zinc-100',
-        border: 'border-zinc-300',
+        color: 'text-stone-500',
+        bg: 'bg-stone-100',
+        border: 'border-stone-300',
       },
       pending_signatures: {
         label: 'Pending Signatures',
@@ -537,7 +537,7 @@ export function SignatureWorkflow({
             ? 'bg-emerald-50/60 border-emerald-200'
             : signer.status === 'rejected'
               ? 'bg-red-50/60 border-red-200'
-              : 'bg-white border-zinc-200'
+              : 'bg-white border-stone-200'
         )}
       >
         <div className="flex items-center gap-3">
@@ -551,14 +551,14 @@ export function SignatureWorkflow({
             <RoleIcon className={cn('w-4 h-4', roleConf.color)} />
           </div>
           <div>
-            <div className="text-sm font-medium text-zinc-900">{signer.name}</div>
+            <div className="text-sm font-medium text-stone-900">{signer.name}</div>
             <div className={cn('text-xs font-medium', roleConf.color)}>{signer.role}</div>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           {signer.timestamp && (
-            <span className="text-[10px] text-zinc-400 hidden sm:block">
+            <span className="text-[10px] text-stone-400 hidden sm:block">
               {formatTimestampReadable(signer.timestamp)}
             </span>
           )}
@@ -598,14 +598,14 @@ export function SignatureWorkflow({
       <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
         <div className="w-full max-w-lg mx-4 bg-white rounded-xl shadow-lg overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 bg-zinc-50">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200 bg-stone-50">
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-100 border border-blue-200">
                 <Fingerprint className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-zinc-900">Electronic Signature</h3>
-                <p className="text-[10px] text-zinc-500">21 CFR Part 11 Compliant</p>
+                <h3 className="text-sm font-semibold text-stone-900">Electronic Signature</h3>
+                <p className="text-[10px] text-stone-500">21 CFR Part 11 Compliant</p>
               </div>
             </div>
             <button
@@ -613,7 +613,7 @@ export function SignatureWorkflow({
                 setShowSignModal(false);
                 resetSignForm();
               }}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors duration-150"
+              className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors duration-150"
             >
               <X className="w-4 h-4" />
             </button>
@@ -621,14 +621,14 @@ export function SignatureWorkflow({
 
           <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
             {/* Document info */}
-            <div className="p-3 rounded-lg bg-zinc-50 border border-zinc-200">
-              <div className="flex items-center gap-2 text-sm text-zinc-700">
-                <FileText className="w-4 h-4 text-zinc-400" />
+            <div className="p-3 rounded-lg bg-stone-50 border border-stone-200">
+              <div className="flex items-center gap-2 text-sm text-stone-700">
+                <FileText className="w-4 h-4 text-stone-400" />
                 <span className="font-medium">{documentTitle}</span>
               </div>
               <div className="flex items-center gap-4 mt-1.5">
-                <span className="text-xs text-zinc-500">Version {documentVersion}</span>
-                <span className="text-[10px] text-zinc-400 font-mono">
+                <span className="text-xs text-stone-500">Version {documentVersion}</span>
+                <span className="text-[10px] text-stone-400 font-mono">
                   SHA-256: {documentHash.substring(0, 20)}...
                 </span>
               </div>
@@ -636,13 +636,13 @@ export function SignatureWorkflow({
 
             {/* Signer identity confirmation */}
             <div>
-              <label className="flex items-center gap-1.5 text-xs font-medium text-zinc-600 mb-1.5">
+              <label className="flex items-center gap-1.5 text-xs font-medium text-stone-600 mb-1.5">
                 <User className="w-3 h-3" />
                 Signer Identity
               </label>
-              <div className="p-3 rounded-lg bg-zinc-50 border border-zinc-200">
-                <div className="text-sm font-medium text-zinc-900">{currentUser.name}</div>
-                <div className="flex items-center gap-1 text-xs text-zinc-400 mt-0.5">
+              <div className="p-3 rounded-lg bg-stone-50 border border-stone-200">
+                <div className="text-sm font-medium text-stone-900">{currentUser.name}</div>
+                <div className="flex items-center gap-1 text-xs text-stone-400 mt-0.5">
                   <Mail className="w-3 h-3" />
                   {currentUser.email}
                 </div>
@@ -651,14 +651,14 @@ export function SignatureWorkflow({
 
             {/* Signature meaning */}
             <div>
-              <label className="flex items-center gap-1.5 text-xs font-medium text-zinc-600 mb-1.5">
+              <label className="flex items-center gap-1.5 text-xs font-medium text-stone-600 mb-1.5">
                 Signature Meaning (§11.50)
               </label>
               <div className="relative">
                 <select
                   value={selectedMeaning}
                   onChange={e => setSelectedMeaning(e.target.value as SignatureMeaning)}
-                  className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg bg-white appearance-none focus-visible:ring-2 outline-none focus:ring-blue-200 focus:border-blue-400 cursor-pointer"
+                  className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg bg-white appearance-none focus-visible:ring-2 outline-none focus:ring-blue-200 focus:border-blue-400 cursor-pointer"
                 >
                   {MEANING_OPTIONS.map(opt => (
                     <option key={opt.value} value={opt.value}>
@@ -666,13 +666,13 @@ export function SignatureWorkflow({
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
               </div>
             </div>
 
             {/* Password re-entry */}
             <div>
-              <label className="flex items-center gap-1.5 text-xs font-medium text-zinc-600 mb-1.5">
+              <label className="flex items-center gap-1.5 text-xs font-medium text-stone-600 mb-1.5">
                 <Lock className="w-3 h-3" />
                 Password Re-entry (§11.100)
               </label>
@@ -681,9 +681,9 @@ export function SignatureWorkflow({
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="Re-enter your password to authenticate"
-                className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg bg-white focus-visible:ring-2 outline-none focus:ring-blue-200 focus:border-blue-400"
+                className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg bg-white focus-visible:ring-2 outline-none focus:ring-blue-200 focus:border-blue-400"
               />
-              <p className="text-[10px] text-zinc-400 mt-1">
+              <p className="text-[10px] text-stone-400 mt-1">
                 Identity verification required per 21 CFR Part 11 §11.100(a)
               </p>
             </div>
@@ -712,13 +712,13 @@ export function SignatureWorkflow({
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-zinc-200">
+          <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-stone-200">
             <button
               onClick={() => {
                 setShowSignModal(false);
                 resetSignForm();
               }}
-              className="px-4 py-2 text-sm text-zinc-600 hover:text-zinc-900 transition-colors duration-150"
+              className="px-4 py-2 text-sm text-stone-600 hover:text-stone-900 transition-colors duration-150"
             >
               Cancel
             </button>
@@ -728,7 +728,7 @@ export function SignatureWorkflow({
               className={cn(
                 'inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all duration-150',
                 signing || !legalAck || !password
-                  ? 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
+                  ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
                   : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-200'
               )}
             >
@@ -767,7 +767,7 @@ export function SignatureWorkflow({
             <div className="flex items-center justify-center w-12 h-12 mx-auto rounded-full bg-emerald-100 border border-emerald-200 mb-2">
               <Award className="w-6 h-6 text-emerald-600" />
             </div>
-            <h3 className="text-base font-semibold text-zinc-900">Signature Certificate</h3>
+            <h3 className="text-base font-semibold text-stone-900">Signature Certificate</h3>
             <p className="text-[10px] text-emerald-600 mt-0.5">
               21 CFR Part 11 Electronic Signature Record
             </p>
@@ -804,7 +804,7 @@ export function SignatureWorkflow({
           <div className="flex justify-center px-5 pb-5">
             <button
               onClick={() => setShowCertificate(null)}
-              className="px-6 py-2 rounded-lg text-sm font-medium bg-zinc-100 text-zinc-700 hover:bg-zinc-200 transition-colors border border-zinc-300"
+              className="px-6 py-2 rounded-lg text-sm font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 transition-colors border border-stone-300"
             >
               Close Certificate
             </button>
@@ -818,16 +818,16 @@ export function SignatureWorkflow({
   // Main render
   // ---------------------------------------------------------------------------
   return (
-    <div className="flex flex-col h-full bg-white text-zinc-900">
+    <div className="flex flex-col h-full bg-white text-stone-900">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 bg-zinc-50">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200 bg-stone-50">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-100 border border-blue-200">
             <Shield className="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-zinc-900">E-Signature Workflow</h2>
-            <p className="text-[10px] text-zinc-500">21 CFR Part 11 Compliance</p>
+            <h2 className="text-sm font-semibold text-stone-900">E-Signature Workflow</h2>
+            <p className="text-[10px] text-stone-500">21 CFR Part 11 Compliance</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -835,7 +835,7 @@ export function SignatureWorkflow({
           {onClose && (
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors duration-150"
+              className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors duration-150"
             >
               <X className="w-4 h-4" />
             </button>
@@ -846,16 +846,16 @@ export function SignatureWorkflow({
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
         {/* Document info bar */}
-        <div className="p-3 rounded-lg bg-zinc-50 border border-zinc-200">
+        <div className="p-3 rounded-lg bg-stone-50 border border-stone-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-zinc-400" />
-              <span className="text-sm font-medium text-zinc-700">{documentTitle}</span>
-              <span className="text-xs text-zinc-400">v{documentVersion}</span>
+              <FileText className="w-4 h-4 text-stone-400" />
+              <span className="text-sm font-medium text-stone-700">{documentTitle}</span>
+              <span className="text-xs text-stone-400">v{documentVersion}</span>
             </div>
             <div className="flex items-center gap-1">
-              <Hash className="w-3 h-3 text-zinc-400" />
-              <span className="text-[10px] font-mono text-zinc-400">
+              <Hash className="w-3 h-3 text-stone-400" />
+              <span className="text-[10px] font-mono text-stone-400">
                 {documentHash ? `${documentHash.substring(0, 24)}...` : 'Computing...'}
               </span>
             </div>
@@ -864,12 +864,12 @@ export function SignatureWorkflow({
 
         {/* Required Signers */}
         <div>
-          <h3 className="text-xs font-semibold text-zinc-600 uppercase tracking-wider mb-2.5">
+          <h3 className="text-xs font-semibold text-stone-600 uppercase tracking-wider mb-2.5">
             Required Signers
           </h3>
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-5 h-5 text-zinc-400 animate-spin" />
+              <Loader2 className="w-5 h-5 text-stone-400 animate-spin" />
             </div>
           ) : (
             <div className="space-y-2">{requiredSigners.map(renderSignerRow)}</div>
@@ -902,7 +902,7 @@ export function SignatureWorkflow({
               </span>
             </div>
             {verificationResult.details && (
-              <p className="text-xs text-zinc-500 ml-7">{verificationResult.details}</p>
+              <p className="text-xs text-stone-500 ml-7">{verificationResult.details}</p>
             )}
           </div>
         )}
@@ -912,21 +912,21 @@ export function SignatureWorkflow({
           <div>
             <button
               onClick={() => setTrailExpanded(!trailExpanded)}
-              className="flex items-center gap-2 text-xs font-semibold text-zinc-600 uppercase tracking-wider mb-2.5 hover:text-zinc-900 transition-colors duration-150"
+              className="flex items-center gap-2 text-xs font-semibold text-stone-600 uppercase tracking-wider mb-2.5 hover:text-stone-900 transition-colors duration-150"
             >
               <span>Signature Trail</span>
-              <span className="text-zinc-400 normal-case font-normal">({signatures.length})</span>
+              <span className="text-stone-400 normal-case font-normal">({signatures.length})</span>
               {trailExpanded ? (
-                <ChevronUp className="w-3.5 h-3.5 text-zinc-400" />
+                <ChevronUp className="w-3.5 h-3.5 text-stone-400" />
               ) : (
-                <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+                <ChevronDown className="w-3.5 h-3.5 text-stone-400" />
               )}
             </button>
 
             {trailExpanded && (
               <div className="relative">
                 {/* Vertical timeline line */}
-                <div className="absolute left-[13px] top-2 bottom-2 w-px bg-zinc-200" />
+                <div className="absolute left-[13px] top-2 bottom-2 w-px bg-stone-200" />
 
                 <div className="space-y-2.5">
                   {[...signatures]
@@ -945,17 +945,17 @@ export function SignatureWorkflow({
                           </div>
 
                           {/* Content */}
-                          <div className="flex-1 p-3 rounded-lg bg-zinc-50 border border-zinc-200">
+                          <div className="flex-1 p-3 rounded-lg bg-stone-50 border border-stone-200">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-medium text-zinc-700">
+                              <span className="text-sm font-medium text-stone-700">
                                 {sig.signer_name}
                               </span>
-                              <span className="text-[10px] text-zinc-400 font-mono">
+                              <span className="text-[10px] text-stone-400 font-mono">
                                 #{idx + 1}
                               </span>
                             </div>
-                            <div className="text-xs text-zinc-500 mb-1">{label}</div>
-                            <div className="flex items-center gap-4 text-[10px] text-zinc-400">
+                            <div className="text-xs text-stone-500 mb-1">{label}</div>
+                            <div className="flex items-center gap-4 text-[10px] text-stone-400">
                               <span>{formatTimestampReadable(sig.timestamp)}</span>
                               <span className="font-mono">
                                 {sig.signature_hash.substring(0, 16)}...
@@ -973,15 +973,15 @@ export function SignatureWorkflow({
       </div>
 
       {/* Footer actions */}
-      <div className="flex items-center justify-between px-5 py-3 border-t border-zinc-200 bg-zinc-50/50">
+      <div className="flex items-center justify-between px-5 py-3 border-t border-stone-200 bg-stone-50/50">
         <button
           onClick={handleVerify}
           disabled={verifying || signatures.length === 0}
           className={cn(
             'inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all border',
             verifying || signatures.length === 0
-              ? 'bg-zinc-100 text-zinc-400 border-zinc-200 cursor-not-allowed'
-              : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50 hover:border-zinc-400'
+              ? 'bg-stone-100 text-stone-400 border-stone-200 cursor-not-allowed'
+              : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-50 hover:border-stone-400'
           )}
         >
           {verifying ? (
@@ -1025,12 +1025,12 @@ function CertRow({
 }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">
+      <span className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">
         {label}
       </span>
       <span
         className={cn(
-          'text-sm text-zinc-700 break-all',
+          'text-sm text-stone-700 break-all',
           mono && 'font-mono text-xs',
           shouldTruncate && 'truncate'
         )}
@@ -1049,7 +1049,7 @@ function CertRow({
 export function SignatureList({ documentId, signatures, loading }: SignatureListProps) {
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-6 text-zinc-400">
+      <div className="flex items-center justify-center py-6 text-stone-400">
         <Loader2 className="w-4 h-4 animate-spin mr-2" />
         <span className="text-xs">Loading signatures...</span>
       </div>
@@ -1059,8 +1059,8 @@ export function SignatureList({ documentId, signatures, loading }: SignatureList
   if (signatures.length === 0) {
     return (
       <div className="text-center py-6">
-        <Shield className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
-        <p className="text-xs text-zinc-400">No signatures yet</p>
+        <Shield className="w-8 h-8 text-stone-300 mx-auto mb-2" />
+        <p className="text-xs text-stone-400">No signatures yet</p>
       </div>
     );
   }
@@ -1080,7 +1080,7 @@ export function SignatureList({ documentId, signatures, loading }: SignatureList
               <ShieldCheck
                 className={cn('w-3.5 h-3.5', sig.revoked ? 'text-red-500' : 'text-emerald-600')}
               />
-              <span className="font-medium text-zinc-700">{sig.signerName}</span>
+              <span className="font-medium text-stone-700">{sig.signerName}</span>
             </div>
             <span
               className={cn(
@@ -1091,7 +1091,7 @@ export function SignatureList({ documentId, signatures, loading }: SignatureList
               {sig.revoked ? 'REVOKED' : 'VALID'}
             </span>
           </div>
-          <div className="text-zinc-500 space-y-0.5">
+          <div className="text-stone-500 space-y-0.5">
             <div className="flex items-center gap-1">
               <User className="w-3 h-3" />
               {sig.signerTitle}
@@ -1104,7 +1104,7 @@ export function SignatureList({ documentId, signatures, loading }: SignatureList
               <Clock className="w-3 h-3" />
               {new Date(sig.signedAt).toLocaleString()}
             </div>
-            <div className="flex items-center gap-1 font-mono text-[10px] text-zinc-400">
+            <div className="flex items-center gap-1 font-mono text-[10px] text-stone-400">
               <Hash className="w-3 h-3" />
               {sig.signatureHash.slice(0, 20)}...
             </div>

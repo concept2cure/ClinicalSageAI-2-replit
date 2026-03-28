@@ -265,10 +265,10 @@ function StatusLabel({ status }: { status: WorkflowRun["status"] }) {
     <span
       className={cn(
         "text-xs",
-        status === "running" && "text-zinc-900",
-        status === "paused" && "text-zinc-600",
-        status === "completed" && "text-zinc-400",
-        status === "failed" && "text-zinc-400"
+        status === "running" && "text-stone-900",
+        status === "paused" && "text-stone-600",
+        status === "completed" && "text-stone-400",
+        status === "failed" && "text-stone-400"
       )}
     >
       {labels[status]}
@@ -290,13 +290,13 @@ function AgentStatusText({ status }: { status: AgentStatus }) {
 
 function StepStatusIndicator({ status }: { status: StepStatus }) {
   if (status === "complete") {
-    return <Check className="h-3.5 w-3.5 text-zinc-400" />;
+    return <Check className="h-3.5 w-3.5 text-stone-400" />;
   }
   if (status === "running") {
     return (
-      <span className="inline-flex items-center gap-1 text-xs text-zinc-900">
+      <span className="inline-flex items-center gap-1 text-xs text-stone-900">
         <motion.span
-          className="inline-block h-1.5 w-1.5 rounded-full bg-zinc-900"
+          className="inline-block h-1.5 w-1.5 rounded-full bg-stone-900"
           animate={{ opacity: [1, 0.3, 1] }}
           transition={{ duration: 1.4, repeat: Infinity }}
         />
@@ -306,16 +306,16 @@ function StepStatusIndicator({ status }: { status: StepStatus }) {
   }
   if (status === "blocked") {
     return (
-      <span className="inline-flex items-center gap-1 text-xs text-zinc-600">
+      <span className="inline-flex items-center gap-1 text-xs text-stone-600">
         <Clock className="h-3 w-3" />
         Waiting for review
       </span>
     );
   }
   if (status === "skipped") {
-    return <span className="text-xs text-zinc-400">Skipped</span>;
+    return <span className="text-xs text-stone-400">Skipped</span>;
   }
-  return <span className="text-xs text-zinc-400">Pending</span>;
+  return <span className="text-xs text-stone-400">Pending</span>;
 }
 
 // ---------------------------------------------------------------------------
@@ -342,12 +342,12 @@ function WorkflowHeader({
     <div className="space-y-3">
       <div className="flex items-start justify-between">
         <div className="space-y-1">
-          <h2 className="text-sm font-medium text-zinc-900">
+          <h2 className="text-sm font-medium text-stone-900">
             Agent Workflow Monitor
           </h2>
-          <p className="text-sm text-zinc-600">{run.title}</p>
+          <p className="text-sm text-stone-600">{run.title}</p>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-zinc-400">
+            <span className="text-xs text-stone-400">
               {run.submissionType}
             </span>
             <StatusLabel status={run.status} />
@@ -373,19 +373,19 @@ function WorkflowHeader({
 
       {/* Progress bar */}
       <div className="space-y-1">
-        <div className="h-1 w-full rounded-full bg-zinc-100">
+        <div className="h-1 w-full rounded-full bg-stone-100">
           <motion.div
-            className="h-1 rounded-full bg-zinc-900"
+            className="h-1 rounded-full bg-stone-900"
             initial={{ width: 0 }}
             animate={{ width: `${run.progress}%` }}
             transition={{ duration: 0.4, ease: "easeOut" }}
           />
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-xs text-zinc-400">{run.progress}%</span>
-          <span className="text-xs text-zinc-400">{elapsed}</span>
+          <span className="text-xs text-stone-400">{run.progress}%</span>
+          <span className="text-xs text-stone-400">{elapsed}</span>
           {run.estimatedCompletion && (
-            <span className="text-xs text-zinc-400">
+            <span className="text-xs text-stone-400">
               {run.estimatedCompletion}
             </span>
           )}
@@ -411,12 +411,12 @@ function ActiveAgentsStrip({ agents }: { agents: AgentNode[] }) {
         return (
           <div key={agent.id} className="flex items-start">
             {i > 0 && (
-              <div className="mt-3 w-6 border-t border-zinc-200" />
+              <div className="mt-3 w-6 border-t border-stone-200" />
             )}
             <div
               className={cn(
                 "flex-shrink-0 px-3 py-2 text-center",
-                isActive ? "text-zinc-900" : "text-zinc-400"
+                isActive ? "text-stone-900" : "text-stone-400"
               )}
             >
               <p
@@ -427,7 +427,7 @@ function ActiveAgentsStrip({ agents }: { agents: AgentNode[] }) {
               >
                 {agent.name}
               </p>
-              <p className="text-xs text-zinc-400">{agent.role}</p>
+              <p className="text-xs text-stone-400">{agent.role}</p>
               <p className="mt-0.5 text-xs">
                 <AgentStatusText status={agent.status} />
               </p>
@@ -460,8 +460,8 @@ function HITLReviewPanel({
       revised: "Revision requested",
     };
     return (
-      <motion.div {...fadeUp} className="mt-3 rounded-lg border border-zinc-200 p-4">
-        <p className="text-xs text-zinc-400">
+      <motion.div {...fadeUp} className="mt-3 rounded-lg border border-stone-200 p-4">
+        <p className="text-xs text-stone-400">
           Decision: {labels[step.humanDecision]}
         </p>
       </motion.div>
@@ -471,17 +471,17 @@ function HITLReviewPanel({
   return (
     <motion.div
       {...fadeUp}
-      className="mt-3 rounded-lg border border-zinc-200 p-4 space-y-3"
+      className="mt-3 rounded-lg border border-stone-200 p-4 space-y-3"
     >
-      <p className="text-xs font-medium text-zinc-900">
+      <p className="text-xs font-medium text-stone-900">
         Human review required
       </p>
-      <p className="text-sm text-zinc-600">
+      <p className="text-sm text-stone-600">
         The agent has flagged a potential issue and is requesting your decision
         before proceeding.
       </p>
       {step.result && (
-        <p className="text-sm text-zinc-600">{step.result}</p>
+        <p className="text-sm text-stone-600">{step.result}</p>
       )}
       <div className="flex items-center gap-4 pt-1">
         <button
@@ -492,13 +492,13 @@ function HITLReviewPanel({
         </button>
         <button
           onClick={() => onDecision(step.id, "revised")}
-          className="text-xs text-zinc-600 hover:underline"
+          className="text-xs text-stone-600 hover:underline"
         >
           Request revision
         </button>
         <button
           onClick={() => onDecision(step.id, "rejected")}
-          className="text-xs text-zinc-400 hover:underline"
+          className="text-xs text-stone-400 hover:underline"
         >
           Reject
         </button>
@@ -535,7 +535,7 @@ function StepRow({
       {...fadeUp}
       className={cn(
         "relative py-3 pl-4 pr-2",
-        isCurrent && "border-l-2 border-zinc-900",
+        isCurrent && "border-l-2 border-stone-900",
         !isCurrent && "border-l-2 border-transparent"
       )}
     >
@@ -544,7 +544,7 @@ function StepRow({
         <span
           className={cn(
             "mt-0.5 flex-shrink-0 text-xs tabular-nums",
-            isPending ? "text-zinc-400" : "text-zinc-400"
+            isPending ? "text-stone-400" : "text-stone-400"
           )}
         >
           {index + 1}
@@ -557,16 +557,16 @@ function StepRow({
               className={cn(
                 "text-sm font-medium",
                 isPending
-                  ? "text-zinc-400"
+                  ? "text-stone-400"
                   : isComplete
-                  ? "text-zinc-500"
-                  : "text-zinc-900"
+                  ? "text-stone-500"
+                  : "text-stone-900"
               )}
             >
               {step.agentName}
             </span>
             {step.duration && (
-              <span className="text-xs text-zinc-400">
+              <span className="text-xs text-stone-400">
                 {step.duration}
               </span>
             )}
@@ -576,10 +576,10 @@ function StepRow({
             className={cn(
               "text-sm",
               isPending
-                ? "text-zinc-400"
+                ? "text-stone-400"
                 : isComplete
-                ? "text-zinc-500"
-                : "text-zinc-600"
+                ? "text-stone-500"
+                : "text-stone-600"
             )}
           >
             {step.action}
@@ -592,7 +592,7 @@ function StepRow({
 
           {/* Result preview */}
           {step.result && !isPending && (
-            <p className="line-clamp-2 text-sm text-zinc-600">
+            <p className="line-clamp-2 text-sm text-stone-600">
               {step.result}
             </p>
           )}
@@ -620,7 +620,7 @@ function StepRow({
                     transition={{ duration: 0.15 }}
                     className="overflow-hidden"
                   >
-                    <p className="mt-1 text-xs italic text-zinc-500">
+                    <p className="mt-1 text-xs italic text-stone-500">
                       {step.reasoning}
                     </p>
                   </motion.div>
@@ -656,10 +656,10 @@ function StepRow({
                       {step.artifacts.map((a) => (
                         <li
                           key={a.name}
-                          className="text-xs text-zinc-500"
+                          className="text-xs text-stone-500"
                         >
                           {a.name}{" "}
-                          <span className="text-zinc-400">
+                          <span className="text-stone-400">
                             ({a.type})
                           </span>
                         </li>
@@ -716,12 +716,12 @@ function SummaryFooter({ run }: { run: WorkflowRun }) {
   return (
     <motion.div {...fadeUp} className="space-y-3 pt-4">
       <div className="flex items-center gap-2">
-        <Check className="h-3.5 w-3.5 text-zinc-400" />
-        <span className="text-sm font-medium text-zinc-900">
+        <Check className="h-3.5 w-3.5 text-stone-400" />
+        <span className="text-sm font-medium text-stone-900">
           Workflow completed
         </span>
         {totalDuration && (
-          <span className="text-xs text-zinc-400">
+          <span className="text-xs text-stone-400">
             in {totalDuration}
           </span>
         )}
@@ -729,12 +729,12 @@ function SummaryFooter({ run }: { run: WorkflowRun }) {
 
       {allArtifacts.length > 0 && (
         <div className="space-y-1">
-          <p className="text-xs text-zinc-400">Artifacts generated</p>
+          <p className="text-xs text-stone-400">Artifacts generated</p>
           <ul className="space-y-0.5">
             {allArtifacts.map((a) => (
-              <li key={a.name} className="text-xs text-zinc-600">
+              <li key={a.name} className="text-xs text-stone-600">
                 {a.name}{" "}
-                <span className="text-zinc-400">({a.type})</span>
+                <span className="text-stone-400">({a.type})</span>
               </li>
             ))}
           </ul>
@@ -742,12 +742,12 @@ function SummaryFooter({ run }: { run: WorkflowRun }) {
       )}
 
       <div className="space-y-1">
-        <p className="text-xs text-zinc-400">Agent utilization</p>
+        <p className="text-xs text-stone-400">Agent utilization</p>
         <ul className="space-y-0.5">
           {agentUsage.map(([name, count]) => (
-            <li key={name} className="text-xs text-zinc-600">
+            <li key={name} className="text-xs text-stone-600">
               {name}{" "}
-              <span className="text-zinc-400">
+              <span className="text-stone-400">
                 ({count} {count === 1 ? "step" : "steps"})
               </span>
             </li>
@@ -756,7 +756,7 @@ function SummaryFooter({ run }: { run: WorkflowRun }) {
       </div>
 
       {run.tokensUsed !== undefined && (
-        <p className="text-xs text-zinc-400">
+        <p className="text-xs text-stone-400">
           {run.tokensUsed.toLocaleString()} tokens used
         </p>
       )}
@@ -863,12 +863,12 @@ export function AgentWorkflowMonitor({
         <WorkflowHeader run={run} onTogglePause={handleTogglePause} />
 
         {/* 2. Active Agents Strip */}
-        <div className="border-y border-zinc-200 py-3">
+        <div className="border-y border-stone-200 py-3">
           <ActiveAgentsStrip agents={run.agents} />
         </div>
 
         {/* 3. Step Timeline */}
-        <div className="space-y-0 divide-y divide-zinc-50">
+        <div className="space-y-0 divide-y divide-stone-50">
           {run.steps.map((step, i) => (
             <StepRow
               key={step.id}

@@ -286,7 +286,7 @@ Submission type context: ${projectName || 'regulatory submission'}`,
 
       {/* ── Ingest area ── */}
       <div className="mt-4 mb-6">
-        <label htmlFor="haq-input" className="text-xs font-medium text-zinc-500 block mb-1.5">
+        <label htmlFor="haq-input" className="text-xs font-medium text-stone-500 block mb-1.5">
           Paste Health Authority Questions
         </label>
         <Textarea
@@ -349,7 +349,7 @@ Submission type context: ${projectName || 'regulatory submission'}`,
                 variant="ghost"
                 onClick={handleClearSession}
                 aria-label="Clear HAQ session"
-                className="ml-auto text-zinc-400 hover:text-zinc-600"
+                className="ml-auto text-stone-400 hover:text-stone-600"
               >
                 <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
                 Clear
@@ -370,8 +370,8 @@ Submission type context: ${projectName || 'regulatory submission'}`,
       ) : (
         <div className="flex gap-4 min-h-[400px]" role="region" aria-label="HAQ questions and responses">
           {/* Question list */}
-          <div className="w-1/3 space-y-1 border-r border-zinc-100 pr-4" role="listbox" aria-label="Questions">
-            <p className="text-xs font-medium text-zinc-500 mb-2">
+          <div className="w-1/3 space-y-1 border-r border-stone-100 pr-4" role="listbox" aria-label="Questions">
+            <p className="text-xs font-medium text-stone-500 mb-2">
               {questions.length} question{questions.length !== 1 ? 's' : ''} · {draftedCount} drafted
             </p>
             {questions.map(q => (
@@ -386,15 +386,15 @@ Submission type context: ${projectName || 'regulatory submission'}`,
                 data-testid={`haq-question-${q.questionNumber}`}
                 className={cn(
                   'w-full justify-start text-left h-auto py-2 px-3',
-                  selectedQuestion === q.id && 'bg-zinc-100 border border-zinc-200'
+                  selectedQuestion === q.id && 'bg-stone-100 border border-stone-200'
                 )}
               >
                 <div className="w-full">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-zinc-700 text-xs">{q.questionNumber}</span>
+                    <span className="font-medium text-stone-700 text-xs">{q.questionNumber}</span>
                     <WorkspaceStatusBadge status={STATUS_TO_BADGE[q.status]} />
                   </div>
-                  <p className="text-xs text-zinc-500 mt-0.5 line-clamp-2">{q.questionText}</p>
+                  <p className="text-xs text-stone-500 mt-0.5 line-clamp-2">{q.questionText}</p>
                 </div>
               </Button>
             ))}
@@ -404,7 +404,7 @@ Submission type context: ${projectName || 'regulatory submission'}`,
           <div className="flex-1" role="region" aria-label="Question detail" aria-live="polite">
             {selected ? (
               <div data-testid="haq-detail">
-                <h3 className="text-sm font-semibold text-zinc-800">
+                <h3 className="text-sm font-semibold text-stone-800">
                   {selected.questionNumber}: {selected.questionText}
                 </h3>
 
@@ -438,23 +438,23 @@ Submission type context: ${projectName || 'regulatory submission'}`,
                 </div>
 
                 {draftingId === selected.id && (
-                  <div className="mt-4 flex items-center gap-2 text-sm text-blue-600" role="status" aria-live="polite" aria-busy="true">
+                  <div className="mt-4 flex items-center gap-2 text-sm text-stone-600" role="status" aria-live="polite" aria-busy="true">
                     <Spinner size="sm" />
                     Drafting response from project documents...
                   </div>
                 )}
 
                 {selected.responseText && (
-                  <div className="mt-4 p-3 rounded-lg bg-zinc-50 border border-zinc-200" data-testid="haq-response">
-                    <p className="text-xs font-medium text-zinc-500 mb-1">Draft Response</p>
-                    <div className="text-sm text-zinc-700 whitespace-pre-wrap">
+                  <div className="mt-4 p-3 rounded-lg bg-stone-50 border border-stone-200" data-testid="haq-response">
+                    <p className="text-xs font-medium text-stone-500 mb-1">Draft Response</p>
+                    <div className="text-sm text-stone-700 whitespace-pre-wrap">
                       {selected.responseText}
                     </div>
                     {selected.sources && selected.sources.length > 0 && (
-                      <div className="mt-3 pt-2 border-t border-zinc-200">
-                        <p className="text-[10px] font-medium text-zinc-400 mb-1">Sources</p>
+                      <div className="mt-3 pt-2 border-t border-stone-200">
+                        <p className="text-[10px] font-medium text-stone-400 mb-1">Sources</p>
                         {selected.sources.map((source, i) => (
-                          <span key={i} className="text-[10px] text-zinc-500 mr-2">
+                          <span key={i} className="text-[10px] text-stone-500 mr-2">
                             [{i + 1}] {source}
                           </span>
                         ))}

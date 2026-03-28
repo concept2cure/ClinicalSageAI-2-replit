@@ -41,8 +41,8 @@ export interface IndustryWorkspaceProps {
 const WorkspaceLoading: React.FC = () => (
   <div className="flex items-center justify-center h-full">
     <div className="text-center">
-      <Loader2 className="w-10 h-10 animate-spin text-zinc-400 mx-auto mb-4" />
-      <p className="text-zinc-500">Loading workspace...</p>
+      <Loader2 className="w-10 h-10 animate-spin text-stone-400 mx-auto mb-4" />
+      <p className="text-stone-500">Loading workspace...</p>
     </div>
   </div>
 );
@@ -78,7 +78,7 @@ export const IndustryWorkspace: React.FC<IndustryWorkspaceProps> = ({
         return <MedicalWritingWorkspace {...commonProps} />;
       default:
         return (
-          <div className="flex items-center justify-center h-full text-zinc-500">
+          <div className="flex items-center justify-center h-full text-stone-500">
             Unknown industry type: {industry}
           </div>
         );

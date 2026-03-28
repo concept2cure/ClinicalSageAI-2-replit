@@ -100,7 +100,7 @@ const ProjectPMABridge: React.FC = () => {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center bg-[#FAFAF9]">
-          <p className="text-sm text-zinc-400">Loading PMA workspace…</p>
+          <p className="text-sm text-stone-400">Loading PMA workspace…</p>
         </div>
       }
     >
@@ -135,7 +135,7 @@ const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading..
         />
       </motion.div>
 
-      <p className="text-sm text-zinc-500" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>
+      <p className="text-sm text-stone-500" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>
         {message}
       </p>
 

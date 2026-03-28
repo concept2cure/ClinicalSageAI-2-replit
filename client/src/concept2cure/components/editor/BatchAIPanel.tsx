@@ -325,19 +325,19 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
   const actionInfo = AI_ACTIONS.find((a) => a.value === selectedAction);
 
   return (
-    <div className="w-80 h-full flex flex-col bg-zinc-900 border-l border-zinc-700/60 text-zinc-100 overflow-hidden">
+    <div className="w-80 h-full flex flex-col bg-stone-900 border-l border-stone-700/60 text-stone-100 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-700/60">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-700/60">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-violet-400" />
           <span className="text-sm font-semibold tracking-tight">Batch AI Operations</span>
         </div>
         <button
           onClick={onClose}
-          className="p-1 rounded hover:bg-zinc-700/60 transition-colors duration-150"
+          className="p-1 rounded hover:bg-stone-700/60 transition-colors duration-150"
           aria-label="Close panel"
         >
-          <X className="w-4 h-4 text-zinc-400" />
+          <X className="w-4 h-4 text-stone-400" />
         </button>
       </div>
 
@@ -345,7 +345,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
         {/* Action selector */}
         <div>
-          <label className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-1.5 block">
+          <label className="text-xs font-medium text-stone-400 uppercase tracking-wider mb-1.5 block">
             AI Action
           </label>
           <div className="relative">
@@ -356,7 +356,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
                 'w-full flex items-center justify-between px-3 py-2 rounded-md border text-sm transition-colors duration-150',
                 selectedAction
                   ? 'border-violet-500/50 bg-violet-500/10 text-violet-200'
-                  : 'border-zinc-600 bg-zinc-800 text-zinc-300 hover:border-zinc-500',
+                  : 'border-stone-600 bg-stone-800 text-stone-300 hover:border-stone-500',
                 isRunning && 'opacity-50 cursor-not-allowed',
               )}
             >
@@ -368,7 +368,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
             </button>
 
             {actionMenuOpen && (
-              <div className="absolute z-20 mt-1 w-full rounded-md border border-zinc-600 bg-zinc-800 shadow-xl py-1">
+              <div className="absolute z-20 mt-1 w-full rounded-md border border-stone-600 bg-stone-800 shadow-xl py-1">
                 {AI_ACTIONS.map((action) => (
                   <button
                     key={action.value}
@@ -378,14 +378,14 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
                       resetResults();
                     }}
                     className={cn(
-                      'w-full flex items-start gap-2.5 px-3 py-2 text-left hover:bg-zinc-700/60 transition-colors duration-150',
+                      'w-full flex items-start gap-2.5 px-3 py-2 text-left hover:bg-stone-700/60 transition-colors duration-150',
                       selectedAction === action.value && 'bg-violet-500/10',
                     )}
                   >
                     <span className="mt-0.5 text-violet-400">{action.icon}</span>
                     <div>
-                      <div className="text-sm font-medium text-zinc-100">{action.label}</div>
-                      <div className="text-xs text-zinc-400">{action.description}</div>
+                      <div className="text-sm font-medium text-stone-100">{action.label}</div>
+                      <div className="text-xs text-stone-400">{action.description}</div>
                     </div>
                   </button>
                 ))}
@@ -397,7 +397,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
         {/* Section selector */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+            <label className="text-xs font-medium text-stone-400 uppercase tracking-wider">
               Sections ({sections.length})
             </label>
             <div className="flex gap-2">
@@ -411,7 +411,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
               <button
                 onClick={deselectAll}
                 disabled={isRunning}
-                className="text-xs text-zinc-400 hover:text-zinc-300 transition-colors disabled:opacity-40"
+                className="text-xs text-stone-400 hover:text-stone-300 transition-colors disabled:opacity-40"
               >
                 None
               </button>
@@ -419,7 +419,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
           </div>
 
           {sections.length === 0 && (
-            <p className="text-xs text-zinc-500 italic">No headings found in the document.</p>
+            <p className="text-xs text-stone-500 italic">No headings found in the document.</p>
           )}
 
           <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
@@ -435,7 +435,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
                     'w-full flex items-start gap-2 px-2.5 py-2 rounded-md text-left transition-colors duration-150',
                     selectedSections.has(section.id)
                       ? 'bg-blue-500/10 border border-blue-500/30'
-                      : 'bg-zinc-800/50 border border-transparent hover:border-zinc-600',
+                      : 'bg-stone-800/50 border border-transparent hover:border-stone-600',
                     isRunning && 'cursor-default',
                   )}
                 >
@@ -445,7 +445,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
                       'mt-0.5 w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center',
                       selectedSections.has(section.id)
                         ? 'bg-blue-500 border-blue-500'
-                        : 'border-zinc-500',
+                        : 'border-stone-500',
                     )}
                   >
                     {selectedSections.has(section.id) && <Check className="w-3 h-3 text-white" />}
@@ -458,13 +458,13 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
                         'text-sm truncate',
                         section.level === 1 && 'font-semibold',
                         section.level === 2 && 'font-medium pl-2',
-                        section.level === 3 && 'font-normal pl-4 text-zinc-300',
+                        section.level === 3 && 'font-normal pl-4 text-stone-300',
                       )}
                     >
                       {section.heading}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] text-zinc-500">{wc} words</span>
+                      <span className="text-[10px] text-stone-500">{wc} words</span>
                       {result && <StatusBadge status={result.status} />}
                       {result?.status === 'done' && result.resultWordCount !== null && (
                         <WordCountDelta
@@ -483,7 +483,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
         {/* Progress bar */}
         {hasResults && (
           <div>
-            <div className="flex items-center justify-between text-xs text-zinc-400 mb-1">
+            <div className="flex items-center justify-between text-xs text-stone-400 mb-1">
               <span>
                 {isRunning ? (isPaused ? 'Paused' : 'Processing…') : allDone ? 'Complete' : 'Stopped'}
               </span>
@@ -491,7 +491,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
                 {completedCount}/{totalSelected} sections
               </span>
             </div>
-            <div className="h-1.5 w-full rounded-full bg-zinc-700 overflow-hidden">
+            <div className="h-1.5 w-full rounded-full bg-stone-700 overflow-hidden">
               <div
                 className={cn(
                   'h-full rounded-full transition-all duration-500',
@@ -506,7 +506,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
         {/* Results preview */}
         {hasResults && (
           <div>
-            <label className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-1.5 block">
+            <label className="text-xs font-medium text-stone-400 uppercase tracking-wider mb-1.5 block">
               Results
             </label>
             <div className="space-y-1.5">
@@ -518,11 +518,11 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
                   return (
                     <div
                       key={section.id}
-                      className="rounded-md border border-zinc-700/60 bg-zinc-800/50 overflow-hidden"
+                      className="rounded-md border border-stone-700/60 bg-stone-800/50 overflow-hidden"
                     >
                       <button
                         onClick={() => setExpandedSection(isExpanded ? null : section.id)}
-                        className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-zinc-700/30 transition-colors duration-150"
+                        className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-stone-700/30 transition-colors duration-150"
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <StatusIcon status={result.status} />
@@ -537,7 +537,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
                           )}
                           <ChevronDown
                             className={cn(
-                              'w-3.5 h-3.5 text-zinc-500 transition-transform duration-150',
+                              'w-3.5 h-3.5 text-stone-500 transition-transform duration-150',
                               isExpanded && 'rotate-180',
                             )}
                           />
@@ -545,18 +545,18 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
                       </button>
 
                       {isExpanded && result.status === 'done' && result.result !== null && (
-                        <div className="border-t border-zinc-700/60 px-3 py-2">
+                        <div className="border-t border-stone-700/60 px-3 py-2">
                           <div className="grid grid-cols-2 gap-2 text-xs mb-2">
                             <div>
-                              <span className="text-zinc-500 block mb-0.5">Original</span>
-                              <div className="bg-zinc-900 rounded p-2 max-h-32 overflow-y-auto text-zinc-400 leading-relaxed">
+                              <span className="text-stone-500 block mb-0.5">Original</span>
+                              <div className="bg-stone-900 rounded p-2 max-h-32 overflow-y-auto text-stone-400 leading-relaxed">
                                 {stripHtml(result.original).slice(0, 500)}
                                 {stripHtml(result.original).length > 500 && '…'}
                               </div>
                             </div>
                             <div>
-                              <span className="text-zinc-500 block mb-0.5">Updated</span>
-                              <div className="bg-violet-500/5 border border-violet-500/10 rounded p-2 max-h-32 overflow-y-auto text-zinc-200 leading-relaxed">
+                              <span className="text-stone-500 block mb-0.5">Updated</span>
+                              <div className="bg-violet-500/5 border border-violet-500/10 rounded p-2 max-h-32 overflow-y-auto text-stone-200 leading-relaxed">
                                 {stripHtml(result.result).slice(0, 500)}
                                 {stripHtml(result.result).length > 500 && '…'}
                               </div>
@@ -574,7 +574,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
                       )}
 
                       {isExpanded && result.status === 'error' && (
-                        <div className="border-t border-zinc-700/60 px-3 py-2">
+                        <div className="border-t border-stone-700/60 px-3 py-2">
                           <p className="text-xs text-red-400">{result.error}</p>
                         </div>
                       )}
@@ -587,7 +587,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
       </div>
 
       {/* Footer actions */}
-      <div className="border-t border-zinc-700/60 px-4 py-3 space-y-2">
+      <div className="border-t border-stone-700/60 px-4 py-3 space-y-2">
         {!isRunning && !allDone && (
           <button
             onClick={processSections}
@@ -596,7 +596,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
               'w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150',
               selectedAction && selectedSections.size > 0
                 ? 'bg-violet-600 hover:bg-blue-500 text-white'
-                : 'bg-zinc-700 text-zinc-500 cursor-not-allowed',
+                : 'bg-stone-700 text-stone-500 cursor-not-allowed',
             )}
           >
             <Play className="w-4 h-4" />
@@ -634,7 +634,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
             </button>
             <button
               onClick={resetResults}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-zinc-700 hover:bg-zinc-600 text-zinc-300 transition-colors duration-150"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-stone-700 hover:bg-stone-600 text-stone-300 transition-colors duration-150"
             >
               <RotateCcw className="w-4 h-4" />
               Reset
@@ -652,7 +652,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
 
 function StatusBadge({ status }: { status: SectionStatus }) {
   const map: Record<SectionStatus, { label: string; className: string }> = {
-    pending: { label: 'Pending', className: 'text-zinc-500 bg-zinc-700/40' },
+    pending: { label: 'Pending', className: 'text-stone-500 bg-stone-700/40' },
     processing: { label: 'Running', className: 'text-violet-300 bg-violet-500/20' },
     done: { label: 'Done', className: 'text-emerald-300 bg-emerald-500/20' },
     error: { label: 'Error', className: 'text-red-300 bg-red-500/20' },
@@ -668,7 +668,7 @@ function StatusBadge({ status }: { status: SectionStatus }) {
 function StatusIcon({ status }: { status: SectionStatus }) {
   switch (status) {
     case 'pending':
-      return <div className="w-3.5 h-3.5 rounded-full border border-zinc-500" />;
+      return <div className="w-3.5 h-3.5 rounded-full border border-stone-500" />;
     case 'processing':
       return <Loader2 className="w-3.5 h-3.5 text-violet-400 animate-spin" />;
     case 'done':
@@ -680,7 +680,7 @@ function StatusIcon({ status }: { status: SectionStatus }) {
 
 function WordCountDelta({ original, updated }: { original: number; updated: number }) {
   const delta = updated - original;
-  if (delta === 0) return <span className="text-[10px] text-zinc-500">±0</span>;
+  if (delta === 0) return <span className="text-[10px] text-stone-500">±0</span>;
   return (
     <span
       className={cn(

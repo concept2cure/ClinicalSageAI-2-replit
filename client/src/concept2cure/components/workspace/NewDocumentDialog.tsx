@@ -220,28 +220,28 @@ export function NewDocumentDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div role="dialog" aria-modal="true" aria-label="Create new document" className="w-full max-w-2xl rounded-xl bg-white shadow-lg border border-zinc-200 overflow-hidden">
+      <div role="dialog" aria-modal="true" aria-label="Create new document" className="w-full max-w-2xl rounded-xl bg-white shadow-lg border border-stone-200 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100">
           <div className="flex items-center gap-3">
             {step === 2 && (
               <button
                 onClick={() => setStep(1)}
-                className="p-1 text-zinc-400 hover:text-zinc-600 rounded-md hover:bg-zinc-100"
+                className="p-1 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100"
               >
                 <ArrowLeft className="h-4 w-4" />
               </button>
             )}
             <div>
-              <h2 className="text-base font-semibold text-zinc-900">
+              <h2 className="text-base font-semibold text-stone-900">
                 {step === 1 ? 'Create New Document' : 'Document Details'}
               </h2>
-              <p className="text-xs text-zinc-500 mt-0.5">
+              <p className="text-xs text-stone-500 mt-0.5">
                 {step === 1 ? 'Choose how to start your document' : 'Configure your new document'}
               </p>
             </div>
           </div>
-          <button onClick={handleClose} aria-label="Close dialog" title="Close" className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded-md hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none">
+          <button onClick={handleClose} aria-label="Close dialog" title="Close" className="p-1.5 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -255,14 +255,14 @@ export function NewDocumentDialog({
                 onClick={() => { setMode('blank'); setSelectedTemplate(null); setStep(2); }}
                 className={cn(
                   'flex flex-col items-center gap-2 p-4 rounded-lg border transition-all text-center',
-                  'border-zinc-200 hover:border-blue-300 hover:bg-blue-50/50',
+                  'border-stone-200 hover:border-blue-300 hover:bg-blue-50/50',
                 )}
               >
-                <div className="h-10 w-10 rounded-lg bg-zinc-100 flex items-center justify-center">
-                  <FileText className="h-5 w-5 text-zinc-500" />
+                <div className="h-10 w-10 rounded-lg bg-stone-100 flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-stone-500" />
                 </div>
-                <span className="text-sm font-semibold text-zinc-900">Blank Document</span>
-                <span className="text-[11px] text-zinc-500">Start from scratch</span>
+                <span className="text-sm font-semibold text-stone-900">Blank Document</span>
+                <span className="text-[11px] text-stone-500">Start from scratch</span>
               </button>
 
               <button
@@ -271,14 +271,14 @@ export function NewDocumentDialog({
                   'flex flex-col items-center gap-2 p-4 rounded-lg border transition-all text-center',
                   mode === 'template'
                     ? 'border-blue-400 bg-blue-50'
-                    : 'border-zinc-200 hover:border-blue-300 hover:bg-blue-50/50',
+                    : 'border-stone-200 hover:border-blue-300 hover:bg-blue-50/50',
                 )}
               >
                 <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
                   <BookOpen className="h-5 w-5 text-blue-500" />
                 </div>
-                <span className="text-sm font-semibold text-zinc-900">From Template</span>
-                <span className="text-[11px] text-zinc-500">Pre-structured sections</span>
+                <span className="text-sm font-semibold text-stone-900">From Template</span>
+                <span className="text-[11px] text-stone-500">Pre-structured sections</span>
               </button>
 
               <button
@@ -287,21 +287,21 @@ export function NewDocumentDialog({
                   'flex flex-col items-center gap-2 p-4 rounded-lg border transition-all text-center',
                   mode === 'ai-generate'
                     ? 'border-violet-400 bg-violet-50'
-                    : 'border-zinc-200 hover:border-blue-200 hover:bg-blue-50/50',
+                    : 'border-stone-200 hover:border-blue-200 hover:bg-blue-50/50',
                 )}
               >
                 <div className="h-10 w-10 rounded-lg bg-violet-100 flex items-center justify-center">
                   <Sparkles className="h-5 w-5 text-violet-500" />
                 </div>
-                <span className="text-sm font-semibold text-zinc-900">AI Generate</span>
-                <span className="text-[11px] text-zinc-500">AI-drafted content</span>
+                <span className="text-sm font-semibold text-stone-900">AI Generate</span>
+                <span className="text-[11px] text-stone-500">AI-drafted content</span>
               </button>
             </div>
 
             {/* Template grid (shown when template or ai-generate is selected) */}
             {(mode === 'template' || mode === 'ai-generate') && (
               <div>
-                <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">
+                <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-3">
                   Choose a Template
                 </h3>
                 <div className="grid grid-cols-2 gap-2 max-h-[280px] overflow-y-auto">
@@ -313,24 +313,24 @@ export function NewDocumentDialog({
                         'flex items-start gap-3 p-3 rounded-lg border text-left transition-all duration-150',
                         selectedTemplate?.id === t.id
                           ? 'border-blue-300 bg-blue-50'
-                          : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50',
+                          : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50',
                       )}
                     >
                       <FileCheck className="h-4 w-4 text-blue-400 mt-0.5 shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-zinc-900 leading-tight">{t.name}</p>
-                        <p className="text-[11px] text-zinc-500 mt-0.5 line-clamp-2">{t.description}</p>
+                        <p className="text-sm font-medium text-stone-900 leading-tight">{t.name}</p>
+                        <p className="text-[11px] text-stone-500 mt-0.5 line-clamp-2">{t.description}</p>
                         <div className="flex items-center gap-2 mt-1.5">
                           {t.ctdSection && (
                             <span className="text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-medium">
                               {t.ctdSection}
                             </span>
                           )}
-                          <span className="text-[10px] text-zinc-400">
+                          <span className="text-[10px] text-stone-400">
                             {t.sections.length} sections
                           </span>
                           {t.estimatedPages && (
-                            <span className="text-[10px] text-zinc-400">~{t.estimatedPages}p</span>
+                            <span className="text-[10px] text-stone-400">~{t.estimatedPages}p</span>
                           )}
                         </div>
                       </div>
@@ -370,7 +370,7 @@ export function NewDocumentDialog({
 
             {/* Title input */}
             <div>
-              <label className="block text-xs font-medium text-zinc-600 mb-1.5">
+              <label className="block text-xs font-medium text-stone-600 mb-1.5">
                 Document Title
               </label>
               <input
@@ -378,7 +378,7 @@ export function NewDocumentDialog({
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 placeholder={selectedTemplate?.name || 'Enter document title...'}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 focus-visible:ring-2 outline-none focus:ring-blue-200 focus:border-blue-400"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 focus-visible:ring-2 outline-none focus:ring-blue-200 focus:border-blue-400"
                 autoFocus
                 onKeyDown={e => {
                   if (e.key === 'Enter' && !isCreating) handleCreate();
@@ -389,14 +389,14 @@ export function NewDocumentDialog({
 
             {/* CTD Section */}
             <div>
-              <label className="block text-xs font-medium text-zinc-600 mb-1.5">
+              <label className="block text-xs font-medium text-stone-600 mb-1.5">
                 CTD Section
-                <span className="text-zinc-400 font-normal ml-1">(optional)</span>
+                <span className="text-stone-400 font-normal ml-1">(optional)</span>
               </label>
               <select
                 value={ctdSection}
                 onChange={e => setCtdSection(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 focus-visible:ring-2 outline-none focus:ring-blue-200 focus:border-blue-400 bg-white"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 focus-visible:ring-2 outline-none focus:ring-blue-200 focus:border-blue-400 bg-white"
               >
                 {CTD_SECTIONS.map(s => (
                   <option key={s.value} value={s.value}>{s.label}</option>
@@ -407,14 +407,14 @@ export function NewDocumentDialog({
             {/* Template sections preview */}
             {selectedTemplate && selectedTemplate.sections.length > 0 && (
               <div>
-                <label className="block text-xs font-medium text-zinc-600 mb-1.5">
+                <label className="block text-xs font-medium text-stone-600 mb-1.5">
                   Template Sections
                 </label>
-                <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-2.5 max-h-32 overflow-y-auto">
+                <div className="rounded-lg border border-stone-200 bg-stone-50 p-2.5 max-h-32 overflow-y-auto">
                   {selectedTemplate.sections.map((s, i) => (
                     <div key={i} className="flex items-center gap-2 py-0.5">
-                      <span className="text-[10px] text-zinc-400 w-4 text-right">{i + 1}.</span>
-                      <span className="text-xs text-zinc-700">{s.title}</span>
+                      <span className="text-[10px] text-stone-400 w-4 text-right">{i + 1}.</span>
+                      <span className="text-xs text-stone-700">{s.title}</span>
                       {s.required && <span className="text-[9px] text-red-400">*</span>}
                     </div>
                   ))}
@@ -426,10 +426,10 @@ export function NewDocumentDialog({
 
         {/* Footer */}
         {step === 2 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-100 bg-zinc-50/50">
+          <div className="flex items-center justify-between px-6 py-4 border-t border-stone-100 bg-stone-50/50">
             <button
               onClick={handleClose}
-              className="px-4 py-2 text-sm text-zinc-500 hover:text-zinc-700 rounded-lg hover:bg-zinc-100 transition-colors duration-150"
+              className="px-4 py-2 text-sm text-stone-500 hover:text-stone-700 rounded-lg hover:bg-stone-100 transition-colors duration-150"
             >
               Cancel
             </button>

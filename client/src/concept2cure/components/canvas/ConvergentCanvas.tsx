@@ -200,15 +200,15 @@ const ContextRibbon: React.FC<ContextRibbonProps> = ({
   };
 
   return (
-    <div className="h-10 bg-white border-b border-zinc-200 flex items-center justify-between px-4 text-xs">
+    <div className="h-10 bg-white border-b border-stone-200 flex items-center justify-between px-4 text-xs">
       {/* Left: Project & Risk */}
       <div className="flex items-center gap-4">
         {context.projectName && (
           <div className="flex items-center gap-2">
-            <FileText className="w-3.5 h-3.5 text-zinc-400" />
-            <span className="font-medium text-zinc-700">{context.projectName}</span>
+            <FileText className="w-3.5 h-3.5 text-stone-400" />
+            <span className="font-medium text-stone-700">{context.projectName}</span>
             {context.projectType && (
-              <span className="px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600 text-xs font-medium">
+              <span className="px-1.5 py-0.5 rounded bg-stone-100 text-stone-600 text-xs font-medium">
                 {context.projectType}
               </span>
             )}
@@ -229,15 +229,15 @@ const ContextRibbon: React.FC<ContextRibbonProps> = ({
       {context.nextDeadline && (
         <button 
           onClick={onDeadlineClick}
-          className="flex items-center gap-2 px-3 py-1 rounded-lg hover:bg-zinc-50 transition-colors duration-150"
+          className="flex items-center gap-2 px-3 py-1 rounded-lg hover:bg-stone-50 transition-colors duration-150"
         >
-          <Clock className="w-3.5 h-3.5 text-zinc-400" />
-          <span className="text-zinc-600">{context.nextDeadline.label}</span>
+          <Clock className="w-3.5 h-3.5 text-stone-400" />
+          <span className="text-stone-600">{context.nextDeadline.label}</span>
           <span className={cn(
             "font-semibold",
             context.nextDeadline.daysRemaining <= 7 ? 'text-red-600' :
             context.nextDeadline.daysRemaining <= 30 ? 'text-amber-600' :
-            'text-zinc-700'
+            'text-stone-700'
           )}>
             {context.nextDeadline.daysRemaining}d
           </span>
@@ -259,7 +259,7 @@ const ContextRibbon: React.FC<ContextRibbonProps> = ({
 
         {/* Pending Actions */}
         {context.pendingActions > 0 && (
-          <div className="flex items-center gap-1.5 text-zinc-500">
+          <div className="flex items-center gap-1.5 text-stone-500">
             <CheckCircle2 className="w-3.5 h-3.5" />
             <span>{context.pendingActions} pending</span>
           </div>
@@ -268,13 +268,13 @@ const ContextRibbon: React.FC<ContextRibbonProps> = ({
         {/* Connection Status */}
         <div className="flex items-center gap-1.5">
           {getConnectionIcon(context.connectionStatus)}
-          <span className="text-zinc-500">{context.connectionStatus.toLowerCase()}</span>
+          <span className="text-stone-500">{context.connectionStatus.toLowerCase()}</span>
         </div>
 
         {/* Refresh */}
         <button
           onClick={onRefresh}
-          className="p-1 rounded hover:bg-zinc-100 transition-colors text-zinc-400 hover:text-zinc-600"
+          className="p-1 rounded hover:bg-stone-100 transition-colors text-stone-400 hover:text-stone-600"
         >
           <RefreshCw className="w-3.5 h-3.5" />
         </button>
@@ -315,7 +315,7 @@ const MorningBriefingGreeting: React.FC<MorningBriefingGreetingProps> = ({
   const firstName = userName.split(' ')[0];
 
   return (
-    <div className="bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 rounded-xl p-8 text-white shadow-xl">
+    <div className="bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900 rounded-xl p-8 text-white shadow-xl">
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-lg bg-amber-500 flex items-center justify-center">
@@ -325,7 +325,7 @@ const MorningBriefingGreeting: React.FC<MorningBriefingGreetingProps> = ({
             <h2 className="text-2xl font-semibold">
               {getGreeting()}, {firstName}
             </h2>
-            <p className="text-zinc-400 text-sm">
+            <p className="text-stone-400 text-sm">
               {new Date().toLocaleDateString('en-US', { 
                 weekday: 'long', 
                 month: 'long', 
@@ -373,7 +373,7 @@ const MorningBriefingGreeting: React.FC<MorningBriefingGreetingProps> = ({
       {/* CTA */}
       <button
         onClick={onViewDetails}
-        className="w-full flex items-center justify-center gap-2 bg-white text-zinc-900 rounded-xl py-3 font-medium hover:bg-zinc-100 transition-colors duration-150"
+        className="w-full flex items-center justify-center gap-2 bg-white text-stone-900 rounded-xl py-3 font-medium hover:bg-stone-100 transition-colors duration-150"
       >
         <span>View Full Briefing</span>
         <ArrowRight className="w-4 h-4" />
@@ -402,7 +402,7 @@ const StatCard: React.FC<{
         <Icon className="w-4 h-4" />
       </div>
       <div className="text-2xl font-semibold">{value}</div>
-      <div className="text-xs text-zinc-500">{label}</div>
+      <div className="text-xs text-stone-500">{label}</div>
     </div>
   );
 };
@@ -429,13 +429,13 @@ const CouncilAdvisorCard: React.FC<CouncilAdvisorCardProps> = ({
         "flex items-center gap-3 p-3 rounded-xl transition-all duration-150",
         isActive
           ? `bg-gradient-to-r ${persona.color} text-white shadow-lg`
-          : "bg-zinc-50 hover:bg-zinc-100 text-zinc-700"
+          : "bg-stone-50 hover:bg-stone-100 text-stone-700"
       )}
     >
       <span className="text-2xl">{persona.avatar}</span>
       <div className="text-left">
         <div className="font-medium text-sm">{persona.name}</div>
-        <div className={cn("text-xs", isActive ? "text-white/80" : "text-zinc-500")}>
+        <div className={cn("text-xs", isActive ? "text-white/80" : "text-stone-500")}>
           {persona.role}
         </div>
       </div>
@@ -501,10 +501,10 @@ const ZeroState: React.FC<ZeroStateProps> = ({ userName, industry, onQuickAction
         </div>
 
         {/* Greeting */}
-        <h1 className="text-2xl font-semibold text-zinc-900 mb-2">
+        <h1 className="text-2xl font-semibold text-stone-900 mb-2">
           Ready when you are, {firstName}
         </h1>
-        <p className="text-lg text-zinc-500 mb-8">
+        <p className="text-lg text-stone-500 mb-8">
           Your regulatory expedition team is standing by. What would you like to accomplish today?
         </p>
 
@@ -514,19 +514,19 @@ const ZeroState: React.FC<ZeroStateProps> = ({ userName, industry, onQuickAction
             <button
               key={action.id}
               onClick={() => onQuickAction(action.id)}
-              className="flex items-center gap-3 p-4 bg-zinc-50 rounded-xl hover:bg-zinc-100 transition-colors text-left group"
+              className="flex items-center gap-3 p-4 bg-stone-50 rounded-xl hover:bg-stone-100 transition-colors text-left group"
             >
               <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm group-hover:shadow transition-shadow">
-                <action.icon className="w-5 h-5 text-zinc-600" />
+                <action.icon className="w-5 h-5 text-stone-600" />
               </div>
-              <span className="text-sm font-medium text-zinc-700">{action.label}</span>
+              <span className="text-sm font-medium text-stone-700">{action.label}</span>
             </button>
           ))}
         </div>
 
         {/* Council Preview */}
-        <div className="mt-12 pt-8 border-t border-zinc-200">
-          <p className="text-sm text-zinc-500 mb-4">Or ask your council of advisors</p>
+        <div className="mt-12 pt-8 border-t border-stone-200">
+          <p className="text-sm text-stone-500 mb-4">Or ask your council of advisors</p>
           <div className="flex items-center justify-center gap-2">
             {Object.values(SHERPA_PERSONAS).slice(0, 4).map(persona => (
               <button
@@ -600,18 +600,18 @@ function CouncilChat({ advisorId, projectId }: { advisorId: string; projectId: s
   }, [input, isThinking, messages, persona, projectId]);
 
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 shadow-sm flex flex-col" style={{ height: 'calc(100vh - 280px)', minHeight: 400 }}>
+    <div className="bg-white rounded-xl border border-stone-200 shadow-sm flex flex-col" style={{ height: 'calc(100vh - 280px)', minHeight: 400 }}>
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-sm text-zinc-500">Ask {persona?.name || 'your advisor'} anything about your regulatory strategy.</p>
+            <p className="text-sm text-stone-500">Ask {persona?.name || 'your advisor'} anything about your regulatory strategy.</p>
             <div className="flex flex-wrap gap-2 justify-center mt-4">
               {['What should I prioritize?', 'Review my submission readiness', 'Help with risk assessment'].map(q => (
                 <button
                   key={q}
                   onClick={() => { setInput(q); }}
-                  className="px-3 py-1.5 text-xs bg-zinc-50 hover:bg-zinc-100 text-zinc-600 rounded-full border border-zinc-200 transition-colors duration-150"
+                  className="px-3 py-1.5 text-xs bg-stone-50 hover:bg-stone-100 text-stone-600 rounded-full border border-stone-200 transition-colors duration-150"
                 >
                   {q}
                 </button>
@@ -624,8 +624,8 @@ function CouncilChat({ advisorId, projectId }: { advisorId: string; projectId: s
             <div className={cn(
               'max-w-[80%] rounded-xl px-4 py-2.5 text-sm leading-relaxed',
               msg.role === 'user'
-                ? 'bg-zinc-900 text-white'
-                : 'bg-zinc-50 text-zinc-900 border border-zinc-200'
+                ? 'bg-stone-900 text-white'
+                : 'bg-stone-50 text-stone-900 border border-stone-200'
             )}>
               {msg.content}
             </div>
@@ -633,7 +633,7 @@ function CouncilChat({ advisorId, projectId }: { advisorId: string; projectId: s
         ))}
         {isThinking && (
           <div className="flex justify-start">
-            <div className="bg-zinc-50 rounded-xl px-4 py-2.5 text-sm text-zinc-500 border border-zinc-200 flex items-center gap-2">
+            <div className="bg-stone-50 rounded-xl px-4 py-2.5 text-sm text-stone-500 border border-stone-200 flex items-center gap-2">
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
               {persona?.name || 'Advisor'} is thinking...
             </div>
@@ -642,19 +642,19 @@ function CouncilChat({ advisorId, projectId }: { advisorId: string; projectId: s
       </div>
 
       {/* Input */}
-      <div className="border-t border-zinc-200 p-3">
+      <div className="border-t border-stone-200 p-3">
         <div className="flex items-center gap-2">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
             placeholder={`Ask ${persona?.name || 'your advisor'}...`}
-            className="flex-1 px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus-visible:ring-2 outline-none focus:ring-zinc-900/10 focus:border-zinc-300"
+            className="flex-1 px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm focus-visible:ring-2 outline-none focus:ring-stone-900/10 focus:border-stone-300"
           />
           <button
             onClick={sendMessage}
             disabled={!input.trim() || isThinking}
-            className="px-4 py-2.5 bg-zinc-900 text-white text-sm font-medium rounded-xl hover:bg-zinc-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150"
+            className="px-4 py-2.5 bg-stone-900 text-white text-sm font-medium rounded-xl hover:bg-stone-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150"
           >
             Send
           </button>
@@ -802,7 +802,7 @@ export const ConvergentCanvas: React.FC<ConvergentCanvasProps> = ({
   // ─────────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className={cn("flex flex-col h-screen bg-zinc-50", className)}>
+    <div className={cn("flex flex-col h-screen bg-stone-50", className)}>
       {/* Context Ribbon */}
       <ContextRibbon
         context={context}
@@ -815,13 +815,13 @@ export const ConvergentCanvas: React.FC<ConvergentCanvasProps> = ({
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar - Council of Advisors */}
         {sidebarOpen && (
-          <div className="w-72 bg-white border-r border-zinc-200 flex flex-col">
+          <div className="w-72 bg-white border-r border-stone-200 flex flex-col">
             {/* Header */}
-            <div className="h-14 flex items-center justify-between px-4 border-b border-zinc-200">
-              <h3 className="font-semibold text-zinc-900">Council</h3>
+            <div className="h-14 flex items-center justify-between px-4 border-b border-stone-200">
+              <h3 className="font-semibold text-stone-900">Council</h3>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-zinc-100 transition-colors text-zinc-400"
+                className="p-1.5 rounded-lg hover:bg-stone-100 transition-colors text-stone-400"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -843,10 +843,10 @@ export const ConvergentCanvas: React.FC<ConvergentCanvasProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="p-3 border-t border-zinc-200">
+            <div className="p-3 border-t border-stone-200">
               <button
                 onClick={onSettingsOpen}
-                className="w-full flex items-center gap-2 p-2 rounded-lg text-sm text-zinc-600 hover:bg-zinc-50 transition-colors duration-150"
+                className="w-full flex items-center gap-2 p-2 rounded-lg text-sm text-stone-600 hover:bg-stone-50 transition-colors duration-150"
               >
                 <Settings className="w-4 h-4" />
                 <span>Settings</span>
@@ -863,7 +863,7 @@ export const ConvergentCanvas: React.FC<ConvergentCanvasProps> = ({
               onClick={() => setSidebarOpen(true)}
               className="absolute left-4 top-16 z-10 p-2 bg-white rounded-lg shadow-md hover:shadow-md transition-shadow"
             >
-              <Menu className="w-5 h-5 text-zinc-600" />
+              <Menu className="w-5 h-5 text-stone-600" />
             </button>
           )}
 
@@ -892,7 +892,7 @@ export const ConvergentCanvas: React.FC<ConvergentCanvasProps> = ({
             <Suspense
               fallback={
                 <div className="flex-1 flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
+                  <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
                 </div>
               }
             >
@@ -909,14 +909,14 @@ export const ConvergentCanvas: React.FC<ConvergentCanvasProps> = ({
                         ]?.avatar || '🏔️'}
                       </div>
                       <div>
-                        <h2 className="text-xl font-semibold text-zinc-900">
+                        <h2 className="text-xl font-semibold text-stone-900">
                           {SHERPA_PERSONAS[
                             Object.keys(SHERPA_PERSONAS).find(
                               k => SHERPA_PERSONAS[k as keyof typeof SHERPA_PERSONAS].id === activeAdvisor
                             ) as keyof typeof SHERPA_PERSONAS
                           ]?.name || 'Advisor'}
                         </h2>
-                        <p className="text-sm text-zinc-500">
+                        <p className="text-sm text-stone-500">
                           Ready to assist with regulatory strategy
                         </p>
                       </div>

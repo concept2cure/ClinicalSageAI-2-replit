@@ -139,7 +139,7 @@ const ScoreRing: React.FC<ScoreRingProps> = ({
           fill="none"
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          className="text-zinc-200"
+          className="text-stone-200"
         />
         {/* Progress circle */}
         <circle
@@ -163,7 +163,7 @@ const ScoreRing: React.FC<ScoreRingProps> = ({
           {score}
         </span>
         {label && (
-          <span className="text-xs text-zinc-500">{label}</span>
+          <span className="text-xs text-stone-500">{label}</span>
         )}
       </div>
     </div>
@@ -189,15 +189,15 @@ const CategoryScoreBar: React.FC<CategoryScoreBarProps> = ({ label, score, icon 
 
   return (
     <div className="flex items-center gap-3">
-      <div className="w-8 h-8 flex items-center justify-center rounded-md bg-zinc-100 text-zinc-600 flex-shrink-0">
+      <div className="w-8 h-8 flex items-center justify-center rounded-md bg-stone-100 text-stone-600 flex-shrink-0">
         {icon}
       </div>
       <div className="flex-1">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-sm font-medium text-zinc-700">{label}</span>
-          <span className="text-sm text-zinc-500">{score}%</span>
+          <span className="text-sm font-medium text-stone-700">{label}</span>
+          <span className="text-sm text-stone-500">{score}%</span>
         </div>
-        <div className="w-full h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+        <div className="w-full h-1.5 bg-stone-100 rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-300 ${getScoreColor(score)}`}
             style={{ width: `${score}%` }}
@@ -258,24 +258,24 @@ const ViolationCard: React.FC<ViolationCardProps> = ({
         <Icon className={`w-4 h-4 flex-shrink-0 mt-0.5 ${config.iconColor}`} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-medium text-zinc-500">
+            <span className="text-xs font-medium text-stone-500">
               {violation.ruleId}
             </span>
-            <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-200 text-zinc-600">
+            <span className="text-xs px-1.5 py-0.5 rounded bg-stone-200 text-stone-600">
               {violation.category}
             </span>
           </div>
-          <p className="text-sm font-medium text-zinc-900">
+          <p className="text-sm font-medium text-stone-900">
             {violation.ruleName}
           </p>
-          <p className="text-sm text-zinc-600 mt-0.5">
+          <p className="text-sm text-stone-600 mt-0.5">
             {violation.message}
           </p>
         </div>
         {isExpanded ? (
-          <ChevronDown className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+          <ChevronDown className="w-4 h-4 text-stone-400 flex-shrink-0" />
         ) : (
-          <ChevronRight className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+          <ChevronRight className="w-4 h-4 text-stone-400 flex-shrink-0" />
         )}
       </button>
 
@@ -283,12 +283,12 @@ const ViolationCard: React.FC<ViolationCardProps> = ({
         <div className="px-5 pb-5 ml-8 space-y-2">
           {violation.suggestion && (
             <div className="p-2 bg-white rounded-xl">
-              <p className="text-xs text-zinc-500 mb-1">Suggestion:</p>
-              <p className="text-sm text-zinc-700">{violation.suggestion}</p>
+              <p className="text-xs text-stone-500 mb-1">Suggestion:</p>
+              <p className="text-sm text-stone-700">{violation.suggestion}</p>
             </div>
           )}
           {violation.regulatoryReference && (
-            <div className="flex items-center gap-2 text-xs text-zinc-500">
+            <div className="flex items-center gap-2 text-xs text-stone-500">
               <BookOpen className="w-3 h-3" />
               <span>Reference: {violation.regulatoryReference}</span>
             </div>
@@ -340,7 +340,7 @@ const TrendIndicator: React.FC<TrendIndicatorProps> = ({ history }) => {
     );
   }
   return (
-    <span className="flex items-center gap-1 text-zinc-400 text-sm">
+    <span className="flex items-center gap-1 text-stone-400 text-sm">
       <Minus className="w-4 h-4" />
       No change
     </span>
@@ -412,16 +412,16 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
   return (
     <div className={`flex flex-col h-full bg-white ${className}`}>
       {/* Header */}
-      <div className="px-5 py-4 border-b border-zinc-200">
+      <div className="px-5 py-4 border-b border-stone-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
               <Shield size={18} strokeWidth={2} className="text-blue-600" />
             </div>
             <div>
-              <h2 className="font-semibold text-zinc-900">Compliance Dashboard</h2>
+              <h2 className="font-semibold text-stone-900">Compliance Dashboard</h2>
               {documentTitle && (
-                <p className="text-sm text-zinc-500">{documentTitle}</p>
+                <p className="text-sm text-stone-500">{documentTitle}</p>
               )}
             </div>
           </div>
@@ -430,19 +430,19 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
               <button
                 onClick={onRefresh}
                 disabled={isLoading}
-                className="p-2 hover:bg-zinc-100 rounded-lg transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none disabled:opacity-60"
+                className="p-2 hover:bg-stone-100 rounded-lg transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none disabled:opacity-60"
                 title="Refresh"
               >
-                <RefreshCw className={`w-4 h-4 text-zinc-600 ${isLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 text-stone-600 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
             )}
             {onExport && (
               <button
                 onClick={onExport}
-                className="p-2 hover:bg-zinc-100 rounded-lg transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none"
+                className="p-2 hover:bg-stone-100 rounded-lg transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none"
                 title="Export Report"
               >
-                <Download className="w-4 h-4 text-zinc-600" />
+                <Download className="w-4 h-4 text-stone-600" />
               </button>
             )}
           </div>
@@ -450,7 +450,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
       </div>
 
       {/* Score Overview */}
-      <div className="px-5 py-4 border-b border-zinc-100 bg-zinc-50">
+      <div className="px-5 py-4 border-b border-stone-100 bg-stone-50">
         <div className="flex items-center gap-6">
           <ScoreRing score={score.overall} label="Overall" />
           <div className="flex-1">
@@ -475,11 +475,11 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
                 <Info className="w-4 h-4" />
                 {infoCount} info
               </span>
-              <span className="text-zinc-400">
+              <span className="text-stone-400">
                 {score.passedRules}/{score.totalRules} rules passed
               </span>
             </div>
-            <p className="text-xs text-zinc-400 mt-2">
+            <p className="text-xs text-stone-400 mt-2">
               Last checked: {new Date(score.timestamp).toLocaleString()}
             </p>
           </div>
@@ -487,8 +487,8 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
       </div>
 
       {/* Category Breakdown */}
-      <div className="px-5 py-4 border-b border-zinc-100">
-        <h3 className="text-sm font-medium text-zinc-700 mb-3">
+      <div className="px-5 py-4 border-b border-stone-100">
+        <h3 className="text-sm font-medium text-stone-700 mb-3">
           Category Breakdown
         </h3>
         <div className="grid grid-cols-2 gap-3">
@@ -506,12 +506,12 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
       {/* Violations Section */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Filters */}
-        <div className="px-5 py-3 border-b border-zinc-100 flex items-center gap-2">
-          <Filter className="w-4 h-4 text-zinc-400" />
+        <div className="px-5 py-3 border-b border-stone-100 flex items-center gap-2">
+          <Filter className="w-4 h-4 text-stone-400" />
           <select
             value={severityFilter}
             onChange={e => setSeverityFilter(e.target.value as typeof severityFilter)}
-            className="px-2 py-1 bg-zinc-100 border-0 rounded text-sm"
+            className="px-2 py-1 bg-stone-100 border-0 rounded text-sm"
           >
             <option value="all">All Severities</option>
             <option value="error">Errors</option>
@@ -521,7 +521,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
           <select
             value={categoryFilter}
             onChange={e => setCategoryFilter(e.target.value as typeof categoryFilter)}
-            className="px-2 py-1 bg-zinc-100 border-0 rounded text-sm"
+            className="px-2 py-1 bg-stone-100 border-0 rounded text-sm"
           >
             <option value="all">All Categories</option>
             <option value="structure">Structure</option>
@@ -533,7 +533,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
             <option value="data_integrity">Data Integrity</option>
             <option value="signature">Signatures</option>
           </select>
-          <span className="text-xs text-zinc-500 ml-auto">
+          <span className="text-xs text-stone-500 ml-auto">
             {filteredViolations.length} issues
           </span>
         </div>
@@ -541,7 +541,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
         {/* Violations List */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
           {filteredViolations.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-zinc-500">
+            <div className="flex flex-col items-center justify-center py-8 text-stone-500">
               <CheckCircle className="w-12 h-12 mb-3 text-green-500" />
               <p className="font-medium">No Issues Found</p>
               <p className="text-sm">

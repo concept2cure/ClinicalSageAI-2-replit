@@ -103,7 +103,7 @@ export const ToolsLanding: React.FC<ToolsLandingProps> = ({
       {/* ── Resume card: show recent artifacts if available ── */}
       {recentArtifacts && recentArtifacts.length > 0 && (
         <div className="mb-6 mt-4" role="region" aria-label="Recent documents">
-          <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">Continue</h2>
+          <h2 className="text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Continue</h2>
           <div className="space-y-1">
             {recentArtifacts.slice(0, 3).map(artifact => (
               <Button
@@ -114,13 +114,13 @@ export const ToolsLanding: React.FC<ToolsLandingProps> = ({
                 aria-label={`Resume ${artifact.title}`}
                 className="w-full justify-start text-left h-auto py-2.5 px-3 group"
               >
-                <FileText className="w-4 h-4 text-zinc-400 flex-shrink-0 mr-3" />
+                <FileText className="w-4 h-4 text-stone-400 flex-shrink-0 mr-3" />
                 <div className="flex-1 min-w-0">
-                  <span className="text-sm font-medium text-zinc-800 block truncate">
+                  <span className="text-sm font-medium text-stone-800 block truncate">
                     {artifact.title}
                   </span>
                   {artifact.updatedAt && (
-                    <span className="text-[11px] text-zinc-400">
+                    <span className="text-[11px] text-stone-400">
                       {new Date(artifact.updatedAt).toLocaleDateString()}
                     </span>
                   )}
@@ -128,7 +128,7 @@ export const ToolsLanding: React.FC<ToolsLandingProps> = ({
                 {artifact.status && (
                   <WorkspaceStatusBadge status={STATUS_TO_BADGE[artifact.status] || 'not-started'} />
                 )}
-                <ArrowRight className="w-3.5 h-3.5 text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2" />
+                <ArrowRight className="w-3.5 h-3.5 text-stone-300 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2" />
               </Button>
             ))}
           </div>
@@ -152,7 +152,7 @@ export const ToolsLanding: React.FC<ToolsLandingProps> = ({
           if (groupTools.length === 0) return null;
           return (
             <div key={groupKey} className="mb-5" role="group" aria-label={GROUP_LABELS[groupKey]}>
-              <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">
+              <h2 className="text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">
                 {GROUP_LABELS[groupKey]}
               </h2>
               <div className="space-y-0.5">
@@ -166,14 +166,14 @@ export const ToolsLanding: React.FC<ToolsLandingProps> = ({
                     data-testid={`tool-${tool.id}`}
                     className="w-full justify-start text-left h-auto py-2.5 px-3 group"
                   >
-                    <div className="w-8 h-8 rounded-md bg-zinc-100 flex items-center justify-center flex-shrink-0 mr-3">
-                      <span className="text-zinc-500">{tool.icon}</span>
+                    <div className="w-8 h-8 rounded-md bg-stone-100 flex items-center justify-center flex-shrink-0 mr-3">
+                      <span className="text-stone-500">{tool.icon}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <span className="text-sm font-medium text-zinc-800 block">{tool.label}</span>
-                      <span className="text-[11px] text-zinc-400 block">{tool.description}</span>
+                      <span className="text-sm font-medium text-stone-800 block">{tool.label}</span>
+                      <span className="text-[11px] text-stone-400 block">{tool.description}</span>
                     </div>
-                    <ArrowRight className="w-3.5 h-3.5 text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                    <ArrowRight className="w-3.5 h-3.5 text-stone-300 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                   </Button>
                 ))}
               </div>

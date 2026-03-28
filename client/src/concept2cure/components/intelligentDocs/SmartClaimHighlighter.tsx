@@ -128,9 +128,9 @@ export const ClaimSummaryStrip: React.FC<{
   if (claims.length === 0) return null;
   
   return (
-    <div className="flex items-center justify-between px-4 py-2 bg-white border-t border-zinc-200 shadow-sm">
+    <div className="flex items-center justify-between px-4 py-2 bg-white border-t border-stone-200 shadow-sm">
       <div className="flex items-center gap-4 text-sm">
-        <span className="text-zinc-600">
+        <span className="text-stone-600">
           {claims.length} claims detected
         </span>
         
@@ -163,7 +163,7 @@ export const ClaimSummaryStrip: React.FC<{
         )}
       </div>
       
-      <div className="text-xs text-zinc-500">
+      <div className="text-xs text-stone-500">
         {Math.round((supported / claims.length) * 100)}% traceable
       </div>
     </div>
@@ -193,7 +193,7 @@ export const ClaimTooltip: React.FC<{
   
   return (
     <div
-      className="fixed z-50 w-72 p-3 bg-white rounded-lg shadow-xl border border-zinc-200"
+      className="fixed z-50 w-72 p-3 bg-white rounded-lg shadow-xl border border-stone-200"
       style={{
         left: position.x,
         top: position.y,
@@ -201,12 +201,12 @@ export const ClaimTooltip: React.FC<{
       }}
     >
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium text-zinc-500">
+        <span className="text-xs font-medium text-stone-500">
           {claimTypeLabels[claim.claimType]}
         </span>
         <button
           onClick={onDismiss}
-          className="p-1 text-zinc-400 hover:text-zinc-600"
+          className="p-1 text-stone-400 hover:text-stone-600"
           data-testid={`button-dismiss-claim-tooltip-${claim.id}`}
           aria-label="Dismiss claim tooltip"
         >
@@ -214,7 +214,7 @@ export const ClaimTooltip: React.FC<{
         </button>
       </div>
       
-      <p className="text-sm text-zinc-700 mb-3 line-clamp-2">
+      <p className="text-sm text-stone-700 mb-3 line-clamp-2">
         "{claim.text}"
       </p>
       

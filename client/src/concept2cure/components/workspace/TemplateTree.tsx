@@ -50,7 +50,7 @@ function TemplateNodeRow({
       <div
         className={cn(
           'w-full flex items-center gap-1 py-[4px] pr-2 text-left transition-colors group',
-          'text-zinc-600 hover:bg-zinc-50'
+          'text-stone-600 hover:bg-stone-50'
         )}
         style={{ paddingLeft: `${8 + depth * 14}px` }}
         data-testid={`template-node-${node.templateKey}`}
@@ -61,13 +61,13 @@ function TemplateNodeRow({
             onClick={() => toggleExpand(node.templateKey)}
             aria-expanded={isExpanded}
             aria-label={isExpanded ? `Collapse ${node.label}` : `Expand ${node.label}`}
-            className="shrink-0 p-0.5 rounded focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            className="shrink-0 p-0.5 rounded focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
           >
             {' '}
             {isExpanded ? (
-              <ChevronDown className="w-3 h-3 text-zinc-400" />
+              <ChevronDown className="w-3 h-3 text-stone-400" />
             ) : (
-              <ChevronRight className="w-3 h-3 text-zinc-400" />
+              <ChevronRight className="w-3 h-3 text-stone-400" />
             )}
           </button>
         ) : (
@@ -82,7 +82,7 @@ function TemplateNodeRow({
         )}
 
         {/* CTD section badge */}
-        <span className="text-xs text-zinc-400 font-mono shrink-0 min-w-[28px]">
+        <span className="text-xs text-stone-400 font-mono shrink-0 min-w-[28px]">
           {node.ctdSection}
         </span>
 
@@ -106,7 +106,7 @@ function TemplateNodeRow({
         {/* Create button */}
         <button
           onClick={() => onCreateFromTemplate(node.templateKey, node.ctdSection, node.label)}
-          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 p-1 rounded hover:bg-violet-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 p-1 rounded hover:bg-violet-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
           title={`Create "${node.label}" from template`}
           aria-label={`Create ${node.label} from template`}
         >
@@ -116,7 +116,7 @@ function TemplateNodeRow({
         {onOpenTransformCanvas && (
           <button
             onClick={() => onOpenTransformCanvas(node.ctdSection, node.templateKey)}
-            className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 p-1 rounded hover:bg-amber-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 p-1 rounded hover:bg-amber-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
             title={`Open Transform Canvas for "${node.label}"`}
             aria-label={`Open Transform Canvas for ${node.label}`}
           >
@@ -163,17 +163,17 @@ export const TemplateTree: React.FC<TemplateTreeProps> = ({
   return (
     <div className={cn('flex flex-col h-full', className)} data-testid="template-tree">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 h-8 border-b border-zinc-200 bg-zinc-50/60 shrink-0">
-        <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+      <div className="flex items-center justify-between px-3 h-8 border-b border-stone-200 bg-stone-50/60 shrink-0">
+        <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
           Templates
         </span>
-        <span className="text-xs text-zinc-400 tabular-nums">
+        <span className="text-xs text-stone-400 tabular-nums">
           {IND_TEMPLATES.length} groups
         </span>
       </div>
 
       {/* Tip */}
-      <div className="px-3 py-2 border-b border-zinc-200 bg-violet-50/40">
+      <div className="px-3 py-2 border-b border-stone-200 bg-violet-50/40">
         <p className="text-xs text-violet-600 leading-relaxed">
           Templates are pre-structured documents wired to CTD sections. Click + to create a new
           document from any template.

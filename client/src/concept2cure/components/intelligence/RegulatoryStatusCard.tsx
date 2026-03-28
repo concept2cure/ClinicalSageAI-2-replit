@@ -102,12 +102,12 @@ export function RegulatoryStatusCard({
   if (!submissionType) return null;
 
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-zinc-200 bg-zinc-50">
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-stone-200 bg-stone-50">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0" />
-          <span className="text-xs sm:text-sm font-semibold text-zinc-900 truncate">
+          <span className="text-xs sm:text-sm font-semibold text-stone-900 truncate">
             Regulatory Status
           </span>
         </div>
@@ -133,15 +133,15 @@ export function RegulatoryStatusCard({
         testId="regulatory-status"
       >
         {(statusData) => statusData ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 gap-0 divide-x divide-y divide-zinc-100">
+          <div className="grid grid-cols-2 sm:grid-cols-2 gap-0 divide-x divide-y divide-stone-100">
             {/* Submission Readiness */}
             <div className="p-3">
               <div className="flex items-center gap-1.5 mb-1.5">
                 <Target className="w-3.5 h-3.5 text-violet-500" />
-                <span className="text-xs text-zinc-500 font-medium">Readiness</span>
+                <span className="text-xs text-stone-500 font-medium">Readiness</span>
               </div>
-              <div className="text-2xl font-semibold text-zinc-900">{statusData.submissionReadiness}%</div>
-              <div className="h-1.5 bg-zinc-100 rounded-full mt-1.5 overflow-hidden">
+              <div className="text-2xl font-semibold text-stone-900">{statusData.submissionReadiness}%</div>
+              <div className="h-1.5 bg-stone-100 rounded-full mt-1.5 overflow-hidden">
                 <div
                   className="h-full rounded-full bg-violet-500 transition-all duration-150"
                   style={{ width: `${statusData.submissionReadiness}%` }}
@@ -153,19 +153,19 @@ export function RegulatoryStatusCard({
             <div className="p-3">
               <div className="flex items-center gap-1.5 mb-1.5">
                 <FileSearch className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs text-zinc-500 font-medium">Precedents</span>
+                <span className="text-xs text-stone-500 font-medium">Precedents</span>
               </div>
-              <div className="text-2xl font-semibold text-zinc-900">{statusData.precedentsFound}</div>
-              <span className="text-xs text-zinc-400">matching records</span>
+              <div className="text-2xl font-semibold text-stone-900">{statusData.precedentsFound}</div>
+              <span className="text-xs text-stone-400">matching records</span>
             </div>
 
             {/* Risk Score */}
             <div className="p-3">
               <div className="flex items-center gap-1.5 mb-1.5">
                 <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                <span className="text-xs text-zinc-500 font-medium">Risk Score</span>
+                <span className="text-xs text-stone-500 font-medium">Risk Score</span>
               </div>
-              <div className="text-2xl font-semibold text-zinc-900">{statusData.riskScore}</div>
+              <div className="text-2xl font-semibold text-stone-900">{statusData.riskScore}</div>
               <span
                 className={`text-xs font-medium ${
                   statusData.riskScore < 30
@@ -183,10 +183,10 @@ export function RegulatoryStatusCard({
             <div className="p-3">
               <div className="flex items-center gap-1.5 mb-1.5">
                 <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-xs text-zinc-500 font-medium">Approval Prob.</span>
+                <span className="text-xs text-stone-500 font-medium">Approval Prob.</span>
               </div>
-              <div className="text-2xl font-semibold text-zinc-900">{statusData.approvalProbability}%</div>
-              <div className="h-1.5 bg-zinc-100 rounded-full mt-1.5 overflow-hidden">
+              <div className="text-2xl font-semibold text-stone-900">{statusData.approvalProbability}%</div>
+              <div className="h-1.5 bg-stone-100 rounded-full mt-1.5 overflow-hidden">
                 <div
                   className="h-full rounded-full bg-emerald-500 transition-all duration-150"
                   style={{ width: `${statusData.approvalProbability}%` }}

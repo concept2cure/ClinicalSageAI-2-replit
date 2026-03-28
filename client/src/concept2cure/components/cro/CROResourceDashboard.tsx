@@ -159,7 +159,7 @@ const STATUS_CONFIG: Record<CROProject['status'], {
   on_hold: { label: 'On Hold', color: 'text-amber-700', bgColor: 'bg-amber-100' },
   at_risk: { label: 'At Risk', color: 'text-red-700', bgColor: 'bg-red-100' },
   completed: { label: 'Completed', color: 'text-blue-700', bgColor: 'bg-blue-100' },
-  cancelled: { label: 'Cancelled', color: 'text-zinc-500', bgColor: 'bg-zinc-100' },
+  cancelled: { label: 'Cancelled', color: 'text-stone-500', bgColor: 'bg-stone-100' },
 };
 
 const TIER_CONFIG: Record<CROClient['tier'], {
@@ -168,7 +168,7 @@ const TIER_CONFIG: Record<CROClient['tier'], {
 }> = {
   enterprise: { label: 'Enterprise', color: 'text-violet-600' },
   strategic: { label: 'Strategic', color: 'text-blue-600' },
-  standard: { label: 'Standard', color: 'text-zinc-600' },
+  standard: { label: 'Standard', color: 'text-stone-600' },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -207,16 +207,16 @@ const ClientCard: React.FC<{
   const atRiskProjects = clientProjects.filter(p => p.status === 'at_risk');
   
   return (
-    <div className="border border-zinc-200 rounded-lg overflow-hidden">
+    <div className="border border-stone-200 rounded-lg overflow-hidden">
       {/* Header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-4 p-4 hover:bg-zinc-50 transition-colors duration-150"
+        className="w-full flex items-center gap-4 p-4 hover:bg-stone-50 transition-colors duration-150"
       >
-        <Building2 className="w-8 h-8 text-zinc-400" />
+        <Building2 className="w-8 h-8 text-stone-400" />
         <div className="flex-1 text-left">
           <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-zinc-900">{client.name}</h3>
+            <h3 className="font-semibold text-stone-900">{client.name}</h3>
             <span className={cn('text-xs font-medium', tierConfig.color)}>
               {tierConfig.label}
             </span>
@@ -227,19 +227,19 @@ const ClientCard: React.FC<{
               </span>
             )}
           </div>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <p className="text-xs text-stone-500 mt-0.5">
             MSA: {client.msaNumber} • {client.activeProjects} active projects
           </p>
         </div>
         
         {/* Financials */}
         <div className="text-right">
-          <p className="text-sm font-semibold text-zinc-900">
+          <p className="text-sm font-semibold text-stone-900">
             {formatCurrency(client.revenueYTD)}
-            <span className="text-xs text-zinc-500 font-normal"> / {formatCurrency(client.totalContractValue)}</span>
+            <span className="text-xs text-stone-500 font-normal"> / {formatCurrency(client.totalContractValue)}</span>
           </p>
           <div className="flex items-center gap-2 mt-1">
-            <div className="w-24 h-1.5 bg-zinc-200 rounded-full overflow-hidden">
+            <div className="w-24 h-1.5 bg-stone-200 rounded-full overflow-hidden">
               <div
                 className={cn(
                   'h-full rounded-full',
@@ -248,20 +248,20 @@ const ClientCard: React.FC<{
                 style={{ width: `${Math.min(revenueProgress, 100)}%` }}
               />
             </div>
-            <span className="text-xs text-zinc-500">{revenueProgress.toFixed(0)}%</span>
+            <span className="text-xs text-stone-500">{revenueProgress.toFixed(0)}%</span>
           </div>
         </div>
         
         {expanded ? (
-          <ChevronDown className="w-5 h-5 text-zinc-400" />
+          <ChevronDown className="w-5 h-5 text-stone-400" />
         ) : (
-          <ChevronRight className="w-5 h-5 text-zinc-400" />
+          <ChevronRight className="w-5 h-5 text-stone-400" />
         )}
       </button>
       
       {/* Projects */}
       {expanded && (
-        <div className="border-t border-zinc-200 bg-zinc-50 p-4">
+        <div className="border-t border-stone-200 bg-stone-50 p-4">
           <div className="space-y-2">
             {clientProjects.map(project => {
               const statusConfig = STATUS_CONFIG[project.status];
@@ -270,12 +270,12 @@ const ClientCard: React.FC<{
                 <button
                   key={project.id}
                   onClick={() => onProjectClick?.(project)}
-                  className="w-full flex items-center gap-3 p-3 bg-white rounded-lg border border-zinc-200 hover:border-blue-300 transition-colors text-left"
+                  className="w-full flex items-center gap-3 p-3 bg-white rounded-lg border border-stone-200 hover:border-blue-300 transition-colors text-left"
                 >
-                  <FileText className="w-5 h-5 text-zinc-400 flex-shrink-0" />
+                  <FileText className="w-5 h-5 text-stone-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-zinc-900 truncate">{project.projectName}</p>
-                    <p className="text-xs text-zinc-500">{project.productName} • {project.sowNumber}</p>
+                    <p className="text-sm font-medium text-stone-900 truncate">{project.projectName}</p>
+                    <p className="text-xs text-stone-500">{project.productName} • {project.sowNumber}</p>
                   </div>
                   
                   <span className={cn(
@@ -287,8 +287,8 @@ const ClientCard: React.FC<{
                   </span>
                   
                   <div className="text-right flex-shrink-0">
-                    <p className="text-sm font-medium text-zinc-900">{formatCurrency(project.billedToDate)}</p>
-                    <p className="text-xs text-zinc-500">{project.burnRate}% burned</p>
+                    <p className="text-sm font-medium text-stone-900">{formatCurrency(project.billedToDate)}</p>
+                    <p className="text-xs text-stone-500">{project.burnRate}% burned</p>
                   </div>
                   
                   <div className={cn(
@@ -301,7 +301,7 @@ const ClientCard: React.FC<{
               );
             })}
             {clientProjects.length === 0 && (
-              <p className="text-sm text-zinc-500 italic text-center py-4">No active projects</p>
+              <p className="text-sm text-stone-500 italic text-center py-4">No active projects</p>
             )}
           </div>
         </div>
@@ -329,8 +329,8 @@ const UtilizationChart: React.FC<{
   }, [resources]);
   
   return (
-    <div className="p-4 border border-zinc-200 rounded-lg">
-      <h3 className="text-sm font-semibold text-zinc-900 mb-4">Resource Utilization by Department</h3>
+    <div className="p-4 border border-stone-200 rounded-lg">
+      <h3 className="text-sm font-semibold text-stone-900 mb-4">Resource Utilization by Department</h3>
       
       <div className="space-y-4">
         {Object.entries(byDepartment).map(([dept, deptResources]) => {
@@ -341,7 +341,7 @@ const UtilizationChart: React.FC<{
           return (
             <div key={dept}>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-zinc-700">{dept}</span>
+                <span className="text-sm font-medium text-stone-700">{dept}</span>
                 <span className={cn(
                   'text-sm font-medium',
                   avgUtil > 100 ? 'text-red-600' : avgUtil > 85 ? 'text-amber-600' : 'text-green-600'
@@ -351,7 +351,7 @@ const UtilizationChart: React.FC<{
               </div>
               
               {/* Utilization bar */}
-              <div className="h-6 bg-zinc-100 rounded-lg overflow-hidden flex">
+              <div className="h-6 bg-stone-100 rounded-lg overflow-hidden flex">
                 {deptResources.slice(0, 10).map((resource, i) => (
                   <button
                     key={resource.resourceId}
@@ -369,7 +369,7 @@ const UtilizationChart: React.FC<{
                 ))}
               </div>
               
-              <div className="flex items-center gap-4 mt-1 text-xs text-zinc-500">
+              <div className="flex items-center gap-4 mt-1 text-xs text-stone-500">
                 <span>{deptResources.length} resources</span>
                 {overAllocated > 0 && (
                   <span className="text-red-600">{overAllocated} over-allocated</span>
@@ -384,22 +384,22 @@ const UtilizationChart: React.FC<{
       </div>
       
       {/* Legend */}
-      <div className="flex items-center gap-4 mt-4 pt-4 border-t border-zinc-200">
+      <div className="flex items-center gap-4 mt-4 pt-4 border-t border-stone-200">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded bg-red-500" />
-          <span className="text-xs text-zinc-500">&gt;100%</span>
+          <span className="text-xs text-stone-500">&gt;100%</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded bg-amber-500" />
-          <span className="text-xs text-zinc-500">85-100%</span>
+          <span className="text-xs text-stone-500">85-100%</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded bg-green-500" />
-          <span className="text-xs text-zinc-500">70-85%</span>
+          <span className="text-xs text-stone-500">70-85%</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded bg-blue-300" />
-          <span className="text-xs text-zinc-500">&lt;70%</span>
+          <span className="text-xs text-stone-500">&lt;70%</span>
         </div>
       </div>
     </div>
@@ -417,9 +417,9 @@ const ChangeOrderPanel: React.FC<{
   const totalImpact = pending.reduce((sum, co) => sum + co.financialImpact, 0);
   
   return (
-    <div className="p-4 border border-zinc-200 rounded-lg">
+    <div className="p-4 border border-stone-200 rounded-lg">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-zinc-900">Change Orders</h3>
+        <h3 className="text-sm font-semibold text-stone-900">Change Orders</h3>
         <span className="px-2 py-1 text-xs font-medium text-amber-700 bg-amber-100 rounded-full">
           {pending.length} pending
         </span>
@@ -437,18 +437,18 @@ const ChangeOrderPanel: React.FC<{
         {changeOrders.slice(0, 5).map(co => (
           <div
             key={co.id}
-            className="flex items-center gap-3 p-3 bg-zinc-50 rounded-lg"
+            className="flex items-center gap-3 p-3 bg-stone-50 rounded-lg"
           >
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-zinc-900 truncate">{co.projectName}</p>
-              <p className="text-xs text-zinc-500 truncate">{co.description}</p>
+              <p className="text-sm font-medium text-stone-900 truncate">{co.projectName}</p>
+              <p className="text-xs text-stone-500 truncate">{co.description}</p>
             </div>
             <span className={cn(
               'px-2 py-0.5 text-xs font-medium rounded-full',
               co.status === 'pending_approval' && 'bg-amber-100 text-amber-700',
               co.status === 'approved' && 'bg-green-100 text-green-700',
               co.status === 'rejected' && 'bg-red-100 text-red-700',
-              co.status === 'draft' && 'bg-zinc-100 text-zinc-600'
+              co.status === 'draft' && 'bg-stone-100 text-stone-600'
             )}>
               {co.status.replace('_', ' ')}
             </span>
@@ -501,17 +501,17 @@ export const CROResourceDashboard: React.FC<CROResourceDashboardProps> = ({
   return (
     <div className={cn('flex flex-col h-full', className)}>
       {/* Header */}
-      <div className="flex-shrink-0 p-4 border-b border-zinc-200">
+      <div className="flex-shrink-0 p-4 border-b border-stone-200">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-zinc-900">CRO Operations Dashboard</h2>
-          <div className="flex items-center gap-1 bg-zinc-100 rounded-lg p-1">
+          <h2 className="text-xl font-semibold text-stone-900">CRO Operations Dashboard</h2>
+          <div className="flex items-center gap-1 bg-stone-100 rounded-lg p-1">
             {(['clients', 'projects', 'resources'] as const).map(v => (
               <button
                 key={v}
                 onClick={() => setView(v)}
                 className={cn(
                   'px-3 py-1.5 text-sm font-medium rounded-md transition-colors capitalize',
-                  view === v ? 'bg-white shadow text-zinc-900' : 'text-zinc-600 hover:text-zinc-900'
+                  view === v ? 'bg-white shadow text-stone-900' : 'text-stone-600 hover:text-stone-900'
                 )}
               >
                 {v}
@@ -536,27 +536,27 @@ export const CROResourceDashboard: React.FC<CROResourceDashboardProps> = ({
           </div>
           <div className={cn(
             'p-3 rounded-lg',
-            metrics.atRiskProjects > 0 ? 'bg-red-50' : 'bg-zinc-50'
+            metrics.atRiskProjects > 0 ? 'bg-red-50' : 'bg-stone-50'
           )}>
-            <p className={cn('text-xs mb-0.5', metrics.atRiskProjects > 0 ? 'text-red-600' : 'text-zinc-500')}>At Risk</p>
-            <p className={cn('text-lg font-semibold', metrics.atRiskProjects > 0 ? 'text-red-700' : 'text-zinc-600')}>
+            <p className={cn('text-xs mb-0.5', metrics.atRiskProjects > 0 ? 'text-red-600' : 'text-stone-500')}>At Risk</p>
+            <p className={cn('text-lg font-semibold', metrics.atRiskProjects > 0 ? 'text-red-700' : 'text-stone-600')}>
               {metrics.atRiskProjects}
             </p>
           </div>
           <div className={cn(
             'p-3 rounded-lg',
-            metrics.avgUtilization > 90 ? 'bg-amber-50' : 'bg-zinc-50'
+            metrics.avgUtilization > 90 ? 'bg-amber-50' : 'bg-stone-50'
           )}>
-            <p className={cn('text-xs mb-0.5', metrics.avgUtilization > 90 ? 'text-amber-600' : 'text-zinc-500')}>
+            <p className={cn('text-xs mb-0.5', metrics.avgUtilization > 90 ? 'text-amber-600' : 'text-stone-500')}>
               Avg Utilization
             </p>
-            <p className={cn('text-lg font-semibold', metrics.avgUtilization > 90 ? 'text-amber-700' : 'text-zinc-700')}>
+            <p className={cn('text-lg font-semibold', metrics.avgUtilization > 90 ? 'text-amber-700' : 'text-stone-700')}>
               {metrics.avgUtilization.toFixed(0)}%
             </p>
           </div>
-          <div className="p-3 bg-zinc-50 rounded-lg">
-            <p className="text-xs text-zinc-500 mb-0.5">Clients</p>
-            <p className="text-lg font-semibold text-zinc-700">{clients.length}</p>
+          <div className="p-3 bg-stone-50 rounded-lg">
+            <p className="text-xs text-stone-500 mb-0.5">Clients</p>
+            <p className="text-lg font-semibold text-stone-700">{clients.length}</p>
           </div>
         </div>
       </div>
@@ -591,11 +591,11 @@ export const CROResourceDashboard: React.FC<CROResourceDashboardProps> = ({
                 <button
                   key={project.id}
                   onClick={() => onProjectClick?.(project)}
-                  className="w-full flex items-center gap-4 p-4 rounded-lg border border-zinc-200 hover:border-blue-300 transition-colors text-left"
+                  className="w-full flex items-center gap-4 p-4 rounded-lg border border-stone-200 hover:border-blue-300 transition-colors text-left"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-zinc-900">{project.projectName}</p>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-sm font-medium text-stone-900">{project.projectName}</p>
+                    <p className="text-xs text-stone-500">
                       {project.clientName} • {project.productName} • {project.sowNumber}
                     </p>
                   </div>
@@ -607,8 +607,8 @@ export const CROResourceDashboard: React.FC<CROResourceDashboardProps> = ({
                     {statusConfig.label}
                   </span>
                   <div className="text-right">
-                    <p className="text-sm font-medium text-zinc-900">{formatCurrency(project.billedToDate)}</p>
-                    <p className="text-xs text-zinc-500">{project.burnRate}% of {formatCurrency(project.contractValue)}</p>
+                    <p className="text-sm font-medium text-stone-900">{formatCurrency(project.billedToDate)}</p>
+                    <p className="text-xs text-stone-500">{project.burnRate}% of {formatCurrency(project.contractValue)}</p>
                   </div>
                   <div className={cn(
                     'text-lg font-semibold',

@@ -115,14 +115,14 @@ function ScoreBar({ value, max = 1, label }: { value: number; max?: number; labe
   const color = pct >= 70 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-500' : 'bg-red-500';
   return (
     <div className="flex items-center gap-2">
-      {label && <span className="text-xs text-zinc-500 w-28 flex-shrink-0">{label}</span>}
-      <div className="flex-1 h-2 bg-zinc-100 rounded-full overflow-hidden">
+      {label && <span className="text-xs text-stone-500 w-28 flex-shrink-0">{label}</span>}
+      <div className="flex-1 h-2 bg-stone-100 rounded-full overflow-hidden">
         <div
           className={cn('h-full rounded-full transition-all duration-150', color)}
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="text-xs font-medium text-zinc-600 w-10 text-right">{pct}%</span>
+      <span className="text-xs font-medium text-stone-600 w-10 text-right">{pct}%</span>
     </div>
   );
 }
@@ -262,10 +262,10 @@ export function PrecedentIntelligenceDashboard({
   // ═══════════════════════════════════════════════════════════════════════════
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-zinc-50/30">
+    <div className="flex-1 flex flex-col min-h-0 bg-stone-50/30">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
         {/* Tab bar */}
-        <div className="flex-shrink-0 border-b border-zinc-200 bg-white px-4">
+        <div className="flex-shrink-0 border-b border-stone-200 bg-white px-4">
           <TabsList className="h-11 bg-transparent gap-1">
             <TabsTrigger
               value="search"
@@ -331,7 +331,7 @@ export function PrecedentIntelligenceDashboard({
             <div className="px-3 py-2">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-zinc-500 mb-1 block">Submission Type *</label>
+                  <label className="text-xs text-stone-500 mb-1 block">Submission Type *</label>
                   <Select value={searchSubmissionType} onValueChange={setSearchSubmissionType}>
                     <SelectTrigger className="h-9">
                       <SelectValue />
@@ -350,7 +350,7 @@ export function PrecedentIntelligenceDashboard({
                   </Select>
                 </div>
                 <div>
-                  <label className="text-xs text-zinc-500 mb-1 block">Device Class</label>
+                  <label className="text-xs text-stone-500 mb-1 block">Device Class</label>
                   <Select value={searchDeviceClass} onValueChange={setSearchDeviceClass}>
                     <SelectTrigger className="h-9">
                       <SelectValue placeholder="Any" />
@@ -364,7 +364,7 @@ export function PrecedentIntelligenceDashboard({
                   </Select>
                 </div>
                 <div>
-                  <label className="text-xs text-zinc-500 mb-1 block">Therapeutic Area</label>
+                  <label className="text-xs text-stone-500 mb-1 block">Therapeutic Area</label>
                   <Input
                     value={searchTherapeuticArea}
                     onChange={e => setSearchTherapeuticArea(e.target.value)}
@@ -373,7 +373,7 @@ export function PrecedentIntelligenceDashboard({
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-zinc-500 mb-1 block">Indication</label>
+                  <label className="text-xs text-stone-500 mb-1 block">Indication</label>
                   <Input
                     value={searchIndication}
                     onChange={e => setSearchIndication(e.target.value)}
@@ -420,8 +420,8 @@ export function PrecedentIntelligenceDashboard({
                   <LoadingState size="sm" message="Searching across FDA databases..." />
                 ) : !searchResults?.length ? (
                   <div className="text-center py-8">
-                    <Search className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
-                    <p className="text-sm text-zinc-500">
+                    <Search className="w-8 h-8 text-stone-400 mx-auto mb-2" />
+                    <p className="text-sm text-stone-500">
                       No precedents found. Try broadening your search criteria.
                     </p>
                   </div>
@@ -438,13 +438,13 @@ export function PrecedentIntelligenceDashboard({
                           'w-full text-left p-3 rounded-lg border transition-all hover:shadow-sm',
                           selectedPrecedent?.id === p.id
                             ? 'border-violet-300 bg-violet-50/50'
-                            : 'border-zinc-200 hover:border-zinc-300 bg-white'
+                            : 'border-stone-200 hover:border-stone-300 bg-white'
                         )}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-sm text-zinc-900 truncate">
+                              <span className="font-medium text-sm text-stone-900 truncate">
                                 {p.deviceName || p.clearanceNumber || 'Unnamed'}
                               </span>
                               {p.clearanceNumber && (
@@ -453,12 +453,12 @@ export function PrecedentIntelligenceDashboard({
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-xs text-zinc-500 truncate">
+                            <p className="text-xs text-stone-500 truncate">
                               {p.indication || p.therapeuticArea || p.submissionType}
                               {p.applicant ? ` · ${p.applicant}` : ''}
                             </p>
                             {p.strategySummary && (
-                              <p className="text-xs text-zinc-400 mt-1 line-clamp-2">
+                              <p className="text-xs text-stone-400 mt-1 line-clamp-2">
                                 {p.strategySummary}
                               </p>
                             )}
@@ -480,11 +480,11 @@ export function PrecedentIntelligenceDashboard({
                               </Badge>
                             )}
                             {p.confidenceScore != null && (
-                              <span className="text-xs text-zinc-400">
+                              <span className="text-xs text-stone-400">
                                 {Math.round(p.confidenceScore * 100)}% conf
                               </span>
                             )}
-                            <ChevronRight className="w-3 h-3 text-zinc-400 mt-1" />
+                            <ChevronRight className="w-3 h-3 text-stone-400 mt-1" />
                           </div>
                         </div>
                       </button>
@@ -501,11 +501,11 @@ export function PrecedentIntelligenceDashboard({
           {!selectedPrecedent ? (
             <div className="border border-border/40 rounded-sm bg-background">
               <div className="px-3 py-2 py-12 text-center">
-                <GitCompare className="w-10 h-10 text-zinc-400 mx-auto mb-3" />
-                <h3 className="text-sm font-medium text-zinc-700 mb-1">
+                <GitCompare className="w-10 h-10 text-stone-400 mx-auto mb-3" />
+                <h3 className="text-sm font-medium text-stone-700 mb-1">
                   Select a Precedent to Compare
                 </h3>
-                <p className="text-xs text-zinc-500 max-w-sm mx-auto">
+                <p className="text-xs text-stone-500 max-w-sm mx-auto">
                   Search for precedents first, then click one to compare against your submission.
                 </p>
                 <Button
@@ -545,20 +545,20 @@ export function PrecedentIntelligenceDashboard({
                 <div className="px-3 py-2">
                   <div className="grid grid-cols-3 gap-3 text-xs">
                     <div>
-                      <span className="text-zinc-500">Device</span>
-                      <p className="font-medium text-zinc-900">
+                      <span className="text-stone-500">Device</span>
+                      <p className="font-medium text-stone-900">
                         {selectedPrecedent.deviceName || '—'}
                       </p>
                     </div>
                     <div>
-                      <span className="text-zinc-500">Clearance</span>
-                      <p className="font-medium text-zinc-900">
+                      <span className="text-stone-500">Clearance</span>
+                      <p className="font-medium text-stone-900">
                         {selectedPrecedent.clearanceNumber || '—'}
                       </p>
                     </div>
                     <div>
-                      <span className="text-zinc-500">Predicate</span>
-                      <p className="font-medium text-zinc-900">
+                      <span className="text-stone-500">Predicate</span>
+                      <p className="font-medium text-stone-900">
                         {selectedPrecedent.predicateDevice || '—'}
                       </p>
                     </div>
@@ -577,7 +577,7 @@ export function PrecedentIntelligenceDashboard({
                 <div className="px-3 py-2">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs text-zinc-500 mb-1 block">Your Device Name</label>
+                      <label className="text-xs text-stone-500 mb-1 block">Your Device Name</label>
                       <Input
                         value={compareDeviceName}
                         onChange={e => setCompareDeviceName(e.target.value)}
@@ -586,7 +586,7 @@ export function PrecedentIntelligenceDashboard({
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-zinc-500 mb-1 block">Indication</label>
+                      <label className="text-xs text-stone-500 mb-1 block">Indication</label>
                       <Input
                         value={compareIndication}
                         onChange={e => setCompareIndication(e.target.value)}
@@ -595,7 +595,7 @@ export function PrecedentIntelligenceDashboard({
                       />
                     </div>
                     <div className="col-span-2">
-                      <label className="text-xs text-zinc-500 mb-1 block">Predicate Device</label>
+                      <label className="text-xs text-stone-500 mb-1 block">Predicate Device</label>
                       <Input
                         value={comparePredicate}
                         onChange={e => setComparePredicate(e.target.value)}
@@ -649,10 +649,10 @@ export function PrecedentIntelligenceDashboard({
                               className="flex items-center gap-2 text-xs p-2 rounded bg-emerald-50/50"
                             >
                               <CheckCircle className="w-3 h-3 text-emerald-500 flex-shrink-0" />
-                              <span className="font-medium text-zinc-700 w-32 flex-shrink-0">
+                              <span className="font-medium text-stone-700 w-32 flex-shrink-0">
                                 {d.dimension}
                               </span>
-                              <span className="text-zinc-500 truncate flex-1">{d.userValue}</span>
+                              <span className="text-stone-500 truncate flex-1">{d.userValue}</span>
                               <Badge variant="outline" className="text-xs">
                                 {d.impact}
                               </Badge>
@@ -677,7 +677,7 @@ export function PrecedentIntelligenceDashboard({
                             >
                               <div className="flex items-center gap-2 mb-1">
                                 <AlertTriangle className="w-3 h-3 text-amber-500 flex-shrink-0" />
-                                <span className="font-medium text-zinc-700">{d.dimension}</span>
+                                <span className="font-medium text-stone-700">{d.dimension}</span>
                                 <Badge
                                   variant="outline"
                                   className={cn(
@@ -688,12 +688,12 @@ export function PrecedentIntelligenceDashboard({
                                   {d.impact}
                                 </Badge>
                               </div>
-                              <div className="ml-5 grid grid-cols-2 gap-2 text-zinc-500">
+                              <div className="ml-5 grid grid-cols-2 gap-2 text-stone-500">
                                 <div>
-                                  <span className="text-zinc-400">Yours:</span> {d.userValue}
+                                  <span className="text-stone-400">Yours:</span> {d.userValue}
                                 </div>
                                 <div>
-                                  <span className="text-zinc-400">Precedent:</span>{' '}
+                                  <span className="text-stone-400">Precedent:</span>{' '}
                                   {d.precedentValue}
                                 </div>
                               </div>
@@ -713,7 +713,7 @@ export function PrecedentIntelligenceDashboard({
                           {compareResult.recommendations.map((r, i) => (
                             <li
                               key={i}
-                              className="text-xs text-zinc-600 flex items-start gap-2 p-2 bg-violet-50/50 rounded"
+                              className="text-xs text-stone-600 flex items-start gap-2 p-2 bg-violet-50/50 rounded"
                             >
                               <ArrowUpRight className="w-3 h-3 text-violet-500 flex-shrink-0 mt-0.5" />
                               {r}
@@ -739,7 +739,7 @@ export function PrecedentIntelligenceDashboard({
               </h3>
             </div>
             <div className="px-3 py-2">
-              <p className="text-xs text-zinc-500 mb-3">
+              <p className="text-xs text-stone-500 mb-3">
                 Cross-references adversarial precedents, safety signals, toxic predicates, and FDA
                 objection patterns.
               </p>
@@ -774,12 +774,12 @@ export function PrecedentIntelligenceDashboard({
                 <div className="px-3 py-2 pt-4">
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <h3 className="text-lg font-semibold text-zinc-900">Risk Assessment</h3>
-                      <p className="text-xs text-zinc-500">Based on historical FDA patterns</p>
+                      <h3 className="text-lg font-semibold text-stone-900">Risk Assessment</h3>
+                      <p className="text-xs text-stone-500">Based on historical FDA patterns</p>
                     </div>
                     <div className="text-right">
                       <RiskBadge level={riskResult.overallRisk} />
-                      <p className="text-xs text-zinc-400 mt-1">
+                      <p className="text-xs text-stone-400 mt-1">
                         Score: {Math.round(riskResult.riskScore * 100)}%
                       </p>
                     </div>
@@ -803,8 +803,8 @@ export function PrecedentIntelligenceDashboard({
                         >
                           <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0 mt-0.5" />
                           <div className="flex-1 min-w-0">
-                            <span className="font-medium text-zinc-900">{f.category || f.factor}</span>
-                            <p className="text-zinc-500 mt-0.5">{f.description || f.detail}</p>
+                            <span className="font-medium text-stone-900">{f.category || f.factor}</span>
+                            <p className="text-stone-500 mt-0.5">{f.description || f.detail}</p>
                             {f.mitigation && (
                               <p className="text-emerald-600 mt-1 flex items-start gap-1">
                                 <ShieldCheck className="w-3 h-3 flex-shrink-0 mt-0.5" />
@@ -815,7 +815,7 @@ export function PrecedentIntelligenceDashboard({
                           <div className="flex flex-col items-end gap-1 flex-shrink-0">
                             <RiskBadge level={f.severity} />
                             {f.precedentCount > 0 && (
-                              <span className="text-zinc-400 text-xs">{f.precedentCount} case{f.precedentCount !== 1 ? 's' : ''}</span>
+                              <span className="text-stone-400 text-xs">{f.precedentCount} case{f.precedentCount !== 1 ? 's' : ''}</span>
                             )}
                           </div>
                         </div>
@@ -842,11 +842,11 @@ export function PrecedentIntelligenceDashboard({
                         return (
                           <div
                             key={i}
-                            className="flex items-center gap-2 p-2 rounded bg-zinc-50 text-xs"
+                            className="flex items-center gap-2 p-2 rounded bg-stone-50 text-xs"
                           >
                             <Zap className="w-3 h-3 text-red-400 flex-shrink-0" />
-                            <span className="font-medium text-zinc-700">{s.deviceName || s.device}</span>
-                            <span className="text-zinc-500 flex-1 truncate">{s.description || s.signalType || s.signal}</span>
+                            <span className="font-medium text-stone-700">{s.deviceName || s.device}</span>
+                            <span className="text-stone-500 flex-1 truncate">{s.description || s.signalType || s.signal}</span>
                             {s.kNumber && <Badge variant="outline" className="text-xs">{s.kNumber}</Badge>}
                             <RiskBadge level={sevLevel} />
                           </div>
@@ -870,7 +870,7 @@ export function PrecedentIntelligenceDashboard({
                       {riskResult.mitigationStrategies.map((s, i) => (
                         <li
                           key={i}
-                          className="flex items-start gap-2 text-xs text-zinc-600 p-2 bg-emerald-50/50 rounded"
+                          className="flex items-start gap-2 text-xs text-stone-600 p-2 bg-emerald-50/50 rounded"
                         >
                           <CheckCircle className="w-3 h-3 text-emerald-500 flex-shrink-0 mt-0.5" />
                           {s}
@@ -885,8 +885,8 @@ export function PrecedentIntelligenceDashboard({
                 <div className="border border-border/40 rounded-sm bg-background">
                   <div className="px-3 py-2 py-8 text-center">
                     <ShieldCheck className="w-10 h-10 text-emerald-400 mx-auto mb-2" />
-                    <h3 className="text-sm font-medium text-zinc-700">Low Risk Profile</h3>
-                    <p className="text-xs text-zinc-500 mt-1">
+                    <h3 className="text-sm font-medium text-stone-700">Low Risk Profile</h3>
+                    <p className="text-xs text-stone-500 mt-1">
                       No adversarial precedents, safety signals, or toxic predicates found for this
                       submission profile.
                     </p>
@@ -907,7 +907,7 @@ export function PrecedentIntelligenceDashboard({
               </h3>
             </div>
             <div className="px-3 py-2">
-              <p className="text-xs text-zinc-500 mb-3">
+              <p className="text-xs text-stone-500 mb-3">
                 Analyzes approved vs. rejected precedents to recommend the optimal submission
                 strategy.
               </p>
@@ -934,11 +934,11 @@ export function PrecedentIntelligenceDashboard({
                 <div className="px-3 py-2 pt-4">
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <h3 className="text-base font-semibold text-zinc-900">
+                      <h3 className="text-base font-semibold text-stone-900">
                         {strategyResult.recommendedStrategy}
                       </h3>
                       <div className="flex items-center gap-3 mt-1">
-                        <div className="flex items-center gap-1 text-xs text-zinc-500">
+                        <div className="flex items-center gap-1 text-xs text-stone-500">
                           <Clock className="w-3 h-3" />
                           {strategyResult.estimatedTimeline}
                         </div>
@@ -965,10 +965,10 @@ export function PrecedentIntelligenceDashboard({
                       {strategyResult.supportingPrecedents.map((p, i) => (
                         <div
                           key={i}
-                          className="flex items-center gap-2 p-2 rounded text-xs border border-zinc-200 hover:bg-zinc-50"
+                          className="flex items-center gap-2 p-2 rounded text-xs border border-stone-200 hover:bg-stone-50"
                         >
-                          <FileText className="w-3 h-3 text-zinc-400 flex-shrink-0" />
-                          <span className="font-medium text-zinc-700">
+                          <FileText className="w-3 h-3 text-stone-400 flex-shrink-0" />
+                          <span className="font-medium text-stone-700">
                             {p.deviceName || p.clearanceNumber}
                           </span>
                           {p.clearanceNumber && (
@@ -1002,20 +1002,20 @@ export function PrecedentIntelligenceDashboard({
                       {strategyResult.alternativeStrategies.map((alt: any, i: number) => (
                         <div
                           key={i}
-                          className="p-3 rounded-lg border border-zinc-200 bg-zinc-50/50"
+                          className="p-3 rounded-lg border border-stone-200 bg-stone-50/50"
                         >
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm font-medium text-zinc-900">
+                            <span className="text-sm font-medium text-stone-900">
                               {alt.strategy}
                             </span>
                             <div className="flex items-center gap-2">
                               {alt.precedentCount != null && (
-                                <span className="text-xs text-zinc-400">{alt.precedentCount} precedent{alt.precedentCount !== 1 ? 's' : ''}</span>
+                                <span className="text-xs text-stone-400">{alt.precedentCount} precedent{alt.precedentCount !== 1 ? 's' : ''}</span>
                               )}
                               <ScoreBar value={alt.successRate ?? alt.confidence ?? 0} label="" />
                             </div>
                           </div>
-                          <p className="text-xs text-zinc-500">{alt.description || alt.rationale}</p>
+                          <p className="text-xs text-stone-500">{alt.description || alt.rationale}</p>
                         </div>
                       ))}
                     </div>
@@ -1035,7 +1035,7 @@ export function PrecedentIntelligenceDashboard({
                   <div className="px-3 py-2">
                     <ul className="space-y-1">
                       {strategyResult.testingRequirements.map((t, i) => (
-                        <li key={i} className="flex items-center gap-2 text-xs text-zinc-600 p-1.5">
+                        <li key={i} className="flex items-center gap-2 text-xs text-stone-600 p-1.5">
                           <CheckCircle className="w-3 h-3 text-violet-400 flex-shrink-0" />
                           {t}
                         </li>
@@ -1057,7 +1057,7 @@ export function PrecedentIntelligenceDashboard({
                   <div className="px-3 py-2">
                     <ul className="space-y-1">
                       {strategyResult.keyRisks.map((r, i) => (
-                        <li key={i} className="flex items-start gap-2 text-xs text-zinc-600 p-1.5">
+                        <li key={i} className="flex items-start gap-2 text-xs text-stone-600 p-1.5">
                           <AlertTriangle className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
                           {r}
                         </li>
@@ -1096,7 +1096,7 @@ export function PrecedentIntelligenceDashboard({
               </h3>
             </div>
             <div className="px-3 py-2">
-              <p className="text-xs text-zinc-500 mb-3">
+              <p className="text-xs text-stone-500 mb-3">
                 Identifies CRL trigger patterns based on historical FDA actions, calibrated with confidence scores.
               </p>
               <Button
@@ -1122,8 +1122,8 @@ export function PrecedentIntelligenceDashboard({
                 <div className="px-3 py-3">
                   <div className="flex items-center justify-between mb-2">
                     <div>
-                      <h3 className="text-lg font-semibold text-zinc-900">CRL Risk Assessment</h3>
-                      <p className="text-xs text-zinc-500">{crlResult.totalPatterns} patterns analyzed, {crlResult.criticalCount} critical</p>
+                      <h3 className="text-lg font-semibold text-stone-900">CRL Risk Assessment</h3>
+                      <p className="text-xs text-stone-500">{crlResult.totalPatterns} patterns analyzed, {crlResult.criticalCount} critical</p>
                     </div>
                     <RiskBadge level={crlResult.overallCRLRisk} />
                   </div>
@@ -1136,18 +1136,18 @@ export function PrecedentIntelligenceDashboard({
                     <div className="flex items-start justify-between mb-1">
                       <div className="flex items-center gap-2">
                         <AlertTriangle className={cn('w-4 h-4 flex-shrink-0',
-                          t.severity === 'critical' ? 'text-red-600' : t.severity === 'high' ? 'text-amber-600' : 'text-zinc-400'
+                          t.severity === 'critical' ? 'text-red-600' : t.severity === 'high' ? 'text-amber-600' : 'text-stone-400'
                         )} />
-                        <span className="text-sm font-medium text-zinc-900">{t.category}</span>
+                        <span className="text-sm font-medium text-stone-900">{t.category}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <RiskBadge level={t.severity} />
                         <Badge variant="outline" className="text-xs">{Math.round(t.confidence * 100)}% conf</Badge>
                       </div>
                     </div>
-                    <p className="text-xs text-zinc-500 ml-6 mb-2">{t.description}</p>
+                    <p className="text-xs text-stone-500 ml-6 mb-2">{t.description}</p>
                     <div className="ml-6 flex items-center gap-3 mb-2">
-                      <span className="text-xs text-zinc-400">Historical rate: {Math.round(t.historicalRate * 100)}%</span>
+                      <span className="text-xs text-stone-400">Historical rate: {Math.round(t.historicalRate * 100)}%</span>
                       <ScoreBar value={t.historicalRate} label="" />
                     </div>
                     <div className="ml-6 p-2 bg-emerald-50/50 rounded text-xs text-emerald-700 flex items-start gap-1">
@@ -1157,7 +1157,7 @@ export function PrecedentIntelligenceDashboard({
                     {t.supportingObjections?.length > 0 && (
                       <div className="ml-6 mt-2 space-y-1">
                         {t.supportingObjections.map((q: string, j: number) => (
-                          <div key={j} className="text-xs text-zinc-400 flex items-start gap-1 p-1">
+                          <div key={j} className="text-xs text-stone-400 flex items-start gap-1 p-1">
                             <FileText className="w-3 h-3 flex-shrink-0 mt-0.5" />
                             <span className="italic">{q}</span>
                           </div>
@@ -1181,7 +1181,7 @@ export function PrecedentIntelligenceDashboard({
               </h3>
             </div>
             <div className="px-3 py-2">
-              <p className="text-xs text-zinc-500 mb-3">
+              <p className="text-xs text-stone-500 mb-3">
                 CTD module checklist and historical RTF trigger patterns per 21 CFR 314.101.
               </p>
               <Button
@@ -1208,24 +1208,24 @@ export function PrecedentIntelligenceDashboard({
                 <div className="px-3 py-2">
                   <div className="space-y-1">
                     {rtfResult.checklist.map((c: any, i: number) => (
-                      <div key={i} className="flex items-center gap-2 p-2 rounded text-xs hover:bg-zinc-50">
+                      <div key={i} className="flex items-center gap-2 p-2 rounded text-xs hover:bg-stone-50">
                         <div className={cn('w-5 h-5 rounded border flex items-center justify-center flex-shrink-0',
-                          c.required ? 'border-orange-300 bg-orange-50' : 'border-zinc-200'
+                          c.required ? 'border-orange-300 bg-orange-50' : 'border-stone-200'
                         )}>
                           {c.required && <AlertTriangle className="w-3 h-3 text-orange-500" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-xs flex-shrink-0">{c.section}</Badge>
-                            <span className="font-medium text-zinc-800 truncate">{c.item}</span>
+                            <span className="font-medium text-stone-800 truncate">{c.item}</span>
                           </div>
-                          <p className="text-zinc-500 mt-0.5">{c.description}</p>
+                          <p className="text-stone-500 mt-0.5">{c.description}</p>
                         </div>
                         <Badge variant="secondary" className={cn('text-xs flex-shrink-0',
                           c.category === 'clinical' && 'bg-blue-50 text-blue-700',
                           c.category === 'cmc' && 'bg-purple-50 text-purple-700',
                           c.category === 'nonclinical' && 'bg-green-50 text-green-700',
-                          c.category === 'administrative' && 'bg-zinc-100 text-zinc-700',
+                          c.category === 'administrative' && 'bg-stone-100 text-stone-700',
                           c.category === 'safety' && 'bg-red-50 text-red-700',
                         )}>{c.category}</Badge>
                       </div>
@@ -1244,13 +1244,13 @@ export function PrecedentIntelligenceDashboard({
                       <Ban className="w-3.5 h-3.5 text-red-500 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="font-medium text-zinc-900">{t.trigger}</span>
+                          <span className="font-medium text-stone-900">{t.trigger}</span>
                           <div className="flex items-center gap-2">
-                            <span className="text-zinc-400">{Math.round(t.frequency * 100)}% freq</span>
+                            <span className="text-stone-400">{Math.round(t.frequency * 100)}% freq</span>
                             <RiskBadge level={t.severity} />
                           </div>
                         </div>
-                        <p className="text-zinc-500">{t.description}</p>
+                        <p className="text-stone-500">{t.description}</p>
                       </div>
                     </div>
                   ))}
@@ -1270,7 +1270,7 @@ export function PrecedentIntelligenceDashboard({
               </h3>
             </div>
             <div className="px-3 py-2">
-              <p className="text-xs text-zinc-500 mb-3">
+              <p className="text-xs text-stone-500 mb-3">
                 Common Major Objections and Other Concerns raised during EMA centralised procedure assessment.
               </p>
               <Button
@@ -1291,8 +1291,8 @@ export function PrecedentIntelligenceDashboard({
                 <div className="px-3 py-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-base font-semibold text-zinc-900">EMA Assessment Patterns</h3>
-                      <p className="text-xs text-zinc-500">{emaResult.therapeuticArea} — {emaResult.submissionType}</p>
+                      <h3 className="text-base font-semibold text-stone-900">EMA Assessment Patterns</h3>
+                      <p className="text-xs text-stone-500">{emaResult.therapeuticArea} — {emaResult.submissionType}</p>
                     </div>
                     <div className="flex gap-2">
                       <Badge className="bg-red-100 text-red-700">{emaResult.majorObjectionCount} Major Objection{emaResult.majorObjectionCount !== 1 ? 's' : ''}</Badge>
@@ -1313,18 +1313,18 @@ export function PrecedentIntelligenceDashboard({
                         q.severity === 'major_objection' ? 'border-red-200 bg-red-50/30' : 'border-amber-200 bg-amber-50/30'
                       )}>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="font-medium text-zinc-900">{q.category}</span>
+                          <span className="font-medium text-stone-900">{q.category}</span>
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className={cn('text-xs',
                               q.severity === 'major_objection' ? 'border-red-300 text-red-700' : 'border-amber-300 text-amber-700'
                             )}>
                               {q.severity === 'major_objection' ? 'Major Objection' : 'Other Concern'}
                             </Badge>
-                            <span className="text-zinc-400">{Math.round(q.confidence * 100)}% conf</span>
+                            <span className="text-stone-400">{Math.round(q.confidence * 100)}% conf</span>
                           </div>
                         </div>
-                        <p className="text-zinc-600 italic mb-1">&ldquo;{q.pattern}&rdquo;</p>
-                        <div className="flex items-center gap-3 text-zinc-400">
+                        <p className="text-stone-600 italic mb-1">&ldquo;{q.pattern}&rdquo;</p>
+                        <div className="flex items-center gap-3 text-stone-400">
                           <span>Frequency: {Math.round(q.frequency * 100)}%</span>
                         </div>
                       </div>
@@ -1344,14 +1344,14 @@ export function PrecedentIntelligenceDashboard({
                         q.severity === 'major_objection' ? 'border-red-200 bg-red-50/30' : 'border-amber-200 bg-amber-50/30'
                       )}>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="font-medium text-zinc-900">{q.category}</span>
+                          <span className="font-medium text-stone-900">{q.category}</span>
                           <Badge variant="outline" className={cn('text-xs',
                             q.severity === 'major_objection' ? 'border-red-300 text-red-700' : 'border-amber-300 text-amber-700'
                           )}>
                             {q.severity === 'major_objection' ? 'Major Objection' : 'Other Concern'}
                           </Badge>
                         </div>
-                        <p className="text-zinc-600 italic">&ldquo;{q.pattern}&rdquo;</p>
+                        <p className="text-stone-600 italic">&ldquo;{q.pattern}&rdquo;</p>
                       </div>
                     ))}
                   </div>
@@ -1371,7 +1371,7 @@ export function PrecedentIntelligenceDashboard({
               </h3>
             </div>
             <div className="px-3 py-2">
-              <p className="text-xs text-zinc-500 mb-3">
+              <p className="text-xs text-stone-500 mb-3">
                 Predicts likelihood of Advisory Committee referral and identifies contributing factors.
               </p>
               <Button
@@ -1397,8 +1397,8 @@ export function PrecedentIntelligenceDashboard({
                 <div className="px-3 py-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-lg font-semibold text-zinc-900">AdCom Referral Risk</h3>
-                      <p className="text-xs text-zinc-500">{adcomResult.totalTriggers} triggers, {adcomResult.highProbabilityTriggers} high-probability</p>
+                      <h3 className="text-lg font-semibold text-stone-900">AdCom Referral Risk</h3>
+                      <p className="text-xs text-stone-500">{adcomResult.totalTriggers} triggers, {adcomResult.highProbabilityTriggers} high-probability</p>
                     </div>
                     <RiskBadge level={adcomResult.overallAdcomRisk} />
                   </div>
@@ -1409,13 +1409,13 @@ export function PrecedentIntelligenceDashboard({
                 <div key={i} className="border border-border/40 rounded-sm bg-background">
                   <div className="px-3 py-2">
                     <div className="flex items-start justify-between mb-1">
-                      <span className="text-sm font-medium text-zinc-900">{t.trigger}</span>
+                      <span className="text-sm font-medium text-stone-900">{t.trigger}</span>
                       <div className="flex items-center gap-2">
                         <RiskBadge level={t.severity} />
                         <Badge variant="outline" className="text-xs">{Math.round(t.probability * 100)}% prob</Badge>
                       </div>
                     </div>
-                    <p className="text-xs text-zinc-500">{t.description}</p>
+                    <p className="text-xs text-stone-500">{t.description}</p>
                     <ScoreBar value={t.probability} label="Probability" />
                   </div>
                 </div>
@@ -1429,7 +1429,7 @@ export function PrecedentIntelligenceDashboard({
                 </div>
                 <div className="px-3 py-2 space-y-1.5">
                   {adcomResult.votingInsights.map((v: string, i: number) => (
-                    <div key={i} className="text-xs text-zinc-600 flex items-start gap-2 p-2 bg-purple-50/30 rounded">
+                    <div key={i} className="text-xs text-stone-600 flex items-start gap-2 p-2 bg-purple-50/30 rounded">
                       <Sparkles className="w-3 h-3 text-purple-400 flex-shrink-0 mt-0.5" />
                       {v}
                     </div>

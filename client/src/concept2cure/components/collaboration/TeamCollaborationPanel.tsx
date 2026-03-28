@@ -139,7 +139,7 @@ const STATUS_CONFIG: Record<TeamMember['status'], {
   online: { color: 'bg-green-500', bgColor: 'bg-green-100', label: 'Online' },
   away: { color: 'bg-amber-500', bgColor: 'bg-amber-100', label: 'Away' },
   busy: { color: 'bg-red-500', bgColor: 'bg-red-100', label: 'Busy' },
-  offline: { color: 'bg-zinc-400', bgColor: 'bg-zinc-100', label: 'Offline' },
+  offline: { color: 'bg-stone-400', bgColor: 'bg-stone-100', label: 'Offline' },
 };
 
 const ACTIVITY_CONFIG: Record<ActivityType, {
@@ -148,7 +148,7 @@ const ACTIVITY_CONFIG: Record<ActivityType, {
   label: string;
 }> = {
   document_edit: { icon: PenTool, color: 'text-blue-600', label: 'edited' },
-  document_view: { icon: Eye, color: 'text-zinc-500', label: 'viewed' },
+  document_view: { icon: Eye, color: 'text-stone-500', label: 'viewed' },
   comment_added: { icon: MessageSquare, color: 'text-violet-600', label: 'commented on' },
   comment_resolved: { icon: CheckCircle, color: 'text-green-600', label: 'resolved comment on' },
   task_assigned: { icon: UserPlus, color: 'text-amber-600', label: 'assigned task' },
@@ -260,7 +260,7 @@ const TeamPresenceSection: React.FC<{
   return (
     <div className="p-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-zinc-900">Team</h3>
+        <h3 className="text-sm font-semibold text-stone-900">Team</h3>
         <span className="text-xs text-green-600 font-medium">
           {onlineMembers.length} online
         </span>
@@ -270,18 +270,18 @@ const TeamPresenceSection: React.FC<{
       <div className="space-y-4">
         {Object.entries(byDepartment).map(([dept, deptMembers]) => (
           <div key={dept}>
-            <p className="text-xs font-medium text-zinc-500 mb-2">{dept}</p>
+            <p className="text-xs font-medium text-stone-500 mb-2">{dept}</p>
             <div className="space-y-2">
               {deptMembers.map(member => (
                 <button
                   key={member.id}
                   onClick={() => onMemberClick?.(member)}
-                  className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-zinc-100 transition-colors text-left"
+                  className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-stone-100 transition-colors text-left"
                 >
                   <MemberAvatar member={member} size="sm" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-zinc-900 truncate">{member.name}</p>
-                    <p className="text-xs text-zinc-500 truncate">{member.role}</p>
+                    <p className="text-sm font-medium text-stone-900 truncate">{member.name}</p>
+                    <p className="text-xs text-stone-500 truncate">{member.role}</p>
                   </div>
                   {member.currentDocument && (
                     <span className="text-xs text-blue-600 truncate max-w-24">
@@ -297,14 +297,14 @@ const TeamPresenceSection: React.FC<{
       
       {/* Offline members collapsed */}
       {offlineMembers.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-zinc-200">
-          <p className="text-xs text-zinc-400 mb-2">{offlineMembers.length} offline</p>
+        <div className="mt-4 pt-4 border-t border-stone-200">
+          <p className="text-xs text-stone-400 mb-2">{offlineMembers.length} offline</p>
           <div className="flex -space-x-1">
             {offlineMembers.slice(0, 8).map(member => (
               <MemberAvatar key={member.id} member={member} size="sm" showStatus={false} />
             ))}
             {offlineMembers.length > 8 && (
-              <div className="w-6 h-6 rounded-full bg-zinc-200 flex items-center justify-center text-xs text-zinc-500 ring-2 ring-white">
+              <div className="w-6 h-6 rounded-full bg-stone-200 flex items-center justify-center text-xs text-stone-500 ring-2 ring-white">
                 +{offlineMembers.length - 8}
               </div>
             )}
@@ -313,7 +313,7 @@ const TeamPresenceSection: React.FC<{
       )}
       
       {/* Quick actions */}
-      <div className="mt-4 pt-4 border-t border-zinc-200 flex gap-2">
+      <div className="mt-4 pt-4 border-t border-stone-200 flex gap-2">
         <button
           onClick={() => onStartCall?.(onlineMembers)}
           className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-150"
@@ -321,7 +321,7 @@ const TeamPresenceSection: React.FC<{
           <Video className="w-4 h-4" />
           Start Call
         </button>
-        <button className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-zinc-600 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors duration-150">
+        <button className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-stone-600 bg-stone-100 rounded-lg hover:bg-stone-200 transition-colors duration-150">
           <Calendar className="w-4 h-4" />
           Schedule
         </button>
@@ -346,7 +346,7 @@ const ActivityFeed: React.FC<{
   
   return (
     <div className="p-4">
-      <h3 className="text-sm font-semibold text-zinc-900 mb-4">Activity</h3>
+      <h3 className="text-sm font-semibold text-stone-900 mb-4">Activity</h3>
       
       {/* My mentions */}
       {myMentions.length > 0 && (
@@ -368,15 +368,15 @@ const ActivityFeed: React.FC<{
                 >
                   <MemberAvatar member={activity.actor} size="sm" showStatus={false} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-zinc-900">
+                    <p className="text-sm text-stone-900">
                       <span className="font-medium">{activity.actor.name}</span>
                       {' '}{config.label}{' '}
                       <span className="text-pink-600">{activity.documentName || activity.taskTitle}</span>
                     </p>
                     {activity.message && (
-                      <p className="text-xs text-zinc-500 truncate mt-0.5">{activity.message}</p>
+                      <p className="text-xs text-stone-500 truncate mt-0.5">{activity.message}</p>
                     )}
-                    <p className="text-xs text-zinc-400 mt-1">{formatTimeAgo(activity.timestamp)}</p>
+                    <p className="text-xs text-stone-400 mt-1">{formatTimeAgo(activity.timestamp)}</p>
                   </div>
                 </button>
               );
@@ -395,16 +395,16 @@ const ActivityFeed: React.FC<{
             <button
               key={activity.id}
               onClick={() => onActivityClick?.(activity)}
-              className="w-full flex items-start gap-2 p-2 hover:bg-zinc-50 rounded-lg transition-colors text-left"
+              className="w-full flex items-start gap-2 p-2 hover:bg-stone-50 rounded-lg transition-colors text-left"
             >
               <MemberAvatar member={activity.actor} size="sm" showStatus={false} />
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-zinc-700">
-                  <span className="font-medium text-zinc-900">{activity.actor.name}</span>
+                <p className="text-sm text-stone-700">
+                  <span className="font-medium text-stone-900">{activity.actor.name}</span>
                   {' '}{config.label}{' '}
                   <span className="text-blue-600">{activity.documentName || activity.taskTitle}</span>
                 </p>
-                <p className="text-xs text-zinc-400">{formatTimeAgo(activity.timestamp)}</p>
+                <p className="text-xs text-stone-400">{formatTimeAgo(activity.timestamp)}</p>
               </div>
               <Icon className={cn('w-4 h-4 flex-shrink-0 mt-0.5', config.color)} />
             </button>
@@ -426,8 +426,8 @@ const ActiveSessionsSection: React.FC<{
   if (sessions.length === 0) return null;
   
   return (
-    <div className="p-4 border-t border-zinc-200">
-      <h3 className="text-sm font-semibold text-zinc-900 mb-3">Active Editing Sessions</h3>
+    <div className="p-4 border-t border-stone-200">
+      <h3 className="text-sm font-semibold text-stone-900 mb-3">Active Editing Sessions</h3>
       
       <div className="space-y-2">
         {sessions.map(session => (
@@ -491,9 +491,9 @@ export const TeamCollaborationPanel: React.FC<TeamCollaborationPanelProps> = ({
   ).length;
   
   return (
-    <div className={cn('flex flex-col h-full bg-white border-l border-zinc-200', className)}>
+    <div className={cn('flex flex-col h-full bg-white border-l border-stone-200', className)}>
       {/* Header */}
-      <div className="flex-shrink-0 border-b border-zinc-200">
+      <div className="flex-shrink-0 border-b border-stone-200">
         <div className="flex">
           <button
             onClick={() => setActiveTab('activity')}
@@ -501,7 +501,7 @@ export const TeamCollaborationPanel: React.FC<TeamCollaborationPanelProps> = ({
               'flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors duration-150',
               activeTab === 'activity'
                 ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-zinc-500 hover:text-zinc-700'
+                : 'border-transparent text-stone-500 hover:text-stone-700'
             )}
           >
             Activity
@@ -517,7 +517,7 @@ export const TeamCollaborationPanel: React.FC<TeamCollaborationPanelProps> = ({
               'flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors duration-150',
               activeTab === 'team'
                 ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-zinc-500 hover:text-zinc-700'
+                : 'border-transparent text-stone-500 hover:text-stone-700'
             )}
           >
             Team
@@ -552,15 +552,15 @@ export const TeamCollaborationPanel: React.FC<TeamCollaborationPanelProps> = ({
       </div>
       
       {/* Quick message input */}
-      <div className="flex-shrink-0 p-4 border-t border-zinc-200">
+      <div className="flex-shrink-0 p-4 border-t border-stone-200">
         <div className="relative">
           <input
             type="text"
             placeholder="Message team..."
-            className="w-full pl-4 pr-20 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+            className="w-full pl-4 pr-20 py-2 text-sm border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
           />
           <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            <button className="p-1.5 text-zinc-400 hover:text-zinc-600 transition-colors duration-150">
+            <button className="p-1.5 text-stone-400 hover:text-stone-600 transition-colors duration-150">
               <Paperclip className="w-4 h-4" />
             </button>
             <button className="p-1.5 text-blue-600 hover:text-blue-700 transition-colors duration-150">

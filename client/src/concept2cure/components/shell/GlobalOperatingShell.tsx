@@ -68,10 +68,10 @@ export function GlobalOperatingShell({
     <div className="flex-1 flex flex-col min-w-0 min-h-0 bg-[#faf9f7]">
       {showHeader && (
         <div className="h-9 border-b border-stone-200 bg-white/80 backdrop-blur-sm px-3 flex items-center gap-2">
-          <Layers className="w-3.5 h-3.5 text-zinc-500" />
-          <span className="text-xs font-medium text-zinc-700">Concept2Cure OS</span>
+          <Layers className="w-3.5 h-3.5 text-stone-500" />
+          <span className="text-xs font-medium text-stone-700">Concept2Cure OS</span>
           {activeProjectName && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-600">
               {activeProjectName}
             </span>
           )}
@@ -91,7 +91,7 @@ export function GlobalOperatingShell({
                 <button
                   type="button"
                   onClick={() => onAction('ri-copilot')}
-                  className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
+                  className="inline-flex items-center gap-1 rounded-md border border-stone-200 bg-white px-1.5 py-0.5 text-[10px] text-stone-600 hover:bg-stone-100"
                 >
                   <Brain className="w-3 h-3" />
                   RI Copilot
@@ -99,7 +99,7 @@ export function GlobalOperatingShell({
                 <button
                   type="button"
                   onClick={() => onAction('submission-builder')}
-                  className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
+                  className="inline-flex items-center gap-1 rounded-md border border-stone-200 bg-white px-1.5 py-0.5 text-[10px] text-stone-600 hover:bg-stone-100"
                 >
                   <Layers className="w-3 h-3" />
                   Submission Builder
@@ -107,7 +107,7 @@ export function GlobalOperatingShell({
                 <button
                   type="button"
                   onClick={() => onAction('cmc')}
-                  className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
+                  className="inline-flex items-center gap-1 rounded-md border border-stone-200 bg-white px-1.5 py-0.5 text-[10px] text-stone-600 hover:bg-stone-100"
                 >
                   <FlaskConical className="w-3 h-3" />
                   CMC
@@ -115,7 +115,7 @@ export function GlobalOperatingShell({
                 <button
                   type="button"
                   onClick={() => onAction('clinical-module5')}
-                  className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
+                  className="inline-flex items-center gap-1 rounded-md border border-stone-200 bg-white px-1.5 py-0.5 text-[10px] text-stone-600 hover:bg-stone-100"
                 >
                   <Microscope className="w-3 h-3" />
                   Clinical / Module 5
@@ -123,7 +123,7 @@ export function GlobalOperatingShell({
                 <button
                   type="button"
                   onClick={() => onAction('verify')}
-                  className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
+                  className="inline-flex items-center gap-1 rounded-md border border-stone-200 bg-white px-1.5 py-0.5 text-[10px] text-stone-600 hover:bg-stone-100"
                 >
                   <FileCheck className="w-3 h-3" />
                   Verify
@@ -131,7 +131,7 @@ export function GlobalOperatingShell({
                 <button
                   type="button"
                   onClick={() => onAction('review')}
-                  className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
+                  className="inline-flex items-center gap-1 rounded-md border border-stone-200 bg-white px-1.5 py-0.5 text-[10px] text-stone-600 hover:bg-stone-100"
                 >
                   <ShieldCheck className="w-3 h-3" />
                   Review
@@ -139,7 +139,7 @@ export function GlobalOperatingShell({
                 <button
                   type="button"
                   onClick={() => onAction('publish')}
-                  className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
+                  className="inline-flex items-center gap-1 rounded-md border border-stone-200 bg-white px-1.5 py-0.5 text-[10px] text-stone-600 hover:bg-stone-100"
                 >
                   <Upload className="w-3 h-3" />
                   Publish
@@ -147,7 +147,7 @@ export function GlobalOperatingShell({
                 <button
                   type="button"
                   onClick={() => onAction('haq')}
-                  className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
+                  className="inline-flex items-center gap-1 rounded-md border border-stone-200 bg-white px-1.5 py-0.5 text-[10px] text-stone-600 hover:bg-stone-100"
                 >
                   <Shield className="w-3 h-3" />
                   HAQ
@@ -155,7 +155,7 @@ export function GlobalOperatingShell({
                 <button
                   type="button"
                   onClick={() => onAction('vault')}
-                  className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] text-zinc-600 hover:bg-zinc-100"
+                  className="inline-flex items-center gap-1 rounded-md border border-stone-200 bg-white px-1.5 py-0.5 text-[10px] text-stone-600 hover:bg-stone-100"
                 >
                   <Archive className="w-3 h-3" />
                   Vault
@@ -171,8 +171,8 @@ export function GlobalOperatingShell({
                   className={cn(
                     'inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px]',
                     isActive
-                      ? 'border-zinc-300 bg-zinc-100 text-zinc-700'
-                      : 'border-zinc-200 bg-white text-zinc-400'
+                      ? 'border-stone-300 bg-stone-100 text-stone-700'
+                      : 'border-stone-200 bg-white text-stone-400'
                   )}
                 >
                   <Icon className="w-3 h-3" />

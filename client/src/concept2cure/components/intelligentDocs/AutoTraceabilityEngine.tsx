@@ -331,23 +331,23 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-medium text-zinc-500">
+                <span className="text-xs font-medium text-stone-500">
                   {config.label}
                 </span>
                 {showConfidence && (
-                  <span className="text-xs text-zinc-400">
+                  <span className="text-xs text-stone-400">
                     {Math.round(claim.detectionConfidence)}% confidence
                   </span>
                 )}
               </div>
-              <p className="text-sm font-medium text-zinc-900">
+              <p className="text-sm font-medium text-stone-900">
                 "{claim.text}"
               </p>
             </div>
           </div>
           <button
             onClick={onDismiss}
-            className="p-1 text-zinc-400 hover:text-zinc-600"
+            className="p-1 text-stone-400 hover:text-stone-600"
             data-testid={`button-dismiss-claim-${claim.id}`}
             aria-label="Dismiss claim"
           >
@@ -357,7 +357,7 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
 
         {/* Best Match */}
         {topSuggestion && (
-          <div className="mt-4 p-3 bg-white rounded-lg border border-zinc-200">
+          <div className="mt-4 p-3 bg-white rounded-lg border border-stone-200">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-medium text-green-600 flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
@@ -368,10 +368,10 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
               </span>
             </div>
 
-            <p className="text-sm font-medium text-zinc-700 mb-1">
+            <p className="text-sm font-medium text-stone-700 mb-1">
               {topSuggestion.title}
             </p>
-            <p className="text-xs text-zinc-500 italic line-clamp-2">
+            <p className="text-xs text-stone-500 italic line-clamp-2">
               "{topSuggestion.keyExcerpt}"
             </p>
 
@@ -386,7 +386,7 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
               </button>
               <button
                 onClick={() => onPreview(topSuggestion)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-zinc-600 text-sm hover:bg-zinc-100 rounded-lg transition-colors duration-150"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-stone-600 text-sm hover:bg-stone-100 rounded-lg transition-colors duration-150"
                 data-testid={`button-preview-claim-source-${claim.id}`}
               >
                 <Eye className="w-3.5 h-3.5" />
@@ -395,7 +395,7 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
               {suggestedSources.length > 1 && (
                 <button
                   onClick={() => setIsExpanded(!isExpanded)}
-                  className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 ml-auto"
+                  className="flex items-center gap-1 text-xs text-stone-500 hover:text-stone-700 ml-auto"
                   data-testid={`button-toggle-sources-${claim.id}`}
                 >
                   {isExpanded ? (
@@ -435,13 +435,13 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
           {suggestedSources.slice(1).map(source => (
             <div
               key={source.id}
-              className="flex items-center justify-between p-2 bg-white rounded-lg border border-zinc-200"
+              className="flex items-center justify-between p-2 bg-white rounded-lg border border-stone-200"
             >
               <div className="flex-1 min-w-0 mr-3">
-                <p className="text-sm text-zinc-700 truncate">
+                <p className="text-sm text-stone-700 truncate">
                   {source.title}
                 </p>
-                <p className="text-xs text-zinc-500">{source.relevanceScore}% match</p>
+                <p className="text-xs text-stone-500">{source.relevanceScore}% match</p>
               </div>
               <div className="flex items-center gap-1">
                 <button
@@ -455,7 +455,7 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
                 </button>
                 <button
                   onClick={() => onPreview(source)}
-                  className="p-1.5 text-zinc-500 hover:bg-zinc-100 rounded"
+                  className="p-1.5 text-stone-500 hover:bg-stone-100 rounded"
                   title="Preview"
                   data-testid={`button-claim-preview-source-${source.id}`}
                   aria-label="Preview source"
@@ -666,13 +666,13 @@ export const AutoTraceabilityEngine: React.FC<AutoTraceabilityEngineProps> = ({
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 rounded-xl border border-zinc-200/70 bg-white shadow-sm">
+      <div className="flex items-center justify-between p-4 rounded-xl border border-stone-200/70 bg-white shadow-sm">
         <div>
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-blue-500" />
-            <h3 className="font-semibold text-zinc-900">Auto-Traceability</h3>
+            <h3 className="font-semibold text-stone-900">Auto-Traceability</h3>
           </div>
-          <p className="text-xs text-zinc-500 mt-1">
+          <p className="text-xs text-stone-500 mt-1">
             {totalClaims} claims detected
           </p>
         </div>
@@ -703,9 +703,9 @@ export const AutoTraceabilityEngine: React.FC<AutoTraceabilityEngineProps> = ({
 
       {/* Claims List */}
       {visibleClaims.length === 0 ? (
-        <div className="text-center py-10 text-zinc-500 bg-white rounded-xl border border-zinc-200/70 shadow-sm">
+        <div className="text-center py-10 text-stone-500 bg-white rounded-xl border border-stone-200/70 shadow-sm">
           <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500" />
-          <p className="font-medium text-zinc-700">All claims sourced!</p>
+          <p className="font-medium text-stone-700">All claims sourced!</p>
           <p className="text-sm mt-1">Your document is fully traceable.</p>
         </div>
       ) : (
@@ -723,7 +723,7 @@ export const AutoTraceabilityEngine: React.FC<AutoTraceabilityEngineProps> = ({
           ))}
 
           {visibleClaims.length > 10 && (
-            <p className="text-sm text-center text-zinc-500 py-2">
+            <p className="text-sm text-center text-stone-500 py-2">
               And {visibleClaims.length - 10} more claims...
             </p>
           )}

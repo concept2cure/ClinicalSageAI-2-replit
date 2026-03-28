@@ -140,11 +140,11 @@ const InteractiveDemoPage: React.FC = () => {
       <motion.header
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between px-4 py-3 border-b border-zinc-200/60 bg-white/80 backdrop-blur-sm z-10"
+        className="flex items-center justify-between px-4 py-3 border-b border-stone-200/60 bg-white/80 backdrop-blur-sm z-10"
       >
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900 transition-colors duration-150"
+          className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900 transition-colors duration-150"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Home
@@ -152,7 +152,7 @@ const InteractiveDemoPage: React.FC = () => {
 
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-violet-500" />
-          <span className="text-sm font-semibold text-zinc-900">Interactive Demo</span>
+          <span className="text-sm font-semibold text-stone-900">Interactive Demo</span>
         </div>
 
         <button

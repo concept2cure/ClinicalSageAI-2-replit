@@ -75,7 +75,7 @@ function getNotifIcon(type: string) {
     case 'escalation':
       return <AlertTriangle className="w-3 h-3 text-red-600" />;
     default:
-      return <Bell className="w-3 h-3 text-zinc-400" />;
+      return <Bell className="w-3 h-3 text-stone-400" />;
   }
 }
 
@@ -188,7 +188,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
         onClick={() => setOpen(!open)}
         className={cn(
           'p-1 rounded relative',
-          open ? 'text-blue-600 bg-blue-50' : 'text-zinc-400 hover:text-blue-600 hover:bg-blue-50'
+          open ? 'text-blue-600 bg-blue-50' : 'text-stone-400 hover:text-blue-600 hover:bg-blue-50'
         )}
         title="Notifications"
       >
@@ -202,10 +202,10 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-72 bg-white border border-zinc-200 rounded-lg shadow-xl z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-1 w-72 bg-white border border-stone-200 rounded-lg shadow-xl z-50 overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-zinc-50/50">
-            <span className="text-xs font-semibold text-zinc-700">Notifications</span>
+          <div className="flex items-center justify-between px-3 py-2 border-b border-stone-200 bg-stone-50/50">
+            <span className="text-xs font-semibold text-stone-700">Notifications</span>
             <div className="flex items-center gap-1">
               {unreadCount > 0 && (
                 <button
@@ -220,7 +220,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
           </div>
 
           {/* Tabs */}
-          <div className="flex border-b border-zinc-200">
+          <div className="flex border-b border-stone-200">
             {(['unread', 'all'] as const).map(t => (
               <button
                 key={t}
@@ -229,7 +229,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
                   'flex-1 py-1 text-xs font-medium capitalize',
                   tab === t
                     ? 'text-blue-600 border-b-2 border-blue-600'
-                    : 'text-zinc-400 hover:text-zinc-600'
+                    : 'text-stone-400 hover:text-stone-600'
                 )}
               >
                 {t === 'unread' ? `Unread (${unreadCount})` : 'All'}
@@ -242,7 +242,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
             {loading ? (
               <LoadingState message="Loading…" size="sm" />
             ) : notifications.length === 0 ? (
-              <p className="text-xs text-zinc-400 text-center py-6">
+              <p className="text-xs text-stone-400 text-center py-6">
                 {tab === 'unread' ? 'No unread notifications' : 'No notifications'}
               </p>
             ) : (
@@ -250,16 +250,16 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
                 <div
                   key={n.notificationId}
                   className={cn(
-                    'flex items-start gap-2 px-3 py-2 border-b border-zinc-50 hover:bg-zinc-50 transition-colors group',
+                    'flex items-start gap-2 px-3 py-2 border-b border-stone-50 hover:bg-stone-50 transition-colors group',
                     n.status === 'unread' && 'bg-blue-50/30'
                   )}
                 >
                   <div className="mt-0.5 shrink-0">{getNotifIcon(n.notificationType)}</div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-zinc-900 truncate">{n.title}</p>
-                    <p className="text-xs text-zinc-500 line-clamp-2">{n.body}</p>
+                    <p className="text-xs font-medium text-stone-900 truncate">{n.title}</p>
+                    <p className="text-xs text-stone-500 line-clamp-2">{n.body}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-xs text-zinc-400">{formatTimeAgo(n.createdAt)}</span>
+                      <span className="text-xs text-stone-400">{formatTimeAgo(n.createdAt)}</span>
                       {n.severity === 'critical' && (
                         <span className="text-[7px] bg-red-100 text-red-700 px-1 rounded font-medium">
                           {tailoring.severityLabels.critical?.toUpperCase() || 'CRITICAL'}
@@ -284,7 +284,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
                           e.stopPropagation();
                           markRead(n.notificationId);
                         }}
-                        className="p-1.5 text-zinc-400 hover:text-blue-600 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+                        className="p-1.5 text-stone-400 hover:text-blue-600 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
                         title="Mark read"
                         aria-label="Mark as read"
                       >
@@ -296,7 +296,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
                         e.stopPropagation();
                         dismiss(n.notificationId);
                       }}
-                      className="p-1.5 text-zinc-400 hover:text-red-500 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+                      className="p-1.5 text-stone-400 hover:text-red-500 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
                       title="Dismiss"
                       aria-label="Dismiss notification"
                     >

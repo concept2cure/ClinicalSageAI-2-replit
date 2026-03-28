@@ -154,7 +154,7 @@ const categoryIcons: Record<ArtifactCategory, React.ElementType> = {
 };
 
 const categoryColors: Record<ArtifactCategory, string> = {
-  document: 'bg-zinc-100 text-zinc-600',
+  document: 'bg-stone-100 text-stone-600',
   interactive: 'bg-blue-50 text-blue-600',
   visualization: 'bg-emerald-50 text-emerald-600',
 };
@@ -257,10 +257,10 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
     <div className="max-w-5xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-lg font-semibold text-zinc-900">
+        <h2 className="text-lg font-semibold text-stone-900">
           Template Library
         </h2>
-        <p className="text-sm text-zinc-500 mt-1">
+        <p className="text-sm text-stone-500 mt-1">
           {filteredTemplates.length} templates for {segment} workflows. Select a template to draft with AnA RI.
         </p>
       </div>
@@ -268,12 +268,12 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
       {/* Filters */}
       <div className="flex items-center gap-3 mb-6">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
           <Input
             placeholder="Search templates, CTD sections..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 border-zinc-200 h-9 text-sm"
+            className="pl-9 border-stone-200 h-9 text-sm"
           />
         </div>
 
@@ -281,7 +281,7 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
           value={selectedCategory}
           onValueChange={(v) => setSelectedCategory(v as ArtifactCategory | 'all')}
         >
-          <SelectTrigger className="w-[140px] border-zinc-200 h-9 text-sm">
+          <SelectTrigger className="w-[140px] border-stone-200 h-9 text-sm">
             <SelectValue placeholder="Category" />
           </SelectTrigger>
           <SelectContent>
@@ -295,7 +295,7 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
           value={selectedSubmissionType}
           onValueChange={(v) => setSelectedSubmissionType(v as SubmissionType | 'all')}
         >
-          <SelectTrigger className="w-[130px] border-zinc-200 h-9 text-sm">
+          <SelectTrigger className="w-[130px] border-stone-200 h-9 text-sm">
             <SelectValue placeholder="Submission" />
           </SelectTrigger>
           <SelectContent>
@@ -309,7 +309,7 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
         </Select>
 
         {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters} className="text-zinc-400 h-9 text-sm">
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="text-stone-400 h-9 text-sm">
             <X className="h-3.5 w-3.5 mr-1" />
             Clear
           </Button>
@@ -319,7 +319,7 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
       {/* Document Templates */}
       {documentTemplates.length > 0 && (
         <div className="mb-8">
-          <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
+          <div className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3">
             Documents ({documentTemplates.length})
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -327,17 +327,17 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
               <button
                 key={t.id}
                 onClick={() => handleUse(t)}
-                className="group text-left p-4 rounded-lg border border-zinc-200 hover:border-zinc-300 bg-white transition-all duration-150"
+                className="group text-left p-4 rounded-lg border border-stone-200 hover:border-stone-300 bg-white transition-all duration-150"
               >
                 <div className="flex items-start gap-3">
                   <div className={cn('p-1.5 rounded-md flex-shrink-0', categoryColors[t.category])}>
                     <FileText className="h-3.5 w-3.5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-zinc-900 group-hover:text-zinc-700 truncate">
+                    <div className="text-sm font-medium text-stone-900 group-hover:text-stone-700 truncate">
                       {t.name}
                     </div>
-                    <div className="text-xs text-zinc-500 line-clamp-2 mt-0.5">
+                    <div className="text-xs text-stone-500 line-clamp-2 mt-0.5">
                       {t.description}
                     </div>
                     <div className="flex items-center gap-2 mt-2">
@@ -347,17 +347,17 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
                         </Badge>
                       )}
                       {t.submissionTypes.slice(0, 3).map((st) => (
-                        <Badge key={st} variant="outline" className="text-xs px-1 py-0 border-zinc-200 text-zinc-400">
+                        <Badge key={st} variant="outline" className="text-xs px-1 py-0 border-stone-200 text-stone-400">
                           {st}
                         </Badge>
                       ))}
-                      <span className="text-xs text-zinc-400 ml-auto flex items-center gap-0.5">
+                      <span className="text-xs text-stone-400 ml-auto flex items-center gap-0.5">
                         <Download className="h-2.5 w-2.5" />
                         {t.usageCount.toLocaleString()}
                       </span>
                     </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-zinc-400 group-hover:text-zinc-500 flex-shrink-0 mt-1 transition-colors duration-150" />
+                  <ArrowRight className="h-4 w-4 text-stone-400 group-hover:text-stone-500 flex-shrink-0 mt-1 transition-colors duration-150" />
                 </div>
               </button>
             ))}
@@ -368,7 +368,7 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
       {/* Interactive Tools */}
       {interactiveTemplates.length > 0 && (
         <div className="mb-8">
-          <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
+          <div className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3">
             Interactive Tools ({interactiveTemplates.length})
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -376,21 +376,21 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
               <button
                 key={t.id}
                 onClick={() => handleUse(t)}
-                className="group text-left p-4 rounded-lg border border-zinc-200 hover:border-blue-200 bg-white transition-all duration-150"
+                className="group text-left p-4 rounded-lg border border-stone-200 hover:border-blue-200 bg-white transition-all duration-150"
               >
                 <div className="flex items-start gap-3">
                   <div className={cn('p-1.5 rounded-md flex-shrink-0', categoryColors[t.category])}>
                     <Workflow className="h-3.5 w-3.5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-zinc-900 group-hover:text-blue-700 truncate">
+                    <div className="text-sm font-medium text-stone-900 group-hover:text-blue-700 truncate">
                       {t.name}
                     </div>
-                    <div className="text-xs text-zinc-500 line-clamp-2 mt-0.5">
+                    <div className="text-xs text-stone-500 line-clamp-2 mt-0.5">
                       {t.description}
                     </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-zinc-400 group-hover:text-blue-500 flex-shrink-0 mt-1 transition-colors duration-150" />
+                  <ArrowRight className="h-4 w-4 text-stone-400 group-hover:text-blue-500 flex-shrink-0 mt-1 transition-colors duration-150" />
                 </div>
               </button>
             ))}
@@ -401,28 +401,28 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
       {/* Empty state */}
       {filteredTemplates.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Filter className="h-10 w-10 text-zinc-200 mb-4" />
-          <h3 className="text-sm font-medium text-zinc-900 mb-1">No templates found</h3>
-          <p className="text-xs text-zinc-500 mb-4">Try adjusting your filters.</p>
-          <Button variant="outline" size="sm" onClick={clearFilters} className="border-zinc-200 text-sm">
+          <Filter className="h-10 w-10 text-stone-200 mb-4" />
+          <h3 className="text-sm font-medium text-stone-900 mb-1">No templates found</h3>
+          <p className="text-xs text-stone-500 mb-4">Try adjusting your filters.</p>
+          <Button variant="outline" size="sm" onClick={clearFilters} className="border-stone-200 text-sm">
             Clear filters
           </Button>
         </div>
       )}
 
       {/* Quick draft CTA */}
-      <div className="mt-6 p-4 rounded-lg border border-dashed border-zinc-200 bg-zinc-50/50 text-center">
-        <Sparkles className="h-5 w-5 text-zinc-400 mx-auto mb-2" />
-        <p className="text-sm font-medium text-zinc-700 mb-1">
+      <div className="mt-6 p-4 rounded-lg border border-dashed border-stone-200 bg-stone-50/50 text-center">
+        <Sparkles className="h-5 w-5 text-stone-400 mx-auto mb-2" />
+        <p className="text-sm font-medium text-stone-700 mb-1">
           Don't see what you need?
         </p>
-        <p className="text-xs text-zinc-500 mb-3">
+        <p className="text-xs text-stone-500 mb-3">
           Ask AnA RI to draft any regulatory document — just describe what you need in the chat.
         </p>
         <Button
           variant="outline"
           size="sm"
-          className="border-zinc-200 text-sm"
+          className="border-stone-200 text-sm"
           onClick={() => onUseTemplate(undefined)}
         >
           Open Co-Author

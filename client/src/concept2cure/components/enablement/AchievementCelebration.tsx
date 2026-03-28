@@ -64,23 +64,23 @@ function AchievementToast({ type, title, description, progress, onDismiss }: Ach
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 8 }}
       transition={{ duration: 0.15 }}
-      className="w-72 bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden"
+      className="w-72 bg-white border border-stone-200 rounded-lg shadow-sm overflow-hidden"
     >
       <div className="p-3 flex gap-3">
-        <span className="text-zinc-400 text-sm mt-0.5 flex-shrink-0">{icon}</span>
+        <span className="text-stone-400 text-sm mt-0.5 flex-shrink-0">{icon}</span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-zinc-900">{title}</p>
+            <p className="text-sm font-medium text-stone-900">{title}</p>
             <button
               onClick={onDismiss}
-              className="text-zinc-400 hover:text-zinc-600 transition-colors ml-2 flex-shrink-0"
+              className="text-stone-400 hover:text-stone-600 transition-colors ml-2 flex-shrink-0"
             >
               <X className="w-3 h-3" />
             </button>
           </div>
-          <p className="text-xs text-zinc-500 mt-0.5">{description}</p>
+          <p className="text-xs text-stone-500 mt-0.5">{description}</p>
           {progress && (
-            <p className="text-xs text-zinc-400 mt-1">
+            <p className="text-xs text-stone-400 mt-1">
               {progress.current} of {progress.total}
             </p>
           )}

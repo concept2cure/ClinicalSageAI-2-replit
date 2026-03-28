@@ -36,7 +36,7 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.05 }}
-          className="text-4xl sm:text-5xl md:text-6xl font-bold text-zinc-900 leading-[1.1] tracking-tight mb-6"
+          className="text-4xl sm:text-5xl md:text-6xl font-bold text-stone-900 leading-[1.1] tracking-tight mb-6"
         >
           From research to submission
           <br />
@@ -47,7 +47,7 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="text-lg text-zinc-600 max-w-2xl mx-auto mb-10 leading-relaxed"
+          className="text-lg text-stone-600 max-w-2xl mx-auto mb-10 leading-relaxed"
         >
           Concept2Cure unifies deep research, document authoring, eCTD assembly, and compliance into
           one AI-native platform — built for FDA, EMA, PMDA, and NMPA submissions.
@@ -68,7 +68,7 @@ export function HeroSection() {
           </button>
           <button
             onClick={() => setLocation('/concept2cure/signup')}
-            className="group px-8 py-3.5 text-base font-medium text-zinc-700 bg-white hover:bg-zinc-50 border border-zinc-200 rounded-xl transition-all flex items-center gap-2"
+            className="group px-8 py-3.5 text-base font-medium text-stone-700 bg-white hover:bg-stone-50 border border-stone-200 rounded-xl transition-all flex items-center gap-2"
           >
             Start Free Trial
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -79,7 +79,7 @@ export function HeroSection() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.2 }}
-          className="text-sm text-zinc-400"
+          className="text-sm text-stone-400"
         >
           No credit card required &middot; 14-day trial &middot; 21 CFR Part 11 compliant
         </motion.p>
@@ -89,7 +89,7 @@ export function HeroSection() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.3 }}
-          className="mt-16 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-zinc-500"
+          className="mt-16 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-stone-500"
         >
           {[
             { flag: '\u{1F1FA}\u{1F1F8}', agency: 'FDA' },
@@ -101,7 +101,7 @@ export function HeroSection() {
           ].map(m => (
             <span key={m.agency} className="flex items-center gap-1.5">
               <span aria-hidden="true">{m.flag}</span>
-              <span className="font-medium text-zinc-700">{m.agency}</span>
+              <span className="font-medium text-stone-700">{m.agency}</span>
             </span>
           ))}
         </motion.div>

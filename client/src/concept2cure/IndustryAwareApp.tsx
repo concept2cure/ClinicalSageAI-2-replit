@@ -194,23 +194,23 @@ const Sidebar: React.FC<{
   return (
     <div
       className={cn(
-        'flex flex-col h-full bg-white border-r border-zinc-200 transition-all duration-300',
+        'flex flex-col h-full bg-white border-r border-stone-200 transition-all duration-300',
         collapsed ? 'w-16' : 'w-64'
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-zinc-200">
+      <div className="flex items-center justify-between p-4 border-b border-stone-200">
         {!collapsed && (
           <div className="flex items-center gap-2">
             <div className={cn('p-2 rounded-lg bg-blue-600')}>
               <Sparkles className="w-5 h-5 text-white" />
             </div>
-            <span className="font-semibold text-zinc-900">Concept2Cure</span>
+            <span className="font-semibold text-stone-900">Concept2Cure</span>
           </div>
         )}
         <button
           onClick={onToggleCollapse}
-          className="p-2 rounded-lg hover:bg-zinc-100 transition-colors duration-150"
+          className="p-2 rounded-lg hover:bg-stone-100 transition-colors duration-150"
         >
           {collapsed ? <Menu className="w-5 h-5" /> : <X className="w-5 h-5" />}
         </button>
@@ -248,7 +248,7 @@ const Sidebar: React.FC<{
               onClick={() => onViewChange(view.id)}
               className={cn(
                 'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-150',
-                isActive ? 'bg-blue-50 text-blue-600' : 'text-zinc-600 hover:bg-zinc-100'
+                isActive ? 'bg-blue-50 text-blue-600' : 'text-stone-600 hover:bg-stone-100'
               )}
               title={collapsed ? view.label : undefined}
             >
@@ -261,8 +261,8 @@ const Sidebar: React.FC<{
 
       {/* RI Assistant */}
       {!collapsed && (
-        <div className="p-4 border-t border-zinc-200">
-          <button className="w-full flex items-center gap-3 px-4 py-3 bg-zinc-900 text-white rounded-lg hover:opacity-90 transition-opacity">
+        <div className="p-4 border-t border-stone-200">
+          <button className="w-full flex items-center gap-3 px-4 py-3 bg-stone-900 text-white rounded-lg hover:opacity-90 transition-opacity">
             <MessageSquare className="w-5 h-5" />
             <span className="text-sm font-medium">Ask RI</span>
           </button>
@@ -270,25 +270,25 @@ const Sidebar: React.FC<{
       )}
 
       {/* User */}
-      <div className="p-4 border-t border-zinc-200">
+      <div className="p-4 border-t border-stone-200">
         {collapsed ? (
-          <div className="w-10 h-10 mx-auto rounded-full bg-zinc-200 flex items-center justify-center">
-            <span className="text-sm font-medium text-zinc-600">U</span>
+          <div className="w-10 h-10 mx-auto rounded-full bg-stone-200 flex items-center justify-center">
+            <span className="text-sm font-medium text-stone-600">U</span>
           </div>
         ) : (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-zinc-200 flex items-center justify-center">
-                <span className="text-sm font-medium text-zinc-600">U</span>
+              <div className="w-10 h-10 rounded-full bg-stone-200 flex items-center justify-center">
+                <span className="text-sm font-medium text-stone-600">U</span>
               </div>
               <div>
-                <p className="text-sm font-medium text-zinc-900">User Name</p>
-                <p className="text-xs text-zinc-500 capitalize">
+                <p className="text-sm font-medium text-stone-900">User Name</p>
+                <p className="text-xs text-stone-500 capitalize">
                   {config.primaryRole.replace(/_/g, ' ')}
                 </p>
               </div>
             </div>
-            <button className="p-2 text-zinc-400 hover:text-zinc-600 transition-colors duration-150">
+            <button className="p-2 text-stone-400 hover:text-stone-600 transition-colors duration-150">
               <LogOut className="w-4 h-4" />
             </button>
           </div>
@@ -309,24 +309,24 @@ const Header: React.FC<{
   const industryConfig = INDUSTRY_CONFIG[config.industryMode];
 
   return (
-    <header className="h-14 bg-white border-b border-zinc-200 flex items-center justify-between px-6">
+    <header className="h-14 bg-white border-b border-stone-200 flex items-center justify-between px-6">
       <div className="flex items-center gap-4">
-        <h1 className="text-lg font-semibold text-zinc-900">{industryConfig.dashboardTitle}</h1>
+        <h1 className="text-lg font-semibold text-stone-900">{industryConfig.dashboardTitle}</h1>
       </div>
 
       <div className="flex items-center gap-4">
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
           <input
             type="text"
             placeholder="Search..."
-            className="pl-9 pr-4 py-2 w-64 text-sm bg-zinc-100 border-none rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+            className="pl-9 pr-4 py-2 w-64 text-sm bg-stone-100 border-none rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
           />
         </div>
 
         {/* Notifications */}
-        <button className="relative p-2 text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors duration-150">
+        <button className="relative p-2 text-stone-600 hover:bg-stone-100 rounded-lg transition-colors duration-150">
           <Bell className="w-5 h-5" />
           {notifications > 0 && (
             <span className="absolute top-1 right-1 w-4 h-4 text-xs font-semibold bg-red-500 text-white rounded-full flex items-center justify-center">
@@ -336,7 +336,7 @@ const Header: React.FC<{
         </button>
 
         {/* Help */}
-        <button className="p-2 text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors duration-150">
+        <button className="p-2 text-stone-600 hover:bg-stone-100 rounded-lg transition-colors duration-150">
           <MessageSquare className="w-5 h-5" />
         </button>
       </div>
@@ -399,7 +399,7 @@ export const IndustryAwareApp: React.FC = () => {
       default:
         return (
           <div className="flex items-center justify-center h-full">
-            <p className="text-zinc-500">Dashboard not available</p>
+            <p className="text-stone-500">Dashboard not available</p>
           </div>
         );
     }
@@ -416,10 +416,10 @@ export const IndustryAwareApp: React.FC = () => {
         return <ClinicalDocAuthoringWorkspace documents={[]} onDocumentSelect={() => {}} />;
       case 'settings':
         return (
-          <div className="flex items-center justify-center h-full bg-zinc-50">
+          <div className="flex items-center justify-center h-full bg-stone-50">
             <div className="text-center">
-              <Settings className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
-              <p className="text-zinc-500">Settings workspace</p>
+              <Settings className="w-12 h-12 text-stone-400 mx-auto mb-3" />
+              <p className="text-stone-500">Settings workspace</p>
             </div>
           </div>
         );
@@ -429,7 +429,7 @@ export const IndustryAwareApp: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-zinc-50">
+    <div className="flex h-screen bg-stone-50">
       {/* Sidebar */}
       <Sidebar
         config={state.config}

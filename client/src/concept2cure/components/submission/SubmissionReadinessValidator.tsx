@@ -295,9 +295,9 @@ function StatusIcon({ status }: { status: CheckStatus }) {
     case 'warning':
       return <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />;
     case 'not-applicable':
-      return <div className="w-4 h-4 rounded-full bg-zinc-200 shrink-0" />;
+      return <div className="w-4 h-4 rounded-full bg-stone-200 shrink-0" />;
     default:
-      return <Loader2 className="w-4 h-4 text-zinc-400 animate-spin shrink-0" />;
+      return <Loader2 className="w-4 h-4 text-stone-400 animate-spin shrink-0" />;
   }
 }
 
@@ -376,13 +376,13 @@ export function SubmissionReadinessValidator({
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
+      <div className="px-4 py-3 border-b border-stone-200 bg-stone-50">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-blue-600" />
             <div>
-              <h2 className="text-sm font-semibold text-zinc-900">Submission Readiness</h2>
-              <p className="text-[10px] text-zinc-500">
+              <h2 className="text-sm font-semibold text-stone-900">Submission Readiness</h2>
+              <p className="text-[10px] text-stone-500">
                 eCTD Validation — {submissionType || 'NDA'}
               </p>
             </div>
@@ -399,7 +399,7 @@ export function SubmissionReadinessValidator({
 
         {/* Score bar */}
         <div className="flex items-center gap-3">
-          <div className="flex-1 bg-zinc-200 rounded-full h-2 overflow-hidden">
+          <div className="flex-1 bg-stone-200 rounded-full h-2 overflow-hidden">
             <div
               className={cn(
                 'h-full rounded-full transition-all duration-500',
@@ -419,19 +419,19 @@ export function SubmissionReadinessValidator({
         <div className="grid grid-cols-4 gap-2 mt-2">
           <div className="text-center">
             <div className="text-lg font-semibold text-emerald-600 tabular-nums">{stats.pass}</div>
-            <div className="text-[10px] text-zinc-400">Pass</div>
+            <div className="text-[10px] text-stone-400">Pass</div>
           </div>
           <div className="text-center">
             <div className="text-lg font-semibold text-red-600 tabular-nums">{stats.fail}</div>
-            <div className="text-[10px] text-zinc-400">Fail</div>
+            <div className="text-[10px] text-stone-400">Fail</div>
           </div>
           <div className="text-center">
             <div className="text-lg font-semibold text-amber-600 tabular-nums">{stats.warning}</div>
-            <div className="text-[10px] text-zinc-400">Warn</div>
+            <div className="text-[10px] text-stone-400">Warn</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-semibold text-zinc-400 tabular-nums">{stats.na}</div>
-            <div className="text-[10px] text-zinc-400">N/A</div>
+            <div className="text-lg font-semibold text-stone-400 tabular-nums">{stats.na}</div>
+            <div className="text-[10px] text-stone-400">N/A</div>
           </div>
         </div>
       </div>
@@ -444,18 +444,18 @@ export function SubmissionReadinessValidator({
           const modWarn = mod.checks.filter(c => c.status === 'warning').length;
 
           return (
-            <div key={mod.module} className="border-b border-zinc-100">
+            <div key={mod.module} className="border-b border-stone-100">
               {/* Module header */}
               <button
                 onClick={() => toggleModule(mod.module)}
-                className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-zinc-50 transition-colors duration-150"
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-stone-50 transition-colors duration-150"
               >
                 {mod.expanded ? (
-                  <ChevronDown className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                  <ChevronDown className="w-3.5 h-3.5 text-stone-400 shrink-0" />
                 ) : (
-                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                  <ChevronRight className="w-3.5 h-3.5 text-stone-400 shrink-0" />
                 )}
-                <span className="text-xs font-semibold text-zinc-700 flex-1">{mod.label}</span>
+                <span className="text-xs font-semibold text-stone-700 flex-1">{mod.label}</span>
                 <div className="flex items-center gap-1.5 text-[10px]">
                   {modFail > 0 && (
                     <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-medium">
@@ -485,17 +485,17 @@ export function SubmissionReadinessValidator({
                         'flex items-start gap-2 px-3 py-2 rounded-lg text-xs',
                         check.status === 'fail' && 'bg-red-50',
                         check.status === 'warning' && 'bg-amber-50',
-                        check.status === 'pass' && 'bg-zinc-50',
-                        check.status === 'not-applicable' && 'bg-zinc-50 opacity-60',
+                        check.status === 'pass' && 'bg-stone-50',
+                        check.status === 'not-applicable' && 'bg-stone-50 opacity-60',
                       )}
                     >
                       <StatusIcon status={check.status} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
                           <CategoryIcon category={check.category} />
-                          <span className="font-medium text-zinc-700 truncate">{check.label}</span>
+                          <span className="font-medium text-stone-700 truncate">{check.label}</span>
                         </div>
-                        <p className="text-zinc-500 mt-0.5 leading-relaxed">{check.description}</p>
+                        <p className="text-stone-500 mt-0.5 leading-relaxed">{check.description}</p>
                       </div>
                       {check.autoFixable && (
                         <button
@@ -519,15 +519,15 @@ export function SubmissionReadinessValidator({
       </div>
 
       {/* Footer actions */}
-      <div className="px-4 py-3 border-t border-zinc-200 bg-zinc-50 flex items-center justify-between">
-        <div className="text-[10px] text-zinc-400">
+      <div className="px-4 py-3 border-t border-stone-200 bg-stone-50 flex items-center justify-between">
+        <div className="text-[10px] text-stone-400">
           {stats.total} checks across {validationResults.length} modules
         </div>
         <div className="flex items-center gap-2">
           {onClose && (
             <button
               onClick={onClose}
-              className="px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-700 transition-colors duration-150"
+              className="px-3 py-1.5 text-xs text-stone-500 hover:text-stone-700 transition-colors duration-150"
             >
               Close
             </button>

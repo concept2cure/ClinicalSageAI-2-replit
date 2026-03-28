@@ -219,24 +219,24 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-zinc-50">
+    <div className="flex-1 flex flex-col min-h-0 bg-stone-50">
       {/* Header */}
-      <div className="shrink-0 border-b border-zinc-100 bg-white px-6 py-4">
+      <div className="shrink-0 border-b border-stone-100 bg-white px-6 py-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-rose-100 rounded-lg flex items-center justify-center">
             <Shield className="w-4 h-4 text-rose-600" aria-hidden="true" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-zinc-900">Safety Narrative Generator</h1>
-            <p className="text-xs text-zinc-500">ICH E3 · CIOMS · FDA/EMA regulatory frameworks · AI-assisted authoring</p>
+            <h1 className="text-lg font-semibold text-stone-900">Safety Narrative Generator</h1>
+            <p className="text-xs text-stone-500">ICH E3 · CIOMS · FDA/EMA regulatory frameworks · AI-assisted authoring</p>
           </div>
         </div>
       </div>
 
       <div className="flex-1 flex min-h-0">
         {/* Left: Narrative Type Selector */}
-        <div className="w-80 shrink-0 border-r border-zinc-100 bg-white p-4 overflow-y-auto">
-          <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-3">Narrative Type</p>
+        <div className="w-80 shrink-0 border-r border-stone-100 bg-white p-4 overflow-y-auto">
+          <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wider mb-3">Narrative Type</p>
           <nav className="space-y-2" aria-label="Narrative types">
             {NARRATIVE_TYPES.map((nt, i) => (
               <motion.button
@@ -249,27 +249,27 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
                 className={`w-full text-left p-3 rounded-lg border transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-violet-300 focus:ring-offset-1 ${
                   selectedType === nt.type
                     ? 'border-violet-300 bg-violet-50 shadow-sm'
-                    : 'border-zinc-100 hover:border-zinc-200 hover:bg-zinc-50/50'
+                    : 'border-stone-100 hover:border-stone-200 hover:bg-stone-50/50'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-1">
                   {nt.icon}
-                  <span className="text-sm font-medium text-zinc-800">{nt.label}</span>
+                  <span className="text-sm font-medium text-stone-800">{nt.label}</span>
                 </div>
-                <p className="text-xs text-zinc-500 ml-6">{nt.description}</p>
+                <p className="text-xs text-stone-500 ml-6">{nt.description}</p>
               </motion.button>
             ))}
           </nav>
 
           {/* Quick help */}
-          <div className="mt-6 p-3 bg-zinc-50 rounded-lg border border-zinc-100">
-            <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-2">Quick Guide</p>
-            <div className="space-y-1.5 text-xs text-zinc-500">
-              <p><strong className="text-zinc-600">Aggregate</strong> — Full TEAE summary per ICH E3 §12</p>
-              <p><strong className="text-zinc-600">SAE</strong> — Individual case for CIOMS/MedWatch</p>
-              <p><strong className="text-zinc-600">Benefit-Risk</strong> — FDA/EMA framework assessment</p>
-              <p><strong className="text-zinc-600">Signal</strong> — CIOMS/ICH E2E signal evaluation</p>
-              <p><strong className="text-zinc-600">Cross-Study</strong> — Integrated ISS/ISE safety</p>
+          <div className="mt-6 p-3 bg-stone-50 rounded-lg border border-stone-100">
+            <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wider mb-2">Quick Guide</p>
+            <div className="space-y-1.5 text-xs text-stone-500">
+              <p><strong className="text-stone-600">Aggregate</strong> — Full TEAE summary per ICH E3 §12</p>
+              <p><strong className="text-stone-600">SAE</strong> — Individual case for CIOMS/MedWatch</p>
+              <p><strong className="text-stone-600">Benefit-Risk</strong> — FDA/EMA framework assessment</p>
+              <p><strong className="text-stone-600">Signal</strong> — CIOMS/ICH E2E signal evaluation</p>
+              <p><strong className="text-stone-600">Cross-Study</strong> — Integrated ISS/ISE safety</p>
             </div>
           </div>
         </div>
@@ -279,8 +279,8 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
           <AnimatePresence mode="wait">
             <motion.div key={selectedType} {...fade} className="space-y-6">
               {/* Form */}
-              <div className="bg-white rounded-lg border border-zinc-100 p-5">
-                <h3 className="text-sm font-semibold text-zinc-800 mb-4 flex items-center gap-2">
+              <div className="bg-white rounded-lg border border-stone-100 p-5">
+                <h3 className="text-sm font-semibold text-stone-800 mb-4 flex items-center gap-2">
                   {config.icon}
                   {config.label}
                 </h3>
@@ -290,7 +290,7 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
                     <div key={field.key} className={field.type === 'textarea' ? 'col-span-2' : ''}>
                       <label
                         htmlFor={`field-${field.key}`}
-                        className="block text-xs font-medium text-zinc-600 mb-1"
+                        className="block text-xs font-medium text-stone-600 mb-1"
                       >
                         {field.label}
                         {field.required && <span className="text-red-400 ml-0.5" aria-label="required">*</span>}
@@ -303,7 +303,7 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
                           placeholder={field.placeholder}
                           aria-required={field.required}
                           rows={4}
-                          className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400 placeholder:text-zinc-300"
+                          className="w-full px-3 py-2 text-sm border border-stone-200 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400 placeholder:text-stone-300"
                         />
                       ) : field.type === 'select' ? (
                         <select
@@ -311,7 +311,7 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
                           value={formData[field.key] || ''}
                           onChange={e => setFormData(prev => ({ ...prev, [field.key]: e.target.value }))}
                           aria-required={field.required}
-                          className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+                          className="w-full px-3 py-2 text-sm border border-stone-200 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
                         >
                           <option value="">Select...</option>
                           {field.options?.map(opt => (
@@ -326,7 +326,7 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
                           onChange={e => setFormData(prev => ({ ...prev, [field.key]: e.target.value }))}
                           placeholder={field.placeholder}
                           aria-required={field.required}
-                          className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400 placeholder:text-zinc-300"
+                          className="w-full px-3 py-2 text-sm border border-stone-200 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400 placeholder:text-stone-300"
                         />
                       )}
                     </div>
@@ -386,10 +386,10 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.25 }}
-                    className="bg-white rounded-lg border border-zinc-100 p-5"
+                    className="bg-white rounded-lg border border-stone-100 p-5"
                   >
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-sm font-semibold text-zinc-800 flex items-center gap-2">
+                      <h3 className="text-sm font-semibold text-stone-800 flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-emerald-500" aria-hidden="true" />
                         Generated Narrative
                       </h3>
@@ -397,7 +397,7 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
                         <button
                           onClick={handleCopy}
                           aria-label={copied ? 'Copied to clipboard' : 'Copy narrative to clipboard'}
-                          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-zinc-600 bg-zinc-50 rounded-md hover:bg-zinc-100 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-300"
+                          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-stone-600 bg-stone-50 rounded-md hover:bg-stone-100 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-300"
                         >
                           {copied ? (
                             <>
@@ -422,7 +422,7 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
                     </div>
 
                     {/* Word count + meta */}
-                    <div className="flex items-center gap-3 mb-3 text-[10px] text-zinc-400">
+                    <div className="flex items-center gap-3 mb-3 text-[10px] text-stone-400">
                       <span>{result.split(/\s+/).length} words</span>
                       <span aria-hidden="true">·</span>
                       <span>{result.length} characters</span>
@@ -430,7 +430,7 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
                       <span>Generated {new Date().toLocaleTimeString()}</span>
                     </div>
 
-                    <div className="prose prose-sm max-w-none text-zinc-700 whitespace-pre-wrap leading-relaxed border-t border-zinc-100 pt-4">
+                    <div className="prose prose-sm max-w-none text-stone-700 whitespace-pre-wrap leading-relaxed border-t border-stone-100 pt-4">
                       {result}
                     </div>
                   </motion.div>
@@ -439,10 +439,10 @@ export default function SafetyNarrative({ projectId }: SafetyNarrativeProps) {
 
               {/* Placeholder when no result */}
               {!result && !generating && !error && (
-                <div className="bg-white rounded-lg border border-zinc-100 py-16 text-center">
-                  <Sparkles className="w-8 h-8 text-zinc-200 mx-auto mb-3" aria-hidden="true" />
-                  <p className="text-sm text-zinc-500">Fill in the form above and click Generate</p>
-                  <p className="text-xs text-zinc-400 mt-1">
+                <div className="bg-white rounded-lg border border-stone-100 py-16 text-center">
+                  <Sparkles className="w-8 h-8 text-stone-200 mx-auto mb-3" aria-hidden="true" />
+                  <p className="text-sm text-stone-500">Fill in the form above and click Generate</p>
+                  <p className="text-xs text-stone-400 mt-1">
                     Ana will produce an ICH-compliant narrative tailored to your inputs
                   </p>
                 </div>

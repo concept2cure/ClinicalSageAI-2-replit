@@ -333,7 +333,7 @@ const SOPList: React.FC<SOPListProps> = ({ sops, onSelect, onEdit }) => {
       {/* Filters */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
           <Input
             placeholder="Search SOPs..."
             value={searchQuery}
@@ -369,7 +369,7 @@ const SOPList: React.FC<SOPListProps> = ({ sops, onSelect, onEdit }) => {
       <div className="border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-zinc-50">
+            <TableRow className="bg-stone-50">
               <TableHead className="w-[140px]">Document #</TableHead>
               <TableHead>Title</TableHead>
               <TableHead className="w-[100px]">Version</TableHead>
@@ -387,7 +387,7 @@ const SOPList: React.FC<SOPListProps> = ({ sops, onSelect, onEdit }) => {
               return (
                 <TableRow
                   key={sop.id}
-                  className="cursor-pointer hover:bg-zinc-50"
+                  className="cursor-pointer hover:bg-stone-50"
                   onClick={() => onSelect(sop)}
                 >
                   <TableCell className="font-mono text-sm">{sop.documentNumber}</TableCell>
@@ -408,17 +408,17 @@ const SOPList: React.FC<SOPListProps> = ({ sops, onSelect, onEdit }) => {
                       {STATUS_CONFIG[sop.status].label}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-sm text-zinc-500">{formatDate(sop.reviewDate)}</TableCell>
+                  <TableCell className="text-sm text-stone-500">{formatDate(sop.reviewDate)}</TableCell>
                   <TableCell>
                     {sop.trainingRequired ? (
                       <div className="flex items-center gap-2">
                         <Progress value={trainingPercent} className="h-1.5 w-12" />
-                        <span className="text-xs text-zinc-500">
+                        <span className="text-xs text-stone-500">
                           {sop.trainedPersonnel.length}/{sop.totalRequiredTrainees}
                         </span>
                       </div>
                     ) : (
-                      <span className="text-xs text-zinc-400">N/A</span>
+                      <span className="text-xs text-stone-400">N/A</span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -456,7 +456,7 @@ const SOPList: React.FC<SOPListProps> = ({ sops, onSelect, onEdit }) => {
       </div>
 
       {filteredSOPs.length === 0 && (
-        <div className="text-center py-8 text-sm text-zinc-500">
+        <div className="text-center py-8 text-sm text-stone-500">
           No SOPs found matching your criteria
         </div>
       )}
@@ -494,28 +494,28 @@ const TrainingMatrix: React.FC<TrainingMatrixProps> = ({ records, onAcknowledge 
     <div className="space-y-4">
       {/* Stats */}
       <div className="grid grid-cols-4 gap-3">
-        <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-zinc-300" onClick={() => setFilterStatus('all')}>
+        <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-stone-300" onClick={() => setFilterStatus('all')}>
           <div className="px-3 py-2 p-3 text-center">
-            <p className="text-2xl font-semibold text-zinc-900">{stats.total}</p>
-            <p className="text-xs text-zinc-500">Total</p>
+            <p className="text-2xl font-semibold text-stone-900">{stats.total}</p>
+            <p className="text-xs text-stone-500">Total</p>
           </div>
         </div>
         <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-green-300" onClick={() => setFilterStatus('completed')}>
           <div className="px-3 py-2 p-3 text-center">
             <p className="text-2xl font-semibold text-green-600">{stats.completed}</p>
-            <p className="text-xs text-zinc-500">Completed</p>
+            <p className="text-xs text-stone-500">Completed</p>
           </div>
         </div>
         <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-amber-300" onClick={() => setFilterStatus('pending')}>
           <div className="px-3 py-2 p-3 text-center">
             <p className="text-2xl font-semibold text-amber-600">{stats.pending}</p>
-            <p className="text-xs text-zinc-500">Pending</p>
+            <p className="text-xs text-stone-500">Pending</p>
           </div>
         </div>
         <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-red-300" onClick={() => setFilterStatus('overdue')}>
           <div className="px-3 py-2 p-3 text-center">
             <p className="text-2xl font-semibold text-red-600">{stats.overdue}</p>
-            <p className="text-xs text-zinc-500">Overdue</p>
+            <p className="text-xs text-stone-500">Overdue</p>
           </div>
         </div>
       </div>
@@ -524,7 +524,7 @@ const TrainingMatrix: React.FC<TrainingMatrixProps> = ({ records, onAcknowledge 
       <div className="border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-zinc-50">
+            <TableRow className="bg-stone-50">
               <TableHead>Employee</TableHead>
               <TableHead>Department</TableHead>
               <TableHead>SOP</TableHead>
@@ -537,10 +537,10 @@ const TrainingMatrix: React.FC<TrainingMatrixProps> = ({ records, onAcknowledge 
             {filteredRecords.map(record => (
               <TableRow key={record.id}>
                 <TableCell className="font-medium">{record.userName}</TableCell>
-                <TableCell className="text-sm text-zinc-500">{record.department}</TableCell>
+                <TableCell className="text-sm text-stone-500">{record.department}</TableCell>
                 <TableCell>
                   <div>
-                    <span className="font-mono text-xs text-zinc-500">{record.sopNumber}</span>
+                    <span className="font-mono text-xs text-stone-500">{record.sopNumber}</span>
                     <p className="text-sm">{record.sopTitle}</p>
                   </div>
                 </TableCell>
@@ -629,8 +629,8 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
             <BookOpen className="h-5 w-5 text-green-600" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-zinc-900">SOP Management</h1>
-            <p className="text-xs text-zinc-500">Document control and training tracking</p>
+            <h1 className="text-lg font-semibold text-stone-900">SOP Management</h1>
+            <p className="text-xs text-stone-500">Document control and training tracking</p>
           </div>
         </div>
         <Button onClick={() => setShowNewSOPDialog(true)}>
@@ -640,15 +640,15 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-4 gap-3 p-4 bg-zinc-50 border-b">
+      <div className="grid grid-cols-4 gap-3 p-4 bg-stone-50 border-b">
         <div className="border border-border/40 rounded-sm bg-background">
           <div className="px-3 py-2 p-3 flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
               <FileText className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-2xl font-semibold text-zinc-900">{stats.total}</p>
-              <p className="text-xs text-zinc-500">Total SOPs</p>
+              <p className="text-2xl font-semibold text-stone-900">{stats.total}</p>
+              <p className="text-xs text-stone-500">Total SOPs</p>
             </div>
           </div>
         </div>
@@ -659,7 +659,7 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
             </div>
             <div>
               <p className="text-2xl font-semibold text-green-600">{stats.effective}</p>
-              <p className="text-xs text-zinc-500">Effective</p>
+              <p className="text-xs text-stone-500">Effective</p>
             </div>
           </div>
         </div>
@@ -670,7 +670,7 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
             </div>
             <div>
               <p className="text-2xl font-semibold text-amber-600">{stats.underReview}</p>
-              <p className="text-xs text-zinc-500">Under Review</p>
+              <p className="text-xs text-stone-500">Under Review</p>
             </div>
           </div>
         </div>
@@ -681,7 +681,7 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
             </div>
             <div>
               <p className="text-2xl font-semibold text-red-600">{stats.reviewDue}</p>
-              <p className="text-xs text-zinc-500">Review Due</p>
+              <p className="text-xs text-stone-500">Review Due</p>
             </div>
           </div>
         </div>
@@ -722,7 +722,7 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
 
           <TabsContent value="reviews" className="m-0">
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-zinc-700">Upcoming Periodic Reviews</h3>
+              <h3 className="text-sm font-medium text-stone-700">Upcoming Periodic Reviews</h3>
               {sops
                 .filter(s => s.status === 'effective')
                 .sort((a, b) => new Date(a.reviewDate).getTime() - new Date(b.reviewDate).getTime())
@@ -734,26 +734,26 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
                         <div className="flex items-center gap-3">
                           <div className={cn(
                             'w-10 h-10 rounded-lg flex items-center justify-center',
-                            daysUntil <= 30 ? 'bg-red-100' : 'bg-zinc-100'
+                            daysUntil <= 30 ? 'bg-red-100' : 'bg-stone-100'
                           )}>
                             <Calendar className={cn(
                               'h-5 w-5',
-                              daysUntil <= 30 ? 'text-red-600' : 'text-zinc-600'
+                              daysUntil <= 30 ? 'text-red-600' : 'text-stone-600'
                             )} />
                           </div>
                           <div>
-                            <p className="font-medium text-zinc-900">{sop.title}</p>
-                            <p className="text-xs text-zinc-500">{sop.documentNumber} · v{sop.version}</p>
+                            <p className="font-medium text-stone-900">{sop.title}</p>
+                            <p className="text-xs text-stone-500">{sop.documentNumber} · v{sop.version}</p>
                           </div>
                         </div>
                         <div className="text-right">
                           <p className={cn(
                             'font-medium',
-                            daysUntil <= 30 ? 'text-red-600' : 'text-zinc-900'
+                            daysUntil <= 30 ? 'text-red-600' : 'text-stone-900'
                           )}>
                             {daysUntil} days
                           </p>
-                          <p className="text-xs text-zinc-500">
+                          <p className="text-xs text-stone-500">
                             {new Date(sop.reviewDate).toLocaleDateString()}
                           </p>
                         </div>
