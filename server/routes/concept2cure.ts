@@ -667,7 +667,7 @@ const addMessageSchema = z.object({
 const createArtifactSchema = z.object({
   conversationId: z.string().optional(),
   type: z.string().min(1).max(50),
-  category: z.enum(['document', 'interactive', 'visualization']),
+  category: z.enum(['document', 'interactive', 'visualization', 'source', 'evidence']),
   title: z.string().min(1, 'Title required').max(200),
   content: z.string().min(1, 'Content must not be empty').max(1000000, 'Content too large'), // 1MB max, no empty
   ctdSection: z.string().max(50).optional(),
@@ -2304,11 +2304,89 @@ router.post(
 
       await logAuditEntry(req, 'UPDATE', 'project', projectIdRaw, project, updated);
 
+      // ── CONVERGENCE: Also create a concept2cureArtifact for unified Data Room ──
+      let artifactRecord: { id: number; artifactId: string } | null = null;
+      try {
+        const userId = getUserId(req);
+        const artifactId = `artifact_upload_${Date.now()}_${crypto.randomBytes(5).toString('hex')}`;
+        const contentForArtifact = extractedText && extractedText.length > 10
+          ? extractedText
+          : `[Uploaded file: ${safeOriginalName}] (${file.mimetype}, ${file.size} bytes)`;
+        const contentHash = calculateContentHash(contentForArtifact);
+
+        const [newArtifact] = await db
+          .insert(concept2cureArtifacts)
+          .values({
+            organizationId,
+            projectId: numericId,
+            artifactId,
+            type: 'source_document',
+            category: 'source',
+            title: safeOriginalName,
+            content: contentForArtifact,
+            contentHash,
+            version: 1,
+            metadata: {
+              originalName: safeOriginalName,
+              mimeType: file.mimetype,
+              fileSize: file.size,
+              extension,
+              tokenCount,
+              uploadSource: 'knowledge_upload',
+              knowledgeDocumentId: documentId,
+            },
+            createdById: userId,
+          })
+          .returning();
+
+        // Version entry
+        await db.insert(concept2cureArtifactVersions).values({
+          organizationId,
+          artifactId: newArtifact.id,
+          version: 1,
+          content: contentForArtifact,
+          contentHash,
+          createdById: userId,
+        });
+
+        artifactRecord = { id: newArtifact.id, artifactId };
+
+        // ── AUTO-EMBED: Insert into lumen_data_atoms + generate embedding ──
+        try {
+          const atomResult = await pool.query(
+            `INSERT INTO lumen_data_atoms
+               (organization_id, source_type, source_id, atom_type, title, content, tags, confidence, status)
+             VALUES ($1, 'data_room_upload', $2, 'source_document', $3, $4, $5, 0.9, 'active')
+             ON CONFLICT DO NOTHING
+             RETURNING id`,
+            [
+              organizationId,
+              artifactId,
+              safeOriginalName,
+              contentForArtifact.substring(0, 16000),
+              `{source,upload,${extension}}`,
+            ]
+          );
+          if (atomResult.rows.length > 0) {
+            const atomId = atomResult.rows[0].id;
+            const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
+            const embeddingService = getEmbeddingService(pool);
+            await embeddingService.embedAtom(atomId);
+            logger.info('Source document auto-embedded for retrieval', { artifactId, atomId });
+          }
+        } catch (embedErr: any) {
+          logger.warn('Auto-embedding failed (non-fatal)', { error: embedErr.message });
+        }
+      } catch (artifactErr: any) {
+        logger.warn('Artifact convergence failed (non-fatal)', { error: artifactErr.message });
+      }
+
       res.status(201);
       return sendSuccess(res, {
         document,
         extractedText,
         tokenCount,
+        artifact: artifactRecord,
       });
     } catch (error: any) {
       logger.error('Failed to upload knowledge document', { error: error.message });
@@ -4269,6 +4347,38 @@ router.post('/projects/:projectId/artifacts', guardEmptyContent, guardDemoConten
         generationMethod: (data.metadata as Record<string, unknown>)?.generationMethod || 'unknown',
       },
     });
+
+    // ── AUTO-EMBED: Insert into lumen_data_atoms + generate embedding ────
+    // All artifacts become searchable evidence for AI source traceability
+    try {
+      const plainText = sanitizedContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (plainText.length > 40) {
+        const atomResult = await pool.query(
+          `INSERT INTO lumen_data_atoms
+             (organization_id, source_type, source_id, atom_type, title, content, tags, confidence, status)
+           VALUES ($1, 'artifact', $2, $3, $4, $5, $6, 0.85, 'active')
+           ON CONFLICT DO NOTHING
+           RETURNING id`,
+          [
+            organizationId,
+            artifactId,
+            data.category === 'source' ? 'source_document' : 'authored_document',
+            sanitizedTitle,
+            plainText.substring(0, 16000),
+            `{${data.category},${data.type}${ctdSection ? `,${ctdSection}` : ''}}`,
+          ]
+        );
+        if (atomResult.rows.length > 0) {
+          const atomId = atomResult.rows[0].id;
+          const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
+          const embeddingService = getEmbeddingService(pool);
+          await embeddingService.embedAtom(atomId);
+        }
+      }
+    } catch (embedErr: any) {
+      // Non-fatal �� artifact created successfully, embedding can be retried
+      logger.warn('Auto-embedding failed for new artifact', { artifactId, error: embedErr.message });
+    }
 
     logger.info('Created artifact', { projectId: req.params.projectId, artifactId });
     return sendSuccess(res.status(201), newArtifact);

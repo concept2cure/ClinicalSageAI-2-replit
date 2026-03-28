@@ -15,7 +15,7 @@ import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { queryKeys } from '@/concept2cure/hooks/queryKeys';
-import { Wrench, Settings2, ArrowRight } from 'lucide-react';
+import { Wrench, Settings2, ArrowRight, Database, Upload, FileText } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,8 +72,16 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
     let ready = 0;
     let review = 0;
     let draft = 0;
+    let sourceCount = 0;
     for (const a of list) {
       const s = (a.status || '').toLowerCase();
+      const cat = ((a as any).category || '').toLowerCase();
+      const typ = ((a as any).type || '').toLowerCase();
+      // Count source/evidence documents for Data Room
+      if (cat === 'source' || cat === 'evidence' || typ === 'source_document' || typ.includes('upload')) {
+        sourceCount++;
+        continue; // Don't count source docs in readiness
+      }
       if (s === 'approved' || s === 'locked') ready++;
       else if (s === 'review' || s === 'in_review') review++;
       else if (s === 'draft' || s === 'drafting') draft++;
@@ -98,7 +106,7 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
       nextActionTarget = 'tools';
     }
 
-    return { total, ready, review, draft, pct, nextAction, nextActionTarget };
+    return { total, ready, review, draft, pct, nextAction, nextActionTarget, sourceCount };
   }, [artifacts, isPharma, isDevice]);
 
   const typeLabel = isPharma ? `${upperType} Submission` : isDevice ? `${upperType} Submission` : project.type;
@@ -142,8 +150,36 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
           </div>
         </div>
 
-        {/* Row 2: Readiness progress + next action */}
+        {/* Row 2: Data Room + Readiness */}
         <div className="mt-4 pt-3 border-t border-stone-100">
+          {/* Data Room summary */}
+          <div className="flex items-center justify-between mb-3">
+            <button
+              onClick={() => onNavigate('dataroom')}
+              className="flex items-center gap-2 text-xs text-stone-500 hover:text-stone-700 transition-colors group"
+            >
+              <div className="w-5 h-5 rounded bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                <Database className="w-3 h-3 text-blue-500" />
+              </div>
+              <span className="font-medium">
+                {summary.sourceCount > 0
+                  ? `${summary.sourceCount} source file${summary.sourceCount !== 1 ? 's' : ''} in Data Room`
+                  : 'Data Room'}
+              </span>
+              {summary.sourceCount === 0 && (
+                <span className="text-stone-400">— upload evidence to ground AI drafts</span>
+              )}
+            </button>
+            <button
+              onClick={() => onNavigate('upload')}
+              className="flex items-center gap-1 px-2 py-1 text-[11px] text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors"
+            >
+              <Upload className="w-3 h-3" />
+              Upload
+            </button>
+          </div>
+
+          {/* Readiness progress */}
           {summary.total > 0 ? (
             <div className="space-y-2.5">
               {/* Progress bar */}

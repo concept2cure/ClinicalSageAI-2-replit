@@ -51,6 +51,7 @@ interface SourceFile {
   };
   status?: 'processing' | 'ready' | 'error';
   excerpt?: string;
+  ctdSection?: string;
 }
 
 interface DataRoomPanelProps {
@@ -118,27 +119,26 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
       if (res.ok) {
         const payload = await res.json();
         const all = payload.data ?? payload;
-        // Filter for source-like documents and map to our type
+        // Show ALL project documents — source files, authored documents, evidence
+        // Every document in the project is accessible from the Data Room
         const sourceFiles: SourceFile[] = (Array.isArray(all) ? all : [])
-          .filter(
-            (a: Record<string, string>) =>
-              a.category === 'source' ||
-              a.type === 'source_document' ||
-              a.type === 'evidence' ||
-              a.category === 'evidence' ||
-              a.type?.includes('upload') ||
-              a.category === 'upload'
-          )
-          .map((a: Record<string, unknown>) => ({
-            id: a.id as string,
-            title: (a.title as string) || 'Untitled',
-            type: (a.type as string) || 'document',
-            category: (a.category as string) || 'source',
-            uploadedAt: (a.createdAt as string) || new Date().toISOString(),
-            status: 'ready' as const,
-            excerpt: typeof a.content === 'string' ? (a.content as string).replace(/<[^>]+>/g, '').slice(0, 200) : undefined,
-            metadata: (a.metadata as SourceFile['metadata']) || undefined,
-          }));
+          .map((a: Record<string, unknown>) => {
+            const cat = (a.category as string || '').toLowerCase();
+            const typ = (a.type as string || '').toLowerCase();
+            const isSource = cat === 'source' || cat === 'evidence' || cat === 'upload'
+              || typ === 'source_document' || typ.includes('upload');
+            return {
+              id: a.id as string,
+              title: (a.title as string) || 'Untitled',
+              type: (a.type as string) || 'document',
+              category: isSource ? (a.category as string || 'source') : (a.category as string || 'document'),
+              uploadedAt: (a.createdAt as string) || new Date().toISOString(),
+              status: 'ready' as const,
+              excerpt: typeof a.content === 'string' ? (a.content as string).replace(/<[^>]+>/g, '').slice(0, 200) : undefined,
+              metadata: (a.metadata as SourceFile['metadata']) || undefined,
+              ctdSection: a.ctdSection as string | undefined,
+            };
+          });
         setSources(sourceFiles);
       }
     } catch {
@@ -189,7 +189,19 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
           s.excerpt?.toLowerCase().includes(q)
       );
     }
-    if (filterType !== 'all') {
+    if (filterType === 'sources') {
+      filtered = filtered.filter((s) => {
+        const cat = s.category.toLowerCase();
+        const typ = s.type.toLowerCase();
+        return cat === 'source' || cat === 'evidence' || cat === 'upload'
+          || typ === 'source_document' || typ.includes('upload');
+      });
+    } else if (filterType === 'authored') {
+      filtered = filtered.filter((s) => {
+        const cat = s.category.toLowerCase();
+        return cat === 'document' || cat === 'interactive' || cat === 'visualization';
+      });
+    } else if (filterType !== 'all') {
       filtered = filtered.filter((s) => s.type === filterType || s.category === filterType);
     }
     return filtered;
@@ -200,6 +212,17 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
     return Array.from(types);
   }, [sources]);
 
+  const sourceDocCount = useMemo(() => sources.filter(s => {
+    const cat = s.category.toLowerCase();
+    const typ = s.type.toLowerCase();
+    return cat === 'source' || cat === 'evidence' || typ === 'source_document';
+  }).length, [sources]);
+
+  const authoredCount = useMemo(() => sources.filter(s => {
+    const cat = s.category.toLowerCase();
+    return cat === 'document' || cat === 'interactive' || cat === 'visualization';
+  }).length, [sources]);
+
   return (
     <div className={cn('flex flex-col h-full bg-white border-l border-stone-200', className)}>
       {/* Header */}
@@ -208,7 +231,9 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
           <Database className="w-4 h-4 text-emerald-600" />
           <span className="font-semibold text-sm text-stone-900">Data Room</span>
           <span className="ml-auto text-xs text-stone-500">
-            {sources.length} source{sources.length !== 1 ? 's' : ''}
+            {sources.length} file{sources.length !== 1 ? 's' : ''}
+            {sourceDocCount > 0 && ` · ${sourceDocCount} source${sourceDocCount !== 1 ? 's' : ''}`}
+            {authoredCount > 0 && ` · ${authoredCount} authored`}
           </span>
         </div>
         {/* Search */}
@@ -252,29 +277,36 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
             Upload Source
           </button>
         </div>
-        {/* Filter dropdown */}
+        {/* Filter chips */}
         {showFilters && (
           <div className="mt-2 flex flex-wrap gap-1">
-            <button
-              onClick={() => setFilterType('all')}
-              className={cn(
-                'px-2 py-0.5 text-xs rounded-full border',
-                filterType === 'all'
-                  ? 'bg-emerald-100 border-emerald-300 text-emerald-700'
-                  : 'border-stone-200 text-stone-500'
-              )}
-            >
-              All
-            </button>
-            {typeOptions.map((t) => (
+            {[
+              { key: 'all', label: 'All Files' },
+              { key: 'sources', label: `Sources (${sourceDocCount})` },
+              { key: 'authored', label: `Authored (${authoredCount})` },
+            ].map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setFilterType(key)}
+                className={cn(
+                  'px-2 py-0.5 text-xs rounded-full border transition-colors',
+                  filterType === key
+                    ? 'bg-emerald-100 border-emerald-300 text-emerald-700'
+                    : 'border-stone-200 text-stone-500 hover:bg-stone-50'
+                )}
+              >
+                {label}
+              </button>
+            ))}
+            {typeOptions.filter(t => !['source_document', 'document'].includes(t)).map((t) => (
               <button
                 key={t}
                 onClick={() => setFilterType(t)}
                 className={cn(
-                  'px-2 py-0.5 text-xs rounded-full border',
+                  'px-2 py-0.5 text-xs rounded-full border transition-colors',
                   filterType === t
                     ? 'bg-emerald-100 border-emerald-300 text-emerald-700'
-                    : 'border-stone-200 text-stone-500'
+                    : 'border-stone-200 text-stone-500 hover:bg-stone-50'
                 )}
               >
                 {t}
@@ -295,8 +327,8 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
             <Database className="w-8 h-8 mb-2 opacity-40" />
             <p className="text-xs">
               {sources.length === 0
-                ? 'No source files yet'
-                : 'No sources match your search'}
+                ? 'No files in this project yet'
+                : 'No files match your search'}
             </p>
             {sources.length === 0 && (
               <button
@@ -332,9 +364,21 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                       <p className="text-xs font-medium text-stone-900 truncate">
                         {source.title}
                       </p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs px-1.5 py-0.5 bg-stone-100 rounded text-stone-500">
-                          {source.type}
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        {source.ctdSection && (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-blue-50 rounded text-blue-600 font-medium">
+                            {source.ctdSection}
+                          </span>
+                        )}
+                        <span className={cn(
+                          'text-xs px-1.5 py-0.5 rounded',
+                          source.category === 'source' || source.type === 'source_document'
+                            ? 'bg-emerald-50 text-emerald-600'
+                            : 'bg-stone-100 text-stone-500'
+                        )}>
+                          {source.category === 'source' || source.type === 'source_document'
+                            ? 'Source'
+                            : source.type === 'document' ? 'Authored' : source.type}
                         </span>
                         <span className="text-xs text-stone-400 flex items-center gap-1">
                           <Clock className="w-2.5 h-2.5" />
