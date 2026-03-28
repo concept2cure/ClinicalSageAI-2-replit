@@ -1,6 +1,7 @@
 # Weave Bio -- Comprehensive Feature & Product Analysis
 
-**Date**: 2026-03-27
+**Date**: 2026-03-28 (updated)
+**Previous version**: 2026-03-27
 **Subject**: Competitive intelligence report on www.weave.bio
 
 ---
@@ -70,11 +71,18 @@ Centralized document repository with intelligence layer.
 **Capabilities:**
 - Single smart repository for all source files
 - AI-extracted metadata from uploaded documents
-- Semantic search across all stored content
-- Import existing folder/file structures
+- Semantic "Deep Search" with AI-generated relevance scoring
+- Import existing folder/file structures (preserves structure on upload)
 - Direct connection to drafting workflows
 - Traceable flow between source files and submission documents
 - Smart extraction pulls key data points from hundreds of source files automatically
+- In-context file preview directly in the Data Room
+- **"Ask" tab** (formerly "Explore"): natural-language Q&A against your data room
+  - Multiple saved questions
+  - Editable queries
+  - Referenced responses with citations
+  - File downloads from answers
+  - Useful for answering Health Authority Questions or internal queries
 
 ### 3.3 Dossier Manager
 
@@ -105,7 +113,29 @@ Structured workspace for assembling submission-ready content.
 - DOCX export
 - Live collaboration with comments, context, and redline suggestions side-by-side
 
-### 3.5 HAQ Manager (Launched November 2025)
+### 3.5 AutoCT (Clinical-Stage Submissions)
+
+Extends Weave's AI workbench from preclinical (AutoIND) into clinical development.
+
+**Supported Document Types:**
+- Clinical Study Reports (CSRs) -- including pivotal CSRs from one workspace
+- Protocols -- generate complete protocol from synopsis, no specific input format required
+- Safety Narratives / Safety Reports
+- Investigator's Brochures (IBs)
+- Integrated Summary of Safety (ISS) / Integrated Summary of Efficacy (ISE)
+
+**Capabilities:**
+- AI-generated first drafts in minutes, starting from primary sources (protocols, TLFs)
+- AI-assisted sentence-level content refinement for scientific narratives
+- Source-linked review: sentence-level traceability back to source documents (two-click traceability)
+- Protocol generation directly from synopsis
+- AI-driven templates for rapid submission creation
+- Automated checks to reduce errors
+- Effortless updates when source data changes
+
+**Key Claim:** "Reduces document prep from days to minutes."
+
+### 3.6 HAQ Manager (Launched November 2025)
 
 Post-submission Health Authority Question response management.
 
@@ -157,11 +187,17 @@ Post-submission Health Authority Question response management.
 - Module 3 (Quality/CMC)
 - Module 5 (Clinical Study Reports)
 
+### AutoCT (Clinical-Stage -- Launched/Expanding):
+- **CSR (Clinical Study Reports)** -- AI-generated first drafts from protocols and TLFs
+- **Protocols** -- Generate complete protocol documents from synopsis
+- **Safety Reports / Safety Narratives** -- Clinical safety documents
+- **Investigator's Brochures (IBs)** -- Clinical-stage IB updates
+- **ISS/ISE (Integrated Summary of Safety/Efficacy)** -- Polished integrated summaries
+
 ### On Roadmap (Not Yet Launched):
 - **NDA (New Drug Application)** -- Planned expansion
 - **BLA (Biologics License Application)** -- Planned expansion
 - **Post-market filings** -- Planned expansion
-- **Clinical-stage submissions** -- Platform expanding to cover this
 - **Diagnostics & medical devices** -- Hinted at by leadership
 
 ### Regulatory Agencies:
@@ -176,13 +212,25 @@ Post-submission Health Authority Question response management.
 
 ## 6. Document Types Generated
 
+**Preclinical (AutoIND):**
 - IND application sections (full eCTD-formatted)
 - Nonclinical written summaries (Modules 2.6.2, 2.6.4, 2.6.6)
 - Investigator's Brochure (IB) sections
 - Quality/CMC documentation (Module 3)
+
+**Clinical (AutoCT):**
+- Clinical Study Reports (CSRs) -- including pivotal CSRs
+- Protocols -- from synopsis to complete document
+- Safety Reports and Safety Narratives
+- Integrated Summary of Safety (ISS)
+- Integrated Summary of Efficacy (ISE)
 - Clinical Study Report sections (Module 5)
+
+**Post-Submission:**
 - HAQ response documents
-- General-purpose structured documents (via flexible template engine)
+
+**General:**
+- General-purpose structured documents (via flexible template engine beyond eCTD)
 - Tables and figures from source data
 
 ---
@@ -204,8 +252,10 @@ Post-submission Health Authority Question response management.
 - **Cloud-based** SaaS platform
 - **eCTD-native** formatting built in
 - **DOCX export** for offline/external use
+- **Veeva Integration** -- Import and export between Weave and Veeva with ease; resync to automatically update source files
+- **AWS infrastructure** -- Zero data retention policy, enterprise security controls
+- **Folder upload** -- Preserves existing folder structures on import
 - No public API documentation found
-- No specific integrations with third-party systems disclosed publicly
 - Parexel integration as exclusive CRO partner suggests enterprise integration capability
 
 ---
@@ -259,12 +309,15 @@ Messaging suggests tiered approach:
 - No predictive analytics or risk scoring engine disclosed
 - No compliance scanning / gap analysis capabilities disclosed
 - No multi-agency comparison or regulatory strategy recommendation engine
-- No mention of chat-first AI assistant or conversational interface
-- No project management or submission workflow orchestration beyond document assembly
+- No mention of chat-first AI assistant or conversational interface (their AI is embedded in templates/editor, not conversational)
+- No dedicated project management dashboard or task management system -- workflow is document-centric, not task-centric
 - No readiness scoring or submission risk assessment
 - No cross-document consistency analysis beyond basic inconsistency flagging
-- No learning loop or pattern registry (accumulated regulatory judgment)
-- No mention of CSR (Clinical Study Report) deep extraction/knowledge building
+- No learning loop or pattern registry (accumulated regulatory judgment over time)
+- No CSR deep extraction / knowledge building (AutoCT generates CSRs but does not extract intelligence from existing CSRs)
+- No biostatistics / SAP capabilities
+- No device or diagnostics regulatory support yet
+- No multi-agency strategy comparison (e.g., "FDA vs EMA approach")
 
 ---
 
@@ -294,6 +347,10 @@ Messaging suggests tiered approach:
 - [Excedr Deep Dive](https://www.excedr.com/blog/weave-bio-ai-powered-regulatory-automation-for-drug-development)
 - [Innovation Endeavors Investment Thesis](https://www.innovationendeavors.com/insights/our-investment-in-weave-bio-using-ai-to-alleviate-regulatory-friction-in-drug-development)
 - [AutoIND April 2025 Release Notes](https://www.weave.bio/resources/autoind-april-2025-product-release-notes/)
+- [AutoCT Product Page (Webflow)](https://weave-bio.webflow.io/products/autoct)
+- [RAPS Webcast: AutoCT](https://www.raps.org/events/sponsored-webcast-ai-for-your-clinical-program-submissions-autoct-from-weave)
 - [Human-AI Collaboration Study (arXiv)](https://www.arxiv.org/pdf/2509.09738)
+- [Built In SF: $20M Raise](https://www.builtinsf.com/articles/weave-bio-raises-20m-series-a-20251020)
+- [HIT Consultant: HAQ Manager](https://hitconsultant.net/2025/11/06/weave-bio-launches-haq-manager-ai-automation-accelerates-health-authority-question-responses/)
 - [Fierce Biotech Feature](https://www.fiercebiotech.com/sponsored/weaves-ai-platform-aims-revolutionize-regulatory-workflows-pharma)
 - [SAB Announcement (PharmiWeb)](https://www.pharmiweb.com/press-release/2026-03-25/weave-bio-establishes-inaugural-strategic-advisory-board-to-shape-the-future-of-ai-driven-regulatory)
