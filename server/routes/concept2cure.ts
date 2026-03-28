@@ -1726,7 +1726,7 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
     if (error instanceof z.ZodError) {
       return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
     }
-    logger.error('Failed to update project', { error: error.message });
+    logger.error('Failed to update project', { error: error.message, projectId: req.params.id });
     return sendError(res, 500, 'Failed to update project');
   }
 });
@@ -2132,17 +2132,13 @@ router.post('/projects/:projectId/apps', async (req: Request, res: Response) => 
     const appContext = buildAppMemoryContext(updatedApps);
     updatedSettings = syncKnowledgeAppContext(updatedSettings, appContext);
 
-    await db
+    const [updatedProject] = await db
       .update(projects)
       .set({ settings: updatedSettings, updatedAt: new Date() })
-      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)));
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .returning();
 
-    await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, {
-      action: 'connect_app',
-      appId,
-      totalConnected: updatedApps.length,
-      hasMemoryRole: !!sanitizedRole,
-    });
+    await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, project, updatedProject);
 
     logger.info('App connected to project', { projectId: numericId, appId, totalConnected: updatedApps.length });
 
@@ -2204,16 +2200,13 @@ router.delete('/projects/:projectId/apps/:appId', async (req: Request, res: Resp
     const appContext = buildAppMemoryContext(updatedApps);
     updatedSettings = syncKnowledgeAppContext(updatedSettings, appContext);
 
-    await db
+    const [updatedProject] = await db
       .update(projects)
       .set({ settings: updatedSettings, updatedAt: new Date() })
-      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)));
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .returning();
 
-    await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, {
-      action: 'disconnect_app',
-      appId,
-      totalConnected: updatedApps.length,
-    });
+    await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, project, updatedProject);
 
     logger.info('App disconnected from project', { projectId: numericId, appId, totalConnected: updatedApps.length });
 
