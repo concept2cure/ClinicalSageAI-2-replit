@@ -144,7 +144,7 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
   onOpenConfig,
   onSuggestedPrompt,
 }) => {
-  const { data: artifacts } = useQuery<Artifact[]>({
+  const { data: artifacts, isLoading: artifactsLoading } = useQuery<Artifact[]>({
     queryKey: queryKeys.projects.overviewArtifacts(project.id),
     queryFn: async () => {
       const res = await apiRequest('GET', `/api/concept2cure/projects/${project.id}/artifacts`);
@@ -205,7 +205,7 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
 
   return (
     <div className="flex-shrink-0 border-b border-stone-100 bg-white/80 backdrop-blur-sm" data-testid="project-context-strip">
-      <div className="max-w-3xl mx-auto px-6 py-5">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 sm:py-5">
         {/* ── Row 1: Project Identity ──────────────────────────────────────── */}
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
@@ -232,8 +232,21 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
           )}
         </div>
 
+        {/* ── Loading skeleton ─────────────────────────────────────────── */}
+        {artifactsLoading && (
+          <div className="mt-4 pt-3 border-t border-stone-100 space-y-2">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex items-center gap-3 px-3 py-2">
+                <div className="w-3.5 h-3.5 bg-stone-100 rounded animate-pulse" />
+                <div className="h-3 bg-stone-100 rounded animate-pulse flex-1" style={{ maxWidth: `${70 - i * 15}%` }} />
+                <div className="h-4 w-12 bg-stone-50 rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* ── Row 2: Recent Documents ──────────────────────────────────────── */}
-        {summary.recentDocs.length > 0 && (
+        {!artifactsLoading && summary.recentDocs.length > 0 && (
           <div className="mt-4 pt-3 border-t border-stone-100">
             <div className="flex items-center justify-between mb-2.5">
               <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wide">Recent documents</span>
@@ -275,7 +288,7 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
         )}
 
         {/* ── Row 3: Readiness + Data Room ─────────────────────────────────── */}
-        <div className="mt-4 pt-3 border-t border-stone-100">
+        {!artifactsLoading && <div className="mt-4 pt-3 border-t border-stone-100">
           <div className="flex items-center gap-4">
             {/* Readiness mini-bar */}
             {summary.docCount > 0 && (
@@ -315,11 +328,11 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
               Upload
             </button>
           </div>
-        </div>
+        </div>}
 
         {/* ── Row 4: Suggested Prompts (Claude-style) ─────────────────────── */}
         <div className="mt-4 pt-3 border-t border-stone-100">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {suggestedPrompts.map((sp, idx) => (
               <button
                 key={idx}

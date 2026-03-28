@@ -766,7 +766,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
     return (
       <aside
-        className="flex flex-col h-full w-14 bg-stone-50 border-r border-stone-200 items-center py-3 gap-1 flex-shrink-0"
+        className="flex flex-col h-full w-14 bg-stone-50 border-r border-stone-200 items-center py-3 gap-1 flex-shrink-0 transition-[width] duration-200 ease-out"
         role="navigation"
         aria-label="Main sidebar"
       >
@@ -800,7 +800,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <div className="w-8 border-t border-stone-200 my-1" />
         <button
           onClick={() => onNavigate?.('ri-copilot')}
-          aria-label="RI Copilot"
+          aria-label="Regulatory Intelligence"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors',
             activeNavId === 'ri-copilot'
@@ -880,7 +880,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
       {/* Mobile backdrop */}
       <div className="fixed inset-0 z-40 bg-black/30 md:hidden" onClick={onToggleCollapse} />
       <aside
-        className="flex flex-col h-full w-[260px] bg-stone-50/80 border-r border-stone-100 flex-shrink-0 fixed z-50 md:static md:z-auto"
+        className="flex flex-col h-full w-[260px] bg-stone-50/80 border-r border-stone-100 flex-shrink-0 fixed z-50 md:static md:z-auto transition-[width] duration-200 ease-out"
         role="navigation"
         aria-label="Main sidebar"
       >
@@ -1108,10 +1108,10 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
           {/* ── SUBMISSION WORKFLOW — secondary nav ────────────────── */}
           <div className="mx-2 my-1 border-t border-stone-100" />
-          <WorkspaceGroup label="Biotech Hero Lane" defaultOpen={true}>
+          <WorkspaceGroup label="Intelligence" defaultOpen={true}>
             <NavItem
               icon={<Brain className="w-3.5 h-3.5" />}
-              label="RI Copilot"
+              label="Regulatory Intelligence"
               active={activeNavId === 'ri-copilot'}
               accentColor="blue"
               onClick={() => onNavigate?.('ri-copilot')}

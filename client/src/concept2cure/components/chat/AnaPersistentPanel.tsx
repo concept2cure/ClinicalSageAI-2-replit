@@ -227,9 +227,9 @@ interface AnaMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  /** Base64 images from Nano Banana */
+  /** Base64 images from Visual AI */
   images?: Array<{ base64: string; mimeType: string }>;
-  /** Downloadable PPTX from Nano Banana */
+  /** Downloadable PPTX from Visual AI */
   pptx?: { base64: string; filename: string; mimeType: string };
   /** Whether this message has been saved as an artifact */
   savedAsArtifact?: boolean;
@@ -1466,7 +1466,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         let data: any;
 
         if (chatMode === 'nano-banana') {
-          // Route to Nano Banana (Gemini image gen) endpoint
+          // Route to Visual AI (Gemini image gen) endpoint
           const response = await apiRequest('POST', '/api/nano-banana/chat', {
             message: text,
             conversationHistory: messages.slice(-10).map(m => ({
@@ -3802,7 +3802,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                             dangerouslySetInnerHTML={{ __html: htmlContent }}
                           />
-                          {/* Nano Banana generated images */}
+                          {/* Visual AI generated images */}
                           {msg.images && msg.images.length > 0 && (
                             <div className="flex flex-wrap gap-2 mt-2">
                               {msg.images.map((img, idx) => (
@@ -3886,7 +3886,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           {msg.role === 'assistant' && msg.isComplete && (
                             <DoneIndicator visible />
                           )}
-                          {/* Nano Banana PPTX download button */}
+                          {/* Visual AI PPTX download button */}
                           {msg.pptx && (
                             <button
                               onClick={() => {
@@ -4386,7 +4386,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   {chatMode === 'deep-research'
                     ? 'Deep Research'
                     : chatMode === 'nano-banana'
-                      ? 'Nano Banana'
+                      ? 'Visual AI'
                       : 'AnA'}
                 </span>
                 <ChevronDown className="w-3 h-3 opacity-50" />
@@ -4453,7 +4453,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   >
                     <ImageIcon className="w-4 h-4 mt-0.5 text-amber-600 flex-shrink-0" />
                     <div>
-                      <div className="text-sm font-medium text-stone-900">Nano Banana</div>
+                      <div className="text-sm font-medium text-stone-900">Visual AI</div>
                       <div className="text-[11px] text-stone-400 leading-tight">
                         AI image generation, presentations &amp; visual design via Gemini
                       </div>

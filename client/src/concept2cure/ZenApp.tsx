@@ -129,8 +129,19 @@ import { LoadingState } from '@/components/ui/statesV2';
 
 // Canonical loading fallback for Suspense boundaries
 const ModuleLoadingFallback = () => (
-  <div className="flex-1 flex items-center justify-center bg-white">
-    <LoadingState size="sm" message="" />
+  <div className="flex-1 bg-white p-6">
+    <div className="max-w-4xl mx-auto space-y-4 animate-pulse">
+      <div className="h-6 bg-stone-100 rounded w-1/3" />
+      <div className="h-3 bg-stone-50 rounded w-2/3" />
+      <div className="mt-6 space-y-3">
+        <div className="h-32 bg-stone-50 rounded-lg" />
+        <div className="grid grid-cols-3 gap-3">
+          <div className="h-20 bg-stone-50 rounded-lg" />
+          <div className="h-20 bg-stone-50 rounded-lg" />
+          <div className="h-20 bg-stone-50 rounded-lg" />
+        </div>
+      </div>
+    </div>
   </div>
 );
 

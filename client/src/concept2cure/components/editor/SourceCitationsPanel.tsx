@@ -177,8 +177,18 @@ const SourceCitationsPanel: React.FC<SourceCitationsPanelProps> = ({ artifactId,
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
+          <div className="p-3 space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="rounded-lg border border-stone-100 p-3 space-y-2">
+                <div className="h-3 bg-stone-100 rounded animate-pulse w-full" />
+                <div className="h-3 bg-stone-50 rounded animate-pulse w-4/5" />
+                <div className="flex gap-2 mt-2">
+                  <div className="h-5 w-16 bg-blue-50 rounded animate-pulse" />
+                  <div className="h-5 bg-stone-50 rounded animate-pulse flex-1" />
+                  <div className="h-5 w-8 bg-stone-50 rounded animate-pulse" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : !artifactId ? (
           <div className="flex flex-col items-center justify-center py-12 px-6 text-center">

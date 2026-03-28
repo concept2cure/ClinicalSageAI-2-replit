@@ -348,8 +348,18 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
       {/* Source list */}
       <div className="flex-1 overflow-y-auto">
         {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
+          <div className="space-y-2 p-3">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="rounded-lg border border-stone-100 p-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded bg-stone-100 animate-pulse" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3 bg-stone-100 rounded animate-pulse w-3/4" />
+                    <div className="h-2 bg-stone-50 rounded animate-pulse w-1/2" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : filteredSources.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-stone-500">

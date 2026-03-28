@@ -780,13 +780,49 @@ export const InspectorDrawer: React.FC<InspectorDrawerProps> = ({
   className,
   testId,
 }) => {
-  if (!visible) return null;
+  // Track mount state for slide animation
+  const [shouldRender, setShouldRender] = React.useState(visible);
+  const [isAnimating, setIsAnimating] = React.useState(false);
+
+  React.useEffect(() => {
+    if (visible) {
+      setShouldRender(true);
+      // Trigger animation on next frame
+      requestAnimationFrame(() => setIsAnimating(true));
+    } else {
+      setIsAnimating(false);
+      // Delay unmount for exit animation
+      const timer = setTimeout(() => setShouldRender(false), 200);
+      return () => clearTimeout(timer);
+    }
+  }, [visible]);
+
+  if (!shouldRender) return null;
+
   return (
-    <div
-      className={cn(width, 'shrink-0 border-l border-stone-200 h-full transition-all duration-150', className)}
-      data-testid={testId}
-    >
-      {children}
-    </div>
+    <>
+      {/* Mobile: overlay with backdrop */}
+      <div
+        className={cn(
+          'md:hidden fixed inset-0 z-40 bg-black/20 transition-opacity duration-200',
+          isAnimating ? 'opacity-100' : 'opacity-0 pointer-events-none',
+        )}
+      />
+      <div
+        className={cn(
+          // Mobile: fixed overlay from right. Desktop: inline side panel.
+          'fixed right-0 top-0 bottom-0 z-50 md:relative md:z-auto',
+          width,
+          'shrink-0 border-l border-stone-200 h-full overflow-hidden bg-white',
+          'transition-all duration-200 ease-out',
+          isAnimating ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4',
+          className,
+        )}
+        data-testid={testId}
+        style={{ willChange: 'transform, opacity' }}
+      >
+        {children}
+      </div>
+    </>
   );
 };
