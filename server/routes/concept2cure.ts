@@ -575,6 +575,7 @@ const createProjectSchema = z.object({
   region: z.string().max(100).optional(),
   pinned: z.boolean().optional(),
   targetAgency: z.string().max(50).optional(),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Invalid hex color').optional(),
 });
 
 const updateProjectSchema = createProjectSchema.partial();
@@ -1291,6 +1292,7 @@ router.get('/projects', async (req: Request, res: Response) => {
         region: p.metadata?.region,
         pinned: (p.metadata as any)?.pinned ?? false,
         targetAgency: (p.metadata as any)?.targetAgency ?? null,
+        color: (p.metadata as any)?.color ?? null,
         organizationId,
         conversations,
         ownership: buildProjectOwnership(conversations, normalizeProjectSettings(p.settings)),
@@ -1351,6 +1353,7 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
       region: (project.metadata as any)?.region,
       pinned: (project.metadata as any)?.pinned ?? false,
       targetAgency: (project.metadata as any)?.targetAgency ?? null,
+      color: (project.metadata as any)?.color ?? null,
       customInstructions: (project.settings as any)?.customInstructions,
       status: project.status,
       organizationId: project.organizationId,
@@ -1448,6 +1451,7 @@ router.post('/projects', async (req: Request, res: Response) => {
           region: data.region,
           pinned: data.pinned ?? false,
           targetAgency: data.targetAgency ?? null,
+          color: data.color ?? null,
         },
         settings: {
           customInstructions: sanitizedData.customInstructions,
@@ -1656,7 +1660,8 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
       data.product !== undefined ||
       data.region !== undefined ||
       data.pinned !== undefined ||
-      data.targetAgency !== undefined
+      data.targetAgency !== undefined ||
+      data.color !== undefined
     ) {
       updateData.metadata = {
         ...((existing.metadata as object) || {}),
@@ -1673,6 +1678,7 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
         }),
         ...(data.pinned !== undefined && { pinned: data.pinned }),
         ...(data.targetAgency !== undefined && { targetAgency: data.targetAgency ? sanitizeContent(data.targetAgency) : null }),
+        ...(data.color !== undefined && { color: data.color }),
       };
     }
 

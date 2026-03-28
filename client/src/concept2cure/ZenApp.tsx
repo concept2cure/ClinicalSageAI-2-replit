@@ -1711,6 +1711,7 @@ export const ZenApp: React.FC = () => {
       product?: string;
       region?: string;
       goal?: string;
+      color?: string;
     }) => {
       try {
         await createProjectMutation({
@@ -1721,6 +1722,7 @@ export const ZenApp: React.FC = () => {
           product: data.product,
           region: data.region,
           goal: data.goal,
+          color: data.color,
           conversations: [],
         });
         setNewProjectOpen(false);
