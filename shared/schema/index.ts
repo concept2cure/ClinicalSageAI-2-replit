@@ -148,3 +148,6 @@ export type {
 
 export * from './resolution';
 export * from './project-charter';
+
+// AnA Intelligence System (CLAUDE.md Memory Compression Model)
+export * from './ana-intelligence';

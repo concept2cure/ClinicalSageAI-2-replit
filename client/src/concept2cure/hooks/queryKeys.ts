@@ -151,4 +151,32 @@ export const queryKeys = {
     feedbackSummary: (projectId: number | string) =>
       ['intelligence', 'feedback-summary', projectId] as const,
   },
+
+  // ── AnA Intelligence (CLAUDE.md Memory Compression Model) ─────────────
+  anaIntelligence: {
+    /** Company context (Global.md) */
+    companyContext: ['concept2cure', 'ana-intelligence', 'company-context'] as const,
+    /** Project context (Local.md) */
+    projectContext: (projectId: number | string) =>
+      ['concept2cure', 'ana-intelligence', 'project-context', projectId] as const,
+    /** User preferences (User.md) */
+    userContext: ['concept2cure', 'ana-intelligence', 'user-context'] as const,
+    /** AnA capabilities for a project */
+    capabilities: (projectId?: number | string) =>
+      ['concept2cure', 'ana-intelligence', 'capabilities', projectId] as const,
+    /** Project memory entries (database-backed) */
+    projectMemory: (projectId: number | string) =>
+      ['concept2cure', 'ana-intelligence', 'project-memory', projectId] as const,
+    /** Client memory entries */
+    clientMemory: ['concept2cure', 'ana-intelligence', 'client-memory'] as const,
+    /** AnA wisdom / outcome stats */
+    wisdom: (projectId?: number | string) =>
+      ['concept2cure', 'ana-intelligence', 'wisdom', projectId] as const,
+    /** Objectives */
+    objectives: (projectId?: number | string) =>
+      ['concept2cure', 'ana-intelligence', 'objectives', projectId] as const,
+    /** Uploaded documents for intelligence */
+    documents: (scope: 'company' | 'project', scopeId?: number | string) =>
+      ['concept2cure', 'ana-intelligence', 'documents', scope, scopeId] as const,
+  },
 } as const;

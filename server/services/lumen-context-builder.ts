@@ -1,6 +1,6 @@
 /**
  * @fileoverview AnA 1.0 Regulatory Intelligence — Context Builder
- * @module server/services/lumen-context-builder
+ * @module server/services/ana-context-builder
  * @version 2.0.0
  *
  * @description
@@ -82,7 +82,10 @@ export interface ConversationContext {
   messageCount: number;
 }
 
-export interface LumenContext {
+/** @deprecated Use AnAContext instead */
+export type LumenContext = AnAContext;
+
+export interface AnAContext {
   project: ProjectContext | null;
   documents: DocumentContext | null;
   workflow: WorkflowContext | null;
@@ -94,6 +97,7 @@ export interface LumenContext {
   accountCanon: string | null; // Selectively resolved account-level governed memory
   clientIntelligence: string | null;
   projectIntelligence: string | null;
+  anaIntelligenceContext: string | null; // AnA CLAUDE.md layers: User.md + Capabilities + Wisdom + Scoped Rules
   timestamp: string;
 }
 
@@ -686,12 +690,15 @@ async function loadOrganizationName(orgId: number | null): Promise<string | null
  * Fast-fails on each sub-query independently so partial context
  * is still usable even if one query fails.
  */
-export async function buildLumenContext(params: {
+/** @deprecated Use buildAnAContext instead */
+export const buildLumenContext = buildAnAContext;
+
+export async function buildAnAContext(params: {
   projectId?: number | string;
   organizationId?: number;
   userId?: number;
   submissionType?: string;
-}): Promise<LumenContext> {
+}): Promise<AnAContext> {
   const { organizationId, userId } = params;
   const projectId = params.projectId ? parseInt(String(params.projectId), 10) : null;
 
@@ -705,6 +712,7 @@ export async function buildLumenContext(params: {
     userIntelligence,
     clientIntelligence,
     projectIntelligence,
+    anaIntelligenceContext,
     accountCanonResolved,
   ] = await Promise.all([
     projectId && organizationId
@@ -732,6 +740,20 @@ export async function buildLumenContext(params: {
     // Project Intelligence Memory — deep knowledge specific to the active project
     projectId
       ? buildProjectIntelligenceContext(projectId).catch(() => null)
+      : Promise.resolve(null),
+    // AnA Intelligence Context (CLAUDE.md Memory Compression Model)
+    // User.md (personal overrides) + Capabilities + Wisdom + Scoped Rules
+    userId && organizationId
+      ? import('./ana-context-router')
+          .then(({ buildMergedContext }) =>
+            buildMergedContext({
+              organizationId,
+              projectId: projectId || undefined,
+              userId,
+            })
+          )
+          .then(result => result.contextBlock || null)
+          .catch(() => null)
       : Promise.resolve(null),
     // Account Canon — selectively resolved governed memory (canon items, terms, bundles)
     organizationId
@@ -773,6 +795,7 @@ export async function buildLumenContext(params: {
     accountCanon: accountCanonResolved,
     clientIntelligence,
     projectIntelligence,
+    anaIntelligenceContext,
     timestamp: new Date().toISOString(),
   };
 }
@@ -782,7 +805,7 @@ export async function buildLumenContext(params: {
  * Returns the base prompt if no project context is available.
  */
 export async function assembleSystemPrompt(
-  context: LumenContext,
+  context: AnAContext,
   customSystemPrompt?: string
 ): Promise<string> {
   // If caller provided a full custom system prompt, respect it
@@ -938,6 +961,12 @@ Use conversation history to avoid re-asking for information the user has already
   // Deep knowledge specific to the active project, learned from project documents
   if (context.projectIntelligence) {
     parts.push(context.projectIntelligence);
+  }
+
+  // ── AnA Intelligence Layers (CLAUDE.md Memory Compression Model) ────
+  // User.md (personal overrides) + Capability Context + Wisdom + Scoped Rules
+  if (context.anaIntelligenceContext) {
+    parts.push(context.anaIntelligenceContext);
   }
 
   // ── Document Context ─────────────────────────────────────────────────────
@@ -1237,8 +1266,8 @@ export async function buildContextAwarePrompt(params: {
   submissionType?: string;
   customSystemPrompt?: string;
   sectionCode?: string;
-}): Promise<{ systemPrompt: string; context: LumenContext }> {
-  const context = await buildLumenContext(params);
+}): Promise<{ systemPrompt: string; context: AnAContext }> {
+  const context = await buildAnAContext(params);
   let systemPrompt = await assembleSystemPrompt(context, params.customSystemPrompt);
 
   // Append deep section-specific guidance if drafting a particular CTD section

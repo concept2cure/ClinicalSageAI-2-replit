@@ -1007,7 +1007,7 @@ router.post('/save-draft', async (req: Request, res: Response) => {
  */
 function generateContextAwareDemoResponse(
   message: string,
-  context: import('../services/ana-context-builder.js').LumenContext
+  context: import('../services/ana-context-builder.js').AnAContext
 ): string {
   const lower = message.toLowerCase().trim();
   const projectName = context.project?.name || 'your project';

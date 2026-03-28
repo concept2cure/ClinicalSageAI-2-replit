@@ -13,7 +13,7 @@
  * - Context injection API for AI enrichment
  */
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   Brain,
   Plus,
@@ -35,6 +35,9 @@ import {
   Download,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { queryKeys } from '@/concept2cure/hooks/queryKeys';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -80,11 +83,11 @@ const CATEGORY_CONFIG: Record<MemoryCategory, { label: string; icon: React.Eleme
   technical: { label: 'Technical', icon: Database, color: 'text-stone-600 bg-stone-50' },
 };
 
-// ── Storage Helpers ────────────────────────────────────────────────────────────
+// ── Storage Helpers (Database-backed with localStorage fallback) ──────────────
 
 const STORAGE_KEY_PREFIX = 'ana_memory_';
 
-function loadMemory(projectId: string): MemoryEntry[] {
+function loadMemoryFromLocalStorage(projectId: string): MemoryEntry[] {
   try {
     const raw = localStorage.getItem(`${STORAGE_KEY_PREFIX}${projectId}`);
     return raw ? JSON.parse(raw) : [];
@@ -93,11 +96,38 @@ function loadMemory(projectId: string): MemoryEntry[] {
   }
 }
 
-function saveMemory(projectId: string, entries: MemoryEntry[]): void {
+function saveMemoryToLocalStorage(projectId: string, entries: MemoryEntry[]): void {
   try {
     localStorage.setItem(`${STORAGE_KEY_PREFIX}${projectId}`, JSON.stringify(entries));
   } catch {
     // localStorage full — silently fail
+  }
+}
+
+/** Fetch memory entries from the database via API */
+async function fetchMemoryFromDB(projectId: string): Promise<MemoryEntry[]> {
+  try {
+    const res = await apiRequest(
+      'GET',
+      `/api/client-intelligence/project/${projectId}/memory`
+    );
+    const data = await res.json();
+    if (Array.isArray(data?.entries)) {
+      return data.entries.map((e: Record<string, unknown>) => ({
+        id: String(e.id),
+        category: (e.category as MemoryCategory) || 'context',
+        content: String(e.content || ''),
+        source: (e.extractedBy === 'manual' ? 'manual' : 'auto') as 'auto' | 'manual',
+        createdAt: String(e.createdAt || new Date().toISOString()),
+        updatedAt: e.updatedAt ? String(e.updatedAt) : undefined,
+        tags: Array.isArray(e.tags) ? e.tags : [],
+        relevanceScore: typeof e.confidenceScore === 'number' ? e.confidenceScore : undefined,
+      }));
+    }
+    return [];
+  } catch {
+    // Fallback to localStorage if API unavailable
+    return loadMemoryFromLocalStorage(projectId);
   }
 }
 
@@ -141,10 +171,26 @@ export function AnAMemory({
   onClose,
   onMemoryUpdate,
 }: AnAMemoryProps) {
+  const queryClient = useQueryClient();
+
+  // Database-backed memory query with localStorage fallback
+  const { data: dbEntries, isLoading: isLoadingMemory } = useQuery({
+    queryKey: queryKeys.anaIntelligence.projectMemory(projectId),
+    queryFn: () => fetchMemoryFromDB(projectId),
+    staleTime: 30_000,
+  });
+
   const [entries, setEntries] = useState<MemoryEntry[]>(() => {
-    const loaded = loadMemory(projectId);
+    const loaded = loadMemoryFromLocalStorage(projectId);
     return loaded.length > 0 ? loaded : getDefaultMemory(projectName);
   });
+
+  // Sync from DB when data arrives
+  React.useEffect(() => {
+    if (dbEntries && dbEntries.length > 0) {
+      setEntries(dbEntries);
+    }
+  }, [dbEntries]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<MemoryCategory | 'all'>('all');
@@ -162,9 +208,9 @@ export function AnAMemory({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
 
-  // Persist on change
-  useEffect(() => {
-    saveMemory(projectId, entries);
+  // Persist on change — save to localStorage as fallback, notify parent
+  React.useEffect(() => {
+    saveMemoryToLocalStorage(projectId, entries);
     onMemoryUpdate?.(entries);
   }, [entries, projectId, onMemoryUpdate]);
 

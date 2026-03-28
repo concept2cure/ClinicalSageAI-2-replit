@@ -626,4 +626,364 @@ router.get('/project/:projectId/context', async (req: Request, res: Response) =>
   }
 });
 
+// ============================================================
+// AnA Intelligence System Routes (CLAUDE.md Memory Compression Model)
+// ============================================================
+
+import {
+  buildUserContext,
+  upsertUserProfile,
+  buildMergedContext,
+} from '../services/ana-context-router';
+
+/**
+ * GET /api/client-intelligence/ana/user-profile
+ * Get the current user's intelligence profile (User.md layer).
+ */
+router.get('/ana/user-profile', async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const organizationId = (req as any).user?.organizationId;
+    if (!userId || !organizationId) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+
+    const { db } = await import('../db');
+    const { userIntelligenceProfiles } = await import('shared/schema');
+    const { eq, and } = await import('drizzle-orm');
+
+    const [profile] = await db
+      .select()
+      .from(userIntelligenceProfiles)
+      .where(
+        and(
+          eq(userIntelligenceProfiles.userId, userId),
+          eq(userIntelligenceProfiles.organizationId, organizationId)
+        )
+      )
+      .limit(1);
+
+    return res.json({ success: true, profile: profile || null });
+  } catch (err: any) {
+    console.error('[AnA Intelligence] GET user-profile error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/client-intelligence/ana/user-profile
+ * Upsert the current user's intelligence profile.
+ */
+router.post('/ana/user-profile', async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const organizationId = (req as any).user?.organizationId;
+    if (!userId || !organizationId) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+
+    await upsertUserProfile(userId, organizationId, req.body);
+    return res.json({ success: true });
+  } catch (err: any) {
+    console.error('[AnA Intelligence] POST user-profile error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/client-intelligence/ana/merged-context
+ * Preview the full merged context (Global + Local + User + Capabilities + Wisdom).
+ */
+router.get('/ana/merged-context', async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const organizationId = (req as any).user?.organizationId;
+    if (!organizationId) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+
+    const projectId = req.query.projectId
+      ? parseInt(req.query.projectId as string, 10)
+      : undefined;
+
+    const result = await buildMergedContext({
+      organizationId,
+      projectId,
+      userId,
+    });
+
+    return res.json({ success: true, ...result });
+  } catch (err: any) {
+    console.error('[AnA Intelligence] GET merged-context error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/client-intelligence/ana/capabilities
+ * Get AnA capabilities for a project context.
+ */
+router.get('/ana/capabilities', async (req: Request, res: Response) => {
+  try {
+    const { db } = await import('../db');
+    const { anaCapabilityRegistry } = await import('shared/schema');
+    const { eq, desc } = await import('drizzle-orm');
+
+    const projectId = req.query.projectId
+      ? parseInt(req.query.projectId as string, 10)
+      : undefined;
+
+    const capabilities = await db
+      .select()
+      .from(anaCapabilityRegistry)
+      .where(eq(anaCapabilityRegistry.isActive, true))
+      .orderBy(desc(anaCapabilityRegistry.successCount))
+      .limit(100);
+
+    return res.json({ success: true, capabilities });
+  } catch (err: any) {
+    console.error('[AnA Intelligence] GET capabilities error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/client-intelligence/ana/log-outcome
+ * Log an AnA action outcome for learning.
+ */
+router.post('/ana/log-outcome', async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const organizationId = (req as any).user?.organizationId;
+    if (!organizationId) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+
+    const { db } = await import('../db');
+    const { anaOutcomeLog, anaCapabilityRegistry } = await import('shared/schema');
+    const { eq, sql } = await import('drizzle-orm');
+
+    const {
+      capabilityKey, actionType, outcome, qualityScore,
+      userFeedback, editDelta, errorMessage, regulatoryBody,
+      projectType, therapeuticArea, documentType, sectionCode,
+      durationMs, tokenCount, lessonsLearned, inputSummary,
+      projectId,
+    } = req.body;
+
+    // Insert outcome log
+    await db.insert(anaOutcomeLog).values({
+      organizationId,
+      projectId: projectId || null,
+      userId: userId || null,
+      capabilityKey,
+      actionType,
+      outcome,
+      qualityScore,
+      userFeedback,
+      editDelta,
+      errorMessage,
+      regulatoryBody,
+      projectType,
+      therapeuticArea,
+      documentType,
+      sectionCode,
+      durationMs,
+      tokenCount,
+      lessonsLearned,
+      inputSummary,
+    });
+
+    // Update capability counts (non-blocking)
+    if (outcome === 'success') {
+      await db.update(anaCapabilityRegistry)
+        .set({
+          successCount: sql`${anaCapabilityRegistry.successCount} + 1`,
+          lastUsedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(anaCapabilityRegistry.capabilityKey, capabilityKey));
+    } else if (outcome === 'failure') {
+      await db.update(anaCapabilityRegistry)
+        .set({
+          failureCount: sql`${anaCapabilityRegistry.failureCount} + 1`,
+          lastUsedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(anaCapabilityRegistry.capabilityKey, capabilityKey));
+    }
+
+    return res.json({ success: true });
+  } catch (err: any) {
+    console.error('[AnA Intelligence] POST log-outcome error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/client-intelligence/ana/wisdom
+ * Get AnA platform wisdom entries.
+ */
+router.get('/ana/wisdom', async (req: Request, res: Response) => {
+  try {
+    const { db } = await import('../db');
+    const { anaPlatformWisdom } = await import('shared/schema');
+    const { eq, and, desc, sql } = await import('drizzle-orm');
+
+    const projectType = req.query.projectType as string | undefined;
+    const regulatoryBody = req.query.regulatoryBody as string | undefined;
+
+    const wisdom = await db
+      .select()
+      .from(anaPlatformWisdom)
+      .where(
+        and(
+          eq(anaPlatformWisdom.isActive, true),
+          sql`${anaPlatformWisdom.evidenceCount} >= ${anaPlatformWisdom.minEvidenceThreshold}`
+        )
+      )
+      .orderBy(desc(anaPlatformWisdom.confidenceScore))
+      .limit(50);
+
+    // Filter by context if provided
+    const filtered = wisdom.filter(w => {
+      if (regulatoryBody && w.regulatoryBody && w.regulatoryBody !== regulatoryBody) return false;
+      if (projectType && w.projectType && w.projectType !== projectType) return false;
+      return true;
+    });
+
+    return res.json({ success: true, wisdom: filtered });
+  } catch (err: any) {
+    console.error('[AnA Intelligence] GET wisdom error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/client-intelligence/ana/objectives
+ * Get client objectives.
+ */
+router.get('/ana/objectives', async (req: Request, res: Response) => {
+  try {
+    const organizationId = (req as any).user?.organizationId;
+    if (!organizationId) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+
+    const { db } = await import('../db');
+    const { anaClientObjectives } = await import('shared/schema');
+    const { eq, and, desc } = await import('drizzle-orm');
+
+    const projectId = req.query.projectId
+      ? parseInt(req.query.projectId as string, 10)
+      : undefined;
+
+    const conditions = [eq(anaClientObjectives.organizationId, organizationId)];
+    if (projectId) {
+      conditions.push(eq(anaClientObjectives.projectId, projectId));
+    }
+
+    const objectives = await db
+      .select()
+      .from(anaClientObjectives)
+      .where(and(...conditions))
+      .orderBy(desc(anaClientObjectives.createdAt))
+      .limit(50);
+
+    return res.json({ success: true, objectives });
+  } catch (err: any) {
+    console.error('[AnA Intelligence] GET objectives error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/client-intelligence/ana/objectives
+ * Create a new client objective.
+ */
+router.post('/ana/objectives', async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const organizationId = (req as any).user?.organizationId;
+    if (!organizationId) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+
+    const { db } = await import('../db');
+    const { anaClientObjectives } = await import('shared/schema');
+
+    const [objective] = await db
+      .insert(anaClientObjectives)
+      .values({
+        organizationId,
+        createdBy: userId,
+        ...req.body,
+      })
+      .returning();
+
+    return res.json({ success: true, objective });
+  } catch (err: any) {
+    console.error('[AnA Intelligence] POST objectives error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/client-intelligence/ana/templates/company-types
+ * Get available company type templates.
+ */
+router.get('/ana/templates/company-types', async (_req: Request, res: Response) => {
+  try {
+    const { getCompanyTypes } = await import('../services/industry-context-templates');
+    return res.json({ success: true, types: getCompanyTypes() });
+  } catch (err: any) {
+    console.error('[AnA Intelligence] GET company-types error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/client-intelligence/ana/templates/project-types
+ * Get available project type templates.
+ */
+router.get('/ana/templates/project-types', async (_req: Request, res: Response) => {
+  try {
+    const { getProjectTypes } = await import('../services/industry-context-templates');
+    return res.json({ success: true, types: getProjectTypes() });
+  } catch (err: any) {
+    console.error('[AnA Intelligence] GET project-types error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/client-intelligence/ana/templates/company/:type
+ * Get a specific company template.
+ */
+router.get('/ana/templates/company/:type', async (req: Request, res: Response) => {
+  try {
+    const { getCompanyTemplate } = await import('../services/industry-context-templates');
+    const template = getCompanyTemplate(req.params.type as any);
+    return res.json({ success: true, template });
+  } catch (err: any) {
+    console.error('[AnA Intelligence] GET company template error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/client-intelligence/ana/templates/project/:type
+ * Get a specific project template.
+ */
+router.get('/ana/templates/project/:type', async (req: Request, res: Response) => {
+  try {
+    const { getProjectTemplate } = await import('../services/industry-context-templates');
+    const template = getProjectTemplate(req.params.type as any);
+    return res.json({ success: true, template });
+  } catch (err: any) {
+    console.error('[AnA Intelligence] GET project template error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;

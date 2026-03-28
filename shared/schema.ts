@@ -15591,6 +15591,14 @@ export const projectIntelligenceProfiles = pgTable(
     projectPersona: text('project_persona'), // SKILL.md for this project
     customInstructions: text('custom_instructions'), // Freeform AI instructions
 
+    // ── Project Classification (C2C Memory Compression Model) ──
+    targetRegulatoryBodies: json('target_regulatory_bodies').$type<string[]>(), // ['FDA', 'EMA', 'PMDA']
+    projectType: text('project_type'), // 'IND' | 'NDA' | 'BLA' | '510k' | 'PMA' | 'ANDA' | 'biosimilar' | 'device' | 'combination'
+    therapeuticArea: text('therapeutic_area'),
+    drugDeviceName: text('drug_device_name'),
+    mechanismOfAction: text('mechanism_of_action'),
+    developmentPhase: text('development_phase'), // 'preclinical' | 'phase1' | 'phase2' | 'phase3' | 'phase4' | 'nda_bla'
+
     // ── Status ──────────────────────────────────────────────────
     profileStatus: text('profile_status').default('active'),
     lastEnrichedAt: timestamp('last_enriched_at'),
