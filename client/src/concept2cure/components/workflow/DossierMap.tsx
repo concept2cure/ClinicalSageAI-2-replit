@@ -127,17 +127,39 @@ export const DossierMap: React.FC<DossierMapProps> = ({
   onSectionClick,
   onBack,
 }) => {
-  const { data: sections, isLoading, error } = useQuery<Array<{ code: string; title: string; status: string }>>({
+  // Fetch project sections from existing API
+  const { data: sections, isLoading: sectionsLoading, error } = useQuery<Array<{ code: string; title: string; status: string }>>({
     queryKey: queryKeys.ind.projectSections(projectId || 'none'),
     queryFn: () => apiRequest(`/api/project-sections?projectId=${projectId}`),
     enabled: !!projectId,
     staleTime: 60_000,
   });
 
+  // For IND projects: also fetch IND status to get real section completion
+  const isIND = projectType === 'IND';
+  const { data: indStatus } = useQuery<{ sections: Array<{ code: string; title: string; status: string }> }>({
+    queryKey: ['concept2cure', 'ind', 'status', projectId],
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/ind/status/${projectId}`);
+      if (!res.ok) return { sections: [] };
+      const json = await res.json();
+      return json.data || { sections: [] };
+    },
+    enabled: !!projectId && isIND,
+    staleTime: 30_000,
+  });
+
+  const isLoading = sectionsLoading;
+
   const structure = useMemo(() => {
-    if (!sections || sections.length === 0) return DEFAULT_CTD_STRUCTURE;
-    return buildModuleTree(sections);
-  }, [sections]);
+    // IND projects: use IND registry sections for complete Module 1-5 structure
+    if (isIND && indStatus?.sections && indStatus.sections.length > 0) {
+      return buildModuleTree(indStatus.sections);
+    }
+    // Other projects: use project sections or fallback
+    if (sections && sections.length > 0) return buildModuleTree(sections);
+    return DEFAULT_CTD_STRUCTURE;
+  }, [sections, indStatus, isIND]);
 
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-stone-50/50">
