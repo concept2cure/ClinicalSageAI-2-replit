@@ -96,13 +96,25 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
           </div>
         </div>
 
-        {/* Subtle activity bar */}
+        {/* Subtle activity bar — shows IND module progress if IND project */}
         {summary.total > 0 && (
           <div className="flex items-center gap-3 mt-3 pt-3 border-t border-stone-100">
             <span className="text-xs text-stone-400">
               {summary.ready} of {summary.total} artifacts ready
               {summary.review > 0 && ` · ${summary.review} in review`}
             </span>
+            {project.type === 'IND' && (
+              <span className="text-xs text-stone-400 ml-auto">
+                IND Submission
+              </span>
+            )}
+          </div>
+        )}
+        {summary.total === 0 && project.type === 'IND' && (
+          <div className="mt-3 pt-3 border-t border-stone-100">
+            <p className="text-xs text-stone-400">
+              IND Submission — ask AnA to start generating your CTD sections
+            </p>
           </div>
         )}
       </div>
