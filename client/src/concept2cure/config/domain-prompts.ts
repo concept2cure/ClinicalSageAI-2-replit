@@ -50,6 +50,8 @@ const RISK_INTELLIGENCE: DomainPromptGroup = {
     { id: 'ri-deficiencies', label: 'Show known deficiency patterns for my submission type' },
     { id: 'ri-twin', label: 'Run a submission twin analysis — claims vs evidence integrity' },
     { id: 'ri-consistency', label: 'Check cross-module consistency across the dossier' },
+    { id: 'ri-contradictions', label: 'Scan for contradictions across documents' },
+    { id: 'ri-drift', label: 'Detect narrative drift across my submission' },
   ],
 };
 
@@ -126,6 +128,7 @@ const SAFETY: DomainPromptGroup = {
     { id: 'sf-dsur', label: 'Help with DSUR preparation' },
     { id: 'sf-benefit-risk', label: 'Draft benefit-risk analysis' },
     { id: 'sf-rmp', label: 'Generate or update the Risk Management Plan' },
+    { id: 'sf-cross-study', label: 'Run cross-study safety analysis' },
   ],
 };
 
@@ -137,7 +140,8 @@ const CLINICAL: DomainPromptGroup = {
     { id: 'cl-ise', label: 'Generate an Integrated Summary of Efficacy' },
     { id: 'cl-ib', label: 'Generate or update the Investigator\'s Brochure' },
     { id: 'cl-design', label: 'Design the optimal clinical trial' },
-    { id: 'cl-endpoints', label: 'Evaluate my primary endpoint strategy' },
+    { id: 'cl-endpoints', label: 'Recommend and evaluate endpoint strategy' },
+    { id: 'cl-insights', label: 'Generate clinical insights for my indication' },
   ],
 };
 
@@ -162,6 +166,8 @@ const REGULATORY_STRATEGY: DomainPromptGroup = {
     { id: 'str-brief', label: 'Prepare reviewer question anticipation brief' },
     { id: 'str-precedent', label: 'Find and analyze relevant regulatory precedents' },
     { id: 'str-pathway', label: 'Compare regulatory pathways for my product' },
+    { id: 'str-jurisdictions', label: 'Analyze cross-jurisdictional requirements for my product' },
+    { id: 'str-haq', label: 'Prepare for health authority questions' },
   ],
 };
 
@@ -184,6 +190,8 @@ const DOSSIER: DomainPromptGroup = {
     { id: 'dos-ectd', label: 'Show eCTD module structure' },
     { id: 'dos-readiness', label: 'Assess submission readiness by module' },
     { id: 'dos-workflow', label: 'Show full submission workflow with blockers' },
+    { id: 'dos-predict', label: 'Predict the next best artifact to maximize readiness' },
+    { id: 'dos-fragility', label: 'Assess my submission fragility' },
   ],
 };
 
@@ -194,6 +202,7 @@ const KNOWLEDGE: DomainPromptGroup = {
     { id: 'kb-knowledge', label: 'Show all knowledge stored for this project' },
     { id: 'kb-search', label: 'Search the project knowledge base' },
     { id: 'kb-decisions', label: 'Show key decisions and their rationale' },
+    { id: 'kb-cross-doc', label: 'Analyze connections and gaps across my documents' },
   ],
 };
 
