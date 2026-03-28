@@ -62,6 +62,7 @@ import {
   History,
   BarChart3,
 } from 'lucide-react';
+import { useProject } from '../../context/ProjectContext';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -842,21 +843,89 @@ function ModuleProgress({ sections }: { sections: eCTDSection[] }) {
   );
 }
 
+// ── Real Data Overlay ─────────────────────────────────────────────────────────
+// Maps real project artifacts (from useProject context) onto the CTD structure,
+// replacing mock documents with live data from the database.
+
+function mapArtifactStatus(status?: string): DocumentStatus {
+  if (!status) return 'draft';
+  const s = status.toLowerCase();
+  if (s === 'approved') return 'approved';
+  if (s === 'review' || s === 'under_review' || s === 'in_review') return 'in_review';
+  if (s === 'locked' || s === 'published') return 'approved';
+  return 'draft';
+}
+
+function overlayRealArtifacts(
+  structure: eCTDSection[],
+  artifacts: Array<{ id: string; title: string; ctdSection?: string; status?: string; version?: number; updatedAt?: string }>,
+): eCTDSection[] {
+  // Group artifacts by CTD section prefix
+  const bySection: Record<string, eCTDDocument[]> = {};
+  for (const a of artifacts) {
+    if (!a.ctdSection) continue;
+    // Normalize section: "2.7" -> match m2.7, "m2.7" -> match m2.7
+    const key = a.ctdSection.startsWith('m') ? a.ctdSection : `m${a.ctdSection}`;
+    if (!bySection[key]) bySection[key] = [];
+    bySection[key].push({
+      id: a.id,
+      title: a.title,
+      section: a.ctdSection,
+      status: mapArtifactStatus(a.status),
+      version: String(a.version ?? 1),
+      lastModified: a.updatedAt ?? new Date().toISOString(),
+    });
+  }
+
+  function overlaySection(section: eCTDSection): eCTDSection {
+    const docs = bySection[section.id] || section.documents || [];
+    return {
+      ...section,
+      documents: docs.length > 0 ? docs : section.documents,
+      children: section.children?.map(overlaySection),
+    };
+  }
+
+  return structure.map(overlaySection);
+}
+
 /**
  * Main eCTD Navigator Component
+ *
+ * Integrates with project context to overlay real artifact data onto the
+ * standard ICH CTD Module 1-5 structure. Falls back to mock structure
+ * when no project is active.
  */
 export function ECTDNavigator() {
   const [selectedSection, setSelectedSection] = useState<eCTDSection | null>(null);
   const [selectedHA, setSelectedHA] = useState<string>('FDA');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Calculate overall stats
+  // Pull real artifacts from project context
+  const { activeProject, artifacts: projectArtifacts } = useProject();
+
+  // Overlay real artifacts onto CTD structure when project is active
+  const liveStructure = useMemo(() => {
+    if (!activeProject || !projectArtifacts || projectArtifacts.length === 0) {
+      return ECTD_STRUCTURE;
+    }
+    return overlayRealArtifacts(ECTD_STRUCTURE, projectArtifacts.map(a => ({
+      id: String(a.id),
+      title: a.title,
+      ctdSection: a.ctdSection,
+      status: a.status,
+      version: a.version,
+      updatedAt: a.updatedAt,
+    })));
+  }, [activeProject, projectArtifacts]);
+
+  // Calculate overall stats from live structure
   const overallStats = useMemo(() => {
     let total = 0,
       approved = 0,
       inReview = 0,
       draft = 0;
-    for (const section of ECTD_STRUCTURE) {
+    for (const section of liveStructure) {
       const counts = countDocuments(section);
       total += counts.total;
       approved += counts.approved;
@@ -864,7 +933,7 @@ export function ECTDNavigator() {
       draft += counts.draft;
     }
     return { total, approved, inReview, draft };
-  }, []);
+  }, [liveStructure]);
 
   return (
     <div className="p-6 space-y-6">
@@ -878,6 +947,12 @@ export function ECTDNavigator() {
           <p className="text-muted-foreground">
             Electronic Common Technical Document structure and management
           </p>
+          {activeProject && (
+            <p className="text-xs text-emerald-600 flex items-center gap-1 mt-1">
+              <CheckCircle2 className="w-3 h-3" />
+              Live data from: {activeProject.name}
+            </p>
+          )}
         </div>
         <div className="flex gap-2">
           <Select value={selectedHA} onValueChange={setSelectedHA}>
@@ -973,7 +1048,7 @@ export function ECTDNavigator() {
                   </div>
                 </div>
                 <div className="px-3 py-2 p-2">
-                  {ECTD_STRUCTURE.map(section => (
+                  {liveStructure.map(section => (
                     <SectionNode key={section.id} section={section} onSelect={setSelectedSection} />
                   ))}
                 </div>
@@ -993,7 +1068,7 @@ export function ECTDNavigator() {
                 </div>
               )}
 
-              <ModuleProgress sections={ECTD_STRUCTURE} />
+              <ModuleProgress sections={liveStructure} />
             </div>
           </div>
         </TabsContent>
