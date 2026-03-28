@@ -470,7 +470,29 @@ export async function generateEctdPackage(
       }
     }
 
-    // If no content from vault, check metadata for any stored content
+    // If no content from vault, try concept2cure artifacts (editor-authored documents)
+    if (!documentContent) {
+      try {
+        const artifactResult = await pool.query(
+          `SELECT content, title FROM concept2cure_artifacts
+           WHERE organization_id = $1
+             AND (ctd_section = $2 OR ctd_section = $3 OR ctd_section = $4)
+             AND status IN ('approved', 'locked', 'review', 'draft')
+           ORDER BY
+             CASE status WHEN 'locked' THEN 1 WHEN 'approved' THEN 2 WHEN 'review' THEN 3 ELSE 4 END,
+             updated_at DESC
+           LIMIT 1`,
+          [organizationId, granule.granuleId, `csr-${granule.granuleId}`, `m${moduleNum}-${granule.granuleId}`]
+        );
+        if (artifactResult.rows.length > 0 && artifactResult.rows[0].content) {
+          documentContent = artifactResult.rows[0].content;
+        }
+      } catch (artErr: any) {
+        console.warn(`[eCTD Export] Artifact lookup failed for ${granule.granuleId}: ${artErr.message}`);
+      }
+    }
+
+    // If no content from vault or artifacts, check metadata for any stored content
     if (!documentContent && granule.metadata?.content) {
       documentContent = granule.metadata.content;
     }
@@ -501,7 +523,31 @@ export async function generateEctdPackage(
 
   // Also add project_sections as documents if they have content
   for (const section of projectSections) {
-    if (!section.content || section.content.trim().length === 0) continue;
+    let docContent = section.content?.trim() || '';
+
+    // If project_sections has no content, try concept2cure artifacts
+    if (!docContent) {
+      try {
+        const artResult = await pool.query(
+          `SELECT content FROM concept2cure_artifacts
+           WHERE organization_id = $1
+             AND (ctd_section = $2 OR ctd_section = $3)
+             AND content IS NOT NULL AND LENGTH(content) > 10
+           ORDER BY
+             CASE status WHEN 'locked' THEN 1 WHEN 'approved' THEN 2 WHEN 'review' THEN 3 ELSE 4 END,
+             updated_at DESC
+           LIMIT 1`,
+          [organizationId, section.section_code, `csr-${section.section_code}`]
+        );
+        if (artResult.rows.length > 0) {
+          docContent = artResult.rows[0].content;
+        }
+      } catch {
+        // Artifact lookup failed — skip
+      }
+    }
+
+    if (!docContent) continue;
 
     const moduleNum = section.section_code?.split('.')[0];
     if (!moduleNum || !MODULE_DEFS[moduleNum]) continue;
@@ -515,8 +561,6 @@ export async function generateEctdPackage(
     const folder = MODULE_DEFS[moduleNum].folder;
     const filePath = `${folder}/${section.section_code?.replace(/\./g, '/')}/${sectionSlug}.pdf`;
 
-    // Use actual content from DB
-    const docContent = section.content;
     zip.file(filePath, docContent);
     totalFiles++;
 
