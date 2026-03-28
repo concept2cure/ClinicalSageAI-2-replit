@@ -3670,7 +3670,6 @@ export const ZenApp: React.FC = () => {
             module pages (dossier, documents, etc.): compact input bar at bottom */}
         {layoutMode !== 'workspace' &&
           layoutMode !== 'regulatory-workspace' &&
-          layoutMode !== 'section-workspace' &&
           layoutMode !== 'project-home' && (
             <AnaPersistentPanel
               mode={
