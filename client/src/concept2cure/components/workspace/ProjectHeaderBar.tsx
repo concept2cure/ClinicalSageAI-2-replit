@@ -75,81 +75,41 @@ export const ProjectHeaderBar: React.FC<ProjectHeaderBarProps> = ({
   return (
     <div
       className={cn(
-        'flex items-center gap-3 px-4 py-2 border-b border-zinc-100 bg-white/80 backdrop-blur-sm flex-shrink-0',
+        'flex items-center gap-3 px-5 py-3 border-b border-stone-150 bg-[#f9f8f6]/80 backdrop-blur-sm flex-shrink-0',
         className
       )}
     >
-      {/* Submission type badge */}
-      <span
-        className={cn(
-          'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold tracking-wide flex-shrink-0',
-          badge.bg,
-          badge.color
-        )}
-      >
-        {badge.label}
-      </span>
-
-      {/* Project name — clickable to open config */}
-      <button
-        onClick={onOpenConfig}
-        className="flex items-center gap-1.5 min-w-0 hover:opacity-70 transition-opacity"
-        title={projectName}
-      >
-        <span className="text-sm font-medium text-zinc-900 truncate max-w-[240px]">
-          {projectName}
-        </span>
-        {productName && (
-          <span className="text-[11px] text-zinc-400 truncate max-w-[160px] hidden sm:inline">
-            — {productName}
-          </span>
-        )}
-      </button>
-
-      {/* Project switcher dropdown */}
-      <button
-        onClick={onSwitchProject}
-        className="p-0.5 rounded text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors flex-shrink-0"
-        aria-label="Switch project"
-        title="Switch project"
-      >
-        <ChevronDown className="w-3.5 h-3.5" />
-      </button>
-
-      <div className="flex-1" />
-
-      {/* Target agency indicator */}
-      {targetAgency && (
-        <div className="hidden md:flex items-center gap-1 text-[11px] text-zinc-500">
-          <Target className="w-3 h-3" />
-          {targetAgency}
-        </div>
-      )}
-
-      {/* Readiness score */}
-      {readinessScore !== undefined && readinessScore > 0 && (
+      {/* Colored accent dot + Project name */}
+      <div className="flex items-center gap-2.5 min-w-0 flex-1">
         <div
+          className="w-2.5 h-2.5 rounded-full flex-shrink-0 bg-indigo-500"
+        />
+        <button
+          onClick={onSwitchProject}
+          className="flex items-center gap-1.5 min-w-0 hover:opacity-70 transition-opacity"
+          title={projectName}
+        >
+          <span className="text-[15px] font-semibold text-stone-900 truncate max-w-[320px]">
+            {projectName}
+          </span>
+          <ChevronDown className="w-3.5 h-3.5 text-stone-400 flex-shrink-0" />
+        </button>
+        {/* Subtle submission type label */}
+        <span
           className={cn(
-            'flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium',
-            readinessBg(readinessScore)
+            'text-xs font-medium px-1.5 py-0.5 rounded flex-shrink-0',
+            badge.bg,
+            badge.color
           )}
         >
-          <span className="text-zinc-500">Readiness</span>
-          <span
-            className={cn(
-              'tabular-nums font-semibold',
-              readinessColor(readinessScore)
-            )}
-          >
-            {readinessScore}%
-          </span>
-        </div>
-      )}
+          {badge.label}
+        </span>
+      </div>
 
       {/* Config button */}
       <button
         onClick={onOpenConfig}
-        className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors flex-shrink-0"
+        className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors flex-shrink-0"
         aria-label="Project settings"
         title="Project settings"
       >

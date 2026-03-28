@@ -63,29 +63,26 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
   }, [artifacts]);
 
   return (
-    <div className="flex-shrink-0 px-6 py-4 border-b border-zinc-100 bg-white" data-testid="project-context-strip">
+    <div className="flex-shrink-0 px-6 py-4 border-b border-stone-150 bg-white/60 backdrop-blur-sm" data-testid="project-context-strip">
       <div className="flex items-center justify-between max-w-3xl mx-auto">
         {/* Project identity + readiness */}
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h1 className="text-sm font-semibold text-zinc-900 truncate">{project.name}</h1>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium flex-shrink-0">
-              {project.type}
-            </span>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-[15px] font-semibold text-stone-900 truncate">{project.name}</h1>
+            {summary.total > 0 && (
+              <span className="text-xs text-stone-400">
+                {summary.ready} of {summary.total} ready
+                {summary.review > 0 && ` · ${summary.review} in review`}
+              </span>
+            )}
           </div>
-          {summary.total > 0 && (
-            <p className="text-xs text-zinc-400 mt-0.5">
-              {summary.ready} of {summary.total} artifacts ready
-              {summary.review > 0 && ` · ${summary.review} in review`}
-            </p>
-          )}
         </div>
 
         {/* Open Tools */}
         <button
           onClick={() => onNavigate('tools')}
           aria-label="Open Tools"
-          className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50 hover:text-zinc-800 transition-colors flex-shrink-0 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+          className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-stone-600 border border-stone-200 rounded-lg hover:bg-stone-50 hover:text-stone-800 transition-colors flex-shrink-0 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
         >
           <Wrench className="w-3.5 h-3.5" />
           Open Tools

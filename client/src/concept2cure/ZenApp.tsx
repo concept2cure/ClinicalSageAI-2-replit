@@ -3227,9 +3227,9 @@ export const ZenApp: React.FC = () => {
                   }
                 />
 
-                {/* Right sidebar: Claude.ai-style project knowledge (Context, Strategy, Instructions, Files, Intelligence, RIM) */}
+                {/* Right sidebar: Claude.ai-style project knowledge */}
                 {/* Desktop: static panel */}
-                <div className="w-72 xl:w-80 border-l border-zinc-100 bg-white flex-shrink-0 hidden lg:flex">
+                <div className="w-72 xl:w-80 border-l border-stone-150 bg-white flex-shrink-0 hidden lg:flex">
                   <Suspense
                     fallback={
                       <div className="flex items-center justify-center py-12 w-full">
@@ -3315,20 +3315,20 @@ export const ZenApp: React.FC = () => {
           )}
         </div>
 
-        {/* ── Project Cards Grid — Claude.ai-style projects landing ── */}
+        {/* ── Project Cards Grid — Claude.ai projects landing ── */}
         {layoutMode === 'projects' && !embeddedModule && projects.length > 0 && (
-          <div className="px-6 pt-6 pb-2 max-w-5xl mx-auto w-full flex-shrink-0">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-zinc-900">Projects</h2>
+          <div className="px-8 pt-8 pb-4 max-w-4xl mx-auto w-full flex-shrink-0">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-stone-900">Projects</h2>
               <button
                 onClick={() => setNewProjectOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-stone-700 border border-stone-300 hover:bg-stone-50 rounded-lg transition-colors"
               >
-                <Plus className="w-3.5 h-3.5" />
-                New project
+                <Plus className="w-4 h-4" />
+                Create a project
               </button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {projects
                 .filter(p => !p.archived)
                 .sort((a, b) => {
@@ -3345,43 +3345,43 @@ export const ZenApp: React.FC = () => {
                       setLayoutMode('workspace');
                     }}
                     className={cn(
-                      'group text-left p-4 rounded-xl border transition-all duration-150',
+                      'group text-left rounded-xl border overflow-hidden transition-all duration-150',
                       activeProjectId === project.id
-                        ? 'border-zinc-300 bg-zinc-50 ring-1 ring-zinc-200'
-                        : 'border-zinc-200 hover:border-zinc-300 hover:shadow-sm bg-white'
+                        ? 'border-stone-300 bg-stone-50/80 ring-1 ring-stone-200'
+                        : 'border-stone-200 hover:border-stone-300 hover:shadow-sm bg-white'
                     )}
                   >
-                    <div className="flex items-start justify-between mb-2">
-                      <span
-                        className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold text-white"
-                        style={{ backgroundColor: project.color || '#6366f1' }}
-                      >
-                        {project.type}
-                      </span>
-                      {project.starred && (
-                        <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 flex-shrink-0" />
+                    {/* Colored top accent bar */}
+                    <div
+                      className="h-1 w-full"
+                      style={{ backgroundColor: project.color || '#6366f1' }}
+                    />
+                    <div className="p-4">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <h3 className="text-[15px] font-semibold text-stone-900 truncate group-hover:text-stone-700">
+                          {project.name}
+                        </h3>
+                        {project.starred && (
+                          <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 flex-shrink-0" />
+                        )}
+                      </div>
+                      {project.description && (
+                        <p className="text-[13px] text-stone-500 line-clamp-2 mb-3 leading-relaxed">
+                          {project.description}
+                        </p>
                       )}
-                    </div>
-                    <h3 className="text-sm font-semibold text-zinc-900 truncate mb-0.5 group-hover:text-zinc-700">
-                      {project.name}
-                    </h3>
-                    {project.description && (
-                      <p className="text-xs text-zinc-500 line-clamp-2 mb-2 leading-relaxed">
-                        {project.description}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-3 text-[11px] text-zinc-400">
-                      <span className="flex items-center gap-1">
-                        <MessageSquare className="w-3 h-3" />
-                        {project.conversationCount}
-                      </span>
-                      {project.sponsor && <span className="truncate">{project.sponsor}</span>}
-                      <span className="ml-auto tabular-nums">
-                        {new Date(project.lastUpdated).toLocaleDateString(undefined, {
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </span>
+                      <div className="flex items-center gap-3 text-xs text-stone-400 pt-2 border-t border-stone-100">
+                        <span className="flex items-center gap-1">
+                          <MessageSquare className="w-3 h-3" />
+                          {project.conversationCount} {project.conversationCount === 1 ? 'chat' : 'chats'}
+                        </span>
+                        <span className="ml-auto tabular-nums">
+                          {new Date(project.lastUpdated).toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </span>
+                      </div>
                     </div>
                   </button>
                 ))}

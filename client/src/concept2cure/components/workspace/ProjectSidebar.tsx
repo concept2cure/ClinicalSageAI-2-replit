@@ -65,35 +65,34 @@ const InstructionsModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-[2px]">
+      <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col">
         <div className="px-6 pt-6 pb-4">
-          <h2 className="text-lg font-semibold text-zinc-900">Set project instructions</h2>
-          <p className="text-sm text-zinc-500 mt-1">
+          <h2 className="text-lg font-semibold text-stone-900">Set project instructions</h2>
+          <p className="text-sm text-stone-500 mt-1 leading-relaxed">
             Provide AnA with relevant instructions and information for chats within{' '}
-            <span className="font-medium text-zinc-700">{projectName || 'this project'}</span>.
-            This will work alongside user preferences and the selected style in a chat.
+            <span className="font-medium text-stone-700">{projectName || 'this project'}</span>.
           </p>
         </div>
         <div className="flex-1 px-6 min-h-0">
           <textarea
             value={draft}
             onChange={e => setDraft(e.target.value)}
-            className="w-full h-64 p-4 border border-zinc-200 rounded-xl text-sm text-zinc-900 leading-relaxed resize-none focus-visible:ring-2 outline-none focus:ring-zinc-200 focus:border-zinc-300 bg-zinc-50"
+            className="w-full h-64 p-4 border border-stone-200 rounded-xl text-sm text-stone-900 leading-relaxed resize-none focus-visible:ring-2 outline-none focus:ring-stone-200 focus:border-stone-300 bg-stone-50"
             placeholder="e.g., This project is for a 510(k) submission for a Class II medical device. Focus on FDA guidance documents and use formal regulatory language..."
           />
         </div>
         <div className="flex items-center justify-end gap-3 px-6 py-4">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors duration-150"
+            className="px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100 rounded-lg transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg transition-colors disabled:opacity-60"
+            className="px-4 py-2 text-sm font-medium text-white bg-stone-900 hover:bg-stone-800 rounded-lg transition-colors disabled:opacity-60"
           >
             {saving ? 'Saving...' : 'Save instructions'}
           </button>
@@ -148,56 +147,60 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
   return (
     <div className={cn('flex flex-col h-full overflow-y-auto', className)} style={{ scrollbarWidth: 'thin' }}>
       {/* ── Project Context ── */}
-      <div className="px-4 py-4 border-b border-zinc-200">
+      <div className="px-5 py-4 border-b border-stone-100">
         <div className="flex items-center justify-between mb-1">
-          <h3 className="text-sm font-semibold text-zinc-900">Project Context</h3>
-          <span className="flex items-center gap-1 text-xs text-zinc-400 bg-zinc-50 px-2 py-0.5 rounded-full">
+          <h3 className="text-[13px] font-semibold text-stone-800">Project knowledge</h3>
+          <span className="flex items-center gap-1 text-[11px] text-stone-400 bg-stone-50 px-2 py-0.5 rounded-full">
             <Lock className="w-3 h-3" />
             Your team
           </span>
         </div>
-        <p className="text-xs text-zinc-400 leading-relaxed">
-          AnA learns your project context after a few interactions — submission history, regulatory preferences, and key decisions.
+        <p className="text-[11px] text-stone-400 leading-relaxed">
+          Instructions and files that AnA uses in every conversation.
         </p>
       </div>
 
       {/* ── Instructions ── */}
-      <div className="px-4 py-4 border-b border-zinc-200">
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="text-sm font-semibold text-zinc-900">Instructions</h3>
+      <div className="px-5 py-4 border-b border-stone-100">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-medium text-stone-700">Custom instructions</span>
           <button
             onClick={() => setInstructionsOpen(true)}
-            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors duration-150"
+            className="p-1 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded transition-colors"
             title="Edit instructions"
           >
             <PenLine className="w-3.5 h-3.5" />
           </button>
         </div>
         {instructions ? (
-          <p
-            className="text-xs text-zinc-500 leading-relaxed line-clamp-3 cursor-pointer hover:text-zinc-700"
+          <button
+            className="w-full text-left p-3 rounded-lg border border-stone-200 hover:border-stone-300 hover:bg-stone-50/50 transition-colors"
             onClick={() => setInstructionsOpen(true)}
           >
-            {instructions}
-          </p>
+            <p className="text-[13px] text-stone-600 leading-relaxed line-clamp-4">
+              {instructions}
+            </p>
+          </button>
         ) : (
-          <p
-            className="text-xs text-zinc-400 cursor-pointer hover:text-zinc-600"
+          <button
+            className="w-full text-left p-3 rounded-lg border border-stone-200 hover:border-stone-300 hover:bg-stone-50/50 transition-colors"
             onClick={() => setInstructionsOpen(true)}
           >
-            Click to add project instructions...
-          </p>
+            <p className="text-[13px] text-stone-400">
+              Add instructions for AnA on this project...
+            </p>
+          </button>
         )}
       </div>
 
       {/* ── Files ── */}
-      <div className="px-4 py-4 flex-1">
+      <div className="px-5 py-4 flex-1">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-zinc-900">Files</h3>
+          <span className="text-xs font-medium text-stone-700">Files</span>
           <div className="relative">
             <button
               onClick={() => setUploadMenuOpen(!uploadMenuOpen)}
-              className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors duration-150"
+              className="p-1 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded transition-colors"
               title="Add files"
             >
               <Plus className="w-4 h-4" />
@@ -207,19 +210,19 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
             {uploadMenuOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setUploadMenuOpen(false)} />
-                <div className="absolute right-0 top-8 z-20 bg-white rounded-xl shadow-lg border border-zinc-200 py-1 w-48">
+                <div className="absolute right-0 top-8 z-20 bg-white rounded-xl shadow-lg border border-stone-200 py-1 w-48">
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 transition-colors duration-150"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50 transition-colors"
                   >
-                    <Upload className="w-4 h-4 text-zinc-400" />
+                    <Upload className="w-4 h-4 text-stone-400" />
                     Upload from device
                   </button>
                   <button
                     onClick={() => { setUploadMenuOpen(false); setInstructionsOpen(true); }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 transition-colors duration-150"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50 transition-colors"
                   >
-                    <PenLine className="w-4 h-4 text-zinc-400" />
+                    <PenLine className="w-4 h-4 text-stone-400" />
                     Add text content
                   </button>
                 </div>
@@ -238,13 +241,13 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
 
         {/* Capacity bar */}
         <div className="mb-3">
-          <div className="w-full h-1 bg-zinc-100 rounded-full overflow-hidden">
+          <div className="w-full h-1 bg-stone-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-blue-500 rounded-full transition-all duration-150"
+              className="h-full bg-emerald-500 rounded-full transition-all duration-300"
               style={{ width: `${Math.max(capacityPercent, 1)}%` }}
             />
           </div>
-          <p className="text-xs text-zinc-400 mt-1">
+          <p className="text-[11px] text-stone-400 mt-1">
             {capacityPercent}% of project capacity used
           </p>
         </div>
@@ -260,21 +263,21 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
         {docs.length === 0 && !isUploading ? (
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="w-full py-8 border border-dashed border-zinc-200 rounded-xl text-center hover:border-zinc-300 hover:bg-zinc-50 transition-colors duration-150"
+            className="w-full py-8 border-2 border-dashed border-stone-200 rounded-xl text-center hover:border-stone-300 hover:bg-stone-50 transition-colors"
           >
-            <Upload className="w-5 h-5 text-zinc-400 mx-auto mb-2" />
-            <p className="text-xs text-zinc-400">Drop files here or click to upload</p>
+            <Upload className="w-5 h-5 text-stone-400 mx-auto mb-2" />
+            <p className="text-xs text-stone-400">Drop files here or click to upload</p>
           </button>
         ) : (
           <div className="grid grid-cols-2 gap-2">
             {docs.map((doc: any) => (
               <div
                 key={doc.id || doc.name}
-                className="group relative border border-zinc-200 rounded-lg overflow-hidden hover:border-zinc-300 transition-colors duration-150"
+                className="group relative border border-stone-200 rounded-lg overflow-hidden hover:border-stone-300 transition-colors"
               >
                 {/* Thumbnail placeholder */}
-                <div className="aspect-[4/5] bg-zinc-50 flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-zinc-400" />
+                <div className="aspect-[4/5] bg-stone-50 flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-stone-400" />
                 </div>
                 {/* File type badge */}
                 <div className="absolute bottom-1 left-1">
