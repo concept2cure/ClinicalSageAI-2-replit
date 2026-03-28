@@ -67,7 +67,8 @@
     "ci:reasoning-tier-uat-evidence": "node scripts/ci/check-reasoning-tier-uat-evidence.mjs",
     "ci:reasoning-tier-uat-evidence:strict": "node scripts/ci/check-reasoning-tier-uat-evidence.mjs --strict",
     "ci:reasoning-tier-readiness": "node scripts/ci/check-reasoning-tier-readiness-suite.mjs",
-    "ci:reasoning-tier-readiness:strict": "node scripts/ci/check-reasoning-tier-readiness-suite.mjs --strict-uat-evidence"
+    "ci:reasoning-tier-readiness:strict": "node scripts/ci/check-reasoning-tier-readiness-suite.mjs --strict-uat-evidence",
+    "audit:last-20-prs": "node scripts/audits/generate-last-pr-wiring-audit.mjs --limit 20"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
