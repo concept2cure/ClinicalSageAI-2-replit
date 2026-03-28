@@ -3333,6 +3333,54 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
       }
     }
 
+    // ── RIM Intelligence Context (non-blocking) ─────────────────────────
+    let rimBlock = '';
+    if (data.projectId) {
+      try {
+        const { computeReadinessScore, generateRecommendations } = await import('../services/intelligence/index.js');
+        const projId = Number(data.projectId);
+        const [readiness, recs] = await Promise.all([
+          computeReadinessScore({ organizationId, projectId: projId }).catch(() => null),
+          generateRecommendations({ organizationId, projectId: projId, triggeredBy: 'template_gen' }).catch(() => null),
+        ]);
+
+        const rimParts: string[] = [];
+        if (readiness) {
+          const dims = readiness.dimensions;
+          rimParts.push(
+            `Submission readiness: ${Math.round(readiness.overallScore)}% ` +
+            `(completeness ${Math.round(dims.completeness)}%, quality ${Math.round(dims.quality)}%, ` +
+            `consistency ${Math.round(dims.consistency)}%, compliance ${Math.round(dims.compliance)}%).`
+          );
+          if (readiness.gaps?.length > 0) {
+            const topGaps = readiness.gaps
+              .filter((g: any) => g.severity === 'critical' || g.severity === 'high')
+              .slice(0, 3);
+            if (topGaps.length > 0) {
+              rimParts.push('Key gaps: ' + topGaps.map((g: any) => `${g.description} (${g.severity})`).join('; ') + '.');
+            }
+          }
+        }
+        if (recs?.recommendations) {
+          const activeRecs = recs.recommendations
+            .filter((r: any) => r.status === 'active' && (r.severity === 'critical' || r.severity === 'high'))
+            .slice(0, 3);
+          if (activeRecs.length > 0) {
+            rimParts.push('Active recommendations: ' + activeRecs.map((r: any) => r.suggestedAction).join('; ') + '.');
+          }
+        }
+        if (rimParts.length > 0) {
+          rimBlock =
+            '\n\n--- REGULATORY INTELLIGENCE ---\n' +
+            rimParts.join(' ') +
+            '\nAddress identified gaps where relevant. Do not mention these scores in your output.\n' +
+            '--- END INTELLIGENCE ---\n';
+        }
+      } catch {
+        /* Non-blocking — continue without RIM context */
+      }
+    }
+
     // ── Generate with AI Gateway ────────────────────────────────────────
     const { getGateway } = await import('../services/ai-gateway/gateway.js');
     const gw = getGateway();
@@ -3343,7 +3391,7 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
     const gwResponse = await gw.route({
       taskType: 'document_drafting',
       messages: [
-        { role: 'system', content: prompt + evidenceBlock + '\n\n' + template.outputGuidance },
+        { role: 'system', content: prompt + evidenceBlock + rimBlock + '\n\n' + template.outputGuidance },
         { role: 'user', content: 'Generate the document content now.' },
       ],
       temperature: 0.35,

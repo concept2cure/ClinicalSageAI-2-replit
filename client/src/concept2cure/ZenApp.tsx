@@ -2922,6 +2922,10 @@ export const ZenApp: React.FC = () => {
                 onSuggestedPrompt={prompt => {
                   setExternalChatMessage({ text: prompt, ts: Date.now() });
                 }}
+                onOpenArtifact={artifactId => {
+                  setOpenArtifactId(artifactId);
+                  setLayoutMode('editor');
+                }}
               />
             </div>
           )}

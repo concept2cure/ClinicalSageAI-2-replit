@@ -61,6 +61,7 @@ interface ProjectHomeDashboardProps {
   onOpenConfig?: () => void;
   onSuggestedPrompt?: (prompt: string) => void;
   onOpenSearch?: () => void;
+  onOpenArtifact?: (artifactId: string) => void;
 }
 
 interface Artifact {
@@ -286,6 +287,7 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
   onOpenConfig,
   onSuggestedPrompt,
   onOpenSearch,
+  onOpenArtifact,
 }) => {
   const { data: artifacts, isLoading: artifactsLoading } = useQuery<Artifact[]>({
     queryKey: queryKeys.projects.overviewArtifacts(project.id),
@@ -354,6 +356,25 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
     return { docCount, ready, review, draft, pct, sourceCount, recentDocs: recentDocs.slice(0, 5) };
   }, [artifacts]);
 
+  // Derive per-document risk indicators from cross-module intelligence
+  const docRiskMap = useMemo(() => {
+    const map = new Map<string, 'critical' | 'high'>();
+    if (!intelligence?.crossModule?.insights) return map;
+    for (const insight of intelligence.crossModule.insights) {
+      if (insight.severity === 'critical' || insight.severity === 'high') {
+        const existing = map.get(insight.sourceDocumentId);
+        if (!existing || insight.severity === 'critical') {
+          map.set(insight.sourceDocumentId, insight.severity as 'critical' | 'high');
+        }
+        const existingTarget = map.get(insight.targetDocumentId);
+        if (!existingTarget || insight.severity === 'critical') {
+          map.set(insight.targetDocumentId, insight.severity as 'critical' | 'high');
+        }
+      }
+    }
+    return map;
+  }, [intelligence?.crossModule?.insights]);
+
   const typeLabel = isPharma || isDevice ? `${upperType} Submission` : project.type;
 
   const suggestedPrompts = useMemo(
@@ -419,20 +440,36 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
           <div className="mt-4 pt-3 border-t border-stone-100">
             <div className="flex items-center justify-between mb-2.5">
               <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wide">Recent documents</span>
-              <button
-                onClick={() => onNavigate('tools')}
-                className="text-[11px] text-stone-400 hover:text-stone-600 transition-colors"
-              >
-                View all
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => onNavigate('documents')}
+                  className="flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-700 transition-colors"
+                >
+                  <Plus className="w-3 h-3" />
+                  New
+                </button>
+                <button
+                  onClick={() => onNavigate('tools')}
+                  className="text-[11px] text-stone-400 hover:text-stone-600 transition-colors"
+                >
+                  View all
+                </button>
+              </div>
             </div>
             <div className="space-y-1">
               {summary.recentDocs.map(doc => {
                 const meta = STATUS_META[(doc.status || 'draft').toLowerCase()] || STATUS_META.draft;
+                const risk = docRiskMap.get(doc.id);
                 return (
                   <button
                     key={doc.id}
-                    onClick={() => onNavigate('documents')}
+                    onClick={() => {
+                      if (onOpenArtifact) {
+                        onOpenArtifact(doc.id);
+                      } else {
+                        onNavigate('documents');
+                      }
+                    }}
                     className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-stone-50 transition-colors text-left group"
                   >
                     <FileText className="w-3.5 h-3.5 text-stone-400 flex-shrink-0" />
@@ -441,6 +478,13 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
                     </span>
                     {doc.ctdSection && (
                       <span className="text-[10px] text-stone-400 font-mono flex-shrink-0">{doc.ctdSection}</span>
+                    )}
+                    {risk && (
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${risk === 'critical' ? 'bg-red-400' : 'bg-amber-400'}`}
+                        title={`${risk} risk signal`}
+                        aria-label={`${risk} risk signal`}
+                      />
                     )}
                     <span className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded ${meta.color} flex-shrink-0`}>
                       {meta.icon}
@@ -523,7 +567,44 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
           />
         )}
 
-        {/* ── Row 3.6: Recent Activity ─────────────────────────────────────── */}
+        {/* ── Row 3.6: Next Best Actions ─────────────────────────────────── */}
+        {intelligence?.nextActions?.actions && intelligence.nextActions.actions.length > 0 && (
+          <div className="mt-4 pt-3 border-t border-stone-100">
+            <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wide flex items-center gap-1.5 mb-2">
+              <Zap className="w-3 h-3" />
+              Suggested next steps
+            </span>
+            <div className="space-y-1">
+              {intelligence.nextActions.actions.slice(0, 2).map(action => {
+                const urgencyColor = action.urgency === 'immediate'
+                  ? 'text-red-500'
+                  : action.urgency === 'this_week'
+                  ? 'text-amber-500'
+                  : 'text-stone-400';
+                return (
+                  <button
+                    key={action.actionId}
+                    onClick={() => onSuggestedPrompt?.(
+                      `Help me with this next step: ${action.title}. ${action.description}`
+                    )}
+                    className="w-full flex items-start gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-stone-50 transition-colors group"
+                  >
+                    <ArrowRight className={`w-3 h-3 mt-0.5 flex-shrink-0 ${urgencyColor}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] text-stone-700 group-hover:text-stone-900 truncate">{action.title}</p>
+                      <p className="text-[10px] text-stone-400 truncate">{action.description}</p>
+                    </div>
+                    <span className="text-[9px] text-stone-400 flex-shrink-0 uppercase tracking-wide">
+                      {action.effortEstimate}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Row 3.7: Recent Activity ─────────────────────────────────────── */}
         {activityFeed && activityFeed.length > 0 && (
           <div className="mt-4 pt-3 border-t border-stone-100">
             <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wide flex items-center gap-1.5 mb-2">

@@ -435,7 +435,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       return new Set(['audit', 'submission-readiness', 'ga-readiness']);
     }
     // Default: draft stage
-    return new Set(['intelligence', 'dataroom', 'batch-ai']);
+    return new Set(['intelligence', 'precedent', 'dataroom', 'batch-ai']);
   }, [activeArtifact?.status]);
 
   // ── Sign/Approve state ────────────────────────────────────────────────
