@@ -796,64 +796,15 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <Settings className="w-4 h-4" />
         </IconBtn>
 
-        {/* Primary workflow icons */}
+        {/* Workflow shortcut — just one icon for the editor workspace */}
         <div className="w-8 border-t border-stone-200 my-1" />
-        <button
-          onClick={() => onNavigate?.('ri-copilot')}
-          aria-label="Regulatory Intelligence"
-          className={cn(
-            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors',
-            activeNavId === 'ri-copilot'
-              ? 'bg-blue-100 text-blue-500'
-              : 'text-stone-500 hover:bg-stone-200'
-          )}
-        >
-          <Brain className="w-4 h-4" />
-        </button>
-        <button
+        <IconBtn
+          label="Editor"
+          active={['submission-builder', 'ri-copilot', 'verify', 'review', 'publish'].includes(activeNavId || '')}
           onClick={() => onNavigate?.('submission-builder')}
-          aria-label="Submission Builder"
-          className={cn(
-            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors',
-            activeNavId === 'submission-builder'
-              ? 'bg-blue-100 text-blue-500'
-              : 'text-stone-500 hover:bg-stone-200'
-          )}
         >
           <PenLine className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => onNavigate?.('verify')}
-          aria-label="Verify"
-          className={cn(
-            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors',
-            activeNavId === 'verify' ? 'bg-emerald-50 text-emerald-600' : 'text-stone-500 hover:bg-stone-200'
-          )}
-        >
-          <FileCheck className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => onNavigate?.('review')}
-          aria-label="Review"
-          className={cn(
-            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors',
-            activeNavId === 'review' ? 'bg-emerald-50 text-emerald-600' : 'text-stone-500 hover:bg-stone-200'
-          )}
-        >
-          <ShieldCheck className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => onNavigate?.('publish')}
-          aria-label="Publish"
-          className={cn(
-            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors',
-            activeNavId === 'publish'
-              ? 'bg-blue-100 text-blue-500'
-              : 'text-stone-500 hover:bg-stone-200'
-          )}
-        >
-          <Upload className="w-4 h-4" />
-        </button>
+        </IconBtn>
 
         {/* Bottom: expand + account */}
         <div className="mt-auto flex flex-col items-center gap-1">
@@ -1108,70 +1059,26 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
           {/* ── SUBMISSION WORKFLOW — secondary nav ────────────────── */}
           <div className="mx-2 my-1 border-t border-stone-100" />
-          <WorkspaceGroup label="Intelligence" defaultOpen={true}>
+          <WorkspaceGroup label="Workspace" defaultOpen={true}>
+            <NavItem
+              icon={<PenLine className="w-3.5 h-3.5" />}
+              label="Editor"
+              active={activeNavId === 'submission-builder'}
+              onClick={() => onNavigate?.('submission-builder')}
+            />
             <NavItem
               icon={<Brain className="w-3.5 h-3.5" />}
-              label="Regulatory Intelligence"
+              label="Intelligence"
               active={activeNavId === 'ri-copilot'}
               accentColor="blue"
               onClick={() => onNavigate?.('ri-copilot')}
             />
             <NavItem
-              icon={<PenLine className="w-3.5 h-3.5" />}
-              label="Submission Builder"
-              active={activeNavId === 'submission-builder'}
-              onClick={() => onNavigate?.('submission-builder')}
-            />
-            <NavItem
-              icon={<Activity className="w-3.5 h-3.5" />}
-              label="CSR Authoring"
-              active={activeNavId === 'csr-workflow'}
-              onClick={() => onNavigate?.('csr-workflow')}
-            />
-            <NavItem
-              icon={<ClipboardCheck className="w-3.5 h-3.5" />}
-              label="IND Checklist"
-              active={activeNavId === 'ind-checklist'}
-              onClick={() => onNavigate?.('ind-checklist')}
-            />
-            <NavItem
-              icon={<FlaskConical className="w-3.5 h-3.5" />}
-              label="CMC"
-              active={activeNavId === 'cmc'}
-              onClick={() => onNavigate?.('cmc')}
-            />
-            <NavItem
-              icon={<Microscope className="w-3.5 h-3.5" />}
-              label="Clinical / Module 5"
-              active={activeNavId === 'clinical-module5'}
-              onClick={() => onNavigate?.('clinical-module5')}
-            />
-            <NavItem
-              icon={<FileCheck className="w-3.5 h-3.5" />}
-              label="Verify"
-              active={activeNavId === 'verify'}
-              accentColor="emerald"
-              onClick={() => onNavigate?.('verify')}
-            />
-            <NavItem
               icon={<ShieldCheck className="w-3.5 h-3.5" />}
-              label="Review"
-              active={activeNavId === 'review'}
+              label="Review & Verify"
+              active={activeNavId === 'review' || activeNavId === 'verify'}
               accentColor="emerald"
               onClick={() => onNavigate?.('review')}
-            />
-            <NavItem
-              icon={<Upload className="w-3.5 h-3.5" />}
-              label="Publish"
-              active={activeNavId === 'publish'}
-              onClick={() => onNavigate?.('publish')}
-            />
-            <NavItem
-              icon={<Shield className="w-3.5 h-3.5" />}
-              label="HAQ"
-              active={activeNavId === 'haq'}
-              accentColor="emerald"
-              onClick={() => onNavigate?.('haq')}
             />
             <NavItem
               icon={<Archive className="w-3.5 h-3.5" />}
