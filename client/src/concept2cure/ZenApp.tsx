@@ -2678,7 +2678,9 @@ export const ZenApp: React.FC = () => {
                     projectId={activeProjectId}
                     projectName={activeProject?.name}
                     onOpenDocument={docId => {
-                      setLayoutMode('documents');
+                      setOpenArtifactId(docId);
+                      setRiViewMode('editor');
+                      setLayoutMode('regulatory-workspace');
                     }}
                   />
                 </Suspense>
