@@ -2928,8 +2928,14 @@ export const ZenApp: React.FC = () => {
                     setRiViewMode('editor');
                     setLayoutMode('regulatory-workspace');
                   } else {
-                    setActiveSectionCode(sectionCode);
-                    setLayoutMode('section-workspace');
+                    // Create draft directly and open in editor
+                    setPendingEditorContent({
+                      title: sectionCode,
+                      content: '',
+                      ctdSection: sectionCode,
+                    });
+                    setRiViewMode('editor');
+                    setLayoutMode('regulatory-workspace');
                   }
                 }}
                 onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
@@ -3179,8 +3185,14 @@ export const ZenApp: React.FC = () => {
                     setRiViewMode('editor');
                     setLayoutMode('regulatory-workspace');
                   } else {
-                    setActiveSectionCode(sectionCode);
-                    setLayoutMode('section-workspace');
+                    // Create draft directly and open in editor
+                    setPendingEditorContent({
+                      title: sectionCode,
+                      content: '',
+                      ctdSection: sectionCode,
+                    });
+                    setRiViewMode('editor');
+                    setLayoutMode('regulatory-workspace');
                   }
                 }}
                 onAIDraft={async (sectionCode, sectionTitle) => {
@@ -3217,8 +3229,14 @@ export const ZenApp: React.FC = () => {
                     setRiViewMode('editor');
                     setLayoutMode('regulatory-workspace');
                   } else {
-                    setActiveSectionCode(sectionCode);
-                    setLayoutMode('section-workspace');
+                    // Create draft directly and open in editor
+                    setPendingEditorContent({
+                      title: sectionCode,
+                      content: '',
+                      ctdSection: sectionCode,
+                    });
+                    setRiViewMode('editor');
+                    setLayoutMode('regulatory-workspace');
                   }
                 }}
                 onAIDraft={async (sectionCode, sectionTitle) => {
