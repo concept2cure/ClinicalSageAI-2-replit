@@ -2189,6 +2189,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     onOpenSubmissions={onNavigate ? () => onNavigate('submissions') : undefined}
                     onOpenTemplates={undefined}
                     onOpenTaskBoard={onNavigate ? () => onNavigate('task-board') : undefined}
+                    onOpenCSRWorkflow={onNavigate ? () => onNavigate('csr-workflow') : undefined}
+                    onOpenINDChecklist={onNavigate ? () => onNavigate('ind-checklist') : undefined}
                   />
                   {projectNav === 'haq' && (
                     <div className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-4 space-y-3">

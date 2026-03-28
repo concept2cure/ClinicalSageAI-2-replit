@@ -279,6 +279,16 @@ const ProjectTaskBoardView = lazy(() =>
     default: m.ProjectTaskBoard,
   }))
 );
+const CSRWorkflowView = lazy(() =>
+  import('./components/workflow/CSRWorkflow').then(m => ({
+    default: m.CSRWorkflow,
+  }))
+);
+const INDChecklistView = lazy(() =>
+  import('./components/workflow/INDChecklist').then(m => ({
+    default: m.INDChecklist,
+  }))
+);
 const HAQManagerView = lazy(() =>
   import('./components/workflow/HAQManager').then(m => ({
     default: m.HAQManager,
@@ -394,6 +404,8 @@ type LayoutMode =
   | 'submissions' // Submit
   | 'dossier-map' // Sub-view within Work
   | 'section-workspace' // Sub-view within Work
+  | 'csr-workflow' // CSR guided authoring (ICH E3)
+  | 'ind-checklist' // IND requirements checklist (21 CFR 312.23)
   // ── Canonical workspace + editor ──
   | 'regulatory-workspace'
   | 'editor'
@@ -3114,6 +3126,44 @@ export const ZenApp: React.FC = () => {
             </Suspense>
           )}
 
+          {/* ── Unified Workflow: CSR Authoring (ICH E3) ──────────────── */}
+          {!embeddedModule && layoutMode === 'csr-workflow' && activeProjectId && (
+            <Suspense fallback={<ModuleLoadingFallback />}>
+              <CSRWorkflowView
+                projectId={activeProjectId}
+                projectName={activeProject?.name}
+                onSectionClick={sectionCode => {
+                  setActiveSectionCode(sectionCode);
+                  setLayoutMode('section-workspace');
+                }}
+                onAIDraft={async (sectionCode, sectionTitle) => {
+                  setActiveSectionCode(sectionCode);
+                  setLayoutMode('section-workspace');
+                }}
+                onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+              />
+            </Suspense>
+          )}
+
+          {/* ── Unified Workflow: IND Checklist (21 CFR 312.23) ────────── */}
+          {!embeddedModule && layoutMode === 'ind-checklist' && activeProjectId && (
+            <Suspense fallback={<ModuleLoadingFallback />}>
+              <INDChecklistView
+                projectId={activeProjectId}
+                projectName={activeProject?.name}
+                onSectionClick={sectionCode => {
+                  setActiveSectionCode(sectionCode);
+                  setLayoutMode('section-workspace');
+                }}
+                onAIDraft={async (sectionCode, sectionTitle) => {
+                  setActiveSectionCode(sectionCode);
+                  setLayoutMode('section-workspace');
+                }}
+                onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+              />
+            </Suspense>
+          )}
+
           {/* ── Unified Workflow: Section Workspace ──────────────────────── */}
           {!embeddedModule && layoutMode === 'section-workspace' && (
             <Suspense fallback={<ModuleLoadingFallback />}>
@@ -3798,5 +3848,7 @@ const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
   publish: 'submissions',
   haq: 'report-engine',
   'task-board': 'task-board',
+  'csr-workflow': 'csr-workflow',
+  'ind-checklist': 'ind-checklist',
   tools: 'documents',
 };

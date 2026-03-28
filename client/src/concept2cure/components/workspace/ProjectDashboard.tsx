@@ -59,6 +59,8 @@ interface ProjectDashboardProps {
   onOpenSubmissions?: () => void;
   onOpenTemplates?: () => void;
   onOpenTaskBoard?: () => void;
+  onOpenCSRWorkflow?: () => void;
+  onOpenINDChecklist?: () => void;
 }
 
 // ── Status helpers (canonical lifecycle) ─────────────────────────────────────
@@ -129,6 +131,8 @@ export function ProjectDashboard({
   onOpenSubmissions,
   onOpenTemplates,
   onOpenTaskBoard,
+  onOpenCSRWorkflow,
+  onOpenINDChecklist,
 }: ProjectDashboardProps) {
 
   // ── Derived data ───────────────────────────────────────────────────────────
@@ -578,6 +582,22 @@ export function ProjectDashboard({
               subtitle="Regulatory document templates"
               onClick={onOpenTemplates}
             />
+            {onOpenCSRWorkflow && (
+              <ActionCard
+                icon={Activity}
+                title="CSR Authoring"
+                subtitle="Guided ICH E3 sections 1-16"
+                onClick={onOpenCSRWorkflow}
+              />
+            )}
+            {onOpenINDChecklist && (
+              <ActionCard
+                icon={Shield}
+                title="IND Checklist"
+                subtitle="21 CFR 312.23 requirements"
+                onClick={onOpenINDChecklist}
+              />
+            )}
           </div>
         </div>
       </section>
