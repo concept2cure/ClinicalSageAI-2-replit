@@ -1070,26 +1070,24 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
   // Merge parent-provided actions with authoring-aware + intelligence actions
   const effectiveSuggestedActions = useMemo(() => {
+    const MAX_CHIPS = 4; // Keep it calm — 4 choices, not a menu
     const parent = suggestedActions || [];
     if (authoringSuggestedActions.length > 0) {
-      // Show up to 5 authoring actions, rotate based on context richness
-      const limit = authoringSuggestedActions.length > 5 ? 5 : authoringSuggestedActions.length;
-      const base = [...authoringSuggestedActions.slice(0, limit), ...parent.slice(0, 1)];
-      // Append intelligence actions if there's room (up to 6 total)
-      const remaining = 6 - base.length;
+      const base = [...authoringSuggestedActions.slice(0, 3), ...parent.slice(0, 1)];
+      const remaining = MAX_CHIPS - base.length;
       if (remaining > 0 && intelligenceSuggestedActions.length > 0) {
         return [...base, ...intelligenceSuggestedActions.slice(0, remaining)];
       }
-      return base;
+      return base.slice(0, MAX_CHIPS);
     }
     // No authoring context — lead with intelligence actions, then parent
     if (intelligenceSuggestedActions.length > 0) {
-      return [...intelligenceSuggestedActions.slice(0, 4), ...parent.slice(0, 2)];
+      return [...intelligenceSuggestedActions.slice(0, 3), ...parent.slice(0, 1)];
     }
     // Fall back to parent actions if available
-    if (parent.length > 0) return parent;
+    if (parent.length > 0) return parent.slice(0, MAX_CHIPS);
     // Fall back to default project actions when project is active but no other actions
-    return defaultProjectActions;
+    return defaultProjectActions.slice(0, MAX_CHIPS);
   }, [suggestedActions, authoringSuggestedActions, intelligenceSuggestedActions, defaultProjectActions]);
 
   // Close mode dropdown on outside click
@@ -3631,16 +3629,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           /* ── Empty state: greeting + suggested actions ── */
           <div className="flex flex-col items-center justify-center h-full px-6">
             <div className="max-w-2xl w-full text-center">
-              {/* Greeting */}
+              {/* Greeting — calm, no branding chrome */}
               <div className="mb-8">
-                <div className="w-10 h-10 rounded-full bg-[#D97757] flex items-center justify-center mx-auto mb-3">
-                  <Sparkles className="w-5 h-5 text-white" />
-                </div>
-                <p className="text-[10px] font-semibold tracking-wider text-[#B0AEA5] uppercase mb-3">
-                  AnA 1.0 Regulatory Intelligence
-                </p>
-                <h2 className="text-xl font-semibold text-[#141413]">{defaultGreeting}</h2>
-                {screenLabel && <p className="text-sm text-[#B0AEA5] mt-1">{screenLabel}</p>}
+                <h2 className="text-lg font-semibold text-stone-800">{defaultGreeting}</h2>
+                {screenLabel && <p className="text-[13px] text-stone-400 mt-1">{screenLabel}</p>}
                 {/* Project context badge */}
                 {contextProfile?.activeProject && !messages?.length && (
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F5F4EF] rounded-full text-[11px] border border-[#E8E6DC] mb-2">
@@ -3685,10 +3677,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   )}
               </div>
 
-              {/* Suggested actions — up to 6 chips (authoring + intelligence + parent) */}
+              {/* Suggested actions — max 4 chips, 2×2 grid */}
               {effectiveSuggestedActions && effectiveSuggestedActions.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg mx-auto">
-                  {effectiveSuggestedActions.slice(0, 6).map(action => (
+                  {effectiveSuggestedActions.slice(0, 4).map(action => (
                     <button
                       key={action.id}
                       onClick={() => handleSuggestedAction(action)}
