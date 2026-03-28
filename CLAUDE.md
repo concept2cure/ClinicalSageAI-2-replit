@@ -235,6 +235,10 @@ All UI work — new components, modifications, layouts — MUST follow these 12 
 
 Read the full skill file for visual language reference, component sizing, and anti-pattern list.
 
+**ZERO CAPABILITY LOSS:** Conversation-first does NOT mean capability-second. Every result a
+dashboard once delivered must still be achievable via conversation, slash commands, or on-demand
+panels. Removing a widget without ensuring the user can still get that data is a regression.
+
 ## Chat-First Design (NON-NEGOTIABLE)
 
 > Skill file: `.claude/skills/chat-first-design.md`
@@ -247,6 +251,12 @@ No new screens, no new panels, no new modals, no new pages. Everything is inline
 - Results render as rich markdown (tables, lists, structured data)
 - Action buttons appear on hover (save, insert, export, regenerate)
 - Intelligence surfaces naturally — AnA "knows" without being told
+
+**ZERO CAPABILITY LOSS:** We still need to achieve all the results of each dashboard, no matter
+what. Removing chrome does NOT mean removing capability. Every metric, score, workflow step, and
+action that a dashboard provided MUST still be achievable — through conversation, slash commands,
+inspector panels, or inline results. Before removing any permanent UI element, verify the same
+outcome is reachable via an alternative path. A cleaner UI that does less is a regression.
 
 ## AnA 1.0 RI Operating System (NON-NEGOTIABLE)
 

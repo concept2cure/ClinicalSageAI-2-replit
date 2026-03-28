@@ -21,6 +21,10 @@ This skill activates when:
 
 The default instinct is to build dashboard-first, not conversation-first. Every surface will accumulate analytics widgets, scorecards, and control density that violate this principle. If data can surface through the conversation, it MUST NOT be plastered on a dashboard or toolbar. Intelligence informs the conversation — it does not replace it. Fight the dashboard instinct relentlessly.
 
+### The Non-Negotiable Constraint: Zero Capability Loss
+
+**We still need to achieve all the results of each dashboard, no matter what.** Removing chrome does NOT mean removing capability. Every metric, score, workflow step, readiness check, and action that a dashboard provided MUST still be achievable — through conversation, slash commands, inspector panels, or inline results. If you remove a permanent widget, you MUST verify the same outcome is reachable via chat (`/status`, `/readiness`, `/checklist`, `/workflow`, etc.) or an on-demand inspector. Deleting a scorecard without ensuring the user can still get that score on demand is a regression, not a simplification.
+
 ## Rules
 
 ### 1. No New UI Surfaces

@@ -33,6 +33,10 @@ The default instinct when building is **dashboard-first, not conversation-first.
 
 **The fix:** Delete the widget. Put the intelligence into the conversation. Let the user ask.
 
+### The Non-Negotiable Constraint: Zero Capability Loss
+
+**We still need to achieve all the results of each dashboard, no matter what.** Conversation-first does NOT mean capability-second. Every metric, score, workflow progression, readiness assessment, and action that a dashboard or widget once provided MUST still be achievable — through conversation, slash commands, on-demand inspector panels, or rich inline results. Before removing any permanent UI element, verify that every outcome it delivered is reachable via an alternative path. A cleaner UI that can do less is a regression, not an improvement.
+
 ## The 12 Principles
 
 ### 1. Calm Over Loud

@@ -14,6 +14,10 @@ This skill activates when:
 - Modifying AnaPersistentPanel or any chat component
 - Adding new backend endpoints
 
+## Governing Design Constraint
+
+**Zero Capability Loss:** Conversation-first design does NOT mean removing capabilities. Every metric, score, workflow step, and action that a dashboard or widget once provided MUST still be achievable — through conversation, slash commands, on-demand inspector panels, or rich inline results. A cleaner UI that does less is a regression, not an improvement.
+
 ## Rules (Hard Requirements)
 
 ### 1. Data Display Components

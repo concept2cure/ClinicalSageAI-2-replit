@@ -237,3 +237,4 @@ Before shipping any AnA change:
 - [ ] All catch blocks commented
 - [ ] Toast notifications for errors in frontend
 - [ ] New capabilities follow chat-first design — no new UI surfaces
+- [ ] Zero capability loss — every result a removed dashboard/widget delivered is achievable via AnA conversation, slash commands, or on-demand inspector panels
