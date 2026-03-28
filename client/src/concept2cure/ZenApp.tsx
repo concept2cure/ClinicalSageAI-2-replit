@@ -269,6 +269,16 @@ const SubmissionReadinessView = lazy(() =>
     default: m.SubmissionReadiness,
   }))
 );
+const SubmissionBuilderView = lazy(() =>
+  import('./components/submission/SubmissionBuilder').then(m => ({
+    default: m.default,
+  }))
+);
+const ProjectTaskBoardView = lazy(() =>
+  import('./components/workspace/ProjectTaskBoard').then(m => ({
+    default: m.ProjectTaskBoard,
+  }))
+);
 const HAQManagerView = lazy(() =>
   import('./components/workflow/HAQManager').then(m => ({
     default: m.HAQManager,
@@ -827,6 +837,9 @@ export const ZenApp: React.FC = () => {
 
   // Active section code — tracks which dossier section is open in SectionWorkspace
   const [activeSectionCode, setActiveSectionCode] = useState<string | null>(null);
+
+  // Submission view sub-tab: readiness checklist vs package builder
+  const [submissionTab, setSubmissionTab] = useState<'readiness' | 'builder'>('readiness');
 
   // Guard: prevents URL-sync from reverting a navigation that's in-flight
   const navInProgressRef = useRef(false);
@@ -2982,20 +2995,122 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* ── Unified Workflow: Submissions (readiness & export) ────────── */}
+          {/* ── Unified Workflow: Submissions (readiness, builder & export) ── */}
           {!embeddedModule && layoutMode === 'submissions' && (
             <Suspense fallback={<ModuleLoadingFallback />}>
-              <SubmissionReadinessView
-                projectId={activeProjectId}
-                projectName={activeProject?.name}
-                projectType={activeProject?.type}
-                onSectionClick={sectionCode => {
-                  setActiveSectionCode(sectionCode);
-                  setLayoutMode('section-workspace');
-                }}
-                onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
-                onExport={() => {}}
-              />
+              <div className="flex-1 flex flex-col min-h-0">
+                {/* Submission sub-nav tabs */}
+                <div className="flex items-center gap-1 border-b border-stone-200 bg-white px-4">
+                  {(['readiness', 'builder'] as const).map(tab => (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setSubmissionTab(tab)}
+                      className={cn(
+                        'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
+                        submissionTab === tab
+                          ? 'border-stone-900 text-stone-900'
+                          : 'border-transparent text-stone-500 hover:text-stone-700',
+                      )}
+                    >
+                      {tab === 'readiness' ? 'Readiness' : 'Package Builder'}
+                    </button>
+                  ))}
+                </div>
+
+                {submissionTab === 'readiness' ? (
+                  <SubmissionReadinessView
+                    projectId={activeProjectId}
+                    projectName={activeProject?.name}
+                    projectType={activeProject?.type}
+                    onSectionClick={sectionCode => {
+                      setActiveSectionCode(sectionCode);
+                      setLayoutMode('section-workspace');
+                    }}
+                    onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+                    onExport={async () => {
+                      if (!activeProjectId) return;
+                      try {
+                        const token = sessionStorage.getItem('trialsage_access_token') || localStorage.getItem('trialsage_access_token');
+                        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+                        if (token) headers['Authorization'] = `Bearer ${token}`;
+                        const res = await fetch(`/api/concept2cure/projects/${activeProjectId}/submission-package`, {
+                          method: 'POST',
+                          headers,
+                        });
+                        if (!res.ok) {
+                          const err = await res.json().catch(() => ({}));
+                          console.error('[Export] Failed:', err);
+                          return;
+                        }
+                        const payload = await res.json();
+                        const manifest = payload?.data;
+                        if (manifest) {
+                          const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `${manifest.projectName || 'submission'}-package-manifest.json`;
+                          document.body.appendChild(a);
+                          a.click();
+                          document.body.removeChild(a);
+                          URL.revokeObjectURL(url);
+                        }
+                      } catch (err) {
+                        console.error('[Export] Package generation failed:', err);
+                      }
+                    }}
+                  />
+                ) : (
+                  <Suspense fallback={<ModuleLoadingFallback />}>
+                    <SubmissionBuilderView
+                      projectId={String(activeProjectId || '')}
+                      projectName={activeProject?.name}
+                      submissionType={(activeProject?.type as 'IND' | 'NDA' | 'BLA') || 'IND'}
+                      artifacts={projectArtifacts.map((a: any) => ({
+                        id: String(a.id),
+                        title: a.title || 'Untitled',
+                        ctdSection: a.ctdSection || a.ctd_section,
+                        status: a.status || 'draft',
+                        version: a.version || 1,
+                      }))}
+                      onOpenArtifact={(artifactId) => {
+                        setLayoutMode('editor');
+                      }}
+                      onCreateArtifact={(sectionId, sectionLabel) => {
+                        setActiveSectionCode(sectionId);
+                        setLayoutMode('section-workspace');
+                      }}
+                      onClose={() => setSubmissionTab('readiness')}
+                    />
+                  </Suspense>
+                )}
+              </div>
+            </Suspense>
+          )}
+
+          {/* ── Unified Workflow: Task Board (full Kanban view) ──────────── */}
+          {!embeddedModule && layoutMode === 'task-board' && activeProjectId && (
+            <Suspense fallback={<ModuleLoadingFallback />}>
+              <div className="flex-1 flex flex-col min-h-0 p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <button
+                    type="button"
+                    onClick={() => setLayoutMode('project-home')}
+                    className="inline-flex items-center gap-1 text-sm text-stone-500 hover:text-stone-700"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back
+                  </button>
+                  <h1 className="text-lg font-semibold text-stone-900">
+                    {activeProject?.name} — Tasks
+                  </h1>
+                </div>
+                <ProjectTaskBoardView
+                  projectId={activeProjectId}
+                  projectType={activeProject?.type}
+                />
+              </div>
             </Suspense>
           )}
 
@@ -3682,4 +3797,6 @@ const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
   review: 'review',
   publish: 'submissions',
   haq: 'report-engine',
+  'task-board': 'task-board',
+  tools: 'documents',
 };

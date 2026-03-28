@@ -2188,6 +2188,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     onOpenIntelligence={onSwitchToIntelligence}
                     onOpenSubmissions={onNavigate ? () => onNavigate('submissions') : undefined}
                     onOpenTemplates={undefined}
+                    onOpenTaskBoard={onNavigate ? () => onNavigate('task-board') : undefined}
                   />
                   {projectNav === 'haq' && (
                     <div className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-4 space-y-3">

@@ -31,6 +31,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { ActivityFeed, generateActivityFromArtifacts } from './ActivityFeed';
+import { ProjectTaskBoard } from './ProjectTaskBoard';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -57,6 +58,7 @@ interface ProjectDashboardProps {
   onOpenIntelligence?: () => void;
   onOpenSubmissions?: () => void;
   onOpenTemplates?: () => void;
+  onOpenTaskBoard?: () => void;
 }
 
 // ── Status helpers (canonical lifecycle) ─────────────────────────────────────
@@ -126,6 +128,7 @@ export function ProjectDashboard({
   onOpenIntelligence,
   onOpenSubmissions,
   onOpenTemplates,
+  onOpenTaskBoard,
 }: ProjectDashboardProps) {
 
   // ── Derived data ───────────────────────────────────────────────────────────
@@ -592,6 +595,30 @@ export function ProjectDashboard({
           />
         </section>
       )}
+
+      {/* ── 3A½. Tasks & Milestones ────────────────────────────────────── */}
+      <section className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-stone-500">
+            Tasks & Milestones
+          </h2>
+          {onOpenTaskBoard && (
+            <button
+              type="button"
+              onClick={onOpenTaskBoard}
+              className="inline-flex items-center gap-1 text-xs font-medium text-stone-500 hover:text-stone-700 transition-colors"
+            >
+              View All
+              <ChevronRight size={12} />
+            </button>
+          )}
+        </div>
+        <ProjectTaskBoard
+          projectId={projectId}
+          projectType={projectType || submissionType}
+          compact
+        />
+      </section>
 
       {/* ── 3B. Getting Started — type-specific workflow guidance ──────────── */}
       {stats.total < 5 && (

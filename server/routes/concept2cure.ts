@@ -11591,6 +11591,117 @@ router.get('/projects/:projectId/readiness-summary', async (req: Request, res: R
   }
 });
 
+// ── Submission Package Export ─────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/projects/:projectId/submission-package
+ * Assemble an eCTD submission package manifest from project artifacts.
+ * Returns structured manifest with CTD module assignments and readiness status.
+ */
+router.post('/projects/:projectId/submission-package', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+    const projectDbId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectDbId)) return sendError(res, 400, 'Invalid project ID');
+
+    // Fetch the project
+    const [project] = await db
+      .select()
+      .from(concept2cureProjects)
+      .where(
+        and(
+          eq(concept2cureProjects.id, projectDbId),
+          eq(concept2cureProjects.organizationId, organizationId)
+        )
+      );
+
+    if (!project) return sendError(res, 404, 'Project not found');
+
+    // Fetch all project artifacts
+    const artifacts = await db
+      .select()
+      .from(concept2cureArtifacts)
+      .where(
+        and(
+          eq(concept2cureArtifacts.projectId, projectDbId),
+          eq(concept2cureArtifacts.organizationId, organizationId)
+        )
+      );
+
+    // Only include approved or locked artifacts in the package
+    const eligibleArtifacts = artifacts.filter(
+      a => a.status === 'approved' || a.status === 'locked'
+    );
+    const ineligibleArtifacts = artifacts.filter(
+      a => a.status !== 'approved' && a.status !== 'locked'
+    );
+
+    // Organize by CTD module
+    const moduleMap: Record<string, Array<{ id: number; title: string; ctdSection: string; status: string; version: number }>> = {};
+    for (const a of eligibleArtifacts) {
+      const section = a.ctdSection || 'unplaced';
+      const moduleKey = section === 'unplaced' ? 'unplaced' : `module-${section.charAt(0)}`;
+      if (!moduleMap[moduleKey]) moduleMap[moduleKey] = [];
+      moduleMap[moduleKey].push({
+        id: a.id,
+        title: a.title,
+        ctdSection: section,
+        status: a.status || 'draft',
+        version: a.version || 1,
+      });
+    }
+
+    // Compute readiness
+    const totalArtifacts = artifacts.length;
+    const eligibleCount = eligibleArtifacts.length;
+    const readinessPercent = totalArtifacts > 0 ? Math.round((eligibleCount / totalArtifacts) * 100) : 0;
+    const isReady = readinessPercent === 100 && totalArtifacts > 0;
+
+    const manifest = {
+      projectId: projectDbId,
+      projectName: project.name,
+      projectType: project.type || 'IND',
+      generatedAt: new Date().toISOString(),
+      readiness: {
+        percent: readinessPercent,
+        ready: isReady,
+        eligible: eligibleCount,
+        total: totalArtifacts,
+        ineligible: ineligibleArtifacts.map(a => ({
+          id: a.id,
+          title: a.title,
+          status: a.status || 'draft',
+          reason: `Status is "${a.status || 'draft'}" — must be approved or locked`,
+        })),
+      },
+      modules: moduleMap,
+      packageStructure: {
+        'module-1': { label: 'Module 1 — Administrative Information', artifacts: moduleMap['module-1'] || [] },
+        'module-2': { label: 'Module 2 — CTD Summaries', artifacts: moduleMap['module-2'] || [] },
+        'module-3': { label: 'Module 3 — Quality', artifacts: moduleMap['module-3'] || [] },
+        'module-4': { label: 'Module 4 — Nonclinical Study Reports', artifacts: moduleMap['module-4'] || [] },
+        'module-5': { label: 'Module 5 — Clinical Study Reports', artifacts: moduleMap['module-5'] || [] },
+        'unplaced': { label: 'Unplaced Artifacts', artifacts: moduleMap['unplaced'] || [] },
+      },
+    };
+
+    // Audit trail
+    await logAuditEntry(req, 'EXPORT', 'submission_package', String(projectDbId), null, {
+      readinessPercent,
+      eligibleCount,
+      totalArtifacts,
+    });
+
+    return sendSuccess(res, manifest);
+  } catch (error: any) {
+    logConcept2cureError('submission package export', error, { projectId: req.params.projectId });
+    return sendError(res, 500, 'Failed to generate submission package');
+  }
+});
+
 // ── Reminder / Escalation Processing ─────────────────────────────────────────
 
 /**
