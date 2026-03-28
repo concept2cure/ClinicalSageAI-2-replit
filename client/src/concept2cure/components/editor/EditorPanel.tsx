@@ -180,6 +180,37 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [unlockReason, setUnlockReason] = useState('');
   const [openArtifactNotFound, setOpenArtifactNotFound] = useState(false);
 
+  // ── Reviewer data (fetched from API) ──────────────────────────────────────
+  const [reviewers, setReviewers] = useState<Array<{ id: string; name: string; email: string; role?: string; status: string; assignedAt: string; completedAt?: string; comment?: string }>>([]);
+  const [teamMembers, setTeamMembers] = useState<Array<{ id: string; name: string; email: string; role?: string }>>([]);
+
+  // Fetch reviewers when active artifact changes
+  useEffect(() => {
+    if (!projectId || !activeArtifact?.id) {
+      setReviewers([]);
+      return;
+    }
+    (async () => {
+      try {
+        const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/reviewers`);
+        if (res.ok) {
+          const json = await res.json();
+          const data = json?.data ?? [];
+          setReviewers(data.map((r: any) => ({
+            id: String(r.id || r.assignmentId),
+            name: r.name || r.reviewerName || 'Unknown',
+            email: r.email || '',
+            role: r.role,
+            status: r.decision || r.status || 'pending',
+            assignedAt: r.assignedAt || r.createdAt || new Date().toISOString(),
+            completedAt: r.completedAt,
+            comment: r.comment || r.notes,
+          })));
+        }
+      } catch { /* non-blocking */ }
+    })();
+  }, [projectId, activeArtifact?.id]);
+
   // ── Claim checker (Precedent Engine) ─────────────────────────────────────
   const [claimResult, setClaimResult] = useState<ClaimCheckResult | null>(null);
   const [claimStatus, setClaimStatus] = useState<
@@ -243,6 +274,53 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     },
     []
   );
+
+  // ── Reviewer CRUD handlers (after pushToast is defined) ──────────────
+  const handleAddReviewer = useCallback(async (memberId: string) => {
+    if (!projectId || !activeArtifact?.id) return;
+    try {
+      const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/reviewers`, {
+        reviewerIds: [Number(memberId)],
+      });
+      if (res.ok) {
+        const refreshRes = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/reviewers`);
+        if (refreshRes.ok) {
+          const json = await refreshRes.json();
+          const data = json?.data ?? [];
+          setReviewers(data.map((r: any) => ({
+            id: String(r.id || r.assignmentId),
+            name: r.name || r.reviewerName || 'Unknown',
+            email: r.email || '',
+            role: r.role,
+            status: r.decision || r.status || 'pending',
+            assignedAt: r.assignedAt || r.createdAt || new Date().toISOString(),
+            completedAt: r.completedAt,
+            comment: r.comment || r.notes,
+          })));
+        }
+        pushToast('Reviewer assigned', 'success');
+      } else {
+        pushToast('Failed to assign reviewer', 'error');
+      }
+    } catch {
+      pushToast('Failed to assign reviewer', 'error');
+    }
+  }, [projectId, activeArtifact?.id, pushToast]);
+
+  const handleRemoveReviewer = useCallback(async (assignmentId: string) => {
+    if (!projectId || !activeArtifact?.id) return;
+    try {
+      const res = await apiRequest('DELETE', `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/reviewers/${assignmentId}`);
+      if (res.ok) {
+        setReviewers(prev => prev.filter(r => r.id !== assignmentId));
+        pushToast('Reviewer removed', 'success');
+      } else {
+        pushToast('Failed to remove reviewer', 'error');
+      }
+    } catch {
+      pushToast('Failed to remove reviewer', 'error');
+    }
+  }, [projectId, activeArtifact?.id, pushToast]);
 
   // ── CTD Section assignment state ──────────────────────────────────────
   const [showCtdInput, setShowCtdInput] = useState(false);
@@ -2914,8 +2992,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             documentId={activeArtifact.id}
             documentTitle={activeArtifact.title}
             currentStatus={activeArtifact.status}
-            reviewers={[]}
-            teamMembers={[]}
+            reviewers={reviewers}
+            teamMembers={teamMembers}
+            onAddReviewer={handleAddReviewer}
+            onRemoveReviewer={handleRemoveReviewer}
             onSubmitForReview={async () => {
               await handleStatusChange('review');
               pushToast('Document submitted for review', 'success');
