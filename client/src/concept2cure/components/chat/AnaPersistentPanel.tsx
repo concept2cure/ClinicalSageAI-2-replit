@@ -43,6 +43,7 @@ import {
   Bot,
   FolderOpen,
 } from 'lucide-react';
+import { ToolExecutionBlock, ThinkingBlock, DoneIndicator } from './ClaudeStyleBlocks';
 
 marked.setOptions({ breaks: true, gfm: true });
 
@@ -221,6 +222,18 @@ interface AnaMessage {
   modelProvider?: string;
   /** AI model name that generated this response */
   modelName?: string;
+  /** Tool executions during this response (Claude-style collapsible blocks) */
+  toolExecutions?: Array<{
+    name: string;
+    label: string;
+    status: 'running' | 'completed' | 'error';
+    input?: string;
+    result?: string;
+  }>;
+  /** Extended thinking content (Claude-style collapsible) */
+  thinking?: string;
+  /** Whether this response is fully complete */
+  isComplete?: boolean;
   evidenceUsage?: {
     firecrawlRequested?: boolean;
     firecrawlUsed?: boolean;
@@ -1708,6 +1721,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               modelProvider: data.provider || data.modelProvider || undefined,
               modelName: data.model || data.modelName || undefined,
               evidenceUsage: data.evidenceUsage || undefined,
+              // Claude-style: tool executions and thinking
+              toolExecutions: data.toolExecutions || undefined,
+              thinking: data.thinking || undefined,
+              isComplete: true,
             },
           ]);
 
@@ -3716,50 +3733,45 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               </div>
                             );
                           })()}
-                          {/* AnA 1.0 RI — Executed Guidance Actions */}
-                          {msg.executedActions && msg.executedActions.length > 0 && (
-                            <div className="mt-2 space-y-1.5">
+                          {/* ── Claude-style: Extended Thinking block ── */}
+                          {msg.thinking && (
+                            <ThinkingBlock content={msg.thinking} />
+                          )}
+                          {/* ── Claude-style: Tool Execution blocks ── */}
+                          {msg.toolExecutions && msg.toolExecutions.length > 0 && (
+                            <div className="my-1">
+                              {msg.toolExecutions.map((tool, i) => (
+                                <ToolExecutionBlock
+                                  key={`${tool.name}-${i}`}
+                                  label={tool.label}
+                                  status={tool.status}
+                                  input={tool.input}
+                                  result={tool.result}
+                                />
+                              ))}
+                            </div>
+                          )}
+                          {/* ── Legacy: Executed Guidance Actions (backward compat) ── */}
+                          {msg.executedActions && msg.executedActions.length > 0 && !msg.toolExecutions && (
+                            <div className="my-1">
                               {msg.executedActions.map((action, i) => (
-                                <div
+                                <ToolExecutionBlock
                                   key={i}
-                                  className={cn(
-                                    'flex items-center gap-2 px-3 py-2 rounded-lg border text-xs',
-                                    action.executed && !action.error
-                                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                                      : action.error
-                                        ? 'bg-red-50 border-red-200 text-red-800'
-                                        : 'bg-zinc-50 border-zinc-200 text-zinc-600'
-                                  )}
-                                >
-                                  {action.executed && !action.error ? (
-                                    <Check className="w-3.5 h-3.5 flex-shrink-0" />
-                                  ) : action.error ? (
-                                    <span className="w-3.5 h-3.5 flex-shrink-0 text-red-500">
-                                      !
-                                    </span>
-                                  ) : (
-                                    <Zap className="w-3.5 h-3.5 flex-shrink-0" />
-                                  )}
-                                  <span className="font-medium">
-                                    {action.executed
+                                  label={
+                                    action.executed
                                       ? `Created ${action.actionType.replace(/_/g, ' ')}`
                                       : action.error
                                         ? `Failed: ${action.error}`
-                                        : `Prepared ${action.actionType.replace(/_/g, ' ')} (${action.confidence})`}
-                                  </span>
-                                  {action.artifactId && (
-                                    <span className="text-emerald-600 font-mono text-[10px]">
-                                      {action.artifactId}
-                                    </span>
-                                  )}
-                                  {action.threadId && (
-                                    <span className="text-emerald-600 font-mono text-[10px]">
-                                      thread:{action.threadId.slice(0, 8)}
-                                    </span>
-                                  )}
-                                </div>
+                                        : `Prepared ${action.actionType.replace(/_/g, ' ')}`
+                                  }
+                                  status={action.executed && !action.error ? 'completed' : action.error ? 'error' : 'running'}
+                                />
                               ))}
                             </div>
+                          )}
+                          {/* ── Claude-style: Done indicator ── */}
+                          {msg.role === 'assistant' && msg.isComplete && (
+                            <DoneIndicator visible />
                           )}
                           {/* Nano Banana PPTX download button */}
                           {msg.pptx && (
