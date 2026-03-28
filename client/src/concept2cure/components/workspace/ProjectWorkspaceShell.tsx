@@ -64,6 +64,7 @@ import {
   Info,
   AlertTriangle,
   ChevronDown,
+  ChevronUp,
   ChevronRight,
   Sparkles,
   ShieldCheck,
@@ -301,6 +302,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const [selectedFolder, setSelectedFolder] = useState<string>('drafts');
   const [selectedDocId, setSelectedDocId] = useState<string | undefined>();
   const [mode, setMode] = useState<'dashboard' | 'browse' | 'edit'>('dashboard');
+  const [showContextBars, setShowContextBars] = useState(false);
   const [projectNav, setProjectNav] = useState<ProjectNav>('submission_builder');
   const [documentTab, setDocumentTab] = useState<DocumentTab>('content');
   const [leftRailMode, setLeftRailMode] = useState<LeftRailMode>('files');
@@ -1360,7 +1362,21 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               </button>
             </div>
           )}
+          {/* Context bars expand/collapse toggle */}
+          <button
+            onClick={() => setShowContextBars(prev => !prev)}
+            className={cn(
+              'flex items-center justify-center w-6 h-6 rounded border border-stone-200 text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors',
+              !onSwitchToIntelligence && 'ml-auto'
+            )}
+            title={showContextBars ? 'Collapse context bars' : 'Expand context bars'}
+          >
+            {showContextBars ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
         </div>
+
+        {/* ── Collapsible context bars (AnA Shell, Context Band, CTD Flow) ──── */}
+        <div className={cn('overflow-hidden transition-all duration-200', showContextBars ? 'max-h-32' : 'max-h-0')}>
 
         {/* ── AnA 1.0 controlled shell layer/workbench bar ─────────────────── */}
         <div className="flex items-center gap-3 px-4 h-11 border-b border-stone-200 bg-stone-50/70 shrink-0 overflow-x-auto">
@@ -1481,6 +1497,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             </span>
           ))}
         </div>
+
+        </div>{/* end collapsible context bars */}
 
         <div className="flex items-center gap-1 px-4 h-9 border-b border-stone-200 bg-stone-50/70 shrink-0 overflow-x-auto">
           {PROJECT_NAV_ITEMS.map(item => (
