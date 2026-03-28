@@ -52,7 +52,18 @@ marked.setOptions({ breaks: true, gfm: true });
 
 const renderMarkdown = (content: string): string => {
   try {
-    const rawHtml = marked.parse(content) as string;
+    let rawHtml = marked.parse(content) as string;
+    // Claude-style: wrap code blocks with copy button + language label
+    rawHtml = rawHtml.replace(
+      /<pre><code(?:\s+class="language-(\w+)")?>([\s\S]*?)<\/code><\/pre>/g,
+      (_, lang, code) => {
+        const langLabel = lang
+          ? `<span style="position:absolute;top:8px;left:12px;font-size:10px;color:#a1a1aa;font-family:monospace;text-transform:uppercase;letter-spacing:0.05em">${lang}</span>`
+          : '';
+        const copyBtn = `<button style="position:absolute;top:6px;right:8px;padding:2px 8px;font-size:11px;color:#a1a1aa;background:#27272a;border:1px solid #3f3f46;border-radius:4px;cursor:pointer;font-family:system-ui" data-code="${encodeURIComponent(code)}" onclick="navigator.clipboard.writeText(decodeURIComponent(this.dataset.code)).then(()=>{this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)})" title="Copy code">Copy</button>`;
+        return `<div style="position:relative">${langLabel}${copyBtn}<pre><code${lang ? ` class="language-${lang}"` : ''}>${code}</code></pre></div>`;
+      }
+    );
     return DOMPurify.sanitize(rawHtml, {
       ALLOWED_TAGS: [
         'p',
@@ -86,8 +97,9 @@ const renderMarkdown = (content: string): string => {
         'hr',
         'sup',
         'sub',
+        'button',
       ],
-      ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'id'],
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'id', 'data-code', 'onclick', 'title', 'style'],
     });
   } catch {
     return content
@@ -237,6 +249,8 @@ interface AnaMessage {
   thinking?: string;
   /** Whether this response is fully complete */
   isComplete?: boolean;
+  /** Token usage for this response */
+  tokenUsage?: { inputTokens?: number; outputTokens?: number };
   evidenceUsage?: {
     firecrawlRequested?: boolean;
     firecrawlUsed?: boolean;
@@ -634,6 +648,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  const [useExtendedThinking, setUseExtendedThinking] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [chatMode, setChatMode] = useState<'standard' | 'deep-research' | 'nano-banana'>(
     defaultChatMode
@@ -1763,6 +1778,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               toolExecutions: data.toolExecutions || undefined,
               thinking: data.thinking || undefined,
               isComplete: true,
+              tokenUsage: data.usage ? {
+                inputTokens: data.usage.prompt_tokens || data.usage.inputTokens,
+                outputTokens: data.usage.completion_tokens || data.usage.outputTokens,
+              } : undefined,
             },
           ]);
 
@@ -3907,6 +3926,14 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                     : msg.modelProvider}
                             </span>
                           )}
+                          {/* Claude-style: token usage */}
+                          {msg.tokenUsage && (
+                            <span className="text-[10px] text-zinc-400 mr-1 tabular-nums">
+                              {msg.tokenUsage.inputTokens ? `${msg.tokenUsage.inputTokens} in` : ''}
+                              {msg.tokenUsage.inputTokens && msg.tokenUsage.outputTokens ? ' · ' : ''}
+                              {msg.tokenUsage.outputTokens ? `${msg.tokenUsage.outputTokens} out` : ''}
+                            </span>
+                          )}
                           {msg.evidenceUsage?.firecrawlRequested && (
                             <span
                               className={cn(
@@ -4532,6 +4559,20 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 </div>
               )}
             </div>
+
+            {/* Extended Thinking toggle — Claude-style */}
+            <button
+              onClick={() => setUseExtendedThinking(e => !e)}
+              className={cn(
+                'flex-shrink-0 px-2 py-1 text-[10px] rounded border transition-colors',
+                useExtendedThinking
+                  ? 'bg-violet-50 border-violet-200 text-violet-700'
+                  : 'border-zinc-200 text-zinc-400 hover:text-zinc-600'
+              )}
+              title={useExtendedThinking ? 'Extended thinking enabled' : 'Enable extended thinking'}
+            >
+              {useExtendedThinking ? '🧠 Extended' : '🧠'}
+            </button>
 
             {/* Input */}
             <textarea
