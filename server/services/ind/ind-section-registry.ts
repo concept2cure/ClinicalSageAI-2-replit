@@ -286,6 +286,26 @@ export const IND_SECTIONS: INDSection[] = [
   ...MODULE_5,
 ];
 
+/**
+ * Get sections for any FDA submission type.
+ * IND, NDA, and BLA all use the same CTD Module 1-5 structure.
+ * The difference is which sections are required vs optional.
+ */
+export function getSectionsForSubmissionType(type: 'IND' | 'NDA' | 'BLA'): INDSection[] {
+  if (type === 'IND') return IND_SECTIONS;
+
+  // NDA/BLA: same structure but Module 2.7 and Module 5.3 become required
+  return IND_SECTIONS.map(s => {
+    if (type === 'NDA' || type === 'BLA') {
+      // For NDA/BLA, clinical summaries and CSRs are required
+      if (s.code === '2.7' || s.code === '5.3' || s.code === '3.2.A') {
+        return { ...s, required: true };
+      }
+    }
+    return s;
+  });
+}
+
 /** Get all sections for a specific module */
 export function getSectionsByModule(module: 1 | 2 | 3 | 4 | 5): INDSection[] {
   return IND_SECTIONS.filter(s => s.module === module);
