@@ -323,32 +323,53 @@ router.post('/document/generate', requireTier('standard'), async (req: Request, 
     const sections = await Promise.all(
       templates.map(async (tmpl) => {
         try {
+          const moduleNum = tmpl.number.split('.')[0];
+          const sectionGuidance = moduleNum === '1' ? 'This is an administrative section. Use formal letter/form language. Include all required identifiers.'
+            : moduleNum === '2' ? 'This is a CTD summary section. Provide a comprehensive yet concise overview. Reference the detailed data in Modules 3-5.'
+            : moduleNum === '3' ? 'This is a Quality/CMC section. Use precise scientific language. Reference ICH Q guidelines. Include specifications, methods, and acceptance criteria.'
+            : moduleNum === '4' ? 'This is a Nonclinical section. Reference ICH M3(R2) and S guidelines. Describe study design, results, and conclusions.'
+            : 'This is a Clinical section. Follow ICH E3 structure. Present data systematically with statistical context.';
+
           const result = await ai.chat(
             [
               {
                 role: 'system',
-                content: `You are a regulatory medical writer generating Section ${tmpl.number} (${tmpl.title}) for a ${documentType.toUpperCase()} document targeting ${agencies.join(', ')}. Write regulatory-grade content following ICH E3/CTD conventions. Use passive voice, formal regulatory language. Output 200-400 words of flowing prose.`,
+                content: `You are an experienced regulatory medical writer at a top-tier CRO, generating Section ${tmpl.number} (${tmpl.title}) for a ${documentType.toUpperCase()} document targeting ${agencies.join(', ')}.
+
+Writing standards:
+- Follow ICH E3/CTD conventions strictly
+- Use third-person passive voice and formal regulatory language
+- Include bracketed placeholders [like this] for data points that need to be filled in
+- Cross-reference other CTD sections where appropriate (e.g., "See Section 2.7.4 for detailed safety data")
+- Use hedging language appropriately ("was observed", "appeared to", "is considered")
+- Never use promotional language, unsupported claims, or superlatives
+- Structure with clear subheadings where the section warrants them
+
+${sectionGuidance}
+
+Output 300-600 words of publication-ready regulatory prose. Include proper CTD-style subheadings as H3 tags.`,
               },
               {
                 role: 'user',
                 content: `Generate Section ${tmpl.number}: ${tmpl.title}
 
-Study: ${studyInfo.title}
-Protocol: ${studyInfo.protocolNumber || studyInfo.protocol || 'Not specified'}
-Phase: ${studyInfo.phase || 'Not specified'}
-Indication: ${studyInfo.indication || 'Not specified'}
-Sponsor: ${studyInfo.sponsor || 'Not specified'}
-Product: ${studyInfo.investigationalProduct || studyInfo.product || 'Not specified'}
-Design: ${studyInfo.studyDesign || studyInfo.design || 'Not specified'}
-Primary Endpoint: ${studyInfo.primaryEndpoint || 'Not specified'}
-Secondary Endpoints: ${Array.isArray(studyInfo.secondaryEndpoints) ? studyInfo.secondaryEndpoints.join(', ') : studyInfo.secondaryEndpoints || 'Not specified'}
-Sample Size: ${studyInfo.sampleSize || 'Not specified'}
-Duration: ${studyInfo.treatmentDuration || studyInfo.duration || 'Not specified'}
+Study Information:
+- Title: ${studyInfo.title}
+- Protocol: ${studyInfo.protocolNumber || studyInfo.protocol || '[Protocol Number]'}
+- Phase: ${studyInfo.phase || '[Phase]'}
+- Indication: ${studyInfo.indication || '[Indication]'}
+- Sponsor: ${studyInfo.sponsor || '[Sponsor]'}
+- Investigational Product: ${studyInfo.investigationalProduct || studyInfo.product || '[Product Name]'}
+- Study Design: ${studyInfo.studyDesign || studyInfo.design || '[Study Design]'}
+- Primary Endpoint: ${studyInfo.primaryEndpoint || '[Primary Endpoint]'}
+- Secondary Endpoints: ${Array.isArray(studyInfo.secondaryEndpoints) ? studyInfo.secondaryEndpoints.join(', ') : studyInfo.secondaryEndpoints || '[Secondary Endpoints]'}
+- Sample Size: ${studyInfo.sampleSize || '[N]'}
+- Treatment Duration: ${studyInfo.treatmentDuration || studyInfo.duration || '[Duration]'}
 
-Write the section content.`,
+Generate the section content with proper regulatory structure and cross-references to related CTD sections.`,
               },
             ],
-            { taskType: 'regulatory_review', temperature: 0.3, maxTokens: 2000, callerModule: 'document-builder' }
+            { taskType: 'regulatory_review', temperature: 0.3, maxTokens: 3000, callerModule: 'document-builder' }
           );
 
           const content = result.content || '';
