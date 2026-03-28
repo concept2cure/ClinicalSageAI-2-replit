@@ -633,6 +633,8 @@ export interface InspectorRibbonItem {
   badge?: number;
   /** Show pulse indicator when active */
   pulse?: boolean;
+  /** Contextual suggestion indicator — shows a small dot when this panel is relevant to the current lifecycle stage */
+  suggested?: boolean;
   testId?: string;
 }
 
@@ -719,6 +721,9 @@ export const InspectorRibbon: React.FC<InspectorRibbonProps> = ({
                         )}
                         {item.pulse && isActive && (
                           <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                        )}
+                        {item.suggested && !isActive && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
                         )}
                       </button>
                     );

@@ -249,6 +249,22 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     if (initialInspector) setActiveInspector(initialInspector);
   }, [initialInspector]);
 
+  // ── Contextual panel suggestions based on document lifecycle stage ────
+  const suggestedPanels = useMemo<Set<string>>(() => {
+    const status = (activeArtifact?.status ?? 'draft').toLowerCase();
+    if (status === 'review' || status === 'in_review' || status === 'in-review') {
+      return new Set(['comments', 'review', 'reviewers']);
+    }
+    if (status.includes('approv') || status === 'approved') {
+      return new Set(['compliance-scanner', 'crossref', 'proof']);
+    }
+    if (status === 'locked' || status === 'published' || status === 'final') {
+      return new Set(['audit', 'submission-readiness', 'ga-readiness']);
+    }
+    // Default: draft stage
+    return new Set(['intelligence', 'dataroom', 'batch-ai']);
+  }, [activeArtifact?.status]);
+
   // ── Sign/Approve state ────────────────────────────────────────────────
   const [signing, setSigning] = useState(false);
   const [signResult, setSignResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -2261,10 +2277,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             {
               label: 'Draft',
               items: [
-                { id: 'intelligence', label: 'AI Assist', icon: <Brain className="w-3.5 h-3.5" /> },
-                { id: 'batch-ai', label: 'Batch AI', icon: <Layers className="w-3.5 h-3.5" /> },
-                { id: 'dataroom', label: 'Data Room', icon: <Database className="w-3.5 h-3.5" /> },
-                { id: 'ana-memory', label: 'Context', icon: <Brain className="w-3.5 h-3.5" /> },
+                { id: 'intelligence', label: 'AI Assist', icon: <Brain className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('intelligence') },
+                { id: 'batch-ai', label: 'Batch AI', icon: <Layers className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('batch-ai') },
+                { id: 'dataroom', label: 'Data Room', icon: <Database className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('dataroom') },
+                { id: 'ana-memory', label: 'Context', icon: <Brain className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('ana-memory') },
               ],
             },
             {
@@ -2275,6 +2291,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   label: 'Comments',
                   icon: <MessageSquare className="w-3.5 h-3.5" />,
                   badge: comments.filter(c => !c.resolved).length || undefined,
+                  suggested: suggestedPanels.has('comments'),
                 },
                 {
                   id: 'review',
@@ -2284,8 +2301,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                     ? 'bg-amber-500 text-white font-medium shadow-sm'
                     : undefined,
                   pulse: isReviewMode,
+                  suggested: suggestedPanels.has('review'),
                 },
-                { id: 'reviewers', label: 'Reviewers', icon: <Users className="w-3.5 h-3.5" /> },
+                { id: 'reviewers', label: 'Reviewers', icon: <Users className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('reviewers') },
                 { id: 'versions', label: 'History', icon: <GitCompare className="w-3.5 h-3.5" /> },
                 { id: 'compare', label: 'Compare', icon: <GitCompare className="w-3.5 h-3.5" /> },
               ],
@@ -2298,18 +2316,20 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   label: 'Provenance',
                   icon: <ShieldCheck className="w-3.5 h-3.5" />,
                 },
-                { id: 'crossref', label: 'Cross-Refs', icon: <Link2 className="w-3.5 h-3.5" /> },
+                { id: 'crossref', label: 'Cross-Refs', icon: <Link2 className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('crossref') },
                 { id: 'inconsistency', label: 'Issues', icon: <Zap className="w-3.5 h-3.5" /> },
                 {
                   id: 'compliance-scanner',
                   label: 'Compliance',
                   icon: <AlertTriangle className="w-3.5 h-3.5" />,
+                  suggested: suggestedPanels.has('compliance-scanner'),
                 },
                 {
                   id: 'proof',
                   label: 'Evidence',
                   icon: <Shield className="w-3.5 h-3.5" />,
                   activeColor: 'bg-emerald-600 text-white font-medium shadow-sm',
+                  suggested: suggestedPanels.has('proof'),
                 },
               ],
             },
@@ -2320,17 +2340,20 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   id: 'audit',
                   label: 'Audit Trail',
                   icon: <ClipboardList className="w-3.5 h-3.5" />,
+                  suggested: suggestedPanels.has('audit'),
                 },
                 {
                   id: 'submission-readiness',
                   label: 'Submission',
                   icon: <Shield className="w-3.5 h-3.5" />,
+                  suggested: suggestedPanels.has('submission-readiness'),
                 },
                 { id: 'health', label: 'Health', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
                 {
                   id: 'ga-readiness',
                   label: 'Readiness',
                   icon: <Rocket className="w-3.5 h-3.5" />,
+                  suggested: suggestedPanels.has('ga-readiness'),
                 },
               ],
             },
