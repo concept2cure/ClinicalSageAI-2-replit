@@ -3885,4 +3885,6 @@ const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
   templates: 'template-library',
   'template-library': 'template-library',
   tools: 'documents',
+  dataroom: 'regulatory-workspace',
+  upload: 'regulatory-workspace',
 };

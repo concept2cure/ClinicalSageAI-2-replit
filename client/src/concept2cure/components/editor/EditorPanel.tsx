@@ -1155,7 +1155,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           submissionType: submissionType || undefined,
           projectId: projectId || undefined,
           artifactId: activeArtifact.id || undefined,
-          ctdSection: ctdSection || (activeArtifact as any).ctdSection || undefined,
+          ctdSection: ctdSection || activeArtifact.ctdSection || undefined,
         });
         if (res.ok) {
           const payload = await res.json();

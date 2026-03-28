@@ -35,6 +35,10 @@ export { CitationPlugin, CitationMark, CitationSearchPanel } from './extensions/
 export { ComplianceScanner } from './extensions/ComplianceScanner';
 export { ComplianceScannerPanel } from './ComplianceScannerPanel';
 
+// Data Room & Source Traceability
+export { default as TemplateGeneratorPanel } from './TemplateGeneratorPanel';
+export { default as SourceCitationsPanel } from './SourceCitationsPanel';
+
 // Document control
 export { DocumentWatermark, WatermarkSettings, getWatermarkForStatus } from './DocumentWatermark';
 export type { DocumentWatermarkProps, WatermarkSettingsProps } from './DocumentWatermark';
