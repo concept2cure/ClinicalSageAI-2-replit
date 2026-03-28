@@ -369,6 +369,46 @@ export const BUILD_FROM_TEMPLATE: ClaudeTool = {
   },
 };
 
+/** Generate an IND CTD section */
+export const IND_GENERATE_SECTION: ClaudeTool = {
+  name: 'ind_generate_section',
+  description: 'Generate a specific CTD section for an IND submission. Creates a governed draft artifact with regulatory-quality content. Use when the user asks to draft, generate, or create a specific IND/CTD section (e.g., "draft section 2.5", "generate the clinical overview", "create Module 3 drug substance section").',
+  input_schema: {
+    type: 'object',
+    properties: {
+      section_code: {
+        type: 'string',
+        description: 'CTD section code (e.g., "2.5" for Clinical Overview, "3.2.S" for Drug Substance, "4.2.3" for Toxicology)',
+      },
+      project_id: {
+        type: 'string',
+        description: 'Project ID to save the generated section to',
+      },
+      product_name: { type: 'string', description: 'Name of the drug/product' },
+      indication: { type: 'string', description: 'Therapeutic indication' },
+      sponsor: { type: 'string', description: 'Sponsor company name' },
+      phase: { type: 'string', description: 'Clinical phase (Phase 1, Phase 2, etc.)' },
+    },
+    required: ['section_code'],
+  },
+};
+
+/** Get IND submission status and structure */
+export const IND_GET_STATUS: ClaudeTool = {
+  name: 'ind_get_status',
+  description: 'Get the complete IND submission structure and section-by-section completion status. Use when the user asks about IND progress, what sections are done, what\'s missing, or the overall readiness of their IND submission.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      project_id: {
+        type: 'string',
+        description: 'Project ID to check status for',
+      },
+    },
+    required: ['project_id'],
+  },
+};
+
 /** Rasterize a document page for visual inspection */
 export const RASTERIZE_PAGE: ClaudeTool = {
   name: 'rasterize_page',
@@ -443,6 +483,8 @@ export const ALL_CLAUDE_TOOLS: ClaudeTool[] = [
   EXTRACT_DOCUMENT_STRUCTURE,
   GENERATE_DOCUMENT,
   BUILD_FROM_TEMPLATE,
+  IND_GENERATE_SECTION,
+  IND_GET_STATUS,
   RASTERIZE_PAGE,
   PDF_OVERLAY,
 ];

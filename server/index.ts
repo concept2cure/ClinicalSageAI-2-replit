@@ -4090,6 +4090,11 @@ import chatRoutes from './routes/chat';
 app.use('/api/chat', chatRoutes);
 console.log('✅ AnA Intelligence Chat API routes mounted successfully');
 
+// Mount IND Generation routes
+import indGenerationRoutes from './routes/ind-generation';
+app.use('/api/ind', indGenerationRoutes);
+console.log('✅ IND Generation API routes mounted successfully');
+
 // Mount AI Claims → Binder provenance route
 try {
   const claimsModule = await import('./routes/ai-claims-routes');

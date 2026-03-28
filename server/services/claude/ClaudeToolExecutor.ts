@@ -549,6 +549,43 @@ registerToolHandler('build_from_template', async (input: Record<string, unknown>
   });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// IND Submission Tools
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('ind_generate_section', async (input: Record<string, unknown>) => {
+  const sectionCode = input.section_code as string;
+  const projectId = input.project_id as string;
+  const productName = input.product_name as string;
+  const indication = input.indication as string;
+  const sponsor = input.sponsor as string;
+  const phase = input.phase as string;
+
+  try {
+    const res = await fetch(`http://localhost:${process.env.PORT || 5000}/api/ind/generate-section`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectId, sectionCode, productName, indication, sponsor, phase }),
+    });
+    const data = await res.json();
+    return JSON.stringify(data);
+  } catch (error: any) {
+    return JSON.stringify({ success: false, error: error.message || 'IND section generation failed' });
+  }
+});
+
+registerToolHandler('ind_get_status', async (input: Record<string, unknown>) => {
+  const projectId = input.project_id as string;
+
+  try {
+    const res = await fetch(`http://localhost:${process.env.PORT || 5000}/api/ind/status/${projectId}`);
+    const data = await res.json();
+    return JSON.stringify(data);
+  } catch (error: any) {
+    return JSON.stringify({ success: false, error: error.message || 'Failed to get IND status' });
+  }
+});
+
 registerToolHandler('rasterize_page', async (input: Record<string, unknown>) => {
   const documentPath = input.document_path as string;
   const pageNumber = (input.page_number as number) || 1;
