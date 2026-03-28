@@ -484,7 +484,15 @@ const sendMessageHandler = async (req: Request, res: Response) => {
           const sectionList = IND_SECTIONS.map(s =>
             `- ${s.code} ${s.title} (Module ${s.module}, ${s.required ? 'required' : 'optional'}) — ${s.guidance}`
           ).join('\n');
-          indContextBlock = `\n\n## IND Submission Context\nThis is an IND (Investigational New Drug) project. You have tools to generate any CTD section.\n\nComplete IND structure (19 sections across 5 modules):\n${sectionList}\n\nUse the ind_generate_section tool to draft any section. Use ind_get_status to check progress. Guide the user section by section.\n`;
+          // Include project context for generation prompts
+          const projectContext = req.body.context || {};
+          const projectCtx = [
+            projectContext.activeProject ? `Project: ${projectContext.activeProject}` : '',
+            projectContext.productType ? `Submission type: ${projectContext.productType}` : '',
+            projectContext.projectId ? `Project ID: ${projectContext.projectId}` : '',
+          ].filter(Boolean).join('\n');
+
+          indContextBlock = `\n\n## IND Submission Context\nThis is an IND (Investigational New Drug) project. You have AnA tools to generate any CTD section.\n${projectCtx}\n\nComplete IND structure (19 sections across 5 modules):\n${sectionList}\n\nWhen the user asks to draft or generate a section:\n1. Use ind_generate_section tool with the section code and project context\n2. The tool will generate regulatory-quality content and save it as a governed artifact\n3. Show the user a summary of what was generated\n\nUse ind_get_status to check which sections are done and which need work.\nGuide the user through the submission systematically — Module 1 first, then 2-5.\n`;
         } catch {
           // IND registry not available — skip
         }
