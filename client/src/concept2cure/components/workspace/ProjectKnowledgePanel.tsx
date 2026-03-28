@@ -11,6 +11,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { useProjectKnowledge } from '../../hooks/useProjectKnowledge';
 import { useProjectIntelligence } from '../../hooks/useIntelligence';
+import { useProjectApps, APP_CATALOG } from '../../hooks/useProjectApps';
 import { useProject } from '../../context/ProjectContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -30,6 +31,17 @@ import {
   Save,
   Plus,
   Activity,
+  Blocks,
+  Check,
+  Search,
+  Scale,
+  Heart,
+  Microscope,
+  ShieldCheck,
+  BarChart3,
+  BookOpen,
+  FlaskConical,
+  Database,
 } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -40,6 +52,14 @@ function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+const APP_ICONS: Record<string, React.ElementType> = {
+  Search, Scale, FileText, Heart, Microscope, ShieldCheck, BarChart3, BookOpen, FlaskConical, Database,
+};
+
+function getAppIcon(iconName: string): React.ElementType {
+  return APP_ICONS[iconName] || Blocks;
 }
 
 function getFileIcon(type: string) {
@@ -93,6 +113,12 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
   const { data: intelligence } = useProjectIntelligence(
     projectId ? Number(projectId) : 0
   );
+  const {
+    connectedApps,
+    availableApps,
+    connectApp,
+    disconnectApp,
+  } = useProjectApps(projectId, activeProject?.type);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [editingInstructions, setEditingInstructions] = useState(false);
@@ -405,6 +431,90 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
         </div>
 
         {/* ── 3. Activity (collapsible, minimal) ─�� */}
+        {/* ── 3. Connected Apps ── */}
+        <div className="px-5 py-4 border-b border-stone-100">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-medium text-stone-700">
+              Connected apps {connectedApps.length > 0 && <span className="text-stone-400">({connectedApps.length})</span>}
+            </span>
+          </div>
+
+          {/* Connected apps list */}
+          {connectedApps.length > 0 && (
+            <ul className="space-y-1 mb-3">
+              {connectedApps.map((ca) => {
+                const def = APP_CATALOG.find(a => a.id === ca.appId);
+                if (!def) return null;
+                const Icon = getAppIcon(def.icon);
+                return (
+                  <li
+                    key={ca.appId}
+                    className="group flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-stone-50 transition-colors"
+                  >
+                    <div className="w-6 h-6 rounded-md bg-stone-100 flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-3.5 h-3.5 text-stone-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] text-stone-700 truncate">{def.name}</p>
+                      <p className="text-[11px] text-stone-400 truncate">{def.description}</p>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Active" />
+                      <button
+                        onClick={() => disconnectApp(ca.appId)}
+                        className="opacity-0 group-hover:opacity-100 p-1 rounded text-stone-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                        title="Disconnect app"
+                        aria-label={`Disconnect ${def.name}`}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {/* Available apps to connect */}
+          {availableApps.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-[11px] text-stone-400 mb-1.5">
+                {connectedApps.length === 0 ? 'Connect apps to make them project-aware' : 'Add more'}
+              </p>
+              {availableApps.slice(0, connectedApps.length === 0 ? 6 : 3).map((app) => {
+                const Icon = getAppIcon(app.icon);
+                return (
+                  <button
+                    key={app.id}
+                    onClick={() => connectApp(app.id)}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left hover:bg-stone-50 transition-colors group"
+                  >
+                    <div className="w-6 h-6 rounded-md bg-stone-50 border border-stone-200 flex items-center justify-center flex-shrink-0 group-hover:bg-white group-hover:border-stone-300 transition-colors">
+                      <Icon className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-600 transition-colors" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] text-stone-600 truncate">{app.name}</p>
+                    </div>
+                    <Plus className="w-3.5 h-3.5 text-stone-300 group-hover:text-stone-500 transition-colors flex-shrink-0" />
+                  </button>
+                );
+              })}
+              {availableApps.length > (connectedApps.length === 0 ? 6 : 3) && (
+                <p className="text-[11px] text-stone-400 text-center pt-1">
+                  +{availableApps.length - (connectedApps.length === 0 ? 6 : 3)} more apps available
+                </p>
+              )}
+            </div>
+          )}
+
+          {connectedApps.length === 0 && availableApps.length === 0 && (
+            <p className="text-[11px] text-stone-400 text-center py-3">
+              No apps available for this submission type.
+            </p>
+          )}
+        </div>
+
+        {/* ── 4. Activity (collapsible, minimal) ── */}
         {hasActivity && (
           <div className="px-5 py-4">
             <button

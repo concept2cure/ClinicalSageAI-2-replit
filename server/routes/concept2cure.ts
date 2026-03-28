@@ -500,6 +500,18 @@ function normalizeKnowledge(settings: Record<string, unknown>): ProjectKnowledge
   };
 }
 
+interface ConnectedAppRecord {
+  appId: string;
+  connectedAt: string;
+  status: 'active' | 'paused';
+  memoryRole?: string;
+}
+
+function normalizeConnectedApps(settings: Record<string, unknown>): ConnectedAppRecord[] {
+  const apps = settings.connectedApps;
+  return Array.isArray(apps) ? (apps as ConnectedAppRecord[]) : [];
+}
+
 function estimateTokensFromBytes(bytes: number): number {
   return Math.ceil(bytes * 0.25);
 }
@@ -746,6 +758,7 @@ interface ProjectOwnership {
   documentInventory: UploadedDocument[];
   vaultLinkedFilesEvidence: UploadedDocument[];
   projectInstructions: string;
+  connectedAppsContext: string;
   reusableSnippetsKnowledge: string[];
   reports: string[];
   reviewState: string;
@@ -774,6 +787,13 @@ function buildProjectOwnership(
     projectInstructions:
       (typeof settings.customInstructions === 'string' ? settings.customInstructions : '') ||
       (typeof ownership.projectInstructions === 'string' ? ownership.projectInstructions : ''),
+    connectedAppsContext: (() => {
+      const apps = normalizeConnectedApps(settings);
+      return apps
+        .filter(a => a.status === 'active' && a.memoryRole)
+        .map(a => a.memoryRole)
+        .join('\n');
+    })(),
     reusableSnippetsKnowledge: Array.isArray(ownership.reusableSnippetsKnowledge)
       ? (ownership.reusableSnippetsKnowledge as string[])
       : [],
@@ -1968,6 +1988,181 @@ router.patch('/projects/:projectId/knowledge', async (req: Request, res: Respons
     }
     logger.error('Failed to update project knowledge', { error: error.message });
     return sendError(res, 500, 'Failed to update project knowledge');
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROJECT CONNECTED APPS ROUTES
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/concept2cure/projects/:projectId/apps
+ * List apps connected to this project.
+ */
+router.get('/projects/:projectId/apps', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const projectId = req.params.projectId.replace('proj_', '');
+    const numericId = parseInt(projectId, 10);
+
+    if (isNaN(numericId)) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .limit(1);
+
+    if (!project) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    const settings = normalizeProjectSettings(project.settings);
+    const apps = normalizeConnectedApps(settings);
+    return sendSuccess(res, { apps });
+  } catch (error: any) {
+    logger.error('Failed to fetch project apps', { error: error.message });
+    return sendError(res, 500, 'Failed to fetch project apps');
+  }
+});
+
+/**
+ * POST /api/concept2cure/projects/:projectId/apps
+ * Connect an app to the project. Stores connection and initializes memory role.
+ */
+router.post('/projects/:projectId/apps', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const projectId = req.params.projectId.replace('proj_', '');
+    const numericId = parseInt(projectId, 10);
+
+    if (isNaN(numericId)) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+
+    const { appId, memoryRole } = req.body as { appId?: string; memoryRole?: string };
+    if (!appId || typeof appId !== 'string') {
+      return sendError(res, 400, 'appId is required');
+    }
+
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .limit(1);
+
+    if (!project) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    const settings = normalizeProjectSettings(project.settings);
+    const apps = normalizeConnectedApps(settings);
+
+    // Prevent duplicate connections
+    if (apps.some(a => a.appId === appId)) {
+      return sendError(res, 409, 'App is already connected to this project');
+    }
+
+    const newApp: ConnectedAppRecord = {
+      appId,
+      connectedAt: new Date().toISOString(),
+      status: 'active',
+      ...(memoryRole ? { memoryRole } : {}),
+    };
+
+    const updatedApps = [...apps, newApp];
+    const updatedSettings = { ...settings, connectedApps: updatedApps };
+
+    // Build app memory roles context string for AnA
+    const activeMemoryRoles = updatedApps
+      .filter(a => a.status === 'active' && a.memoryRole)
+      .map(a => a.memoryRole)
+      .join('\n');
+
+    if (activeMemoryRoles) {
+      const knowledge = settings.knowledge && typeof settings.knowledge === 'object'
+        ? { ...(settings.knowledge as Record<string, unknown>) }
+        : {};
+      knowledge.appContext = activeMemoryRoles;
+      updatedSettings.knowledge = knowledge;
+    }
+
+    await db
+      .update(projects)
+      .set({ settings: updatedSettings, updatedAt: new Date() })
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)));
+
+    await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, { action: 'connect_app', appId });
+    return sendSuccess(res, { app: newApp, totalConnected: updatedApps.length });
+  } catch (error: any) {
+    logger.error('Failed to connect app to project', { error: error.message });
+    return sendError(res, 500, 'Failed to connect app to project');
+  }
+});
+
+/**
+ * DELETE /api/concept2cure/projects/:projectId/apps/:appId
+ * Disconnect an app from the project.
+ */
+router.delete('/projects/:projectId/apps/:appId', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const projectId = req.params.projectId.replace('proj_', '');
+    const numericId = parseInt(projectId, 10);
+
+    if (isNaN(numericId)) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+
+    const { appId } = req.params;
+    if (!appId) {
+      return sendError(res, 400, 'appId is required');
+    }
+
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .limit(1);
+
+    if (!project) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    const settings = normalizeProjectSettings(project.settings);
+    const apps = normalizeConnectedApps(settings);
+    const updatedApps = apps.filter(a => a.appId !== appId);
+
+    if (updatedApps.length === apps.length) {
+      return sendError(res, 404, 'App not found in project connections');
+    }
+
+    const updatedSettings = { ...settings, connectedApps: updatedApps };
+
+    // Rebuild app memory roles context
+    const activeMemoryRoles = updatedApps
+      .filter(a => a.status === 'active' && a.memoryRole)
+      .map(a => a.memoryRole)
+      .join('\n');
+
+    const knowledge = settings.knowledge && typeof settings.knowledge === 'object'
+      ? { ...(settings.knowledge as Record<string, unknown>) }
+      : {};
+    knowledge.appContext = activeMemoryRoles || '';
+    updatedSettings.knowledge = knowledge;
+
+    await db
+      .update(projects)
+      .set({ settings: updatedSettings, updatedAt: new Date() })
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)));
+
+    await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, { action: 'disconnect_app', appId });
+    return sendSuccess(res, { disconnected: appId, totalConnected: updatedApps.length });
+  } catch (error: any) {
+    logger.error('Failed to disconnect app from project', { error: error.message });
+    return sendError(res, 500, 'Failed to disconnect app from project');
   }
 });
 
