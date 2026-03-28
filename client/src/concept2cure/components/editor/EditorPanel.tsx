@@ -66,6 +66,8 @@ import { DocumentStatusTimeline } from './DocumentStatusTimeline';
 import type { CommentThread } from './extensions/CommentMark';
 import { useComments } from '../../hooks/useComments';
 import { recordDocumentAccess } from '../../hooks/useRecentDocuments';
+import TemplateGeneratorPanel from './TemplateGeneratorPanel';
+import SourceCitationsPanel from './SourceCitationsPanel';
 import { ReviewerAssignment } from './ReviewerAssignment';
 import { CollaborationPresence, CollaborationCursors } from './CollaborationPresence';
 import { DocumentWatermark } from './DocumentWatermark';
@@ -179,6 +181,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [lockRejection, setLockRejection] = useState<string | null>(null);
   const [unlockReason, setUnlockReason] = useState('');
   const [openArtifactNotFound, setOpenArtifactNotFound] = useState(false);
+  const [showTemplateGenerator, setShowTemplateGenerator] = useState(false);
 
   // ── Reviewer data (fetched from API) ──────────────────────────────────────
   const [reviewers, setReviewers] = useState<Array<{ id: string; name: string; email: string; role?: string; status: string; assignedAt: string; completedAt?: string; comment?: string }>>([]);
@@ -2287,6 +2290,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               label: 'Draft',
               items: [
                 { id: 'intelligence', label: 'AI Assist', icon: <Brain className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('intelligence') },
+                { id: 'templates', label: 'Templates', icon: <FileText className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('templates') },
                 { id: 'batch-ai', label: 'Batch AI', icon: <Layers className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('batch-ai') },
                 { id: 'dataroom', label: 'Data Room', icon: <Database className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('dataroom') },
                 { id: 'ana-memory', label: 'Context', icon: <Brain className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('ana-memory') },
@@ -2301,6 +2305,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   icon: <MessageSquare className="w-3.5 h-3.5" />,
                   badge: comments.filter(c => !c.resolved).length || undefined,
                   suggested: suggestedPanels.has('comments'),
+                },
+                {
+                  id: 'sources',
+                  label: 'Sources',
+                  icon: <Shield className="w-3.5 h-3.5" />,
+                  suggested: suggestedPanels.has('sources'),
                 },
                 {
                   id: 'review',
@@ -2916,6 +2926,32 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             onRestore={version => {
               setActiveArtifact(prev => (prev ? { ...prev, content: version.content } : null));
               pushToast(`Restored to version ${version.version}`, 'success');
+            }}
+            onClose={() => setActiveInspector(null)}
+          />
+        </InspectorDrawer>
+        <InspectorDrawer visible={activeInspector === 'sources'}>
+          <SourceCitationsPanel
+            artifactId={activeArtifact?.id}
+            onClose={() => setActiveInspector(null)}
+          />
+        </InspectorDrawer>
+        <InspectorDrawer visible={activeInspector === 'templates'} width="w-96">
+          <TemplateGeneratorPanel
+            projectId={projectId}
+            artifactId={activeArtifact?.id}
+            onGenerated={(content, templateName) => {
+              // Wrap in HTML if not already
+              const htmlContent = content.startsWith('<')
+                ? content
+                : content.split('\n\n').map(p => `<p>${p}</p>`).join('\n');
+              if (activeArtifact) {
+                setActiveArtifact(prev => (prev ? { ...prev, content: htmlContent } : null));
+              } else {
+                setNewDocTitle(templateName);
+              }
+              pushToast(`Template content generated: ${templateName}`, 'success');
+              setActiveInspector(null);
             }}
             onClose={() => setActiveInspector(null)}
           />
