@@ -500,7 +500,27 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         }
       }
 
-      const systemPrompt = intelligencePrefix + basePrompt + indContextBlock + memoryBlock + evidenceBlock;
+      // ── Device Context Injection ────────────────────────────────────────────────
+      let deviceContextBlock = '';
+      const deviceTypes = ['510K', 'PMA', 'DE_NOVO', 'CER', 'IVDR'];
+      if (deviceTypes.includes(detectedType) || deviceTypes.includes(contextType)) {
+        try {
+          const { getDeviceSections } = await import('../services/device/device-section-registry.js');
+          const deviceType = (deviceTypes.includes(contextType) ? contextType : detectedType) as '510K' | 'PMA' | 'DE_NOVO' | 'CER';
+          const sections = getDeviceSections(deviceType);
+          if (sections.length > 0) {
+            const sectionList = sections.map(s =>
+              `- ${s.code} ${s.title} (${s.required ? 'required' : 'optional'}) — ${s.guidance}`
+            ).join('\n');
+            const projectContext = req.body.context || {};
+            deviceContextBlock = `\n\n## ${deviceType} Submission Context\nThis is a ${deviceType} medical device submission project.\n${projectContext.activeProject ? `Project: ${projectContext.activeProject}` : ''}\n\nRequired sections (${sections.filter(s => s.required).length} required, ${sections.length} total):\n${sectionList}\n\nUse the generate_document tool to draft any section. Guide the user through the submission systematically.\n`;
+          }
+        } catch {
+          // Device registry not available
+        }
+      }
+
+      const systemPrompt = intelligencePrefix + basePrompt + indContextBlock + deviceContextBlock + memoryBlock + evidenceBlock;
 
       const gwMessages = [
         { role: 'system' as const, content: systemPrompt },
