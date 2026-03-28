@@ -136,7 +136,8 @@ export const DossierMap: React.FC<DossierMapProps> = ({
   });
 
   // For IND projects: also fetch IND status to get real section completion
-  const isIND = projectType === 'IND';
+  const upperType = (projectType || '').toUpperCase();
+  const isIND = upperType === 'IND' || upperType === 'NDA' || upperType === 'BLA';
   const { data: indStatus } = useQuery<{ sections: Array<{ code: string; title: string; status: string }> }>({
     queryKey: ['concept2cure', 'ind', 'status', projectId],
     queryFn: async () => {

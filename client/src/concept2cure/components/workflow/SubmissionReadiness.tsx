@@ -67,7 +67,8 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
   });
 
   // For IND projects: fetch IND section status for complete Module 1-5 readiness
-  const isIND = projectType === 'IND';
+  const upperType = (projectType || '').toUpperCase();
+  const isIND = upperType === 'IND' || upperType === 'NDA' || upperType === 'BLA';
   const { data: indStatus } = useQuery<{ sections: Array<{ code: string; title: string; status: string }> }>({
     queryKey: ['concept2cure', 'ind', 'status', projectId],
     queryFn: async () => {

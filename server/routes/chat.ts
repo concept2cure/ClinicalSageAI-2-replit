@@ -478,7 +478,9 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       // When the project is an IND submission, inject the complete CTD structure
       // so AnA knows every section needed and can guide the user through it.
       let indContextBlock = '';
-      if (orchestratorResult.detectedSubmissionType === 'IND' || (req.body.context?.productType || '').toUpperCase() === 'IND') {
+      const detectedType = (orchestratorResult.detectedSubmissionType || '').toUpperCase();
+      const contextType = (req.body.context?.productType || '').toUpperCase();
+      if (detectedType === 'IND' || contextType === 'IND' || contextType === 'NDA' || contextType === 'BLA') {
         try {
           const { IND_SECTIONS, getModuleStatus } = await import('../services/ind/ind-section-registry.js');
           const sectionList = IND_SECTIONS.map(s =>

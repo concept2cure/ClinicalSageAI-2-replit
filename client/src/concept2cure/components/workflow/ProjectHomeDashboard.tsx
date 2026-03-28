@@ -103,14 +103,14 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
               {summary.ready} of {summary.total} artifacts ready
               {summary.review > 0 && ` · ${summary.review} in review`}
             </span>
-            {project.type === 'IND' && (
+            {['IND', 'NDA', 'BLA'].includes(project.type?.toUpperCase()) && (
               <span className="text-xs text-stone-400 ml-auto">
                 IND Submission
               </span>
             )}
           </div>
         )}
-        {summary.total === 0 && project.type === 'IND' && (
+        {summary.total === 0 && ['IND', 'NDA', 'BLA'].includes(project.type?.toUpperCase()) && (
           <div className="mt-3 pt-3 border-t border-stone-100">
             <p className="text-xs text-stone-400">
               IND Submission — ask AnA to start generating your CTD sections
