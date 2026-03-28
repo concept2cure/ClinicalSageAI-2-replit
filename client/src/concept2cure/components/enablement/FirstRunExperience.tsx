@@ -94,16 +94,16 @@ function WelcomeScreen({
         {userName ? `Welcome, ${userName}` : 'Welcome to Concept2Cure'}
       </h1>
       <p className="text-sm text-stone-500 mt-2 max-w-md">
-        Let's get you set up. This takes about a minute.
+        We'll tailor your templates, compliance rules, and regulatory guidance based on your pathway.
       </p>
 
       <div className="mt-10 max-w-sm w-full space-y-3">
         <p className="text-xs font-medium text-stone-400 uppercase tracking-wider text-left">
-          What do you work on?
+          Your regulatory pathway
         </p>
         {([
-          { id: 'pharma' as ClientTrack, label: 'Pharma & Biotech', description: 'Drugs, biologics, clinical trials' },
-          { id: 'device' as ClientTrack, label: 'Medical Device & Diagnostics', description: 'Devices, IVDs, combination products' },
+          { id: 'pharma' as ClientTrack, label: 'Pharma & Biotech', description: 'IND, NDA, BLA — CTD Module 1-5 structure, ICH guidelines' },
+          { id: 'device' as ClientTrack, label: 'Medical Device & Diagnostics', description: '510(k), PMA, De Novo, CER — FDA eSTAR, EU MDR compliance' },
         ]).map(option => (
           <button
             key={option.id}
@@ -148,7 +148,7 @@ function SetupScreen({
   return (
     <div className="flex flex-col items-center h-full px-8 pt-16 overflow-y-auto">
       <h2 className="text-xl font-semibold text-stone-900 mb-1">Quick setup</h2>
-      <p className="text-sm text-stone-500 mb-8">Three quick choices to personalize your experience.</p>
+      <p className="text-sm text-stone-500 mb-8">Your role determines which templates and checklists appear first. Your submission type sets the regulatory structure. Your agency sets compliance rules.</p>
 
       <div className="max-w-sm w-full space-y-6">
         {/* Role */}
@@ -237,7 +237,9 @@ function CreateProjectScreen({
     <div className="flex flex-col items-center justify-center h-full px-8">
       <h2 className="text-xl font-semibold text-stone-900 mb-1">Create your first project</h2>
       <p className="text-sm text-stone-500 mb-8">
-        {submissionType ? `A ${submissionType} project to get you started.` : 'Give your project a name.'}
+        {submissionType
+          ? `Your ${submissionType} project is where all regulatory documents, evidence, and review workflows live. AnA will help you build each section.`
+          : 'Your project organizes all documents, evidence, and workflows for a single regulatory submission.'}
       </p>
 
       {createError && (
@@ -308,7 +310,7 @@ function ConfidenceScreen({
     <div className="flex flex-col items-center justify-center h-full px-8 text-center">
       <h2 className="text-xl font-semibold text-stone-900 mb-2">You're all set</h2>
       <p className="text-sm text-stone-500 max-w-md">
-        Your project is ready. AnA is always available at the bottom of every page to help you.
+        Your project is ready. You'll land on your project home where AnA — your regulatory intelligence guide — is ready to help. Ask her to draft sections, check compliance, or guide you through the submission process.
       </p>
 
       <div className="mt-8 max-w-sm w-full space-y-2">
