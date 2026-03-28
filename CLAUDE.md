@@ -248,9 +248,11 @@ No new screens, no new panels, no new modals, no new pages. Everything is inline
 
 - 43 slash commands + 39 operational commands — everything through chat
 - Features invoked by typing naturally, slash commands, or suggested actions
+- **Domain prompt buttons** — organized by capability area in "Browse all capabilities" (`config/domain-prompts.ts`)
 - Results render as rich markdown (tables, lists, structured data)
 - Action buttons appear on hover (save, insert, export, regenerate)
 - Intelligence surfaces naturally — AnA "knows" without being told
+- When adding a new capability: add prompts to domain-prompts.ts + map to nav contexts
 
 **ZERO CAPABILITY LOSS:** We still need to achieve all the results of each dashboard, no matter
 what. Removing chrome does NOT mean removing capability. Every metric, score, workflow step, and

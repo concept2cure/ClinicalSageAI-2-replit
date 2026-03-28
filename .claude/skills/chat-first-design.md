@@ -42,7 +42,15 @@ Every new capability should be invocable by:
 1. **Typing naturally** — "What's our submission risk?" triggers Foresight
 2. **Slash commands** — `/risk`, `/readiness`, `/sap`, etc.
 3. **Suggested actions** — Context-aware chips that appear based on workflow stage
-4. **Inline results** — Response renders as rich markdown directly in the conversation
+4. **Domain prompt buttons** — Organized by capability area (CMC, biostatistics, safety, etc.) in the "Browse all capabilities" section
+5. **Inline results** — Response renders as rich markdown directly in the conversation
+
+### 2a. Domain Prompt Registry (NON-NEGOTIABLE)
+For every slash command, every specialized focus, and every former dashboard — there MUST be a corresponding human-language prompt button accessible in the chat empty state. When adding a new capability:
+1. Add prompts to the relevant domain group in `client/src/concept2cure/config/domain-prompts.ts`
+2. If it's a new domain, create a new `DomainPromptGroup` and add it to `ALL_DOMAIN_GROUPS`
+3. Map it to the right navigation contexts in `CONTEXT_DOMAIN_MAP`
+4. The prompt label should be human language (not system vocabulary)
 
 ### 3. Slash Commands Are the Power User Interface
 When adding a new capability:
@@ -147,5 +155,6 @@ Complete submission workflows accessible via `/workflow`:
 | Workflow orchestration | `server/services/ana-ri/workflow-orchestration.ts` |
 | Orchestrator | `server/services/ana-ri/orchestrator.ts` |
 | Artifact generator | `server/services/ana-ri/artifact-generator.ts` |
+| Domain prompt registry | `client/src/concept2cure/config/domain-prompts.ts` |
 | Streaming endpoint | `server/routes/ana-ri.ts` (POST /api/ana-ri/stream) |
 | Ana response CSS | `client/src/index.css` (.ana-response class) |
