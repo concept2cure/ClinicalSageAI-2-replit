@@ -1,26 +1,27 @@
 /**
  * IND Generation Routes — API for AnA to guide IND submission preparation.
  *
- * Endpoints:
- * - GET /api/ind/structure — Returns complete IND CTD structure (Module 1-5)
- * - GET /api/ind/status/:projectId — Returns section-by-section completion status
- * - POST /api/ind/generate-section — Generate a specific CTD section using AI
- * - POST /api/ind/generate-form — Generate FDA administrative forms (1571, 1572, 3674)
- * - POST /api/ind/assemble — Assemble complete eCTD package
+ * Uses the existing concept2cure artifact API for persistence (not raw SQL).
+ * Uses the AI gateway for content generation.
+ * Uses the IND Section Registry for structure.
  *
  * @module server/routes/ind-generation
  */
 
 import { Router, Request, Response } from 'express';
-import { IND_SECTIONS, getSectionsByModule, getSectionByCode, getModuleStatus, getGenerationPrompt } from '../services/ind/ind-section-registry.js';
+import {
+  IND_SECTIONS,
+  getSectionsByModule,
+  getSectionByCode,
+  getModuleStatus,
+  getGenerationPrompt,
+} from '../services/ind/ind-section-registry.js';
 import { getGateway } from '../services/ai-gateway/index.js';
 import { getMasterDocumentBuilder } from '../services/docx/masterDocumentBuilder.js';
-import { pool } from '../db.js';
 
 const router = Router();
 
 // ─── GET /api/ind/structure ───────────────────────────────────────────────────
-// Returns the complete IND CTD structure for the frontend to display
 
 router.get('/structure', (_req: Request, res: Response) => {
   const modules = [1, 2, 3, 4, 5].map(n => ({
@@ -41,35 +42,45 @@ router.get('/structure', (_req: Request, res: Response) => {
 });
 
 // ─── GET /api/ind/status/:projectId ───────────────────────────────────────────
-// Returns section completion status for a specific project
 
 router.get('/status/:projectId', async (req: Request, res: Response) => {
   try {
     const { projectId } = req.params;
 
-    // Get all artifacts for the project
-    const result = await pool.query(
-      `SELECT id, title, "ctdSection" as "ctdSection", status FROM artifacts WHERE "projectId" = $1`,
-      [projectId]
-    );
-    const artifacts = result.rows;
+    // Fetch project artifacts using the internal concept2cure API pattern
+    // This uses the same data path as the frontend
+    let artifacts: Array<{ id: string; ctdSection?: string; status?: string }> = [];
+    try {
+      // Try to fetch from the concept2cure artifacts endpoint internally
+      const port = process.env.PORT || 5000;
+      const fetchRes = await fetch(`http://localhost:${port}/api/concept2cure/projects/${projectId}/artifacts`, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (fetchRes.ok) {
+        const json = await fetchRes.json();
+        artifacts = json.data?.artifacts || json.data || [];
+      }
+    } catch {
+      // If internal fetch fails, return empty — sections will show as not_started
+      artifacts = [];
+    }
 
     // Map against IND structure
     const sectionStatus = IND_SECTIONS.map(section => {
-      const artifact = artifacts.find((a: { ctdSection?: string }) => a.ctdSection === section.code);
+      const artifact = artifacts.find(a => a.ctdSection === section.code);
       return {
         code: section.code,
         title: section.title,
         module: section.module,
         required: section.required,
-        status: artifact
-          ? (artifact as { status?: string }).status || 'draft'
-          : 'not_started',
-        artifactId: artifact ? (artifact as { id: string }).id : null,
+        status: artifact ? (artifact.status || 'draft') : 'not_started',
+        artifactId: artifact ? artifact.id : null,
       };
     });
 
-    const moduleStatus = getModuleStatus(artifacts);
+    const moduleStatus = getModuleStatus(
+      artifacts.map(a => ({ ctdSection: a.ctdSection, status: a.status }))
+    );
 
     res.json({
       success: true,
@@ -87,7 +98,6 @@ router.get('/status/:projectId', async (req: Request, res: Response) => {
 });
 
 // ─── POST /api/ind/generate-section ───────────────────────────────────────────
-// Generate a specific CTD section using AI and save as governed artifact
 
 router.post('/generate-section', async (req: Request, res: Response) => {
   try {
@@ -106,7 +116,10 @@ router.post('/generate-section', async (req: Request, res: Response) => {
     const response = await gw.route({
       taskType: 'document_drafting',
       messages: [
-        { role: 'system', content: 'You are a senior regulatory affairs writer producing content for an FDA IND submission. Write in formal regulatory language. Include proper section headings and sub-headings per ICH M4 CTD structure.' },
+        {
+          role: 'system',
+          content: 'You are a senior regulatory affairs writer producing content for an FDA IND submission. Write in formal regulatory language suitable for submission. Follow ICH M4 CTD structure. Include proper section headings and sub-headings. Produce comprehensive, publication-quality content.',
+        },
         { role: 'user', content: prompt },
       ],
       temperature: 0.3,
@@ -115,27 +128,54 @@ router.post('/generate-section', async (req: Request, res: Response) => {
     });
 
     const content = response.content || '';
+    const title = `${section.code} ${section.title}`;
 
-    // Save as governed artifact
-    const artifactResult = await pool.query(
-      `INSERT INTO artifacts (title, content, type, status, "ctdSection", "projectId", "createdAt", "updatedAt")
-       VALUES ($1, $2, 'regulatory_document', 'draft', $3, $4, NOW(), NOW())
-       RETURNING id, title, status, "ctdSection"`,
-      [`${section.code} ${section.title}`, content, section.code, projectId]
-    );
+    // Save as governed artifact via the concept2cure API
+    try {
+      const port = process.env.PORT || 5000;
+      const createRes = await fetch(`http://localhost:${port}/api/concept2cure/projects/${projectId}/artifacts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          content,
+          type: 'regulatory_document',
+          category: 'document',
+          ctdSection: section.code,
+        }),
+      });
 
-    const artifact = artifactResult.rows[0];
+      if (createRes.ok) {
+        const json = await createRes.json();
+        const artifact = json.data;
+        return res.json({
+          success: true,
+          data: {
+            artifactId: artifact?.id || artifact?.artifactId,
+            sectionCode: section.code,
+            sectionTitle: section.title,
+            status: 'draft',
+            wordCount: content.split(/\s+/).length,
+            content: content.substring(0, 500) + (content.length > 500 ? '...' : ''),
+            message: `${title} drafted successfully.`,
+          },
+        });
+      }
+    } catch {
+      // Artifact creation failed — still return the content
+    }
 
+    // Fallback: return content without artifact creation
     res.json({
       success: true,
       data: {
-        artifactId: artifact.id,
         sectionCode: section.code,
         sectionTitle: section.title,
-        status: 'draft',
+        status: 'generated',
         wordCount: content.split(/\s+/).length,
-        content: content.substring(0, 500) + '...', // Preview
-        message: `${section.code} ${section.title} drafted successfully.`,
+        content: content.substring(0, 500) + (content.length > 500 ? '...' : ''),
+        fullContent: content,
+        message: `${title} content generated. Save it as an artifact to track in your submission.`,
       },
     });
   } catch (error: any) {
@@ -144,7 +184,6 @@ router.post('/generate-section', async (req: Request, res: Response) => {
 });
 
 // ─── POST /api/ind/generate-form ──────────────────────────────────────────────
-// Generate FDA administrative forms (1571, 1572, 3674) as DOCX
 
 router.post('/generate-form', async (req: Request, res: Response) => {
   try {
@@ -155,9 +194,11 @@ router.post('/generate-form', async (req: Request, res: Response) => {
     const sections = [{
       number: '1',
       title: `FDA Form ${formType}`,
-      content: `<p>This form has been auto-generated for ${productName || 'the investigational product'} (${indication || 'the proposed indication'}).</p>
+      content: `<h2>FDA Form ${formType}</h2>
 <p><strong>Sponsor:</strong> ${sponsorName || '[Sponsor Name]'}</p>
 <p><strong>Investigator:</strong> ${investigatorName || '[Investigator Name]'}</p>
+<p><strong>Product:</strong> ${productName || '[Product Name]'}</p>
+<p><strong>Indication:</strong> ${indication || '[Indication]'}</p>
 <p><strong>Phase:</strong> ${phase || '[Phase]'}</p>
 <p><strong>Date:</strong> ${new Date().toISOString().split('T')[0]}</p>`,
     }];
@@ -185,22 +226,29 @@ router.post('/generate-form', async (req: Request, res: Response) => {
 });
 
 // ─── POST /api/ind/assemble ───────────────────────────────────────────────────
-// Assemble all sections into an eCTD package
 
 router.post('/assemble', async (req: Request, res: Response) => {
   try {
     const { projectId, sponsorName, productName } = req.body;
 
-    // Get all artifacts for the project
-    const result = await pool.query(
-      `SELECT id, title, "ctdSection", status, content FROM artifacts WHERE "projectId" = $1 ORDER BY "ctdSection"`,
-      [projectId]
-    );
-    const artifacts = result.rows;
+    // Fetch all artifacts via internal API
+    let artifacts: Array<{ id: string; title: string; ctdSection?: string; status?: string; content?: string }> = [];
+    try {
+      const port = process.env.PORT || 5000;
+      const fetchRes = await fetch(`http://localhost:${port}/api/concept2cure/projects/${projectId}/artifacts`, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (fetchRes.ok) {
+        const json = await fetchRes.json();
+        artifacts = json.data?.artifacts || json.data || [];
+      }
+    } catch {
+      return res.status(500).json({ success: false, error: 'Failed to fetch project artifacts' });
+    }
 
     // Check readiness
     const required = IND_SECTIONS.filter(s => s.required);
-    const missing = required.filter(s => !artifacts.find((a: { ctdSection?: string }) => a.ctdSection === s.code));
+    const missing = required.filter(s => !artifacts.find(a => a.ctdSection === s.code));
 
     if (missing.length > 0) {
       return res.json({
@@ -221,11 +269,11 @@ router.post('/assemble', async (req: Request, res: Response) => {
       number: String(n),
       title: ['Administrative', 'CTD Summaries', 'Quality', 'Nonclinical', 'Clinical'][n - 1],
       documents: artifacts
-        .filter((a: { ctdSection?: string }) => a.ctdSection?.startsWith(String(n)))
-        .map((a: { id: string; title: string; ctdSection?: string }) => ({
+        .filter(a => a.ctdSection?.startsWith(String(n)))
+        .map(a => ({
           id: a.id,
           title: a.title,
-          filePath: `m${n}/${a.ctdSection}/${a.title.replace(/[^a-zA-Z0-9]/g, '_')}.docx`,
+          filePath: `m${n}/${a.ctdSection}/${(a.title || 'document').replace(/[^a-zA-Z0-9]/g, '_')}.docx`,
         })),
     }));
 
