@@ -59,17 +59,37 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
   onBack,
   onExport,
 }) => {
-  const { data: sections, isLoading, error } = useQuery<Array<{ code: string; title: string; status: string }>>({
+  const { data: sections, isLoading: sectionsLoading, error } = useQuery<Array<{ code: string; title: string; status: string }>>({
     queryKey: queryKeys.ind.projectSections(projectId || 'none'),
     queryFn: () => apiRequest(`/api/project-sections?projectId=${projectId}`),
     enabled: !!projectId,
     staleTime: 60_000,
   });
 
+  // For IND projects: fetch IND section status for complete Module 1-5 readiness
+  const isIND = projectType === 'IND';
+  const { data: indStatus } = useQuery<{ sections: Array<{ code: string; title: string; status: string }> }>({
+    queryKey: ['concept2cure', 'ind', 'status', projectId],
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/ind/status/${projectId}`);
+      if (!res.ok) return { sections: [] };
+      const json = await res.json();
+      return json.data || { sections: [] };
+    },
+    enabled: !!projectId && isIND,
+    staleTime: 30_000,
+  });
+
+  const isLoading = sectionsLoading;
+
   const readinessItems = useMemo(() => {
+    // IND projects: use IND registry for complete section list
+    if (isIND && indStatus?.sections && indStatus.sections.length > 0) {
+      return sectionsToReadiness(indStatus.sections);
+    }
     if (!sections || sections.length === 0) return [];
     return sectionsToReadiness(sections);
-  }, [sections]);
+  }, [sections, indStatus, isIND]);
 
   const readyCount = readinessItems.filter(i => i.status === 'ready').length;
   const totalCount = readinessItems.length;
