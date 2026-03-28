@@ -171,7 +171,7 @@ function deriveQCSections(artifacts: any[]): QCSection[] {
     const issues = items.filter((i: any) => i.status === 'draft').length;
     return {
       name: type.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
-      status: (approved === items.length ? 'pass' : issues > 0 ? 'warning' : 'pass') as QCStatus,
+      status: (approved === items.length ? 'pass' : issues > 0 ? 'warning' : 'fail') as QCStatus,
       issuesFound: issues,
       lastChecked: items.reduce((latest: string, i: any) => {
         const ts = i.updatedAt || i.createdAt || '';
@@ -1492,8 +1492,7 @@ export function ReviewReadiness({ onClose, projectId }: { onClose: () => void; p
         return <QualityCenterView qcSections={qcSections} />;
       case 'compliance':
         return <ComplianceView complianceRules={complianceRules} />;
-      case 'snowglobe':
-        return <SnowGlobeView />;
+      // snowglobe removed — specialist stress-testing not in core Review
       case 'readiness':
         return projectId
           ? <React.Suspense fallback={<div className="flex items-center justify-center py-12 text-stone-400 text-sm">Loading readiness dashboard...</div>}>

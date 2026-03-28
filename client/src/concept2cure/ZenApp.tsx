@@ -2422,8 +2422,8 @@ export const ZenApp: React.FC = () => {
                       submissionType={activeProject?.type || '510K'}
                       threadId={activeThreadId}
                       greeting={{ text: 'How can I help with your 510(k) submission?' }}
-                      onNavigate={() => {}}
-                      onNewProject={() => {}}
+                      onNavigate={path => setLayoutMode(path as LayoutMode)}
+                      onNewProject={() => setNewProjectOpen(true)}
                       onThreadChange={handleThreadChange}
                     />
                   </div>
@@ -2488,8 +2488,8 @@ export const ZenApp: React.FC = () => {
                       submissionType="PMA"
                       threadId={activeThreadId}
                       greeting={{ text: 'How can I help with your PMA submission?' }}
-                      onNavigate={() => {}}
-                      onNewProject={() => {}}
+                      onNavigate={path => setLayoutMode(path as LayoutMode)}
+                      onNewProject={() => setNewProjectOpen(true)}
                       onThreadChange={handleThreadChange}
                     />
                   </div>
@@ -2557,8 +2557,8 @@ export const ZenApp: React.FC = () => {
                       submissionType="CER"
                       threadId={activeThreadId}
                       greeting={{ text: 'How can I help with your Clinical Evaluation Report?' }}
-                      onNavigate={() => {}}
-                      onNewProject={() => {}}
+                      onNavigate={path => setLayoutMode(path as LayoutMode)}
+                      onNewProject={() => setNewProjectOpen(true)}
                       onThreadChange={handleThreadChange}
                     />
                   </div>

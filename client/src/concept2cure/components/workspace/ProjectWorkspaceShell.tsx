@@ -2254,7 +2254,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                       phase4Ctx.artifactTitle
                     )
                   }
-                  onCreateSubsection={() => {}}
+                  onCreateSubsection={handleCreateSubsection}
                 />
               ) : phase4Panel === 'twin' ? (
                 <ProgramTwinPanel
