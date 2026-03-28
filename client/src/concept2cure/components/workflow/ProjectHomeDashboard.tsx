@@ -1,13 +1,12 @@
 /**
- * ProjectHomeDashboard — Project command center.
+ * ProjectHomeDashboard — Thin context strip above the conversation.
  *
- * Claude-quality UX: calm, informative, actionable.
- * Shows everything a user needs to orient and take their next step:
- * - Project identity with type badge
- * - Recent documents with status and one-click open
- * - Suggested conversation starters (like Claude.ai)
- * - Data Room summary with upload
- * - Readiness progress
+ * Design philosophy: AnA-first. The chat IS the product.
+ * This strip orients the user (project name, one-line status) and offers
+ * conversation starters. Everything else surfaces through AnA when asked.
+ *
+ * Deliberately minimal. No dashboards, no data grids, no analytics widgets.
+ * The intelligence is IN the conversation, not above it.
  */
 
 import React, { useMemo } from 'react';
@@ -16,33 +15,19 @@ import { apiRequest } from '@/lib/queryClient';
 import { queryKeys } from '@/concept2cure/hooks/queryKeys';
 import {
   useIntelligenceDashboard,
-  type ReadinessScore,
-  type Recommendation,
 } from '@/concept2cure/hooks/useIntelligence';
 import {
   Settings2,
   FileText,
-  Database,
-  Upload,
-  ArrowRight,
-  Clock,
-  CheckCircle,
-  PenLine,
-  Eye,
-  Lock,
   Sparkles,
-  MessageSquare,
   Shield,
   Search,
   BarChart3,
-  Activity,
-  Plus,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  AlertTriangle,
-  Zap,
-  Target,
+  Eye,
+  Database,
+  Upload,
+  MessageSquare,
+  ChevronRight,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -76,208 +61,94 @@ interface Artifact {
   createdAt?: string;
 }
 
-interface ActivityItem {
-  id: string;
-  type: string;
-  activityType: string;
-  entityType: string;
-  entityId: string;
-  description: string;
-  userName?: string | null;
-  timestamp: string;
-}
-
 const PHARMA_TYPES = ['IND', 'NDA', 'BLA', 'MAA'];
 const DEVICE_TYPES = ['510K', 'PMA', 'DE_NOVO', 'CER', 'IVDR'];
 
-const STATUS_META: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
-  draft: { icon: <PenLine className="w-3 h-3" />, color: 'text-stone-500 bg-stone-100', label: 'Draft' },
-  review: { icon: <Eye className="w-3 h-3" />, color: 'text-amber-600 bg-amber-50', label: 'Review' },
-  in_review: { icon: <Eye className="w-3 h-3" />, color: 'text-amber-600 bg-amber-50', label: 'Review' },
-  approved: { icon: <CheckCircle className="w-3 h-3" />, color: 'text-emerald-600 bg-emerald-50', label: 'Approved' },
-  locked: { icon: <Lock className="w-3 h-3" />, color: 'text-blue-600 bg-blue-50', label: 'Published' },
-};
-
-function relativeTime(dateStr?: string): string {
-  if (!dateStr) return '';
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days}d ago`;
-  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
 // ─── Suggested Prompts ───────────────────────────────────────────────────────
+// These are the ONLY things the user sees besides the project name.
+// They must be human-readable, not system vocabulary.
 
 function getSuggestedPrompts(
   type: string,
   isPharma: boolean,
   isDevice: boolean,
   hasDocuments: boolean,
+  hasRisk: boolean,
   reviewCount: number,
-  sourceCount: number,
+  readinessScore: number | null,
 ): { icon: React.ReactNode; text: string; prompt: string }[] {
+  // ── New project: guide first steps ──
   if (!hasDocuments) {
-    // New project — guide first actions
     if (isPharma) {
       return [
-        { icon: <Sparkles className="w-3.5 h-3.5" />, text: `Draft my first ${type} section`, prompt: `Help me draft the first section for my ${type} submission. What section should I start with and why?` },
-        { icon: <Search className="w-3.5 h-3.5" />, text: 'Find relevant precedents', prompt: `Search for recent ${type} approval precedents relevant to my submission. What can I learn from similar successful applications?` },
-        { icon: <Shield className="w-3.5 h-3.5" />, text: 'Plan my regulatory strategy', prompt: `Help me create a regulatory strategy for this ${type} submission. What are the key milestones, risks, and critical path items?` },
-        { icon: <BarChart3 className="w-3.5 h-3.5" />, text: 'Assess submission readiness', prompt: `Assess my current submission readiness for this ${type} application. What do I need to prepare first?` },
+        { icon: <Sparkles className="w-3.5 h-3.5" />, text: 'Help me get started', prompt: `I'm starting a new ${type} submission. What should I do first? Guide me through the initial steps.` },
+        { icon: <Search className="w-3.5 h-3.5" />, text: 'What worked for similar submissions?', prompt: `Find recent ${type} approvals similar to mine. What can I learn from their approach?` },
+        { icon: <Shield className="w-3.5 h-3.5" />, text: 'What are the biggest risks?', prompt: `What are the most common reasons ${type} submissions get rejected or delayed? Help me avoid those pitfalls.` },
+        { icon: <MessageSquare className="w-3.5 h-3.5" />, text: 'What can you do?', prompt: 'Show me what you can help with. What regulatory intelligence capabilities do you have?' },
       ];
     }
     if (isDevice) {
       return [
-        { icon: <Sparkles className="w-3.5 h-3.5" />, text: 'Structure my device documentation', prompt: `Help me structure the documentation for my ${type} submission. What are the required sections and what order should I draft them?` },
-        { icon: <Search className="w-3.5 h-3.5" />, text: 'Find predicate devices', prompt: `Help me identify predicate devices for my ${type} submission. What should I look for in substantial equivalence?` },
-        { icon: <Shield className="w-3.5 h-3.5" />, text: 'Plan my regulatory pathway', prompt: `Analyze the optimal regulatory pathway for my device submission. Should I consider ${type} vs alternative routes?` },
-        { icon: <BarChart3 className="w-3.5 h-3.5" />, text: 'Review compliance requirements', prompt: `What are the key compliance requirements for a ${type} submission? Help me create a checklist.` },
+        { icon: <Sparkles className="w-3.5 h-3.5" />, text: 'Help me get started', prompt: `I'm starting a ${type} submission. Walk me through what I need to prepare first.` },
+        { icon: <Search className="w-3.5 h-3.5" />, text: 'Find similar cleared devices', prompt: `Help me find predicate devices for my ${type}. What should I look for?` },
+        { icon: <Shield className="w-3.5 h-3.5" />, text: 'Am I on the right pathway?', prompt: `Is ${type} the right regulatory pathway for my device? What are the alternatives?` },
+        { icon: <MessageSquare className="w-3.5 h-3.5" />, text: 'What can you do?', prompt: 'Show me what you can help with. What regulatory intelligence capabilities do you have?' },
       ];
     }
     return [
-      { icon: <Sparkles className="w-3.5 h-3.5" />, text: 'Create my first document', prompt: 'Help me create my first regulatory document. What type of document should I start with for this project?' },
-      { icon: <Upload className="w-3.5 h-3.5" />, text: 'Upload source evidence', prompt: 'I want to upload source documents to ground my writing in evidence. How should I organize my data room?' },
-      { icon: <Shield className="w-3.5 h-3.5" />, text: 'Plan my approach', prompt: 'Help me plan the regulatory approach for this project. What are the key considerations?' },
-      { icon: <MessageSquare className="w-3.5 h-3.5" />, text: 'What can you help with?', prompt: 'What regulatory intelligence capabilities do you have? How can you help me with this project?' },
+      { icon: <Sparkles className="w-3.5 h-3.5" />, text: 'Help me get started', prompt: 'I\'m starting a new project. What should I work on first?' },
+      { icon: <Upload className="w-3.5 h-3.5" />, text: 'I have documents to upload', prompt: 'I want to upload source documents. How should I organize my evidence?' },
+      { icon: <Shield className="w-3.5 h-3.5" />, text: 'Help me plan my approach', prompt: 'Help me think through the regulatory approach for this project.' },
+      { icon: <MessageSquare className="w-3.5 h-3.5" />, text: 'What can you do?', prompt: 'What regulatory intelligence capabilities do you have? How can you help me?' },
     ];
   }
 
-  // Existing project — context-aware suggestions
+  // ── Existing project: context-aware prompts ──
+  // The intelligence here is that prompts change based on project state.
+  // The user doesn't see "readiness = 42%" — they see "What's holding me back?"
   const prompts: { icon: React.ReactNode; text: string; prompt: string }[] = [];
 
+  // If there are items in review, that's the most likely next action
   if (reviewCount > 0) {
-    prompts.push({ icon: <Eye className="w-3.5 h-3.5" />, text: `Review ${reviewCount} pending section${reviewCount > 1 ? 's' : ''}`, prompt: `I have ${reviewCount} section${reviewCount > 1 ? 's' : ''} in review. Summarize what needs my attention and flag any regulatory concerns.` });
+    prompts.push({
+      icon: <Eye className="w-3.5 h-3.5" />,
+      text: `${reviewCount} section${reviewCount > 1 ? 's' : ''} need${reviewCount === 1 ? 's' : ''} my attention`,
+      prompt: `Summarize the sections in review and flag anything I should focus on.`,
+    });
   }
-  if (sourceCount === 0) {
-    prompts.push({ icon: <Database className="w-3.5 h-3.5" />, text: 'Upload evidence to strengthen drafts', prompt: 'I need to upload source documents to my data room. What types of evidence should I prioritize for grounding my regulatory writing?' });
+
+  // If readiness is known and low, surface it as a human question
+  if (readinessScore !== null && readinessScore < 60) {
+    prompts.push({
+      icon: <BarChart3 className="w-3.5 h-3.5" />,
+      text: 'What\'s holding my submission back?',
+      prompt: 'Analyze my submission readiness. What are the biggest gaps and what should I prioritize to improve?',
+    });
+  } else if (hasRisk) {
+    prompts.push({
+      icon: <Shield className="w-3.5 h-3.5" />,
+      text: 'Are there any risks I should know about?',
+      prompt: 'Check my submission for risks — cross-section inconsistencies, unsupported claims, missing evidence, or compliance gaps.',
+    });
   }
-  prompts.push({ icon: <Sparkles className="w-3.5 h-3.5" />, text: 'Draft the next section', prompt: `What section should I draft next for this ${type} submission? Consider what I already have and recommend the highest-priority gap.` });
-  prompts.push({ icon: <Shield className="w-3.5 h-3.5" />, text: 'Run a gap analysis', prompt: `Analyze my current submission for gaps. What sections are missing, what claims lack evidence, and what are the top risks?` });
+
+  // Always useful
+  prompts.push({
+    icon: <Sparkles className="w-3.5 h-3.5" />,
+    text: 'What should I work on next?',
+    prompt: `What's the highest-priority thing I should work on next for this ${type} submission?`,
+  });
+
+  if (prompts.length < 4) {
+    prompts.push({
+      icon: <Search className="w-3.5 h-3.5" />,
+      text: 'Find precedents for my approach',
+      prompt: `Search for regulatory precedents relevant to my ${type} submission. What can I learn from similar applications?`,
+    });
+  }
 
   return prompts.slice(0, 4);
 }
-
-// ─── Intelligence Surface ───────────────────────────────────────────────────
-
-const DIMENSION_LABELS: Record<string, string> = {
-  completeness: 'Completeness',
-  quality: 'Quality',
-  consistency: 'Consistency',
-  compliance: 'Compliance',
-};
-
-const SEVERITY_STYLE: Record<string, string> = {
-  critical: 'text-red-600 bg-red-50',
-  high: 'text-amber-700 bg-amber-50',
-  medium: 'text-stone-600 bg-stone-100',
-  low: 'text-stone-500 bg-stone-50',
-};
-
-const IntelligenceSurface: React.FC<{
-  readiness: ReadinessScore;
-  recommendations: Recommendation[];
-  onSuggestedPrompt?: (prompt: string) => void;
-}> = ({ readiness, recommendations, onSuggestedPrompt }) => {
-  const activeRecs = recommendations.filter(r => r.status === 'active').slice(0, 3);
-  const trendIcon = readiness.trend.direction === 'improving'
-    ? <TrendingUp className="w-3 h-3 text-emerald-500" />
-    : readiness.trend.direction === 'declining'
-    ? <TrendingDown className="w-3 h-3 text-red-500" />
-    : <Minus className="w-3 h-3 text-stone-400" />;
-
-  return (
-    <div className="mt-4 pt-3 border-t border-stone-100" data-testid="intelligence-surface">
-      {/* Readiness dimensions */}
-      <div className="flex items-center justify-between mb-2.5">
-        <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wide flex items-center gap-1.5">
-          <Target className="w-3 h-3" />
-          Submission readiness
-        </span>
-        <div className="flex items-center gap-1.5">
-          {trendIcon}
-          <span className="text-[11px] text-stone-500 tabular-nums font-medium">
-            {Math.round(readiness.overallScore)}%
-          </span>
-        </div>
-      </div>
-
-      {/* 4-dimension bars — compact, calm */}
-      <div className="grid grid-cols-4 gap-2">
-        {(['completeness', 'quality', 'consistency', 'compliance'] as const).map(dim => {
-          const score = readiness.dimensions[dim];
-          const barColor = score >= 70 ? 'bg-stone-700' : score >= 40 ? 'bg-amber-500' : 'bg-red-400';
-          return (
-            <div key={dim} className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] text-stone-400">{DIMENSION_LABELS[dim]}</span>
-                <span className="text-[10px] text-stone-500 tabular-nums font-medium">{Math.round(score)}%</span>
-              </div>
-              <div className="h-1 bg-stone-100 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${barColor}`}
-                  style={{ width: `${Math.min(score, 100)}%` }}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Prediction — subtle inline */}
-      {readiness.predictions.approvalProbability > 0 && (
-        <div className="mt-2.5 flex items-center gap-3 text-[11px] text-stone-400">
-          <span className="flex items-center gap-1">
-            <Zap className="w-3 h-3" />
-            <span className="text-stone-500 font-medium">{Math.round(readiness.predictions.approvalProbability)}%</span>
-            {' '}approval probability
-          </span>
-          {readiness.predictions.estimatedDeficiencies > 0 && (
-            <span className="flex items-center gap-1">
-              <AlertTriangle className="w-3 h-3" />
-              ~{readiness.predictions.estimatedDeficiencies} potential deficiencies
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Top recommendations — contextual nudges */}
-      {activeRecs.length > 0 && (
-        <div className="mt-3 space-y-1.5">
-          {activeRecs.map(rec => (
-            <button
-              key={rec.recommendationId}
-              onClick={() => onSuggestedPrompt?.(
-                `Help me address this: ${rec.reason}. Suggested action: ${rec.suggestedAction}`
-              )}
-              className="w-full flex items-start gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-stone-50 transition-colors group"
-            >
-              <span className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5 ${SEVERITY_STYLE[rec.severity] || SEVERITY_STYLE.medium}`}>
-                {rec.severity === 'critical' || rec.severity === 'high' ? (
-                  <AlertTriangle className="w-2.5 h-2.5" />
-                ) : (
-                  <Sparkles className="w-2.5 h-2.5" />
-                )}
-                {rec.severity}
-              </span>
-              <div className="flex-1 min-w-0">
-                <p className="text-[12px] text-stone-600 leading-snug truncate group-hover:text-stone-800">
-                  {rec.suggestedAction}
-                </p>
-                <p className="text-[10px] text-stone-400 truncate mt-0.5">{rec.reason}</p>
-              </div>
-              <ArrowRight className="w-3 h-3 text-stone-300 group-hover:text-stone-500 flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -300,20 +171,8 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
     staleTime: 30_000,
   });
 
-  // Intelligence dashboard — readiness, recommendations, next actions
-  const { data: intelligence, isLoading: intelligenceLoading } = useIntelligenceDashboard(project.id);
-
-  // Activity feed — what happened recently
-  const { data: activityFeed } = useQuery<ActivityItem[]>({
-    queryKey: ['concept2cure', 'projects', project.id, 'activity'],
-    queryFn: async () => {
-      const res = await apiRequest('GET', `/api/concept2cure/projects/${project.id}/activity?limit=5`);
-      if (!res.ok) return [];
-      const json = await res.json();
-      return Array.isArray(json.data) ? json.data : [];
-    },
-    staleTime: 60_000,
-  });
+  // Intelligence — fetched quietly for prompt context, NOT for display
+  const { data: intelligence } = useIntelligenceDashboard(project.id);
 
   const upperType = (project.type || '').toUpperCase();
   const isPharma = PHARMA_TYPES.includes(upperType);
@@ -343,7 +202,6 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
       recentDocs.push(a);
     }
 
-    // Sort by most recently updated
     recentDocs.sort((a, b) => {
       const aDate = a.updatedAt || a.createdAt || '';
       const bDate = b.updatedAt || b.createdAt || '';
@@ -351,288 +209,111 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
     });
 
     const docCount = recentDocs.length;
-    const pct = docCount > 0 ? Math.round((ready / docCount) * 100) : 0;
 
-    return { docCount, ready, review, draft, pct, sourceCount, recentDocs: recentDocs.slice(0, 5) };
+    return { docCount, ready, review, draft, sourceCount, recentDocs: recentDocs.slice(0, 3) };
   }, [artifacts]);
 
-  // Derive per-document risk indicators from cross-module intelligence
-  const docRiskMap = useMemo(() => {
-    const map = new Map<string, 'critical' | 'high'>();
-    if (!intelligence?.crossModule?.insights) return map;
-    for (const insight of intelligence.crossModule.insights) {
-      if (insight.severity === 'critical' || insight.severity === 'high') {
-        const existing = map.get(insight.sourceDocumentId);
-        if (!existing || insight.severity === 'critical') {
-          map.set(insight.sourceDocumentId, insight.severity as 'critical' | 'high');
-        }
-        const existingTarget = map.get(insight.targetDocumentId);
-        if (!existingTarget || insight.severity === 'critical') {
-          map.set(insight.targetDocumentId, insight.severity as 'critical' | 'high');
-        }
-      }
-    }
-    return map;
-  }, [intelligence?.crossModule?.insights]);
+  const hasRisk = (intelligence?.crossModule?.bySeverity?.critical ?? 0) +
+    (intelligence?.crossModule?.bySeverity?.high ?? 0) > 0;
+  const readinessScore = intelligence?.readiness?.overallScore ?? null;
 
-  const typeLabel = isPharma || isDevice ? `${upperType} Submission` : project.type;
+  const typeLabel = isPharma || isDevice ? upperType : project.type;
 
   const suggestedPrompts = useMemo(
-    () => getSuggestedPrompts(upperType, isPharma, isDevice, summary.docCount > 0, summary.review, summary.sourceCount),
-    [upperType, isPharma, isDevice, summary.docCount, summary.review, summary.sourceCount],
+    () => getSuggestedPrompts(
+      upperType, isPharma, isDevice,
+      summary.docCount > 0, hasRisk,
+      summary.review, readinessScore,
+    ),
+    [upperType, isPharma, isDevice, summary.docCount, hasRisk, summary.review, readinessScore],
   );
 
   return (
     <div className="flex-shrink-0 border-b border-stone-100 bg-white/80 backdrop-blur-sm" data-testid="project-context-strip">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 sm:py-5">
-        {/* ── Row 1: Project Identity ──────────────────────────────────────── */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-lg font-semibold text-stone-900 leading-tight truncate">{project.name}</h1>
-              {typeLabel && (
-                <span className="text-[10px] px-2 py-0.5 rounded-md bg-stone-100 text-stone-500 font-semibold uppercase tracking-tight flex-shrink-0">
-                  {typeLabel}
-                </span>
-              )}
-            </div>
-            {project.description && (
-              <p className="text-[13px] text-stone-500 mt-1 leading-relaxed line-clamp-1">{project.description}</p>
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4">
+        {/* ── Project identity: one line ──────────────────────────────────── */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <h1 className="text-[15px] font-semibold text-stone-800 truncate">{project.name}</h1>
+            {typeLabel && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 font-medium uppercase tracking-tight flex-shrink-0">
+                {typeLabel}
+              </span>
+            )}
+            {/* Quiet status — just enough to orient */}
+            {!artifactsLoading && summary.docCount > 0 && (
+              <span className="text-[10px] text-stone-400 flex-shrink-0">
+                {summary.docCount} doc{summary.docCount !== 1 ? 's' : ''}
+                {summary.review > 0 && <> · <span className="text-amber-500">{summary.review} in review</span></>}
+              </span>
             )}
           </div>
-          <div className="flex items-center gap-1 mt-0.5">
+          <div className="flex items-center gap-0.5 flex-shrink-0">
             {onOpenSearch && (
               <button
                 onClick={onOpenSearch}
                 aria-label="Search documents"
-                className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+                className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-lg transition-colors"
               >
-                <Search className="w-4 h-4" />
+                <Search className="w-3.5 h-3.5" />
               </button>
             )}
             {onOpenConfig && (
               <button
                 onClick={onOpenConfig}
                 aria-label="Project settings"
-                className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+                className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-lg transition-colors"
               >
-                <Settings2 className="w-4 h-4" />
+                <Settings2 className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
         </div>
 
-        {/* ── Loading skeleton ─────────────────────────────────────────── */}
+        {/* ── Recent documents: compact, discoverable ─────────────────────── */}
+        {/* Only show if there ARE documents. Max 3. Clicking opens the document. */}
+        {!artifactsLoading && summary.recentDocs.length > 0 && (
+          <div className="mt-3 flex items-center gap-2 overflow-x-auto scrollbar-hide">
+            {summary.recentDocs.map(doc => (
+              <button
+                key={doc.id}
+                onClick={() => onOpenArtifact ? onOpenArtifact(doc.id) : onNavigate('documents')}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-stone-100 hover:border-stone-200 hover:bg-stone-50/50 transition-colors text-left flex-shrink-0 max-w-[200px] group"
+              >
+                <FileText className="w-3 h-3 text-stone-400 flex-shrink-0" />
+                <span className="text-[12px] text-stone-600 truncate group-hover:text-stone-800">
+                  {doc.title || 'Untitled'}
+                </span>
+              </button>
+            ))}
+            {summary.docCount > 3 && (
+              <button
+                onClick={() => onNavigate('documents')}
+                className="text-[11px] text-stone-400 hover:text-stone-600 flex-shrink-0 transition-colors flex items-center gap-0.5"
+              >
+                +{summary.docCount - 3} more
+                <ChevronRight className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* ── Loading: just the prompt cards skeleton ─────────────────────── */}
         {artifactsLoading && (
-          <div className="mt-4 pt-3 border-t border-stone-100 space-y-2">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="flex items-center gap-3 px-3 py-2">
-                <div className="w-3.5 h-3.5 bg-stone-100 rounded animate-pulse" />
-                <div className="h-3 bg-stone-100 rounded animate-pulse flex-1" style={{ maxWidth: `${70 - i * 15}%` }} />
-                <div className="h-4 w-12 bg-stone-50 rounded animate-pulse" />
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="flex items-center gap-2.5 px-3 py-3 rounded-xl border border-stone-100 animate-pulse">
+                <div className="w-3.5 h-3.5 bg-stone-100 rounded" />
+                <div className="h-3 bg-stone-100 rounded flex-1" style={{ maxWidth: `${75 - i * 10}%` }} />
               </div>
             ))}
           </div>
         )}
 
-        {/* ── Row 2: Recent Documents ──────────────────────────────────────── */}
-        {!artifactsLoading && summary.recentDocs.length > 0 && (
-          <div className="mt-4 pt-3 border-t border-stone-100">
-            <div className="flex items-center justify-between mb-2.5">
-              <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wide">Recent documents</span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => onNavigate('documents')}
-                  className="flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-700 transition-colors"
-                >
-                  <Plus className="w-3 h-3" />
-                  New
-                </button>
-                <button
-                  onClick={() => onNavigate('tools')}
-                  className="text-[11px] text-stone-400 hover:text-stone-600 transition-colors"
-                >
-                  View all
-                </button>
-              </div>
-            </div>
-            <div className="space-y-1">
-              {summary.recentDocs.map(doc => {
-                const meta = STATUS_META[(doc.status || 'draft').toLowerCase()] || STATUS_META.draft;
-                const risk = docRiskMap.get(doc.id);
-                return (
-                  <button
-                    key={doc.id}
-                    onClick={() => {
-                      if (onOpenArtifact) {
-                        onOpenArtifact(doc.id);
-                      } else {
-                        onNavigate('documents');
-                      }
-                    }}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-stone-50 transition-colors text-left group"
-                  >
-                    <FileText className="w-3.5 h-3.5 text-stone-400 flex-shrink-0" />
-                    <span className="text-[13px] text-stone-700 truncate flex-1 group-hover:text-stone-900">
-                      {doc.title || 'Untitled'}
-                    </span>
-                    {doc.ctdSection && (
-                      <span className="text-[10px] text-stone-400 font-mono flex-shrink-0">{doc.ctdSection}</span>
-                    )}
-                    {risk && (
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${risk === 'critical' ? 'bg-red-400' : 'bg-amber-400'}`}
-                        title={`${risk} risk signal`}
-                        aria-label={`${risk} risk signal`}
-                      />
-                    )}
-                    <span className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded ${meta.color} flex-shrink-0`}>
-                      {meta.icon}
-                      {meta.label}
-                    </span>
-                    <span className="text-[10px] text-stone-400 flex-shrink-0 w-12 text-right">
-                      {relativeTime(doc.updatedAt || doc.createdAt)}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── Row 3: Readiness + Data Room ─────────────────────────────────── */}
-        {!artifactsLoading && <div className="mt-4 pt-3 border-t border-stone-100">
-          <div className="flex items-center gap-4">
-            {/* Readiness mini-bar */}
-            {summary.docCount > 0 && (
-              <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                <div className="flex-1 h-1.5 bg-stone-100 rounded-full overflow-hidden max-w-[140px]">
-                  <div
-                    className="h-full bg-stone-700 rounded-full transition-all duration-500"
-                    style={{ width: `${summary.pct}%` }}
-                  />
-                </div>
-                <span className="text-[11px] text-stone-500 tabular-nums flex-shrink-0">
-                  {summary.pct}% ready
-                </span>
-                <span className="text-[10px] text-stone-400">
-                  {summary.ready} approved · {summary.draft} drafts · {summary.review} in review
-                </span>
-              </div>
-            )}
-
-            {/* Data Room link */}
-            <button
-              onClick={() => onNavigate('dataroom')}
-              className="flex items-center gap-1.5 text-[11px] text-stone-500 hover:text-stone-700 transition-colors flex-shrink-0"
-            >
-              <Database className="w-3 h-3" />
-              {summary.sourceCount > 0
-                ? `${summary.sourceCount} source${summary.sourceCount !== 1 ? 's' : ''}`
-                : 'Data Room'}
-            </button>
-
-            {/* Upload button */}
-            <button
-              onClick={() => onNavigate('upload')}
-              className="flex items-center gap-1 px-2 py-1 text-[11px] text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors flex-shrink-0"
-            >
-              <Upload className="w-3 h-3" />
-              Upload
-            </button>
-          </div>
-        </div>}
-
-        {/* ── Row 3.5: Intelligence Surface ──────────────────────────────── */}
-        {intelligenceLoading && summary.docCount > 0 && (
-          <div className="mt-4 pt-3 border-t border-stone-100">
-            <div className="flex items-center gap-4 animate-pulse">
-              <div className="flex-1 space-y-2">
-                <div className="h-3 bg-stone-100 rounded w-24" />
-                <div className="flex gap-2">
-                  <div className="h-8 bg-stone-50 rounded-lg flex-1" />
-                  <div className="h-8 bg-stone-50 rounded-lg flex-1" />
-                  <div className="h-8 bg-stone-50 rounded-lg flex-1" />
-                  <div className="h-8 bg-stone-50 rounded-lg flex-1" />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        {intelligence?.readiness && !intelligenceLoading && (
-          <IntelligenceSurface
-            readiness={intelligence.readiness}
-            recommendations={intelligence.recommendations?.recommendations ?? []}
-            onSuggestedPrompt={onSuggestedPrompt}
-          />
-        )}
-
-        {/* ── Row 3.6: Next Best Actions ─────────────────────────────────── */}
-        {intelligence?.nextActions?.actions && intelligence.nextActions.actions.length > 0 && (
-          <div className="mt-4 pt-3 border-t border-stone-100">
-            <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wide flex items-center gap-1.5 mb-2">
-              <Zap className="w-3 h-3" />
-              Suggested next steps
-            </span>
-            <div className="space-y-1">
-              {intelligence.nextActions.actions.slice(0, 2).map(action => {
-                const urgencyColor = action.urgency === 'immediate'
-                  ? 'text-red-500'
-                  : action.urgency === 'this_week'
-                  ? 'text-amber-500'
-                  : 'text-stone-400';
-                return (
-                  <button
-                    key={action.actionId}
-                    onClick={() => onSuggestedPrompt?.(
-                      `Help me with this next step: ${action.title}. ${action.description}`
-                    )}
-                    className="w-full flex items-start gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-stone-50 transition-colors group"
-                  >
-                    <ArrowRight className={`w-3 h-3 mt-0.5 flex-shrink-0 ${urgencyColor}`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[12px] text-stone-700 group-hover:text-stone-900 truncate">{action.title}</p>
-                      <p className="text-[10px] text-stone-400 truncate">{action.description}</p>
-                    </div>
-                    <span className="text-[9px] text-stone-400 flex-shrink-0 uppercase tracking-wide">
-                      {action.effortEstimate}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── Row 3.7: Recent Activity ─────────────────────────────────────── */}
-        {activityFeed && activityFeed.length > 0 && (
-          <div className="mt-4 pt-3 border-t border-stone-100">
-            <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wide flex items-center gap-1.5 mb-2">
-              <Activity className="w-3 h-3" />
-              Recent activity
-            </span>
-            <div className="space-y-1">
-              {activityFeed.slice(0, 4).map(item => {
-                const icon = item.activityType === 'create' ? <Plus className="w-3 h-3" />
-                  : item.activityType === 'update' ? <PenLine className="w-3 h-3" />
-                  : item.activityType === 'review' || item.activityType === 'approve' ? <CheckCircle className="w-3 h-3" />
-                  : <Activity className="w-3 h-3" />;
-                return (
-                  <div key={item.id} className="flex items-center gap-2.5 px-2 py-1.5 text-[12px] text-stone-500">
-                    <span className="text-stone-400 flex-shrink-0">{icon}</span>
-                    <span className="truncate flex-1">{item.description}</span>
-                    {item.userName && <span className="text-stone-400 flex-shrink-0 text-[10px]">{item.userName.split(' ')[0]}</span>}
-                    <span className="text-stone-400 flex-shrink-0 text-[10px] tabular-nums">{relativeTime(item.timestamp)}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── Row 4: Suggested Prompts (Claude-style) ─────────────────────── */}
-        <div className="mt-4 pt-3 border-t border-stone-100">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {/* ── Conversation starters ──────────────────────────────────────── */}
+        {/* This is the main UI. Like Claude.ai — prompts that start a conversation. */}
+        {!artifactsLoading && (
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
             {suggestedPrompts.map((sp, idx) => (
               <button
                 key={idx}
@@ -648,7 +329,7 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
               </button>
             ))}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
