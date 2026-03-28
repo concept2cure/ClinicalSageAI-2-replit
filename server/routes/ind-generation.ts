@@ -15,9 +15,19 @@ import {
   getSectionByCode,
   getModuleStatus,
   getGenerationPrompt,
+  getSectionsForSubmissionType,
 } from '../services/ind/ind-section-registry.js';
 import { getGateway } from '../services/ai-gateway/index.js';
 import { getMasterDocumentBuilder } from '../services/docx/masterDocumentBuilder.js';
+
+// Also import device registry
+let getDeviceSections: ((type: '510K' | 'PMA' | 'DE_NOVO' | 'CER') => Array<{ code: string; title: string; required: boolean; guidance: string }>) | null = null;
+try {
+  const deviceMod = await import('../services/device/device-section-registry.js');
+  getDeviceSections = deviceMod.getDeviceSections;
+} catch {
+  // Device registry not available
+}
 
 const router = Router();
 
@@ -39,6 +49,64 @@ router.get('/structure', (_req: Request, res: Response) => {
   }));
 
   res.json({ success: true, data: { modules, totalSections: IND_SECTIONS.length } });
+});
+
+// ─── GET /api/ind/device-status/:type/:projectId ──────────────────────────────
+// Universal section status for device submissions (510K, PMA, CER, DE_NOVO)
+
+router.get('/device-status/:type/:projectId', async (req: Request, res: Response) => {
+  try {
+    const { type, projectId } = req.params;
+    const deviceType = type.toUpperCase() as '510K' | 'PMA' | 'DE_NOVO' | 'CER';
+
+    if (!getDeviceSections) {
+      return res.json({ success: true, data: { sections: [], totalSections: 0, completedSections: 0 } });
+    }
+
+    const sections = getDeviceSections(deviceType);
+    if (!sections || sections.length === 0) {
+      return res.json({ success: true, data: { sections: [], totalSections: 0, completedSections: 0 } });
+    }
+
+    // Fetch project artifacts via internal API
+    let artifacts: Array<{ id: string; ctdSection?: string; status?: string }> = [];
+    try {
+      const port = process.env.PORT || 5000;
+      const fetchRes = await fetch(`http://localhost:${port}/api/concept2cure/projects/${projectId}/artifacts`, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (fetchRes.ok) {
+        const json = await fetchRes.json();
+        artifacts = json.data?.artifacts || json.data || [];
+      }
+    } catch {
+      artifacts = [];
+    }
+
+    const sectionStatus = sections.map(section => {
+      const artifact = artifacts.find(a => a.ctdSection === section.code);
+      return {
+        code: section.code,
+        title: section.title,
+        module: 0,
+        required: section.required,
+        status: artifact ? (artifact.status || 'draft') : 'not_started',
+        artifactId: artifact ? artifact.id : null,
+      };
+    });
+
+    res.json({
+      success: true,
+      data: {
+        sections: sectionStatus,
+        totalSections: sections.length,
+        completedSections: sectionStatus.filter(s => s.status !== 'not_started').length,
+        approvedSections: sectionStatus.filter(s => s.status === 'approved' || s.status === 'locked').length,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to retrieve device status' });
+  }
 });
 
 // ─── GET /api/ind/status/:projectId ───────────────────────────────────────────

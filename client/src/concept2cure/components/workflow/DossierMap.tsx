@@ -138,6 +138,8 @@ export const DossierMap: React.FC<DossierMapProps> = ({
   // For IND projects: also fetch IND status to get real section completion
   const upperType = (projectType || '').toUpperCase();
   const isIND = upperType === 'IND' || upperType === 'NDA' || upperType === 'BLA';
+  const isDevice = upperType === '510K' || upperType === 'PMA' || upperType === 'DE_NOVO' || upperType === 'CER';
+  const hasRegistry = isIND || isDevice;
   const { data: indStatus } = useQuery<{ sections: Array<{ code: string; title: string; status: string }> }>({
     queryKey: ['concept2cure', 'ind', 'status', projectId],
     queryFn: async () => {
@@ -150,9 +152,26 @@ export const DossierMap: React.FC<DossierMapProps> = ({
     staleTime: 30_000,
   });
 
+  // For device projects: fetch device section status
+  const { data: deviceStatus } = useQuery<{ sections: Array<{ code: string; title: string; status: string }> }>({
+    queryKey: ['concept2cure', 'device', 'status', upperType, projectId],
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/ind/device-status/${upperType}/${projectId}`);
+      if (!res.ok) return { sections: [] };
+      const json = await res.json();
+      return json.data || { sections: [] };
+    },
+    enabled: !!projectId && isDevice,
+    staleTime: 30_000,
+  });
+
   const isLoading = sectionsLoading;
 
   const structure = useMemo(() => {
+    // Device projects: use device registry sections
+    if (isDevice && deviceStatus?.sections && deviceStatus.sections.length > 0) {
+      return buildModuleTree(deviceStatus.sections);
+    }
     // IND projects: use IND registry sections for complete Module 1-5 structure
     if (isIND && indStatus?.sections && indStatus.sections.length > 0) {
       return buildModuleTree(indStatus.sections);
@@ -160,7 +179,7 @@ export const DossierMap: React.FC<DossierMapProps> = ({
     // Other projects: use project sections or fallback
     if (sections && sections.length > 0) return buildModuleTree(sections);
     return DEFAULT_CTD_STRUCTURE;
-  }, [sections, indStatus, isIND]);
+  }, [sections, indStatus, deviceStatus, isIND, isDevice]);
 
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-stone-50/50">

@@ -69,6 +69,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
   // For IND projects: fetch IND section status for complete Module 1-5 readiness
   const upperType = (projectType || '').toUpperCase();
   const isIND = upperType === 'IND' || upperType === 'NDA' || upperType === 'BLA';
+  const isDevice = upperType === '510K' || upperType === 'PMA' || upperType === 'DE_NOVO' || upperType === 'CER';
   const { data: indStatus } = useQuery<{ sections: Array<{ code: string; title: string; status: string }> }>({
     queryKey: ['concept2cure', 'ind', 'status', projectId],
     queryFn: async () => {
@@ -81,16 +82,33 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
     staleTime: 30_000,
   });
 
+  // For device projects: fetch device section readiness
+  const { data: deviceStatus } = useQuery<{ sections: Array<{ code: string; title: string; status: string }> }>({
+    queryKey: ['concept2cure', 'device', 'status', upperType, projectId],
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/ind/device-status/${upperType}/${projectId}`);
+      if (!res.ok) return { sections: [] };
+      const json = await res.json();
+      return json.data || { sections: [] };
+    },
+    enabled: !!projectId && isDevice,
+    staleTime: 30_000,
+  });
+
   const isLoading = sectionsLoading;
 
   const readinessItems = useMemo(() => {
+    // Device projects: use device registry
+    if (isDevice && deviceStatus?.sections && deviceStatus.sections.length > 0) {
+      return sectionsToReadiness(deviceStatus.sections);
+    }
     // IND projects: use IND registry for complete section list
     if (isIND && indStatus?.sections && indStatus.sections.length > 0) {
       return sectionsToReadiness(indStatus.sections);
     }
     if (!sections || sections.length === 0) return [];
     return sectionsToReadiness(sections);
-  }, [sections, indStatus, isIND]);
+  }, [sections, indStatus, deviceStatus, isIND, isDevice]);
 
   const readyCount = readinessItems.filter(i => i.status === 'ready').length;
   const totalCount = readinessItems.length;
