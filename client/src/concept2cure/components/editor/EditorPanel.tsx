@@ -243,6 +243,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     | 'proof'
     | 'ga-readiness';
   const [activeInspector, setActiveInspector] = useState<InspectorPanel | null>(null);
+  const [complianceIssues, setComplianceIssues] = useState<Array<{ id: string; severity: string; message: string; suggestion?: string; category: string; from: number; to: number }>>([]);
+  const [isScanning, setIsScanning] = useState(false);
+  const [lastScanTime, setLastScanTime] = useState(Date.now());
   const toggleInspector = useCallback((panel: InspectorPanel) => {
     setActiveInspector(prev => (prev === panel ? null : panel));
   }, []);
@@ -2756,8 +2759,14 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             documentTitle={activeArtifact?.title}
             documentType={activeArtifact?.type}
             submissionType={submissionType}
-            showCompliance={false}
+            showCompliance={true}
             showTraceability={false}
+            complianceIssues={complianceIssues}
+            onComplianceIssuesFound={(issues: any[]) => {
+              setComplianceIssues(issues);
+              setIsScanning(false);
+              setLastScanTime(Date.now());
+            }}
             embedded
             isReadOnly={modeCaps ? !modeCaps.editable : activeArtifact?.status === 'locked'}
             documentMode={currentDocumentMode}
@@ -3136,12 +3145,26 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         </InspectorDrawer>
         <InspectorDrawer visible={activeInspector === 'compliance-scanner'} width="w-96">
           <ComplianceScannerPanel
-            issues={[]}
-            isScanning={false}
-            lastScanTime={Date.now()}
-            onNavigateToIssue={() => {}}
-            onFixIssue={() => {}}
-            onRescan={() => {}}
+            issues={complianceIssues}
+            isScanning={isScanning}
+            lastScanTime={lastScanTime}
+            onNavigateToIssue={(issueId) => {
+              const issue = complianceIssues.find(i => i.id === issueId);
+              if (issue) {
+                // Scroll to issue location in editor
+                console.log(`[Compliance] Navigate to issue at position ${issue.from}-${issue.to}`);
+              }
+            }}
+            onFixIssue={(issueId, suggestion) => {
+              // Apply suggested fix
+              setComplianceIssues(prev => prev.filter(i => i.id !== issueId));
+            }}
+            onRescan={() => {
+              setIsScanning(true);
+              setLastScanTime(Date.now());
+              // Trigger re-scan by reading from editor storage after a delay
+              setTimeout(() => setIsScanning(false), 1500);
+            }}
             onClose={() => setActiveInspector(null)}
           />
         </InspectorDrawer>

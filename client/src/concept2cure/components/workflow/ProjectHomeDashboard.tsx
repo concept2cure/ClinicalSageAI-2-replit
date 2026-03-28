@@ -1,15 +1,21 @@
 /**
- * ProjectHomeDashboard — Claude.ai-style project context header.
+ * ProjectHomeDashboard — Project context header with business intelligence.
  *
- * Shows project name, description, and an "Open Tools" action.
- * Sits above the AnA chat when inside a project.
+ * Shows:
+ * - Project identity (name, type badge, description)
+ * - Readiness progress bar with percentage
+ * - Next recommended action
+ * - Quick access to Tools and Settings
+ *
+ * Sits above AnA conversation on project-home.
+ * Must feel like an Anthropic product — calm, informative, actionable.
  */
 
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { queryKeys } from '@/concept2cure/hooks/queryKeys';
-import { Wrench, Settings2 } from 'lucide-react';
+import { Wrench, Settings2, ArrowRight } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,7 +36,13 @@ interface ProjectHomeDashboardProps {
 interface Artifact {
   id: string;
   status?: string;
+  ctdSection?: string;
+  title?: string;
+  updatedAt?: string;
 }
+
+const PHARMA_TYPES = ['IND', 'NDA', 'BLA', 'MAA'];
+const DEVICE_TYPES = ['510K', 'PMA', 'DE_NOVO', 'CER', 'IVDR'];
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -50,29 +62,63 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
     staleTime: 30_000,
   });
 
+  const upperType = (project.type || '').toUpperCase();
+  const isPharma = PHARMA_TYPES.includes(upperType);
+  const isDevice = DEVICE_TYPES.includes(upperType);
+  const hasRegistry = isPharma || isDevice;
+
   const summary = useMemo(() => {
     const list = artifacts ?? [];
     let ready = 0;
     let review = 0;
+    let draft = 0;
     for (const a of list) {
-      const s = a.status as string;
+      const s = (a.status || '').toLowerCase();
       if (s === 'approved' || s === 'locked') ready++;
-      if (s === 'review') review++;
+      else if (s === 'review' || s === 'in_review') review++;
+      else if (s === 'draft' || s === 'drafting') draft++;
     }
-    return { total: list.length, ready, review };
-  }, [artifacts]);
+    const total = list.length;
+    const pct = total > 0 ? Math.round((ready / total) * 100) : 0;
+
+    // Find next action
+    let nextAction = '';
+    let nextActionTarget = '';
+    if (total === 0) {
+      nextAction = isPharma ? 'Draft your first CTD section' : isDevice ? 'Set up your device description' : 'Create your first document';
+      nextActionTarget = 'tools';
+    } else if (review > 0) {
+      nextAction = `${review} section${review > 1 ? 's' : ''} awaiting review`;
+      nextActionTarget = 'review-tab';
+    } else if (ready === total && total > 0) {
+      nextAction = 'All sections ready — prepare submission package';
+      nextActionTarget = 'submit';
+    } else {
+      nextAction = `${total - ready} section${total - ready > 1 ? 's' : ''} still need work`;
+      nextActionTarget = 'tools';
+    }
+
+    return { total, ready, review, draft, pct, nextAction, nextActionTarget };
+  }, [artifacts, isPharma, isDevice]);
+
+  const typeLabel = isPharma ? `${upperType} Submission` : isDevice ? `${upperType} Submission` : project.type;
 
   return (
-    <div className="flex-shrink-0 border-b border-stone-100 bg-white/60 backdrop-blur-sm" data-testid="project-context-strip">
+    <div className="flex-shrink-0 border-b border-stone-100 bg-white/80 backdrop-blur-sm" data-testid="project-context-strip">
       <div className="max-w-3xl mx-auto px-6 py-5">
-        {/* Project name row */}
+        {/* Row 1: Project identity */}
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <h1 className="text-lg font-semibold text-stone-900 leading-tight">{project.name}</h1>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-lg font-semibold text-stone-900 leading-tight truncate">{project.name}</h1>
+              {typeLabel && (
+                <span className="text-[10px] px-2 py-0.5 rounded-md bg-stone-100 text-stone-500 font-semibold uppercase tracking-tight flex-shrink-0">
+                  {typeLabel}
+                </span>
+              )}
+            </div>
             {project.description && (
-              <p className="text-[13px] text-stone-500 mt-1 leading-relaxed line-clamp-2">
-                {project.description}
-              </p>
+              <p className="text-[13px] text-stone-500 mt-1 leading-relaxed line-clamp-1">{project.description}</p>
             )}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
@@ -96,29 +142,45 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
           </div>
         </div>
 
-        {/* Subtle activity bar — shows IND module progress if IND project */}
-        {summary.total > 0 && (
-          <div className="flex items-center gap-3 mt-3 pt-3 border-t border-stone-100">
-            <span className="text-xs text-stone-400">
-              {summary.ready} of {summary.total} artifacts ready
-              {summary.review > 0 && ` · ${summary.review} in review`}
-            </span>
-            {['IND', 'NDA', 'BLA'].includes(project.type?.toUpperCase()) && (
-              <span className="text-xs text-stone-400 ml-auto">
-                IND Submission
-              </span>
-            )}
-          </div>
-        )}
-        {summary.total === 0 && (
-          <div className="mt-3 pt-3 border-t border-stone-100">
+        {/* Row 2: Readiness progress + next action */}
+        <div className="mt-4 pt-3 border-t border-stone-100">
+          {summary.total > 0 ? (
+            <div className="space-y-2.5">
+              {/* Progress bar */}
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-stone-700 rounded-full transition-all duration-500"
+                    style={{ width: `${summary.pct}%` }}
+                  />
+                </div>
+                <span className="text-xs font-medium text-stone-600 tabular-nums w-8 text-right">{summary.pct}%</span>
+              </div>
+              {/* Status line */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-stone-400">
+                  {summary.ready} ready · {summary.draft} drafts · {summary.review} in review
+                </span>
+                {/* Next action */}
+                <button
+                  onClick={() => onNavigate(summary.nextActionTarget)}
+                  className="flex items-center gap-1 text-xs text-stone-500 hover:text-stone-700 transition-colors"
+                >
+                  {summary.nextAction}
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          ) : (
             <p className="text-[13px] text-stone-500 leading-relaxed">
-              {['IND', 'NDA', 'BLA'].includes(project.type?.toUpperCase())
-                ? 'Ready to begin your submission. Ask AnA to draft your first CTD section, or use Tools to start from a template.'
-                : 'Start a conversation with AnA below to begin drafting, or use Tools to create your first document.'}
+              {isPharma
+                ? `Ready to begin your ${upperType} submission. Ask AnA to draft your first CTD section, or use Tools to start from a template.`
+                : isDevice
+                  ? `Ready to begin your ${upperType} submission. Ask AnA to help structure your device documentation.`
+                  : 'Start a conversation with AnA below, or use Tools to create your first document.'}
             </p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

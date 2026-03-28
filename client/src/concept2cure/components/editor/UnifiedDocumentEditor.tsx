@@ -161,6 +161,8 @@ export interface UnifiedDocumentEditorProps {
   onToggleLock?: () => void;
   showTraceability?: boolean;
   showCompliance?: boolean;
+  /** Callback when compliance scanner finds issues */
+  onComplianceIssuesFound?: (issues: Array<{ id: string; severity: string; message: string; suggestion?: string; category: string; from: number; to: number }>) => void;
   /** Hide the document header bar (title/type/panel toggles) when embedded in EditorPanel which provides its own */
   embedded?: boolean;
   onSave?: (content: string, metadata: Record<string, unknown>) => Promise<void>;
@@ -1097,6 +1099,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   onToggleLock,
   showTraceability = true,
   showCompliance = true,
+  onComplianceIssuesFound,
   embedded = false,
   onSave,
   onLinkSource,
@@ -1191,6 +1194,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
           documentType: documentType,
           submissionType: submissionType,
         },
+        onIssuesFound: onComplianceIssuesFound,
       }),
     ],
     content: initialContent,
