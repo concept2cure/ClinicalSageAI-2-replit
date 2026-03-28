@@ -752,14 +752,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     }
   }, [modeCtx, activeArtifact?.status, activeArtifact?.id]);
 
-  useEffect(() => {
-    if (!activeArtifact) return;
-    if (gaBlockingCount === 0) return;
-    if (activeInspector) return;
-    const snoozedUntil = Number(localStorage.getItem(gaSnoozeKey) || 0);
-    if (Number.isFinite(snoozedUntil) && snoozedUntil > Date.now()) return;
-    setActiveInspector('ga-readiness');
-  }, [activeArtifact, gaBlockingCount, activeInspector, gaSnoozeKey]);
+  // GA readiness auto-popup removed — progressive disclosure: user opens it via ribbon when ready
 
   // ── Review mode: snapshot content when entering review mode ─────────
   const handleToggleReviewMode = useCallback(() => {
@@ -2155,20 +2148,6 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
         {/* Keyboard shortcuts */}
         <button
-          onClick={() => toggleInspector('intelligence')}
-          className="px-2 py-1.5 text-xs text-violet-700 bg-violet-50 hover:bg-violet-100 rounded-lg transition-colors duration-150 ring-1 ring-violet-200"
-          title="Open AnA 1.0 RI intelligence copilot"
-        >
-          Ask AnA RI
-        </button>
-        <button
-          onClick={() => toggleInspector('ga-readiness')}
-          className="px-2 py-1.5 text-xs text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-150 ring-1 ring-blue-200"
-          title="Open launch checklist and readiness actions"
-        >
-          Launch Checklist
-        </button>
-        <button
           onClick={() => setShowShortcuts(true)}
           className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors duration-150"
           title="Keyboard shortcuts (Ctrl+Shift+/)"
@@ -2323,45 +2302,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         </div>
       </div>
 
-      {/* Human-first journey guidance strip */}
-      {activeArtifact && (
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-stone-200 bg-gradient-to-r from-blue-50/70 to-violet-50/70 overflow-x-auto">
-          <span className="text-xs font-semibold text-stone-700 shrink-0">
-            Human workflow ({completedJourneySteps}/{humanJourneySteps.length} · {journeyProgress}
-            %):
-          </span>
-          {humanJourneySteps.map((step, idx) => (
-            <React.Fragment key={step.id}>
-              <button
-                onClick={() => openInspectorById(step.target)}
-                className={cn(
-                  'inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md shrink-0 transition-colors',
-                  step.done
-                    ? 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200'
-                    : nextJourneyStep.id === step.id
-                      ? 'bg-blue-100 text-blue-700 ring-1 ring-blue-200'
-                      : 'bg-white text-stone-600 ring-1 ring-stone-200 hover:bg-stone-50'
-                )}
-                title={`Open ${step.label} workflow`}
-              >
-                {step.done ? <CheckCircle className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-                {step.label}
-              </button>
-              {idx < humanJourneySteps.length - 1 && (
-                <ArrowRight className="w-3 h-3 text-stone-400 shrink-0" />
-              )}
-            </React.Fragment>
-          ))}
-          <button
-            onClick={() => toggleInspector('ga-readiness')}
-            className="ml-1 inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md shrink-0 bg-violet-100 text-violet-700 ring-1 ring-violet-200 hover:bg-violet-200 transition-colors"
-            title="Open full launch checklist and remediation queue"
-          >
-            <Rocket className="w-3 h-3" />
-            Full checklist
-          </button>
-        </div>
-      )}
+      {/* Journey guidance removed — accessible via /checklist in conversation */}
 
       {/* ── Ribbon toolbar — canonical InspectorRibbon ── */}
       <InspectorRibbon
@@ -2593,102 +2534,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         </div>
       )}
 
-      {/* ── Document Lifecycle Pipeline ──────────────────────────────── */}
-      {activeArtifact && (
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-stone-200 bg-stone-50/30">
-          {(['draft', 'review', 'approved', 'locked'] as const).map((stage, idx, arr) => {
-            const currentStatus = activeArtifact.status || 'draft';
-            const stageOrder = { draft: 0, review: 1, approved: 2, locked: 3 };
-            const currentOrder = stageOrder[currentStatus as keyof typeof stageOrder] ?? 0;
-            const stageIdx = stageOrder[stage];
-            const isCompleted = stageIdx < currentOrder;
-            const isCurrent = stage === currentStatus;
-            const stageLabels: Record<string, string> = {
-              draft: 'Draft',
-              review: 'In Review',
-              approved: 'Approved',
-              locked: 'Published',
-            };
-            const stageDescriptions: Record<string, string> = {
-              draft: 'Document is being authored',
-              review: 'Submitted for peer/regulatory review',
-              approved: 'Content approved by reviewer',
-              locked: 'Locked for submission — read only',
-            };
-            const stageColors: Record<string, string> = {
-              draft: 'bg-stone-100 text-stone-700 border-stone-200',
-              review: 'bg-amber-50 text-amber-700 border-amber-200',
-              approved: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-              locked: 'bg-blue-50 text-blue-700 border-blue-200',
-            };
-            return (
-              <React.Fragment key={stage}>
-                <button
-                  onClick={() => {
-                    if (stage !== currentStatus && !changingStatus) {
-                      if (stage === 'locked' || stage === 'approved') {
-                        if (
-                          confirm(`${stageLabels[stage]}: ${stageDescriptions[stage]}. Proceed?`)
-                        ) {
-                          handleStatusChange(stage);
-                        }
-                      } else {
-                        handleStatusChange(stage);
-                      }
-                    }
-                  }}
-                  disabled={changingStatus}
-                  title={stageDescriptions[stage]}
-                  className={cn(
-                    'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
-                    isCurrent
-                      ? `${stageColors[stage]} shadow-sm`
-                      : isCompleted
-                        ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                        : 'bg-white text-stone-400 border-stone-200 hover:bg-stone-50 hover:text-stone-600'
-                  )}
-                >
-                  {isCompleted ? (
-                    <CheckCircle className="w-3.5 h-3.5" />
-                  ) : isCurrent ? (
-                    <div className="w-2.5 h-2.5 rounded-full bg-current animate-pulse" />
-                  ) : (
-                    <div className="w-2.5 h-2.5 rounded-full border-2 border-current" />
-                  )}
-                  {stageLabels[stage]}
-                </button>
-                {idx < arr.length - 1 && (
-                  <div className={cn('w-6 h-px', isCompleted ? 'bg-emerald-300' : 'bg-stone-200')} />
-                )}
-              </React.Fragment>
-            );
-          })}
-          {/* Claim status + last updated */}
-          <div className="flex items-center gap-3 ml-auto text-xs text-stone-400">
-            {claimStatus === 'checking' && (
-              <span className="text-blue-500 flex items-center gap-1.5 bg-blue-50 px-2.5 py-1 rounded-md">
-                <Loader2 className="w-3 h-3 animate-spin" /> Checking claims
-              </span>
-            )}
-            {claimStatus === 'supported' && (
-              <span className="text-emerald-600 font-medium flex items-center gap-1.5 bg-emerald-50 px-2.5 py-1 rounded-md">
-                <CheckCircle className="w-3 h-3" /> Claims supported
-              </span>
-            )}
-            {claimStatus === 'needs-evidence' && (
-              <span className="text-amber-600 font-medium flex items-center gap-1.5 bg-amber-50 px-2.5 py-1 rounded-md">
-                <AlertTriangle className="w-3 h-3" /> Needs evidence
-              </span>
-            )}
-            <span className="tabular-nums text-stone-500">
-              {new Date(activeArtifact.updatedAt || activeArtifact.createdAt).toLocaleString(
-                undefined,
-                { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }
-              )}
-            </span>
-          </div>
-        </div>
-      )}
+      {/* Lifecycle pipeline removed — status visible in toolbar badge, transitions via /workflow */}
 
       {/* ── Main canvas: Editor + optional single inspector drawer ──────── */}
       <div className="flex-1 min-h-0 overflow-hidden flex">

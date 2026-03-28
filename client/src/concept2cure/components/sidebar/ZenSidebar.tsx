@@ -41,7 +41,7 @@ import {
   PinOff,
   Sparkles,
   Settings,
-  LayoutDashboard,
+  Home,
   Wrench,
   Send,
   Activity,
@@ -916,7 +916,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               {/* Project tabs */}
               <div className="space-y-0.5">
                 <NavItem
-                  icon={<LayoutDashboard className="w-3.5 h-3.5" />}
+                  icon={<Home className="w-3.5 h-3.5" />}
                   label="Overview"
                   active={activeNavId === 'overview'}
                   onClick={() => onNavigate?.('overview')}
@@ -1001,7 +1001,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               <EmptyState
                 icon={FolderOpen}
                 title="No projects yet"
-                description="Create your first regulatory project to unlock AnA's full intelligence, dossier mapping, and readiness scoring."
+                description="Create your first project to start working with AnA on your submission."
                 action={{
                   label: '+ Create your first project',
                   onClick: onOpenProjects,

@@ -53,7 +53,6 @@ import {
   useRecommendations,
 } from './hooks/useIntelligence';
 
-import { WorkspaceReadinessStrip } from './components/workspace/WorkspaceReadinessStrip';
 import { ProjectWorkspaceShell } from './components/workspace/ProjectWorkspaceShell';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import type { IndustryMode } from './types/workspace';
