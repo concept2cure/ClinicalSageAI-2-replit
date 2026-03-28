@@ -47,9 +47,12 @@ interface BuildResult {
 }
 
 const DOC_TYPES = [
+  { type: 'ind_full', name: 'IND Application (Modules 1-5)', description: 'Complete IND submission for FDA investigational new drug', tier: 'professional', icon: 'layers' },
   { type: 'csr', name: 'Clinical Study Report', description: 'Full ICH E3 CSR with all sections', tier: 'standard', icon: 'doc' },
   { type: 'ctd_full', name: 'Full CTD (Modules 1-5)', description: 'Complete submission dossier for regulatory filing', tier: 'professional', icon: 'layers' },
   { type: 'ctd_module2', name: 'CTD Module 2 — Summaries', description: 'Quality, nonclinical, and clinical summaries', tier: 'professional', icon: 'list' },
+  { type: 'ctd_module3', name: 'CTD Module 3 — Quality (CMC)', description: 'Drug substance, drug product, and appendices', tier: 'professional', icon: 'list' },
+  { type: 'ctd_module4', name: 'CTD Module 4 — Nonclinical', description: 'Pharmacology, pharmacokinetics, and toxicology', tier: 'professional', icon: 'chart' },
   { type: 'ctd_module5', name: 'CTD Module 5 — Clinical', description: 'Clinical study reports and data', tier: 'professional', icon: 'chart' },
 ];
 
