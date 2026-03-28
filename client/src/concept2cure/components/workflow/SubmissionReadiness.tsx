@@ -142,14 +142,22 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
                   {projectName || 'Submission'} — Readiness
                 </h2>
               </div>
-              <button
-                onClick={onExport}
-                disabled={readinessPercent < 100}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Send className="w-3.5 h-3.5" />
-                Export Package
-              </button>
+              <div className="flex items-center gap-3">
+                {readinessPercent >= 100 && (
+                  <span className="text-xs text-emerald-600 font-medium">✓ All sections ready</span>
+                )}
+                <button
+                  onClick={onExport}
+                  disabled={readinessPercent < 100}
+                  title={readinessPercent < 100
+                    ? `Complete all required sections before exporting (${totalCount - readyCount} remaining)`
+                    : 'Export eCTD submission package (XML + documents)'}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  Export Package
+                </button>
+              </div>
             </WorkspaceStatusStrip>
 
             {/* Section checklist */}
