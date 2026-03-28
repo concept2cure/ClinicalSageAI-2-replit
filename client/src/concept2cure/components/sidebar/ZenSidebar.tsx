@@ -73,6 +73,12 @@ interface Project {
   status?: string;
 }
 
+/** Submission type → hex color fallback for the sidebar project dot */
+const SIDEBAR_TYPE_COLORS: Record<string, string> = {
+  '510K': '#3b82f6', IND: '#8b5cf6', NDA: '#22c55e', BLA: '#f97316',
+  PMA: '#ef4444', MAA: '#ec4899', DE_NOVO: '#f59e0b', EUA: '#06b6d4', IVDR: '#10b981',
+};
+
 export interface ZenSidebarProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
@@ -402,7 +408,7 @@ const ProjectRow: React.FC<{
         <span
           onClick={onSelect}
           className="w-2 h-2 rounded-full flex-shrink-0"
-          style={{ backgroundColor: project.color || '#6366f1' }}
+          style={{ backgroundColor: project.color || SIDEBAR_TYPE_COLORS[project.type] || '#6366f1' }}
         />
 
         {/* Project name — clicking selects the project */}
@@ -423,6 +429,13 @@ const ProjectRow: React.FC<{
         >
           {project.name}
         </span>
+
+        {/* Conversation count badge (when not expanded) */}
+        {!isExpanded && conversations.length > 0 && (
+          <span className="text-[10px] text-stone-400 tabular-nums flex-shrink-0">
+            {conversations.length}
+          </span>
+        )}
 
         {/* Starred indicator */}
         {isPinned && (

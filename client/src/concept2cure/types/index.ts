@@ -139,6 +139,8 @@ export interface Project {
   status?: ProjectStatus;
   /** Additional metadata */
   metadata?: ProjectMetadata;
+  /** User-selected project accent color (hex) */
+  color?: string;
   /** Whether this project is pinned to the top of the sidebar */
   pinned?: boolean;
   /** Target regulatory agency (FDA, EMA, PMDA, Health Canada) */

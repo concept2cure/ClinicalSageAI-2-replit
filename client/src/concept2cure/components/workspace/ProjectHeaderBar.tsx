@@ -1,16 +1,38 @@
 /**
  * ProjectHeaderBar — Claude.ai-style persistent project context strip
  *
- * Per .claude/skills/project-design.md §3:
- * Shows submission type badge, project name, product name, readiness score,
- * target agency, and config button. Persistent at top of chat area.
+ * Shows colored accent dot, project name, submission type badge,
+ * and config button. Persistent at top of chat area.
  */
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Settings2, ChevronDown, Target } from 'lucide-react';
+import { Settings2, ChevronDown } from 'lucide-react';
 
-// ─── Submission type badge config (aligned to spec §3) ──────────────────────
+// ─── Submission type → hex accent color ─────────────────────────────────────
+
+export const SUBMISSION_TYPE_HEX: Record<string, string> = {
+  '510K': '#3b82f6',    // blue-500
+  IND: '#8b5cf6',       // violet-500
+  NDA: '#22c55e',       // green-500
+  BLA: '#f97316',       // orange-500
+  PMA: '#ef4444',       // red-500
+  MAA: '#ec4899',       // pink-500
+  DE_NOVO: '#f59e0b',   // amber-500
+  EUA: '#06b6d4',       // cyan-500
+  IVDR: '#10b981',      // emerald-500
+};
+
+const DEFAULT_COLOR = '#6366f1'; // indigo-500
+
+/** Returns the hex accent color for a project — user color → type color → default */
+export function getProjectAccentColor(projectColor?: string | null, submissionType?: string): string {
+  if (projectColor) return projectColor;
+  if (submissionType && SUBMISSION_TYPE_HEX[submissionType]) return SUBMISSION_TYPE_HEX[submissionType];
+  return DEFAULT_COLOR;
+}
+
+// ─── Submission type badge config ───────────────────────────────────────────
 
 const SUBMISSION_BADGE: Record<
   string,
@@ -33,25 +55,12 @@ const FALLBACK_BADGE = {
   bg: 'bg-zinc-100',
 };
 
-// ─── Readiness score styling ─────────────────────────────────────────────────
-
-function readinessColor(score: number): string {
-  if (score >= 80) return 'text-emerald-600';
-  if (score >= 50) return 'text-amber-600';
-  return 'text-red-500';
-}
-
-function readinessBg(score: number): string {
-  if (score >= 80) return 'bg-emerald-50';
-  if (score >= 50) return 'bg-amber-50';
-  return 'bg-red-50';
-}
-
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export interface ProjectHeaderBarProps {
   projectName: string;
   submissionType: string;
+  projectColor?: string;
   productName?: string;
   targetAgency?: string;
   readinessScore?: number;
@@ -63,14 +72,13 @@ export interface ProjectHeaderBarProps {
 export const ProjectHeaderBar: React.FC<ProjectHeaderBarProps> = ({
   projectName,
   submissionType,
-  productName,
-  targetAgency,
-  readinessScore,
+  projectColor,
   onOpenConfig,
   onSwitchProject,
   className,
 }) => {
   const badge = SUBMISSION_BADGE[submissionType] ?? FALLBACK_BADGE;
+  const accentColor = getProjectAccentColor(projectColor, submissionType);
 
   return (
     <div
@@ -82,7 +90,8 @@ export const ProjectHeaderBar: React.FC<ProjectHeaderBarProps> = ({
       {/* Colored accent dot + Project name */}
       <div className="flex items-center gap-2.5 min-w-0 flex-1">
         <div
-          className="w-2.5 h-2.5 rounded-full flex-shrink-0 bg-indigo-500"
+          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+          style={{ backgroundColor: accentColor }}
         />
         <button
           onClick={onSwitchProject}

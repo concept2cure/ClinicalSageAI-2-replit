@@ -332,6 +332,22 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
 // NEW PROJECT MODAL
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Claude.ai-style project accent colors */
+const PROJECT_COLORS = [
+  '#6366f1', // indigo (default)
+  '#3b82f6', // blue
+  '#06b6d4', // cyan
+  '#10b981', // emerald
+  '#22c55e', // green
+  '#f59e0b', // amber
+  '#f97316', // orange
+  '#ef4444', // red
+  '#ec4899', // pink
+  '#8b5cf6', // violet
+  '#a855f7', // purple
+  '#64748b', // slate
+];
+
 interface NewProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -343,6 +359,7 @@ interface NewProjectModalProps {
     product?: string;
     region?: string;
     goal?: string;
+    color?: string;
   }) => void;
 }
 
@@ -354,6 +371,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
   const [product, setProduct] = useState('');
   const [region, setRegion] = useState('FDA');
   const [goal, setGoal] = useState('');
+  const [color, setColor] = useState(PROJECT_COLORS[0]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -366,6 +384,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
         product: product.trim() || undefined,
         region: region || undefined,
         goal: goal.trim() || undefined,
+        color,
       });
       setName('');
       setDescription('');
@@ -374,6 +393,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
       setProduct('');
       setRegion('FDA');
       setGoal('');
+      setColor(PROJECT_COLORS[0]);
       onClose();
     }
   };
@@ -409,31 +429,63 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
       >
         <form onSubmit={handleSubmit}>
           {/* Header */}
-          <div className="px-6 py-4 border-b border-zinc-200">
-            <h2 id="new-project-title" className="text-lg font-semibold text-zinc-900">
-              New Project
-            </h2>
-            <p className="text-sm text-zinc-500 mt-1">Create a new regulatory submission project</p>
+          <div className="px-6 py-4 border-b border-stone-200">
+            <div className="flex items-center gap-2.5">
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
+              <h2 id="new-project-title" className="text-lg font-semibold text-stone-900">
+                New Project
+              </h2>
+            </div>
+            <p className="text-sm text-stone-500 mt-1">Create a new regulatory submission project</p>
           </div>
 
           {/* Content */}
           <div className="px-6 py-4 space-y-4">
             {/* Project name */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1.5">Project Name</label>
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">Project Name</label>
               <input
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder="e.g., CardioFlow Heart Monitor"
-                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-150"
+                className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/30 outline-none transition-all duration-150"
                 autoFocus
               />
             </div>
 
+            {/* Project color */}
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-2">
+                Color
+              </label>
+              <div className="flex items-center gap-1.5">
+                {PROJECT_COLORS.map(c => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setColor(c)}
+                    aria-label={`Select color ${c}`}
+                    aria-pressed={color === c}
+                    className={cn(
+                      'w-6 h-6 rounded-full transition-all duration-150 flex items-center justify-center',
+                      color === c
+                        ? 'ring-2 ring-offset-2 ring-stone-400 scale-110'
+                        : 'hover:scale-110 hover:ring-1 hover:ring-stone-300'
+                    )}
+                    style={{ backgroundColor: c }}
+                  >
+                    {color === c && (
+                      <Check className="w-3 h-3 text-white drop-shadow-sm" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Submission type */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">
                 Submission Type
               </label>
               <div className="grid grid-cols-4 gap-2">
@@ -449,19 +501,19 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
                       onClick={() => setType(submissionType)}
                       aria-pressed={isSelected}
                       className={cn(
-                        'flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
+                        'flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none',
                         isSelected
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-zinc-200 hover:border-zinc-300'
+                          ? 'border-stone-800 bg-stone-50'
+                          : 'border-stone-200 hover:border-stone-300'
                       )}
                     >
                       <Icon
-                        className={cn('w-5 h-5', isSelected ? 'text-blue-600' : 'text-zinc-400')}
+                        className={cn('w-5 h-5', isSelected ? 'text-stone-800' : 'text-stone-400')}
                       />
                       <span
                         className={cn(
                           'text-xs font-medium',
-                          isSelected ? 'text-blue-600' : 'text-zinc-600'
+                          isSelected ? 'text-stone-800' : 'text-stone-600'
                         )}
                       >
                         {config.label}
@@ -474,55 +526,55 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
-                Description <span className="text-zinc-400">(optional)</span>
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                Description <span className="text-stone-400">(optional)</span>
               </label>
               <textarea
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 placeholder="Brief description of the project..."
                 rows={2}
-                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all resize-none"
+                className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/30 outline-none transition-all resize-none"
               />
             </div>
 
             {/* Sponsor */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
-                Sponsor / Client <span className="text-zinc-400">(optional)</span>
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                Sponsor / Client <span className="text-stone-400">(optional)</span>
               </label>
               <input
                 type="text"
                 value={sponsor}
                 onChange={e => setSponsor(e.target.value)}
                 placeholder="e.g., Acme Biotech, Inc."
-                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-150"
+                className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/30 outline-none transition-all duration-150"
               />
             </div>
 
             {/* Product / Device / Molecule */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
-                Product / Device / Molecule <span className="text-zinc-400">(optional)</span>
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                Product / Device / Molecule <span className="text-stone-400">(optional)</span>
               </label>
               <input
                 type="text"
                 value={product}
                 onChange={e => setProduct(e.target.value)}
                 placeholder="e.g., CardioFlow HR-200, mRNA-7621"
-                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-150"
+                className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/30 outline-none transition-all duration-150"
               />
             </div>
 
             {/* Region / Agency */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">
                 Region / Agency
               </label>
               <select
                 value={region}
                 onChange={e => setRegion(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all bg-white"
+                className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/30 outline-none transition-all bg-white"
               >
                 <option value="FDA">FDA (United States)</option>
                 <option value="EMA">EMA (European Union)</option>
@@ -537,25 +589,25 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
 
             {/* Goal / Instructions */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
-                Goal & Instructions <span className="text-zinc-400">(optional)</span>
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                Goal & Instructions <span className="text-stone-400">(optional)</span>
               </label>
               <textarea
                 value={goal}
                 onChange={e => setGoal(e.target.value)}
                 placeholder="What are you trying to achieve? Any specific requirements or context for the RI..."
                 rows={3}
-                className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all resize-none"
+                className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/30 outline-none transition-all resize-none"
               />
             </div>
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-zinc-200 flex justify-end gap-3">
+          <div className="px-6 py-4 border-t border-stone-200 flex justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
+              className="px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors duration-150"
             >
               Cancel
             </button>
@@ -563,8 +615,8 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
               type="submit"
               disabled={!name.trim()}
               className={cn(
-                'px-4 py-2 text-sm font-medium text-white rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
-                name.trim() ? 'bg-blue-600 hover:bg-blue-700' : 'bg-zinc-300 cursor-not-allowed'
+                'px-4 py-2 text-sm font-medium text-white rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none',
+                name.trim() ? 'bg-stone-900 hover:bg-stone-800' : 'bg-stone-300 cursor-not-allowed'
               )}
             >
               Create Project

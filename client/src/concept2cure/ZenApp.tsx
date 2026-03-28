@@ -37,7 +37,7 @@ import { ProjectSwitcher, NewProjectModal } from './components/projects/ProjectS
 import ProjectConfigPanel from './components/workspace/ProjectConfigPanel';
 // [BATCH 3] WorkflowTimeline — renderer removed, import kept for type compatibility
 import { ProjectFilesCompact } from './components/workspace/ProjectFilesCompact';
-import { ProjectHeaderBar } from './components/workspace/ProjectHeaderBar';
+import { ProjectHeaderBar, getProjectAccentColor } from './components/workspace/ProjectHeaderBar';
 // [BATCH 3] CustomInstructions — knowledge-base renderer removed
 import { useProjectKnowledge } from './hooks/useProjectKnowledge';
 import { useProjectTasks } from './hooks/useProjectTasks';
@@ -3188,6 +3188,7 @@ export const ZenApp: React.FC = () => {
               <ProjectHeaderBar
                 projectName={activeProject?.name || 'Untitled Project'}
                 submissionType={activeProject?.type || 'IND'}
+                projectColor={activeProject?.color}
                 productName={activeProject?.product}
                 targetAgency={activeProject?.targetAgency}
                 readinessScore={projectReadinessScore}
@@ -3355,7 +3356,7 @@ export const ZenApp: React.FC = () => {
                     {/* Colored top accent bar */}
                     <div
                       className="h-1 w-full"
-                      style={{ backgroundColor: project.color || '#6366f1' }}
+                      style={{ backgroundColor: getProjectAccentColor(project.color, project.type) }}
                     />
                     <div className="p-4">
                       <div className="flex items-center gap-2 mb-1.5">
