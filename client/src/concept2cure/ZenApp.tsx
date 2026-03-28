@@ -3423,6 +3423,7 @@ export const ZenApp: React.FC = () => {
                 <AnaPersistentPanel
                   mode="full"
                   authoringContext={authoringContext}
+                  navContext={activeNavId}
                   contextProfile={{
                     productType: activeProject?.type,
                     userRole: userRole,
@@ -3619,6 +3620,7 @@ export const ZenApp: React.FC = () => {
             <AnaPersistentPanel
               mode="full"
               authoringContext={authoringContext}
+              navContext="project-home"
               contextProfile={{
                 productType: activeProject?.type,
                 userRole: userRole,
@@ -3702,6 +3704,7 @@ export const ZenApp: React.FC = () => {
               }
               defaultChatMode={layoutMode === 'deep-research' ? 'deep-research' : 'standard'}
               authoringContext={authoringContext}
+              navContext={activeNavId}
               contextProfile={{
                 productType: activeProject?.type,
                 userRole: userRole,

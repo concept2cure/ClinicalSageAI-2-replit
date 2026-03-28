@@ -17,6 +17,7 @@ import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { useAIAction } from '../../hooks/useAIAction';
 import type { AIActionType, AIActionSourceSurface } from '../../hooks/useAIAction';
+import { getPromptsForContext, type DomainPromptGroup } from '../../config/domain-prompts';
 import {
   Sparkles,
   ArrowUp,
@@ -551,6 +552,8 @@ interface AnaPersistentPanelProps {
   authoringContext?: AuthoringContextPack | null;
   /** Suggested actions shown as quick-start chips when conversation is empty */
   suggestedActions?: SuggestedAction[];
+  /** Navigation context for domain prompt selection (e.g. 'cmc', 'biostatistics', 'submission-builder') */
+  navContext?: string | null;
   /** Greeting text shown when no messages */
   greeting?: string;
   /** Initial message to auto-send on mount */
@@ -620,12 +623,65 @@ const SCREEN_LABELS: Record<string, string> = {
   'safety-narrative': 'Safety Narrative',
 };
 
+// ─── Domain Prompt Section — collapsible group in the capability browser ──────
+
+function DomainPromptSection({
+  group,
+  expanded,
+  onToggle,
+  onSelect,
+  isPrimary,
+}: {
+  group: DomainPromptGroup;
+  expanded: boolean;
+  onToggle: () => void;
+  onSelect: (prompt: { id: string; label: string }) => void;
+  isPrimary?: boolean;
+}) {
+  return (
+    <div className="rounded-lg border border-stone-100 overflow-hidden">
+      <button
+        onClick={onToggle}
+        className={cn(
+          'w-full flex items-center justify-between px-3 py-2 text-left transition-colors',
+          expanded ? 'bg-stone-50' : 'hover:bg-stone-50/50',
+        )}
+      >
+        <span className={cn(
+          'text-[12px] font-medium',
+          isPrimary ? 'text-stone-700' : 'text-stone-500',
+        )}>
+          {group.label}
+        </span>
+        <ChevronDown className={cn(
+          'w-3 h-3 text-stone-400 transition-transform',
+          expanded && 'rotate-180',
+        )} />
+      </button>
+      {expanded && (
+        <div className="px-1.5 pb-1.5 space-y-0.5">
+          {group.prompts.map(prompt => (
+            <button
+              key={prompt.id}
+              onClick={() => onSelect(prompt)}
+              className="w-full text-left px-2.5 py-2 rounded-md text-[13px] text-stone-600 hover:bg-stone-100 hover:text-stone-800 transition-colors"
+            >
+              {prompt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   contextProfile,
   authoringContext,
   suggestedActions,
+  navContext,
   greeting,
   initialMessage,
   externalMessage,
@@ -684,6 +740,14 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const initialMessageSentRef = useRef(false);
   // Thread persistence — reuse thread_id across messages for continuous conversation
   const threadIdRef = useRef<string | null>(null);
+
+  // Domain prompt browser — organized by capability area
+  const [showDomainPrompts, setShowDomainPrompts] = useState(false);
+  const [expandedDomain, setExpandedDomain] = useState<string | null>(null);
+  const domainPrompts = useMemo(
+    () => getPromptsForContext(navContext || contextProfile?.screenName),
+    [navContext, contextProfile?.screenName]
+  );
 
   const screenName = contextProfile?.screenName || 'default';
   const screenLabel = SCREEN_LABELS[screenName] || '';
@@ -3698,6 +3762,51 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   ))}
                 </div>
               )}
+
+              {/* Domain prompt browser — all capabilities organized by area */}
+              <div className="mt-6 max-w-lg mx-auto">
+                <button
+                  onClick={() => setShowDomainPrompts(prev => !prev)}
+                  className="text-[11px] text-stone-400 hover:text-stone-600 transition-colors mx-auto flex items-center gap-1"
+                >
+                  {showDomainPrompts ? 'Hide capabilities' : 'Browse all capabilities'}
+                  <ChevronDown className={cn('w-3 h-3 transition-transform', showDomainPrompts && 'rotate-180')} />
+                </button>
+
+                {showDomainPrompts && (
+                  <div className="mt-3 space-y-1 text-left">
+                    {/* Primary domains for current context */}
+                    {domainPrompts.primary.map(group => (
+                      <DomainPromptSection
+                        key={group.domain}
+                        group={group}
+                        expanded={expandedDomain === group.domain}
+                        onToggle={() => setExpandedDomain(prev => prev === group.domain ? null : group.domain)}
+                        onSelect={prompt => {
+                          handleSend(prompt.label);
+                          setShowDomainPrompts(false);
+                          setExpandedDomain(null);
+                        }}
+                        isPrimary
+                      />
+                    ))}
+                    {/* More domains */}
+                    {domainPrompts.more.map(group => (
+                      <DomainPromptSection
+                        key={group.domain}
+                        group={group}
+                        expanded={expandedDomain === group.domain}
+                        onToggle={() => setExpandedDomain(prev => prev === group.domain ? null : group.domain)}
+                        onSelect={prompt => {
+                          handleSend(prompt.label);
+                          setShowDomainPrompts(false);
+                          setExpandedDomain(null);
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ) : (

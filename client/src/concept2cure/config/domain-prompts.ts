@@ -1,0 +1,320 @@
+/**
+ * Domain Prompt Registry — Comprehensive specialized prompts for every capability area.
+ *
+ * Every slash command, every former dashboard, every specialized focus has a set of
+ * human-language prompts that achieve all goals through AnA conversation.
+ *
+ * Zero Capability Loss: if a dashboard once showed it, a prompt here can surface it.
+ */
+
+export interface DomainPrompt {
+  id: string;
+  label: string;
+  /** Optional description shown below the label */
+  description?: string;
+  /** The intent key (for action handlers that intercept specific intents) */
+  intent?: string;
+}
+
+export interface DomainPromptGroup {
+  /** Domain identifier */
+  domain: string;
+  /** Human-readable label */
+  label: string;
+  /** Prompts in this domain — ordered by most common usage */
+  prompts: DomainPrompt[];
+}
+
+// ── Core Project Intelligence ─────────────────────────────────────────────────
+
+const PROJECT_STATUS: DomainPromptGroup = {
+  domain: 'project-status',
+  label: 'Project Status',
+  prompts: [
+    { id: 'ps-status', label: 'Give me a quick project status briefing' },
+    { id: 'ps-readiness', label: 'How ready is my submission?' },
+    { id: 'ps-blockers', label: "What's blocking my submission?" },
+    { id: 'ps-next', label: 'What should I work on next?' },
+    { id: 'ps-workflow', label: 'Show my full workflow progress' },
+    { id: 'ps-assess', label: 'Run a comprehensive project assessment' },
+  ],
+};
+
+const RISK_INTELLIGENCE: DomainPromptGroup = {
+  domain: 'risk',
+  label: 'Risk & Foresight',
+  prompts: [
+    { id: 'ri-risk', label: 'Analyze my submission risk profile' },
+    { id: 'ri-simulate', label: 'Simulate likely reviewer challenges' },
+    { id: 'ri-signals', label: 'Show accumulated regulatory intelligence signals' },
+    { id: 'ri-deficiencies', label: 'Show known deficiency patterns for my submission type' },
+    { id: 'ri-twin', label: 'Run a submission twin analysis — claims vs evidence integrity' },
+    { id: 'ri-consistency', label: 'Check cross-module consistency across the dossier' },
+  ],
+};
+
+const RECOMMENDATIONS: DomainPromptGroup = {
+  domain: 'recommendations',
+  label: 'Recommendations',
+  prompts: [
+    { id: 'rec-recommend', label: 'What are my top priority actions right now?' },
+    { id: 'rec-next', label: 'Prioritize my next steps by impact' },
+    { id: 'rec-checklist', label: 'Generate a compliance checklist for my document' },
+    { id: 'rec-preflight', label: 'Run a preflight check before submission' },
+  ],
+};
+
+// ── Document Authoring ────────────────────────────────────────────────────────
+
+const AUTHORING: DomainPromptGroup = {
+  domain: 'authoring',
+  label: 'Document Authoring',
+  prompts: [
+    { id: 'auth-draft', label: 'Draft a section for my submission' },
+    { id: 'auth-audit', label: 'Audit my document like a hostile reviewer' },
+    { id: 'auth-scan', label: 'Scan for regulatory deficiencies' },
+    { id: 'auth-amend', label: 'Amend my document with change tracking' },
+    { id: 'auth-review', label: 'Conduct a regulatory review of the current section' },
+    { id: 'auth-claims', label: 'Analyze evidence chains and find unsupported claims' },
+  ],
+};
+
+const DOCUMENT_LIFECYCLE: DomainPromptGroup = {
+  domain: 'doc-lifecycle',
+  label: 'Document Lifecycle',
+  prompts: [
+    { id: 'dl-freeze', label: 'Freeze this document for submission' },
+    { id: 'dl-sign', label: 'Request electronic signature' },
+    { id: 'dl-submit', label: 'Submit this document to regulatory workflow' },
+    { id: 'dl-checklist', label: 'Generate regulatory compliance checklist' },
+    { id: 'dl-export', label: 'Export this conversation' },
+  ],
+};
+
+// ── Specialized Domains ───────────────────────────────────────────────────────
+
+const BIOSTATISTICS: DomainPromptGroup = {
+  domain: 'biostatistics',
+  label: 'Biostatistics',
+  prompts: [
+    { id: 'bio-sap', label: 'Generate a Statistical Analysis Plan' },
+    { id: 'bio-power', label: 'Calculate sample size and statistical power' },
+    { id: 'bio-dose', label: 'Design a dose escalation protocol' },
+    { id: 'bio-defensibility', label: 'Run a statistical defensibility assessment' },
+    { id: 'bio-design', label: 'Help design the optimal clinical trial' },
+  ],
+};
+
+const CMC: DomainPromptGroup = {
+  domain: 'cmc',
+  label: 'CMC / Manufacturing',
+  prompts: [
+    { id: 'cmc-eval', label: 'Evaluate my CMC documentation' },
+    { id: 'cmc-change', label: 'Assess manufacturing change impact on CQAs' },
+    { id: 'cmc-compare', label: 'Help with comparability assessment' },
+    { id: 'cmc-module3', label: 'Review Module 3 documentation completeness' },
+    { id: 'cmc-workplan', label: 'Generate a CMC workplan and timeline' },
+  ],
+};
+
+const SAFETY: DomainPromptGroup = {
+  domain: 'safety',
+  label: 'Safety & Pharmacovigilance',
+  prompts: [
+    { id: 'sf-narrative', label: 'Generate a safety narrative' },
+    { id: 'sf-iss', label: 'Generate an Integrated Summary of Safety' },
+    { id: 'sf-dsur', label: 'Help with DSUR preparation' },
+    { id: 'sf-benefit-risk', label: 'Draft benefit-risk analysis' },
+    { id: 'sf-rmp', label: 'Generate or update the Risk Management Plan' },
+  ],
+};
+
+const CLINICAL: DomainPromptGroup = {
+  domain: 'clinical',
+  label: 'Clinical / Efficacy',
+  prompts: [
+    { id: 'cl-csr', label: 'Help with Clinical Study Report sections' },
+    { id: 'cl-ise', label: 'Generate an Integrated Summary of Efficacy' },
+    { id: 'cl-ib', label: 'Generate or update the Investigator\'s Brochure' },
+    { id: 'cl-design', label: 'Design the optimal clinical trial' },
+    { id: 'cl-endpoints', label: 'Evaluate my primary endpoint strategy' },
+  ],
+};
+
+const DEVICE: DomainPromptGroup = {
+  domain: 'device',
+  label: 'Medical Devices',
+  prompts: [
+    { id: 'dev-510k', label: 'Help with my 510(k) submission' },
+    { id: 'dev-predicate', label: 'Find predicate devices and comparisons' },
+    { id: 'dev-pma', label: 'Help with PMA submission requirements' },
+    { id: 'dev-denovo', label: 'Guide me through De Novo classification' },
+    { id: 'dev-cer', label: 'Build Clinical Evaluation Report for EU MDR' },
+  ],
+};
+
+const REGULATORY_STRATEGY: DomainPromptGroup = {
+  domain: 'strategy',
+  label: 'Regulatory Strategy',
+  prompts: [
+    { id: 'str-strategy', label: 'Generate a Regulatory Strategy Note' },
+    { id: 'str-memo', label: 'Generate a Risk Assessment Memo with go/no-go recommendation' },
+    { id: 'str-brief', label: 'Prepare reviewer question anticipation brief' },
+    { id: 'str-precedent', label: 'Find and analyze relevant regulatory precedents' },
+    { id: 'str-pathway', label: 'Compare regulatory pathways for my product' },
+  ],
+};
+
+const LABELING: DomainPromptGroup = {
+  domain: 'labeling',
+  label: 'Labeling & SmPC',
+  prompts: [
+    { id: 'lbl-uspi', label: 'Generate US Prescribing Information' },
+    { id: 'lbl-smpc', label: 'Generate Summary of Product Characteristics' },
+    { id: 'lbl-ectd', label: 'Show eCTD module structure and place artifacts' },
+  ],
+};
+
+const DOSSIER: DomainPromptGroup = {
+  domain: 'dossier',
+  label: 'Dossier & Submission',
+  prompts: [
+    { id: 'dos-map', label: 'Map my CTD dossier structure' },
+    { id: 'dos-missing', label: 'Identify missing sections in my dossier' },
+    { id: 'dos-ectd', label: 'Show eCTD module structure' },
+    { id: 'dos-readiness', label: 'Assess submission readiness by module' },
+    { id: 'dos-workflow', label: 'Show full submission workflow with blockers' },
+  ],
+};
+
+const KNOWLEDGE: DomainPromptGroup = {
+  domain: 'knowledge',
+  label: 'Knowledge & Memory',
+  prompts: [
+    { id: 'kb-knowledge', label: 'Show all knowledge stored for this project' },
+    { id: 'kb-search', label: 'Search the project knowledge base' },
+    { id: 'kb-decisions', label: 'Show key decisions and their rationale' },
+  ],
+};
+
+const REPORTS: DomainPromptGroup = {
+  domain: 'reports',
+  label: 'Reports & Export',
+  prompts: [
+    { id: 'rpt-report', label: 'Generate a full regulatory report' },
+    { id: 'rpt-export', label: 'Export this conversation' },
+    { id: 'rpt-audit-trail', label: 'Show audit trail for this document' },
+  ],
+};
+
+// ── All domains ───────────────────────────────────────────────────────────────
+
+export const ALL_DOMAIN_GROUPS: DomainPromptGroup[] = [
+  PROJECT_STATUS,
+  RISK_INTELLIGENCE,
+  RECOMMENDATIONS,
+  AUTHORING,
+  DOCUMENT_LIFECYCLE,
+  BIOSTATISTICS,
+  CMC,
+  SAFETY,
+  CLINICAL,
+  DEVICE,
+  REGULATORY_STRATEGY,
+  LABELING,
+  DOSSIER,
+  KNOWLEDGE,
+  REPORTS,
+];
+
+// ── Context-Aware Selection ───────────────────────────────────────────────────
+
+/**
+ * Map from navigation context to the most relevant domain groups.
+ * Each context gets 3-5 primary domains surfaced first, with the rest available
+ * through a "More prompts" expansion.
+ */
+const CONTEXT_DOMAIN_MAP: Record<string, string[]> = {
+  // Global / project home
+  'overview':           ['project-status', 'recommendations', 'risk', 'dossier'],
+  'project-home':       ['project-status', 'recommendations', 'risk', 'dossier'],
+  'projects':           ['project-status', 'recommendations', 'risk', 'dossier'],
+
+  // Editor / authoring
+  'submission-builder': ['authoring', 'doc-lifecycle', 'recommendations', 'risk'],
+  'editor':             ['authoring', 'doc-lifecycle', 'recommendations', 'risk'],
+  'ri-copilot':         ['authoring', 'risk', 'strategy', 'recommendations'],
+
+  // Specialized domains
+  'biostatistics':      ['biostatistics', 'clinical', 'authoring', 'risk'],
+  'cmc':                ['cmc', 'authoring', 'recommendations', 'dossier'],
+  'clinical-module5':   ['clinical', 'safety', 'biostatistics', 'authoring'],
+  'safety':             ['safety', 'clinical', 'risk', 'authoring'],
+  'device':             ['device', 'strategy', 'dossier', 'authoring'],
+
+  // Workflow views
+  'verify':             ['recommendations', 'risk', 'doc-lifecycle', 'authoring'],
+  'review':             ['authoring', 'risk', 'doc-lifecycle', 'recommendations'],
+  'publish':            ['doc-lifecycle', 'dossier', 'recommendations', 'risk'],
+
+  // Strategy / intelligence
+  'strategy':           ['strategy', 'risk', 'recommendations', 'reports'],
+  'intelligence':       ['risk', 'strategy', 'recommendations', 'knowledge'],
+  'foresight':          ['risk', 'strategy', 'recommendations', 'project-status'],
+  'precedent':          ['strategy', 'risk', 'authoring', 'recommendations'],
+
+  // Dossier / vault
+  'dossier-map':        ['dossier', 'authoring', 'recommendations', 'doc-lifecycle'],
+  'vault':              ['knowledge', 'reports', 'dossier', 'doc-lifecycle'],
+
+  // Labeling
+  'labeling':           ['labeling', 'authoring', 'strategy', 'doc-lifecycle'],
+
+  // Reports
+  'report-engine':      ['reports', 'risk', 'recommendations', 'project-status'],
+};
+
+/**
+ * Get domain prompt groups relevant to the current navigation context.
+ *
+ * @param navContext - The activeNavId or layoutMode (e.g. 'submission-builder', 'cmc')
+ * @returns Primary groups (3-5) followed by remaining groups
+ */
+export function getPromptsForContext(navContext: string | null | undefined): {
+  primary: DomainPromptGroup[];
+  more: DomainPromptGroup[];
+} {
+  const key = navContext || 'overview';
+  const primaryDomains = CONTEXT_DOMAIN_MAP[key] || CONTEXT_DOMAIN_MAP['overview']!;
+
+  const primary = primaryDomains
+    .map(d => ALL_DOMAIN_GROUPS.find(g => g.domain === d))
+    .filter((g): g is DomainPromptGroup => !!g);
+
+  const primarySet = new Set(primaryDomains);
+  const more = ALL_DOMAIN_GROUPS.filter(g => !primarySet.has(g.domain));
+
+  return { primary, more };
+}
+
+/**
+ * Get a flat list of suggested action prompts for the current context.
+ * Returns the top N prompts from primary domains, suitable for the
+ * suggested action chips in AnaPersistentPanel.
+ *
+ * @param navContext - The activeNavId or layoutMode
+ * @param maxChips - Maximum number of prompts to return (default 4)
+ */
+export function getSuggestedPromptsForContext(
+  navContext: string | null | undefined,
+  maxChips = 4
+): DomainPrompt[] {
+  const { primary } = getPromptsForContext(navContext);
+  // Take the first prompt from each primary domain, then fill remaining slots
+  const top: DomainPrompt[] = [];
+  for (const group of primary) {
+    if (top.length >= maxChips) break;
+    if (group.prompts[0]) top.push(group.prompts[0]);
+  }
+  return top.slice(0, maxChips);
+}
