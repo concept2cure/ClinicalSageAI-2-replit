@@ -177,7 +177,7 @@ export const DossierMap: React.FC<DossierMapProps> = ({
         data={structure}
         isLoading={isLoading && !!projectId}
         error={error}
-        emptyDescription="No sections initialized for this project"
+        emptyDescription="Your CTD dossier structure will appear here. Ask AnA to set up sections, or create documents to populate the map."
       >
         {(modules) => (
           <WorkspaceCanvas>

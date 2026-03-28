@@ -339,15 +339,15 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
               </div>
             ) : section.status === 'not-started' && onCreateDraft ? (
               /* Section has no document yet — prompt to create one */
-              <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50/50 p-8 text-center">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-stone-100">
+              <div className="rounded-xl border border-dashed border-stone-200 bg-white/80 p-10 text-center">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-stone-50">
                   <FilePlus className="h-6 w-6 text-stone-400" />
                 </div>
-                <h3 className="text-base font-semibold text-stone-900 mb-1">
-                  No document for Section {section.code}
+                <h3 className="text-base font-semibold text-stone-900 mb-2">
+                  Start Section {section.code}
                 </h3>
-                <p className="text-sm text-stone-500 mb-5 max-w-md mx-auto">
-                  Create a new document for this CTD section. The full editor includes AI-assisted drafting, regulatory templates, and compliance checking.
+                <p className="text-sm text-stone-500 mb-6 max-w-md mx-auto leading-relaxed">
+                  Create a document to begin drafting. AnA can help you write content, and the editor includes compliance checking, evidence linking, and regulatory templates.
                 </p>
                 <Button onClick={onCreateDraft} variant="default" size="default" className="gap-2">
                   <FilePlus className="h-4 w-4" />
@@ -377,8 +377,8 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
             )}
             {!isLoadingIssues && issues.length === 0 && (
               <EmptyState
-                title="No issues detected"
-                description="No issues detected for this section."
+                title="Looking good"
+                description="No compliance issues or contradictions found. Issues will appear here automatically as you draft."
                 testId="section-issues-empty"
               />
             )}
@@ -443,8 +443,8 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
           <div className="p-6 space-y-3">
             {evidence.length === 0 && (
               <EmptyState
-                title="No evidence linked"
-                description="No evidence linked to this section yet."
+                title="No evidence linked yet"
+                description="Link source documents, clinical data, or references to support this section. Evidence can be attached from the editor's Data Room panel."
                 testId="section-evidence-empty"
               />
             )}
@@ -470,8 +470,8 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
           <div className="p-6 space-y-3">
             {versions.length === 0 && (
               <EmptyState
-                title="No version history"
-                description="No version history available."
+                title="No versions yet"
+                description="Version history will build automatically as you save drafts and advance through review stages."
                 testId="section-versions-empty"
               />
             )}

@@ -220,15 +220,11 @@ const WORKBENCHES: WorkbenchConfig[] = [
 ];
 
 const PROJECT_NAV_ITEMS: Array<{ id: ProjectNav; label: string }> = [
-  { id: 'submission_builder', label: 'Submission Builder' },
-  { id: 'cmc', label: 'CMC' },
-  { id: 'clinical_module5', label: 'Clinical / Module 5' },
+  { id: 'overview', label: 'Overview' },
+  { id: 'submission_builder', label: 'Documents' },
   { id: 'verify', label: 'Verify' },
   { id: 'review', label: 'Review' },
   { id: 'publish', label: 'Publish' },
-  { id: 'haq', label: 'HAQ' },
-  { id: 'vault', label: 'Vault' },
-  { id: 'overview', label: 'Overview' },
 ];
 
 const DOCUMENT_TAB_ITEMS: Array<{ id: DocumentTab; label: string }> = [

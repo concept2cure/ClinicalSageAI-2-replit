@@ -139,8 +139,8 @@ export const ToolsLanding: React.FC<ToolsLandingProps> = ({
       {(!recentArtifacts || recentArtifacts.length === 0) && (
         <div className="mb-6 mt-4">
           <EmptyState
-            title="No recent documents"
-            description="Create a new document or use the Document Builder to get started."
+            title="Ready to start"
+            description="Create your first document below, or ask AnA to draft one for you."
           />
         </div>
       )}

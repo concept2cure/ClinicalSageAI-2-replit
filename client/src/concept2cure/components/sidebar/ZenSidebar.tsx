@@ -49,6 +49,7 @@ import {
   ClipboardCheck,
   BookOpen,
   Pill,
+  Heart,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -981,19 +982,6 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
                   active={activeNavId === 'work'}
                   accentColor="blue"
                   onClick={() => onNavigate?.('tools')}
-                />
-                <NavItem
-                  icon={<Archive className="w-3.5 h-3.5" />}
-                  label="Vault"
-                  active={activeNavId === 'vault'}
-                  onClick={() => onNavigate?.('vault')}
-                />
-                <NavItem
-                  icon={<ShieldCheck className="w-3.5 h-3.5" />}
-                  label="Review"
-                  active={activeNavId === 'review'}
-                  accentColor="emerald"
-                  onClick={() => onNavigate?.('review-tab')}
                 />
                 <NavItem
                   icon={<Send className="w-3.5 h-3.5" />}

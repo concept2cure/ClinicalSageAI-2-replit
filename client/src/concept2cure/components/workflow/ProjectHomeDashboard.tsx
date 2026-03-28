@@ -110,10 +110,12 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
             )}
           </div>
         )}
-        {summary.total === 0 && ['IND', 'NDA', 'BLA'].includes(project.type?.toUpperCase()) && (
+        {summary.total === 0 && (
           <div className="mt-3 pt-3 border-t border-stone-100">
-            <p className="text-xs text-stone-400">
-              IND Submission — ask AnA to start generating your CTD sections
+            <p className="text-[13px] text-stone-500 leading-relaxed">
+              {['IND', 'NDA', 'BLA'].includes(project.type?.toUpperCase())
+                ? 'Ready to begin your submission. Ask AnA to draft your first CTD section, or use Tools to start from a template.'
+                : 'Start a conversation with AnA below to begin drafting, or use Tools to create your first document.'}
             </p>
           </div>
         )}

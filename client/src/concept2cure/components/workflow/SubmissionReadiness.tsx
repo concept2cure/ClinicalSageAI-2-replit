@@ -110,7 +110,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
         data={readinessItems}
         isLoading={isLoading && !!projectId}
         error={error}
-        emptyDescription="No sections initialized — initialize project sections first"
+        emptyDescription="No sections found yet. Start by creating documents for your CTD sections, then return here to track submission readiness."
       >
         {(items) => (
           <WorkspaceCanvas>
