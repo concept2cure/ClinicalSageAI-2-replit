@@ -43,8 +43,9 @@ import {
   Link2,
   Layers,
   Keyboard,
+  Scale,
 } from 'lucide-react';
-import { useClaimCheck, type ClaimCheckResult } from '../../hooks/usePrecedentEngine';
+import { useClaimCheck, usePrecedentSearch, type ClaimCheckResult, type PrecedentRecord, type SearchParams } from '../../hooks/usePrecedentEngine';
 import { RegulatoryIntelligencePanel } from '../intelligence/RegulatoryIntelligencePanel';
 import { useGenerateDocx, downloadBlob } from '../../hooks/useDocumentFactory';
 import DocumentProvenancePanel from '../provenance/DocumentProvenancePanel';
@@ -147,6 +148,172 @@ const AI_ACTIONS: { id: AIAction; label: string; description: string }[] = [
   { id: 'regulatory-tone', label: 'Regulatory Tone', description: 'Formal FDA/EMA language' },
   { id: 'add-references', label: 'Add References', description: 'Insert reference placeholders' },
 ];
+
+// ── Precedent Search Inspector ───────────────────────────────────────────────
+
+const PRECEDENT_SEVERITY: Record<string, string> = {
+  approved: 'text-emerald-600 bg-emerald-50',
+  cleared: 'text-emerald-600 bg-emerald-50',
+  denied: 'text-red-600 bg-red-50',
+  withdrawn: 'text-amber-600 bg-amber-50',
+};
+
+const PrecedentSearchInspector: React.FC<{
+  submissionType: string;
+  onInsertCitation: (text: string) => void;
+  onClose: () => void;
+}> = ({ submissionType, onInsertCitation, onClose }) => {
+  const [query, setQuery] = React.useState('');
+  const [searchParams, setSearchParams] = React.useState<SearchParams | null>(null);
+
+  const { data: results, isLoading, isFetching } = usePrecedentSearch(searchParams);
+
+  const handleSearch = () => {
+    if (!query.trim() && !submissionType) return;
+    setSearchParams({
+      submissionType: submissionType || 'NDA',
+      query: query.trim() || undefined,
+      limit: 8,
+    });
+  };
+
+  return (
+    <div className="h-full flex flex-col" data-testid="precedent-inspector">
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-2.5 border-b border-stone-100">
+        <div className="flex items-center gap-2">
+          <Scale className="w-3.5 h-3.5 text-stone-500" />
+          <span className="text-[13px] font-semibold text-stone-700">Precedent Search</span>
+        </div>
+        <button
+          onClick={onClose}
+          className="text-stone-400 hover:text-stone-600 transition-colors p-1"
+          aria-label="Close precedent panel"
+        >
+          <XCircle className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {/* Search bar */}
+      <div className="px-3 py-2 border-b border-stone-50">
+        <div className="flex gap-1.5">
+          <input
+            type="text"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSearch()}
+            placeholder="Search precedents..."
+            className="flex-1 text-[12px] px-2.5 py-1.5 rounded-md border border-stone-200 bg-white focus:border-stone-400 focus:outline-none transition-colors"
+          />
+          <button
+            onClick={handleSearch}
+            disabled={isLoading}
+            className="px-2.5 py-1.5 text-[11px] font-medium bg-stone-800 text-white rounded-md hover:bg-stone-700 disabled:opacity-50 transition-colors"
+          >
+            {isFetching ? '...' : 'Search'}
+          </button>
+        </div>
+        {submissionType && (
+          <span className="text-[10px] text-stone-400 mt-1 block">
+            Searching {submissionType} precedents
+          </span>
+        )}
+      </div>
+
+      {/* Results */}
+      <div className="flex-1 overflow-y-auto">
+        {!searchParams && !results && (
+          <div className="px-3 py-6 text-center">
+            <Scale className="w-5 h-5 text-stone-300 mx-auto mb-2" />
+            <p className="text-[12px] text-stone-400">Search regulatory precedents to strengthen your submission</p>
+            <p className="text-[10px] text-stone-400 mt-1">Results from FDA clearances, approvals, and advisory committees</p>
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="px-3 py-3 space-y-2">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="animate-pulse space-y-1.5 py-2">
+                <div className="h-3 bg-stone-100 rounded w-3/4" />
+                <div className="h-2.5 bg-stone-50 rounded w-1/2" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {results && results.length === 0 && !isLoading && (
+          <div className="px-3 py-6 text-center">
+            <p className="text-[12px] text-stone-500">No precedents found</p>
+            <p className="text-[10px] text-stone-400 mt-1">Try broader search terms</p>
+          </div>
+        )}
+
+        {results && results.length > 0 && (
+          <div className="divide-y divide-stone-50">
+            {results.map(rec => {
+              const outcome = (rec.decisionOutcome || '').toLowerCase();
+              const outcomeStyle = PRECEDENT_SEVERITY[outcome] || 'text-stone-500 bg-stone-50';
+              return (
+                <div key={rec.id} className="px-3 py-2.5 hover:bg-stone-50/50 transition-colors group">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] text-stone-700 font-medium truncate">
+                        {rec.deviceName || rec.indication || rec.clearanceNumber || 'Precedent'}
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {rec.clearanceNumber && (
+                          <span className="text-[10px] text-stone-400 font-mono">{rec.clearanceNumber}</span>
+                        )}
+                        {rec.applicant && (
+                          <span className="text-[10px] text-stone-400 truncate">{rec.applicant}</span>
+                        )}
+                        {rec.decisionDate && (
+                          <span className="text-[10px] text-stone-400 tabular-nums">
+                            {new Date(rec.decisionDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {rec.decisionOutcome && (
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${outcomeStyle}`}>
+                        {rec.decisionOutcome}
+                      </span>
+                    )}
+                  </div>
+                  {rec.strategySummary && (
+                    <p className="text-[11px] text-stone-500 mt-1 line-clamp-2 leading-relaxed">{rec.strategySummary}</p>
+                  )}
+                  {rec.similarityScore != null && rec.similarityScore > 0 && (
+                    <div className="mt-1 flex items-center gap-1">
+                      <div className="h-0.5 bg-stone-100 rounded-full flex-1 max-w-[60px]">
+                        <div
+                          className="h-full bg-stone-500 rounded-full"
+                          style={{ width: `${Math.min(rec.similarityScore * 100, 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-[9px] text-stone-400 tabular-nums">{Math.round(rec.similarityScore * 100)}% match</span>
+                    </div>
+                  )}
+                  {/* Insert citation button — appears on hover */}
+                  <button
+                    onClick={() => {
+                      const parts = [rec.deviceName || rec.indication, rec.clearanceNumber, rec.applicant, rec.decisionOutcome].filter(Boolean);
+                      onInsertCitation(parts.join(' — '));
+                    }}
+                    className="mt-1.5 text-[10px] text-blue-500 hover:text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
+                  >
+                    <Plus className="w-2.5 h-2.5" />
+                    Insert as citation
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 // ── Component ────────────────────────────────────────────────────────────────
 const EditorPanel: React.FC<EditorPanelProps> = ({
@@ -2295,6 +2462,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 { id: 'intelligence', label: 'AI Assist', icon: <Brain className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('intelligence') },
                 { id: 'templates', label: 'Templates', icon: <FileText className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('templates') },
                 { id: 'batch-ai', label: 'Batch AI', icon: <Layers className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('batch-ai') },
+                { id: 'precedent', label: 'Precedents', icon: <Scale className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('precedent') },
                 { id: 'dataroom', label: 'Data Room', icon: <Database className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('dataroom') },
                 { id: 'ana-memory', label: 'Context', icon: <Brain className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('ana-memory') },
               ],
@@ -3020,6 +3188,20 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               }
               pushToast(`Template content generated: ${templateName}`, 'success');
               setActiveInspector(null);
+            }}
+            onClose={() => setActiveInspector(null)}
+          />
+        </InspectorDrawer>
+        <InspectorDrawer visible={activeInspector === 'precedent'} width="w-96">
+          <PrecedentSearchInspector
+            submissionType={submissionType || ''}
+            onInsertCitation={(text) => {
+              /* Insert precedent citation at cursor */
+              if (activeArtifact) {
+                const citation = `<p class="precedent-citation" style="border-left:2px solid #e5e7eb;padding-left:8px;color:#6b7280;font-size:13px">${text}</p>`;
+                setActiveArtifact(prev => prev ? { ...prev, content: (prev.content || '') + citation } : null);
+                pushToast('Precedent citation inserted', 'success');
+              }
             }}
             onClose={() => setActiveInspector(null)}
           />

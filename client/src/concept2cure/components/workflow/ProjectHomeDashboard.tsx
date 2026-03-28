@@ -15,6 +15,11 @@ import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { queryKeys } from '@/concept2cure/hooks/queryKeys';
 import {
+  useIntelligenceDashboard,
+  type ReadinessScore,
+  type Recommendation,
+} from '@/concept2cure/hooks/useIntelligence';
+import {
   Settings2,
   FileText,
   Database,
@@ -32,6 +37,12 @@ import {
   BarChart3,
   Activity,
   Plus,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  AlertTriangle,
+  Zap,
+  Target,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -150,6 +161,123 @@ function getSuggestedPrompts(
   return prompts.slice(0, 4);
 }
 
+// ─── Intelligence Surface ───────────────────────────────────────────────────
+
+const DIMENSION_LABELS: Record<string, string> = {
+  completeness: 'Completeness',
+  quality: 'Quality',
+  consistency: 'Consistency',
+  compliance: 'Compliance',
+};
+
+const SEVERITY_STYLE: Record<string, string> = {
+  critical: 'text-red-600 bg-red-50',
+  high: 'text-amber-700 bg-amber-50',
+  medium: 'text-stone-600 bg-stone-100',
+  low: 'text-stone-500 bg-stone-50',
+};
+
+const IntelligenceSurface: React.FC<{
+  readiness: ReadinessScore;
+  recommendations: Recommendation[];
+  onSuggestedPrompt?: (prompt: string) => void;
+}> = ({ readiness, recommendations, onSuggestedPrompt }) => {
+  const activeRecs = recommendations.filter(r => r.status === 'active').slice(0, 3);
+  const trendIcon = readiness.trend.direction === 'improving'
+    ? <TrendingUp className="w-3 h-3 text-emerald-500" />
+    : readiness.trend.direction === 'declining'
+    ? <TrendingDown className="w-3 h-3 text-red-500" />
+    : <Minus className="w-3 h-3 text-stone-400" />;
+
+  return (
+    <div className="mt-4 pt-3 border-t border-stone-100" data-testid="intelligence-surface">
+      {/* Readiness dimensions */}
+      <div className="flex items-center justify-between mb-2.5">
+        <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wide flex items-center gap-1.5">
+          <Target className="w-3 h-3" />
+          Submission readiness
+        </span>
+        <div className="flex items-center gap-1.5">
+          {trendIcon}
+          <span className="text-[11px] text-stone-500 tabular-nums font-medium">
+            {Math.round(readiness.overallScore)}%
+          </span>
+        </div>
+      </div>
+
+      {/* 4-dimension bars — compact, calm */}
+      <div className="grid grid-cols-4 gap-2">
+        {(['completeness', 'quality', 'consistency', 'compliance'] as const).map(dim => {
+          const score = readiness.dimensions[dim];
+          const barColor = score >= 70 ? 'bg-stone-700' : score >= 40 ? 'bg-amber-500' : 'bg-red-400';
+          return (
+            <div key={dim} className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-stone-400">{DIMENSION_LABELS[dim]}</span>
+                <span className="text-[10px] text-stone-500 tabular-nums font-medium">{Math.round(score)}%</span>
+              </div>
+              <div className="h-1 bg-stone-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+                  style={{ width: `${Math.min(score, 100)}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Prediction — subtle inline */}
+      {readiness.predictions.approvalProbability > 0 && (
+        <div className="mt-2.5 flex items-center gap-3 text-[11px] text-stone-400">
+          <span className="flex items-center gap-1">
+            <Zap className="w-3 h-3" />
+            <span className="text-stone-500 font-medium">{Math.round(readiness.predictions.approvalProbability)}%</span>
+            {' '}approval probability
+          </span>
+          {readiness.predictions.estimatedDeficiencies > 0 && (
+            <span className="flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3" />
+              ~{readiness.predictions.estimatedDeficiencies} potential deficiencies
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Top recommendations — contextual nudges */}
+      {activeRecs.length > 0 && (
+        <div className="mt-3 space-y-1.5">
+          {activeRecs.map(rec => (
+            <button
+              key={rec.recommendationId}
+              onClick={() => onSuggestedPrompt?.(
+                `Help me address this: ${rec.reason}. Suggested action: ${rec.suggestedAction}`
+              )}
+              className="w-full flex items-start gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-stone-50 transition-colors group"
+            >
+              <span className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5 ${SEVERITY_STYLE[rec.severity] || SEVERITY_STYLE.medium}`}>
+                {rec.severity === 'critical' || rec.severity === 'high' ? (
+                  <AlertTriangle className="w-2.5 h-2.5" />
+                ) : (
+                  <Sparkles className="w-2.5 h-2.5" />
+                )}
+                {rec.severity}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] text-stone-600 leading-snug truncate group-hover:text-stone-800">
+                  {rec.suggestedAction}
+                </p>
+                <p className="text-[10px] text-stone-400 truncate mt-0.5">{rec.reason}</p>
+              </div>
+              <ArrowRight className="w-3 h-3 text-stone-300 group-hover:text-stone-500 flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
@@ -169,6 +297,9 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
     },
     staleTime: 30_000,
   });
+
+  // Intelligence dashboard — readiness, recommendations, next actions
+  const { data: intelligence, isLoading: intelligenceLoading } = useIntelligenceDashboard(project.id);
 
   // Activity feed — what happened recently
   const { data: activityFeed } = useQuery<ActivityItem[]>({
@@ -368,7 +499,31 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
           </div>
         </div>}
 
-        {/* ── Row 3.5: Recent Activity ─────────────────────────────────────── */}
+        {/* ── Row 3.5: Intelligence Surface ──────────────────────────────── */}
+        {intelligenceLoading && summary.docCount > 0 && (
+          <div className="mt-4 pt-3 border-t border-stone-100">
+            <div className="flex items-center gap-4 animate-pulse">
+              <div className="flex-1 space-y-2">
+                <div className="h-3 bg-stone-100 rounded w-24" />
+                <div className="flex gap-2">
+                  <div className="h-8 bg-stone-50 rounded-lg flex-1" />
+                  <div className="h-8 bg-stone-50 rounded-lg flex-1" />
+                  <div className="h-8 bg-stone-50 rounded-lg flex-1" />
+                  <div className="h-8 bg-stone-50 rounded-lg flex-1" />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        {intelligence?.readiness && !intelligenceLoading && (
+          <IntelligenceSurface
+            readiness={intelligence.readiness}
+            recommendations={intelligence.recommendations?.recommendations ?? []}
+            onSuggestedPrompt={onSuggestedPrompt}
+          />
+        )}
+
+        {/* ── Row 3.6: Recent Activity ─────────────────────────────────────── */}
         {activityFeed && activityFeed.length > 0 && (
           <div className="mt-4 pt-3 border-t border-stone-100">
             <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wide flex items-center gap-1.5 mb-2">

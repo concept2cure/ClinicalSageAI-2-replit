@@ -207,6 +207,28 @@ Set `FIGMA_ACCESS_TOKEN` environment variable before use.
 - Use the AI gateway (`server/services/ai-gateway/`) instead of direct OpenAI/Anthropic calls
 - Conventional commits: `feat:`, `fix:`, `refactor:`, `chore:`
 
+## Claude UI Design Principles (NON-NEGOTIABLE)
+
+> Skill file: `.claude/skills/claude-ui-design-principles.md`
+
+**Every UI element must embody the Anthropic Claude design philosophy: calm, intelligent, restrained.**
+All UI work — new components, modifications, layouts — MUST follow these 12 principles:
+
+1. **Calm Over Loud** — muted stone palette, color reserved for meaning, white space as feature
+2. **Typography Hierarchy** — never shout; `text-lg` max for titles, `text-[13px]` for body, `text-[10px]` for metadata
+3. **Progressive Disclosure** — show what matters now, reveal detail on interaction
+4. **Content-Shaped Loading** — skeleton blocks matching layout geometry, never bare spinners
+5. **Animation: Brief & Purposeful** — 200ms ease-out, no bounce, no spring, no overshoot
+6. **Density Without Clutter** — compact rows for professionals, every element earns its space
+7. **Inline Intelligence** — surface insights where user is working, not behind navigation
+8. **Conversation-First** — chat is the primary interface, everything else supports it
+9. **Trust Through Restraint** — no celebrations, no "are you sure?", factual status language
+10. **No Chrome** — minimize frame, borders barely visible (`stone-100`), content IS the interface
+11. **Mobile as Overlay** — panels become fixed overlays on small screens
+12. **Accessibility as Default** — ARIA on everything, focus rings, color never alone
+
+Read the full skill file for visual language reference, component sizing, and anti-pattern list.
+
 ## Chat-First Design (NON-NEGOTIABLE)
 
 > Skill file: `.claude/skills/chat-first-design.md`
