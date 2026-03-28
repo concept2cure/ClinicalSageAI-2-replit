@@ -269,13 +269,42 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
             <Filter className="w-3 h-3" />
             Filter
           </button>
-          <button
-            onClick={onUpload}
-            className="flex items-center gap-1 px-2 py-1 text-xs rounded border border-stone-200 text-stone-600 hover:bg-stone-50 ml-auto"
+          <label
+            className="flex items-center gap-1 px-2 py-1 text-xs rounded border border-stone-200 text-stone-600 hover:bg-stone-50 ml-auto cursor-pointer"
           >
             <Upload className="w-3 h-3" />
-            Upload Source
-          </button>
+            Upload
+            <input
+              type="file"
+              className="hidden"
+              accept=".pdf,.docx,.xlsx,.csv,.txt,.md"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file || !projectId) return;
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('projectId', projectId);
+                try {
+                  const orgId = localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
+                  const token = localStorage.getItem('token') || localStorage.getItem('authToken') || '';
+                  const headers: Record<string, string> = { 'x-organization-id': orgId };
+                  if (token) headers['Authorization'] = `Bearer ${token}`;
+                  const res = await fetch('/api/concept2cure/documents/upload', {
+                    method: 'POST',
+                    body: formData,
+                    headers,
+                    credentials: 'include',
+                  });
+                  if (res.ok) {
+                    loadSources();
+                  }
+                } catch {
+                  // Upload failed
+                }
+                e.target.value = '';
+              }}
+            />
+          </label>
         </div>
         {/* Filter chips */}
         {showFilters && (

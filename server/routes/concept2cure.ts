@@ -4581,6 +4581,29 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
       content: sanitizedContent || undefined,
     });
 
+    // ── RE-EMBED on content change for Data Room searchability ────────
+    if (newVersion > dbArtifact.version && sanitizedContent) {
+      try {
+        const plainText = sanitizedContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        if (plainText.length > 40) {
+          const atomResult = await pool.query(
+            `UPDATE lumen_data_atoms
+             SET content = $1, title = $2, updated_at = NOW()
+             WHERE source_type = 'artifact' AND source_id = $3
+             RETURNING id`,
+            [plainText.substring(0, 16000), newTitle, updatedArtifact.artifactId]
+          );
+          if (atomResult.rows.length > 0) {
+            const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
+            const embeddingService = getEmbeddingService(pool);
+            await embeddingService.embedAtom(atomResult.rows[0].id, true);
+          }
+        }
+      } catch (embedErr: any) {
+        logger.warn('Re-embedding failed on update (non-fatal)', { error: embedErr.message });
+      }
+    }
+
     logger.info('Updated artifact', {
       artifactId: req.params.artifactId,
       version: artifact.version,

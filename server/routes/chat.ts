@@ -965,7 +965,10 @@ router.post('/', sendMessageHandler);
 
 /**
  * POST /api/chat/upload
- * Handle file uploads — stores metadata in file_uploads table
+ * Handle file uploads — stores metadata in file_uploads table.
+ * When projectId + organizationId are available, also creates a
+ * concept2cure_artifact (category='source') for unified Data Room access
+ * and embeds content into lumen_data_atoms for pgvector retrieval.
  */
 router.post('/upload', async (req: Request, res: Response) => {
   try {
@@ -974,6 +977,9 @@ router.post('/upload', async (req: Request, res: Response) => {
     const mimeType =
       (req as any).file?.mimetype || req.body?.mimeType || 'application/octet-stream';
     const fileSize = (req as any).file?.size || req.body?.fileSize || 0;
+    const projectId = req.body?.projectId || req.body?.project_id;
+    const userId = (req as any).user?.id || null;
+    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
 
     // Store in uploads directory
     const storagePath = `uploads/${fileId}`;
@@ -982,14 +988,72 @@ router.post('/upload', async (req: Request, res: Response) => {
     await pool.query(
       `INSERT INTO file_uploads (id, user_id, original_name, mime_type, file_size, storage_path, status, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, 'uploaded', NOW())`,
-      [fileId, (req as any).user?.id || null, fileName, mimeType, fileSize, storagePath]
+      [fileId, userId, fileName, mimeType, fileSize, storagePath]
     );
+
+    // ── Data Room convergence: create artifact + embed for retrieval ──
+    let artifactId: string | null = null;
+    if (projectId && orgId) {
+      try {
+        const numericProjectId = parseInt(String(projectId).replace('proj_', ''), 10);
+        const numericOrgId = parseInt(String(orgId), 10);
+        if (!isNaN(numericProjectId) && !isNaN(numericOrgId)) {
+          const artId = `artifact_chat_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+          // Extract text content from file buffer if available
+          const fileBuffer = (req as any).file?.buffer;
+          const extractedText = fileBuffer && mimeType.startsWith('text/')
+            ? fileBuffer.toString('utf8')
+            : `[Uploaded via chat: ${fileName}] (${mimeType}, ${fileSize} bytes)`;
+
+          const contentHash = sha256(extractedText);
+          await pool.query(
+            `INSERT INTO concept2cure_artifacts
+               (organization_id, project_id, artifact_id, type, category, title, content, content_hash, version, metadata, created_by_id)
+             VALUES ($1, $2, $3, 'source_document', 'source', $4, $5, $6, 1, $7, $8)
+             ON CONFLICT DO NOTHING`,
+            [
+              numericOrgId,
+              numericProjectId,
+              artId,
+              fileName,
+              extractedText.substring(0, 100000),
+              contentHash,
+              JSON.stringify({ uploadSource: 'chat', fileId, mimeType, fileSize }),
+              userId,
+            ]
+          );
+          artifactId = artId;
+
+          // Auto-embed into lumen_data_atoms for pgvector retrieval
+          try {
+            const atomResult = await pool.query(
+              `INSERT INTO lumen_data_atoms
+                 (organization_id, source_type, source_id, atom_type, title, content, tags, confidence, status)
+               VALUES ($1, 'chat_upload', $2, 'source_document', $3, $4, '{source,chat_upload}', 0.85, 'active')
+               ON CONFLICT DO NOTHING
+               RETURNING id`,
+              [numericOrgId, artId, fileName, extractedText.substring(0, 16000)]
+            );
+            if (atomResult.rows.length > 0) {
+              const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
+              const embeddingService = getEmbeddingService(pool);
+              await embeddingService.embedAtom(atomResult.rows[0].id);
+            }
+          } catch (embedErr: any) {
+            console.warn('[AnA] Chat upload embedding failed (non-fatal):', embedErr.message);
+          }
+        }
+      } catch (artErr: any) {
+        console.warn('[AnA] Chat upload artifact creation failed (non-fatal):', artErr.message);
+      }
+    }
 
     res.json({
       fileId,
       message: 'File uploaded successfully',
       status: 'ready',
       fileName,
+      artifactId,
     });
   } catch (error: any) {
     console.error('[AnA] Upload error:', error);
