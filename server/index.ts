@@ -4095,6 +4095,11 @@ import indGenerationRoutes from './routes/ind-generation';
 app.use('/api/ind', indGenerationRoutes);
 console.log('✅ IND Generation API routes mounted successfully');
 
+// Mount Global Regulatory Registry routes
+import regulatoryRegistryRoutes from './routes/regulatory-registry';
+app.use('/api/regulatory', regulatoryRegistryRoutes);
+console.log('✅ Global Regulatory Registry API routes mounted successfully');
+
 // Mount AI Claims → Binder provenance route
 try {
   const claimsModule = await import('./routes/ai-claims-routes');
