@@ -474,7 +474,23 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       memoryBlockChars = memoryBlock.length;
       memoryDiagnostics = diagnostics;
 
-      const systemPrompt = intelligencePrefix + basePrompt + memoryBlock + evidenceBlock;
+      // ── IND Context Injection ──────────────────────────────────────────────────
+      // When the project is an IND submission, inject the complete CTD structure
+      // so AnA knows every section needed and can guide the user through it.
+      let indContextBlock = '';
+      if (orchestratorResult.detectedSubmissionType === 'IND' || (req.body.context?.productType || '').toUpperCase() === 'IND') {
+        try {
+          const { IND_SECTIONS, getModuleStatus } = await import('../services/ind/ind-section-registry.js');
+          const sectionList = IND_SECTIONS.map(s =>
+            `- ${s.code} ${s.title} (Module ${s.module}, ${s.required ? 'required' : 'optional'}) — ${s.guidance}`
+          ).join('\n');
+          indContextBlock = `\n\n## IND Submission Context\nThis is an IND (Investigational New Drug) project. You have tools to generate any CTD section.\n\nComplete IND structure (19 sections across 5 modules):\n${sectionList}\n\nUse the ind_generate_section tool to draft any section. Use ind_get_status to check progress. Guide the user section by section.\n`;
+        } catch {
+          // IND registry not available — skip
+        }
+      }
+
+      const systemPrompt = intelligencePrefix + basePrompt + indContextBlock + memoryBlock + evidenceBlock;
 
       const gwMessages = [
         { role: 'system' as const, content: systemPrompt },
