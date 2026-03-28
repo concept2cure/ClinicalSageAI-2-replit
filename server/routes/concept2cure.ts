@@ -2761,6 +2761,63 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
       }
     }
 
+    // ── STEP 1.5: RIM INTELLIGENCE CONTEXT (non-blocking) ──────────────
+    let rimBlock = '';
+    if (data.projectId) {
+      try {
+        const { computeReadinessScore, generateRecommendations } = await import('../services/intelligence/index.js');
+        const projId = Number(data.projectId);
+        const [readiness, recs] = await Promise.all([
+          computeReadinessScore({ organizationId, projectId: projId }).catch(() => null),
+          generateRecommendations({ organizationId, projectId: projId, triggeredBy: 'ai_edit' }).catch(() => null),
+        ]);
+
+        const rimParts: string[] = [];
+
+        if (readiness) {
+          const dims = readiness.dimensions;
+          rimParts.push(
+            `Submission readiness: ${Math.round(readiness.overallScore)}% overall ` +
+            `(completeness ${Math.round(dims.completeness)}%, quality ${Math.round(dims.quality)}%, ` +
+            `consistency ${Math.round(dims.consistency)}%, compliance ${Math.round(dims.compliance)}%).`
+          );
+          if (readiness.gaps && readiness.gaps.length > 0) {
+            const topGaps = readiness.gaps
+              .filter((g: any) => g.severity === 'critical' || g.severity === 'high')
+              .slice(0, 3);
+            if (topGaps.length > 0) {
+              rimParts.push(
+                'Key gaps: ' + topGaps.map((g: any) => `${g.description} (${g.severity})`).join('; ') + '.'
+              );
+            }
+          }
+        }
+
+        if (recs?.recommendations) {
+          const activeRecs = recs.recommendations
+            .filter((r: any) => r.status === 'active' && (r.severity === 'critical' || r.severity === 'high'))
+            .slice(0, 3);
+          if (activeRecs.length > 0) {
+            rimParts.push(
+              'Active recommendations: ' +
+              activeRecs.map((r: any) => r.suggestedAction).join('; ') + '.'
+            );
+          }
+        }
+
+        if (rimParts.length > 0) {
+          rimBlock =
+            '\n\n--- REGULATORY INTELLIGENCE CONTEXT ---\n' +
+            rimParts.join(' ') +
+            '\nUse this intelligence to inform your writing. Address identified gaps where relevant. ' +
+            'Strengthen areas flagged as weak. Do not mention these scores directly in the output.\n' +
+            '--- END INTELLIGENCE ---\n';
+        }
+      } catch {
+        /* Non-blocking — continue without RIM context */
+      }
+    }
+
     // ── STEP 2: BUILD PROMPT with evidence context ────────────────────────
     const actionPrompts: Record<string, string> = {
       rewrite:
@@ -2782,6 +2839,7 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
       data.ctdSection ? `CTD section: ${data.ctdSection}.` : '',
       data.context || '',
       evidenceBlock,
+      rimBlock,
       actionPrompts[data.action],
     ]
       .filter(Boolean)
