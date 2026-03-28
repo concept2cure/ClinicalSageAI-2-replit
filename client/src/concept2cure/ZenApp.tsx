@@ -3448,9 +3448,15 @@ export const ZenApp: React.FC = () => {
                     artifactId={activeArtifactId}
                     projectId={activeProjectId}
                     onClose={() => setActiveArtifactId(undefined)}
-                    onEdit={(id) => {
+                    onOpenFullEditor={(id) => {
                       setOpenArtifactId(id);
-                      setLayoutMode('documents');
+                      setRiViewMode('editor');
+                      setLayoutMode('regulatory-workspace');
+                    }}
+                    onSaveToVault={(id) => {
+                      // Artifact is already in the project — just confirm
+                      setActiveArtifactId(undefined);
+                      setLayoutMode('vault');
                     }}
                   />
                 </Suspense>

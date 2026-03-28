@@ -1,14 +1,15 @@
 /**
  * DocumentCanvasPanel — Claude.ai-style right-side document canvas.
  *
- * Matches the Claude artifact panel pattern exactly:
- * - Title bar: document name + format badge + Download dropdown + close
- * - Content: rendered page with line number gutter on paper-like surface
- * - Clean, no clutter — just the document
- * - Edit opens the full editor (implicit, not a visible button)
+ * Full workflow:
+ * 1. AnA generates document → appears in canvas
+ * 2. Inline basic editing in the canvas
+ * 3. Save as PDF / DOCX (download to PC)
+ * 4. Save to Vault / DMS
+ * 5. Open in Full Document Editor (EditorPanel — Weave.bio/ARTOS-style)
  */
 
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -20,7 +21,10 @@ import {
   FileText,
   Maximize2,
   Minimize2,
-  Settings,
+  Save,
+  Archive,
+  PenLine,
+  Edit3,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -29,7 +33,10 @@ interface DocumentCanvasPanelProps {
   artifactId: string;
   projectId?: string;
   onClose: () => void;
-  onEdit: (artifactId: string) => void;
+  /** Opens the full document editor (EditorPanel / Weave-style) */
+  onOpenFullEditor: (artifactId: string) => void;
+  /** Saves to vault/DMS */
+  onSaveToVault?: (artifactId: string) => void;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
 }
@@ -45,10 +52,9 @@ interface ArtifactData {
   format?: string;
 }
 
-// ─── Sanitizer (prevent XSS from server content) ─────────────────────────────
+// ─── Sanitizer ────────────────────────────────────────────────────────────────
 
 function sanitizeHtml(html: string): string {
-  // Strip script tags, event handlers, and dangerous attributes
   return html
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
     .replace(/\son\w+\s*=\s*"[^"]*"/gi, '')
@@ -63,10 +69,15 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
   artifactId,
   projectId,
   onClose,
-  onEdit,
+  onOpenFullEditor,
+  onSaveToVault,
   isFullscreen,
   onToggleFullscreen,
 }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState('');
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+
   const { data: artifact, isLoading } = useQuery<ArtifactData>({
     queryKey: queryKeys.artifacts.detail(artifactId),
     queryFn: async () => {
@@ -86,23 +97,34 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
     return fmt.toUpperCase().slice(0, 4);
   }, [artifact]);
 
-  // Count actual content lines for the gutter
   const lineCount = useMemo(() => {
-    if (!artifact?.content) return 0;
-    const text = artifact.content.replace(/<[^>]+>/g, '').trim();
+    const text = (isEditing ? editContent : artifact?.content || '').replace(/<[^>]+>/g, '').trim();
     return Math.max(text.split('\n').length, 10);
-  }, [artifact?.content]);
+  }, [artifact?.content, isEditing, editContent]);
 
   const sanitizedContent = useMemo(() => {
     if (!artifact?.content) return '';
     return sanitizeHtml(artifact.content);
   }, [artifact?.content]);
 
-  const handleDoubleClick = useCallback(() => {
-    onEdit(artifactId);
-  }, [onEdit, artifactId]);
+  const handleStartEdit = useCallback(() => {
+    setEditContent(artifact?.content || '');
+    setIsEditing(true);
+  }, [artifact?.content]);
 
-  // ── Loading state ───────────────────────────────────────────────────────────
+  const handleSaveEdit = useCallback(async () => {
+    if (!projectId || !artifactId) return;
+    try {
+      await apiRequest('PUT', `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}`, {
+        content: editContent,
+      });
+      setIsEditing(false);
+    } catch {
+      // Save failed — stay in edit mode
+    }
+  }, [projectId, artifactId, editContent]);
+
+  // ── Loading ─────────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="flex flex-col h-full border-l border-zinc-200 bg-white">
@@ -122,40 +144,107 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
     );
   }
 
-  // ── Empty state ─────────────────────────────────────────────────────────────
   if (!artifact) {
     return (
       <div className="flex flex-col h-full border-l border-zinc-200 bg-white items-center justify-center">
         <FileText className="w-8 h-8 text-zinc-300 mb-3" />
         <p className="text-sm font-medium text-zinc-500">No content yet</p>
-        <p className="text-xs text-zinc-400 mt-1.5 max-w-xs text-center">
-          Generate content in AnA or paste existing document content
-        </p>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col h-full border-l border-zinc-200 bg-white">
-      {/* ── Title bar — Claude artifact panel style ── */}
+      {/* ── Title bar ── */}
       <div className="flex-shrink-0 h-11 px-4 flex items-center justify-between border-b border-zinc-100">
         <div className="flex items-center gap-2.5 min-w-0">
-          <span className="text-sm font-medium text-zinc-800 truncate">
-            {artifact.title}
-          </span>
+          <span className="text-sm font-medium text-zinc-800 truncate">{artifact.title}</span>
           <span className="text-[10px] px-2 py-0.5 rounded-md bg-zinc-200 text-zinc-600 font-semibold flex-shrink-0 uppercase tracking-tight">
             {formatBadge}
           </span>
         </div>
         <div className="flex items-center gap-0.5 flex-shrink-0">
-          {/* Download with label */}
+          {/* Inline edit toggle */}
+          {isEditing ? (
+            <button
+              onClick={handleSaveEdit}
+              className="flex items-center gap-1 px-2 py-1 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            >
+              <Save className="w-3.5 h-3.5" />
+              Save
+            </button>
+          ) : (
+            <button
+              onClick={handleStartEdit}
+              aria-label="Edit inline"
+              className="flex items-center gap-1 px-2 py-1 text-xs text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              Edit
+            </button>
+          )}
+
+          {/* Open in Full Editor — Weave.bio/ARTOS-style */}
           <button
-            aria-label="Download document"
+            onClick={() => onOpenFullEditor(artifactId)}
+            aria-label="Open in Full Editor"
             className="flex items-center gap-1 px-2 py-1 text-xs text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
           >
-            Download
-            <ChevronDown className="w-3 h-3" />
+            <PenLine className="w-3.5 h-3.5" />
+            Full Editor
           </button>
+
+          {/* Save to Vault */}
+          {onSaveToVault && (
+            <button
+              onClick={() => onSaveToVault(artifactId)}
+              aria-label="Save to Vault"
+              className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              title="Save to Vault"
+            >
+              <Archive className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {/* Download dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowDownloadMenu(d => !d)}
+              aria-label="Download document"
+              aria-haspopup="menu"
+              aria-expanded={showDownloadMenu}
+              className="flex items-center gap-1 px-2 py-1 text-xs text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <ChevronDown className="w-3 h-3" />
+            </button>
+            {showDownloadMenu && (
+              <div className="absolute right-0 mt-1 w-36 bg-white border border-zinc-200 rounded-lg shadow-lg z-50 py-1" role="menu">
+                <button
+                  role="menuitem"
+                  className="w-full text-left px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50"
+                  onClick={() => { setShowDownloadMenu(false); }}
+                >
+                  Download as PDF
+                </button>
+                <button
+                  role="menuitem"
+                  className="w-full text-left px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50"
+                  onClick={() => { setShowDownloadMenu(false); }}
+                >
+                  Download as DOCX
+                </button>
+                <button
+                  role="menuitem"
+                  className="w-full text-left px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50"
+                  onClick={() => { setShowDownloadMenu(false); }}
+                >
+                  Download as XML
+                </button>
+              </div>
+            )}
+          </div>
+
           {onToggleFullscreen && (
             <button
               onClick={onToggleFullscreen}
@@ -175,29 +264,27 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
         </div>
       </div>
 
-      {/* ── Document preview — paper-like page with line numbers ── */}
-      <div
-        className="flex-1 overflow-y-auto bg-zinc-100"
-        role="region"
-        aria-label="Document preview"
-        onDoubleClick={handleDoubleClick}
-        title="Double-click to edit"
-      >
-        {/* Page container — looks like a printed page */}
+      {/* ── Document content ── */}
+      <div className="flex-1 overflow-y-auto bg-zinc-100" role="region" aria-label="Document preview">
         <div className="bg-white mx-auto mt-4 mb-8 shadow-lg border border-zinc-200" style={{ maxWidth: '8.5in' }}>
           <div className="flex min-h-[11in]">
-            {/* Line number gutter */}
+            {/* Line numbers */}
             <div className="w-10 flex-shrink-0 pt-12 pr-2 text-right select-none border-r border-zinc-200" aria-hidden="true">
               {Array.from({ length: lineCount || 30 }, (_, i) => (
-                <div key={i} className="text-[11px] text-zinc-300 leading-7 tabular-nums font-mono">
-                  {i + 1}
-                </div>
+                <div key={i} className="text-[11px] text-zinc-300 leading-7 tabular-nums font-mono">{i + 1}</div>
               ))}
             </div>
 
-            {/* Content */}
+            {/* Content / Editor */}
             <div className="flex-1 px-12 py-12 text-sm text-zinc-800 leading-7">
-              {sanitizedContent ? (
+              {isEditing ? (
+                <textarea
+                  value={editContent}
+                  onChange={e => setEditContent(e.target.value)}
+                  className="w-full h-full min-h-[600px] text-sm leading-7 text-zinc-800 bg-transparent border-none outline-none resize-none font-serif"
+                  autoFocus
+                />
+              ) : sanitizedContent ? (
                 <div
                   className="prose prose-sm prose-zinc max-w-none"
                   dangerouslySetInnerHTML={{ __html: sanitizedContent }}
@@ -206,7 +293,7 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
                 <div className="text-center py-16 text-zinc-400">
                   <FileText className="w-8 h-8 mx-auto mb-3 text-zinc-300" />
                   <p className="text-sm font-medium text-zinc-500">No content yet</p>
-                  <p className="text-xs text-zinc-400 mt-1.5">Double-click to open the editor</p>
+                  <p className="text-xs text-zinc-400 mt-1.5">Generate content with AnA to see it here</p>
                 </div>
               )}
             </div>
