@@ -2814,6 +2814,18 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             }}
             onAddComment={handleAddCommentFromEditor}
             cancelCommentId={cancelCommentId}
+            onSelectionUpdate={(editor) => {
+              if (!editor || !collaboration.emitCursorMove) return;
+              const { from } = editor.state.selection;
+              const coords = editor.view.coordsAtPos(from);
+              if (coords) {
+                const editorRect = editor.view.dom.getBoundingClientRect();
+                collaboration.emitCursorMove({
+                  x: coords.left - editorRect.left,
+                  y: coords.top - editorRect.top,
+                });
+              }
+            }}
             onLiveContentChange={html => {
               onContentChange?.(html, activeArtifact?.title || '');
               triggerAutoSave(html);

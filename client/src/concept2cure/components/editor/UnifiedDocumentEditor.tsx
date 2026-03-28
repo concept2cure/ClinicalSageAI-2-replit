@@ -186,6 +186,8 @@ export interface UnifiedDocumentEditorProps {
   className?: string;
   /** Live content callback for outline sync */
   onLiveContentChange?: (html: string) => void;
+  /** Selection/cursor change callback for collaboration cursor emission */
+  onSelectionUpdate?: (editor: any) => void;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1116,6 +1118,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   collaborators,
   className = '',
   onLiveContentChange,
+  onSelectionUpdate,
 }) => {
   const modeCtx = useDocumentModeOptional();
   const resolvedMode: DocumentMode =
@@ -1201,6 +1204,9 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
     editable: caps.editable,
     onUpdate: ({ editor }) => {
       onLiveContentChange?.(editor.getHTML());
+    },
+    onSelectionUpdate({ editor }) {
+      onSelectionUpdate?.(editor);
     },
   });
 

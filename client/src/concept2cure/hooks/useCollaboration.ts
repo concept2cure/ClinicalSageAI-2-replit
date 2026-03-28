@@ -79,7 +79,7 @@ export function useCollaboration(documentId: string | null): UseDocumentCollabor
     (position: { x: number; y: number; section?: string }): void => {
       socket.emitCursorMove(position);
       if (firestore.isConnected) {
-        firestore.updateCursor(position.x);
+        firestore.updateCursor(position.x + position.y * 10000);
       }
     },
     [socket, firestore],

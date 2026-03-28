@@ -2918,6 +2918,7 @@ export const ZenApp: React.FC = () => {
                   }
                 }}
                 onOpenConfig={() => setEditProjectOpen(true)}
+                onOpenSearch={() => setCommandPaletteOpen(true)}
                 onSuggestedPrompt={prompt => {
                   setExternalChatMessage({ text: prompt, ts: Date.now() });
                 }}

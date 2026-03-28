@@ -30,6 +30,8 @@ import {
   Shield,
   Search,
   BarChart3,
+  Activity,
+  Plus,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -47,6 +49,7 @@ interface ProjectHomeDashboardProps {
   onNavigate: (mode: string, sectionCode?: string) => void;
   onOpenConfig?: () => void;
   onSuggestedPrompt?: (prompt: string) => void;
+  onOpenSearch?: () => void;
 }
 
 interface Artifact {
@@ -59,6 +62,17 @@ interface Artifact {
   ctdSection?: string;
   updatedAt?: string;
   createdAt?: string;
+}
+
+interface ActivityItem {
+  id: string;
+  type: string;
+  activityType: string;
+  entityType: string;
+  entityId: string;
+  description: string;
+  userName?: string | null;
+  timestamp: string;
 }
 
 const PHARMA_TYPES = ['IND', 'NDA', 'BLA', 'MAA'];
@@ -143,6 +157,7 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
   onNavigate,
   onOpenConfig,
   onSuggestedPrompt,
+  onOpenSearch,
 }) => {
   const { data: artifacts, isLoading: artifactsLoading } = useQuery<Artifact[]>({
     queryKey: queryKeys.projects.overviewArtifacts(project.id),
@@ -153,6 +168,18 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
       return Array.isArray(json.data) ? json.data : [];
     },
     staleTime: 30_000,
+  });
+
+  // Activity feed — what happened recently
+  const { data: activityFeed } = useQuery<ActivityItem[]>({
+    queryKey: ['concept2cure', 'projects', project.id, 'activity'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${project.id}/activity?limit=5`);
+      if (!res.ok) return [];
+      const json = await res.json();
+      return Array.isArray(json.data) ? json.data : [];
+    },
+    staleTime: 60_000,
   });
 
   const upperType = (project.type || '').toUpperCase();
@@ -221,15 +248,26 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
               <p className="text-[13px] text-stone-500 mt-1 leading-relaxed line-clamp-1">{project.description}</p>
             )}
           </div>
-          {onOpenConfig && (
-            <button
-              onClick={onOpenConfig}
-              aria-label="Project settings"
-              className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none mt-0.5"
-            >
-              <Settings2 className="w-4 h-4" />
-            </button>
-          )}
+          <div className="flex items-center gap-1 mt-0.5">
+            {onOpenSearch && (
+              <button
+                onClick={onOpenSearch}
+                aria-label="Search documents"
+                className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+              >
+                <Search className="w-4 h-4" />
+              </button>
+            )}
+            {onOpenConfig && (
+              <button
+                onClick={onOpenConfig}
+                aria-label="Project settings"
+                className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+              >
+                <Settings2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* ── Loading skeleton ─────────────────────────────────────────── */}
@@ -329,6 +367,32 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
             </button>
           </div>
         </div>}
+
+        {/* ── Row 3.5: Recent Activity ─────────────────────────────────────── */}
+        {activityFeed && activityFeed.length > 0 && (
+          <div className="mt-4 pt-3 border-t border-stone-100">
+            <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wide flex items-center gap-1.5 mb-2">
+              <Activity className="w-3 h-3" />
+              Recent activity
+            </span>
+            <div className="space-y-1">
+              {activityFeed.slice(0, 4).map(item => {
+                const icon = item.activityType === 'create' ? <Plus className="w-3 h-3" />
+                  : item.activityType === 'update' ? <PenLine className="w-3 h-3" />
+                  : item.activityType === 'review' || item.activityType === 'approve' ? <CheckCircle className="w-3 h-3" />
+                  : <Activity className="w-3 h-3" />;
+                return (
+                  <div key={item.id} className="flex items-center gap-2.5 px-2 py-1.5 text-[12px] text-stone-500">
+                    <span className="text-stone-400 flex-shrink-0">{icon}</span>
+                    <span className="truncate flex-1">{item.description}</span>
+                    {item.userName && <span className="text-stone-400 flex-shrink-0 text-[10px]">{item.userName.split(' ')[0]}</span>}
+                    <span className="text-stone-400 flex-shrink-0 text-[10px] tabular-nums">{relativeTime(item.timestamp)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ── Row 4: Suggested Prompts (Claude-style) ─────────────────────── */}
         <div className="mt-4 pt-3 border-t border-stone-100">

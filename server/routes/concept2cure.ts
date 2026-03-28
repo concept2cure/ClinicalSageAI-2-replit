@@ -1930,6 +1930,85 @@ router.get('/projects/:projectId/knowledge', async (req: Request, res: Response)
 });
 
 /**
+ * GET /api/concept2cure/projects/:projectId/activity
+ * Returns a merged activity feed: explicit project_activities + recent artifact updates.
+ */
+router.get('/projects/:projectId/activity', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const numericProjectId = parseInt(req.params.projectId.replace('proj_', ''), 10);
+
+    if (isNaN(numericProjectId)) {
+      return sendError(res, 400, 'Invalid project ID');
+    }
+
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+
+    // Fetch from projectActivities table
+    const activities = await pool.query(
+      `SELECT pa.id, pa.activity_type, pa.entity_type, pa.entity_id, pa.description, pa.details, pa.created_at,
+              u.full_name as user_name, u.email as user_email
+       FROM project_activities pa
+       LEFT JOIN users u ON u.id = pa.user_id
+       WHERE pa.project_id = $1 AND pa.organization_id = $2
+       ORDER BY pa.created_at DESC
+       LIMIT $3`,
+      [numericProjectId, organizationId, limit]
+    );
+
+    // Also get recently modified artifacts as activity items
+    const recentArtifacts = await pool.query(
+      `SELECT id, artifact_id, title, status, category, type, updated_at, created_at, version
+       FROM concept2cure_artifacts
+       WHERE project_id = $1 AND organization_id = $2
+       ORDER BY updated_at DESC
+       LIMIT 10`,
+      [numericProjectId, organizationId]
+    );
+
+    // Merge and sort by timestamp
+    const feed = [
+      ...activities.rows.map((a: any) => ({
+        id: `act-${a.id}`,
+        type: 'activity' as const,
+        activityType: a.activity_type,
+        entityType: a.entity_type,
+        entityId: a.entity_id,
+        description: a.description,
+        details: a.details,
+        userName: a.user_name || a.user_email || 'System',
+        timestamp: a.created_at,
+      })),
+      ...recentArtifacts.rows.map((a: any) => ({
+        id: `doc-${a.id}`,
+        type: 'document_update' as const,
+        activityType: a.version > 1 ? 'update' : 'create',
+        entityType: 'document',
+        entityId: a.artifact_id || a.id,
+        description: a.version > 1
+          ? `Updated "${a.title || 'Untitled'}" to v${a.version}`
+          : `Created "${a.title || 'Untitled'}"`,
+        details: { status: a.status, category: a.category, type: a.type },
+        userName: null,
+        timestamp: a.updated_at || a.created_at,
+      })),
+    ]
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, limit);
+
+    return sendSuccess(res, feed);
+  } catch (error: any) {
+    logger.error('Failed to fetch project activity', { error: error.message });
+    return sendError(res, 500, 'Failed to fetch project activity');
+  }
+});
+
+/**
  * PATCH /api/concept2cure/projects/:projectId/knowledge
  * Update knowledge base metadata (custom instructions, context).
  */
