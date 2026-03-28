@@ -289,6 +289,11 @@ const INDChecklistView = lazy(() =>
     default: m.INDChecklist,
   }))
 );
+const TemplateLibraryView = lazy(() =>
+  import('./components/submission/TemplateLibrary').then(m => ({
+    default: m.default,
+  }))
+);
 const HAQManagerView = lazy(() =>
   import('./components/workflow/HAQManager').then(m => ({
     default: m.HAQManager,
@@ -406,6 +411,7 @@ type LayoutMode =
   | 'section-workspace' // Sub-view within Work
   | 'csr-workflow' // CSR guided authoring (ICH E3)
   | 'ind-checklist' // IND requirements checklist (21 CFR 312.23)
+  | 'template-library' // Template browser and creation
   // ── Canonical workspace + editor ──
   | 'regulatory-workspace'
   | 'editor'
@@ -949,7 +955,7 @@ export const ZenApp: React.FC = () => {
     'vault-workspace': 'vault',
     'review-readiness': 'review',
     'clinical-trial': 'documents',
-    templates: 'documents',
+    // templates: now a real layout mode — removed from DEMOTED_REDIRECTS
     'document-builder': 'documents',
     artifacts: 'artifacts-center',
     sherpa: 'projects',
@@ -3164,6 +3170,35 @@ export const ZenApp: React.FC = () => {
             </Suspense>
           )}
 
+          {/* ── Unified Workflow: Template Library ──────────────────────── */}
+          {!embeddedModule && (layoutMode === 'template-library' || layoutMode === 'templates') && (
+            <Suspense fallback={<ModuleLoadingFallback />}>
+              <div className="flex-1 flex flex-col min-h-0">
+                <div className="flex items-center gap-3 border-b border-stone-200 bg-white px-6 py-3">
+                  <button
+                    type="button"
+                    onClick={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+                    className="inline-flex items-center gap-1 text-sm text-stone-500 hover:text-stone-700"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back
+                  </button>
+                  <h1 className="text-lg font-semibold text-stone-900">Template Library</h1>
+                </div>
+                <TemplateLibraryView
+                  onSelectTemplate={(template) => {
+                    // Navigate to section workspace with template context
+                    if (template.ctdSection) {
+                      setActiveSectionCode(template.ctdSection);
+                    }
+                    setLayoutMode('section-workspace');
+                  }}
+                  onClose={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+                />
+              </div>
+            </Suspense>
+          )}
+
           {/* ── Unified Workflow: Section Workspace ──────────────────────── */}
           {!embeddedModule && layoutMode === 'section-workspace' && (
             <Suspense fallback={<ModuleLoadingFallback />}>
@@ -3850,5 +3885,7 @@ const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
   'task-board': 'task-board',
   'csr-workflow': 'csr-workflow',
   'ind-checklist': 'ind-checklist',
+  templates: 'template-library',
+  'template-library': 'template-library',
   tools: 'documents',
 };

@@ -2187,7 +2187,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     }}
                     onOpenIntelligence={onSwitchToIntelligence}
                     onOpenSubmissions={onNavigate ? () => onNavigate('submissions') : undefined}
-                    onOpenTemplates={undefined}
+                    onOpenTemplates={onNavigate ? () => onNavigate('template-library') : undefined}
                     onOpenTaskBoard={onNavigate ? () => onNavigate('task-board') : undefined}
                     onOpenCSRWorkflow={onNavigate ? () => onNavigate('csr-workflow') : undefined}
                     onOpenINDChecklist={onNavigate ? () => onNavigate('ind-checklist') : undefined}
