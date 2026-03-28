@@ -545,7 +545,9 @@ export function ProjectDashboard({
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-stone-500">
             Quick Actions
           </h2>
-          <div className="grid grid-cols-2 gap-3">
+
+          {/* Primary actions — larger, more prominent */}
+          <div className="grid grid-cols-2 gap-3 mb-3">
             <ActionCard
               icon={FilePlus}
               title="Create Document"
@@ -553,51 +555,41 @@ export function ProjectDashboard({
               onClick={onCreateDocument}
             />
             <ActionCard
-              icon={PenLine}
-              title="All Documents"
-              subtitle="Browse and edit all documents"
-              onClick={onOpenEditor}
-            />
-            <ActionCard
               icon={FolderOpen}
               title="View Dossier"
               subtitle="Browse the CTD dossier tree"
               onClick={onOpenDossier}
             />
-            <ActionCard
-              icon={Brain}
-              title="AI Intelligence"
-              subtitle="Regulatory insights and analysis"
-              onClick={onOpenIntelligence}
-            />
-            <ActionCard
-              icon={Package}
-              title="Submissions"
-              subtitle="eCTD builder and packaging"
-              onClick={onOpenSubmissions}
-            />
-            <ActionCard
-              icon={BookOpen}
-              title="Templates"
-              subtitle="Regulatory document templates"
-              onClick={onOpenTemplates}
-            />
-            {onOpenCSRWorkflow && (
-              <ActionCard
-                icon={Activity}
-                title="CSR Authoring"
-                subtitle="Guided ICH E3 sections 1-16"
-                onClick={onOpenCSRWorkflow}
-              />
-            )}
-            {onOpenINDChecklist && (
-              <ActionCard
-                icon={Shield}
-                title="IND Checklist"
-                subtitle="21 CFR 312.23 requirements"
-                onClick={onOpenINDChecklist}
-              />
-            )}
+          </div>
+
+          {/* Secondary actions — compact list style */}
+          <div className="space-y-0.5">
+            {[
+              { icon: PenLine, label: 'All Documents', onClick: onOpenEditor },
+              { icon: Brain, label: 'AI Intelligence', onClick: onOpenIntelligence },
+              { icon: Package, label: 'Submissions', onClick: onOpenSubmissions },
+              { icon: BookOpen, label: 'Templates', onClick: onOpenTemplates },
+              ...(onOpenCSRWorkflow ? [{ icon: Activity, label: 'CSR Authoring (ICH E3)', onClick: onOpenCSRWorkflow }] : []),
+              ...(onOpenINDChecklist ? [{ icon: Shield, label: 'IND Checklist (21 CFR 312.23)', onClick: onOpenINDChecklist }] : []),
+            ].filter(a => a.onClick).map(action => {
+              const Icon = action.icon;
+              return (
+                <button
+                  key={action.label}
+                  type="button"
+                  onClick={action.onClick}
+                  className={cn(
+                    'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left',
+                    'text-sm text-stone-700 transition-colors hover:bg-stone-50 hover:text-stone-900',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40',
+                  )}
+                >
+                  <Icon size={15} className="text-stone-400 flex-shrink-0" />
+                  <span>{action.label}</span>
+                  <ChevronRight size={13} className="ml-auto text-stone-300" />
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>

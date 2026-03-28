@@ -39,6 +39,16 @@ import {
   Shield,
   Pin,
   PinOff,
+  Sparkles,
+  Settings,
+  LayoutDashboard,
+  Wrench,
+  Send,
+  Activity,
+  ListChecks,
+  ClipboardCheck,
+  BookOpen,
+  Pill,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -960,6 +970,12 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
                   onClick={() => onNavigate?.('overview')}
                 />
                 <NavItem
+                  icon={<ListChecks className="w-3.5 h-3.5" />}
+                  label="Tasks"
+                  active={activeNavId === 'task-board'}
+                  onClick={() => onNavigate?.('task-board')}
+                />
+                <NavItem
                   icon={<Wrench className="w-3.5 h-3.5" />}
                   label="Tools"
                   active={activeNavId === 'work'}
@@ -1117,6 +1133,18 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               label="Submission Builder"
               active={activeNavId === 'submission-builder'}
               onClick={() => onNavigate?.('submission-builder')}
+            />
+            <NavItem
+              icon={<Activity className="w-3.5 h-3.5" />}
+              label="CSR Authoring"
+              active={activeNavId === 'csr-workflow'}
+              onClick={() => onNavigate?.('csr-workflow')}
+            />
+            <NavItem
+              icon={<ClipboardCheck className="w-3.5 h-3.5" />}
+              label="IND Checklist"
+              active={activeNavId === 'ind-checklist'}
+              onClick={() => onNavigate?.('ind-checklist')}
             />
             <NavItem
               icon={<FlaskConical className="w-3.5 h-3.5" />}

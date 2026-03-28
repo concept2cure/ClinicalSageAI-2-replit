@@ -499,6 +499,10 @@ const PRIMARY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
   'vault-workspace': 'vault',
   'review-readiness': 'verify',
   'report-engine': 'haq',
+  'task-board': 'task-board',
+  'csr-workflow': 'csr-workflow',
+  'ind-checklist': 'ind-checklist',
+  'template-library': 'templates',
 };
 
 const LEGACY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
@@ -2208,6 +2212,11 @@ export const ZenApp: React.FC = () => {
             case 'clinical-module5':
             case 'cmc':
             case 'ri-copilot':
+            case 'task-board':
+            case 'csr-workflow':
+            case 'ind-checklist':
+            case 'templates':
+            case 'template-library':
               setLayoutMode(SIDEBAR_NAV_TO_LAYOUT[id] ?? 'projects');
               if (id === 'ri-copilot') setRiViewMode('intelligence');
               if (id === 'submission-builder') setRiViewMode('editor');
@@ -3110,24 +3119,28 @@ export const ZenApp: React.FC = () => {
           {/* ── Unified Workflow: Task Board (full Kanban view) ──────────── */}
           {!embeddedModule && layoutMode === 'task-board' && activeProjectId && (
             <Suspense fallback={<ModuleLoadingFallback />}>
-              <div className="flex-1 flex flex-col min-h-0 p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <button
-                    type="button"
-                    onClick={() => setLayoutMode('project-home')}
-                    className="inline-flex items-center gap-1 text-sm text-stone-500 hover:text-stone-700"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    Back
-                  </button>
-                  <h1 className="text-lg font-semibold text-stone-900">
-                    {activeProject?.name} — Tasks
-                  </h1>
+              <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-stone-50/50">
+                <div className="sticky top-0 z-10 border-b border-stone-200 bg-white/95 backdrop-blur-sm px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setLayoutMode('project-home')}
+                      className="text-stone-500 hover:text-stone-700"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                    </button>
+                    <div>
+                      <h1 className="text-lg font-semibold text-stone-900">Tasks & Milestones</h1>
+                      <p className="text-xs text-stone-500">{activeProject?.name || 'Project'}</p>
+                    </div>
+                  </div>
                 </div>
-                <ProjectTaskBoardView
-                  projectId={activeProjectId}
-                  projectType={activeProject?.type}
-                />
+                <div className="flex-1 min-h-0 p-6">
+                  <ProjectTaskBoardView
+                    projectId={activeProjectId}
+                    projectType={activeProject?.type}
+                  />
+                </div>
               </div>
             </Suspense>
           )}
@@ -3173,17 +3186,21 @@ export const ZenApp: React.FC = () => {
           {/* ── Unified Workflow: Template Library ──────────────────────── */}
           {!embeddedModule && (layoutMode === 'template-library' || layoutMode === 'templates') && (
             <Suspense fallback={<ModuleLoadingFallback />}>
-              <div className="flex-1 flex flex-col min-h-0">
-                <div className="flex items-center gap-3 border-b border-stone-200 bg-white px-6 py-3">
-                  <button
-                    type="button"
-                    onClick={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
-                    className="inline-flex items-center gap-1 text-sm text-stone-500 hover:text-stone-700"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    Back
-                  </button>
-                  <h1 className="text-lg font-semibold text-stone-900">Template Library</h1>
+              <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-stone-50/50">
+                <div className="sticky top-0 z-10 border-b border-stone-200 bg-white/95 backdrop-blur-sm px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+                      className="text-stone-500 hover:text-stone-700"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                    </button>
+                    <div>
+                      <h1 className="text-lg font-semibold text-stone-900">Template Library</h1>
+                      <p className="text-xs text-stone-500">Regulatory document templates</p>
+                    </div>
+                  </div>
                 </div>
                 <TemplateLibraryView
                   onSelectTemplate={(template) => {
@@ -3204,169 +3221,47 @@ export const ZenApp: React.FC = () => {
             <Suspense fallback={<ModuleLoadingFallback />}>
               <SectionWorkspace
                 section={(() => {
-                  // Resolve section metadata from active section code
+                  // Resolve section metadata from real project artifacts + CTD hierarchy
                   const code = activeSectionCode || '2.5';
-                  const SECTION_LOOKUP: Record<
-                    string,
-                    {
-                      title: string;
-                      module: string;
-                      status:
-                        | 'not-started'
-                        | 'drafting'
-                        | 'in-review'
-                        | 'approved'
-                        | 'blocked'
-                        | 'locked';
-                    }
-                  > = {
-                    '1.1': {
-                      title: 'Forms',
-                      module: 'Module 1 — Administrative',
-                      status: 'approved',
-                    },
-                    '1.2': {
-                      title: 'Cover Letter',
-                      module: 'Module 1 — Administrative',
-                      status: 'approved',
-                    },
-                    '1.3.1': {
-                      title: 'Form FDA 1571',
-                      module: 'Module 1 — Administrative',
-                      status: 'approved',
-                    },
-                    '1.3.2': {
-                      title: 'Form FDA 1572',
-                      module: 'Module 1 — Administrative',
-                      status: 'drafting',
-                    },
-                    '1.3.3': {
-                      title: 'Financial Disclosure',
-                      module: 'Module 1 — Administrative',
-                      status: 'not-started',
-                    },
-                    '2.2': {
-                      title: 'Introduction',
-                      module: 'Module 2 — CTD Summaries',
-                      status: 'drafting',
-                    },
-                    '2.3': {
-                      title: 'Quality Overall Summary',
-                      module: 'Module 2 — CTD Summaries',
-                      status: 'not-started',
-                    },
-                    '2.4': {
-                      title: 'Nonclinical Overview',
-                      module: 'Module 2 — CTD Summaries',
-                      status: 'not-started',
-                    },
-                    '2.5': {
-                      title: 'Clinical Overview',
-                      module: 'Module 2 — CTD Summaries',
-                      status: 'drafting',
-                    },
-                    '2.6.1': {
-                      title: 'Pharmacology',
-                      module: 'Module 2 — CTD Summaries',
-                      status: 'not-started',
-                    },
-                    '2.6.2': {
-                      title: 'Pharmacokinetics',
-                      module: 'Module 2 — CTD Summaries',
-                      status: 'not-started',
-                    },
-                    '2.6.3': {
-                      title: 'Toxicology',
-                      module: 'Module 2 — CTD Summaries',
-                      status: 'not-started',
-                    },
-                    '2.7.1': {
-                      title: 'Biopharmaceutic Studies',
-                      module: 'Module 2 — CTD Summaries',
-                      status: 'not-started',
-                    },
-                    '2.7.2': {
-                      title: 'Clinical Pharmacology',
-                      module: 'Module 2 — CTD Summaries',
-                      status: 'not-started',
-                    },
-                    '2.7.3': {
-                      title: 'Clinical Efficacy',
-                      module: 'Module 2 — CTD Summaries',
-                      status: 'drafting',
-                    },
-                    '2.7.4': {
-                      title: 'Clinical Safety',
-                      module: 'Module 2 — CTD Summaries',
-                      status: 'not-started',
-                    },
-                    '2.7.5': {
-                      title: 'Literature References',
-                      module: 'Module 2 — CTD Summaries',
-                      status: 'not-started',
-                    },
-                    '2.7.6': {
-                      title: 'Synopses',
-                      module: 'Module 2 — CTD Summaries',
-                      status: 'not-started',
-                    },
-                    '3.2.S': {
-                      title: 'Drug Substance',
-                      module: 'Module 3 — Quality',
-                      status: 'in-review',
-                    },
-                    '3.2.P': {
-                      title: 'Drug Product',
-                      module: 'Module 3 — Quality',
-                      status: 'in-review',
-                    },
-                    '3.2.A': {
-                      title: 'Appendices',
-                      module: 'Module 3 — Quality',
-                      status: 'not-started',
-                    },
-                    '3.2.R': {
-                      title: 'Regional Information',
-                      module: 'Module 3 — Quality',
-                      status: 'not-started',
-                    },
-                    '4.2.1': {
-                      title: 'Pharmacology',
-                      module: 'Module 4 — Nonclinical',
-                      status: 'not-started',
-                    },
-                    '4.2.2': {
-                      title: 'Pharmacokinetics',
-                      module: 'Module 4 — Nonclinical',
-                      status: 'not-started',
-                    },
-                    '4.2.3': {
-                      title: 'Toxicology',
-                      module: 'Module 4 — Nonclinical',
-                      status: 'not-started',
-                    },
-                    '5.2': {
-                      title: 'Tabular Listing of Studies',
-                      module: 'Module 5 — Clinical',
-                      status: 'not-started',
-                    },
-                    '5.3': {
-                      title: 'Clinical Study Reports',
-                      module: 'Module 5 — Clinical',
-                      status: 'blocked',
-                    },
-                    '5.4': {
-                      title: 'Literature References',
-                      module: 'Module 5 — Clinical',
-                      status: 'not-started',
-                    },
+
+                  // Module name from the section code prefix
+                  const moduleNum = code.charAt(0);
+                  const MODULE_NAMES: Record<string, string> = {
+                    '1': 'Module 1 — Administrative',
+                    '2': 'Module 2 — CTD Summaries',
+                    '3': 'Module 3 — Quality',
+                    '4': 'Module 4 — Nonclinical',
+                    '5': 'Module 5 — Clinical',
                   };
-                  const found = SECTION_LOOKUP[code];
+
+                  // Find matching artifact by CTD section
+                  const matchingArtifact = projectArtifacts.find((a: any) =>
+                    a.ctdSection === code ||
+                    a.ctdSection === `csr-${code}` ||
+                    a.ctdSection === `m${moduleNum}-${code}`
+                  );
+
+                  // Derive status from real artifact if found
+                  let status: 'not-started' | 'drafting' | 'in-review' | 'approved' | 'blocked' | 'locked' = 'not-started';
+                  if (matchingArtifact) {
+                    const s = matchingArtifact.status;
+                    if (s === 'approved') status = 'approved';
+                    else if (s === 'locked' || s === 'published') status = 'locked';
+                    else if (s === 'review' || s === 'in_review') status = 'in-review';
+                    else if (s === 'blocked') status = 'blocked';
+                    else status = 'drafting';
+                  }
+
+                  // Title: prefer artifact title, fall back to section code
+                  const title = matchingArtifact?.title || `Section ${code}`;
+
                   return {
                     code,
-                    title: found?.title || `Section ${code}`,
-                    status: found?.status || 'not-started',
-                    module: found?.module || 'Unknown Module',
+                    title,
+                    status,
+                    module: MODULE_NAMES[moduleNum] || 'Unknown Module',
+                    version: matchingArtifact?.version,
+                    lastEditedAt: matchingArtifact?.updatedAt,
                   };
                 })()}
                 projectName={activeProject?.name}
@@ -3375,6 +3270,38 @@ export const ZenApp: React.FC = () => {
                 contradictions={sectionContradictions}
                 onContextChange={handleAuthoringContextChange}
                 onBack={() => setLayoutMode('dossier-map')}
+                onOpenInEditor={(() => {
+                  // If there's a matching artifact, provide a way to open it in the full editor
+                  const code = activeSectionCode || '2.5';
+                  const moduleNum = code.charAt(0);
+                  const matchingArtifact = projectArtifacts.find((a: any) =>
+                    a.ctdSection === code ||
+                    a.ctdSection === `csr-${code}` ||
+                    a.ctdSection === `m${moduleNum}-${code}`
+                  );
+                  if (matchingArtifact) {
+                    return () => {
+                      setOpenArtifactId(matchingArtifact.id);
+                      setRiViewMode('editor');
+                      setLayoutMode('regulatory-workspace');
+                    };
+                  }
+                  return undefined;
+                })()}
+                onCreateDraft={activeProjectId ? () => {
+                  const code = activeSectionCode || '2.5';
+                  const moduleNum = code.charAt(0);
+                  const MODULE_NAMES: Record<string, string> = {
+                    '1': 'Administrative', '2': 'CTD Summaries', '3': 'Quality', '4': 'Nonclinical', '5': 'Clinical',
+                  };
+                  setPendingEditorContent({
+                    title: `Section ${code} — ${MODULE_NAMES[moduleNum] || 'Document'}`,
+                    content: '',
+                    ctdSection: code,
+                  });
+                  setRiViewMode('editor');
+                  setLayoutMode('regulatory-workspace');
+                } : undefined}
               />
             </Suspense>
           )}

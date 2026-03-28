@@ -10,7 +10,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
-import { FileText, AlertTriangle, BookOpen, History, XCircle } from 'lucide-react';
+import { FileText, AlertTriangle, BookOpen, History, XCircle, PenLine, FilePlus, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { EmptyState } from '@/components/ui/statesV2';
@@ -85,6 +85,10 @@ interface SectionWorkspaceProps {
   contradictions?: ContradictionEntry[];
   /** Callback to update parent's authoring context when section state changes */
   onContextChange?: (ctx: Partial<AuthoringContextPack>) => void;
+  /** Opens the full document editor for the existing artifact */
+  onOpenInEditor?: () => void;
+  /** Creates a new draft document for this section and opens the editor */
+  onCreateDraft?: () => void;
 }
 
 type TabId = 'editor' | 'issues' | 'evidence' | 'versions';
@@ -105,6 +109,8 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
   readiness,
   contradictions,
   onContextChange,
+  onOpenInEditor,
+  onCreateDraft,
 }) => {
   const [activeTab, setActiveTab] = useState<TabId>('editor');
   const [editorContent, setEditorContent] = useState(initialContent || '');
@@ -259,6 +265,18 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
         }
         actions={
           <>
+            {onOpenInEditor && (
+              <Button onClick={onOpenInEditor} variant="default" size="sm" className="gap-1.5">
+                <PenLine className="h-3.5 w-3.5" />
+                Open in Editor
+              </Button>
+            )}
+            {!onOpenInEditor && onCreateDraft && section.status === 'not-started' && (
+              <Button onClick={onCreateDraft} variant="default" size="sm" className="gap-1.5">
+                <FilePlus className="h-3.5 w-3.5" />
+                Create Draft
+              </Button>
+            )}
             {onSave && section.status !== 'locked' && section.status !== 'approved' && (
               <Button onClick={handleSave} disabled={isSaving} variant="default" size="sm">
                 {isSaving ? <Spinner size="sm" /> : 'Save'}
@@ -286,13 +304,66 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
       <div className="flex-1 overflow-auto min-h-0">
         {activeTab === 'editor' && (
           <div className="p-6">
-            <textarea
-              value={editorContent}
-              onChange={e => setEditorContent(e.target.value)}
-              readOnly={section.status === 'locked' || section.status === 'approved'}
-              placeholder={`Begin drafting ${section.title}...\n\nAnA can help — ask her to "draft section ${section.code}" or "explain what blocks promotion".`}
-              className="w-full min-h-[400px] p-4 text-sm text-stone-800 bg-white border border-stone-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-stone-300 font-serif leading-relaxed"
-            />
+            {/* When an existing document is linked, show a clear path to the full editor */}
+            {onOpenInEditor ? (
+              <div className="space-y-4">
+                <div className="rounded-xl border border-stone-200 bg-white p-8 text-center">
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-stone-100">
+                    <PenLine className="h-6 w-6 text-stone-500" />
+                  </div>
+                  <h3 className="text-base font-semibold text-stone-900 mb-1">
+                    Document exists for this section
+                  </h3>
+                  <p className="text-sm text-stone-500 mb-5 max-w-md mx-auto">
+                    Open the full document editor with rich text, comments, version history, compliance scanning, and AI assistance.
+                  </p>
+                  <Button onClick={onOpenInEditor} variant="default" size="default" className="gap-2">
+                    <ExternalLink className="h-4 w-4" />
+                    Open in Full Editor
+                  </Button>
+                </div>
+
+                {/* Quick preview with textarea fallback */}
+                <details className="group">
+                  <summary className="cursor-pointer text-xs text-stone-400 hover:text-stone-600 transition-colors">
+                    Quick edit (plain text)
+                  </summary>
+                  <textarea
+                    value={editorContent}
+                    onChange={e => setEditorContent(e.target.value)}
+                    readOnly={section.status === 'locked' || section.status === 'approved'}
+                    placeholder={`Begin drafting ${section.title}...`}
+                    className="mt-2 w-full min-h-[200px] p-4 text-sm text-stone-800 bg-white border border-stone-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-stone-300 font-serif leading-relaxed"
+                  />
+                </details>
+              </div>
+            ) : section.status === 'not-started' && onCreateDraft ? (
+              /* Section has no document yet — prompt to create one */
+              <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50/50 p-8 text-center">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-stone-100">
+                  <FilePlus className="h-6 w-6 text-stone-400" />
+                </div>
+                <h3 className="text-base font-semibold text-stone-900 mb-1">
+                  No document for Section {section.code}
+                </h3>
+                <p className="text-sm text-stone-500 mb-5 max-w-md mx-auto">
+                  Create a new document for this CTD section. The full editor includes AI-assisted drafting, regulatory templates, and compliance checking.
+                </p>
+                <Button onClick={onCreateDraft} variant="default" size="default" className="gap-2">
+                  <FilePlus className="h-4 w-4" />
+                  Create Document
+                </Button>
+              </div>
+            ) : (
+              /* Fallback: plain textarea editor */
+              <textarea
+                value={editorContent}
+                onChange={e => setEditorContent(e.target.value)}
+                readOnly={section.status === 'locked' || section.status === 'approved'}
+                placeholder={`Begin drafting ${section.title}...\n\nAnA can help — ask her to "draft section ${section.code}" or "explain what blocks promotion".`}
+                className="w-full min-h-[400px] p-4 text-sm text-stone-800 bg-white border border-stone-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-stone-300 font-serif leading-relaxed"
+              />
+            )}
           </div>
         )}
 
