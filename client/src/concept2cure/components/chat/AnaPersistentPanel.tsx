@@ -20,6 +20,9 @@ import type { AIActionType, AIActionSourceSurface } from '../../hooks/useAIActio
 import {
   Sparkles,
   ArrowUp,
+  Square,
+  RefreshCw,
+  Pencil,
   Copy,
   Check,
   RotateCcw,
@@ -627,7 +630,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const [messages, setMessages] = useState<AnaMessage[]>([]);
   const [input, setInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [chatMode, setChatMode] = useState<'standard' | 'deep-research' | 'nano-banana'>(
     defaultChatMode
@@ -1219,10 +1225,41 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialMessage]);
 
+  // ── Stop generating ──────────────────────────────────────────────────────────
+  const handleStop = useCallback(() => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+    setIsThinking(false);
+  }, []);
+
+  // ── Regenerate last assistant message ────────────────────────────────────────
+  const handleRegenerate = useCallback(() => {
+    // Find the last user message and resend it
+    const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+    if (lastUserMsg) {
+      // Remove the last assistant message
+      setMessages(prev => {
+        const lastAssistantIdx = prev.findLastIndex(m => m.role === 'assistant');
+        if (lastAssistantIdx >= 0) {
+          return prev.slice(0, lastAssistantIdx);
+        }
+        return prev;
+      });
+      // Resend
+      handleSend(lastUserMsg.content);
+    }
+  }, [messages]); // handleSend added below after it's defined
+
   const handleSend = useCallback(
     async (messageText?: string) => {
       const text = messageText || input.trim();
       if (!text || isThinking) return;
+
+      // Create AbortController for this request so user can stop generation
+      const controller = new AbortController();
+      abortRef.current = controller;
 
       const userMsg: AnaMessage = {
         id: `u-${Date.now()}`,
@@ -1568,6 +1605,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               method: 'POST',
               headers: chatHeaders,
               credentials: 'include',
+              signal: controller.signal,
               body: chatBody,
             });
             // Auto-refresh token on 401 and retry once
@@ -3672,9 +3710,52 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         {isUser ? 'You' : 'AnA'}
                       </span>
                       {isUser ? (
-                        <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5">
-                          {msg.content}
-                        </p>
+                        editingMsgId === msg.id ? (
+                          /* Claude-style: inline edit mode */
+                          <div className="mt-1">
+                            <textarea
+                              value={editText}
+                              onChange={e => setEditText(e.target.value)}
+                              className="w-full text-sm text-[#2D2C28] leading-relaxed border border-zinc-300 rounded-lg px-3 py-2 resize-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                              rows={3}
+                              autoFocus
+                            />
+                            <div className="flex gap-2 mt-1.5">
+                              <button
+                                onClick={() => {
+                                  if (editText.trim()) {
+                                    const msgIdx = messages.findIndex(m => m.id === msg.id);
+                                    setMessages(prev => prev.slice(0, msgIdx));
+                                    setEditingMsgId(null);
+                                    handleSend(editText.trim());
+                                  }
+                                }}
+                                className="px-3 py-1 text-xs font-medium text-white bg-zinc-900 rounded-md hover:bg-zinc-800"
+                              >
+                                Send
+                              </button>
+                              <button
+                                onClick={() => setEditingMsgId(null)}
+                                className="px-3 py-1 text-xs text-zinc-500 hover:text-zinc-700"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="group/user flex items-start gap-1 mt-0.5">
+                            <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap flex-1">
+                              {msg.content}
+                            </p>
+                            <button
+                              onClick={() => { setEditingMsgId(msg.id); setEditText(msg.content); }}
+                              className="opacity-0 group-hover/user:opacity-100 p-1 text-zinc-400 hover:text-zinc-600 rounded transition-opacity flex-shrink-0"
+                              title="Edit message"
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )
                       ) : (
                         <>
                           <div
@@ -3851,6 +3932,14 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             ) : (
                               <Copy className="w-3 h-3" />
                             )}
+                          </button>
+                          {/* Regenerate — Claude-style retry on assistant messages */}
+                          <button
+                            onClick={handleRegenerate}
+                            className="p-1 text-[#B0AEA5] hover:text-[#4D4B45] hover:bg-[#F5F4EF] rounded transition-colors"
+                            title="Regenerate"
+                          >
+                            <RefreshCw className="w-3 h-3" />
                           </button>
                           <button
                             onClick={() => {
@@ -4465,20 +4554,30 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"
             />
 
-            {/* Send */}
-            <button
-              onClick={() => handleSend()}
-              disabled={!input.trim() || isThinking}
-              className={cn(
-                'flex-shrink-0 p-2 rounded-full transition-colors duration-150',
-                input.trim() && !isThinking
-                  ? 'bg-[#141413] text-white hover:bg-[#2D2C28]'
-                  : 'bg-[#E8E6DC] text-[#B0AEA5] cursor-not-allowed'
-              )}
-              aria-label="Send message"
-            >
-              <ArrowUp className="w-4 h-4" />
-            </button>
+            {/* Send / Stop — Claude-style: shows Stop during generation */}
+            {isThinking ? (
+              <button
+                onClick={handleStop}
+                className="flex-shrink-0 p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors duration-150"
+                aria-label="Stop generating"
+              >
+                <Square className="w-4 h-4 fill-current" />
+              </button>
+            ) : (
+              <button
+                onClick={() => handleSend()}
+                disabled={!input.trim()}
+                className={cn(
+                  'flex-shrink-0 p-2 rounded-full transition-colors duration-150',
+                  input.trim()
+                    ? 'bg-[#141413] text-white hover:bg-[#2D2C28]'
+                    : 'bg-[#E8E6DC] text-[#B0AEA5] cursor-not-allowed'
+                )}
+                aria-label="Send message"
+              >
+                <ArrowUp className="w-4 h-4" />
+              </button>
+            )}
           </div>
 
           {useFirecrawl && (
