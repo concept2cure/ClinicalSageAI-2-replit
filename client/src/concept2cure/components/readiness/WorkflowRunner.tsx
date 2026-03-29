@@ -2,6 +2,8 @@
  * WorkflowRunner — Execute and track multi-step orchestration workflows.
  */
 import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   useWorkflowExecution,
   useWorkflowTemplates,
@@ -49,25 +51,25 @@ export function WorkflowRunner({ projectId, module, onComplete }: WorkflowRunner
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
               Workflow
             </label>
-            <select
-              value={selectedTemplate}
-              onChange={(e) => setSelectedTemplate(e.target.value)}
-              className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm px-3 py-2 text-gray-900 dark:text-gray-100"
-            >
-              {templates.map((t) => (
-                <option key={t.templateId} value={t.templateId}>
-                  {t.name} ({t.stepCount} steps, ~{t.estimatedDurationMinutes}m)
-                </option>
-              ))}
-            </select>
+            <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+              <SelectTrigger className="w-full h-9 text-sm">
+                <SelectValue placeholder="Select workflow" />
+              </SelectTrigger>
+              <SelectContent>
+                {templates.map((t) => (
+                  <SelectItem key={t.templateId} value={t.templateId}>
+                    {t.name} ({t.stepCount} steps, ~{t.estimatedDurationMinutes}m)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <button
+          <Button
             onClick={handleRun}
             disabled={isRunning}
-            className="px-4 py-2 rounded-md bg-stone-700 text-white text-sm font-medium hover:bg-stone-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isRunning ? 'Running...' : 'Run Workflow'}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -95,20 +97,24 @@ export function WorkflowRunner({ projectId, module, onComplete }: WorkflowRunner
             </div>
             <div className="flex items-center gap-2">
               {execution.status === 'running' && (
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => cancel(execution.executionId)}
-                  className="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="text-xs"
                 >
                   Cancel
-                </button>
+                </Button>
               )}
               {(execution.status === 'completed' || execution.status === 'failed') && (
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={reset}
-                  className="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="text-xs"
                 >
                   New Run
-                </button>
+                </Button>
               )}
             </div>
           </div>

@@ -328,16 +328,18 @@ export const DossierMap: React.FC<DossierMapProps> = ({
                                 {sectionArtifacts.length}
                               </span>
                             )}
-                          </button>
+                          </Button>
                           {!hasArtifacts && onCreateForSection && (
-                            <button
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => onCreateForSection(sec.code, sec.title)}
-                              className="opacity-0 group-hover:opacity-100 text-[10px] text-stone-400 hover:text-stone-700 px-2 py-1 rounded hover:bg-stone-100 transition-all flex items-center gap-1 shrink-0"
+                              className="opacity-0 group-hover:opacity-100 h-auto px-2 py-1 text-[10px] text-stone-400 hover:text-stone-700 shrink-0"
                               title={`Create draft for ${sec.code}`}
                             >
                               <Plus className="w-3 h-3" />
                               Create
-                            </button>
+                            </Button>
                           )}
                           <WorkspaceStatusBadge
                             status={sec.status}
