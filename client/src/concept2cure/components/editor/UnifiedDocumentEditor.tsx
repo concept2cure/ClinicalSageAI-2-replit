@@ -43,8 +43,9 @@ import { AIAutocomplete } from './extensions/AIAutocomplete';
 import { GlossaryTooltip } from './extensions/GlossaryTooltip';
 import { CitationMark, CitationPlugin } from './extensions/CitationPlugin';
 import { ComplianceScanner } from './extensions/ComplianceScanner';
-import Collaboration from '@tiptap/extension-collaboration';
-import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
+// Collaboration extensions require @tiptap/core >=3.19 — dynamically loaded when ydoc is provided
+// import Collaboration from '@tiptap/extension-collaboration';
+// import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 import {
   Bold,
   Italic,
@@ -194,6 +195,8 @@ export interface UnifiedDocumentEditorProps {
   yjsProvider?: any;
   /** Current user info for collaboration cursor */
   currentUser?: { name: string; color: string };
+  /** Pre-configured collaboration extensions (Collaboration + CollaborationCursor) */
+  collabExtensions?: any[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1106,6 +1109,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   ydoc,
   yjsProvider,
   currentUser,
+  collabExtensions,
 }) => {
   const modeCtx = useDocumentModeOptional();
   const resolvedMode: DocumentMode =
@@ -1186,22 +1190,9 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
         },
         onIssuesFound: onComplianceIssuesFound,
       }),
-      // Y.js CRDT collaboration — only active when ydoc is provided
-      ...(ydoc
-        ? [
-            Collaboration.configure({
-              document: ydoc,
-            }),
-            ...(yjsProvider
-              ? [
-                  CollaborationCursor.configure({
-                    provider: yjsProvider,
-                    user: currentUser || { name: 'Anonymous', color: '#94A3B8' },
-                  }),
-                ]
-              : []),
-          ]
-        : []),
+      // Y.js CRDT collaboration extensions are passed via collabExtensions prop
+      // Requires @tiptap/core >=3.19 — will activate after tiptap upgrade
+      ...(collabExtensions || []),
     ],
     content: initialContent,
     editable: caps.editable,

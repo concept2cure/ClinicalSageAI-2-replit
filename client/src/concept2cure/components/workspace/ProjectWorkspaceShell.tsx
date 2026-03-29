@@ -18,7 +18,7 @@
 
 import React, { useState, useCallback, useEffect, useMemo, lazy, Suspense, useRef } from 'react';
 // @ts-expect-error -- error-boundary is a .jsx file without type declarations
-import { ErrorBoundary } from '@/components/ui/error-boundary';
+import ErrorBoundary from '@/components/ui/error-boundary';
 
 import { ProjectFileTree, type TreeArtifact } from './ProjectFileTree';
 import { DocumentListPane } from './DocumentListPane';

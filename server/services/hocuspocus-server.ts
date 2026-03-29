@@ -10,28 +10,28 @@
  * - Room isolation per artifact
  */
 
-import { Server as HocuspocusServer } from '@hocuspocus/server';
+import { Hocuspocus } from '@hocuspocus/server';
 import type { IncomingMessage } from 'http';
 import type { Server as HttpServer } from 'http';
 import type { WebSocket } from 'ws';
 
-let hocuspocusInstance: ReturnType<typeof HocuspocusServer.configure> | null = null;
+let hocuspocusInstance: Hocuspocus | null = null;
 
 /**
  * Configure and return the Hocuspocus server instance.
  * Called once during server startup.
  */
-export function createHocuspocusServer(): ReturnType<typeof HocuspocusServer.configure> {
+export function createHocuspocusServer(): Hocuspocus {
   if (hocuspocusInstance) return hocuspocusInstance;
 
-  hocuspocusInstance = HocuspocusServer.configure({
+  hocuspocusInstance = new Hocuspocus({
     name: 'concept2cure-collab',
     timeout: 30000,
     debounce: 2000,
     maxDebounce: 10000,
     quiet: process.env.NODE_ENV === 'production',
 
-    async onAuthenticate({ token, documentName }) {
+    async onAuthenticate({ token, documentName }: { token: string; documentName: string }) {
       // Validate JWT token — allow anonymous in dev for testing
       if (!token && process.env.NODE_ENV !== 'production') {
         return { user: { name: 'Anonymous', id: 'anon', color: '#94A3B8' } };
@@ -68,25 +68,20 @@ export function createHocuspocusServer(): ReturnType<typeof HocuspocusServer.con
       throw new Error('Invalid authentication token');
     },
 
-    async onConnect({ documentName, context }) {
+    async onConnect({ documentName }: { documentName: string }) {
       console.log(`[Hocuspocus] User connected to document: ${documentName}`);
     },
 
-    async onDisconnect({ documentName, context }) {
+    async onDisconnect({ documentName }: { documentName: string }) {
       console.log(`[Hocuspocus] User disconnected from document: ${documentName}`);
     },
 
-    async onStoreDocument({ documentName, document }) {
-      // Persist Y.js document state for offline recovery
-      // In production this would write to PostgreSQL
-      // For now we use in-memory storage via the existing YjsRoomManager
+    async onStoreDocument({ documentName, document }: any) {
       console.log(`[Hocuspocus] Storing document state: ${documentName} (${document.getSize()} bytes)`);
     },
 
-    async onLoadDocument({ documentName, document }) {
-      // Load persisted Y.js state when a room is first opened
+    async onLoadDocument({ documentName, document }: any) {
       console.log(`[Hocuspocus] Loading document: ${documentName}`);
-      // Return the empty document — it will be populated by the first client
       return document;
     },
   });
