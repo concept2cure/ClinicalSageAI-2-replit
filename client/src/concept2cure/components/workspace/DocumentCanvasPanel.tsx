@@ -13,6 +13,7 @@ import React, { useMemo, useCallback, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import { queryKeys } from '@/concept2cure/hooks/queryKeys';
 import {
   X,
@@ -74,6 +75,7 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
   isFullscreen,
   onToggleFullscreen,
 }) => {
+  const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
@@ -120,9 +122,9 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
       });
       setIsEditing(false);
     } catch {
-      // Save failed — stay in edit mode
+      toast({ title: 'Save failed', description: 'Your changes could not be saved. Please try again.', variant: 'destructive' });
     }
-  }, [projectId, artifactId, editContent]);
+  }, [projectId, artifactId, editContent, toast]);
 
   const handleDownload = useCallback(async (format: 'pdf' | 'docx' | 'xml') => {
     if (!artifact) return;
@@ -169,9 +171,9 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
         URL.revokeObjectURL(url);
       }
     } catch {
-      // Download failed silently — could add toast here
+      toast({ title: 'Download failed', description: `Could not export as ${format.toUpperCase()}.`, variant: 'destructive' });
     }
-  }, [artifact]);
+  }, [artifact, toast]);
 
   // ── Loading ─────────────────────────────────────────────────────────────────
   if (isLoading) {

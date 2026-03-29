@@ -85,7 +85,7 @@ import {
   type InspectorRibbonGroup,
 } from '@/components/ui/workspace-primitives';
 import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
+
 import { LoadingState } from '@/components/ui/statesV2';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -3113,8 +3113,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             lastScanTime={lastScanTime}
             onNavigateToIssue={(issue) => {
               if (issue) {
-                // Scroll to issue location in editor
-                console.log(`[Compliance] Navigate to issue at position ${issue.from}-${issue.to}`);
+                // TODO: integrate with editor ref to scroll to issue.from position
+                pushToast(`Compliance issue at position ${issue.from}–${issue.to}: ${issue.message}`, 'info');
               }
             }}
             onFixIssue={(issue) => {
