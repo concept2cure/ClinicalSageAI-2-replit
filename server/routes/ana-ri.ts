@@ -649,6 +649,47 @@ router.post('/chat', async (req: Request, res: Response) => {
       }).catch(() => {});
     }
 
+    // Guidance executor — auto-create artifacts if response contains action signals (non-blocking)
+    const chatProjectIdForActions = req.body.project_id || req.body.context?.projectId;
+    let executedActions: any[] = [];
+    if (response.content && chatProjectIdForActions && orgId) {
+      try {
+        const guidance = await processResponseActions(response.content, {
+          projectId: typeof chatProjectIdForActions === 'string' ? parseInt(chatProjectIdForActions, 10) : chatProjectIdForActions,
+          organizationId: Number(orgId),
+          userId: typeof userId === 'number' ? userId : 0,
+          userName: 'AnA',
+          threadId: resolvedThreadId || undefined,
+        });
+        executedActions = guidance.actions;
+      } catch (e: unknown) {
+        console.warn('[AnA RI] Guidance executor failed:', e instanceof Error ? e.message : String(e));
+      }
+    }
+
+    // Command executor — execute operational commands (create project, artifact, task, etc.) (non-blocking)
+    let executedCommands: any[] = [];
+    if (response.content && orgId) {
+      try {
+        const cmdCtx: CommandContext = {
+          userId: typeof userId === 'number' ? userId : 0,
+          organizationId: Number(orgId),
+          activeProjectId: chatProjectIdForActions
+            ? typeof chatProjectIdForActions === 'string'
+              ? parseInt(chatProjectIdForActions, 10)
+              : chatProjectIdForActions
+            : undefined,
+        };
+        const cmdResult = await processCommandsInResponse(response.content, cmdCtx);
+        executedCommands = cmdResult.executedCommands;
+        if (executedCommands.length > 0) {
+          console.log(`[AnA RI] Executed ${executedCommands.length} command(s)`);
+        }
+      } catch (e: unknown) {
+        console.warn('[AnA RI] Command executor failed:', e instanceof Error ? e.message : String(e));
+      }
+    }
+
     // Parse grounding mode from AnA's response
     const groundingInfo = parseGroundingMode(response.content);
     const cleanedResponse = stripGroundingBlock(response.content);
@@ -706,6 +747,8 @@ router.post('/chat', async (req: Request, res: Response) => {
       model: response.model,
       usage: response.usage,
       persistenceFailed,
+      executedActions,
+      executedCommands,
       _meta: {
         ...(correlationId && { correlationId }),
         ...(source_surface ? { sourceSurface: source_surface } : {}),

@@ -3,7 +3,7 @@ import { Send, PenLine, Check, RefreshCw, FileText, AlertTriangle, Clock, FilePl
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { queryKeys } from '@/concept2cure/hooks/queryKeys';
-import { DataStateWrapper } from '@/components/ui/statesV2';
+import { DataStateWrapper, SkeletonTable } from '@/components/ui/statesV2';
 import {
   WorkspaceHeader,
   WorkspaceCanvas,
@@ -118,9 +118,12 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
 }) => {
   const queryClient = useQueryClient();
 
-  const { data: sections, isLoading: sectionsLoading, error, isFetching: sectionsFetching } = useQuery<Array<{ code: string; title: string; status: string }>>({
+  const { data: sections, isLoading: sectionsLoading, error, isFetching: sectionsFetching, refetch } = useQuery<Array<{ code: string; title: string; status: string }>>({
     queryKey: queryKeys.ind.projectSections(projectId || 'none'),
-    queryFn: () => apiRequest(`/api/project-sections?projectId=${projectId}`),
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/project-sections?projectId=${projectId}`);
+      return res.json();
+    },
     enabled: !!projectId,
     staleTime: 15_000,
     refetchOnWindowFocus: true,
@@ -131,7 +134,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
     queryKey: queryKeys.submission.projectArtifacts(projectId || 'none'),
     queryFn: async () => {
       const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts`);
-      const json = typeof res === 'object' && 'json' in res ? await (res as Response).json() : res;
+      const json = await res.json();
       return json?.data || json || [];
     },
     enabled: !!projectId,
@@ -147,7 +150,6 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
     queryKey: queryKeys.ind.status(projectId || 'none'),
     queryFn: async () => {
       const res = await apiRequest('GET', `/api/ind/status/${projectId}`);
-      if (!res.ok) return { sections: [] };
       const json = await res.json();
       return json.data || { sections: [] };
     },
@@ -161,7 +163,6 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
     queryKey: queryKeys.device.status(upperType, projectId || 'none'),
     queryFn: async () => {
       const res = await apiRequest('GET', `/api/ind/device-status/${upperType}/${projectId}`);
-      if (!res.ok) return { sections: [] };
       const json = await res.json();
       return json.data || { sections: [] };
     },
@@ -223,7 +224,10 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
         data={readinessItems}
         isLoading={isLoading && !!projectId}
         error={error}
+        retry={refetch}
+        emptyTitle="No submission sections"
         emptyDescription="No sections found yet. Start by creating documents for your CTD sections, then return here to track submission readiness."
+        loadingComponent={<SkeletonTable rows={6} cols={3} />}
       >
         {(items) => (
           <WorkspaceCanvas>

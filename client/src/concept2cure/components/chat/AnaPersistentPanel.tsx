@@ -49,6 +49,7 @@ import {
   FolderOpen,
 } from 'lucide-react';
 import { ToolExecutionBlock, ThinkingBlock, DoneIndicator } from './ClaudeStyleBlocks';
+import { Button } from '@/components/ui/button';
 
 marked.setOptions({ breaks: true, gfm: true });
 
@@ -518,6 +519,9 @@ const SLASH_COMMANDS: SlashCommand[] = [
   { command: '/deficiencies', description: 'Known deficiency patterns', category: 'Analysis' },
   { command: '/simulate', description: 'Simulate reviewer challenges', category: 'Analysis' },
   { command: '/precedent', description: 'Similar products / predicates', category: 'Analysis' },
+  { command: '/iss', description: 'Integrated Summary of Safety — compile safety data across studies', category: 'Analysis' },
+  { command: '/ise', description: 'Integrated Summary of Efficacy — compile efficacy data across studies', category: 'Analysis' },
+  { command: '/ib', description: "Investigator's Brochure — generate or review IB content", category: 'Analysis' },
   // Biostatistics
   { command: '/sap', description: 'Generate Statistical Analysis Plan', category: 'Biostatistics' },
   { command: '/power', description: 'Sample size and power calculation', category: 'Biostatistics' },
@@ -530,6 +534,9 @@ const SLASH_COMMANDS: SlashCommand[] = [
   { command: '/csr', description: 'Clinical study report analysis', category: 'Subspecialties' },
   { command: '/device', description: '510(k), PMA, De Novo intelligence', category: 'Subspecialties' },
   { command: '/ectd', description: 'Module structure / artifact placement', category: 'Subspecialties' },
+  { command: '/smpc', description: 'Summary of Product Characteristics — EU labeling document', category: 'Subspecialties' },
+  { command: '/rmp', description: 'Risk Management Plan — EU pharmacovigilance document', category: 'Subspecialties' },
+  { command: '/uspi', description: 'US Prescribing Information — FDA labeling document', category: 'Subspecialties' },
   // Document Authoring
   { command: '/draft', description: 'Draft submission-ready CTD section', category: 'Authoring' },
   { command: '/audit', description: 'Hostile reviewer audit', category: 'Authoring' },
@@ -539,6 +546,8 @@ const SLASH_COMMANDS: SlashCommand[] = [
   { command: '/memo', description: 'Risk assessment memo (go/no-go)', category: 'Authoring' },
   { command: '/brief', description: 'Reviewer question anticipation brief', category: 'Authoring' },
   { command: '/strategy', description: 'Regulatory strategy note', category: 'Authoring' },
+  { command: '/narrative', description: 'Generate a regulatory narrative for the current section', category: 'Authoring' },
+  { command: '/report', description: 'Generate a structured report for the project', category: 'Authoring' },
   // Document Lifecycle
   { command: '/checklist', description: 'Compliance checklist generation', category: 'Lifecycle' },
   { command: '/freeze', description: 'Freeze document (immutable snapshot)', category: 'Lifecycle' },
@@ -4070,7 +4079,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           )}
                           {/* Visual AI PPTX download button */}
                           {msg.pptx && (
-                            <button
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => {
                                 const blob = new Blob(
                                   [Uint8Array.from(atob(msg.pptx!.base64), c => c.charCodeAt(0))],
@@ -4083,12 +4094,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 a.click();
                                 URL.revokeObjectURL(url);
                               }}
-                              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-colors"
+                              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-colors h-auto"
                               aria-label={`Download ${msg.pptx!.filename}`}
                             >
                               <Download className="w-3.5 h-3.5" />
                               {msg.pptx.filename}
-                            </button>
+                            </Button>
                           )}
                         </>
                       )}
@@ -4240,9 +4251,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 : 'Firecrawl requested'}
                             </span>
                           )}
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handleCopy(msg.id, msg.content)}
-                            className="p-1 text-[#B0AEA5] hover:text-[#4D4B45] hover:bg-[#F5F4EF] rounded transition-colors"
+                            className="p-1 text-[#B0AEA5] hover:text-[#4D4B45] hover:bg-[#F5F4EF] rounded transition-colors h-auto w-auto"
                             title="Copy"
                             aria-label="Copy message"
                           >
@@ -4251,47 +4264,55 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             ) : (
                               <Copy className="w-3 h-3" />
                             )}
-                          </button>
+                          </Button>
                           {/* Regenerate — Claude-style retry on assistant messages */}
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={handleRegenerate}
-                            className="p-1 text-[#B0AEA5] hover:text-[#4D4B45] hover:bg-[#F5F4EF] rounded transition-colors"
+                            className="p-1 text-[#B0AEA5] hover:text-[#4D4B45] hover:bg-[#F5F4EF] rounded transition-colors h-auto w-auto"
                             title="Regenerate"
                             aria-label="Regenerate response"
                           >
                             <RefreshCw className="w-3 h-3" />
-                          </button>
-                          <button
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => {
                               apiRequest('POST', '/api/concept2cure/feedback', {
                                 messageId: msg.id,
                                 positive: true,
                               }).catch(() => {});
                             }}
-                            className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded transition-colors"
+                            className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded transition-colors h-auto w-auto"
                             title="Good"
                             aria-label="Rate response as good"
                           >
                             <ThumbsUp className="w-3 h-3" />
-                          </button>
-                          <button
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => {
                               apiRequest('POST', '/api/concept2cure/feedback', {
                                 messageId: msg.id,
                                 positive: false,
                               }).catch(() => {});
                             }}
-                            className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded transition-colors"
+                            className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded transition-colors h-auto w-auto"
                             title="Bad"
                             aria-label="Rate response as bad"
                           >
                             <ThumbsDown className="w-3 h-3" />
-                          </button>
+                          </Button>
                           {/* Save to Vault — persist AI response as a governed artifact */}
                           {contextProfile?.projectId &&
                             msg.content.length > 100 &&
                             !msg.savedAsArtifact && (
-                              <button
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 onClick={async () => {
                                   const numProjId = String(contextProfile.projectId).replace(
                                     /^proj_/,
@@ -4319,12 +4340,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                     /* non-blocking */
                                   }
                                 }}
-                                className="p-1 text-stone-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                                className="p-1 text-stone-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors h-auto w-auto"
                                 title="Save to Vault"
                                 aria-label="Save to Vault"
                               >
                                 <Download className="w-3 h-3" />
-                              </button>
+                              </Button>
                             )}
                           {/* Insert into Editor — when onDraftInsert is available and content is substantial */}
                           {onDraftInsert &&
@@ -4395,40 +4416,48 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             {msg.grounding.mode === 'inferred' && (
                               <>
                                 {!contextProfile?.projectId && (
-                                  <button
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
                                     onClick={() => handleSend('Show me my projects so I can select one.')}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-colors"
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-colors h-auto"
                                   >
                                     Select a project
-                                  </button>
+                                  </Button>
                                 )}
                                 {contextProfile?.projectId && (
-                                  <button
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
                                     onClick={() => handleSend('/status')}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-colors"
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-colors h-auto"
                                   >
                                     Load project context
-                                  </button>
+                                  </Button>
                                 )}
                               </>
                             )}
                             {msg.grounding.mode === 'blocked' && (
                               <>
-                                <button
+                                <Button
+                                  variant="outline"
+                                  size="sm"
                                   onClick={() => handleSend('What do I need to fix to unblock this?')}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-red-700 bg-red-50 hover:bg-red-100 border border-red-200/60 transition-colors"
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-red-700 bg-red-50 hover:bg-red-100 border border-red-200/60 transition-colors h-auto"
                                 >
                                   How to unblock
-                                </button>
+                                </Button>
                               </>
                             )}
                             {msg.grounding.confidence === 'low' && (
-                              <button
+                              <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={() => handleSend('What additional context would help you give a better answer?')}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-stone-600 bg-stone-50 hover:bg-stone-100 border border-stone-200/60 transition-colors"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-stone-600 bg-stone-50 hover:bg-stone-100 border border-stone-200/60 transition-colors h-auto"
                               >
                                 Improve answer
-                              </button>
+                              </Button>
                             )}
                           </div>
                         )}
@@ -4442,14 +4471,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           if (nextStep.length < 5 || nextStep.length > 120) return null;
                           return (
                             <div className="mt-2 flex flex-wrap gap-1.5">
-                              <button
+                              <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={() => handleSend(nextStep)}
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200/60 transition-colors max-w-full"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200/60 transition-colors max-w-full h-auto"
                                 data-testid="ana-next-step-chip"
                               >
                                 <span className="truncate">{nextStep.length > 80 ? nextStep.slice(0, 77) + '...' : nextStep}</span>
                                 <span className="text-blue-400 flex-shrink-0">→</span>
-                              </button>
+                              </Button>
                             </div>
                           );
                         })()}

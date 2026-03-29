@@ -78,6 +78,9 @@ const AUTHORING: DomainPromptGroup = {
     { id: 'auth-amend', label: 'Amend my document with change tracking' },
     { id: 'auth-review', label: 'Conduct a regulatory review of the current section' },
     { id: 'auth-claims', label: 'Analyze evidence chains and find unsupported claims' },
+    { id: 'auth-lock-check', label: 'Check if this document is locked or approved before editing' },
+    { id: 'auth-ctd-reqs', label: 'What are the regulatory requirements for this CTD section?' },
+    { id: 'auth-next-step', label: 'Suggest the next step for this document' },
   ],
 };
 
@@ -206,6 +209,20 @@ const KNOWLEDGE: DomainPromptGroup = {
   ],
 };
 
+const CONTEXT_TRANSPARENCY: DomainPromptGroup = {
+  domain: 'context-transparency',
+  label: 'Context & Transparency',
+  prompts: [
+    { id: 'ctx-memory', label: 'What memory context did you use for your last answer?' },
+    { id: 'ctx-sources', label: 'Show me what sources informed your response' },
+    { id: 'ctx-grounding', label: 'What is your current grounding mode?' },
+    { id: 'ctx-enrichment', label: 'Which enrichment sources failed in the last response?' },
+    { id: 'ctx-freshness', label: 'How fresh is the project context in this conversation?' },
+    { id: 'ctx-ctd-guidance', label: 'What CTD section guidance applies to my current document?' },
+    { id: 'ctx-confidence', label: 'Show me the confidence level of your last response' },
+  ],
+};
+
 const REPORTS: DomainPromptGroup = {
   domain: 'reports',
   label: 'Reports & Export',
@@ -233,6 +250,7 @@ export const ALL_DOMAIN_GROUPS: DomainPromptGroup[] = [
   LABELING,
   DOSSIER,
   KNOWLEDGE,
+  CONTEXT_TRANSPARENCY,
   REPORTS,
 ];
 
@@ -268,13 +286,13 @@ const CONTEXT_DOMAIN_MAP: Record<string, string[]> = {
 
   // Strategy / intelligence
   'strategy':           ['strategy', 'risk', 'recommendations', 'reports'],
-  'intelligence':       ['risk', 'strategy', 'recommendations', 'knowledge'],
+  'intelligence':       ['risk', 'strategy', 'recommendations', 'knowledge', 'context-transparency'],
   'foresight':          ['risk', 'strategy', 'recommendations', 'project-status'],
   'precedent':          ['strategy', 'risk', 'authoring', 'recommendations'],
 
   // Dossier / vault
   'dossier-map':        ['dossier', 'authoring', 'recommendations', 'doc-lifecycle'],
-  'vault':              ['knowledge', 'reports', 'dossier', 'doc-lifecycle'],
+  'vault':              ['knowledge', 'context-transparency', 'reports', 'dossier', 'doc-lifecycle'],
 
   // Labeling
   'labeling':           ['labeling', 'authoring', 'strategy', 'doc-lifecycle'],
