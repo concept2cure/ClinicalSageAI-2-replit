@@ -18,6 +18,7 @@ import type { GatewayMessage } from '../services/ai-gateway/types.js';
 import {
   orchestrate,
   prefetchProjectIntelligence,
+  extractThreadIntelligence,
   type OrchestratorInput,
   type IntentLens,
   type UserRole,
@@ -1135,6 +1136,12 @@ router.post('/stream', async (req: Request, res: Response) => {
       } catch (e: unknown) {
         console.warn('[AnA RI Stream] Command executor failed:', e instanceof Error ? e.message : 'unknown error');
       }
+    }
+
+    // Extract intelligence from conversation (non-blocking, every 6th message)
+    if (project_id && orgId && messages.length >= 6 && messages.length % 6 === 0) {
+      extractThreadIntelligence(messages, project_id, orgId)
+        .catch((e: unknown) => console.warn('[AnA RI] Intelligence extraction failed:', e instanceof Error ? e.message : String(e)));
     }
 
     // Warn client if thread persistence failed
