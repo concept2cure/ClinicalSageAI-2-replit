@@ -169,7 +169,7 @@ export function SectionHeader({
   level = 2,
 }: SectionHeaderProps) {
   const headingStyle = {
-    1: 'text-base font-medium tracking-tight',
+    1: 'text-lg font-semibold tracking-tight',
     2: 'text-lg font-semibold',
     3: 'text-base font-semibold',
   }[level];
@@ -591,9 +591,9 @@ interface TextProps {
   readonly as?: 'p' | 'span' | 'div' | 'label';
 }
 
-/** Page title — text-base font-medium tracking-tight */
+/** Page title — text-lg font-semibold tracking-tight */
 export function PageTitle({ children, className }: TextProps) {
-  return <h1 className={cn('text-base font-medium tracking-tight text-stone-900', className)}>{children}</h1>;
+  return <h1 className={cn('text-lg font-semibold tracking-tight text-stone-900', className)}>{children}</h1>;
 }
 
 /** Section heading — text-lg font-semibold. Defaults to h2 for proper document outline. */
@@ -803,7 +803,7 @@ export function PageHeader({ title, subtitle, actions, className }: PageHeaderPr
   return (
     <div className={cn('flex items-start justify-between gap-4', className)}>
       <div>
-        <h1 className="text-base font-medium text-stone-900 tracking-tight">{title}</h1>
+        <h1 className="text-lg font-semibold text-stone-900 tracking-tight">{title}</h1>
         {subtitle && <p className="mt-1 text-sm text-stone-500">{subtitle}</p>}
       </div>
       {actions && <div className="flex items-center gap-2 flex-shrink-0">{actions}</div>}

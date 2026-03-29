@@ -405,7 +405,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               <div
                 className="prose prose-sm prose-stone max-w-none
                   prose-headings:font-semibold prose-headings:text-stone-900 prose-headings:leading-snug
-                  prose-h1:text-base prose-h2:text-lg prose-h3:text-base
+                  prose-h1:text-lg prose-h2:text-base prose-h3:text-sm
                   prose-p:text-stone-700 prose-p:leading-relaxed prose-p:my-2
                   prose-strong:text-stone-900 prose-strong:font-semibold
                   prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono prose-code:before:content-none prose-code:after:content-none
