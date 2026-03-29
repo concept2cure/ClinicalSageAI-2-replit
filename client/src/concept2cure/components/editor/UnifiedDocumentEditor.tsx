@@ -79,6 +79,7 @@ import { AIAutocomplete } from './extensions/AIAutocomplete';
 import { GlossaryTooltip } from './extensions/GlossaryTooltip';
 import { CitationMark, CitationPlugin } from './extensions/CitationPlugin';
 import { ComplianceScanner } from './extensions/ComplianceScanner';
+import { TrackChanges } from './extensions/TrackChangesExtension';
 // Collaboration extensions require @tiptap/core >=3.19 — dynamically loaded when ydoc is provided
 // import Collaboration from '@tiptap/extension-collaboration';
 // import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
@@ -603,6 +604,26 @@ const Toolbar: React.FC<ToolbarProps> = ({
       >
         <Search className="w-4 h-4" />
       </ToolButton>
+
+      <div className="w-px h-5 bg-stone-200 mx-0.5" />
+
+      {/* Track Changes — Suggestion Mode Toggle */}
+      <button
+        onClick={() => (editor as any).commands.toggleSuggestionMode()}
+        className={`flex items-center gap-1 px-2 py-1.5 rounded text-xs font-medium transition-colors ${
+          (editor as any).extensionManager?.extensions?.find((e: any) => e.name === 'trackChanges')?.options?.enabled
+            ? 'bg-green-100 text-green-700 border border-green-300'
+            : 'text-stone-500 hover:bg-stone-100'
+        }`}
+        title="Toggle Suggestion Mode — edits become tracked changes"
+      >
+        <Eye className="w-3.5 h-3.5" />
+        <span className="hidden sm:inline">
+          {(editor as any).extensionManager?.extensions?.find((e: any) => e.name === 'trackChanges')?.options?.enabled
+            ? 'Suggesting'
+            : 'Editing'}
+        </span>
+      </button>
 
       {/* AI Actions dropdown — replaces separate SmartToolbar row */}
       {onAIAction && (
@@ -1343,6 +1364,11 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
           submissionType: submissionType,
         },
         onIssuesFound: onComplianceIssuesFound,
+      }),
+      TrackChanges.configure({
+        enabled: false,
+        authorId: getCurrentUser()?.id ?? 'unknown',
+        authorName: getCurrentUser()?.name ?? 'Unknown',
       }),
       // Y.js CRDT collaboration extensions are passed via collabExtensions prop
       // Requires @tiptap/core >=3.19 — will activate after tiptap upgrade
