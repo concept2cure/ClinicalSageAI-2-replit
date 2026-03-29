@@ -1,0 +1,44 @@
+name: Ops Audit Plan
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/audits/**'
+      - 'tests/ops/**'
+      - 'package.json'
+      - '.github/workflows/ops-audit-plan.yml'
+  workflow_dispatch:
+
+jobs:
+  ops-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ops audit unit tests
+        run: npm run test:ops-audits
+
+      - name: Execute strict audit plan
+        run: npm run audit:last-20-prs:plan:strict
+
+      - name: Upload audit artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ops-audit-reports
+          path: |
+            docs/audits/LAST_*_PRS_WIRING_AUDIT_*.md
+            docs/audits/LAST_*_PRS_BUILD_PLAN_EXECUTION_*.md
+            docs/audits/LAST_*_PRS_BUILD_PLAN_EXECUTION_*.json
+          if-no-files-found: warn
