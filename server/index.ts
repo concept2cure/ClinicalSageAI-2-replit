@@ -7565,6 +7565,17 @@ async function startServer() {
   }
 
   // ──────────────────────────────────────────────────────────────────────────
+  // CONNECTOR LIBRARY (self-service connector catalog, toggle, setup guides)
+  // ──────────────────────────────────────────────────────────────────────────
+  try {
+    const connectorLibraryModule = await import('./routes/connector-library.ts');
+    app.use('/api/connectors', connectorLibraryModule.default);
+    console.log('✅ Connector Library routes mounted (catalog, toggle, guides, search)');
+  } catch (error) {
+    console.error('❌ Failed to mount Connector Library routes:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
   // ADVANCED PLATFORM CAPABILITIES (GraphRAG, Digital Twin, RWE, etc.)
   // ──────────────────────────────────────────────────────────────────────────
   try {
