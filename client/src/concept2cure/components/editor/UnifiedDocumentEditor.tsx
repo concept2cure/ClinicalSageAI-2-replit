@@ -43,6 +43,8 @@ import { AIAutocomplete } from './extensions/AIAutocomplete';
 import { GlossaryTooltip } from './extensions/GlossaryTooltip';
 import { CitationMark, CitationPlugin } from './extensions/CitationPlugin';
 import { ComplianceScanner } from './extensions/ComplianceScanner';
+import Collaboration from '@tiptap/extension-collaboration';
+import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 import {
   Bold,
   Italic,
@@ -186,6 +188,12 @@ export interface UnifiedDocumentEditorProps {
   onLiveContentChange?: (html: string) => void;
   /** Selection/cursor change callback for collaboration cursor emission */
   onSelectionUpdate?: (editor: any) => void;
+  /** Y.js document for CRDT collaboration (from useYjsProvider) */
+  ydoc?: any;
+  /** Hocuspocus provider for awareness sync */
+  yjsProvider?: any;
+  /** Current user info for collaboration cursor */
+  currentUser?: { name: string; color: string };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1095,6 +1103,9 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   className = '',
   onLiveContentChange,
   onSelectionUpdate,
+  ydoc,
+  yjsProvider,
+  currentUser,
 }) => {
   const modeCtx = useDocumentModeOptional();
   const resolvedMode: DocumentMode =
@@ -1175,6 +1186,22 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
         },
         onIssuesFound: onComplianceIssuesFound,
       }),
+      // Y.js CRDT collaboration — only active when ydoc is provided
+      ...(ydoc
+        ? [
+            Collaboration.configure({
+              document: ydoc,
+            }),
+            ...(yjsProvider
+              ? [
+                  CollaborationCursor.configure({
+                    provider: yjsProvider,
+                    user: currentUser || { name: 'Anonymous', color: '#94A3B8' },
+                  }),
+                ]
+              : []),
+          ]
+        : []),
     ],
     content: initialContent,
     editable: caps.editable,

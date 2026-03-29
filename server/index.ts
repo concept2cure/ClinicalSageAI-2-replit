@@ -7992,6 +7992,15 @@ async function startServer() {
     console.warn('[Socket.io] Failed to initialize (non-blocking):', err?.message);
   }
 
+  // Initialize Hocuspocus Y.js CRDT collaboration server
+  try {
+    const { attachHocuspocusToServer } = await import('./services/hocuspocus-server.js');
+    attachHocuspocusToServer(httpServer);
+    console.log('[Hocuspocus] CRDT collaboration server initialized');
+  } catch (err: any) {
+    console.warn('[Hocuspocus] Failed to initialize (non-blocking):', err?.message);
+  }
+
   // Start the HTTP server
   httpServer.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);

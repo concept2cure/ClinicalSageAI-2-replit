@@ -7499,6 +7499,124 @@ router.delete(
 );
 
 /**
+ * GET /api/concept2cure/projects/:projectId/team
+ * List organization team members who can be assigned as reviewers.
+ * Returns users in the same organization as the project.
+ */
+router.get(
+  '/projects/:projectId/team',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      // Get all users in this organization
+      const members = await db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          role: organizationUsers.role,
+          title: users.title,
+          department: users.department,
+          avatar: users.avatar,
+          status: users.status,
+        })
+        .from(organizationUsers)
+        .innerJoin(users, eq(organizationUsers.userId, users.id))
+        .where(
+          and(
+            eq(organizationUsers.organizationId, organizationId),
+            eq(users.status, 'active')
+          )
+        )
+        .orderBy(users.name);
+
+      return sendSuccess(res, members.map(m => ({
+        id: String(m.id),
+        userId: m.id,
+        name: m.name,
+        email: m.email,
+        role: m.role,
+        title: m.title,
+        department: m.department,
+        avatar: m.avatar,
+      })));
+    } catch (error: any) {
+      logConcept2cureError('get team members', error, { projectId: req.params.projectId });
+      return sendError(res, 500, 'Failed to fetch team members');
+    }
+  }
+);
+
+/**
+ * POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind
+ * Send a reminder to a reviewer about their pending review.
+ */
+router.post(
+  '/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const userId = getUserId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      // Get the assignment
+      const [assignment] = await db
+        .select()
+        .from(concept2cureReviewAssignments)
+        .where(
+          and(
+            eq(concept2cureReviewAssignments.assignmentId, req.params.assignmentId),
+            eq(concept2cureReviewAssignments.organizationId, organizationId)
+          )
+        )
+        .limit(1);
+
+      if (!assignment) {
+        return sendError(res, 404, 'Assignment not found');
+      }
+
+      if (assignment.status === 'completed' || assignment.status === 'withdrawn') {
+        return sendError(res, 400, `Cannot remind — assignment is ${assignment.status}`);
+      }
+
+      // Create a notification for the reviewer
+      await db.insert(concept2cureNotifications).values({
+        notificationId: `notif_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`,
+        orgId: organizationId,
+        recipientUserId: assignment.reviewerId,
+        actorUserId: userId,
+        notificationType: 'due_soon',
+        title: 'Review Reminder',
+        body: `You have a pending review for artifact ${req.params.artifactId}. Please complete your review.`,
+        severity: 'warning',
+        status: 'unread',
+        artifactId: Number(req.params.artifactId) || undefined,
+        projectId: Number(req.params.projectId) || undefined,
+      });
+
+      // Log audit entry
+      await logAuditEntry(req, 'UPDATE', 'review_assignment', req.params.assignmentId, null, {
+        action: 'reminder_sent',
+        reviewerId: assignment.reviewerId,
+      });
+
+      return sendSuccess(res, {
+        assignmentId: req.params.assignmentId,
+        reminded: true,
+        reviewerId: assignment.reviewerId,
+      });
+    } catch (error: any) {
+      logConcept2cureError('send review reminder', error, { assignmentId: req.params.assignmentId });
+      return sendError(res, 500, 'Failed to send reminder');
+    }
+  }
+);
+
+/**
  * POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit
  * Submit a formal review decision for the current review round.
  * Body: { decision: 'approve'|'request_changes'|'reject', comment?: string }

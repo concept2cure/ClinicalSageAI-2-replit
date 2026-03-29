@@ -85,6 +85,8 @@ import {
   type InspectorRibbonGroup,
 } from '@/components/ui/workspace-primitives';
 import { apiRequest } from '@/lib/queryClient';
+import { applySourceTraceabilityToHtml, type AIProvenance } from './utils/applySourceTraceability';
+import { useYjsProvider } from '../../hooks/useYjsProvider';
 
 import { LoadingState } from '@/components/ui/statesV2';
 
@@ -334,11 +336,21 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   // ── Real-time collaboration ────────────────────────────────────────────
   const currentUser = getCurrentUser();
   const collaboration = useCollaboration(activeArtifact?.id || null);
+
+  // Y.js CRDT collaboration — conflict-free real-time editing
+  const yjsCollab = useYjsProvider({
+    documentId: activeArtifact?.id || '',
+    projectId: projectId ? String(projectId) : undefined,
+    userName: currentUser?.name || currentUser?.username || 'Anonymous',
+    userColor: '#3B82F6',
+    enabled: !!activeArtifact?.id && (currentDocumentMode === 'edit' || currentDocumentMode === 'draft'),
+  });
   const [, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiMenuOpen, setAiMenuOpen] = useState(false);
   const [aiResult, setAiResult] = useState<string | null>(null);
+  const [aiProvenance, setAiProvenance] = useState<AIProvenance | null>(null);
   const [showArtifactList, setShowArtifactList] = useState(true);
   const [newDocTitle, setNewDocTitle] = useState('');
   const [creatingNew, setCreatingNew] = useState(false);
@@ -377,6 +389,29 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       } catch { /* non-blocking */ }
     })();
   }, [projectId, activeArtifact?.id]);
+
+  // Fetch team members for reviewer assignment dropdown
+  useEffect(() => {
+    if (!projectId) {
+      setTeamMembers([]);
+      return;
+    }
+    (async () => {
+      try {
+        const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/team`);
+        if (res.ok) {
+          const json = await res.json();
+          const members = json?.data ?? json?.members ?? [];
+          setTeamMembers(members.map((m: any) => ({
+            id: String(m.id || m.userId),
+            name: m.name || m.displayName || m.username || 'Unknown',
+            email: m.email || '',
+            role: m.role || m.projectRole,
+          })));
+        }
+      } catch { /* non-blocking — team list is supplementary */ }
+    })();
+  }, [projectId]);
 
   // ── Claim checker (Precedent Engine) ─────────────────────────────────────
   const [claimResult, setClaimResult] = useState<ClaimCheckResult | null>(null);
@@ -1316,6 +1351,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           const provenance = payload.data?.provenance ?? payload.provenance;
           if (result) {
             setAiResult(result);
+            setAiProvenance(provenance || null);
             const srcCount = provenance?.sourcesRetrieved || 0;
             const claimCount = provenance?.claims?.length || 0;
             const msg = srcCount > 0
@@ -1347,9 +1383,20 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           .split('\n\n')
           .map(p => `<p>${p}</p>`)
           .join('');
-    setActiveArtifact({ ...activeArtifact, content: htmlContent });
+
+    // Apply source traceability marks from provenance chain
+    // This converts [SRC-n] tokens into TraceabilityMark spans linked to real sources
+    let finalContent = htmlContent;
+    if (aiProvenance?.sources?.length) {
+      finalContent = applySourceTraceabilityToHtml(htmlContent, aiProvenance);
+      const srcCount = aiProvenance.sources.length;
+      pushToast(`Applied ${srcCount} source traceability link${srcCount !== 1 ? 's' : ''}`, 'success');
+    }
+
+    setActiveArtifact({ ...activeArtifact, content: finalContent });
     setAiResult(null);
-  }, [aiResult, activeArtifact]);
+    setAiProvenance(null);
+  }, [aiResult, aiProvenance, activeArtifact]);
 
   // ── DOCX Export (real generation via knowledge-base → shadow service) ───
   const generateDocxMutation = useGenerateDocx();
@@ -2724,6 +2771,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               collaboration.emitTypingStart();
               collaboration.setPresence('editing');
             }}
+            ydoc={yjsCollab.ydoc}
+            yjsProvider={yjsCollab.provider}
+            currentUser={{ name: currentUser?.name || 'Anonymous', color: '#3B82F6' }}
           />
         </div>
 
@@ -3036,6 +3086,22 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             teamMembers={teamMembers}
             onAddReviewer={handleAddReviewer}
             onRemoveReviewer={handleRemoveReviewer}
+            onSendReminder={async (reviewerId: string) => {
+              if (!projectId || !activeArtifact?.id) return;
+              try {
+                // Find the assignment ID for this reviewer
+                const reviewer = reviewers.find(r => r.id === reviewerId);
+                if (!reviewer) return;
+                const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/reviewers/${reviewer.id}/remind`);
+                if (res.ok) {
+                  pushToast('Reminder sent to reviewer', 'success');
+                } else {
+                  pushToast('Failed to send reminder', 'error');
+                }
+              } catch {
+                pushToast('Failed to send reminder', 'error');
+              }
+            }}
             onSubmitForReview={async () => {
               await handleStatusChange('review');
               pushToast('Document submitted for review', 'success');
