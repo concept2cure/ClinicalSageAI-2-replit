@@ -2,8 +2,9 @@
  * SetupPage — Global setup/configuration destination.
  *
  * A full-page settings experience (not a modal). Mirrors ZenSettings
- * sections but rendered inline as a page. 7 sections: Profile,
- * Organization, Notifications, Security, Appearance, Integrations, Help.
+ * sections but rendered inline as a page. 8 sections: Profile,
+ * Organization, Notifications, Security, Appearance, Integrations,
+ * AnA Intelligence, Help.
  */
 
 import React, { useState } from 'react';
@@ -18,13 +19,14 @@ import {
   Palette,
   Link2,
   HelpCircle,
+  Brain,
   ChevronRight,
   ExternalLink,
 } from 'lucide-react';
 
 // ─── Section definitions ──────────────────────────────────────────────────────
 
-type SetupSection = 'profile' | 'organization' | 'notifications' | 'security' | 'appearance' | 'integrations' | 'help';
+type SetupSection = 'profile' | 'organization' | 'notifications' | 'security' | 'appearance' | 'integrations' | 'ana-intelligence' | 'help';
 
 const SECTIONS: {
   id: SetupSection;
@@ -38,6 +40,7 @@ const SECTIONS: {
   { id: 'security', label: 'Security', description: 'Two-factor authentication, password, and sessions', icon: Shield },
   { id: 'appearance', label: 'Appearance', description: 'Theme, compact mode, and display preferences', icon: Palette },
   { id: 'integrations', label: 'Integrations', description: 'Connect to Veeva, Medidata, Slack, and more', icon: Link2 },
+  { id: 'ana-intelligence', label: 'AnA Intelligence', description: 'Personal preferences, company context, and project knowledge for AnA', icon: Brain },
   { id: 'help', label: 'Help & Support', description: 'Documentation, tutorials, and contact support', icon: HelpCircle },
 ];
 
@@ -97,6 +100,13 @@ export const SetupPage: React.FC<SetupPageProps> = ({ onOpenSettings }) => {
           >
             <Shield className="w-4 h-4 text-stone-400" />
             Change password
+          </button>
+          <button
+            onClick={() => onOpenSettings('ana-intelligence')}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-stone-600 hover:text-stone-800 hover:bg-stone-50 rounded-lg transition-colors text-left focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+          >
+            <Brain className="w-4 h-4 text-stone-400" />
+            Teach AnA
           </button>
           <button
             onClick={() => onOpenSettings('integrations')}

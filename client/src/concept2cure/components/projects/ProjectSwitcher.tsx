@@ -903,14 +903,15 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                     const tc = SUBMISSION_TYPES[project.type] ?? SUBMISSION_TYPE_FALLBACK;
                     const TypeIcon = tc.icon;
                     return (
-                      <button
+                      <Button
                         key={project.id}
+                        variant="ghost"
                         onClick={() => {
                           onSelectProject(project.id);
                           onClose();
                         }}
                         className={cn(
-                          'w-full flex items-center gap-3 px-4 py-2 text-left transition-colors duration-150',
+                          'w-full flex items-center gap-3 px-4 py-2 h-auto text-left rounded-none',
                           project.id === activeProjectId ? 'bg-stone-50' : 'hover:bg-stone-50'
                         )}
                       >
@@ -940,7 +941,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                           {tc.label}
                         </span>
                         <ChevronRight className="w-3 h-3 text-stone-400 shrink-0" />
-                      </button>
+                      </Button>
                     );
                   })}
                 </>
@@ -1059,12 +1060,12 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
             {/* Project name */}
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1.5">Project Name</label>
-              <input
+              <Input
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder="e.g., CardioFlow Heart Monitor"
-                className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/30 outline-none transition-all duration-150"
+                className="w-full px-4 py-2.5 rounded-lg"
                 autoFocus
                 required
               />
@@ -1089,12 +1090,12 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
               <label className="block text-sm font-medium text-stone-700 mb-1.5">
                 Sponsor / Client <span className="text-stone-400">(optional)</span>
               </label>
-              <input
+              <Input
                 type="text"
                 value={sponsor}
                 onChange={e => setSponsor(e.target.value)}
                 placeholder="e.g., Acme Biotech, Inc."
-                className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/30 outline-none transition-all duration-150"
+                className="w-full px-4 py-2.5 rounded-lg"
               />
             </div>
 
@@ -1103,12 +1104,12 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
               <label className="block text-sm font-medium text-stone-700 mb-1.5">
                 Product / Device / Molecule <span className="text-stone-400">(optional)</span>
               </label>
-              <input
+              <Input
                 type="text"
                 value={product}
                 onChange={e => setProduct(e.target.value)}
                 placeholder="e.g., CardioFlow™, Atorvastatin 20 mg"
-                className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/30 outline-none transition-all duration-150"
+                className="w-full px-4 py-2.5 rounded-lg"
               />
             </div>
 
@@ -1117,38 +1118,38 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
               <label className="block text-sm font-medium text-stone-700 mb-1.5">
                 Region / Agency
               </label>
-              <select
-                value={region}
-                onChange={e => setRegion(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/30 outline-none transition-all duration-150"
-              >
-                {['FDA', 'EMA', 'MHRA', 'TGA', 'Health Canada', 'PMDA', 'ANVISA', 'Other'].map(
-                  r => (
-                    <option key={r} value={r}>
-                      {r}
-                    </option>
-                  )
-                )}
-              </select>
+              <Select value={region} onValueChange={setRegion}>
+                <SelectTrigger className="w-full h-10">
+                  <SelectValue placeholder="Select region" />
+                </SelectTrigger>
+                <SelectContent>
+                  {['FDA', 'EMA', 'MHRA', 'TGA', 'Health Canada', 'PMDA', 'ANVISA', 'Other'].map(
+                    r => (
+                      <SelectItem key={r} value={r}>
+                        {r}
+                      </SelectItem>
+                    )
+                  )}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           {/* Footer */}
           <div className="px-6 py-4 border-t border-stone-200 flex justify-end gap-3">
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-stone-700 hover:text-stone-900 rounded-lg hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors duration-150"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               disabled={!name.trim()}
-              className="px-5 py-2 text-sm font-semibold text-white bg-stone-900 rounded-lg hover:bg-stone-800 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors duration-150"
             >
               Save Changes
-            </button>
+            </Button>
           </div>
         </form>
       </motion.div>

@@ -50,6 +50,10 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LIFECYCLE } from '../ui/enterprise';
 import { getCurrentUser } from '../../utils/getCurrentUser';
 
@@ -576,15 +580,17 @@ export function SignatureWorkflow({
             {statusConf.label}
           </div>
           {signer.status === 'signed' && signer.signatureHash && (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => {
                 const match = signatures.find(s => s.id === signer.signatureId);
                 if (match) setShowCertificate(match);
               }}
-              className="text-[11px] text-blue-600 hover:text-blue-800 transition-colors underline underline-offset-2"
+              className="h-auto p-0 text-[11px] text-blue-600 hover:text-blue-800 underline underline-offset-2"
             >
               Certificate
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -611,15 +617,17 @@ export function SignatureWorkflow({
                 <p className="text-[10px] text-stone-500">21 CFR Part 11 Compliant</p>
               </div>
             </div>
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => {
                 setShowSignModal(false);
                 resetSignForm();
               }}
-              className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors duration-150"
+              className="h-7 w-7 text-stone-400 hover:text-stone-600"
             >
               <X className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
 
           <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
@@ -657,20 +665,18 @@ export function SignatureWorkflow({
               <label className="flex items-center gap-1.5 text-xs font-medium text-stone-600 mb-1.5">
                 Signature Meaning (§11.50)
               </label>
-              <div className="relative">
-                <select
-                  value={selectedMeaning}
-                  onChange={e => setSelectedMeaning(e.target.value as SignatureMeaning)}
-                  className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg bg-white appearance-none focus-visible:ring-2 outline-none focus:ring-stone-300 focus:border-blue-400 cursor-pointer"
-                >
+              <Select value={selectedMeaning} onValueChange={(val) => setSelectedMeaning(val as SignatureMeaning)}>
+                <SelectTrigger className="w-full text-sm border-stone-300 bg-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
                   {MEANING_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>
+                    <SelectItem key={opt.value} value={opt.value}>
                       {opt.label}
-                    </option>
+                    </SelectItem>
                   ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
-              </div>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Password re-entry */}
@@ -679,12 +685,12 @@ export function SignatureWorkflow({
                 <Lock className="w-3 h-3" />
                 Password Re-entry (§11.100)
               </label>
-              <input
+              <Input
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="Re-enter your password to authenticate"
-                className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg bg-white focus-visible:ring-2 outline-none focus:ring-stone-300 focus:border-blue-400"
+                className="text-sm border-stone-300 bg-white"
               />
               <p className="text-[10px] text-stone-400 mt-1">
                 Identity verification required per 21 CFR Part 11 §11.100(a)
@@ -692,18 +698,18 @@ export function SignatureWorkflow({
             </div>
 
             {/* Legal acknowledgment */}
-            <label className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-50 border border-amber-200 cursor-pointer group">
-              <input
-                type="checkbox"
+            <div className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-50 border border-amber-200 cursor-pointer group">
+              <Checkbox
+                id="legal-ack"
                 checked={legalAck}
-                onChange={e => setLegalAck(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-200 focus:ring-offset-0 cursor-pointer"
+                onCheckedChange={(checked) => setLegalAck(!!checked)}
+                className="mt-0.5 border-amber-300 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
               />
-              <span className="text-xs text-amber-800 leading-relaxed group-hover:text-amber-900 transition-colors duration-150">
+              <label htmlFor="legal-ack" className="text-xs text-amber-800 leading-relaxed group-hover:text-amber-900 transition-colors duration-150 cursor-pointer">
                 I understand this constitutes a legally binding electronic signature equivalent to a
                 handwritten signature under 21 CFR Part 11 and applicable regulations.
-              </span>
-            </label>
+              </label>
+            </div>
 
             {/* Error */}
             {signError && (
@@ -716,15 +722,16 @@ export function SignatureWorkflow({
 
           {/* Footer */}
           <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-stone-200">
-            <button
+            <Button
+              variant="ghost"
               onClick={() => {
                 setShowSignModal(false);
                 resetSignForm();
               }}
-              className="px-4 py-2 text-sm text-stone-600 hover:text-stone-900 transition-colors duration-150"
+              className="text-sm text-stone-600 hover:text-stone-900"
             >
               Cancel
-            </button>
+            </Button>
             <button
               onClick={handleSign}
               disabled={signing || !legalAck || !password}
@@ -805,12 +812,13 @@ export function SignatureWorkflow({
 
           {/* Certificate footer */}
           <div className="flex justify-center px-5 pb-5">
-            <button
+            <Button
+              variant="outline"
               onClick={() => setShowCertificate(null)}
-              className="px-6 py-2 rounded-lg text-sm font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 transition-colors border border-stone-300"
+              className="px-6 text-sm font-medium"
             >
               Close Certificate
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -836,12 +844,14 @@ export function SignatureWorkflow({
         <div className="flex items-center gap-2">
           {renderStatusBadge()}
           {onClose && (
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={onClose}
-              className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors duration-150"
+              className="h-7 w-7 text-stone-400 hover:text-stone-600"
             >
               <X className="w-4 h-4" />
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -913,9 +923,10 @@ export function SignatureWorkflow({
         {/* Signature Trail */}
         {signatures.length > 0 && (
           <div>
-            <button
+            <Button
+              variant="ghost"
               onClick={() => setTrailExpanded(!trailExpanded)}
-              className="flex items-center gap-2 text-xs font-semibold text-stone-600 uppercase tracking-wider mb-2.5 hover:text-stone-900 transition-colors duration-150"
+              className="flex items-center gap-2 h-auto p-0 text-xs font-semibold text-stone-600 uppercase tracking-wider mb-2.5 hover:text-stone-900 hover:bg-transparent"
             >
               <span>Signature Trail</span>
               <span className="text-stone-400 normal-case font-normal">({signatures.length})</span>
@@ -924,7 +935,7 @@ export function SignatureWorkflow({
               ) : (
                 <ChevronDown className="w-3.5 h-3.5 text-stone-400" />
               )}
-            </button>
+            </Button>
 
             {trailExpanded && (
               <div className="relative">
@@ -977,15 +988,11 @@ export function SignatureWorkflow({
 
       {/* Footer actions */}
       <div className="flex items-center justify-between px-5 py-3 border-t border-stone-200 bg-stone-50/50">
-        <button
+        <Button
+          variant="outline"
           onClick={handleVerify}
           disabled={verifying || signatures.length === 0}
-          className={cn(
-            'inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all border',
-            verifying || signatures.length === 0
-              ? 'bg-stone-100 text-stone-400 border-stone-200 cursor-not-allowed'
-              : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-50 hover:border-stone-400'
-          )}
+          className="inline-flex items-center gap-2 text-sm font-medium"
         >
           {verifying ? (
             <RefreshCw className="w-4 h-4 animate-spin" />
@@ -993,7 +1000,7 @@ export function SignatureWorkflow({
             <ShieldCheck className="w-4 h-4" />
           )}
           Verify Signatures
-        </button>
+        </Button>
 
         <button
           onClick={() => setShowSignModal(true)}

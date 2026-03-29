@@ -21,6 +21,8 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { ComplianceIssue } from './extensions/ComplianceScanner';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -183,18 +185,20 @@ export function ComplianceScannerPanel({
             </div>
           </div>
           <div className="flex items-center gap-1.5">
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={onRescan}
               disabled={isScanning}
-              className="p-1.5 rounded-md hover:bg-white/60 transition-colors disabled:opacity-50"
+              className="h-7 w-7 hover:bg-white/60"
               title="Re-scan document"
             >
               <RefreshCw className={cn('w-3.5 h-3.5 text-stone-500', isScanning && 'animate-spin')} />
-            </button>
+            </Button>
             {onClose && (
-              <button onClick={onClose} aria-label="Close compliance scanner" title="Close" className="p-1.5 rounded-md hover:bg-white/60 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none">
+              <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close compliance scanner" title="Close" className="h-7 w-7 hover:bg-white/60">
                 <X className="w-3.5 h-3.5 text-stone-500" />
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -231,28 +235,30 @@ export function ComplianceScannerPanel({
 
         {/* Filters */}
         <div className="flex items-center gap-2 mt-2">
-          <select
-            value={filterSeverity}
-            onChange={e => setFilterSeverity(e.target.value as typeof filterSeverity)}
-            className="text-[10px] px-2 py-1 border border-stone-200 rounded-md bg-white text-stone-600"
-          >
-            <option value="all">All severities</option>
-            <option value="error">Errors only</option>
-            <option value="warning">Warnings only</option>
-            <option value="info">Suggestions only</option>
-          </select>
-          <select
-            value={filterCategory}
-            onChange={e => setFilterCategory(e.target.value)}
-            className="text-[10px] px-2 py-1 border border-stone-200 rounded-md bg-white text-stone-600"
-          >
-            <option value="all">All categories</option>
-            {activeCategories.map(cat => (
-              <option key={cat} value={cat}>
-                {CATEGORY_LABELS[cat] || cat}
-              </option>
-            ))}
-          </select>
+          <Select value={filterSeverity} onValueChange={(val) => setFilterSeverity(val as typeof filterSeverity)}>
+            <SelectTrigger className="h-6 text-[10px] px-2 py-1 w-auto min-w-[110px] border-stone-200 bg-white text-stone-600">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All severities</SelectItem>
+              <SelectItem value="error">Errors only</SelectItem>
+              <SelectItem value="warning">Warnings only</SelectItem>
+              <SelectItem value="info">Suggestions only</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterCategory} onValueChange={setFilterCategory}>
+            <SelectTrigger className="h-6 text-[10px] px-2 py-1 w-auto min-w-[110px] border-stone-200 bg-white text-stone-600">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All categories</SelectItem>
+              {activeCategories.map(cat => (
+                <SelectItem key={cat} value={cat}>
+                  {CATEGORY_LABELS[cat] || cat}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {stats.fixable > 0 && (
             <span className="text-[10px] text-violet-600 font-medium ml-auto">
               {stats.fixable} auto-fixable
@@ -288,9 +294,10 @@ export function ComplianceScannerPanel({
 
           return (
             <div key={severity} className="border-b border-stone-100">
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => toggleSeverity(severity)}
-                className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-stone-50 transition-colors duration-150"
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-stone-50 h-auto rounded-none justify-start"
               >
                 {isExpanded ? (
                   <ChevronDown className="w-3.5 h-3.5 text-stone-400 shrink-0" />
@@ -302,7 +309,7 @@ export function ComplianceScannerPanel({
                 <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium', config.badge)}>
                   {items.length}
                 </span>
-              </button>
+              </Button>
 
               {isExpanded && (
                 <div className="px-4 pb-2 space-y-1.5">

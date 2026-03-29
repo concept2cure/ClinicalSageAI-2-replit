@@ -2713,6 +2713,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 <Suspense fallback={<ModuleLoadingFallback />}>
                   <SetupPage
                     onOpenSettings={section => {
+                      if (section) setSettingsSection(section);
                       setSettingsOpen(true);
                     }}
                   />
