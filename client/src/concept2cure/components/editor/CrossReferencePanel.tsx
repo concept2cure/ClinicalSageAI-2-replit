@@ -20,6 +20,9 @@ import {
   MapPin,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -373,34 +376,40 @@ export function CrossReferencePanel({
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setShowInsertForm((v) => !v)}
             className={cn(
-              'p-1.5 rounded-md text-stone-500 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-150',
+              'h-7 w-7 text-stone-500 hover:text-blue-600 hover:bg-blue-50',
               showInsertForm && 'text-blue-600 bg-blue-50'
             )}
             title="Insert Reference"
           >
             <Plus className="w-4 h-4" />
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={scanDocument}
             disabled={isScanning}
-            className="p-1.5 rounded-md text-stone-500 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
+            className="h-7 w-7 text-stone-500 hover:text-blue-600 hover:bg-blue-50"
             title="Scan Document"
           >
             <RefreshCw
               className={cn('w-4 h-4', isScanning && 'animate-spin')}
             />
-          </button>
+          </Button>
           {onClose && (
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={onClose}
-              className="p-1.5 rounded-md text-stone-500 hover:text-stone-700 hover:bg-stone-100 transition-colors duration-150"
+              className="h-7 w-7 text-stone-500 hover:text-stone-700"
               title="Close"
             >
               <XCircle className="w-4 h-4" />
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -416,32 +425,28 @@ export function CrossReferencePanel({
               <label className="text-[10px] uppercase tracking-wider text-stone-500 block mb-1">
                 CTD Module
               </label>
-              <select
-                value={insertModule}
-                onChange={(e) => {
-                  setInsertModule(e.target.value);
-                  setInsertSection('');
-                }}
-                className="w-full text-xs border border-stone-300 rounded-md px-2 py-1.5 bg-white focus-visible:ring-2 focus-visible:ring-stone-400 outline-none focus:border-blue-400"
-              >
-                <option value="">Select module...</option>
-                <option value="1">Module 1 — Administrative</option>
-                <option value="2">Module 2 — Summaries</option>
-                <option value="3">Module 3 — Quality</option>
-                <option value="4">Module 4 — Nonclinical</option>
-                <option value="5">Module 5 — Clinical</option>
-              </select>
+              <Select value={insertModule} onValueChange={(val) => { setInsertModule(val); setInsertSection(''); }}>
+                <SelectTrigger className="w-full text-xs border-stone-300 bg-white">
+                  <SelectValue placeholder="Select module..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Module 1 — Administrative</SelectItem>
+                  <SelectItem value="2">Module 2 — Summaries</SelectItem>
+                  <SelectItem value="3">Module 3 — Quality</SelectItem>
+                  <SelectItem value="4">Module 4 — Nonclinical</SelectItem>
+                  <SelectItem value="5">Module 5 — Clinical</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex-1">
               <label className="text-[10px] uppercase tracking-wider text-stone-500 block mb-1">
                 Section (optional)
               </label>
-              <input
-                type="text"
+              <Input
                 value={insertSection}
                 onChange={(e) => setInsertSection(e.target.value)}
                 placeholder="e.g. 3.2"
-                className="w-full text-xs border border-stone-300 rounded-md px-2 py-1.5 bg-white focus-visible:ring-2 focus-visible:ring-stone-400 outline-none focus:border-blue-400"
+                className="text-xs border-stone-300 bg-white"
               />
             </div>
           </div>
@@ -464,13 +469,15 @@ export function CrossReferencePanel({
               </span>
             </div>
           )}
-          <button
+          <Button
+            variant="default"
+            size="sm"
             onClick={handleInsertReference}
             disabled={!insertModule}
-            className="w-full text-xs font-medium py-1.5 rounded-md bg-stone-800 text-white hover:bg-stone-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150"
+            className="w-full text-xs font-medium"
           >
             Insert Reference
-          </button>
+          </Button>
         </div>
       )}
 
@@ -478,10 +485,12 @@ export function CrossReferencePanel({
       {hasScanned && (
         <div className="px-4 py-2.5 border-b border-stone-200 bg-stone-50/50">
           <div className="flex items-center gap-3 text-[11px]">
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setFilterStatus('all')}
               className={cn(
-                'flex items-center gap-1 px-2 py-0.5 rounded-full transition-colors duration-150',
+                'flex items-center gap-1 h-auto px-2 py-0.5 rounded-full',
                 filterStatus === 'all'
                   ? 'bg-stone-200 text-stone-900 font-medium'
                   : 'text-stone-500 hover:text-stone-700'
@@ -489,11 +498,13 @@ export function CrossReferencePanel({
             >
               <MapPin className="w-3 h-3" />
               {stats.total} Total
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setFilterStatus('valid')}
               className={cn(
-                'flex items-center gap-1 px-2 py-0.5 rounded-full transition-colors duration-150',
+                'flex items-center gap-1 h-auto px-2 py-0.5 rounded-full',
                 filterStatus === 'valid'
                   ? 'bg-emerald-100 text-emerald-800 font-medium'
                   : 'text-emerald-600 hover:text-emerald-800'
@@ -501,11 +512,13 @@ export function CrossReferencePanel({
             >
               <CheckCircle className="w-3 h-3" />
               {stats.valid}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setFilterStatus('broken')}
               className={cn(
-                'flex items-center gap-1 px-2 py-0.5 rounded-full transition-colors duration-150',
+                'flex items-center gap-1 h-auto px-2 py-0.5 rounded-full',
                 filterStatus === 'broken'
                   ? 'bg-red-100 text-red-800 font-medium'
                   : 'text-red-600 hover:text-red-800'
@@ -513,11 +526,13 @@ export function CrossReferencePanel({
             >
               <XCircle className="w-3 h-3" />
               {stats.broken}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setFilterStatus('unlinked')}
               className={cn(
-                'flex items-center gap-1 px-2 py-0.5 rounded-full transition-colors duration-150',
+                'flex items-center gap-1 h-auto px-2 py-0.5 rounded-full',
                 filterStatus === 'unlinked'
                   ? 'bg-amber-100 text-amber-800 font-medium'
                   : 'text-amber-600 hover:text-amber-800'
@@ -525,7 +540,7 @@ export function CrossReferencePanel({
             >
               <AlertTriangle className="w-3 h-3" />
               {stats.unlinked}
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -535,12 +550,11 @@ export function CrossReferencePanel({
         <div className="px-4 py-2 border-b border-stone-200">
           <div className="relative">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
-            <input
-              type="text"
+            <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Filter references..."
-              className="w-full text-xs border border-stone-200 rounded-md pl-7 pr-2 py-1.5 bg-stone-50 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none focus:border-blue-400"
+              className="text-xs border-stone-200 pl-7 pr-2 bg-stone-50"
             />
           </div>
         </div>
@@ -558,16 +572,18 @@ export function CrossReferencePanel({
               Scan the document to detect cross-references, validate links, and
               find broken references.
             </p>
-            <button
+            <Button
+              variant="default"
+              size="sm"
               onClick={scanDocument}
               disabled={isScanning}
-              className="flex items-center gap-2 text-xs font-medium px-4 py-2 rounded-md bg-stone-800 text-white hover:bg-stone-900 disabled:opacity-50 transition-colors duration-150"
+              className="flex items-center gap-2 text-xs font-medium"
             >
               <RefreshCw
                 className={cn('w-3.5 h-3.5', isScanning && 'animate-spin')}
               />
               Scan Document
-            </button>
+            </Button>
           </div>
         ) : isScanning ? (
           <div className="flex flex-col items-center justify-center h-full">
@@ -640,25 +656,31 @@ export function CrossReferencePanel({
                   {/* Actions */}
                   <div className="flex items-center gap-2 pt-0.5">
                     {ref.targetArtifactId && onNavigateToSection && (
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => onNavigateToSection(ref.targetArtifactId!)}
-                        className="flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 transition-colors duration-150"
+                        className="h-auto p-0 text-[11px] text-blue-600 hover:text-blue-800 hover:bg-transparent"
                       >
                         <ArrowRight className="w-3 h-3" />
                         Go to section
-                      </button>
+                      </Button>
                     )}
                     {ref.status === 'unlinked' && onNavigateToSection && (
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => onNavigateToSection(ref.targetSection)}
-                        className="flex items-center gap-1 text-[11px] text-amber-600 hover:text-amber-800 transition-colors duration-150"
+                        className="h-auto p-0 text-[11px] text-amber-600 hover:text-amber-800 hover:bg-transparent"
                       >
                         <ExternalLink className="w-3 h-3" />
                         Create section
-                      </button>
+                      </Button>
                     )}
                     {ref.status === 'broken' && onInsertReference && ref.suggestion && (
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => {
                           // Extract suggested section number from suggestion text
                           const sugMatch = ref.suggestion?.match(/(\d+(?:\.\d+)*)/);
@@ -674,11 +696,11 @@ export function CrossReferencePanel({
                             onInsertReference(refText, sugSection);
                           }
                         }}
-                        className="flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 transition-colors duration-150"
+                        className="h-auto p-0 text-[11px] text-blue-600 hover:text-blue-800 hover:bg-transparent"
                       >
                         <RefreshCw className="w-3 h-3" />
                         Fix reference
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -695,16 +717,18 @@ export function CrossReferencePanel({
             <span>
               {filteredReferences.length} of {references.length} references shown
             </span>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={scanDocument}
               disabled={isScanning}
-              className="flex items-center gap-1 text-blue-500 hover:text-stone-700 transition-colors disabled:opacity-50"
+              className="h-auto p-0 text-blue-500 hover:text-blue-700 hover:bg-transparent"
             >
               <RefreshCw
                 className={cn('w-3 h-3', isScanning && 'animate-spin')}
               />
               Re-scan
-            </button>
+            </Button>
           </div>
         </div>
       )}

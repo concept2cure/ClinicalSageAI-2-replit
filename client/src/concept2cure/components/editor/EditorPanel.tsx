@@ -89,6 +89,9 @@ import { applySourceTraceabilityToHtml, type AIProvenance } from './utils/applyS
 import { useYjsProvider } from '../../hooks/useYjsProvider';
 
 import { LoadingState } from '@/components/ui/statesV2';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface Artifact {
@@ -184,19 +187,19 @@ const PrecedentSearchInspector: React.FC<{
           <Scale className="w-3.5 h-3.5 text-stone-500" />
           <span className="text-[13px] font-semibold text-stone-700">Precedent Search</span>
         </div>
-        <button
+        <Button variant="ghost"
           onClick={onClose}
           className="text-stone-400 hover:text-stone-600 transition-colors p-1"
           aria-label="Close precedent panel"
         >
           <XCircle className="w-3.5 h-3.5" />
-        </button>
+        </Button>
       </div>
 
       {/* Search bar */}
       <div className="px-3 py-2 border-b border-stone-50">
         <div className="flex gap-1.5">
-          <input
+          <Input
             type="text"
             value={query}
             onChange={e => setQuery(e.target.value)}
@@ -204,13 +207,13 @@ const PrecedentSearchInspector: React.FC<{
             placeholder="Search precedents..."
             className="flex-1 text-[12px] px-2.5 py-1.5 rounded-md border border-stone-200 bg-white focus:border-stone-400 focus:outline-none transition-colors"
           />
-          <button
+          <Button variant="default"
             onClick={handleSearch}
             disabled={isLoading}
             className="px-2.5 py-1.5 text-[11px] font-medium bg-stone-800 text-white rounded-md hover:bg-stone-700 disabled:opacity-50 transition-colors"
           >
             {isFetching ? '...' : 'Search'}
-          </button>
+          </Button>
         </div>
         {submissionType && (
           <span className="text-[10px] text-stone-400 mt-1 block">
@@ -294,7 +297,7 @@ const PrecedentSearchInspector: React.FC<{
                     </div>
                   )}
                   {/* Insert citation button — appears on hover */}
-                  <button
+                  <Button variant="ghost"
                     onClick={() => {
                       const parts = [rec.deviceName || rec.indication, rec.clearanceNumber, rec.applicant, rec.decisionOutcome].filter(Boolean);
                       onInsertCitation(parts.join(' — '));
@@ -303,7 +306,7 @@ const PrecedentSearchInspector: React.FC<{
                   >
                     <Plus className="w-2.5 h-2.5" />
                     Insert as citation
-                  </button>
+                  </Button>
                 </div>
               );
             })}
@@ -1772,12 +1775,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             Select a project to access its regulatory documents, version history, and audit trail.
           </p>
           {onNavigateToProject && (
-            <button
+            <Button variant="ghost"
               onClick={onNavigateToProject}
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none"
             >
               Go to Projects
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -1797,7 +1800,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             The artifact may still be processing or the ID could not be matched.
           </p>
           <div className="flex items-center justify-center gap-3">
-            <button
+            <Button variant="ghost"
               onClick={() => {
                 setOpenArtifactNotFound(false);
                 loadArtifacts();
@@ -1805,8 +1808,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               className="px-4 py-2 text-sm font-medium bg-stone-800 text-white rounded-lg hover:bg-stone-900 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none shadow-sm"
             >
               Refresh documents
-            </button>
-            <button
+            </Button>
+            <Button variant="ghost"
               onClick={() => {
                 setOpenArtifactNotFound(false);
                 setShowArtifactList(true);
@@ -1814,7 +1817,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               className="px-4 py-2 text-sm font-medium border border-stone-200 text-stone-700 rounded-lg hover:bg-stone-50 hover:border-stone-300 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none"
             >
               Open artifact list
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -1852,7 +1855,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             )}
           </div>
           {artifacts.length > 0 && (
-            <button
+            <Button variant="ghost"
               onClick={() => setShowFilters(!showFilters)}
               className={cn(
                 'flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors duration-150',
@@ -1864,7 +1867,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               {(filterStatus !== 'all' || filterType !== 'all' || filterCtd !== 'all') && (
                 <span className="w-1.5 h-1.5 rounded-full bg-stone-600" />
               )}
-            </button>
+            </Button>
           )}
         </div>
 
@@ -1874,41 +1877,44 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             className="flex items-center gap-2 px-4 py-2 border-b border-stone-200 bg-stone-50/20 flex-wrap"
             data-testid="artifact-filters"
           >
-            <select
-              value={filterStatus}
-              onChange={e => setFilterStatus(e.target.value)}
-              className="px-2 py-1 text-xs border border-stone-200 rounded-md bg-white focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-1 outline-none"
-            >
+            <Select value={filterStatus} onValueChange={(val) => setFilterStatus(val)}>
+            <SelectTrigger className="h-7 text-xs w-auto min-w-[100px] border-stone-200 bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
               {statusOptions.map(s => (
-                <option key={s} value={s}>
+                <SelectItem key={s} value={s}>
                   {s === 'all' ? 'All Status' : s}
-                </option>
+                </SelectItem>
               ))}
-            </select>
-            <select
-              value={filterType}
-              onChange={e => setFilterType(e.target.value)}
-              className="px-2 py-1 text-xs border border-stone-200 rounded-md bg-white focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-1 outline-none"
-            >
+            </SelectContent>
+          </Select>
+            <Select value={filterType} onValueChange={(val) => setFilterType(val)}>
+            <SelectTrigger className="h-7 text-xs w-auto min-w-[100px] border-stone-200 bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
               {typeOptions.map(t => (
-                <option key={t} value={t}>
+                <SelectItem key={t} value={t}>
                   {t === 'all' ? 'All Types' : t.replace(/_/g, ' ')}
-                </option>
+                </SelectItem>
               ))}
-            </select>
-            <select
-              value={filterCtd}
-              onChange={e => setFilterCtd(e.target.value)}
-              className="px-2 py-1 text-xs border border-stone-200 rounded-md bg-white focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-1 outline-none"
-            >
+            </SelectContent>
+          </Select>
+            <Select value={filterCtd} onValueChange={(val) => setFilterCtd(val)}>
+            <SelectTrigger className="h-7 text-xs w-auto min-w-[100px] border-stone-200 bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
               {ctdOptions.map(c => (
-                <option key={c} value={c}>
+                <SelectItem key={c} value={c}>
                   {c === 'all' ? 'All CTD Sections' : `CTD ${c}`}
-                </option>
+                </SelectItem>
               ))}
-            </select>
+            </SelectContent>
+          </Select>
             {(filterStatus !== 'all' || filterType !== 'all' || filterCtd !== 'all') && (
-              <button
+              <Button variant="ghost"
                 onClick={() => {
                   setFilterStatus('all');
                   setFilterType('all');
@@ -1917,7 +1923,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 className="text-xs text-stone-400 hover:text-stone-600"
               >
                 Clear
-              </button>
+              </Button>
             )}
             <span className="text-xs text-stone-400 ml-auto">
               {filtered.length} of {artifacts.length}
@@ -1928,7 +1934,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         {/* New doc creation — enhanced with quick templates */}
         <div className="p-3 border-b border-stone-200 space-y-2.5">
           <div className="flex gap-2">
-            <input
+            <Input
               type="text"
               value={newDocTitle}
               onChange={e => setNewDocTitle(e.target.value)}
@@ -1936,7 +1942,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               placeholder="New document title..."
               className="flex-1 px-3 py-2 text-sm border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
             />
-            <button
+            <Button variant="default"
               onClick={handleCreateNew}
               disabled={creatingNew || !newDocTitle.trim()}
               className="px-4 py-2 text-sm font-medium bg-stone-800 text-white rounded-lg hover:bg-stone-900 disabled:opacity-60 flex items-center gap-1.5 shadow-sm"
@@ -1947,7 +1953,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 <Plus className="w-3.5 h-3.5" />
               )}
               Create
-            </button>
+            </Button>
           </div>
           {/* Quick-start templates */}
           <div className="flex flex-wrap gap-1.5">
@@ -1958,13 +1964,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               { label: 'Device Description', prefix: 'DD' },
               { label: 'Risk Analysis', prefix: 'RA' },
             ].map(tpl => (
-              <button
+              <Button variant="ghost"
                 key={tpl.prefix}
                 onClick={() => setNewDocTitle(tpl.label)}
                 className="text-xs px-2.5 py-1 rounded-md border border-stone-200 text-stone-500 hover:border-blue-200 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-150"
               >
                 {tpl.prefix}: {tpl.label}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -2003,7 +2009,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   : `${artifacts.length} document${artifacts.length !== 1 ? 's' : ''} hidden by filters.`}
               </p>
               {artifacts.length > 0 && (
-                <button
+                <Button variant="ghost"
                   onClick={() => {
                     setFilterStatus('all');
                     setFilterType('all');
@@ -2012,10 +2018,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   className="mt-3 px-3 py-1.5 text-xs font-medium text-stone-600 bg-stone-100 rounded-lg hover:bg-stone-200 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
                 >
                   Clear all filters
-                </button>
+                </Button>
               )}
               {artifacts.length === 0 && (
-                <button
+                <Button variant="default"
                   onClick={() => {
                     setNewDocTitle('Untitled Document');
                   }}
@@ -2023,13 +2029,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 >
                   <Plus className="w-3 h-3" />
                   Create First Document
-                </button>
+                </Button>
               )}
             </div>
           ) : (
             <div className="space-y-0.5" data-testid="artifact-list">
               {filtered.map(a => (
-                <button
+                <Button variant="ghost"
                   key={a.id}
                   data-testid="artifact-row"
                   onClick={() => {
@@ -2084,7 +2090,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                       {new Date(a.updatedAt || a.createdAt).toLocaleDateString()}
                     </span>
                   </div>
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -2102,17 +2108,17 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         <nav className="flex items-center gap-1 text-xs min-w-0" aria-label="Breadcrumb">
           {projectName && onNavigateToProject && (
             <>
-              <button
+              <Button variant="ghost"
                 onClick={onNavigateToProject}
                 className="text-stone-400 hover:text-stone-700 shrink-0 px-1.5 py-0.5 rounded hover:bg-stone-100 transition-colors truncate max-w-[120px]"
                 title={projectName}
               >
                 {projectName}
-              </button>
+              </Button>
               <ChevronDown className="w-3 h-3 text-stone-300 shrink-0 -rotate-90" />
             </>
           )}
-          <button
+          <Button variant="ghost"
             onClick={() => {
               setActiveArtifact(null);
               setShowArtifactList(true);
@@ -2121,20 +2127,20 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             className="text-stone-500 hover:text-stone-900 shrink-0 px-1.5 py-0.5 rounded hover:bg-stone-100 transition-colors duration-150"
           >
             Documents
-          </button>
+          </Button>
           <ChevronDown className="w-3 h-3 text-stone-300 shrink-0 -rotate-90" />
           <span className="text-sm font-semibold text-stone-900 truncate max-w-[280px]">
             {activeArtifact?.title}
           </span>
         </nav>
         {activeArtifact?.ctdSection && (
-          <button
+          <Button variant="ghost"
             onClick={() => setShowCtdInput(prev => !prev)}
             className="text-xs px-2 py-0.5 rounded-md bg-violet-50 text-stone-700 font-semibold shrink-0 ring-1 ring-violet-200/60 hover:bg-violet-100 transition-colors cursor-pointer"
             title="Edit CTD section placement"
           >
             CTD {activeArtifact.ctdSection}
-          </button>
+          </Button>
         )}
         {/* Lifecycle stage pill — signals where in the workflow this document sits */}
         <span className={cn(
@@ -2183,13 +2189,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         {/* Minimal document metadata — version only, details in inspector */}
         {activeArtifact && (
           <div className="flex items-center gap-1.5 ml-2">
-            <button
+            <Button variant="ghost"
               onClick={() => toggleInspector('versions')}
               className="text-[11px] text-stone-400 hover:text-stone-600 tabular-nums transition-colors"
               title="View version history"
             >
               v{activeArtifact.version}
-            </button>
+            </Button>
             {integrityVerified === false && (
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400" title="Content modified since last verification" />
             )}
@@ -2199,26 +2205,26 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         <div className="flex-1" />
 
         {/* Keyboard shortcuts */}
-        <button
+        <Button variant="ghost"
           onClick={() => setShowShortcuts(true)}
           className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors duration-150"
           title="Keyboard shortcuts (Ctrl+Shift+/)"
         >
           <Keyboard className="w-4 h-4" />
-        </button>
+        </Button>
 
         <span className="w-px h-5 bg-stone-200 mx-0.5" />
 
         {/* Overflow: Save, Export, Sign, Review, CTD, Audit export */}
         <div className="relative">
-          <button
+          <Button variant="ghost"
             onClick={() => setOverflowOpen(!overflowOpen)}
             aria-label="More actions"
             aria-expanded={overflowOpen}
             className="px-2 py-1.5 text-stone-500 hover:text-stone-700 hover:bg-stone-100 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors duration-150"
           >
             <ChevronDown className="w-4 h-4" />
-          </button>
+          </Button>
           {overflowOpen && (
             <div
               role="menu"
@@ -2231,7 +2237,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               className="absolute right-0 top-full mt-1 w-48 bg-white border border-stone-200 rounded-lg shadow-sm z-50 py-1"
             >
               {/* Save */}
-              <button
+              <Button variant="ghost"
                 role="menuitem"
                 onClick={() => {
                   activeArtifact && handleSave(activeArtifact.content, {});
@@ -2241,9 +2247,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               >
                 <Check className="w-3 h-3 text-stone-400" />
                 Save
-              </button>
+              </Button>
               {/* Export */}
-              <button
+              <Button variant="ghost"
                 role="menuitem"
                 onClick={() => {
                   setShowExportDialog(true);
@@ -2253,8 +2259,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               >
                 <Download className="w-3 h-3 text-stone-400" />
                 Export…
-              </button>
-              <button
+              </Button>
+              <Button variant="ghost"
                 role="menuitem"
                 onClick={() => {
                   handleExportMarkdown();
@@ -2264,8 +2270,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               >
                 <Download className="w-3 h-3 text-stone-400" />
                 Markdown (.md)
-              </button>
-              <button
+              </Button>
+              <Button variant="ghost"
                 role="menuitem"
                 onClick={() => {
                   handleExportLaunchChecklist();
@@ -2275,10 +2281,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               >
                 <ClipboardList className="w-3 h-3 text-stone-400" />
                 Launch Checklist (.md)
-              </button>
+              </Button>
               <div className="border-t border-stone-200 my-1" />
               {/* Sign — opens Part 11 compliant dialog */}
-              <button
+              <Button variant="ghost"
                 role="menuitem"
                 onClick={() => {
                   setShowSignatureDialog(true);
@@ -2289,10 +2295,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               >
                 <PenTool className="w-3 h-3 text-stone-400" />
                 Sign & Approve (Part 11)
-              </button>
+              </Button>
               {/* Status change — forward transitions only; regressions use lock overlay / GovernedDocumentPanel */}
               {activeArtifact?.status !== 'locked' && (
-                <button
+                <Button variant="ghost"
                   role="menuitem"
                   onClick={() => {
                     const current = activeArtifact?.status || 'draft';
@@ -2314,10 +2320,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                     : activeArtifact?.status === 'review'
                       ? 'Approve'
                       : 'Submit for Review'}
-                </button>
+                </Button>
               )}
               <div className="border-t border-stone-200 my-1" />
-              <button
+              <Button variant="ghost"
                 onClick={() => {
                   handleClaimCheck();
                   setOverflowOpen(false);
@@ -2327,8 +2333,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               >
                 <ShieldCheck className="w-3 h-3 inline mr-1.5 text-amber-500" />
                 Check Claims
-              </button>
-              <button
+              </Button>
+              <Button variant="ghost"
                 onClick={() => {
                   setShowCtdInput(!showCtdInput);
                   setOverflowOpen(false);
@@ -2337,8 +2343,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               >
                 <MapPin className="w-3 h-3 inline mr-1.5 text-stone-400" />
                 Set CTD Section
-              </button>
-              <button
+              </Button>
+              <Button variant="ghost"
                 onClick={() => {
                   handleExportAudit();
                   setOverflowOpen(false);
@@ -2348,7 +2354,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               >
                 <ClipboardList className="w-3 h-3 inline mr-1.5 text-stone-400" />
                 Export Audit
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -2432,19 +2438,19 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               <span className="text-xs text-violet-500 ml-1">Review changes before applying</span>
             </div>
             <div className="flex items-center gap-2">
-              <button
+              <Button variant="ghost"
                 onClick={() => setAiResult(null)}
                 className="px-3 py-1.5 text-xs font-medium text-stone-600 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors duration-150"
               >
                 Dismiss
-              </button>
-              <button
+              </Button>
+              <Button variant="ghost"
                 onClick={handleAcceptAI}
                 className="px-4 py-1.5 text-xs font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm flex items-center gap-1.5"
               >
                 <Check className="w-3.5 h-3.5" />
                 Apply Changes
-              </button>
+              </Button>
             </div>
           </div>
           {/* Diff content */}
@@ -2498,12 +2504,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse [animation-delay:300ms]" />
           </div>
           <span className="text-sm text-stone-700 font-medium">Generating AI suggestion...</span>
-          <button
+          <Button variant="ghost"
             onClick={() => setAiLoading(false)}
             className="ml-auto text-xs text-violet-500 hover:text-stone-700"
           >
             Cancel
-          </button>
+          </Button>
         </div>
       )}
 
@@ -2524,12 +2530,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         <div className="border-b border-red-300 bg-red-50 px-3 py-1.5 text-xs flex items-center gap-2 text-red-800">
           <Lock className="w-3.5 h-3.5 text-red-600 shrink-0" />
           <span className="font-semibold">{lockRejection}</span>
-          <button
+          <Button variant="ghost"
             onClick={() => setLockRejection(null)}
             className="ml-auto text-red-400 hover:text-red-600"
           >
             <XCircle className="w-3 h-3" />
-          </button>
+          </Button>
         </div>
       )}
 
@@ -2546,12 +2552,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           {claimResult.warnings?.length > 0 && (
             <span className="text-xs opacity-70">({claimResult.warnings.length} warnings)</span>
           )}
-          <button
+          <Button variant="ghost"
             onClick={() => setClaimResult(null)}
             className="ml-auto text-stone-400 hover:text-stone-600"
           >
             <XCircle className="w-3 h-3" />
-          </button>
+          </Button>
         </div>
       )}
 
@@ -2559,7 +2565,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       {showCtdInput && (
         <div className="flex items-center gap-2 px-3 py-1.5 border-b border-stone-200 bg-stone-50/50">
           <MapPin className="w-3.5 h-3.5 text-stone-400" />
-          <input
+          <Input
             type="text"
             value={ctdSectionInput}
             onChange={e => setCtdSectionInput(e.target.value)}
@@ -2567,18 +2573,18 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             placeholder="e.g. 3.2.S"
             className="w-28 px-2 py-1 text-xs border border-stone-200 rounded bg-white focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-1 outline-none"
           />
-          <button
+          <Button variant="ghost"
             onClick={handleCtdSection}
             className="text-xs text-emerald-600 hover:text-emerald-800 font-medium"
           >
             Save
-          </button>
-          <button
+          </Button>
+          <Button variant="ghost"
             onClick={() => setShowCtdInput(false)}
             className="text-xs text-stone-400 hover:text-stone-600"
           >
             Cancel
-          </button>
+          </Button>
         </div>
       )}
 
@@ -2602,14 +2608,14 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   <p className="text-xs text-red-600 mt-1 mb-3">
                     This document is locked and read-only. Provide a reason to unlock.
                   </p>
-                  <input
+                  <Input
                     type="text"
                     value={unlockReason}
                     onChange={e => setUnlockReason(e.target.value)}
                     placeholder="Reason for unlocking (min 5 chars)"
                     className="w-full px-2 py-1.5 text-xs border border-red-200 rounded-lg mb-2 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 outline-none"
                   />
-                  <button
+                  <Button variant="ghost"
                     onClick={() => {
                       handleStatusChange('draft', unlockReason.trim());
                       setUnlockReason('');
@@ -2623,7 +2629,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                       <Unlock className="w-3 h-3" />
                     )}
                     Unlock to Edit
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
@@ -2682,14 +2688,14 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                       </p>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
-                      <button
+                      <Button variant="ghost"
                         onClick={() => handleAIEdit('expand')}
                         className="flex items-center gap-2 px-3 py-2.5 text-xs font-medium text-stone-700 bg-stone-50 border border-stone-200 rounded-lg hover:bg-stone-100 hover:border-stone-300 transition-colors text-left"
                       >
                         <Sparkles className="w-3.5 h-3.5 shrink-0 text-stone-500" />
                         AI Generate Draft
-                      </button>
-                      <button
+                      </Button>
+                      <Button variant="ghost"
                         onClick={() => {
                           setActiveArtifact({ ...activeArtifact, content: getOutlineTemplate() });
                           setIsDirty(true);
@@ -2698,21 +2704,21 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                       >
                         <FileText className="w-3.5 h-3.5 shrink-0 text-stone-500" />
                         {outlineLabel}
-                      </button>
-                      <button
+                      </Button>
+                      <Button variant="ghost"
                         onClick={() => toggleInspector('templates')}
                         className="flex items-center gap-2 px-3 py-2.5 text-xs font-medium text-stone-700 bg-stone-50 border border-stone-200 rounded-lg hover:bg-stone-100 hover:border-stone-300 transition-colors text-left"
                       >
                         <Layers className="w-3.5 h-3.5 shrink-0 text-stone-500" />
                         From Template
-                      </button>
-                      <button
+                      </Button>
+                      <Button variant="ghost"
                         onClick={() => toggleInspector('dataroom')}
                         className="flex items-center gap-2 px-3 py-2.5 text-xs font-medium text-stone-700 bg-stone-50 border border-stone-200 rounded-lg hover:bg-stone-100 hover:border-stone-300 transition-colors text-left"
                       >
                         <Database className="w-3.5 h-3.5 shrink-0 text-stone-500" />
                         Browse Sources
-                      </button>
+                      </Button>
                     </div>
                     <p className="text-[10px] text-stone-400 text-center mt-3">
                       Type <kbd className="px-1 py-0.5 bg-stone-100 rounded text-stone-500">/</kbd>{' '}
@@ -3268,15 +3274,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               ))}
             </ul>
             <div className="flex items-center justify-end gap-2">
-              <button
+              <Button variant="ghost"
                 onClick={() =>
                   setQualityGateDialog({ show: false, targetStatus: '', warnings: [] })
                 }
                 className="px-3 py-1.5 text-xs font-medium text-stone-600 bg-stone-100 rounded-lg hover:bg-stone-200 transition-colors duration-150"
               >
                 Go Back & Fix
-              </button>
-              <button
+              </Button>
+              <Button variant="ghost"
                 onClick={() => {
                   const target = qualityGateDialog.targetStatus;
                   setQualityGateDialog({ show: false, targetStatus: '', warnings: [] });
@@ -3285,7 +3291,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 className="px-3 py-1.5 text-xs font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors duration-150"
               >
                 Proceed Anyway
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -3325,19 +3331,19 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <div className="flex items-center justify-between mt-3">
               <span className="text-[10px] text-stone-400">Ctrl+Enter to submit</span>
               <div className="flex items-center gap-2">
-                <button
+                <Button variant="ghost"
                   onClick={handleCancelComment}
                   className="px-3 py-1.5 text-xs text-stone-500 hover:text-stone-700 rounded-md hover:bg-stone-100"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button variant="default"
                   onClick={() => handleSubmitComment(pendingCommentText)}
                   disabled={!pendingCommentText.trim()}
                   className="px-4 py-1.5 text-xs font-medium bg-stone-800 text-white rounded-md hover:bg-stone-900 disabled:opacity-50"
                 >
                   Add Comment
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -3379,7 +3385,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               {t.type === 'info' && <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" />}
               {t.message}
               {t.onUndo && (
-                <button
+                <Button variant="ghost"
                   onClick={() => {
                     t.onUndo?.();
                     setToasts(prev => prev.filter(x => x.id !== t.id));
@@ -3387,14 +3393,14 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   className="ml-1 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-white/20 rounded hover:bg-white/30 transition-colors duration-150"
                 >
                   Undo
-                </button>
+                </Button>
               )}
-              <button
+              <Button variant="ghost"
                 onClick={() => setToasts(prev => prev.filter(x => x.id !== t.id))}
                 className="ml-1 opacity-60 hover:opacity-100"
               >
                 <XCircle className="w-3 h-3" />
-              </button>
+              </Button>
             </div>
           ))}
         </div>

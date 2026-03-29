@@ -22,6 +22,8 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { LIFECYCLE } from '../ui/enterprise';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -163,9 +165,9 @@ export function ReviewerAssignment({
           )}
         </div>
         {onClose && (
-          <button onClick={onClose} className="p-1 text-stone-400 hover:text-stone-600">
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-6 w-6 text-stone-400 hover:text-stone-600">
             <X className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         )}
       </div>
 
@@ -247,22 +249,26 @@ export function ReviewerAssignment({
                 {/* Actions */}
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   {reviewer.status === 'pending' && onSendReminder && (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => onSendReminder(reviewer.id)}
-                      className="p-1 text-stone-400 hover:text-blue-600 rounded"
+                      className="h-5 w-5 text-stone-400 hover:text-blue-600"
                       title="Send reminder"
                     >
                       <Send className="h-3 w-3" />
-                    </button>
+                    </Button>
                   )}
                   {onRemoveReviewer && (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => onRemoveReviewer(reviewer.id)}
-                      className="p-1 text-stone-400 hover:text-red-500 rounded"
+                      className="h-5 w-5 text-stone-400 hover:text-red-500"
                       title="Remove reviewer"
                     >
                       <X className="h-3 w-3" />
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -274,24 +280,24 @@ export function ReviewerAssignment({
       {/* Add reviewer */}
       <div className="px-3 py-2 border-t border-stone-100">
         <div className="relative">
-          <button
+          <Button
+            variant="ghost"
             onClick={() => setShowAddDropdown(!showAddDropdown)}
-            className="w-full flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors duration-150"
+            className="w-full flex items-center gap-1.5 h-auto px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 justify-start"
           >
             <Plus className="h-3 w-3" />
             Add Reviewer
             <ChevronDown className={cn('h-3 w-3 ml-auto transition-transform duration-150', showAddDropdown && 'rotate-180')} />
-          </button>
+          </Button>
 
           {showAddDropdown && (
             <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-stone-200 rounded-lg shadow-sm z-10 overflow-hidden">
               <div className="p-2 border-b border-stone-100">
-                <input
-                  type="text"
+                <Input
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Search team members..."
-                  className="w-full px-2 py-1.5 text-xs rounded border border-stone-200 focus-visible:ring-2 outline-none focus:ring-blue-300"
+                  className="text-xs border-stone-200"
                   autoFocus
                 />
               </div>
@@ -302,14 +308,15 @@ export function ReviewerAssignment({
                   </p>
                 ) : (
                   availableMembers.map(m => (
-                    <button
+                    <Button
                       key={m.id}
+                      variant="ghost"
                       onClick={() => {
                         onAddReviewer?.(m.id);
                         setShowAddDropdown(false);
                         setSearchQuery('');
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-stone-50 transition-colors duration-150"
+                      className="w-full flex items-center gap-2 h-auto px-3 py-1.5 hover:bg-stone-50 justify-start rounded-none"
                     >
                       <div className={cn(
                         'h-6 w-6 rounded-full flex items-center justify-center text-white text-[9px] font-semibold shrink-0',
@@ -324,7 +331,7 @@ export function ReviewerAssignment({
                       {m.role && (
                         <span className="text-[9px] text-stone-400 shrink-0">{m.role}</span>
                       )}
-                    </button>
+                    </Button>
                   ))
                 )}
               </div>
@@ -336,10 +343,12 @@ export function ReviewerAssignment({
       {/* Submit for review */}
       {isDraft && reviewers.length > 0 && onSubmitForReview && (
         <div className="px-3 py-2 border-t border-stone-100 bg-stone-50">
-          <button
+          <Button
+            variant="default"
+            size="sm"
             onClick={onSubmitForReview}
             disabled={isSubmitting}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-stone-800 rounded-md hover:bg-stone-900 transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-1.5 text-xs font-medium"
           >
             {isSubmitting ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -347,7 +356,7 @@ export function ReviewerAssignment({
               <Send className="h-3.5 w-3.5" />
             )}
             Submit for Review
-          </button>
+          </Button>
         </div>
       )}
     </div>

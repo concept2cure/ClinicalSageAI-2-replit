@@ -732,15 +732,11 @@ export function SignatureWorkflow({
             >
               Cancel
             </Button>
-            <button
+            <Button
+              variant="default"
               onClick={handleSign}
               disabled={signing || !legalAck || !password}
-              className={cn(
-                'inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all duration-150',
-                signing || !legalAck || !password
-                  ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
-                  : 'bg-stone-800 text-white hover:bg-stone-900 shadow-sm shadow-blue-200'
-              )}
+              className="inline-flex items-center gap-2 text-sm font-medium"
             >
               {signing ? (
                 <>
@@ -753,7 +749,7 @@ export function SignatureWorkflow({
                   Apply Signature
                 </>
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -1002,13 +998,14 @@ export function SignatureWorkflow({
           Verify Signatures
         </Button>
 
-        <button
+        <Button
+          variant="default"
           onClick={() => setShowSignModal(true)}
-          className="inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium bg-stone-800 text-white hover:bg-stone-900 shadow-sm shadow-blue-200 transition-all duration-150"
+          className="inline-flex items-center gap-2 text-sm font-medium"
         >
           <PenTool className="w-4 h-4" />
           Sign Document
-        </button>
+        </Button>
       </div>
 
       {/* Modals */}
