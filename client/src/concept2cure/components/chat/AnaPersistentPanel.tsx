@@ -282,6 +282,8 @@ interface AnaMessage {
   };
   /** Enrichment sources that informed this response */
   enrichmentSources?: string[];
+  /** Enrichment sources that failed during context building */
+  enrichmentFailures?: string[];
   /** Memory atom count used in this response */
   memoryAtomCount?: number;
 }
@@ -1898,6 +1900,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               // Grounding, enrichment, and memory metadata
               grounding: data.grounding || undefined,
               enrichmentSources: data.enrichment?.sources || data.enrichmentSources || undefined,
+              enrichmentFailures: data.enrichment?.meta?.sourcesFailed || data.enrichmentMeta?.sourcesFailed || undefined,
               memoryAtomCount: data.memory?.atomCount || undefined,
             },
           ]);
@@ -4155,6 +4158,15 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               title={`Sources: ${msg.enrichmentSources.join(', ')}`}
                             >
                               {msg.enrichmentSources.length} source{msg.enrichmentSources.length !== 1 ? 's' : ''}
+                            </span>
+                          )}
+                          {/* Enrichment failures */}
+                          {msg.enrichmentFailures && msg.enrichmentFailures.length > 0 && (
+                            <span
+                              className="text-[10px] text-amber-600 mr-1"
+                              title={`Failed sources: ${msg.enrichmentFailures.join(', ')}. Response may be less contextual.`}
+                            >
+                              {msg.enrichmentFailures.length} source{msg.enrichmentFailures.length !== 1 ? 's' : ''} unavailable
                             </span>
                           )}
                           {/* Memory atom count */}
