@@ -17,6 +17,8 @@
  */
 
 import React, { useState, useCallback, useEffect, useMemo, lazy, Suspense, useRef } from 'react';
+// @ts-expect-error -- error-boundary is a .jsx file without type declarations
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 
 import { ProjectFileTree, type TreeArtifact } from './ProjectFileTree';
 import { DocumentListPane } from './DocumentListPane';
@@ -2837,33 +2839,35 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 </div>
               ) : (
                 <div ref={editorContainerRef} className="flex-1 flex min-h-0 min-w-0">
-                  <Suspense
-                    fallback={
-                      <div
-                        className="flex-1 flex flex-col items-center justify-center gap-3"
-                        data-testid="editor-loading"
-                      >
-                        <LoadingState
-                          message="Loading editor..."
-                          size="sm"
-                          testId="editor-suspense"
-                        />
-                      </div>
-                    }
-                  >
-                    <EditorPanel
-                      projectId={projectId}
-                      submissionType={submissionType || projectType}
-                      initialContent={initialContent}
-                      initialTitle={initialTitle}
-                      initialCtdSection={initialCtdSection}
-                      onInitialContentConsumed={onInitialContentConsumed}
-                      openArtifactId={openArtifactId}
-                      onOpenArtifactConsumed={onOpenArtifactConsumed}
-                      onContentChange={handleDocContentChange}
-                      initialInspector={editorInitialInspector}
-                    />
-                  </Suspense>
+                  <ErrorBoundary>
+                    <Suspense
+                      fallback={
+                        <div
+                          className="flex-1 flex flex-col items-center justify-center gap-3"
+                          data-testid="editor-loading"
+                        >
+                          <LoadingState
+                            message="Loading editor..."
+                            size="sm"
+                            testId="editor-suspense"
+                          />
+                        </div>
+                      }
+                    >
+                      <EditorPanel
+                        projectId={projectId}
+                        submissionType={submissionType || projectType}
+                        initialContent={initialContent}
+                        initialTitle={initialTitle}
+                        initialCtdSection={initialCtdSection}
+                        onInitialContentConsumed={onInitialContentConsumed}
+                        openArtifactId={openArtifactId}
+                        onOpenArtifactConsumed={onOpenArtifactConsumed}
+                        onContentChange={handleDocContentChange}
+                        initialInspector={editorInitialInspector}
+                      />
+                    </Suspense>
+                  </ErrorBoundary>
                 </div>
               )}
             </DocumentStudioSurface>

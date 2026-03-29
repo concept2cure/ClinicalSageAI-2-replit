@@ -906,13 +906,7 @@ function GovernanceTrailTab({ projectId, artifactId }: { projectId: string | num
     let cancelled = false;
     (async () => {
       try {
-        const token = sessionStorage.getItem('trialsage_access_token') || localStorage.getItem('trialsage_access_token');
-        const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-        const res = await fetch(
-          `/api/operating-system/governance/transitions?projectId=${projectId}&artifactId=${artifactId}`,
-          { headers }
-        );
-        if (!res.ok) throw new Error('Failed to fetch');
+        const res = await apiRequest('GET', `/api/operating-system/governance/transitions?projectId=${projectId}&artifactId=${artifactId}`);
         const data = await res.json();
         if (!cancelled) {
           setTransitions(data.data || []);
