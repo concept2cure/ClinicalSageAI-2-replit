@@ -704,6 +704,36 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     setMode('edit');
   }, [openArtifactId, artifacts, tryOpenForEdit]);
 
+  // ── Resume where left off — persist last active artifact per project ───
+  const resumeAttemptedRef = useRef(false);
+
+  // Save last active artifact to localStorage whenever it changes
+  useEffect(() => {
+    if (!projectId || !selectedDocId) return;
+    try {
+      localStorage.setItem(`c2c_last_artifact_${projectId}`, selectedDocId);
+    } catch { /* storage full — non-critical */ }
+  }, [projectId, selectedDocId]);
+
+  // On workspace mount, auto-restore last active artifact if nothing else is requesting a specific doc
+  useEffect(() => {
+    if (resumeAttemptedRef.current) return;
+    if (!projectId || artifacts.length === 0) return;
+    // Don't override explicit openArtifactId or initialContent
+    if (openArtifactId || initialContent) return;
+    resumeAttemptedRef.current = true;
+
+    try {
+      const lastDocId = localStorage.getItem(`c2c_last_artifact_${projectId}`);
+      if (!lastDocId) return;
+      const art = artifacts.find(a => a.id === lastDocId);
+      if (!art) return;
+      // Resume: open the document in browse mode (user can escalate to edit)
+      setSelectedDocId(lastDocId);
+      setMode('browse');
+    } catch { /* localStorage unavailable */ }
+  }, [projectId, artifacts, openArtifactId, initialContent]);
+
   useEffect(() => {
     loadArtifacts();
   }, [loadArtifacts]);
@@ -1528,85 +1558,79 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   return (
     <DocumentModeProvider initialStage={workflowStage} key={workflowStage}>
       <div className="flex-1 flex flex-col min-h-0" data-testid="project-workspace-shell">
-        {/* ── Compact breadcrumb bar ────────────────────────────────────────── */}
-        <div className="flex items-center gap-3 px-4 h-11 border-b border-stone-200 bg-white shrink-0">
+        {/* ── Compact breadcrumb bar — minimal chrome ─────────────────────── */}
+        <div className="flex items-center gap-2.5 px-4 h-10 border-b border-stone-150 bg-white shrink-0">
           <button
             onClick={onBackToProjects}
-            className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-900 transition-colors duration-150"
+            className="flex items-center gap-1 text-xs text-stone-400 hover:text-stone-700 transition-colors duration-150"
+            aria-label="Back to projects"
           >
-            <ChevronLeft className="w-4 h-4" />
-            <span>Projects</span>
+            <ChevronLeft className="w-3.5 h-3.5" />
           </button>
-          <span className="text-stone-300">/</span>
           {projectType && (
-            <span className="text-xs px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 font-semibold">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 font-medium uppercase tracking-tight flex-shrink-0">
               {projectType}
             </span>
           )}
-          <span className="text-sm font-semibold text-stone-900 truncate">
+          <span className="text-[14px] font-semibold text-stone-800 truncate">
             {projectName || 'Untitled Project'}
           </span>
           {(mode === 'edit' || mode === 'browse') && (
-            <>
-              <span className="text-stone-300">/</span>
+            <div className="flex items-center gap-1.5 text-stone-300">
+              <span>/</span>
               <button
                 onClick={() => {
                   setSelectedDocId(undefined);
                   setMode('dashboard');
                 }}
-                className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                className="text-[11px] text-stone-500 hover:text-stone-700 font-medium transition-colors"
               >
-                Dashboard
+                Home
               </button>
               {mode === 'edit' && selectedDocId && (
                 <>
-                  <span className="text-stone-300">/</span>
+                  <span>/</span>
                   <button
                     onClick={() => setMode('browse')}
-                    className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                    className="text-[11px] text-stone-500 hover:text-stone-700 font-medium transition-colors"
                   >
                     Files
                   </button>
                 </>
               )}
-            </>
-          )}
-          {/* View toggle — push to right */}
-          {onSwitchToIntelligence && (
-            <div className="ml-auto flex items-center rounded-lg border border-stone-200 overflow-hidden">
-              <button
-                onClick={onSwitchToIntelligence}
-                className="px-3 py-1.5 text-xs font-medium text-stone-500 hover:bg-stone-50 transition-colors flex items-center gap-1.5"
-              >
-                <Brain className="w-3.5 h-3.5" />
-                Intelligence
-              </button>
-              <button className="px-3 py-1.5 text-xs font-medium bg-stone-900 text-white transition-colors duration-150">
-                Work
-              </button>
             </div>
           )}
-          {/* Context bars expand/collapse toggle */}
+          {/* Spacer */}
+          <div className="flex-1" />
+          {/* Intelligence link — subtle, not a toggle */}
+          {onSwitchToIntelligence && (
+            <button
+              onClick={onSwitchToIntelligence}
+              className="text-[11px] font-medium text-stone-400 hover:text-stone-600 transition-colors flex items-center gap-1"
+            >
+              <Brain className="w-3 h-3" />
+              Intelligence
+            </button>
+          )}
+          {/* Context bars expand/collapse */}
           <button
             onClick={() => setShowContextBars(prev => !prev)}
-            className={cn(
-              'flex items-center justify-center w-6 h-6 rounded border border-stone-200 text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors',
-              !onSwitchToIntelligence && 'ml-auto'
-            )}
-            title={showContextBars ? 'Collapse context bars' : 'Expand context bars'}
+            className="flex items-center justify-center w-5 h-5 rounded text-stone-300 hover:text-stone-600 hover:bg-stone-100 transition-colors"
+            title={showContextBars ? 'Hide advanced controls' : 'Show advanced controls'}
+            aria-label={showContextBars ? 'Hide advanced controls' : 'Show advanced controls'}
           >
-            {showContextBars ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            {showContextBars ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
           </button>
         </div>
 
         {/* ── Collapsible context bars (AnA Shell, Context Band, CTD Flow) ──── */}
         <div className={cn('overflow-hidden transition-all duration-200', showContextBars ? 'max-h-32' : 'max-h-0')}>
 
-        {/* ── AnA 1.0 controlled shell layer/workbench bar ─────────────────── */}
+        {/* ── Work modes / workbench bar ─────────────────────────────────── */}
         {!isINDWorkspace && (
-        <div className="flex items-center gap-3 px-4 h-11 border-b border-zinc-200 bg-zinc-50/70 shrink-0 overflow-x-auto">
-          <div className="text-[11px] font-semibold tracking-wide text-zinc-500 uppercase whitespace-nowrap">
-            AnA 1.0 Shell
+        <div className="flex items-center gap-3 px-4 h-10 border-b border-stone-150 bg-stone-50/50 shrink-0 overflow-x-auto">
+          <div className="text-[10px] font-medium tracking-wide text-stone-400 uppercase whitespace-nowrap">
+            Mode
           </div>
           <div className="flex items-center gap-1.5">
             {OPERATING_LAYERS.map(layer => {
@@ -1630,9 +1654,9 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               );
             })}
           </div>
-          <span className="text-stone-300">|</span>
-          <div className="text-[11px] font-semibold tracking-wide text-stone-500 uppercase whitespace-nowrap">
-            Workbenches
+          <span className="text-stone-200">|</span>
+          <div className="text-[10px] font-medium tracking-wide text-stone-400 uppercase whitespace-nowrap">
+            Focus
           </div>
           <div className="flex items-center gap-1.5">
             {WORKBENCHES.map(workbench => {
@@ -1659,19 +1683,17 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         </div>
         )}
 
-        {/* ── Canonical shell context band ─────────────────────────────────────────── */}
-        <div className="flex items-center gap-2 px-4 h-9 border-b border-stone-200 bg-white/95 shrink-0">
-          <span className="text-[11px] font-semibold text-stone-700">Project</span>
-          <span className="text-[11px] text-stone-900 font-medium truncate max-w-[240px]">
-            {projectName || 'Untitled Project'}
+        {/* ── Context band ─────────────────────────────────────────────────────── */}
+        <div className="flex items-center gap-2 px-4 h-9 border-b border-stone-150 bg-white/95 shrink-0">
+          <span className="text-[11px] text-stone-500 truncate max-w-[240px]">
+            {activeArtifact?.title ? activeArtifact.title.slice(0, 50) : 'No document selected'}
           </span>
-          <span className="text-stone-300">/</span>
-          <span className="text-[11px] text-stone-600">
-            Doc:{' '}
-            {activeArtifact?.title ? activeArtifact.title.slice(0, 44) : 'No document selected'}
-          </span>
-          <span className="text-stone-300">/</span>
-          <span className="text-[11px] text-stone-600">Reviews in flight: {reviewInFlight}</span>
+          {reviewInFlight > 0 && (
+            <>
+              <span className="text-stone-200">·</span>
+              <span className="text-[11px] text-amber-600">{reviewInFlight} in review</span>
+            </>
+          )}
           <div className="ml-auto flex items-center gap-1">
             <button
               onClick={() => {
@@ -1704,8 +1726,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
         {!isINDWorkspace && (
         <div className="flex items-center gap-2 px-4 h-9 border-b border-zinc-200 bg-emerald-50/40 shrink-0 overflow-x-auto">
-          <span className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wide whitespace-nowrap">
-            Guided CTD Flow
+          <span className="text-[10px] font-medium text-emerald-600 uppercase tracking-wide whitespace-nowrap">
+            Dossier modules
           </span>
           {[
             { module: 'Module 1', focus: 'Administrative / regional' },
