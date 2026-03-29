@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { FolderOpen, FileText, Plus } from 'lucide-react';
+import { FolderOpen, FileText, Plus, Send } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { queryKeys } from '@/concept2cure/hooks/queryKeys';
@@ -25,6 +25,7 @@ interface DossierMapProps {
   projectType?: string;
   onSectionClick: (sectionCode: string) => void;
   onCreateForSection?: (sectionCode: string, sectionTitle: string) => void;
+  onNavigateSubmit?: () => void;
   onBack: () => void;
 }
 
@@ -152,6 +153,7 @@ export const DossierMap: React.FC<DossierMapProps> = ({
   projectType,
   onSectionClick,
   onCreateForSection,
+  onNavigateSubmit,
   onBack,
 }) => {
   // Fetch project sections from existing API
@@ -274,6 +276,20 @@ export const DossierMap: React.FC<DossierMapProps> = ({
       >
         {(modules) => (
           <WorkspaceCanvas>
+            {/* Submission readiness link */}
+            {onNavigateSubmit && (
+              <button
+                onClick={onNavigateSubmit}
+                className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 transition-colors text-left"
+              >
+                <div className="flex items-center gap-2">
+                  <Send className="w-3.5 h-3.5 text-violet-500" />
+                  <span className="text-sm font-medium text-stone-800">Check Submission Readiness</span>
+                </div>
+                <span className="text-xs text-stone-400">Review readiness & export →</span>
+              </button>
+            )}
+
             {modules.map(mod => {
               const modStatus = STATUS_ICON_MAP[mod.status] || STATUS_ICON_MAP['not-started'];
               return (

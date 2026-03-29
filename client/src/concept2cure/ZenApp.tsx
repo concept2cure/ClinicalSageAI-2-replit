@@ -2976,6 +2976,16 @@ export const ZenApp: React.FC = () => {
                     setLayoutMode('regulatory-workspace');
                   }
                 }}
+                onCreateForSection={(sectionCode, sectionTitle) => {
+                  setPendingEditorContent({
+                    title: sectionTitle,
+                    content: '',
+                    ctdSection: sectionCode,
+                  });
+                  setRiViewMode('editor');
+                  setLayoutMode('regulatory-workspace');
+                }}
+                onNavigateSubmit={() => setLayoutMode('submissions')}
                 onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
               />
             </Suspense>

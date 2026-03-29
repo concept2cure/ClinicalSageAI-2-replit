@@ -1092,6 +1092,13 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               active={activeNavId === 'vault'}
               onClick={() => onNavigate?.('vault')}
             />
+            <NavItem
+              icon={<Send className="w-3.5 h-3.5" />}
+              label="Submit & Export"
+              active={activeNavId === 'submit'}
+              accentColor="blue"
+              onClick={() => onNavigate?.('submit')}
+            />
           </WorkspaceGroup>
         </div>
 
