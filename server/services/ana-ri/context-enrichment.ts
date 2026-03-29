@@ -286,9 +286,9 @@ async function enrichWithCRLRTF(projectId: string | number, orgId?: number): Pro
       const recurring = getRecurringPatterns(orgId, Number(projectId));
       if (recurring.length > 0) {
         // Resolve pattern details from registry for top matches
+        const allPatterns = patternRegistry.getPatterns();
         const lines = recurring.slice(0, 8).map(r => {
-          const patterns = patternRegistry.getPatterns();
-          const pat = patterns.find(p => p.id === r.patternId);
+          const pat = allPatterns.find(p => p.id === r.patternId);
           if (!pat) return `- **${r.patternId}** — ${r.occurrences} occurrences`;
           return `- **[${pat.severity.toUpperCase()}]** ${pat.name} (${pat.agency}) — ${r.occurrences} hits${pat.remediation ? ` | Fix: ${pat.remediation.slice(0, 150)}` : ''}`;
         }).join('\n');
