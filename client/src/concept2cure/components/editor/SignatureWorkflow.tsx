@@ -60,10 +60,13 @@ import { getCurrentUser } from '../../utils/getCurrentUser';
 interface ExistingSignature {
   id: string;
   signerName: string;
+  signerId?: string;
   signerTitle: string;
   meaning: string;
   signedAt: string;
   signatureHash: string;
+  documentVersion?: number;
+  passwordVerified?: boolean;
   revoked: boolean;
 }
 
@@ -775,17 +778,17 @@ export function SignatureWorkflow({
 
           {/* Certificate body */}
           <div className="p-5 space-y-3">
-            <CertRow label="Signer" value={sig.signer_name || sig.signerName} />
-            <CertRow label="Signer ID" value={sig.signer_id || sig.signerId} />
+            <CertRow label="Signer" value={sig.signer_name || sig.signerName || ''} />
+            <CertRow label="Signer ID" value={sig.signer_id || sig.signerId || ''} />
             <CertRow label="Meaning" value={meaningLabel} />
             <CertRow
               label="Document Version"
-              value={String(sig.document_version || sig.documentVersion)}
+              value={String(sig.document_version || sig.documentVersion || 1)}
             />
             <CertRow label="Timestamp (ISO 8601)" value={formatTimestampISO(sig.timestamp)} mono />
             <CertRow
               label="Signature Hash (SHA-256)"
-              value={sig.signature_hash || sig.signatureHash}
+              value={sig.signature_hash || sig.signatureHash || ''}
               mono
               truncate
             />
