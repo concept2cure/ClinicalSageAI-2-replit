@@ -680,14 +680,14 @@ router.post('/ana/user-profile', async (req: Request, res: Response) => {
     const userId = (req as any).user?.id;
     const organizationId = (req as any).user?.organizationId;
     if (!userId || !organizationId) {
-      return res.status(401).json({ success: false, error: 'Authentication required' });
+      return sendError(res, 401, 'Authentication required');
     }
 
     await upsertUserProfile(userId, organizationId, req.body);
-    return res.json({ success: true });
+    return sendSuccess(res);
   } catch (err: any) {
     console.error('[AnA Intelligence] POST user-profile error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -700,7 +700,7 @@ router.get('/ana/merged-context', async (req: Request, res: Response) => {
     const userId = (req as any).user?.id;
     const organizationId = (req as any).user?.organizationId;
     if (!organizationId) {
-      return res.status(401).json({ success: false, error: 'Authentication required' });
+      return sendError(res, 401, 'Authentication required');
     }
 
     const projectId = req.query.projectId
@@ -713,10 +713,10 @@ router.get('/ana/merged-context', async (req: Request, res: Response) => {
       userId,
     });
 
-    return res.json({ success: true, ...result });
+    return sendSuccess(res, { ...result });
   } catch (err: any) {
     console.error('[AnA Intelligence] GET merged-context error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -741,10 +741,10 @@ router.get('/ana/capabilities', async (req: Request, res: Response) => {
       .orderBy(desc(anaCapabilityRegistry.successCount))
       .limit(100);
 
-    return res.json({ success: true, capabilities });
+    return sendSuccess(res, { capabilities });
   } catch (err: any) {
     console.error('[AnA Intelligence] GET capabilities error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
