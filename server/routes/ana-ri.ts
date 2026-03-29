@@ -211,6 +211,11 @@ function extractRequestContext(req: Request) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 router.post('/chat', async (req: Request, res: Response) => {
+  // Request-level deadline: 45s socket timeout, 40s abort signal, 35s gateway race
+  req.setTimeout(45_000);
+  const abortController = new AbortController();
+  const requestDeadline = setTimeout(() => abortController.abort(), 40_000);
+
   try {
     const {
       message,
@@ -584,7 +589,7 @@ router.post('/chat', async (req: Request, res: Response) => {
         ? (preferred_provider as (typeof VALID_PROVIDERS)[number])
         : undefined;
 
-    const response = await gw.route({
+    const gatewayPromise = gw.route({
       taskType: routingPlan.taskType,
       messages,
       maxTokens: routingPlan.maxTokens,
@@ -592,6 +597,16 @@ router.post('/chat', async (req: Request, res: Response) => {
       strategy: selectedStrategy,
       ...(validatedProvider ? { provider: validatedProvider } : {}),
     });
+
+    const gatewayTimeout = new Promise<never>((_, reject) => {
+      const timer = setTimeout(() => {
+        reject(new Error('AI gateway timeout: no response within 35s'));
+      }, 35_000);
+      // Allow the timer to be cleaned up if the abort fires first
+      abortController.signal.addEventListener('abort', () => clearTimeout(timer));
+    });
+
+    const response = await Promise.race([gatewayPromise, gatewayTimeout]);
 
     if (!response.content) {
       return sendError(res, 502, 'No response from AI provider', null, 'EMPTY_RESPONSE');
@@ -809,7 +824,16 @@ router.post('/chat', async (req: Request, res: Response) => {
 
     return sendSuccess(res, responsePayload);
   } catch (error: unknown) {
-    console.error('[AnA RI] Chat error:', error);
+    const isTimeout =
+      abortController.signal.aborted ||
+      (error instanceof Error && error.message.includes('gateway timeout'));
+    const statusCode = isTimeout ? 504 : 500;
+    const errorCode = isTimeout ? 'AI_GATEWAY_TIMEOUT' : 'INTERNAL_ERROR';
+    const errorMsg = isTimeout
+      ? 'AI response timed out — please try again or simplify your request'
+      : (error instanceof Error ? error.message : 'Internal server error');
+
+    console.error(`[AnA RI] Chat error (${errorCode}):`, error);
     void logKernelDecision({
       requestId: `ana-ri-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
       route: '/api/ana-ri/chat',
@@ -819,9 +843,11 @@ router.post('/chat', async (req: Request, res: Response) => {
       selectedTools: [],
       outcome: 'failed',
       errorMessage: (error instanceof Error ? error.message : 'unknown error'),
-      decisionRationale: 'AnA RI route failed before completion.',
+      decisionRationale: isTimeout ? 'AnA RI route timed out.' : 'AnA RI route failed before completion.',
     });
-    return sendError(res, 500, (error instanceof Error ? error.message : 'Internal server error'), null, 'INTERNAL_ERROR');
+    return sendError(res, statusCode, errorMsg, null, errorCode);
+  } finally {
+    clearTimeout(requestDeadline);
   }
 });
 
