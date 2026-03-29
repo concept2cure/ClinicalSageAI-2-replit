@@ -24,6 +24,7 @@ import { buildEvidenceChain, computeConfidence, analyzeFactors, type EvidenceSou
 import { getDeficienciesBySubmissionType, getCriticalDeficiencies, type SubmissionType } from './deficiency-taxonomy.js';
 import { buildWorkflowContext } from './workflow-orchestration.js';
 import { detectDocumentType, buildDocumentGenerationContext } from './document-routing.js';
+import { getFeedbackSummary } from '../intelligence/learning-loop-service.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -252,6 +253,23 @@ async function enrichWithReadiness(projectId: string | number, orgId?: number): 
 }
 
 async function enrichWithRecommendations(projectId: string | number, orgId?: number): Promise<string> {
+  // Query feedback summary to avoid repeating dismissed recommendations
+  let feedbackNote = '';
+  if (orgId) {
+    try {
+      const feedback = await getFeedbackSummary(Number(projectId), orgId);
+      const repeatedDismissals = feedback.topDismissedTypes.filter(d => d.count > 2);
+      if (repeatedDismissals.length > 0) {
+        const dismissalLines = repeatedDismissals.slice(0, 3).map(
+          d => `- ${d.type}: dismissed ${d.count} times`
+        ).join('\n');
+        feedbackNote = `\n\nNote: The user has previously dismissed the following recommendation types. Consider alternative approaches or provide stronger justification.\n${dismissalLines}`;
+      }
+    } catch (e: unknown) {
+      // Non-blocking — feedback query is optional enrichment
+    }
+  }
+
   // Try live recommendation engine first
   if (orgId) {
     try {
@@ -265,19 +283,20 @@ async function enrichWithRecommendations(projectId: string | number, orgId?: num
         `${i + 1}. **${a.title}** [${a.urgency}/${a.impact}] — ${a.description}${a.estimatedEffortHours ? ` (~${a.estimatedEffortHours}h)` : ''}`
       ).join('\n');
 
-      return `\n\n## Next Best Actions (Live)\n**${actionSet.actions.length} actions** prioritized by urgency and impact.\n\n${actionLines || 'No actions generated.'}\n\nPresent these as a prioritized to-do list. Be directive — tell the user what to do first and why.`;
+      return `\n\n## Next Best Actions (Live)\n**${actionSet.actions.length} actions** prioritized by urgency and impact.\n\n${actionLines || 'No actions generated.'}${feedbackNote}\n\nPresent these as a prioritized to-do list. Be directive — tell the user what to do first and why.`;
     } catch (e: unknown) {
       console.warn('[enrichment] Live recommendations failed, falling back to memory:', e instanceof Error ? e.message : 'unknown error');
     }
   }
   // Fallback to stored memory
-  return enrichWithProjectMemory(
+  const memoryResult = await enrichWithProjectMemory(
     projectId,
     ['recommendation_feedback', 'next_best_action', 'workflow_optimization'],
     'Recommendations & Next Actions',
     'Active recommendations and prioritized next steps. Present as an actionable list.',
     6
   );
+  return memoryResult + feedbackNote;
 }
 
 async function enrichWithClaims(projectId: string | number): Promise<string> {

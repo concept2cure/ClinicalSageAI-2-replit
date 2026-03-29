@@ -25,6 +25,7 @@ import { buildMemoryContextForChat } from '../memory-context-assembler.js';
 import { getIntelligencePrefix, buildSectionSpecificPrompt } from '../lumen-context-builder.js';
 import { enrichContextForChat } from './context-enrichment.js';
 import { getThreadMessages } from '../chat-thread-helpers.js';
+import { getFeedbackSummary } from '../intelligence/learning-loop-service.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -120,6 +121,23 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
   // Build authoring context
   const authoringContextBlock = buildAuthoringContextBlock(authoring_context);
 
+  // Pre-fetch user feedback patterns from learning loop (non-blocking)
+  let feedbackContext: OrchestratorInput['_feedbackContext'] = null;
+  if (projectId && numericOrgId) {
+    try {
+      const summary = await getFeedbackSummary(Number(projectId), numericOrgId);
+      if (summary.totalFeedback > 0 && summary.topDismissedTypes.length > 0) {
+        feedbackContext = {
+          totalFeedback: summary.totalFeedback,
+          acceptanceRate: summary.acceptanceRate,
+          topDismissedTypes: summary.topDismissedTypes,
+        };
+      }
+    } catch (e: unknown) {
+      // Non-blocking — feedback context is optional enrichment
+    }
+  }
+
   // Orchestrate
   const orchestratorInput: OrchestratorInput = {
     message,
@@ -129,6 +147,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     documentContext: document_context,
     submissionType: submission_type as SubmissionType | undefined,
     conversationHistory: conversation_history,
+    _feedbackContext: feedbackContext,
   };
   const orchestration = orchestrate(orchestratorInput);
 

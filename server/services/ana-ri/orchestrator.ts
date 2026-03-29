@@ -23,6 +23,17 @@ import { buildDeficiencyContext, type SubmissionType } from './deficiency-taxono
 import { buildDocumentActionContext, type DocumentActionType } from './document-actions.js';
 import { buildRoleAdaptiveContext } from './role-adapter.js';
 import { buildCommandContextForPrompt } from './command-executor.js';
+import {
+  getProjectIntelligence,
+  computeReadinessScore,
+  getProjectSignals,
+  type ProjectIntelligenceSummary,
+  type RiskFactor,
+  type OpenQuestion,
+  type KeyDecision,
+  type LearnedInsight,
+  type ReadinessContext,
+} from '../intelligence/index.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CTD Section Guidance — compact regulatory knowledge per section
@@ -199,12 +210,23 @@ export interface OrchestratorInput {
   /** Authoring context with optional pre-fetched decision context (_decisionContext) */
   authoringContext?: {
     projectId?: string;
+    organizationId?: number;
     sectionCode?: string;
     moduleCode?: string;
     artifactStatus?: string;
     _decisionContext?: Array<{ decision: unknown; receipt?: unknown }>;
+    /** Pre-fetched RIM context block (loaded by route layer via preloadRIMContext) */
+    _rimContext?: string;
     [key: string]: unknown;
   };
+  /** Pre-fetched project intelligence profile (loaded by route layer, injected into system prompt) */
+  _projectIntelligenceProfile?: ProjectIntelligenceSummary | null;
+  /** Pre-fetched user feedback patterns from the learning loop (async, injected by chat-context-builder) */
+  _feedbackContext?: {
+    totalFeedback: number;
+    acceptanceRate: number;
+    topDismissedTypes: Array<{ type: string; count: number }>;
+  } | null;
 }
 
 export interface OrchestratorOutput {
@@ -225,6 +247,8 @@ export interface OrchestratorOutput {
     documentActionContextInjected: boolean;
     workstreamContextInjected: boolean;
     workstreamHandoffInjected: boolean;
+    projectIntelligenceInjected: boolean;
+    rimContextInjected: boolean;
   };
 }
 
@@ -274,6 +298,16 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
   }
 
   let systemPrompt = buildAnaRISystemPrompt(promptOptions);
+
+  // 4b. Inject project intelligence profile (pre-fetched by route layer)
+  let projectIntelligenceInjected = false;
+  if (input._projectIntelligenceProfile) {
+    const profileBlock = formatProjectIntelligenceBlock(input._projectIntelligenceProfile);
+    if (profileBlock) {
+      systemPrompt += '\n\n' + profileBlock;
+      projectIntelligenceInjected = true;
+    }
+  }
 
   // 5. Inject deficiency context if submission type is known
   let deficiencyContextInjected = false;
@@ -331,6 +365,23 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     } catch { /* non-blocking */ }
   }
 
+  // 8b2. Inject RIM (Regulatory Intelligence Model) context for document-scoped conversations.
+  // Pre-fetched by the route layer via preloadRIMContext() and attached as _rimContext.
+  // Only injected when the user is working on a specific section or artifact — not for general chat.
+  let rimContextInjected = false;
+  if (
+    input.authoringContext?._rimContext &&
+    (input.authoringContext?.sectionCode || input.authoringContext?.artifactId)
+  ) {
+    try {
+      const rimBlock = input.authoringContext._rimContext;
+      if (rimBlock.trim().length > 0) {
+        systemPrompt += '\n\n' + rimBlock;
+        rimContextInjected = true;
+      }
+    } catch { /* non-blocking */ }
+  }
+
   // 8c. Inject document-state intelligence when authoring context includes artifact status
   if (input.authoringContext) {
     const artifactStatus = input.authoringContext?.artifactStatus;
@@ -364,6 +415,54 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
   if (input.conversationHistory && input.conversationHistory.length > 12) {
     systemPrompt += `\n\n## CONTEXT FRESHNESS WARNING\nThis conversation has ${input.conversationHistory.length} messages. Project context was injected at the start and may not reflect recent changes. If the user asks about current state, suggest running /status or /readiness for a live check rather than relying on stale context. If you're unsure whether data is current, say so.`;
   }
+
+  // 8e. Inject user feedback patterns from learning loop (pre-fetched by chat-context-builder)
+  if (input._feedbackContext && input._feedbackContext.totalFeedback > 0 && input._feedbackContext.acceptanceRate < 100) {
+    const fb = input._feedbackContext;
+    const dismissedWithCounts = fb.topDismissedTypes
+      .filter(d => d.count > 1)
+      .slice(0, 3);
+    if (dismissedWithCounts.length > 0) {
+      const lines = dismissedWithCounts.map(d => {
+        const typeRate = fb.totalFeedback > 0
+          ? Math.round(((fb.totalFeedback - d.count) / fb.totalFeedback) * 100)
+          : 0;
+        return `- ${d.type}: dismissed ${d.count} times (acceptance rate: ${typeRate}%)`;
+      }).join('\n');
+      systemPrompt += `\n\n## USER FEEDBACK PATTERNS\nThe user has previously dismissed or rejected the following types of recommendations for this project:\n${lines}\n\nAvoid repeating these exact patterns. If you must recommend something similar, acknowledge the prior dismissal and explain why the recommendation is still relevant, or offer an alternative approach.`;
+    }
+  }
+
+  // 8f. Inject proactive intelligence surfacing protocol + intelligence usage directives
+  systemPrompt += `
+
+## USING INJECTED INTELLIGENCE
+When you receive PROJECT INTELLIGENCE PROFILE, REGULATORY INTELLIGENCE CONTEXT, or USER FEEDBACK PATTERNS sections above, you MUST:
+1. Reference specific items from these sections in your responses when relevant
+2. Never contradict a documented decision without flagging the contradiction
+3. Cite the source when referencing memory atoms (e.g., "per the project's risk assessment...")
+4. Adjust recommendation confidence based on evidence sufficiency scores
+5. When readiness is low for a section, lead with what's missing before addressing the user's question
+
+## PROACTIVE INTELLIGENCE PROTOCOL
+You are expected to proactively surface relevant intelligence when contextually appropriate. Do NOT wait to be asked. Specifically:
+
+1. **Risk alerts**: If the user is working on a section or artifact that has known risks from the project intelligence profile, mention them upfront. Example: "Before we proceed with Module 2.5, note that the evidence sufficiency score for this section is 62% — you may want to address the data gaps first."
+
+2. **Consistency warnings**: If the user's current request could create inconsistency with prior decisions or other sections, flag it. Example: "This dosing rationale differs from what was established in Section 2.7.4 — should I reconcile them?"
+
+3. **Memory-informed suggestions**: If you have memory atoms relevant to the current task, reference them naturally. Example: "Based on the regulatory feedback captured last week, the reviewer was concerned about the primary endpoint justification."
+
+4. **Deadline/milestone awareness**: If the project has milestones approaching, mention them when relevant. Example: "The Module 3 freeze date is in 5 days — this section should be finalized soon."
+
+5. **Pattern recognition**: If you notice the user asking similar questions repeatedly, offer to create a reusable template or persistent knowledge atom.
+
+Rules for proactive surfacing:
+- Maximum ONE proactive insight per response (don't overwhelm)
+- Only surface if confidence > 70% that it's relevant to the current message
+- Prefix proactive insights with a subtle marker: "**Note:**" or "**Context:**"
+- Never repeat a proactive insight you've already surfaced in this thread
+- If you have nothing proactive to add, say nothing — silence is better than noise`;
 
   // 9. Inject conversation continuity context
   if (input.conversationHistory && input.conversationHistory.length > 0) {
@@ -402,8 +501,106 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
       documentActionContextInjected,
       workstreamContextInjected: true,
       workstreamHandoffInjected: !!workstreamHandoff,
+      projectIntelligenceInjected,
+      rimContextInjected,
     },
   };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RIM Context Pre-loader
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Pre-fetch RIM intelligence context for injection into the orchestrator.
+ *
+ * Call this in the async route layer BEFORE calling `orchestrate()`, then
+ * attach the result as `authoringContext._rimContext`. This follows the
+ * same pattern used for `_decisionContext`.
+ *
+ * Only call when the user is working on a specific document section or
+ * artifact — skip for general chat to avoid unnecessary overhead.
+ *
+ * The returned block is capped at ~400 tokens to avoid prompt bloat.
+ *
+ * @param projectId - The project ID
+ * @param organizationId - The organization ID (for live readiness scoring)
+ * @returns A formatted markdown block or empty string if no data
+ */
+export async function preloadRIMContext(
+  projectId: string,
+  organizationId?: number,
+): Promise<string> {
+  try {
+    const parts: string[] = [];
+
+    // 1. Readiness score (live computation if org available, else skip)
+    if (organizationId) {
+      try {
+        const ctx: ReadinessContext = {
+          organizationId,
+          projectId: Number(projectId),
+        };
+        const score = await computeReadinessScore(ctx);
+        const gapLines = score.gaps
+          .slice(0, 5)
+          .map(
+            (g) =>
+              `- [${g.severity.toUpperCase()}] ${g.module}: ${g.description}`,
+          )
+          .join('\n');
+        parts.push(
+          `**Readiness: ${score.overallScore}/100** | Trend: ${score.trend?.direction || 'unknown'}` +
+            (gapLines ? `\nTop gaps:\n${gapLines}` : ''),
+        );
+      } catch (e: unknown) {
+        console.warn(
+          '[rim-preload] Readiness scoring failed:',
+          e instanceof Error ? e.message : String(e),
+        );
+      }
+    }
+
+    // 2. Accumulated RIM signals (in-memory, synchronous)
+    try {
+      const signals = getProjectSignals(projectId);
+      if (signals && signals.length > 0) {
+        const signalLines = signals
+          .slice(0, 6)
+          .map(
+            (s: {
+              riskLevel?: string;
+              type?: string;
+              content?: string;
+              message?: string;
+              score?: number;
+            }) =>
+              `- [${s.riskLevel || s.type || 'signal'}] ${(s.content || s.message || '').slice(0, 200)}${s.score != null ? ` (score: ${s.score})` : ''}`,
+          )
+          .join('\n');
+        parts.push(`**${signals.length} intelligence signals**\n${signalLines}`);
+      }
+    } catch (e: unknown) {
+      console.warn(
+        '[rim-preload] Signal retrieval failed:',
+        e instanceof Error ? e.message : String(e),
+      );
+    }
+
+    if (parts.length === 0) return '';
+
+    return (
+      `## REGULATORY INTELLIGENCE CONTEXT\n` +
+      parts.join('\n\n') +
+      `\n\nUse this intelligence to inform your response. Flag sections with low readiness. Reference specific signals when making recommendations.`
+    );
+  } catch (e: unknown) {
+    console.warn(
+      '[rim-preload] Failed to build RIM context:',
+      e instanceof Error ? e.message : String(e),
+    );
+    return '';
+  }
 }
 
 /**
@@ -1173,4 +1370,141 @@ function extractKeyRegTerms(text: string): string[] {
     if (matches) matches.forEach(m => terms.add(m.trim()));
   }
   return [...terms];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Project Intelligence Profile — context injection for conversation continuity
+// ─────────────────────────────────────────────────────────────────────────────
+
+const MAX_PROFILE_ITEMS = 5;
+
+/**
+ * Format a project intelligence profile into a concise system prompt block.
+ * Returns null if the profile has no meaningful content to inject.
+ */
+function formatProjectIntelligenceBlock(profile: ProjectIntelligenceSummary): string | null {
+  const parts: string[] = [];
+
+  // Header
+  parts.push('## PROJECT INTELLIGENCE PROFILE');
+  parts.push(`**Project ID:** ${profile.projectId} | **Status:** ${profile.profileStatus}`);
+  if (profile.targetIndication || profile.targetPopulation) {
+    const meta: string[] = [];
+    if (profile.targetIndication) meta.push(`**Indication:** ${profile.targetIndication}`);
+    if (profile.targetPopulation) meta.push(`**Population:** ${profile.targetPopulation}`);
+    parts.push(meta.join(' | '));
+  }
+
+  // Regulatory Strategy
+  parts.push('');
+  parts.push('### Regulatory Strategy');
+  parts.push(profile.regulatoryStrategy || 'Not yet defined');
+
+  // Known Risks (top 5 by severity)
+  const risks = profile.riskFactors as readonly RiskFactor[];
+  if (risks.length > 0) {
+    const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+    const sortedRisks = [...risks].sort((a, b) => {
+      const aScore = severityOrder[a.impact?.toLowerCase() ?? ''] ?? 4;
+      const bScore = severityOrder[b.impact?.toLowerCase() ?? ''] ?? 4;
+      return aScore - bScore;
+    });
+    const topRisks = sortedRisks.slice(0, MAX_PROFILE_ITEMS);
+    parts.push('');
+    parts.push(`### Known Risks (${risks.length})`);
+    for (const r of topRisks) {
+      parts.push(`- [${(r.impact || 'unknown').toUpperCase()}] ${r.risk} (likelihood: ${r.likelihood || 'unknown'})`);
+    }
+    if (risks.length > MAX_PROFILE_ITEMS) {
+      parts.push(`- ... and ${risks.length - MAX_PROFILE_ITEMS} more`);
+    }
+  }
+
+  // Open Questions (top 5 by priority)
+  const questions = profile.openQuestions as readonly OpenQuestion[];
+  if (questions.length > 0) {
+    const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+    const sortedQuestions = [...questions].sort((a, b) => {
+      const aScore = priorityOrder[a.priority?.toLowerCase() ?? ''] ?? 4;
+      const bScore = priorityOrder[b.priority?.toLowerCase() ?? ''] ?? 4;
+      return aScore - bScore;
+    });
+    const topQuestions = sortedQuestions.slice(0, MAX_PROFILE_ITEMS);
+    parts.push('');
+    parts.push(`### Open Questions (${questions.length})`);
+    for (const q of topQuestions) {
+      const priorityTag = q.priority ? `[${q.priority.toUpperCase()}] ` : '';
+      parts.push(`- ${priorityTag}${q.question}`);
+    }
+    if (questions.length > MAX_PROFILE_ITEMS) {
+      parts.push(`- ... and ${questions.length - MAX_PROFILE_ITEMS} more`);
+    }
+  }
+
+  // Key Decisions (most recent 5)
+  const decisions = profile.keyDecisions as readonly KeyDecision[];
+  if (decisions.length > 0) {
+    const sortedDecisions = [...decisions].sort((a, b) => {
+      return (b.date || '').localeCompare(a.date || '');
+    });
+    const topDecisions = sortedDecisions.slice(0, MAX_PROFILE_ITEMS);
+    parts.push('');
+    parts.push(`### Key Decisions (${decisions.length})`);
+    for (const d of topDecisions) {
+      const dateTag = d.date ? ` (${d.date})` : '';
+      parts.push(`- ${d.decision}${dateTag} — ${d.rationale}`);
+    }
+    if (decisions.length > MAX_PROFILE_ITEMS) {
+      parts.push(`- ... and ${decisions.length - MAX_PROFILE_ITEMS} more`);
+    }
+  }
+
+  // Learned Insights (top 5 by confidence)
+  const insights = profile.learnedInsights as readonly LearnedInsight[];
+  if (insights.length > 0) {
+    const sortedInsights = [...insights].sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0));
+    const topInsights = sortedInsights.slice(0, MAX_PROFILE_ITEMS);
+    parts.push('');
+    parts.push('### Learned Insights');
+    for (const i of topInsights) {
+      parts.push(`- ${i.insight} (source: ${i.source}, confidence: ${Math.round((i.confidence ?? 0) * 100)}%)`);
+    }
+    if (insights.length > MAX_PROFILE_ITEMS) {
+      parts.push(`- ... and ${insights.length - MAX_PROFILE_ITEMS} more`);
+    }
+  }
+
+  // Check if there's any meaningful content beyond the header
+  const hasContent = risks.length > 0 || questions.length > 0 || decisions.length > 0 ||
+    insights.length > 0 || profile.regulatoryStrategy;
+  if (!hasContent) return null;
+
+  // Closing directive
+  parts.push('');
+  parts.push('Use this profile to maintain continuity. Reference known risks and open questions proactively. Do not repeat recommendations that contradict prior decisions.');
+
+  return parts.join('\n');
+}
+
+/**
+ * Pre-fetch the project intelligence profile for injection into the orchestrator.
+ * Call this in route handlers before calling orchestrate(), then pass the result
+ * as `_projectIntelligenceProfile` on the OrchestratorInput.
+ *
+ * Non-blocking: returns null on any failure.
+ */
+export async function prefetchProjectIntelligence(
+  projectId: number | undefined | null,
+  organizationId: number | undefined | null,
+): Promise<ProjectIntelligenceSummary | null> {
+  if (!projectId || !organizationId) return null;
+  try {
+    return await getProjectIntelligence(projectId, organizationId);
+  } catch (e: unknown) {
+    console.warn(
+      '[orchestrator] Failed to prefetch project intelligence profile:',
+      e instanceof Error ? e.message : String(e),
+    );
+    return null;
+  }
 }
