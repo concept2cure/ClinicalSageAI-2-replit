@@ -302,7 +302,7 @@ function ConfidenceScreen({
       ]
     : [
         { id: 'work', label: 'Start in Work', description: 'Open the document workspace' },
-        { id: 'apps', label: 'Browse Apps', description: 'Explore builders and specialist tools' },
+        { id: 'apps', label: 'Browse AI Assistants', description: 'Explore builders and specialist tools' },
         { id: 'vault', label: 'Open Vault', description: 'Browse files and evidence' },
       ];
 

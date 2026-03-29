@@ -50,6 +50,7 @@ import {
   BookOpen,
   Pill,
   Heart,
+  MoreHorizontal,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -653,7 +654,7 @@ const NewDropdown: React.FC<{
             className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50 transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
           >
             <FileStack className="w-3.5 h-3.5 text-stone-400" />
-            New Artifact
+            New Document
           </button>
         </div>
       )}
@@ -859,7 +860,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <NewDropdown
             onNewChat={onNewChat}
             onNewProject={onOpenProjects}
-            onNewArtifact={() => onNavigate?.('apps')}
+            onNewArtifact={() => onNavigate?.('artifacts-center')}
           />
 
           <NavItem

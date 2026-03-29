@@ -34,7 +34,7 @@ export interface ProjectComposeBarProps {
   projectId: number;
   projectName: string;
   projectType: string;
-  onComposeAction: (mode: string, prompt: string) => void;
+  onComposeAction?: (mode: string, prompt: string) => void;
 }
 
 // ─── Mode definitions ─────────────────────────────────────────────────────────
@@ -96,7 +96,7 @@ export const ProjectComposeBar: React.FC<ProjectComposeBarProps> = ({
       }
 
       // For action modes, fire the prompt prefix so AnA starts the flow
-      onComposeAction(option.mode, option.promptPrefix);
+      onComposeAction?.(option.mode, option.promptPrefix);
     },
     [activeMode, onComposeAction],
   );

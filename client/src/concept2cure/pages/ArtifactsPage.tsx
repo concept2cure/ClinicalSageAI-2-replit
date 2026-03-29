@@ -133,7 +133,7 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onOpenArtifact }) 
           type="text"
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          placeholder="Search artifacts by title, project, section, or type..."
+          placeholder="Search documents by title, project, section, or type..."
           className="w-full pl-10 pr-4 text-sm"
         />
       </div>

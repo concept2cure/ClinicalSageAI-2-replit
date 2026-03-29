@@ -157,7 +157,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
   const [filterPhase, setFilterPhase] = useState<string>('');
   const [filterOutcome, setFilterOutcome] = useState<string>('');
 
-  // ── Send to dossier handler (fires event for dossier system) ──────────────
+  // ── Draft as memo handler (fires event for dossier system) ────────────────
   const handleSendToDossier = (title: string, ctdSection: string, content: string) => {
     onDraftFromPrecedent(content, `${title}`, ctdSection);
   };
@@ -782,7 +782,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                       className="text-[11px] text-stone-500 hover:text-stone-700 flex items-center gap-1"
                     >
                       <Send className="w-3 h-3" />
-                      Send to dossier
+                      Draft as memo
                     </button>
                   </div>
                 </div>
@@ -1081,7 +1081,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
 // SUB-COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/** "Send to dossier as..." inline dropdown menu */
+/** "Draft as memo..." inline dropdown menu */
 const SendToDossierMenu: React.FC<{
   projectName: string;
   generateDocContent: (docType: string) => string;
@@ -1095,7 +1095,7 @@ const SendToDossierMenu: React.FC<{
         className="inline-flex items-center gap-1 text-[11px] text-stone-500 hover:text-stone-700"
       >
         <Send className="w-3 h-3" />
-        Send to dossier as...
+        Draft as memo...
       </button>
       {open && (
         <div className="absolute left-0 top-full mt-1 z-20 w-56 rounded-md border border-stone-200 bg-white shadow-lg py-1">
@@ -1232,7 +1232,7 @@ const CSRStudyCard: React.FC<{
             className="inline-flex items-center gap-1 text-[11px] text-stone-500 hover:text-stone-700"
           >
             <Send className="w-3 h-3" />
-            Send to dossier
+            Draft as memo
           </button>
         </div>
       </div>
@@ -1312,7 +1312,7 @@ const PrecedentCard: React.FC<{
         className="inline-flex items-center gap-1 text-[11px] text-stone-500 hover:text-stone-700"
       >
         <Send className="w-3 h-3" />
-        Send to dossier
+        Draft as memo
       </button>
     </div>
   </div>

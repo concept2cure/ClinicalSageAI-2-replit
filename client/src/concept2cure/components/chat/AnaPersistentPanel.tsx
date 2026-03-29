@@ -1369,6 +1369,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
   // Handle external message (auto-send whenever value changes, supports resend)
   const lastExternalTsRef = useRef(0);
+  const consequenceInFlightRef = useRef(false);
   useEffect(() => {
     if (externalMessage && externalMessage.ts !== lastExternalTsRef.current) {
       lastExternalTsRef.current = externalMessage.ts;
@@ -4464,6 +4465,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 }}
                                 className="h-auto w-auto p-1 text-stone-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                                 title="Insert into Editor"
+                                aria-label="Insert into Editor"
                               >
                                 <FileEdit className="w-3 h-3" />
                               </Button>
@@ -4503,6 +4505,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 disabled={isThinking}
                                 onClick={async () => {
                                   if (isThinking || !contextProfile?.projectId) return;
+                                  if (!msg.id) return;
+                                  if (consequenceInFlightRef.current) return;
+                                  consequenceInFlightRef.current = true;
                                   setIsThinking(true);
                                   try {
                                     const res = await apiRequest('POST', '/api/ana-ri/generate', {
@@ -4531,7 +4536,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                         },
                                       ]);
                                     }
-                                  } catch { /* fallback: silent — main action row still available */ }
+                                  } catch {
+                                    toast({ title: 'Action failed', description: `Could not save as ${act.label}. Please try again.`, variant: 'destructive' });
+                                  } finally {
+                                    consequenceInFlightRef.current = false;
+                                  }
                                   setIsThinking(false);
                                 }}
                                 className={cn(

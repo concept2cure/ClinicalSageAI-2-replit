@@ -1812,6 +1812,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           ))}
         </div>
         )}
+        </div>{/* close collapsible context bars container */}
 
         {isINDWorkspace && (
           <div className="border-b border-blue-200 bg-blue-50/50 px-4 py-2.5 shrink-0">
@@ -2059,7 +2060,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   openSubmissionApps(activeArtifact.ctdSection, activeArtifact.templateId)
                 }
                 className="p-1.5 text-stone-400 hover:text-orange-600 rounded-md hover:bg-orange-50"
-                title="Submission Apps"
+                title="AI Assistants"
               >
                 <AppWindow className="w-3.5 h-3.5" />
               </button>
@@ -2085,6 +2086,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           <div className="flex items-center gap-3 px-4 h-7 border-b border-stone-100 bg-white shrink-0">
             <span
               role="button"
+              aria-label="Provenance tab"
               tabIndex={0}
               onClick={() => setDocumentTab('provenance')}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDocumentTab('provenance'); } }}
@@ -2098,6 +2100,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             </span>
             <span
               role="button"
+              aria-label="Compare versions tab"
               tabIndex={0}
               onClick={() => setDocumentTab('versions')}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDocumentTab('versions'); } }}
@@ -2111,6 +2114,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             </span>
             <span
               role="button"
+              aria-label="Audit trail tab"
               tabIndex={0}
               onClick={() => setDocumentTab('review')}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDocumentTab('review'); } }}

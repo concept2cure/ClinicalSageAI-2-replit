@@ -996,6 +996,15 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     'ana-platform-control': 'projects',
   };
 
+  // [C-03/C-04] Validate initialProjectId exists in the projects array.
+  // If the stored/URL project was deleted or is inaccessible, fall back gracefully.
+  useEffect(() => {
+    if (initialProjectId && projects.length > 0 && !projects.find(p => p.id === initialProjectId)) {
+      setActiveProjectId(projects[0]?.id);
+      setLayoutMode('projects');
+    }
+  }, [initialProjectId, projects]);
+
   // [BATCH 3] Redirect demoted layout modes to surviving destinations.
   // This catches deep links, stale bookmarks, and any navigation to removed worlds.
   useEffect(() => {
@@ -3630,7 +3639,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           };
           const fallbackBadge = { label: 'Project', color: 'text-stone-600', bg: 'bg-stone-50' };
           const relTime = (d: Date | string) => {
-            const ms = Date.now() - new Date(d).getTime();
+            const parsed = new Date(d);
+            if (isNaN(parsed.getTime())) return 'Recently';
+            const ms = Date.now() - parsed.getTime();
+            if (ms < 0) return 'Just now';
             const min = Math.floor(ms / 60000);
             if (min < 1) return 'Just now';
             if (min < 60) return `${min}m ago`;
@@ -3638,7 +3650,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             if (hr < 24) return `${hr}h ago`;
             const day = Math.floor(hr / 24);
             if (day < 30) return `${day}d ago`;
-            return new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            try {
+              return parsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            } catch {
+              return 'Recently';
+            }
           };
 
           return (
