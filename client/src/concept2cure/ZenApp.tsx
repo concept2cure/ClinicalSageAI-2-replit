@@ -202,7 +202,7 @@ const EditorPanel = lazy(() =>
 );
 // [BATCH 3] ECTDCoAuthorStandalone — standalone mode removed, redirects to documents
 
-// RI Copilot Intelligence Home (evidence-first landing surface)
+// AnA 1.0 Intelligence Home (evidence-first landing surface)
 const RICopilotHome = lazy(() =>
   import('./components/intelligence/RICopilotHome').then(m => ({
     default: m.RICopilotHome,
@@ -918,7 +918,7 @@ export const ZenApp: React.FC = () => {
   // Direct artifact open — when a module has already saved an artifact and wants to open it
   const [openArtifactId, setOpenArtifactId] = useState<string | undefined>();
 
-  // RI Copilot view: 'intelligence' = evidence-first home, 'editor' = document editing
+  // AnA intelligence view: 'intelligence' = evidence-first home, 'editor' = document editing
   const [riViewMode, setRiViewMode] = useState<'intelligence' | 'editor'>(
     urlProjectId ? 'editor' : 'intelligence'
   );
@@ -1942,7 +1942,7 @@ export const ZenApp: React.FC = () => {
     if (activeToolPanel === 'vault') return 'Vault';
     if (activeToolPanel === 'ana-biostats') return 'Biostatistics';
     const labelByNavId: Record<string, string> = {
-      'ri-copilot': 'RI Copilot',
+      'ri-copilot': 'Intelligence',
       'submission-builder': 'Submission Builder',
       cmc: 'CMC',
       'clinical-module5': 'Clinical / Module 5',
@@ -2829,7 +2829,7 @@ export const ZenApp: React.FC = () => {
                   </button>
                   <span className="text-stone-200">·</span>
                   <Brain className="w-3.5 h-3.5 text-blue-500" />
-                  <span className="text-xs font-medium text-stone-800">RI Copilot</span>
+                  <span className="text-xs font-medium text-stone-800">Intelligence</span>
                   {activeProject && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 font-medium">
                       {activeProject.name}

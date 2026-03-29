@@ -72,6 +72,9 @@ import {
   Target,
   AppWindow,
   Activity,
+  GitBranch,
+  Eye,
+  Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
@@ -381,7 +384,7 @@ interface ProjectWorkspaceShellProps {
   industryMode?: string;
   onBackToProjects: () => void;
   onSelectProject: () => void;
-  /** Switch to RI Copilot intelligence view */
+  /** Switch to AnA intelligence view */
   onSwitchToIntelligence?: () => void;
   /** Pending content from IND/eCTD handoff */
   initialContent?: string;
@@ -2074,6 +2077,72 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               </button>
               <NotificationCenter projectId={projectId} industryMode={industryMode} />
             </div>
+          </div>
+        )}
+
+        {/* ── Trust strip (provenance / compare / audit / version / status) ── */}
+        {mode === 'edit' && activeArtifact && (
+          <div className="flex items-center gap-3 px-4 h-7 border-b border-stone-100 bg-white shrink-0">
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={() => setDocumentTab('provenance')}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDocumentTab('provenance'); } }}
+              className={cn(
+                'flex items-center gap-1 text-[10px] font-medium cursor-pointer transition-colors',
+                documentTab === 'provenance' ? 'text-stone-700' : 'text-stone-400 hover:text-stone-600'
+              )}
+            >
+              <GitBranch className="w-3 h-3" />
+              Provenance
+            </span>
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={() => setDocumentTab('versions')}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDocumentTab('versions'); } }}
+              className={cn(
+                'flex items-center gap-1 text-[10px] font-medium cursor-pointer transition-colors',
+                documentTab === 'versions' ? 'text-stone-700' : 'text-stone-400 hover:text-stone-600'
+              )}
+            >
+              <Eye className="w-3 h-3" />
+              Compare
+            </span>
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={() => setDocumentTab('review')}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDocumentTab('review'); } }}
+              className={cn(
+                'flex items-center gap-1 text-[10px] font-medium cursor-pointer transition-colors',
+                documentTab === 'review' ? 'text-stone-700' : 'text-stone-400 hover:text-stone-600'
+              )}
+            >
+              <ShieldCheck className="w-3 h-3" />
+              Audit
+            </span>
+            <span className="w-px h-3 bg-stone-200" />
+            {activeArtifact.version && (
+              <span className="text-[10px] font-medium text-stone-400">
+                v{activeArtifact.version}
+              </span>
+            )}
+            <span
+              className={cn(
+                'flex items-center gap-1 text-[10px] font-medium',
+                activeArtifact.status === 'locked'
+                  ? 'text-emerald-600'
+                  : activeArtifact.status === 'approved'
+                    ? 'text-emerald-600'
+                    : activeArtifact.status === 'review'
+                      ? 'text-amber-600'
+                      : 'text-stone-400'
+              )}
+            >
+              {activeArtifact.status === 'locked' && <Lock className="w-3 h-3" />}
+              {(activeArtifact.status || 'draft').charAt(0).toUpperCase() + (activeArtifact.status || 'draft').slice(1)}
+            </span>
           </div>
         )}
 

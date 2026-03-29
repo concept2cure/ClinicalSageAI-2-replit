@@ -27,7 +27,7 @@ interface ComputeJob {
 
 const SURFACE_PRESETS = [
   {
-    label: 'RI Copilot evidence memo',
+    label: 'AnA evidence memo',
     surfaceKey: 'ri_copilot',
     intentType: 'docx_generation',
     format: 'docx',

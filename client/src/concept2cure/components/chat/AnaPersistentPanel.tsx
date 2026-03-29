@@ -4479,6 +4479,75 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           )}
                         </div>
                       )}
+                      {/* ── Consequence row — every substantial assistant response gets artifact actions ── */}
+                      {!isUser &&
+                        contextProfile?.projectId &&
+                        msg.content.length > 200 &&
+                        !msg.savedAsArtifact && (
+                          <div
+                            className={cn(
+                              'flex items-center gap-1 mt-1.5 transition-opacity duration-150',
+                              showActions === msg.id ? 'opacity-100' : 'opacity-0',
+                            )}
+                          >
+                            <span className="text-[9px] text-stone-300 mr-0.5 select-none">Save as</span>
+                            {[
+                              { label: 'Memo', type: 'strategy_note' as DocumentActionType, icon: <FileText className="w-2.5 h-2.5" /> },
+                              { label: 'Section draft', type: 'rewritten_section' as DocumentActionType, icon: <PenTool className="w-2.5 h-2.5" /> },
+                              { label: 'To dossier', type: 'attach_to_dossier' as DocumentActionType, icon: <FolderPlus className="w-2.5 h-2.5" /> },
+                            ].map(act => (
+                              <button
+                                key={act.type}
+                                type="button"
+                                disabled={isThinking}
+                                onClick={async () => {
+                                  if (isThinking || !contextProfile?.projectId) return;
+                                  setIsThinking(true);
+                                  try {
+                                    const res = await apiRequest('POST', '/api/ana-ri/generate', {
+                                      action_type: act.type,
+                                      conversation_context: messages
+                                        .slice(
+                                          Math.max(0, messages.indexOf(msg) - 4),
+                                          messages.indexOf(msg) + 1,
+                                        )
+                                        .map(m => ({ role: m.role, content: m.content })),
+                                      project_id: contextProfile.projectId,
+                                      user_role: contextProfile?.userRole || undefined,
+                                    });
+                                    if (res.ok) {
+                                      const data = await res.json();
+                                      const statusLine = data.artifactId
+                                        ? `\n\n---\n**${act.label} saved** | Artifact #${data.artifactId}`
+                                        : '';
+                                      setMessages(prev => [
+                                        ...prev,
+                                        {
+                                          id: `a-${Date.now()}`,
+                                          role: 'assistant' as const,
+                                          content: (data.content || `${act.label} created from conversation.`) + statusLine,
+                                          timestamp: new Date(),
+                                        },
+                                      ]);
+                                    }
+                                  } catch { /* fallback: silent — main action row still available */ }
+                                  setIsThinking(false);
+                                }}
+                                className={cn(
+                                  'inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-colors',
+                                  isThinking
+                                    ? 'text-stone-300 cursor-not-allowed'
+                                    : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100',
+                                )}
+                                title={act.label}
+                                aria-label={`Save as ${act.label}`}
+                              >
+                                {act.icon}
+                                {act.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       {/* Grounding-aware contextual follow-up chips — shown on last assistant message */}
                       {!isUser &&
                         msg.id === messages.filter(m => m.role === 'assistant').at(-1)?.id &&

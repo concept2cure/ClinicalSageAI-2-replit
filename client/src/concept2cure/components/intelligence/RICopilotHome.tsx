@@ -1,5 +1,5 @@
 /**
- * @fileoverview RI Copilot — Full 3-pane evidence intelligence workspace
+ * @fileoverview AnA 1.0 Intelligence — Full 3-pane evidence intelligence workspace
  *
  * Layout:
  *   LEFT  — Investigation rail (prompt input, saved investigations, quick prompts)
@@ -62,6 +62,8 @@ import {
   Lightbulb,
   Fingerprint,
   ExternalLink,
+  Send,
+  GitCompareArrows,
 } from 'lucide-react';
 
 interface RICopilotHomeProps {
@@ -74,6 +76,8 @@ interface RICopilotHomeProps {
   onOpenEditor: () => void;
   onSelectProject: () => void;
 }
+
+type CenterTab = 'evidence' | 'recommendations' | 'documents';
 
 // ── Document type definitions for RI -> Document actions ─────────────────────
 // CTD section mapping: every document type suggests a dossier placement
@@ -148,9 +152,25 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
 }) => {
   const [investigationInput, setInvestigationInput] = useState('');
   const [expandedCSRId, setExpandedCSRId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<CenterTab>('evidence');
   // Evidence filters
   const [filterPhase, setFilterPhase] = useState<string>('');
   const [filterOutcome, setFilterOutcome] = useState<string>('');
+
+  // ── Send to dossier handler (fires event for dossier system) ──────────────
+  const handleSendToDossier = (title: string, ctdSection: string, content: string) => {
+    onDraftFromPrecedent(content, `${title}`, ctdSection);
+  };
+
+  // ── Compare against strategy handler ──────────────────────────────────────
+  const handleCompareStrategy = () => {
+    const content = generateDocContent('Strategy Comparison');
+    onDraftFromPrecedent(
+      content,
+      `Strategy Comparison — ${projectName}`,
+      '2.5'
+    );
+  };
 
   // ── Live data from real APIs ───────────────────────────────────────────────
   // Use indication (project description) or fall back to projectName/submissionType
@@ -274,13 +294,9 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
           <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-blue-50 flex items-center justify-center">
             <Brain className="w-8 h-8 text-blue-600" />
           </div>
-          <h2 className="text-xl font-semibold text-stone-900 mb-2">AnA Intelligence</h2>
-          <p className="text-sm text-stone-500 mb-2">
-            Historical evidence, precedent intelligence, and regulatory reasoning.
-          </p>
-          <p className="text-xs text-stone-400 mb-6">
-            Select a project to analyze CSR data, match precedents, surface risks, and generate
-            governed documents.
+          <h2 className="text-[15px] font-semibold text-stone-900 mb-2">AnA Intelligence</h2>
+          <p className="text-[13px] text-stone-500 mb-4">
+            Select a project to surface evidence, precedents, and regulatory reasoning.
           </p>
           <button
             onClick={onSelectProject}
@@ -460,10 +476,10 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
           CENTER INTELLIGENCE CANVAS
           ═══════════════════════════════════════════════════════════════════════ */}
       <div className="flex-1 overflow-y-auto zen-scroll min-w-0">
-        <div className="max-w-3xl mx-auto px-5 py-4">
-          {/* ── 1. Intelligence Summary ─────────────────────────────── */}
-          <div className="mb-5">
-            <p className="text-sm text-stone-500">
+        <div className="max-w-3xl mx-auto px-4 py-3">
+          {/* ── 1. Project context line ─────────────────────────────── */}
+          <div className="mb-2">
+            <p className="text-[13px] text-stone-500">
               {projectName}
               {submissionType && (
                 <span className="ml-2 px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-xs font-medium">
@@ -472,67 +488,95 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
               )}
               {indication && <span className="ml-2 text-stone-400">— {indication}</span>}
             </p>
-            {strategyData?.recommendedStrategy && (
-              <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50/50 p-3">
-                <div className="flex items-start gap-2">
-                  <Lightbulb className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <span className="text-xs font-semibold text-blue-800 block mb-0.5">
-                      Strategic Recommendation
-                    </span>
-                    <p className="text-xs text-blue-700">{strategyData.recommendedStrategy}</p>
-                    {strategyData.confidence != null && (
-                      <span className="text-xs text-blue-500 mt-1 block">
-                        Confidence: {Math.round(strategyData.confidence * 100)}% · Based on{' '}
-                        {precedents.length} precedents
-                      </span>
-                    )}
+          </div>
 
-                    {/* Source Basis */}
-                    <div className="mt-2 pt-2 border-t border-blue-200/60">
-                      <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider block mb-1">
-                        Source Basis
-                      </span>
-                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-blue-600">
-                        {csrResults.length > 0 && <span>{csrResults.length} CSR studies</span>}
-                        {precedents.length > 0 && (
-                          <span>{precedents.length} regulatory precedents</span>
-                        )}
-                        {riskData && <span>Risk score: {riskData.riskScore}/100</span>}
-                      </div>
-                    </div>
-
-                    {/* Why This Recommendation */}
-                    {strategyData.rationale && (
-                      <div className="mt-2 pt-2 border-t border-blue-200/60">
-                        <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider block mb-1">
-                          Why This Recommendation
-                        </span>
-                        <p className="text-xs text-blue-600">{strategyData.rationale}</p>
-                      </div>
-                    )}
+          {/* ── Recommended Next Document (above the fold) ─────────── */}
+          {strategyData?.recommendedStrategy && (
+            <div className="mb-2 rounded-lg border border-blue-200 bg-blue-50/50 p-3">
+              <div className="flex items-start gap-2">
+                <Lightbulb className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <span className="text-[13px] font-semibold text-blue-800">Next recommended: Regulatory Strategy Note</span>
+                  <p className="text-[11px] text-blue-700 mt-0.5 line-clamp-1">{strategyData.recommendedStrategy}</p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <button
+                      onClick={() => {
+                        const content = generateDocContent('Regulatory Strategy Note');
+                        onDraftFromPrecedent(content, `Regulatory Strategy Note — ${projectName}`, '2.5');
+                      }}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 hover:text-blue-900"
+                    >
+                      Start drafting <ArrowRight className="w-3 h-3" />
+                    </button>
+                    <span className="text-stone-300">|</span>
+                    <button
+                      onClick={handleCompareStrategy}
+                      className="inline-flex items-center gap-1 text-[11px] text-stone-500 hover:text-stone-700"
+                    >
+                      <GitCompareArrows className="w-3 h-3" />
+                      Compare against strategy
+                    </button>
+                    <span className="text-stone-300">|</span>
+                    <SendToDossierMenu
+                      projectName={projectName || ''}
+                      generateDocContent={generateDocContent}
+                      onDraftFromPrecedent={onDraftFromPrecedent}
+                    />
                   </div>
+                  {/* Why this recommendation */}
+                  {strategyData.rationale && (
+                    <div className="mt-1.5 pt-1.5 border-t border-blue-200/60">
+                      <span className="text-[11px] font-semibold text-blue-700">Why: </span>
+                      <span className="text-[11px] text-blue-600">{strategyData.rationale}</span>
+                    </div>
+                  )}
+                  {strategyData.confidence != null && (
+                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-blue-500 mt-1">
+                      <span>{Math.round(strategyData.confidence * 100)}% confidence</span>
+                      {csrResults.length > 0 && <span>{csrResults.length} CSRs</span>}
+                      {precedents.length > 0 && <span>{precedents.length} precedents</span>}
+                      {riskData && <span>Risk: {riskData.riskScore}/100</span>}
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
-            {strategyLoading && (
-              <div className="mt-3 rounded-lg border border-stone-200 bg-stone-50/50 p-3">
-                <SkeletonText lines={2} label="Computing strategic recommendation" />
-              </div>
-            )}
-            {strategyError && !strategyLoading && (
-              <div className="mt-3">
-                <ErrorState
-                  message="Failed to compute strategic recommendation."
-                  retry={refetchStrategy}
-                  testId="strategy-error"
-                />
-              </div>
-            )}
+            </div>
+          )}
+          {strategyLoading && (
+            <div className="mb-2 rounded-lg border border-stone-200 bg-stone-50/50 p-3">
+              <SkeletonText lines={2} label="Computing recommendation" />
+            </div>
+          )}
+          {strategyError && !strategyLoading && (
+            <div className="mb-2">
+              <ErrorState
+                message="Failed to compute recommendation."
+                retry={refetchStrategy}
+                testId="strategy-error"
+              />
+            </div>
+          )}
+
+          {/* ── Tab toggle: Evidence / Recommendations / Documents ── */}
+          <div className="flex items-center gap-1 mb-2 border-b border-stone-200 pb-1.5">
+            {(['evidence', 'recommendations', 'documents'] as const).map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={cn(
+                  'px-3 py-1 text-xs font-medium rounded-md transition-colors',
+                  activeTab === tab
+                    ? 'bg-stone-900 text-white'
+                    : 'text-stone-500 hover:text-stone-700 hover:bg-stone-100'
+                )}
+              >
+                {tab === 'evidence' ? 'Evidence' : tab === 'recommendations' ? 'Recommendations' : 'Document Outcomes'}
+              </button>
+            ))}
           </div>
 
           {/* ── 2. Historical Evidence Metrics Row ──────────────────── */}
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-5">
+          {activeTab === 'evidence' && <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 mb-3">
             <MetricPill
               label="CSR Reports"
               value={csrResults.length}
@@ -583,14 +627,14 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                 )}
               </div>
             </div>
-          </div>
+          </div>}
 
           {/* ── 3. Evidence Clusters — Real CSR Study Cards ─────────── */}
-          <div className="mb-5">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-stone-900 flex items-center gap-1.5">
-                <Database className="w-4 h-4 text-violet-500" />
-                Matched Clinical Study Reports
+          {activeTab === 'evidence' && <div className="mb-3">
+            <div className="flex items-center justify-between mb-1.5">
+              <h2 className="text-[13px] font-semibold text-stone-900 flex items-center gap-1.5">
+                <Database className="w-3.5 h-3.5 text-violet-500" />
+                CSR Studies
                 {csrLoading && <Spinner size="sm" className="ml-1" />}
               </h2>
               <span className="text-xs text-stone-400">
@@ -606,12 +650,9 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                 testId="csr-error"
               />
             ) : filteredCSR.length === 0 && !csrLoading ? (
-              <div className="rounded-xl border border-dashed border-stone-200 bg-white p-6 text-center">
-                <Database className="w-8 h-8 text-stone-400 mx-auto mb-2" />
-                <p className="text-xs text-stone-500">No CSR data matched for this indication.</p>
-                <p className="text-xs text-stone-400 mt-1">
-                  Try adjusting the project indication or uploading CSR PDFs.
-                </p>
+              <div className="rounded-lg border border-dashed border-stone-200 bg-white p-3 text-center">
+                <Database className="w-5 h-5 text-stone-400 mx-auto mb-1" />
+                <p className="text-xs text-stone-500">No CSR data matched.</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -663,16 +704,16 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                 )}
               </div>
             )}
-          </div>
+          </div>}
 
           {/* ── 4. Recommendation Block ────────────────────────────── */}
-          {(riskData || strategyData) && (
-            <div className="mb-5 space-y-3">
+          {activeTab === 'recommendations' && (riskData || strategyData) && (
+            <div className="mb-3 space-y-2">
               {/* Risk Assessment */}
               {riskData && (
-                <div className="rounded-xl border border-stone-200 bg-white p-4">
-                  <h3 className="text-sm font-semibold text-stone-900 flex items-center gap-1.5 mb-3">
-                    <AlertTriangle className="w-4 h-4 text-amber-500" />
+                <div className="rounded-lg border border-stone-200 bg-white p-3">
+                  <h3 className="text-[13px] font-semibold text-stone-900 flex items-center gap-1.5 mb-2">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
                     Risk Assessment
                     <span
                       className={cn(
@@ -690,7 +731,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                     </span>
                   </h3>
                   {riskData.factors && riskData.factors.length > 0 && (
-                    <div className="space-y-1.5 mb-3">
+                    <div className="space-y-1 mb-2">
                       {riskData.factors.slice(0, 4).map((f: any, i: number) => (
                         <div key={i} className="flex items-start gap-2 text-xs">
                           <span
@@ -712,8 +753,8 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                     </div>
                   )}
                   {riskData.mitigationStrategies && riskData.mitigationStrategies.length > 0 && (
-                    <div className="border-t border-stone-200 pt-2">
-                      <span className="text-xs font-semibold text-stone-500 uppercase block mb-1">
+                    <div className="border-t border-stone-200 pt-1.5">
+                      <span className="text-[11px] font-semibold text-stone-500 block mb-0.5">
                         Mitigations
                       </span>
                       {riskData.mitigationStrategies.slice(0, 3).map((m: string, i: number) => (
@@ -724,21 +765,30 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                       ))}
                     </div>
                   )}
-                  <button
-                    onClick={() => {
-                      const content = generateDocContent('Risk Assessment Summary');
-                      onDraftFromPrecedent(content, `Risk Summary — ${projectName}`, '2.5.6');
-                    }}
-                    className="mt-3 text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
-                  >
-                    <FileText className="w-3 h-3" />
-                    Generate Risk Assessment Document
-                    <ArrowRight className="w-3 h-3" />
-                  </button>
+                  <div className="flex items-center gap-3 mt-2">
+                    <button
+                      onClick={() => {
+                        const content = generateDocContent('Risk Assessment Summary');
+                        onDraftFromPrecedent(content, `Risk Summary — ${projectName}`, '2.5.6');
+                      }}
+                      className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                    >
+                      <FileText className="w-3 h-3" />
+                      Generate risk document
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={() => handleSendToDossier('Risk Assessment', '2.5.6', generateDocContent('Risk Assessment Summary'))}
+                      className="text-[11px] text-stone-500 hover:text-stone-700 flex items-center gap-1"
+                    >
+                      <Send className="w-3 h-3" />
+                      Send to dossier
+                    </button>
+                  </div>
                 </div>
               )}
               {riskLoading && (
-                <div className="rounded-xl border border-stone-200 bg-white p-4">
+                <div className="rounded-lg border border-stone-200 bg-white p-3">
                   <SkeletonCard label="Analyzing regulatory risk" />
                 </div>
               )}
@@ -754,9 +804,9 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
               {strategyData &&
                 strategyData.alternativeStrategies &&
                 strategyData.alternativeStrategies.length > 0 && (
-                  <div className="rounded-xl border border-stone-200 bg-white p-4">
-                    <h3 className="text-sm font-semibold text-stone-900 flex items-center gap-1.5 mb-3">
-                      <Target className="w-4 h-4 text-violet-500" />
+                  <div className="rounded-lg border border-stone-200 bg-white p-3">
+                    <h3 className="text-[13px] font-semibold text-stone-900 flex items-center gap-1.5 mb-2">
+                      <Target className="w-3.5 h-3.5 text-violet-500" />
                       Alternative Pathways
                     </h3>
                     <div className="space-y-2">
@@ -782,7 +832,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
 
           {/* ── 5. Precedent Match Cards ───────────────────────────── */}
           {precedentError && !precedentLoading && (
-            <div className="mb-5">
+            <div className="mb-3">
               <ErrorState
                 message="Failed to search regulatory precedents."
                 retry={refetchPrecedents}
@@ -791,16 +841,16 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
             </div>
           )}
           {precedentLoading && !precedents.length && (
-            <div className="mb-5 space-y-2">
+            <div className="mb-3 space-y-2">
               <SkeletonCard label="Loading precedent matches" />
               <SkeletonCard label="Loading precedent matches" />
             </div>
           )}
           {precedents.length > 0 && (
-            <div className="mb-5">
-              <h2 className="text-sm font-semibold text-stone-900 flex items-center gap-1.5 mb-3">
-                <Microscope className="w-4 h-4 text-blue-500" />
-                Matched Regulatory Precedents
+            <div className="mb-3">
+              <h2 className="text-[13px] font-semibold text-stone-900 flex items-center gap-1.5 mb-1.5">
+                <Microscope className="w-3.5 h-3.5 text-blue-500" />
+                Regulatory Precedents
                 <span className="text-xs text-stone-400 ml-1 font-normal">
                   {precedents.length} found
                 </span>
@@ -842,16 +892,12 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
           )}
 
           {/* ── 6. Document Outcome Block ──────────────────────────── */}
-          <div className="rounded-xl border border-stone-200 bg-white p-4 mb-5">
-            <h3 className="text-sm font-semibold text-stone-900 flex items-center gap-1.5 mb-3">
-              <FileCheck className="w-4 h-4 text-emerald-500" />
+          <div className="rounded-lg border border-stone-200 bg-white p-3 mb-3">
+            <h3 className="text-[13px] font-semibold text-stone-900 flex items-center gap-1.5 mb-2">
+              <FileCheck className="w-3.5 h-3.5 text-emerald-500" />
               Document Actions
             </h3>
-            <p className="text-xs text-stone-500 mb-3">
-              Every RI investigation ends in a governed document. Choose a document type to
-              generate.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
               {RI_DOCUMENT_TYPES.map(doc => {
                 const Icon = doc.icon;
                 return (
@@ -865,14 +911,14 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                         doc.ctdSection
                       );
                     }}
-                    className="group flex items-center gap-2.5 p-3 rounded-lg border border-stone-200 bg-stone-50/50 hover:bg-blue-50 hover:border-blue-200 transition-all text-left"
+                    className="group flex items-center gap-2 p-2 rounded-md border border-stone-200 bg-stone-50/50 hover:bg-blue-50 hover:border-blue-200 transition-all text-left"
                   >
-                    <Icon className="w-4 h-4 text-stone-400 group-hover:text-blue-600 transition-colors shrink-0" />
+                    <Icon className="w-3.5 h-3.5 text-stone-400 group-hover:text-blue-600 transition-colors shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <span className="text-xs font-medium text-stone-700 group-hover:text-blue-800 transition-colors block">
+                      <span className="text-xs font-medium text-stone-700 group-hover:text-blue-800 transition-colors block leading-tight">
                         {doc.label}
                       </span>
-                      <span className="text-xs text-stone-400">CTD {doc.ctdSection}</span>
+                      <span className="text-[11px] text-stone-400">CTD {doc.ctdSection}</span>
                     </div>
                     <ArrowRight className="w-3 h-3 text-stone-400 group-hover:text-blue-500 transition-colors duration-150" />
                   </button>
@@ -882,7 +928,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
           </div>
 
           {/* ── Source Transparency Footer ─────────────────────────── */}
-          <div className="text-xs text-stone-400 flex items-center gap-3 pb-4">
+          <div className="text-[11px] text-stone-400 flex items-center gap-2 pb-3">
             <Globe className="w-3 h-3" />
             <span>
               Evidence from AnA RI · {csrResults.length} CSRs · {precedents.length} precedents
@@ -1035,6 +1081,48 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
 // SUB-COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** "Send to dossier as..." inline dropdown menu */
+const SendToDossierMenu: React.FC<{
+  projectName: string;
+  generateDocContent: (docType: string) => string;
+  onDraftFromPrecedent: (content: string, title: string, ctdSection?: string) => void;
+}> = ({ projectName, generateDocContent, onDraftFromPrecedent }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="inline-flex items-center gap-1 text-[11px] text-stone-500 hover:text-stone-700"
+      >
+        <Send className="w-3 h-3" />
+        Send to dossier as...
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-20 w-56 rounded-md border border-stone-200 bg-white shadow-lg py-1">
+          {RI_DOCUMENT_TYPES.map(doc => {
+            const Icon = doc.icon;
+            return (
+              <button
+                key={doc.key}
+                onClick={() => {
+                  const content = generateDocContent(doc.label);
+                  onDraftFromPrecedent(content, `${doc.label} — ${projectName}`, doc.ctdSection);
+                  setOpen(false);
+                }}
+                className="w-full text-left px-3 py-1.5 text-xs text-stone-600 hover:bg-stone-50 hover:text-stone-900 flex items-center gap-2"
+              >
+                <Icon className="w-3 h-3 text-stone-400 shrink-0" />
+                <span className="flex-1 truncate">{doc.label}</span>
+                <span className="text-[11px] text-stone-400">{doc.ctdSection}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
 /** CSR Study Card — shows real study data, not a vague card */
 const CSRStudyCard: React.FC<{
   csr: any;
@@ -1117,36 +1205,36 @@ const CSRStudyCard: React.FC<{
               <span className="text-stone-700">{csr.summary}</span>
             </div>
           )}
-          <div className="col-span-2 rounded border border-stone-200 bg-white px-2.5 py-2 space-y-1.5">
-            <div className="text-[11px] font-semibold text-stone-700 uppercase tracking-wide">
-              Intelligence Outcome
-            </div>
-            <div className="text-[11px] text-stone-600">
-              <span className="font-medium">Evidence basis:</span> CSR signal ({csr.phase || 'N/A'} · {csr.outcome || 'N/A'}) with sponsor context.
-            </div>
-            <div className="text-[11px] text-stone-600">
-              <span className="font-medium">Matched precedents:</span> {matchedPrecedents}
-            </div>
-            <div className="text-[11px] text-stone-600">
-              <span className="font-medium">Risk & strategy:</span> {(riskLabel || 'pending').toUpperCase()} risk · {strategyLabel || 'Strategy computing'}
-            </div>
-            <div className="text-[11px] text-stone-700">
-              <span className="font-medium">Destination action:</span> Draft Evidence Memo
-            </div>
-            <div className="text-[11px] text-blue-700 font-medium">Target CTD placement: Module 5 / 5.3</div>
+          <div className="col-span-2 rounded border border-stone-200 bg-white px-2 py-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-stone-600">
+            <span>{csr.phase || 'N/A'} · {csr.outcome || 'N/A'}</span>
+            <span>{matchedPrecedents} precedents</span>
+            <span>{(riskLabel || 'pending').toUpperCase()} risk</span>
+            <span className="text-blue-700 font-medium">CTD 5.3</span>
           </div>
         </div>
-        <button
-          onClick={e => {
-            e.stopPropagation();
-            onDraft();
-          }}
-          className="mt-2 inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium"
-        >
-          <FileText className="w-3 h-3" />
-          Draft Evidence Memo from this study
-          <ArrowRight className="w-2.5 h-2.5" />
-        </button>
+        <div className="flex items-center gap-3 mt-2">
+          <button
+            onClick={e => {
+              e.stopPropagation();
+              onDraft();
+            }}
+            className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium"
+          >
+            <FileText className="w-3 h-3" />
+            Draft Evidence Memo
+            <ArrowRight className="w-2.5 h-2.5" />
+          </button>
+          <button
+            onClick={e => {
+              e.stopPropagation();
+              onDraft();
+            }}
+            className="inline-flex items-center gap-1 text-[11px] text-stone-500 hover:text-stone-700"
+          >
+            <Send className="w-3 h-3" />
+            Send to dossier
+          </button>
+        </div>
       </div>
     )}
   </div>
@@ -1198,20 +1286,10 @@ const PrecedentCard: React.FC<{
             {precedent.strategySummary}
           </p>
         )}
-        <div className="mt-2 rounded border border-stone-200 bg-stone-50 px-2.5 py-2 text-[11px] space-y-1">
-          <div className="text-stone-700">
-            <span className="font-medium">Evidence basis:</span> regulatory decision metadata + submission pathway.
-          </div>
-          <div className="text-stone-700">
-            <span className="font-medium">Matched precedents:</span> {matchedPrecedents}
-          </div>
-          <div className="text-stone-700">
-            <span className="font-medium">Risk & strategy:</span> {(riskLabel || 'pending').toUpperCase()} risk · {strategyLabel || 'Strategy computing'}
-          </div>
-          <div className="text-stone-800">
-            <span className="font-medium">Destination action:</span> Draft from this precedent
-          </div>
-          <div className="text-blue-700 font-medium">Target CTD placement: Module 2 / 2.7</div>
+        <div className="mt-1.5 rounded border border-stone-200 bg-stone-50 px-2 py-1.5 text-[11px] flex flex-wrap gap-x-3 gap-y-0.5 text-stone-600">
+          <span>{matchedPrecedents} precedents</span>
+          <span>{(riskLabel || 'pending').toUpperCase()} risk</span>
+          <span className="text-blue-700 font-medium">CTD 2.7</span>
         </div>
       </div>
       {precedent.confidenceScore != null && (
@@ -1220,14 +1298,23 @@ const PrecedentCard: React.FC<{
         </span>
       )}
     </div>
-    <button
-      onClick={onDraft}
-      className="mt-2 inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium"
-    >
-      <FileText className="w-3 h-3" />
-      Draft from this precedent
-      <ArrowRight className="w-2.5 h-2.5" />
-    </button>
+    <div className="flex items-center gap-3 mt-2">
+      <button
+        onClick={onDraft}
+        className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium"
+      >
+        <FileText className="w-3 h-3" />
+        Draft from precedent
+        <ArrowRight className="w-2.5 h-2.5" />
+      </button>
+      <button
+        onClick={onDraft}
+        className="inline-flex items-center gap-1 text-[11px] text-stone-500 hover:text-stone-700"
+      >
+        <Send className="w-3 h-3" />
+        Send to dossier
+      </button>
+    </div>
   </div>
 );
 
@@ -1250,7 +1337,7 @@ const MetricPill: React.FC<{
       {loading ? (
         <Loader2 className="w-3.5 h-3.5 animate-spin text-stone-400 mx-auto mt-0.5" />
       ) : (
-        <span className={cn('text-lg font-semibold block', colorMap[color] || 'text-stone-700')}>
+        <span className={cn('text-[15px] font-semibold block', colorMap[color] || 'text-stone-700')}>
           {value}
         </span>
       )}

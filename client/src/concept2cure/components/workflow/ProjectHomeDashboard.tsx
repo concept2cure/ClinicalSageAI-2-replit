@@ -9,13 +9,14 @@
  * The intelligence is IN the conversation, not above it.
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { queryKeys } from '@/concept2cure/hooks/queryKeys';
 import {
   useIntelligenceDashboard,
 } from '@/concept2cure/hooks/useIntelligence';
+import { ProjectComposeBar } from '@/concept2cure/components/workspace/ProjectComposeBar';
 import {
   Settings2,
   FileText,
@@ -228,6 +229,13 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
     [upperType, isPharma, isDevice, summary.docCount, hasRisk, summary.review, readinessScore],
   );
 
+  const handleComposeAction = useCallback(
+    (mode: string, prompt: string) => {
+      onSuggestedPrompt?.(prompt);
+    },
+    [onSuggestedPrompt],
+  );
+
   return (
     <div className="flex-shrink-0 border-b border-stone-100 bg-white/80 backdrop-blur-sm" data-testid="project-context-strip">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4">
@@ -295,6 +303,18 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
                 <ChevronRight className="w-3 h-3" />
               </button>
             )}
+          </div>
+        )}
+
+        {/* ── Compose bar: action mode chips ────────────────────────────── */}
+        {!artifactsLoading && (
+          <div className="mt-3">
+            <ProjectComposeBar
+              projectId={project.id}
+              projectName={project.name}
+              projectType={project.type}
+              onComposeAction={handleComposeAction}
+            />
           </div>
         )}
 

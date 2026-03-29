@@ -3,7 +3,7 @@
  *
  * Provides CTD/section-specific guidance, historical basis,
  * required inputs, reviewer state, and placement context.
- * Clearly differentiates IND from RI Copilot.
+ * Clearly differentiates IND from AnA Intelligence.
  */
 
 import React, { useState } from 'react';

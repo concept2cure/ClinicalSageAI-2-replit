@@ -30,6 +30,7 @@ import {
   Info,
   MapPin,
   Sparkles,
+  Link2,
   Target,
   AppWindow,
 } from 'lucide-react';
@@ -72,6 +73,12 @@ interface DossierTreeProps {
   onOpenTransformCanvas?: (ctdSection: string) => void;
   onOpenProgramTwin?: () => void;
   onOpenSubmissionApps?: (ctdSection: string) => void;
+  /** Suggestion chip: create a document from a template in this section */
+  onCreateFromTemplate?: (ctdSection: string) => void;
+  /** Suggestion chip: draft a document with AI/RI in this section */
+  onDraftWithAI?: (ctdSection: string) => void;
+  /** Suggestion chip: attach an existing document to this section */
+  onAttachExisting?: (ctdSection: string) => void;
   className?: string;
 }
 
@@ -212,6 +219,9 @@ interface DossierNodeRowProps {
       lockedCount?: number;
     }
   >;
+  onCreateFromTemplate?: (ctdSection: string) => void;
+  onDraftWithAI?: (ctdSection: string) => void;
+  onAttachExisting?: (ctdSection: string) => void;
 }
 
 function DossierNodeRow({
@@ -224,6 +234,9 @@ function DossierNodeRow({
   counts,
   onContextMenu,
   metrics,
+  onCreateFromTemplate,
+  onDraftWithAI,
+  onAttachExisting,
 }: DossierNodeRowProps) {
   const isExpanded = expanded.has(node.nodeId);
   const hasChildren = node.children.length > 0;
@@ -240,8 +253,18 @@ function DossierNodeRow({
       childSection => !counts[childSection] || counts[childSection].total === 0
     ) ?? [];
 
+  // Is this section required and currently empty/drafting? (for suggestion chips + required badge)
+  const isRequired = reqs?.required ?? false;
+  const isLeafOrDirect = node.nodeType === 'leaf' || node.nodeType === 'section';
+  const showSuggestionChips =
+    isLeafOrDirect &&
+    (status === 'empty' || status === 'draft_present') &&
+    (onCreateFromTemplate || onDraftWithAI || onAttachExisting);
+  const showRequiredBadge = isRequired && status === 'empty' && isLeafOrDirect;
+
   return (
     <>
+      <div className="group">
       <button
         onClick={() => {
           if (hasChildren) toggleExpand(node.nodeId);
@@ -249,7 +272,7 @@ function DossierNodeRow({
         }}
         onContextMenu={e => onContextMenu(e, node)}
         className={cn(
-          'w-full flex items-center gap-1 py-[4px] pr-2 text-left transition-all duration-150 group focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-400 focus-visible:outline-none',
+          'w-full flex items-center gap-1 py-[4px] pr-2 text-left transition-all duration-150 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-400 focus-visible:outline-none',
           isSelected
             ? 'bg-blue-50 text-blue-700'
             : 'text-stone-600 hover:bg-stone-50 hover:translate-x-px'
@@ -282,6 +305,13 @@ function DossierNodeRow({
         <span className="text-sm truncate flex-1 leading-snug">
           {node.label.replace(/^Module \d+ — /, '')}
         </span>
+
+        {/* Required badge for empty required sections */}
+        {showRequiredBadge && (
+          <span className="text-[10px] text-amber-500 font-medium shrink-0" aria-label="Required section">
+            Required
+          </span>
+        )}
 
         {/* Count badge */}
         {docCount > 0 && (
@@ -408,6 +438,63 @@ function DossierNodeRow({
         </span>
       </button>
 
+      {/* Suggestion chips — visible on hover for empty/drafting leaf sections */}
+      {showSuggestionChips && (
+        <div
+          className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150"
+          style={{ paddingLeft: `${8 + (depth + 1) * 14 + 16}px`, paddingBottom: '2px' }}
+          role="group"
+          aria-label={`Actions for ${node.label}`}
+        >
+          {onCreateFromTemplate && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onCreateFromTemplate(node.ctdSection); }}
+              className={cn(
+                'flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded',
+                'text-stone-400 hover:text-stone-600 hover:bg-stone-100',
+                'transition-colors focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-stone-400'
+              )}
+              title="Create from template"
+              data-testid={`chip-template-${node.ctdSection}`}
+            >
+              <FileText className="w-3 h-3" />
+              Template
+            </button>
+          )}
+          {onDraftWithAI && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onDraftWithAI(node.ctdSection); }}
+              className={cn(
+                'flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded',
+                'text-stone-400 hover:text-stone-600 hover:bg-stone-100',
+                'transition-colors focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-stone-400'
+              )}
+              title="Draft with AI"
+              data-testid={`chip-draft-ai-${node.ctdSection}`}
+            >
+              <Sparkles className="w-3 h-3" />
+              Draft with AI
+            </button>
+          )}
+          {onAttachExisting && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onAttachExisting(node.ctdSection); }}
+              className={cn(
+                'flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded',
+                'text-stone-400 hover:text-stone-600 hover:bg-stone-100',
+                'transition-colors focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-stone-400'
+              )}
+              title="Attach existing document"
+              data-testid={`chip-attach-${node.ctdSection}`}
+            >
+              <Link2 className="w-3 h-3" />
+              Attach
+            </button>
+          )}
+        </div>
+      )}
+      </div>
+
       {/* Children */}
       {isExpanded &&
         node.children.map(child => (
@@ -422,6 +509,9 @@ function DossierNodeRow({
             counts={counts}
             onContextMenu={onContextMenu}
             metrics={metrics}
+            onCreateFromTemplate={onCreateFromTemplate}
+            onDraftWithAI={onDraftWithAI}
+            onAttachExisting={onAttachExisting}
           />
         ))}
     </>
@@ -443,6 +533,9 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
   onOpenTransformCanvas,
   onOpenProgramTwin,
   onOpenSubmissionApps,
+  onCreateFromTemplate,
+  onDraftWithAI,
+  onAttachExisting,
   className,
 }) => {
   // Use custom hierarchy when provided (submission-type-specific), otherwise default CTD
@@ -514,6 +607,9 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
             counts={counts}
             onContextMenu={handleContextMenu}
             metrics={metrics}
+            onCreateFromTemplate={onCreateFromTemplate}
+            onDraftWithAI={onDraftWithAI}
+            onAttachExisting={onAttachExisting}
           />
         ))}
       </div>

@@ -95,7 +95,7 @@ const CopilotPreviewPage: React.FC<{
   description: string;
   icon?: string;
   copilotLabel?: string;
-}> = ({ title, description, icon, copilotLabel = 'Launch in RI Copilot' }) => {
+}> = ({ title, description, icon, copilotLabel = 'Launch in AnA' }) => {
   const [, navigate] = useLocation();
   return (
     <div className="p-6">
@@ -261,7 +261,7 @@ export const ClientPortalV2: React.FC = () => {
                 title="Regulatory Intelligence"
                 description="AI-powered regulatory landscape monitoring and advisory alerts. Full RI analysis is available in the Concept2Cure copilot."
                 icon="📊"
-                copilotLabel="Launch in RI Copilot"
+                copilotLabel="Launch in AnA"
               />
             </Route>
 
