@@ -950,10 +950,10 @@ router.get('/ana/templates/company-types', async (_req: Request, res: Response) 
 router.get('/ana/templates/project-types', async (_req: Request, res: Response) => {
   try {
     const { getProjectTypes } = await import('../services/industry-context-templates');
-    return res.json({ success: true, types: getProjectTypes() });
+    return sendSuccess(res, { types: getProjectTypes() });
   } catch (err: any) {
     console.error('[AnA Intelligence] GET project-types error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -965,10 +965,10 @@ router.get('/ana/templates/company/:type', async (req: Request, res: Response) =
   try {
     const { getCompanyTemplate } = await import('../services/industry-context-templates');
     const template = getCompanyTemplate(req.params.type as any);
-    return res.json({ success: true, template });
+    return sendSuccess(res, { template });
   } catch (err: any) {
     console.error('[AnA Intelligence] GET company template error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -980,10 +980,10 @@ router.get('/ana/templates/project/:type', async (req: Request, res: Response) =
   try {
     const { getProjectTemplate } = await import('../services/industry-context-templates');
     const template = getProjectTemplate(req.params.type as any);
-    return res.json({ success: true, template });
+    return sendSuccess(res, { template });
   } catch (err: any) {
     console.error('[AnA Intelligence] GET project template error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
