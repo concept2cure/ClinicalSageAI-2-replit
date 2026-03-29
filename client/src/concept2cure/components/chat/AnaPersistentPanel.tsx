@@ -4042,10 +4042,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           )}
                           {/* ── Executed Command Receipts ── */}
                           {msg.executedCommands && msg.executedCommands.length > 0 && (
-                            <div className="my-1.5 space-y-1">
+                            <div className="my-1.5 space-y-1" role="log" aria-label="Command execution results" data-testid="ana-command-receipts">
                               {msg.executedCommands.map((cmd, i) => (
                                 <div
                                   key={`cmd-${i}`}
+                                  role="status"
                                   className={cn(
                                     'flex items-start gap-2 px-3 py-2 rounded-lg text-[12px] border',
                                     cmd.success
@@ -4083,6 +4084,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 URL.revokeObjectURL(url);
                               }}
                               className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-colors"
+                              aria-label={`Download ${msg.pptx!.filename}`}
                             >
                               <Download className="w-3.5 h-3.5" />
                               {msg.pptx.filename}
@@ -4131,6 +4133,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           {/* Grounding mode badge */}
                           {msg.grounding?.mode && (
                             <span
+                              data-testid="ana-grounding-badge"
                               className={cn(
                                 'text-[10px] font-medium px-1.5 py-0.5 rounded mr-1',
                                 msg.grounding.mode === 'grounded'
@@ -4174,6 +4177,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           {msg.enrichmentFailures && msg.enrichmentFailures.length > 0 && (
                             <span
                               className="text-[10px] text-amber-600 mr-1"
+                              role="status"
+                              aria-live="polite"
+                              data-testid="ana-enrichment-failure"
                               title={`Failed sources: ${msg.enrichmentFailures.join(', ')}. Response may be less contextual.`}
                             >
                               {msg.enrichmentFailures.length} source{msg.enrichmentFailures.length !== 1 ? 's' : ''} unavailable
@@ -4189,7 +4195,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 {msg.memoryAtomCount} mem
                               </span>
                               {msg.memoryAtoms && msg.memoryAtoms.length > 0 && (
-                                <div className="hidden group-hover:block absolute bottom-full left-0 mb-1.5 w-64 bg-white border border-stone-200 rounded-lg shadow-lg p-2 z-50">
+                                <div className="hidden group-hover:block group-focus-within:block absolute bottom-full left-0 mb-1.5 w-64 bg-white border border-stone-200 rounded-lg shadow-md p-2 z-50" role="tooltip" data-testid="ana-memory-panel">
                                   <p className="text-[10px] font-medium text-stone-500 uppercase tracking-wide mb-1.5">
                                     Memory Context ({msg.memoryAtomCount} atoms)
                                   </p>
@@ -4199,7 +4205,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                         <span className={cn(
                                           'flex-shrink-0 px-1 py-0.5 rounded font-medium',
                                           atom.layer === 'working_memory' ? 'text-blue-600 bg-blue-50'
-                                            : atom.layer === 'project_memory' ? 'text-violet-600 bg-violet-50'
+                                            : atom.layer === 'project_memory' ? 'text-blue-600 bg-blue-50'
                                             : 'text-emerald-600 bg-emerald-50'
                                         )}>
                                           {atom.layer === 'working_memory' ? 'WM' : atom.layer === 'project_memory' ? 'PM' : 'CM'}
@@ -4238,6 +4244,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             onClick={() => handleCopy(msg.id, msg.content)}
                             className="p-1 text-[#B0AEA5] hover:text-[#4D4B45] hover:bg-[#F5F4EF] rounded transition-colors"
                             title="Copy"
+                            aria-label="Copy message"
                           >
                             {copiedId === msg.id ? (
                               <Check className="w-3 h-3 text-green-600" />
@@ -4250,6 +4257,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             onClick={handleRegenerate}
                             className="p-1 text-[#B0AEA5] hover:text-[#4D4B45] hover:bg-[#F5F4EF] rounded transition-colors"
                             title="Regenerate"
+                            aria-label="Regenerate response"
                           >
                             <RefreshCw className="w-3 h-3" />
                           </button>
@@ -4262,6 +4270,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             }}
                             className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded transition-colors"
                             title="Good"
+                            aria-label="Rate response as good"
                           >
                             <ThumbsUp className="w-3 h-3" />
                           </button>
@@ -4274,6 +4283,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             }}
                             className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded transition-colors"
                             title="Bad"
+                            aria-label="Rate response as bad"
                           >
                             <ThumbsDown className="w-3 h-3" />
                           </button>
@@ -4311,6 +4321,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 }}
                                 className="p-1 text-stone-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
                                 title="Save to Vault"
+                                aria-label="Save to Vault"
                               >
                                 <Download className="w-3 h-3" />
                               </button>
@@ -4380,7 +4391,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         msg.id === messages.filter(m => m.role === 'assistant').at(-1)?.id &&
                         msg.grounding?.mode &&
                         msg.grounding.mode !== 'grounded' && (
-                          <div className="mt-2 flex flex-wrap gap-1.5">
+                          <div className="mt-2 flex flex-wrap gap-1.5" data-testid="ana-recovery-chips">
                             {msg.grounding.mode === 'inferred' && (
                               <>
                                 {!contextProfile?.projectId && (
@@ -4433,10 +4444,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             <div className="mt-2 flex flex-wrap gap-1.5">
                               <button
                                 onClick={() => handleSend(nextStep)}
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200/60 transition-colors max-w-full"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200/60 transition-colors max-w-full"
+                                data-testid="ana-next-step-chip"
                               >
                                 <span className="truncate">{nextStep.length > 80 ? nextStep.slice(0, 77) + '...' : nextStep}</span>
-                                <span className="text-violet-400 flex-shrink-0">→</span>
+                                <span className="text-blue-400 flex-shrink-0">→</span>
                               </button>
                             </div>
                           );

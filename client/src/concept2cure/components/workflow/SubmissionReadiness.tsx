@@ -128,7 +128,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
 
   // Fetch artifacts for this project to know which sections have documents
   const { data: projectArtifacts } = useQuery<Array<{ id: string; ctdSection?: string; status?: string }>>({
-    queryKey: ['concept2cure', 'project-artifacts', projectId],
+    queryKey: queryKeys.submission.projectArtifacts(projectId || 'none'),
     queryFn: async () => {
       const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts`);
       const json = typeof res === 'object' && 'json' in res ? await (res as Response).json() : res;
@@ -144,7 +144,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
   const isIND = upperType === 'IND' || upperType === 'NDA' || upperType === 'BLA';
   const isDevice = upperType === '510K' || upperType === 'PMA' || upperType === 'DE_NOVO' || upperType === 'CER';
   const { data: indStatus } = useQuery<{ sections: Array<{ code: string; title: string; status: string }> }>({
-    queryKey: ['concept2cure', 'ind', 'status', projectId],
+    queryKey: queryKeys.ind.status(projectId || 'none'),
     queryFn: async () => {
       const res = await apiRequest('GET', `/api/ind/status/${projectId}`);
       if (!res.ok) return { sections: [] };
@@ -158,7 +158,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
 
   // For device projects: fetch device section readiness
   const { data: deviceStatus } = useQuery<{ sections: Array<{ code: string; title: string; status: string }> }>({
-    queryKey: ['concept2cure', 'device', 'status', upperType, projectId],
+    queryKey: queryKeys.device.status(upperType, projectId || 'none'),
     queryFn: async () => {
       const res = await apiRequest('GET', `/api/ind/device-status/${upperType}/${projectId}`);
       if (!res.ok) return { sections: [] };
@@ -198,9 +198,9 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
   const handleRefresh = useCallback(() => {
     if (!projectId) return;
     queryClient.invalidateQueries({ queryKey: queryKeys.ind.projectSections(projectId) });
-    queryClient.invalidateQueries({ queryKey: ['concept2cure', 'project-artifacts', projectId] });
-    if (isIND) queryClient.invalidateQueries({ queryKey: ['concept2cure', 'ind', 'status', projectId] });
-    if (isDevice) queryClient.invalidateQueries({ queryKey: ['concept2cure', 'device', 'status', upperType, projectId] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.submission.projectArtifacts(projectId) });
+    if (isIND) queryClient.invalidateQueries({ queryKey: queryKeys.ind.status(projectId) });
+    if (isDevice) queryClient.invalidateQueries({ queryKey: queryKeys.device.status(upperType, projectId) });
   }, [queryClient, projectId, isIND, isDevice, upperType]);
 
   /** Handle Fix Now — navigate to section and schedule a refresh for when user returns */
@@ -213,7 +213,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
     <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-stone-50/50">
       <WorkspaceHeader
         title="Submission Readiness"
-        titleIcon={<Send className="w-3.5 h-3.5 text-violet-500" />}
+        titleIcon={<Send className="w-3.5 h-3.5 text-blue-500" />}
         onBack={onBack}
         typeBadge={projectType}
         testId="submission-readiness-header"
@@ -258,6 +258,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
                   onClick={handleRefresh}
                   disabled={isRefreshing}
                   title="Refresh readiness status"
+                  aria-label={isRefreshing ? 'Refreshing readiness status' : 'Refresh readiness status'}
                   className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-stone-600 text-sm font-medium hover:bg-stone-100 border border-stone-200 transition-colors disabled:opacity-50"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -327,7 +328,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
                       ) : (
                         <button
                           onClick={() => handleFixNow(item.section, item.title)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-white bg-violet-600 hover:bg-violet-700 transition-colors shadow-sm"
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm"
                           data-testid={`fix-now-${item.section}`}
                         >
                           {!item.hasArtifact ? (

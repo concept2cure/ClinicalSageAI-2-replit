@@ -762,7 +762,7 @@ export async function enrichContextForChat(params: {
             } else {
               sourcesFailed.push(t.name);
             }
-          } catch {
+          } catch { /* non-blocking enrichment — failure tracked in sourcesFailed */
             sourcesFailed.push(t.name);
           }
         })

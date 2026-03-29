@@ -723,7 +723,7 @@ export async function exportPersonalData(
     const safeQuery = async (sql: string, values: unknown[]) => {
       try {
         return await pool.query(sql, values);
-      } catch {
+      } catch { /* query failure in non-critical lookup — return empty to allow graceful degradation */
         return { rows: [] as any[] };
       }
     };

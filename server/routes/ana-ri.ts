@@ -98,7 +98,7 @@ function isDatabaseAvailable(): Promise<boolean> {
       .query('SELECT 1')
       .then(() => true)
       .catch(() => false);
-  } catch {
+  } catch { /* pool initialization or connectivity failure — treat as unavailable */
     return Promise.resolve(false);
   }
 }
