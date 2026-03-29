@@ -3129,36 +3129,40 @@ export const ZenApp: React.FC = () => {
                     projectName={activeProject?.name}
                     projectType={activeProject?.type}
                     onSectionClick={sectionCode => {
-                      setActiveSectionCode(sectionCode);
-                      setLayoutMode('section-workspace');
+                      const moduleNum = sectionCode.charAt(0);
+                      const match = projectArtifacts.find((a: any) =>
+                        a.ctdSection === sectionCode ||
+                        a.ctdSection === `csr-${sectionCode}` ||
+                        a.ctdSection === `m${moduleNum}-${sectionCode}`
+                      );
+                      if (match) {
+                        setOpenArtifactId(match.id);
+                        setRiViewMode('editor');
+                        setLayoutMode('regulatory-workspace');
+                      } else {
+                        setPendingEditorContent({
+                          title: sectionCode,
+                          content: '',
+                          ctdSection: sectionCode,
+                        });
+                        setRiViewMode('editor');
+                        setLayoutMode('regulatory-workspace');
+                      }
                     }}
                     onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
                     onExport={async () => {
                       if (!activeProjectId) return;
                       try {
-                        const token = sessionStorage.getItem('trialsage_access_token') || localStorage.getItem('trialsage_access_token');
-                        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-                        if (token) headers['Authorization'] = `Bearer ${token}`;
-                        const res = await fetch(`/api/concept2cure/projects/${activeProjectId}/submission-package`, {
-                          method: 'POST',
-                          headers,
-                        });
-                        if (!res.ok) {
-                          const err = await res.json().catch(() => ({}));
-                          console.error('[Export] Failed:', err);
-                          return;
-                        }
+                        const res = await apiRequest('POST', `/api/concept2cure/projects/${activeProjectId}/submission-package`);
                         const payload = await res.json();
-                        const manifest = payload?.data;
+                        const manifest = payload?.data ?? payload;
                         if (manifest) {
                           const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
                           const url = URL.createObjectURL(blob);
                           const a = document.createElement('a');
                           a.href = url;
                           a.download = `${manifest.projectName || 'submission'}-package-manifest.json`;
-                          document.body.appendChild(a);
                           a.click();
-                          document.body.removeChild(a);
                           URL.revokeObjectURL(url);
                         }
                       } catch (err) {
@@ -3180,11 +3184,34 @@ export const ZenApp: React.FC = () => {
                         version: a.version || 1,
                       }))}
                       onOpenArtifact={(artifactId) => {
-                        setLayoutMode('editor');
+                        setOpenArtifactId(artifactId);
+                        setRiViewMode('editor');
+                        setLayoutMode('regulatory-workspace');
                       }}
                       onCreateArtifact={(sectionId, sectionLabel) => {
-                        setActiveSectionCode(sectionId);
-                        setLayoutMode('section-workspace');
+                        setPendingEditorContent({
+                          title: sectionLabel,
+                          content: '',
+                          ctdSection: sectionId,
+                        });
+                        setRiViewMode('editor');
+                        setLayoutMode('regulatory-workspace');
+                      }}
+                      onGeneratePackage={async () => {
+                        if (!activeProjectId) return;
+                        try {
+                          const res = await apiRequest('POST', `/api/concept2cure/projects/${activeProjectId}/submission-package`);
+                          const manifest = await res.json();
+                          const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `submission-package-${activeProjectId}-${Date.now()}.json`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        } catch (err) {
+                          console.error('[SubmissionBuilder] Package generation failed:', err);
+                        }
                       }}
                       onClose={() => setSubmissionTab('readiness')}
                     />

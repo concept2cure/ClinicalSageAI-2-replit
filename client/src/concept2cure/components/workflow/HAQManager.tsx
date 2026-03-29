@@ -292,6 +292,11 @@ Submission type context: ${projectName || 'regulatory submission'}`,
       });
 
       toast({ title: 'HAQ responses saved as governed artifact' });
+
+      // Auto-open in editor if handler available
+      if (onOpenInEditor) {
+        onOpenInEditor(content, `HAQ Responses — ${new Date().toISOString().split('T')[0]}`);
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Save failed';
       toast({ title: 'Save failed', description: message, variant: 'destructive' });
