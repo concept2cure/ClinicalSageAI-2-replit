@@ -1394,7 +1394,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         pushShellToast('Failed to create draft', 'error');
       }
     },
-    [projectId, loadArtifacts, closePhase4Panel]
+    [projectId, loadArtifacts, closePhase4Panel, pushShellToast]
   );
 
   const documentConsequenceRows = useMemo(
@@ -1627,7 +1627,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         </div>
 
         {/* ── Collapsible context bars (AnA Shell, Context Band, CTD Flow) ──── */}
-        <div className={cn('overflow-hidden transition-all duration-200', showContextBars ? 'max-h-48' : 'max-h-0')}>
+        <div className={cn('overflow-hidden transition-all duration-200', showContextBars ? 'max-h-48' : 'max-h-0')} aria-hidden={!showContextBars}>
 
         {/* ── Work modes / workbench bar ─────────────────────────────────── */}
         {!isINDWorkspace && (
