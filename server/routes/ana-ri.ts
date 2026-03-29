@@ -397,6 +397,17 @@ router.post('/chat', async (req: Request, res: Response) => {
       documentContext: document_context,
       submissionType: submission_type as SubmissionType | undefined,
       conversationHistory: conversation_history,
+      // Pass authoring context so orchestrator can inject document-state directives
+      authoringContext: authoring_context && typeof authoring_context === 'object'
+        ? {
+            projectId: authoring_context.projectId || req.body.context?.projectId,
+            sectionCode: authoring_context.sectionCode,
+            moduleCode: authoring_context.moduleCode,
+            artifactId: authoring_context.artifactId,
+            artifactStatus: authoring_context.artifactStatus,
+            workflowStage: authoring_context.workflowStage,
+          }
+        : undefined,
     };
 
     const orchestration = orchestrate(orchestratorInput);
@@ -793,6 +804,17 @@ router.post('/stream', async (req: Request, res: Response) => {
       documentContext: document_context,
       submissionType: submission_type as SubmissionType | undefined,
       conversationHistory: conversation_history,
+      // Pass authoring context so orchestrator can inject document-state directives
+      authoringContext: authoring_context && typeof authoring_context === 'object'
+        ? {
+            projectId: authoring_context.projectId || req.body.context?.projectId,
+            sectionCode: authoring_context.sectionCode,
+            moduleCode: authoring_context.moduleCode,
+            artifactId: authoring_context.artifactId,
+            artifactStatus: authoring_context.artifactStatus,
+            workflowStage: authoring_context.workflowStage,
+          }
+        : undefined,
     });
 
     if (authoringContextBlock) {

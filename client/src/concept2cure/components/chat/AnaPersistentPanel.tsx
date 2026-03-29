@@ -4380,6 +4380,26 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             )}
                           </div>
                         )}
+                      {/* Next step chip — parsed from AI's **Next step:** recommendation */}
+                      {!isUser &&
+                        msg.id === messages.filter(m => m.role === 'assistant').at(-1)?.id &&
+                        (() => {
+                          const nextStepMatch = msg.content.match(/\*\*Next step:\*\*\s*(.+?)(?:\n|$)/);
+                          if (!nextStepMatch) return null;
+                          const nextStep = nextStepMatch[1].trim();
+                          if (nextStep.length < 5 || nextStep.length > 120) return null;
+                          return (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              <button
+                                onClick={() => handleSend(nextStep)}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200/60 transition-colors max-w-full"
+                              >
+                                <span className="truncate">{nextStep.length > 80 ? nextStep.slice(0, 77) + '...' : nextStep}</span>
+                                <span className="text-violet-400 flex-shrink-0">→</span>
+                              </button>
+                            </div>
+                          );
+                        })()}
                       {/* AnA RI Document Action Row — shown on the last assistant message */}
                       {!isUser &&
                         msg.id === messages.filter(m => m.role === 'assistant').at(-1)?.id &&
