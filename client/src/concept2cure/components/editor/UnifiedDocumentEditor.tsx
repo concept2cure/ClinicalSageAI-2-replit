@@ -35,6 +35,42 @@ import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
+import TextAlign from '@tiptap/extension-text-align';
+import Superscript from '@tiptap/extension-superscript';
+import Subscript from '@tiptap/extension-subscript';
+import { Node, mergeAttributes } from '@tiptap/core';
+
+/**
+ * Lightweight Image node compatible with @tiptap/core 3.7.x.
+ * The official @tiptap/extension-image >=3.19 requires ResizableNodeView
+ * which doesn't exist in core 3.7.x.
+ */
+const TiptapImage = Node.create({
+  name: 'image',
+  group: 'block',
+  atom: true,
+  addAttributes() {
+    return {
+      src: { default: null },
+      alt: { default: null },
+      title: { default: null },
+      width: { default: null },
+    };
+  },
+  parseHTML() {
+    return [{ tag: 'img[src]' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['img', mergeAttributes({ style: 'max-width:100%;height:auto' }, HTMLAttributes)];
+  },
+  addCommands() {
+    return {
+      setImage: (options: { src: string; alt?: string; title?: string }) => ({ commands }: any) => {
+        return commands.insertContent({ type: this.name, attrs: options });
+      },
+    };
+  },
+});
 import { SearchAndReplace } from './extensions/SearchAndReplace';
 import { createSlashCommandExtension } from './extensions/SlashCommandMenu';
 import { CommentMark, type CommentThread } from './extensions/CommentMark';
@@ -86,6 +122,17 @@ import {
   Clock,
   ChevronDown,
   Replace,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  Superscript as SuperscriptIcon,
+  Subscript as SubscriptIcon,
+  ImagePlus,
+  Merge,
+  SplitSquareHorizontal,
+  Plus,
+  Minus,
 } from 'lucide-react';
 import InlineApprovalPanel from './InlineApprovalPanel';
 
@@ -391,6 +438,52 @@ const Toolbar: React.FC<ToolbarProps> = ({
           H
         </span>
       </ToolButton>
+      <ToolButton
+        onClick={() => editor.chain().focus().toggleSuperscript().run()}
+        isActive={editor.isActive('superscript')}
+        title="Superscript"
+      >
+        <SuperscriptIcon className="w-4 h-4" />
+      </ToolButton>
+      <ToolButton
+        onClick={() => editor.chain().focus().toggleSubscript().run()}
+        isActive={editor.isActive('subscript')}
+        title="Subscript"
+      >
+        <SubscriptIcon className="w-4 h-4" />
+      </ToolButton>
+
+      <div className="w-px h-5 bg-stone-200 mx-0.5" />
+
+      {/* Text Alignment */}
+      <ToolButton
+        onClick={() => editor.chain().focus().setTextAlign('left').run()}
+        isActive={editor.isActive({ textAlign: 'left' })}
+        title="Align Left"
+      >
+        <AlignLeft className="w-4 h-4" />
+      </ToolButton>
+      <ToolButton
+        onClick={() => editor.chain().focus().setTextAlign('center').run()}
+        isActive={editor.isActive({ textAlign: 'center' })}
+        title="Align Center"
+      >
+        <AlignCenter className="w-4 h-4" />
+      </ToolButton>
+      <ToolButton
+        onClick={() => editor.chain().focus().setTextAlign('right').run()}
+        isActive={editor.isActive({ textAlign: 'right' })}
+        title="Align Right"
+      >
+        <AlignRight className="w-4 h-4" />
+      </ToolButton>
+      <ToolButton
+        onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+        isActive={editor.isActive({ textAlign: 'justify' })}
+        title="Justify"
+      >
+        <AlignJustify className="w-4 h-4" />
+      </ToolButton>
 
       <div className="w-px h-5 bg-stone-200 mx-0.5" />
 
@@ -441,6 +534,63 @@ const Toolbar: React.FC<ToolbarProps> = ({
         title="Insert Table"
       >
         <TableIcon className="w-4 h-4" />
+      </ToolButton>
+      {editor.isActive('table') && (
+        <>
+          <ToolButton
+            onClick={() => editor.chain().focus().addRowAfter().run()}
+            title="Add Row"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span className="text-[9px] ml-px">Row</span>
+          </ToolButton>
+          <ToolButton
+            onClick={() => editor.chain().focus().addColumnAfter().run()}
+            title="Add Column"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span className="text-[9px] ml-px">Col</span>
+          </ToolButton>
+          <ToolButton
+            onClick={() => editor.chain().focus().deleteRow().run()}
+            title="Delete Row"
+          >
+            <Minus className="w-3.5 h-3.5" />
+            <span className="text-[9px] ml-px">Row</span>
+          </ToolButton>
+          <ToolButton
+            onClick={() => editor.chain().focus().deleteColumn().run()}
+            title="Delete Column"
+          >
+            <Minus className="w-3.5 h-3.5" />
+            <span className="text-[9px] ml-px">Col</span>
+          </ToolButton>
+          <ToolButton
+            onClick={() => editor.chain().focus().mergeCells().run()}
+            title="Merge Cells"
+          >
+            <Merge className="w-4 h-4" />
+          </ToolButton>
+          <ToolButton
+            onClick={() => editor.chain().focus().splitCell().run()}
+            title="Split Cell"
+          >
+            <SplitSquareHorizontal className="w-4 h-4" />
+          </ToolButton>
+        </>
+      )}
+
+      <div className="w-px h-5 bg-stone-200 mx-0.5" />
+
+      {/* Image Insert */}
+      <ToolButton
+        onClick={() => {
+          const url = window.prompt('Image URL:');
+          if (url) editor.chain().focus().setImage({ src: url }).run();
+        }}
+        title="Insert Image"
+      >
+        <ImagePlus className="w-4 h-4" />
       </ToolButton>
 
       <div className="w-px h-5 bg-stone-200 mx-0.5" />
@@ -1151,6 +1301,10 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
       TextStyle,
       Color,
       Underline_,
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
+      Superscript,
+      Subscript,
+      TiptapImage,
       Placeholder.configure({
         placeholder: 'Start writing your regulatory document... Type "/" for commands',
       }),
@@ -1572,6 +1726,20 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                 <span className="w-3.5 h-3.5 bg-yellow-400 rounded text-xs flex items-center justify-center font-semibold text-black">
                   H
                 </span>
+              </button>
+              <button
+                onClick={() => editor.chain().focus().toggleSuperscript().run()}
+                className={`p-1.5 rounded hover:bg-stone-700 ${editor.isActive('superscript') ? 'text-blue-400' : 'text-white'}`}
+                title="Superscript"
+              >
+                <SuperscriptIcon className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => editor.chain().focus().toggleSubscript().run()}
+                className={`p-1.5 rounded hover:bg-stone-700 ${editor.isActive('subscript') ? 'text-blue-400' : 'text-white'}`}
+                title="Subscript"
+              >
+                <SubscriptIcon className="w-3.5 h-3.5" />
               </button>
               <div className="w-px h-4 bg-stone-600 mx-0.5" />
               {/* Source link */}
