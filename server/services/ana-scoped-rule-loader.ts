@@ -12,7 +12,7 @@
  */
 
 import { db } from '../db';
-import { anaScopedRules } from 'shared/schema';
+import { anaScopedRules } from 'shared/schema/ana-intelligence';
 import { eq, desc } from 'drizzle-orm';
 
 // ─── Types ──────────────────────────────────────────────────────────────────

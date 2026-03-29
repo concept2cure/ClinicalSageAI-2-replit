@@ -12,7 +12,7 @@
  */
 
 import { db } from '../db';
-import { anaCapabilityRegistry, anaOutcomeLog, anaProjectCapabilities } from 'shared/schema';
+import { anaCapabilityRegistry, anaOutcomeLog, anaProjectCapabilities } from 'shared/schema/ana-intelligence';
 import { eq, and, desc, sql, or, inArray } from 'drizzle-orm';
 
 // ============================================================

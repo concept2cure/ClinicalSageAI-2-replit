@@ -27,7 +27,7 @@ import {
   anaPlatformWisdom,
   anaClientObjectives,
   anaProjectCapabilities,
-} from 'shared/schema';
+} from 'shared/schema/ana-intelligence';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import type { ActionContext } from './ana-scoped-rule-loader';
 
