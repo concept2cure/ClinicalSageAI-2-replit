@@ -13,6 +13,7 @@ import React, { useMemo, useCallback, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import { queryKeys } from '@/concept2cure/hooks/queryKeys';
 import {
   X,
@@ -74,6 +75,7 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
   isFullscreen,
   onToggleFullscreen,
 }) => {
+  const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
@@ -120,9 +122,58 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
       });
       setIsEditing(false);
     } catch {
-      // Save failed — stay in edit mode
+      toast({ title: 'Save failed', description: 'Your changes could not be saved. Please try again.', variant: 'destructive' });
     }
-  }, [projectId, artifactId, editContent]);
+  }, [projectId, artifactId, editContent, toast]);
+
+  const handleDownload = useCallback(async (format: 'pdf' | 'docx' | 'xml') => {
+    if (!artifact) return;
+    setShowDownloadMenu(false);
+    try {
+      if (format === 'docx') {
+        const res = await apiRequest('POST', '/api/concept2cure/documents/generate', {
+          content: artifact.content || '',
+          title: artifact.title,
+          format: 'docx',
+        });
+        if (res.ok) {
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${artifact.title || 'document'}.docx`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      } else if (format === 'pdf') {
+        const res = await apiRequest('POST', '/api/concept2cure/documents/export/pdf', {
+          content: artifact.content || '',
+          title: artifact.title,
+        });
+        if (res.ok) {
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${artifact.title || 'document'}.pdf`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      } else {
+        // XML — client-side generation for eCTD-style export
+        const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>\n<document>\n  <title>${artifact.title || ''}</title>\n  <content><![CDATA[${artifact.content || ''}]]></content>\n  <metadata>\n    <type>${artifact.type || 'unknown'}</type>\n    <version>${artifact.version || 1}</version>\n    <ctdSection>${artifact.ctdSection || ''}</ctdSection>\n  </metadata>\n</document>`;
+        const blob = new Blob([xmlContent], { type: 'application/xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${artifact.title || 'document'}.xml`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch {
+      toast({ title: 'Download failed', description: `Could not export as ${format.toUpperCase()}.`, variant: 'destructive' });
+    }
+  }, [artifact, toast]);
 
   // ── Loading ─────────────────────────────────────────────────────────────────
   if (isLoading) {
@@ -158,13 +209,26 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
       {/* ── Title bar ── */}
       <div className="flex-shrink-0 h-11 px-4 flex items-center justify-between border-b border-stone-100">
         <div className="flex items-center gap-2.5 min-w-0">
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-400 font-medium uppercase tracking-tight shrink-0">
+            Preview
+          </span>
           <span className="text-sm font-medium text-stone-800 truncate">{artifact.title}</span>
           <span className="text-[10px] px-2 py-0.5 rounded-md bg-stone-200 text-stone-600 font-semibold flex-shrink-0 uppercase tracking-tight">
             {formatBadge}
           </span>
         </div>
         <div className="flex items-center gap-0.5 flex-shrink-0">
-          {/* Inline edit toggle */}
+          {/* Open in Full Editor — primary action */}
+          <button
+            onClick={() => onOpenFullEditor(artifactId)}
+            aria-label="Open in Full Editor"
+            className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-none"
+          >
+            <PenLine className="w-3.5 h-3.5" />
+            Open in Editor
+          </button>
+
+          {/* Quick polish toggle — intentionally secondary */}
           {isEditing ? (
             <button
               onClick={handleSaveEdit}
@@ -176,23 +240,13 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
           ) : (
             <button
               onClick={handleStartEdit}
-              aria-label="Edit inline"
-              className="flex items-center gap-1 px-2 py-1 text-xs text-stone-500 hover:text-stone-700 hover:bg-stone-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+              aria-label="Quick polish"
+              className="flex items-center gap-1 px-2 py-1 text-xs text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+              title="Quick text polish — use Full Editor for rich editing"
             >
               <Edit3 className="w-3.5 h-3.5" />
-              Edit
             </button>
           )}
-
-          {/* Open in Full Editor — Weave.bio/ARTOS-style */}
-          <button
-            onClick={() => onOpenFullEditor(artifactId)}
-            aria-label="Open in Full Editor"
-            className="flex items-center gap-1 px-2 py-1 text-xs text-stone-500 hover:text-stone-700 hover:bg-stone-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
-          >
-            <PenLine className="w-3.5 h-3.5" />
-            Full Editor
-          </button>
 
           {/* Save to Vault */}
           {onSaveToVault && (
@@ -223,21 +277,21 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
                 <button
                   role="menuitem"
                   className="w-full text-left px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50"
-                  onClick={() => { setShowDownloadMenu(false); }}
+                  onClick={() => handleDownload('pdf')}
                 >
                   Download as PDF
                 </button>
                 <button
                   role="menuitem"
                   className="w-full text-left px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50"
-                  onClick={() => { setShowDownloadMenu(false); }}
+                  onClick={() => handleDownload('docx')}
                 >
                   Download as DOCX
                 </button>
                 <button
                   role="menuitem"
                   className="w-full text-left px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50"
-                  onClick={() => { setShowDownloadMenu(false); }}
+                  onClick={() => handleDownload('xml')}
                 >
                   Download as XML
                 </button>
@@ -293,7 +347,14 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
                 <div className="text-center py-16 text-stone-400">
                   <FileText className="w-8 h-8 mx-auto mb-3 text-stone-300" />
                   <p className="text-sm font-medium text-stone-500">No content yet</p>
-                  <p className="text-xs text-stone-400 mt-1.5">Generate content with AnA to see it here</p>
+                  <p className="text-xs text-stone-400 mt-1.5 mb-3">Generate content with AnA, or start drafting in the editor</p>
+                  <button
+                    onClick={() => onOpenFullEditor(artifactId)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+                  >
+                    <PenLine className="w-3.5 h-3.5" />
+                    Open in Editor
+                  </button>
                 </div>
               )}
             </div>

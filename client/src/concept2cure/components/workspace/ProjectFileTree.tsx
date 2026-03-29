@@ -33,6 +33,7 @@ export interface TreeArtifact {
   status?: string;
   ctdSection?: string;
   templateId?: string;
+  folder?: string;
   version: number;
   updatedAt: string;
 }

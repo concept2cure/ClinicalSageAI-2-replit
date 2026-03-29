@@ -159,7 +159,7 @@ export const DossierMap: React.FC<DossierMapProps> = ({
   // Fetch project sections from existing API
   const { data: sections, isLoading: sectionsLoading, error } = useQuery<Array<{ code: string; title: string; status: string }>>({
     queryKey: queryKeys.ind.projectSections(projectId || 'none'),
-    queryFn: () => apiRequest(`/api/project-sections?projectId=${projectId}`),
+    queryFn: () => apiRequest('GET', `/api/project-sections?projectId=${projectId}`).then(r => r.json()),
     enabled: !!projectId,
     staleTime: 60_000,
   });

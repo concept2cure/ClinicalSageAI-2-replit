@@ -28,7 +28,7 @@ import { Button } from '@/components/ui/button';
 import { getSectionLabel } from '../../models/ctdHierarchy';
 import type { PlacementOperation } from './PlacementDialog';
 import type { TreeArtifact } from './ProjectFileTree';
-import { InlineAIMenu } from '../ui/InlineAIMenu';
+// InlineAIMenu removed from row-level actions — available via context menu or editor
 
 interface DocumentListPaneProps {
   folderLabel: string;
@@ -243,6 +243,29 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
             )}
           </div>
         ) : (
+          <>
+          {/* Continue latest draft — prominent CTA for the most recent document */}
+          {filteredDocs.length > 0 && (() => {
+            const latestDraft = filteredDocs.find(d => d.status !== 'approved' && d.status !== 'locked') || filteredDocs[0];
+            return (
+              <div className="px-4 py-3 border-b border-stone-100 bg-blue-50/30 flex items-center gap-3">
+                <FileText className="w-4 h-4 text-blue-500 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-stone-800 truncate">{latestDraft.title}</p>
+                  <p className="text-[10px] text-stone-400">
+                    v{latestDraft.version} · {latestDraft.status || 'draft'} · updated {new Date(latestDraft.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                  </p>
+                </div>
+                <button
+                  onClick={() => onSelect(latestDraft)}
+                  className="shrink-0 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+                >
+                  Continue →
+                </button>
+              </div>
+            );
+          })()}
+
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-stone-200 bg-stone-50/30 sticky top-0">
@@ -271,7 +294,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                     <tr
                       onClick={() => onSelect(doc)}
                       className={cn(
-                        'cursor-pointer transition-colors duration-150',
+                        'group cursor-pointer transition-colors duration-150',
                         doc.id === selectedId ? 'bg-blue-50/60' : 'hover:bg-stone-50'
                       )}
                       data-testid="document-list-row"
@@ -319,9 +342,10 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                           day: 'numeric',
                         })}
                       </td>
+                      {/* Row-level utility actions — hidden until hover for reduced noise */}
                       {(onCutDocument || onOpenPlacement || onCopyCtdPath) && (
                         <td className="px-1 py-2">
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                             {onCutDocument && doc.status !== 'locked' && (
                               <button
                                 onClick={e => {
@@ -358,15 +382,6 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                                 <Copy className="w-3.5 h-3.5" />
                               </button>
                             )}
-                            <span onClick={e => e.stopPropagation()}>
-                              <InlineAIMenu
-                                content={`${doc.title}${doc.ctdSection ? ` | CTD ${doc.ctdSection}` : ''} | Status: ${doc.status || 'draft'} | Version: v${doc.version}`}
-                                title={doc.title}
-                                projectId={1}
-                                actions={['summarize_selection', 'explain_selection', 'extract_structured_data']}
-                                variant="icon"
-                              />
-                            </span>
                           </div>
                         </td>
                       )}
@@ -406,6 +421,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
               })}
             </tbody>
           </table>
+          </>
         )}
       </div>
     </div>

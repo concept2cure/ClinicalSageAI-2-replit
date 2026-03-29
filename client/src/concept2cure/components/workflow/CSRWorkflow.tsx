@@ -271,7 +271,7 @@ export function CSRWorkflow({ projectId, projectName, onSectionClick, onAIDraft,
       </div>
 
       {/* Section list */}
-      <DataStateWrapper data={ICH_E3_SECTIONS} isLoading={isLoading}>
+      <DataStateWrapper data={ICH_E3_SECTIONS} isLoading={isLoading} error={null}>
         {(sections) => (
           <div className="px-6 py-4 space-y-1">
             {sections.map(section => {

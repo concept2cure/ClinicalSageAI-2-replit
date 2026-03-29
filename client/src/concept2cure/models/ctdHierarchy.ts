@@ -13,7 +13,7 @@
 
 // ── Node / status / placement types ──────────────────────────────────────────
 
-export type DossierNodeType = 'module' | 'section' | 'subsection' | 'placeholder' | 'document';
+export type DossierNodeType = 'module' | 'section' | 'subsection' | 'placeholder' | 'document' | 'leaf';
 
 export type DossierNodeStatus =
   | 'empty'

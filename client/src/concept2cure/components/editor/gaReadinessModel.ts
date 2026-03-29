@@ -6,6 +6,10 @@ export interface SessionSnapshot {
   hasActiveArtifact: boolean;
   artifactCount: number;
   collaborationConnected: boolean;
+  signatureCount?: number;
+  provenanceCount?: number;
+  unresolvedCommentCount?: number;
+  trustLoadFailed?: boolean;
 }
 
 export interface ReadinessCheckModel {
@@ -31,6 +35,67 @@ export interface RemediationModel {
   detail: string;
   inspectorTarget: string;
   severity: 'high' | 'medium';
+}
+
+export function buildReadinessChecks(snapshot: SessionSnapshot): ReadinessCheckModel[] {
+  return [
+    {
+      id: 'project-context',
+      label: 'Project context available',
+      status: snapshot.projectId ? 'ready' : 'missing',
+      detail: snapshot.projectId
+        ? 'Project context is loaded and available for document operations.'
+        : 'No project context — save, export, and compliance features require a project.',
+    },
+    {
+      id: 'active-artifact',
+      label: 'Active document loaded',
+      status: snapshot.hasActiveArtifact ? 'ready' : 'missing',
+      detail: snapshot.hasActiveArtifact
+        ? 'An artifact is loaded in the editor.'
+        : 'No document loaded — create or open an artifact to begin.',
+    },
+    {
+      id: 'collaboration',
+      label: 'Real-time collaboration',
+      status: snapshot.collaborationConnected ? 'ready' : 'partial',
+      detail: snapshot.collaborationConnected
+        ? 'WebSocket collaboration channel is connected.'
+        : 'Collaboration channel is not connected — edits will still autosave.',
+    },
+    {
+      id: 'signatures',
+      label: 'E-signature workflow',
+      status: (snapshot.signatureCount ?? 0) > 0 ? 'ready' : snapshot.hasActiveArtifact ? 'partial' : 'missing',
+      detail: (snapshot.signatureCount ?? 0) > 0
+        ? `${snapshot.signatureCount} signature(s) recorded.`
+        : 'No signatures yet — available via Sign/Approve in the editor toolbar.',
+    },
+    {
+      id: 'provenance',
+      label: 'Provenance trail',
+      status: (snapshot.provenanceCount ?? 0) > 0 ? 'ready' : snapshot.hasActiveArtifact ? 'partial' : 'missing',
+      detail: (snapshot.provenanceCount ?? 0) > 0
+        ? `${snapshot.provenanceCount} provenance entries tracked.`
+        : 'No provenance entries — they will accumulate as you edit and save.',
+    },
+    {
+      id: 'comments-resolved',
+      label: 'Open comments resolved',
+      status: (snapshot.unresolvedCommentCount ?? 0) === 0 ? 'ready' : 'partial',
+      detail: (snapshot.unresolvedCommentCount ?? 0) === 0
+        ? 'All comments resolved.'
+        : `${snapshot.unresolvedCommentCount} unresolved comment(s) — review before advancing stage.`,
+    },
+    {
+      id: 'api-wiring',
+      label: 'Backend connectivity',
+      status: snapshot.trustLoadFailed ? 'missing' : 'ready',
+      detail: snapshot.trustLoadFailed
+        ? 'Some API calls failed — document operations may be degraded.'
+        : 'All backend services are responding.',
+    },
+  ];
 }
 
 export function buildCapabilityModels(snapshot: SessionSnapshot): CapabilityModel[] {

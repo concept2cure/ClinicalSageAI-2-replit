@@ -82,7 +82,7 @@ const STATUS_ICON_CLASS: Record<string, string> = {
 };
 
 // Step type → icon
-const STEP_TYPE_ICONS: Record<string, React.ElementType> = {
+const STEP_TYPE_ICONS: Record<string, any> = {
   APPROVAL: CheckCircle2,
   REVIEW: CheckCircle2,
   SIGNATURE: PenTool,

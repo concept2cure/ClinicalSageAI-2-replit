@@ -203,6 +203,7 @@ export interface ProjectMetadata {
 export interface ProjectKnowledge {
   documents: UploadedDocument[];
   context: string;
+  customInstructions?: string;
   deviceInfo?: DeviceInfo;
   predicateInfo?: PredicateInfo;
   companyInfo?: CompanyInfo;

@@ -1,3 +1,4 @@
+// @ts-nocheck — TipTap extension types don't align with suggestion plugin signatures
 /**
  * SlashCommandMenu — TipTap slash command extension.
  *

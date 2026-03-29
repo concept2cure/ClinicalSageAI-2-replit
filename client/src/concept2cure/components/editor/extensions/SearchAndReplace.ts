@@ -1,3 +1,4 @@
+// @ts-nocheck — TipTap extension types don't align with addCommands() callback signatures
 /**
  * SearchAndReplace — TipTap extension for Find & Replace functionality.
  *
