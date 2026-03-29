@@ -11,7 +11,7 @@ interface GetQueryFnOptions {
 let _cachedOrgId: string | null = null;
 let _cachedAuthToken: string | null = null;
 
-function getCachedOrgId(): string {
+export function getCachedOrgId(): string {
   if (!_cachedOrgId) {
     _cachedOrgId =
       localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';

@@ -39,6 +39,15 @@ import { buildMemoryContextForChat } from '../services/memory-context-assembler.
 
 const router = Router();
 
+// ── Response envelope helpers (governed pattern per CLAUDE.md §Code Standards) ──
+function sendSuccess(res: Response, data: Record<string, unknown> = {}, status = 200) {
+  return res.status(status).json({ success: true, ...data });
+}
+
+function sendError(res: Response, status: number, message: string) {
+  return res.status(status).json({ success: false, error: message });
+}
+
 // ── Multer config for file uploads (50MB limit) ─────────────────────────────
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -94,17 +103,16 @@ router.get('/profile', async (req: Request, res: Response) => {
     const profile = await getClientProfile(organizationId, clientWorkspaceId);
 
     if (!profile) {
-      return res.json({
-        success: true,
+      return sendSuccess(res, {
         profile: null,
         message: 'No client intelligence profile found. Create one to get started.',
       });
     }
 
-    return res.json({ success: true, profile });
+    return sendSuccess(res, { profile });
   } catch (err: any) {
     console.error('[ClientIntelligence] GET /profile error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -118,10 +126,7 @@ router.post('/profile', async (req: Request, res: Response) => {
     const { clientWorkspaceId, ...profileData } = req.body;
 
     if (!profileData.companyName) {
-      return res.status(400).json({
-        success: false,
-        error: 'companyName is required',
-      });
+      return sendError(res, 400, 'companyName is required');
     }
 
     const profile = await upsertClientProfile(
@@ -131,10 +136,10 @@ router.post('/profile', async (req: Request, res: Response) => {
       clientWorkspaceId ? parseInt(clientWorkspaceId, 10) : undefined
     );
 
-    return res.json({ success: true, profile });
+    return sendSuccess(res, { profile });
   } catch (err: any) {
     console.error('[ClientIntelligence] POST /profile error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -155,15 +160,12 @@ router.post(
       const file = req.file;
 
       if (!file) {
-        return res.status(400).json({ success: false, error: 'No file provided' });
+        return sendError(res, 400, 'No file provided');
       }
 
       const profileId = parseInt(req.body.profileId, 10);
       if (!profileId) {
-        return res.status(400).json({
-          success: false,
-          error: 'profileId is required',
-        });
+        return sendError(res, 400, 'profileId is required');
       }
 
       const result = await ingestDocument(
@@ -178,10 +180,10 @@ router.post(
         userId
       );
 
-      return res.json({ success: true, result });
+      return sendSuccess(res, { result });
     } catch (err: any) {
       console.error('[ClientIntelligence] POST /documents/upload error:', err);
-      return res.status(500).json({ success: false, error: err.message });
+      return sendError(res, 500, err.message);
     }
   }
 );
@@ -194,14 +196,14 @@ router.get('/documents', async (req: Request, res: Response) => {
   try {
     const profileId = parseInt(req.query.profileId as string, 10);
     if (!profileId) {
-      return res.status(400).json({ success: false, error: 'profileId is required' });
+      return sendError(res, 400, 'profileId is required');
     }
 
     const documents = await getIngestedDocuments(profileId);
-    return res.json({ success: true, documents });
+    return sendSuccess(res, { documents });
   } catch (err: any) {
     console.error('[ClientIntelligence] GET /documents error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -213,14 +215,14 @@ router.get('/checklist', async (req: Request, res: Response) => {
   try {
     const profileId = parseInt(req.query.profileId as string, 10);
     if (!profileId) {
-      return res.status(400).json({ success: false, error: 'profileId is required' });
+      return sendError(res, 400, 'profileId is required');
     }
 
     const checklist = await getDocumentChecklist(profileId);
-    return res.json({ success: true, checklist });
+    return sendSuccess(res, { checklist });
   } catch (err: any) {
     console.error('[ClientIntelligence] GET /checklist error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -236,7 +238,7 @@ router.get('/memory', async (req: Request, res: Response) => {
   try {
     const profileId = parseInt(req.query.profileId as string, 10);
     if (!profileId) {
-      return res.status(400).json({ success: false, error: 'profileId is required' });
+      return sendError(res, 400, 'profileId is required');
     }
 
     const category = req.query.category as string | undefined;
@@ -244,10 +246,10 @@ router.get('/memory', async (req: Request, res: Response) => {
     const offset = parseInt(req.query.offset as string, 10) || 0;
 
     const result = await getMemoryEntries(profileId, { category, limit, offset });
-    return res.json({ success: true, ...result });
+    return sendSuccess(res, { ...result });
   } catch (err: any) {
     console.error('[ClientIntelligence] GET /memory error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -265,7 +267,7 @@ router.get('/memory/semantic-search', async (req: Request, res: Response) => {
     const query = (req.query.query as string)?.trim();
 
     if (!query) {
-      return res.status(400).json({ success: false, error: 'query is required' });
+      return sendError(res, 400, 'query is required');
     }
 
     const category = req.query.category as string | undefined;
@@ -280,10 +282,10 @@ router.get('/memory/semantic-search', async (req: Request, res: Response) => {
       minSimilarity,
     });
 
-    return res.json({ success: true, ...result });
+    return sendSuccess(res, { ...result });
   } catch (err: any) {
     console.error('[ClientIntelligence] GET /memory/semantic-search error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -303,10 +305,10 @@ router.get('/memory/context-assemble', async (req: Request, res: Response) => {
     const maxAgeDays = req.query.maxAgeDays ? parseInt(req.query.maxAgeDays as string, 10) : undefined;
 
     if (!threadId) {
-      return res.status(400).json({ success: false, error: 'threadId is required' });
+      return sendError(res, 400, 'threadId is required');
     }
     if (!query) {
-      return res.status(400).json({ success: false, error: 'query is required' });
+      return sendError(res, 400, 'query is required');
     }
 
     const CONTEXT_ASSEMBLY_TIMEOUT_MS = 30000;
@@ -327,8 +329,7 @@ router.get('/memory/context-assemble', async (req: Request, res: Response) => {
       timeoutPromise,
     ]) as Awaited<ReturnType<typeof buildMemoryContextForChat>>;
 
-    return res.json({
-      success: true,
+    return sendSuccess(res, {
       ...result,
       memoryBlockChars: result.memoryBlock.length,
       memoryDiagnostics: result.diagnostics,
@@ -336,10 +337,10 @@ router.get('/memory/context-assemble', async (req: Request, res: Response) => {
   } catch (err: any) {
     if (err.message === 'Memory context assembly timeout') {
       console.error('[ClientIntelligence] GET /memory/context-assemble timed out after 30s');
-      return res.status(504).json({ success: false, error: 'Memory context assembly timed out' });
+      return sendError(res, 504, 'Memory context assembly timed out');
     }
     console.error('[ClientIntelligence] GET /memory/context-assemble error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -353,10 +354,10 @@ router.post('/memory/:id/verify', async (req: Request, res: Response) => {
     const entryId = parseInt(req.params.id, 10);
 
     await verifyMemoryEntry(entryId, userId);
-    return res.json({ success: true });
+    return sendSuccess(res);
   } catch (err: any) {
     console.error('[ClientIntelligence] POST /memory/:id/verify error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 

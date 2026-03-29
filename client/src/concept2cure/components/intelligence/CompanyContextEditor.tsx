@@ -511,6 +511,7 @@ export function CompanyContextEditor({ onClose }: CompanyContextEditorProps) {
     data: profile,
     isLoading,
     error,
+    refetch,
   } = useQuery<CompanyProfile>({
     queryKey: queryKeys.anaIntelligence.companyContext,
     queryFn: async () => {
@@ -608,6 +609,7 @@ export function CompanyContextEditor({ onClose }: CompanyContextEditorProps) {
           emptyTitle="Tell AnA about your company"
           emptyDescription="Fill in details below so AnA can tailor regulatory guidance to your needs."
           isEmpty={() => isEmpty && !isLoading}
+          retry={() => refetch()}
         >
           {(data) => (
             <div className="space-y-1">

@@ -238,6 +238,13 @@ function Section({
         onClick={collapsible && !editing ? toggle : undefined}
         role={collapsible ? 'button' : undefined}
         aria-expanded={collapsible ? open : undefined}
+        tabIndex={collapsible ? 0 : undefined}
+        onKeyDown={collapsible && !editing ? (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggle();
+          }
+        } : undefined}
       >
         <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
           {collapsible && (
@@ -326,7 +333,7 @@ function AgencyChips({
   };
 
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap gap-1.5" role="group" aria-label="Target agencies">
       {AGENCIES.map((agency) => {
         const active = selected.includes(agency);
         return (
@@ -337,6 +344,15 @@ function AgencyChips({
               active ? '' : 'text-slate-400 border-slate-200'
             }`}
             onClick={() => toggle(agency)}
+            role="checkbox"
+            aria-checked={active}
+            tabIndex={readOnly ? -1 : 0}
+            onKeyDown={(e) => {
+              if (!readOnly && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault();
+                toggle(agency);
+              }
+            }}
           >
             {agency}
           </Badge>
@@ -371,6 +387,7 @@ export function ProjectContextEditor({
     isLoading,
     isError,
     error,
+    refetch,
   } = useQuery({
     queryKey: queryKeys.anaIntelligence.projectContext(projectId),
     queryFn: async () => {
@@ -487,6 +504,7 @@ export function ProjectContextEditor({
           loadingMessage="Loading project context..."
           emptyTitle="No project context found"
           emptyDescription="Start editing to teach AnA about this project."
+          retry={() => refetch()}
         >
           {(data) => (
             <div className="divide-y divide-slate-100">
@@ -512,16 +530,17 @@ export function ProjectContextEditor({
                   editContent={
                     <div className="space-y-3">
                       <div>
-                        <label className="text-xs text-slate-500 mb-1 block">
+                        <label htmlFor="project-field-projectName" className="text-xs text-slate-500 mb-1 block">
                           Project Name
                         </label>
                         <Input
+                          id="project-field-projectName"
                           {...form.register('projectName')}
                           placeholder="Project name"
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-slate-500 mb-1 block">
+                        <label htmlFor="project-field-projectType" className="text-xs text-slate-500 mb-1 block">
                           Project Type
                         </label>
                         <Controller
@@ -532,7 +551,7 @@ export function ProjectContextEditor({
                               value={field.value}
                               onValueChange={field.onChange}
                             >
-                              <SelectTrigger>
+                              <SelectTrigger id="project-field-projectType">
                                 <SelectValue placeholder="Select type" />
                               </SelectTrigger>
                               <SelectContent>
@@ -547,7 +566,7 @@ export function ProjectContextEditor({
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-slate-500 mb-1 block">
+                        <label htmlFor="project-field-developmentPhase" className="text-xs text-slate-500 mb-1 block">
                           Development Phase
                         </label>
                         <Controller
@@ -558,7 +577,7 @@ export function ProjectContextEditor({
                               value={field.value}
                               onValueChange={field.onChange}
                             >
-                              <SelectTrigger>
+                              <SelectTrigger id="project-field-developmentPhase">
                                 <SelectValue placeholder="Select phase" />
                               </SelectTrigger>
                               <SelectContent>
@@ -573,37 +592,41 @@ export function ProjectContextEditor({
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-slate-500 mb-1 block">
+                        <label htmlFor="project-field-drugDeviceName" className="text-xs text-slate-500 mb-1 block">
                           Drug / Device Name
                         </label>
                         <Input
+                          id="project-field-drugDeviceName"
                           {...form.register('drugDeviceName')}
                           placeholder="Drug or device name"
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-slate-500 mb-1 block">
+                        <label htmlFor="project-field-therapeuticArea" className="text-xs text-slate-500 mb-1 block">
                           Therapeutic Area
                         </label>
                         <Input
+                          id="project-field-therapeuticArea"
                           {...form.register('therapeuticArea')}
                           placeholder="e.g. Oncology, Cardiology, Rare Disease"
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-slate-500 mb-1 block">
+                        <label htmlFor="project-field-mechanismOfAction" className="text-xs text-slate-500 mb-1 block">
                           Mechanism of Action
                         </label>
                         <Input
+                          id="project-field-mechanismOfAction"
                           {...form.register('mechanismOfAction')}
                           placeholder="e.g. PD-1 inhibitor, mRNA vaccine"
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-slate-500 mb-1 block">
+                        <label htmlFor="project-field-indication" className="text-xs text-slate-500 mb-1 block">
                           Indication
                         </label>
                         <Input
+                          id="project-field-indication"
                           {...form.register('indication')}
                           placeholder="Target indication"
                         />
