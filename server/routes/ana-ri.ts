@@ -856,6 +856,15 @@ router.post('/chat', async (req: Request, res: Response) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 router.post('/stream', async (req: Request, res: Response) => {
+  let keepaliveTimer: ReturnType<typeof setInterval> | null = null;
+  let streamDeadlineTimer: ReturnType<typeof setTimeout> | null = null;
+  const cleanupStreamTimers = () => {
+    if (keepaliveTimer) { clearInterval(keepaliveTimer); keepaliveTimer = null; }
+    if (streamDeadlineTimer) { clearTimeout(streamDeadlineTimer); streamDeadlineTimer = null; }
+  };
+  // Ensure timers are cleaned up if the client disconnects early
+  res.on('close', cleanupStreamTimers);
+
   try {
     const {
       message,
@@ -1115,27 +1124,19 @@ router.post('/stream', async (req: Request, res: Response) => {
     });
 
     // SSE keepalive — prevents proxies/load-balancers from dropping idle connections
-    const keepalive = setInterval(() => {
+    keepaliveTimer = setInterval(() => {
       if (!res.writableEnded) res.write(': keepalive\n\n');
     }, 15_000);
 
     // Maximum stream duration — graceful close after 120s to prevent zombie connections
-    const streamDeadline = setTimeout(() => {
+    streamDeadlineTimer = setTimeout(() => {
       if (!res.writableEnded) {
         console.warn('[AnA RI Stream] Stream deadline exceeded (120s), closing gracefully');
         res.write(`data: ${JSON.stringify({ type: 'error', error: 'Stream timeout exceeded — partial response delivered' })}\n\n`);
+        cleanupStreamTimers();
         res.end();
       }
     }, 120_000);
-
-    // Cleanup helper — clear all stream timers
-    const cleanupStreamTimers = () => {
-      clearInterval(keepalive);
-      clearTimeout(streamDeadline);
-    };
-
-    // Ensure timers are cleaned up if the client disconnects
-    res.on('close', cleanupStreamTimers);
 
     // Send thread_id immediately so client can track
     res.write(`data: ${JSON.stringify({ type: 'thread_id', thread_id: threadId })}\n\n`);
@@ -1314,7 +1315,7 @@ router.post('/stream', async (req: Request, res: Response) => {
   } catch (error: unknown) {
     console.error('[AnA RI Stream] Error:', error instanceof Error ? error.message : String(error));
     // Always clean up timers on error path
-    if (typeof cleanupStreamTimers === 'function') cleanupStreamTimers();
+    cleanupStreamTimers();
     if (res.headersSent) {
       res.write(
         `data: ${JSON.stringify({
