@@ -757,7 +757,7 @@ router.post('/ana/log-outcome', async (req: Request, res: Response) => {
     const userId = (req as any).user?.id;
     const organizationId = (req as any).user?.organizationId;
     if (!organizationId) {
-      return res.status(401).json({ success: false, error: 'Authentication required' });
+      return sendError(res, 401, 'Authentication required');
     }
 
     const { db } = await import('../db');
@@ -814,10 +814,10 @@ router.post('/ana/log-outcome', async (req: Request, res: Response) => {
         .where(eq(anaCapabilityRegistry.capabilityKey, capabilityKey));
     }
 
-    return res.json({ success: true });
+    return sendSuccess(res);
   } catch (err: any) {
     console.error('[AnA Intelligence] POST log-outcome error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -853,10 +853,10 @@ router.get('/ana/wisdom', async (req: Request, res: Response) => {
       return true;
     });
 
-    return res.json({ success: true, wisdom: filtered });
+    return sendSuccess(res, { wisdom: filtered });
   } catch (err: any) {
     console.error('[AnA Intelligence] GET wisdom error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
