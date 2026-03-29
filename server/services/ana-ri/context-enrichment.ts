@@ -32,6 +32,21 @@ interface EnrichmentResult {
   sources: string[];
   /** Rewritten message if a slash command was detected (strips the command prefix) */
   rewrittenMessage?: string;
+  /** Metadata about the enrichment process for transparency */
+  enrichmentMeta?: {
+    /** Total enrichment sources attempted */
+    sourcesAttempted: number;
+    /** Sources that returned data */
+    sourcesSucceeded: string[];
+    /** Sources that failed or had no data */
+    sourcesFailed: string[];
+    /** Whether this was a slash-command-triggered or natural-language-triggered enrichment */
+    triggerType: 'slash_command' | 'natural_language' | 'proactive' | 'none';
+    /** The detected slash command, if any */
+    detectedCommand?: string;
+    /** Whether project context was available */
+    hasProjectContext: boolean;
+  };
 }
 
 // ─── Slash command detection ─────────────────────────────────────────────────
@@ -539,9 +554,23 @@ export async function enrichContextForChat(params: {
   const { message, projectId, organizationId, submissionType } = params;
   const blocks: string[] = [];
   const sources: string[] = [];
+  const sourcesFailed: string[] = [];
+  let sourcesAttempted = 0;
+  let triggerType: 'slash_command' | 'natural_language' | 'proactive' | 'none' = 'none';
+  let detectedCommand: string | undefined;
   let rewrittenMessage: string | undefined;
 
-  if (!projectId) return { block: '', sources: [] };
+  if (!projectId) return {
+    block: '',
+    sources: [],
+    enrichmentMeta: {
+      sourcesAttempted: 0,
+      sourcesSucceeded: [],
+      sourcesFailed: [],
+      triggerType: 'none',
+      hasProjectContext: false,
+    },
+  };
 
   // ── Always inject project intelligence summary when available ──
   const projectSummary = await enrichWithProjectSummary(projectId, organizationId).catch(() => '');
@@ -628,12 +657,17 @@ export async function enrichContextForChat(params: {
       ]).then(r => r.join('')),
     };
 
+    triggerType = 'slash_command';
+    detectedCommand = slash.command;
     const enrichFn = enrichMap[slash.command];
     if (enrichFn) {
+      sourcesAttempted++;
       const block = await enrichFn().catch(() => '');
       if (block) {
         blocks.push(block);
         sources.push(slash.command);
+      } else {
+        sourcesFailed.push(slash.command);
       }
     }
 
@@ -716,12 +750,20 @@ export async function enrichContextForChat(params: {
     const matchedFns = triggers.filter(t => matchesTriggers(message, t.test));
 
     if (matchedFns.length > 0) {
+      triggerType = 'natural_language';
       await Promise.allSettled(
         matchedFns.map(async t => {
-          const block = await t.fn();
-          if (block) {
-            blocks.push(block);
-            sources.push(t.name);
+          sourcesAttempted++;
+          try {
+            const block = await t.fn();
+            if (block) {
+              blocks.push(block);
+              sources.push(t.name);
+            } else {
+              sourcesFailed.push(t.name);
+            }
+          } catch {
+            sourcesFailed.push(t.name);
           }
         })
       );
@@ -730,6 +772,8 @@ export async function enrichContextForChat(params: {
     // ── Proactive enrichment for greetings/help — inject status so AnA can lead ──
     const isGreeting = /^(hi|hello|hey|good\s*(morning|afternoon|evening)|what.?s up|how are you|help|what can you do)/i.test(message.trim());
     if (isGreeting && sources.length === 0) {
+      triggerType = 'proactive';
+      sourcesAttempted += 2;
       // Inject readiness + top recommendation so AnA can give a proactive status update
       const [readinessBlock, recsBlock] = await Promise.allSettled([
         enrichWithReadiness(projectId, organizationId),
@@ -738,10 +782,14 @@ export async function enrichContextForChat(params: {
       if (readinessBlock.status === 'fulfilled' && readinessBlock.value) {
         blocks.push(readinessBlock.value);
         sources.push('proactive-readiness');
+      } else {
+        sourcesFailed.push('proactive-readiness');
       }
       if (recsBlock.status === 'fulfilled' && recsBlock.value) {
         blocks.push(recsBlock.value);
         sources.push('proactive-recommendations');
+      } else {
+        sourcesFailed.push('proactive-recommendations');
       }
     }
   }
@@ -761,5 +809,13 @@ export async function enrichContextForChat(params: {
     block: blocks.join('\n'),
     sources,
     rewrittenMessage,
+    enrichmentMeta: {
+      sourcesAttempted,
+      sourcesSucceeded: [...sources],
+      sourcesFailed,
+      triggerType,
+      detectedCommand,
+      hasProjectContext: true,
+    },
   };
 }

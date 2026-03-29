@@ -259,6 +259,31 @@ interface AnaMessage {
     quotaConsumed?: number;
     quotaRemaining?: number;
   };
+  /** Executed actions from guidance executor */
+  executedActions?: Array<{
+    actionType: string;
+    executed: boolean;
+    error?: string;
+    [key: string]: unknown;
+  }>;
+  /** Executed operational commands */
+  executedCommands?: Array<{
+    command: string;
+    success: boolean;
+    message?: string;
+    action?: string;
+    [key: string]: unknown;
+  }>;
+  /** Grounding mode metadata */
+  grounding?: {
+    mode: 'grounded' | 'inferred' | 'actioned' | 'blocked' | null;
+    contextUsed: string[];
+    confidence: 'high' | 'moderate' | 'low' | null;
+  };
+  /** Enrichment sources that informed this response */
+  enrichmentSources?: string[];
+  /** Memory atom count used in this response */
+  memoryAtomCount?: number;
 }
 
 interface SuggestedAction {
@@ -1858,6 +1883,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               content: assistantContent,
               timestamp: new Date(),
               executedActions: data.executedActions || undefined,
+              executedCommands: data.executedCommands || undefined,
               modelProvider: data.provider || data.modelProvider || undefined,
               modelName: data.model || data.modelName || undefined,
               evidenceUsage: data.evidenceUsage || undefined,
@@ -1869,6 +1895,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 inputTokens: data.usage.prompt_tokens || data.usage.inputTokens,
                 outputTokens: data.usage.completion_tokens || data.usage.outputTokens,
               } : undefined,
+              // Grounding, enrichment, and memory metadata
+              grounding: data.grounding || undefined,
+              enrichmentSources: data.enrichment?.sources || data.enrichmentSources || undefined,
+              memoryAtomCount: data.memory?.atomCount || undefined,
             },
           ]);
 
@@ -3997,6 +4027,29 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               ))}
                             </div>
                           )}
+                          {/* ── Executed Command Receipts ── */}
+                          {msg.executedCommands && msg.executedCommands.length > 0 && (
+                            <div className="my-1.5 space-y-1">
+                              {msg.executedCommands.map((cmd, i) => (
+                                <div
+                                  key={`cmd-${i}`}
+                                  className={cn(
+                                    'flex items-start gap-2 px-3 py-2 rounded-lg text-[12px] border',
+                                    cmd.success
+                                      ? 'bg-emerald-50/60 border-emerald-100 text-emerald-800'
+                                      : 'bg-red-50/60 border-red-100 text-red-800'
+                                  )}
+                                >
+                                  <span className="font-medium shrink-0">
+                                    {cmd.success ? '✓' : '✗'} {cmd.action || cmd.command}
+                                  </span>
+                                  {cmd.message && (
+                                    <span className="text-stone-600 truncate">{cmd.message}</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                           {/* ── Claude-style: Done indicator ── */}
                           {msg.role === 'assistant' && msg.isComplete && (
                             <DoneIndicator visible />
@@ -4060,6 +4113,57 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               {msg.tokenUsage.inputTokens ? `${msg.tokenUsage.inputTokens} in` : ''}
                               {msg.tokenUsage.inputTokens && msg.tokenUsage.outputTokens ? ' · ' : ''}
                               {msg.tokenUsage.outputTokens ? `${msg.tokenUsage.outputTokens} out` : ''}
+                            </span>
+                          )}
+                          {/* Grounding mode badge */}
+                          {msg.grounding?.mode && (
+                            <span
+                              className={cn(
+                                'text-[10px] font-medium px-1.5 py-0.5 rounded mr-1',
+                                msg.grounding.mode === 'grounded'
+                                  ? 'text-emerald-700 bg-emerald-50'
+                                  : msg.grounding.mode === 'inferred'
+                                    ? 'text-amber-700 bg-amber-50'
+                                    : msg.grounding.mode === 'actioned'
+                                      ? 'text-blue-700 bg-blue-50'
+                                      : 'text-red-700 bg-red-50'
+                              )}
+                              title={
+                                msg.grounding.contextUsed.length > 0
+                                  ? `Context: ${msg.grounding.contextUsed.join(', ')}`
+                                  : `Mode: ${msg.grounding.mode}`
+                              }
+                            >
+                              {msg.grounding.mode === 'grounded'
+                                ? '● Grounded'
+                                : msg.grounding.mode === 'inferred'
+                                  ? '◐ Inferred'
+                                  : msg.grounding.mode === 'actioned'
+                                    ? '▶ Actioned'
+                                    : '○ Blocked'}
+                              {msg.grounding.confidence && msg.grounding.confidence !== 'high' && (
+                                <span className="ml-0.5 opacity-60">
+                                  ({msg.grounding.confidence})
+                                </span>
+                              )}
+                            </span>
+                          )}
+                          {/* Enrichment sources */}
+                          {msg.enrichmentSources && msg.enrichmentSources.length > 0 && (
+                            <span
+                              className="text-[10px] text-stone-400 mr-1"
+                              title={`Sources: ${msg.enrichmentSources.join(', ')}`}
+                            >
+                              {msg.enrichmentSources.length} source{msg.enrichmentSources.length !== 1 ? 's' : ''}
+                            </span>
+                          )}
+                          {/* Memory atom count */}
+                          {msg.memoryAtomCount && msg.memoryAtomCount > 0 && (
+                            <span
+                              className="text-[10px] text-stone-400 mr-1"
+                              title="Memory atoms used in context"
+                            >
+                              {msg.memoryAtomCount} mem
                             </span>
                           )}
                           {msg.evidenceUsage?.firecrawlRequested && (

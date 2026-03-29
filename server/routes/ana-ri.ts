@@ -130,6 +130,34 @@ setInterval(() => {
   }
 }, 10 * 60 * 1000);
 
+// ── Grounding mode parser — extracts ana-grounding block from AnA's response ──
+function parseGroundingMode(content: string): {
+  mode: 'grounded' | 'inferred' | 'actioned' | 'blocked' | null;
+  contextUsed: string[];
+  confidence: 'high' | 'moderate' | 'low' | null;
+} {
+  const match = content.match(/```ana-grounding\s*\n([\s\S]*?)```/);
+  if (!match) return { mode: null, contextUsed: [], confidence: null };
+
+  const block = match[1];
+  const modeMatch = block.match(/mode:\s*(grounded|inferred|actioned|blocked)/i);
+  const contextMatch = block.match(/context_used:\s*\[([^\]]*)\]/i);
+  const confMatch = block.match(/confidence:\s*(high|moderate|low)/i);
+
+  return {
+    mode: (modeMatch?.[1]?.toLowerCase() as any) || null,
+    contextUsed: contextMatch?.[1]
+      ? contextMatch[1].split(',').map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean)
+      : [],
+    confidence: (confMatch?.[1]?.toLowerCase() as any) || null,
+  };
+}
+
+// ── Strip grounding block from visible response (metadata only, not user-facing prose) ──
+function stripGroundingBlock(content: string): string {
+  return content.replace(/\n*```ana-grounding\s*\n[\s\S]*?```\s*$/, '').trimEnd();
+}
+
 // AI Gateway instance
 let gateway: ReturnType<typeof getGateway> | null = null;
 function ensureGateway() {
@@ -610,8 +638,12 @@ router.post('/chat', async (req: Request, res: Response) => {
       }).catch(() => {});
     }
 
+    // Parse grounding mode from AnA's response
+    const groundingInfo = parseGroundingMode(response.content);
+    const cleanedResponse = stripGroundingBlock(response.content);
+
     const responsePayload = {
-      response: response.content,
+      response: cleanedResponse,
       thread_id: resolvedThreadId,
       orchestration: {
         detectedIntent: orchestration.detectedIntent,
@@ -622,6 +654,19 @@ router.post('/chat', async (req: Request, res: Response) => {
         suggestedActions: orchestration.suggestedActions,
         meta: orchestration.orchestrationMeta,
         goalPlan,
+      },
+      grounding: {
+        mode: groundingInfo.mode,
+        contextUsed: groundingInfo.contextUsed,
+        confidence: groundingInfo.confidence,
+      },
+      enrichment: {
+        sources: chatEnrichment.sources,
+        meta: chatEnrichment.enrichmentMeta || null,
+      },
+      memory: {
+        atomCount: chatMemoryResult.atoms?.length || 0,
+        diagnostics: chatMemoryResult.diagnostics || null,
       },
       evaluation: {
         grade: evaluation.grade,
@@ -1010,7 +1055,20 @@ router.post('/stream', async (req: Request, res: Response) => {
       res.write(`data: ${JSON.stringify({ type: 'warning', message: 'Thread persistence failed' })}\n\n`);
     }
 
-    // Send done event
+    // Parse and strip grounding mode from the full streamed response
+    const streamGrounding = parseGroundingMode(fullContent);
+    if (streamGrounding.mode) {
+      // Tell the frontend to strip the grounding block from the rendered message
+      const groundingBlockMatch = fullContent.match(/\n*```ana-grounding\s*\n[\s\S]*?```\s*$/);
+      if (groundingBlockMatch) {
+        res.write(`data: ${JSON.stringify({
+          type: 'grounding_strip',
+          stripFromEnd: groundingBlockMatch[0].length,
+        })}\n\n`);
+      }
+    }
+
+    // Send done event with rich metadata
     res.write(
       `data: ${JSON.stringify({
         type: 'done',
@@ -1021,6 +1079,16 @@ router.post('/stream', async (req: Request, res: Response) => {
         executedActions: executedActions.length > 0 ? executedActions : undefined,
         executedCommands: executedCommands.length > 0 ? executedCommands : undefined,
         enrichmentSources: enrichment.sources.length > 0 ? enrichment.sources : undefined,
+        grounding: streamGrounding.mode ? {
+          mode: streamGrounding.mode,
+          contextUsed: streamGrounding.contextUsed,
+          confidence: streamGrounding.confidence,
+        } : undefined,
+        enrichmentMeta: enrichment.enrichmentMeta || undefined,
+        memoryMeta: {
+          atomCount: memoryResult.atoms?.length || 0,
+          diagnostics: memoryResult.diagnostics || null,
+        },
       })}\n\n`
     );
 

@@ -287,6 +287,34 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     } catch { /* non-blocking */ }
   }
 
+  // 8c. Inject document-state intelligence when authoring context includes artifact status
+  if (input.authoringContext) {
+    const artifactStatus = (input.authoringContext as any)?.artifactStatus as string | undefined;
+    const sectionCode = input.authoringContext?.sectionCode;
+    const moduleCode = input.authoringContext?.moduleCode;
+
+    if (artifactStatus) {
+      const statusLower = (artifactStatus || '').toLowerCase();
+      let stateDirective = '';
+      if (statusLower === 'draft') {
+        stateDirective = `\n\n## DOCUMENT STATE: DRAFT\nThis artifact is in DRAFT status. Your behavior should be:\n- Constructive and building-forward\n- Offer to write, expand, fill gaps, restructure\n- Flag missing subsections and weak claims\n- Suggest running /audit or /scan before moving to review\n- Recommend evidence that needs gathering`;
+      } else if (statusLower === 'review' || statusLower === 'in_review') {
+        stateDirective = `\n\n## DOCUMENT STATE: IN REVIEW\nThis artifact is in REVIEW status. Your behavior should be:\n- Evaluative and precise — act as a reviewer\n- Identify issues that would block approval\n- Focus on completeness, consistency, defensibility\n- Do NOT suggest major rewrites — suggest targeted fixes\n- Recommend specific review actions and reviewers`;
+      } else if (statusLower === 'approved') {
+        stateDirective = `\n\n## DOCUMENT STATE: APPROVED\nThis artifact is APPROVED. Your behavior should be:\n- Cautious — warn before suggesting changes ("This is approved; changes require re-review")\n- Focus on pre-submission checks: cross-references, formatting, eCTD placement\n- Suggest /preflight or /checklist rather than edits\n- Verification-focused, not editing-focused`;
+      } else if (statusLower === 'locked' || statusLower === 'frozen') {
+        stateDirective = `\n\n## DOCUMENT STATE: LOCKED\nThis artifact is LOCKED/FROZEN and IMMUTABLE. Your behavior should be:\n- Do NOT suggest edits — this document cannot be changed\n- If user asks to edit: "This document is locked. Create a new version to make changes."\n- Focus on interpretation, comparison, or export actions\n- Read-only and informational`;
+      }
+      if (stateDirective) {
+        systemPrompt += stateDirective;
+      }
+    }
+
+    if (sectionCode) {
+      systemPrompt += `\n\n## ACTIVE SECTION: ${sectionCode}${moduleCode ? ` (Module ${moduleCode})` : ''}\nThe user is working in a specific CTD section. Tailor all guidance to this section. When the user says "this section" or "here", they mean ${sectionCode}. Be section-specific, not generic.`;
+    }
+  }
+
   // 9. Inject conversation continuity context
   if (input.conversationHistory && input.conversationHistory.length > 0) {
     const continuityContext = buildContinuityContext(
