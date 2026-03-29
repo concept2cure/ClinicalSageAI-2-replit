@@ -129,7 +129,7 @@ export async function listProjects(ctx: CommandContext): Promise<CommandResult> 
       message: `Found ${result.rows.length} project(s).`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'list_projects', message: 'Failed to list projects.', error: err?.message };
+    return { success: false, action: 'list_projects', message: 'Failed to list projects.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -171,7 +171,7 @@ export async function updateProject(
       message: `Project ${projectId} updated: ${fieldList}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'update_project', message: `Failed to update project ${projectId}: ${err?.message || 'unknown error'}.`, error: err?.message };
+    return { success: false, action: 'update_project', message: `Failed to update project ${projectId}: ${err instanceof Error ? err.message : 'unknown error'}.`, error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -231,7 +231,7 @@ export async function createArtifact(
       message: `Created "${params.title}"${sectionLabel} — ID: ${result.artifactId}, status: ${statusLabel}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'create_artifact', message: `Failed to create artifact "${params.title}": ${err?.message || 'unknown error'}.`, error: err?.message };
+    return { success: false, action: 'create_artifact', message: `Failed to create artifact "${params.title}": ${err instanceof Error ? err.message : 'unknown error'}.`, error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -302,7 +302,7 @@ export async function updateArtifact(
       message: `Updated "${current.title}"${sectionLabel}${newVersion}. ${params.changeDescription || 'Content revised by AnA.'}`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'update_artifact', message: `Failed to update artifact ${params.artifactId}: ${err?.message || 'unknown error'}.`, error: err?.message };
+    return { success: false, action: 'update_artifact', message: `Failed to update artifact ${params.artifactId}: ${err instanceof Error ? err.message : 'unknown error'}.`, error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -365,7 +365,7 @@ export async function updateArtifactStatus(
       message: `"${current.title}"${sectionLabel} status changed: ${transitionLabel}.${regressionWarning}`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'update_artifact_status', message: `Failed to update status for artifact ${params.artifactId}: ${err?.message || 'unknown error'}.`, error: err?.message };
+    return { success: false, action: 'update_artifact_status', message: `Failed to update status for artifact ${params.artifactId}: ${err instanceof Error ? err.message : 'unknown error'}.`, error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -401,7 +401,7 @@ export async function placeInDossier(
       message: `Placed "${artTitle}" in CTD section ${params.ctdSection}${moduleLabel}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'place_in_dossier', message: `Failed to place artifact ${params.artifactId} in section ${params.ctdSection}: ${err?.message || 'unknown error'}.`, error: err?.message };
+    return { success: false, action: 'place_in_dossier', message: `Failed to place artifact ${params.artifactId} in section ${params.ctdSection}: ${err instanceof Error ? err.message : 'unknown error'}.`, error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -439,7 +439,7 @@ export async function listArtifacts(
       message: `Found ${result.rows.length} artifact(s) in project ${projectId}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'list_artifacts', message: 'Failed to list artifacts.', error: err?.message };
+    return { success: false, action: 'list_artifacts', message: 'Failed to list artifacts.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -481,7 +481,7 @@ export async function createTask(
       message: `Created task "${params.title}" — ID: ${task.id}${priorityLabel}${dueLabel}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'create_task', message: `Failed to create task "${params.title}": ${err?.message || 'unknown error'}.`, error: err?.message };
+    return { success: false, action: 'create_task', message: `Failed to create task "${params.title}": ${err instanceof Error ? err.message : 'unknown error'}.`, error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -526,7 +526,7 @@ export async function updateTask(
       message: `Task ${params.taskId} updated.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'update_task', message: 'Failed to update task.', error: err?.message };
+    return { success: false, action: 'update_task', message: 'Failed to update task.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -558,7 +558,7 @@ export async function listTasks(
       message: `Found ${result.rows.length} task(s) in project ${projectId}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'list_tasks', message: 'Failed to list tasks.', error: err?.message };
+    return { success: false, action: 'list_tasks', message: 'Failed to list tasks.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -607,7 +607,7 @@ export async function checkDossierReadiness(
       message: `Dossier readiness: ${readiness}% (${approved}/${total} approved). ${issues.length > 0 ? 'Issues: ' + issues.join('; ') : 'No blocking issues.'}`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'check_dossier_readiness', message: 'Failed to check readiness.', error: err?.message };
+    return { success: false, action: 'check_dossier_readiness', message: 'Failed to check readiness.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -703,7 +703,7 @@ export async function loadConversationHistory(
       message: `Found ${result.rows.length} conversation(s).`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'load_conversation_history', message: 'Could not load conversation history.', error: err?.message };
+    return { success: false, action: 'load_conversation_history', message: 'Could not load conversation history.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -777,7 +777,7 @@ export async function exportPersonalData(
       message: `Personal data export prepared for subject ${dataSubjectId}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'export_personal_data', message: 'Personal data export failed.', error: err?.message };
+    return { success: false, action: 'export_personal_data', message: 'Personal data export failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -866,7 +866,7 @@ export async function erasePersonalData(
     };
   } catch (err: unknown) {
     await client.query('ROLLBACK').catch(() => undefined);
-    return { success: false, action: 'erase_personal_data', message: 'Erasure workflow failed.', error: err?.message };
+    return { success: false, action: 'erase_personal_data', message: 'Erasure workflow failed.', error: err instanceof Error ? err.message : String(err) };
   } finally {
     client.release();
   }
@@ -905,7 +905,7 @@ export async function createSubmissionPackage(
       message: `Submission package "${params.title}" created (${params.packageFamily.toUpperCase()}).`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'create_submission_package', message: 'Failed to create submission package.', error: err?.message };
+    return { success: false, action: 'create_submission_package', message: 'Failed to create submission package.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -947,7 +947,7 @@ export async function createReviewThread(
       message: `Review thread "${params.title}" created on artifact ${params.artifactId}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'create_review_thread', message: 'Failed to create review thread.', error: err?.message };
+    return { success: false, action: 'create_review_thread', message: 'Failed to create review thread.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -978,7 +978,7 @@ export async function addReviewComment(
       message: `Comment added to review thread ${params.threadId}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'add_review_comment', message: 'Failed to add comment.', error: err?.message };
+    return { success: false, action: 'add_review_comment', message: 'Failed to add comment.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -1067,7 +1067,7 @@ export async function listTeamMembers(ctx: CommandContext): Promise<CommandResul
       message: `Found ${result.rows.length} team member(s).`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'list_team_members', message: 'Failed to list team.', error: err?.message };
+    return { success: false, action: 'list_team_members', message: 'Failed to list team.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -1100,7 +1100,7 @@ export async function listArtifactVersions(
       message: `Found ${result.rows.length} version(s) of artifact ${params.artifactId}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'list_artifact_versions', message: 'Failed to load version history.', error: err?.message };
+    return { success: false, action: 'list_artifact_versions', message: 'Failed to load version history.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -1208,7 +1208,7 @@ export async function runComplianceScan(
         : `Compliance scan: ${overallScore}/100 — ${criticalCount} critical, ${majorCount} major, ${minorCount} minor issue(s) in "${doc.title}".`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'run_compliance_scan', message: 'Compliance scan failed.', error: err?.message };
+    return { success: false, action: 'run_compliance_scan', message: 'Compliance scan failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -1277,7 +1277,7 @@ export async function exportArtifact(
       message: `Exported "${doc.title}" content (version ${doc.version}). Full PDF generation requires the PDF service.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'export_artifact', message: 'Export failed.', error: err?.message };
+    return { success: false, action: 'export_artifact', message: 'Export failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -1358,7 +1358,7 @@ export async function compareVersions(
       message: `Version ${older.version} → ${newer.version}: +${diff.additions} lines, -${diff.deletions} lines. ${addedSections.length} section(s) added, ${removedSections.length} removed.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'compare_versions', message: 'Version comparison failed.', error: err?.message };
+    return { success: false, action: 'compare_versions', message: 'Version comparison failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -1563,7 +1563,7 @@ What should be done BEFORE this version is submitted? Be specific.`;
         });
         savedArtifactId = tagResult.artifactId;
       } catch (err: unknown) {
-        console.error('[AnA RI] Failed to persist version impact artifact:', err?.message);
+        console.error('[AnA RI] Failed to persist version impact artifact:', err instanceof Error ? err.message : String(err));
       }
     }
 
@@ -1599,7 +1599,7 @@ What should be done BEFORE this version is submitted? Be specific.`;
       message: `Version Impact Review for "${artifactMeta.title}" (v${older.version} → v${newer.version}): +${diff.additions}/-${diff.deletions} lines analyzed.${savedArtifactId ? ` Saved as artifact #${savedArtifactId}.` : ''}`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'review_version_impact', message: 'Version impact review failed.', error: err?.message };
+    return { success: false, action: 'review_version_impact', message: 'Version impact review failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -1637,7 +1637,7 @@ export async function createMilestone(
       message: `Milestone "${params.title}" created.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'create_milestone', message: 'Failed to create milestone.', error: err?.message };
+    return { success: false, action: 'create_milestone', message: 'Failed to create milestone.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -1679,7 +1679,7 @@ export async function updateMilestone(
       message: `Milestone ${params.milestoneId} updated.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'update_milestone', message: 'Failed to update milestone.', error: err?.message };
+    return { success: false, action: 'update_milestone', message: 'Failed to update milestone.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -1703,7 +1703,7 @@ export async function listMilestones(
       message: `Found ${result.rows.length} milestone(s).`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'list_milestones', message: 'Failed to list milestones.', error: err?.message };
+    return { success: false, action: 'list_milestones', message: 'Failed to list milestones.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -1796,7 +1796,7 @@ export async function revertToVersion(
       message: `Artifact ${params.artifactId} reverted to version ${params.targetVersion} content (created as new version ${result.versionId}).`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'revert_to_version', message: 'Revert failed.', error: err?.message };
+    return { success: false, action: 'revert_to_version', message: 'Revert failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -1842,7 +1842,7 @@ export async function generateSAP(ctx: CommandContext, params: any): Promise<Com
       message: `SAP generated. Sample size: ${result?.computation?.sampleSize || 'calculated'}. Document saved.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'generate_sap', message: 'SAP generation failed.', error: err?.message };
+    return { success: false, action: 'generate_sap', message: 'SAP generation failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -1872,7 +1872,7 @@ export async function computeSampleSize(ctx: CommandContext, params: any): Promi
       message: `Sample size: ${result.sampleSize || 'N/A'} per arm (${result.totalSampleSize || 'N/A'} total). Power: ${result.achievedPower ? Math.round(result.achievedPower * 100) + '%' : 'N/A'}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'compute_sample_size', message: 'Computation failed.', error: err?.message };
+    return { success: false, action: 'compute_sample_size', message: 'Computation failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -1892,7 +1892,7 @@ export async function computeDoseEscalation(ctx: CommandContext, params: any): P
       message: `Dose escalation designed. Method: ${result?.method || params.method || '3+3'}. ${result?.recommendation || 'See results for details.'}`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'compute_dose_escalation', message: 'Dose escalation computation failed.', error: err?.message };
+    return { success: false, action: 'compute_dose_escalation', message: 'Dose escalation computation failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -1921,7 +1921,7 @@ export async function assessDefensibility(ctx: CommandContext, params: any): Pro
       message: `Defensibility score: ${result?.overallScore || 'N/A'}/100. ${result?.summary || 'Assessment complete.'}`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'assess_defensibility', message: 'Assessment failed.', error: err?.message };
+    return { success: false, action: 'assess_defensibility', message: 'Assessment failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -1962,7 +1962,7 @@ export async function draftSection(ctx: CommandContext, params: any): Promise<Co
       message: `Section ${res.rows[0].code || sectionId} ready for AI drafting. Use the /draft slash command or ask me to draft it.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'draft_section', message: 'Draft failed.', error: err?.message };
+    return { success: false, action: 'draft_section', message: 'Draft failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -1977,7 +1977,7 @@ export async function scanDeficiencies(ctx: CommandContext, params: any): Promis
       message: `Deficiency scan queued for section ${sectionId}. Results will appear in the compliance panel.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'scan_deficiencies', message: 'Scan failed.', error: err?.message };
+    return { success: false, action: 'scan_deficiencies', message: 'Scan failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2002,7 +2002,7 @@ export async function freezeDocument(ctx: CommandContext, params: any): Promise<
       message: `Document "${res.rows[0].title}" frozen. No further edits possible without creating a new version.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'freeze_document', message: 'Freeze failed.', error: err?.message };
+    return { success: false, action: 'freeze_document', message: 'Freeze failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2018,7 +2018,7 @@ export async function signDocument(ctx: CommandContext, params: any): Promise<Co
       message: `Electronic signature requested for document ${docId} as ${meaning}. User must confirm with their PIN in the document panel.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'sign_document', message: 'Signature request failed.', error: err?.message };
+    return { success: false, action: 'sign_document', message: 'Signature request failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2041,7 +2041,7 @@ export async function exportDocument(ctx: CommandContext, params: any): Promise<
       message: `Document ${docId} export as ${format.toUpperCase()} initiated. Download will be available in the exports panel.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'export_document', message: 'Export failed.', error: err?.message };
+    return { success: false, action: 'export_document', message: 'Export failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2056,7 +2056,7 @@ export async function generateChecklist(ctx: CommandContext, params: any): Promi
       message: `Compliance checklist generated for document ${docId}. View in the document checklist panel.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'generate_checklist', message: 'Checklist generation failed.', error: err?.message };
+    return { success: false, action: 'generate_checklist', message: 'Checklist generation failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2077,7 +2077,7 @@ export async function submitDocument(ctx: CommandContext, params: any): Promise<
       message: `Document "${res.rows[0].title}" submitted. Status updated to SUBMITTED. Audit trail recorded.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'submit_document', message: 'Submission failed.', error: err?.message };
+    return { success: false, action: 'submit_document', message: 'Submission failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2101,7 +2101,7 @@ export async function searchPrecedents(ctx: CommandContext, params: any): Promis
       message: `Found ${results.length} regulatory precedent(s) matching your search.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'search_precedents', message: 'Precedent search failed.', error: err?.message };
+    return { success: false, action: 'search_precedents', message: 'Precedent search failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2120,7 +2120,7 @@ export async function analyzeCRLTriggers(ctx: CommandContext, params: any): Prom
       message: `CRL trigger analysis complete. Identified risk factors based on regulatory precedents.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'analyze_crl_triggers', message: 'CRL trigger analysis failed.', error: err?.message };
+    return { success: false, action: 'analyze_crl_triggers', message: 'CRL trigger analysis failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2139,7 +2139,7 @@ export async function analyzeRTFTriggers(ctx: CommandContext, params: any): Prom
       message: `RTF trigger analysis complete. Identified filing risk factors.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'analyze_rtf_triggers', message: 'RTF trigger analysis failed.', error: err?.message };
+    return { success: false, action: 'analyze_rtf_triggers', message: 'RTF trigger analysis failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2158,7 +2158,7 @@ export async function recommendStrategy(ctx: CommandContext, params: any): Promi
       message: `Strategy recommendation generated based on regulatory precedent analysis.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'recommend_strategy', message: 'Strategy recommendation failed.', error: err?.message };
+    return { success: false, action: 'recommend_strategy', message: 'Strategy recommendation failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2177,7 +2177,7 @@ export async function checkClaim(ctx: CommandContext, params: any): Promise<Comm
       message: `Claim checked against regulatory precedents. Assessment complete.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'check_claim', message: 'Claim check failed.', error: err?.message };
+    return { success: false, action: 'check_claim', message: 'Claim check failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2197,7 +2197,7 @@ export async function runSubmissionAssessment(ctx: CommandContext, params: any):
       message: `Full submission twin assessment complete for package ${packageId}. ${result.claims?.length ?? 0} claim(s), ${result.driftAlerts?.length ?? 0} drift alert(s), ${result.challenges?.length ?? 0} challenge(s), ${result.weakZones?.length ?? 0} weak zone(s).`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'run_submission_assessment', message: 'Submission assessment failed.', error: err?.message };
+    return { success: false, action: 'run_submission_assessment', message: 'Submission assessment failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2216,7 +2216,7 @@ export async function simulateChallenges(ctx: CommandContext, params: any): Prom
       message: `Simulated ${challenges.length} potential reviewer challenge(s) across ${lenses.join(', ')} lenses.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'simulate_challenges', message: 'Challenge simulation failed.', error: err?.message };
+    return { success: false, action: 'simulate_challenges', message: 'Challenge simulation failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2234,7 +2234,7 @@ export async function detectDrift(ctx: CommandContext, params: any): Promise<Com
         : `No narrative drift detected. Submission narrative is consistent.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'detect_drift', message: 'Drift detection failed.', error: err?.message };
+    return { success: false, action: 'detect_drift', message: 'Drift detection failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2250,7 +2250,7 @@ export async function predictNextArtifact(ctx: CommandContext, params: any): Pro
       message: `Next best artifact prediction generated. Focus on what maximizes submission readiness.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'predict_next_artifact', message: 'Prediction failed.', error: err?.message };
+    return { success: false, action: 'predict_next_artifact', message: 'Prediction failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2266,7 +2266,7 @@ export async function computeReadiness(ctx: CommandContext, params: any): Promis
       message: `Readiness: ${result.readinessScore}% | Fragility: ${result.fragilityScore}% | ${result.weakZones.length} weak zone(s) identified.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'compute_readiness', message: 'Readiness computation failed.', error: err?.message };
+    return { success: false, action: 'compute_readiness', message: 'Readiness computation failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2288,7 +2288,7 @@ export async function scanContradictions(ctx: CommandContext, params: any): Prom
       message: `Found ${summary.total} contradiction(s): ${criticalCount} critical/high severity. ${summary.total === 0 ? 'Documents are internally consistent.' : 'Review recommended.'}`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'scan_contradictions', message: 'Contradiction scan failed.', error: err?.message };
+    return { success: false, action: 'scan_contradictions', message: 'Contradiction scan failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2308,7 +2308,7 @@ export async function checkPromotionBlockers(ctx: CommandContext, params: any): 
         : `Artifact ${artifactId} is clear for promotion. No blocking contradictions found.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'check_promotion_blockers', message: 'Promotion check failed.', error: err?.message };
+    return { success: false, action: 'check_promotion_blockers', message: 'Promotion check failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2338,7 +2338,7 @@ export async function analyzeJurisdictions(ctx: CommandContext, params: any): Pr
       message: `Cross-jurisdictional analysis complete for ${targetAgencies.join(', ')}. ${result.divergences?.length || 0} divergence(s), ${result.reliancePathways?.length || 0} reliance pathway(s), ${result.filingSequences?.length || 0} filing sequence option(s).`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'analyze_jurisdictions', message: 'Jurisdictional analysis failed.', error: err?.message };
+    return { success: false, action: 'analyze_jurisdictions', message: 'Jurisdictional analysis failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2363,7 +2363,7 @@ export async function recommendEndpoints(ctx: CommandContext, params: any): Prom
       message: `Generated ${recommendations.length} endpoint recommendation(s) for ${params.indication}${params.phase ? ` (Phase ${params.phase})` : ''}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'recommend_endpoints', message: 'Endpoint recommendation failed.', error: err?.message };
+    return { success: false, action: 'recommend_endpoints', message: 'Endpoint recommendation failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2381,7 +2381,7 @@ export async function evaluateEndpoint(ctx: CommandContext, params: any): Promis
       message: `Endpoint "${params.endpoint}" scored ${evaluation.score}/100 for ${params.indication}. ${evaluation.feedback}`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'evaluate_endpoint', message: 'Endpoint evaluation failed.', error: err?.message };
+    return { success: false, action: 'evaluate_endpoint', message: 'Endpoint evaluation failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2420,7 +2420,7 @@ export async function runRIMScan(ctx: CommandContext, params: any): Promise<Comm
       message: `RIM assessment complete. Score: ${assessment.rimScore ?? 'N/A'}/100 — ${assessment.rimVerdict}. ${assessment.patternMatches?.length || 0} pattern(s) detected. ${assessment.topActions?.length || 0} recommended action(s).`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'run_rim_scan', message: 'RIM assessment failed.', error: err?.message };
+    return { success: false, action: 'run_rim_scan', message: 'RIM assessment failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2450,7 +2450,7 @@ export async function generateReport(ctx: CommandContext, params: any): Promise<
       message: `Report "${params.title}" generated (domain: ${params.domain}). Cryptographically sealed with verification code.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'generate_report', message: 'Report generation failed.', error: err?.message };
+    return { success: false, action: 'generate_report', message: 'Report generation failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2469,7 +2469,7 @@ export async function generateClinicalInsights(ctx: CommandContext, params: any)
       message: `Clinical trial insights generated for ${params.indication} (${params.phase || 'Phase 2'}).`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'generate_clinical_insights', message: 'Clinical insights generation failed.', error: err?.message };
+    return { success: false, action: 'generate_clinical_insights', message: 'Clinical insights generation failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2489,7 +2489,7 @@ export async function analyzeCrossDocument(ctx: CommandContext, params: any): Pr
       message: `Cross-document analysis complete across ${documentIds.length} documents.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'analyze_cross_document', message: 'Cross-document analysis failed.', error: err?.message };
+    return { success: false, action: 'analyze_cross_document', message: 'Cross-document analysis failed.', error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -2769,7 +2769,7 @@ export async function executeCommands(
         results.push(result);
         console.log(`[AnA Command] Executed ${cmd.command}: ${result.success ? 'OK' : 'FAILED'} — ${result.message}`);
       } catch (err: unknown) {
-        results.push({ success: false, action: cmd.command, message: `Execution failed: ${err?.message}` });
+        results.push({ success: false, action: cmd.command, message: `Execution failed: ${err instanceof Error ? err.message : String(err)}` });
       }
     }
   }
