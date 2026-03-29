@@ -157,6 +157,66 @@ This file provides transcript-style proof for 10 specific improvements, as requi
 
 ---
 
+## CTD Section Guidance Wins (2)
+
+### Win 11: Section-specific drafting guidance
+
+**User prompt:** "Help me draft this section" (while editing section 2.5)
+
+**Context:** User is in section 2.5 with artifact in draft status.
+
+**Old weakness:** AnA gives generic drafting advice: "When drafting a regulatory section, you should include background, objectives, methods..." regardless of which CTD section is active.
+
+**New strength:** Orchestrator injects ICH-sourced guidance for 2.5: "Clinical Overview: integrated benefit-risk assessment. Cover efficacy, safety, dosing, special populations. This is the most critical Module 2 section — reviewers read this first." AnA tailors drafting to 2.5 specifically. Document-state directive adds: "This artifact is in DRAFT status — be constructive, flag missing subsections, suggest /audit before review." Next step: "Start with the benefit-risk framework, then I'll help you build out each subsection."
+
+**Why it matters:** Section 2.5 is the most-read section in any NDA/BLA submission. Generic drafting advice wastes the user's time. Section-specific ICH requirements give the user a head start on what actually matters.
+
+---
+
+### Win 12: Memory transparency in context
+
+**User prompt:** "What do you know about this project?"
+
+**Context:** User has project with 6 memory atoms across working/project/client memory.
+
+**Old weakness:** AnA answers comprehensively but the user has zero visibility into what memory atoms informed the response. "I know about your project" could be based on 6 rich atoms or nothing.
+
+**New strength:** Memory indicator shows "6 mem" with a hover panel revealing each atom: [WM] "Current Section 2.5 Context" (85%), [PM] "Clinical Overview Draft Notes" (72%), [PM] "Efficacy Endpoint Rationale" (68%), [CM] "Account Regulatory Preferences" (90%). User can verify what AnA actually "knows." Grounding badge: "● Grounded" with confidence "high".
+
+**Why it matters:** In regulated work, "trust but verify" is the norm. Users need to see the evidence base for AI claims, even if it's just memory atoms. Hovering to see what informed the response is the minimum viable transparency for a regulated intelligence assistant.
+
+---
+
+## Document-State Guard Wins (2)
+
+### Win 13: Locked artifact mutation blocked
+
+**User prompt:** "Update the content of this document" (artifact is locked)
+
+**Context:** User asks to update an artifact that was locked after final review.
+
+**Old weakness:** Command executor attempts the update, may fail with a DB error or silently succeed if the status check is missing. Message: "Failed to update artifact."
+
+**New strength:** Command executor checks status before mutation: "Cannot update 'Clinical Overview' — document is locked. Create a new version or change status to draft first." Returns `blocked` result with `currentStatus: 'locked'` in data. UI renders a red receipt card: "✗ update_artifact — Document is locked." Grounding mode: `blocked`.
+
+**Why it matters:** Document lifecycle integrity is non-negotiable in regulated submissions. A locked document that gets silently modified breaks the audit trail and could invalidate the submission.
+
+---
+
+### Win 14: Next-step chip from AI recommendation
+
+**User prompt:** "Analyze the safety profile"
+
+**Context:** User asks about safety in a project with safety data.
+
+**Old weakness:** AnA gives a thorough safety analysis but the response ends. User has to think about what to do next.
+
+**New strength:** AnA concludes with "**Next step:** Run /scan on Module 2.7.5 to check safety narrative completeness." Below the response, a violet chip appears with the text "Run /scan on Module 2.7.5 to check safety narrative completeness →". User clicks it, and that becomes the next message — zero-friction workflow continuation.
+
+**Why it matters:** The gap between "here's the analysis" and "what do I do about it" is where users stall. Making the AI's own recommendation one click away turns analysis into action.
+
+---
+
 ## Summary
 
 | Category | Win Count | Key Theme |
@@ -166,4 +226,6 @@ This file provides transcript-style proof for 10 specific improvements, as requi
 | Action receipt | 2 | Command execution is visible and legible |
 | Document-aware | 2 | Behavior adapts to document lifecycle stage |
 | Honest failure | 2 | Blocking is explicit, not silent; missing context acknowledged |
-| **Total** | **10** | **AnA is more grounded, more directed, more honest, more state-aware** |
+| CTD section guidance | 2 | Section-specific ICH requirements + memory transparency |
+| Document-state guards | 2 | Locked/approved mutations blocked, next-step chips |
+| **Total** | **14** | **AnA is more grounded, more directed, more honest, more state-aware, more section-specific, and more transparent** |

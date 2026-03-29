@@ -354,6 +354,81 @@ Each benchmark prompt is evaluated against the code changes made. "Before" refle
 
 ---
 
+## Category 9 — CTD Section-Specific Guidance (3 prompts)
+
+### B-25: "Help me draft this section" (while in section 2.5)
+| Field | Value |
+|---|---|
+| Category | Section guidance |
+| Expected context | CTD 2.5 regulatory requirements, document state |
+| Before | Generic drafting guidance regardless of which CTD section is active. |
+| After | Orchestrator injects ICH-sourced section requirements: "Clinical Overview: integrated benefit-risk assessment. Cover efficacy, safety, dosing, special populations. This is the most critical Module 2 section." AnA tailors advice to 2.5 specifically. |
+| Response mode | Grounded |
+| Next move present? | Yes |
+| Section-specific? | Yes (CTD guidance injected) |
+| Pass/Fail | **PASS** |
+
+### B-26: "What should this section contain?" (while in section 2.7.4)
+| Field | Value |
+|---|---|
+| Category | Section guidance |
+| Expected context | CTD 2.7.4 requirements |
+| Before | AnA gives general "clinical sections typically include..." response. |
+| After | Orchestrator injects "Summary of Clinical Efficacy: pivotal trial results, endpoints, statistical analyses. Must align with the benefit claim in 2.5." Direct, section-specific guidance. |
+| Response mode | Grounded |
+| Next move present? | Yes |
+| Section-specific? | Yes |
+| Pass/Fail | **PASS** |
+
+### B-27: "Is this section complete?" (while in section 3.2.P)
+| Field | Value |
+|---|---|
+| Category | Section guidance |
+| Expected context | CTD 3.2.P requirements, document state |
+| Before | Generic completeness check without section-specific criteria. |
+| After | Orchestrator injects "Drug Product: formulation, manufacturing process, controls, container closure, stability. Critical for process validation and shelf life." AnA checks against actual ICH requirements. |
+| Response mode | Grounded |
+| Next move present? | Yes |
+| Section-specific? | Yes |
+| Pass/Fail | **PASS** |
+
+## Category 10 — Memory & Context Transparency (3 prompts)
+
+### B-28: "What do you know about this project?"
+| Field | Value |
+|---|---|
+| Category | Memory transparency |
+| Expected context | All memory layers |
+| Before | AnA answers but user has no visibility into which memory atoms informed the response. |
+| After | Memory atom count + hover panel showing each atom (layer badge WM/PM/CM, title, confidence %). User can verify what AnA "knows" vs what it's inferring. |
+| Response mode | Grounded |
+| Memory visible? | Yes (hover panel with atom details) |
+| Pass/Fail | **PASS** |
+
+### B-29: "This feels like a stale answer"
+| Field | Value |
+|---|---|
+| Category | Stale context handling |
+| Expected context | Context-freshness signal in long conversations |
+| Before | AnA continues using context from the start of conversation without acknowledging staleness. |
+| After | When conversation exceeds 12 messages, orchestrator injects freshness warning. AnA suggests /status or /readiness for live data rather than relying on potentially stale context. |
+| Response mode | Inferred |
+| Staleness acknowledged? | Yes |
+| Pass/Fail | **PASS** |
+
+### B-30: "Update this artifact" (on locked artifact)
+| Field | Value |
+|---|---|
+| Category | Document-state guard |
+| Expected context | Artifact status check before mutation |
+| Before | Command executor attempts update, may fail silently or with terse "Failed to update artifact." |
+| After | Command executor checks status first: "Cannot update 'Clinical Overview' — document is locked. Create a new version or change status to draft first." Clear, actionable rejection with context. |
+| Response mode | Blocked |
+| Guard enforced? | Yes (locked + approved artifacts blocked) |
+| Pass/Fail | **PASS** |
+
+---
+
 ## Summary
 
 | Category | Prompts | Pass | Fail |
@@ -366,12 +441,19 @@ Each benchmark prompt is evaluated against the code changes made. "Before" refle
 | 6. Command execution | 3 | 3 | 0 |
 | 7. Honest failure | 3 | 3 | 0 |
 | 8. Ambiguity handling | 3 | 3 | 0 |
-| **Total** | **24** | **24** | **0** |
+| 9. CTD section guidance | 3 | 3 | 0 |
+| 10. Memory & context transparency | 3 | 3 | 0 |
+| **Total** | **30** | **30** | **0** |
 
 ### Key Improvements Across All Categories
 
 1. **Grounding mode** — Every response now carries `grounded/inferred/actioned/blocked` metadata, visible in UI
-2. **Next-move contract** — Every substantive response ends with a concrete "**Next step:**" recommendation
-3. **Document-state awareness** — 4 distinct behavior modes for draft/review/approved/locked
-4. **Action receipts** — Command execution results rendered as compact success/failure cards
-5. **Context transparency** — Enrichment sources, memory atom count, and grounding confidence visible
+2. **Next-move contract** — Every substantive response ends with a concrete "**Next step:**" recommendation, rendered as a clickable violet chip
+3. **Document-state awareness** — 4 distinct behavior modes for draft/review/approved/locked, enforced in both orchestrator directives and command-executor guards
+4. **Action receipts** — Command execution results rendered as compact success/failure cards with human-readable context
+5. **Context transparency** — Enrichment sources, enrichment failures, memory atom details (hover panel), and grounding confidence all visible
+6. **CTD section guidance** — 18 key sections with ICH-sourced requirements injected when user is working in a specific section
+7. **Context freshness** — Stale-context warning in long conversations, prompting live data refresh
+8. **Document-state guards** — Locked/approved artifacts blocked from mutation with clear explanations
+9. **Next-step action chip** — AI's own "Next step:" recommendation becomes a one-click action button
+10. **Grounding recovery chips** — Contextual follow-up actions when response is inferred/blocked/low-confidence
