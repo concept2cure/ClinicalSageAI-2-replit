@@ -36,6 +36,13 @@ const MIN_EVIDENCE_FOR_PLATFORM_WISDOM = 10;
 const REJECTION_RATE_THRESHOLD = 0.3;
 const REJECTION_SAMPLE_MIN = 20;
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Escape SQL LIKE metacharacters so they match literally. */
+function escapeLikePattern(str: string): string {
+  return str.replace(/[%_\\]/g, '\\$&');
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface CaptureProjectLessonParams {
@@ -109,6 +116,7 @@ export async function captureProjectLesson(params: CaptureProjectLessonParams): 
       projectType,
       documentType,
       sectionCode,
+      therapeuticArea,
     } = params;
 
     // Build lesson text
@@ -220,15 +228,24 @@ export async function promoteToClientWisdom(organizationId: number): Promise<num
       )
       .orderBy(desc(projectMemoryEntries.createdAt));
 
-    // Group by subcategory (capabilityKey) and count distinct projects
-    const patternMap = new Map<string, { projects: Set<number>; latestContent: string }>();
+    // Group by subcategory (capabilityKey) + outcome and count distinct projects
+    const patternMap = new Map<string, { capabilityKey: string; outcome: string; projects: Set<number>; latestContent: string }>();
 
     for (const row of lessonCounts) {
-      const key = row.subcategory ?? 'unknown';
+      const capKey = row.subcategory ?? 'unknown';
+      // Extract outcome from title format "Lesson: <capabilityKey> — <outcome>"
+      const outcomeMatch = row.content.match(/(?:worked well|partially succeeded|did not work)/);
+      const outcome = outcomeMatch
+        ? (outcomeMatch[0] === 'worked well' ? 'success' : outcomeMatch[0] === 'partially succeeded' ? 'partial' : 'failure')
+        : 'unknown';
+      const key = `${capKey}::${outcome}`;
       if (!patternMap.has(key)) {
-        patternMap.set(key, { projects: new Set(), latestContent: row.content });
+        patternMap.set(key, { capabilityKey: capKey, outcome, projects: new Set(), latestContent: row.content });
       }
-      patternMap.get(key)!.projects.add(row.projectId);
+      // Only add non-null projectIds to avoid counting null as a distinct project
+      if (row.projectId != null) {
+        patternMap.get(key)!.projects.add(row.projectId);
+      }
     }
 
     // Get client profile for FK
@@ -255,24 +272,60 @@ export async function promoteToClientWisdom(organizationId: number): Promise<num
         )
       );
 
-    const existingKeys = new Set(existingWisdom.map(w => w.subcategory));
+    const existingKeysMap = new Map(existingWisdom.map(w => [w.subcategory, true]));
 
     // Promote patterns seen in 3+ projects
-    for (const [capabilityKey, data] of patternMap) {
-      if (data.projects.size >= MIN_PROJECTS_FOR_CLIENT_WISDOM && !existingKeys.has(capabilityKey)) {
+    for (const [compositeKey, data] of patternMap) {
+      if (data.projects.size < MIN_PROJECTS_FOR_CLIENT_WISDOM) continue;
+
+      const newContent = `Pattern observed across ${data.projects.size} projects (outcome: ${data.outcome}). ${data.latestContent}`;
+      const newConfidence = Math.min(0.95, 0.6 + data.projects.size * 0.05);
+
+      if (!existingKeysMap.has(compositeKey)) {
         await db.insert(clientMemoryEntries).values({
           profileId: clientProfile.id,
           organizationId,
           category: 'ana_wisdom',
-          subcategory: capabilityKey,
-          title: `Client wisdom: ${capabilityKey} (${data.projects.size} projects)`,
-          content: `Pattern observed across ${data.projects.size} projects. ${data.latestContent}`,
-          confidenceScore: Math.min(0.95, 0.6 + data.projects.size * 0.05),
+          subcategory: compositeKey,
+          title: `Client wisdom: ${data.capabilityKey} — ${data.outcome} (${data.projects.size} projects)`,
+          content: newContent,
+          confidenceScore: newConfidence,
           importanceLevel: 'high',
           extractedBy: 'ai',
           status: 'active',
         });
         promoted++;
+      } else {
+        // Update existing entry if evidence has grown significantly (2x or more)
+        const [existingEntry] = await db
+          .select({ id: clientMemoryEntries.id, content: clientMemoryEntries.content })
+          .from(clientMemoryEntries)
+          .where(
+            and(
+              eq(clientMemoryEntries.organizationId, organizationId),
+              eq(clientMemoryEntries.category, 'ana_wisdom'),
+              eq(clientMemoryEntries.subcategory, compositeKey),
+              eq(clientMemoryEntries.status, 'active'),
+            )
+          )
+          .limit(1);
+
+        if (existingEntry) {
+          // Extract previous project count from content (e.g., "across 3 projects")
+          const prevCountMatch = existingEntry.content.match(/across (\d+) projects/);
+          const prevCount = prevCountMatch ? parseInt(prevCountMatch[1], 10) : 0;
+
+          if (prevCount > 0 && data.projects.size >= prevCount * 2) {
+            await db
+              .update(clientMemoryEntries)
+              .set({
+                content: newContent,
+                confidenceScore: newConfidence,
+                title: `Client wisdom: ${data.capabilityKey} — ${data.outcome} (${data.projects.size} projects)`,
+              })
+              .where(eq(clientMemoryEntries.id, existingEntry.id));
+          }
+        }
       }
     }
   } catch (err) {
@@ -446,9 +499,13 @@ export async function detectProjectRisks(projectId: number): Promise<RiskAlert[]
       .limit(10);
 
     for (const lesson of failureLessons) {
+      const lessonSeverity: RiskAlert['severity'] =
+        lesson.importanceLevel === 'high' || (lesson.confidenceScore != null && lesson.confidenceScore >= 0.8)
+          ? 'high'
+          : 'medium';
       risks.push({
         riskId: `lesson-${lesson.id}`,
-        severity: 'medium',
+        severity: lessonSeverity,
         category: 'learned_failure',
         description: lesson.content,
         recommendation: `Review and address previous failure: ${lesson.title}`,
@@ -476,9 +533,16 @@ export async function detectProjectRisks(projectId: number): Promise<RiskAlert[]
       const typeMatch = !wisdom.projectType || wisdom.projectType === projectType;
 
       if (bodyMatch && typeMatch) {
+        const defSeverity: RiskAlert['severity'] = wisdom.confidenceScore >= 0.8
+          ? 'critical'
+          : wisdom.confidenceScore >= 0.6
+            ? 'high'
+            : wisdom.confidenceScore >= 0.4
+              ? 'medium'
+              : 'low';
         risks.push({
           riskId: `deficiency-${wisdom.id}`,
-          severity: 'critical',
+          severity: defSeverity,
           category: 'deficiency_prevention',
           description: wisdom.patternDescription,
           recommendation: wisdom.recommendation,
@@ -638,7 +702,7 @@ export async function processUserFeedback(
     if (!outcome) return;
 
     // Find matching platform wisdom entries
-    const wisdomKeyPrefix = `${outcome.capabilityKey}:${outcome.regulatoryBody ?? 'any'}:${outcome.projectType ?? 'any'}`;
+    const wisdomKeyPrefix = `${escapeLikePattern(outcome.capabilityKey)}:${escapeLikePattern(outcome.regulatoryBody ?? 'any')}:${escapeLikePattern(outcome.projectType ?? 'any')}`;
 
     const relatedWisdom = await db
       .select()
@@ -705,7 +769,9 @@ export async function processUserFeedback(
         }
       } else if (feedback === 'edited' && editDelta) {
         // Capture the edit delta as a refinement signal in project memory
-        if (outcome.projectId) {
+        if (!outcome.projectId) {
+          console.warn(`[ana-wisdom-engine] Edit delta dropped for outcome ${outcomeId} — projectId is null`);
+        } else if (outcome.projectId) {
           // Fire-and-forget lesson capture with the edit context
           captureProjectLesson({
             projectId: outcome.projectId,
