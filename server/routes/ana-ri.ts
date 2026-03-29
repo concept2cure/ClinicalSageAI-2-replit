@@ -18,11 +18,13 @@ import type { GatewayMessage } from '../services/ai-gateway/types.js';
 import {
   orchestrate,
   prefetchProjectIntelligence,
+  preloadRIMContext,
   extractThreadIntelligence,
   type OrchestratorInput,
   type IntentLens,
   type UserRole,
 } from '../services/ana-ri/index.js';
+import { getFeedbackSummary } from '../services/intelligence/learning-loop-service.js';
 import {
   DEFICIENCY_TAXONOMY,
   getDeficienciesBySubmissionType,
@@ -861,6 +863,19 @@ router.post('/stream', async (req: Request, res: Response) => {
       authoringContextBlock = parts.join('\n');
     }
 
+    // Pre-fetch project intelligence profile for conversation continuity (non-blocking)
+    const streamProjectId = project_context?.projectId
+      ? Number(project_context.projectId)
+      : project_id
+        ? Number(project_id)
+        : authoring_context?.projectId
+          ? Number(authoring_context.projectId)
+          : null;
+    const streamIntelligenceProfile = await prefetchProjectIntelligence(
+      streamProjectId,
+      orgId ? Number(orgId) : null,
+    );
+
     // Orchestrate
     const orchestration = orchestrate({
       message,
@@ -881,6 +896,7 @@ router.post('/stream', async (req: Request, res: Response) => {
             workflowStage: authoring_context.workflowStage,
           }
         : undefined,
+      _projectIntelligenceProfile: streamIntelligenceProfile,
     });
 
     if (authoringContextBlock) {

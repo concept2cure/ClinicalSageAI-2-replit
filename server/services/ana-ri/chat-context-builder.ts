@@ -15,6 +15,7 @@ import type { GatewayMessage } from '../ai-gateway/types.js';
 import { pool } from '../../db.js';
 import {
   orchestrate,
+  prefetchProjectIntelligence,
   type OrchestratorInput,
   type IntentLens,
   type UserRole,
@@ -138,6 +139,12 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     }
   }
 
+  // Pre-fetch project intelligence profile for conversation continuity (non-blocking)
+  const intelligenceProfile = await prefetchProjectIntelligence(
+    projectId ? Number(projectId) : null,
+    numericOrgId,
+  );
+
   // Orchestrate
   const orchestratorInput: OrchestratorInput = {
     message,
@@ -148,6 +155,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     submissionType: submission_type as SubmissionType | undefined,
     conversationHistory: conversation_history,
     _feedbackContext: feedbackContext,
+    _projectIntelligenceProfile: intelligenceProfile,
   };
   const orchestration = orchestrate(orchestratorInput);
 

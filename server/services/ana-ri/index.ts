@@ -7,7 +7,7 @@
  */
 
 export { buildAnaRISystemPrompt, type AnaRIPromptOptions, type IntentLens, type UserRole } from './persona.js';
-export { orchestrate, detectIntent, detectSubmissionType, prefetchProjectIntelligence, extractThreadIntelligence, type OrchestratorInput, type OrchestratorOutput } from './orchestrator.js';
+export { orchestrate, detectIntent, detectSubmissionType, prefetchProjectIntelligence, preloadRIMContext, extractThreadIntelligence, type OrchestratorInput, type OrchestratorOutput } from './orchestrator.js';
 export { DEFICIENCY_TAXONOMY, getDeficienciesBySubmissionType, getCriticalDeficiencies, getDeficiencyById, getDeficiencyCategories, buildDeficiencyContext, type DeficiencyPattern, type SubmissionType, type Severity } from './deficiency-taxonomy.js';
 export { DOCUMENT_ACTIONS, getActionsForLens, getAllActions, getAction, buildDocumentActionContext, type DocumentActionType, type DocumentAction } from './document-actions.js';
 export { ROLE_TEMPLATES, buildRoleAdaptiveContext, getRoleTemplate, inferRole, type RoleResponseTemplate } from './role-adapter.js';
