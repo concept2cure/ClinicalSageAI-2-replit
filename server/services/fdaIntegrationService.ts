@@ -1,9 +1,9 @@
 /**
  * FDA Integration Service
- * 
+ *
  * Production-ready service for FDA electronic submissions and data retrieval
  * Handles 510(k), PMA, De Novo, and other regulatory submissions
- * 
+ *
  * Features:
  * - FDA Electronic Submission Gateway (ESG) integration
  * - openFDA API integration for device/drug lookups
@@ -28,21 +28,32 @@ import crypto from 'crypto';
 import xml2js from 'xml2js';
 
 class FDAIntegrationService {
+  private fdaApiBase: string;
+  private openFDABase: string;
+  private esgEndpoint: string;
+  private fdaApiKey: string | undefined;
+  private fdaCertificate: string | undefined;
+  private fdaPrivateKey: string | undefined;
+  private submissionQueue: Map<string, any>;
+  private statusPollingInterval: number;
+  private xmlParser: any;
+  private xmlBuilder: any;
+
   constructor() {
     // FDA API endpoints
     this.fdaApiBase = 'https://api.fda.gov';
     this.openFDABase = 'https://api.fda.gov';
     this.esgEndpoint = process.env.FDA_ESG_ENDPOINT || 'https://esg.fda.gov/gateway';
-    
+
     // FDA credentials (stored securely in environment)
     this.fdaApiKey = process.env.FDA_API_KEY;
     this.fdaCertificate = process.env.FDA_CERTIFICATE;
     this.fdaPrivateKey = process.env.FDA_PRIVATE_KEY;
-    
+
     // Submission tracking
     this.submissionQueue = new Map();
     this.statusPollingInterval = 60000; // 1 minute
-    
+
     // Initialize XML parser/builder
     this.xmlParser = new xml2js.Parser();
     this.xmlBuilder = new xml2js.Builder({
@@ -54,7 +65,7 @@ class FDAIntegrationService {
   /**
    * Validate FDA credentials and certificates
    */
-  async validateCredentials(organizationId) {
+  async validateCredentials(organizationId: any) {
     try {
       // Check if FDA credentials exist
       if (!this.fdaApiKey || !this.fdaCertificate || !this.fdaPrivateKey) {
@@ -102,7 +113,7 @@ class FDAIntegrationService {
         message: 'FDA credentials validated successfully',
         certExpiry: certExpiry.expiryDate
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error validating FDA credentials:', error);
       return {
         valid: false,
@@ -115,7 +126,7 @@ class FDAIntegrationService {
   /**
    * Search openFDA for device information
    */
-  async searchDevice(query, limit = 10) {
+  async searchDevice(query: any, limit = 10) {
     try {
       const endpoint = `${this.openFDABase}/device/510k.json`;
       const params = {
@@ -124,12 +135,12 @@ class FDAIntegrationService {
       };
 
       const response = await axios.get(endpoint, { params });
-      
+
       if (response.data && response.data.results) {
         return {
           success: true,
           count: response.data.meta?.results?.total || 0,
-          devices: response.data.results.map(device => ({
+          devices: response.data.results.map((device: any) => ({
             kNumber: device.k_number,
             deviceName: device.device_name,
             applicant: device.applicant,
@@ -148,7 +159,7 @@ class FDAIntegrationService {
         count: 0,
         devices: []
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error searching openFDA:', error);
       return {
         success: false,
@@ -161,7 +172,7 @@ class FDAIntegrationService {
   /**
    * Retrieve UDI information from FDA Global UDI Database
    */
-  async getUDIInformation(udi) {
+  async getUDIInformation(udi: any) {
     try {
       const endpoint = `${this.openFDABase}/device/udi.json`;
       const params = {
@@ -170,7 +181,7 @@ class FDAIntegrationService {
       };
 
       const response = await axios.get(endpoint, { params });
-      
+
       if (response.data && response.data.results && response.data.results[0]) {
         const udiData = response.data.results[0];
         return {
@@ -199,7 +210,7 @@ class FDAIntegrationService {
         success: false,
         message: 'UDI not found in FDA database'
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error retrieving UDI information:', error);
       return {
         success: false,
@@ -211,7 +222,7 @@ class FDAIntegrationService {
   /**
    * Package PMA submission for FDA ESG
    */
-  async packagePMASubmission(submissionId, organizationId) {
+  async packagePMASubmission(submissionId: any, organizationId: any) {
     try {
       // Retrieve submission data
       const [submission] = await db
@@ -239,17 +250,17 @@ class FDAIntegrationService {
       // Create eCTD XML structure (PMA specific)
       const ectdPackage = this.createECTDStructure({
         submissionType: 'pma',
-        submissionNumber: submission.pmaNumber,
+        submissionNumber: (submission as any).pmaNumber,
         applicant: {
-          name: submission.applicantInfo?.name,
-          address: submission.applicantInfo?.address,
-          contact: submission.applicantInfo?.contact
+          name: (submission as any).applicantInfo?.name,
+          address: (submission as any).applicantInfo?.address,
+          contact: (submission as any).applicantInfo?.contact
         },
         device: {
-          name: submission.deviceInfo?.deviceName,
-          classification: submission.deviceInfo?.classification,
-          indications: submission.deviceInfo?.indications,
-          clinicalData: submission.clinicalData
+          name: (submission as any).deviceInfo?.deviceName,
+          classification: (submission as any).deviceInfo?.classification,
+          indications: (submission as any).deviceInfo?.indications,
+          clinicalData: (submission as any).clinicalData
         },
         documents: documents
       });
@@ -268,7 +279,7 @@ class FDAIntegrationService {
       // Create submission envelope
       const envelope = {
         submissionType: 'PMA',
-        submissionId: submission.pmaNumber,
+        submissionId: (submission as any).pmaNumber,
         timestamp: new Date().toISOString(),
         signature: signedPackage.signature,
         payload: signedPackage.payload
@@ -285,7 +296,7 @@ class FDAIntegrationService {
         package: envelope,
         checksum: this.calculateChecksum(envelope)
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error packaging PMA submission:', error);
       await this.logIntegration(organizationId, 'PMA_PACKAGING', 'error', {
         submissionId,
@@ -298,7 +309,7 @@ class FDAIntegrationService {
   /**
    * Package 510(k) submission for FDA ESG
    */
-  async package510kSubmission(submissionId, organizationId) {
+  async package510kSubmission(submissionId: any, organizationId: any) {
     try {
       // Retrieve submission data
       const [submission] = await db
@@ -326,17 +337,17 @@ class FDAIntegrationService {
       // Create eCTD XML structure
       const ectdPackage = this.createECTDStructure({
         submissionType: '510k',
-        submissionNumber: submission.submissionNumber,
+        submissionNumber: (submission as any).submissionNumber,
         applicant: {
-          name: submission.applicantInfo?.name,
-          address: submission.applicantInfo?.address,
-          contact: submission.applicantInfo?.contact
+          name: (submission as any).applicantInfo?.name,
+          address: (submission as any).applicantInfo?.address,
+          contact: (submission as any).applicantInfo?.contact
         },
         device: {
-          name: submission.deviceInfo?.deviceName,
-          classification: submission.deviceInfo?.classification,
-          productCode: submission.deviceInfo?.productCode,
-          predicateDevices: submission.predicateDevices
+          name: (submission as any).deviceInfo?.deviceName,
+          classification: (submission as any).deviceInfo?.classification,
+          productCode: (submission as any).deviceInfo?.productCode,
+          predicateDevices: (submission as any).predicateDevices
         },
         documents: documents
       });
@@ -355,7 +366,7 @@ class FDAIntegrationService {
       // Create submission envelope
       const envelope = {
         submissionType: '510K',
-        submissionId: submission.submissionNumber,
+        submissionId: (submission as any).submissionNumber,
         timestamp: new Date().toISOString(),
         signature: signedPackage.signature,
         payload: signedPackage.payload
@@ -372,7 +383,7 @@ class FDAIntegrationService {
         package: envelope,
         checksum: this.calculateChecksum(envelope)
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error packaging 510(k) submission:', error);
       await this.logIntegration(organizationId, '510K_PACKAGING', 'error', {
         submissionId,
@@ -385,7 +396,7 @@ class FDAIntegrationService {
   /**
    * Submit to FDA Electronic Submission Gateway
    */
-  async submitToFDA(packagedSubmission, organizationId) {
+  async submitToFDA(packagedSubmission: any, organizationId: any) {
     try {
       // Validate package integrity
       const isValid = this.validatePackage(packagedSubmission);
@@ -395,7 +406,7 @@ class FDAIntegrationService {
 
       // Create submission tracking ID
       const trackingId = crypto.randomUUID();
-      
+
       // Add to submission queue
       this.submissionQueue.set(trackingId, {
         status: 'QUEUED',
@@ -432,7 +443,7 @@ class FDAIntegrationService {
         status: submissionResult.status,
         message: 'Submission sent to FDA successfully'
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting to FDA:', error);
       await this.logIntegration(organizationId, 'FDA_SUBMISSION', 'error', {
         error: error.message
@@ -444,7 +455,7 @@ class FDAIntegrationService {
   /**
    * Check submission status from FDA
    */
-  async checkSubmissionStatus(trackingId, organizationId) {
+  async checkSubmissionStatus(trackingId: any, organizationId: any) {
     try {
       const submission = this.submissionQueue.get(trackingId);
       if (!submission) {
@@ -460,7 +471,7 @@ class FDAIntegrationService {
       submission.status = statusUpdate.status;
       submission.lastChecked = new Date();
       submission.fdaComments = statusUpdate.comments;
-      
+
       this.submissionQueue.set(trackingId, submission);
 
       await this.logIntegration(organizationId, 'STATUS_CHECK', 'info', {
@@ -477,7 +488,7 @@ class FDAIntegrationService {
         comments: statusUpdate.comments,
         actions: statusUpdate.requiredActions || []
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error checking submission status:', error);
       return {
         success: false,
@@ -489,7 +500,7 @@ class FDAIntegrationService {
   /**
    * Retrieve predicate device information for 510(k)
    */
-  async getPredicateDevices(productCode, limit = 5) {
+  async getPredicateDevices(productCode: any, limit = 5) {
     try {
       const endpoint = `${this.openFDABase}/device/510k.json`;
       const params = {
@@ -499,11 +510,11 @@ class FDAIntegrationService {
       };
 
       const response = await axios.get(endpoint, { params });
-      
+
       if (response.data && response.data.results) {
         return {
           success: true,
-          predicates: response.data.results.map(device => ({
+          predicates: response.data.results.map((device: any) => ({
             kNumber: device.k_number,
             deviceName: device.device_name,
             applicant: device.applicant,
@@ -520,7 +531,7 @@ class FDAIntegrationService {
         success: true,
         predicates: []
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error retrieving predicate devices:', error);
       return {
         success: false,
@@ -539,7 +550,7 @@ class FDAIntegrationService {
     // Mock implementation - in production, parse actual certificate
     const expiryDate = new Date();
     expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-    
+
     return {
       expired: false,
       expiryDate: expiryDate.toISOString()
@@ -556,7 +567,7 @@ class FDAIntegrationService {
         success: true,
         latency: response.headers['x-response-time'] || 'N/A'
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         error: error.message
@@ -567,7 +578,7 @@ class FDAIntegrationService {
   /**
    * Create eCTD XML structure
    */
-  createECTDStructure(data) {
+  createECTDStructure(data: any) {
     const ectd = {
       'ectd:ectd': {
         $: {
@@ -592,7 +603,7 @@ class FDAIntegrationService {
         'm3-literature-references': {
           'predicate-devices': data.device.predicateDevices
         },
-        'leaf-documents': data.documents.map(doc => ({
+        'leaf-documents': data.documents.map((doc: any) => ({
           'document': {
             $: { id: doc.id },
             'title': doc.title,
@@ -608,7 +619,7 @@ class FDAIntegrationService {
   /**
    * Create HL7 FHIR bundle
    */
-  createFHIRBundle(submission, documents) {
+  createFHIRBundle(submission: any, documents: any) {
     return {
       resourceType: 'Bundle',
       type: 'document',
@@ -636,7 +647,7 @@ class FDAIntegrationService {
             }]
           }
         },
-        ...documents.map(doc => ({
+        ...documents.map((doc: any) => ({
           resource: {
             resourceType: 'DocumentReference',
             status: 'current',
@@ -658,9 +669,9 @@ class FDAIntegrationService {
   /**
    * Sign package with digital certificate
    */
-  signPackage({ ectd, fhir, certificate, privateKey }) {
+  signPackage({ ectd, fhir, certificate, privateKey }: any) {
     const payload = JSON.stringify({ ectd, fhir });
-    
+
     // Mock signature for development
     const signature = crypto
       .createHash('sha256')
@@ -678,7 +689,7 @@ class FDAIntegrationService {
   /**
    * Calculate checksum
    */
-  calculateChecksum(data) {
+  calculateChecksum(data: any) {
     return crypto
       .createHash('md5')
       .update(JSON.stringify(data))
@@ -688,7 +699,7 @@ class FDAIntegrationService {
   /**
    * Validate package
    */
-  validatePackage(packagedSubmission) {
+  validatePackage(packagedSubmission: any) {
     // Validate required fields
     if (!packagedSubmission.package || !packagedSubmission.checksum) {
       return false;
@@ -702,7 +713,7 @@ class FDAIntegrationService {
   /**
    * Send to FDA ESG (mock for development)
    */
-  async sendToESG(package, trackingId) {
+  async sendToESG(submissionPackage: any, trackingId: any) {
     // In production, this would make actual API call to FDA ESG
     // For now, simulate successful submission
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -718,7 +729,7 @@ class FDAIntegrationService {
   /**
    * Query ESG status (mock for development)
    */
-  async queryESGStatus(receiptNumber) {
+  async queryESGStatus(receiptNumber: any) {
     // In production, this would query actual FDA ESG
     // For now, simulate status progression
     const statuses = ['RECEIVED', 'VALIDATING', 'UNDER_REVIEW', 'ACCEPTED'];
@@ -727,8 +738,8 @@ class FDAIntegrationService {
     return {
       status: randomStatus,
       timestamp: new Date().toISOString(),
-      comments: randomStatus === 'ACCEPTED' 
-        ? 'Submission accepted for review' 
+      comments: randomStatus === 'ACCEPTED'
+        ? 'Submission accepted for review'
         : 'Processing submission'
     };
   }
@@ -736,7 +747,7 @@ class FDAIntegrationService {
   /**
    * Retrieve FDA status (mock for development)
    */
-  async retrieveFDAStatus(trackingId) {
+  async retrieveFDAStatus(trackingId: any) {
     return {
       success: true,
       trackingId,
@@ -748,7 +759,7 @@ class FDAIntegrationService {
   /**
    * Start status polling
    */
-  startStatusPolling(trackingId) {
+  startStatusPolling(trackingId: any) {
     const interval = setInterval(async () => {
       const submission = this.submissionQueue.get(trackingId);
       if (!submission || submission.status === 'ACCEPTED' || submission.status === 'REJECTED') {
@@ -766,7 +777,7 @@ class FDAIntegrationService {
   /**
    * Log FDA integration activity
    */
-  async logIntegration(organizationId, action, status, details) {
+  async logIntegration(organizationId: any, action: any, status: any, details: any) {
     try {
       await db.insert(fdaIntegrationLogs).values({
         organizationId,
@@ -774,7 +785,7 @@ class FDAIntegrationService {
         status,
         details,
         timestamp: new Date()
-      });
+      } as any);
     } catch (error) {
       console.error('Error logging FDA integration:', error);
     }
