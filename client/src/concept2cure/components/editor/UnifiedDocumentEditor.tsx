@@ -80,6 +80,7 @@ import { GlossaryTooltip } from './extensions/GlossaryTooltip';
 import { CitationMark, CitationPlugin } from './extensions/CitationPlugin';
 import { ComplianceScanner } from './extensions/ComplianceScanner';
 import { TrackChanges } from './extensions/TrackChangesExtension';
+import { PageBreak } from './extensions/PageBreakExtension';
 // Collaboration extensions require @tiptap/core >=3.19 — dynamically loaded when ydoc is provided
 // import Collaboration from '@tiptap/extension-collaboration';
 // import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
@@ -535,6 +536,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
         title="Insert Table"
       >
         <TableIcon className="w-4 h-4" />
+      </ToolButton>
+      <ToolButton
+        onClick={() => (editor as any).commands.setPageBreak()}
+        title="Insert Page Break (Ctrl+Enter)"
+      >
+        <Minus className="w-4 h-4" />
       </ToolButton>
       {editor.isActive('table') && (
         <>
@@ -1365,6 +1372,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
         },
         onIssuesFound: onComplianceIssuesFound,
       }),
+      PageBreak,
       TrackChanges.configure({
         enabled: false,
         authorId: getCurrentUser()?.id ?? 'unknown',
