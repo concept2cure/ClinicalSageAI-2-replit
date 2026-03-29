@@ -81,6 +81,7 @@ import { CitationMark, CitationPlugin } from './extensions/CitationPlugin';
 import { ComplianceScanner } from './extensions/ComplianceScanner';
 import { TrackChanges } from './extensions/TrackChangesExtension';
 import { PageBreak } from './extensions/PageBreakExtension';
+import { Indent } from './extensions/IndentExtension';
 // Collaboration extensions require @tiptap/core >=3.19 — dynamically loaded when ydoc is provided
 // import Collaboration from '@tiptap/extension-collaboration';
 // import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
@@ -135,6 +136,8 @@ import {
   SplitSquareHorizontal,
   Plus,
   Minus,
+  IndentIncrease,
+  IndentDecrease,
 } from 'lucide-react';
 import InlineApprovalPanel from './InlineApprovalPanel';
 
@@ -485,6 +488,18 @@ const Toolbar: React.FC<ToolbarProps> = ({
         title="Justify"
       >
         <AlignJustify className="w-4 h-4" />
+      </ToolButton>
+      <ToolButton
+        onClick={() => (editor as any).commands.indent()}
+        title="Indent (Tab)"
+      >
+        <IndentIncrease className="w-4 h-4" />
+      </ToolButton>
+      <ToolButton
+        onClick={() => (editor as any).commands.outdent()}
+        title="Outdent (Shift+Tab)"
+      >
+        <IndentDecrease className="w-4 h-4" />
       </ToolButton>
 
       <div className="w-px h-5 bg-stone-200 mx-0.5" />
@@ -1373,6 +1388,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
         onIssuesFound: onComplianceIssuesFound,
       }),
       PageBreak,
+      Indent,
       TrackChanges.configure({
         enabled: false,
         authorId: getCurrentUser()?.id ?? 'unknown',
