@@ -259,6 +259,25 @@ interface AnaMessage {
     quotaConsumed?: number;
     quotaRemaining?: number;
   };
+  /** Grounding context from orchestrator — what context sources were available */
+  groundingContext?: {
+    hasProjectContext: boolean;
+    hasArtifactContext: boolean;
+    hasSectionContext: boolean;
+    hasWorkflowContext: boolean;
+    hasEvidenceContext: boolean;
+    hasMemoryContext: boolean;
+    documentStatus: string | null;
+    enrichmentSources?: string[];
+    enrichmentFailures?: string[];
+  };
+  /** Executed slash commands or workflow actions */
+  executedActions?: Array<{
+    actionType: string;
+    executed: boolean;
+    error?: string;
+    [key: string]: any;
+  }>;
 }
 
 interface SuggestedAction {
@@ -1869,6 +1888,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 inputTokens: data.usage.prompt_tokens || data.usage.inputTokens,
                 outputTokens: data.usage.completion_tokens || data.usage.outputTokens,
               } : undefined,
+              groundingContext: data.orchestration?.groundingContext || data.groundingContext || undefined,
             },
           ]);
 
@@ -4000,6 +4020,46 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           {/* ── Claude-style: Done indicator ── */}
                           {msg.role === 'assistant' && msg.isComplete && (
                             <DoneIndicator visible />
+                          )}
+                          {/* ── Grounding context badges ── */}
+                          {msg.role === 'assistant' && msg.groundingContext && (
+                            <div className="flex flex-wrap items-center gap-1 mt-1">
+                              {msg.groundingContext.hasProjectContext && (
+                                <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100">Project</span>
+                              )}
+                              {msg.groundingContext.hasArtifactContext && (
+                                <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-100">Artifact</span>
+                              )}
+                              {msg.groundingContext.hasSectionContext && (
+                                <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 border border-violet-100">Section</span>
+                              )}
+                              {msg.groundingContext.hasWorkflowContext && (
+                                <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-100">Workflow</span>
+                              )}
+                              {msg.groundingContext.hasEvidenceContext && (
+                                <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-cyan-50 text-cyan-600 border border-cyan-100">Evidence</span>
+                              )}
+                              {msg.groundingContext.hasMemoryContext && (
+                                <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-stone-50 text-stone-500 border border-stone-100">Memory</span>
+                              )}
+                              {msg.groundingContext.documentStatus && (
+                                <span className={cn(
+                                  'text-[9px] font-medium px-1.5 py-0.5 rounded border',
+                                  msg.groundingContext.documentStatus === 'draft' ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
+                                  msg.groundingContext.documentStatus === 'review' ? 'bg-orange-50 text-orange-600 border-orange-100' :
+                                  msg.groundingContext.documentStatus === 'approved' ? 'bg-green-50 text-green-600 border-green-100' :
+                                  msg.groundingContext.documentStatus === 'locked' ? 'bg-red-50 text-red-600 border-red-100' :
+                                  'bg-stone-50 text-stone-500 border-stone-100'
+                                )}>
+                                  {msg.groundingContext.documentStatus}
+                                </span>
+                              )}
+                              {msg.groundingContext.enrichmentFailures && msg.groundingContext.enrichmentFailures.length > 0 && (
+                                <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-red-50 text-red-500 border border-red-100" title={msg.groundingContext.enrichmentFailures.join(', ')}>
+                                  {msg.groundingContext.enrichmentFailures.length} gap{msg.groundingContext.enrichmentFailures.length > 1 ? 's' : ''}
+                                </span>
+                              )}
+                            </div>
                           )}
                           {/* Visual AI PPTX download button */}
                           {msg.pptx && (

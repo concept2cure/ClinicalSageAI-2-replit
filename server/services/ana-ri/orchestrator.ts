@@ -176,6 +176,18 @@ export interface OrchestratorOutput {
   workstreamHandoff: WorkstreamHandoff | null;
   /** Suggested document actions based on the interaction */
   suggestedActions: DocumentActionType[];
+  /** Grounding context available to AnA for this request */
+  groundingContext: {
+    hasProjectContext: boolean;
+    hasArtifactContext: boolean;
+    hasSectionContext: boolean;
+    hasWorkflowContext: boolean;
+    hasEvidenceContext: boolean;
+    hasMemoryContext: boolean;
+    documentStatus: string | null;
+    enrichmentSources: string[];
+    enrichmentFailures: string[];
+  };
   /** Metadata about what was orchestrated */
   orchestrationMeta: {
     intentSource: 'explicit' | 'detected' | 'default';
@@ -308,6 +320,19 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     activeWorkstream
   );
 
+  // 12. Build grounding context metadata
+  const groundingContext = {
+    hasProjectContext: !!(input.projectContext?.productName || input.projectContext?.submissionType || input.authoringContext?.projectId),
+    hasArtifactContext: !!(input.documentContext?.documentType || input.documentContext?.title),
+    hasSectionContext: !!(input.documentContext?.section || input.authoringContext?.sectionCode),
+    hasWorkflowContext: !!(activeWorkstream.stream !== 'general'),
+    hasEvidenceContext: deficiencyContextInjected,
+    hasMemoryContext: !!(input.conversationHistory && input.conversationHistory.length > 0),
+    documentStatus: input.documentContext?.status ?? null,
+    enrichmentSources: [] as string[], // populated by caller after enrichment
+    enrichmentFailures: [] as string[], // populated by caller if enrichment fails
+  };
+
   return {
     systemPrompt,
     detectedIntent,
@@ -316,6 +341,7 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     activeWorkstream,
     workstreamHandoff,
     suggestedActions,
+    groundingContext,
     orchestrationMeta: {
       intentSource,
       submissionTypeSource,

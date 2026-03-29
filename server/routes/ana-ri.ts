@@ -424,7 +424,7 @@ router.post('/chat', async (req: Request, res: Response) => {
         submissionType: orchestration.detectedSubmissionType || undefined,
       }).catch((err) => {
         console.warn('[AnA RI] Context enrichment failed:', err?.message);
-        return { block: '', sources: [] as string[] };
+        return { block: '', sources: [] as string[], failures: ['enrichment-total-failure'] };
       }),
     ]);
 
@@ -621,6 +621,7 @@ router.post('/chat', async (req: Request, res: Response) => {
         workstreamHandoff: orchestration.workstreamHandoff,
         suggestedActions: orchestration.suggestedActions,
         meta: orchestration.orchestrationMeta,
+        groundingContext: orchestration.groundingContext || undefined,
         goalPlan,
       },
       evaluation: {
@@ -787,7 +788,7 @@ router.post('/stream', async (req: Request, res: Response) => {
         submissionType: orchestration.detectedSubmissionType || undefined,
       }).catch((err) => {
         console.warn('[AnA RI] Context enrichment failed:', err?.message);
-        return { block: '', sources: [] as string[] };
+        return { block: '', sources: [] as string[], failures: ['enrichment-total-failure'] };
       }),
     ]);
 
@@ -895,6 +896,7 @@ router.post('/stream', async (req: Request, res: Response) => {
           activeWorkstream: orchestration.activeWorkstream,
           workstreamHandoff: orchestration.workstreamHandoff,
           suggestedActions: orchestration.suggestedActions,
+          groundingContext: orchestration.groundingContext || undefined,
         },
       })}\n\n`
     );
@@ -1021,6 +1023,8 @@ router.post('/stream', async (req: Request, res: Response) => {
         executedActions: executedActions.length > 0 ? executedActions : undefined,
         executedCommands: executedCommands.length > 0 ? executedCommands : undefined,
         enrichmentSources: enrichment.sources.length > 0 ? enrichment.sources : undefined,
+        enrichmentFailures: enrichment.failures && enrichment.failures.length > 0 ? enrichment.failures : undefined,
+        groundingContext: orchestration.groundingContext || undefined,
       })}\n\n`
     );
 

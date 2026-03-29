@@ -32,6 +32,8 @@ interface EnrichmentResult {
   sources: string[];
   /** Rewritten message if a slash command was detected (strips the command prefix) */
   rewrittenMessage?: string;
+  /** Enrichment sources that failed (empty array = all succeeded) */
+  failures?: string[];
 }
 
 // ─── Slash command detection ─────────────────────────────────────────────────
@@ -539,12 +541,16 @@ export async function enrichContextForChat(params: {
   const { message, projectId, organizationId, submissionType } = params;
   const blocks: string[] = [];
   const sources: string[] = [];
+  const failures: string[] = [];
   let rewrittenMessage: string | undefined;
 
-  if (!projectId) return { block: '', sources: [] };
+  if (!projectId) return { block: '', sources: [], failures: ['no-project-context'] };
 
   // ── Always inject project intelligence summary when available ──
-  const projectSummary = await enrichWithProjectSummary(projectId, organizationId).catch(() => '');
+  const projectSummary = await enrichWithProjectSummary(projectId, organizationId).catch(() => {
+    failures.push('project-profile');
+    return '';
+  });
   if (projectSummary) {
     blocks.push(projectSummary);
     sources.push('project-profile');
@@ -552,7 +558,10 @@ export async function enrichContextForChat(params: {
 
   // ── Always inject workflow status when submission type is known ──
   if (submissionType) {
-    const workflowCtx = await buildWorkflowContext(projectId, submissionType, organizationId).catch(() => '');
+    const workflowCtx = await buildWorkflowContext(projectId, submissionType, organizationId).catch(() => {
+      failures.push('workflow');
+      return '';
+    });
     if (workflowCtx) {
       blocks.push(workflowCtx);
       sources.push('workflow');
@@ -630,10 +639,15 @@ export async function enrichContextForChat(params: {
 
     const enrichFn = enrichMap[slash.command];
     if (enrichFn) {
-      const block = await enrichFn().catch(() => '');
+      const block = await enrichFn().catch(() => {
+        failures.push(slash.command);
+        return '';
+      });
       if (block) {
         blocks.push(block);
         sources.push(slash.command);
+      } else {
+        failures.push(slash.command);
       }
     }
 
@@ -716,15 +730,23 @@ export async function enrichContextForChat(params: {
     const matchedFns = triggers.filter(t => matchesTriggers(message, t.test));
 
     if (matchedFns.length > 0) {
-      await Promise.allSettled(
+      const results = await Promise.allSettled(
         matchedFns.map(async t => {
           const block = await t.fn();
           if (block) {
             blocks.push(block);
             sources.push(t.name);
+          } else {
+            failures.push(t.name);
           }
         })
       );
+      // Track rejected promises
+      results.forEach((r, i) => {
+        if (r.status === 'rejected') {
+          failures.push(matchedFns[i].name);
+        }
+      });
     }
 
     // ── Proactive enrichment for greetings/help — inject status so AnA can lead ──
@@ -757,9 +779,16 @@ export async function enrichContextForChat(params: {
     }
   }
 
+  // ── Inject failure context so AnA knows what's missing ──
+  if (failures.length > 0) {
+    const uniqueFailures = [...new Set(failures)];
+    blocks.push(`\n## ⚠️ CONTEXT GAPS\nThe following enrichment sources could not be loaded: ${uniqueFailures.join(', ')}.\nIf the user's question depends on this data, explicitly acknowledge the gap and explain what you cannot ground your answer on. Use [Mode: Blocked] or [Mode: Inferred] as appropriate.`);
+  }
+
   return {
     block: blocks.join('\n'),
     sources,
     rewrittenMessage,
+    failures: failures.length > 0 ? [...new Set(failures)] : undefined,
   };
 }
