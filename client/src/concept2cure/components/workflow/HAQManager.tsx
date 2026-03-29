@@ -120,19 +120,43 @@ export const HAQManager: React.FC<HAQManagerProps> = ({
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
-  // Load persisted session on mount
+  // Load persisted session on mount — try server first, fall back to sessionStorage
   useEffect(() => {
-    const session = loadSession(projectId);
-    if (session?.questions?.length) {
-      setQuestions(session.questions);
-      toast({ title: `Restored ${session.questions.length} question${session.questions.length > 1 ? 's' : ''} from previous session` });
-    }
+    (async () => {
+      if (projectId) {
+        try {
+          const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/haq-session`);
+          if (res.ok) {
+            const json = await res.json();
+            const serverQuestions = json?.data?.questions ?? [];
+            if (serverQuestions.length > 0) {
+              setQuestions(serverQuestions);
+              toast({ title: `Restored ${serverQuestions.length} question${serverQuestions.length > 1 ? 's' : ''} from server` });
+              return;
+            }
+          }
+        } catch { /* fall through to sessionStorage */ }
+      }
+      // Fallback: sessionStorage
+      const session = loadSession(projectId);
+      if (session?.questions?.length) {
+        setQuestions(session.questions);
+        toast({ title: `Restored ${session.questions.length} question${session.questions.length > 1 ? 's' : ''} from local session` });
+      }
+    })();
   }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-save session when questions change
+  // Auto-save session when questions change — save to both sessionStorage and server
   useEffect(() => {
     if (questions.length > 0) {
       saveSession({ questions }, projectId);
+      // Also persist to server (debounced, non-blocking)
+      if (projectId) {
+        const timer = setTimeout(() => {
+          apiRequest('PUT', `/api/concept2cure/projects/${projectId}/haq-session`, { questions }).catch(() => {});
+        }, 2000);
+        return () => clearTimeout(timer);
+      }
     }
   }, [questions, projectId]);
 

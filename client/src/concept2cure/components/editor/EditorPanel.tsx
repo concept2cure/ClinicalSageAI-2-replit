@@ -138,7 +138,7 @@ interface EditorPanelProps {
   onNavigateToProject?: () => void;
 }
 
-type AIAction = 'rewrite' | 'expand' | 'summarize' | 'regulatory-tone' | 'add-references';
+type AIAction = 'rewrite' | 'expand' | 'summarize' | 'regulatory-tone' | 'add-references' | 'generate-table';
 
 const AI_ACTIONS: { id: AIAction; label: string; description: string }[] = [
   { id: 'rewrite', label: 'Rewrite', description: 'Improve clarity and precision' },
@@ -337,14 +337,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const currentUser = getCurrentUser();
   const collaboration = useCollaboration(activeArtifact?.id || null);
 
-  // Y.js CRDT collaboration — conflict-free real-time editing
-  const yjsCollab = useYjsProvider({
-    documentId: activeArtifact?.id || '',
-    projectId: projectId ? String(projectId) : undefined,
-    userName: currentUser?.name || currentUser?.username || 'Anonymous',
-    userColor: '#3B82F6',
-    enabled: !!activeArtifact?.id && (currentDocumentMode === 'edit' || currentDocumentMode === 'draft'),
-  });
+  // Y.js CRDT collaboration — initialized below after currentDocumentMode is resolved
   const [, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
   const [aiLoading, setAiLoading] = useState(false);
@@ -569,6 +562,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const modeCtx = useDocumentModeOptional();
   const modeCaps = modeCtx?.capabilities;
   const currentDocumentMode: DocumentMode | undefined = modeCtx?.mode;
+
+  // Y.js CRDT collaboration — conflict-free real-time editing
+  const yjsCollab = useYjsProvider({
+    documentId: activeArtifact?.id || '',
+    projectId: projectId ? String(projectId) : undefined,
+    userName: currentUser?.name || 'Anonymous',
+    userColor: '#3B82F6',
+    enabled: !!activeArtifact?.id && (currentDocumentMode === 'edit' || currentDocumentMode === 'draft'),
+  });
 
   // ── Artifact list filters (P5) ────────────────────────────────────────
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -2746,7 +2748,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 return;
               }
               handleAIEdit(
-                action as 'rewrite' | 'expand' | 'summarize' | 'regulatory-tone' | 'add-references'
+                action as 'rewrite' | 'expand' | 'summarize' | 'regulatory-tone' | 'add-references' | 'generate-table'
               );
             }}
             onAddComment={handleAddCommentFromEditor}

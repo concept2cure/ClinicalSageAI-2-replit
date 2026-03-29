@@ -2900,6 +2900,8 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
         'Revise the following text to use formal regulatory submission language appropriate for FDA/EMA filings. Ensure passive voice where appropriate, precise quantitative language, and proper regulatory terminology. Return only the revised text.',
       'add-references':
         'Add inline reference placeholders (e.g., [REF-001], [REF-002]) to claims in the following text that would require supporting evidence in a regulatory submission. After the text, add a "References" section listing what type of evidence each reference should cite. Return the full annotated text.',
+      'generate-table':
+        'Analyze the following regulatory document text and generate a well-structured HTML table that organizes the key data, findings, or comparisons mentioned. The table should have a proper header row (<thead>) and data rows (<tbody>). Use regulatory-appropriate column headers. If the text contains numerical data, study results, or comparisons, organize them into the table. If the text is descriptive, create a summary table with appropriate categorization. Return ONLY the HTML table markup (no surrounding text).',
     };
 
     const systemPrompt = [
@@ -7933,6 +7935,122 @@ router.get(
     } catch (error: any) {
       logConcept2cureError('review status', error, { artifactId: req.params.artifactId });
       return sendError(res, 500, 'Failed to fetch review status');
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HAQ SESSION PERSISTENCE
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * PUT /api/concept2cure/projects/:projectId/haq-session
+ * Persist a HAQ (Health Authority Question) session to the database.
+ * Stores as a JSON artifact so it survives beyond sessionStorage.
+ */
+router.put(
+  '/projects/:projectId/haq-session',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const userId = getUserId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      const { questions } = req.body;
+      if (!Array.isArray(questions)) {
+        return sendError(res, 400, 'questions must be an array');
+      }
+
+      // Check for existing HAQ session artifact
+      const [existing] = await db
+        .select()
+        .from(concept2cureArtifacts)
+        .where(
+          and(
+            eq(concept2cureArtifacts.projectId, Number(req.params.projectId)),
+            eq(concept2cureArtifacts.organizationId, organizationId),
+            eq(concept2cureArtifacts.type, 'haq_session')
+          )
+        )
+        .limit(1);
+
+      if (existing) {
+        // Update existing session
+        await db
+          .update(concept2cureArtifacts)
+          .set({
+            content: JSON.stringify({ questions }),
+            updatedAt: new Date(),
+            metadata: sql`jsonb_set(COALESCE(metadata, '{}'), '{questionCount}', ${JSON.stringify(questions.length)}::jsonb)`,
+          })
+          .where(eq(concept2cureArtifacts.id, existing.id));
+
+        return sendSuccess(res, { artifactId: existing.artifactId, updated: true, questionCount: questions.length });
+      } else {
+        // Create new HAQ session artifact
+        const artifactId = `haq_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+        await db.insert(concept2cureArtifacts).values({
+          artifactId,
+          projectId: Number(req.params.projectId),
+          organizationId,
+          createdById: userId,
+          title: 'HAQ Session',
+          type: 'haq_session',
+          category: 'data',
+          content: JSON.stringify({ questions }),
+          status: 'draft',
+          version: 1,
+          metadata: { questionCount: questions.length, sourceSystem: 'haq_manager' },
+        });
+
+        return sendSuccess(res, { artifactId, created: true, questionCount: questions.length });
+      }
+    } catch (error: any) {
+      logConcept2cureError('save HAQ session', error, { projectId: req.params.projectId });
+      return sendError(res, 500, 'Failed to save HAQ session');
+    }
+  }
+);
+
+/**
+ * GET /api/concept2cure/projects/:projectId/haq-session
+ * Load the most recent HAQ session for a project.
+ */
+router.get(
+  '/projects/:projectId/haq-session',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) return sendError(res, 404, 'Project not found');
+
+      const [session] = await db
+        .select()
+        .from(concept2cureArtifacts)
+        .where(
+          and(
+            eq(concept2cureArtifacts.projectId, Number(req.params.projectId)),
+            eq(concept2cureArtifacts.organizationId, organizationId),
+            eq(concept2cureArtifacts.type, 'haq_session')
+          )
+        )
+        .orderBy(desc(concept2cureArtifacts.updatedAt))
+        .limit(1);
+
+      if (!session) {
+        return sendSuccess(res, { questions: [] });
+      }
+
+      try {
+        const parsed = JSON.parse(session.content || '{}');
+        return sendSuccess(res, { questions: parsed.questions || [], artifactId: session.artifactId });
+      } catch {
+        return sendSuccess(res, { questions: [] });
+      }
+    } catch (error: any) {
+      logConcept2cureError('load HAQ session', error, { projectId: req.params.projectId });
+      return sendError(res, 500, 'Failed to load HAQ session');
     }
   }
 );

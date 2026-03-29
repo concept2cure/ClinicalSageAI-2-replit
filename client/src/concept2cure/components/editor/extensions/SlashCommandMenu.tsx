@@ -83,6 +83,14 @@ export function getSlashCommands(
       category: 'ai',
       action: () => onAIAction?.('add-references', ''),
     },
+    {
+      id: 'ai-table',
+      label: 'AI Generate Table',
+      description: 'Create a data table from surrounding content',
+      icon: <TableIcon className="w-4 h-4 text-purple-500" />,
+      category: 'ai',
+      action: () => onAIAction?.('generate-table', ''),
+    },
     // Insert actions
     {
       id: 'table',

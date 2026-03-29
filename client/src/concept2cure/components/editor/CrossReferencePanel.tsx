@@ -6,7 +6,7 @@
  * formatted references and navigate to target sections.
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   Link2,
   AlertTriangle,
@@ -295,6 +295,21 @@ export function CrossReferencePanel({
       setIsScanning(false);
     }, 300);
   }, [content, resolveSection, findSuggestion]);
+
+  // Auto-scan when content changes (debounced) — cross-reference auto-update
+  const scanTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    // Auto-scan on content change with 1s debounce
+    if (scanTimerRef.current) clearTimeout(scanTimerRef.current);
+    scanTimerRef.current = setTimeout(() => {
+      if (content && content.length > 10) {
+        scanDocument();
+      }
+    }, 1000);
+    return () => {
+      if (scanTimerRef.current) clearTimeout(scanTimerRef.current);
+    };
+  }, [content, scanDocument]);
 
   // Summary stats
   const stats = useMemo(() => {
