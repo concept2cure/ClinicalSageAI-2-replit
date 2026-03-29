@@ -515,7 +515,8 @@ export function CompanyContextEditor({ onClose }: CompanyContextEditorProps) {
     queryKey: queryKeys.anaIntelligence.companyContext,
     queryFn: async () => {
       const res = await apiRequest('GET', '/api/client-intelligence/profile');
-      return res.json();
+      const json = await res.json();
+      return json?.profile ?? null;
     },
   });
 
@@ -527,7 +528,8 @@ export function CompanyContextEditor({ onClose }: CompanyContextEditorProps) {
         ...profile,
         ...patch,
       });
-      return res.json();
+      const json = await res.json();
+      return json?.profile ?? null;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({

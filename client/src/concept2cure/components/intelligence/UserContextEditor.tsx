@@ -70,8 +70,9 @@ export function UserContextEditor({ onClose }: UserContextEditorProps) {
   const { data: profile, isLoading, error } = useQuery<UserProfileResponse>({
     queryKey: queryKeys.anaIntelligence.userContext,
     queryFn: async () => {
-      const res = await apiRequest('GET', '/api/client-intelligence/user/profile');
-      return res.json();
+      const res = await apiRequest('GET', '/api/client-intelligence/ana/user-profile');
+      const json = await res.json();
+      return json?.profile ?? null;
     },
   });
 
@@ -112,8 +113,9 @@ export function UserContextEditor({ onClose }: UserContextEditorProps) {
 
   const saveMutation = useMutation({
     mutationFn: async (data: UserProfileForm) => {
-      const res = await apiRequest('POST', '/api/client-intelligence/user/profile', data);
-      return res.json();
+      const res = await apiRequest('POST', '/api/client-intelligence/ana/user-profile', data);
+      const json = await res.json();
+      return json?.profile ?? null;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.anaIntelligence.userContext });
