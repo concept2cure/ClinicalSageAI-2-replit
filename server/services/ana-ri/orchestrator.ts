@@ -25,6 +25,44 @@ import { buildRoleAdaptiveContext } from './role-adapter.js';
 import { buildCommandContextForPrompt } from './command-executor.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
+// CTD Section Guidance — compact regulatory knowledge per section
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SECTION_GUIDANCE: Record<string, string> = {
+  '2.2': 'Introduction to the CTD: brief overview of the drug product, pharmacological class, proposed indication, and route of administration. Keep concise — typically 1-2 pages.',
+  '2.3': 'Quality Overall Summary (QOS): summarize all Module 3 CMC data. Cover drug substance, drug product, manufacturing, controls, stability. Must be self-contained.',
+  '2.4': 'Nonclinical Overview: integrated assessment of pharmacology, PK, and toxicology. Expert narrative, not a summary of studies. Must support the proposed clinical use.',
+  '2.5': 'Clinical Overview: integrated benefit-risk assessment. Cover efficacy, safety, dosing, special populations. This is the most critical Module 2 section — reviewers read this first.',
+  '2.6': 'Nonclinical Written and Tabulated Summaries: study-level summaries organized by pharmacology (2.6.2), PK (2.6.4), and toxicology (2.6.6). Tabulated format per ICH M4S.',
+  '2.7': 'Clinical Summary: detailed clinical data summaries. 2.7.1 (biopharmaceutics), 2.7.2 (PK), 2.7.3 (PD), 2.7.4 (efficacy), 2.7.5 (safety), 2.7.6 (individual studies).',
+  '2.7.1': 'Summary of Biopharmaceutic Studies and Associated Analytical Methods: BA/BE studies, dissolution, food effect, formulation bridging.',
+  '2.7.2': 'Summary of Clinical Pharmacology Studies: PK characterization, dose-response, DDI, special populations, PK modeling.',
+  '2.7.3': 'Summary of Clinical Pharmacodynamics: PD biomarkers, dose-response relationships, PK/PD modeling.',
+  '2.7.4': 'Summary of Clinical Efficacy: pivotal trial results, endpoints, statistical analyses. Must align with the benefit claim in 2.5.',
+  '2.7.5': 'Summary of Clinical Safety: adverse events, deaths, lab abnormalities, vital signs, special populations. Aggregate across all studies.',
+  '2.7.6': 'Synopses of Individual Studies: one synopsis per clinical study following ICH E3 format.',
+  '3.2.S': 'Drug Substance: characterization, manufacturing, controls, stability. Each topic needs its own subsection per ICH M4Q.',
+  '3.2.P': 'Drug Product: formulation, manufacturing process, controls, container closure, stability. Critical for process validation and shelf life.',
+  '5.3.5': 'Reports of Efficacy and Safety Studies: full clinical study reports (CSRs) per ICH E3. Each pivotal study needs a complete CSR.',
+  '1.2': 'Cover Letter: formal submission letter to the health authority. Reference regulatory pathway, submission type, and any pre-submission agreements.',
+  '1.3': 'Administrative Information: prescribing information, labels, patent certificates, exclusivity claims.',
+  '1.14': 'Environmental Assessment: required for NDAs. Justify categorical exclusion or provide full EA.',
+};
+
+function getSectionGuidance(sectionCode: string): string | null {
+  // Direct match
+  if (SECTION_GUIDANCE[sectionCode]) return SECTION_GUIDANCE[sectionCode];
+  // Try prefix match (e.g., "2.7.4.1" matches "2.7.4")
+  const parts = sectionCode.split('.');
+  while (parts.length > 1) {
+    parts.pop();
+    const prefix = parts.join('.');
+    if (SECTION_GUIDANCE[prefix]) return SECTION_GUIDANCE[prefix];
+  }
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Intent Detection
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -311,8 +349,14 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     }
 
     if (sectionCode) {
-      systemPrompt += `\n\n## ACTIVE SECTION: ${sectionCode}${moduleCode ? ` (Module ${moduleCode})` : ''}\nThe user is working in a specific CTD section. Tailor all guidance to this section. When the user says "this section" or "here", they mean ${sectionCode}. Be section-specific, not generic.`;
+      const sectionGuidance = getSectionGuidance(sectionCode);
+      systemPrompt += `\n\n## ACTIVE SECTION: ${sectionCode}${moduleCode ? ` (Module ${moduleCode})` : ''}\nThe user is working in a specific CTD section. Tailor all guidance to this section. When the user says "this section" or "here", they mean ${sectionCode}. Be section-specific, not generic.${sectionGuidance ? `\n\n### Section Requirements\n${sectionGuidance}` : ''}`;
     }
+  }
+
+  // 8d. Inject context-freshness signal when conversation is long
+  if (input.conversationHistory && input.conversationHistory.length > 12) {
+    systemPrompt += `\n\n## CONTEXT FRESHNESS WARNING\nThis conversation has ${input.conversationHistory.length} messages. Project context was injected at the start and may not reflect recent changes. If the user asks about current state, suggest running /status or /readiness for a live check rather than relying on stale context. If you're unsure whether data is current, say so.`;
   }
 
   // 9. Inject conversation continuity context
