@@ -31,7 +31,7 @@ import {
   integer,
   boolean,
   timestamp,
-  json,
+  jsonb,
   real,
   index,
   uniqueIndex,
@@ -60,12 +60,12 @@ export const anaCapabilityRegistry = pgTable(
     // ── How to invoke ────────────────────────────────────────────
     slashCommand: text('slash_command'), // '/compliance-scan', '/draft-section', etc.
     apiEndpoint: text('api_endpoint'), // route path for programmatic invocation
-    triggerPatterns: json('trigger_patterns').$type<string[]>(), // natural language triggers
+    triggerPatterns: jsonb('trigger_patterns').$type<string[]>().default([]), // natural language triggers
 
     // ── Applicability scope ──────────────────────────────────────
-    regulatoryBodiesApplicable: json('regulatory_bodies_applicable').$type<string[]>(), // ['FDA','EMA','PMDA',...]
-    projectTypesApplicable: json('project_types_applicable').$type<string[]>(), // ['IND','NDA','BLA','510k',...]
-    documentTypesApplicable: json('document_types_applicable').$type<string[]>(), // ['csr','protocol','ib',...]
+    regulatoryBodiesApplicable: jsonb('regulatory_bodies_applicable').$type<string[]>().default([]), // ['FDA','EMA','PMDA',...]
+    projectTypesApplicable: jsonb('project_types_applicable').$type<string[]>().default([]), // ['IND','NDA','BLA','510k',...]
+    documentTypesApplicable: jsonb('document_types_applicable').$type<string[]>().default([]), // ['csr','protocol','ib',...]
 
     // ── Effectiveness tracking (aggregated from outcome log) ────
     successCount: integer('success_count').default(0).notNull(),
@@ -217,20 +217,20 @@ export const userIntelligenceProfiles = pgTable(
     displayName: text('display_name'),
     role: text('role'), // 'Regulatory Affairs Director', 'Medical Writer', etc.
     department: text('department'), // 'Regulatory', 'Clinical', 'CMC', 'Quality'
-    expertiseAreas: json('expertise_areas').$type<string[]>(), // ['CMC', 'Clinical', 'Biostatistics']
+    expertiseAreas: jsonb('expertise_areas').$type<string[]>().default([]), // ['CMC', 'Clinical', 'Biostatistics']
 
     // ── Regulatory specializations ──────────────────────────────
-    regulatorySpecializations: json('regulatory_specializations').$type<string[]>(), // ['FDA CMC', 'EMA Clinical']
+    regulatorySpecializations: jsonb('regulatory_specializations').$type<string[]>().default([]), // ['FDA CMC', 'EMA Clinical']
 
     // ── How AnA should work for this user ────────────────────────
     communicationStyle: text('communication_style'), // 'concise' | 'detailed' | 'technical' | 'executive'
     personalInstructions: text('personal_instructions'), // User's own CLAUDE.local.md for AnA
-    workflowPreferences: json('workflow_preferences').$type<Record<string, unknown>>(),
+    workflowPreferences: jsonb('workflow_preferences').$type<Record<string, unknown>>().default({}),
 
     // ── AnA-learned patterns (auto-populated) ───────────────────
-    preferredCapabilities: json('preferred_capabilities').$type<string[]>(), // most-used capability keys
-    projectsContributed: json('projects_contributed').$type<number[]>(), // project IDs
-    editingPatterns: json('editing_patterns').$type<Record<string, unknown>>(), // what they typically change
+    preferredCapabilities: jsonb('preferred_capabilities').$type<string[]>().default([]), // most-used capability keys
+    projectsContributed: jsonb('projects_contributed').$type<number[]>().default([]), // project IDs
+    editingPatterns: jsonb('editing_patterns').$type<Record<string, unknown>>().default({}), // what they typically change
 
     // ── Engagement metrics ──────────────────────────────────────
     totalInteractions: integer('total_interactions').default(0).notNull(),
@@ -324,12 +324,12 @@ export const anaScopedRules = pgTable(
     description: text('description'),
 
     // ── Scope declarations (what triggers this rule to load) ────
-    scopeDocumentTypes: json('scope_document_types').$type<string[]>(), // ['csr', 'protocol']
-    scopeCapabilities: json('scope_capabilities').$type<string[]>(), // ['compliance_scan', 'foresight']
-    scopeRegulatoryBodies: json('scope_regulatory_bodies').$type<string[]>(), // ['FDA', 'EMA']
-    scopeWorkflowStages: json('scope_workflow_stages').$type<string[]>(), // ['drafting', 'review']
-    scopeSectionCodes: json('scope_section_codes').$type<string[]>(), // ['2.5', '3.2.S']
-    scopeSlashCommands: json('scope_slash_commands').$type<string[]>(), // ['/compliance-scan']
+    scopeDocumentTypes: jsonb('scope_document_types').$type<string[]>().default([]), // ['csr', 'protocol']
+    scopeCapabilities: jsonb('scope_capabilities').$type<string[]>().default([]), // ['compliance_scan', 'foresight']
+    scopeRegulatoryBodies: jsonb('scope_regulatory_bodies').$type<string[]>().default([]), // ['FDA', 'EMA']
+    scopeWorkflowStages: jsonb('scope_workflow_stages').$type<string[]>().default([]), // ['drafting', 'review']
+    scopeSectionCodes: jsonb('scope_section_codes').$type<string[]>().default([]), // ['2.5', '3.2.S']
+    scopeSlashCommands: jsonb('scope_slash_commands').$type<string[]>().default([]), // ['/compliance-scan']
 
     // ── Rule content ────────────────────────────────────────────
     ruleContent: text('rule_content').notNull(), // The ~50-line instruction set for AnA
@@ -377,7 +377,7 @@ export const anaClientObjectives = pgTable(
 
     // ── Linkage ─────────────────────────────────────────────────
     parentObjectiveId: integer('parent_objective_id'), // links project objective to company objective
-    linkedProjectIds: json('linked_project_ids').$type<number[]>(),
+    linkedProjectIds: jsonb('linked_project_ids').$type<number[]>().default([]),
 
     createdBy: integer('created_by').references(() => users.id),
     createdAt: timestamp('created_at').defaultNow().notNull(),
