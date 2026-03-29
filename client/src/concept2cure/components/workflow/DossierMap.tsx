@@ -279,16 +279,17 @@ export const DossierMap: React.FC<DossierMapProps> = ({
           <WorkspaceCanvas>
             {/* Submission readiness link */}
             {onNavigateSubmit && (
-              <button
+              <Button
+                variant="outline"
                 onClick={onNavigateSubmit}
-                className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 transition-colors text-left"
+                className="w-full flex items-center justify-between gap-3 px-4 py-3 h-auto text-left"
               >
                 <div className="flex items-center gap-2">
                   <Send className="w-3.5 h-3.5 text-violet-500" />
                   <span className="text-sm font-medium text-stone-800">Check Submission Readiness</span>
                 </div>
-                <span className="text-xs text-stone-400">Review readiness & export →</span>
-              </button>
+                <span className="text-xs text-stone-400">Review readiness & export</span>
+              </Button>
             )}
 
             {modules.map(mod => {
@@ -313,9 +314,10 @@ export const DossierMap: React.FC<DossierMapProps> = ({
                           key={sec.code}
                           className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-stone-50 transition-colors group"
                         >
-                          <button
+                          <Button
+                            variant="ghost"
                             onClick={() => onSectionClick(sec.code)}
-                            className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                            className="flex items-center gap-3 flex-1 min-w-0 h-auto text-left px-0"
                           >
                             <Icon className={`w-3.5 h-3.5 ${statusInfo.color}`} />
                             <span className="text-xs font-mono text-stone-400 w-10">{sec.code}</span>
