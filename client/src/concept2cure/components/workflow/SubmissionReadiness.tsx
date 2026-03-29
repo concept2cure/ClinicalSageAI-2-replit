@@ -1,4 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
+import { Button } from '@/components/ui/button';
 import { Send, PenLine, Check, RefreshCw, FileText, AlertTriangle, Clock, FilePlus, ArrowRight } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -258,30 +259,36 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
               </div>
               <div className="flex items-center gap-2">
                 {/* Refresh button */}
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={handleRefresh}
                   disabled={isRefreshing}
                   title="Refresh readiness status"
                   aria-label={isRefreshing ? 'Refreshing readiness status' : 'Refresh readiness status'}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-stone-600 text-sm font-medium hover:bg-stone-100 border border-stone-200 transition-colors disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 h-auto text-stone-600 text-sm font-medium hover:bg-stone-100 transition-colors disabled:opacity-50"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
                   {isRefreshing ? 'Refreshing...' : 'Refresh'}
-                </button>
+                </Button>
                 {readinessPercent >= 100 && (
                   <span className="text-xs text-emerald-600 font-medium">✓ All sections ready</span>
                 )}
-                <button
+                <Button
+                  variant="default"
+                  size="sm"
                   onClick={onExport}
                   disabled={readinessPercent < 100}
                   title={readinessPercent < 100
                     ? `Complete all required sections before exporting (${totalCount - readyCount} remaining)`
                     : 'Export eCTD submission package (XML + documents)'}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+                  aria-label="Export submission package"
+                  data-testid="export-package-btn"
+                  className="inline-flex items-center gap-2 h-auto bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Send className="w-3.5 h-3.5" />
                   Export Package
-                </button>
+                </Button>
               </div>
             </WorkspaceStatusStrip>
 
@@ -330,9 +337,11 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
                           <Check className="w-3.5 h-3.5" />
                         </span>
                       ) : (
-                        <button
+                        <Button
+                          variant="default"
+                          size="sm"
                           onClick={() => handleFixNow(item.section, item.title)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm"
+                          className="inline-flex items-center gap-1 h-auto text-xs text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm"
                           data-testid={`fix-now-${item.section}`}
                         >
                           {!item.hasArtifact ? (
@@ -342,7 +351,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
                           )}
                           {item.fixAction}
                           <ArrowRight className="w-3 h-3 opacity-60" />
-                        </button>
+                        </Button>
                       )}
                       <WorkspaceStatusBadge status={item.status} />
                     </div>

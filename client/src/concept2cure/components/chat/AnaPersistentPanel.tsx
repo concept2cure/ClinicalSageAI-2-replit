@@ -50,6 +50,7 @@ import {
 } from 'lucide-react';
 import { ToolExecutionBlock, ThinkingBlock, DoneIndicator } from './ClaudeStyleBlocks';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 marked.setOptions({ breaks: true, gfm: true });
 
@@ -686,10 +687,12 @@ function DomainPromptSection({
 }) {
   return (
     <div className="rounded-lg border border-stone-100 overflow-hidden">
-      <button
+      <Button
+        variant="ghost"
+        size="sm"
         onClick={onToggle}
         className={cn(
-          'w-full flex items-center justify-between px-3 py-2 text-left transition-colors',
+          'h-auto w-full flex items-center justify-between px-3 py-2 text-left transition-colors rounded-none',
           expanded ? 'bg-stone-50' : 'hover:bg-stone-50/50',
         )}
       >
@@ -703,17 +706,19 @@ function DomainPromptSection({
           'w-3 h-3 text-stone-400 transition-transform',
           expanded && 'rotate-180',
         )} />
-      </button>
+      </Button>
       {expanded && (
         <div className="px-1.5 pb-1.5 space-y-0.5">
           {group.prompts.map(prompt => (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               key={prompt.id}
               onClick={() => onSelect(prompt)}
-              className="w-full text-left px-2.5 py-2 rounded-md text-[13px] text-stone-600 hover:bg-stone-100 hover:text-stone-800 transition-colors"
+              className="h-auto w-full text-left px-2.5 py-2 rounded-md text-[13px] text-stone-600 hover:bg-stone-100 hover:text-stone-800 transition-colors justify-start font-normal"
             >
               {prompt.label}
-            </button>
+            </Button>
           ))}
         </div>
       )}
@@ -745,6 +750,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 }) => {
   // AI Action system — unified execution spine (Phase 1)
   const aiAction = useAIAction();
+  const { toast } = useToast();
 
   const [messages, setMessages] = useState<AnaMessage[]>([]);
   const [input, setInput] = useState('');
@@ -805,13 +811,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       localStorage.getItem('currentOrganizationId');
     if (!tenantId) return;
 
-    fetch(`/api/firecrawl/quota-status?tenantId=${tenantId}`, {
-      credentials: 'include',
-      headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
-    })
+    apiRequest('GET', `/api/firecrawl/quota-status?tenantId=${tenantId}`)
       .then(async res => {
         const payload = await res.json().catch(() => null);
-        if (!res.ok || !payload?.success) return;
+        if (!payload?.success) return;
         const quota = payload.data;
         setFirecrawlQuotaRemaining(Number(quota?.remaining ?? 0));
         if (quota?.reason === 'policy_blocked') {
@@ -1550,7 +1553,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   );
                 }
               })
-              .catch(() => {})
+              .catch(() => { toast({ title: 'Research poll failed', description: 'Could not check research job status.', variant: 'destructive' }); })
               .finally(() => setIsThinking(false));
           };
         } catch (err) {
@@ -2699,11 +2702,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           return;
         }
         try {
-          const res = await fetch('/api/authoring-actions/approve-artifact', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ projectId, artifactId }),
-          });
+          const res = await apiRequest('POST', '/api/authoring-actions/approve-artifact', { projectId, artifactId });
           const data = await res.json();
           if (data.approved) {
             const decisionNote = data.decisionId
@@ -3622,7 +3621,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 aria-label="Slash commands"
               >
                 {filteredSlashCommands.map((cmd, i) => (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     key={cmd.command}
                     type="button"
                     role="option"
@@ -3630,7 +3631,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     onMouseDown={(e) => { e.preventDefault(); selectSlashCommand(cmd); }}
                     onMouseEnter={() => setSlashMenuIndex(i)}
                     className={cn(
-                      'w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors',
+                      'h-auto w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors rounded-none justify-start font-normal',
                       i === slashMenuIndex ? 'bg-[#FAF9F5]' : 'hover:bg-[#FAF9F5]/50'
                     )}
                   >
@@ -3643,7 +3644,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     <span className={cn('text-[10px] font-medium', SLASH_CATEGORY_COLORS[cmd.category] || 'text-stone-400')}>
                       {cmd.category}
                     </span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}
@@ -3675,22 +3676,26 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"
               />
               {hasMessages && (
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => {
                     setMessages([]);
                     threadIdRef.current = null;
                   }}
-                  className="flex-shrink-0 p-1.5 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg transition-colors"
+                  className="h-auto w-auto flex-shrink-0 p-1.5 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg transition-colors"
                   title="New thread"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
-                </button>
+                </Button>
               )}
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => handleSend()}
                 disabled={!input.trim() || isThinking}
                 className={cn(
-                  'flex-shrink-0 p-2 rounded-full transition-colors duration-150',
+                  'h-auto w-auto flex-shrink-0 p-2 rounded-full transition-colors duration-150',
                   input.trim() && !isThinking
                     ? 'bg-[#141413] text-white hover:bg-[#2D2C28]'
                     : 'bg-[#E8E6DC] text-[#B0AEA5] cursor-not-allowed'
@@ -3698,7 +3703,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 aria-label="Send message"
               >
                 <ArrowUp className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -3811,33 +3816,37 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               {effectiveSuggestedActions && effectiveSuggestedActions.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg mx-auto">
                   {effectiveSuggestedActions.slice(0, 4).map(action => (
-                    <button
+                    <Button
+                      variant="outline"
+                      size="sm"
                       key={action.id}
                       onClick={() => handleSuggestedAction(action)}
-                      className="text-left px-4 py-3 rounded-xl border border-[#E8E6DC] hover:border-[#D8D5CA] hover:bg-[#FAF9F5] transition-colors group"
+                      className="h-auto text-left px-4 py-3 rounded-xl border border-[#E8E6DC] hover:border-[#D8D5CA] hover:bg-[#FAF9F5] transition-colors group flex-col items-start"
                     >
                       <p className="text-sm font-medium text-[#4D4B45] group-hover:text-[#141413]">
                         {action.label}
                       </p>
                       {action.description && (
-                        <p className="text-xs text-[#B0AEA5] mt-0.5 line-clamp-1">
+                        <p className="text-xs text-[#B0AEA5] mt-0.5 line-clamp-1 font-normal">
                           {action.description}
                         </p>
                       )}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               )}
 
               {/* Domain prompt browser — all capabilities organized by area */}
               <div className="mt-6 max-w-lg mx-auto">
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setShowDomainPrompts(prev => !prev)}
-                  className="text-[11px] text-stone-400 hover:text-stone-600 transition-colors mx-auto flex items-center gap-1"
+                  className="h-auto text-[11px] text-stone-400 hover:text-stone-600 transition-colors mx-auto flex items-center gap-1 font-normal"
                 >
                   {showDomainPrompts ? 'Hide capabilities' : 'Browse all capabilities'}
                   <ChevronDown className={cn('w-3 h-3 transition-transform', showDomainPrompts && 'rotate-180')} />
-                </button>
+                </Button>
 
                 {showDomainPrompts && (
                   <div className="mt-3 space-y-1 text-left">
@@ -4283,7 +4292,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               apiRequest('POST', '/api/concept2cure/feedback', {
                                 messageId: msg.id,
                                 positive: true,
-                              }).catch(() => {});
+                              }).catch(() => { toast({ title: 'Feedback failed', description: 'Could not save your feedback. Please try again.', variant: 'destructive' }); });
                             }}
                             className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded transition-colors h-auto w-auto"
                             title="Good"
@@ -4298,7 +4307,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               apiRequest('POST', '/api/concept2cure/feedback', {
                                 messageId: msg.id,
                                 positive: false,
-                              }).catch(() => {});
+                              }).catch(() => { toast({ title: 'Feedback failed', description: 'Could not save your feedback. Please try again.', variant: 'destructive' }); });
                             }}
                             className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded transition-colors h-auto w-auto"
                             title="Bad"
@@ -4412,7 +4421,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         msg.id === messages.filter(m => m.role === 'assistant').at(-1)?.id &&
                         msg.grounding?.mode &&
                         msg.grounding.mode !== 'grounded' && (
-                          <div className="mt-2 flex flex-wrap gap-1.5" data-testid="ana-recovery-chips">
+                          <div className="mt-2 flex flex-wrap gap-1.5" aria-live="polite" data-testid="ana-recovery-chips">
                             {msg.grounding.mode === 'inferred' && (
                               <>
                                 {!contextProfile?.projectId && (
@@ -4470,7 +4479,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           const nextStep = nextStepMatch[1].trim();
                           if (nextStep.length < 5 || nextStep.length > 120) return null;
                           return (
-                            <div className="mt-2 flex flex-wrap gap-1.5">
+                            <div className="mt-2 flex flex-wrap gap-1.5" aria-live="polite">
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -4488,7 +4497,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       {!isUser &&
                         msg.id === messages.filter(m => m.role === 'assistant').at(-1)?.id &&
                         lastOrchestration && (
-                          <div className="mt-3 pt-3 border-t border-[#F5F4EF]">
+                          <div className="mt-3 pt-3 border-t border-[#F5F4EF]" aria-live="polite">
                             <p className="text-[10px] font-medium text-[#B0AEA5] uppercase tracking-wide mb-2">
                               Document Actions
                             </p>

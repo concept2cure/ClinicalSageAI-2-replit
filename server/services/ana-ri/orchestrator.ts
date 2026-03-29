@@ -299,9 +299,7 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     systemPrompt += '\n\n' + roleContext;
   }
 
-  // 8. Inject command capabilities (condensed to save tokens)
-  systemPrompt +=
-    '\n\n## OPERATIONAL COMMANDS\nYou can execute platform commands. Available: create_project, list_projects, update_project, create_artifact, update_artifact, update_artifact_status, list_artifacts, place_in_dossier, create_task, update_task, list_tasks, check_dossier_readiness, create_submission_package, create_review_thread, add_review_comment, search_artifacts, list_team_members, list_artifact_versions, run_compliance_scan, export_artifact, compare_versions, review_version_impact, create_milestone, update_milestone, list_milestones, revert_to_version, load_user_context, load_conversation_history.\n\nWhen you decide to act (not just advise), embed commands:\n```command\n{"command":"command_name","params":{...}}\n```\nMultiple commands execute sequentially. Chain stops on failure.';
+  // 8. (Command capabilities injected via buildCommandContextForPrompt() in step 10)
 
   // 8b. Inject decision architecture context for grounded explanations.
   // The chat route layer (async) pre-fetches decision context and attaches it
