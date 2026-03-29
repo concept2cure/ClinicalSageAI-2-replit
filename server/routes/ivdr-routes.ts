@@ -16,6 +16,7 @@
 import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { z } from 'zod';
+import { registerExportGovernanceQuick } from '../services/compute/exportGovernance';
 
 // ─── Zod Schemas for IVDR Input Validation ───────────────────────────────────
 
@@ -381,6 +382,23 @@ export default function createIVDRRoutes(pool: Pool): Router {
       res.setHeader('Content-Type', 'application/json');
       const safeId = id.replace(/[^a-zA-Z0-9\-_]/g, '');
       res.setHeader('Content-Disposition', `attachment; filename="ivdr-classification-${safeId}.json"`);
+
+      // Register governed export (non-blocking)
+      const user = (req as any).user;
+      registerExportGovernanceQuick({
+        organizationId: user?.organizationId || Number(orgId) || 1,
+        projectId: 0,
+        userId: user?.id || 0,
+        userName: user?.name || user?.email || 'unknown',
+        title: `IVDR Classification Report: ${record.device_name}`,
+        exportFormat: 'zip', // JSON report mapped to zip for governance
+        exportFilename: `ivdr-classification-${safeId}.json`,
+        exportFileSize: Buffer.byteLength(JSON.stringify(report), 'utf-8'),
+        docType: 'ivdr_classification_report',
+        backendRoute: `/api/ivdr/classify/${id}/report`,
+        ipAddress: req.ip,
+      }).catch(() => {}); // non-blocking
+
       return res.json(report);
     } catch (error: any) {
       return safeError(res, error, 'IVDR_CLASS_REPORT_ERROR', 'Classification report');

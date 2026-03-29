@@ -8,6 +8,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { registerExportGovernanceQuick } from '../services/compute/exportGovernance';
 import { db } from '../db';
 import { eq, and, isNull } from 'drizzle-orm';
 import {
@@ -193,6 +194,23 @@ router.get('/programs/:programId/rtm/csv', async (req: Request, res: Response) =
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    // Register governed export (non-blocking)
+    const user = (req as any).user;
+    registerExportGovernanceQuick({
+      organizationId: user?.organizationId || 1,
+      projectId: Number(programId) || 0,
+      userId: user?.id || 0,
+      userName: user?.name || user?.email || 'unknown',
+      title: `RTM Export: Program ${programId}`,
+      exportFormat: 'csv',
+      exportFilename: filename,
+      exportFileSize: Buffer.byteLength(csvContent, 'utf-8'),
+      docType: 'rtm_export',
+      backendRoute: `/api/rtm/programs/${programId}/rtm/csv`,
+      ipAddress: req.ip,
+    }).catch(() => {}); // non-blocking
+
     return res.send(csvContent);
   } catch (error: any) {
     logger.error('Failed to export RTM CSV', { error: error.message });

@@ -295,3 +295,58 @@ export async function registerGovernedExport(
     client.release();
   }
 }
+
+/**
+ * Lightweight governance hook for routes that stream exports.
+ *
+ * Call this AFTER the export buffer is ready but BEFORE sending the response.
+ * Non-blocking: if governance write fails, the export still proceeds (degraded mode).
+ * Returns the governance result or null on failure.
+ */
+export async function registerExportGovernanceQuick(opts: {
+  organizationId: number;
+  projectId: number;
+  userId: number;
+  userName: string;
+  userRole?: string;
+  title: string;
+  exportFormat: 'pdf' | 'docx' | 'zip' | 'csv' | 'xml' | 'markdown' | 'bibtex' | 'ris';
+  exportFilename: string;
+  exportFileSize: number;
+  exportHash?: string;
+  docType: string;
+  backendRoute: string;
+  ctdSection?: string;
+  ipAddress?: string;
+}): Promise<ExportGovernanceResult | null> {
+  try {
+    const contentHash = opts.exportHash ?? crypto.createHash('sha256')
+      .update(`${opts.title}:${opts.exportFilename}:${opts.exportFileSize}`)
+      .digest('hex');
+
+    const normalizedFormat = (['pdf', 'docx', 'zip'].includes(opts.exportFormat)
+      ? opts.exportFormat
+      : 'zip') as 'pdf' | 'docx' | 'zip';
+
+    return await registerGovernedExport({
+      organizationId: opts.organizationId,
+      projectId: opts.projectId,
+      userId: opts.userId,
+      userName: opts.userName,
+      userRole: opts.userRole || 'user',
+      title: opts.title,
+      sourceContent: `[Export: ${opts.exportFormat}] ${opts.title}`,
+      exportHash: contentHash,
+      exportFormat: normalizedFormat,
+      exportFilename: opts.exportFilename,
+      exportFileSize: opts.exportFileSize,
+      docType: opts.docType,
+      backendRoute: opts.backendRoute,
+      ctdSection: opts.ctdSection,
+      ipAddress: opts.ipAddress,
+    });
+  } catch (err) {
+    console.error('[ExportGovernanceQuick] Non-blocking governance registration failed:', err);
+    return null;
+  }
+}

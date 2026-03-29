@@ -18,6 +18,7 @@ import { Router, Request, Response } from 'express';
 import { Cluster } from 'puppeteer-cluster';
 import PDFDocument from 'pdfkit';
 import { pool } from '../db';
+import { registerExportGovernanceQuick } from '../services/compute/exportGovernance';
 import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
@@ -443,6 +444,22 @@ router.post('/:projectId/generate', async (req: Request, res: Response) => {
 
     console.log(`[IND-PDF] Generated ${pdfBuffer.length} bytes → ${filepath}`);
 
+    // Register governed export (non-blocking)
+    const user = (req as any).user;
+    registerExportGovernanceQuick({
+      organizationId: user?.organizationId || 1,
+      projectId: Number(projectId) || 0,
+      userId: user?.id || 0,
+      userName: user?.name || user?.email || 'unknown',
+      title: `IND PDF: Project ${projectId}`,
+      exportFormat: 'pdf',
+      exportFilename: filename,
+      exportFileSize: pdfBuffer.length,
+      docType: 'ind_pdf',
+      backendRoute: `/api/ind-pdf/${projectId}/generate`,
+      ipAddress: req.ip,
+    }).catch(() => {}); // non-blocking
+
     // Return PDF directly or download URL
     if (req.query.download === 'true') {
       res.setHeader('Content-Type', 'application/pdf');
@@ -527,6 +544,24 @@ router.post('/:projectId/section', async (req: Request, res: Response) => {
       `attachment; filename="section-${sectionCode}-${projectId}.pdf"`
     );
     res.setHeader('Content-Length', String(pdfBuffer.length));
+
+    // Register governed export (non-blocking)
+    const secUser = (req as any).user;
+    registerExportGovernanceQuick({
+      organizationId: secUser?.organizationId || 1,
+      projectId: Number(projectId) || 0,
+      userId: secUser?.id || 0,
+      userName: secUser?.name || secUser?.email || 'unknown',
+      title: `IND Section PDF: ${sectionCode}`,
+      exportFormat: 'pdf',
+      exportFilename: `section-${sectionCode}-${projectId}.pdf`,
+      exportFileSize: pdfBuffer.length,
+      docType: 'ind_section_pdf',
+      backendRoute: `/api/ind-pdf/${projectId}/section`,
+      ctdSection: sectionCode,
+      ipAddress: req.ip,
+    }).catch(() => {}); // non-blocking
+
     res.send(pdfBuffer);
   } catch (error: any) {
     console.error('[IND-PDF] Section export failed:', error);

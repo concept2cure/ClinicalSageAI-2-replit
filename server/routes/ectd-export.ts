@@ -15,6 +15,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { generateEctdPackage, validateEctdPackage } from '../services/ectdExportService';
+import { registerExportGovernanceQuick } from '../services/compute/exportGovernance';
 
 const router = Router();
 
@@ -130,6 +131,22 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
         res.setHeader('X-ECTD-Validation-Errors', String(validation.errors.length));
       }
     }
+
+    // Register governed export (non-blocking)
+    const user = (req as any).user;
+    registerExportGovernanceQuick({
+      organizationId: user?.organizationId || 1,
+      projectId: submissionId,
+      userId: user?.id || 0,
+      userName: user?.name || user?.email || 'unknown',
+      title: `eCTD Package: ${result.filename}`,
+      exportFormat: 'zip',
+      exportFilename: result.filename,
+      exportFileSize: result.buffer.length,
+      docType: 'ectd_package',
+      backendRoute: `/api/ectd/export/${submissionId}`,
+      ipAddress: req.ip,
+    }).catch(() => {}); // non-blocking
 
     return res.send(result.buffer);
   } catch (error: any) {

@@ -2,10 +2,29 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import PDFDocument from 'pdfkit';
+import { registerExportGovernanceQuick } from '../services/compute/exportGovernance';
 
 const router = express.Router();
 
 export const exportRoutes = router;
+
+/** Fire-and-forget governance registration for export endpoints */
+function governExport(req: express.Request, format: 'pdf' | 'docx' | 'csv' | 'xml' | 'markdown' | 'bibtex' | 'ris', title: string, filename: string, sizeEstimate: number) {
+  const user = (req as any).user;
+  registerExportGovernanceQuick({
+    organizationId: user?.organizationId || 1,
+    projectId: user?.projectId || 0,
+    userId: user?.id || 0,
+    userName: user?.name || user?.email || 'unknown',
+    title,
+    exportFormat: format,
+    exportFilename: filename,
+    exportFileSize: sizeEstimate,
+    docType: 'document_export',
+    backendRoute: req.originalUrl || req.path,
+    ipAddress: req.ip,
+  }).catch(() => {}); // non-blocking
+}
 
 // Function to convert HTML content to plain text
 function stripHtml(html: string): string {
@@ -64,6 +83,9 @@ router.post('/pdf', async (req, res) => {
 
     // Pipe the PDF document to the response
     doc.pipe(res);
+
+    // Register governed export (non-blocking)
+    governExport(req, 'pdf', title || 'Protocol Analysis', `${encodeURIComponent(title || 'protocol-recommendations').replace(/%20/g, '_')}.pdf`, 0);
 
     // Define colors for consistent Concept2Cure branding
     const primary = '#c15f3c'; // Terracotta (Anthropic crail)
@@ -713,6 +735,9 @@ router.post('/word', async (req, res) => {
       `attachment; filename="${encodeURIComponent(title || 'protocol-recommendations').replace(/%20/g, '_')}.html"`
     );
 
+    // Register governed export (non-blocking)
+    governExport(req, 'docx', title || 'Protocol Recommendations', `${encodeURIComponent(title || 'protocol-recommendations').replace(/%20/g, '_')}.html`, Buffer.byteLength(html, 'utf-8'));
+
     // Send the HTML content
     res.send(html);
   } catch (error: any) {
@@ -811,6 +836,9 @@ router.post('/csv', async (req, res) => {
       `attachment; filename="protocol-recommendations-${getFormattedDate()}.csv"`
     );
 
+    // Register governed export (non-blocking)
+    governExport(req, 'csv', 'Protocol Recommendations CSV', `protocol-recommendations-${getFormattedDate()}.csv`, Buffer.byteLength(csv, 'utf-8'));
+
     // Send the CSV content
     res.send(csv);
   } catch (error: any) {
@@ -882,6 +910,9 @@ router.post('/bibtex', async (req, res) => {
       'Content-Disposition',
       `attachment; filename="protocol-references-${getFormattedDate()}.bib"`
     );
+
+    // Register governed export (non-blocking)
+    governExport(req, 'bibtex', 'Protocol References BibTeX', `protocol-references-${getFormattedDate()}.bib`, Buffer.byteLength(bibtex, 'utf-8'));
 
     // Send the BibTeX content
     res.send(bibtex);
@@ -961,6 +992,9 @@ router.post('/ris', async (req, res) => {
       'Content-Disposition',
       `attachment; filename="protocol-references-${getFormattedDate()}.ris"`
     );
+
+    // Register governed export (non-blocking)
+    governExport(req, 'ris', 'Protocol References RIS', `protocol-references-${getFormattedDate()}.ris`, Buffer.byteLength(ris, 'utf-8'));
 
     // Send the RIS content
     res.send(ris);
@@ -1109,6 +1143,9 @@ router.post('/markdown', async (req, res) => {
       'Content-Disposition',
       `attachment; filename="${encodeURIComponent(title || 'protocol-recommendations').replace(/%20/g, '_')}.md"`
     );
+
+    // Register governed export (non-blocking)
+    governExport(req, 'markdown', title || 'Protocol Analysis Markdown', `protocol-analysis-${getFormattedDate()}.md`, Buffer.byteLength(markdown, 'utf-8'));
 
     // Send the Markdown content
     res.send(markdown);
@@ -1312,6 +1349,9 @@ router.post('/xml', async (req, res) => {
       'Content-Disposition',
       `attachment; filename="${encodeURIComponent(title || 'protocol-recommendations').replace(/%20/g, '_')}.xml"`
     );
+
+    // Register governed export (non-blocking)
+    governExport(req, 'xml', title || 'Protocol Analysis XML', `protocol-analysis-${getFormattedDate()}.xml`, Buffer.byteLength(xml, 'utf-8'));
 
     // Send the XML content
     res.send(xml);

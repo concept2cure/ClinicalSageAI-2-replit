@@ -17,6 +17,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { Readable } from 'stream';
 import { eq, and } from 'drizzle-orm';
 import { authenticateToken } from '../middleware/auth.js';
+import { registerExportGovernanceQuick } from '../services/compute/exportGovernance';
 import { db } from '../db';
 import { regulatoryPrograms } from '../../shared/schema/programs.js';
 
@@ -419,6 +420,22 @@ router.get(
       if (sha256Header) {
         res.setHeader('X-Artifact-SHA256', sha256Header);
       }
+
+      // Register governed export (non-blocking)
+      const user = (req as any).user;
+      registerExportGovernanceQuick({
+        organizationId: user?.organizationId || 1,
+        projectId: Number(programId) || 0,
+        userId: user?.id || 0,
+        userName: user?.name || user?.email || 'unknown',
+        title: `DOCX Artifact: ${req.params.artifactId}`,
+        exportFormat: 'docx',
+        exportFilename: `artifact-${req.params.artifactId}.docx`,
+        exportFileSize: 0,
+        docType: 'docx_artifact',
+        backendRoute: `/api/docx-factory/artifacts/${req.params.artifactId}/download`,
+        ipAddress: req.ip,
+      }).catch(() => {}); // non-blocking
 
       if (response.body) {
         const stream = Readable.fromWeb(response.body as any);

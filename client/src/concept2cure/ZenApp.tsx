@@ -2705,6 +2705,15 @@ export const ZenApp: React.FC = () => {
                       setRiViewMode('editor');
                       setLayoutMode('regulatory-workspace');
                     }}
+                    onDraftFromSource={(sourceTitle, sourceId) => {
+                      setPendingEditorContent({
+                        title: `Draft from: ${sourceTitle}`,
+                        content: '',
+                        ctdSection: undefined,
+                      });
+                      setRiViewMode('editor');
+                      setLayoutMode('regulatory-workspace');
+                    }}
                   />
                 </Suspense>
               </ErrorBoundary>
