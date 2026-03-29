@@ -1878,10 +1878,22 @@ export async function getIntelligencePrefix(
   const parsedProjectId = projectId ? parseInt(String(projectId), 10) : null;
 
   try {
-    const [clientCtx, projectCtx] = await Promise.all([
+    const [clientCtx, projectCtx, wisdomBlock] = await Promise.all([
       buildClientIntelligenceContext(organizationId).catch(() => null),
       parsedProjectId
         ? buildProjectIntelligenceContext(parsedProjectId).catch(() => null)
+        : Promise.resolve(null),
+      // AnA Wisdom Engine — inject learned wisdom (risks, lessons, patterns)
+      // Non-blocking: if it fails, chat still works without wisdom context
+      parsedProjectId
+        ? import('./ana-wisdom-engine')
+            .then(({ buildWisdomContext }) =>
+              buildWisdomContext(parsedProjectId!, organizationId!)
+            )
+            .catch((err) => {
+              console.warn('[IntelligencePrefix] Wisdom context failed (non-blocking):', err?.message);
+              return null;
+            })
         : Promise.resolve(null),
     ]);
 
@@ -1905,6 +1917,43 @@ The following is learned intelligence about the active project.
 Use it to tailor analysis, drafting, and guidance to this specific submission.
 ${projectCtx}
 ---`);
+    }
+
+    // AnA Wisdom Context — accumulated intelligence from the wisdom engine
+    if (wisdomBlock) {
+      const wisdomLines: string[] = [];
+
+      if (wisdomBlock.projectRisks.length > 0) {
+        const riskList = wisdomBlock.projectRisks
+          .map(r => `- [${r.severity.toUpperCase()}] ${r.description}`)
+          .join('\n');
+        wisdomLines.push(`**Active Risks:**\n${riskList}`);
+      }
+
+      if (wisdomBlock.projectLesson) {
+        wisdomLines.push(`**Lesson Learned:** ${wisdomBlock.projectLesson}`);
+      }
+
+      if (wisdomBlock.clientPattern) {
+        wisdomLines.push(`**Client Pattern:** ${wisdomBlock.clientPattern}`);
+      }
+
+      if (wisdomBlock.platformInsight) {
+        wisdomLines.push(`**Platform Insight:** ${wisdomBlock.platformInsight}`);
+      }
+
+      if (wisdomBlock.recommendedNextAction) {
+        wisdomLines.push(`**Recommended Action:** ${wisdomBlock.recommendedNextAction}`);
+      }
+
+      if (wisdomLines.length > 0) {
+        parts.push(`
+---
+## AnA Wisdom (Learned Intelligence — v${wisdomBlock.engineVersion})
+Use these accumulated insights to guide responses proactively.
+${wisdomLines.join('\n')}
+---`);
+      }
     }
 
     return parts.join('\n');
