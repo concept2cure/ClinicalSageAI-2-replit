@@ -436,16 +436,35 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     }
   }
 
-  // 8f. Inject proactive intelligence surfacing protocol + intelligence usage directives
+  // 8f. Inject proactive intelligence surfacing protocol + intelligence usage directives + citation protocol
   systemPrompt += `
 
 ## USING INJECTED INTELLIGENCE
-When you receive PROJECT INTELLIGENCE PROFILE, REGULATORY INTELLIGENCE CONTEXT, or USER FEEDBACK PATTERNS sections above, you MUST:
+When you receive PROJECT INTELLIGENCE PROFILE, REGULATORY INTELLIGENCE CONTEXT, PERSISTENT MEMORY CONTEXT, or USER FEEDBACK PATTERNS sections above, you MUST:
 1. Reference specific items from these sections in your responses when relevant
 2. Never contradict a documented decision without flagging the contradiction
-3. Cite the source when referencing memory atoms (e.g., "per the project's risk assessment...")
+3. Cite sources using the Evidence Citation Protocol below
 4. Adjust recommendation confidence based on evidence sufficiency scores
 5. When readiness is low for a section, lead with what's missing before addressing the user's question
+
+## EVIDENCE CITATION PROTOCOL
+When your response draws on specific knowledge from the injected context above, cite the source inline using this format:
+
+- For memory atoms: [Source: {category} — {title}]
+- For readiness scores: [Readiness: {section} at {score}%]
+- For regulatory signals: [Signal: {type} — {description}]
+- For precedent data: [Precedent: {case/decision reference}]
+- For project decisions: [Decision: {decision summary}]
+- For risk factors: [Risk: {severity} — {risk description}]
+- For learned insights: [Insight: {insight summary}]
+
+Citation rules:
+1. Cite when making specific factual claims derived from injected context, not for general regulatory knowledge
+2. Maximum 3 citations per response — do not over-cite
+3. Place citations at the end of the relevant sentence or paragraph, not mid-sentence
+4. If no specific source exists for a claim, say "Based on general regulatory practice" — never fabricate a citation
+5. When confidence is below 70%, explicitly state: "This recommendation has moderate confidence — {reason}"
+6. Memory atoms injected above use the format [category | "title"] — use those values in your citations
 
 ## PROACTIVE INTELLIGENCE PROTOCOL
 You are expected to proactively surface relevant intelligence when contextually appropriate. Do NOT wait to be asked. Specifically:
@@ -593,9 +612,9 @@ export async function preloadRIMContext(
     if (parts.length === 0) return '';
 
     return (
-      `## REGULATORY INTELLIGENCE CONTEXT\n` +
+      `## REGULATORY INTELLIGENCE CONTEXT (cite as [Readiness: section at score%] or [Signal: type — description])\n` +
       parts.join('\n\n') +
-      `\n\nUse this intelligence to inform your response. Flag sections with low readiness. Reference specific signals when making recommendations.`
+      `\n\nUse this intelligence to inform your response. Flag sections with low readiness. When citing readiness scores or signals, use the Evidence Citation Protocol format.`
     );
   } catch (e: unknown) {
     console.warn(
@@ -1623,7 +1642,7 @@ function formatProjectIntelligenceBlock(profile: ProjectIntelligenceSummary): st
 
   // Closing directive
   parts.push('');
-  parts.push('Use this profile to maintain continuity. Reference known risks and open questions proactively. Do not repeat recommendations that contradict prior decisions.');
+  parts.push('Use this profile to maintain continuity. Reference known risks and open questions proactively. Do not repeat recommendations that contradict prior decisions. When citing items from this profile, use the Evidence Citation Protocol format: [Risk: severity — description], [Decision: summary], [Insight: summary].');
 
   return parts.join('\n');
 }
