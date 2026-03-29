@@ -23,6 +23,7 @@ import {
   LineChart, 
   Line
 } from 'recharts';
+// @ts-expect-error -- .jsx module has no type declarations
 import VaultMetadataPanel from './VaultMetadataPanel';
 
 // Types for API responses and component props

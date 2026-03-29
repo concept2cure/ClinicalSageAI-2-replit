@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactDiffViewer from '../lightweight-wrappers.js';
+// @ts-expect-error -- .jsx module has no type declarations
 import { useToast } from '../App';
 
 // Define DiffType enum since it's not exported from the library

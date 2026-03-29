@@ -84,6 +84,7 @@ export default function ProtocolAnalyzer() {
   const [file, setFile] = useState<File | null>(null);
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(null);
+  const [filteredLiterature, setFilteredLiterature] = useState<AcademicCitation[] | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -106,9 +107,7 @@ export default function ProtocolAnalyzer() {
   // Upload and analyze protocol mutation
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const response = await apiRequest('POST', '/api/protocol-analyses/upload', formData, {
-        disableContentType: true,
-      });
+      const response = await apiRequest('POST', '/api/protocol-analyses/upload', formData);
       return await response.json();
     },
     onSuccess: (data) => {
@@ -132,9 +131,7 @@ export default function ProtocolAnalyzer() {
   // Export report as PDF
   const exportMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await apiRequest('GET', `/api/protocol-analyses/${id}/export-pdf`, null, {
-        responseType: 'blob',
-      });
+      const response = await apiRequest('GET', `/api/protocol-analyses/${id}/export-pdf`);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -527,47 +524,36 @@ export default function ProtocolAnalyzer() {
                       onValueChange={(value) => {
                         const sortedLiterature = [...(currentAnalysis.assessment.academicLiterature || [])];
                         if (value === "relevance") {
-                          sortedLiterature.sort((a, b) => (b.relevance_score || 0) - (a.relevance_score || 0));
+                          sortedLiterature.sort((a: AcademicCitation, b: AcademicCitation) => (b.relevance_score || 0) - (a.relevance_score || 0));
                         } else if (value === "citations") {
-                          sortedLiterature.sort((a, b) => (b.citation_count || 0) - (a.citation_count || 0));
+                          sortedLiterature.sort((a: AcademicCitation, b: AcademicCitation) => (b.citation_count || 0) - (a.citation_count || 0));
                         } else if (value === "year") {
-                          sortedLiterature.sort((a, b) => parseInt(b.year) - parseInt(a.year));
+                          sortedLiterature.sort((a: AcademicCitation, b: AcademicCitation) => parseInt(b.year) - parseInt(a.year));
                         } else if (value === "regulatory") {
                           // Prioritize papers with global regulatory relevance in their title or abstract
-                          sortedLiterature.sort((a, b) => {
-                            // Create an array of global regulatory terms to search for
+                          sortedLiterature.sort((a: AcademicCitation, b: AcademicCitation) => {
                             const regulatoryTerms = [
-                              'regulatory', 'regulation', 'regulator', 'fda', 'ema', 'mhra', 'tga', 
+                              'regulatory', 'regulation', 'regulator', 'fda', 'ema', 'mhra', 'tga',
                               'pmda', 'health canada', 'anvisa', 'cdsco', 'nmpa', 'kfda', 'sfda',
                               'ich', 'guidance', 'guideline', 'compliance', 'approval', 'submission',
                               'investigator brochure', 'drug approval', 'marketing authorization'
                             ];
-                            
-                            // Check if paper contains regulatory terms and count occurrences
-                            const countRegTerms = (text) => {
+
+                            const countRegTerms = (text: string | undefined) => {
                               if (!text) return 0;
                               const lowerText = text.toLowerCase();
-                              return regulatoryTerms.reduce((count, term) => 
+                              return regulatoryTerms.reduce((count, term) =>
                                 count + (lowerText.includes(term) ? 1 : 0), 0);
                             };
-                            
+
                             const aRegScore = countRegTerms(a.title) * 2 + countRegTerms(a.abstract);
                             const bRegScore = countRegTerms(b.title) * 2 + countRegTerms(b.abstract);
-                            
-                            // First sort by regulatory score, then by relevance score
+
                             return bRegScore - aRegScore || (b.relevance_score || 0) - (a.relevance_score || 0);
                           });
                         }
-                        
-                        // Create a shallow copy of currentAnalysis to trigger a re-render
-                        const updatedAnalysis = {
-                          ...currentAnalysis,
-                          assessment: {
-                            ...currentAnalysis.assessment,
-                            academicLiterature: sortedLiterature
-                          }
-                        };
-                        setCurrentAnalysis(updatedAnalysis);
+
+                        setFilteredLiterature(sortedLiterature);
                       }}
                     >
                       <SelectTrigger className="w-[180px]">
@@ -586,31 +572,17 @@ export default function ProtocolAnalyzer() {
                       className="w-[200px]"
                       onChange={(e) => {
                         const searchTerm = e.target.value.toLowerCase();
-                        // Filter literature based on the search term
-                        // Create a shallow copy of currentAnalysis to trigger a re-render
                         if (searchTerm) {
-                          const filteredLiterature = (currentAnalysis.assessment.academicLiterature || [])
-                            .filter(citation => 
-                              citation.title.toLowerCase().includes(searchTerm) || 
+                          const filtered = (currentAnalysis.assessment.academicLiterature || [])
+                            .filter((citation: AcademicCitation) =>
+                              citation.title.toLowerCase().includes(searchTerm) ||
                               citation.abstract?.toLowerCase().includes(searchTerm) ||
                               citation.authors.toLowerCase().includes(searchTerm) ||
                               citation.journal.toLowerCase().includes(searchTerm)
                             );
-                            
-                          const updatedAnalysis = {
-                            ...currentAnalysis,
-                            assessment: {
-                              ...currentAnalysis.assessment,
-                              academicLiterature: filteredLiterature
-                            }
-                          };
-                          setCurrentAnalysis(updatedAnalysis);
+                          setFilteredLiterature(filtered);
                         } else {
-                          // Reset to original data when search term is empty
-                          const originalAnalysis = assessments.find(a => a.id === currentAnalysisId);
-                          if (originalAnalysis) {
-                            setCurrentAnalysis(originalAnalysis);
-                          }
+                          setFilteredLiterature(null);
                         }
                       }}
                     />
@@ -619,11 +591,7 @@ export default function ProtocolAnalyzer() {
                       variant="outline" 
                       size="sm"
                       onClick={() => {
-                        // Reset to original data
-                        const originalAnalysis = assessments.find(a => a.id === currentAnalysisId);
-                        if (originalAnalysis) {
-                          setCurrentAnalysis(originalAnalysis);
-                        }
+                        setFilteredLiterature(null);
                       }}
                     >
                       <RotateCcw className="h-4 w-4 mr-2" />

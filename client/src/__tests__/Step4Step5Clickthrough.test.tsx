@@ -205,8 +205,8 @@ describe('Step 4 click-throughs', () => {
 
   test('Concept workflow timeline steps are clickable', () => {
     const steps = [
-      { id: 'step-1', name: 'Draft', status: 'IN_PROGRESS', stepType: 'TASK', order: 1, isRequired: true },
-      { id: 'step-2', name: 'Review', status: 'READY', stepType: 'REVIEW', order: 2, isRequired: true },
+      { id: 'step-1', name: 'Draft', status: 'IN_PROGRESS' as const, stepType: 'TASK' as const, order: 1, isRequired: true },
+      { id: 'step-2', name: 'Review', status: 'READY' as const, stepType: 'REVIEW' as const, order: 2, isRequired: true },
     ];
 
     render(
@@ -283,7 +283,7 @@ describe('Step 5 click-throughs', () => {
         submissionType="510K"
         workflowStep={2}
         totalSteps={5}
-        dataBridges={[{ id: 'bridge-1', sourceModule: 'predicate_finder', status: 'available', itemCount: 5, preview: 'Predicate data' }]}
+        dataBridges={[{ id: 'bridge-1', sourceModule: 'predicate_finder' as const, targetDocumentId: 'doc-1', dataType: 'predicate_devices' as const, dataLabel: 'Predicate Devices', status: 'available' as const, itemCount: 5, preview: 'Predicate data' }]}
         complianceScore={60}
         totalClaims={4}
         supportedClaims={1}
@@ -301,7 +301,7 @@ describe('Step 5 click-throughs', () => {
   test('ComplianceGuardian compact toggle works', () => {
     render(
       <ComplianceGuardian
-        document={{ id: 'doc-1', title: 'Test Doc', content: 'Short content', complianceStatus: 'needs-attention', complianceScore: 70 }}
+        document={{ id: 'doc-1', title: 'Test Doc', type: '510k_summary' as const, status: 'draft' as const, content: 'Short content', lastEditedBy: 'User', lastEditedAt: new Date(), completionPercent: 30, nextActions: [], blockers: [], complianceStatus: 'needs-attention' as const, complianceScore: 70 }}
         submissionType="510K"
         totalClaims={2}
         supportedClaims={1}

@@ -65,15 +65,14 @@ export default function INDNarrativeModule({ organizationId }: { organizationId:
 
   // Generate protocol mutation
   const generateProtocolMutation = useMutation({
-    mutationFn: (params: any) => 
-      apiRequest('/api/foresight-ai/protocol/generate', {
-        method: 'POST',
-        body: JSON.stringify(params)
-      }),
-    onSuccess: (data) => {
+    mutationFn: async (params: any) => {
+      const res = await apiRequest('POST', '/api/foresight-ai/protocol/generate', params);
+      return res.json();
+    },
+    onSuccess: (data: any) => {
       setSelectedNarrative(data.protocol.id);
-      queryClient.invalidateQueries({ 
-        queryKey: ['/api/foresight-ai/ind-narratives'] 
+      queryClient.invalidateQueries({
+        queryKey: ['/api/foresight-ai/ind-narratives']
       });
     }
   });

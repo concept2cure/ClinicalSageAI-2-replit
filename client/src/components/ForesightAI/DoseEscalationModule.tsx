@@ -75,26 +75,24 @@ export default function DoseEscalationModule({ organizationId }: { organizationI
 
   // Create or optimize dose escalation study
   const optimizeMutation = useMutation({
-    mutationFn: (params: any) => 
-      apiRequest('/api/foresight-ai/dose-escalation/optimize', {
-        method: 'POST',
-        body: JSON.stringify(params)
-      }),
-    onSuccess: (data) => {
+    mutationFn: async (params: any) => {
+      const res = await apiRequest('POST', '/api/foresight-ai/dose-escalation/optimize', params);
+      return res.json();
+    },
+    onSuccess: (data: any) => {
       setStudyId(data.studyId);
-      queryClient.invalidateQueries({ 
-        queryKey: ['/api/foresight-ai/dose-escalation/studies'] 
+      queryClient.invalidateQueries({
+        queryKey: ['/api/foresight-ai/dose-escalation/studies']
       });
     }
   });
 
   // Report DLT mutation
   const reportDLTMutation = useMutation({
-    mutationFn: (params: any) => 
-      apiRequest('/api/foresight-ai/dose-escalation/report-dlt', {
-        method: 'POST',
-        body: JSON.stringify(params)
-      }),
+    mutationFn: async (params: any) => {
+      const res = await apiRequest('POST', '/api/foresight-ai/dose-escalation/report-dlt', params);
+      return res.json();
+    },
     onSuccess: () => {
       setShowDLTForm(false);
       queryClient.invalidateQueries({ 

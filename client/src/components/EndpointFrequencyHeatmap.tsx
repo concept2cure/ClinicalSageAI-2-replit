@@ -9,12 +9,14 @@ type HeatMapProps = {
   xLabels: string[];
   yLabels: string[];
   data: number[][];
+  square?: boolean;
   squares?: boolean;
   onClick?: (x: number, y: number) => void;
   cellStyle?: (background: any, value: any, x: number, y: number) => React.CSSProperties;
   cellRender?: (value: any) => React.ReactNode;
   xLabelsStyle?: (index: number) => React.CSSProperties;
   yLabelsStyle?: (index: number) => React.CSSProperties;
+  [key: string]: any;
 };
 
 interface EndpointData {

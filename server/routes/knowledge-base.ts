@@ -21,7 +21,18 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { authenticateToken } from '../middleware/auth.js';
-import { Document, Packer, Paragraph, HeadingLevel, TextRun, AlignmentType } from 'docx';
+import {
+  Document,
+  Packer,
+  Paragraph,
+  HeadingLevel,
+  TextRun,
+  AlignmentType,
+  Table as DocxTable,
+  TableRow as DocxTableRow,
+  TableCell as DocxTableCell,
+  WidthType,
+} from 'docx';
 import { db } from '../db.js';
 import { eq, desc } from 'drizzle-orm';
 import { cmcProjects, drugSubstances, drugProducts } from '../../shared/cmc-schema.js';
@@ -174,12 +185,219 @@ interface DocxSection {
   sectionCode?: string;
 }
 
+/**
+ * Decode common HTML entities to plain text.
+ */
+function decodeHtmlEntities(html: string): string {
+  return html
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#(\d+);/g, (_: string, n: string) => String.fromCharCode(parseInt(n, 10)));
+}
+
+/**
+ * Parse inline HTML into formatted TextRun[] preserving bold/italic/underline/etc.
+ */
+function parseInlineHtml(html: string): TextRun[] {
+  const runs: TextRun[] = [];
+  const tagStack: string[] = [];
+  let i = 0;
+  let textBuf = '';
+
+  const flushText = (): void => {
+    if (textBuf) {
+      const decoded = decodeHtmlEntities(textBuf);
+      if (decoded.trim() || decoded === ' ') {
+        const opts: Record<string, unknown> = { text: decoded };
+        for (const tag of tagStack) {
+          const t = tag.toLowerCase();
+          if (t === 'strong' || t === 'b') opts.bold = true;
+          if (t === 'em' || t === 'i') opts.italics = true;
+          if (t === 'u') opts.underline = { type: 'single' };
+          if (t === 's' || t === 'del' || t === 'strike') opts.strike = true;
+          if (t === 'sup') opts.superScript = true;
+          if (t === 'sub') opts.subScript = true;
+          if (t === 'mark') opts.shading = { fill: 'FFFF00' };
+        }
+        runs.push(new TextRun(opts as any));
+      }
+      textBuf = '';
+    }
+  };
+
+  while (i < html.length) {
+    if (html[i] === '<') {
+      const end = html.indexOf('>', i);
+      if (end === -1) { textBuf += html[i]; i++; continue; }
+      const tagFull = html.slice(i + 1, end).trim();
+      const isClosing = tagFull.startsWith('/');
+      const tagName = (isClosing ? tagFull.slice(1) : tagFull.split(/[\s/]/)[0]).toLowerCase();
+      if (tagName === 'br') { flushText(); runs.push(new TextRun({ break: 1 } as any)); i = end + 1; continue; }
+      if (['img', 'hr', 'input'].includes(tagName) || tagFull.endsWith('/')) { i = end + 1; continue; }
+      if (['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'ul', 'ol',
+        'table', 'tr', 'td', 'th', 'thead', 'tbody', 'blockquote', 'pre', 'code'].includes(tagName)) {
+        i = end + 1; continue;
+      }
+      flushText();
+      if (isClosing) {
+        const idx = tagStack.lastIndexOf(tagName);
+        if (idx !== -1) tagStack.splice(idx, 1);
+      } else {
+        tagStack.push(tagName);
+      }
+      i = end + 1;
+    } else {
+      textBuf += html[i];
+      i++;
+    }
+  }
+  flushText();
+  return runs.length > 0 ? runs : [new TextRun({ text: '' })];
+}
+
+/**
+ * Parse HTML content into DOCX paragraph/table elements, preserving formatting.
+ */
+function htmlToDocxElements(html: string): (Paragraph | DocxTable)[] {
+  const elements: (Paragraph | DocxTable)[] = [];
+  let processed = html;
+
+  // Extract tables first (complex nested structure)
+  const tablePlaceholders: DocxTable[] = [];
+  const tableRegex = /<table[^>]*>([\s\S]*?)<\/table>/gi;
+  processed = processed.replace(tableRegex, (_: string, tableContent: string) => {
+    const rows: DocxTableRow[] = [];
+    const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+    let rowMatch;
+    while ((rowMatch = rowRegex.exec(tableContent)) !== null) {
+      const cells: DocxTableCell[] = [];
+      const cellRegex = /<(td|th)[^>]*>([\s\S]*?)<\/\1>/gi;
+      let cellMatch;
+      while ((cellMatch = cellRegex.exec(rowMatch[1])) !== null) {
+        const isHeader = cellMatch[1].toLowerCase() === 'th';
+        const cellRuns = isHeader
+          ? parseInlineHtml(`<strong>${cellMatch[2]}</strong>`)
+          : parseInlineHtml(cellMatch[2]);
+        cells.push(new DocxTableCell({
+          children: [new Paragraph({ children: cellRuns })],
+          width: { size: 100, type: WidthType.AUTO },
+        }));
+      }
+      if (cells.length > 0) {
+        rows.push(new DocxTableRow({ children: cells }));
+      }
+    }
+    if (rows.length > 0) {
+      tablePlaceholders.push(new DocxTable({
+        rows,
+        width: { size: 100, type: WidthType.PERCENTAGE },
+      }));
+      return `\n__TABLE_${tablePlaceholders.length - 1}__\n`;
+    }
+    return '';
+  });
+
+  // Split remaining content by block-level closing tags
+  const lines = processed
+    .replace(/<\/(p|div|h[1-6]|blockquote|pre|li)>/gi, '\n')
+    .split('\n');
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) continue;
+
+    // Table placeholder
+    const tableMatch = line.match(/^__TABLE_(\d+)__$/);
+    if (tableMatch) {
+      const idx = parseInt(tableMatch[1], 10);
+      if (tablePlaceholders[idx]) elements.push(tablePlaceholders[idx]);
+      continue;
+    }
+
+    // Headings (h1-h4)
+    const hMatch = line.match(/^<h([1-6])([^>]*)>([\s\S]*?)$/i);
+    if (hMatch) {
+      const level = parseInt(hMatch[1], 10);
+      const headingMap: Record<number, (typeof HeadingLevel)[keyof typeof HeadingLevel]> = {
+        1: HeadingLevel.HEADING_1, 2: HeadingLevel.HEADING_2,
+        3: HeadingLevel.HEADING_3, 4: HeadingLevel.HEADING_4,
+      };
+      const alignMatch = (hMatch[2] || '').match(/text-align:\s*(center|right|justify)/i);
+      const alignment = alignMatch
+        ? ({ center: AlignmentType.CENTER, right: AlignmentType.RIGHT, justify: AlignmentType.JUSTIFIED } as any)[alignMatch[1].toLowerCase()]
+        : undefined;
+      elements.push(new Paragraph({
+        children: parseInlineHtml(hMatch[3]),
+        heading: headingMap[level] || HeadingLevel.HEADING_4,
+        spacing: { before: level === 1 ? 400 : 240, after: 120 },
+        ...(alignment ? { alignment } : {}),
+      }));
+      continue;
+    }
+
+    // Blockquote
+    if (line.match(/^<blockquote/i)) {
+      const content = line.replace(/<\/?blockquote[^>]*>/gi, '').replace(/<\/?p[^>]*>/gi, '');
+      const bqRuns = parseInlineHtml(`<em>${content}</em>`);
+      elements.push(new Paragraph({
+        children: bqRuns,
+        indent: { left: 720 },
+        spacing: { before: 120, after: 120 },
+      }));
+      continue;
+    }
+
+    // List items
+    const liMatch = line.match(/^<li[^>]*>([\s\S]*?)$/i);
+    if (liMatch) {
+      elements.push(new Paragraph({
+        children: parseInlineHtml(liMatch[1]),
+        bullet: { level: 0 },
+        spacing: { after: 60 },
+      }));
+      continue;
+    }
+
+    // Horizontal rule
+    if (line.match(/^<hr/i)) {
+      elements.push(new Paragraph({
+        children: [new TextRun({ text: '\u2500'.repeat(60), color: 'CCCCCC', size: 16 })],
+        spacing: { before: 200, after: 200 },
+      }));
+      continue;
+    }
+
+    // Regular paragraph
+    const pMatch = line.match(/^<p([^>]*)>([\s\S]*?)$/i);
+    const content = pMatch ? pMatch[2] : line.replace(/<[/]?(?:div|span)[^>]*>/gi, '');
+    const stripped = content.replace(/<[^>]*>/g, '').trim();
+    if (!stripped) continue;
+
+    const alignMatch = pMatch ? (pMatch[1] || '').match(/text-align:\s*(center|right|justify)/i) : null;
+    const alignment = alignMatch
+      ? ({ center: AlignmentType.CENTER, right: AlignmentType.RIGHT, justify: AlignmentType.JUSTIFIED } as any)[alignMatch[1].toLowerCase()]
+      : undefined;
+
+    elements.push(new Paragraph({
+      children: parseInlineHtml(content),
+      spacing: { after: 120 },
+      ...(alignment ? { alignment } : {}),
+    }));
+  }
+
+  return elements;
+}
+
 async function renderDocxNodeFallback(
   title: string,
   sections: DocxSection[],
   submissionType?: string
 ): Promise<Buffer> {
-  const children: Paragraph[] = [];
+  const children: (Paragraph | DocxTable)[] = [];
 
   // Title page
   children.push(
@@ -221,7 +439,7 @@ async function renderDocxNodeFallback(
     })
   );
 
-  // Render each section
+  // Render each section with formatting-aware HTML parsing
   for (const section of sections) {
     children.push(
       new Paragraph({
@@ -247,21 +465,8 @@ async function renderDocxNodeFallback(
       );
     }
 
-    // Strip HTML tags and render text
-    const plainText = (section.content || '')
-      .replace(/<[^>]*>/g, '\n')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"');
-
-    const lines = plainText
-      .split('\n')
-      .map((l: string) => l.trim())
-      .filter(Boolean);
-
-    if (lines.length === 0) {
+    const content = section.content || '';
+    if (!content.trim() || content.trim() === '<p></p>') {
       children.push(
         new Paragraph({
           children: [
@@ -270,9 +475,8 @@ async function renderDocxNodeFallback(
         })
       );
     } else {
-      for (const line of lines) {
-        children.push(new Paragraph({ text: line, spacing: { after: 120 } }));
-      }
+      const docxElements = htmlToDocxElements(content);
+      children.push(...docxElements);
     }
   }
 

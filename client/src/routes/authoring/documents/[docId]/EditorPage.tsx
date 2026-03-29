@@ -3,19 +3,33 @@ import { useRoute } from 'wouter';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from 'react-resizable-panels';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Save, Settings, Eye, Share2, Clock, MapPin } from 'lucide-react';
 import DossierTree from './DossierTree';
 import EditorCanvas from './EditorCanvas';
 import GuidancePanel from './RightRail/GuidancePanel';
-import DataPanel from './RightRail/DataPanel';
-import CitationsPanel from './RightRail/CitationsPanel';
-import HistoryPanel from './RightRail/HistoryPanel';
-import CompareVersionsModal from './Modals/CompareVersionsModal';
-import SignApproveModal from './Modals/SignApproveModal';
-import InsertStructuredBlockModal from './Modals/InsertStructuredBlockModal';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+// RightRail panels and Modals not yet built — inline stubs
+function DataPanel(_props: { documentId?: string; productName?: string }) {
+  return <div className="p-4 text-sm text-muted-foreground">Data panel — not yet implemented.</div>;
+}
+function CitationsPanel(_props: { documentId?: string }) {
+  return <div className="p-4 text-sm text-muted-foreground">Citations panel — not yet implemented.</div>;
+}
+function HistoryPanel(_props: { documentId?: string }) {
+  return <div className="p-4 text-sm text-muted-foreground">History panel — not yet implemented.</div>;
+}
+function CompareVersionsModal(_props: { open: boolean; onClose: () => void; documentId?: string }) {
+  return null;
+}
+function SignApproveModal(_props: { open: boolean; onClose: () => void; document: any }) {
+  return null;
+}
+function InsertStructuredBlockModal(_props: { open: boolean; onClose: () => void; onInsert: (blockType: string) => void }) {
+  return null;
+}
 
 interface Document {
   id: string;
@@ -30,7 +44,7 @@ interface Document {
 
 export default function EditorPage() {
   const [match, params] = useRoute('/authoring/documents/:docId/editor');
-  const { docId } = params || {};
+  const { docId = '' } = params || {};
   const [document, setDocument] = useState<Document | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('guidance');

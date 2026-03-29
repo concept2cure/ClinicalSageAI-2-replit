@@ -7,6 +7,7 @@ import { TaskList } from '@tiptap/extension-task-list';
 import { TaskItem } from '@tiptap/extension-task-item';
 import { Mention } from '@tiptap/extension-mention';
 import CharacterCount from '@tiptap/extension-character-count';
+// @ts-expect-error — @tiptap/react/menus may not resolve in all TS configurations
 import { BubbleMenu, FloatingMenu } from '@tiptap/react/menus';
 import {
   Bold,
@@ -25,11 +26,12 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { ValidationPlugin } from '../plugins/validationPlugin';
-import { CitationsPlugin } from '../plugins/citationsPlugin';
-import { PlaceholdersPlugin } from '../plugins/placeholdersPlugin';
-import { RedlinePlugin } from '../plugins/redlinePlugin';
-import { RegionTerminologyPlugin } from '../plugins/regionTerminologyPlugin';
+// Plugins are not yet built — stubbed out to avoid TS errors
+// import { ValidationPlugin } from '../plugins/validationPlugin';
+// import { CitationsPlugin } from '../plugins/citationsPlugin';
+// import { PlaceholdersPlugin } from '../plugins/placeholdersPlugin';
+// import { RedlinePlugin } from '../plugins/redlinePlugin';
+// import { RegionTerminologyPlugin } from '../plugins/regionTerminologyPlugin';
 
 interface EditorCanvasProps {
   content: string;
@@ -100,22 +102,22 @@ export default function EditorCanvas({
         },
       }),
       CharacterCount,
-      // Custom plugins for CMC features
-      ValidationPlugin.configure({
-        region,
-        onValidationUpdate: setValidationIssues,
-        onValidationStart: () => setIsValidating(true),
-        onValidationComplete: () => setIsValidating(false),
-      }),
-      CitationsPlugin,
-      PlaceholdersPlugin.configure({
-        productName,
-        region,
-      }),
-      RedlinePlugin,
-      RegionTerminologyPlugin.configure({
-        region,
-      }),
+      // Custom plugins for CMC features — not yet built, enable when available
+      // ValidationPlugin.configure({
+      //   region,
+      //   onValidationUpdate: setValidationIssues,
+      //   onValidationStart: () => setIsValidating(true),
+      //   onValidationComplete: () => setIsValidating(false),
+      // }),
+      // CitationsPlugin,
+      // PlaceholdersPlugin.configure({
+      //   productName,
+      //   region,
+      // }),
+      // RedlinePlugin,
+      // RegionTerminologyPlugin.configure({
+      //   region,
+      // }),
     ],
     content: content || getInitialTemplate(region),
     onUpdate: ({ editor }) => {

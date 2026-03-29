@@ -3,7 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Database, FileText, BookOpen, Activity, BrainCircuit } from 'lucide-react';
 import { trialsageApi } from '@/lib/api-connector';
 import StatCard from './StatCard';
+// @ts-expect-error -- .jsx module has no type declarations
 import BenchmarksModal from './BenchmarksModal';
+// @ts-expect-error -- .jsx module has no type declarations
 import InsightsModal from './InsightsModal';
 
 interface CsrIntelligenceStatsProps {
