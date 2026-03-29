@@ -1245,8 +1245,24 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // ── P2: Navigate to section — real navigation ──
   const handleNavigateToSection = useCallback((sectionCode: string) => {
     setActiveSectionCode(sectionCode);
-    setLayoutMode('section-workspace');
-  }, []);
+    const moduleNum = sectionCode.charAt(0);
+    const match = projectArtifacts.find((a: any) =>
+      a.ctdSection === sectionCode ||
+      a.ctdSection === `csr-${sectionCode}` ||
+      a.ctdSection === `m${moduleNum}-${sectionCode}`
+    );
+    if (match) {
+      setOpenArtifactId(match.id);
+    } else {
+      setPendingEditorContent({
+        title: `Section ${sectionCode}`,
+        content: '',
+        ctdSection: sectionCode,
+      });
+    }
+    setRiViewMode('editor');
+    setLayoutMode('regulatory-workspace');
+  }, [projectArtifacts]);
 
   // ── P2: Open artifact — real navigation ──
   const handleOpenArtifact = useCallback((artifactId: string) => {
@@ -2677,7 +2693,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   <ArtifactsPage
                     onOpenArtifact={(projectId, artifactId) => {
                       setActiveProjectId(projectId);
-                      setLayoutMode('documents');
+                      setOpenArtifactId(artifactId);
+                      setRiViewMode('editor');
+                      setLayoutMode('regulatory-workspace');
                     }}
                   />
                 </Suspense>
@@ -2963,7 +2981,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 }}
                 onOpenArtifact={artifactId => {
                   setOpenArtifactId(artifactId);
-                  setLayoutMode('editor');
+                  setRiViewMode('editor');
+                  setLayoutMode('regulatory-workspace');
                 }}
               />
             </div>
@@ -3373,11 +3392,32 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 </div>
                 <TemplateLibraryView
                   onSelectTemplate={(template) => {
-                    // Navigate to section workspace with template context
-                    if (template.ctdSection) {
-                      setActiveSectionCode(template.ctdSection);
+                    const sectionCode = template.ctdSection;
+                    if (sectionCode) {
+                      setActiveSectionCode(sectionCode);
+                      const moduleNum = sectionCode.charAt(0);
+                      const match = projectArtifacts.find((a: any) =>
+                        a.ctdSection === sectionCode ||
+                        a.ctdSection === `csr-${sectionCode}` ||
+                        a.ctdSection === `m${moduleNum}-${sectionCode}`
+                      );
+                      if (match) {
+                        setOpenArtifactId(match.id);
+                      } else {
+                        setPendingEditorContent({
+                          title: template.name,
+                          content: '',
+                          ctdSection: sectionCode,
+                        });
+                      }
+                    } else {
+                      setPendingEditorContent({
+                        title: template.name,
+                        content: '',
+                      });
                     }
-                    setLayoutMode('section-workspace');
+                    setRiViewMode('editor');
+                    setLayoutMode('regulatory-workspace');
                   }}
                   onClose={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
                 />
