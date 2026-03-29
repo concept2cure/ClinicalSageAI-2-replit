@@ -336,7 +336,7 @@ const CONTEXT_DOMAIN_MAP: Record<string, string[]> = {
   'projects':           ['project-status', 'recommendations', 'risk', 'dossier'],
 
   // Editor / authoring
-  'submission-builder': ['authoring', 'doc-lifecycle', 'recommendations', 'risk'],
+  'submission-builder': ['authoring', 'doc-lifecycle', 'multi-agency-strategy', 'recommendations', 'risk'],
   'editor':             ['authoring', 'doc-lifecycle', 'recommendations', 'risk'],
   'ri-copilot':         ['authoring', 'risk', 'strategy', 'recommendations'],
 
