@@ -24,6 +24,10 @@ import { PMDAConnector } from './pmda-reviews.js';
 import { NMPACDEConnector } from './nmpa-cde.js';
 import { VeevaVaultConnector } from './veeva-vault.js';
 import { MedidataRaveConnector } from './medidata-rave.js';
+import { SharePointConnector } from './sharepoint.js';
+import { FHIRR4Connector } from './fhir-r4.js';
+import { OneDriveConnector } from './onedrive.js';
+import { GoogleDriveConnector } from './google-drive.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ENCRYPTION
@@ -71,6 +75,10 @@ function initializeConnectors(): void {
   connectors.set('nmpa_cde', new NMPACDEConnector());
   connectors.set('veeva_vault', new VeevaVaultConnector());
   connectors.set('medidata_rave', new MedidataRaveConnector());
+  connectors.set('sharepoint', new SharePointConnector());
+  connectors.set('fhir-r4', new FHIRR4Connector());
+  connectors.set('onedrive', new OneDriveConnector());
+  connectors.set('google_drive', new GoogleDriveConnector());
 }
 
 /**
