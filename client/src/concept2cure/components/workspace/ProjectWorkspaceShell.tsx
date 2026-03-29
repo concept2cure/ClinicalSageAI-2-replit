@@ -46,6 +46,7 @@ import { SubmissionAppsPanel } from './SubmissionAppsPanel';
 import { ReviewPulseDashboard } from './ReviewPulseDashboard';
 import { NotificationCenter } from './NotificationCenter';
 import { ComputeJobPanel } from '../compute/ComputeJobPanel';
+import { IndEvidenceAskPanel } from './IndEvidenceAskPanel';
 import {
   ChevronLeft,
   Loader2,
@@ -441,6 +442,18 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
   // Submission-type-aware section tree for dossier mode
   const { sections: submissionSections, readinessPercent } = useSubmissionSections(projectId, submissionType || projectType);
+  const normalizedSubmissionType = String(submissionType || projectType || '').toUpperCase();
+  const isINDWorkspace = ['IND', 'NDA', 'BLA', 'MAA'].includes(normalizedSubmissionType);
+  const nextRecommendedSection = useMemo(() => {
+    const flatten = (nodes: SectionNode[]): SectionNode[] =>
+      nodes.flatMap(n => [n, ...(n.children ? flatten(n.children) : [])]);
+    return flatten(submissionSections).find(
+      section =>
+        section.depth > 0 &&
+        section.required &&
+        (section.status === 'empty' || section.status === 'drafting')
+    );
+  }, [submissionSections]);
 
   // Convert SectionNode[] to DossierNode[] for DossierTree when submission-specific sections are available
   const submissionDossierHierarchy = useMemo<DossierNode[] | undefined>(() => {
@@ -580,6 +593,21 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       });
     });
   }, [projectId, mode]);
+
+  useEffect(() => {
+    if (!projectId || !isINDWorkspace) return;
+    setActiveLayer('document_studio');
+    setLeftRailMode('dossier');
+    if (!selectedDocId) {
+      setMode('browse');
+    }
+  }, [projectId, isINDWorkspace, selectedDocId]);
+
+  useEffect(() => {
+    if (!isINDWorkspace || selectedCtdSection || submissionSections.length === 0) return;
+    const firstLeaf = submissionSections.find(s => s.depth > 0)?.code || submissionSections[0]?.code;
+    if (firstLeaf) setSelectedCtdSection(firstLeaf);
+  }, [isINDWorkspace, selectedCtdSection, submissionSections]);
 
   // ── Load artifacts (must be defined before actOnProposal) ────────────────
   const loadArtifacts = useCallback(async () => {
@@ -1000,6 +1028,54 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     [projectId, loadArtifacts, pushShellToast]
   );
 
+  const handleCreateSectionDraftWithRI = useCallback(async () => {
+    if (!projectId || !selectedCtdSection) return;
+    setCreatingNew(true);
+    try {
+      const sectionLabel = getSectionLabel(selectedCtdSection);
+      const riContext = [
+        `Project: ${projectName || 'Untitled Project'}`,
+        `Submission Type: ${submissionType || projectType || 'IND'}`,
+        `Section Code: ${selectedCtdSection}`,
+        `Section Title: ${sectionLabel}`,
+      ].join('\n');
+      const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
+        title: `${selectedCtdSection} — ${sectionLabel}`,
+        content: `<h1>${sectionLabel}</h1><p>RI draft scaffold initialized.</p><pre>${riContext}</pre>`,
+        type: 'regulatory_document',
+        category: 'document',
+        ctdSection: selectedCtdSection,
+        metadata: {
+          draftingMode: 'ri',
+          projectId,
+          projectName: projectName || 'Untitled Project',
+          submissionType: submissionType || projectType || 'IND',
+          sectionCode: selectedCtdSection,
+          moduleCode: selectedCtdSection.split('.')[0],
+        },
+      });
+      if (!res.ok) throw new Error('Failed to create draft');
+      const payload = await res.json();
+      const created = payload.data ?? payload;
+      await loadArtifacts();
+      setSelectedDocId(created.id);
+      setMode('edit');
+      pushShellToast(`RI draft started for ${selectedCtdSection}`, 'success');
+    } catch {
+      pushShellToast('RI draft creation failed', 'error');
+    } finally {
+      setCreatingNew(false);
+    }
+  }, [
+    projectId,
+    selectedCtdSection,
+    projectName,
+    submissionType,
+    projectType,
+    loadArtifacts,
+    pushShellToast,
+  ]);
+
   // ── Placement confirmation handler ───────────────────────────────────────
   const handlePlacementConfirm = useCallback(
     async (params: PlacementConfirmation) => {
@@ -1348,10 +1424,28 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
   const handleSelectSection = useCallback((ctdSection: string, _label: string) => {
     setSelectedCtdSection(ctdSection);
-    setSelectedDocId(undefined);
-    setMode('browse');
+    const sectionArtifact = artifacts
+      .filter(
+        a => a.ctdSection === ctdSection || (a.ctdSection || '').startsWith(`${ctdSection}.`)
+      )
+      .sort((a, b) => {
+        const ta = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const tb = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return tb - ta;
+      })[0];
+    if (sectionArtifact) {
+      setSelectedDocId(sectionArtifact.id);
+      if (tryOpenForEdit(sectionArtifact.status)) {
+        setMode('edit');
+      } else {
+        setMode('browse');
+      }
+    } else {
+      setSelectedDocId(undefined);
+      setMode('browse');
+    }
     setSectionReqs(null);
-  }, []);
+  }, [artifacts, tryOpenForEdit]);
 
   const handleBackToList = useCallback(() => {
     setSelectedDocId(undefined);
@@ -1509,8 +1603,9 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         <div className={cn('overflow-hidden transition-all duration-200', showContextBars ? 'max-h-32' : 'max-h-0')}>
 
         {/* ── AnA 1.0 controlled shell layer/workbench bar ─────────────────── */}
-        <div className="flex items-center gap-3 px-4 h-11 border-b border-stone-200 bg-stone-50/70 shrink-0 overflow-x-auto">
-          <div className="text-[11px] font-semibold tracking-wide text-stone-500 uppercase whitespace-nowrap">
+        {!isINDWorkspace && (
+        <div className="flex items-center gap-3 px-4 h-11 border-b border-zinc-200 bg-zinc-50/70 shrink-0 overflow-x-auto">
+          <div className="text-[11px] font-semibold tracking-wide text-zinc-500 uppercase whitespace-nowrap">
             AnA 1.0 Shell
           </div>
           <div className="flex items-center gap-1.5">
@@ -1562,6 +1657,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             })}
           </div>
         </div>
+        )}
 
         {/* ── Canonical shell context band ─────────────────────────────────────────── */}
         <div className="flex items-center gap-2 px-4 h-9 border-b border-stone-200 bg-white/95 shrink-0">
@@ -1606,7 +1702,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 px-4 h-9 border-b border-stone-200 bg-emerald-50/40 shrink-0 overflow-x-auto">
+        {!isINDWorkspace && (
+        <div className="flex items-center gap-2 px-4 h-9 border-b border-zinc-200 bg-emerald-50/40 shrink-0 overflow-x-auto">
           <span className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wide whitespace-nowrap">
             Guided CTD Flow
           </span>
@@ -1627,10 +1724,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             </span>
           ))}
         </div>
+        )}
 
-        </div>{/* end collapsible context bars */}
-
-        <div className="flex items-center gap-1 px-4 h-9 border-b border-stone-200 bg-stone-50/70 shrink-0 overflow-x-auto">
+        {!isINDWorkspace && (
+        <div className="flex items-center gap-1 px-4 h-9 border-b border-zinc-200 bg-zinc-50/70 shrink-0 overflow-x-auto">
           {PROJECT_NAV_ITEMS.map(item => (
             <button
               key={item.id}
@@ -1689,6 +1786,64 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             </button>
           ))}
         </div>
+        )}
+
+        {isINDWorkspace && (
+          <div className="border-b border-blue-200 bg-blue-50/50 px-4 py-2.5 shrink-0">
+            <div className="flex items-center gap-2 text-xs text-blue-900">
+              <span className="font-semibold">IND / eCTD Workspace</span>
+              <span className="text-blue-300">•</span>
+              <span>Readiness {readinessPercent}%</span>
+              <span className="text-blue-300">•</span>
+              <span>
+                Next step:{' '}
+                {nextRecommendedSection
+                  ? `${nextRecommendedSection.code} ${nextRecommendedSection.title}`
+                  : selectedCtdSection
+                    ? `Open ${selectedCtdSection}`
+                    : 'Select a section'}
+              </span>
+              <div className="ml-auto flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setLeftRailMode('dossier');
+                    setMode('browse');
+                  }}
+                  className="inline-flex items-center gap-1 rounded border border-blue-200 bg-white px-2 py-1 text-[11px] font-medium text-blue-700 hover:bg-blue-100"
+                >
+                  Section tree
+                </button>
+                <button
+                  onClick={() => {
+                    if (nextRecommendedSection?.code) {
+                      setSelectedCtdSection(nextRecommendedSection.code);
+                    }
+                    setLeftRailMode('dossier');
+                    setMode('browse');
+                    setTimeout(() => {
+                      handleCreateSectionDraftWithRI();
+                    }, 0);
+                  }}
+                  className="inline-flex items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 hover:bg-emerald-100"
+                >
+                  Start next with RI
+                </button>
+                <button
+                  onClick={() => onNavigate?.('haq')}
+                  className="inline-flex items-center gap-1 rounded border border-blue-200 bg-white px-2 py-1 text-[11px] font-medium text-blue-700 hover:bg-blue-100"
+                >
+                  HAQ path
+                </button>
+                <button
+                  onClick={() => onNavigate?.('submissions')}
+                  className="inline-flex items-center gap-1 rounded border border-blue-200 bg-white px-2 py-1 text-[11px] font-medium text-blue-700 hover:bg-blue-100"
+                >
+                  Assemble/export
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Pending move banner ───────────────────────────────────────────── */}
         {pendingMove && (
@@ -1923,8 +2078,9 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         <div className="flex-1 flex min-h-0">
           {/* Left: Tree panel with mode toggle — hidden in dashboard mode for full-width layout */}
           {mode !== 'dashboard' && (
-            <div className="w-[200px] 2xl:w-[240px] border-r border-stone-200 shrink-0 flex flex-col bg-white">
-              <div className="grid grid-cols-3 gap-1 p-1.5 border-b border-stone-200 bg-white">
+            <div className="w-[200px] 2xl:w-[240px] border-r border-zinc-200 shrink-0 flex flex-col bg-white">
+              {!isINDWorkspace && (
+              <div className="grid grid-cols-3 gap-1 p-1.5 border-b border-zinc-200 bg-white">
                 {[
                   { key: 'documents' as OperatingLayer, label: 'Docs' },
                   { key: 'vault' as OperatingLayer, label: 'Vault' },
@@ -1951,9 +2107,25 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   </button>
                 ))}
               </div>
+              )}
               {/* Mode toggle tabs */}
-              <div className="flex border-b border-stone-200 shrink-0 bg-stone-50/60">
-                {[
+              <div className="flex border-b border-zinc-200 shrink-0 bg-zinc-50/60">
+                {(isINDWorkspace
+                  ? [
+                      {
+                        key: 'dossier' as LeftRailMode,
+                        icon: BookOpen,
+                        label: 'Sections',
+                        disabled: false,
+                      },
+                      {
+                        key: 'outline' as LeftRailMode,
+                        icon: List,
+                        label: 'Outline',
+                        disabled: !outlineAvailable,
+                      },
+                    ]
+                  : [
                   { key: 'files' as LeftRailMode, icon: Files, label: 'Files', disabled: false },
                   {
                     key: 'dossier' as LeftRailMode,
@@ -1979,7 +2151,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     label: 'OS',
                     disabled: false,
                   },
-                ].map(tab => (
+                  ]).map(tab => (
                   <button
                     key={tab.key}
                     onClick={() => !tab.disabled && setLeftRailMode(tab.key)}
@@ -2624,25 +2796,56 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   )}
                 </div>
               ) : mode === 'browse' ? (
-                <DocumentListPane
-                  folderLabel={browseLabel}
-                  documents={browseDocs}
-                  selectedId={selectedDocId}
-                  onSelect={handleSelectDoc}
-                  onCreateNew={() => setShowNewDoc(true)}
-                  onAIDraft={
-                    leftRailMode === 'dossier' && selectedCtdSection
-                      ? () => {
-                          // AI draft for this section — open editor with section context
-                          if (onNavigate) onNavigate('regulatory-workspace');
+                <div className="flex-1 min-h-0 flex flex-col">
+                  {isINDWorkspace && leftRailMode === 'dossier' && (
+                    <div className="px-4 pt-3">
+                      <IndEvidenceAskPanel
+                        projectId={projectId}
+                        sectionCode={selectedCtdSection}
+                        sectionTitle={
+                          selectedCtdSection ? getSectionLabel(selectedCtdSection) : undefined
                         }
-                      : undefined
-                  }
-                  sectionAIDraftable={leftRailMode === 'dossier' && !!selectedCtdSection}
-                  onCutDocument={handleCutDocument}
-                  onCopyCtdPath={handleCopyCtdPath}
-                  onOpenPlacement={handleOpenPlacementForDoc}
-                />
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1 min-h-0">
+                    <DocumentListPane
+                      folderLabel={browseLabel}
+                      documents={browseDocs}
+                      selectedId={selectedDocId}
+                      onSelect={handleSelectDoc}
+                      onCreateNew={() => setShowNewDoc(true)}
+                      onAIDraft={
+                        leftRailMode === 'dossier' && selectedCtdSection
+                          ? handleCreateSectionDraftWithRI
+                          : undefined
+                      }
+                      onStartFromTemplate={
+                        leftRailMode === 'dossier' && selectedCtdSection
+                          ? () =>
+                              handleDialogCreateFromTemplate(
+                                'clinical-overview',
+                                `${selectedCtdSection} — ${getSectionLabel(selectedCtdSection)}`,
+                                selectedCtdSection
+                              )
+                          : undefined
+                      }
+                      onWriteManually={
+                        leftRailMode === 'dossier' && selectedCtdSection
+                          ? () =>
+                              handleDialogCreateBlank(
+                                `${selectedCtdSection} — ${getSectionLabel(selectedCtdSection)}`,
+                                selectedCtdSection
+                              )
+                          : undefined
+                      }
+                      sectionAIDraftable={leftRailMode === 'dossier' && !!selectedCtdSection}
+                      onCutDocument={handleCutDocument}
+                      onCopyCtdPath={handleCopyCtdPath}
+                      onOpenPlacement={handleOpenPlacementForDoc}
+                    />
+                  </div>
+                </div>
               ) : (
                 <div ref={editorContainerRef} className="flex-1 flex min-h-0 min-w-0">
                   <Suspense

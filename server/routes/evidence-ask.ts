@@ -13,6 +13,10 @@ import { Router, Request, Response } from 'express';
 import { authMiddleware } from '../auth';
 import { ForesightRAGService } from '../services/foresight-rag-service.js';
 import rateLimit from 'express-rate-limit';
+import {
+  getProjectIntelligence,
+  getProjectIngestedDocuments,
+} from '../services/client-intelligence-memory.js';
 
 const router = Router();
 
@@ -52,7 +56,7 @@ const askRateLimiter = rateLimit({
  *
  * Response (envelope):
  *   success: true
- *   data: { answer, sources, confidence, question }
+ *   data: { answer, sources, confidence, question, projectId }
  */
 router.post('/ask', authMiddleware, askRateLimiter, async (req: Request, res: Response) => {
   try {
@@ -70,6 +74,26 @@ router.post('/ask', authMiddleware, askRateLimiter, async (req: Request, res: Re
     const contextParts: string[] = [];
     if (projectId) {
       contextParts.push(`Project context: project ID ${projectId}`);
+      contextParts.push('Scope retrieval and answering to project-specific evidence when available.');
+      const numericProjectId = parseInt(String(projectId), 10);
+      if (!Number.isNaN(numericProjectId) && numericProjectId > 0) {
+        try {
+          const profile = await getProjectIntelligence(numericProjectId);
+          if (profile?.id) {
+            const docs = await getProjectIngestedDocuments(profile.id);
+            if (docs.length > 0) {
+              const docNames = docs
+                .slice(0, 10)
+                .map(d => d.fileName)
+                .filter(Boolean)
+                .join(', ');
+              contextParts.push(`Prioritize these uploaded project documents: ${docNames}`);
+            }
+          }
+        } catch (error) {
+          console.warn('[Evidence Ask] Failed to enrich with project-intelligence docs', error);
+        }
+      }
     }
     if (orgId) {
       contextParts.push(`Organization: ${orgId}`);
@@ -95,6 +119,7 @@ router.post('/ask', authMiddleware, askRateLimiter, async (req: Request, res: Re
       })),
       confidence: Math.round(result.confidence * 100) / 100,
       question: question.trim(),
+      projectId: projectId || null,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
