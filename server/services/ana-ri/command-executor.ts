@@ -1038,8 +1038,8 @@ export async function searchArtifacts(
         data: { results: fallback.rows, count: fallback.rows.length },
         message: `Found ${fallback.rows.length} artifact(s) matching "${params.query}".`,
       };
-    } catch (fallbackErr: any) {
-      return { success: false, action: 'search_artifacts', message: 'Search failed.', error: fallbackErr?.message };
+    } catch (fallbackErr: unknown) {
+      return { success: false, action: 'search_artifacts', message: 'Search failed.', error: fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr) };
     }
   }
 }
@@ -1805,7 +1805,7 @@ export async function revertToVersion(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Generate SAP via biostats orchestrator and save as artifact */
-export async function generateSAP(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function generateSAP(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const res = await pool.query(
       `SELECT id FROM projects WHERE id = $1 AND organization_id = $2`,
@@ -1847,7 +1847,7 @@ export async function generateSAP(ctx: CommandContext, params: any): Promise<Com
 }
 
 /** Compute sample size and power */
-export async function computeSampleSize(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function computeSampleSize(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const { compute } = await import('../ana-biostats/computation-engine.js').catch(() => ({ compute: null }));
     if (!compute) {
@@ -1877,7 +1877,7 @@ export async function computeSampleSize(ctx: CommandContext, params: any): Promi
 }
 
 /** Compute dose escalation design */
-export async function computeDoseEscalation(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function computeDoseEscalation(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const { ForesightAIEngine } = await import('../foresight-ai-engine.js').catch(() => ({ ForesightAIEngine: null }));
     if (!ForesightAIEngine) {
@@ -1897,7 +1897,7 @@ export async function computeDoseEscalation(ctx: CommandContext, params: any): P
 }
 
 /** Assess statistical defensibility */
-export async function assessDefensibility(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function assessDefensibility(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const projectId = params.projectId || ctx.activeProjectId;
     if (!projectId) return { success: false, action: 'assess_defensibility', message: 'No project context.' };
@@ -1926,7 +1926,7 @@ export async function assessDefensibility(ctx: CommandContext, params: any): Pro
 }
 
 /** Design a clinical trial */
-export async function designTrial(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function designTrial(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   return {
     success: true,
     action: 'design_trial',
@@ -1946,7 +1946,7 @@ export async function designTrial(ctx: CommandContext, params: any): Promise<Com
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Draft a CTD section using AI */
-export async function draftSection(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function draftSection(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const sectionId = params.sectionId;
     if (!sectionId) return { success: false, action: 'draft_section', message: 'sectionId required.' };
@@ -1967,7 +1967,7 @@ export async function draftSection(ctx: CommandContext, params: any): Promise<Co
 }
 
 /** Scan section for deficiencies */
-export async function scanDeficiencies(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function scanDeficiencies(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const sectionId = params.sectionId || params.artifactId;
     if (!sectionId) return { success: false, action: 'scan_deficiencies', message: 'sectionId or artifactId required.' };
@@ -1982,7 +1982,7 @@ export async function scanDeficiencies(ctx: CommandContext, params: any): Promis
 }
 
 /** Freeze a document (immutable snapshot + SHA256 hash) */
-export async function freezeDocument(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function freezeDocument(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const docId = params.docId || params.documentId;
     if (!docId) return { success: false, action: 'freeze_document', message: 'docId required.' };
@@ -2007,7 +2007,7 @@ export async function freezeDocument(ctx: CommandContext, params: any): Promise<
 }
 
 /** Sign a document (electronic signature) */
-export async function signDocument(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function signDocument(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const docId = params.docId || params.documentId;
     const meaning = params.meaning || 'APPROVER';
@@ -2023,7 +2023,7 @@ export async function signDocument(ctx: CommandContext, params: any): Promise<Co
 }
 
 /** Export document as PDF/DOCX */
-export async function exportDocument(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function exportDocument(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const docId = params.docId || params.documentId;
     const format = params.format || 'docx';
@@ -2046,7 +2046,7 @@ export async function exportDocument(ctx: CommandContext, params: any): Promise<
 }
 
 /** Generate compliance checklist for document */
-export async function generateChecklist(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function generateChecklist(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const docId = params.docId || params.documentId;
     if (!docId) return { success: false, action: 'generate_checklist', message: 'docId required.' };
@@ -2061,7 +2061,7 @@ export async function generateChecklist(ctx: CommandContext, params: any): Promi
 }
 
 /** Submit document to regulatory workflow */
-export async function submitDocument(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function submitDocument(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const docId = params.docId || params.documentId;
     if (!docId) return { success: false, action: 'submit_document', message: 'docId required.' };
@@ -2086,7 +2086,7 @@ export async function submitDocument(ctx: CommandContext, params: any): Promise<
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Search regulatory precedents by indication, submission type, or therapeutic area */
-export async function searchPrecedents(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function searchPrecedents(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const results = await precedentEngine.search({
       submissionType: params.submissionType,
@@ -2106,7 +2106,7 @@ export async function searchPrecedents(ctx: CommandContext, params: any): Promis
 }
 
 /** Analyze CRL (Complete Response Letter) trigger risks */
-export async function analyzeCRLTriggers(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function analyzeCRLTriggers(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const result = await precedentEngine.analyzeCRLTriggers({
       submissionType: params.submissionType || 'NDA',
@@ -2125,7 +2125,7 @@ export async function analyzeCRLTriggers(ctx: CommandContext, params: any): Prom
 }
 
 /** Analyze RTF (Refuse to File) trigger risks */
-export async function analyzeRTFTriggers(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function analyzeRTFTriggers(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const result = await precedentEngine.analyzeRTFTriggers({
       submissionType: params.submissionType || 'NDA',
@@ -2144,7 +2144,7 @@ export async function analyzeRTFTriggers(ctx: CommandContext, params: any): Prom
 }
 
 /** Recommend regulatory submission strategy based on precedents */
-export async function recommendStrategy(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function recommendStrategy(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const result = await precedentEngine.recommendStrategy({
       submissionType: params.submissionType,
@@ -2163,7 +2163,7 @@ export async function recommendStrategy(ctx: CommandContext, params: any): Promi
 }
 
 /** Check a regulatory claim against precedent evidence */
-export async function checkClaim(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function checkClaim(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     if (!params.claim) return { success: false, action: 'check_claim', message: 'claim text is required.' };
     const result = await precedentEngine.checkClaim(params.claim, {
@@ -2186,7 +2186,7 @@ export async function checkClaim(ctx: CommandContext, params: any): Promise<Comm
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Run full submission twin assessment (claims, evidence, drift, challenges, readiness) */
-export async function runSubmissionAssessment(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function runSubmissionAssessment(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const packageId = params.packageId;
     if (!packageId) return { success: false, action: 'run_submission_assessment', message: 'packageId is required.' };
@@ -2202,7 +2202,7 @@ export async function runSubmissionAssessment(ctx: CommandContext, params: any):
 }
 
 /** Simulate regulatory reviewer challenges on a submission */
-export async function simulateChallenges(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function simulateChallenges(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const packageId = params.packageId;
     const assessmentId = params.assessmentId;
@@ -2221,7 +2221,7 @@ export async function simulateChallenges(ctx: CommandContext, params: any): Prom
 }
 
 /** Detect narrative drift in a submission package */
-export async function detectDrift(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function detectDrift(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const packageId = params.packageId;
     if (!packageId) return { success: false, action: 'detect_drift', message: 'packageId is required.' };
@@ -2239,7 +2239,7 @@ export async function detectDrift(ctx: CommandContext, params: any): Promise<Com
 }
 
 /** Predict next best artifact to work on */
-export async function predictNextArtifact(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function predictNextArtifact(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const packageId = params.packageId;
     if (!packageId) return { success: false, action: 'predict_next_artifact', message: 'packageId is required.' };
@@ -2255,7 +2255,7 @@ export async function predictNextArtifact(ctx: CommandContext, params: any): Pro
 }
 
 /** Compute submission readiness and fragility scores */
-export async function computeReadiness(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function computeReadiness(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const packageId = params.packageId;
     if (!packageId) return { success: false, action: 'compute_readiness', message: 'packageId is required.' };
@@ -2275,7 +2275,7 @@ export async function computeReadiness(ctx: CommandContext, params: any): Promis
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Scan a project for cross-artifact contradictions */
-export async function scanContradictions(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function scanContradictions(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const projectId = params.projectId || ctx.activeProjectId;
     if (!projectId) return { success: false, action: 'scan_contradictions', message: 'projectId is required.' };
@@ -2293,7 +2293,7 @@ export async function scanContradictions(ctx: CommandContext, params: any): Prom
 }
 
 /** Check if contradictions block promotion of an artifact */
-export async function checkPromotionBlockers(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function checkPromotionBlockers(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const artifactId = params.artifactId;
     if (!artifactId) return { success: false, action: 'check_promotion_blockers', message: 'artifactId is required.' };
@@ -2317,7 +2317,7 @@ export async function checkPromotionBlockers(ctx: CommandContext, params: any): 
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Analyze cross-jurisdictional regulatory divergences and harmonization strategies */
-export async function analyzeJurisdictions(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function analyzeJurisdictions(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const targetAgencies = params.targetAgencies || params.agencies || ['FDA', 'EMA'];
     const result = await crossJurisdictionalEngine.analyze({
@@ -2347,7 +2347,7 @@ export async function analyzeJurisdictions(ctx: CommandContext, params: any): Pr
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Recommend clinical trial endpoints for an indication */
-export async function recommendEndpoints(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function recommendEndpoints(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     if (!params.indication) return { success: false, action: 'recommend_endpoints', message: 'indication is required.' };
     const service = getEndpointRecommenderService();
@@ -2368,7 +2368,7 @@ export async function recommendEndpoints(ctx: CommandContext, params: any): Prom
 }
 
 /** Evaluate a specific endpoint for an indication */
-export async function evaluateEndpoint(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function evaluateEndpoint(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     if (!params.endpoint || !params.indication) {
       return { success: false, action: 'evaluate_endpoint', message: 'endpoint and indication are required.' };
@@ -2390,7 +2390,7 @@ export async function evaluateEndpoint(ctx: CommandContext, params: any): Promis
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Run a full RIM (Regulatory Intelligence Model) assessment on content */
-export async function runRIMScan(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function runRIMScan(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const projectId = params.projectId || ctx.activeProjectId;
     if (!projectId) return { success: false, action: 'run_rim_scan', message: 'projectId is required.' };
@@ -2429,7 +2429,7 @@ export async function runRIMScan(ctx: CommandContext, params: any): Promise<Comm
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Generate a regulatory report (sealed, audited, 21 CFR Part 11 compliant) */
-export async function generateReport(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function generateReport(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     if (!params.domain || !params.title) {
       return { success: false, action: 'generate_report', message: 'domain and title are required.' };
@@ -2459,7 +2459,7 @@ export async function generateReport(ctx: CommandContext, params: any): Promise<
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Generate clinical trial insights for an indication and phase */
-export async function generateClinicalInsights(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function generateClinicalInsights(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     if (!params.indication) return { success: false, action: 'generate_clinical_insights', message: 'indication is required.' };
     const insights = await clinicalIntelligenceService.generateClinicalTrialInsights(params.indication, params.phase || 'Phase 2');
@@ -2474,7 +2474,7 @@ export async function generateClinicalInsights(ctx: CommandContext, params: any)
 }
 
 /** Perform cross-document semantic analysis */
-export async function analyzeCrossDocument(ctx: CommandContext, params: any): Promise<CommandResult> {
+export async function analyzeCrossDocument(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   try {
     const documentIds = params.documentIds;
     if (!documentIds || !Array.isArray(documentIds) || documentIds.length < 2) {
@@ -2689,7 +2689,7 @@ export async function executeCommands(
   ctx: CommandContext,
 ): Promise<CommandResult[]> {
   const results: CommandResult[] = [];
-  const commandMap: Record<string, (ctx: CommandContext, params: any) => Promise<CommandResult>> = {
+  const commandMap: Record<string, (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>> = {
     create_project: createProject,
     list_projects: listProjects,
     update_project: updateProject,

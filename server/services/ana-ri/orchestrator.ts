@@ -201,6 +201,8 @@ export interface OrchestratorInput {
     projectId?: string;
     sectionCode?: string;
     moduleCode?: string;
+    artifactStatus?: string;
+    _decisionContext?: Array<{ decision: unknown; receipt?: unknown }>;
     [key: string]: unknown;
   };
 }
@@ -306,17 +308,23 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
   // as _decisionContext on the authoringContext object. This keeps orchestrate() sync.
   if (input.authoringContext?.projectId) {
     try {
-      const decisionCtx = (input.authoringContext as any)?._decisionContext as
-        Array<{ decision: any; receipt?: any }> | undefined;
+      const decisionCtx = input.authoringContext._decisionContext;
       if (decisionCtx && decisionCtx.length > 0) {
-        const decisionBlock = decisionCtx.map(({ decision, receipt }: any) => {
-          let line = `- [${decision.status?.toUpperCase?.() || '?'}] ${decision.kind}: ${decision.summary}`;
-          if (decision.authority?.level) line += ` (authority: ${decision.authority.level})`;
-          if (decision.sourceSignals?.length > 0) line += ` — ${decision.sourceSignals.length} signal(s)`;
-          if (receipt) {
-            if (receipt.execution?.executed) line += ' → executed';
-            if (receipt.pendingApprovals?.length > 0) line += ` → ${receipt.pendingApprovals.length} pending approval(s)`;
-            if (receipt.provisionalItems?.length > 0) line += ` → ${receipt.provisionalItems.length} provisional`;
+        const decisionBlock = decisionCtx.map(({ decision, receipt }: { decision: unknown; receipt?: unknown }) => {
+          const d = decision as Record<string, unknown>;
+          const r = receipt as Record<string, unknown> | undefined;
+          let line = `- [${(d.status as string)?.toUpperCase?.() || '?'}] ${d.kind}: ${d.summary}`;
+          const authority = d.authority as Record<string, unknown> | undefined;
+          if (authority?.level) line += ` (authority: ${authority.level})`;
+          const sourceSignals = d.sourceSignals as unknown[] | undefined;
+          if (sourceSignals && sourceSignals.length > 0) line += ` — ${sourceSignals.length} signal(s)`;
+          if (r) {
+            const execution = r.execution as Record<string, unknown> | undefined;
+            if (execution?.executed) line += ' → executed';
+            const pendingApprovals = r.pendingApprovals as unknown[] | undefined;
+            if (pendingApprovals && pendingApprovals.length > 0) line += ` → ${pendingApprovals.length} pending approval(s)`;
+            const provisionalItems = r.provisionalItems as unknown[] | undefined;
+            if (provisionalItems && provisionalItems.length > 0) line += ` → ${provisionalItems.length} provisional`;
           }
           return line;
         }).join('\n');
@@ -327,7 +335,7 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
 
   // 8c. Inject document-state intelligence when authoring context includes artifact status
   if (input.authoringContext) {
-    const artifactStatus = (input.authoringContext as any)?.artifactStatus as string | undefined;
+    const artifactStatus = input.authoringContext?.artifactStatus;
     const sectionCode = input.authoringContext?.sectionCode;
     const moduleCode = input.authoringContext?.moduleCode;
 

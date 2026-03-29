@@ -164,8 +164,8 @@ function ensureGateway() {
   if (!gateway) {
     try {
       gateway = getGateway();
-    } catch (e: any) {
-      console.error('[AnA RI] AI Gateway initialization failed:', e?.message);
+    } catch (e: unknown) {
+      console.error('[AnA RI] AI Gateway initialization failed:', e instanceof Error ? e.message : 'unknown error');
     }
   }
   return gateway;
@@ -367,8 +367,8 @@ router.post('/chat', async (req: Request, res: Response) => {
                 regulatorySignals: normalized.regulatorySignals,
               },
             }).catch(() => null);
-          } catch (normalizationError: any) {
-            console.warn('[AnA RI] normalization_failed', normalizationError?.message);
+          } catch (normalizationError: unknown) {
+            console.warn('[AnA RI] normalization_failed', normalizationError instanceof Error ? normalizationError.message : 'unknown error');
           }
           if (id) persistedIds.push(id);
         }
@@ -441,8 +441,8 @@ router.post('/chat', async (req: Request, res: Response) => {
     // Intelligence + memory + enrichment — run in PARALLEL for speed
     const chatProjectId = req.body.project_id || req.body.context?.projectId;
     const [chatIntelligencePrefix, chatMemoryResult, chatEnrichment] = await Promise.all([
-      getIntelligencePrefix(orgId ? Number(orgId) : undefined, chatProjectId).catch((err) => {
-        console.warn('[AnA RI] Intelligence prefix failed:', err?.message);
+      getIntelligencePrefix(orgId ? Number(orgId) : undefined, chatProjectId).catch((err: unknown) => {
+        console.warn('[AnA RI] Intelligence prefix failed:', err instanceof Error ? err.message : 'unknown error');
         return '';
       }),
       buildMemoryContextForChat({
@@ -452,8 +452,8 @@ router.post('/chat', async (req: Request, res: Response) => {
         query: message,
         limitPerLayer: 4,
         maxChars: 3500,
-      }).catch((err) => {
-        console.warn('[AnA RI] Memory context failed:', err?.message);
+      }).catch((err: unknown) => {
+        console.warn('[AnA RI] Memory context failed:', err instanceof Error ? err.message : 'unknown error');
         return { memoryBlock: '', atoms: [], diagnostics: null };
       }),
       enrichContextForChat({
@@ -461,8 +461,8 @@ router.post('/chat', async (req: Request, res: Response) => {
         projectId: chatProjectId,
         organizationId: orgId ? Number(orgId) : undefined,
         submissionType: orchestration.detectedSubmissionType || undefined,
-      }).catch((err) => {
-        console.warn('[AnA RI] Context enrichment failed:', err?.message);
+      }).catch((err: unknown) => {
+        console.warn('[AnA RI] Context enrichment failed:', err instanceof Error ? err.message : 'unknown error');
         return { block: '', sources: [] as string[] };
       }),
     ]);
@@ -577,8 +577,8 @@ router.post('/chat', async (req: Request, res: Response) => {
         );
         await saveMessage(resolvedThreadId, 'user', message);
         await saveMessage(resolvedThreadId, 'assistant', response.content);
-      } catch (e: any) {
-        console.error('[AnA RI] Thread persistence failed:', e?.message);
+      } catch (e: unknown) {
+        console.error('[AnA RI] Thread persistence failed:', e instanceof Error ? e.message : 'unknown error');
         persistenceFailed = true;
       }
     }
@@ -763,7 +763,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     }
 
     return sendSuccess(res, responsePayload);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[AnA RI] Chat error:', error);
     void logKernelDecision({
       requestId: `ana-ri-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
@@ -773,10 +773,10 @@ router.post('/chat', async (req: Request, res: Response) => {
       routingStrategy: 'quality_optimized',
       selectedTools: [],
       outcome: 'failed',
-      errorMessage: error?.message || 'unknown error',
+      errorMessage: (error instanceof Error ? error.message : 'unknown error'),
       decisionRationale: 'AnA RI route failed before completion.',
     });
-    return sendError(res, 500, error?.message || 'Internal server error', null, 'INTERNAL_ERROR');
+    return sendError(res, 500, (error instanceof Error ? error.message : 'Internal server error'), null, 'INTERNAL_ERROR');
   }
 });
 
@@ -884,8 +884,8 @@ router.post('/stream', async (req: Request, res: Response) => {
 
     // Intelligence + memory + enrichment — run in PARALLEL for speed
     const [intelligencePrefix, memoryResult, enrichment] = await Promise.all([
-      getIntelligencePrefix(orgId ? Number(orgId) : undefined, project_id).catch((err) => {
-        console.warn('[AnA RI] Intelligence prefix failed:', err?.message);
+      getIntelligencePrefix(orgId ? Number(orgId) : undefined, project_id).catch((err: unknown) => {
+        console.warn('[AnA RI] Intelligence prefix failed:', err instanceof Error ? err.message : 'unknown error');
         return '';
       }),
       buildMemoryContextForChat({
@@ -895,8 +895,8 @@ router.post('/stream', async (req: Request, res: Response) => {
         query: message,
         limitPerLayer: 4,
         maxChars: 3500,
-      }).catch((err) => {
-        console.warn('[AnA RI] Memory context failed:', err?.message);
+      }).catch((err: unknown) => {
+        console.warn('[AnA RI] Memory context failed:', err instanceof Error ? err.message : 'unknown error');
         return { memoryBlock: '', atoms: [], diagnostics: null };
       }),
       enrichContextForChat({
@@ -904,8 +904,8 @@ router.post('/stream', async (req: Request, res: Response) => {
         projectId: project_id,
         organizationId: orgId ? Number(orgId) : undefined,
         submissionType: orchestration.detectedSubmissionType || undefined,
-      }).catch((err) => {
-        console.warn('[AnA RI] Context enrichment failed:', err?.message);
+      }).catch((err: unknown) => {
+        console.warn('[AnA RI] Context enrichment failed:', err instanceof Error ? err.message : 'unknown error');
         return { block: '', sources: [] as string[] };
       }),
     ]);
@@ -933,8 +933,8 @@ router.post('/stream', async (req: Request, res: Response) => {
           'ana-ri'
         );
         await saveMessage(threadId, 'user', message);
-      } catch (e: any) {
-        console.error('[AnA RI Stream] Thread persistence failed:', e?.message);
+      } catch (e: unknown) {
+        console.error('[AnA RI Stream] Thread persistence failed:', e instanceof Error ? e.message : 'unknown error');
         persistenceFailed = true;
       }
     }
@@ -1061,8 +1061,8 @@ router.post('/stream', async (req: Request, res: Response) => {
     if (orgId && threadId && fullContent) {
       try {
         await saveMessage(threadId, 'assistant', fullContent);
-      } catch (e: any) {
-        console.error('[AnA RI Stream] Assistant persist failed:', e?.message);
+      } catch (e: unknown) {
+        console.error('[AnA RI Stream] Assistant persist failed:', e instanceof Error ? e.message : 'unknown error');
         persistenceFailed = true;
       }
     }
@@ -1093,8 +1093,8 @@ router.post('/stream', async (req: Request, res: Response) => {
           threadId: threadId || undefined,
         });
         executedActions = guidance.actions;
-      } catch (e: any) {
-        console.warn('[AnA RI Stream] Guidance executor failed:', e?.message);
+      } catch (e: unknown) {
+        console.warn('[AnA RI Stream] Guidance executor failed:', e instanceof Error ? e.message : 'unknown error');
       }
     }
 
@@ -1119,8 +1119,8 @@ router.post('/stream', async (req: Request, res: Response) => {
         if (executedCommands.length > 0) {
           console.log(`[AnA RI Stream] Executed ${executedCommands.length} command(s)`);
         }
-      } catch (e: any) {
-        console.warn('[AnA RI Stream] Command executor failed:', e?.message);
+      } catch (e: unknown) {
+        console.warn('[AnA RI Stream] Command executor failed:', e instanceof Error ? e.message : 'unknown error');
       }
     }
 
@@ -1167,8 +1167,8 @@ router.post('/stream', async (req: Request, res: Response) => {
     );
 
     res.end();
-  } catch (error: any) {
-    console.error('[AnA RI Stream] Error:', error.message);
+  } catch (error: unknown) {
+    console.error('[AnA RI Stream] Error:', error instanceof Error ? error.message : String(error));
     if (res.headersSent) {
       res.write(
         `data: ${JSON.stringify({
@@ -1238,8 +1238,8 @@ router.post('/plan', async (req: Request, res: Response) => {
         detectedSubmissionType: orchestration.detectedSubmissionType,
       },
     });
-  } catch (error: any) {
-    return sendError(res, 500, error?.message || 'Failed to compute plan', null, 'PLANNER_ERROR');
+  } catch (error: unknown) {
+    return sendError(res, 500, (error instanceof Error ? error.message : 'Failed to compute plan'), null, 'PLANNER_ERROR');
   }
 });
 
@@ -1452,9 +1452,9 @@ router.post('/generate', async (req: Request, res: Response) => {
       provider: result.provider,
       model: result.model,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[AnA RI] Generate error:', error);
-    return sendError(res, 500, error?.message || 'Internal server error', null, 'INTERNAL_ERROR');
+    return sendError(res, 500, (error instanceof Error ? error.message : 'Internal server error'), null, 'INTERNAL_ERROR');
   }
 });
 
@@ -1651,12 +1651,12 @@ router.post('/execute', async (req: Request, res: Response) => {
         message: `Command ${command} did not produce a result.`,
       }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[AnA RI] Command execution error:', error);
     return sendError(
       res,
       500,
-      error?.message || 'Command execution failed',
+      (error instanceof Error ? error.message : 'Command execution failed'),
       null,
       'EXECUTION_ERROR'
     );
@@ -1671,11 +1671,11 @@ router.get('/commands', async (_req: Request, res: Response) => {
   try {
     const { COMMAND_REGISTRY } = await import('../services/ana-ri/command-executor.js');
     return sendSuccess(res, { commands: COMMAND_REGISTRY });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return sendError(
       res,
       503,
-      error?.message || 'Command registry unavailable',
+      (error instanceof Error ? error.message : 'Command registry unavailable'),
       null,
       'COMMANDS_UNAVAILABLE'
     );

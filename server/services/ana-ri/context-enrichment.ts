@@ -181,10 +181,10 @@ async function enrichWithProjectMemory(
 
     if (result.rows.length === 0) return '';
 
-    const items = result.rows.map((r: any) => {
+    const items = result.rows.map((r: { confidence?: number; title?: string; content?: string }) => {
       const conf = r.confidence ? ` [${Math.round(r.confidence * 100)}% confidence]` : '';
       const title = r.title ? `**${r.title}**` : '';
-      return `- ${title}${conf}: ${r.content.slice(0, 400)}`;
+      return `- ${title}${conf}: ${(r.content || '').slice(0, 400)}`;
     }).join('\n');
 
     return `\n\n## ${label}\n${description}\n${items}`;
@@ -232,13 +232,13 @@ async function enrichWithReadiness(projectId: string | number, orgId?: number): 
       const gapLines = score.gaps.slice(0, 8).map(g =>
         `- **[${g.severity.toUpperCase()}]** ${g.module}: ${g.description} _(${g.remediation})_`
       ).join('\n');
-      const dimLines = Object.entries(score.dimensions || {}).map(([k, v]: [string, any]) =>
-        `| ${k} | ${typeof v === 'number' ? v : v?.score ?? '—'}/100 |`
+      const dimLines = Object.entries(score.dimensions || {}).map(([k, v]: [string, unknown]) =>
+        `| ${k} | ${typeof v === 'number' ? v : (v && typeof v === 'object' && 'score' in v ? (v as Record<string, unknown>).score : '—')}/100 |`
       ).join('\n');
 
       return `\n\n## Live Readiness Assessment\n**Overall Score: ${score.overallScore}/100** | Trend: ${score.trend?.direction || 'unknown'}\n\n**Predictions:** Approval probability ~${score.predictions?.approvalProbability ?? '—'}% | Est. ${score.predictions?.estimatedDeficiencies ?? '—'} deficiencies | ~${score.predictions?.estimatedReviewDays ?? '—'} review days\n\n| Dimension | Score |\n|---|---|\n${dimLines}\n\n**Top Gaps (${score.gaps.length} total):**\n${gapLines || '- None identified'}\n\nPresent these scores directly. Be specific about gaps and remediation steps.`;
-    } catch (e: any) {
-      console.warn('[enrichment] Live readiness failed, falling back to memory:', e?.message);
+    } catch (e: unknown) {
+      console.warn('[enrichment] Live readiness failed, falling back to memory:', e instanceof Error ? e.message : 'unknown error');
     }
   }
   // Fallback to stored memory
@@ -266,8 +266,8 @@ async function enrichWithRecommendations(projectId: string | number, orgId?: num
       ).join('\n');
 
       return `\n\n## Next Best Actions (Live)\n**${actionSet.actions.length} actions** prioritized by urgency and impact.\n\n${actionLines || 'No actions generated.'}\n\nPresent these as a prioritized to-do list. Be directive — tell the user what to do first and why.`;
-    } catch (e: any) {
-      console.warn('[enrichment] Live recommendations failed, falling back to memory:', e?.message);
+    } catch (e: unknown) {
+      console.warn('[enrichment] Live recommendations failed, falling back to memory:', e instanceof Error ? e.message : 'unknown error');
     }
   }
   // Fallback to stored memory
@@ -294,7 +294,7 @@ async function enrichWithClaims(projectId: string | number): Promise<string> {
 
     if (result.rows.length > 0) {
       // Build evidence sources from memory entries
-      const sources: EvidenceSource[] = result.rows.map((r: any) => ({
+      const sources: EvidenceSource[] = result.rows.map((r: { category?: string; title?: string; confidence?: number; content?: string }) => ({
         sourceType: r.category === 'evidence_gap' ? 'ai_analysis' as const : 'document_state' as const,
         sourceId: `mem-${r.title || 'unknown'}`,
         sourceTitle: r.title || 'Evidence entry',
@@ -306,7 +306,7 @@ async function enrichWithClaims(projectId: string | number): Promise<string> {
       const confidence = computeConfidence(sources);
       const factors = analyzeFactors(sources);
 
-      const entryLines = result.rows.map((r: any) =>
+      const entryLines = result.rows.map((r: { title?: string; category?: string; confidence?: number; content?: string }) =>
         `- **${r.title || r.category}** [${r.confidence ? Math.round(r.confidence * 100) + '%' : '—'}]: ${r.content?.slice(0, 300)}`
       ).join('\n');
 
@@ -330,13 +330,13 @@ async function enrichWithCrossModule(projectId: string | number, orgId?: number)
     const report = await analyzeCrossModuleRelationships({ organizationId: orgId, projectId: Number(projectId) });
     if (!report || report.insights.length === 0) return '';
 
-    const insightLines = report.insights.slice(0, 8).map((i: any) =>
+    const insightLines = report.insights.slice(0, 8).map((i: { severity?: string; type?: string; description?: string; message?: string; affectedModules?: string[] }) =>
       `- **[${i.severity || i.type || 'info'}]** ${i.description || i.message || String(i)}${i.affectedModules ? ` (${i.affectedModules.join(', ')})` : ''}`
     ).join('\n');
 
     return `\n\n## Cross-Module Consistency Report (Live)\n**${report.insights.length} insights** across ${report.documentsCovered || '—'} documents.\n\n${insightLines}\n\nHighlight stale references, status gaps, and orphaned documents. Be specific about which modules are affected.`;
-  } catch (e: any) {
-    console.warn('[enrichment] Cross-module analysis failed:', e?.message);
+  } catch (e: unknown) {
+    console.warn('[enrichment] Cross-module analysis failed:', e instanceof Error ? e.message : 'unknown error');
     return '';
   }
 }
@@ -346,7 +346,7 @@ async function enrichWithSignals(projectId: string | number): Promise<string> {
   try {
     const signals = getProjectSignals(String(projectId));
     if (signals && signals.length > 0) {
-      const signalLines = signals.slice(0, 10).map((s: any) =>
+      const signalLines = signals.slice(0, 10).map((s: { riskLevel?: string; type?: string; content?: string; message?: string; score?: number }) =>
         `- **[${s.riskLevel || s.type || 'signal'}]** ${s.content?.slice(0, 300) || s.message || 'No content'} (score: ${s.score ?? '—'})`
       ).join('\n');
       return `\n\n## RIM Intelligence Signals (Live)\n**${signals.length} signals** accumulated for this project.\n\n${signalLines}\n\nSummarize patterns, highlight recurring risks, and note trend directions.`;
@@ -401,7 +401,7 @@ async function enrichWithKnowledgeSearch(query: string, projectId: string | numb
 
     if (result.rows.length === 0) return '';
 
-    const entries = result.rows.map((r: any) =>
+    const entries = result.rows.map((r: { title?: string; category?: string; confidence?: number; content?: string }) =>
       `- **${r.title || r.category}** [${r.category}] ${r.confidence ? `(${Math.round(r.confidence * 100)}%)` : ''}: ${r.content?.slice(0, 300)}`
     ).join('\n');
 
@@ -462,7 +462,7 @@ async function enrichWithBiostatContext(projectId: string | number, submissionTy
       [projectId, 8]
     );
     if (result.rows.length > 0) {
-      const signalLines = result.rows.map((r: any) =>
+      const signalLines = result.rows.map((r: { severity?: string; signal_type?: string; description?: string }) =>
         `- **[${r.severity?.toUpperCase() || 'INFO'}]** ${r.signal_type}: ${r.description?.slice(0, 300) || 'No description'}`
       ).join('\n');
       parts.push(`**Active Biostat Signals (${result.rows.length}):**\n${signalLines}`);
@@ -480,7 +480,7 @@ async function enrichWithBiostatContext(projectId: string | number, submissionTy
       [projectId, 5]
     );
     if (assumptions.rows.length > 0) {
-      const assLines = assumptions.rows.map((r: any) =>
+      const assLines = assumptions.rows.map((r: { parameter_name?: string; finding_type?: string; description?: string; status?: string }) =>
         `- ${r.parameter_name || r.finding_type}: ${r.description?.slice(0, 200) || ''} (${r.status})`
       ).join('\n');
       parts.push(`**Statistical Assumptions:**\n${assLines}`);
