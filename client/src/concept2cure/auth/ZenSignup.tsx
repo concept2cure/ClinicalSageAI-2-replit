@@ -322,7 +322,7 @@ export const ZenSignup: React.FC = () => {
             className={`
               w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
               transition-all duration-300
-              ${index <= currentStepIndex ? 'bg-blue-600 text-white' : 'bg-stone-200 text-stone-500'}
+              ${index <= currentStepIndex ? 'bg-stone-800 text-white' : 'bg-stone-200 text-stone-500'}
             `}
           >
             {index < currentStepIndex ? <CheckIcon /> : index + 1}
@@ -331,7 +331,7 @@ export const ZenSignup: React.FC = () => {
             <div
               className={`
                 w-12 h-0.5 transition-all duration-300
-                ${index < currentStepIndex ? 'bg-blue-600' : 'bg-stone-200'}
+                ${index < currentStepIndex ? 'bg-stone-800' : 'bg-stone-200'}
               `}
             />
           )}
@@ -362,7 +362,7 @@ export const ZenSignup: React.FC = () => {
         placeholder={placeholder}
         className={`
           w-full px-4 py-3 text-base
-          border-2 rounded-xl
+          border rounded-xl
           transition-all duration-150
           outline-none focus:ring-0
           ${
@@ -392,7 +392,7 @@ export const ZenSignup: React.FC = () => {
         onChange={e => updateField(field, e.target.value)}
         className={`
           w-full px-4 py-3 text-base
-          border-2 rounded-xl
+          border rounded-xl
           transition-all duration-150
           outline-none focus:ring-0
           appearance-none
@@ -459,7 +459,7 @@ export const ZenSignup: React.FC = () => {
           w-full py-3 px-4 mt-2
           flex items-center justify-center gap-2
           text-base font-medium text-white
-          bg-blue-600 hover:bg-blue-700
+          bg-stone-800 hover:bg-stone-900
           rounded-xl
           transition-all duration-150
           focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none
@@ -509,7 +509,7 @@ export const ZenSignup: React.FC = () => {
           w-full py-3 px-4 mt-2
           flex items-center justify-center gap-2
           text-base font-medium text-white
-          bg-blue-600 hover:bg-blue-700
+          bg-stone-800 hover:bg-stone-900
           rounded-xl
           transition-all duration-150
           focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none
@@ -575,13 +575,13 @@ export const ZenSignup: React.FC = () => {
               w-full p-4 rounded-xl border text-left transition-all relative
               ${
                 formData.selectedPlan === plan.id
-                  ? 'border-blue-500 bg-blue-50/50 shadow-sm'
+                  ? 'border-stone-600 bg-blue-50/50 shadow-sm'
                   : 'border-stone-200 hover:border-stone-300'
               }
             `}
           >
             {plan.badge && (
-              <span className="absolute -top-2.5 right-3 text-xs font-medium bg-blue-600 text-white px-2 py-0.5 rounded-full">
+              <span className="absolute -top-2.5 right-3 text-xs font-medium bg-stone-800 text-white px-2 py-0.5 rounded-full">
                 {plan.badge}
               </span>
             )}
@@ -611,7 +611,7 @@ export const ZenSignup: React.FC = () => {
           w-full py-3 px-4 mt-2
           flex items-center justify-center gap-2
           text-base font-medium text-white
-          bg-blue-600 hover:bg-blue-700
+          bg-stone-800 hover:bg-stone-900
           rounded-xl
           transition-all duration-150
           focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none
@@ -822,7 +822,7 @@ export const ZenSignup: React.FC = () => {
             </div>
             <button
               onClick={() => setAiLearningOptIn(!aiLearningOptIn)}
-              className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${aiLearningOptIn ? 'bg-blue-600' : 'bg-stone-300'}`}
+              className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${aiLearningOptIn ? 'bg-stone-800' : 'bg-stone-300'}`}
             >
               <span
                 className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${aiLearningOptIn ? 'translate-x-5' : ''}`}
@@ -869,7 +869,7 @@ export const ZenSignup: React.FC = () => {
           w-full py-3 px-4 mt-2
           flex items-center justify-center gap-2
           text-base font-medium text-white
-          bg-blue-600 hover:bg-blue-700
+          bg-stone-800 hover:bg-stone-900
           rounded-xl
           transition-all duration-150
           disabled:opacity-60 disabled:cursor-not-allowed
@@ -918,7 +918,7 @@ export const ZenSignup: React.FC = () => {
       </motion.div>
 
       <div className="space-y-2">
-        <h3 className="text-xl font-semibold text-stone-900">Account Created!</h3>
+        <h3 className="text-base font-medium text-stone-900">Account Created!</h3>
         <p className="text-stone-600">
           Welcome to Concept2Cure. Your workspace is ready at <strong>{formData.email}</strong>.
         </p>
@@ -936,7 +936,7 @@ export const ZenSignup: React.FC = () => {
         className={`
           w-full py-3 px-4
           text-base font-medium text-white
-          bg-blue-600 hover:bg-blue-700 rounded-xl
+          bg-stone-800 hover:bg-stone-900 rounded-xl
           transition-all duration-150
         `}
       >
@@ -958,7 +958,7 @@ export const ZenSignup: React.FC = () => {
             <div className="inline-flex items-center justify-center mb-4">
               <LogoIcon />
             </div>
-            <h1 className="text-2xl font-semibold text-stone-900">
+            <h1 className="text-base font-semibold text-stone-900">
               {step === 'submitted' ? '' : 'Create your account'}
             </h1>
             {step !== 'submitted' && (

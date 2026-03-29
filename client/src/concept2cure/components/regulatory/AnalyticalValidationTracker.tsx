@@ -529,7 +529,7 @@ export default function AnalyticalValidationTracker() {
         <div className="px-3 py-2 border-b border-border/30">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold flex items-center gap-2 text-xl">
+              <h3 className="text-sm font-semibold flex items-center gap-2 text-base">
                 <FlaskConical className="h-6 w-6" />
                 Analytical Validation Tracker
               </h3>

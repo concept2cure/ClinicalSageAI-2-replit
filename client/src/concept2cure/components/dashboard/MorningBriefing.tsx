@@ -123,7 +123,7 @@ const PRIORITY_CONFIG: Record<AlertPriority, {
   CRITICAL: { indicator: 'bg-red-500', border: 'border-l-red-500', icon: <AlertTriangle className="w-3 h-3 text-red-500" /> },
   HIGH: { indicator: 'bg-orange-500', border: 'border-l-orange-500', icon: <Zap className="w-3 h-3 text-orange-500" /> },
   MEDIUM: { indicator: 'bg-amber-500', border: 'border-l-amber-500' },
-  LOW: { indicator: 'bg-blue-500', border: 'border-l-blue-500' },
+  LOW: { indicator: 'bg-stone-600', border: 'border-l-blue-500' },
   INFO: { indicator: 'bg-stone-400', border: 'border-l-slate-400' },
 };
 
@@ -254,10 +254,10 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
   return (
     <div className={cn(
       'fixed inset-0 z-[200] flex items-center justify-center p-4',
-      'bg-stone-900/60 backdrop-blur-sm animate-in fade-in duration-500',
+      'bg-stone-900/60 backdrop-blur-sm animate-in fade-in duration-200',
       className
     )}>
-      <div className="bg-white w-full max-w-2xl rounded-xl shadow-lg overflow-hidden border border-stone-200 transform transition-all scale-100 max-h-[90vh] flex flex-col">
+      <div className="bg-white w-full max-w-2xl rounded-xl shadow-sm overflow-hidden border border-stone-200 transform transition-all scale-100 max-h-[90vh] flex flex-col">
         {/* ═══════ HEADER ═══════ */}
         <div className="h-44 bg-stone-900 relative p-8 flex flex-col justify-end flex-shrink-0">
           {/* Close Button */}
@@ -270,7 +270,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
           
           {/* Greeting */}
           <div className="mb-3">{icon}</div>
-          <h2 className="text-2xl font-semibold text-white tracking-tight">
+          <h2 className="text-base font-semibold text-white tracking-tight">
             {greeting}{userName ? `, ${userName}` : ''}.
           </h2>
           <p className="text-blue-100 text-sm font-medium opacity-90">
@@ -282,12 +282,12 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
         {statsSnapshot && (
           <div className="grid grid-cols-4 gap-3 p-4 bg-stone-50 border-b border-stone-200 flex-shrink-0">
             <div className="text-center p-2">
-              <p className="text-2xl font-semibold text-stone-900">{statsSnapshot.projectsActive}</p>
+              <p className="text-base font-semibold text-stone-900">{statsSnapshot.projectsActive}</p>
               <Caption as="p" className="uppercase tracking-wide">Active Projects</Caption>
             </div>
             <div className="text-center p-2">
               <p className={cn(
-                'text-2xl font-semibold',
+                'text-base font-semibold',
                 statsSnapshot.deadlinesThisWeek > 2 ? 'text-amber-600' : 'text-stone-900'
               )}>
                 {statsSnapshot.deadlinesThisWeek}
@@ -296,7 +296,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
             </div>
             <div className="text-center p-2">
               <p className={cn(
-                'text-2xl font-semibold',
+                'text-base font-semibold',
                 statsSnapshot.pendingReviews > 0 ? 'text-blue-600' : 'text-stone-900'
               )}>
                 {statsSnapshot.pendingReviews}
@@ -305,7 +305,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
             </div>
             <div className="text-center p-2">
               <p className={cn(
-                'text-2xl font-semibold',
+                'text-base font-semibold',
                 statsSnapshot.riskItems > 0 ? 'text-red-600' : 'text-stone-900'
               )}>
                 {statsSnapshot.riskItems}

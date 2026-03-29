@@ -130,7 +130,7 @@ const DOCUMENT_TYPE_CONFIG: Record<DocumentType, {
   color: string;
   avgDays: number;
 }> = {
-  csr: { label: 'Clinical Study Report', shortLabel: 'CSR', color: 'bg-blue-500', avgDays: 45 },
+  csr: { label: 'Clinical Study Report', shortLabel: 'CSR', color: 'bg-stone-600', avgDays: 45 },
   ib: { label: 'Investigator Brochure', shortLabel: 'IB', color: 'bg-violet-500', avgDays: 21 },
   protocol: { label: 'Protocol', shortLabel: 'Protocol', color: 'bg-emerald-500', avgDays: 14 },
   protocol_amend: { label: 'Protocol Amendment', shortLabel: 'Amendment', color: 'bg-teal-500', avgDays: 7 },
@@ -140,7 +140,7 @@ const DOCUMENT_TYPE_CONFIG: Record<DocumentType, {
   response: { label: 'Regulatory Response', shortLabel: 'Response', color: 'bg-orange-500', avgDays: 14 },
   briefing: { label: 'Briefing Document', shortLabel: 'Briefing', color: 'bg-cyan-500', avgDays: 21 },
   nonclinical_summary: { label: 'Nonclinical Summary', shortLabel: 'CTD 2.4', color: 'bg-lime-500', avgDays: 21 },
-  quality_summary: { label: 'Quality Summary', shortLabel: 'CTD 2.3', color: 'bg-indigo-500', avgDays: 14 },
+  quality_summary: { label: 'Quality Summary', shortLabel: 'CTD 2.3', color: 'bg-stone-600', avgDays: 14 },
 };
 
 const STAGE_CONFIG: Record<ReviewStage, {
@@ -156,7 +156,7 @@ const STAGE_CONFIG: Record<ReviewStage, {
   sponsor_review: { label: 'Sponsor Review', icon: Send, color: 'text-cyan-600', bgColor: 'bg-cyan-100' },
   final_qc: { label: 'Final QC', icon: CheckCircle, color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
   approved: { label: 'Approved', icon: Star, color: 'text-green-600', bgColor: 'bg-green-100' },
-  published: { label: 'Published', icon: BookOpen, color: 'text-indigo-600', bgColor: 'bg-indigo-100' },
+  published: { label: 'Published', icon: BookOpen, color: 'text-stone-600', bgColor: 'bg-stone-100' },
 };
 
 const REVIEW_PIPELINE: ReviewStage[] = [
@@ -239,7 +239,7 @@ const TaskCard: React.FC<{
             <div
               className={cn(
                 'h-full rounded-full transition-all',
-                task.progress >= 100 ? 'bg-green-500' : 'bg-blue-500'
+                task.progress >= 100 ? 'bg-green-500' : 'bg-stone-600'
               )}
               style={{ width: `${task.progress}%` }}
             />
@@ -333,7 +333,7 @@ const TaskCard: React.FC<{
           <div
             className={cn(
               'h-full rounded-full transition-all',
-              task.progress >= 100 ? 'bg-green-500' : 'bg-blue-500'
+              task.progress >= 100 ? 'bg-green-500' : 'bg-stone-600'
             )}
             style={{ width: `${task.progress}%` }}
           />
@@ -386,7 +386,7 @@ const TaskCard: React.FC<{
           {onStartWriting && task.stage === 'draft' && (
             <button
               onClick={onStartWriting}
-              className="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
+              className="px-3 py-1 text-xs font-medium text-white bg-stone-800 rounded hover:bg-stone-900 transition-colors"
             >
               Start Writing
             </button>
@@ -510,7 +510,7 @@ export const MedicalWriterQueue: React.FC<MedicalWriterQueueProps> = ({
       {/* Header */}
       <div className="flex-shrink-0 p-4 border-b border-stone-200">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-stone-900">Document Queue</h2>
+          <h2 className="text-base font-medium text-stone-900">Document Queue</h2>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setView('list')}

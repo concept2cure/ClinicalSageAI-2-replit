@@ -57,9 +57,9 @@ const submissionTypeConfig: Record<
   SubmissionType,
   { label: string; color: string; dotColor: string }
 > = {
-  '510K': { label: '510K', color: 'bg-blue-100 text-blue-700 border-blue-200', dotColor: 'bg-blue-500' },
+  '510K': { label: '510K', color: 'bg-blue-100 text-blue-700 border-blue-200', dotColor: 'bg-stone-600' },
   IND: { label: 'IND', color: 'bg-purple-100 text-purple-700 border-purple-200', dotColor: 'bg-purple-500' },
-  NDA: { label: 'NDA', color: 'bg-indigo-100 text-indigo-700 border-indigo-200', dotColor: 'bg-indigo-500' },
+  NDA: { label: 'NDA', color: 'bg-stone-100 text-stone-700 border-indigo-200', dotColor: 'bg-stone-600' },
   BLA: { label: 'BLA', color: 'bg-violet-100 text-violet-700 border-violet-200', dotColor: 'bg-violet-500' },
   MAA: { label: 'MAA', color: 'bg-teal-100 text-teal-700 border-teal-200', dotColor: 'bg-teal-500' },
   PMA: { label: 'PMA', color: 'bg-red-100 text-red-700 border-red-200', dotColor: 'bg-red-500' },
@@ -98,7 +98,7 @@ const SubmissionBadge: React.FC<{ type: SubmissionType; compact?: boolean }> = (
 const statusDotColor: Record<string, string> = {
   active: 'bg-emerald-500',
   in_review: 'bg-amber-500',
-  submitted: 'bg-blue-500',
+  submitted: 'bg-stone-600',
   archived: 'bg-stone-400',
   draft: 'bg-stone-300',
   planning: 'bg-stone-300',

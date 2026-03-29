@@ -188,7 +188,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
                     className={cn(
                       'w-3 h-3 rounded-full border-2 z-10',
                       isLatest
-                        ? 'bg-blue-500 border-blue-500'
+                        ? 'bg-stone-600 border-stone-600'
                         : iSelected
                           ? 'bg-violet-500 border-violet-500'
                           : 'bg-white border-stone-300'

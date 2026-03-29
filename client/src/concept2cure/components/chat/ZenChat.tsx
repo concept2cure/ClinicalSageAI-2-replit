@@ -244,7 +244,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
           {showExportMenu && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowExportMenu(false)} />
-              <div className="absolute left-0 bottom-full mb-1 w-52 bg-white border border-stone-200 rounded-lg shadow-lg z-50 py-1">
+              <div className="absolute left-0 bottom-full mb-1 w-52 bg-white border border-stone-200 rounded-lg shadow-sm z-50 py-1">
                 <button
                   onClick={() => { onExportDocx(artifact); setShowExportMenu(false); }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50"
@@ -377,15 +377,15 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               {message.isStreaming && message.content && (
                 <span className="inline-flex gap-0.5 items-center">
                   <span
-                    className="w-1 h-1 rounded-full bg-[#E8967A] animate-bounce"
+                    className="w-1 h-1 rounded-full bg-[#E8967A] animate-pulse"
                     style={{ animationDelay: '0ms' }}
                   />
                   <span
-                    className="w-1 h-1 rounded-full bg-[#E8967A] animate-bounce"
+                    className="w-1 h-1 rounded-full bg-[#E8967A] animate-pulse"
                     style={{ animationDelay: '150ms' }}
                   />
                   <span
-                    className="w-1 h-1 rounded-full bg-[#E8967A] animate-bounce"
+                    className="w-1 h-1 rounded-full bg-[#E8967A] animate-pulse"
                     style={{ animationDelay: '300ms' }}
                   />
                 </span>
@@ -405,7 +405,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               <div
                 className="prose prose-sm prose-stone max-w-none
                   prose-headings:font-semibold prose-headings:text-stone-900 prose-headings:leading-snug
-                  prose-h1:text-xl prose-h2:text-lg prose-h3:text-base
+                  prose-h1:text-base prose-h2:text-lg prose-h3:text-base
                   prose-p:text-stone-700 prose-p:leading-relaxed prose-p:my-2
                   prose-strong:text-stone-900 prose-strong:font-semibold
                   prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono prose-code:before:content-none prose-code:after:content-none
@@ -643,7 +643,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       <div className="w-full max-w-2xl">
         {/* Greeting — warm, concise */}
         <div className="text-center mb-10">
-          <h1 className="text-2xl font-semibold text-stone-900 mb-2">
+          <h1 className="text-base font-semibold text-stone-900 mb-2">
             {greeting?.text || 'Hi — what are you working on?'}
           </h1>
           <p className="text-sm text-stone-500 max-w-md mx-auto">
@@ -853,7 +853,7 @@ const ScrollToBottomButton: React.FC<ScrollButtonProps> = ({ visible, onClick })
   <button
     onClick={onClick}
     className={cn(
-      'fixed bottom-24 left-1/2 -translate-x-1/2 px-4 py-2 bg-white border border-stone-200 rounded-full shadow-lg flex items-center gap-2 text-sm text-stone-600 hover:bg-stone-50 transition-all duration-150',
+      'fixed bottom-24 left-1/2 -translate-x-1/2 px-4 py-2 bg-white border border-stone-200 rounded-full shadow-sm flex items-center gap-2 text-sm text-stone-600 hover:bg-stone-50 transition-all duration-150',
       visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
     )}
   >

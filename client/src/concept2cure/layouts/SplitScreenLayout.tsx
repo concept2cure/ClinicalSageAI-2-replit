@@ -192,7 +192,7 @@ export const SplitScreenLayout: React.FC = () => {
           className={cn(
             'relative flex w-1 cursor-col-resize items-center justify-center',
             'bg-stone-200 hover:bg-blue-400 transition-colors duration-150',
-            isDragging && 'bg-blue-500'
+            isDragging && 'bg-stone-600'
           )}
         >
           <div

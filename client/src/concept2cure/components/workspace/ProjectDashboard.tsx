@@ -207,7 +207,7 @@ export function ProjectDashboard({
         'flex flex-col items-center justify-center rounded-xl border px-4 py-5 transition-shadow hover:shadow-sm',
         cfg.bg, cfg.border,
       )}>
-        <span className={cn('text-2xl font-semibold tabular-nums', cfg.color)}>{count}</span>
+        <span className={cn('text-base font-semibold tabular-nums', cfg.color)}>{count}</span>
         <span className={cn('mt-1 text-xs font-medium', cfg.color)}>{cfg.label}</span>
       </div>
     );
@@ -290,10 +290,10 @@ export function ProjectDashboard({
       <section className="space-y-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">
-            <h1 className="text-2xl font-semibold tracking-tight text-stone-900">{projectName}</h1>
+            <h1 className="text-base font-semibold tracking-tight text-stone-900">{projectName}</h1>
             <div className="flex flex-wrap items-center gap-2">
               {projectType && (
-                <span className="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-200">
+                <span className="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-stone-300">
                   {projectType}
                 </span>
               )}
@@ -311,8 +311,8 @@ export function ProjectDashboard({
               type="button"
               onClick={onCreateDocument}
               className={cn(
-                'inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white',
-                'shadow-sm transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40',
+                'inline-flex items-center gap-2 rounded-lg bg-stone-800 px-4 py-2 text-sm font-medium text-white',
+                'shadow-sm transition-colors hover:bg-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40',
               )}
             >
               <FilePlus size={16} />
@@ -395,7 +395,7 @@ export function ProjectDashboard({
             )}
             {stats.counts.review > 0 && (
               <div
-                className="bg-blue-500 transition-all duration-150"
+                className="bg-stone-600 transition-all duration-150"
                 style={{ width: `${(stats.counts.review / barTotal) * 100}%` }}
                 title={`${stats.counts.review} In Review`}
               />
@@ -430,7 +430,7 @@ export function ProjectDashboard({
               'text-emerald-500',
             )} />
             <span className={cn(
-              'text-2xl font-semibold tabular-nums mt-1',
+              'text-base font-semibold tabular-nums mt-1',
               stats.riskLevel === 'high' ? 'text-red-700' :
               stats.riskLevel === 'medium' ? 'text-amber-700' :
               'text-emerald-700',
@@ -450,21 +450,21 @@ export function ProjectDashboard({
           {/* CTD Coverage */}
           <div className="flex flex-col items-center justify-center rounded-xl border border-stone-200 bg-white p-5 hover:shadow-sm transition-shadow">
             <Layers size={18} className="text-blue-500" />
-            <span className="text-2xl font-semibold tabular-nums text-stone-900 mt-1">{stats.ctdCoverage}%</span>
+            <span className="text-base font-semibold tabular-nums text-stone-900 mt-1">{stats.ctdCoverage}%</span>
             <span className="text-xs font-medium text-stone-500 mt-0.5">CTD Coverage</span>
           </div>
 
           {/* Approval Rate */}
           <div className="flex flex-col items-center justify-center rounded-xl border border-stone-200 bg-white p-5 hover:shadow-sm transition-shadow">
             <TrendingUp size={18} className="text-green-500" />
-            <span className="text-2xl font-semibold tabular-nums text-stone-900 mt-1">{stats.approvalRate}%</span>
+            <span className="text-base font-semibold tabular-nums text-stone-900 mt-1">{stats.approvalRate}%</span>
             <span className="text-xs font-medium text-stone-500 mt-0.5">Approval Rate</span>
           </div>
 
           {/* In Review */}
           <div className="flex flex-col items-center justify-center rounded-xl border border-stone-200 bg-white p-5 hover:shadow-sm transition-shadow">
             <AlertTriangle size={18} className={stats.reviewCycle > 30 ? 'text-amber-500' : 'text-blue-500'} />
-            <span className="text-2xl font-semibold tabular-nums text-stone-900 mt-1">{stats.counts.review}</span>
+            <span className="text-base font-semibold tabular-nums text-stone-900 mt-1">{stats.counts.review}</span>
             <span className="text-xs font-medium text-stone-500 mt-0.5">Awaiting Review</span>
           </div>
         </section>
@@ -718,7 +718,7 @@ export function ProjectDashboard({
                     <div
                       className={cn(
                         'h-full rounded-full transition-all duration-150',
-                        hasContent ? 'bg-blue-500' : 'bg-stone-100',
+                        hasContent ? 'bg-stone-600' : 'bg-stone-100',
                       )}
                       style={{ width: `${pct}%` }}
                     />

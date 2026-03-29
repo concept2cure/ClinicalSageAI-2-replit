@@ -12,7 +12,7 @@
  * - WCAG 2.1 AA: Fully accessible forms
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
@@ -34,7 +34,14 @@ import {
   Camera,
   Link2,
   FileText,
+  Brain,
+  Loader2,
 } from 'lucide-react';
+
+// Lazy-load intelligence editors to avoid bundling them eagerly
+const UserContextEditor = lazy(() => import('../intelligence/UserContextEditor'));
+const CompanyContextEditor = lazy(() => import('../intelligence/CompanyContextEditor'));
+const ProjectContextEditor = lazy(() => import('../intelligence/ProjectContextEditor'));
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -47,11 +54,18 @@ type SettingsSection =
   | 'security'
   | 'appearance'
   | 'integrations'
-  | 'help';
+  | 'help'
+  | 'ana-intelligence';
 
 interface ZenSettingsProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Active project ID — enables the Project Context editor in AnA Intelligence */
+  activeProjectId?: string | null;
+  /** Active project name — displayed in Project Context editor header */
+  activeProjectName?: string;
+  /** Initial section to open when the modal appears */
+  initialSection?: SettingsSection;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -69,6 +83,7 @@ const SETTINGS_NAV: {
   { id: 'security', label: 'Security', icon: Shield },
   { id: 'appearance', label: 'Appearance', icon: Palette },
   { id: 'integrations', label: 'Integrations', icon: Link2 },
+  { id: 'ana-intelligence', label: 'AnA Intelligence', icon: Brain },
   { id: 'help', label: 'Help & Support', icon: HelpCircle },
 ];
 
@@ -105,8 +120,8 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ enabled, onChange, label })
     aria-label={label}
     onClick={() => onChange(!enabled)}
     className={cn(
-      'relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:ring-offset-2',
-      enabled ? 'bg-blue-600' : 'bg-stone-300'
+      'relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-stone-300 focus:ring-offset-2',
+      enabled ? 'bg-stone-800' : 'bg-stone-300'
     )}
   >
     <span
@@ -204,7 +219,7 @@ const ProfileSection: React.FC = () => {
       {/* Avatar */}
       <div className="flex items-center gap-4 mb-6 pb-6 border-b border-stone-200">
         <div className="relative">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-2xl font-semibold">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-base font-semibold">
             {initials}
           </div>
           <button
@@ -280,7 +295,7 @@ const ProfileSection: React.FC = () => {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50"
+          className="px-4 py-2 text-sm font-medium text-white bg-stone-800 hover:bg-stone-900 rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Changes'}
         </button>
@@ -457,7 +472,7 @@ const NotificationsSection: React.FC = () => {
       {dirty && (
         <button
           onClick={save}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+          className="px-4 py-2 text-sm font-medium text-white bg-stone-800 hover:bg-stone-900 rounded-lg transition-colors"
         >
           Save Notification Preferences
         </button>
@@ -543,7 +558,7 @@ const AppearanceSection: React.FC = () => {
               className={cn(
                 'flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border transition-all duration-150',
                 theme === id
-                  ? 'border-blue-500 bg-blue-50'
+                  ? 'border-stone-600 bg-blue-50'
                   : 'border-stone-200 hover:border-stone-300'
               )}
             >
@@ -965,7 +980,7 @@ const IntegrationsSection: React.FC = () => {
           className={cn(
             'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
             filterCategory === 'all'
-              ? 'bg-blue-600 text-white'
+              ? 'bg-stone-800 text-white'
               : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
           )}
         >
@@ -980,7 +995,7 @@ const IntegrationsSection: React.FC = () => {
               className={cn(
                 'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
                 filterCategory === cat
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-stone-800 text-white'
                   : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               )}
             >
@@ -1004,7 +1019,7 @@ const IntegrationsSection: React.FC = () => {
               className={cn(
                 'rounded-xl border transition-all duration-200',
                 isConnected ? 'border-green-200 bg-green-50/50' : 'border-stone-200 bg-white',
-                isConfiguring && 'ring-2 ring-blue-200'
+                isConfiguring && 'ring-2 ring-stone-300'
               )}
             >
               {/* Integration header */}
@@ -1054,7 +1069,7 @@ const IntegrationsSection: React.FC = () => {
                         ? 'text-red-600 bg-red-50 hover:bg-red-100'
                         : isConfiguring
                           ? 'text-stone-600 bg-stone-100 hover:bg-stone-200'
-                          : 'text-white bg-blue-600 hover:bg-blue-700'
+                          : 'text-white bg-stone-800 hover:bg-stone-900'
                     )}
                   >
                     {isConnected ? 'Disconnect' : isConfiguring ? 'Cancel' : 'Configure'}
@@ -1078,7 +1093,7 @@ const IntegrationsSection: React.FC = () => {
                           onChange={e =>
                             handleConfigChange(integration.id, field.key, e.target.value)
                           }
-                          className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg bg-stone-50 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
+                          className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg bg-stone-50 focus:outline-none focus:ring-2 focus:ring-stone-300 focus:border-blue-400 transition-all"
                         />
                       </div>
                     ))}
@@ -1095,7 +1110,7 @@ const IntegrationsSection: React.FC = () => {
                     </button>
                     <button
                       onClick={() => handleConnect(integration.id)}
-                      className="px-4 py-2 text-xs font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                      className="px-4 py-2 text-xs font-medium rounded-lg text-white bg-stone-800 hover:bg-stone-900 transition-colors"
                     >
                       Save & Connect
                     </button>
@@ -1289,7 +1304,7 @@ export const ZenSettings: React.FC<ZenSettingsProps> = ({ isOpen, onClose }) => 
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
-            className="fixed inset-4 sm:inset-auto sm:top-[5%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-4xl sm:h-[90vh] bg-white rounded-xl shadow-lg overflow-hidden z-50 flex"
+            className="fixed inset-4 sm:inset-auto sm:top-[5%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-4xl sm:h-[90vh] bg-white rounded-xl shadow-sm overflow-hidden z-50 flex"
           >
             {/* Sidebar */}
             <div className="w-56 bg-stone-50 border-r border-stone-200 flex flex-col">

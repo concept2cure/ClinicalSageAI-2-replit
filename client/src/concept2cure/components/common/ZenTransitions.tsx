@@ -54,7 +54,7 @@ export const ZenLoader: React.FC<ZenLoaderProps> = ({
       />
       {/* Center dot */}
       <motion.div
-        className="absolute top-1/2 left-1/2 w-1.5 h-1.5 -translate-x-1/2 -translate-y-1/2 bg-blue-600 rounded-full"
+        className="absolute top-1/2 left-1/2 w-1.5 h-1.5 -translate-x-1/2 -translate-y-1/2 bg-stone-800 rounded-full"
         animate={{ scale: [1, 1.2, 1] }}
         transition={{ duration: 1, repeat: Infinity }}
       />
@@ -432,7 +432,7 @@ export const ZenProgress: React.FC<ZenProgressProps> = ({
   };
 
   const colors = {
-    blue: 'bg-blue-600',
+    blue: 'bg-stone-800',
     green: 'bg-green-600',
     amber: 'bg-amber-500',
     red: 'bg-red-600',
@@ -530,7 +530,7 @@ export const MotionPanel: React.FC<MotionPanelProps> = ({
             exit={{ x: slideFrom, opacity: 0.8 }}
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
             className={cn(
-              'fixed top-0 h-full bg-white shadow-xl z-50 overflow-y-auto border-stone-200',
+              'fixed top-0 h-full bg-white shadow z-50 overflow-y-auto border-stone-200',
               side === 'right' ? 'right-0 border-l' : 'left-0 border-r',
               width,
               className,
@@ -582,7 +582,7 @@ export const MotionModal: React.FC<MotionModalProps> = ({
           exit={{ opacity: 0, scale: 0.95, y: 8 }}
           transition={{ type: 'spring', damping: 25, stiffness: 350 }}
           className={cn(
-            'relative z-10 bg-white rounded-xl shadow-2xl border border-stone-200',
+            'relative z-10 bg-white rounded-xl shadow-sm border border-stone-200',
             className,
           )}
           role="dialog"

@@ -20,7 +20,7 @@ export const RegulatoryWorkspace: React.FC<RegulatoryWorkspaceProps> = ({
   return (
     <div className="h-full flex flex-col">
       <div className="bg-white border-b border-stone-200 px-6 py-4">
-        <h2 className="text-xl font-semibold text-stone-900">Regulatory Consulting Workspace</h2>
+        <h2 className="text-base font-medium text-stone-900">Regulatory Consulting Workspace</h2>
         <p className="text-sm text-stone-500">Multi-Client Strategy & Intelligence</p>
       </div>
       

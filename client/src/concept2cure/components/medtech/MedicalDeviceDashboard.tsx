@@ -355,7 +355,7 @@ const PredicatePathfinder: React.FC<{
           </div>
           <button
             onClick={onPredicateSearch}
-            className="px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none flex items-center gap-2"
+            className="px-3 py-1.5 text-sm font-medium bg-stone-800 text-white rounded-lg hover:bg-stone-900 shadow-sm focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none flex items-center gap-2"
           >
             <Search className="w-4 h-4" />
             Search Predicates
@@ -378,7 +378,7 @@ const PredicatePathfinder: React.FC<{
             </div>
             <div className="text-right">
               <div className="flex items-center gap-1">
-                <span className="text-2xl font-semibold text-green-600">
+                <span className="text-base font-semibold text-green-600">
                   {selected.similarityScore}
                 </span>
                 <span className="text-xs text-green-600">% Match</span>
@@ -620,7 +620,7 @@ const ESTARProgressTracker: React.FC<{
         {/* Progress Bar */}
         <div className="h-3 bg-stone-100 rounded-full overflow-hidden">
           <div
-            className="h-full bg-blue-500 rounded-full transition-all duration-150"
+            className="h-full bg-stone-600 rounded-full transition-all duration-150"
             style={{ width: `${submission.estarProgress}%` }}
           />
         </div>
@@ -893,7 +893,7 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
               <Mountain className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-semibold">Medical Device Regulatory Pathfinder</h1>
+              <h1 className="text-base font-medium">Medical Device Regulatory Pathfinder</h1>
               <p className="text-blue-200 text-sm">Your Sherpa to FDA Clearance</p>
             </div>
           </div>
@@ -903,7 +903,7 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
               <Database className="w-4 h-4" />
               MAUDE Search
             </button>
-            <button className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none flex items-center gap-2">
+            <button className="px-4 py-2 text-sm font-medium bg-stone-800 hover:bg-stone-900 rounded-lg shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none flex items-center gap-2">
               <Flag className="w-4 h-4" />
               New Submission
             </button>
@@ -914,15 +914,15 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
         <div className="grid grid-cols-5 gap-4">
           <div className="p-3 bg-white/10 rounded-xl backdrop-blur">
             <p className="text-xs text-blue-200">510(k) Active</p>
-            <p className="text-2xl font-semibold">{metrics.total510k}</p>
+            <p className="text-base font-semibold">{metrics.total510k}</p>
           </div>
           <div className="p-3 bg-white/10 rounded-xl backdrop-blur">
             <p className="text-xs text-blue-200">PMA Active</p>
-            <p className="text-2xl font-semibold">{metrics.totalPMA}</p>
+            <p className="text-base font-semibold">{metrics.totalPMA}</p>
           </div>
           <div className="p-3 bg-white/10 rounded-xl backdrop-blur">
             <p className="text-xs text-blue-200">Submitted</p>
-            <p className="text-2xl font-semibold">{metrics.submitted}</p>
+            <p className="text-base font-semibold">{metrics.submitted}</p>
           </div>
           <div
             className={cn(
@@ -931,7 +931,7 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
             )}
           >
             <p className="text-xs text-amber-200">Needs Action</p>
-            <p className="text-2xl font-semibold">{metrics.needsAction}</p>
+            <p className="text-base font-semibold">{metrics.needsAction}</p>
           </div>
           <div
             className={cn(
@@ -940,7 +940,7 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
             )}
           >
             <p className="text-xs text-red-200">MAUDE Alerts</p>
-            <p className="text-2xl font-semibold">{metrics.criticalAlerts}</p>
+            <p className="text-base font-semibold">{metrics.criticalAlerts}</p>
           </div>
         </div>
       </div>

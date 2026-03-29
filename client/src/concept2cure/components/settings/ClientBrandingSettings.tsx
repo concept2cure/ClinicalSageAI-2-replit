@@ -244,7 +244,7 @@ const ClientBrandingSettings: React.FC = () => {
                 <button
                   onClick={() => logoInputRef.current?.click()}
                   disabled={uploadLogo.isPending}
-                  className="px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  className="px-3 py-1.5 text-xs font-medium bg-stone-800 text-white rounded-lg hover:bg-stone-900 disabled:opacity-50"
                 >
                   {uploadLogo.isPending ? 'Uploading...' : branding.logoUrl ? 'Replace Logo' : 'Upload Logo'}
                 </button>
@@ -333,7 +333,7 @@ const ClientBrandingSettings: React.FC = () => {
             </p>
             <button
               onClick={() => setShowNewTemplate(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-stone-800 text-white rounded-lg hover:bg-stone-900"
             >
               <Plus className="w-3.5 h-3.5" />
               New Template
@@ -552,7 +552,7 @@ function NewTemplateForm({
         <button
           onClick={() => onCreate({ name, description, category, content, fileType: 'html' })}
           disabled={!name.trim() || isPending}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-stone-800 text-white rounded-lg hover:bg-stone-900 disabled:opacity-50"
         >
           <Save className="w-3.5 h-3.5" />
           Create Template

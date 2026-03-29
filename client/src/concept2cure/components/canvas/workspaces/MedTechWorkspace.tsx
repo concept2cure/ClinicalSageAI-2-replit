@@ -239,25 +239,25 @@ const MAUDEHazardMonitor: React.FC<MAUDEHazardMonitorProps> = ({ productCode }) 
       {/* Summary Stats */}
       <div className="grid grid-cols-4 gap-4 p-4 border-b border-stone-200">
         <div className="text-center">
-          <div className="text-2xl font-semibold text-stone-900">
+          <div className="text-base font-semibold text-stone-900">
             {hazardAnalysis.summary.totalReports}
           </div>
           <div className="text-xs text-stone-500">Total Reports</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-semibold text-amber-600">
+          <div className="text-base font-semibold text-amber-600">
             {hazardAnalysis.summary.malfunctions}
           </div>
           <div className="text-xs text-stone-500">Malfunctions</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-semibold text-orange-600">
+          <div className="text-base font-semibold text-orange-600">
             {hazardAnalysis.summary.injuries}
           </div>
           <div className="text-xs text-stone-500">Injuries</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-semibold text-red-600">
+          <div className="text-base font-semibold text-red-600">
             {hazardAnalysis.summary.deaths}
           </div>
           <div className="text-xs text-stone-500">Deaths</div>
@@ -409,7 +409,7 @@ export const MedTechWorkspace: React.FC<MedTechWorkspaceProps> = ({
       <div className="bg-white border-b border-stone-200 px-6 py-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-xl font-semibold text-stone-900">MedTech Workspace</h2>
+            <h2 className="text-base font-medium text-stone-900">MedTech Workspace</h2>
             <p className="text-sm text-stone-500">510(k), PMA, De Novo & EU MDR Tools</p>
           </div>
           <div className="flex items-center gap-2">

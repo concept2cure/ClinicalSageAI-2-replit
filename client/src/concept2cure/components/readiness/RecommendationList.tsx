@@ -95,7 +95,7 @@ export function RecommendationList({
             {onExecute && rec.actionPayload && (
               <button
                 onClick={() => onExecute(rec)}
-                className="shrink-0 text-xs px-3 py-1.5 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition-colors font-medium"
+                className="shrink-0 text-xs px-3 py-1.5 rounded-md bg-stone-700 text-white hover:bg-stone-800 transition-colors font-medium"
               >
                 Run
               </button>
@@ -104,7 +104,7 @@ export function RecommendationList({
           <div className="mt-1.5 flex items-center gap-2">
             <div className="flex-1 h-1 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
               <div
-                className="h-full rounded-full bg-indigo-500 transition-all duration-300"
+                className="h-full rounded-full bg-stone-600 transition-all duration-300"
                 style={{ width: `${Math.round(rec.confidence * 100)}%` }}
               />
             </div>

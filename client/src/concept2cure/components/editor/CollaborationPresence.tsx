@@ -95,7 +95,7 @@ export function CollaborationPresence({
               <span
                 className={cn(
                   'absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ring-1 ring-white',
-                  collab.status === 'editing' ? 'bg-blue-500' :
+                  collab.status === 'editing' ? 'bg-stone-600' :
                   collab.status === 'idle' ? 'bg-amber-400' :
                   'bg-emerald-500',
                 )}

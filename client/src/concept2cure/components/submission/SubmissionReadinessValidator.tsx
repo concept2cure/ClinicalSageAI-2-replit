@@ -402,7 +402,7 @@ export function SubmissionReadinessValidator({
           <div className="flex-1 bg-stone-200 rounded-full h-2 overflow-hidden">
             <div
               className={cn(
-                'h-full rounded-full transition-all duration-500',
+                'h-full rounded-full transition-all duration-200',
                 readinessScore >= 80 ? 'bg-emerald-500' :
                 readinessScore >= 50 ? 'bg-amber-500' :
                 'bg-red-500',
@@ -533,7 +533,7 @@ export function SubmissionReadinessValidator({
             </button>
           )}
           <button
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-stone-800 rounded-lg hover:bg-stone-900 transition-colors disabled:opacity-50"
             disabled={stats.fail > 0}
             title={stats.fail > 0 ? 'Resolve all failures before exporting' : 'Generate submission package'}
           >

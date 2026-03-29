@@ -204,7 +204,7 @@ export function ComplianceScannerPanel({
           <div className="flex items-center gap-2">
             <div className="flex-1 w-24 bg-stone-200 rounded-full h-2 overflow-hidden">
               <div
-                className={cn('h-full rounded-full transition-all duration-500', scoreBg)}
+                className={cn('h-full rounded-full transition-all duration-200', scoreBg)}
                 style={{ width: `${score}%` }}
               />
             </div>
@@ -332,28 +332,32 @@ export function ComplianceScannerPanel({
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
                           {issue.suggestion && (
-                            <button
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={e => {
                                 e.stopPropagation();
                                 onFixIssue(issue);
                               }}
-                              className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-violet-700 bg-violet-100 rounded-lg hover:bg-violet-200 transition-colors duration-150"
+                              className="flex items-center gap-1 h-auto px-2 py-1 text-[10px] font-medium text-violet-700 bg-violet-100 hover:bg-violet-200"
                               title={`Replace with "${issue.suggestion}"`}
                             >
                               <Zap className="w-3 h-3" />
                               Fix
-                            </button>
+                            </Button>
                           )}
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={e => {
                               e.stopPropagation();
                               handleDismiss(issue.id);
                             }}
-                            className="p-1 text-stone-400 hover:text-stone-600 transition-colors duration-150"
+                            className="h-6 w-6 text-stone-400 hover:text-stone-600"
                             title="Dismiss"
                           >
                             <X className="w-3 h-3" />
-                          </button>
+                          </Button>
                         </div>
                       </div>
                       {issue.suggestion && (

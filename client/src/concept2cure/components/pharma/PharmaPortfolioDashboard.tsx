@@ -494,7 +494,7 @@ const TherapeuticAreaCard: React.FC<{
         className="w-full flex items-center justify-between p-4 hover:bg-stone-50 transition-colors duration-150"
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-stone-800 flex items-center justify-center">
             <Pill className="w-5 h-5 text-white" />
           </div>
           <div className="text-left">
@@ -623,7 +623,7 @@ export const PharmaPortfolioDashboard: React.FC<PharmaPortfolioDashboardProps> =
       <div className="flex-shrink-0 bg-white border-b border-stone-200 p-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-semibold text-stone-900">Global Regulatory Portfolio</h1>
+            <h1 className="text-base font-medium text-stone-900">Global Regulatory Portfolio</h1>
             <p className="text-sm text-stone-500">Enterprise-wide view across therapeutic areas</p>
           </div>
           
@@ -632,7 +632,7 @@ export const PharmaPortfolioDashboard: React.FC<PharmaPortfolioDashboardProps> =
               onClick={() => setView('portfolio')}
               className={cn(
                 'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors duration-150',
-                view === 'portfolio' ? 'bg-blue-600 text-white' : 'text-stone-600 hover:bg-stone-100'
+                view === 'portfolio' ? 'bg-stone-800 text-white' : 'text-stone-600 hover:bg-stone-100'
               )}
             >
               <LayoutGrid className="w-4 h-4 inline mr-1" />
@@ -642,7 +642,7 @@ export const PharmaPortfolioDashboard: React.FC<PharmaPortfolioDashboardProps> =
               onClick={() => setView('matrix')}
               className={cn(
                 'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors duration-150',
-                view === 'matrix' ? 'bg-blue-600 text-white' : 'text-stone-600 hover:bg-stone-100'
+                view === 'matrix' ? 'bg-stone-800 text-white' : 'text-stone-600 hover:bg-stone-100'
               )}
             >
               <Globe className="w-4 h-4 inline mr-1" />
@@ -655,11 +655,11 @@ export const PharmaPortfolioDashboard: React.FC<PharmaPortfolioDashboardProps> =
         <div className="grid grid-cols-5 gap-4">
           <div className="p-3 bg-blue-50 rounded-lg">
             <p className="text-xs text-blue-600">Total Revenue</p>
-            <p className="text-xl font-semibold text-blue-700">{formatCurrency(metrics.totalRevenue)}</p>
+            <p className="text-base font-medium text-blue-700">{formatCurrency(metrics.totalRevenue)}</p>
           </div>
           <div className="p-3 bg-stone-100 rounded-lg">
             <p className="text-xs text-stone-500">Products</p>
-            <p className="text-xl font-semibold text-stone-900">{metrics.totalProducts}</p>
+            <p className="text-base font-medium text-stone-900">{metrics.totalProducts}</p>
           </div>
           <div className={cn(
             'p-3 rounded-lg',
@@ -668,7 +668,7 @@ export const PharmaPortfolioDashboard: React.FC<PharmaPortfolioDashboardProps> =
             <p className={cn('text-xs', metrics.upcomingPDUFAs > 0 ? 'text-amber-600' : 'text-stone-500')}>
               PDUFA (90d)
             </p>
-            <p className={cn('text-xl font-semibold', metrics.upcomingPDUFAs > 0 ? 'text-amber-700' : 'text-stone-900')}>
+            <p className={cn('text-base font-medium', metrics.upcomingPDUFAs > 0 ? 'text-amber-700' : 'text-stone-900')}>
               {metrics.upcomingPDUFAs}
             </p>
           </div>
@@ -679,13 +679,13 @@ export const PharmaPortfolioDashboard: React.FC<PharmaPortfolioDashboardProps> =
             <p className={cn('text-xs', metrics.overdueCommitments > 0 ? 'text-red-600' : 'text-stone-500')}>
               Overdue Commitments
             </p>
-            <p className={cn('text-xl font-semibold', metrics.overdueCommitments > 0 ? 'text-red-700' : 'text-stone-900')}>
+            <p className={cn('text-base font-medium', metrics.overdueCommitments > 0 ? 'text-red-700' : 'text-stone-900')}>
               {metrics.overdueCommitments}
             </p>
           </div>
           <div className="p-3 bg-violet-50 rounded-lg">
             <p className="text-xs text-violet-600">At Risk (30d)</p>
-            <p className="text-xl font-semibold text-violet-700">{metrics.atRiskCommitments}</p>
+            <p className="text-base font-medium text-violet-700">{metrics.atRiskCommitments}</p>
           </div>
         </div>
       </div>

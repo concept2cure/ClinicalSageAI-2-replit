@@ -504,7 +504,7 @@ export default function IntelligentReportGenerator() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-800" />
       </div>
     );
   }
@@ -524,7 +524,7 @@ export default function IntelligentReportGenerator() {
       <div className="flex-shrink-0 border-b border-stone-200 bg-white px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-stone-800 flex items-center justify-center">
               <FileText className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -593,7 +593,7 @@ export default function IntelligentReportGenerator() {
                     }}
                     className={`p-3 rounded-xl border text-left transition-all ${
                       selectedDomain?.domain === d.domain
-                        ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
+                        ? 'border-stone-600 bg-blue-50 ring-2 ring-stone-300'
                         : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50'
                     }`}
                   >
@@ -627,7 +627,7 @@ export default function IntelligentReportGenerator() {
                       onClick={() => setSelectedSubtype(sub)}
                       className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
                         selectedSubtype === sub
-                          ? 'border-blue-500 bg-blue-100 text-blue-700'
+                          ? 'border-stone-600 bg-blue-100 text-blue-700'
                           : 'border-stone-200 text-stone-600 hover:bg-stone-50'
                       }`}
                     >
@@ -651,7 +651,7 @@ export default function IntelligentReportGenerator() {
                     onClick={() => setSelectedBody(selectedBody === b.code ? '' : b.code)}
                     className={`p-2.5 rounded-lg border text-left transition-all ${
                       selectedBody === b.code
-                        ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-200'
+                        ? 'border-stone-600 bg-blue-50 ring-1 ring-stone-300'
                         : 'border-stone-200 hover:border-stone-300'
                     }`}
                   >
@@ -704,7 +704,7 @@ export default function IntelligentReportGenerator() {
               <button
                 onClick={handleGenerate}
                 disabled={!selectedDomain || !reportTitle || generating}
-                className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium text-sm hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none transition-colors duration-150 shadow-sm focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none"
+                className="flex items-center gap-2 px-6 py-2.5 bg-stone-800 text-white rounded-lg font-medium text-sm hover:bg-stone-900 disabled:opacity-50 disabled:pointer-events-none transition-colors duration-150 shadow-sm focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none"
               >
                 {generating ? (
                   <>
@@ -728,7 +728,7 @@ export default function IntelligentReportGenerator() {
           <div className="max-w-5xl mx-auto p-6 space-y-6">
             {/* Report Header Card */}
             <div className="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden">
-              <div className="bg-blue-600 px-6 py-4">
+              <div className="bg-stone-800 px-6 py-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-white font-semibold text-lg">{generatedReport.record.reportTitle}</h2>
@@ -828,7 +828,7 @@ export default function IntelligentReportGenerator() {
                   Export
                   <ChevronDown className="w-3 h-3" />
                 </button>
-                <div className="absolute top-full left-0 mt-1 bg-white border border-stone-200 rounded-xl shadow-lg py-1 w-48 hidden group-hover:block z-10">
+                <div className="absolute top-full left-0 mt-1 bg-white border border-stone-200 rounded-xl shadow-sm py-1 w-48 hidden group-hover:block z-10">
                   <button
                     onClick={() => handleExport('json')}
                     className="flex items-center gap-2 w-full px-3 py-2 text-sm text-stone-700 hover:bg-stone-50"
@@ -1351,7 +1351,7 @@ export default function IntelligentReportGenerator() {
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className={`text-xl font-semibold ${complianceScore >= 80 ? 'text-emerald-600' : complianceScore >= 60 ? 'text-amber-600' : 'text-red-600'}`}>
+                      <span className={`text-base font-medium ${complianceScore >= 80 ? 'text-emerald-600' : complianceScore >= 60 ? 'text-amber-600' : 'text-red-600'}`}>
                         {complianceScore}
                       </span>
                     </div>
@@ -1373,7 +1373,7 @@ export default function IntelligentReportGenerator() {
 
             {validating && complianceChecks.length === 0 && (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3" />
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-800 mx-auto mb-3" />
                 <div className="text-sm text-stone-500">Running compliance validation...</div>
               </div>
             )}

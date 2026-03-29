@@ -83,7 +83,7 @@ function ScoreBar({ value, label, color }: { value: number; label: string; color
       </div>
       <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all duration-500 ${color}`}
+          className={`h-full rounded-full transition-all duration-200 ${color}`}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -253,7 +253,7 @@ export function RegulatoryIntelligencePanel({
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 flex items-center justify-center gap-1 px-1 sm:px-2 py-2 text-xs font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-blue-500 text-blue-700 bg-blue-50/50'
+                  ? 'border-stone-600 text-blue-700 bg-blue-50/50'
                   : 'border-transparent text-stone-500 hover:text-stone-700 hover:bg-stone-50'
               }`}
             >
@@ -273,7 +273,7 @@ export function RegulatoryIntelligencePanel({
             <button
               onClick={handleRunAnalysis}
               disabled={regulatoryAnalysis.isPending}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-stone-800 text-white text-xs font-medium rounded-lg hover:bg-stone-900 disabled:opacity-60"
             >
               {regulatoryAnalysis.isPending ? (
                 <Spinner size="sm" />
@@ -303,7 +303,7 @@ export function RegulatoryIntelligencePanel({
                   <ScoreBar
                     value={analysisResult.overall_confidence_score || 0}
                     label="Confidence"
-                    color="bg-blue-500"
+                    color="bg-stone-600"
                   />
                   {analysisResult.regulatory_impact_summary && (
                     <p className="text-xs text-stone-700 leading-relaxed mt-2">
@@ -471,7 +471,7 @@ export function RegulatoryIntelligencePanel({
                   <ScoreBar
                     value={compareResult.overallScore}
                     label="Overall Similarity"
-                    color="bg-blue-500"
+                    color="bg-stone-600"
                   />
                 )}
                 {compareResult.riskLevel && (
@@ -940,7 +940,7 @@ export function RegulatoryIntelligencePanel({
                   </div>
                   <div className="h-2 bg-stone-200 rounded-full overflow-hidden mb-2">
                     <div
-                      className={`h-full rounded-full transition-all duration-500 ${coverageColor}`}
+                      className={`h-full rounded-full transition-all duration-200 ${coverageColor}`}
                       style={{ width: `${Math.round(coverageRatio * 100)}%` }}
                     />
                   </div>
@@ -1129,7 +1129,7 @@ export function RegulatoryIntelligencePanel({
                     '5.3'
                   );
                 }}
-                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-150"
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-stone-800 text-white rounded-lg hover:bg-stone-900 transition-colors duration-150"
               >
                 <ArrowRight className="w-3.5 h-3.5" />
                 Save as Evidence Binder

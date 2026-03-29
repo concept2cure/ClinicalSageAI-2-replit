@@ -142,8 +142,8 @@ const getStatusColors = (status: PhaseStatus) => {
       };
     case 'current':
       return {
-        bg: 'bg-blue-500',
-        border: 'border-blue-500',
+        bg: 'bg-stone-600',
+        border: 'border-stone-600',
         text: 'text-blue-700',
         line: 'bg-blue-200',
       };
@@ -186,7 +186,7 @@ const MiniTimeline: React.FC<{
     <div className="flex items-center gap-2">
       <div className="flex-1 h-2 bg-stone-100 rounded-full overflow-hidden">
         <div
-          className="h-full bg-blue-500 transition-all duration-500"
+          className="h-full bg-stone-600 transition-all duration-200"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -226,7 +226,7 @@ const CompactTimeline: React.FC<{
                   colors.bg,
                   colors.border,
                   'border-2',
-                  isCurrent && 'ring-2 ring-blue-200 ring-offset-1',
+                  isCurrent && 'ring-2 ring-stone-300 ring-offset-1',
                   onPhaseClick && 'hover:scale-110'
                 )}
               >
@@ -310,7 +310,7 @@ const FullTimeline: React.FC<{
         </div>
         <div className="h-3 bg-stone-200 rounded-full overflow-hidden">
           <div
-            className="h-full bg-blue-500 transition-all duration-500 rounded-full"
+            className="h-full bg-stone-600 transition-all duration-200 rounded-full"
             style={{ width: `${overallProgress}%` }}
           />
         </div>
@@ -390,7 +390,7 @@ const FullTimeline: React.FC<{
                       </div>
                       <div className="h-1.5 bg-blue-100 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-blue-500 rounded-full transition-all duration-150"
+                          className="h-full bg-stone-600 rounded-full transition-all duration-150"
                           style={{ width: `${phase.progress}%` }}
                         />
                       </div>

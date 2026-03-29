@@ -202,7 +202,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-72 bg-white border border-stone-200 rounded-lg shadow-xl z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-1 w-72 bg-white border border-stone-200 rounded-lg shadow z-50 overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-3 py-2 border-b border-stone-200 bg-stone-50/50">
             <span className="text-xs font-semibold text-stone-700">Notifications</span>
@@ -228,7 +228,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
                 className={cn(
                   'flex-1 py-1 text-xs font-medium capitalize',
                   tab === t
-                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    ? 'text-blue-600 border-b-2 border-stone-800'
                     : 'text-stone-400 hover:text-stone-600'
                 )}
               >

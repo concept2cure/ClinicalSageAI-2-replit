@@ -451,7 +451,7 @@ const ModuleHeader: React.FC<{
               className={cn(
                 'h-full rounded-full transition-all duration-150',
                 progressPercent === 100 && 'bg-emerald-500',
-                progressPercent >= 50 && progressPercent < 100 && 'bg-blue-500',
+                progressPercent >= 50 && progressPercent < 100 && 'bg-stone-600',
                 progressPercent < 50 && 'bg-amber-500'
               )}
               style={{ width: `${progressPercent}%` }}
@@ -580,7 +580,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
           </div>
           <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-blue-600 rounded-full transition-all duration-150"
+              className="h-full bg-stone-800 rounded-full transition-all duration-150"
               style={{ width: `${overallProgress.percent}%` }}
             />
           </div>
@@ -741,7 +741,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
             <Download className="w-4 h-4" />
             Export eCTD
           </button>
-          <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+          <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-stone-800 rounded-lg hover:bg-stone-900">
             <Check className="w-4 h-4" />
             Validate
           </button>

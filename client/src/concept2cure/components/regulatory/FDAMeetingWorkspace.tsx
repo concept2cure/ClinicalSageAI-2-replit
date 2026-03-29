@@ -261,7 +261,7 @@ const MeetingTimeline: React.FC<{
         {/* Progress Line */}
         <div className="absolute top-3 left-0 right-0 h-1 bg-stone-200 rounded-full">
           <div
-            className="h-full bg-blue-600 rounded-full transition-all duration-150"
+            className="h-full bg-stone-800 rounded-full transition-all duration-150"
             style={{ width: `${(currentStep / 12) * 100}%` }}
           />
         </div>
@@ -276,8 +276,8 @@ const MeetingTimeline: React.FC<{
               <div key={milestone.step} className="flex flex-col items-center">
                 <div className={cn(
                   'w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-semibold z-10',
-                  isComplete && 'bg-blue-600 border-blue-600 text-white',
-                  isCurrent && !isComplete && 'bg-white border-blue-600 text-blue-600',
+                  isComplete && 'bg-stone-800 border-stone-800 text-white',
+                  isCurrent && !isComplete && 'bg-white border-stone-800 text-blue-600',
                   !isComplete && !isCurrent && 'bg-white border-stone-300 text-stone-400'
                 )}>
                   {isComplete ? '✓' : idx + 1}
@@ -468,7 +468,7 @@ const ActionItemsPanel: React.FC<{
               'flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors duration-150',
               item.status === 'completed'
                 ? 'bg-green-600 border-green-600 text-white'
-                : 'border-stone-300 hover:border-blue-500'
+                : 'border-stone-300 hover:border-stone-600'
             )}
           >
             {item.status === 'completed' && <CheckCircle className="w-3 h-3" />}
@@ -665,7 +665,7 @@ const MeetingDetail: React.FC<{
         <div className="flex items-start justify-between mb-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl">{purposeConfig.icon}</span>
+              <span className="text-base font-medium">{purposeConfig.icon}</span>
               <span className={cn('inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', typeConfig.color === 'text-red-600' ? 'bg-red-100' : typeConfig.color === 'text-blue-600' ? 'bg-blue-100' : 'bg-stone-100', typeConfig.color)}>
                 {typeConfig.label}
               </span>
@@ -673,7 +673,7 @@ const MeetingDetail: React.FC<{
                 {statusConfig.label}
               </span>
             </div>
-            <h2 className="text-xl font-semibold text-stone-900">{meeting.title}</h2>
+            <h2 className="text-base font-medium text-stone-900">{meeting.title}</h2>
             <p className="text-sm text-stone-500">{meeting.productName}</p>
           </div>
           
@@ -682,7 +682,7 @@ const MeetingDetail: React.FC<{
               <Download className="w-4 h-4" />
               Export
             </button>
-            <button className="inline-flex items-center justify-center font-medium rounded-lg transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none bg-blue-600 text-white hover:bg-blue-700 shadow-sm px-4 py-2 text-sm gap-2">
+            <button className="inline-flex items-center justify-center font-medium rounded-lg transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none bg-stone-800 text-white hover:bg-stone-900 shadow-sm px-4 py-2 text-sm gap-2">
               <Send className="w-4 h-4" />
               Send to FDA
             </button>
@@ -769,11 +769,11 @@ export const FDAMeetingWorkspace: React.FC<FDAMeetingWorkspaceProps> = ({
       <div className="flex-shrink-0 bg-white border-b border-stone-200 p-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-semibold text-stone-900">FDA Meeting Workspace</h1>
+            <h1 className="text-base font-medium text-stone-900">FDA Meeting Workspace</h1>
             <p className="text-sm text-stone-500">Manage regulatory interactions</p>
           </div>
           
-          <button className="inline-flex items-center justify-center font-medium rounded-lg transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none bg-blue-600 text-white hover:bg-blue-700 shadow-sm px-4 py-2 text-sm gap-2">
+          <button className="inline-flex items-center justify-center font-medium rounded-lg transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none bg-stone-800 text-white hover:bg-stone-900 shadow-sm px-4 py-2 text-sm gap-2">
             <Plus className="w-4 h-4" />
             New Meeting Request
           </button>
@@ -783,19 +783,19 @@ export const FDAMeetingWorkspace: React.FC<FDAMeetingWorkspaceProps> = ({
         <div className="grid grid-cols-4 gap-4">
           <div className="rounded-xl border border-stone-200 bg-white px-5 py-4 shadow-sm">
             <span className="text-xs font-medium text-stone-500 uppercase tracking-wide">Scheduled</span>
-            <span className="text-2xl font-semibold mt-1 block text-blue-700">{metrics.scheduled}</span>
+            <span className="text-base font-semibold mt-1 block text-blue-700">{metrics.scheduled}</span>
           </div>
           <div className="rounded-xl border border-stone-200 bg-white px-5 py-4 shadow-sm">
             <span className="text-xs font-medium text-stone-500 uppercase tracking-wide">Awaiting FDA</span>
-            <span className="text-2xl font-semibold mt-1 block text-amber-700">{metrics.awaitingResponse}</span>
+            <span className="text-base font-semibold mt-1 block text-amber-700">{metrics.awaitingResponse}</span>
           </div>
           <div className="rounded-xl border border-stone-200 bg-white px-5 py-4 shadow-sm">
             <span className="text-xs font-medium text-stone-500 uppercase tracking-wide">Open Items</span>
-            <span className="text-2xl font-semibold mt-1 block text-stone-900">{metrics.openActionItems}</span>
+            <span className="text-base font-semibold mt-1 block text-stone-900">{metrics.openActionItems}</span>
           </div>
           <div className="rounded-xl border border-stone-200 bg-white px-5 py-4 shadow-sm">
             <span className="text-xs font-medium text-stone-500 uppercase tracking-wide">FDA Commitments</span>
-            <span className="text-2xl font-semibold mt-1 block text-purple-700">{metrics.fdaCommitments}</span>
+            <span className="text-base font-semibold mt-1 block text-purple-700">{metrics.fdaCommitments}</span>
           </div>
         </div>
       </div>

@@ -141,22 +141,22 @@ const ArtifactProofPanel: React.FC<ArtifactProofPanelProps> = ({ projectId, arti
     },
     {
       label: 'Provenance Events',
-      value: loading ? 'Loading...' : provenanceCount !== null ? `${provenanceCount} events` : 'Unavailable',
+      value: loading ? '2014' : provenanceCount !== null ? `${provenanceCount} events` : 'Unavailable',
       status: loading ? 'info' : (provenanceCount ?? 0) > 0 ? 'pass' : 'warn',
     },
     {
       label: 'Audit Trail',
-      value: loading ? 'Loading...' : (provenanceCount ?? 0) > 0 ? 'Present' : 'None found',
+      value: loading ? '2014' : (provenanceCount ?? 0) > 0 ? 'Present' : 'None found',
       status: loading ? 'info' : (provenanceCount ?? 0) > 0 ? 'pass' : 'warn',
     },
     {
       label: 'Signatures',
-      value: loading ? 'Loading...' : signatureCount !== null ? `${signatureCount} signatures` : 'None',
+      value: loading ? '2014' : signatureCount !== null ? `${signatureCount} signatures` : 'None',
       status: loading ? 'info' : (signatureCount ?? 0) > 0 ? 'pass' : 'info',
     },
     {
       label: 'Integrity Verified',
-      value: loading ? 'Loading...' : integrityVerified === true ? 'Verified' : integrityVerified === false ? 'FAILED' : 'Not checked',
+      value: loading ? '2014' : integrityVerified === true ? 'Verified' : integrityVerified === false ? 'FAILED' : 'Not checked',
       status: loading ? 'info' : integrityVerified === true ? 'pass' : integrityVerified === false ? 'fail' : 'warn',
     },
     {

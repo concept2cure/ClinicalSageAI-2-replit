@@ -220,7 +220,7 @@ export function NewDocumentDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div role="dialog" aria-modal="true" aria-label="Create new document" className="w-full max-w-2xl rounded-xl bg-white shadow-lg border border-stone-200 overflow-hidden">
+      <div role="dialog" aria-modal="true" aria-label="Create new document" className="w-full max-w-2xl rounded-xl bg-white shadow-sm border border-stone-200 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100">
           <div className="flex items-center gap-3">
@@ -378,7 +378,7 @@ export function NewDocumentDialog({
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 placeholder={selectedTemplate?.name || 'Enter document title...'}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 focus-visible:ring-2 outline-none focus:ring-blue-200 focus:border-blue-400"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 focus-visible:ring-2 outline-none focus:ring-stone-300 focus:border-blue-400"
                 autoFocus
                 onKeyDown={e => {
                   if (e.key === 'Enter' && !isCreating) handleCreate();
@@ -396,7 +396,7 @@ export function NewDocumentDialog({
               <select
                 value={ctdSection}
                 onChange={e => setCtdSection(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 focus-visible:ring-2 outline-none focus:ring-blue-200 focus:border-blue-400 bg-white"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 focus-visible:ring-2 outline-none focus:ring-stone-300 focus:border-blue-400 bg-white"
               >
                 {CTD_SECTIONS.map(s => (
                   <option key={s.value} value={s.value}>{s.label}</option>
@@ -439,8 +439,8 @@ export function NewDocumentDialog({
               className={cn(
                 'flex items-center gap-2 px-5 py-2 text-sm font-medium rounded-lg transition-colors duration-150',
                 mode === 'ai-generate'
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'bg-blue-600 text-white hover:bg-blue-700',
+                  ? 'bg-stone-800 text-white hover:bg-stone-900'
+                  : 'bg-stone-800 text-white hover:bg-stone-900',
                 'disabled:opacity-50',
               )}
             >

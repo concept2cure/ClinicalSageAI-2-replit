@@ -40,7 +40,7 @@ interface ProjectTaskBoardProps {
 
 const COLUMNS: { key: TaskStatus; label: string; icon: React.ElementType; color: string; bg: string; dot: string }[] = [
   { key: 'todo',        label: 'To Do',       icon: Circle,         color: 'text-stone-600', bg: 'bg-stone-50',  dot: 'bg-stone-400' },
-  { key: 'in-progress', label: 'In Progress', icon: Loader2,        color: 'text-blue-600',  bg: 'bg-blue-50',   dot: 'bg-blue-500' },
+  { key: 'in-progress', label: 'In Progress', icon: Loader2,        color: 'text-blue-600',  bg: 'bg-blue-50',   dot: 'bg-stone-600' },
   { key: 'review',      label: 'Review',      icon: ArrowUpRight,   color: 'text-amber-600', bg: 'bg-amber-50',  dot: 'bg-amber-500' },
   { key: 'done',        label: 'Done',        icon: CheckCircle2,   color: 'text-emerald-600', bg: 'bg-emerald-50', dot: 'bg-emerald-500' },
   { key: 'blocked',     label: 'Blocked',     icon: AlertTriangle,  color: 'text-red-600',   bg: 'bg-red-50',    dot: 'bg-red-500' },

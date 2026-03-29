@@ -42,14 +42,14 @@ function StateBadge({ state }: { state: string }) {
   const colorMap: Record<string, string> = {
     unresolved: 'bg-amber-100 text-amber-800',
     proposed_resolution: 'bg-blue-100 text-blue-800',
-    in_resolution: 'bg-indigo-100 text-indigo-800',
+    in_resolution: 'bg-stone-100 text-stone-800',
     resolved_pending_review: 'bg-purple-100 text-purple-800',
     resolved_approved: 'bg-green-100 text-green-800',
     superseded: 'bg-gray-100 text-gray-500',
     cancelled: 'bg-gray-100 text-gray-400',
     draft: 'bg-gray-100 text-gray-600',
     proposed: 'bg-blue-100 text-blue-800',
-    in_progress: 'bg-indigo-100 text-indigo-800',
+    in_progress: 'bg-stone-100 text-stone-800',
     pending_review: 'bg-purple-100 text-purple-800',
     approved: 'bg-green-100 text-green-800',
     applied: 'bg-emerald-100 text-emerald-800',
@@ -75,7 +75,7 @@ function StateBadge({ state }: { state: string }) {
 function ConfidenceIndicator({ confidence }: { confidence: string }) {
   const indicators: Record<string, { dots: number; color: string }> = {
     strong: { dots: 4, color: 'bg-green-500' },
-    moderate: { dots: 3, color: 'bg-blue-500' },
+    moderate: { dots: 3, color: 'bg-stone-600' },
     provisional: { dots: 2, color: 'bg-amber-500' },
     uncertain: { dots: 1, color: 'bg-red-500' },
   };
@@ -146,7 +146,7 @@ function ResolutionPlanCard({ plan, onCreateBundle }: {
             </button>
             {!plan.bundleId && (
               <button
-                className="text-xs px-3 py-1 bg-indigo-50 text-indigo-700 rounded hover:bg-indigo-100 transition-colors"
+                className="text-xs px-3 py-1 bg-stone-100 text-stone-700 rounded hover:bg-stone-100 transition-colors"
                 onClick={() => onCreateBundle(plan.id)}
               >
                 Create Bundle
@@ -156,7 +156,7 @@ function ResolutionPlanCard({ plan, onCreateBundle }: {
         )}
         {plan.state === 'proposed_resolution' && (
           <button
-            className="text-xs px-3 py-1 bg-indigo-50 text-indigo-700 rounded hover:bg-indigo-100 transition-colors"
+            className="text-xs px-3 py-1 bg-stone-100 text-stone-700 rounded hover:bg-stone-100 transition-colors"
             onClick={() => transitionState.mutate({ planId: plan.id, targetState: 'in_resolution' })}
           >
             Begin Resolution
@@ -222,7 +222,7 @@ function ResolutionBundleCard({ bundle }: { bundle: any }) {
         )}
         {bundle.state === 'proposed' && (
           <button
-            className="text-xs px-3 py-1 bg-indigo-50 text-indigo-700 rounded hover:bg-indigo-100 transition-colors"
+            className="text-xs px-3 py-1 bg-stone-100 text-stone-700 rounded hover:bg-stone-100 transition-colors"
             onClick={() => transitionState.mutate({ bundleId: bundle.id, targetState: 'in_progress' })}
           >
             Begin
@@ -325,7 +325,7 @@ export default function ResolutionPanel({ projectId, className = '' }: Resolutio
             onClick={() => setActiveTab(tab.id)}
             className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
               activeTab === tab.id
-                ? 'border-blue-500 text-blue-600'
+                ? 'border-stone-600 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >

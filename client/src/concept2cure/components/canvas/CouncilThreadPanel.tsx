@@ -468,7 +468,7 @@ export const CouncilThreadPanel: React.FC<CouncilThreadPanelProps> = ({
       <div className="flex items-center justify-between p-4 border-b border-stone-200">
         <div className="flex items-center gap-3">
           <div className={cn(
-            "w-12 h-12 rounded-lg flex items-center justify-center text-2xl",
+            "w-12 h-12 rounded-lg flex items-center justify-center text-base font-medium",
             `bg-gradient-to-br ${persona.color}`
           )}>
             {persona.avatar}
@@ -491,7 +491,7 @@ export const CouncilThreadPanel: React.FC<CouncilThreadPanelProps> = ({
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center">
             <div className={cn(
-              "w-20 h-20 rounded-xl flex items-center justify-center text-4xl mb-4",
+              "w-20 h-20 rounded-xl flex items-center justify-center text-lg font-semibold mb-4",
               `bg-gradient-to-br ${persona.color}`
             )}>
               {persona.avatar}

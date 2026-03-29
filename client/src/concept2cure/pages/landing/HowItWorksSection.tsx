@@ -28,7 +28,7 @@ const STEPS = [
     title: 'Review & Collaborate',
     description:
       'Your team reviews AI-drafted sections with tracked changes, e-signatures, and full audit trails.',
-    color: 'bg-indigo-600',
+    color: 'bg-stone-700',
   },
   {
     step: '4',
@@ -46,7 +46,7 @@ export function HowItWorksSection() {
     <Section id="how-it-works" className="py-24 px-6 bg-stone-50/50">
       <div className="max-w-4xl mx-auto">
         <motion.div variants={fadeUp} className="text-center mb-14">
-          <h2 className="text-3xl sm:text-4xl font-bold text-stone-900 mb-4">How it works</h2>
+          <h2 className="text-lg font-medium sm:text-lg font-semibold text-stone-900 mb-4">How it works</h2>
           <p className="text-lg text-stone-600 max-w-2xl mx-auto">
             From data ingestion to gateway submission in four steps.
           </p>

@@ -237,7 +237,7 @@ const TraceabilityMark = Mark.create({
       mergeAttributes(HTMLAttributes, {
         'data-traceability': 'true',
         class:
-          'traceability-link bg-blue-100 border-b-2 border-blue-500 cursor-pointer hover:bg-blue-200',
+          'traceability-link bg-blue-100 border-b-2 border-stone-600 cursor-pointer hover:bg-blue-200',
       }),
       0,
     ];
@@ -472,7 +472,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <ChevronDown className="w-3 h-3" />
           </button>
           {aiDropdownOpen && (
-            <div className="absolute left-0 top-full mt-1 w-52 bg-white border border-stone-200 rounded-lg shadow-lg z-50 py-1">
+            <div className="absolute left-0 top-full mt-1 w-52 bg-white border border-stone-200 rounded-lg shadow-sm z-50 py-1">
               {AI_TOOLBAR_ACTIONS.map(action => (
                 <button
                   key={action.id}
@@ -507,7 +507,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
       <button
         onClick={onSave}
         disabled={isSaving}
-        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-md text-xs font-medium hover:bg-blue-700 transition-colors disabled:opacity-60"
+        className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-800 text-white rounded-md text-xs font-medium hover:bg-stone-900 transition-colors disabled:opacity-60"
       >
         <Save className="w-3.5 h-3.5" />
         {isSaving ? 'Saving...' : 'Save'}
@@ -670,7 +670,7 @@ const SourceTracerPopover: React.FC<SourceTracerPopoverProps> = ({
   if (!source || !position) return null;
   return (
     <div
-      className="fixed z-50 bg-white border border-blue-200 rounded-lg shadow-xl p-3 w-72"
+      className="fixed z-50 bg-white border border-blue-200 rounded-lg shadow p-3 w-72"
       style={{ top: position.y + 8, left: position.x }}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
@@ -821,7 +821,7 @@ const CompliancePanel: React.FC<CompliancePanelProps> = ({ score, issues, onIssu
       <div className="p-4 border-b border-stone-200">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-stone-600">Compliance Score</span>
-          <span className={`text-2xl font-semibold ${getScoreColor(score)}`}>{score}%</span>
+          <span className={`text-base font-semibold ${getScoreColor(score)}`}>{score}%</span>
         </div>
         <div className="w-full bg-stone-200 rounded-full h-2">
           <div
@@ -1005,7 +1005,7 @@ const LinkSourceModal: React.FC<LinkSourceModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col">
+      <div className="bg-white rounded-xl shadow w-full max-w-lg max-h-[80vh] flex flex-col">
         {/* Header */}
         <div className="p-4 border-b border-stone-200">
           <div className="flex items-center justify-between">
@@ -1397,7 +1397,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   if (!editor) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-2 border-stone-600 border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -1540,7 +1540,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
             <BubbleMenu
               editor={editor}
               tippyOptions={{ duration: 100 }}
-              className="bg-stone-800 rounded-lg shadow-xl px-1.5 py-1 flex items-center gap-0.5"
+              className="bg-stone-800 rounded-lg shadow px-1.5 py-1 flex items-center gap-0.5"
             >
               {/* Formatting — selected-text actions only */}
               <button
@@ -1731,7 +1731,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
 
       {/* Inline Approval Panel — sentence/selection-level annotations */}
       {approvalPanelOpen && approvalSelectionRange && (
-        <div className="fixed z-50 top-1/3 right-8 shadow-2xl">
+        <div className="fixed z-50 top-1/3 right-8 shadow-sm">
           <InlineApprovalPanel
             documentId={documentId ? Number(documentId) : 1}
             selectedText={approvalSelectedText}

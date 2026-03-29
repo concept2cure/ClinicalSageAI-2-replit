@@ -54,14 +54,14 @@ export function ReadinessScoreRing({
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          className="transition-all duration-700 ease-out"
+          className="transition-all duration-200 ease-out"
         />
       </svg>
       <div
         className="absolute flex flex-col items-center justify-center"
         style={{ width: size, height: size }}
       >
-        <span className="text-2xl font-bold" style={{ color }}>
+        <span className="text-base font-semibold" style={{ color }}>
           {score}%
         </span>
         {label && (

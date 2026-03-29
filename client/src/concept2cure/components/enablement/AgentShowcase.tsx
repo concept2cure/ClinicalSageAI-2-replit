@@ -733,7 +733,7 @@ export function AgentShowcase() {
       <div className="max-w-4xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="mb-10">
-          <h1 className="text-2xl font-semibold text-stone-900 tracking-tight">
+          <h1 className="text-base font-semibold text-stone-900 tracking-tight">
             AI Capabilities
           </h1>
           <p className="text-sm text-stone-600 mt-1.5">

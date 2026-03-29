@@ -368,7 +368,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
             </button>
 
             {actionMenuOpen && (
-              <div className="absolute z-20 mt-1 w-full rounded-md border border-stone-600 bg-stone-800 shadow-xl py-1">
+              <div className="absolute z-20 mt-1 w-full rounded-md border border-stone-600 bg-stone-800 shadow py-1">
                 {AI_ACTIONS.map((action) => (
                   <button
                     key={action.value}
@@ -434,7 +434,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
                   className={cn(
                     'w-full flex items-start gap-2 px-2.5 py-2 rounded-md text-left transition-colors duration-150',
                     selectedSections.has(section.id)
-                      ? 'bg-blue-500/10 border border-blue-500/30'
+                      ? 'bg-stone-600/10 border border-stone-600/30'
                       : 'bg-stone-800/50 border border-transparent hover:border-stone-600',
                     isRunning && 'cursor-default',
                   )}
@@ -444,7 +444,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
                     className={cn(
                       'mt-0.5 w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center',
                       selectedSections.has(section.id)
-                        ? 'bg-blue-500 border-blue-500'
+                        ? 'bg-stone-600 border-stone-600'
                         : 'border-stone-500',
                     )}
                   >
@@ -494,7 +494,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
             <div className="h-1.5 w-full rounded-full bg-stone-700 overflow-hidden">
               <div
                 className={cn(
-                  'h-full rounded-full transition-all duration-500',
+                  'h-full rounded-full transition-all duration-200',
                   allDone ? 'bg-emerald-500' : isPaused ? 'bg-amber-500' : 'bg-violet-500',
                 )}
                 style={{ width: `${progressPct}%` }}
@@ -595,7 +595,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
             className={cn(
               'w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150',
               selectedAction && selectedSections.size > 0
-                ? 'bg-violet-600 hover:bg-blue-500 text-white'
+                ? 'bg-violet-600 hover:bg-stone-600 text-white'
                 : 'bg-stone-700 text-stone-500 cursor-not-allowed',
             )}
           >

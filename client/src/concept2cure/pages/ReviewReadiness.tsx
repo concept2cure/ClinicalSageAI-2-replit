@@ -396,15 +396,15 @@ function QualityCenterView({ qcSections }: { qcSections: QCSection[] }) {
             <div className="flex items-center gap-8">
               <div>
                 <p className="text-xs text-stone-400 uppercase tracking-wide">Sections Checked</p>
-                <p className="text-2xl font-semibold text-stone-900 mt-1">{qcSections.length}</p>
+                <p className="text-base font-semibold text-stone-900 mt-1">{qcSections.length}</p>
               </div>
               <div>
                 <p className="text-xs text-stone-400 uppercase tracking-wide">Issues Found</p>
-                <p className="text-2xl font-semibold text-stone-900 mt-1">{totalIssues}</p>
+                <p className="text-base font-semibold text-stone-900 mt-1">{totalIssues}</p>
               </div>
               <div>
                 <p className="text-xs text-stone-400 uppercase tracking-wide">Critical</p>
-                <p className="text-2xl font-semibold text-red-600 mt-1">{critical}</p>
+                <p className="text-base font-semibold text-red-600 mt-1">{critical}</p>
               </div>
             </div>
             <p className="text-xs text-stone-400 mt-4">
@@ -496,15 +496,15 @@ function ComplianceView({ complianceRules }: { complianceRules: ComplianceRule[]
         <div className="flex items-center gap-8">
           <div>
             <p className="text-xs text-stone-400 uppercase tracking-wide">Rules Evaluated</p>
-            <p className="text-2xl font-semibold text-stone-900 mt-1">{complianceRules.length}</p>
+            <p className="text-base font-semibold text-stone-900 mt-1">{complianceRules.length}</p>
           </div>
           <div>
             <p className="text-xs text-stone-400 uppercase tracking-wide">Passed</p>
-            <p className="text-2xl font-semibold text-green-700 mt-1">{passed}</p>
+            <p className="text-base font-semibold text-green-700 mt-1">{passed}</p>
           </div>
           <div>
             <p className="text-xs text-stone-400 uppercase tracking-wide">Warnings</p>
-            <p className="text-2xl font-semibold text-amber-600 mt-1">{warnings}</p>
+            <p className="text-base font-semibold text-amber-600 mt-1">{warnings}</p>
           </div>
         </div>
         <p className="text-xs text-stone-400 mt-4">
@@ -656,19 +656,19 @@ function _removed() { // eslint-disable-line
         <div className="flex items-center gap-8">
           <div>
             <p className="text-xs text-stone-400 uppercase tracking-wide">Aggregate Risk</p>
-            <p className={cn('text-2xl font-semibold mt-1', riskColor(avgRisk))}>{avgRisk}/100</p>
+            <p className={cn('text-base font-semibold mt-1', riskColor(avgRisk))}>{avgRisk}/100</p>
           </div>
           <div>
             <p className="text-xs text-stone-400 uppercase tracking-wide">Engines Run</p>
-            <p className="text-2xl font-semibold text-stone-900 mt-1">{simulations.filter((s) => s.status === 'completed').length}/{simulations.length}</p>
+            <p className="text-base font-semibold text-stone-900 mt-1">{simulations.filter((s) => s.status === 'completed').length}/{simulations.length}</p>
           </div>
           <div>
             <p className="text-xs text-stone-400 uppercase tracking-wide">Trial Success</p>
-            <p className="text-2xl font-semibold text-stone-900 mt-1">{(ANA_PREDICTION.successProbability * 100).toFixed(0)}%</p>
+            <p className="text-base font-semibold text-stone-900 mt-1">{(ANA_PREDICTION.successProbability * 100).toFixed(0)}%</p>
           </div>
           <div>
             <p className="text-xs text-stone-400 uppercase tracking-wide">Statistical Power</p>
-            <p className="text-2xl font-semibold text-stone-900 mt-1">{(ANA_PREDICTION.monteCarlo.power * 100).toFixed(0)}%</p>
+            <p className="text-base font-semibold text-stone-900 mt-1">{(ANA_PREDICTION.monteCarlo.power * 100).toFixed(0)}%</p>
           </div>
         </div>
         <p className="text-xs text-stone-400 mt-4">
@@ -718,7 +718,7 @@ function _removed() { // eslint-disable-line
             <p className="text-xs text-stone-400 mt-0.5">{ANA_PREDICTION.trialName}</p>
           </div>
           <span className={cn(
-            'text-2xl font-semibold',
+            'text-base font-semibold',
             ANA_PREDICTION.successProbability >= 0.7 ? 'text-emerald-600' :
             ANA_PREDICTION.successProbability >= 0.5 ? 'text-amber-500' : 'text-red-500',
           )}>
@@ -887,7 +887,7 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
           {/* Main Score */}
           <div className="bg-white border border-stone-200 rounded-lg p-8 text-center">
             <p className="text-xs text-stone-400 uppercase tracking-wide">Submission Readiness</p>
-            <p className="text-6xl font-semibold text-stone-900 mt-2">{overallReadiness}%</p>
+            <p className="text-lg font-semibold text-stone-900 mt-2">{overallReadiness}%</p>
             <p className="text-sm text-stone-400 mt-2">
               Predicted approval probability: <span className="text-stone-900 font-medium">{approvalProbability}%</span>
             </p>
@@ -923,7 +923,7 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
                 <div key={dim} className="bg-white border border-stone-200 rounded-lg p-4 text-center">
                   <p className="text-xs text-stone-400 uppercase tracking-wide capitalize">{dim}</p>
                   <p className={cn(
-                    'text-2xl font-semibold mt-1',
+                    'text-base font-semibold mt-1',
                     dimensions[dim] >= 75 ? 'text-green-600'
                       : dimensions[dim] >= 50 ? 'text-amber-500'
                       : 'text-red-500'
@@ -959,7 +959,7 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
                       'w-2 h-2 rounded-full mt-1.5 flex-shrink-0',
                       gap.severity === 'critical' ? 'bg-red-500'
                         : gap.severity === 'high' ? 'bg-amber-500'
-                        : 'bg-blue-500'
+                        : 'bg-stone-600'
                     )} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-stone-900">{gap.description}</p>
@@ -1358,12 +1358,12 @@ function TraceabilityView({ traceability }: { traceability: TraceabilityClaim[] 
             <div className="flex items-center gap-8">
               <div>
                 <p className="text-xs text-stone-400 uppercase tracking-wide">Coverage</p>
-                <p className="text-2xl font-semibold text-stone-900 mt-1">{coverage}%</p>
+                <p className="text-base font-semibold text-stone-900 mt-1">{coverage}%</p>
                 <p className="text-xs text-stone-400 mt-0.5">{traced} of {total} claims traced</p>
               </div>
               <div>
                 <p className="text-xs text-stone-400 uppercase tracking-wide">Orphaned Claims</p>
-                <p className="text-2xl font-semibold text-red-600 mt-1">{orphaned.length}</p>
+                <p className="text-base font-semibold text-red-600 mt-1">{orphaned.length}</p>
               </div>
             </div>
             <p className="text-xs text-stone-400 mt-4">

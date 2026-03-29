@@ -311,7 +311,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
                 value={draftTitle}
                 onChange={e => setDraftTitle(e.target.value)}
                 placeholder="Document title..."
-                className="w-full text-sm px-2 py-1.5 rounded border border-stone-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-200 outline-none"
+                className="w-full text-sm px-2 py-1.5 rounded border border-stone-200 focus:border-blue-400 focus:ring-1 focus:ring-stone-300 outline-none"
               />
             </div>
             {selectedCtd && (
@@ -442,7 +442,7 @@ function ActionButton({
         'flex items-center gap-2 px-2.5 py-1.5 rounded text-xs font-medium transition-colors text-left',
         'focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none',
         primary && !disabled
-          ? 'bg-blue-600 text-white hover:bg-blue-700'
+          ? 'bg-stone-800 text-white hover:bg-stone-900'
           : !disabled
             ? 'bg-stone-50 text-stone-700 hover:bg-stone-100 border border-stone-200'
             : 'bg-stone-50 text-stone-400 border border-stone-200 cursor-not-allowed'

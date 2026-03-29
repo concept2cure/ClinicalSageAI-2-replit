@@ -467,7 +467,7 @@ export function CrossReferencePanel({
           <button
             onClick={handleInsertReference}
             disabled={!insertModule}
-            className="w-full text-xs font-medium py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150"
+            className="w-full text-xs font-medium py-1.5 rounded-md bg-stone-800 text-white hover:bg-stone-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150"
           >
             Insert Reference
           </button>
@@ -561,7 +561,7 @@ export function CrossReferencePanel({
             <button
               onClick={scanDocument}
               disabled={isScanning}
-              className="flex items-center gap-2 text-xs font-medium px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors duration-150"
+              className="flex items-center gap-2 text-xs font-medium px-4 py-2 rounded-md bg-stone-800 text-white hover:bg-stone-900 disabled:opacity-50 transition-colors duration-150"
             >
               <RefreshCw
                 className={cn('w-3.5 h-3.5', isScanning && 'animate-spin')}

@@ -380,7 +380,7 @@ export const zenClasses = {
 
   // ─── Typography Hierarchy ────────────────────────────────────────────────────
   // RULE: Always use these — never ad-hoc font-size + weight combos
-  heading1: 'text-xl font-semibold tracking-tight text-stone-900',
+  heading1: 'text-base font-medium tracking-tight text-stone-900',
   heading2: 'text-lg font-semibold text-stone-900',
   heading3: 'text-base font-semibold text-stone-900',
   heading4: 'text-sm font-medium text-stone-700',
@@ -394,7 +394,7 @@ export const zenClasses = {
   // ─── Interactive ─────────────────────────────────────────────────────────────
   // RULE: All buttons use buttonBase + a variant. Never build buttons from scratch.
   buttonBase: 'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none disabled:opacity-50 disabled:pointer-events-none',
-  buttonPrimary: 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm px-4 py-2 text-sm',
+  buttonPrimary: 'bg-stone-800 text-white hover:bg-stone-900 shadow-sm px-4 py-2 text-sm',
   buttonSecondary: 'bg-white text-stone-700 border border-stone-200 hover:bg-stone-50 hover:border-stone-300 px-4 py-2 text-sm',
   buttonGhost: 'text-stone-600 hover:text-stone-900 hover:bg-stone-100 px-3 py-2 text-sm',
   buttonDanger: 'bg-red-600 text-white hover:bg-red-700 shadow-sm px-4 py-2 text-sm',

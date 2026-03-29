@@ -113,7 +113,7 @@ const AGENTS: Record<
     title: 'Team Lead',
     color: 'text-stone-700',
     bgColor: 'bg-stone-100',
-    bubbleColor: 'bg-blue-600 text-white',
+    bubbleColor: 'bg-stone-800 text-white',
     icon: <User className="w-4 h-4" />,
   },
   DRAFTER: {
@@ -173,15 +173,15 @@ const AGENTS: Record<
 const ThinkingIndicator: React.FC = () => (
   <div className="flex items-center gap-1">
     <div
-      className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+      className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"
       style={{ animationDelay: '0ms' }}
     />
     <div
-      className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+      className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"
       style={{ animationDelay: '150ms' }}
     />
     <div
-      className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+      className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"
       style={{ animationDelay: '300ms' }}
     />
   </div>
@@ -230,7 +230,7 @@ const MessageBubble: React.FC<{
   return (
     <div
       className={cn(
-        'flex gap-3 animate-in slide-in-from-bottom-2 duration-500',
+        'flex gap-3 animate-in slide-in-from-bottom-2 duration-200',
         isUser && 'flex-row-reverse'
       )}
     >
@@ -285,7 +285,7 @@ const MessageBubble: React.FC<{
                         className={cn(
                           'h-full rounded-full transition-all duration-150',
                           message.confidence >= 90 && 'bg-green-500',
-                          message.confidence >= 70 && message.confidence < 90 && 'bg-blue-500',
+                          message.confidence >= 70 && message.confidence < 90 && 'bg-stone-600',
                           message.confidence >= 50 && message.confidence < 70 && 'bg-amber-500',
                           message.confidence < 50 && 'bg-red-500'
                         )}
@@ -332,7 +332,7 @@ const MessageBubble: React.FC<{
                 className={cn(
                   'text-xs font-semibold px-3 py-1.5 rounded-full transition-all shadow-sm',
                   'flex items-center gap-1.5',
-                  action.variant === 'primary' && 'bg-blue-600 text-white hover:bg-blue-700',
+                  action.variant === 'primary' && 'bg-stone-800 text-white hover:bg-stone-900',
                   action.variant === 'danger' && 'bg-red-100 text-red-700 hover:bg-red-200',
                   !action.variant &&
                     'bg-white border border-stone-200 text-stone-600 hover:bg-stone-50 hover:border-blue-300'

@@ -57,7 +57,7 @@ export function FeaturesSection() {
     <Section id="features" className="py-24 px-6 bg-white border-t border-stone-200/60">
       <div className="max-w-6xl mx-auto">
         <motion.div variants={fadeUp} className="text-center mb-14">
-          <h2 className="text-3xl sm:text-4xl font-bold text-stone-900 mb-4">
+          <h2 className="text-lg font-medium sm:text-lg font-semibold text-stone-900 mb-4">
             Everything you need for regulatory submissions
           </h2>
           <p className="text-lg text-stone-600 max-w-2xl mx-auto">
@@ -71,7 +71,7 @@ export function FeaturesSection() {
             <motion.div
               key={f.title}
               variants={fadeUp}
-              className="group p-6 rounded-2xl bg-stone-50 border border-stone-100 hover:bg-white hover:border-blue-200 hover:shadow-lg hover:shadow-blue-600/5 transition-all duration-200"
+              className="group p-6 rounded-2xl bg-stone-50 border border-stone-100 hover:bg-white hover:border-blue-200 hover:shadow-sm hover:shadow-blue-600/5 transition-all duration-200"
             >
               <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center mb-4 group-hover:bg-blue-600 transition-colors">
                 <svg

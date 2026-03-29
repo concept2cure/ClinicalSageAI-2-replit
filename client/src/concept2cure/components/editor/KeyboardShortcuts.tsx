@@ -206,7 +206,7 @@ export function KeyboardShortcutsOverlay({ isOpen, onClose }: KeyboardShortcutsO
           'relative w-full max-w-2xl max-h-[80vh] overflow-hidden rounded-xl',
           'bg-gradient-to-br from-slate-900/95 to-slate-800/95',
           'border border-white/10',
-          'shadow-lg shadow-black/40',
+          'shadow-sm shadow-black/40',
           'backdrop-blur-xl',
           'animate-in fade-in zoom-in-95 duration-200',
         )}

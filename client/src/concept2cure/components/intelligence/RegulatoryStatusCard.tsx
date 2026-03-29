@@ -140,7 +140,7 @@ export function RegulatoryStatusCard({
                 <Target className="w-3.5 h-3.5 text-violet-500" />
                 <span className="text-xs text-stone-500 font-medium">Readiness</span>
               </div>
-              <div className="text-2xl font-semibold text-stone-900">{statusData.submissionReadiness}%</div>
+              <div className="text-base font-semibold text-stone-900">{statusData.submissionReadiness}%</div>
               <div className="h-1.5 bg-stone-100 rounded-full mt-1.5 overflow-hidden">
                 <div
                   className="h-full rounded-full bg-violet-500 transition-all duration-150"
@@ -155,7 +155,7 @@ export function RegulatoryStatusCard({
                 <FileSearch className="w-3.5 h-3.5 text-blue-500" />
                 <span className="text-xs text-stone-500 font-medium">Precedents</span>
               </div>
-              <div className="text-2xl font-semibold text-stone-900">{statusData.precedentsFound}</div>
+              <div className="text-base font-semibold text-stone-900">{statusData.precedentsFound}</div>
               <span className="text-xs text-stone-400">matching records</span>
             </div>
 
@@ -165,7 +165,7 @@ export function RegulatoryStatusCard({
                 <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
                 <span className="text-xs text-stone-500 font-medium">Risk Score</span>
               </div>
-              <div className="text-2xl font-semibold text-stone-900">{statusData.riskScore}</div>
+              <div className="text-base font-semibold text-stone-900">{statusData.riskScore}</div>
               <span
                 className={`text-xs font-medium ${
                   statusData.riskScore < 30
@@ -185,7 +185,7 @@ export function RegulatoryStatusCard({
                 <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
                 <span className="text-xs text-stone-500 font-medium">Approval Prob.</span>
               </div>
-              <div className="text-2xl font-semibold text-stone-900">{statusData.approvalProbability}%</div>
+              <div className="text-base font-semibold text-stone-900">{statusData.approvalProbability}%</div>
               <div className="h-1.5 bg-stone-100 rounded-full mt-1.5 overflow-hidden">
                 <div
                   className="h-full rounded-full bg-emerald-500 transition-all duration-150"

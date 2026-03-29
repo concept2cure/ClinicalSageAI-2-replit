@@ -169,7 +169,7 @@ export function SectionHeader({
   level = 2,
 }: SectionHeaderProps) {
   const headingStyle = {
-    1: 'text-xl font-semibold tracking-tight',
+    1: 'text-base font-medium tracking-tight',
     2: 'text-lg font-semibold',
     3: 'text-base font-semibold',
   }[level];
@@ -257,8 +257,8 @@ export function StatusPill({ label, variant = 'default', className, dot }: Statu
           variant === 'success' && 'bg-emerald-500',
           variant === 'danger' && 'bg-red-500',
           variant === 'warning' && 'bg-amber-500',
-          variant === 'info' && 'bg-blue-500',
-          variant === 'active' && 'bg-blue-500 animate-pulse',
+          variant === 'info' && 'bg-stone-600',
+          variant === 'active' && 'bg-stone-600 animate-pulse',
           variant === 'default' && 'bg-stone-400',
           variant === 'purple' && 'bg-purple-500',
         )} />
@@ -285,7 +285,7 @@ interface EnterpriseButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEle
 }
 
 const buttonVariantStyles: Record<ButtonVariant, string> = {
-  primary: 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm',
+  primary: 'bg-stone-800 text-white hover:bg-stone-900 shadow-sm',
   secondary: 'bg-white text-stone-700 border border-stone-200 hover:bg-stone-50 hover:border-stone-300',
   ghost: 'text-stone-600 hover:text-stone-900 hover:bg-stone-100',
   danger: 'bg-red-600 text-white hover:bg-red-700 shadow-sm',
@@ -361,7 +361,7 @@ export function MetricCard({ label, value, icon: Icon, iconClassName, change, cl
       {Icon && <IconBox icon={Icon} className={iconClassName} />}
       <div className="flex-1 min-w-0">
         <p className="text-sm text-stone-500">{label}</p>
-        <p className="text-2xl font-semibold text-stone-900 mt-1">{value}</p>
+        <p className="text-base font-semibold text-stone-900 mt-1">{value}</p>
         {change && (
           <p className={cn(
             'text-xs font-medium mt-1',
@@ -532,7 +532,7 @@ interface ProgressBarProps {
 }
 
 const progressVariants = {
-  default: 'bg-blue-600',
+  default: 'bg-stone-800',
   success: 'bg-emerald-600',
   warning: 'bg-amber-500',
   danger: 'bg-red-600',
@@ -591,9 +591,9 @@ interface TextProps {
   readonly as?: 'p' | 'span' | 'div' | 'label';
 }
 
-/** Page title — text-xl font-semibold tracking-tight */
+/** Page title — text-base font-medium tracking-tight */
 export function PageTitle({ children, className }: TextProps) {
-  return <h1 className={cn('text-xl font-semibold tracking-tight text-stone-900', className)}>{children}</h1>;
+  return <h1 className={cn('text-base font-medium tracking-tight text-stone-900', className)}>{children}</h1>;
 }
 
 /** Section heading — text-lg font-semibold. Defaults to h2 for proper document outline. */
@@ -750,7 +750,7 @@ export function ModalOverlay({ children, onClose, size = 'md', ariaLabel, classN
         aria-label={ariaLabel}
         tabIndex={-1}
         className={cn(
-          'relative w-full bg-white rounded-xl shadow-lg border border-stone-200 overflow-hidden',
+          'relative w-full bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden',
           'animate-in fade-in zoom-in-95 duration-150',
           modalSizes[size],
           className,
@@ -803,7 +803,7 @@ export function PageHeader({ title, subtitle, actions, className }: PageHeaderPr
   return (
     <div className={cn('flex items-start justify-between gap-4', className)}>
       <div>
-        <h1 className="text-xl font-semibold text-stone-900 tracking-tight">{title}</h1>
+        <h1 className="text-base font-medium text-stone-900 tracking-tight">{title}</h1>
         {subtitle && <p className="mt-1 text-sm text-stone-500">{subtitle}</p>}
       </div>
       {actions && <div className="flex items-center gap-2 flex-shrink-0">{actions}</div>}
@@ -846,7 +846,7 @@ export function StatRow({ stats, columns = 4, className }: StatRowProps) {
             {s.icon && <s.icon className={cn('h-4 w-4', s.iconClassName || 'text-stone-500')} />}
             <span className="text-xs font-medium text-stone-500 uppercase tracking-wide">{s.label}</span>
           </div>
-          <span className={cn('text-2xl font-semibold mt-1 block', s.valueClassName || 'text-stone-900')}>
+          <span className={cn('text-base font-semibold mt-1 block', s.valueClassName || 'text-stone-900')}>
             {s.value}
           </span>
         </div>
@@ -887,7 +887,7 @@ export function TabBar({ tabs, activeTab, onTabChange, className }: TabBarProps)
               'inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium -mb-px border-b-2 transition-colors duration-150',
               'focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none',
               active
-                ? 'border-blue-600 text-blue-600'
+                ? 'border-stone-800 text-blue-600'
                 : 'border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300',
             )}
           >
@@ -964,7 +964,7 @@ export const LIFECYCLE: Record<ArtifactLifecycleStage, LifecycleStageConfig> = {
     variant: 'info',
     bg: 'bg-blue-50',
     text: 'text-blue-700',
-    dot: 'bg-blue-500',
+    dot: 'bg-stone-600',
     border: 'border-blue-200',
     order: 2,
   },
@@ -1168,7 +1168,7 @@ export const SEVERITY: Record<SeverityLevel, SeverityConfig> = {
   critical: { label: 'Critical', variant: 'danger',  bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500',    border: 'border-red-200',    order: 0 },
   high:     { label: 'High',     variant: 'warning', bg: 'bg-orange-50', text: 'text-orange-700', dot: 'bg-orange-500', border: 'border-orange-200', order: 1 },
   medium:   { label: 'Medium',   variant: 'warning', bg: 'bg-amber-50',  text: 'text-amber-700',  dot: 'bg-amber-500',  border: 'border-amber-200',  order: 2 },
-  low:      { label: 'Low',      variant: 'info',    bg: 'bg-blue-50',   text: 'text-blue-700',   dot: 'bg-blue-500',   border: 'border-blue-200',   order: 3 },
+  low:      { label: 'Low',      variant: 'info',    bg: 'bg-blue-50',   text: 'text-blue-700',   dot: 'bg-stone-600',   border: 'border-blue-200',   order: 3 },
 };
 
 /** Normalise any severity/priority/impact string to a canonical level */

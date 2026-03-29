@@ -365,7 +365,7 @@ export default function ClinicalEvidenceTracker() {
         <div className="px-3 py-2 border-b border-border/30">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold flex items-center gap-2 text-xl">
+              <h3 className="text-sm font-semibold flex items-center gap-2 text-base">
                 <Activity className="h-6 w-6" />
                 Clinical Evidence Tracker
               </h3>
@@ -800,7 +800,7 @@ export default function ClinicalEvidenceTracker() {
                           className="p-3 rounded-lg border bg-muted/20 text-center"
                         >
                           <p className="text-xs text-muted-foreground">{m.label}</p>
-                          <p className="text-xl font-semibold mt-1">{pct(m.value)}</p>
+                          <p className="text-base font-medium mt-1">{pct(m.value)}</p>
                           {m.ci && <p className="text-xs text-muted-foreground">{ciStr(m.ci)}</p>}
                         </div>
                       ))}

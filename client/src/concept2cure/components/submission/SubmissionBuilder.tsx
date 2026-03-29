@@ -465,7 +465,7 @@ export function SubmissionBuilder({
           </button>
           <button
             onClick={onGeneratePackage}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors duration-150"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-stone-800 rounded-md hover:bg-stone-900 transition-colors duration-150"
           >
             <Download className="h-3.5 w-3.5" />
             Generate Package

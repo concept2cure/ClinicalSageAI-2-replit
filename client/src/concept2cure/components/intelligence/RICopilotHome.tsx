@@ -300,7 +300,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
           </p>
           <button
             onClick={onSelectProject}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors duration-150 shadow-sm focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-stone-800 text-white text-sm font-medium hover:bg-stone-900 transition-colors duration-150 shadow-sm focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none"
           >
             <FolderOpen className="w-4 h-4" />
             Choose Project
@@ -1098,7 +1098,7 @@ const SendToDossierMenu: React.FC<{
         Draft as memo...
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-20 w-56 rounded-md border border-stone-200 bg-white shadow-lg py-1">
+        <div className="absolute left-0 top-full mt-1 z-20 w-56 rounded-md border border-stone-200 bg-white shadow-sm py-1">
           {RI_DOCUMENT_TYPES.map(doc => {
             const Icon = doc.icon;
             return (

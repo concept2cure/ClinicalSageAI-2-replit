@@ -90,7 +90,7 @@ function WelcomeScreen({
 }) {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-8">
-      <h1 className="text-2xl font-semibold text-stone-900">
+      <h1 className="text-base font-semibold text-stone-900">
         {userName ? `Welcome, ${userName}` : 'Welcome to Concept2Cure'}
       </h1>
       <p className="text-sm text-stone-500 mt-2 max-w-md">
@@ -147,7 +147,7 @@ function SetupScreen({
 
   return (
     <div className="flex flex-col items-center h-full px-8 pt-16 overflow-y-auto">
-      <h2 className="text-xl font-semibold text-stone-900 mb-1">Quick setup</h2>
+      <h2 className="text-base font-medium text-stone-900 mb-1">Quick setup</h2>
       <p className="text-sm text-stone-500 mb-8">Your role determines which templates and checklists appear first. Your submission type sets the regulatory structure. Your agency sets compliance rules.</p>
 
       <div className="max-w-sm w-full space-y-6">
@@ -235,7 +235,7 @@ function CreateProjectScreen({
 }) {
   return (
     <div className="flex flex-col items-center justify-center h-full px-8">
-      <h2 className="text-xl font-semibold text-stone-900 mb-1">Create your first project</h2>
+      <h2 className="text-base font-medium text-stone-900 mb-1">Create your first project</h2>
       <p className="text-sm text-stone-500 mb-8">
         {submissionType
           ? `Your ${submissionType} project is where all regulatory documents, evidence, and review workflows live. AnA will help you build each section.`
@@ -308,7 +308,7 @@ function ConfidenceScreen({
 
   return (
     <div className="flex flex-col items-center justify-center h-full px-8 text-center">
-      <h2 className="text-xl font-semibold text-stone-900 mb-2">You're all set</h2>
+      <h2 className="text-base font-medium text-stone-900 mb-2">You're all set</h2>
       <p className="text-sm text-stone-500 max-w-md">
         Your project is ready. You'll land on your project home where AnA — your regulatory intelligence guide — is ready to help. Ask her to draft sections, check compliance, or guide you through the submission process.
       </p>

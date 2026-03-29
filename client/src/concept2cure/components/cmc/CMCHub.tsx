@@ -488,7 +488,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                 'flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-150',
                 saveSuccess
                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-stone-800 text-white hover:bg-stone-900'
               )}
             >
               {isSaving ? (
@@ -537,7 +537,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                     <FlaskConical className="w-4 h-4 text-violet-500" />
                     <span className="text-xs font-medium text-stone-500">Drug Substance (3.2.S)</span>
                   </div>
-                  <div className="text-2xl font-semibold text-stone-900">{dsCompletion}%</div>
+                  <div className="text-base font-semibold text-stone-900">{dsCompletion}%</div>
                   <div className="mt-2 h-1.5 bg-stone-100 rounded-full overflow-hidden">
                     <div className="h-full bg-violet-500 rounded-full transition-all duration-150" style={{ width: `${dsCompletion}%` }} />
                   </div>
@@ -547,7 +547,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                     <Pill className="w-4 h-4 text-emerald-500" />
                     <span className="text-xs font-medium text-stone-500">Drug Product (3.2.P)</span>
                   </div>
-                  <div className="text-2xl font-semibold text-stone-900">{dpCompletion}%</div>
+                  <div className="text-base font-semibold text-stone-900">{dpCompletion}%</div>
                   <div className="mt-2 h-1.5 bg-stone-100 rounded-full overflow-hidden">
                     <div className="h-full bg-emerald-500 rounded-full transition-all duration-150" style={{ width: `${dpCompletion}%` }} />
                   </div>
@@ -557,7 +557,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                     <Shield className="w-4 h-4 text-blue-500" />
                     <span className="text-xs font-medium text-stone-500">ICH Compliance</span>
                   </div>
-                  <div className="text-2xl font-semibold text-stone-900">
+                  <div className="text-base font-semibold text-stone-900">
                     {guardrails.filter(g => g.status === 'pass').length}/{guardrails.length}
                   </div>
                   <p className="text-xs text-stone-400 mt-1">guidelines checked</p>

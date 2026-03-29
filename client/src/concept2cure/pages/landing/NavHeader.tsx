@@ -17,7 +17,7 @@ export function NavHeader() {
           aria-label="Scroll to top"
         >
           <Logo />
-          <span className="text-xl font-semibold text-stone-900">Concept2Cure</span>
+          <span className="text-base font-medium text-stone-900">Concept2Cure</span>
         </button>
 
         <nav

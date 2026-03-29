@@ -485,7 +485,7 @@ const BulkLinkPanel: React.FC<BulkLinkPanelProps> = ({ pendingLinks, onConfirmAl
   if (pendingLinks.length === 0) return null;
 
   return (
-    <div className="p-4 bg-green-50 rounded-xl border-2 border-green-200">
+    <div className="p-4 bg-green-50 rounded-xl border border-green-200">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Zap className="w-5 h-5 text-green-600" />

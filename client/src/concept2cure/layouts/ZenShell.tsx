@@ -108,7 +108,7 @@ const ZenHeader: React.FC<ZenHeaderProps> = ({
       {/* Project indicator */}
       {projectName && (
         <label className="relative flex items-center gap-2 px-2">
-          <div className="w-2 h-2 rounded-full bg-blue-500" />
+          <div className="w-2 h-2 rounded-full bg-stone-600" />
           <select
             value={activeProjectId}
             onChange={e => onProjectChange(e.target.value)}
@@ -154,7 +154,7 @@ const ZenHeader: React.FC<ZenHeaderProps> = ({
         <Settings className="w-4 h-4" />
       </button>
       <button onClick={onProfileClick} className={zenClasses.buttonIcon} aria-label="Profile">
-        <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center">
+        <div className="w-6 h-6 rounded-full bg-stone-800 flex items-center justify-center">
           <span className="text-xs font-medium text-white">U</span>
         </div>
       </button>
@@ -359,8 +359,8 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
           className={cn(
             'flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-150',
             isCollapsed
-              ? 'w-10 h-10 bg-blue-600 text-white hover:bg-blue-700'
-              : 'w-full px-4 py-2.5 bg-blue-600 text-white hover:bg-blue-700'
+              ? 'w-10 h-10 bg-stone-800 text-white hover:bg-stone-900'
+              : 'w-full px-4 py-2.5 bg-stone-800 text-white hover:bg-stone-900'
           )}
         >
           <Plus className="w-4 h-4" />
@@ -580,7 +580,7 @@ const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({ isOpen, onClose }
         role="dialog"
         aria-modal="true"
         aria-label="Command palette"
-        className="fixed top-[20%] left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-xl shadow-lg overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150"
+        className="fixed top-[20%] left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-xl shadow-sm overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150"
       >
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-stone-200">
@@ -734,7 +734,7 @@ export const ZenShell: React.FC<ZenShellProps> = ({ children }) => {
       {/* Persistent AnA Access */}
       <button
         onClick={() => setCommandPaletteOpen(true)}
-        className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full bg-violet-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition hover:bg-violet-700"
+        className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full bg-violet-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-violet-700"
         aria-label="Persistent AnA access"
       >
         <Brain className="h-4 w-4" />

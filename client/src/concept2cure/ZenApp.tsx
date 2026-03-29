@@ -3588,7 +3588,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       className="fixed inset-0 bg-black/30 z-40 lg:hidden"
                       onClick={() => setWorkspacePanelOpen(false)}
                     />
-                    <div className="fixed right-0 top-0 bottom-0 w-80 bg-white border-l border-stone-200 shadow-xl z-50 lg:hidden">
+                    <div className="fixed right-0 top-0 bottom-0 w-80 bg-white border-l border-stone-200 shadow z-50 lg:hidden">
                       <div className="flex items-center justify-between px-4 py-3 border-b border-stone-100">
                         <span className="text-sm font-medium text-stone-700">Project Context</span>
                         <button
@@ -3616,7 +3616,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 {/* Mobile toggle button */}
                 <button
                   onClick={() => setWorkspacePanelOpen(true)}
-                  className="fixed right-4 bottom-4 z-30 lg:hidden w-10 h-10 bg-stone-900 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-stone-800 transition-colors"
+                  className="fixed right-4 bottom-4 z-30 lg:hidden w-10 h-10 bg-stone-900 text-white rounded-full shadow-sm flex items-center justify-center hover:bg-stone-800 transition-colors"
                   title="Project context"
                 >
                   <FileText className="w-4 h-4" />
@@ -3966,7 +3966,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       )}
 
       {!embeddedModule && activeToolPanel && (
-        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-96 lg:w-[620px] shadow-2xl">
+        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-96 lg:w-[620px] shadow-sm">
           <ToolPanelWrapper
             panel={activeToolPanel}
             onClose={() => {

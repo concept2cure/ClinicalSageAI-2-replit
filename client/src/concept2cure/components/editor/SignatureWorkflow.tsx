@@ -599,7 +599,7 @@ export function SignatureWorkflow({
 
     return (
       <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-        <div className="w-full max-w-lg mx-4 bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="w-full max-w-lg mx-4 bg-white rounded-xl shadow-sm overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200 bg-stone-50">
             <div className="flex items-center gap-3">
@@ -661,7 +661,7 @@ export function SignatureWorkflow({
                 <select
                   value={selectedMeaning}
                   onChange={e => setSelectedMeaning(e.target.value as SignatureMeaning)}
-                  className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg bg-white appearance-none focus-visible:ring-2 outline-none focus:ring-blue-200 focus:border-blue-400 cursor-pointer"
+                  className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg bg-white appearance-none focus-visible:ring-2 outline-none focus:ring-stone-300 focus:border-blue-400 cursor-pointer"
                 >
                   {MEANING_OPTIONS.map(opt => (
                     <option key={opt.value} value={opt.value}>
@@ -684,7 +684,7 @@ export function SignatureWorkflow({
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="Re-enter your password to authenticate"
-                className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg bg-white focus-visible:ring-2 outline-none focus:ring-blue-200 focus:border-blue-400"
+                className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg bg-white focus-visible:ring-2 outline-none focus:ring-stone-300 focus:border-blue-400"
               />
               <p className="text-[10px] text-stone-400 mt-1">
                 Identity verification required per 21 CFR Part 11 §11.100(a)
@@ -732,7 +732,7 @@ export function SignatureWorkflow({
                 'inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all duration-150',
                 signing || !legalAck || !password
                   ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-200'
+                  : 'bg-stone-800 text-white hover:bg-stone-900 shadow-sm shadow-blue-200'
               )}
             >
               {signing ? (
@@ -764,7 +764,7 @@ export function SignatureWorkflow({
 
     return (
       <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-        <div className="w-full max-w-md mx-4 bg-white border-2 border-emerald-200 rounded-xl shadow-lg overflow-hidden">
+        <div className="w-full max-w-md mx-4 bg-white border border-emerald-200 rounded-xl shadow-sm overflow-hidden">
           {/* Certificate header */}
           <div className="px-5 py-4 border-b border-emerald-100 bg-emerald-50 text-center">
             <div className="flex items-center justify-center w-12 h-12 mx-auto rounded-full bg-emerald-100 border border-emerald-200 mb-2">
@@ -997,7 +997,7 @@ export function SignatureWorkflow({
 
         <button
           onClick={() => setShowSignModal(true)}
-          className="inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-200 transition-all duration-150"
+          className="inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium bg-stone-800 text-white hover:bg-stone-900 shadow-sm shadow-blue-200 transition-all duration-150"
         >
           <PenTool className="w-4 h-4" />
           Sign Document

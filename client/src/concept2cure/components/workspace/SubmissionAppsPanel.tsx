@@ -225,7 +225,7 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
                   'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150',
                   'focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none',
                   projectId && !running
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    ? 'bg-stone-800 text-white hover:bg-stone-900'
                     : 'bg-stone-100 text-stone-400 cursor-not-allowed'
                 )}
               >

@@ -264,7 +264,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
                 setShowMenu(false);
               }}
             />
-            <div className="absolute right-0 top-8 z-20 w-40 bg-white rounded-lg shadow-lg border border-stone-200 py-1 animate-in fade-in zoom-in-95 duration-100">
+            <div className="absolute right-0 top-8 z-20 w-40 bg-white rounded-lg shadow-sm border border-stone-200 py-1 animate-in fade-in zoom-in-95 duration-100">
               <button
                 onClick={e => {
                   e.stopPropagation();
@@ -462,7 +462,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
         onKeyDown={e => {
           if (e.key === 'Escape') onClose();
         }}
-        className="fixed top-[5%] left-1/2 -translate-x-1/2 w-full max-w-lg max-h-[90vh] bg-white rounded-xl shadow-lg z-50 flex flex-col"
+        className="fixed top-[5%] left-1/2 -translate-x-1/2 w-full max-w-lg max-h-[90vh] bg-white rounded-xl shadow-sm z-50 flex flex-col"
       >
         <form onSubmit={handleSubmit}>
           {/* Header */}
@@ -772,7 +772,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
         onKeyDown={e => {
           if (e.key === 'Escape') onClose();
         }}
-        className="fixed inset-4 sm:inset-auto sm:top-[6%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-[560px] bg-white rounded-xl shadow-lg z-50 flex flex-col max-h-[80vh]"
+        className="fixed inset-4 sm:inset-auto sm:top-[6%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-[560px] bg-white rounded-xl shadow-sm z-50 flex flex-col max-h-[80vh]"
       >
         {/* Header */}
         <div className="flex-shrink-0 px-4 py-3 border-b border-stone-200">
@@ -1043,7 +1043,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
         onKeyDown={e => {
           if (e.key === 'Escape') onClose();
         }}
-        className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-xl shadow-lg z-50"
+        className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-xl shadow-sm z-50"
       >
         <form onSubmit={handleSubmit}>
           {/* Header */}

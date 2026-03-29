@@ -55,7 +55,7 @@ type SectionStatus = 'not_started' | 'draft' | 'review' | 'approved' | 'locked';
 const STATUS_CONFIG: Record<SectionStatus, { label: string; color: string; dot: string }> = {
   not_started: { label: 'Not Started', color: 'text-stone-400', dot: 'bg-stone-300' },
   draft: { label: 'Draft', color: 'text-amber-600', dot: 'bg-amber-500' },
-  review: { label: 'In Review', color: 'text-blue-600', dot: 'bg-blue-500' },
+  review: { label: 'In Review', color: 'text-blue-600', dot: 'bg-stone-600' },
   approved: { label: 'Approved', color: 'text-emerald-600', dot: 'bg-emerald-500' },
   locked: { label: 'Locked', color: 'text-emerald-700', dot: 'bg-emerald-600' },
 };
@@ -238,7 +238,7 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
                         <div
                           className={cn(
                             'h-full rounded-full transition-all',
-                            allComplete ? 'bg-emerald-500' : 'bg-blue-500',
+                            allComplete ? 'bg-emerald-500' : 'bg-stone-600',
                           )}
                           style={{ width: `${modulePct}%` }}
                         />

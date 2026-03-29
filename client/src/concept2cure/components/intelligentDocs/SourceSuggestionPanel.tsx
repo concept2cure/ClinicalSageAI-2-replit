@@ -92,7 +92,7 @@ const SourceCard: React.FC<SourceCardProps> = ({ suggestion, onLink, isLinking }
           <button
             onClick={onLink}
             disabled={isLinking}
-            className="px-3 py-1 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150"
+            className="px-3 py-1 text-sm font-medium bg-stone-800 text-white rounded-lg hover:bg-stone-900 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150"
             data-testid={`button-link-source-${suggestion.sourceId}`}
           >
             {isLinking ? 'Linking...' : 'Link Source'}
@@ -139,7 +139,7 @@ const EmptyState: React.FC<{
 }> = ({ message, suggestion, onAction, actionLabel }) => (
   <div className="text-center py-8">
     <div className="w-12 h-12 mx-auto mb-4 bg-stone-100 rounded-full flex items-center justify-center">
-      <span className="text-2xl">🔎</span>
+      <span className="text-base font-medium">🔎</span>
     </div>
     <p className="text-stone-600 mb-2">{message}</p>
     {suggestion && (
@@ -148,7 +148,7 @@ const EmptyState: React.FC<{
     {onAction && actionLabel && (
       <button
         onClick={onAction}
-        className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-150"
+        className="px-4 py-2 text-sm font-medium bg-stone-800 text-white rounded-lg hover:bg-stone-900 transition-colors duration-150"
         data-testid="button-empty-state-action"
       >
         {actionLabel}
@@ -274,7 +274,7 @@ export const SourceSuggestionPanel: React.FC<SourceSuggestionPanelProps> = ({
               onClick={() => setFilterType(type)}
               className={`px-3 py-1 text-xs font-medium rounded-full whitespace-nowrap transition-colors ${
                 filterType === type
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-stone-800 text-white'
                   : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               }`}
               data-testid={`button-source-filter-${type}`}
@@ -350,7 +350,7 @@ export const InlineSuggestionTooltip: React.FC<{
   onDismiss: () => void;
 }> = ({ suggestion, position, onLink, onDismiss }) => (
   <div
-    className="fixed z-50 w-64 p-3 bg-white rounded-lg shadow-xl border border-stone-200"
+    className="fixed z-50 w-64 p-3 bg-white rounded-lg shadow border border-stone-200"
     style={{
       left: position.x,
       top: position.y,

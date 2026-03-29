@@ -416,7 +416,7 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
         <div className="flex-shrink-0 border-b border-stone-200 p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
-              <h2 className="text-xl font-semibold text-stone-900">
+              <h2 className="text-base font-medium text-stone-900">
                 {MONTHS[month]} {year}
               </h2>
               <div className="flex items-center gap-1">
@@ -467,7 +467,7 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
               {onAddEvent && (
                 <button
                   onClick={() => onAddEvent(selectedDate)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-150"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-stone-800 rounded-lg hover:bg-stone-900 transition-colors duration-150"
                 >
                   <Plus className="w-4 h-4" />
                   Add Event
@@ -513,7 +513,7 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
                   }}
                   className={cn(
                     'min-h-[100px] p-1 text-left rounded-lg border transition-colors duration-150',
-                    isSelected && 'border-blue-500 bg-blue-50',
+                    isSelected && 'border-stone-600 bg-blue-50',
                     !isSelected && 'border-stone-200 hover:border-stone-200 hover:bg-stone-50',
                     hasPdufa && !isSelected && 'border-red-200 bg-red-50/50'
                   )}
@@ -521,7 +521,7 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
                   <div className="flex items-center justify-between mb-1">
                     <span className={cn(
                       'w-6 h-6 flex items-center justify-center text-sm rounded-full',
-                      isTodayDate && 'bg-blue-600 text-white font-semibold',
+                      isTodayDate && 'bg-stone-800 text-white font-semibold',
                       !isTodayDate && isSelected && 'text-blue-700 font-medium',
                       !isTodayDate && !isSelected && 'text-stone-700'
                     )}>

@@ -343,7 +343,7 @@ export function WorkflowEngine({
               className={cn(
                 'text-xs',
                 allComplete && 'bg-emerald-500 hover:bg-emerald-600',
-                isRunning && !allComplete && 'bg-blue-500 hover:bg-blue-600 text-white',
+                isRunning && !allComplete && 'bg-stone-600 hover:bg-stone-800 text-white',
               )}
             >
               {allComplete ? 'Complete' : isRunning ? 'Running' : 'Ready'}
@@ -362,7 +362,7 @@ export function WorkflowEngine({
               'h-full rounded-full',
               allComplete
                 ? 'bg-emerald-500'
-                : 'bg-blue-500',
+                : 'bg-stone-600',
             )}
             initial={{ width: 0 }}
             animate={{

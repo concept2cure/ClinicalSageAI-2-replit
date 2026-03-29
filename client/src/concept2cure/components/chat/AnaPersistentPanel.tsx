@@ -362,7 +362,7 @@ const AI_PROVIDERS: AIProviderOption[] = [
     label: 'Kimi',
     description: 'Moonshot Kimi K2',
     color: 'text-[#8A8880]',
-    activeColor: 'text-[#6366F1]',
+    activeColor: 'text-stone-600',
   },
 ];
 
@@ -3633,7 +3633,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             {slashMenuOpen && filteredSlashCommands.length > 0 && (
               <div
                 ref={slashMenuRef}
-                className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-[#E8E6DC] shadow-lg max-h-[280px] overflow-y-auto z-50"
+                className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-[#E8E6DC] shadow-sm max-h-[280px] overflow-y-auto z-50"
                 role="listbox"
                 aria-label="Slash commands"
               >
@@ -4192,7 +4192,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                   : msg.modelProvider === 'openai'
                                     ? 'text-[#10A37F] bg-emerald-50'
                                     : msg.modelProvider === 'moonshot'
-                                      ? 'text-[#6366F1] bg-indigo-50'
+                                      ? 'text-stone-600 bg-stone-50'
                                       : 'text-stone-500 bg-stone-50'
                               )}
                             >
@@ -4900,7 +4900,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           {slashMenuOpen && filteredSlashCommands.length > 0 && (
             <div
               ref={slashMenuRef}
-              className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-[#E8E6DC] shadow-lg max-h-[280px] overflow-y-auto z-50"
+              className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-[#E8E6DC] shadow-sm max-h-[280px] overflow-y-auto z-50"
               role="listbox"
               aria-label="Slash commands"
             >
@@ -4975,7 +4975,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               </Button>
 
               {showModeDropdown && (
-                <div className="absolute bottom-full left-0 mb-1.5 w-56 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
+                <div className="absolute bottom-full left-0 mb-1.5 w-56 bg-white rounded-xl border border-[#E8E6DC] shadow-sm py-1 z-50">
                   <Button
                     variant="ghost"
                     size="sm"

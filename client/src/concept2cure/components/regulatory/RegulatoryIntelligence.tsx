@@ -306,7 +306,7 @@ function IntelligenceMetrics() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">New Guidance</p>
-              <p className="text-2xl font-semibold">12</p>
+              <p className="text-base font-semibold">12</p>
               <p className="text-xs text-green-600">+3 this week</p>
             </div>
             <FileText className="w-8 h-8 text-blue-500" />
@@ -319,7 +319,7 @@ function IntelligenceMetrics() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Active Alerts</p>
-              <p className="text-2xl font-semibold text-orange-600">5</p>
+              <p className="text-base font-semibold text-orange-600">5</p>
               <p className="text-xs text-red-600">2 high priority</p>
             </div>
             <Bell className="w-8 h-8 text-orange-500" />
@@ -332,7 +332,7 @@ function IntelligenceMetrics() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Recent Approvals</p>
-              <p className="text-2xl font-semibold">24</p>
+              <p className="text-base font-semibold">24</p>
               <p className="text-xs text-muted-foreground">Last 30 days</p>
             </div>
             <CheckCircle2 className="w-8 h-8 text-green-500" />
@@ -345,7 +345,7 @@ function IntelligenceMetrics() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Comment Deadlines</p>
-              <p className="text-2xl font-semibold text-purple-600">3</p>
+              <p className="text-base font-semibold text-purple-600">3</p>
               <p className="text-xs text-muted-foreground">Open for comments</p>
             </div>
             <Calendar className="w-8 h-8 text-purple-500" />
@@ -358,7 +358,7 @@ function IntelligenceMetrics() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Bookmarked</p>
-              <p className="text-2xl font-semibold">8</p>
+              <p className="text-base font-semibold">8</p>
               <p className="text-xs text-muted-foreground">Saved items</p>
             </div>
             <Bookmark className="w-8 h-8 text-yellow-500" />
@@ -677,22 +677,22 @@ function CompetitiveIntelligence({ approvals }: { approvals: CompetitorApproval[
           <div className="grid grid-cols-4 gap-4">
             <div className="border border-border/40 rounded-sm bg-background p-4 bg-blue-50">
               <p className="text-sm text-muted-foreground">FDA 2024</p>
-              <p className="text-2xl font-semibold">50</p>
+              <p className="text-base font-semibold">50</p>
               <p className="text-xs text-green-600">+12% vs 2023</p>
             </div>
             <div className="border border-border/40 rounded-sm bg-background p-4 bg-blue-50">
               <p className="text-sm text-muted-foreground">EMA 2024</p>
-              <p className="text-2xl font-semibold">42</p>
+              <p className="text-base font-semibold">42</p>
               <p className="text-xs text-green-600">+8% vs 2023</p>
             </div>
             <div className="border border-border/40 rounded-sm bg-background p-4 bg-purple-50">
               <p className="text-sm text-muted-foreground">Priority Reviews</p>
-              <p className="text-2xl font-semibold">35%</p>
+              <p className="text-base font-semibold">35%</p>
               <p className="text-xs text-muted-foreground">of total</p>
             </div>
             <div className="border border-border/40 rounded-sm bg-background p-4 bg-green-50">
               <p className="text-sm text-muted-foreground">Avg Review Time</p>
-              <p className="text-2xl font-semibold">10.2</p>
+              <p className="text-base font-semibold">10.2</p>
               <p className="text-xs text-muted-foreground">months</p>
             </div>
           </div>
@@ -722,7 +722,7 @@ function GlobalLandscape() {
           <div key={agency} className="border border-border/40 rounded-sm bg-background">
             <div className="px-3 py-2 border-b border-border/30 pb-2">
               <h3 className="text-lg font-semibold flex items-center gap-2">
-                <span className="text-2xl">{config.flag}</span>
+                <span className="text-base font-medium">{config.flag}</span>
                 {config.label}
               </h3>
             </div>
@@ -765,7 +765,7 @@ export function RegulatoryIntelligence() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold flex items-center gap-3">
+          <h1 className="text-base font-semibold flex items-center gap-3">
             <Globe className="w-8 h-8 text-blue-600" />
             Regulatory Intelligence Hub
           </h1>

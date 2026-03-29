@@ -104,7 +104,7 @@ export function ProjectReadinessDashboard({
             onClick={() => setActiveTab(tab.id)}
             className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               activeTab === tab.id
-                ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                ? 'border-indigo-600 text-stone-600 dark:text-indigo-400'
                 : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
             }`}
           >
@@ -152,7 +152,7 @@ export function ProjectReadinessDashboard({
             </p>
             <button
               onClick={refreshContinuity}
-              className="px-4 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700"
+              className="px-4 py-2 rounded-md bg-stone-700 text-white text-sm font-medium hover:bg-stone-800"
             >
               Generate Snapshot
             </button>
@@ -230,7 +230,7 @@ function OverviewTab({ readiness, recCount }: { readiness: ReadinessAssessment; 
               </span>
               <div className="flex-1 h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ${
+                  className={`h-full rounded-full transition-all duration-200 ${
                     item.value >= 70
                       ? 'bg-green-500'
                       : item.value >= 40

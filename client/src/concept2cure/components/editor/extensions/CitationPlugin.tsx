@@ -13,6 +13,8 @@ import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { BookOpen, Search, X, ExternalLink, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -386,7 +388,7 @@ export function CitationSearchPanel({
   return (
     <div
       className={cn(
-        'fixed z-50 bg-white border border-stone-200 rounded-xl shadow-lg',
+        'fixed z-50 bg-white border border-stone-200 rounded-xl shadow-sm',
         'w-[420px] max-h-[480px] flex flex-col overflow-hidden',
         'animate-in fade-in slide-in-from-top-2 duration-150'
       )}
@@ -401,7 +403,9 @@ export function CitationSearchPanel({
         <BookOpen className="w-4 h-4 text-violet-600" />
         <span className="text-sm font-semibold text-stone-900">Insert Citation</span>
         <div className="flex-1" />
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => {
             onClose();
             editor.view.dispatch(
@@ -409,29 +413,22 @@ export function CitationSearchPanel({
             );
             editor.commands.focus();
           }}
-          className="p-1 rounded-md hover:bg-stone-200 transition-colors text-stone-400 hover:text-stone-600"
+          className="h-7 w-7 text-stone-400 hover:text-stone-600"
           aria-label="Close citation search"
         >
           <X className="w-4 h-4" />
-        </button>
+        </Button>
       </div>
 
       {/* Search input */}
       <div className="relative px-4 py-2 border-b border-stone-100">
         <Search className="absolute left-7 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-        <input
+        <Input
           ref={inputRef}
-          type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search citations, authors, studies..."
-          className={cn(
-            'w-full pl-8 pr-4 py-2 text-sm rounded-lg',
-            'bg-stone-50 border border-stone-200',
-            'focus-visible:ring-2 focus-visible:ring-stone-400 outline-none/30 focus:border-blue-400',
-            'placeholder:text-stone-400 text-stone-900',
-            'transition-all duration-150'
-          )}
+          className="pl-8 pr-4 py-2 text-sm bg-stone-50 border-stone-200 placeholder:text-stone-400 text-stone-900"
           autoComplete="off"
         />
         {loading && (
@@ -444,12 +441,14 @@ export function CitationSearchPanel({
         {error && (
           <div className="px-4 py-6 text-center">
             <p className="text-sm text-red-500">{error}</p>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => doSearch(query)}
               className="mt-2 text-xs text-blue-600 hover:underline"
             >
               Retry search
-            </button>
+            </Button>
           </div>
         )}
 
@@ -477,12 +476,13 @@ export function CitationSearchPanel({
         )}
 
         {results.map((result, index) => (
-          <button
+          <Button
             key={result.id}
+            variant="ghost"
             data-selected={index === selectedIndex}
             onClick={() => insertCitation(result)}
             className={cn(
-              'w-full text-left px-4 py-3 border-b border-stone-50 transition-colors duration-150',
+              'w-full text-left px-4 py-3 h-auto rounded-none border-b border-stone-50 transition-colors duration-150',
               'outline-none',
               index === selectedIndex
                 ? 'bg-blue-50/80 border-l-2 border-l-blue-500'
@@ -537,7 +537,7 @@ export function CitationSearchPanel({
                 </span>
               </div>
             </div>
-          </button>
+          </Button>
         ))}
       </div>
 

@@ -217,7 +217,7 @@ const Sidebar: React.FC<{
                 className={cn(
                   'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-left',
                   isActive 
-                    ? 'bg-blue-600 text-white' 
+                    ? 'bg-stone-800 text-white' 
                     : 'text-stone-400 hover:bg-stone-800 hover:text-white'
                 )}
                 title={collapsed ? item.label : undefined}
@@ -273,7 +273,7 @@ const CortexSidecar: React.FC<{
   if (!open) return null;
   
   return (
-    <div className="w-96 flex flex-col bg-white border-l border-stone-200 shadow-xl">
+    <div className="w-96 flex flex-col bg-white border-l border-stone-200 shadow">
       {/* Header */}
       <div className="h-14 flex items-center justify-between px-4 border-b border-stone-200 bg-stone-900">
         <div className="flex items-center gap-2 text-white">
@@ -292,7 +292,7 @@ const CortexSidecar: React.FC<{
       <div className="flex-1 overflow-y-auto">
         {messages.length === 0 ? (
           <div className="p-6 text-center">
-            <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-blue-600 flex items-center justify-center">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-stone-800 flex items-center justify-center">
               <Mountain className="w-8 h-8 text-white" />
             </div>
             <h3 className="text-lg font-semibold text-stone-900 mb-2">Your Sherpa is Ready</h3>
@@ -340,7 +340,7 @@ const CortexSidecar: React.FC<{
             className={cn(
               'p-2 rounded-lg transition-colors duration-150',
               input.trim()
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                ? 'bg-stone-800 text-white hover:bg-stone-900'
                 : 'bg-stone-200 text-stone-400'
             )}
           >
@@ -410,7 +410,7 @@ const Header: React.FC<{
           <p className="text-sm font-medium text-stone-900">{userName || 'User'}</p>
           <p className="text-xs text-stone-500">Regulatory Lead</p>
         </div>
-        <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+        <div className="w-9 h-9 rounded-full bg-stone-800 flex items-center justify-center text-white font-semibold text-sm">
           {(userName || 'U')[0].toUpperCase()}
         </div>
       </div>

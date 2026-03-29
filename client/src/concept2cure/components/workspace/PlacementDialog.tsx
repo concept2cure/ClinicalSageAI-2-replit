@@ -246,7 +246,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
       role="presentation"
     >
       <div
-        className="bg-white rounded-xl shadow-lg w-full max-w-lg mx-4 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="bg-white rounded-xl shadow-sm w-full max-w-lg mx-4 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         onClick={e => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -453,7 +453,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
             className={cn(
               'px-4 py-1.5 text-sm font-medium rounded-lg transition-colors duration-150',
               canConfirm && !loading
-                ? 'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 focus-visible:outline-none'
+                ? 'bg-stone-800 text-white hover:bg-stone-900 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 focus-visible:outline-none'
                 : 'bg-stone-200 text-stone-400 cursor-not-allowed'
             )}
           >

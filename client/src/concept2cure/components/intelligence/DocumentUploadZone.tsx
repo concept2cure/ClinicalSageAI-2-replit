@@ -315,7 +315,7 @@ export function DocumentUploadZone({
         }}
         className={`
           flex flex-col items-center justify-center border-2 border-dashed transition-colors
-          ${dragOver ? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-950' : 'border-muted-foreground/25 hover:border-muted-foreground/50'}
+          ${dragOver ? 'border-stone-600 bg-blue-50 dark:border-blue-400 dark:bg-blue-950' : 'border-muted-foreground/25 hover:border-muted-foreground/50'}
           ${isUploading ? 'pointer-events-none opacity-70' : 'cursor-pointer'}
           ${compact ? 'gap-2 p-4' : 'gap-3 p-8'}
         `}
@@ -337,7 +337,7 @@ export function DocumentUploadZone({
                 aria-label={`Upload progress: ${uploadState.progress}%`}
               >
                 <div
-                  className="h-full rounded-full bg-blue-500 transition-all duration-300"
+                  className="h-full rounded-full bg-stone-600 transition-all duration-300"
                   style={{ width: `${uploadState.progress}%` }}
                 />
               </div>

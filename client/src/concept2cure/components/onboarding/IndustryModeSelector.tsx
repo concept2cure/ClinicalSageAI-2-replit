@@ -209,7 +209,7 @@ const IndustryStep: React.FC<{
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-semibold text-stone-900">Welcome to Concept2Cure</h2>
+        <h2 className="text-base font-semibold text-stone-900">Welcome to Concept2Cure</h2>
         <p className="mt-2 text-stone-600">
           Let's personalize your workspace. What type of organization are you?
         </p>
@@ -265,7 +265,7 @@ const RoleStep: React.FC<{
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-semibold text-stone-900">What's your primary role?</h2>
+        <h2 className="text-base font-semibold text-stone-900">What's your primary role?</h2>
         <p className="mt-2 text-stone-600">
           This helps us show you the most relevant tools and views.
         </p>
@@ -282,7 +282,7 @@ const RoleStep: React.FC<{
               className={cn(
                 'p-4 rounded-lg border text-left transition-all flex items-start gap-4',
                 selected === role.id
-                  ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-200'
+                  ? 'bg-blue-50 border-stone-600 ring-2 ring-stone-300'
                   : 'bg-white border-stone-200 hover:border-stone-300'
               )}
             >
@@ -325,12 +325,12 @@ const ConfirmationStep: React.FC<{
   
   return (
     <div className="space-y-6 text-center">
-      <div className="w-14 h-14 mx-auto rounded-lg bg-blue-600 flex items-center justify-center">
+      <div className="w-14 h-14 mx-auto rounded-lg bg-stone-800 flex items-center justify-center">
         <Sparkles className="w-10 h-10 text-white" />
       </div>
       
       <div>
-        <h2 className="text-2xl font-semibold text-stone-900">You're all set!</h2>
+        <h2 className="text-base font-semibold text-stone-900">You're all set!</h2>
         <p className="mt-2 text-stone-600">
           Your workspace is configured for optimal productivity.
         </p>
@@ -407,14 +407,14 @@ export const IndustryModeSelector: React.FC<IndustryModeSelectorProps> = ({
               <React.Fragment key={s}>
                 <div className={cn(
                   'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors duration-150',
-                  step >= s ? 'bg-blue-600 text-white' : 'bg-stone-200 text-stone-500'
+                  step >= s ? 'bg-stone-800 text-white' : 'bg-stone-200 text-stone-500'
                 )}>
                   {step > s ? <CheckCircle className="w-4 h-4" /> : s}
                 </div>
                 {s < 3 && (
                   <div className={cn(
                     'w-12 h-1 rounded-full transition-colors duration-150',
-                    step > s ? 'bg-blue-600' : 'bg-stone-200'
+                    step > s ? 'bg-stone-800' : 'bg-stone-200'
                   )} />
                 )}
               </React.Fragment>
@@ -423,7 +423,7 @@ export const IndustryModeSelector: React.FC<IndustryModeSelectorProps> = ({
         </div>
         
         {/* Content */}
-        <div className="bg-white rounded-xl shadow-xl p-8">
+        <div className="bg-white rounded-xl shadow p-8">
           {step === 1 && (
             <IndustryStep
               selected={industry}
@@ -461,7 +461,7 @@ export const IndustryModeSelector: React.FC<IndustryModeSelectorProps> = ({
             {step === 3 ? (
               <button
                 onClick={handleComplete}
-                className="px-6 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                className="px-6 py-2 text-sm font-medium bg-stone-800 text-white rounded-lg hover:bg-stone-900 flex items-center gap-2"
               >
                 Get Started
                 <ArrowRight className="w-4 h-4" />
@@ -473,7 +473,7 @@ export const IndustryModeSelector: React.FC<IndustryModeSelectorProps> = ({
                 className={cn(
                   'px-6 py-2 text-sm font-medium rounded-lg flex items-center gap-2',
                   ((step === 1 && industry) || (step === 2 && role))
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    ? 'bg-stone-800 text-white hover:bg-stone-900'
                     : 'bg-stone-100 text-stone-400 cursor-not-allowed'
                 )}
               >

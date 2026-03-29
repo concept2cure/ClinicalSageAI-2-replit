@@ -222,7 +222,7 @@ export const SlashCommandList = React.forwardRef<
   return (
     <div
       ref={containerRef}
-      className="bg-white border border-stone-200 rounded-xl shadow-xl overflow-hidden w-72 max-h-80 overflow-y-auto"
+      className="bg-white border border-stone-200 rounded-xl shadow overflow-hidden w-72 max-h-80 overflow-y-auto"
     >
       {Object.entries(grouped).map(([category, categoryItems]) => (
         <div key={category}>

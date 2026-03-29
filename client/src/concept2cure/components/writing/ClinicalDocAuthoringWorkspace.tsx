@@ -669,7 +669,7 @@ const DocumentList: React.FC<{
                 </div>
                 <div className="h-1 bg-stone-200 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-blue-500 rounded-full transition-all duration-150"
+                    className="h-full bg-stone-600 rounded-full transition-all duration-150"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -723,7 +723,7 @@ const DocumentHeader: React.FC<{
               </span>
             )}
           </div>
-          <h2 className="text-xl font-semibold text-stone-900">{document.title}</h2>
+          <h2 className="text-base font-medium text-stone-900">{document.title}</h2>
           <p className="text-sm text-stone-500">{document.productName} • v{document.currentVersion}</p>
         </div>
         
@@ -736,7 +736,7 @@ const DocumentHeader: React.FC<{
             <Eye className="w-4 h-4" />
             Preview
           </button>
-          <button className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+          <button className="px-4 py-2 text-sm font-medium bg-stone-800 text-white rounded-lg hover:bg-stone-900 flex items-center gap-2">
             <Edit3 className="w-4 h-4" />
             Edit
           </button>
@@ -763,7 +763,7 @@ const DocumentHeader: React.FC<{
           <p className="text-xs text-stone-500">Progress</p>
           <div className="flex items-center gap-2">
             <div className="flex-1 h-2 bg-stone-200 rounded-full overflow-hidden">
-              <div className="h-full bg-blue-500 rounded-full" style={{ width: `${progress}%` }} />
+              <div className="h-full bg-stone-600 rounded-full" style={{ width: `${progress}%` }} />
             </div>
             <span className="text-sm font-medium text-stone-900">{progress}%</span>
           </div>
@@ -817,11 +817,11 @@ export const ClinicalDocAuthoringWorkspace: React.FC<ClinicalDocAuthoringWorkspa
       <div className="flex-shrink-0 bg-white border-b border-stone-200 p-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-semibold text-stone-900">Clinical Document Authoring</h1>
+            <h1 className="text-base font-medium text-stone-900">Clinical Document Authoring</h1>
             <p className="text-sm text-stone-500">Regulatory document workspace</p>
           </div>
           
-          <button className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+          <button className="px-4 py-2 text-sm font-medium bg-stone-800 text-white rounded-lg hover:bg-stone-900 flex items-center gap-2">
             <Plus className="w-4 h-4" />
             New Document
           </button>
@@ -831,25 +831,25 @@ export const ClinicalDocAuthoringWorkspace: React.FC<ClinicalDocAuthoringWorkspa
         <div className="grid grid-cols-5 gap-4">
           <div className="p-3 bg-stone-100 rounded-lg">
             <p className="text-xs text-stone-500">Documents</p>
-            <p className="text-xl font-semibold text-stone-900">{metrics.totalDocuments}</p>
+            <p className="text-base font-medium text-stone-900">{metrics.totalDocuments}</p>
           </div>
           <div className="p-3 bg-blue-50 rounded-lg">
             <p className="text-xs text-blue-600">In Draft</p>
-            <p className="text-xl font-semibold text-blue-700">{metrics.inDraft}</p>
+            <p className="text-base font-medium text-blue-700">{metrics.inDraft}</p>
           </div>
           <div className="p-3 bg-violet-50 rounded-lg">
             <p className="text-xs text-violet-600">In Review</p>
-            <p className="text-xl font-semibold text-violet-700">{metrics.inReview}</p>
+            <p className="text-base font-medium text-violet-700">{metrics.inReview}</p>
           </div>
           <div className={cn('p-3 rounded-lg', metrics.openComments > 0 ? 'bg-amber-50' : 'bg-stone-100')}>
             <p className={cn('text-xs', metrics.openComments > 0 ? 'text-amber-600' : 'text-stone-500')}>Open Comments</p>
-            <p className={cn('text-xl font-semibold', metrics.openComments > 0 ? 'text-amber-700' : 'text-stone-900')}>
+            <p className={cn('text-base font-medium', metrics.openComments > 0 ? 'text-amber-700' : 'text-stone-900')}>
               {metrics.openComments}
             </p>
           </div>
           <div className="p-3 bg-green-50 rounded-lg">
             <p className="text-xs text-green-600">Avg Progress</p>
-            <p className="text-xl font-semibold text-green-700">{metrics.avgProgress}%</p>
+            <p className="text-base font-medium text-green-700">{metrics.avgProgress}%</p>
           </div>
         </div>
       </div>

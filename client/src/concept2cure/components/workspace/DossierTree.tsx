@@ -615,7 +615,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
       {/* Context menu overlay */}
       {contextMenu && (
         <div
-          className="fixed z-50 bg-white border border-stone-200 rounded-lg shadow-lg py-1 min-w-[180px] animate-in fade-in slide-in-from-top-1 duration-150"
+          className="fixed z-50 bg-white border border-stone-200 rounded-lg shadow-sm py-1 min-w-[180px] animate-in fade-in slide-in-from-top-1 duration-150"
           style={{ left: contextMenu.x, top: contextMenu.y }}
           onClick={e => e.stopPropagation()}
           role="menu"
@@ -631,7 +631,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 </span>
                 <span className="w-[40px] h-[3px] bg-stone-100 rounded-full overflow-hidden">
                   <span
-                    className="block h-full bg-blue-500 rounded-full"
+                    className="block h-full bg-stone-600 rounded-full"
                     style={{
                       width: `${Math.min(100, metrics[contextMenu.ctdSection].completionPercent)}%`,
                     }}

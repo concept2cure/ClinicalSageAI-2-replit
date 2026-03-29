@@ -20,7 +20,7 @@ export const PharmaWorkspace: React.FC<PharmaWorkspaceProps> = ({
   return (
     <div className="h-full flex flex-col">
       <div className="bg-white border-b border-stone-200 px-6 py-4">
-        <h2 className="text-xl font-semibold text-stone-900">Pharma Workspace</h2>
+        <h2 className="text-base font-medium text-stone-900">Pharma Workspace</h2>
         <p className="text-sm text-stone-500">IND, NDA, BLA & Global Regulatory Tools</p>
       </div>
       

@@ -315,14 +315,14 @@ const MorningBriefingGreeting: React.FC<MorningBriefingGreetingProps> = ({
   const firstName = userName.split(' ')[0];
 
   return (
-    <div className="bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900 rounded-xl p-8 text-white shadow-xl">
+    <div className="bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900 rounded-xl p-8 text-white shadow">
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-lg bg-amber-500 flex items-center justify-center">
             <Sun className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-semibold">
+            <h2 className="text-base font-semibold">
               {getGreeting()}, {firstName}
             </h2>
             <p className="text-stone-400 text-sm">
@@ -392,7 +392,7 @@ const StatCard: React.FC<{
     red: 'bg-red-500/20 text-red-400',
     emerald: 'bg-emerald-500/20 text-emerald-400',
     amber: 'bg-amber-500/20 text-amber-400',
-    blue: 'bg-blue-500/20 text-blue-400',
+    blue: 'bg-stone-600/20 text-blue-400',
     orange: 'bg-orange-500/20 text-orange-400',
   };
 
@@ -401,7 +401,7 @@ const StatCard: React.FC<{
       <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center mb-2", colorClasses[color])}>
         <Icon className="w-4 h-4" />
       </div>
-      <div className="text-2xl font-semibold">{value}</div>
+      <div className="text-base font-semibold">{value}</div>
       <div className="text-xs text-stone-500">{label}</div>
     </div>
   );
@@ -428,11 +428,11 @@ const CouncilAdvisorCard: React.FC<CouncilAdvisorCardProps> = ({
       className={cn(
         "flex items-center gap-3 p-3 rounded-xl transition-all duration-150",
         isActive
-          ? `bg-gradient-to-r ${persona.color} text-white shadow-lg`
+          ? `bg-gradient-to-r ${persona.color} text-white shadow-sm`
           : "bg-stone-50 hover:bg-stone-100 text-stone-700"
       )}
     >
-      <span className="text-2xl">{persona.avatar}</span>
+      <span className="text-base font-medium">{persona.avatar}</span>
       <div className="text-left">
         <div className="font-medium text-sm">{persona.name}</div>
         <div className={cn("text-xs", isActive ? "text-white/80" : "text-stone-500")}>
@@ -497,11 +497,11 @@ const ZeroState: React.FC<ZeroStateProps> = ({ userName, industry, onQuickAction
       <div className="max-w-xl text-center">
         {/* Sherpa Avatar */}
         <div className="w-14 h-14 mx-auto mb-6 rounded-lg bg-amber-500 flex items-center justify-center shadow-sm">
-          <span className="text-4xl">🏔️</span>
+          <span className="text-lg font-semibold">🏔️</span>
         </div>
 
         {/* Greeting */}
-        <h1 className="text-2xl font-semibold text-stone-900 mb-2">
+        <h1 className="text-base font-semibold text-stone-900 mb-2">
           Ready when you are, {firstName}
         </h1>
         <p className="text-lg text-stone-500 mb-8">
@@ -532,7 +532,7 @@ const ZeroState: React.FC<ZeroStateProps> = ({ userName, industry, onQuickAction
               <button
                 key={persona.id}
                 onClick={() => onQuickAction(`council-${persona.id}`)}
-                className="w-12 h-12 rounded-full bg-gradient-to-br hover:scale-110 transition-transform flex items-center justify-center text-xl shadow-md"
+                className="w-12 h-12 rounded-full bg-gradient-to-br hover:scale-110 transition-transform flex items-center justify-center text-base shadow-md"
                 style={{
                   backgroundImage: `linear-gradient(to bottom right, var(--tw-gradient-stops))`,
                 }}
@@ -901,7 +901,7 @@ export const ConvergentCanvas: React.FC<ConvergentCanvasProps> = ({
                   {/* Council Thread would render here */}
                   <div className="max-w-3xl mx-auto">
                     <div className="flex items-center gap-4 mb-6">
-                      <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center text-2xl">
+                      <div className="w-12 h-12 rounded-lg bg-stone-800 flex items-center justify-center text-base font-medium">
                         {SHERPA_PERSONAS[
                           Object.keys(SHERPA_PERSONAS).find(
                             k => SHERPA_PERSONAS[k as keyof typeof SHERPA_PERSONAS].id === activeAdvisor
@@ -909,7 +909,7 @@ export const ConvergentCanvas: React.FC<ConvergentCanvasProps> = ({
                         ]?.avatar || '🏔️'}
                       </div>
                       <div>
-                        <h2 className="text-xl font-semibold text-stone-900">
+                        <h2 className="text-base font-medium text-stone-900">
                           {SHERPA_PERSONAS[
                             Object.keys(SHERPA_PERSONAS).find(
                               k => SHERPA_PERSONAS[k as keyof typeof SHERPA_PERSONAS].id === activeAdvisor

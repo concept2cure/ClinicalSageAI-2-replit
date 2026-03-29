@@ -90,7 +90,7 @@ export function PricingSection() {
     <Section id="pricing" className="py-24 px-6 bg-white border-t border-stone-200/60">
       <div className="max-w-6xl mx-auto">
         <motion.div variants={fadeUp} className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-stone-900 mb-4">
+          <h2 className="text-lg font-medium sm:text-lg font-semibold text-stone-900 mb-4">
             Simple, transparent pricing
           </h2>
           <p className="text-lg text-stone-600 mb-8">
@@ -130,9 +130,9 @@ export function PricingSection() {
             <motion.div
               key={tier.name}
               variants={fadeUp}
-              className={`relative p-6 rounded-2xl border-2 transition-all ${
+              className={`relative p-6 rounded-2xl border transition-all ${
                 tier.highlighted
-                  ? 'border-blue-600 bg-blue-50/30 shadow-xl shadow-blue-600/10'
+                  ? 'border-blue-600 bg-blue-50/30 shadow shadow-blue-600/10'
                   : 'border-stone-200 bg-white hover:border-stone-300 hover:shadow-md'
               }`}
             >
@@ -144,7 +144,7 @@ export function PricingSection() {
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-stone-900">{tier.name}</h3>
                 <div className="mt-2 flex items-baseline gap-1">
-                  <span className="text-3xl font-bold text-stone-900">
+                  <span className="text-lg font-medium text-stone-900">
                     {getDisplayPrice(tier.price)}
                   </span>
                   {tier.period && <span className="text-sm text-stone-500">{tier.period}</span>}

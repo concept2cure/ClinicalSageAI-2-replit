@@ -98,8 +98,8 @@ function getInitials(name: string): string {
 }
 
 const AVATAR_COLORS = [
-  'bg-blue-500', 'bg-emerald-500', 'bg-violet-500', 'bg-amber-500',
-  'bg-rose-500', 'bg-cyan-500', 'bg-blue-500', 'bg-teal-500',
+  'bg-stone-600', 'bg-emerald-500', 'bg-violet-500', 'bg-amber-500',
+  'bg-rose-500', 'bg-cyan-500', 'bg-stone-600', 'bg-teal-500',
 ];
 
 function avatarColor(name: string): string {
@@ -185,7 +185,7 @@ export function ReviewerAssignment({
             <div
               className={cn(
                 'h-full rounded-full transition-all duration-150',
-                progress.allApproved ? 'bg-emerald-500' : 'bg-blue-500',
+                progress.allApproved ? 'bg-emerald-500' : 'bg-stone-600',
               )}
               style={{ width: `${progress.total > 0 ? (progress.completed / progress.total) * 100 : 0}%` }}
             />
@@ -284,7 +284,7 @@ export function ReviewerAssignment({
           </button>
 
           {showAddDropdown && (
-            <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-stone-200 rounded-lg shadow-lg z-10 overflow-hidden">
+            <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-stone-200 rounded-lg shadow-sm z-10 overflow-hidden">
               <div className="p-2 border-b border-stone-100">
                 <input
                   type="text"
@@ -339,7 +339,7 @@ export function ReviewerAssignment({
           <button
             onClick={onSubmitForReview}
             disabled={isSubmitting}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-stone-800 rounded-md hover:bg-stone-900 transition-colors disabled:opacity-50"
           >
             {isSubmitting ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />

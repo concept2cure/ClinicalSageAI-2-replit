@@ -1553,7 +1553,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           </p>
           <button
             onClick={onSelectProject}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-stone-800 text-white text-sm font-medium hover:bg-stone-900 transition-colors shadow-sm"
           >
             <FolderOpen className="w-4 h-4" />
             Select Project
@@ -1677,7 +1677,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   className={cn(
                     'inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors',
                     selected
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-stone-800 text-white'
                       : 'bg-white text-stone-600 border border-stone-200 hover:bg-blue-50'
                   )}
                   title={workbench.description}
@@ -2320,7 +2320,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 <button
                   onClick={handleCreateNew}
                   disabled={creatingNew || !newDocTitle.trim()}
-                  className="px-2.5 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60 font-medium flex items-center gap-1"
+                  className="px-2.5 py-1 text-xs bg-stone-800 text-white rounded hover:bg-stone-900 disabled:opacity-60 font-medium flex items-center gap-1"
                 >
                   {creatingNew ? (
                     <Loader2 className="w-3 h-3 animate-spin" aria-label="Creating document" />
@@ -2929,7 +2929,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               <div
                 key={t.id}
                 className={cn(
-                  'pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-lg shadow-lg text-xs font-medium',
+                  'pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-lg shadow-sm text-xs font-medium',
                   t.type === 'success' && 'bg-emerald-600 text-white',
                   t.type === 'error' && 'bg-red-600 text-white',
                   t.type === 'info' && 'bg-stone-700 text-white'

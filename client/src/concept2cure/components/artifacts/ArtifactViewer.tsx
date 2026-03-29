@@ -213,7 +213,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-col bg-white rounded-xl shadow-lg overflow-hidden',
+        'flex flex-col bg-white rounded-xl shadow-sm overflow-hidden',
         isFullscreen
           ? 'fixed inset-4 z-50'
           : 'relative max-h-[80vh]',
@@ -330,7 +330,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
             </button>
             
             {showExportMenu && (
-              <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-stone-200 py-1 z-10">
+              <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-sm border border-stone-200 py-1 z-10">
                 <button
                   onClick={() => { onExport?.(artifact, 'docx'); setShowExportMenu(false); }}
                   className="w-full px-3 py-2 text-left text-sm hover:bg-stone-50 flex items-center gap-2"
@@ -497,7 +497,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
               disabled={isSaving}
               className={cn(
                 'px-4 py-1.5 text-sm font-medium rounded-lg transition-colors duration-150',
-                'bg-blue-600 text-white hover:bg-blue-700',
+                'bg-stone-800 text-white hover:bg-stone-900',
                 'disabled:opacity-60 disabled:cursor-not-allowed',
                 'flex items-center gap-2'
               )}

@@ -328,7 +328,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
       {/* File context menu */}
       {contextMenu && (
         <div
-          className="fixed z-50 bg-white border border-stone-200 rounded-lg shadow-lg py-1 min-w-[180px] animate-in fade-in slide-in-from-top-1 duration-150"
+          className="fixed z-50 bg-white border border-stone-200 rounded-lg shadow-sm py-1 min-w-[180px] animate-in fade-in slide-in-from-top-1 duration-150"
           style={{ left: contextMenu.x, top: contextMenu.y }}
           onClick={e => {
             e.stopPropagation();

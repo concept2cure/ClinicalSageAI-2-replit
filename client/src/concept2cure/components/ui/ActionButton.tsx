@@ -72,9 +72,9 @@ const INTENT_CONFIG: Record<ActionIntent, {
   run: {
     icon: Play,
     loadingText: 'Running...',
-    bgClass: 'bg-blue-600',
+    bgClass: 'bg-stone-800',
     textClass: 'text-white',
-    hoverClass: 'hover:bg-blue-700',
+    hoverClass: 'hover:bg-stone-900',
   },
   save: {
     icon: Save,

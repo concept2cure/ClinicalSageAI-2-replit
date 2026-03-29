@@ -608,7 +608,7 @@ export function PrecedentIntelligenceDashboard({
                     <Button
                       onClick={handleCompare}
                       disabled={compareMutation.isPending}
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      className="bg-stone-800 hover:bg-stone-900 text-white"
                       size="sm"
                     >
                       {compareMutation.isPending ? (

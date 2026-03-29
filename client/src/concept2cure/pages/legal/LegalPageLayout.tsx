@@ -43,7 +43,7 @@ const LegalPageLayout: React.FC<LegalPageLayoutProps> = ({ title, lastUpdated, c
         <div className="px-10 pt-10 pb-6 border-b border-stone-100">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-1 h-8 rounded-full" style={{ background: 'linear-gradient(180deg, #d97757, #c15f3c)' }} />
-            <h1 className="text-2xl font-bold text-stone-900" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>
+            <h1 className="text-base font-semibold text-stone-900" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>
               {title}
             </h1>
           </div>

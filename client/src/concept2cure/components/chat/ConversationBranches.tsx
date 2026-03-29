@@ -180,7 +180,7 @@ const BranchNode: React.FC<BranchNodeProps> = ({
         className={cn(
           'group relative flex items-start gap-2 p-2 rounded-lg transition-colors cursor-pointer',
           isActive
-            ? 'bg-blue-50 ring-1 ring-blue-200'
+            ? 'bg-blue-50 ring-1 ring-stone-300'
             : 'hover:bg-stone-50'
         )}
         style={{ marginLeft: `${depth * 16}px` }}

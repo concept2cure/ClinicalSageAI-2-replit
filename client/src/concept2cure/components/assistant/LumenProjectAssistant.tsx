@@ -312,7 +312,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
       className={cn(
         'flex flex-col bg-white rounded-xl overflow-hidden',
         position === 'floating' &&
-          'fixed bottom-6 right-6 z-50 w-96 max-h-[500px] shadow-lg border border-stone-200',
+          'fixed bottom-6 right-6 z-50 w-96 max-h-[500px] shadow-sm border border-stone-200',
         position === 'sidebar' && 'h-full border-l border-stone-200',
         position === 'inline' && 'border border-stone-200',
         className
@@ -517,7 +517,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
               className={cn(
                 'p-1.5 rounded-lg transition-colors duration-150',
                 input.trim() && !isThinking
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  ? 'bg-stone-800 text-white hover:bg-stone-900'
                   : 'bg-stone-200 text-stone-400'
               )}
             >

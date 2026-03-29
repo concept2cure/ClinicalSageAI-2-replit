@@ -1027,7 +1027,7 @@ export default function RegulatoryPrecedentIntelligence({ onClose, onContextChan
               className={cn(
                 'px-4 py-3 text-sm font-medium transition-colors border-b-2',
                 activeTab === tab.key
-                  ? 'text-blue-600 border-blue-600'
+                  ? 'text-blue-600 border-stone-800'
                   : 'text-stone-500 border-transparent hover:text-stone-700 hover:border-stone-300'
               )}
             >

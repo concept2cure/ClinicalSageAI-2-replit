@@ -80,11 +80,11 @@ const TableRow: React.FC<{ cells: string[]; highlight?: boolean }> = ({ cells, h
 
 const HeroPreview: React.FC = () => (
   <div className="flex flex-col items-center justify-center h-full text-center px-8">
-    <div className="w-14 h-14 rounded-lg bg-blue-600 flex items-center justify-center mb-6 shadow-sm">
+    <div className="w-14 h-14 rounded-lg bg-stone-800 flex items-center justify-center mb-6 shadow-sm">
       <Sparkles className="w-10 h-10 text-white" />
     </div>
-    <h2 className="text-2xl font-bold text-stone-900 mb-2">Concept2Cure.RI</h2>
-    <h2 className="text-2xl font-semibold text-stone-900 mb-2">ClinicalSageAI</h2>
+    <h2 className="text-base font-semibold text-stone-900 mb-2">Concept2Cure.RI</h2>
+    <h2 className="text-base font-semibold text-stone-900 mb-2">ClinicalSageAI</h2>
     <p className="text-sm text-stone-500 max-w-md">
       The unified regulatory intelligence platform. One AI co-pilot replacing 10-15 disconnected tools.
     </p>
@@ -108,7 +108,7 @@ const HeroPreview: React.FC = () => (
 const CTAPreview: React.FC = () => (
   <div className="flex flex-col items-center justify-center h-full text-center px-8">
     <Award className="w-16 h-16 text-violet-500 mb-6" />
-    <h2 className="text-2xl font-semibold text-stone-900 mb-2">Ready to Transform Your Workflow?</h2>
+    <h2 className="text-base font-semibold text-stone-900 mb-2">Ready to Transform Your Workflow?</h2>
     <p className="text-sm text-stone-500 max-w-md mb-6">
       Join teams at leading biotech, pharma, and CRO organizations who have consolidated their regulatory workflows into one platform.
     </p>
@@ -997,7 +997,7 @@ const CollabAcademyPreview: React.FC = () => (
 const NanoBananaOverviewPreview: React.FC = () => (
   <div className="space-y-4">
     <div className="text-center mb-6">
-      <div className="text-5xl mb-2">🍌</div>
+      <div className="text-lg mb-2">🍌</div>
       <h3 className="text-lg font-semibold text-stone-900">AnA Visual</h3>
       <p className="text-xs text-stone-500">Powered by Google Gemini</p>
     </div>
@@ -1041,7 +1041,7 @@ const NanoBananaGeneratePreview: React.FC = () => (
       </div>
       <div className="bg-amber-50 rounded-lg p-6 flex items-center justify-center border border-amber-200">
         <div className="text-center">
-          <div className="text-3xl mb-1">🖼️</div>
+          <div className="text-lg font-medium mb-1">🖼️</div>
           <div className="text-xs font-medium text-amber-700">4096 x 4096 Generated</div>
           <div className="text-xs text-amber-500">11.4s · SynthID watermarked</div>
         </div>

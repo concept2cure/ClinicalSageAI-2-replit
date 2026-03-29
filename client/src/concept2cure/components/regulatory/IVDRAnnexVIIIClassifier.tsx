@@ -485,7 +485,7 @@ export default function IVDRAnnexVIIIClassifier() {
         <div className="px-3 py-2 border-b border-border/30">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold flex items-center gap-2 text-xl">
+              <h3 className="text-sm font-semibold flex items-center gap-2 text-base">
                 <Shield className="h-6 w-6" />
                 IVDR Annex VIII — Classification Wizard
               </h3>
@@ -862,7 +862,7 @@ export default function IVDRAnnexVIIIClassifier() {
               {/* Classification Badge */}
               <div className="flex items-center gap-4">
                 <div
-                  className={`inline-flex items-center justify-center w-20 h-20 rounded-xl text-4xl font-semibold border-2 ${
+                  className={`inline-flex items-center justify-center w-20 h-20 rounded-xl text-lg font-semibold border-2 ${
                     CLASS_COLORS[result.classification]
                   }`}
                 >

@@ -258,7 +258,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-semibold text-stone-900 tracking-tight">
+                <h1 className="text-base font-semibold text-stone-900 tracking-tight">
                   AnA Memory
                 </h1>
                 <span className="inline-flex items-center rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-700 border border-blue-200">
@@ -531,7 +531,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                     'inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all shrink-0',
                     !newMemory.trim() || adding
                       ? 'bg-stone-100 text-stone-400 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 shadow-sm'
+                      : 'bg-stone-800 text-white hover:bg-stone-900 active:bg-stone-950 shadow-sm'
                   )}
                 >
                   {adding ? (

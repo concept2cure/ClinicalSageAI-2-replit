@@ -409,7 +409,7 @@ export function TemplateLibrary({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search templates..."
-            className="w-full pl-9 pr-3 py-2 text-sm rounded-md border border-slate-200 focus-visible:ring-2 outline-none focus:ring-blue-200 focus:border-blue-400"
+            className="w-full pl-9 pr-3 py-2 text-sm rounded-md border border-slate-200 focus-visible:ring-2 outline-none focus:ring-stone-300 focus:border-blue-400"
           />
         </div>
         <div className="flex gap-1.5 flex-wrap">
@@ -420,7 +420,7 @@ export function TemplateLibrary({
               className={cn(
                 'px-2.5 py-1 text-xs font-medium rounded-full transition-colors duration-150',
                 selectedCategory === cat
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-stone-800 text-white'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
               )}
             >
@@ -500,7 +500,7 @@ export function TemplateLibrary({
                   <button
                     onClick={() => onGenerateFromTemplate?.(selectedTemplate)}
                     disabled={isGenerating}
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors flex-1 disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-stone-800 rounded-md hover:bg-stone-900 transition-colors flex-1 disabled:opacity-50"
                   >
                     {isGenerating ? (
                       <Loader2 className="h-3 w-3 animate-spin" />

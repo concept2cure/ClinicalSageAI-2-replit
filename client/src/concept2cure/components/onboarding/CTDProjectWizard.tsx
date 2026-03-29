@@ -220,7 +220,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
                   step > i + 1
                     ? 'bg-green-500 text-white'
                     : step === i + 1
-                    ? 'bg-indigo-600 text-white'
+                    ? 'bg-stone-700 text-white'
                     : 'bg-gray-200 text-gray-500'
                 }`}
               >
@@ -247,7 +247,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
                 value={project.name}
                 onChange={(e) => setProject({ ...project, name: e.target.value })}
                 placeholder="e.g., ABC-123 NDA Submission"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-500"
               />
             </div>
             <div>
@@ -257,7 +257,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
                 value={project.productName}
                 onChange={(e) => setProject({ ...project, productName: e.target.value })}
                 placeholder="e.g., Drugamazin 50mg"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-500"
               />
             </div>
             <div>
@@ -269,7 +269,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
                     onClick={() => setProject({ ...project, productType: pt.value })}
                     className={`border rounded-lg px-3 py-2 text-sm transition-colors ${
                       project.productType === pt.value
-                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                        ? 'border-stone-500 bg-stone-100 text-stone-700'
                         : 'border-gray-300 text-gray-600 hover:border-gray-400'
                     }`}
                   >
@@ -286,7 +286,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
                   value={project.therapeuticArea}
                   onChange={(e) => setProject({ ...project, therapeuticArea: e.target.value })}
                   placeholder="e.g., Oncology"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-500"
                 />
               </div>
               <div>
@@ -296,7 +296,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
                   value={project.indication}
                   onChange={(e) => setProject({ ...project, indication: e.target.value })}
                   placeholder="e.g., Non-small cell lung cancer"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-500"
                 />
               </div>
             </div>
@@ -324,7 +324,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
                     }
                     className={`border rounded-lg p-3 text-center transition-colors ${
                       project.regulatoryRegion === r.value
-                        ? 'border-indigo-500 bg-indigo-50'
+                        ? 'border-stone-500 bg-stone-50'
                         : 'border-gray-300 hover:border-gray-400'
                     }`}
                   >
@@ -343,7 +343,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
                     onClick={() => setProject({ ...project, submissionType: st })}
                     className={`border rounded-lg px-4 py-2 text-sm transition-colors ${
                       project.submissionType === st
-                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                        ? 'border-stone-500 bg-stone-100 text-stone-700'
                         : 'border-gray-300 text-gray-600 hover:border-gray-400'
                     }`}
                   >
@@ -369,7 +369,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
                 onClick={() => setActiveModule(m)}
                 className={`px-4 py-2 text-sm border-b-2 transition-colors ${
                   activeModule === m
-                    ? 'border-indigo-500 text-indigo-700 font-medium'
+                    ? 'border-stone-500 text-stone-700 font-medium'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -382,7 +382,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
           <div
             onDrop={handleDrop}
             onDragOver={(e) => e.preventDefault()}
-            className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center mb-4 hover:border-indigo-400 transition-colors cursor-pointer"
+            className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center mb-4 hover:border-stone-400 transition-colors cursor-pointer"
             onClick={() => {
               const input = document.createElement('input');
               input.type = 'file';
@@ -402,7 +402,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
             <p className="text-xs text-gray-400 mt-1">
               PDF, DOCX, XML, TXT, XLSX — auto-detects CTD section from filename
             </p>
-            {uploading && <p className="text-xs text-indigo-600 mt-2">Uploading...</p>}
+            {uploading && <p className="text-xs text-stone-600 mt-2">Uploading...</p>}
           </div>
 
           {/* Uploaded Documents */}
@@ -439,7 +439,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Compliance Check</h2>
 
           {validationResult && (
-            <div className="mb-4 bg-indigo-50 rounded-xl p-4 flex items-center justify-between">
+            <div className="mb-4 bg-stone-50 rounded-xl p-4 flex items-center justify-between">
               <div>
                 <div className="text-sm font-medium text-gray-900">
                   {validationResult.fulfilled} / {validationResult.totalRequired} required sections fulfilled
@@ -448,7 +448,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
                   {validationResult.completionPercentage}% complete for {project.regulatoryRegion} {project.submissionType}
                 </div>
               </div>
-              <div className="text-2xl font-bold text-indigo-600">
+              <div className="text-base font-semibold text-stone-600">
                 {validationResult.completionPercentage}%
               </div>
             </div>
@@ -529,7 +529,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
           </div>
           <button
             onClick={onComplete}
-            className="bg-indigo-600 text-white px-6 py-2 rounded-lg text-sm hover:bg-indigo-700 transition-colors"
+            className="bg-stone-700 text-white px-6 py-2 rounded-lg text-sm hover:bg-stone-800 transition-colors"
           >
             Activate Project
           </button>
@@ -564,7 +564,7 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
               else setStep(step + 1);
             }}
             disabled={!canProceed()}
-            className="flex items-center gap-1 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-1 bg-stone-700 text-white px-4 py-2 rounded-lg text-sm hover:bg-stone-800 disabled:opacity-50 transition-colors"
           >
             {step === 3 ? 'Run Compliance Check' : 'Continue'} <ChevronRight size={14} />
           </button>

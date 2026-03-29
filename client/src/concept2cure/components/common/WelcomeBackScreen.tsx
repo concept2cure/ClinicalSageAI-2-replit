@@ -203,7 +203,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
       <header className="flex-shrink-0 border-b border-stone-200 bg-white/80 backdrop-blur">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-stone-800 flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -226,7 +226,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
         <div className="max-w-5xl mx-auto px-6 py-12">
           {/* Greeting */}
           <div className="mb-10">
-            <h2 className="text-2xl font-semibold text-stone-900 mb-2">
+            <h2 className="text-base font-semibold text-stone-900 mb-2">
               {getGreeting()}, {firstName}!
             </h2>
             <p className="text-stone-500 text-lg">

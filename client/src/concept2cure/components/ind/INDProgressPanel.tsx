@@ -93,7 +93,7 @@ export const INDProgressPanel: React.FC<INDProgressPanelProps> = ({
         </div>
         <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
           <div
-            className="h-full bg-stone-800 rounded-full transition-all duration-500"
+            className="h-full bg-stone-800 rounded-full transition-all duration-200"
             style={{ width: `${Math.round((data.completedSections / data.totalSections) * 100)}%` }}
           />
         </div>

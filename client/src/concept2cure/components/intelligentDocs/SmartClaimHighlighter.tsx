@@ -193,7 +193,7 @@ export const ClaimTooltip: React.FC<{
   
   return (
     <div
-      className="fixed z-50 w-72 p-3 bg-white rounded-lg shadow-xl border border-stone-200"
+      className="fixed z-50 w-72 p-3 bg-white rounded-lg shadow border border-stone-200"
       style={{
         left: position.x,
         top: position.y,
@@ -226,7 +226,7 @@ export const ClaimTooltip: React.FC<{
       ) : (
         <button
           onClick={onLinkClick}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-150"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-stone-800 text-white text-sm font-medium rounded-lg hover:bg-stone-900 transition-colors duration-150"
           data-testid={`button-claim-link-source-${claim.id}`}
         >
           Link Source

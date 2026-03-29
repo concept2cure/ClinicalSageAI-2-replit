@@ -297,7 +297,7 @@ export const ProjectKnowledge: React.FC<ProjectKnowledgeProps> = ({ project, cla
                 <div className="text-sm font-medium text-stone-900">Project Knowledge</div>
                 <div className="text-xs text-stone-500">
                   {isLoading
-                    ? 'Loading...'
+                    ? 'Fetching2026'
                     : documentCount === 0
                       ? 'Add documents'
                       : `${documentCount} document${documentCount !== 1 ? 's' : ''} · ${formatTokenCount(contextTokens)} tokens`}

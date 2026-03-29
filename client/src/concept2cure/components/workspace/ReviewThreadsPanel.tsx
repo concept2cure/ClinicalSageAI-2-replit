@@ -28,6 +28,9 @@ import { useToast } from '@/hooks/use-toast';
 import { LoadingState } from '@/components/ui/statesV2';
 import { WorkspaceTabBar, type WorkspaceTab } from '@/components/ui/workspace-primitives';
 import { getThreadTaskTailoring } from '../../config/industry-tailoring';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface ReviewThread {
@@ -365,67 +368,71 @@ export function ReviewThreadsPanel({
         {subTab === 'threads' ? (
           <div className="p-2">
             {/* New thread button */}
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setShowNewThread(!showNewThread)}
-              className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded transition-colors mb-2"
+              className="w-full flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 mb-2"
             >
               <Plus className="w-3 h-3" />
               New Thread
-            </button>
+            </Button>
 
             {/* New thread form */}
             {showNewThread && (
               <div className="mb-3 p-2 bg-stone-50 rounded-lg border border-stone-200 space-y-2">
-                <input
+                <Input
                   type="text"
                   value={newThreadTitle}
                   onChange={e => setNewThreadTitle(e.target.value)}
                   placeholder="Thread title..."
-                  className="w-full px-2 py-1 text-xs bg-white border border-stone-200 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
+                  className="w-full h-7 px-2 text-xs"
                   maxLength={500}
                 />
                 <div className="flex gap-1.5">
-                  <select
-                    value={newThreadPriority}
-                    onChange={e => setNewThreadPriority(e.target.value)}
-                    className="flex-1 px-1.5 py-1 text-xs bg-white border border-stone-200 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
-                  >
-                    <option value="">Priority...</option>
-                    {Object.entries(tailoring.priorityLabels).map(([val, label]) => (
-                      <option key={val} value={val}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={newThreadAnchorType}
-                    onChange={e => setNewThreadAnchorType(e.target.value)}
-                    className="flex-1 px-1.5 py-1 text-xs bg-white border border-stone-200 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
-                  >
-                    <option value="">Anchor...</option>
-                    {tailoring.anchorTypes.map(a => (
-                      <option key={a.value} value={a.value}>
-                        {a.label}
-                      </option>
-                    ))}
-                  </select>
+                  <Select value={newThreadPriority} onValueChange={setNewThreadPriority}>
+                    <SelectTrigger className="flex-1 h-7 text-xs">
+                      <SelectValue placeholder="Priority..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Priority...</SelectItem>
+                      {Object.entries(tailoring.priorityLabels).map(([val, label]) => (
+                        <SelectItem key={val} value={val}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={newThreadAnchorType} onValueChange={setNewThreadAnchorType}>
+                    <SelectTrigger className="flex-1 h-7 text-xs">
+                      <SelectValue placeholder="Anchor..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Anchor...</SelectItem>
+                      {tailoring.anchorTypes.map(a => (
+                        <SelectItem key={a.value} value={a.value}>
+                          {a.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 {newThreadAnchorType && newThreadAnchorType !== 'general' && (
-                  <input
+                  <Input
                     type="text"
                     value={newThreadAnchorLabel}
                     onChange={e => setNewThreadAnchorLabel(e.target.value)}
                     placeholder="Anchor label (e.g. section name)..."
-                    className="w-full px-2 py-1 text-xs bg-white border border-stone-200 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
+                    className="w-full h-7 px-2 text-xs"
                   />
                 )}
                 <div className="flex items-center gap-1.5">
                   <label className="text-xs text-stone-400 shrink-0">Due</label>
-                  <input
+                  <Input
                     type="date"
                     value={newThreadDueAt}
                     onChange={e => setNewThreadDueAt(e.target.value)}
-                    className="flex-1 px-2 py-1 text-xs bg-white border border-stone-200 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
+                    className="flex-1 h-7 px-2 text-xs"
                   />
                 </div>
                 <textarea
@@ -437,7 +444,9 @@ export function ReviewThreadsPanel({
                   maxLength={10000}
                 />
                 <div className="flex gap-1.5 justify-end">
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => {
                       setShowNewThread(false);
                       setNewThreadTitle('');
@@ -447,18 +456,19 @@ export function ReviewThreadsPanel({
                       setNewThreadAnchorLabel('');
                       setNewThreadDueAt('');
                     }}
-                    className="px-2 py-0.5 text-xs text-stone-500 hover:bg-stone-200 rounded"
+                    className="h-6 px-2 text-xs text-stone-500"
                   >
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    size="sm"
                     onClick={handleCreateThread}
                     disabled={creating || !newThreadTitle.trim()}
-                    className="px-2 py-0.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60 flex items-center gap-1"
+                    className="h-6 px-2 text-xs"
                   >
                     {creating ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : null}
                     Create
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
@@ -652,7 +662,7 @@ function ThreadCard({
       )}
     >
       {/* Header */}
-      <button onClick={onToggle} className="w-full flex items-start gap-1.5 p-2 text-left">
+      <Button variant="ghost" onClick={onToggle} className="w-full flex items-start gap-1.5 p-2 h-auto text-left rounded-none">
         {expanded ? (
           <ChevronDown className="w-3 h-3 text-stone-400 mt-0.5 shrink-0" />
         ) : (
@@ -710,7 +720,7 @@ function ThreadCard({
           <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
         )}
         {!isOpen && <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />}
-      </button>
+      </Button>
 
       {/* Expanded content */}
       {expanded && (
@@ -779,7 +789,7 @@ function ThreadCard({
                       <button
                         onClick={onReply}
                         disabled={replying || !replyBody.trim()}
-                        className="px-1.5 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60"
+                        className="px-1.5 py-1 bg-stone-800 text-white rounded hover:bg-stone-900 disabled:opacity-60"
                       >
                         {replying ? (
                           <Loader2 className="w-3 h-3 animate-spin" />
@@ -899,7 +909,7 @@ function ThreadCard({
                     <button
                       onClick={() => onCreateTask(thread.threadId)}
                       disabled={creatingTask || !(newTaskTitle || '').trim()}
-                      className="px-1.5 py-0.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60 flex items-center gap-0.5"
+                      className="px-1.5 py-0.5 text-xs bg-stone-800 text-white rounded hover:bg-stone-900 disabled:opacity-60 flex items-center gap-0.5"
                     >
                       {creatingTask && <Loader2 className="w-2 h-2 animate-spin" />}
                       Create

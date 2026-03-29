@@ -78,7 +78,7 @@ const AlertCard: React.FC<AlertCardProps> = ({
     LOW: {
       bg: 'bg-blue-50 border-blue-200',
       icon: 'bg-blue-100 text-blue-600',
-      badge: 'bg-blue-600 text-white',
+      badge: 'bg-stone-800 text-white',
     },
     INFO: {
       bg: 'bg-stone-50 border-stone-200',
@@ -144,7 +144,7 @@ const PriorityItem: React.FC<PriorityItemProps> = ({
   const urgencyConfig = {
     now: { label: 'Now', color: 'bg-red-500' },
     today: { label: 'Today', color: 'bg-amber-500' },
-    this_week: { label: 'This Week', color: 'bg-blue-500' },
+    this_week: { label: 'This Week', color: 'bg-stone-600' },
   };
 
   const config = urgencyConfig[urgency];
@@ -209,7 +209,7 @@ const StatWidget: React.FC<StatWidgetProps> = ({
       <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center mb-3", colorConfig[color])}>
         <Icon className="w-5 h-5" />
       </div>
-      <div className="text-2xl font-semibold text-stone-900">{value}</div>
+      <div className="text-base font-semibold text-stone-900">{value}</div>
       <div className="flex items-center justify-between">
         <span className="text-sm text-stone-500">{label}</span>
         {change && (
@@ -270,7 +270,7 @@ export const MorningBriefingPanel: React.FC<MorningBriefingPanelProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-semibold text-stone-900">Morning Briefing</h2>
+          <h2 className="text-base font-medium text-stone-900">Morning Briefing</h2>
           <p className="text-sm text-stone-500">
             {new Date().toLocaleDateString('en-US', {
               weekday: 'long',

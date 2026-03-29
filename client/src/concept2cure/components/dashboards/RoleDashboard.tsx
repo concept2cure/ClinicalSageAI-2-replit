@@ -272,7 +272,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs text-stone-500 font-medium tracking-wide">{metric.label}</p>
-            <p className={cn('text-2xl font-semibold mt-1.5', COLOR_TEXT_700[colorClass] || 'text-stone-900')}>
+            <p className={cn('text-base font-semibold mt-1.5', COLOR_TEXT_700[colorClass] || 'text-stone-900')}>
               {typeof metric.value === 'number' && metric.value % 1 !== 0
                 ? metric.value.toFixed(1)
                 : metric.value}
@@ -686,7 +686,7 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
                     <p className="text-xs text-stone-500 font-medium">Readiness</p>
                   </div>
                   <p className={cn(
-                    'text-2xl font-bold',
+                    'text-base font-semibold',
                     readinessData.overallScore >= 75 ? 'text-emerald-600'
                       : readinessData.overallScore >= 50 ? 'text-amber-600'
                       : 'text-red-600'

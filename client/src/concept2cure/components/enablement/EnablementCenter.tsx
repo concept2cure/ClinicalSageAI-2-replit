@@ -105,7 +105,7 @@ function HeroSection() {
 
   return (
     <motion.section className="py-12 px-8" {...fade}>
-      <h1 className="text-2xl font-semibold text-stone-900 tracking-tight mb-3">
+      <h1 className="text-base font-semibold text-stone-900 tracking-tight mb-3">
         Your intelligent guide to regulatory excellence
       </h1>
       <p className="text-base text-stone-500 max-w-2xl leading-relaxed mb-6">
@@ -200,7 +200,7 @@ function AllModulesView() {
 
   return (
     <div className="px-8 py-8">
-      <h2 className="text-2xl font-semibold text-stone-900 mb-1">Modules</h2>
+      <h2 className="text-base font-semibold text-stone-900 mb-1">Modules</h2>
       <p className="text-sm text-stone-600 mb-8">
         Browse and launch any module across all learning paths
       </p>
@@ -348,7 +348,7 @@ function AllModulesView() {
 function CertificationsView() {
   return (
     <div className="px-8 py-8">
-      <h2 className="text-2xl font-semibold text-stone-900 mb-1">
+      <h2 className="text-base font-semibold text-stone-900 mb-1">
         Certifications
       </h2>
       <p className="text-sm text-stone-600 mb-8">
@@ -381,7 +381,7 @@ function CertificationsView() {
             <div className="flex items-center gap-3 mb-2">
               <div className="flex-1 max-w-xs h-1 bg-stone-100 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-stone-900 rounded-full transition-all duration-500"
+                  className="h-full bg-stone-900 rounded-full transition-all duration-200"
                   style={{
                     width: `${
                       requiredCount > 0
@@ -420,7 +420,7 @@ function AboutView() {
 
   return (
     <div className="px-8 py-8 max-w-3xl">
-      <h2 className="text-2xl font-semibold text-stone-900 mb-1">
+      <h2 className="text-base font-semibold text-stone-900 mb-1">
         About Concept2Cure
       </h2>
       <p className="text-sm text-stone-600 mb-10">
@@ -530,7 +530,7 @@ function AiAgentsView() {
     <div className="py-12 px-6">
       {/* Header */}
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold text-stone-900 tracking-tight">
+        <h2 className="text-base font-semibold text-stone-900 tracking-tight">
           AI Agents
         </h2>
         <p className="text-base text-stone-500 mt-2 max-w-2xl leading-relaxed">
@@ -564,7 +564,7 @@ function AiAgentsView() {
       {/* Content */}
       <React.Suspense
         fallback={
-          <p className="text-sm text-stone-400 py-12">Loading...</p>
+          <div className="flex items-center justify-center py-12"><div className="w-4 h-4 border-2 border-stone-300 border-t-stone-600 rounded-full animate-spin" /></div>
         }
       >
         <AnimatePresence mode="wait">

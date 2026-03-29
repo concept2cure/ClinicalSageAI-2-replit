@@ -66,7 +66,7 @@ const InstructionsModal: React.FC<{
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-[2px]">
-      <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col">
+      <div className="bg-white rounded-2xl shadow max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col">
         <div className="px-6 pt-6 pb-4">
           <h2 className="text-lg font-semibold text-stone-900">Set project instructions</h2>
           <p className="text-sm text-stone-500 mt-1 leading-relaxed">
@@ -210,7 +210,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
             {uploadMenuOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setUploadMenuOpen(false)} />
-                <div className="absolute right-0 top-8 z-20 bg-white rounded-xl shadow-lg border border-stone-200 py-1 w-48">
+                <div className="absolute right-0 top-8 z-20 bg-white rounded-xl shadow-sm border border-stone-200 py-1 w-48">
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50 transition-colors"

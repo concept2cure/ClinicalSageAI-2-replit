@@ -477,7 +477,7 @@ function InspectionMetrics({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Upcoming</p>
-              <p className="text-2xl font-semibold">{upcoming}</p>
+              <p className="text-base font-semibold">{upcoming}</p>
             </div>
             <Calendar className="w-8 h-8 text-blue-500" />
           </div>
@@ -489,7 +489,7 @@ function InspectionMetrics({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Open Findings</p>
-              <p className="text-2xl font-semibold text-orange-600">{openFindings}</p>
+              <p className="text-base font-semibold text-orange-600">{openFindings}</p>
             </div>
             <AlertTriangle className="w-8 h-8 text-orange-500" />
           </div>
@@ -502,7 +502,7 @@ function InspectionMetrics({
             <div>
               <p className="text-sm text-muted-foreground">Avg Readiness</p>
               <p
-                className={`text-2xl font-semibold ${
+                className={`text-base font-semibold ${
                   avgReadiness >= 80
                     ? 'text-green-600'
                     : avgReadiness >= 60
@@ -523,7 +523,7 @@ function InspectionMetrics({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Ready Items</p>
-              <p className="text-2xl font-semibold">
+              <p className="text-base font-semibold">
                 {readyItems}/{totalItems}
               </p>
             </div>
@@ -949,7 +949,7 @@ export function InspectionReadiness() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold flex items-center gap-3">
+          <h1 className="text-base font-semibold flex items-center gap-3">
             <ClipboardCheck className="w-8 h-8 text-blue-600" />
             Inspection Readiness
           </h1>

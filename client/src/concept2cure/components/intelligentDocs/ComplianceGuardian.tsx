@@ -325,11 +325,11 @@ const ComplianceScoreRing: React.FC<{
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
-          className="transition-all duration-700 ease-out"
+          className="transition-all duration-200 ease-out"
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className={`text-3xl font-semibold ${colors.text}`}>{score}</span>
+        <span className={`text-lg font-medium ${colors.text}`}>{score}</span>
         <span className="text-xs text-stone-500">Compliance</span>
       </div>
     </div>
@@ -367,7 +367,7 @@ const IssueCard: React.FC<IssueCardProps> = ({ guard, onAction, onAutoFix }) => 
       label: 'Suggestion',
       color: 'border-blue-200 bg-blue-50',
       iconColor: 'text-blue-500',
-      buttonColor: 'bg-blue-600 hover:bg-blue-700',
+      buttonColor: 'bg-stone-800 hover:bg-stone-900',
     },
   };
   

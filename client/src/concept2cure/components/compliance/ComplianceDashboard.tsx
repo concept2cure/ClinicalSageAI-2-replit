@@ -152,12 +152,12 @@ const ScoreRing: React.FC<ScoreRingProps> = ({
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
-          className="transition-all duration-500 ease-out"
+          className="transition-all duration-200 ease-out"
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span
-          className="text-3xl font-semibold"
+          className="text-lg font-medium"
           style={{ color: getScoreColor(score) }}
         >
           {score}

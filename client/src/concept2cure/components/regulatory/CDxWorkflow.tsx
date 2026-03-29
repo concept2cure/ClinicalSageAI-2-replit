@@ -311,7 +311,7 @@ export default function CDxWorkflow() {
         <div className="px-4 py-3">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="flex items-center gap-2 text-xl font-semibold">
+              <h3 className="flex items-center gap-2 text-base font-medium">
                 <Pill className="h-6 w-6" />
                 Companion Diagnostic (CDx) Workflow
               </h3>

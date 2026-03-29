@@ -76,7 +76,7 @@ export function ContinuityBriefing({ snapshot, onRefresh, isRefreshing }: Contin
           <div className="space-y-1">
             {snapshot.changes.slice(0, 5).map((change, i) => (
               <div key={i} className="flex items-center gap-2 text-sm">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+                <span className="w-1.5 h-1.5 rounded-full bg-stone-600 shrink-0" />
                 <span className="text-gray-700 dark:text-gray-300">{change.description}</span>
                 <span className="text-xs text-gray-400 ml-auto shrink-0">
                   {new Date(change.timestamp).toLocaleDateString()}
@@ -124,13 +124,13 @@ export function ContinuityBriefing({ snapshot, onRefresh, isRefreshing }: Contin
       {/* Next actions */}
       {snapshot.nextActions.length > 0 && (
         <div>
-          <h4 className="text-xs font-medium uppercase text-indigo-600 dark:text-indigo-400 mb-2">
+          <h4 className="text-xs font-medium uppercase text-stone-600 dark:text-indigo-400 mb-2">
             Recommended Next
           </h4>
           <div className="space-y-1">
             {snapshot.nextActions.slice(0, 3).map((action) => (
               <div key={action.id} className="flex items-center gap-2 text-sm">
-                <span className="text-xs px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-medium">
+                <span className="text-xs px-1.5 py-0.5 rounded bg-stone-100 text-stone-700 dark:text-stone-300 font-medium">
                   {action.severity}
                 </span>
                 <span className="text-gray-700 dark:text-gray-300">{action.suggestedAction}</span>

@@ -319,7 +319,7 @@ const createCommands = (onAction: (id: string) => void): CommandItem[] => [
     id: 'nav-route-planner',
     title: 'Route Planner',
     subtitle: 'Plan regulatory submission pathways & timelines',
-    icon: <Compass className="w-4 h-4 text-indigo-600" />,
+    icon: <Compass className="w-4 h-4 text-stone-600" />,
     category: 'tools',
     action: () => onAction('nav-route-planner'),
     keywords: ['route', 'plan', 'pathway', 'submission', 'timeline', 'destination'],
@@ -680,7 +680,7 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="command-palette-title"
-        className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150"
+        className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-xl bg-white rounded-2xl shadow-sm overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150"
       >
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-4 border-b border-stone-100">

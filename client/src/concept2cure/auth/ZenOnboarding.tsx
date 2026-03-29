@@ -280,7 +280,7 @@ export const ZenOnboarding: React.FC = () => {
           key={s}
           className={`
             w-2 h-2 rounded-full transition-all duration-300
-            ${index <= currentStepIndex ? 'bg-blue-600' : 'bg-stone-300'}
+            ${index <= currentStepIndex ? 'bg-stone-800' : 'bg-stone-300'}
             ${index === currentStepIndex ? 'w-6' : ''}
           `}
         />
@@ -311,7 +311,7 @@ export const ZenOnboarding: React.FC = () => {
       </motion.div>
 
       <div className="space-y-4">
-        <h1 className="text-2xl font-semibold text-stone-900">Welcome to Concept2Cure</h1>
+        <h1 className="text-base font-semibold text-stone-900">Welcome to Concept2Cure</h1>
         <p className="text-lg text-stone-600 max-w-md mx-auto">
           The RI-powered regulatory intelligence platform that transforms how you create and manage
           submissions.
@@ -331,7 +331,7 @@ export const ZenOnboarding: React.FC = () => {
             transition={{ delay: 0.3 + index * 0.1 }}
             className="p-4 bg-stone-50 rounded-xl"
           >
-            <div className="text-2xl mb-2">{item.icon}</div>
+            <div className="text-base font-medium mb-2">{item.icon}</div>
             <div className="text-sm font-medium text-stone-700">{item.label}</div>
           </motion.div>
         ))}
@@ -340,7 +340,7 @@ export const ZenOnboarding: React.FC = () => {
       <div className="pt-4">
         <button
           onClick={handleNext}
-          className="inline-flex items-center gap-2 px-8 py-3 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors duration-150"
+          className="inline-flex items-center gap-2 px-8 py-3 text-base font-medium text-white bg-stone-800 hover:bg-stone-900 rounded-xl transition-colors duration-150"
         >
           Get Started
           <ArrowRightIcon />
@@ -368,7 +368,7 @@ export const ZenOnboarding: React.FC = () => {
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 mb-2">
           <FolderIcon />
         </div>
-        <h2 className="text-2xl font-semibold text-stone-900">Create Your First Project</h2>
+        <h2 className="text-base font-semibold text-stone-900">Create Your First Project</h2>
         <p className="text-stone-600">Set up your workspace to get started</p>
       </div>
 
@@ -380,7 +380,7 @@ export const ZenOnboarding: React.FC = () => {
             value={preferences.projectName}
             onChange={e => setPreferences(p => ({ ...p, projectName: e.target.value }))}
             placeholder="e.g., CardioMonitor 510(k)"
-            className="w-full px-4 py-3 border-2 border-stone-200 rounded-xl focus:border-stone-400 outline-none transition-colors duration-150"
+            className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:border-stone-400 outline-none transition-colors duration-150"
           />
         </div>
 
@@ -392,15 +392,15 @@ export const ZenOnboarding: React.FC = () => {
                 key={type.value}
                 onClick={() => setPreferences(p => ({ ...p, submissionType: type.value }))}
                 className={`
-                  p-4 text-left rounded-xl border-2 transition-all
+                  p-4 text-left rounded-xl border transition-all
                   ${
                     preferences.submissionType === type.value
-                      ? 'border-blue-500 bg-blue-50'
+                      ? 'border-stone-600 bg-blue-50'
                       : 'border-stone-200 hover:border-stone-300'
                   }
                 `}
               >
-                <div className="text-xl mb-1">{type.icon}</div>
+                <div className="text-base mb-1">{type.icon}</div>
                 <div className="font-medium text-stone-900 text-sm">{type.label}</div>
                 <div className="text-xs text-stone-500">{type.description}</div>
               </button>
@@ -419,7 +419,7 @@ export const ZenOnboarding: React.FC = () => {
         <button
           onClick={handleNext}
           disabled={!preferences.projectName || !preferences.submissionType}
-          className="flex-1 py-3 px-4 text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed rounded-xl transition-colors duration-150"
+          className="flex-1 py-3 px-4 text-white bg-stone-800 hover:bg-stone-900 disabled:opacity-60 disabled:cursor-not-allowed rounded-xl transition-colors duration-150"
         >
           Continue
         </button>
@@ -440,7 +440,7 @@ export const ZenOnboarding: React.FC = () => {
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 mb-2">
           <CogIcon />
         </div>
-        <h2 className="text-2xl font-semibold text-stone-900">Your Preferences</h2>
+        <h2 className="text-base font-semibold text-stone-900">Your Preferences</h2>
         <p className="text-stone-600">Customize your experience</p>
       </div>
 
@@ -481,7 +481,7 @@ export const ZenOnboarding: React.FC = () => {
                 relative w-12 h-7 rounded-full transition-colors
                 ${
                   preferences[pref.key as keyof OnboardingPreferences]
-                    ? 'bg-blue-600'
+                    ? 'bg-stone-800'
                     : 'bg-stone-300'
                 }
               `}
@@ -507,7 +507,7 @@ export const ZenOnboarding: React.FC = () => {
         </button>
         <button
           onClick={handleNext}
-          className="flex-1 py-3 px-4 text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors duration-150"
+          className="flex-1 py-3 px-4 text-white bg-stone-800 hover:bg-stone-900 rounded-xl transition-colors duration-150"
         >
           Continue
         </button>
@@ -528,7 +528,7 @@ export const ZenOnboarding: React.FC = () => {
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 mb-2">
           <MapIcon />
         </div>
-        <h2 className="text-2xl font-semibold text-stone-900">Key Features</h2>
+        <h2 className="text-base font-semibold text-stone-900">Key Features</h2>
         <p className="text-stone-600">Here's what you can do with Concept2Cure</p>
       </div>
 
@@ -541,7 +541,7 @@ export const ZenOnboarding: React.FC = () => {
             transition={{ delay: index * 0.1 }}
             className="flex items-start gap-4 p-4 bg-stone-50 rounded-xl"
           >
-            <div className="text-2xl">{feature.icon}</div>
+            <div className="text-base font-medium">{feature.icon}</div>
             <div>
               <div className="font-medium text-stone-900">{feature.title}</div>
               <div className="text-sm text-stone-600">{feature.description}</div>
@@ -559,7 +559,7 @@ export const ZenOnboarding: React.FC = () => {
         </button>
         <button
           onClick={handleNext}
-          className="flex-1 py-3 px-4 text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors duration-150"
+          className="flex-1 py-3 px-4 text-white bg-stone-800 hover:bg-stone-900 rounded-xl transition-colors duration-150"
         >
           Continue
         </button>
@@ -595,7 +595,7 @@ export const ZenOnboarding: React.FC = () => {
       </motion.div>
 
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold text-stone-900">You're All Set!</h2>
+        <h2 className="text-base font-semibold text-stone-900">You're All Set!</h2>
         <p className="text-lg text-stone-600 max-w-md mx-auto">
           Your workspace "{preferences.projectName}" is ready. Let's start building your{' '}
           {SUBMISSION_TYPES.find(t => t.value === preferences.submissionType)?.label ||
@@ -608,7 +608,7 @@ export const ZenOnboarding: React.FC = () => {
         <button
           onClick={handleComplete}
           disabled={isLoading}
-          className="inline-flex items-center gap-2 px-8 py-3 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors disabled:opacity-60"
+          className="inline-flex items-center gap-2 px-8 py-3 text-base font-medium text-white bg-stone-800 hover:bg-stone-900 rounded-xl transition-colors disabled:opacity-60"
         >
           {isLoading ? (
             <>

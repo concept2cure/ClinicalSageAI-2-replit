@@ -229,14 +229,14 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
   compact,
 }) => {
   const colorClasses = {
-    blue: 'bg-blue-500',
+    blue: 'bg-stone-600',
     green: 'bg-green-500',
     orange: 'bg-orange-500',
     purple: 'bg-purple-500',
     slate: 'bg-stone-500',
     red: 'bg-red-500',
     amber: 'bg-amber-500',
-    indigo: 'bg-blue-500',
+    indigo: 'bg-stone-600',
   };
 
   const Icon = config.icon;
@@ -325,7 +325,7 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
           <button
             onClick={onConnect}
             disabled={isLoading}
-            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-60"
+            className="flex items-center gap-1.5 px-4 py-2 bg-stone-800 text-white text-sm font-medium rounded-lg hover:bg-stone-900 transition-colors disabled:opacity-60"
             data-testid={`button-bridge-connect-${config.id}`}
           >
             {isLoading ? (
@@ -385,7 +385,7 @@ const DataFlowDiagram: React.FC<{
           </p>
         </div>
         <div className="text-right">
-          <p className="text-2xl font-semibold text-blue-600">{totalSources}</p>
+          <p className="text-base font-semibold text-blue-600">{totalSources}</p>
           <p className="text-xs text-stone-500">Total Sources</p>
         </div>
       </div>
@@ -422,7 +422,7 @@ const DataFlowDiagram: React.FC<{
         </div>
 
         {/* Document */}
-        <div className="p-4 bg-white rounded-xl border-2 border-blue-500 shadow-lg">
+        <div className="p-4 bg-white rounded-xl border border-stone-300 shadow-sm">
           <FileText className="w-8 h-8 text-blue-500 mx-auto mb-2" />
           <p className="text-sm font-medium text-stone-700 text-center">
             {submissionType}

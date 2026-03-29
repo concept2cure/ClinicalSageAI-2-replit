@@ -212,8 +212,8 @@ const MfaCodeInput: React.FC<MfaInputProps> = ({ value, onChange, error }) => {
             onKeyDown={e => handleKeyDown(index, e)}
             onPaste={handlePaste}
             className={`
-              w-12 h-12 text-center text-xl font-medium
-              border-2 rounded-xl
+              w-12 h-12 text-center text-base font-medium
+              border rounded-xl
               transition-all duration-150
               outline-none focus:ring-0
               ${
@@ -664,7 +664,7 @@ export const ZenLogin: React.FC = () => {
           autoFocus
           className={`
             w-full px-4 py-3 text-base
-            border-2 rounded-xl
+            border rounded-xl
             transition-all duration-150
             outline-none focus:ring-0
             ${
@@ -724,7 +724,7 @@ export const ZenLogin: React.FC = () => {
               w-full py-3 px-4
               flex items-center justify-center gap-2
               text-sm font-semibold
-              text-emerald-700 bg-emerald-50 border-2 border-emerald-200
+              text-emerald-700 bg-emerald-50 border border-emerald-200
               hover:bg-emerald-100 hover:border-emerald-300
               rounded-xl transition-all duration-150
               disabled:opacity-60 disabled:cursor-not-allowed
@@ -766,7 +766,7 @@ export const ZenLogin: React.FC = () => {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="overflow-hidden rounded-xl border-2 border-emerald-200 bg-white divide-y divide-emerald-100"
+              className="overflow-hidden rounded-xl border border-emerald-200 bg-white divide-y divide-emerald-100"
             >
               {demoPersonas.map(persona => (
                 <button
@@ -775,7 +775,7 @@ export const ZenLogin: React.FC = () => {
                   disabled={isLoading}
                   className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-emerald-50 transition-colors disabled:opacity-60"
                 >
-                  <span className="text-xl">{persona.icon}</span>
+                  <span className="text-base">{persona.icon}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-stone-900 truncate">{persona.name}</p>
                     <p className="text-xs text-stone-500 truncate">
@@ -800,7 +800,7 @@ export const ZenLogin: React.FC = () => {
           className={`
             flex items-center justify-center gap-2 px-4 py-3
             text-sm font-medium text-stone-700
-            bg-white border-2 border-stone-200 rounded-xl
+            bg-white border border-stone-200 rounded-xl
             hover:bg-stone-50 hover:border-stone-300
             transition-all duration-150
             disabled:opacity-60 disabled:cursor-not-allowed
@@ -815,7 +815,7 @@ export const ZenLogin: React.FC = () => {
           className={`
             flex items-center justify-center gap-2 px-4 py-3
             text-sm font-medium text-stone-700
-            bg-white border-2 border-stone-200 rounded-xl
+            bg-white border border-stone-200 rounded-xl
             hover:bg-stone-50 hover:border-stone-300
             transition-all duration-150
             disabled:opacity-60 disabled:cursor-not-allowed
@@ -865,7 +865,7 @@ export const ZenLogin: React.FC = () => {
             autoFocus
             className={`
               w-full px-4 py-3 pr-12 text-base
-              border-2 rounded-xl
+              border rounded-xl
               transition-all duration-150
               outline-none focus:ring-0
               ${
@@ -1031,7 +1031,7 @@ export const ZenLogin: React.FC = () => {
                       transition-all duration-150
                       ${
                         mfaMethod === method.type
-                          ? 'border-blue-500 bg-blue-50 text-blue-700'
+                          ? 'border-stone-600 bg-blue-50 text-blue-700'
                           : 'border-stone-200 text-stone-600 hover:border-stone-300'
                       }
                     `}
@@ -1062,7 +1062,7 @@ export const ZenLogin: React.FC = () => {
           w-full py-3 px-4
           flex items-center justify-center gap-2
           text-base font-medium text-white
-          bg-blue-600 hover:bg-blue-700
+          bg-stone-800 hover:bg-stone-900
           rounded-xl
           transition-all duration-150
           disabled:opacity-60 disabled:cursor-not-allowed
@@ -1172,7 +1172,7 @@ export const ZenLogin: React.FC = () => {
           w-full py-3 px-4
           flex items-center justify-center gap-2
           text-base font-medium text-white
-          bg-blue-600 hover:bg-blue-700
+          bg-stone-800 hover:bg-stone-900
           rounded-xl
           transition-all duration-200
           disabled:opacity-50 disabled:cursor-not-allowed
@@ -1247,7 +1247,7 @@ export const ZenLogin: React.FC = () => {
           w-full py-3 px-4
           flex items-center justify-center gap-2
           text-base font-medium text-white
-          bg-blue-600 hover:bg-blue-700
+          bg-stone-800 hover:bg-stone-900
           rounded-xl
           transition-all duration-150
           disabled:opacity-60 disabled:cursor-not-allowed
@@ -1282,7 +1282,7 @@ export const ZenLogin: React.FC = () => {
         className={`
           w-full py-3 px-4
           text-base font-medium text-stone-700
-          bg-white border-2 border-stone-200 rounded-xl
+          bg-white border border-stone-200 rounded-xl
           hover:bg-stone-50 hover:border-stone-300
           transition-all duration-150
         `}
@@ -1316,14 +1316,14 @@ export const ZenLogin: React.FC = () => {
           <CheckIcon />
         </motion.div>
       </motion.div>
-      <h3 className="text-xl font-semibold text-stone-900">Welcome back!</h3>
+      <h3 className="text-base font-medium text-stone-900">Welcome back!</h3>
       <p className="text-sm text-stone-600">Redirecting you to Concept2Cure...</p>
 
       <motion.div
         initial={{ width: 0 }}
         animate={{ width: '100%' }}
         transition={{ duration: 1, ease: 'linear' }}
-        className="h-1 bg-blue-600 rounded-full"
+        className="h-1 bg-stone-800 rounded-full"
       />
     </motion.div>
   );
@@ -1337,14 +1337,14 @@ export const ZenLogin: React.FC = () => {
       <div className="w-full max-w-sm px-6">
         {/* AnA 1.0 RI branding */}
         <div className="mb-10 text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-stone-900">
+          <h1 className="text-lg font-medium tracking-tight text-stone-900">
             AnA 1.0 RI
           </h1>
         </div>
 
         {/* Title */}
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-stone-900">
+          <h2 className="text-base font-semibold text-stone-900">
             {step === 'success' ? '' : 'Sign in'}
           </h2>
         </div>

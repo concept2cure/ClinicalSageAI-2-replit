@@ -183,7 +183,7 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
           <div className="h-3.5 w-48 bg-stone-100 rounded animate-pulse" />
         </div>
         <div className="flex-1 overflow-y-auto bg-stone-50 p-6">
-          <div className="bg-white mx-auto shadow-lg border border-stone-200 rounded-sm px-12 py-8">
+          <div className="bg-white mx-auto shadow-sm border border-stone-200 rounded-sm px-12 py-8">
             <div className="space-y-3">
               {Array.from({ length: 15 }, (_, i) => (
                 <div key={i} className="h-4 bg-stone-100 rounded animate-pulse" style={{ width: `${85 - i * 3}%` }} />
@@ -273,7 +273,7 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
               <ChevronDown className="w-3 h-3" />
             </button>
             {showDownloadMenu && (
-              <div className="absolute right-0 mt-1 w-36 bg-white border border-stone-200 rounded-lg shadow-lg z-50 py-1" role="menu">
+              <div className="absolute right-0 mt-1 w-36 bg-white border border-stone-200 rounded-lg shadow-sm z-50 py-1" role="menu">
                 <button
                   role="menuitem"
                   className="w-full text-left px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50"
@@ -320,7 +320,7 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
 
       {/* ── Document content ── */}
       <div className="flex-1 overflow-y-auto bg-stone-100" role="region" aria-label="Document preview">
-        <div className="bg-white mx-auto mt-4 mb-8 shadow-lg border border-stone-200" style={{ maxWidth: '8.5in' }}>
+        <div className="bg-white mx-auto mt-4 mb-8 shadow-sm border border-stone-200" style={{ maxWidth: '8.5in' }}>
           <div className="flex min-h-[11in]">
             {/* Line numbers */}
             <div className="w-10 flex-shrink-0 pt-12 pr-2 text-right select-none border-r border-stone-200" aria-hidden="true">

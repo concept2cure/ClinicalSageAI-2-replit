@@ -402,7 +402,7 @@ const DocumentsView: React.FC<{ user: CurrentUser }> = ({ user }) => (
 const TeamView: React.FC<{ user: CurrentUser }> = ({ user }) => (
   <div className="flex h-full">
     <div className="flex-1 p-6 bg-stone-50">
-      <h2 className="text-xl font-semibold text-stone-900 mb-4">Team Workspace</h2>
+      <h2 className="text-base font-medium text-stone-900 mb-4">Team Workspace</h2>
       <p className="text-stone-500">Select a team member to collaborate or view activity.</p>
     </div>
     <TeamCollaborationPanel
@@ -488,14 +488,14 @@ export const UnifiedWorkspaceDemo: React.FC = () => {
       case 'projects':
         return (
           <div className="p-6">
-            <h2 className="text-xl font-semibold">Projects View</h2>
+            <h2 className="text-base font-medium">Projects View</h2>
             <p className="text-stone-500 mt-2">Product/portfolio management view</p>
           </div>
         );
       default:
         return (
           <div className="p-6">
-            <h2 className="text-xl font-semibold">{currentView} View</h2>
+            <h2 className="text-base font-medium">{currentView} View</h2>
             <p className="text-stone-500 mt-2">Coming soon...</p>
           </div>
         );
@@ -505,7 +505,7 @@ export const UnifiedWorkspaceDemo: React.FC = () => {
   return (
     <div className="h-screen">
       {/* Mode Switcher (Demo Only) */}
-      <div className="fixed top-4 right-4 z-50 bg-white rounded-lg shadow-lg border border-stone-200 p-2 flex gap-2">
+      <div className="fixed top-4 right-4 z-50 bg-white rounded-lg shadow-sm border border-stone-200 p-2 flex gap-2">
         {([
           'biotech',
           'pharma',
@@ -521,7 +521,7 @@ export const UnifiedWorkspaceDemo: React.FC = () => {
             className={cn(
               'px-3 py-1.5 text-sm font-medium rounded-md transition-colors capitalize',
               currentUser.industryMode === mode
-                ? 'bg-blue-600 text-white'
+                ? 'bg-stone-800 text-white'
                 : 'text-stone-600 hover:bg-stone-100'
             )}
           >
@@ -544,7 +544,7 @@ export const UnifiedWorkspaceDemo: React.FC = () => {
       {/* Quick Start Wizard Modal */}
       {showWizard && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-lg w-[800px] h-[600px] overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm w-[800px] h-[600px] overflow-hidden">
             <QuickStartWizard
               onComplete={handleWizardComplete}
               onCancel={() => setShowWizard(false)}

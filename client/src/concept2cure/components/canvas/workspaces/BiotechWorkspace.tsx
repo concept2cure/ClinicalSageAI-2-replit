@@ -20,7 +20,7 @@ export const BiotechWorkspace: React.FC<BiotechWorkspaceProps> = ({
   return (
     <div className="h-full flex flex-col">
       <div className="bg-white border-b border-stone-200 px-6 py-4">
-        <h2 className="text-xl font-semibold text-stone-900">Biotech Workspace</h2>
+        <h2 className="text-base font-medium text-stone-900">Biotech Workspace</h2>
         <p className="text-sm text-stone-500">Biologics, Gene Therapy & Advanced Therapies</p>
       </div>
       

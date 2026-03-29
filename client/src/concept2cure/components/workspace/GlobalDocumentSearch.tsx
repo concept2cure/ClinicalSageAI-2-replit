@@ -183,27 +183,28 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: -10 }}
         transition={{ duration: 0.15, ease: [0.2, 0, 0, 1] }}
-        className="fixed top-[10%] left-1/2 -translate-x-1/2 w-full max-w-2xl bg-white rounded-xl shadow-lg overflow-hidden z-50">
+        className="fixed top-[10%] left-1/2 -translate-x-1/2 w-full max-w-2xl bg-white rounded-xl shadow-sm overflow-hidden z-50">
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-4 border-b border-stone-200">
           <Search className="w-5 h-5 text-stone-400 shrink-0" />
-          <input
+          <Input
             ref={inputRef}
             type="text"
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Search all documents across projects..."
-            className="flex-1 text-base bg-transparent border-none outline-none text-stone-900 placeholder:text-stone-400"
+            className="flex-1 text-base bg-transparent border-none outline-none shadow-none text-stone-900 placeholder:text-stone-400 focus-visible:ring-0"
           />
-          <button
+          <Button
+            variant={showFilters ? 'default' : 'ghost'}
+            size="icon"
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
-              'p-1.5 rounded-md transition-colors duration-150',
-              showFilters ? 'bg-blue-100 text-blue-600' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100'
+              showFilters ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' : ''
             )}
           >
             <Filter className="w-4 h-4" />
-          </button>
+          </Button>
           <kbd className="hidden sm:flex items-center px-2 py-1 text-xs text-stone-400 bg-stone-100 rounded-md">
             ESC
           </kbd>
@@ -212,34 +213,38 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
         {/* Filters */}
         {showFilters && (
           <div className="flex items-center gap-3 px-4 py-2.5 border-b border-stone-100 bg-stone-50/60">
-            <select
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value)}
-              className="px-2.5 py-1.5 text-xs border border-stone-200 rounded-lg bg-white focus-visible:ring-2 focus-visible:ring-stone-400 outline-none/30"
-            >
-              <option value="all">All Status</option>
-              <option value="draft">Draft</option>
-              <option value="review">In Review</option>
-              <option value="approved">Approved</option>
-              <option value="locked">Published</option>
-            </select>
-            <select
-              value={projectFilter}
-              onChange={e => setProjectFilter(e.target.value)}
-              className="px-2.5 py-1.5 text-xs border border-stone-200 rounded-lg bg-white focus-visible:ring-2 focus-visible:ring-stone-400 outline-none/30 max-w-[200px]"
-            >
-              <option value="all">All Projects</option>
-              {projects.map(([id, name]) => (
-                <option key={id} value={id}>{name}</option>
-              ))}
-            </select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[130px] h-8 text-xs">
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="review">In Review</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="locked">Published</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={projectFilter} onValueChange={setProjectFilter}>
+              <SelectTrigger className="w-[200px] h-8 text-xs">
+                <SelectValue placeholder="All Projects" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Projects</SelectItem>
+                {projects.map(([id, name]) => (
+                  <SelectItem key={id} value={id}>{name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {(statusFilter !== 'all' || projectFilter !== 'all') && (
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => { setStatusFilter('all'); setProjectFilter('all'); }}
                 className="text-xs text-stone-500 hover:text-stone-700"
               >
                 Clear filters
-              </button>
+              </Button>
             )}
           </div>
         )}
@@ -272,10 +277,11 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
                 const colorClass = STATUS_COLORS[status] || STATUS_COLORS.draft;
 
                 return (
-                  <button
+                  <Button
                     key={doc.id}
+                    variant="ghost"
                     onClick={() => handleSelect(doc)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-stone-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40 focus-visible:ring-inset"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 h-auto text-left rounded-none hover:bg-stone-50"
                   >
                     <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center">
                       <FileText className="w-4 h-4 text-stone-500" />
@@ -302,7 +308,7 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
                       {status.charAt(0).toUpperCase() + status.slice(1)}
                     </span>
                     <ChevronRight className="w-4 h-4 text-stone-300 shrink-0" />
-                  </button>
+                  </Button>
                 );
               })}
             </div>

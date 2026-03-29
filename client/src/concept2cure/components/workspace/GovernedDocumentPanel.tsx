@@ -136,7 +136,7 @@ const STATUS_COLORS: Record<string, string> = {
   draft: 'bg-stone-100 text-stone-700 ring-stone-200',
   review: 'bg-amber-50 text-amber-700 ring-amber-200',
   approved: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-  locked: 'bg-blue-50 text-blue-700 ring-blue-200',
+  locked: 'bg-blue-50 text-blue-700 ring-stone-300',
 };
 
 const TRANSITION_LABELS: Record<string, string> = {
@@ -447,7 +447,7 @@ export function GovernedDocumentPanel({
             className={cn(
               'flex-1 py-1.5 text-xs font-medium capitalize transition-colors duration-150',
               activeTab === tab
-                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/30'
+                ? 'text-blue-600 border-b-2 border-stone-800 bg-blue-50/30'
                 : 'text-stone-400 hover:text-stone-600'
             )}
           >
@@ -511,7 +511,7 @@ export function GovernedDocumentPanel({
       {/* Rationale modal overlay */}
       {rationaleTarget && (
         <div className="absolute inset-0 bg-black/20 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg shadow-xl p-4 mx-3 w-full max-w-[280px]">
+          <div className="bg-white rounded-lg shadow p-4 mx-3 w-full max-w-[280px]">
             <div className="flex items-center gap-2 mb-3">
               <AlertCircle className="w-4 h-4 text-amber-500" />
               <span className="text-sm font-semibold text-stone-900">Reason Required</span>
@@ -547,7 +547,7 @@ export function GovernedDocumentPanel({
               <button
                 onClick={() => handleTransition(rationaleTarget, rationale.trim())}
                 disabled={rationale.trim().length < 5 || changingStatus}
-                className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1"
+                className="px-3 py-1 text-xs bg-stone-800 text-white rounded hover:bg-stone-900 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1"
               >
                 {changingStatus && <Loader2 className="w-3 h-3 animate-spin" />}
                 Confirm
@@ -561,7 +561,7 @@ export function GovernedDocumentPanel({
       {/* Attestation modal overlay (for approve/lock) */}
       {attestationTarget && (
         <div className="absolute inset-0 bg-black/20 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg shadow-xl p-4 mx-3 w-full max-w-[280px]">
+          <div className="bg-white rounded-lg shadow p-4 mx-3 w-full max-w-[280px]">
             <div className="flex items-center gap-2 mb-3">
               <CheckCircle className="w-4 h-4 text-emerald-500" />
               <span className="text-sm font-semibold text-stone-900">
@@ -727,7 +727,7 @@ function StatusTab({
               </div>
             )}
             {artifact.publishedVersionId && (
-              <div className="flex items-center gap-1.5 text-xs text-blue-700 bg-blue-50 px-2 py-1 rounded ring-1 ring-blue-200/60">
+              <div className="flex items-center gap-1.5 text-xs text-blue-700 bg-blue-50 px-2 py-1 rounded ring-1 ring-stone-300/60">
                 <Lock className="w-3 h-3" />
                 <span>Published at v{artifact.publishedVersionId}</span>
                 {artifact.publishedAt && (
@@ -766,7 +766,7 @@ function StatusTab({
                   'w-full text-left px-2 py-1.5 rounded text-xs font-medium flex items-center gap-1.5 transition-colors disabled:opacity-60',
                   regression
                     ? 'text-amber-700 bg-amber-50 hover:bg-amber-100 ring-1 ring-amber-200/60'
-                    : 'text-blue-700 bg-blue-50 hover:bg-blue-100 ring-1 ring-blue-200/60'
+                    : 'text-blue-700 bg-blue-50 hover:bg-blue-100 ring-1 ring-stone-300/60'
                 )}
               >
                 {changingStatus ? (
@@ -851,7 +851,7 @@ function StatusTab({
         <div>
           <button
             onClick={onOpenDiff}
-            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 ring-1 ring-blue-200/60 transition-colors duration-150"
+            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 ring-1 ring-stone-300/60 transition-colors duration-150"
           >
             <GitBranch className="w-3 h-3" />
             Compare Versions
@@ -1238,7 +1238,7 @@ function VersionsTab({
             className={cn(
               'px-2 py-1.5 rounded text-xs ring-1',
               v.version === currentVersion
-                ? 'bg-blue-50 ring-blue-200'
+                ? 'bg-blue-50 ring-stone-300'
                 : 'bg-stone-50 ring-stone-200/60'
             )}
           >
@@ -1247,7 +1247,7 @@ function VersionsTab({
                 <GitBranch className="w-3 h-3 text-stone-400" />
                 <span className="font-semibold text-stone-900">v{v.version}</span>
                 {v.version === currentVersion && (
-                  <span className="text-xs px-1 py-px bg-blue-600 text-white rounded">
+                  <span className="text-xs px-1 py-px bg-stone-800 text-white rounded">
                     current
                   </span>
                 )}
@@ -1257,7 +1257,7 @@ function VersionsTab({
                   </span>
                 )}
                 {v.version === publishedVersionId && (
-                  <span className="text-xs px-1 py-px bg-blue-600 text-white rounded">
+                  <span className="text-xs px-1 py-px bg-stone-800 text-white rounded">
                     published
                   </span>
                 )}
@@ -1303,7 +1303,7 @@ function VersionsTab({
         <div className="mt-2">
           <button
             onClick={onOpenDiff}
-            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 ring-1 ring-blue-200/60 transition-colors duration-150"
+            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 ring-1 ring-stone-300/60 transition-colors duration-150"
           >
             <GitBranch className="w-3 h-3" />
             Compare Versions

@@ -189,7 +189,7 @@ const MetricCard: React.FC<{
       </div>
       <div className="flex items-baseline gap-2">
         <span className={cn(
-          'text-2xl font-semibold',
+          'text-base font-semibold',
           metric.status === 'good' && 'text-emerald-600',
           metric.status === 'warning' && 'text-amber-600',
           metric.status === 'critical' && 'text-red-600',
@@ -408,7 +408,7 @@ const CROProjectManagerView: React.FC<{
         {/* Drafting */}
         <div className="bg-stone-50 rounded-xl p-4">
           <h3 className="text-sm font-semibold text-stone-700 mb-3 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-blue-500" />
+            <div className="w-2 h-2 rounded-full bg-stone-600" />
             Drafting ({grouped.drafting.length})
           </h3>
           <div className="space-y-2">
@@ -528,7 +528,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
     return (
       <div className={cn('p-6', className)}>
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-stone-900">
+          <h1 className="text-base font-semibold text-stone-900">
             {config.greeting}
           </h1>
           <p className="text-stone-500">
@@ -549,7 +549,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
       <div className={cn('p-6 space-y-6', className)}>
         {/* Header */}
         <div className="mb-2">
-          <h1 className="text-2xl font-semibold text-stone-900">{config.greeting}</h1>
+          <h1 className="text-base font-semibold text-stone-900">{config.greeting}</h1>
           <p className="text-stone-500">Welcome back, {firstName}</p>
         </div>
         
@@ -622,7 +622,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
     <div className={cn('p-6 space-y-6', className)}>
       {/* Header */}
       <div className="mb-2">
-        <h1 className="text-2xl font-semibold text-stone-900">{config.greeting}</h1>
+        <h1 className="text-base font-semibold text-stone-900">{config.greeting}</h1>
         <p className="text-stone-500">Welcome back, {firstName}</p>
       </div>
       

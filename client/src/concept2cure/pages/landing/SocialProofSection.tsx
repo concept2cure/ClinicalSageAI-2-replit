@@ -53,7 +53,7 @@ const accentStyles: Record<string, { badge: string; border: string; bg: string }
     bg: 'from-violet-50/30 to-white',
   },
   indigo: {
-    badge: 'bg-indigo-100 text-indigo-700',
+    badge: 'bg-stone-100 text-stone-700',
     border: 'border-indigo-100 hover:border-indigo-300',
     bg: 'from-indigo-50/30 to-white',
   },
@@ -64,7 +64,7 @@ export function SocialProofSection() {
     <Section className="py-24 px-6">
       <div className="max-w-6xl mx-auto">
         <motion.div variants={fadeUp} className="text-center mb-14">
-          <h2 className="text-3xl sm:text-4xl font-bold text-stone-900 mb-4">
+          <h2 className="text-lg font-medium sm:text-lg font-semibold text-stone-900 mb-4">
             Built for every stage of regulatory maturity
           </h2>
           <p className="text-lg text-stone-600 max-w-2xl mx-auto">
@@ -80,7 +80,7 @@ export function SocialProofSection() {
               <motion.div
                 key={a.persona}
                 variants={fadeUp}
-                className={`p-7 rounded-2xl border-2 ${styles.border} bg-gradient-to-b ${styles.bg} transition-all duration-200 hover:shadow-lg`}
+                className={`p-7 rounded-2xl border ${styles.border} bg-gradient-to-b ${styles.bg} transition-all duration-200 hover:shadow-sm`}
               >
                 <span
                   className={`inline-block px-3 py-1 rounded-full text-xs font-semibold mb-4 ${styles.badge}`}

@@ -181,7 +181,7 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
   };
 
   return (
-    <div className="w-80 bg-white border border-stone-200 rounded-xl shadow-lg overflow-hidden">
+    <div className="w-80 bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b bg-stone-50/50">
         <div className="flex items-center gap-2">
@@ -290,7 +290,7 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
           <button
             onClick={handleCreate}
             disabled={!content.trim() || createAnnotation.isPending}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-stone-800 text-white rounded-lg hover:bg-stone-900 disabled:opacity-50 transition-colors"
           >
             <Send className="w-3.5 h-3.5" />
             {annotationType === 'approval_request' ? 'Request Approval' :
@@ -366,7 +366,7 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
                             <button
                               onClick={() => replyToAnnotation.mutate({ annotationId: ann.id, reply: replyContent })}
                               disabled={!replyContent.trim()}
-                              className="px-2 py-1 text-[10px] font-medium bg-blue-600 text-white rounded-md disabled:opacity-50"
+                              className="px-2 py-1 text-[10px] font-medium bg-stone-800 text-white rounded-md disabled:opacity-50"
                             >
                               Reply
                             </button>

@@ -167,7 +167,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
         className={cn(
           'relative border border-dashed rounded-lg p-6 transition-all cursor-pointer',
           'flex flex-col items-center justify-center gap-3',
-          isDragging && 'border-blue-500 bg-blue-50',
+          isDragging && 'border-stone-600 bg-blue-50',
           isUploading && 'border-blue-300 bg-blue-50 cursor-wait',
           uploadSuccess && 'border-green-500 bg-green-50',
           error && 'border-red-300 bg-red-50',

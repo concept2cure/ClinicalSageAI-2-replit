@@ -132,7 +132,7 @@ export default function BiologicsDashboard() {
           <FlaskConical size={20} className="text-white" />
         </div>
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Biologics Intelligence</h1>
+          <h1 className="text-base font-medium text-gray-900">Biologics Intelligence</h1>
           <p className="text-sm text-gray-500">Regulatory pathway analysis for biologic & biosimilar products</p>
         </div>
       </div>

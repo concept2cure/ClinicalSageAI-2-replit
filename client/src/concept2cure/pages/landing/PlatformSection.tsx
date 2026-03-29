@@ -11,7 +11,7 @@ import { Section, fadeUp } from './shared';
 function PlatformMockup() {
   return (
     <div className="relative mx-auto max-w-5xl">
-      <div className="rounded-xl border border-stone-200 bg-white shadow-2xl shadow-blue-900/8 overflow-hidden">
+      <div className="rounded-xl border border-stone-200 bg-white shadow-sm shadow-blue-900/8 overflow-hidden">
         {/* Browser chrome */}
         <div className="flex items-center gap-2 px-4 py-3 bg-stone-50 border-b border-stone-200">
           <div className="flex gap-1.5" aria-hidden="true">
@@ -97,7 +97,7 @@ function PlatformMockup() {
                 },
               ].map(m => (
                 <div key={m.label} className={`${m.bg} rounded-xl p-3`}>
-                  <div className={`text-xl font-bold ${m.color}`}>{m.value}</div>
+                  <div className={`text-base font-semibold ${m.color}`}>{m.value}</div>
                   <div className="text-[11px] text-stone-600 mt-0.5">{m.label}</div>
                 </div>
               ))}
@@ -156,7 +156,7 @@ export function PlatformSection() {
     <Section id="platform" className="py-20 px-6">
       <div className="max-w-6xl mx-auto">
         <motion.div variants={fadeUp} className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-stone-900 mb-4">
+          <h2 className="text-lg font-medium sm:text-lg font-semibold text-stone-900 mb-4">
             Your entire regulatory operation, unified
           </h2>
           <p className="text-lg text-stone-600 max-w-2xl mx-auto">

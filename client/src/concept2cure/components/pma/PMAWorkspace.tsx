@@ -376,7 +376,7 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
                       <div
                         className={cn(
                           'h-full rounded-full transition-all',
-                          phaseStatus === 'completed' ? 'bg-green-500' : 'bg-blue-500'
+                          phaseStatus === 'completed' ? 'bg-green-500' : 'bg-stone-600'
                         )}
                         style={{ width: `${progress}%` }}
                       />

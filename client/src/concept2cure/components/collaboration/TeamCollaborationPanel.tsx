@@ -218,7 +218,7 @@ const MemberAvatar: React.FC<{
         />
       ) : (
         <div className={cn(
-          'rounded-full flex items-center justify-center font-medium bg-blue-600 text-white ring-2 ring-white',
+          'rounded-full flex items-center justify-center font-medium bg-stone-800 text-white ring-2 ring-white',
           sizeClasses[size]
         )}>
           {member.initials}
@@ -500,7 +500,7 @@ export const TeamCollaborationPanel: React.FC<TeamCollaborationPanelProps> = ({
             className={cn(
               'flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors duration-150',
               activeTab === 'activity'
-                ? 'border-blue-500 text-blue-600'
+                ? 'border-stone-600 text-blue-600'
                 : 'border-transparent text-stone-500 hover:text-stone-700'
             )}
           >
@@ -516,7 +516,7 @@ export const TeamCollaborationPanel: React.FC<TeamCollaborationPanelProps> = ({
             className={cn(
               'flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors duration-150',
               activeTab === 'team'
-                ? 'border-blue-500 text-blue-600'
+                ? 'border-stone-600 text-blue-600'
                 : 'border-transparent text-stone-500 hover:text-stone-700'
             )}
           >

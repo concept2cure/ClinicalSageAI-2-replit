@@ -284,7 +284,7 @@ const Sidebar: React.FC<{
     )}>
       {/* Logo */}
       <div className="flex items-center gap-3 p-4 border-b border-stone-800">
-        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-stone-800 flex items-center justify-center">
           <Sparkles className="w-5 h-5 text-white" />
         </div>
         {!collapsed && (
@@ -317,7 +317,7 @@ const Sidebar: React.FC<{
               className={cn(
                 'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-150',
                 isActive
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-stone-800 text-white'
                   : 'text-stone-400 hover:text-white hover:bg-stone-800'
               )}
               title={collapsed ? item.label : undefined}
@@ -346,7 +346,7 @@ const Sidebar: React.FC<{
       {/* Collapse Toggle */}
       <button
         onClick={() => onCollapse(!collapsed)}
-        className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-stone-700 text-stone-400 hover:bg-stone-600 flex items-center justify-center shadow-lg"
+        className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-stone-700 text-stone-400 hover:bg-stone-600 flex items-center justify-center shadow-sm"
       >
         {collapsed ? '→' : '←'}
       </button>
@@ -404,7 +404,7 @@ const Header: React.FC<{
         {/* New Project */}
         <button
           onClick={onNewProject}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-150"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-stone-800 rounded-lg hover:bg-stone-900 transition-colors duration-150"
         >
           <Plus className="w-4 h-4" />
           New
@@ -425,7 +425,7 @@ const Header: React.FC<{
           </button>
           
           {showNotifications && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-xl border border-stone-200 z-50">
+            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow border border-stone-200 z-50">
               <div className="p-3 border-b border-stone-200">
                 <h4 className="text-sm font-semibold text-stone-900">Notifications</h4>
               </div>
@@ -450,7 +450,7 @@ const Header: React.FC<{
         
         {/* User Menu */}
         <button className="flex items-center gap-2 px-2 py-1 hover:bg-stone-100 rounded-lg transition-colors duration-150">
-          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium">
+          <div className="w-8 h-8 rounded-full bg-stone-800 flex items-center justify-center text-white text-sm font-medium">
             {currentUser.name.split(' ').map(n => n[0]).join('')}
           </div>
           <div className="text-left">

@@ -159,7 +159,7 @@ export const ProofCertificatePage: React.FC = () => {
       <div className="flex-1 flex flex-col min-w-0">
         <div className="border-b border-stone-200 bg-white/80 backdrop-blur-sm">
           <div className="px-6 py-4">
-            <h1 className="text-2xl font-semibold text-stone-900">Proof Certificate</h1>
+            <h1 className="text-base font-semibold text-stone-900">Proof Certificate</h1>
             <p className="text-sm text-stone-500">Workflow run: {workflowRunId}</p>
           </div>
         </div>

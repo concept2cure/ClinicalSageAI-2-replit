@@ -19,6 +19,9 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -134,16 +137,16 @@ export function ExportDialog({
   return (
     <>
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" onClick={onClose} />
-      <div className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-xl shadow-lg overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
+      <div className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-xl shadow-sm overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200">
           <div>
             <h2 className="text-sm font-semibold text-stone-900">Export Document</h2>
             <p className="text-xs text-stone-500 mt-0.5 truncate max-w-[300px]">{documentTitle}</p>
           </div>
-          <button onClick={onClose} aria-label="Close export dialog" title="Close" className="p-1.5 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none">
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close export dialog" title="Close" className="h-7 w-7 text-stone-400 hover:text-stone-600">
             <X className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
 
         {/* Document info */}
@@ -162,14 +165,15 @@ export function ExportDialog({
               const Icon = fmt.icon;
               const isSelected = selectedFormat === fmt.id;
               return (
-                <button
+                <Button
                   key={fmt.id}
+                  variant="outline"
                   onClick={() => setSelectedFormat(fmt.id)}
                   disabled={!fmt.available}
                   className={cn(
-                    'flex items-start gap-3 p-3 rounded-xl border text-left transition-all duration-150',
+                    'flex items-start gap-3 p-3 h-auto rounded-xl text-left transition-all duration-150',
                     isSelected
-                      ? 'border-blue-500 bg-blue-50/50 shadow-sm'
+                      ? 'border-stone-600 bg-blue-50/50 shadow-sm'
                       : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50',
                     !fmt.available && 'opacity-40 cursor-not-allowed',
                   )}
@@ -181,7 +185,7 @@ export function ExportDialog({
                     <p className="text-xs font-medium text-stone-900">{fmt.label}</p>
                     <p className="text-[10px] text-stone-500 mt-0.5 leading-snug">{fmt.description}</p>
                   </div>
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -191,35 +195,34 @@ export function ExportDialog({
         <div className="px-5 py-3 border-t border-stone-100">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2">Options</h3>
           <div className="space-y-2">
-            <label className="flex items-center gap-2.5 cursor-pointer">
-              <input
-                type="checkbox"
+            <div className="flex items-center gap-2.5 cursor-pointer">
+              <Checkbox
+                id="export-metadata"
                 checked={options.includeMetadata}
-                onChange={e => setOptions(prev => ({ ...prev, includeMetadata: e.target.checked }))}
-                className="w-3.5 h-3.5 rounded border-stone-300 text-blue-600 focus:ring-stone-400"
+                onCheckedChange={(checked) => setOptions(prev => ({ ...prev, includeMetadata: !!checked }))}
               />
-              <span className="text-xs text-stone-700">Include document metadata (author, date, version)</span>
-            </label>
-            <label className="flex items-center gap-2.5 cursor-pointer">
-              <input
-                type="checkbox"
+              <label htmlFor="export-metadata" className="text-xs text-stone-700 cursor-pointer">Include document metadata (author, date, version)</label>
+            </div>
+            <div className="flex items-center gap-2.5 cursor-pointer">
+              <Checkbox
+                id="export-header-footer"
                 checked={options.headerFooter}
-                onChange={e => setOptions(prev => ({ ...prev, headerFooter: e.target.checked }))}
-                className="w-3.5 h-3.5 rounded border-stone-300 text-blue-600 focus:ring-stone-400"
+                onCheckedChange={(checked) => setOptions(prev => ({ ...prev, headerFooter: !!checked }))}
               />
-              <span className="text-xs text-stone-700">Add header & footer (document title, page numbers)</span>
-            </label>
+              <label htmlFor="export-header-footer" className="text-xs text-stone-700 cursor-pointer">Add header & footer (document title, page numbers)</label>
+            </div>
             {(selectedFormat === 'docx' || selectedFormat === 'pdf') && (
               <div className="flex items-center gap-3 mt-1">
                 <span className="text-xs text-stone-500">Page size:</span>
-                <select
-                  value={options.pageSize}
-                  onChange={e => setOptions(prev => ({ ...prev, pageSize: e.target.value as 'letter' | 'a4' }))}
-                  className="text-xs border border-stone-200 rounded-md px-2 py-1 bg-white focus-visible:ring-2 focus-visible:ring-stone-400 outline-none/30"
-                >
-                  <option value="letter">US Letter</option>
-                  <option value="a4">A4</option>
-                </select>
+                <Select value={options.pageSize} onValueChange={(val) => setOptions(prev => ({ ...prev, pageSize: val as 'letter' | 'a4' }))}>
+                  <SelectTrigger className="h-7 text-xs w-auto min-w-[110px] border-stone-200 bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="letter">US Letter</SelectItem>
+                    <SelectItem value="a4">A4</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             )}
           </div>
@@ -242,7 +245,7 @@ export function ExportDialog({
                 ? 'bg-emerald-600 text-white'
                 : exportResult === 'error'
                 ? 'bg-red-600 text-white'
-                : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm',
+                : 'bg-stone-800 text-white hover:bg-stone-900 shadow-sm',
               exporting && 'opacity-70',
             )}
           >

@@ -631,7 +631,7 @@ const NewDropdown: React.FC<{
         <ChevronDown className={cn('w-3 h-3 ml-auto text-stone-400 transition-transform', open && 'rotate-180')} />
       </button>
       {open && (
-        <div role="menu" className="absolute left-0 right-0 mt-1 bg-white border border-stone-200 rounded-lg shadow-lg z-50 py-1">
+        <div role="menu" className="absolute left-0 right-0 mt-1 bg-white border border-stone-200 rounded-lg shadow-sm z-50 py-1">
           <button
             role="menuitem"
             onClick={() => { onNewChat(); setOpen(false); }}

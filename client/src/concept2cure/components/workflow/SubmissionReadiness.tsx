@@ -341,7 +341,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
                           variant="default"
                           size="sm"
                           onClick={() => handleFixNow(item.section, item.title)}
-                          className="inline-flex items-center gap-1 h-auto text-xs text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm"
+                          className="inline-flex items-center gap-1 h-auto text-xs text-white bg-stone-800 hover:bg-stone-900 transition-colors shadow-sm"
                           data-testid={`fix-now-${item.section}`}
                         >
                           {!item.hasArtifact ? (

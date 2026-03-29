@@ -19,7 +19,7 @@ export function SecuritySection() {
     <Section id="security" className="py-24 px-6 bg-stone-900 text-white">
       <div className="max-w-5xl mx-auto">
         <motion.div variants={fadeUp} className="text-center mb-14">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+          <h2 className="text-lg font-medium sm:text-lg font-semibold mb-4">
             Enterprise security. Regulatory compliance.{' '}
             <span className="text-blue-400">Built in.</span>
           </h2>

@@ -243,7 +243,7 @@ const ClientCard: React.FC<{
               <div
                 className={cn(
                   'h-full rounded-full',
-                  revenueProgress > 90 ? 'bg-green-500' : revenueProgress > 70 ? 'bg-amber-500' : 'bg-blue-500'
+                  revenueProgress > 90 ? 'bg-green-500' : revenueProgress > 70 ? 'bg-amber-500' : 'bg-stone-600'
                 )}
                 style={{ width: `${Math.min(revenueProgress, 100)}%` }}
               />
@@ -503,7 +503,7 @@ export const CROResourceDashboard: React.FC<CROResourceDashboardProps> = ({
       {/* Header */}
       <div className="flex-shrink-0 p-4 border-b border-stone-200">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-stone-900">CRO Operations Dashboard</h2>
+          <h2 className="text-base font-medium text-stone-900">CRO Operations Dashboard</h2>
           <div className="flex items-center gap-1 bg-stone-100 rounded-lg p-1">
             {(['clients', 'projects', 'resources'] as const).map(v => (
               <button

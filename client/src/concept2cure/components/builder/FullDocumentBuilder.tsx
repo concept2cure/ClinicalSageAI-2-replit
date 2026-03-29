@@ -202,7 +202,7 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
   const renderTypeStep = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-stone-900">Select Document Type</h2>
+        <h2 className="text-base font-medium text-stone-900">Select Document Type</h2>
         <p className="text-sm text-stone-500 mt-1">Choose the type of regulatory document to build</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -211,7 +211,7 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
             key={dt.type}
             onClick={() => { setSelectedType(dt.type); setStep('agencies'); }}
             className={`p-5 rounded-xl border text-left transition-all hover:shadow-md ${
-              selectedType === dt.type ? 'border-blue-500 bg-blue-50/50' : 'border-stone-200 hover:border-stone-300'
+              selectedType === dt.type ? 'border-stone-600 bg-blue-50/50' : 'border-stone-200 hover:border-stone-300'
             }`}
           >
             <div className="font-semibold text-stone-900">{dt.name}</div>
@@ -228,7 +228,7 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
   const renderAgenciesStep = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-stone-900">Target Regulatory Agencies</h2>
+        <h2 className="text-base font-medium text-stone-900">Target Regulatory Agencies</h2>
         <p className="text-sm text-stone-500 mt-1">Select which agencies you're filing with (Module 1 will be customized per agency)</p>
       </div>
       <div className="grid grid-cols-2 gap-4">
@@ -238,11 +238,11 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
             onClick={() => toggleAgency(a.id)}
             className={`p-4 rounded-xl border flex items-center gap-3 transition-all ${
               selectedAgencies.includes(a.id)
-                ? 'border-blue-500 bg-blue-50/50'
+                ? 'border-stone-600 bg-blue-50/50'
                 : 'border-stone-200 hover:border-stone-300'
             }`}
           >
-            <span className="text-2xl">{a.flag}</span>
+            <span className="text-base font-medium">{a.flag}</span>
             <div className="text-left">
               <div className="font-semibold text-stone-900">{a.name}</div>
               <div className="text-xs text-stone-500">{a.country}</div>
@@ -262,7 +262,7 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
         <button
           onClick={() => setStep('study_info')}
           disabled={selectedAgencies.length === 0}
-          className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-60"
+          className="px-6 py-2.5 text-sm font-medium text-white bg-stone-800 rounded-lg hover:bg-stone-900 disabled:opacity-60"
         >
           Continue
         </button>
@@ -273,7 +273,7 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
   const renderStudyInfoStep = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-stone-900">Study Information</h2>
+        <h2 className="text-base font-medium text-stone-900">Study Information</h2>
         <p className="text-sm text-stone-500 mt-1">Provide study details for document generation</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -298,7 +298,7 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
         <button
           onClick={handleGenerate}
           disabled={!studyInfo.title || !studyInfo.indication || !studyInfo.primaryEndpoint}
-          className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-60"
+          className="px-6 py-2.5 text-sm font-medium text-white bg-stone-800 rounded-lg hover:bg-stone-900 disabled:opacity-60"
         >
           Generate Document
         </button>
@@ -323,7 +323,7 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
       <div className="w-64">
         <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
           <div
-            className="h-full bg-blue-600 rounded-full transition-all duration-500"
+            className="h-full bg-stone-800 rounded-full transition-all duration-200"
             style={{ width: `${generateProgress}%` }}
           />
         </div>
@@ -342,7 +342,7 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-stone-900">Document Generated</h2>
+            <h2 className="text-base font-medium text-stone-900">Document Generated</h2>
             <p className="text-sm text-stone-500 mt-1">
               {buildResult.sections.length} sections | {draftedSections.length} drafted | Validation: {validationPasses}/{validationTotal} passed
             </p>
@@ -437,7 +437,7 @@ export const FullDocumentBuilder: React.FC<FullDocumentBuilderProps> = ({ onOpen
             {(['type', 'agencies', 'study_info', 'review'] as BuilderStep[]).map((s, i) => (
               <React.Fragment key={s}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
-                  step === s ? 'bg-blue-600 text-white' :
+                  step === s ? 'bg-stone-800 text-white' :
                   (['type', 'agencies', 'study_info', 'review'].indexOf(step) > i) ? 'bg-blue-100 text-blue-600' :
                   'bg-stone-100 text-stone-400'
                 }`}>

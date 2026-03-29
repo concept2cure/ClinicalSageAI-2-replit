@@ -463,7 +463,7 @@ const EndpointSelector: React.FC<EndpointSelectorProps> = ({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-stone-900">{endpoint.name}</span>
-                {isPrimary && <Badge className="bg-blue-600 text-white text-xs">Primary</Badge>}
+                {isPrimary && <Badge className="bg-stone-800 text-white text-xs">Primary</Badge>}
                 <Badge variant="outline" className="text-xs">
                   {endpoint.measureType.replace('_', ' ')}
                 </Badge>
@@ -592,15 +592,15 @@ const SampleSizePanel: React.FC<SampleSizePanelProps> = ({
           <div className="px-3 py-2">
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <p className="text-2xl font-semibold text-blue-700">{result.perArm}</p>
+                <p className="text-base font-semibold text-blue-700">{result.perArm}</p>
                 <p className="text-xs text-stone-500">Per Arm</p>
               </div>
               <div>
-                <p className="text-2xl font-semibold text-blue-700">{result.total}</p>
+                <p className="text-base font-semibold text-blue-700">{result.total}</p>
                 <p className="text-xs text-stone-500">Total</p>
               </div>
               <div>
-                <p className="text-2xl font-semibold text-green-700">{result.adjustedForDropout}</p>
+                <p className="text-base font-semibold text-green-700">{result.adjustedForDropout}</p>
                 <p className="text-xs text-stone-500">With Dropout</p>
               </div>
             </div>
@@ -894,7 +894,7 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
                   <div className="space-y-2">
                     {primaryEndpoint && (
                       <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
-                        <Badge className="bg-blue-600">Primary</Badge>
+                        <Badge className="bg-stone-800">Primary</Badge>
                         <span className="text-sm font-medium">{primaryEndpoint.name}</span>
                       </div>
                     )}

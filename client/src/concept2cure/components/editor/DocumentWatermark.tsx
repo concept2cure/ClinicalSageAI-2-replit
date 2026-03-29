@@ -286,7 +286,7 @@ export function WatermarkSettings({
           onClick={handleToggle}
           className={[
             'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 outline-none focus:ring-offset-2',
-            enabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600',
+            enabled ? 'bg-stone-800' : 'bg-gray-300 dark:bg-gray-600',
           ].join(' ')}
         >
           <span

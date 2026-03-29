@@ -327,7 +327,7 @@ const DeliverablesDuePanel: React.FC<{
                 'h-full rounded-full transition-all duration-150',
                 item.deliverable.completionPct >= 80 && 'bg-green-500',
                 item.deliverable.completionPct >= 50 && item.deliverable.completionPct < 80 && 'bg-amber-500',
-                item.deliverable.completionPct < 50 && 'bg-blue-500'
+                item.deliverable.completionPct < 50 && 'bg-stone-600'
               )}
               style={{ width: `${item.deliverable.completionPct}%` }}
             />
@@ -787,7 +787,7 @@ export const CROClientPortal: React.FC<CROClientPortalProps> = ({
       <div className="flex-shrink-0 bg-white border-b border-stone-200 p-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-semibold text-stone-900">Client Engagement Portal</h1>
+            <h1 className="text-base font-medium text-stone-900">Client Engagement Portal</h1>
             <p className="text-sm text-stone-500">CRO operations dashboard</p>
           </div>
           
@@ -796,7 +796,7 @@ export const CROClientPortal: React.FC<CROClientPortalProps> = ({
               <Filter className="w-4 h-4 inline mr-1" />
               Filter
             </button>
-            <button className="px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            <button className="px-3 py-1.5 text-sm font-medium bg-stone-800 text-white rounded-lg hover:bg-stone-900">
               <Briefcase className="w-4 h-4 inline mr-1" />
               New SOW
             </button>
@@ -807,31 +807,31 @@ export const CROClientPortal: React.FC<CROClientPortalProps> = ({
         <div className="grid grid-cols-6 gap-4">
           <div className="p-3 bg-stone-100 rounded-lg">
             <p className="text-xs text-stone-500">Clients</p>
-            <p className="text-xl font-semibold text-stone-900">{metrics.totalClients}</p>
+            <p className="text-base font-medium text-stone-900">{metrics.totalClients}</p>
           </div>
           <div className="p-3 bg-blue-50 rounded-lg">
             <p className="text-xs text-blue-600">Active SOWs</p>
-            <p className="text-xl font-semibold text-blue-700">{metrics.activeSOWs}</p>
+            <p className="text-base font-medium text-blue-700">{metrics.activeSOWs}</p>
           </div>
           <div className="p-3 bg-green-50 rounded-lg">
             <p className="text-xs text-green-600">Contract Value</p>
-            <p className="text-xl font-semibold text-green-700">{formatCurrency(metrics.totalContractValue)}</p>
+            <p className="text-base font-medium text-green-700">{formatCurrency(metrics.totalContractValue)}</p>
           </div>
           <div className={cn('p-3 rounded-lg', metrics.overdueDeliverables > 0 ? 'bg-red-50' : 'bg-stone-100')}>
             <p className={cn('text-xs', metrics.overdueDeliverables > 0 ? 'text-red-600' : 'text-stone-500')}>Overdue</p>
-            <p className={cn('text-xl font-semibold', metrics.overdueDeliverables > 0 ? 'text-red-700' : 'text-stone-900')}>
+            <p className={cn('text-base font-medium', metrics.overdueDeliverables > 0 ? 'text-red-700' : 'text-stone-900')}>
               {metrics.overdueDeliverables}
             </p>
           </div>
           <div className={cn('p-3 rounded-lg', metrics.pendingCOs > 0 ? 'bg-amber-50' : 'bg-stone-100')}>
             <p className={cn('text-xs', metrics.pendingCOs > 0 ? 'text-amber-600' : 'text-stone-500')}>Pending COs</p>
-            <p className={cn('text-xl font-semibold', metrics.pendingCOs > 0 ? 'text-amber-700' : 'text-stone-900')}>
+            <p className={cn('text-base font-medium', metrics.pendingCOs > 0 ? 'text-amber-700' : 'text-stone-900')}>
               {metrics.pendingCOs}
             </p>
           </div>
           <div className="p-3 bg-violet-50 rounded-lg">
             <p className="text-xs text-violet-600">Utilization</p>
-            <p className="text-xl font-semibold text-violet-700">{metrics.avgUtilization}%</p>
+            <p className="text-base font-medium text-violet-700">{metrics.avgUtilization}%</p>
           </div>
         </div>
       </div>

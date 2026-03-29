@@ -160,8 +160,8 @@ const STAGE_CONFIG: Record<DevelopmentStage, {
   preclinical: { label: 'Preclinical', shortLabel: 'Preclin', color: 'bg-purple-500', phase: 'preclinical' },
   ind_enabling: { label: 'IND-Enabling Studies', shortLabel: 'IND-En', color: 'bg-violet-500', phase: 'preclinical' },
   pre_ind_meeting: { label: 'Pre-IND Meeting', shortLabel: 'Pre-IND', color: 'bg-blue-400', phase: 'regulatory' },
-  ind_prep: { label: 'IND Preparation', shortLabel: 'IND Prep', color: 'bg-blue-500', phase: 'regulatory' },
-  ind_filed: { label: 'IND Filed', shortLabel: 'IND Filed', color: 'bg-blue-600', phase: 'regulatory' },
+  ind_prep: { label: 'IND Preparation', shortLabel: 'IND Prep', color: 'bg-stone-600', phase: 'regulatory' },
+  ind_filed: { label: 'IND Filed', shortLabel: 'IND Filed', color: 'bg-stone-800', phase: 'regulatory' },
   ind_active: { label: 'IND Active', shortLabel: 'IND Active', color: 'bg-cyan-500', phase: 'clinical' },
   phase_1: { label: 'Phase 1', shortLabel: 'Ph1', color: 'bg-emerald-500', phase: 'clinical' },
   phase_1b: { label: 'Phase 1b', shortLabel: 'Ph1b', color: 'bg-emerald-600', phase: 'clinical' },
@@ -330,7 +330,7 @@ const CriticalPathTracker: React.FC<{
                 <div className="w-16">
                   <div className="h-1.5 bg-stone-200 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-blue-500 rounded-full"
+                      className="h-full bg-stone-600 rounded-full"
                       style={{ width: `${d.percentComplete}%` }}
                     />
                   </div>
@@ -548,7 +548,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
       <div className="flex-shrink-0 bg-white border-b border-stone-200 p-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-stone-900">Program Dashboard</h1>
+            <h1 className="text-base font-medium text-stone-900">Program Dashboard</h1>
             <p className="text-sm text-stone-500">Track your pipeline from discovery to approval</p>
           </div>
           
@@ -604,7 +604,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
                   className={cn(
                     'px-4 py-2 rounded-lg transition-colors duration-150',
                     isSelected
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-stone-800 text-white'
                       : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
                   )}
                 >
@@ -613,7 +613,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
                     <span className="text-sm font-medium">{program.programName}</span>
                     <span className={cn(
                       'text-xs px-1.5 py-0.5 rounded',
-                      isSelected ? 'bg-blue-500 text-blue-100' : 'bg-stone-200 text-stone-600'
+                      isSelected ? 'bg-stone-600 text-blue-100' : 'bg-stone-200 text-stone-600'
                     )}>
                       {stageConfig.shortLabel}
                     </span>
@@ -632,7 +632,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
           <div className="bg-white rounded-xl border border-stone-200 p-6 mb-6">
             <div className="flex items-start justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-semibold text-stone-900 mb-1">{selectedProgram.programName}</h2>
+                <h2 className="text-base font-semibold text-stone-900 mb-1">{selectedProgram.programName}</h2>
                 <p className="text-sm text-stone-500">
                   {selectedProgram.therapeuticArea} • {selectedProgram.indication} • {selectedProgram.modality.replace('_', ' ')}
                 </p>

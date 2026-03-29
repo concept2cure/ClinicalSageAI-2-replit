@@ -225,7 +225,7 @@ export function DocumentStatusTimeline({
 
       {/* Details popover */}
       {showDetails && (
-        <div className="absolute top-full left-0 mt-1 w-80 bg-white rounded-lg border border-stone-200 shadow-lg z-50 py-3">
+        <div className="absolute top-full left-0 mt-1 w-80 bg-white rounded-lg border border-stone-200 shadow-sm z-50 py-3">
           {/* Header */}
           <div className="px-4 pb-3 border-b border-stone-100">
             <p className="text-sm font-semibold text-stone-900">
@@ -324,7 +324,7 @@ export function DocumentStatusTimeline({
                   onChangeStatus(STAGES[currentIdx + 1].stage);
                   setShowDetails(false);
                 }}
-                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors duration-150"
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-stone-800 rounded-md hover:bg-stone-900 transition-colors duration-150"
               >
                 <ArrowRight className="h-3 w-3" />
                 Advance to {STAGES[currentIdx + 1].label}

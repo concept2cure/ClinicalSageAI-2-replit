@@ -259,13 +259,13 @@ export const DocumentHealth: React.FC<DocumentHealthProps> = ({
             <TrendingUp className={cn('w-5 h-5', getScoreColor(overallScore))} />
             <span className="text-sm font-semibold text-stone-900">Document Health</span>
           </div>
-          <span className={cn('text-2xl font-semibold', getScoreColor(overallScore))}>
+          <span className={cn('text-base font-semibold', getScoreColor(overallScore))}>
             {overallScore}
           </span>
         </div>
         <div className="w-full bg-white/60 rounded-full h-2">
           <div
-            className={cn('h-2 rounded-full transition-all duration-500', getBarColor(overallScore))}
+            className={cn('h-2 rounded-full transition-all duration-200', getBarColor(overallScore))}
             style={{ width: `${overallScore}%` }}
           />
         </div>

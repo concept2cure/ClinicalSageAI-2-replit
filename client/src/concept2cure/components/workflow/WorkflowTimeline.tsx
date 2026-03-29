@@ -121,7 +121,7 @@ const TimelineStep: React.FC<{
           "flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-150",
           isActive && "ring-2 ring-stone-300 ring-offset-2",
           step.status === 'COMPLETED' && "border-green-500 bg-green-50",
-          step.status === 'IN_PROGRESS' && "border-blue-500 bg-blue-50",
+          step.status === 'IN_PROGRESS' && "border-stone-600 bg-blue-50",
           step.status === 'AWAITING_APPROVAL' && "border-amber-500 bg-amber-50",
           step.status === 'BLOCKED' && "border-red-500 bg-red-50",
           step.status === 'PENDING' && "border-stone-200 bg-white",
@@ -247,7 +247,7 @@ const PhaseGroup: React.FC<{
         <div className="flex items-center gap-2">
           <div className="w-24 h-1.5 bg-stone-200 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-green-500 transition-all duration-500"
+              className="h-full bg-green-500 transition-all duration-200"
               style={{ width: `${phaseProgress}%` }}
             />
           </div>
@@ -359,7 +359,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
           </div>
           <div className="w-full h-2 bg-stone-200 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-blue-500 transition-all duration-700"
+              className="h-full bg-stone-600 transition-all duration-200"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -380,7 +380,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
                   "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-150",
                   step.id === currentStepId && "ring-2 ring-stone-300",
                   step.status === 'COMPLETED' && "border-green-500 bg-green-50",
-                  step.status === 'IN_PROGRESS' && "border-blue-500 bg-blue-50",
+                  step.status === 'IN_PROGRESS' && "border-stone-600 bg-blue-50",
                   step.status === 'PENDING' && "border-stone-200"
                 )}>
                   <StatusIcon status={step.status} size={14} />
@@ -399,7 +399,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
                 <div className="flex-1 h-0.5 mx-2 bg-stone-200">
                   <div 
                     className={cn(
-                      "h-full transition-all duration-500",
+                      "h-full transition-all duration-200",
                       step.status === 'COMPLETED' ? 'bg-green-500' : 'bg-transparent'
                     )}
                     style={{ width: step.status === 'COMPLETED' ? '100%' : '0%' }}
@@ -435,7 +435,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
             {assetState}
           </span>
           <div
-            className="text-2xl font-semibold text-stone-900"
+            className="text-base font-semibold text-stone-900"
             aria-label={`Workflow progress ${progressPercent}%`}
           >
             {progressPercent}%
@@ -447,7 +447,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
       <div className="mb-6">
         <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-blue-500 transition-all duration-700 ease-out"
+            className="h-full bg-stone-600 transition-all duration-200 ease-out"
             style={{ width: `${progressPercent}%` }}
           />
         </div>

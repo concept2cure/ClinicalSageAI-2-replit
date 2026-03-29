@@ -181,7 +181,7 @@ const SourceSuggestionCard: React.FC<{
       <div className="flex items-center gap-2 mt-3 pt-3 border-t border-stone-200">
         <button
           onClick={onLink}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors duration-150"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-800 text-white rounded-md text-sm font-medium hover:bg-stone-900 transition-colors duration-150"
           data-testid={`button-link-source-${source.id}`}
         >
           <Link2 className="w-3.5 h-3.5" />
@@ -302,7 +302,7 @@ const CommandCenterPanel: React.FC<{
             <span>{complianceScore}%</span>
           </div>
           <div className="mt-1 h-2 rounded-full bg-white/70">
-            <div className="h-2 rounded-full bg-blue-500" style={{ width: `${complianceScore}%` }} />
+            <div className="h-2 rounded-full bg-stone-600" style={{ width: `${complianceScore}%` }} />
           </div>
         </div>
       </div>
@@ -508,7 +508,7 @@ const ComplianceGuardCard: React.FC<{
               ? 'bg-red-600 text-white hover:bg-red-700' 
               : guard.severity === 'warning'
               ? 'bg-amber-600 text-white hover:bg-amber-700'
-              : 'bg-blue-600 text-white hover:bg-blue-700'
+              : 'bg-stone-800 text-white hover:bg-stone-900'
             }`}
           data-testid={`button-guard-action-${guard.id}`}
         >
@@ -544,7 +544,7 @@ const SherpaGuidanceCard: React.FC<{
   onAction: () => void;
 }> = ({ guidance, isNextBest, onAction }) => {
   const priorityConfig = {
-    high: { color: 'border-blue-500', badge: 'bg-blue-500 text-white' },
+    high: { color: 'border-stone-600', badge: 'bg-stone-600 text-white' },
     medium: { color: 'border-stone-300', badge: 'bg-stone-500 text-white' },
     low: { color: 'border-stone-200', badge: 'bg-stone-400 text-white' },
   };
@@ -588,7 +588,7 @@ const SherpaGuidanceCard: React.FC<{
       
       <button
         onClick={onAction}
-        className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors duration-150"
+        className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-stone-800 text-white rounded-lg font-medium hover:bg-stone-900 transition-colors duration-150"
         data-testid={`button-sherpa-action-${guidance.id}`}
       >
         <ArrowRight className="w-4 h-4" />
@@ -1182,7 +1182,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
               <button
                 onClick={handleSave}
                 disabled={state.isSaving || !state.hasUnsavedChanges}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150"
+                className="flex items-center gap-2 px-4 py-2 bg-stone-800 text-white rounded-lg font-medium hover:bg-stone-900 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150"
                 data-testid="button-save-document"
               >
                 {state.isSaving ? (
@@ -1288,7 +1288,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
                   </span>
                 )}
                 {state.activePanel === tab.id && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500" />
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-stone-600" />
                 )}
               </button>
             ))}

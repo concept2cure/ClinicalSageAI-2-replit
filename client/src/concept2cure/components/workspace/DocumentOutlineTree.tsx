@@ -454,7 +454,7 @@ export const DocumentOutlineTree: React.FC<DocumentOutlineTreeProps> = ({
             className={cn(
               'flex-1 py-1.5 text-xs font-semibold transition-colors text-center',
               subview === 'outline'
-                ? 'text-blue-700 bg-white border-b-2 border-blue-600'
+                ? 'text-blue-700 bg-white border-b-2 border-stone-800'
                 : 'text-stone-400 hover:text-stone-600'
             )}
             data-testid="outline-subview-outline"

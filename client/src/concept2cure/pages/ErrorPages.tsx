@@ -47,7 +47,7 @@ const ErrorLayout: React.FC<{
 
     {/* Title */}
     <h1
-      className="text-2xl font-semibold text-stone-900 mb-3 text-center"
+      className="text-base font-semibold text-stone-900 mb-3 text-center"
       style={{ fontFamily: "'Poppins', Arial, sans-serif" }}
     >
       {title}
@@ -65,7 +65,7 @@ const ErrorLayout: React.FC<{
     {action && (
       <a
         href={action.href}
-        className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white rounded-xl transition-all hover:shadow-lg"
+        className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white rounded-xl transition-all hover:shadow-sm"
         style={{
           background: 'linear-gradient(135deg, #d97757, #c15f3c)',
           fontFamily: "'Poppins', Arial, sans-serif",

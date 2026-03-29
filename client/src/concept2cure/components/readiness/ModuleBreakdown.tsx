@@ -11,7 +11,7 @@ interface ModuleBreakdownProps {
 
 const STATUS_COLORS: Record<string, string> = {
   ready: 'bg-green-500',
-  on_track: 'bg-blue-500',
+  on_track: 'bg-stone-600',
   needs_attention: 'bg-amber-500',
   at_risk: 'bg-red-500',
   in_progress: 'bg-purple-500',
@@ -65,7 +65,7 @@ export function ModuleBreakdown({ modules, onModuleClick }: ModuleBreakdownProps
             {/* Progress bar */}
             <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden mb-2">
               <div
-                className={`h-full rounded-full ${barColor} transition-all duration-500`}
+                className={`h-full rounded-full ${barColor} transition-all duration-200`}
                 style={{ width: `${mod.score}%` }}
               />
             </div>

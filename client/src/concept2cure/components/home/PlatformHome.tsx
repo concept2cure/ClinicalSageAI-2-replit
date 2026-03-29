@@ -138,7 +138,7 @@ const MODULE_CATALOG = [
     label: 'Legal Center',
     subtitle: 'IP & contracts',
     icon: Scale,
-    color: 'text-indigo-600',
+    color: 'text-stone-600',
   },
   {
     id: 'biostatistics',
@@ -192,13 +192,13 @@ const MODULE_CATALOG = [
 ];
 
 const TYPE_COLORS: Record<string, string> = {
-  '510K': 'bg-blue-500',
+  '510K': 'bg-stone-600',
   IND: 'bg-violet-500',
   NDA: 'bg-emerald-500',
   BLA: 'bg-teal-500',
   PMA: 'bg-orange-500',
   CER: 'bg-pink-500',
-  MAA: 'bg-indigo-500',
+  MAA: 'bg-stone-600',
 };
 
 function getGreeting(): string {
@@ -227,7 +227,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
       <div className="py-4">
         {/* ── Greeting ─────────────────────────────────────────── */}
         <div className="mb-10">
-          <h1 className="text-3xl font-semibold text-stone-900 tracking-tight">
+          <h1 className="text-lg font-medium text-stone-900 tracking-tight">
             {greeting}
             {firstName ? `, ${firstName}` : ''}
           </h1>
@@ -278,7 +278,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
             </h2>
             <button
               onClick={onNewProject}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-800 text-white text-xs font-medium hover:bg-stone-900 transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
               New Project

@@ -144,7 +144,7 @@ interface CSRWorkflowProps {
 const STATUS_CONFIG: Record<SectionStatus, { label: string; color: string; icon: React.ElementType; dot: string }> = {
   not_started: { label: 'Not Started', color: 'text-stone-400', icon: Circle, dot: 'bg-stone-300' },
   drafting: { label: 'Drafting', color: 'text-amber-600', icon: Clock, dot: 'bg-amber-500' },
-  review: { label: 'In Review', color: 'text-blue-600', icon: AlertCircle, dot: 'bg-blue-500' },
+  review: { label: 'In Review', color: 'text-blue-600', icon: AlertCircle, dot: 'bg-stone-600' },
   approved: { label: 'Approved', color: 'text-emerald-600', icon: CheckCircle2, dot: 'bg-emerald-500' },
 };
 

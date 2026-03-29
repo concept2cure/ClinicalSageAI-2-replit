@@ -140,11 +140,11 @@ export default function CommandCenter() {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-stone-700 rounded-lg flex items-center justify-center">
             <Shield size={20} className="text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Regulatory Command Center</h1>
+            <h1 className="text-base font-medium text-gray-900">Regulatory Command Center</h1>
             <p className="text-sm text-gray-500">Platform administration & API management</p>
           </div>
         </div>
@@ -159,7 +159,7 @@ export default function CommandCenter() {
               onClick={() => setActiveTab(tab.id)}
               className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm mb-1 transition-colors ${
                 activeTab === tab.id
-                  ? 'bg-indigo-50 text-indigo-700 font-medium'
+                  ? 'bg-stone-100 text-stone-700 font-medium'
                   : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
@@ -287,7 +287,7 @@ function OverviewTab() {
             <div className="flex items-center justify-between mb-2">
               <span className="text-gray-400">{m.icon}</span>
             </div>
-            <div className="text-2xl font-semibold text-gray-900">{m.value}</div>
+            <div className="text-base font-semibold text-gray-900">{m.value}</div>
             <div className="text-sm text-gray-500">{m.label}</div>
           </div>
         ))}
@@ -354,7 +354,7 @@ function ApiKeysTab(props: {
         <h2 className="text-lg font-semibold text-gray-900">API Key Management</h2>
         <button
           onClick={() => props.setShowCreate(true)}
-          className="flex items-center gap-1.5 bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-indigo-700 transition-colors"
+          className="flex items-center gap-1.5 bg-stone-700 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-stone-800 transition-colors"
         >
           <Plus size={14} /> Create Key
         </button>
@@ -402,7 +402,7 @@ function ApiKeysTab(props: {
               value={props.newKeyName}
               onChange={(e) => props.setNewKeyName(e.target.value)}
               placeholder="e.g., Production Key, Partner Integration"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-500"
             />
           </div>
           <div className="mb-3">
@@ -414,7 +414,7 @@ function ApiKeysTab(props: {
                     type="checkbox"
                     checked={props.newKeyScopes.includes(scope)}
                     onChange={() => toggleScope(scope)}
-                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    className="rounded border-gray-300 text-stone-600 focus:ring-indigo-500"
                   />
                   {SCOPE_LABELS[scope]}
                 </label>
@@ -425,7 +425,7 @@ function ApiKeysTab(props: {
             <button
               onClick={props.onCreate}
               disabled={props.loading || !props.newKeyName.trim()}
-              className="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              className="bg-stone-700 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-stone-800 disabled:opacity-50 transition-colors"
             >
               {props.loading ? 'Creating...' : 'Create Key'}
             </button>
@@ -513,7 +513,7 @@ function UsersTab() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-gray-900">Users & Roles</h2>
-        <button className="flex items-center gap-1.5 bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-indigo-700 transition-colors">
+        <button className="flex items-center gap-1.5 bg-stone-700 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-stone-800 transition-colors">
           <Plus size={14} /> Invite User
         </button>
       </div>
@@ -534,8 +534,8 @@ function UsersTab() {
 
 function UsageTab({ usage }: { usage: UsageSummary[] }) {
   const features = [
-    { id: 'deep_research', label: 'Deep Research', color: 'bg-indigo-500' },
-    { id: 'csr_builder', label: 'CSR Builder', color: 'bg-blue-500' },
+    { id: 'deep_research', label: 'Deep Research', color: 'bg-stone-600' },
+    { id: 'csr_builder', label: 'CSR Builder', color: 'bg-stone-600' },
     { id: 'ctd_builder', label: 'CTD Builder', color: 'bg-teal-500' },
     { id: 'api_csr_search', label: 'API: CSR Search', color: 'bg-purple-500' },
     { id: 'api_regulatory_pathways', label: 'API: Regulatory Pathways', color: 'bg-violet-500' },
@@ -604,7 +604,7 @@ function SecurityTab() {
             </div>
             <div
               className={`w-10 h-6 rounded-full flex items-center px-0.5 cursor-pointer transition-colors ${
-                p.enabled ? 'bg-indigo-600 justify-end' : 'bg-gray-300 justify-start'
+                p.enabled ? 'bg-stone-700 justify-end' : 'bg-gray-300 justify-start'
               }`}
             >
               <div className="w-5 h-5 bg-white rounded-full shadow" />

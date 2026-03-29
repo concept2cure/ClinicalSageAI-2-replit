@@ -16,7 +16,7 @@ interface WorkflowRunnerProps {
 
 const STEP_STATUS_STYLES: Record<string, { bg: string; icon: string }> = {
   pending: { bg: 'bg-gray-200 dark:bg-gray-700', icon: '○' },
-  running: { bg: 'bg-blue-500', icon: '◉' },
+  running: { bg: 'bg-stone-600', icon: '◉' },
   completed: { bg: 'bg-green-500', icon: '✓' },
   failed: { bg: 'bg-red-500', icon: '✗' },
   skipped: { bg: 'bg-gray-400', icon: '–' },
@@ -64,7 +64,7 @@ export function WorkflowRunner({ projectId, module, onComplete }: WorkflowRunner
           <button
             onClick={handleRun}
             disabled={isRunning}
-            className="px-4 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 rounded-md bg-stone-700 text-white text-sm font-medium hover:bg-stone-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isRunning ? 'Running...' : 'Run Workflow'}
           </button>
@@ -117,7 +117,7 @@ export function WorkflowRunner({ projectId, module, onComplete }: WorkflowRunner
           <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-300 ${
-                execution.status === 'failed' ? 'bg-red-500' : 'bg-indigo-500'
+                execution.status === 'failed' ? 'bg-red-500' : 'bg-stone-600'
               }`}
               style={{ width: `${execution.progressPercent}%` }}
             />

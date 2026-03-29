@@ -95,7 +95,7 @@ const JourneyProgress: React.FC<{
       {/* Progress bar */}
       <div className="relative h-3 bg-white/20 rounded-full overflow-hidden mb-2">
         <div 
-          className="absolute inset-y-0 left-0 bg-white rounded-full transition-all duration-500"
+          className="absolute inset-y-0 left-0 bg-white rounded-full transition-all duration-200"
           style={{ width: `${completionPercent}%` }}
         />
         {/* Step markers */}
@@ -199,7 +199,7 @@ const NextBestActionCard: React.FC<{
   return (
     <div className="p-4 bg-blue-50/60 rounded-xl border border-blue-200">
       <div className="flex items-center gap-2 mb-3">
-        <div className="p-2 bg-blue-500 rounded-lg">
+        <div className="p-2 bg-stone-600 rounded-lg">
           <Sparkles className="w-4 h-4 text-white" />
         </div>
         <div>
@@ -229,7 +229,7 @@ const NextBestActionCard: React.FC<{
       
       <button
         onClick={onAction}
-        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors duration-150"
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-stone-800 text-white rounded-lg font-medium hover:bg-stone-900 transition-colors duration-150"
         data-testid={`button-next-best-action-${guidance.id}`}
       >
         <ArrowRight className="w-4 h-4" />
@@ -273,7 +273,7 @@ const StatusDashboard: React.FC<{
           }`} />
           <span className="text-xs font-medium text-stone-600">Compliance</span>
         </div>
-        <p className={`text-2xl font-semibold ${
+        <p className={`text-base font-semibold ${
           complianceScore >= 90 ? 'text-green-600' 
           : complianceScore >= 70 ? 'text-amber-600' 
           : 'text-red-600'
@@ -292,7 +292,7 @@ const StatusDashboard: React.FC<{
           <Link2 className={`w-4 h-4 ${claimPercent >= 90 ? 'text-green-500' : 'text-amber-500'}`} />
           <span className="text-xs font-medium text-stone-600">Claims Sourced</span>
         </div>
-        <p className={`text-2xl font-semibold ${
+        <p className={`text-base font-semibold ${
           claimPercent >= 90 ? 'text-green-600' : 'text-amber-600'
         }`}>
           {supportedClaims}/{totalClaims}
@@ -305,7 +305,7 @@ const StatusDashboard: React.FC<{
           <Compass className="w-4 h-4 text-blue-500" />
           <span className="text-xs font-medium text-stone-600">Data Sources</span>
         </div>
-        <p className="text-2xl font-semibold text-blue-600">
+        <p className="text-base font-semibold text-blue-600">
           {connectedModules}
         </p>
       </div>
@@ -321,7 +321,7 @@ const StatusDashboard: React.FC<{
             <Users className={`w-4 h-4 ${pendingReviews === 0 ? 'text-green-500' : 'text-amber-500'}`} />
             <span className="text-xs font-medium text-stone-600">Reviews</span>
           </div>
-          <p className={`text-2xl font-semibold ${
+          <p className={`text-base font-semibold ${
             pendingReviews === 0 ? 'text-green-600' : 'text-amber-600'
           }`}>
             {pendingReviews}

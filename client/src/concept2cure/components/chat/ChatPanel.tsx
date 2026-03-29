@@ -105,7 +105,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
           <div
             className={cn(
               'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center',
-              isUser ? 'bg-blue-600 text-white' : 'bg-purple-600 text-white'
+              isUser ? 'bg-stone-800 text-white' : 'bg-purple-600 text-white'
             )}
           >
             {isUser ? (
@@ -418,7 +418,7 @@ const EmptyState: React.FC = () => {
       <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-6">
         <Sparkles className="h-8 w-8 text-purple-600" />
       </div>
-      <h2 className="text-xl font-semibold text-stone-900 mb-2">
+      <h2 className="text-base font-medium text-stone-900 mb-2">
         Hello! I'm AnA
       </h2>
       <p className="text-stone-500 max-w-md mb-8">
@@ -579,7 +579,7 @@ export const ChatPanel: React.FC = () => {
         <div className="w-12 h-12 bg-stone-100 rounded-lg flex items-center justify-center mb-6">
           <Sparkles className="h-8 w-8 text-stone-400" />
         </div>
-        <h2 className="text-xl font-semibold text-stone-900 mb-2">Select a Project</h2>
+        <h2 className="text-base font-medium text-stone-900 mb-2">Select a Project</h2>
         <p className="text-stone-500 max-w-md">
           Choose a project from the sidebar or create a new one to start
           working with AnA.
@@ -635,13 +635,13 @@ export const ChatPanel: React.FC = () => {
                       <Sparkles className="h-4 w-4 text-white" />
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-stone-400 rounded-full animate-bounce" />
+                      <div className="w-2 h-2 bg-stone-400 rounded-full animate-pulse" />
                       <div
-                        className="w-2 h-2 bg-stone-400 rounded-full animate-bounce"
+                        className="w-2 h-2 bg-stone-400 rounded-full animate-pulse"
                         style={{ animationDelay: '0.1s' }}
                       />
                       <div
-                        className="w-2 h-2 bg-stone-400 rounded-full animate-bounce"
+                        className="w-2 h-2 bg-stone-400 rounded-full animate-pulse"
                         style={{ animationDelay: '0.2s' }}
                       />
                     </div>

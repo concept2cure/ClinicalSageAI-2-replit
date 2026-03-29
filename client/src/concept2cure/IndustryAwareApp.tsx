@@ -202,7 +202,7 @@ const Sidebar: React.FC<{
       <div className="flex items-center justify-between p-4 border-b border-stone-200">
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <div className={cn('p-2 rounded-lg bg-blue-600')}>
+            <div className={cn('p-2 rounded-lg bg-stone-800')}>
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <span className="font-semibold text-stone-900">Concept2Cure</span>

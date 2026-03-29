@@ -245,7 +245,7 @@ export const NextActionsPanel: React.FC<NextActionsPanelProps> = ({
         <EmptyStatePrimitive
           icon={Sparkles}
           title="All caught up!"
-          description="No pending actions at the moment. Great job staying on top of your workflows."
+          description="No pending actions at this time."
         />
       </EnterpriseCard>
     );

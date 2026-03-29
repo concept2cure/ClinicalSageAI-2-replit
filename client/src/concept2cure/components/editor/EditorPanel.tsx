@@ -1802,7 +1802,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 setOpenArtifactNotFound(false);
                 loadArtifacts();
               }}
-              className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none shadow-sm"
+              className="px-4 py-2 text-sm font-medium bg-stone-800 text-white rounded-lg hover:bg-stone-900 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none shadow-sm"
             >
               Refresh documents
             </button>
@@ -1862,7 +1862,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               <Filter className="w-3 h-3" />
               Filters
               {(filterStatus !== 'all' || filterType !== 'all' || filterCtd !== 'all') && (
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                <span className="w-1.5 h-1.5 rounded-full bg-stone-600" />
               )}
             </button>
           )}
@@ -1939,7 +1939,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <button
               onClick={handleCreateNew}
               disabled={creatingNew || !newDocTitle.trim()}
-              className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 flex items-center gap-1.5 shadow-sm"
+              className="px-4 py-2 text-sm font-medium bg-stone-800 text-white rounded-lg hover:bg-stone-900 disabled:opacity-60 flex items-center gap-1.5 shadow-sm"
             >
               {creatingNew ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -2019,7 +2019,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   onClick={() => {
                     setNewDocTitle('Untitled Document');
                   }}
-                  className="mt-4 px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1.5"
+                  className="mt-4 px-3 py-1.5 text-xs font-medium bg-stone-800 text-white rounded-md hover:bg-stone-900 transition-colors flex items-center gap-1.5"
                 >
                   <Plus className="w-3 h-3" />
                   Create First Document
@@ -2141,7 +2141,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           'text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md shrink-0',
           activeLifecycleStage === 'Draft' && 'bg-stone-100 text-stone-500',
           activeLifecycleStage === 'Review' && 'bg-amber-50 text-amber-700 ring-1 ring-amber-200/60',
-          activeLifecycleStage === 'Verify' && 'bg-blue-50 text-blue-700 ring-1 ring-blue-200/60',
+          activeLifecycleStage === 'Verify' && 'bg-blue-50 text-blue-700 ring-1 ring-stone-300/60',
           activeLifecycleStage === 'Publish' && 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/60',
         )}>
           {activeLifecycleStage}
@@ -2228,7 +2228,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   setOverflowOpen(false);
                 }
               }}
-              className="absolute right-0 top-full mt-1 w-48 bg-white border border-stone-200 rounded-lg shadow-lg z-50 py-1"
+              className="absolute right-0 top-full mt-1 w-48 bg-white border border-stone-200 rounded-lg shadow-sm z-50 py-1"
             >
               {/* Save */}
               <button
@@ -2669,7 +2669,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
               return (
                 <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-center pt-20 pointer-events-none">
-                  <div className="pointer-events-auto bg-white/95 backdrop-blur-sm border border-stone-200 rounded-xl shadow-lg p-5 max-w-md w-full mx-4">
+                  <div className="pointer-events-auto bg-white/95 backdrop-blur-sm border border-stone-200 rounded-xl shadow-sm p-5 max-w-md w-full mx-4">
                     <div className="text-center mb-4">
                       <PenTool className="w-6 h-6 text-stone-400 mx-auto mb-2" />
                       <h3 className="text-sm font-semibold text-stone-900">
@@ -3246,7 +3246,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       {/* ── Quality Gate Dialog ── */}
       {qualityGateDialog.show && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-5">
+          <div className="bg-white rounded-xl shadow w-full max-w-md p-5">
             <div className="flex items-center gap-2 mb-3">
               <AlertTriangle className="w-5 h-5 text-amber-500" />
               <h3 className="text-sm font-semibold text-stone-900">
@@ -3294,7 +3294,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       {/* ── New Comment Dialog ── */}
       {showNewCommentDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-4">
+          <div className="bg-white rounded-xl shadow w-full max-w-sm p-4">
             <div className="flex items-center gap-2 mb-3">
               <MessageSquare className="w-4 h-4 text-blue-500" />
               <h3 className="text-sm font-semibold text-stone-900">Add Comment</h3>
@@ -3334,7 +3334,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 <button
                   onClick={() => handleSubmitComment(pendingCommentText)}
                   disabled={!pendingCommentText.trim()}
-                  className="px-4 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  className="px-4 py-1.5 text-xs font-medium bg-stone-800 text-white rounded-md hover:bg-stone-900 disabled:opacity-50"
                 >
                   Add Comment
                 </button>
@@ -3368,7 +3368,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <div
               key={t.id}
               className={cn(
-                'pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-lg shadow-lg text-xs font-medium animate-in slide-in-from-bottom-2 fade-in duration-200',
+                'pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-lg shadow-sm text-xs font-medium animate-in slide-in-from-bottom-2 fade-in duration-200',
                 t.type === 'success' && 'bg-emerald-600 text-white',
                 t.type === 'error' && 'bg-red-600 text-white',
                 t.type === 'info' && 'bg-stone-700 text-white'

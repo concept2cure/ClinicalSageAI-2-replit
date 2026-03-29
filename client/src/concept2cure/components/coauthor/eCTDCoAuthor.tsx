@@ -234,7 +234,7 @@ const ZeroState: React.FC<{ onStartDrafting?: () => void }> = ({ onStartDrafting
       <div className="w-12 h-12 mx-auto mb-5 rounded-lg bg-stone-900 flex items-center justify-center shadow-sm">
         <Mountain className="w-8 h-8 text-white" />
       </div>
-      <h2 className="text-xl font-semibold text-stone-900 mb-3">Your Sherpa is Ready</h2>
+      <h2 className="text-base font-medium text-stone-900 mb-3">Your Sherpa is Ready</h2>
       <p className="text-stone-600 mb-6 leading-relaxed">
         I'll help you draft your regulatory documents, verify every claim against your source data,
         and ensure you reach the summit of approval safely.
@@ -282,7 +282,7 @@ const OutlineTree: React.FC<{
               className={cn(
                 'w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors duration-150',
                 'hover:bg-stone-100',
-                isSelected && 'bg-blue-50 ring-1 ring-blue-200'
+                isSelected && 'bg-blue-50 ring-1 ring-stone-300'
               )}
               style={{ paddingLeft: `${depth * 16 + 8}px` }}
             >
@@ -425,7 +425,7 @@ const RedlineAlertPanel: React.FC<{
                   'px-2 py-0.5 text-xs font-semibold rounded uppercase',
                   alert.severity === 'critical' && 'bg-red-600 text-white',
                   alert.severity === 'warning' && 'bg-amber-500 text-white',
-                  alert.severity === 'info' && 'bg-blue-500 text-white'
+                  alert.severity === 'info' && 'bg-stone-600 text-white'
                 )}
               >
                 {alert.severity}
@@ -580,7 +580,7 @@ const SectionEditor: React.FC<{
             </p>
             <button
               onClick={onDraft}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+              className="px-4 py-2 bg-stone-800 text-white rounded-lg hover:bg-stone-900 text-sm font-medium"
             >
               Start Drafting
             </button>
@@ -775,7 +775,7 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
         {/* Header */}
         <div className="p-4 border-b border-stone-200">
           <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-blue-600 rounded-lg">
+            <div className="p-2 bg-stone-800 rounded-lg">
               <Layers className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -794,7 +794,7 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
             </div>
             <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-blue-500 rounded-full"
+                className="h-full bg-stone-600 rounded-full"
                 style={{ width: `${document.overallProgress}%` }}
               />
             </div>
@@ -1082,7 +1082,7 @@ export const ECTDCoAuthorStandalone: React.FC<{
       {/* 21 CFR Part 11 Electronic Signature Modal */}
       {signingSection && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm max-w-lg w-full mx-4 overflow-hidden">
             <div className="bg-gradient-to-r from-green-700 to-green-800 px-6 py-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-white/20 rounded-lg">

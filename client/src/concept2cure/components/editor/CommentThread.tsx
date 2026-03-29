@@ -74,7 +74,7 @@ function formatRelativeTime(dateString: string): string {
 }
 
 const AUTHOR_COLORS = [
-  "bg-blue-500",
+  "bg-stone-600",
   "bg-emerald-500",
   "bg-violet-500",
   "bg-amber-500",
