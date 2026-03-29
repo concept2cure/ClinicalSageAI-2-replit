@@ -21,15 +21,21 @@ import { anaPlatformController, AnaAction } from '../services/ana-platform-contr
 
 const router = Router();
 
+router.use((req: Request, res: Response, next) => {
+  const correlationId =
+    String(req.headers['x-correlation-id'] || '').trim() ||
+    `ana-platform-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  res.setHeader('x-correlation-id', correlationId);
+  next();
+});
+
 // ── Helper: extract org ID from request ───────────────────
 
 function getOrgId(req: Request): number | null {
   const orgId =
     (req as any).tenantId ||
     (req as any).tenantContext?.organizationId ||
-    (req as any).user?.organizationId ||
-    req.query.organizationId ||
-    req.body?.organizationId;
+    (req as any).user?.organizationId;
   return orgId ? Number(orgId) : null;
 }
 
@@ -72,6 +78,39 @@ router.get('/capabilities', async (req: Request, res: Response) => {
 
   const result = await anaPlatformController.listCapabilities(orgId);
   res.status(result.success ? 200 : 403).json(result);
+});
+
+/**
+ * GET /api/ana/platform/entitlements
+ * Resolve effective module entitlements for this org
+ */
+router.get('/entitlements', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (!orgId) return res.status(400).json({ error: 'Organization ID required' });
+
+  const result = await anaPlatformController.listCapabilities(orgId);
+  if (!result.success) {
+    return res.status(403).json(result);
+  }
+
+  const capabilities = ((result.result as any)?.capabilities || []) as Array<{
+    id: string;
+    enabled: boolean;
+    requiredTier?: string;
+    category?: string;
+  }>;
+
+  return res.json({
+    success: true,
+    action: 'resolve_entitlements',
+    result: {
+      orgId,
+      capabilities,
+      enabledModuleIds: capabilities.filter(c => c.enabled).map(c => c.id),
+      disabledModuleIds: capabilities.filter(c => !c.enabled).map(c => c.id),
+      generatedAt: new Date().toISOString(),
+    },
+  });
 });
 
 /**

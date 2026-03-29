@@ -34,7 +34,11 @@ const router = Router();
 // Error helper
 // ---------------------------------------------------------------------------
 
-function buildRouteError(actionType: string, errors: { code: string; message: string }[]): AIActionResponse {
+function buildRouteError(
+  actionType: string,
+  errors: { code: string; message: string }[],
+  correlationId?: string
+): AIActionResponse {
   return {
     success: false,
     actionType: actionType as any,
@@ -42,7 +46,7 @@ function buildRouteError(actionType: string, errors: { code: string; message: st
     result: null,
     createdObjects: [],
     updatedObjects: [],
-    warnings: [],
+    warnings: correlationId ? [`correlation_id:${correlationId}`] : [],
     errors,
     provenance: {
       actionId: 'none',
@@ -54,6 +58,13 @@ function buildRouteError(actionType: string, errors: { code: string; message: st
     },
     nextSuggestedActions: [],
   };
+}
+
+function resolveCorrelationId(req: Request): string {
+  return (
+    String(req.headers['x-correlation-id'] || '').trim() ||
+    `ai-actions-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -95,6 +106,8 @@ function getUserRole(req: Request): string {
 // ---------------------------------------------------------------------------
 
 router.post('/execute', async (req: Request, res: Response) => {
+  const correlationId = resolveCorrelationId(req);
+  res.setHeader('x-correlation-id', correlationId);
   try {
     // 1. Auth
     let organizationId: number;
@@ -104,7 +117,11 @@ router.post('/execute', async (req: Request, res: Response) => {
       userId = getUserId(req);
     } catch (err: any) {
       return res.status(401).json(
-        buildRouteError(req.body?.actionType || 'unknown', [{ code: 'AUTH_REQUIRED', message: err.message }])
+        buildRouteError(
+          req.body?.actionType || 'unknown',
+          [{ code: 'AUTH_REQUIRED', message: err.message }],
+          correlationId
+        )
       );
     }
 
@@ -112,33 +129,53 @@ router.post('/execute', async (req: Request, res: Response) => {
     const body = req.body;
     if (!body || !body.actionType) {
       return res.status(400).json(
-        buildRouteError('unknown', [{ code: 'INVALID_REQUEST', message: 'actionType is required' }])
+        buildRouteError(
+          'unknown',
+          [{ code: 'INVALID_REQUEST', message: 'actionType is required' }],
+          correlationId
+        )
       );
     }
 
     // 2a. Validate actionType against known types
     if (!isValidActionType(body.actionType)) {
       return res.status(400).json(
-        buildRouteError(body.actionType, [{ code: 'INVALID_ACTION_TYPE', message: `Unknown actionType: '${body.actionType}'` }])
+        buildRouteError(
+          body.actionType,
+          [{ code: 'INVALID_ACTION_TYPE', message: `Unknown actionType: '${body.actionType}'` }],
+          correlationId
+        )
       );
     }
 
     if (!body.targetType) {
       return res.status(400).json(
-        buildRouteError(body.actionType, [{ code: 'INVALID_REQUEST', message: 'targetType is required' }])
+        buildRouteError(
+          body.actionType,
+          [{ code: 'INVALID_REQUEST', message: 'targetType is required' }],
+          correlationId
+        )
       );
     }
 
     if (body.projectId === undefined || body.projectId === null) {
       return res.status(400).json(
-        buildRouteError(body.actionType, [{ code: 'INVALID_REQUEST', message: 'projectId is required' }])
+        buildRouteError(
+          body.actionType,
+          [{ code: 'INVALID_REQUEST', message: 'projectId is required' }],
+          correlationId
+        )
       );
     }
 
     // 2b. Validate sourceSurface if provided
     if (body.sourceSurface && !isValidSourceSurface(body.sourceSurface)) {
       return res.status(400).json(
-        buildRouteError(body.actionType, [{ code: 'INVALID_SOURCE_SURFACE', message: `Unknown sourceSurface: '${body.sourceSurface}'` }])
+        buildRouteError(
+          body.actionType,
+          [{ code: 'INVALID_SOURCE_SURFACE', message: `Unknown sourceSurface: '${body.sourceSurface}'` }],
+          correlationId
+        )
       );
     }
 
@@ -177,7 +214,12 @@ router.post('/execute', async (req: Request, res: Response) => {
         // Queue unavailable — fell back to sync execution; signal this to client
         return res.status(syncResponse.success ? 200 : 400).json({
           ...syncResponse,
-          _meta: { fallback: true, reason: 'Async queue unavailable — executed synchronously' },
+          _meta: {
+            ...(syncResponse as any)._meta,
+            correlationId,
+            fallback: true,
+            reason: 'Async queue unavailable — executed synchronously',
+          },
         });
       }
 
@@ -188,6 +230,7 @@ router.post('/execute', async (req: Request, res: Response) => {
         statusUrl: `/api/ai-actions/jobs/${jobId}`,
         streamUrl: `/api/ai-actions/stream?jobId=${jobId}`,
         message: `Action '${actionRequest.actionType}' enqueued for async processing`,
+        _meta: { correlationId },
       });
     }
 
@@ -204,11 +247,18 @@ router.post('/execute', async (req: Request, res: Response) => {
       : response.errors.some(e => e.code === 'CONCURRENCY_LIMIT') ? 429
       : response.errors.some(e => e.code === 'LOCK_CONTENTION') ? 409
       : 400;
-    return res.status(httpStatus).json(response);
+    return res.status(httpStatus).json({
+      ...response,
+      _meta: { ...(response as any)._meta, correlationId },
+    });
   } catch (err: any) {
     console.error('[AI Actions Route] Unhandled error:', err);
     return res.status(500).json(
-      buildRouteError(req.body?.actionType || 'unknown', [{ code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' }])
+      buildRouteError(
+        req.body?.actionType || 'unknown',
+        [{ code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' }],
+        correlationId
+      )
     );
   }
 });

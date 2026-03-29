@@ -56,6 +56,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePortal, useModuleAccess } from '../core/portalContext';
 import { getNavigationSections, MODULE_REGISTRY, CATEGORY_REGISTRY } from '../core/moduleRegistry';
 import { useIntentEngine } from '../services/intentEngine';
+import { isModuleEnabledByEntitlements, useAnaEntitlements } from '../hooks/useAnaEntitlements';
 import type { ModuleId, ModuleCategory } from '../core/portalTypes';
 
 // Icon mapping for modules
@@ -140,6 +141,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   const { hasAccess } = useModuleAccess();
   const { processIntent, setContext } = useIntentEngine();
 
+  const { enabledModuleIds, hasEntitlementPayload } = useAnaEntitlements();
+
   // Command input state
   const [commandInput, setCommandInput] = useState('');
   const [commandFeedback, setCommandFeedback] = useState<string | null>(null);
@@ -200,8 +203,11 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
 
   // Filter modules by access
   const accessibleModules = useMemo(() => {
-    return experience.modules.filter(moduleId => hasAccess(moduleId));
-  }, [experience.modules, hasAccess]);
+    return experience.modules.filter(moduleId => {
+      if (!hasAccess(moduleId)) return false;
+      return isModuleEnabledByEntitlements(moduleId, hasEntitlementPayload, enabledModuleIds);
+    });
+  }, [experience.modules, hasAccess, enabledModuleIds, hasEntitlementPayload]);
 
   // Group modules by category
   const groupedModules = useMemo(() => {

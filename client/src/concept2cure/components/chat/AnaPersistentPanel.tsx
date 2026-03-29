@@ -12,6 +12,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { createCorrelationId } from '@/lib/correlation';
 import { apiRequest } from '@/lib/queryClient';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
@@ -1614,6 +1615,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             return h;
           };
 
+          const correlationId = createCorrelationId('ana');
+
           // Helper: silently refresh token via dev-login when we get a 401
           const refreshTokenOnce = async (): Promise<boolean> => {
             try {
@@ -1649,6 +1652,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           };
 
           let chatHeaders = buildChatHeaders();
+          chatHeaders['x-correlation-id'] = correlationId;
 
           let rawData: any = null;
           let chatSucceeded = false;
@@ -1657,11 +1661,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           // ── Build chat body (reused for retries) ──
           const chatBody = JSON.stringify({
             message: text,
+            idempotency_key: correlationId,
             chatMode,
             useFirecrawl,
             thread_id: threadIdRef.current || undefined,
             project_id: contextProfile?.projectId || undefined,
             submission_type: contextProfile?.productType || undefined,
+            source_surface: 'ana_persistent_panel',
             preferred_provider: selectedProvider !== 'auto' ? selectedProvider : undefined,
             authoring_context: authoringPayload,
             context: {
@@ -1704,6 +1710,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               const refreshed = await refreshTokenOnce();
               if (refreshed) {
                 chatHeaders = buildChatHeaders();
+                chatHeaders['x-correlation-id'] = correlationId;
                 anaRes = await fetch('/api/ana-ri/chat', {
                   method: 'POST',
                   headers: chatHeaders,
@@ -1739,6 +1746,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 body: JSON.stringify({
                   message: text,
                   chatMode,
+                  idempotency_key: correlationId,
+                  source_surface: 'ana_persistent_panel',
                   project_id: contextProfile?.projectId || undefined,
                   submission_type: contextProfile?.productType || undefined,
                   preferred_provider: selectedProvider !== 'auto' ? selectedProvider : undefined,
@@ -1760,6 +1769,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 const refreshed = await refreshTokenOnce();
                 if (refreshed) {
                   chatHeaders = buildChatHeaders();
+                  chatHeaders['x-correlation-id'] = correlationId;
                   cortexRes = await fetch('/api/cortex/chat', {
                     method: 'POST',
                     headers: chatHeaders,
@@ -1767,6 +1777,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     body: JSON.stringify({
                       message: text,
                       chatMode,
+                      idempotency_key: correlationId,
+                      source_surface: 'ana_persistent_panel',
                       project_id: contextProfile?.projectId || undefined,
                       submission_type: contextProfile?.productType || undefined,
                       preferred_provider:
@@ -1901,6 +1913,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           const fbHeaders: Record<string, string> = {
             'Content-Type': 'application/json',
             'x-organization-id': fbOrgId,
+            'x-correlation-id': createCorrelationId('ana_fb'),
           };
           if (fbToken) fbHeaders['Authorization'] = `Bearer ${fbToken}`;
 
@@ -1911,6 +1924,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             body: JSON.stringify({
               message: text,
               chatMode: 'standard',
+              source_surface: 'ana_persistent_panel_fallback',
               preferred_provider: selectedProvider !== 'auto' ? selectedProvider : undefined,
               context: {
                 screen: contextProfile?.screenName,
