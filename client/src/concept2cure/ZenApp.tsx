@@ -1760,6 +1760,11 @@ export const ZenApp: React.FC = () => {
       region?: string;
       goal?: string;
       color?: string;
+      registryId?: string;
+      applicationFamily?: string;
+      applicationType?: string;
+      agency?: string;
+      dossierStandard?: string;
     }) => {
       try {
         await createProjectMutation({
@@ -1771,6 +1776,11 @@ export const ZenApp: React.FC = () => {
           region: data.region,
           goal: data.goal,
           color: data.color,
+          registryId: data.registryId,
+          applicationFamily: data.applicationFamily,
+          applicationType: data.applicationType,
+          agency: data.agency,
+          dossierStandard: data.dossierStandard,
           conversations: [],
         });
         setNewProjectOpen(false);

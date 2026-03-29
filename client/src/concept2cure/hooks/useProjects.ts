@@ -266,11 +266,17 @@ export function useProjects() {
   const createProject = useMutation({
     mutationFn: async (data: {
       name: string;
-      submissionType: SubmissionType;
+      submissionType: SubmissionType | string;
       description?: string;
       pinned?: boolean;
       targetAgency?: string;
       customInstructions?: string;
+      registryId?: string;
+      applicationFamily?: string;
+      applicationType?: string;
+      agency?: string;
+      dossierStandard?: string;
+      [key: string]: unknown;
     }) => {
       if (USE_API) {
         try {
