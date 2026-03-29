@@ -4322,6 +4322,52 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           )}
                         </div>
                       )}
+                      {/* Grounding-aware contextual follow-up chips — shown on last assistant message */}
+                      {!isUser &&
+                        msg.id === messages.filter(m => m.role === 'assistant').at(-1)?.id &&
+                        msg.grounding?.mode &&
+                        msg.grounding.mode !== 'grounded' && (
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {msg.grounding.mode === 'inferred' && (
+                              <>
+                                {!contextProfile?.projectId && (
+                                  <button
+                                    onClick={() => handleSend('Show me my projects so I can select one.')}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-colors"
+                                  >
+                                    Select a project
+                                  </button>
+                                )}
+                                {contextProfile?.projectId && (
+                                  <button
+                                    onClick={() => handleSend('/status')}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-colors"
+                                  >
+                                    Load project context
+                                  </button>
+                                )}
+                              </>
+                            )}
+                            {msg.grounding.mode === 'blocked' && (
+                              <>
+                                <button
+                                  onClick={() => handleSend('What do I need to fix to unblock this?')}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-red-700 bg-red-50 hover:bg-red-100 border border-red-200/60 transition-colors"
+                                >
+                                  How to unblock
+                                </button>
+                              </>
+                            )}
+                            {msg.grounding.confidence === 'low' && (
+                              <button
+                                onClick={() => handleSend('What additional context would help you give a better answer?')}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-stone-600 bg-stone-50 hover:bg-stone-100 border border-stone-200/60 transition-colors"
+                              >
+                                Improve answer
+                              </button>
+                            )}
+                          </div>
+                        )}
                       {/* AnA RI Document Action Row — shown on the last assistant message */}
                       {!isUser &&
                         msg.id === messages.filter(m => m.role === 'assistant').at(-1)?.id &&

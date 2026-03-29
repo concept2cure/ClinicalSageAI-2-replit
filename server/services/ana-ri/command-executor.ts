@@ -96,14 +96,16 @@ export async function createProject(
        params.therapeuticArea || null, ctx.userId]
     );
     const project = result.rows[0];
+    const typeLabel = params.submissionType ? ` (${params.submissionType.toUpperCase()})` : '';
+    const areaLabel = params.therapeuticArea ? ` in ${params.therapeuticArea}` : '';
     return {
       success: true,
       action: 'create_project',
-      data: { projectId: project.id, name: project.name, status: project.status },
-      message: `Project "${params.name}" created (ID: ${project.id}).`,
+      data: { projectId: project.id, name: project.name, status: project.status, submissionType: params.submissionType },
+      message: `Created project "${params.name}"${typeLabel}${areaLabel} — ID: ${project.id}, status: active.`,
     };
   } catch (err: any) {
-    return { success: false, action: 'create_project', message: 'Failed to create project.', error: err?.message };
+    return { success: false, action: 'create_project', message: `Failed to create project "${params.name}": ${err?.message || 'unknown error'}.`, error: err?.message };
   }
 }
 
@@ -160,14 +162,15 @@ export async function updateProject(
       `UPDATE projects SET ${setClauses.join(', ')} WHERE id = $1 AND organization_id = $2`,
       values
     );
+    const fieldList = Object.keys(updates).join(', ');
     return {
       success: true,
       action: 'update_project',
       data: { projectId, updated: Object.keys(updates) },
-      message: `Project ${projectId} updated.`,
+      message: `Project ${projectId} updated: ${fieldList}.`,
     };
   } catch (err: any) {
-    return { success: false, action: 'update_project', message: 'Failed to update project.', error: err?.message };
+    return { success: false, action: 'update_project', message: `Failed to update project ${projectId}: ${err?.message || 'unknown error'}.`, error: err?.message };
   }
 }
 
@@ -218,14 +221,16 @@ export async function createArtifact(
       anaRiOrchestrated: true,
     });
 
+    const sectionLabel = params.ctdSection && params.ctdSection !== 'unassigned' ? ` in section ${params.ctdSection}` : '';
+    const statusLabel = params.status || 'draft';
     return {
       success: true,
       action: 'create_artifact',
-      data: { artifactId: result.artifactId, isNew: result.isNew, sectionCode: result.sectionCode },
-      message: `Artifact "${params.title}" created (ID: ${result.artifactId}) in project ${params.projectId}.`,
+      data: { artifactId: result.artifactId, isNew: result.isNew, sectionCode: result.sectionCode, title: params.title },
+      message: `Created "${params.title}"${sectionLabel} — ID: ${result.artifactId}, status: ${statusLabel}.`,
     };
   } catch (err: any) {
-    return { success: false, action: 'create_artifact', message: 'Failed to create artifact.', error: err?.message };
+    return { success: false, action: 'create_artifact', message: `Failed to create artifact "${params.title}": ${err?.message || 'unknown error'}.`, error: err?.message };
   }
 }
 
@@ -241,12 +246,42 @@ export async function updateArtifact(
   }
 ): Promise<CommandResult> {
   try {
+    // Document-state guard: check if artifact is locked or approved before mutation
+    const existing = await pool.query(
+      `SELECT artifact_id, title, status, ctd_section, version
+       FROM concept2cure_artifacts
+       WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
+      [params.artifactId, params.projectId, ctx.organizationId]
+    );
+
+    if (existing.rows.length === 0) {
+      return { success: false, action: 'update_artifact', message: `Artifact ${params.artifactId} not found in project ${params.projectId}.` };
+    }
+
+    const current = existing.rows[0];
+    if (current.status === 'locked') {
+      return {
+        success: false,
+        action: 'update_artifact',
+        message: `Cannot update "${current.title}" — document is locked. Create a new version or change status to draft first.`,
+        data: { artifactId: params.artifactId, currentStatus: 'locked', title: current.title },
+      };
+    }
+    if (current.status === 'approved') {
+      return {
+        success: false,
+        action: 'update_artifact',
+        message: `Cannot update "${current.title}" — document is approved. Editing an approved document requires changing its status back to draft or review first, which will trigger re-review.`,
+        data: { artifactId: params.artifactId, currentStatus: 'approved', title: current.title },
+      };
+    }
+
     const result = await tagArtifact({
       projectId: params.projectId,
       organizationId: ctx.organizationId,
       userId: ctx.userId,
-      sectionCode: '',
-      title: params.title || '',
+      sectionCode: current.ctd_section || '',
+      title: params.title || current.title || '',
       content: params.content,
       status: 'draft',
       artifactId: params.artifactId,
@@ -256,18 +291,21 @@ export async function updateArtifact(
         changeDescription: params.changeDescription || 'Updated by AnA RI',
       },
     });
+
+    const sectionLabel = current.ctd_section ? ` in section ${current.ctd_section}` : '';
+    const newVersion = result.versionId ? ` — version ${result.versionId}` : '';
     return {
       success: true,
       action: 'update_artifact',
-      data: { artifactId: result.artifactId, versionId: result.versionId },
-      message: `Artifact ${params.artifactId} updated (new version created).`,
+      data: { artifactId: result.artifactId, versionId: result.versionId, title: current.title, ctdSection: current.ctd_section },
+      message: `Updated "${current.title}"${sectionLabel}${newVersion}. ${params.changeDescription || 'Content revised by AnA.'}`,
     };
   } catch (err: any) {
-    return { success: false, action: 'update_artifact', message: 'Failed to update artifact.', error: err?.message };
+    return { success: false, action: 'update_artifact', message: `Failed to update artifact ${params.artifactId}: ${err?.message || 'unknown error'}.`, error: err?.message };
   }
 }
 
-/** Update artifact status */
+/** Update artifact status with lifecycle transition guards */
 export async function updateArtifactStatus(
   ctx: CommandContext,
   params: {
@@ -277,20 +315,56 @@ export async function updateArtifactStatus(
   }
 ): Promise<CommandResult> {
   try {
+    // Load current artifact to validate transition
+    const existing = await pool.query(
+      `SELECT artifact_id, title, status, ctd_section
+       FROM concept2cure_artifacts
+       WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
+      [params.artifactId, params.projectId, ctx.organizationId]
+    );
+
+    if (existing.rows.length === 0) {
+      return { success: false, action: 'update_artifact_status', message: `Artifact ${params.artifactId} not found.` };
+    }
+
+    const current = existing.rows[0];
+    const fromStatus = current.status;
+    const toStatus = params.status;
+
+    // Guard: locked documents cannot be status-changed without explicit unlock
+    if (fromStatus === 'locked' && toStatus !== 'draft') {
+      return {
+        success: false,
+        action: 'update_artifact_status',
+        message: `"${current.title}" is locked. Locked documents can only be unlocked to draft status — this will trigger full re-review.`,
+        data: { artifactId: params.artifactId, currentStatus: 'locked', requestedStatus: toStatus },
+      };
+    }
+
+    // Guard: warn about approved → draft regression (but allow it)
+    const isRegression = fromStatus === 'approved' && (toStatus === 'draft' || toStatus === 'review');
+
     await pool.query(
       `UPDATE concept2cure_artifacts
        SET status = $4, updated_at = NOW()
        WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
-      [params.artifactId, params.projectId, ctx.organizationId, params.status]
+      [params.artifactId, params.projectId, ctx.organizationId, toStatus]
     );
+
+    const transitionLabel = `${fromStatus} → ${toStatus}`;
+    const sectionLabel = current.ctd_section ? ` (section ${current.ctd_section})` : '';
+    const regressionWarning = isRegression
+      ? ' ⚠ This reverses approval and will require re-review before the document can be approved again.'
+      : '';
+
     return {
       success: true,
       action: 'update_artifact_status',
-      data: { artifactId: params.artifactId, status: params.status },
-      message: `Artifact ${params.artifactId} status changed to "${params.status}".`,
+      data: { artifactId: params.artifactId, previousStatus: fromStatus, status: toStatus, title: current.title, isRegression },
+      message: `"${current.title}"${sectionLabel} status changed: ${transitionLabel}.${regressionWarning}`,
     };
   } catch (err: any) {
-    return { success: false, action: 'update_artifact_status', message: 'Failed to update status.', error: err?.message };
+    return { success: false, action: 'update_artifact_status', message: `Failed to update status for artifact ${params.artifactId}: ${err?.message || 'unknown error'}.`, error: err?.message };
   }
 }
 
@@ -311,14 +385,22 @@ export async function placeInDossier(
        WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
       [params.artifactId, params.projectId, ctx.organizationId, params.ctdSection]
     );
+    // Fetch title for human-readable message
+    const artInfo = await pool.query(
+      `SELECT title FROM concept2cure_artifacts WHERE artifact_id = $1 AND organization_id = $2`,
+      [params.artifactId, ctx.organizationId]
+    ).catch(() => ({ rows: [] as any[] }));
+    const artTitle = artInfo.rows[0]?.title || `Artifact ${params.artifactId}`;
+    const moduleLabel = params.dossierModule ? ` (Module ${params.dossierModule})` : '';
+
     return {
       success: true,
       action: 'place_in_dossier',
-      data: { artifactId: params.artifactId, ctdSection: params.ctdSection },
-      message: `Artifact ${params.artifactId} placed in CTD section ${params.ctdSection}.`,
+      data: { artifactId: params.artifactId, ctdSection: params.ctdSection, title: artTitle },
+      message: `Placed "${artTitle}" in CTD section ${params.ctdSection}${moduleLabel}.`,
     };
   } catch (err: any) {
-    return { success: false, action: 'place_in_dossier', message: 'Failed to place in dossier.', error: err?.message };
+    return { success: false, action: 'place_in_dossier', message: `Failed to place artifact ${params.artifactId} in section ${params.ctdSection}: ${err?.message || 'unknown error'}.`, error: err?.message };
   }
 }
 
@@ -389,14 +471,16 @@ export async function createTask(
        params.dueDate || null, params.moduleType || null, ctx.userId]
     );
     const task = result.rows[0];
+    const priorityLabel = params.priority && params.priority !== 'medium' ? `, priority: ${params.priority}` : '';
+    const dueLabel = params.dueDate ? `, due: ${params.dueDate}` : '';
     return {
       success: true,
       action: 'create_task',
       data: { taskId: task.id, name: task.name, priority: task.priority, status: task.status },
-      message: `Task "${params.title}" created (ID: ${task.id}).`,
+      message: `Created task "${params.title}" — ID: ${task.id}${priorityLabel}${dueLabel}.`,
     };
   } catch (err: any) {
-    return { success: false, action: 'create_task', message: 'Failed to create task.', error: err?.message };
+    return { success: false, action: 'create_task', message: `Failed to create task "${params.title}": ${err?.message || 'unknown error'}.`, error: err?.message };
   }
 }
 
