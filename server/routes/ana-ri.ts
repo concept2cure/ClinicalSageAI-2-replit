@@ -17,10 +17,14 @@ import { getGateway } from '../services/ai-gateway/index.js';
 import type { GatewayMessage } from '../services/ai-gateway/types.js';
 import {
   orchestrate,
+  prefetchProjectIntelligence,
+  preloadRIMContext,
+  extractThreadIntelligence,
   type OrchestratorInput,
   type IntentLens,
   type UserRole,
 } from '../services/ana-ri/index.js';
+import { getFeedbackSummary } from '../services/intelligence/learning-loop-service.js';
 import {
   DEFICIENCY_TAXONOMY,
   getDeficienciesBySubmissionType,
@@ -98,7 +102,7 @@ function isDatabaseAvailable(): Promise<boolean> {
       .query('SELECT 1')
       .then(() => true)
       .catch(() => false);
-  } catch {
+  } catch { /* pool initialization or connectivity failure — treat as unavailable */
     return Promise.resolve(false);
   }
 }
@@ -130,14 +134,42 @@ setInterval(() => {
   }
 }, 10 * 60 * 1000);
 
+// ── Grounding mode parser — extracts ana-grounding block from AnA's response ──
+function parseGroundingMode(content: string): {
+  mode: 'grounded' | 'inferred' | 'actioned' | 'blocked' | null;
+  contextUsed: string[];
+  confidence: 'high' | 'moderate' | 'low' | null;
+} {
+  const match = content.match(/```ana-grounding\s*\n([\s\S]*?)```/);
+  if (!match) return { mode: null, contextUsed: [], confidence: null };
+
+  const block = match[1];
+  const modeMatch = block.match(/mode:\s*(grounded|inferred|actioned|blocked)/i);
+  const contextMatch = block.match(/context_used:\s*\[([^\]]*)\]/i);
+  const confMatch = block.match(/confidence:\s*(high|moderate|low)/i);
+
+  return {
+    mode: (modeMatch?.[1]?.toLowerCase() as any) || null,
+    contextUsed: contextMatch?.[1]
+      ? contextMatch[1].split(',').map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean)
+      : [],
+    confidence: (confMatch?.[1]?.toLowerCase() as any) || null,
+  };
+}
+
+// ── Strip grounding block from visible response (metadata only, not user-facing prose) ──
+function stripGroundingBlock(content: string): string {
+  return content.replace(/\n*```ana-grounding\s*\n[\s\S]*?```\s*$/, '').trimEnd();
+}
+
 // AI Gateway instance
 let gateway: ReturnType<typeof getGateway> | null = null;
 function ensureGateway() {
   if (!gateway) {
     try {
       gateway = getGateway();
-    } catch (e: any) {
-      console.error('[AnA RI] AI Gateway initialization failed:', e?.message);
+    } catch (e: unknown) {
+      console.error('[AnA RI] AI Gateway initialization failed:', e instanceof Error ? e.message : 'unknown error');
     }
   }
   return gateway;
@@ -179,6 +211,11 @@ function extractRequestContext(req: Request) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 router.post('/chat', async (req: Request, res: Response) => {
+  // Request-level deadline: 45s socket timeout, 40s abort signal, 35s gateway race
+  req.setTimeout(45_000);
+  const abortController = new AbortController();
+  const requestDeadline = setTimeout(() => abortController.abort(), 40_000);
+
   try {
     const {
       message,
@@ -339,8 +376,8 @@ router.post('/chat', async (req: Request, res: Response) => {
                 regulatorySignals: normalized.regulatorySignals,
               },
             }).catch(() => null);
-          } catch (normalizationError: any) {
-            console.warn('[AnA RI] normalization_failed', normalizationError?.message);
+          } catch (normalizationError: unknown) {
+            console.warn('[AnA RI] normalization_failed', normalizationError instanceof Error ? normalizationError.message : 'unknown error');
           }
           if (id) persistedIds.push(id);
         }
@@ -360,6 +397,44 @@ router.post('/chat', async (req: Request, res: Response) => {
       }
     }
 
+    // Pre-fetch intelligence context in parallel (non-blocking)
+    const projectId = project_context?.projectId
+      ? Number(project_context.projectId)
+      : authoring_context?.projectId
+        ? Number(authoring_context.projectId)
+        : null;
+    const organizationId = orgId ? Number(orgId) : null;
+
+    const [intelligenceProfile, feedbackContext, rimContext] = await Promise.all([
+      prefetchProjectIntelligence(projectId, organizationId).catch(() => null),
+      (async () => {
+        if (!projectId || !organizationId) return null;
+        try {
+          const summary = await getFeedbackSummary(projectId, organizationId);
+          if (summary) {
+            return {
+              totalFeedback: summary.totalFeedback || 0,
+              acceptanceRate: summary.acceptanceRate ?? 100,
+              topDismissedTypes: summary.topDismissedTypes || [],
+            };
+          }
+          return null;
+        } catch (e: unknown) {
+          console.warn('[AnA RI] Feedback prefetch failed:', e instanceof Error ? e.message : 'unknown');
+          return null;
+        }
+      })(),
+      (async () => {
+        if (!projectId) return null;
+        try {
+          return await preloadRIMContext(String(projectId), organizationId ?? undefined);
+        } catch (e: unknown) {
+          console.warn('[AnA RI] RIM context prefetch failed:', e instanceof Error ? e.message : 'unknown');
+          return null;
+        }
+      })(),
+    ]);
+
     // Orchestrate — build the complete system prompt
     const orchestratorInput: OrchestratorInput = {
       message,
@@ -369,6 +444,20 @@ router.post('/chat', async (req: Request, res: Response) => {
       documentContext: document_context,
       submissionType: submission_type as SubmissionType | undefined,
       conversationHistory: conversation_history,
+      // Pass authoring context so orchestrator can inject document-state directives
+      authoringContext: authoring_context && typeof authoring_context === 'object'
+        ? {
+            projectId: authoring_context.projectId || req.body.context?.projectId,
+            sectionCode: authoring_context.sectionCode,
+            moduleCode: authoring_context.moduleCode,
+            artifactId: authoring_context.artifactId,
+            artifactStatus: authoring_context.artifactStatus,
+            workflowStage: authoring_context.workflowStage,
+            _rimContext: rimContext ?? undefined,
+          }
+        : undefined,
+      _projectIntelligenceProfile: intelligenceProfile,
+      _feedbackContext: feedbackContext,
     };
 
     const orchestration = orchestrate(orchestratorInput);
@@ -402,8 +491,8 @@ router.post('/chat', async (req: Request, res: Response) => {
     // Intelligence + memory + enrichment — run in PARALLEL for speed
     const chatProjectId = req.body.project_id || req.body.context?.projectId;
     const [chatIntelligencePrefix, chatMemoryResult, chatEnrichment] = await Promise.all([
-      getIntelligencePrefix(orgId ? Number(orgId) : undefined, chatProjectId).catch((err) => {
-        console.warn('[AnA RI] Intelligence prefix failed:', err?.message);
+      getIntelligencePrefix(orgId ? Number(orgId) : undefined, chatProjectId).catch((err: unknown) => {
+        console.warn('[AnA RI] Intelligence prefix failed:', err instanceof Error ? err.message : 'unknown error');
         return '';
       }),
       buildMemoryContextForChat({
@@ -413,8 +502,8 @@ router.post('/chat', async (req: Request, res: Response) => {
         query: message,
         limitPerLayer: 4,
         maxChars: 3500,
-      }).catch((err) => {
-        console.warn('[AnA RI] Memory context failed:', err?.message);
+      }).catch((err: unknown) => {
+        console.warn('[AnA RI] Memory context failed:', err instanceof Error ? err.message : 'unknown error');
         return { memoryBlock: '', atoms: [], diagnostics: null };
       }),
       enrichContextForChat({
@@ -422,9 +511,9 @@ router.post('/chat', async (req: Request, res: Response) => {
         projectId: chatProjectId,
         organizationId: orgId ? Number(orgId) : undefined,
         submissionType: orchestration.detectedSubmissionType || undefined,
-      }).catch((err) => {
-        console.warn('[AnA RI] Context enrichment failed:', err?.message);
-        return { block: '', sources: [] as string[], failures: ['enrichment-total-failure'] };
+      }).catch((err: unknown) => {
+        console.warn('[AnA RI] Context enrichment failed:', err instanceof Error ? err.message : 'unknown error');
+        return { block: '', sources: [] as string[] };
       }),
     ]);
 
@@ -500,7 +589,7 @@ router.post('/chat', async (req: Request, res: Response) => {
         ? (preferred_provider as (typeof VALID_PROVIDERS)[number])
         : undefined;
 
-    const response = await gw.route({
+    const gatewayPromise = gw.route({
       taskType: routingPlan.taskType,
       messages,
       maxTokens: routingPlan.maxTokens,
@@ -508,6 +597,16 @@ router.post('/chat', async (req: Request, res: Response) => {
       strategy: selectedStrategy,
       ...(validatedProvider ? { provider: validatedProvider } : {}),
     });
+
+    const gatewayTimeout = new Promise<never>((_, reject) => {
+      const timer = setTimeout(() => {
+        reject(new Error('AI gateway timeout: no response within 35s'));
+      }, 35_000);
+      // Allow the timer to be cleaned up if the abort fires first
+      abortController.signal.addEventListener('abort', () => clearTimeout(timer));
+    });
+
+    const response = await Promise.race([gatewayPromise, gatewayTimeout]);
 
     if (!response.content) {
       return sendError(res, 502, 'No response from AI provider', null, 'EMPTY_RESPONSE');
@@ -538,8 +637,8 @@ router.post('/chat', async (req: Request, res: Response) => {
         );
         await saveMessage(resolvedThreadId, 'user', message);
         await saveMessage(resolvedThreadId, 'assistant', response.content);
-      } catch (e: any) {
-        console.error('[AnA RI] Thread persistence failed:', e?.message);
+      } catch (e: unknown) {
+        console.error('[AnA RI] Thread persistence failed:', e instanceof Error ? e.message : 'unknown error');
         persistenceFailed = true;
       }
     }
@@ -610,8 +709,53 @@ router.post('/chat', async (req: Request, res: Response) => {
       }).catch(() => {});
     }
 
+    // Guidance executor — auto-create artifacts if response contains action signals (non-blocking)
+    const chatProjectIdForActions = req.body.project_id || req.body.context?.projectId;
+    let executedActions: any[] = [];
+    if (response.content && chatProjectIdForActions && orgId) {
+      try {
+        const guidance = await processResponseActions(response.content, {
+          projectId: typeof chatProjectIdForActions === 'string' ? parseInt(chatProjectIdForActions, 10) : chatProjectIdForActions,
+          organizationId: Number(orgId),
+          userId: typeof userId === 'number' ? userId : 0,
+          userName: 'AnA',
+          threadId: resolvedThreadId || undefined,
+        });
+        executedActions = guidance.actions;
+      } catch (e: unknown) {
+        console.warn('[AnA RI] Guidance executor failed:', e instanceof Error ? e.message : String(e));
+      }
+    }
+
+    // Command executor — execute operational commands (create project, artifact, task, etc.) (non-blocking)
+    let executedCommands: any[] = [];
+    if (response.content && orgId) {
+      try {
+        const cmdCtx: CommandContext = {
+          userId: typeof userId === 'number' ? userId : 0,
+          organizationId: Number(orgId),
+          activeProjectId: chatProjectIdForActions
+            ? typeof chatProjectIdForActions === 'string'
+              ? parseInt(chatProjectIdForActions, 10)
+              : chatProjectIdForActions
+            : undefined,
+        };
+        const cmdResult = await processCommandsInResponse(response.content, cmdCtx);
+        executedCommands = cmdResult.executedCommands;
+        if (executedCommands.length > 0) {
+          console.log(`[AnA RI] Executed ${executedCommands.length} command(s)`);
+        }
+      } catch (e: unknown) {
+        console.warn('[AnA RI] Command executor failed:', e instanceof Error ? e.message : String(e));
+      }
+    }
+
+    // Parse grounding mode from AnA's response
+    const groundingInfo = parseGroundingMode(response.content);
+    const cleanedResponse = stripGroundingBlock(response.content);
+
     const responsePayload = {
-      response: response.content,
+      response: cleanedResponse,
       thread_id: resolvedThreadId,
       orchestration: {
         detectedIntent: orchestration.detectedIntent,
@@ -621,8 +765,29 @@ router.post('/chat', async (req: Request, res: Response) => {
         workstreamHandoff: orchestration.workstreamHandoff,
         suggestedActions: orchestration.suggestedActions,
         meta: orchestration.orchestrationMeta,
-        groundingContext: orchestration.groundingContext || undefined,
         goalPlan,
+      },
+      grounding: {
+        mode: groundingInfo.mode,
+        contextUsed: groundingInfo.contextUsed,
+        confidence: groundingInfo.confidence,
+      },
+      enrichment: {
+        sources: chatEnrichment.sources,
+        meta: chatEnrichment.enrichmentMeta || null,
+      },
+      memory: {
+        atomCount: chatMemoryResult.atoms?.length || 0,
+        diagnostics: chatMemoryResult.diagnostics || null,
+        // Lightweight atom summaries for transparency panel
+        atomSummaries: (chatMemoryResult.atoms || []).slice(0, 8).map(a => ({
+          id: a.id,
+          layer: a.layer,
+          title: a.title,
+          category: a.category,
+          confidence: a.metadata?.confidence ?? null,
+          source: a.metadata?.source?.documentName || null,
+        })),
       },
       evaluation: {
         grade: evaluation.grade,
@@ -642,6 +807,8 @@ router.post('/chat', async (req: Request, res: Response) => {
       model: response.model,
       usage: response.usage,
       persistenceFailed,
+      executedActions,
+      executedCommands,
       _meta: {
         ...(correlationId && { correlationId }),
         ...(source_surface ? { sourceSurface: source_surface } : {}),
@@ -656,8 +823,17 @@ router.post('/chat', async (req: Request, res: Response) => {
     }
 
     return sendSuccess(res, responsePayload);
-  } catch (error: any) {
-    console.error('[AnA RI] Chat error:', error);
+  } catch (error: unknown) {
+    const isTimeout =
+      abortController.signal.aborted ||
+      (error instanceof Error && error.message.includes('gateway timeout'));
+    const statusCode = isTimeout ? 504 : 500;
+    const errorCode = isTimeout ? 'AI_GATEWAY_TIMEOUT' : 'INTERNAL_ERROR';
+    const errorMsg = isTimeout
+      ? 'AI response timed out — please try again or simplify your request'
+      : (error instanceof Error ? error.message : 'Internal server error');
+
+    console.error(`[AnA RI] Chat error (${errorCode}):`, error);
     void logKernelDecision({
       requestId: `ana-ri-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
       route: '/api/ana-ri/chat',
@@ -666,10 +842,12 @@ router.post('/chat', async (req: Request, res: Response) => {
       routingStrategy: 'quality_optimized',
       selectedTools: [],
       outcome: 'failed',
-      errorMessage: error?.message || 'unknown error',
-      decisionRationale: 'AnA RI route failed before completion.',
+      errorMessage: (error instanceof Error ? error.message : 'unknown error'),
+      decisionRationale: isTimeout ? 'AnA RI route timed out.' : 'AnA RI route failed before completion.',
     });
-    return sendError(res, 500, error?.message || 'Internal server error', null, 'INTERNAL_ERROR');
+    return sendError(res, statusCode, errorMsg, null, errorCode);
+  } finally {
+    clearTimeout(requestDeadline);
   }
 });
 
@@ -678,6 +856,15 @@ router.post('/chat', async (req: Request, res: Response) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 router.post('/stream', async (req: Request, res: Response) => {
+  let keepaliveTimer: ReturnType<typeof setInterval> | null = null;
+  let streamDeadlineTimer: ReturnType<typeof setTimeout> | null = null;
+  const cleanupStreamTimers = () => {
+    if (keepaliveTimer) { clearInterval(keepaliveTimer); keepaliveTimer = null; }
+    if (streamDeadlineTimer) { clearTimeout(streamDeadlineTimer); streamDeadlineTimer = null; }
+  };
+  // Ensure timers are cleaned up if the client disconnects early
+  res.on('close', cleanupStreamTimers);
+
   try {
     const {
       message,
@@ -740,6 +927,46 @@ router.post('/stream', async (req: Request, res: Response) => {
       authoringContextBlock = parts.join('\n');
     }
 
+    // Pre-fetch intelligence context in parallel (non-blocking)
+    const streamProjectId = project_context?.projectId
+      ? Number(project_context.projectId)
+      : project_id
+        ? Number(project_id)
+        : authoring_context?.projectId
+          ? Number(authoring_context.projectId)
+          : null;
+    const streamOrgId = orgId ? Number(orgId) : null;
+
+    const [streamIntelligenceProfile, streamFeedbackContext, streamRimContext] = await Promise.all([
+      prefetchProjectIntelligence(streamProjectId, streamOrgId).catch(() => null),
+      (async () => {
+        if (!streamProjectId || !streamOrgId) return null;
+        try {
+          const summary = await getFeedbackSummary(streamProjectId, streamOrgId);
+          if (summary) {
+            return {
+              totalFeedback: summary.totalFeedback || 0,
+              acceptanceRate: summary.acceptanceRate ?? 100,
+              topDismissedTypes: summary.topDismissedTypes || [],
+            };
+          }
+          return null;
+        } catch (e: unknown) {
+          console.warn('[AnA RI stream] Feedback prefetch failed:', e instanceof Error ? e.message : 'unknown');
+          return null;
+        }
+      })(),
+      (async () => {
+        if (!streamProjectId) return null;
+        try {
+          return await preloadRIMContext(String(streamProjectId), streamOrgId ?? undefined);
+        } catch (e: unknown) {
+          console.warn('[AnA RI stream] RIM context prefetch failed:', e instanceof Error ? e.message : 'unknown');
+          return null;
+        }
+      })(),
+    ]);
+
     // Orchestrate
     const orchestration = orchestrate({
       message,
@@ -749,6 +976,20 @@ router.post('/stream', async (req: Request, res: Response) => {
       documentContext: document_context,
       submissionType: submission_type as SubmissionType | undefined,
       conversationHistory: conversation_history,
+      // Pass authoring context so orchestrator can inject document-state directives
+      authoringContext: authoring_context && typeof authoring_context === 'object'
+        ? {
+            projectId: authoring_context.projectId || req.body.context?.projectId,
+            sectionCode: authoring_context.sectionCode,
+            moduleCode: authoring_context.moduleCode,
+            artifactId: authoring_context.artifactId,
+            artifactStatus: authoring_context.artifactStatus,
+            workflowStage: authoring_context.workflowStage,
+            _rimContext: streamRimContext ?? undefined,
+          }
+        : undefined,
+      _projectIntelligenceProfile: streamIntelligenceProfile,
+      _feedbackContext: streamFeedbackContext,
     });
 
     if (authoringContextBlock) {
@@ -766,8 +1007,8 @@ router.post('/stream', async (req: Request, res: Response) => {
 
     // Intelligence + memory + enrichment — run in PARALLEL for speed
     const [intelligencePrefix, memoryResult, enrichment] = await Promise.all([
-      getIntelligencePrefix(orgId ? Number(orgId) : undefined, project_id).catch((err) => {
-        console.warn('[AnA RI] Intelligence prefix failed:', err?.message);
+      getIntelligencePrefix(orgId ? Number(orgId) : undefined, project_id).catch((err: unknown) => {
+        console.warn('[AnA RI] Intelligence prefix failed:', err instanceof Error ? err.message : 'unknown error');
         return '';
       }),
       buildMemoryContextForChat({
@@ -777,8 +1018,8 @@ router.post('/stream', async (req: Request, res: Response) => {
         query: message,
         limitPerLayer: 4,
         maxChars: 3500,
-      }).catch((err) => {
-        console.warn('[AnA RI] Memory context failed:', err?.message);
+      }).catch((err: unknown) => {
+        console.warn('[AnA RI] Memory context failed:', err instanceof Error ? err.message : 'unknown error');
         return { memoryBlock: '', atoms: [], diagnostics: null };
       }),
       enrichContextForChat({
@@ -786,9 +1027,9 @@ router.post('/stream', async (req: Request, res: Response) => {
         projectId: project_id,
         organizationId: orgId ? Number(orgId) : undefined,
         submissionType: orchestration.detectedSubmissionType || undefined,
-      }).catch((err) => {
-        console.warn('[AnA RI] Context enrichment failed:', err?.message);
-        return { block: '', sources: [] as string[], failures: ['enrichment-total-failure'] };
+      }).catch((err: unknown) => {
+        console.warn('[AnA RI] Context enrichment failed:', err instanceof Error ? err.message : 'unknown error');
+        return { block: '', sources: [] as string[] };
       }),
     ]);
 
@@ -815,8 +1056,8 @@ router.post('/stream', async (req: Request, res: Response) => {
           'ana-ri'
         );
         await saveMessage(threadId, 'user', message);
-      } catch (e: any) {
-        console.error('[AnA RI Stream] Thread persistence failed:', e?.message);
+      } catch (e: unknown) {
+        console.error('[AnA RI Stream] Thread persistence failed:', e instanceof Error ? e.message : 'unknown error');
         persistenceFailed = true;
       }
     }
@@ -882,6 +1123,21 @@ router.post('/stream', async (req: Request, res: Response) => {
       'X-Accel-Buffering': 'no',
     });
 
+    // SSE keepalive — prevents proxies/load-balancers from dropping idle connections
+    keepaliveTimer = setInterval(() => {
+      if (!res.writableEnded) res.write(': keepalive\n\n');
+    }, 15_000);
+
+    // Maximum stream duration — graceful close after 120s to prevent zombie connections
+    streamDeadlineTimer = setTimeout(() => {
+      if (!res.writableEnded) {
+        console.warn('[AnA RI Stream] Stream deadline exceeded (120s), closing gracefully');
+        res.write(`data: ${JSON.stringify({ type: 'error', error: 'Stream timeout exceeded — partial response delivered' })}\n\n`);
+        cleanupStreamTimers();
+        res.end();
+      }
+    }, 120_000);
+
     // Send thread_id immediately so client can track
     res.write(`data: ${JSON.stringify({ type: 'thread_id', thread_id: threadId })}\n\n`);
 
@@ -944,8 +1200,8 @@ router.post('/stream', async (req: Request, res: Response) => {
     if (orgId && threadId && fullContent) {
       try {
         await saveMessage(threadId, 'assistant', fullContent);
-      } catch (e: any) {
-        console.error('[AnA RI Stream] Assistant persist failed:', e?.message);
+      } catch (e: unknown) {
+        console.error('[AnA RI Stream] Assistant persist failed:', e instanceof Error ? e.message : 'unknown error');
         persistenceFailed = true;
       }
     }
@@ -976,8 +1232,8 @@ router.post('/stream', async (req: Request, res: Response) => {
           threadId: threadId || undefined,
         });
         executedActions = guidance.actions;
-      } catch (e: any) {
-        console.warn('[AnA RI Stream] Guidance executor failed:', e?.message);
+      } catch (e: unknown) {
+        console.warn('[AnA RI Stream] Guidance executor failed:', e instanceof Error ? e.message : 'unknown error');
       }
     }
 
@@ -1002,9 +1258,15 @@ router.post('/stream', async (req: Request, res: Response) => {
         if (executedCommands.length > 0) {
           console.log(`[AnA RI Stream] Executed ${executedCommands.length} command(s)`);
         }
-      } catch (e: any) {
-        console.warn('[AnA RI Stream] Command executor failed:', e?.message);
+      } catch (e: unknown) {
+        console.warn('[AnA RI Stream] Command executor failed:', e instanceof Error ? e.message : 'unknown error');
       }
+    }
+
+    // Extract intelligence from conversation (non-blocking, every 6th message)
+    if (project_id && orgId && messages.length >= 6 && messages.length % 6 === 0) {
+      extractThreadIntelligence(messages, project_id, orgId)
+        .catch((e: unknown) => console.warn('[AnA RI] Intelligence extraction failed:', e instanceof Error ? e.message : String(e)));
     }
 
     // Warn client if thread persistence failed
@@ -1012,7 +1274,20 @@ router.post('/stream', async (req: Request, res: Response) => {
       res.write(`data: ${JSON.stringify({ type: 'warning', message: 'Thread persistence failed' })}\n\n`);
     }
 
-    // Send done event
+    // Parse and strip grounding mode from the full streamed response
+    const streamGrounding = parseGroundingMode(fullContent);
+    if (streamGrounding.mode) {
+      // Tell the frontend to strip the grounding block from the rendered message
+      const groundingBlockMatch = fullContent.match(/\n*```ana-grounding\s*\n[\s\S]*?```\s*$/);
+      if (groundingBlockMatch) {
+        res.write(`data: ${JSON.stringify({
+          type: 'grounding_strip',
+          stripFromEnd: groundingBlockMatch[0].length,
+        })}\n\n`);
+      }
+    }
+
+    // Send done event with rich metadata
     res.write(
       `data: ${JSON.stringify({
         type: 'done',
@@ -1023,14 +1298,25 @@ router.post('/stream', async (req: Request, res: Response) => {
         executedActions: executedActions.length > 0 ? executedActions : undefined,
         executedCommands: executedCommands.length > 0 ? executedCommands : undefined,
         enrichmentSources: enrichment.sources.length > 0 ? enrichment.sources : undefined,
-        enrichmentFailures: enrichment.failures && enrichment.failures.length > 0 ? enrichment.failures : undefined,
-        groundingContext: orchestration.groundingContext || undefined,
+        grounding: streamGrounding.mode ? {
+          mode: streamGrounding.mode,
+          contextUsed: streamGrounding.contextUsed,
+          confidence: streamGrounding.confidence,
+        } : undefined,
+        enrichmentMeta: enrichment.enrichmentMeta || undefined,
+        memoryMeta: {
+          atomCount: memoryResult.atoms?.length || 0,
+          diagnostics: memoryResult.diagnostics || null,
+        },
       })}\n\n`
     );
 
+    cleanupStreamTimers();
     res.end();
-  } catch (error: any) {
-    console.error('[AnA RI Stream] Error:', error.message);
+  } catch (error: unknown) {
+    console.error('[AnA RI Stream] Error:', error instanceof Error ? error.message : String(error));
+    // Always clean up timers on error path
+    cleanupStreamTimers();
     if (res.headersSent) {
       res.write(
         `data: ${JSON.stringify({
@@ -1100,8 +1386,8 @@ router.post('/plan', async (req: Request, res: Response) => {
         detectedSubmissionType: orchestration.detectedSubmissionType,
       },
     });
-  } catch (error: any) {
-    return sendError(res, 500, error?.message || 'Failed to compute plan', null, 'PLANNER_ERROR');
+  } catch (error: unknown) {
+    return sendError(res, 500, (error instanceof Error ? error.message : 'Failed to compute plan'), null, 'PLANNER_ERROR');
   }
 });
 
@@ -1314,9 +1600,9 @@ router.post('/generate', async (req: Request, res: Response) => {
       provider: result.provider,
       model: result.model,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[AnA RI] Generate error:', error);
-    return sendError(res, 500, error?.message || 'Internal server error', null, 'INTERNAL_ERROR');
+    return sendError(res, 500, (error instanceof Error ? error.message : 'Internal server error'), null, 'INTERNAL_ERROR');
   }
 });
 
@@ -1513,12 +1799,12 @@ router.post('/execute', async (req: Request, res: Response) => {
         message: `Command ${command} did not produce a result.`,
       }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[AnA RI] Command execution error:', error);
     return sendError(
       res,
       500,
-      error?.message || 'Command execution failed',
+      (error instanceof Error ? error.message : 'Command execution failed'),
       null,
       'EXECUTION_ERROR'
     );
@@ -1533,11 +1819,11 @@ router.get('/commands', async (_req: Request, res: Response) => {
   try {
     const { COMMAND_REGISTRY } = await import('../services/ana-ri/command-executor.js');
     return sendSuccess(res, { commands: COMMAND_REGISTRY });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return sendError(
       res,
       503,
-      error?.message || 'Command registry unavailable',
+      (error instanceof Error ? error.message : 'Command registry unavailable'),
       null,
       'COMMANDS_UNAVAILABLE'
     );

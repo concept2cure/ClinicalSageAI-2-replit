@@ -58,6 +58,20 @@ export const queryKeys = {
       ['concept2cure', 'ind-sections', projectId] as const,
     projectSections: (projectId: number | string) =>
       ['concept2cure', 'project-sections', projectId] as const,
+    status: (projectId: number | string) =>
+      ['concept2cure', 'ind', 'status', projectId] as const,
+  },
+
+  // ── Device Submissions ────────────────────────────────────────────────────
+  device: {
+    status: (deviceType: string, projectId: number | string) =>
+      ['concept2cure', 'device', 'status', deviceType, projectId] as const,
+  },
+
+  // ── Submission Readiness ──────────────────────────────────────────────────
+  submission: {
+    projectArtifacts: (projectId: number | string) =>
+      ['concept2cure', 'project-artifacts', projectId] as const,
   },
 
   // ── Precedents ─────────────────────────────────────────────────────────────

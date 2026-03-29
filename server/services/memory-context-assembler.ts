@@ -51,6 +51,7 @@ export interface MemoryAtomMetadata {
 export interface RetrievedMemoryAtom {
   id: number;
   layer: MemoryLayer;
+  category?: string;
   title: string;
   content: string;
   similarity?: number;
@@ -108,6 +109,7 @@ function mapClientEntryToAtom(entry: SemanticMemoryHit<ClientMemoryEntry>): Retr
   return {
     id: entry.id,
     layer: 'client_memory',
+    category: (entry as any).category || undefined,
     title: entry.title,
     content: entry.content,
     similarity: entry.similarity,
@@ -131,6 +133,7 @@ function mapProjectEntryToAtom(entry: SemanticMemoryHit<ProjectMemoryEntry>): Re
   return {
     id: entry.id,
     layer: 'project_memory',
+    category: (entry as any).category || undefined,
     title: entry.title,
     content: entry.content,
     similarity: entry.similarity,
@@ -272,14 +275,17 @@ export async function buildMemoryContextForChat(
     if (layerAtoms.length === 0) return;
 
     sections.push(
-      `## ${heading}\n` +
+      `## ${heading} (cite as [Source: category — title])\n` +
         layerAtoms
           .map(a => {
-            const scoreText = a.similarity ? ` (score ${(a.similarity * 100).toFixed(1)}%)` : '';
-            const sourceText = a.metadata?.source?.documentName
-              ? ` [source: ${a.metadata.source.documentName}]`
+            const categoryTag = a.category || layer;
+            const confidenceText = a.metadata?.confidence != null
+              ? ` | confidence: ${Math.round((a.metadata.confidence as number) * 100)}%`
               : '';
-            return `- ${a.title}${scoreText}${sourceText}: ${trimContent(a.content, 400)}`;
+            const sourceText = a.metadata?.source?.documentName
+              ? ` | doc: ${a.metadata.source.documentName}`
+              : '';
+            return `- [${categoryTag} | "${a.title}"${confidenceText}${sourceText}] ${trimContent(a.content, 400)}`;
           })
           .join('\n')
     );

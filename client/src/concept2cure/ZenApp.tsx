@@ -3128,7 +3128,7 @@ export const ZenApp: React.FC = () => {
                     projectId={activeProjectId}
                     projectName={activeProject?.name}
                     projectType={activeProject?.type}
-                    onSectionClick={sectionCode => {
+                    onSectionClick={(sectionCode, sectionTitle) => {
                       const moduleNum = sectionCode.charAt(0);
                       const match = projectArtifacts.find((a: any) =>
                         a.ctdSection === sectionCode ||
@@ -3141,7 +3141,7 @@ export const ZenApp: React.FC = () => {
                         setLayoutMode('regulatory-workspace');
                       } else {
                         setPendingEditorContent({
-                          title: sectionCode,
+                          title: sectionTitle || `Section ${sectionCode}`,
                           content: '',
                           ctdSection: sectionCode,
                         });

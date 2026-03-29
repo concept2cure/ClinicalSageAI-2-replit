@@ -34,6 +34,10 @@ export {
   getProjectMemory,
   type ProjectIntelligenceSummary,
   type IntelligenceUpdatePayload,
+  type RiskFactor,
+  type OpenQuestion,
+  type KeyDecision,
+  type LearnedInsight,
 } from './project-intelligence-service.js';
 
 export {

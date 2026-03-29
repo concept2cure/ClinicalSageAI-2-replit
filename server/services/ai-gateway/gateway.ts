@@ -796,8 +796,35 @@ export class AIGateway {
     let outputTokens = 0;
     let stopReason = 'unknown';
 
+    // Per-chunk watchdog — detect stalled streams (no data for 30s)
+    let lastChunkTime = Date.now();
+    const chunkTimeoutMs = 30_000;
+    let streamStalled = false;
+    const chunkWatchdog = setInterval(() => {
+      if (Date.now() - lastChunkTime > chunkTimeoutMs) {
+        streamStalled = true;
+        clearInterval(chunkWatchdog);
+        console.warn(
+          `[AI Gateway] Stream stalled — no chunk received for ${chunkTimeoutMs / 1000}s. ` +
+          `Accumulated ${content.length} chars so far. Aborting stream.`
+        );
+        // If the stream object has a controller/abort method, try to close it
+        try {
+          if (stream && typeof (stream as any).controller?.abort === 'function') {
+            (stream as any).controller.abort();
+          }
+        } catch { /* best-effort abort */ }
+      }
+    }, 5_000);
+
     try {
       for await (const event of stream as AsyncIterable<any>) {
+        // Update watchdog timestamp on every event
+        lastChunkTime = Date.now();
+
+        // Break out if watchdog flagged a stall (race between interval and iterator)
+        if (streamStalled) break;
+
         if (event.type === 'content_block_delta') {
           if (event.delta?.type === 'text_delta') {
             content += event.delta.text;
@@ -825,8 +852,16 @@ export class AIGateway {
       }
     } catch (streamErr: any) {
       console.error('[AI Gateway] Stream interrupted:', streamErr?.message);
-      // Return whatever content was accumulated so far
+      // Return whatever content was accumulated so far (partial response)
       if (!content) throw streamErr; // Re-throw if nothing was captured
+    } finally {
+      clearInterval(chunkWatchdog);
+    }
+
+    // If stream stalled but we have partial content, mark finish reason accordingly
+    if (streamStalled && content) {
+      stopReason = 'chunk_timeout';
+      console.warn(`[AI Gateway] Returning partial response (${content.length} chars) after stream stall`);
     }
 
     return {

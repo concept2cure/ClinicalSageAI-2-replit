@@ -49,6 +49,8 @@ import {
   FolderOpen,
 } from 'lucide-react';
 import { ToolExecutionBlock, ThinkingBlock, DoneIndicator } from './ClaudeStyleBlocks';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 marked.setOptions({ breaks: true, gfm: true });
 
@@ -271,12 +273,41 @@ interface AnaMessage {
     enrichmentSources?: string[];
     enrichmentFailures?: string[];
   };
-  /** Executed slash commands or workflow actions */
+  /** Executed actions from guidance executor */
   executedActions?: Array<{
     actionType: string;
     executed: boolean;
     error?: string;
-    [key: string]: any;
+    [key: string]: unknown;
+  }>;
+  /** Executed operational commands */
+  executedCommands?: Array<{
+    command: string;
+    success: boolean;
+    message?: string;
+    action?: string;
+    [key: string]: unknown;
+  }>;
+  /** Grounding mode metadata */
+  grounding?: {
+    mode: 'grounded' | 'inferred' | 'actioned' | 'blocked' | null;
+    contextUsed: string[];
+    confidence: 'high' | 'moderate' | 'low' | null;
+  };
+  /** Enrichment sources that informed this response */
+  enrichmentSources?: string[];
+  /** Enrichment sources that failed during context building */
+  enrichmentFailures?: string[];
+  /** Memory atom count used in this response */
+  memoryAtomCount?: number;
+  /** Memory atom summaries for transparency */
+  memoryAtoms?: Array<{
+    id: number;
+    layer: string;
+    title: string;
+    category?: string;
+    confidence?: number | null;
+    source?: string | null;
   }>;
 }
 
@@ -501,6 +532,9 @@ const SLASH_COMMANDS: SlashCommand[] = [
   { command: '/deficiencies', description: 'Known deficiency patterns', category: 'Analysis' },
   { command: '/simulate', description: 'Simulate reviewer challenges', category: 'Analysis' },
   { command: '/precedent', description: 'Similar products / predicates', category: 'Analysis' },
+  { command: '/iss', description: 'Integrated Summary of Safety — compile safety data across studies', category: 'Analysis' },
+  { command: '/ise', description: 'Integrated Summary of Efficacy — compile efficacy data across studies', category: 'Analysis' },
+  { command: '/ib', description: "Investigator's Brochure — generate or review IB content", category: 'Analysis' },
   // Biostatistics
   { command: '/sap', description: 'Generate Statistical Analysis Plan', category: 'Biostatistics' },
   { command: '/power', description: 'Sample size and power calculation', category: 'Biostatistics' },
@@ -513,6 +547,9 @@ const SLASH_COMMANDS: SlashCommand[] = [
   { command: '/csr', description: 'Clinical study report analysis', category: 'Subspecialties' },
   { command: '/device', description: '510(k), PMA, De Novo intelligence', category: 'Subspecialties' },
   { command: '/ectd', description: 'Module structure / artifact placement', category: 'Subspecialties' },
+  { command: '/smpc', description: 'Summary of Product Characteristics — EU labeling document', category: 'Subspecialties' },
+  { command: '/rmp', description: 'Risk Management Plan — EU pharmacovigilance document', category: 'Subspecialties' },
+  { command: '/uspi', description: 'US Prescribing Information — FDA labeling document', category: 'Subspecialties' },
   // Document Authoring
   { command: '/draft', description: 'Draft submission-ready CTD section', category: 'Authoring' },
   { command: '/audit', description: 'Hostile reviewer audit', category: 'Authoring' },
@@ -522,6 +559,8 @@ const SLASH_COMMANDS: SlashCommand[] = [
   { command: '/memo', description: 'Risk assessment memo (go/no-go)', category: 'Authoring' },
   { command: '/brief', description: 'Reviewer question anticipation brief', category: 'Authoring' },
   { command: '/strategy', description: 'Regulatory strategy note', category: 'Authoring' },
+  { command: '/narrative', description: 'Generate a regulatory narrative for the current section', category: 'Authoring' },
+  { command: '/report', description: 'Generate a structured report for the project', category: 'Authoring' },
   // Document Lifecycle
   { command: '/checklist', description: 'Compliance checklist generation', category: 'Lifecycle' },
   { command: '/freeze', description: 'Freeze document (immutable snapshot)', category: 'Lifecycle' },
@@ -660,10 +699,12 @@ function DomainPromptSection({
 }) {
   return (
     <div className="rounded-lg border border-stone-100 overflow-hidden">
-      <button
+      <Button
+        variant="ghost"
+        size="sm"
         onClick={onToggle}
         className={cn(
-          'w-full flex items-center justify-between px-3 py-2 text-left transition-colors',
+          'h-auto w-full flex items-center justify-between px-3 py-2 text-left transition-colors rounded-none',
           expanded ? 'bg-stone-50' : 'hover:bg-stone-50/50',
         )}
       >
@@ -677,17 +718,19 @@ function DomainPromptSection({
           'w-3 h-3 text-stone-400 transition-transform',
           expanded && 'rotate-180',
         )} />
-      </button>
+      </Button>
       {expanded && (
         <div className="px-1.5 pb-1.5 space-y-0.5">
           {group.prompts.map(prompt => (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               key={prompt.id}
               onClick={() => onSelect(prompt)}
-              className="w-full text-left px-2.5 py-2 rounded-md text-[13px] text-stone-600 hover:bg-stone-100 hover:text-stone-800 transition-colors"
+              className="h-auto w-full text-left px-2.5 py-2 rounded-md text-[13px] text-stone-600 hover:bg-stone-100 hover:text-stone-800 transition-colors justify-start font-normal"
             >
               {prompt.label}
-            </button>
+            </Button>
           ))}
         </div>
       )}
@@ -719,6 +762,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 }) => {
   // AI Action system — unified execution spine (Phase 1)
   const aiAction = useAIAction();
+  const { toast } = useToast();
 
   const [messages, setMessages] = useState<AnaMessage[]>([]);
   const [input, setInput] = useState('');
@@ -779,13 +823,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       localStorage.getItem('currentOrganizationId');
     if (!tenantId) return;
 
-    fetch(`/api/firecrawl/quota-status?tenantId=${tenantId}`, {
-      credentials: 'include',
-      headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
-    })
+    apiRequest('GET', `/api/firecrawl/quota-status?tenantId=${tenantId}`)
       .then(async res => {
         const payload = await res.json().catch(() => null);
-        if (!res.ok || !payload?.success) return;
+        if (!payload?.success) return;
         const quota = payload.data;
         setFirecrawlQuotaRemaining(Number(quota?.remaining ?? 0));
         if (quota?.reason === 'policy_blocked') {
@@ -1524,7 +1565,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   );
                 }
               })
-              .catch(() => {})
+              .catch(() => { toast({ title: 'Research poll failed', description: 'Could not check research job status.', variant: 'destructive' }); })
               .finally(() => setIsThinking(false));
           };
         } catch (err) {
@@ -1877,6 +1918,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               content: assistantContent,
               timestamp: new Date(),
               executedActions: data.executedActions || undefined,
+              executedCommands: data.executedCommands || undefined,
               modelProvider: data.provider || data.modelProvider || undefined,
               modelName: data.model || data.modelName || undefined,
               evidenceUsage: data.evidenceUsage || undefined,
@@ -1888,7 +1930,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 inputTokens: data.usage.prompt_tokens || data.usage.inputTokens,
                 outputTokens: data.usage.completion_tokens || data.usage.outputTokens,
               } : undefined,
+              // Grounding, enrichment, and memory metadata
+              grounding: data.grounding || undefined,
               groundingContext: data.orchestration?.groundingContext || data.groundingContext || undefined,
+              enrichmentSources: data.enrichment?.sources || data.enrichmentSources || undefined,
+              enrichmentFailures: data.enrichment?.meta?.sourcesFailed || data.enrichmentMeta?.sourcesFailed || undefined,
+              memoryAtomCount: data.memory?.atomCount || undefined,
+              memoryAtoms: data.memory?.atomSummaries || undefined,
             },
           ]);
 
@@ -2109,6 +2157,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             handleSend('Open my most recently edited section. Show me where I left off.');
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Resume my last section — show me where I left off.');
         }
       })();
@@ -2170,6 +2219,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend(
             authoringContext?.sectionCode
               ? `What is blocking section ${authoringContext.sectionCode} from promotion to review?`
@@ -2233,6 +2283,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             onRefreshIntelligence?.();
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Compare the current document against the last approved version.');
         }
       })();
@@ -2315,6 +2366,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Run preflight on this section.');
         }
       })();
@@ -2402,6 +2454,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend(`Run preflight on module ${moduleCode}.`);
         }
       })();
@@ -2487,6 +2540,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Run dossier preflight for this submission.');
         }
       })();
@@ -2667,11 +2721,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           return;
         }
         try {
-          const res = await fetch('/api/authoring-actions/approve-artifact', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ projectId, artifactId }),
-          });
+          const res = await apiRequest('POST', '/api/authoring-actions/approve-artifact', { projectId, artifactId });
           const data = await res.json();
           if (data.approved) {
             const decisionNote = data.decisionId
@@ -2702,6 +2752,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           }
           onRefreshIntelligence?.();
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Approve this artifact for the next governance stage.');
         }
       })();
@@ -2726,11 +2777,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           return;
         }
         try {
-          const res = await fetch('/api/authoring-actions/lock-artifact', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ projectId, artifactId }),
-          });
+          const res = await apiRequest('POST', '/api/authoring-actions/lock-artifact', { projectId, artifactId });
           const data = await res.json();
           if (data.locked) {
             setMessages(prev => [
@@ -2758,6 +2805,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           }
           onRefreshIntelligence?.();
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Lock this artifact for submission.');
         }
       })();
@@ -2782,11 +2830,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           return;
         }
         try {
-          const res = await fetch('/api/authoring-actions/mark-submission-ready', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ projectId, artifactId }),
-          });
+          const res = await apiRequest('POST', '/api/authoring-actions/mark-submission-ready', { projectId, artifactId });
           const data = await res.json();
           if (data.submissionReady) {
             const decisionNote = data.decisionId
@@ -2817,6 +2861,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           }
           onRefreshIntelligence?.();
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Mark this artifact as submission-ready.');
         }
       })();
@@ -2871,6 +2916,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Prepare a governed correction draft for the current section.');
         }
       })();
@@ -2933,6 +2979,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Check consistency across linked sections.');
         }
       })();
@@ -2980,6 +3027,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('What changed after the last resolution?');
         }
       })();
@@ -3041,6 +3089,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend(`Show readiness for module ${moduleCode}.`);
         }
       })();
@@ -3094,6 +3143,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend(`Gather evidence for section ${sectionCode}.`);
         }
       })();
@@ -3155,6 +3205,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend(`What does ${body} expect in section ${sectionCode}?`);
         }
       })();
@@ -3214,6 +3265,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Check this section against linked sections for consistency.');
         }
       })();
@@ -3268,6 +3320,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend(`What is missing for ${body} in section ${sectionCode}?`);
         }
       })();
@@ -3292,11 +3345,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         });
         const finding = sorted[0];
         try {
-          const res = await fetch('/api/authoring-actions/explain-contradiction-resolution', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ projectId, findingId: finding.id, finding }),
-          });
+          const res = await apiRequest('POST', '/api/authoring-actions/explain-contradiction-resolution', { projectId, findingId: finding.id, finding });
           const data = await res.json();
           if (data.status === 'data' || data.success) {
             setMessages(prev => [
@@ -3322,6 +3371,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Explain the contradictions and how to resolve them.');
         }
       })();
@@ -3343,11 +3393,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         );
         const finding = blocking[0] || contradictions[0];
         try {
-          const res = await fetch('/api/authoring-actions/plan-contradiction-resolution', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ projectId, findingId: finding.id, finding }),
-          });
+          const res = await apiRequest('POST', '/api/authoring-actions/plan-contradiction-resolution', { projectId, findingId: finding.id, finding });
           const data = await res.json();
           if (data.status === 'data' || data.success) {
             const plan = data.data;
@@ -3385,6 +3431,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Plan resolution for the blocking contradictions.');
         }
       })();
@@ -3400,9 +3447,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           return;
         }
         try {
-          const res = await fetch(`/api/authoring-actions/project-resolution-status/${projectId}`, {
-            headers: getAuthHeaders(),
-          });
+          const res = await apiRequest('GET', `/api/authoring-actions/project-resolution-status/${projectId}`);
           const data = await res.json();
           if (data.status === 'data' || data.success) {
             const plans = data.data?.plans;
@@ -3445,6 +3490,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('What is the resolution status of this project?');
         }
       })();
@@ -3558,7 +3604,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               );
             })}
             {isThinking && (
-              <div className="px-4 py-3 bg-white">
+              <div className="px-4 py-3 bg-white" role="status" aria-live="polite" aria-busy="true">
                 <div className="flex gap-2.5 max-w-3xl mx-auto">
                   <div className="w-6 h-6 rounded-full bg-[#D97757] flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Sparkles className="w-3 h-3 text-white" />
@@ -3590,7 +3636,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 aria-label="Slash commands"
               >
                 {filteredSlashCommands.map((cmd, i) => (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     key={cmd.command}
                     type="button"
                     role="option"
@@ -3598,7 +3646,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     onMouseDown={(e) => { e.preventDefault(); selectSlashCommand(cmd); }}
                     onMouseEnter={() => setSlashMenuIndex(i)}
                     className={cn(
-                      'w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors',
+                      'h-auto w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors rounded-none justify-start font-normal',
                       i === slashMenuIndex ? 'bg-[#FAF9F5]' : 'hover:bg-[#FAF9F5]/50'
                     )}
                   >
@@ -3611,7 +3659,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     <span className={cn('text-[10px] font-medium', SLASH_CATEGORY_COLORS[cmd.category] || 'text-stone-400')}>
                       {cmd.category}
                     </span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}
@@ -3643,22 +3691,26 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"
               />
               {hasMessages && (
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => {
                     setMessages([]);
                     threadIdRef.current = null;
                   }}
-                  className="flex-shrink-0 p-1.5 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg transition-colors"
+                  className="h-auto w-auto flex-shrink-0 p-1.5 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg transition-colors"
                   title="New thread"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
-                </button>
+                </Button>
               )}
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => handleSend()}
                 disabled={!input.trim() || isThinking}
                 className={cn(
-                  'flex-shrink-0 p-2 rounded-full transition-colors duration-150',
+                  'h-auto w-auto flex-shrink-0 p-2 rounded-full transition-colors duration-150',
                   input.trim() && !isThinking
                     ? 'bg-[#141413] text-white hover:bg-[#2D2C28]'
                     : 'bg-[#E8E6DC] text-[#B0AEA5] cursor-not-allowed'
@@ -3666,7 +3718,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 aria-label="Send message"
               >
                 <ArrowUp className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -3779,33 +3831,37 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               {effectiveSuggestedActions && effectiveSuggestedActions.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg mx-auto">
                   {effectiveSuggestedActions.slice(0, 4).map(action => (
-                    <button
+                    <Button
+                      variant="outline"
+                      size="sm"
                       key={action.id}
                       onClick={() => handleSuggestedAction(action)}
-                      className="text-left px-4 py-3 rounded-xl border border-[#E8E6DC] hover:border-[#D8D5CA] hover:bg-[#FAF9F5] transition-colors group"
+                      className="h-auto text-left px-4 py-3 rounded-xl border border-[#E8E6DC] hover:border-[#D8D5CA] hover:bg-[#FAF9F5] transition-colors group flex-col items-start"
                     >
                       <p className="text-sm font-medium text-[#4D4B45] group-hover:text-[#141413]">
                         {action.label}
                       </p>
                       {action.description && (
-                        <p className="text-xs text-[#B0AEA5] mt-0.5 line-clamp-1">
+                        <p className="text-xs text-[#B0AEA5] mt-0.5 line-clamp-1 font-normal">
                           {action.description}
                         </p>
                       )}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               )}
 
               {/* Domain prompt browser — all capabilities organized by area */}
               <div className="mt-6 max-w-lg mx-auto">
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setShowDomainPrompts(prev => !prev)}
-                  className="text-[11px] text-stone-400 hover:text-stone-600 transition-colors mx-auto flex items-center gap-1"
+                  className="h-auto text-[11px] text-stone-400 hover:text-stone-600 transition-colors mx-auto flex items-center gap-1 font-normal"
                 >
                   {showDomainPrompts ? 'Hide capabilities' : 'Browse all capabilities'}
                   <ChevronDown className={cn('w-3 h-3 transition-transform', showDomainPrompts && 'rotate-180')} />
-                </button>
+                </Button>
 
                 {showDomainPrompts && (
                   <div className="mt-3 space-y-1 text-left">
@@ -3888,7 +3944,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               autoFocus
                             />
                             <div className="flex gap-2 mt-1.5">
-                              <button
+                              <Button
+                                variant="default"
+                                size="sm"
                                 onClick={() => {
                                   if (editText.trim()) {
                                     const msgIdx = messages.findIndex(m => m.id === msg.id);
@@ -3897,16 +3955,18 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                     handleSend(editText.trim());
                                   }
                                 }}
-                                className="px-3 py-1 text-xs font-medium text-white bg-stone-900 rounded-md hover:bg-stone-800"
+                                className="h-auto px-3 py-1 text-xs font-medium text-white bg-stone-900 rounded-md hover:bg-stone-800"
                               >
                                 Send
-                              </button>
-                              <button
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => setEditingMsgId(null)}
-                                className="px-3 py-1 text-xs text-stone-500 hover:text-stone-700"
+                                className="h-auto px-3 py-1 text-xs text-stone-500 hover:text-stone-700 font-normal"
                               >
                                 Cancel
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         ) : (
@@ -3914,13 +3974,15 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap flex-1">
                               {msg.content}
                             </p>
-                            <button
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={() => { setEditingMsgId(msg.id); setEditText(msg.content); }}
-                              className="opacity-0 group-hover/user:opacity-100 p-1 text-stone-400 hover:text-stone-600 rounded transition-opacity flex-shrink-0"
+                              className="h-auto w-auto opacity-0 group-hover/user:opacity-100 p-1 text-stone-400 hover:text-stone-600 rounded transition-opacity flex-shrink-0"
                               title="Edit message"
                             >
                               <Pencil className="w-3 h-3" />
-                            </button>
+                            </Button>
                           </div>
                         )
                       ) : (
@@ -4017,6 +4079,30 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               ))}
                             </div>
                           )}
+                          {/* ── Executed Command Receipts ── */}
+                          {msg.executedCommands && msg.executedCommands.length > 0 && (
+                            <div className="my-1.5 space-y-1" role="log" aria-label="Command execution results" data-testid="ana-command-receipts">
+                              {msg.executedCommands.map((cmd, i) => (
+                                <div
+                                  key={`cmd-${i}`}
+                                  role="status"
+                                  className={cn(
+                                    'flex items-start gap-2 px-3 py-2 rounded-lg text-[12px] border',
+                                    cmd.success
+                                      ? 'bg-emerald-50/60 border-emerald-100 text-emerald-800'
+                                      : 'bg-red-50/60 border-red-100 text-red-800'
+                                  )}
+                                >
+                                  <span className="font-medium shrink-0">
+                                    {cmd.success ? '✓' : '✗'} {cmd.action || cmd.command}
+                                  </span>
+                                  {cmd.message && (
+                                    <span className="text-stone-600 truncate">{cmd.message}</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                           {/* ── Claude-style: Done indicator ── */}
                           {msg.role === 'assistant' && msg.isComplete && (
                             <DoneIndicator visible />
@@ -4063,7 +4149,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           )}
                           {/* Visual AI PPTX download button */}
                           {msg.pptx && (
-                            <button
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => {
                                 const blob = new Blob(
                                   [Uint8Array.from(atob(msg.pptx!.base64), c => c.charCodeAt(0))],
@@ -4076,11 +4164,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 a.click();
                                 URL.revokeObjectURL(url);
                               }}
-                              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-colors"
+                              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-colors h-auto"
+                              aria-label={`Download ${msg.pptx!.filename}`}
                             >
                               <Download className="w-3.5 h-3.5" />
                               {msg.pptx.filename}
-                            </button>
+                            </Button>
                           )}
                         </>
                       )}
@@ -4122,6 +4211,101 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               {msg.tokenUsage.outputTokens ? `${msg.tokenUsage.outputTokens} out` : ''}
                             </span>
                           )}
+                          {/* Grounding mode badge */}
+                          {msg.grounding?.mode && (
+                            <span
+                              data-testid="ana-grounding-badge"
+                              className={cn(
+                                'text-[10px] font-medium px-1.5 py-0.5 rounded mr-1',
+                                msg.grounding.mode === 'grounded'
+                                  ? 'text-emerald-700 bg-emerald-50'
+                                  : msg.grounding.mode === 'inferred'
+                                    ? 'text-amber-700 bg-amber-50'
+                                    : msg.grounding.mode === 'actioned'
+                                      ? 'text-blue-700 bg-blue-50'
+                                      : 'text-red-700 bg-red-50'
+                              )}
+                              title={
+                                msg.grounding.contextUsed.length > 0
+                                  ? `Context: ${msg.grounding.contextUsed.join(', ')}`
+                                  : `Mode: ${msg.grounding.mode}`
+                              }
+                            >
+                              {msg.grounding.mode === 'grounded'
+                                ? '● Grounded'
+                                : msg.grounding.mode === 'inferred'
+                                  ? '◐ Inferred'
+                                  : msg.grounding.mode === 'actioned'
+                                    ? '▶ Actioned'
+                                    : '○ Blocked'}
+                              {msg.grounding.confidence && msg.grounding.confidence !== 'high' && (
+                                <span className="ml-0.5 opacity-60">
+                                  ({msg.grounding.confidence})
+                                </span>
+                              )}
+                            </span>
+                          )}
+                          {/* Enrichment sources */}
+                          {msg.enrichmentSources && msg.enrichmentSources.length > 0 && (
+                            <span
+                              className="text-[10px] text-stone-400 mr-1"
+                              title={`Sources: ${msg.enrichmentSources.join(', ')}`}
+                            >
+                              {msg.enrichmentSources.length} source{msg.enrichmentSources.length !== 1 ? 's' : ''}
+                            </span>
+                          )}
+                          {/* Enrichment failures */}
+                          {msg.enrichmentFailures && msg.enrichmentFailures.length > 0 && (
+                            <span
+                              className="text-[10px] text-amber-600 mr-1"
+                              role="status"
+                              aria-live="polite"
+                              data-testid="ana-enrichment-failure"
+                              title={`Failed sources: ${msg.enrichmentFailures.join(', ')}. Response may be less contextual.`}
+                            >
+                              {msg.enrichmentFailures.length} source{msg.enrichmentFailures.length !== 1 ? 's' : ''} unavailable
+                            </span>
+                          )}
+                          {/* Memory atom count with expandable detail */}
+                          {msg.memoryAtomCount && msg.memoryAtomCount > 0 && (
+                            <span className="relative group">
+                              <span
+                                className="text-[10px] text-stone-400 mr-1 cursor-help"
+                                title="Memory atoms used in context — hover for details"
+                              >
+                                {msg.memoryAtomCount} mem
+                              </span>
+                              {msg.memoryAtoms && msg.memoryAtoms.length > 0 && (
+                                <div className="hidden group-hover:block group-focus-within:block absolute bottom-full left-0 mb-1.5 w-64 bg-white border border-stone-200 rounded-lg shadow-md p-2 z-50" role="tooltip" data-testid="ana-memory-panel">
+                                  <p className="text-[10px] font-medium text-stone-500 uppercase tracking-wide mb-1.5">
+                                    Memory Context ({msg.memoryAtomCount} atoms)
+                                  </p>
+                                  <div className="space-y-1 max-h-40 overflow-y-auto">
+                                    {msg.memoryAtoms.map((atom) => (
+                                      <div key={atom.id} className="flex items-start gap-1.5 text-[10px]">
+                                        <span className={cn(
+                                          'flex-shrink-0 px-1 py-0.5 rounded font-medium',
+                                          atom.layer === 'working_memory' ? 'text-blue-600 bg-blue-50'
+                                            : atom.layer === 'project_memory' ? 'text-blue-600 bg-blue-50'
+                                            : 'text-emerald-600 bg-emerald-50'
+                                        )}>
+                                          {atom.layer === 'working_memory' ? 'WM' : atom.layer === 'project_memory' ? 'PM' : 'CM'}
+                                        </span>
+                                        <span className="text-stone-600 truncate flex-1" title={atom.title}>
+                                          {atom.title}
+                                        </span>
+                                        {atom.confidence != null && (
+                                          <span className="text-stone-400 flex-shrink-0">
+                                            {Math.round(atom.confidence * 100)}%
+                                          </span>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </span>
+                          )}
                           {msg.evidenceUsage?.firecrawlRequested && (
                             <span
                               className={cn(
@@ -4137,54 +4321,68 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 : 'Firecrawl requested'}
                             </span>
                           )}
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handleCopy(msg.id, msg.content)}
-                            className="p-1 text-[#B0AEA5] hover:text-[#4D4B45] hover:bg-[#F5F4EF] rounded transition-colors"
+                            className="p-1 text-[#B0AEA5] hover:text-[#4D4B45] hover:bg-[#F5F4EF] rounded transition-colors h-auto w-auto"
                             title="Copy"
+                            aria-label="Copy message"
                           >
                             {copiedId === msg.id ? (
                               <Check className="w-3 h-3 text-green-600" />
                             ) : (
                               <Copy className="w-3 h-3" />
                             )}
-                          </button>
+                          </Button>
                           {/* Regenerate — Claude-style retry on assistant messages */}
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={handleRegenerate}
-                            className="p-1 text-[#B0AEA5] hover:text-[#4D4B45] hover:bg-[#F5F4EF] rounded transition-colors"
+                            className="p-1 text-[#B0AEA5] hover:text-[#4D4B45] hover:bg-[#F5F4EF] rounded transition-colors h-auto w-auto"
                             title="Regenerate"
+                            aria-label="Regenerate response"
                           >
                             <RefreshCw className="w-3 h-3" />
-                          </button>
-                          <button
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => {
                               apiRequest('POST', '/api/concept2cure/feedback', {
                                 messageId: msg.id,
                                 positive: true,
-                              }).catch(() => {});
+                              }).catch(() => { toast({ title: 'Feedback failed', description: 'Could not save your feedback. Please try again.', variant: 'destructive' }); });
                             }}
-                            className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded transition-colors"
+                            className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded transition-colors h-auto w-auto"
                             title="Good"
+                            aria-label="Rate response as good"
                           >
                             <ThumbsUp className="w-3 h-3" />
-                          </button>
-                          <button
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => {
                               apiRequest('POST', '/api/concept2cure/feedback', {
                                 messageId: msg.id,
                                 positive: false,
-                              }).catch(() => {});
+                              }).catch(() => { toast({ title: 'Feedback failed', description: 'Could not save your feedback. Please try again.', variant: 'destructive' }); });
                             }}
-                            className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded transition-colors"
+                            className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded transition-colors h-auto w-auto"
                             title="Bad"
+                            aria-label="Rate response as bad"
                           >
                             <ThumbsDown className="w-3 h-3" />
-                          </button>
+                          </Button>
                           {/* Save to Vault — persist AI response as a governed artifact */}
                           {contextProfile?.projectId &&
                             msg.content.length > 100 &&
                             !msg.savedAsArtifact && (
-                              <button
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 onClick={async () => {
                                   const numProjId = String(contextProfile.projectId).replace(
                                     /^proj_/,
@@ -4209,21 +4407,24 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                       );
                                     }
                                   } catch {
-                                    /* non-blocking */
+                                    /* non-blocking */ toast({ title: 'Save failed', description: 'Could not save to vault.', variant: 'destructive' });
                                   }
                                 }}
-                                className="p-1 text-stone-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                                className="p-1 text-stone-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors h-auto w-auto"
                                 title="Save to Vault"
+                                aria-label="Save to Vault"
                               >
                                 <Download className="w-3 h-3" />
-                              </button>
+                              </Button>
                             )}
                           {/* Insert into Editor — when onDraftInsert is available and content is substantial */}
                           {onDraftInsert &&
                             contextProfile?.projectId &&
                             msg.content.length > 100 &&
                             authoringContext?.sectionCode && (
-                              <button
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 onClick={() => {
                                   // Extract draft content: try code block, then content after "---", then strip markdown metadata
                                   let insertContent = msg.content;
@@ -4260,11 +4461,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                     )
                                   );
                                 }}
-                                className="p-1 text-stone-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                className="h-auto w-auto p-1 text-stone-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                                 title="Insert into Editor"
                               >
                                 <FileEdit className="w-3 h-3" />
-                              </button>
+                              </Button>
                             )}
                           {(msg as any).insertedToEditor && (
                             <span className="text-[10px] text-blue-600 font-medium ml-1">
@@ -4278,11 +4479,88 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           )}
                         </div>
                       )}
+                      {/* Grounding-aware contextual follow-up chips — shown on last assistant message */}
+                      {!isUser &&
+                        msg.id === messages.filter(m => m.role === 'assistant').at(-1)?.id &&
+                        msg.grounding?.mode &&
+                        msg.grounding.mode !== 'grounded' && (
+                          <div className="mt-2 flex flex-wrap gap-1.5" aria-live="polite" data-testid="ana-recovery-chips">
+                            {msg.grounding.mode === 'inferred' && (
+                              <>
+                                {!contextProfile?.projectId && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleSend('Show me my projects so I can select one.')}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-colors h-auto"
+                                  >
+                                    Select a project
+                                  </Button>
+                                )}
+                                {contextProfile?.projectId && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleSend('/status')}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 transition-colors h-auto"
+                                  >
+                                    Load project context
+                                  </Button>
+                                )}
+                              </>
+                            )}
+                            {msg.grounding.mode === 'blocked' && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleSend('What do I need to fix to unblock this?')}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-red-700 bg-red-50 hover:bg-red-100 border border-red-200/60 transition-colors h-auto"
+                                >
+                                  How to unblock
+                                </Button>
+                              </>
+                            )}
+                            {msg.grounding.confidence === 'low' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleSend('What additional context would help you give a better answer?')}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-stone-600 bg-stone-50 hover:bg-stone-100 border border-stone-200/60 transition-colors h-auto"
+                              >
+                                Improve answer
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      {/* Next step chip — parsed from AI's **Next step:** recommendation */}
+                      {!isUser &&
+                        msg.id === messages.filter(m => m.role === 'assistant').at(-1)?.id &&
+                        (() => {
+                          const nextStepMatch = msg.content.match(/\*\*Next step:\*\*\s*(.+?)(?:\n|$)/);
+                          if (!nextStepMatch) return null;
+                          const nextStep = nextStepMatch[1].trim();
+                          if (nextStep.length < 5 || nextStep.length > 120) return null;
+                          return (
+                            <div className="mt-2 flex flex-wrap gap-1.5" aria-live="polite">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleSend(nextStep)}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200/60 transition-colors max-w-full h-auto"
+                                data-testid="ana-next-step-chip"
+                              >
+                                <span className="truncate">{nextStep.length > 80 ? nextStep.slice(0, 77) + '...' : nextStep}</span>
+                                <span className="text-blue-400 flex-shrink-0">→</span>
+                              </Button>
+                            </div>
+                          );
+                        })()}
                       {/* AnA RI Document Action Row — shown on the last assistant message */}
                       {!isUser &&
                         msg.id === messages.filter(m => m.role === 'assistant').at(-1)?.id &&
                         lastOrchestration && (
-                          <div className="mt-3 pt-3 border-t border-[#F5F4EF]">
+                          <div className="mt-3 pt-3 border-t border-[#F5F4EF]" aria-live="polite">
                             <p className="text-[10px] font-medium text-[#B0AEA5] uppercase tracking-wide mb-2">
                               Document Actions
                             </p>
@@ -4295,7 +4573,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               )
                                 .slice(0, 5)
                                 .map(action => (
-                                  <button
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
                                     key={action.type}
                                     disabled={isThinking}
                                     onClick={async () => {
@@ -4362,7 +4642,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                       }
                                     }}
                                     className={cn(
-                                      'inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors',
+                                      'h-auto inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors',
                                       isThinking
                                         ? 'border-[#E8E6DC] text-[#D8D5CA] cursor-not-allowed'
                                         : 'border-[#E8E6DC] text-[#6B6962] hover:bg-[#FAF9F5] hover:border-[#D8D5CA] hover:text-[#4D4B45]'
@@ -4370,7 +4650,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                   >
                                     {action.icon}
                                     {action.label}
-                                  </button>
+                                  </Button>
                                 ))}
                             </div>
                             {lastOrchestration.detectedSubmissionType && (
@@ -4448,7 +4728,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
             {/* Thinking indicator */}
             {isThinking && (
-              <div className="px-4 py-3 bg-white">
+              <div className="px-4 py-3 bg-white" role="status" aria-live="polite" aria-busy="true">
                 <div className="flex gap-2.5 max-w-3xl mx-auto">
                   <div className="w-6 h-6 rounded-full bg-[#D97757] flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Sparkles className="w-3 h-3 text-white" />
@@ -4480,23 +4760,27 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           {/* Clear conversation + browse capabilities */}
           {hasMessages && (
             <div className="flex justify-center gap-3 mb-2">
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setMessages([]);
                   threadIdRef.current = null;
                 }}
-                className="flex items-center gap-1.5 px-3 py-1 text-xs text-[#B0AEA5] hover:text-[#6B6962] hover:bg-[#F5F4EF] rounded-full transition-colors"
+                className="h-auto flex items-center gap-1.5 px-3 py-1 text-xs text-[#B0AEA5] hover:text-[#6B6962] hover:bg-[#F5F4EF] rounded-full transition-colors font-normal"
               >
                 <RotateCcw className="w-3 h-3" />
                 New thread
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setShowDomainPrompts(prev => !prev)}
-                className="flex items-center gap-1.5 px-3 py-1 text-xs text-[#B0AEA5] hover:text-[#6B6962] hover:bg-[#F5F4EF] rounded-full transition-colors"
+                className="h-auto flex items-center gap-1.5 px-3 py-1 text-xs text-[#B0AEA5] hover:text-[#6B6962] hover:bg-[#F5F4EF] rounded-full transition-colors font-normal"
               >
                 <Sparkles className="w-3 h-3" />
                 {showDomainPrompts ? 'Hide prompts' : 'Browse prompts'}
-              </button>
+              </Button>
             </div>
           )}
 
@@ -4542,7 +4826,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               aria-label="Slash commands"
             >
               {filteredSlashCommands.map((cmd, i) => (
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   key={cmd.command}
                   type="button"
                   role="option"
@@ -4550,7 +4836,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   onMouseDown={(e) => { e.preventDefault(); selectSlashCommand(cmd); }}
                   onMouseEnter={() => setSlashMenuIndex(i)}
                   className={cn(
-                    'w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors',
+                    'h-auto w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors rounded-none justify-start font-normal',
                     i === slashMenuIndex ? 'bg-[#FAF9F5]' : 'hover:bg-[#FAF9F5]/50'
                   )}
                 >
@@ -4563,7 +4849,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   <span className={cn('text-[10px] font-medium', SLASH_CATEGORY_COLORS[cmd.category] || 'text-stone-400')}>
                     {cmd.category}
                   </span>
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -4578,11 +4864,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           >
             {/* Mode selector — Claude.ai model-picker style */}
             <div className="relative flex-shrink-0 self-center" ref={modeDropdownRef}>
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 type="button"
                 onClick={() => setShowModeDropdown(prev => !prev)}
                 className={cn(
-                  'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
+                  'h-auto flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
                   chatMode === 'deep-research'
                     ? 'bg-violet-50 text-violet-700 hover:bg-violet-100'
                     : chatMode === 'nano-banana'
@@ -4605,11 +4893,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       : 'AnA'}
                 </span>
                 <ChevronDown className="w-3 h-3 opacity-50" />
-              </button>
+              </Button>
 
               {showModeDropdown && (
                 <div className="absolute bottom-full left-0 mb-1.5 w-56 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     type="button"
                     onClick={() => {
                       setChatMode('standard');
@@ -4617,7 +4907,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       setShowModeDropdown(false);
                     }}
                     className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-[#FAF9F5] transition-colors',
+                      'h-auto w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-[#FAF9F5] transition-colors rounded-none justify-start font-normal',
                       chatMode === 'standard' && 'bg-[#FAF9F5]'
                     )}
                   >
@@ -4631,15 +4921,17 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     {chatMode === 'standard' && (
                       <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5 flex-shrink-0" />
                     )}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     type="button"
                     onClick={() => {
                       setChatMode('deep-research');
                       setShowModeDropdown(false);
                     }}
                     className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-[#FAF9F5] transition-colors',
+                      'h-auto w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-[#FAF9F5] transition-colors rounded-none justify-start font-normal',
                       chatMode === 'deep-research' && 'bg-[#FBF0EB]'
                     )}
                   >
@@ -4653,16 +4945,18 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     {chatMode === 'deep-research' && (
                       <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5 flex-shrink-0" />
                     )}
-                  </button>
+                  </Button>
                   <div className="mx-2 my-0.5 border-t border-stone-100" />
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     type="button"
                     onClick={() => {
                       setChatMode('nano-banana');
                       setShowModeDropdown(false);
                     }}
                     className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-stone-50 transition-colors',
+                      'h-auto w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-stone-50 transition-colors rounded-none justify-start font-normal',
                       chatMode === 'nano-banana' && 'bg-amber-50'
                     )}
                   >
@@ -4676,7 +4970,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     {chatMode === 'nano-banana' && (
                       <Check className="w-4 h-4 text-amber-600 ml-auto mt-0.5 flex-shrink-0" />
                     )}
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
@@ -4704,19 +4998,23 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
             {/* Send / Stop — Claude-style: shows Stop during generation */}
             {isThinking ? (
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={handleStop}
-                className="flex-shrink-0 p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors duration-150"
+                className="h-auto w-auto flex-shrink-0 p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors duration-150"
                 aria-label="Stop generating"
               >
                 <Square className="w-4 h-4 fill-current" />
-              </button>
+              </Button>
             ) : (
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => handleSend()}
                 disabled={!input.trim()}
                 className={cn(
-                  'flex-shrink-0 p-2 rounded-full transition-colors duration-150',
+                  'h-auto w-auto flex-shrink-0 p-2 rounded-full transition-colors duration-150',
                   input.trim()
                     ? 'bg-[#141413] text-white hover:bg-[#2D2C28]'
                     : 'bg-[#E8E6DC] text-[#B0AEA5] cursor-not-allowed'
@@ -4724,7 +5022,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 aria-label="Send message"
               >
                 <ArrowUp className="w-4 h-4" />
-              </button>
+              </Button>
             )}
           </div>
 
