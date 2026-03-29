@@ -31,7 +31,11 @@ import {
   ChevronRight,
   Clock,
   Users,
+  Globe,
 } from 'lucide-react';
+import { RegulatoryApplicationPicker } from './RegulatoryApplicationPicker';
+import { RegulatoryApplicationSummaryCard } from './RegulatoryApplicationSummaryCard';
+import { BootstrapPreviewPanel } from './BootstrapPreviewPanel';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -353,13 +357,18 @@ interface NewProjectModalProps {
   onClose: () => void;
   onCreate: (data: {
     name: string;
-    type: SubmissionType;
+    type: SubmissionType | string;
     description?: string;
     sponsor?: string;
     product?: string;
     region?: string;
     goal?: string;
     color?: string;
+    registryId?: string;
+    applicationFamily?: string;
+    applicationType?: string;
+    agency?: string;
+    dossierStandard?: string;
   }) => void;
 }
 
@@ -372,20 +381,46 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
   const [region, setRegion] = useState('FDA');
   const [goal, setGoal] = useState('');
   const [color, setColor] = useState(PROJECT_COLORS[0]);
+  const [useGlobalRegistry, setUseGlobalRegistry] = useState(false);
+  const [registryEntry, setRegistryEntry] = useState<{
+    id: string; region: string; country: string; agency: string;
+    applicationFamily: string; applicationType: string; displayName: string;
+    productClass: string[]; dossierStandard: string; stage: string;
+    synonyms: string[]; active: boolean;
+    requiredArtifacts: string[]; lifecycleActions: string[];
+  } | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim()) {
-      onCreate({
-        name: name.trim(),
-        type,
-        description: description.trim() || undefined,
-        sponsor: sponsor.trim() || undefined,
-        product: product.trim() || undefined,
-        region: region || undefined,
-        goal: goal.trim() || undefined,
-        color,
-      });
+      if (useGlobalRegistry && registryEntry) {
+        onCreate({
+          name: name.trim(),
+          type: registryEntry.applicationType as SubmissionType,
+          registryId: registryEntry.id,
+          applicationFamily: registryEntry.applicationFamily,
+          applicationType: registryEntry.applicationType,
+          agency: registryEntry.agency,
+          region: registryEntry.region,
+          dossierStandard: registryEntry.dossierStandard,
+          description: description.trim() || undefined,
+          sponsor: sponsor.trim() || undefined,
+          product: product.trim() || undefined,
+          goal: goal.trim() || undefined,
+          color,
+        });
+      } else {
+        onCreate({
+          name: name.trim(),
+          type,
+          description: description.trim() || undefined,
+          sponsor: sponsor.trim() || undefined,
+          product: product.trim() || undefined,
+          region: region || undefined,
+          goal: goal.trim() || undefined,
+          color,
+        });
+      }
       setName('');
       setDescription('');
       setType('510K');
@@ -394,6 +429,8 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
       setRegion('FDA');
       setGoal('');
       setColor(PROJECT_COLORS[0]);
+      setUseGlobalRegistry(false);
+      setRegistryEntry(null);
       onClose();
     }
   };
@@ -425,7 +462,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
         onKeyDown={e => {
           if (e.key === 'Escape') onClose();
         }}
-        className="fixed top-[10%] left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-xl shadow-lg z-50"
+        className="fixed top-[5%] left-1/2 -translate-x-1/2 w-full max-w-lg max-h-[90vh] bg-white rounded-xl shadow-lg z-50 flex flex-col"
       >
         <form onSubmit={handleSubmit}>
           {/* Header */}
@@ -440,7 +477,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
           </div>
 
           {/* Content */}
-          <div className="px-6 py-4 space-y-4">
+          <div className="px-6 py-4 space-y-4 overflow-y-auto flex-1 min-h-0">
             {/* Project name */}
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1.5">Project Name</label>
@@ -485,43 +522,82 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
 
             {/* Submission type */}
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1.5">
-                Submission Type
-              </label>
-              <div className="grid grid-cols-4 gap-2">
-                {(Object.keys(SUBMISSION_TYPES) as SubmissionType[]).map(submissionType => {
-                  const config = SUBMISSION_TYPES[submissionType];
-                  const Icon = config.icon;
-                  const isSelected = type === submissionType;
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-sm font-medium text-stone-700">
+                  Submission Type
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUseGlobalRegistry(!useGlobalRegistry);
+                    setRegistryEntry(null);
+                  }}
+                  className="flex items-center gap-1 text-[11px] text-stone-400 hover:text-stone-600 transition-colors"
+                >
+                  <Globe className="w-3 h-3" />
+                  {useGlobalRegistry ? 'Use quick types' : 'Browse global registry'}
+                </button>
+              </div>
 
-                  return (
-                    <button
-                      key={submissionType}
-                      type="button"
-                      onClick={() => setType(submissionType)}
-                      aria-pressed={isSelected}
-                      className={cn(
-                        'flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none',
-                        isSelected
-                          ? 'border-stone-800 bg-stone-50'
-                          : 'border-stone-200 hover:border-stone-300'
-                      )}
-                    >
-                      <Icon
-                        className={cn('w-5 h-5', isSelected ? 'text-stone-800' : 'text-stone-400')}
-                      />
-                      <span
+              {useGlobalRegistry ? (
+                <div className="space-y-2">
+                  {registryEntry ? (
+                    <RegulatoryApplicationSummaryCard
+                      entry={{
+                        ...registryEntry,
+                        requiredArtifacts: registryEntry.requiredArtifacts ?? [],
+                        lifecycleActions: registryEntry.lifecycleActions ?? [],
+                      }}
+                      expanded
+                      onChangeSelection={() => setRegistryEntry(null)}
+                    />
+                  ) : (
+                    <RegulatoryApplicationPicker
+                      onSelect={(entry) => setRegistryEntry(entry as typeof registryEntry)}
+                      selectedId={registryEntry?.id}
+                      compact
+                    />
+                  )}
+                  {registryEntry && (
+                    <BootstrapPreviewPanel registryId={registryEntry.id} />
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-4 gap-2">
+                  {(Object.keys(SUBMISSION_TYPES) as SubmissionType[]).map(submissionType => {
+                    const config = SUBMISSION_TYPES[submissionType];
+                    const Icon = config.icon;
+                    const isSelected = type === submissionType;
+
+                    return (
+                      <button
+                        key={submissionType}
+                        type="button"
+                        onClick={() => setType(submissionType)}
+                        aria-pressed={isSelected}
                         className={cn(
-                          'text-xs font-medium',
-                          isSelected ? 'text-stone-800' : 'text-stone-600'
+                          'flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none',
+                          isSelected
+                            ? 'border-stone-800 bg-stone-50'
+                            : 'border-stone-200 hover:border-stone-300'
                         )}
                       >
-                        {config.label}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+                        <Icon
+                          className={cn('w-5 h-5', isSelected ? 'text-stone-800' : 'text-stone-400')}
+                        />
+                        <span
+                          className={cn(
+                            'text-xs font-medium',
+                            isSelected ? 'text-stone-800' : 'text-stone-600'
+                          )}
+                        >
+                          {config.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Description */}
@@ -566,7 +642,8 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
               />
             </div>
 
-            {/* Region / Agency */}
+            {/* Region / Agency — hidden when using global registry (picker handles it) */}
+            {!useGlobalRegistry && (
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1.5">
                 Region / Agency
@@ -586,6 +663,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
                 <option value="Other">Other</option>
               </select>
             </div>
+            )}
 
             {/* Goal / Instructions */}
             <div>
@@ -613,10 +691,10 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
             </button>
             <button
               type="submit"
-              disabled={!name.trim()}
+              disabled={!name.trim() || (useGlobalRegistry && !registryEntry)}
               className={cn(
                 'px-4 py-2 text-sm font-medium text-white rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none',
-                name.trim() ? 'bg-stone-900 hover:bg-stone-800' : 'bg-stone-300 cursor-not-allowed'
+                name.trim() && (!useGlobalRegistry || registryEntry) ? 'bg-stone-900 hover:bg-stone-800' : 'bg-stone-300 cursor-not-allowed'
               )}
             >
               Create Project
