@@ -32,6 +32,9 @@ jobs:
       - name: Execute strict audit plan
         run: npm run audit:last-20-prs:plan:strict
 
+      - name: Dry-run prune generated artifacts
+        run: npm run audit:prune-artifacts -- --dry-run
+
       - name: Upload audit artifacts
         if: always()
         uses: actions/upload-artifact@v4

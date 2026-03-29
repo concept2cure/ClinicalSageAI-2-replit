@@ -72,7 +72,8 @@
     "audit:last-20-prs:plan": "node scripts/audits/execute-last-pr-audit-build-plan.mjs --limit 20",
     "audit:last-20-prs:plan:strict": "node scripts/audits/execute-last-pr-audit-build-plan.mjs --limit 20 --strict",
     "audit:last-20-prs:plan:auto-install": "node scripts/audits/execute-last-pr-audit-build-plan.mjs --limit 20 --auto-install",
-    "test:ops-audits": "node --test tests/ops/*.test.mjs"
+    "test:ops-audits": "node --test tests/ops/*.test.mjs",
+    "audit:prune-artifacts": "node scripts/audits/prune-generated-audit-artifacts.mjs --retain-days 14"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
