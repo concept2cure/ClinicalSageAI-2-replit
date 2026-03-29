@@ -4844,7 +4844,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
               {showModeDropdown && (
                 <div className="absolute bottom-full left-0 mb-1.5 w-56 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     type="button"
                     onClick={() => {
                       setChatMode('standard');
@@ -4852,7 +4854,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       setShowModeDropdown(false);
                     }}
                     className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-[#FAF9F5] transition-colors',
+                      'h-auto w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-[#FAF9F5] transition-colors rounded-none justify-start font-normal',
                       chatMode === 'standard' && 'bg-[#FAF9F5]'
                     )}
                   >
@@ -4866,15 +4868,17 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     {chatMode === 'standard' && (
                       <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5 flex-shrink-0" />
                     )}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     type="button"
                     onClick={() => {
                       setChatMode('deep-research');
                       setShowModeDropdown(false);
                     }}
                     className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-[#FAF9F5] transition-colors',
+                      'h-auto w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-[#FAF9F5] transition-colors rounded-none justify-start font-normal',
                       chatMode === 'deep-research' && 'bg-[#FBF0EB]'
                     )}
                   >
@@ -4888,16 +4892,18 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     {chatMode === 'deep-research' && (
                       <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5 flex-shrink-0" />
                     )}
-                  </button>
+                  </Button>
                   <div className="mx-2 my-0.5 border-t border-stone-100" />
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     type="button"
                     onClick={() => {
                       setChatMode('nano-banana');
                       setShowModeDropdown(false);
                     }}
                     className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-stone-50 transition-colors',
+                      'h-auto w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-stone-50 transition-colors rounded-none justify-start font-normal',
                       chatMode === 'nano-banana' && 'bg-amber-50'
                     )}
                   >
@@ -4911,7 +4917,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     {chatMode === 'nano-banana' && (
                       <Check className="w-4 h-4 text-amber-600 ml-auto mt-0.5 flex-shrink-0" />
                     )}
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
@@ -4939,19 +4945,23 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
             {/* Send / Stop — Claude-style: shows Stop during generation */}
             {isThinking ? (
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={handleStop}
-                className="flex-shrink-0 p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors duration-150"
+                className="h-auto w-auto flex-shrink-0 p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors duration-150"
                 aria-label="Stop generating"
               >
                 <Square className="w-4 h-4 fill-current" />
-              </button>
+              </Button>
             ) : (
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => handleSend()}
                 disabled={!input.trim()}
                 className={cn(
-                  'flex-shrink-0 p-2 rounded-full transition-colors duration-150',
+                  'h-auto w-auto flex-shrink-0 p-2 rounded-full transition-colors duration-150',
                   input.trim()
                     ? 'bg-[#141413] text-white hover:bg-[#2D2C28]'
                     : 'bg-[#E8E6DC] text-[#B0AEA5] cursor-not-allowed'
@@ -4959,7 +4969,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 aria-label="Send message"
               >
                 <ArrowUp className="w-4 h-4" />
-              </button>
+              </Button>
             )}
           </div>
 
