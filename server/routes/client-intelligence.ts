@@ -577,10 +577,10 @@ router.post('/project/:projectId/memory/:id/supersede', async (req: Request, res
     const entryId = parseInt(req.params.id, 10);
 
     await supersedeProjectMemoryEntry(entryId, projectId, organizationId);
-    return res.json({ success: true });
+    return sendSuccess(res);
   } catch (err: any) {
     console.error('[ProjectIntelligence] POST /project/:projectId/memory/:id/supersede error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -605,10 +605,10 @@ router.get('/memory/shared-pool', async (req: Request, res: Response) => {
       includeSuperseded,
     });
 
-    return res.json({ success: true, ...result });
+    return sendSuccess(res, { ...result });
   } catch (err: any) {
     console.error('[ClientIntelligence] GET /memory/shared-pool error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -620,10 +620,10 @@ router.get('/project/:projectId/context', async (req: Request, res: Response) =>
   try {
     const projectId = parseInt(req.params.projectId, 10);
     const context = await buildProjectIntelligenceContext(projectId);
-    return res.json({ success: true, context });
+    return sendSuccess(res, { context });
   } catch (err: any) {
     console.error('[ProjectIntelligence] GET context error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -646,7 +646,7 @@ router.get('/ana/user-profile', async (req: Request, res: Response) => {
     const userId = (req as any).user?.id;
     const organizationId = (req as any).user?.organizationId;
     if (!userId || !organizationId) {
-      return res.status(401).json({ success: false, error: 'Authentication required' });
+      return sendError(res, 401, 'Authentication required');
     }
 
     const { db } = await import('../db');
@@ -664,10 +664,10 @@ router.get('/ana/user-profile', async (req: Request, res: Response) => {
       )
       .limit(1);
 
-    return res.json({ success: true, profile: profile || null });
+    return sendSuccess(res, { profile: profile || null });
   } catch (err: any) {
     console.error('[AnA Intelligence] GET user-profile error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
