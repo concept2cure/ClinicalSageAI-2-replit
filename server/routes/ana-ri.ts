@@ -80,6 +80,7 @@ import {
 import { interceptChatResponse } from '../services/intelligence/rim-interceptors.js';
 import { enrichContextForChat } from '../services/ana-ri/context-enrichment.js';
 import { processResponseActions } from '../services/ana-guidance-executor.js';
+import { logOutcome as logCapabilityOutcome } from '../services/ana-capability-registry.js';
 import {
   processCommandsInResponse,
   type CommandContext,
@@ -90,6 +91,33 @@ import { persistEvidence } from '../services/research-intelligence';
 import { normalizeEvidence } from '../services/research-intelligence';
 
 const router = Router();
+
+/**
+ * Map an AnA intent lens to a capability registry key.
+ * Returns null if the intent doesn't map to a specific tracked capability.
+ */
+function mapIntentToCapability(
+  intentLens: string,
+  submissionType?: string | null
+): string | null {
+  const INTENT_CAPABILITY_MAP: Record<string, string> = {
+    audit: 'compliance-scan-fda',
+    improve: 'draft-regulatory-response',
+    risk: 'rim-pattern-detection',
+    strategy: 'foresight-risk',
+    compare: 'consistency-analysis',
+  };
+
+  // Refine based on submission type
+  if (intentLens === 'audit' && submissionType) {
+    const lower = submissionType.toLowerCase();
+    if (lower.includes('ema') || lower.includes('maa')) return 'compliance-scan-ema';
+    if (lower.includes('pmda') || lower.includes('j-nda')) return 'compliance-scan-pmda';
+    return 'compliance-scan-fda';
+  }
+
+  return INTENT_CAPABILITY_MAP[intentLens] ?? null;
+}
 
 const dbPool = {
   query: (...args: Parameters<ReturnType<typeof getPool>['query']>) => getPool().query(...args),
@@ -820,6 +848,26 @@ router.post('/chat', async (req: Request, res: Response) => {
     // Cache response for idempotency on client retry
     if (idempotency_key && typeof idempotency_key === 'string') {
       idempotencyCache.set(idempotency_key, { response: responsePayload, timestamp: Date.now() });
+    }
+
+    // Log capability outcome for AnA self-knowledge (non-blocking)
+    if (orgId && orchestration.detectedIntent?.lens) {
+      const capabilityKey = mapIntentToCapability(orchestration.detectedIntent.lens, orchestration.detectedSubmissionType);
+      if (capabilityKey) {
+        void logCapabilityOutcome({
+          organizationId: Number(orgId),
+          projectId: req.body.project_context?.projectId ? Number(req.body.project_context.projectId) : undefined,
+          userId: typeof userId === 'number' ? userId : undefined,
+          capabilityKey,
+          actionType: orchestration.detectedIntent.lens,
+          outcome: evaluation.grade === 'F' ? 'failure' : evaluation.grade === 'D' ? 'partial' : 'success',
+          qualityScore: evaluation.overallScore / Math.max(evaluation.maxOverallScore, 1),
+          regulatoryBody: orchestration.detectedSubmissionType ? undefined : undefined,
+          projectType: orchestration.detectedSubmissionType || undefined,
+          durationMs: response.latencyMs ?? undefined,
+          tokenCount: response.usage?.totalTokens ?? undefined,
+        }).catch(() => {});
+      }
     }
 
     return sendSuccess(res, responsePayload);

@@ -7113,6 +7113,16 @@ async function startServer() {
     console.error('⚠️ Auth schema bootstrap warning:', error.message);
   }
 
+  // Seed AnA Capability Registry (fire-and-forget — don't block startup)
+  import('../services/ana-capability-registry.js')
+    .then(({ seedCapabilityRegistry }) => seedCapabilityRegistry())
+    .then(({ seeded, total }) => {
+      console.log(`✅ AnA Capability Registry seeded (${seeded} new, ${total} total)`);
+    })
+    .catch((err: any) => {
+      console.warn('⚠️ AnA Capability Registry seeding failed (non-blocking):', err?.message);
+    });
+
   // Start Python backend first
   debugLog('Initializing Python backend...');
   await startPythonBackend();
