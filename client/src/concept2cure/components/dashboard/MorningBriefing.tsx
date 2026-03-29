@@ -170,7 +170,7 @@ const AlertCard: React.FC<{
         {/* Title */}
         <div className="flex items-start gap-2 mb-1">
           {priority.icon}
-          <h4 className="text-sm font-semibold text-stone-900 leading-snug group-hover:text-blue-700 transition-colors duration-150">
+          <h4 className="text-sm font-semibold text-stone-900 leading-snug group-hover:text-stone-700 transition-colors duration-150">
             {alert.title}
           </h4>
         </div>
@@ -180,7 +180,7 @@ const AlertCard: React.FC<{
         
         {/* Action */}
         {alert.actionLabel && (
-          <div className="mt-2 flex items-center gap-1 text-xs font-medium text-blue-600 group-hover:text-blue-700">
+          <div className="mt-2 flex items-center gap-1 text-xs font-medium text-blue-600 group-hover:text-stone-700">
             {alert.actionLabel}
             <ExternalLink className="w-3 h-3" />
           </div>

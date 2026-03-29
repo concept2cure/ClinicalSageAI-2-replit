@@ -92,7 +92,7 @@ const CONNECTION_STATUS_CONFIG: Record<
   LIVE: {
     key: 'connected',
     label: 'Connected',
-    color: 'bg-blue-100 text-blue-700',
+    color: 'bg-blue-100 text-stone-700',
     icon: <CloudLightning className="w-3 h-3" />,
   },
   SYNCING: {

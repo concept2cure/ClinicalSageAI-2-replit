@@ -196,7 +196,7 @@ function TaskCard({
 
         {/* Module type */}
         {task.moduleType && (
-          <span className="inline-flex items-center rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">
+          <span className="inline-flex items-center rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-stone-700">
             {task.moduleType}
           </span>
         )}

@@ -701,7 +701,7 @@ function _removed() { // eslint-disable-line
 
             <button
               onClick={() => handleRunSimulation(i)}
-              className="mt-4 flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors duration-150"
+              className="mt-4 flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-stone-700 transition-colors duration-150"
             >
               <Play className="w-3 h-3" />
               Run simulation
@@ -969,7 +969,7 @@ function ReadinessScoreView({ readinessModules, summary, projectId }: { readines
                       'text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 capitalize',
                       gap.severity === 'critical' ? 'bg-red-100 text-red-700'
                         : gap.severity === 'high' ? 'bg-amber-100 text-amber-700'
-                        : 'bg-blue-100 text-blue-700'
+                        : 'bg-blue-100 text-stone-700'
                     )}>
                       {gap.severity}
                     </span>

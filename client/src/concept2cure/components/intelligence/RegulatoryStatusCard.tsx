@@ -114,7 +114,7 @@ export function RegulatoryStatusCard({
         {onOpenIntelligence && (
           <button
             onClick={onOpenIntelligence}
-            className="flex items-center gap-0.5 text-xs text-blue-600 hover:text-blue-700 font-medium"
+            className="flex items-center gap-0.5 text-xs text-blue-600 hover:text-stone-700 font-medium"
           >
             Details
             <ChevronRight className="w-3 h-3" />

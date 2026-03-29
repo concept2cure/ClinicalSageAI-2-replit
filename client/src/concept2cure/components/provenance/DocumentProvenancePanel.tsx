@@ -874,7 +874,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
             <button
               onClick={handleAddComment}
               disabled={addingComment || !newComment.trim()}
-              className="px-2 py-1 text-xs rounded bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:opacity-60 flex items-center gap-0.5"
+              className="px-2 py-1 text-xs rounded bg-blue-50 text-stone-700 hover:bg-blue-100 disabled:opacity-60 flex items-center gap-0.5"
             >
               {addingComment ? (
                 <Loader2 className="w-3 h-3 animate-spin" />

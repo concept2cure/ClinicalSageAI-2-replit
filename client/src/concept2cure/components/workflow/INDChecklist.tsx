@@ -44,8 +44,8 @@ interface INDModuleConfig {
 
 const IND_MODULES: INDModuleConfig[] = [
   { number: 1, name: 'Administrative Information', icon: FileText, color: 'text-stone-700', bg: 'bg-stone-50', description: 'Forms FDA 1571/1572/3674, cover letter, debarment certification' },
-  { number: 2, name: 'CTD Summaries', icon: Activity, color: 'text-blue-700', bg: 'bg-blue-50', description: 'Quality, nonclinical, and clinical overviews and summaries' },
-  { number: 3, name: 'Quality (CMC)', icon: Beaker, color: 'text-violet-700', bg: 'bg-violet-50', description: 'Drug substance, drug product, manufacturing, stability' },
+  { number: 2, name: 'CTD Summaries', icon: Activity, color: 'text-stone-700', bg: 'bg-blue-50', description: 'Quality, nonclinical, and clinical overviews and summaries' },
+  { number: 3, name: 'Quality (CMC)', icon: Beaker, color: 'text-stone-700', bg: 'bg-violet-50', description: 'Drug substance, drug product, manufacturing, stability' },
   { number: 4, name: 'Nonclinical Study Reports', icon: FlaskConical, color: 'text-amber-700', bg: 'bg-amber-50', description: 'Pharmacology, pharmacokinetics, toxicology reports' },
   { number: 5, name: 'Clinical Study Reports', icon: Shield, color: 'text-emerald-700', bg: 'bg-emerald-50', description: 'Clinical protocols, study reports, case report forms' },
 ];
@@ -291,7 +291,7 @@ export function INDChecklist({ projectId, projectName, onSectionClick, onAIDraft
                             <span className={cn(
                               'flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium',
                               isComplete ? 'bg-emerald-50 text-emerald-700' :
-                              section.status === 'review' ? 'bg-blue-50 text-blue-700' :
+                              section.status === 'review' ? 'bg-blue-50 text-stone-700' :
                               section.status === 'draft' ? 'bg-amber-50 text-amber-700' :
                               'bg-stone-50 text-stone-400'
                             )}>

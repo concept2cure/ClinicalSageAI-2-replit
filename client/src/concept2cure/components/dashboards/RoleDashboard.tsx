@@ -260,8 +260,8 @@ const COLOR_TEXT_600: Record<string, string> = {
   rose: 'text-rose-600', slate: 'text-stone-600', sky: 'text-sky-600', orange: 'text-orange-600',
 };
 const COLOR_TEXT_700: Record<string, string> = {
-  blue: 'text-blue-700', indigo: 'text-blue-700', green: 'text-green-700', purple: 'text-purple-700',
-  violet: 'text-violet-700', amber: 'text-amber-700', teal: 'text-teal-700', cyan: 'text-cyan-700',
+  blue: 'text-stone-700', indigo: 'text-stone-700', green: 'text-green-700', purple: 'text-purple-700',
+  violet: 'text-stone-700', amber: 'text-amber-700', teal: 'text-teal-700', cyan: 'text-cyan-700',
   rose: 'text-rose-700', slate: 'text-stone-700', sky: 'text-sky-700', orange: 'text-orange-700',
 };
 

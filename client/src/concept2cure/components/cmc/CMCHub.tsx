@@ -512,7 +512,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
               className={cn(
                 'flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-t-lg border-b-2 transition-colors whitespace-nowrap',
                 activeTab === tab.id
-                  ? 'border-violet-500 text-violet-700 bg-white'
+                  ? 'border-violet-500 text-stone-700 bg-white'
                   : 'border-transparent text-stone-500 hover:text-stone-700 hover:bg-stone-50'
               )}
             >
@@ -660,7 +660,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
               {/* 3.2.S.1 General Information */}
               <div className="bg-white rounded-xl border p-5">
                 <h3 className="text-sm font-semibold text-stone-900 mb-4 flex items-center gap-2">
-                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded font-semibold">3.2.S.1</span>
+                  <span className="px-2 py-0.5 bg-blue-100 text-stone-700 text-xs rounded font-semibold">3.2.S.1</span>
                   General Information
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -686,7 +686,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
               {/* 3.2.S.2 Manufacture */}
               <div className="bg-white rounded-xl border p-5">
                 <h3 className="text-sm font-semibold text-stone-900 mb-4 flex items-center gap-2">
-                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded font-semibold">3.2.S.2</span>
+                  <span className="px-2 py-0.5 bg-blue-100 text-stone-700 text-xs rounded font-semibold">3.2.S.2</span>
                   Manufacture
                 </h3>
                 <div className="grid grid-cols-1 gap-4">
@@ -774,7 +774,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                   <h2 className="text-lg font-semibold text-stone-900">Specifications</h2>
                   <p className="text-sm text-stone-500">ICH Q6A/Q6B compliant quality specifications</p>
                 </div>
-                <button className="flex items-center gap-2 px-3 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none">
+                <button className="flex items-center gap-2 px-3 py-2 text-sm bg-stone-700 text-white rounded-lg hover:bg-stone-800 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none">
                   <Plus className="w-4 h-4" />
                   Add Specification
                 </button>
@@ -787,7 +787,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                   Add quality specifications for drug substance and drug product, or upload a CoA to auto-generate.
                 </p>
                 <div className="flex items-center justify-center gap-3">
-                  <button className="flex items-center gap-2 px-4 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none">
+                  <button className="flex items-center gap-2 px-4 py-2 text-sm bg-stone-700 text-white rounded-lg hover:bg-stone-800 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none">
                     <Plus className="w-4 h-4" />
                     Add Manually
                   </button>
@@ -811,7 +811,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                   <h2 className="text-lg font-semibold text-stone-900">Stability Studies</h2>
                   <p className="text-sm text-stone-500">ICH Q1A(R2) stability data management</p>
                 </div>
-                <button className="flex items-center gap-2 px-3 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none">
+                <button className="flex items-center gap-2 px-3 py-2 text-sm bg-stone-700 text-white rounded-lg hover:bg-stone-800 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none">
                   <Plus className="w-4 h-4" />
                   New Study
                 </button>
@@ -822,7 +822,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                 <h3 className="text-sm font-semibold text-stone-900 mb-3">ICH Storage Conditions Reference</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                   <div className="p-3 bg-blue-50 rounded-lg">
-                    <p className="font-medium text-blue-700 mb-1">Long-term</p>
+                    <p className="font-medium text-stone-700 mb-1">Long-term</p>
                     <p className="text-blue-600">25°C ± 2°C / 60% RH ± 5% RH</p>
                     <p className="text-blue-500 mt-1">12 months minimum</p>
                   </div>
@@ -845,7 +845,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                 <p className="text-xs text-stone-500 max-w-md mx-auto mb-4">
                   Create a stability study or upload stability data to track time-point results.
                 </p>
-                <button className="flex items-center gap-2 px-4 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none mx-auto">
+                <button className="flex items-center gap-2 px-4 py-2 text-sm bg-stone-700 text-white rounded-lg hover:bg-stone-800 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none mx-auto">
                   <Plus className="w-4 h-4" />
                   Create Stability Protocol
                 </button>
@@ -861,7 +861,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                   <h2 className="text-lg font-semibold text-stone-900">Impurity Profile</h2>
                   <p className="text-sm text-stone-500">ICH Q3A/Q3B/Q3C/Q3D impurity management</p>
                 </div>
-                <button className="flex items-center gap-2 px-3 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none">
+                <button className="flex items-center gap-2 px-3 py-2 text-sm bg-stone-700 text-white rounded-lg hover:bg-stone-800 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none">
                   <Plus className="w-4 h-4" />
                   Add Impurity
                 </button>
@@ -904,7 +904,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                 <p className="text-xs text-stone-500 max-w-md mx-auto mb-4">
                   Add impurities manually or upload analytical data (HPLC chromatograms, CoA) to auto-detect.
                 </p>
-                <button className="flex items-center gap-2 px-4 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none mx-auto">
+                <button className="flex items-center gap-2 px-4 py-2 text-sm bg-stone-700 text-white rounded-lg hover:bg-stone-800 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none mx-auto">
                   <Plus className="w-4 h-4" />
                   Add Impurity
                 </button>
@@ -975,7 +975,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                         <button
                           onClick={() => handleGenerateSection(section.code, section.title)}
                           disabled={isGenerating}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-violet-50 text-violet-700 border border-blue-200 rounded-lg hover:bg-violet-100 transition-colors disabled:opacity-60"
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-violet-50 text-stone-700 border border-blue-200 rounded-lg hover:bg-violet-100 transition-colors disabled:opacity-60"
                         >
                           {isGenerating ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />

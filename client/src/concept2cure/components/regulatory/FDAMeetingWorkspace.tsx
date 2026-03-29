@@ -214,9 +214,9 @@ const STATUS_CONFIG: Record<MeetingStatus, {
 };
 
 const TOPIC_CONFIG: Record<QuestionTopic, { label: string; color: string }> = {
-  clinical: { label: 'Clinical', color: 'bg-blue-100 text-blue-700' },
+  clinical: { label: 'Clinical', color: 'bg-blue-100 text-stone-700' },
   nonclinical: { label: 'Nonclinical', color: 'bg-green-100 text-green-700' },
-  cmc: { label: 'CMC', color: 'bg-blue-100 text-blue-700' },
+  cmc: { label: 'CMC', color: 'bg-blue-100 text-stone-700' },
   regulatory_strategy: { label: 'Reg Strategy', color: 'bg-amber-100 text-amber-700' },
   safety: { label: 'Safety', color: 'bg-red-100 text-red-700' },
   efficacy: { label: 'Efficacy', color: 'bg-cyan-100 text-cyan-700' },
@@ -369,8 +369,8 @@ const QuestionsPanel: React.FC<{
                             <span className={cn(
                               'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
                               question.status === 'answered' && 'bg-emerald-100 text-emerald-700',
-                              question.status === 'submitted' && 'bg-blue-100 text-blue-700',
-                              question.status === 'finalized' && 'bg-blue-100 text-blue-700',
+                              question.status === 'submitted' && 'bg-blue-100 text-stone-700',
+                              question.status === 'finalized' && 'bg-blue-100 text-stone-700',
                               question.status === 'draft' && 'bg-stone-100 text-stone-600'
                             )}>
                               {question.status}
@@ -484,7 +484,7 @@ const ActionItemsPanel: React.FC<{
             
             <div className="mt-1 flex items-center gap-2 flex-wrap">
               {item.fdaCommitment && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-stone-700">
                   FDA Commitment
                 </span>
               )}
@@ -582,7 +582,7 @@ const MeetingList: React.FC<{
               onClick={() => setFilter(f)}
               className={cn(
                 'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors duration-150 capitalize focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none',
-                filter === f ? 'bg-blue-100 text-blue-700' : 'text-stone-500 hover:bg-stone-100'
+                filter === f ? 'bg-blue-100 text-stone-700' : 'text-stone-500 hover:bg-stone-100'
               )}
             >
               {f}
@@ -783,7 +783,7 @@ export const FDAMeetingWorkspace: React.FC<FDAMeetingWorkspaceProps> = ({
         <div className="grid grid-cols-4 gap-4">
           <div className="rounded-xl border border-stone-200 bg-white px-5 py-4 shadow-sm">
             <span className="text-xs font-medium text-stone-500 uppercase tracking-wide">Scheduled</span>
-            <span className="text-base font-semibold mt-1 block text-blue-700">{metrics.scheduled}</span>
+            <span className="text-base font-semibold mt-1 block text-stone-700">{metrics.scheduled}</span>
           </div>
           <div className="rounded-xl border border-stone-200 bg-white px-5 py-4 shadow-sm">
             <span className="text-xs font-medium text-stone-500 uppercase tracking-wide">Awaiting FDA</span>

@@ -115,7 +115,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
         className={cn(
           'group inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium',
           'border border-stone-200 bg-white text-stone-700',
-          'hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700',
+          'hover:border-blue-300 hover:bg-blue-50 hover:text-stone-700',
           'transition-colors duration-150',
           'focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none',
           className,

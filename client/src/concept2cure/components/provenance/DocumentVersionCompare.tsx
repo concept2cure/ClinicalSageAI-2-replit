@@ -586,7 +586,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
           {onOpenProvenance && (
             <button
               onClick={onOpenProvenance}
-              className="flex-1 flex items-center justify-center gap-1 px-2 py-1 text-xs rounded bg-violet-50 text-violet-700 hover:bg-violet-100 font-medium"
+              className="flex-1 flex items-center justify-center gap-1 px-2 py-1 text-xs rounded bg-violet-50 text-stone-700 hover:bg-violet-100 font-medium"
             >
               Provenance
             </button>

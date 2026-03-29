@@ -699,7 +699,7 @@ const categoryIcons: Record<ArtifactCategory, React.ElementType> = {
 
 const typeColors: Record<ArtifactCategory, string> = {
   document: 'bg-stone-100 text-stone-700',
-  interactive: 'bg-blue-50 text-blue-700',
+  interactive: 'bg-blue-50 text-stone-700',
   visualization: 'bg-emerald-50 text-emerald-700',
 };
 

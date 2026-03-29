@@ -80,8 +80,8 @@ function sourceTypeLabel(type: CitationResult['sourceType']): string {
 
 function sourceTypeBadgeClass(type: CitationResult['sourceType']): string {
   const classes: Record<CitationResult['sourceType'], string> = {
-    csr: 'bg-blue-100 text-blue-700',
-    artifact: 'bg-blue-100 text-blue-700',
+    csr: 'bg-blue-100 text-stone-700',
+    artifact: 'bg-blue-100 text-stone-700',
     literature: 'bg-stone-100 text-stone-700',
     regulatory: 'bg-amber-100 text-amber-700',
   };
@@ -122,7 +122,7 @@ export const CitationMark = Mark.create({
         'data-citation-source-id': HTMLAttributes.sourceId,
         class:
           'citation-mark inline-flex items-center px-1 py-0.5 rounded ' +
-          'bg-blue-50 text-blue-700 border border-blue-200 ' +
+          'bg-blue-50 text-stone-700 border border-blue-200 ' +
           'hover:bg-blue-100 cursor-pointer text-sm font-medium ' +
           'transition-colors duration-150',
       }),
@@ -532,7 +532,7 @@ export function CitationSearchPanel({
 
               {/* Preview of what will be inserted */}
               <div className="flex-shrink-0 mt-0.5">
-                <span className="inline-flex items-center px-2 py-1 rounded bg-blue-50 text-blue-700 text-[11px] font-medium border border-blue-200">
+                <span className="inline-flex items-center px-2 py-1 rounded bg-blue-50 text-stone-700 text-[11px] font-medium border border-blue-200">
                   {formatCitationLabel(result)}
                 </span>
               </div>

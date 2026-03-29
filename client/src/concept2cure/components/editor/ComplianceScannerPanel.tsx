@@ -61,7 +61,7 @@ const SEVERITY_CONFIG = {
     color: 'text-blue-600',
     bg: 'bg-blue-50',
     border: 'border-blue-200',
-    badge: 'bg-blue-100 text-blue-700',
+    badge: 'bg-blue-100 text-stone-700',
   },
 } as const;
 
@@ -222,7 +222,7 @@ export function ComplianceScannerPanel({
               </span>
             )}
             {stats.info > 0 && (
-              <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">
+              <span className="px-1.5 py-0.5 rounded bg-blue-100 text-stone-700 font-medium">
                 {stats.info} info
               </span>
             )}
@@ -339,7 +339,7 @@ export function ComplianceScannerPanel({
                                 e.stopPropagation();
                                 onFixIssue(issue);
                               }}
-                              className="flex items-center gap-1 h-auto px-2 py-1 text-[10px] font-medium text-violet-700 bg-violet-100 hover:bg-violet-200"
+                              className="flex items-center gap-1 h-auto px-2 py-1 text-[10px] font-medium text-stone-700 bg-violet-100 hover:bg-violet-200"
                               title={`Replace with "${issue.suggestion}"`}
                             >
                               <Zap className="w-3 h-3" />
@@ -363,7 +363,7 @@ export function ComplianceScannerPanel({
                       {issue.suggestion && (
                         <div className="mt-1.5 pt-1.5 border-t border-dashed border-stone-200/60 text-[10px]">
                           <span className="text-stone-400">Suggestion: </span>
-                          <span className="font-medium text-violet-700">&ldquo;{issue.suggestion}&rdquo;</span>
+                          <span className="font-medium text-stone-700">&ldquo;{issue.suggestion}&rdquo;</span>
                         </div>
                       )}
                     </div>

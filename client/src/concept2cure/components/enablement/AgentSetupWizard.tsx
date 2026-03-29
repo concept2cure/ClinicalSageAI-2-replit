@@ -636,7 +636,7 @@ export function AgentSetupWizard({ onSkip, onComplete }: { onSkip?: () => void; 
               className={cn(
                 "flex items-center gap-1 text-sm transition-colors duration-100",
                 canContinue()
-                  ? "text-blue-600 hover:text-blue-700"
+                  ? "text-blue-600 hover:text-stone-700"
                   : "text-stone-400 cursor-not-allowed"
               )}
             >

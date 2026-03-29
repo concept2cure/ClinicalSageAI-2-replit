@@ -38,10 +38,10 @@ const SUBMISSION_BADGE: Record<
   string,
   { label: string; color: string; bg: string }
 > = {
-  '510K': { label: '510(k)', color: 'text-blue-700', bg: 'bg-blue-100' },
+  '510K': { label: '510(k)', color: 'text-stone-700', bg: 'bg-blue-100' },
   IND: { label: 'IND', color: 'text-purple-700', bg: 'bg-purple-100' },
   NDA: { label: 'NDA', color: 'text-stone-700', bg: 'bg-stone-100' },
-  BLA: { label: 'BLA', color: 'text-violet-700', bg: 'bg-violet-100' },
+  BLA: { label: 'BLA', color: 'text-stone-700', bg: 'bg-violet-100' },
   PMA: { label: 'PMA', color: 'text-red-700', bg: 'bg-red-100' },
   MAA: { label: 'MAA', color: 'text-teal-700', bg: 'bg-teal-100' },
   DE_NOVO: { label: 'De Novo', color: 'text-cyan-700', bg: 'bg-cyan-100' },

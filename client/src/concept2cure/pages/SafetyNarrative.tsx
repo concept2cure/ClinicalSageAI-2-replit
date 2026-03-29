@@ -67,7 +67,7 @@ const NARRATIVE_TYPES: NarrativeConfig[] = [
     type: 'aggregate',
     label: 'Aggregate Safety Narrative',
     description: 'ICH E3 Section 12 — TEAE tables to regulatory narrative',
-    icon: <FileText className="w-4 h-4 text-indigo-500" aria-hidden="true" />,
+    icon: <FileText className="w-4 h-4 text-stone-500" aria-hidden="true" />,
     accentColor: 'indigo',
     endpoint: '/api/safety-narratives/aggregate',
     fields: [

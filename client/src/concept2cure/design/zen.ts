@@ -431,7 +431,7 @@ export const zenClasses = {
   focusRing: 'focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none',
   hoverLight: 'hover:bg-stone-50 transition-colors duration-150',
   hoverDark: 'hover:bg-stone-100 transition-colors duration-150',
-  active: 'bg-blue-50 text-blue-700 border-blue-200',
+  active: 'bg-stone-100 text-stone-900 border-stone-300',
 
   // ─── Animation ───────────────────────────────────────────────────────────────
   fadeIn: 'animate-in fade-in duration-200',

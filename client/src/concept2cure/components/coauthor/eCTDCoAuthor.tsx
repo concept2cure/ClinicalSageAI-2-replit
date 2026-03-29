@@ -314,7 +314,7 @@ const OutlineTree: React.FC<{
                 <span
                   className={cn(
                     'text-sm truncate',
-                    isSelected ? 'font-medium text-blue-700' : 'text-stone-700'
+                    isSelected ? 'font-medium text-stone-700' : 'text-stone-700'
                   )}
                 >
                   {section.title}
@@ -359,7 +359,7 @@ const SmartTagBadge: React.FC<{
       icon: <Target className="w-3 h-3" />,
     },
     citation: {
-      color: 'bg-blue-100 text-blue-700 border-blue-200',
+      color: 'bg-blue-100 text-stone-700 border-blue-200',
       icon: <BookOpen className="w-3 h-3" />,
     },
     cross_ref: {
@@ -599,7 +599,7 @@ const SectionEditor: React.FC<{
             <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-blue-100 flex items-center justify-center animate-pulse">
               <Sparkles className="w-8 h-8 text-blue-600" />
             </div>
-            <h3 className="text-lg font-medium text-blue-700 mb-2">RI is Drafting...</h3>
+            <h3 className="text-lg font-medium text-stone-700 mb-2">RI is Drafting...</h3>
             <p className="text-sm text-stone-500">
               Analyzing source documents and generating content with Smart Tags
             </p>

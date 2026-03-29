@@ -165,7 +165,7 @@ const SourceSuggestionCard: React.FC<{
             <h4 className="font-medium text-stone-900 truncate">
               {source.title}
             </h4>
-            <span className="flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs">
+            <span className="flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-stone-700 rounded-full text-xs">
               {source.relevanceScore}% match
             </span>
           </div>
@@ -661,7 +661,7 @@ const DataBridgeCard: React.FC<{
           )}
           <button
             onClick={onView}
-            className="flex items-center gap-1 text-blue-600 hover:text-blue-700"
+            className="flex items-center gap-1 text-blue-600 hover:text-stone-700"
             data-testid={`button-bridge-view-${bridge.id}`}
           >
             <ExternalLink className="w-3 h-3" />
@@ -1157,7 +1157,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
               </h1>
             </div>
             {submissionType && (
-              <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+              <span className="px-2 py-1 bg-blue-100 text-stone-700 text-xs font-medium rounded">
                 {submissionType}
               </span>
             )}
@@ -1269,7 +1269,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
                 onClick={() => setState(prev => ({ ...prev, activePanel: tab.id as any }))}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold uppercase tracking-wide transition-colors relative
                   ${state.activePanel === tab.id
-                    ? 'text-blue-700 bg-white'
+                    ? 'text-stone-700 bg-white'
                     : 'text-stone-500 hover:text-stone-700'
                   }`}
                 data-testid={`button-panel-tab-${tab.id}`}

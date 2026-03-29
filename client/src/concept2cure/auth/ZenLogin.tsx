@@ -933,7 +933,7 @@ export const ZenLogin: React.FC = () => {
         <button
           type="button"
           onClick={() => setStep('forgot-password')}
-          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+          className="text-sm text-blue-600 hover:text-stone-700 font-medium"
         >
           Forgot password?
         </button>
@@ -1031,7 +1031,7 @@ export const ZenLogin: React.FC = () => {
                       transition-all duration-150
                       ${
                         mfaMethod === method.type
-                          ? 'border-stone-600 bg-blue-50 text-blue-700'
+                          ? 'border-stone-600 bg-blue-50 text-stone-700'
                           : 'border-stone-200 text-stone-600 hover:border-stone-300'
                       }
                     `}
@@ -1081,7 +1081,7 @@ export const ZenLogin: React.FC = () => {
             ) : (
               <button
                 onClick={handleResendOtp}
-                className="text-blue-600 hover:text-blue-700 font-medium"
+                className="text-blue-600 hover:text-stone-700 font-medium"
               >
                 Resend code
               </button>
@@ -1097,7 +1097,7 @@ export const ZenLogin: React.FC = () => {
               setError(null);
               setStep('mfa-recovery');
             }}
-            className="text-blue-600 hover:text-blue-700 font-medium"
+            className="text-blue-600 hover:text-stone-700 font-medium"
           >
             Use a recovery code
           </button>
@@ -1191,7 +1191,7 @@ export const ZenLogin: React.FC = () => {
               setMfaCode('');
               setError(null);
             }}
-            className="text-blue-600 hover:text-blue-700 font-medium focus-visible:ring-2 focus-visible:ring-stone-400 rounded outline-none"
+            className="text-blue-600 hover:text-stone-700 font-medium focus-visible:ring-2 focus-visible:ring-stone-400 rounded outline-none"
           >
             Use authenticator app instead
           </button>
@@ -1205,7 +1205,7 @@ export const ZenLogin: React.FC = () => {
                 setMfaCode('');
                 setError(null);
               }}
-              className="text-blue-600 hover:text-blue-700 font-medium focus-visible:ring-2 focus-visible:ring-stone-400 rounded outline-none"
+              className="text-blue-600 hover:text-stone-700 font-medium focus-visible:ring-2 focus-visible:ring-stone-400 rounded outline-none"
             >
               Use a recovery code
             </button>

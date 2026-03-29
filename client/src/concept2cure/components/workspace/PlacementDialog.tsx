@@ -88,7 +88,7 @@ function SectionPicker({ selected, onSelect }: SectionPickerProps) {
           }}
           className={cn(
             'w-full flex items-center gap-1 py-[3px] pr-2 text-left transition-colors duration-150',
-            isSelected ? 'bg-blue-100 text-blue-700 font-medium' : 'text-stone-600 hover:bg-stone-50'
+            isSelected ? 'bg-blue-100 text-stone-700 font-medium' : 'text-stone-600 hover:bg-stone-50'
           )}
           style={{ paddingLeft: `${4 + depth * 12}px` }}
         >
@@ -139,7 +139,7 @@ function SectionPicker({ selected, onSelect }: SectionPickerProps) {
                 className={cn(
                   'w-full flex items-center gap-1.5 px-3 py-1.5 text-left transition-colors duration-150',
                   selected === n.ctdSection
-                    ? 'bg-blue-100 text-blue-700'
+                    ? 'bg-blue-100 text-stone-700'
                     : 'text-stone-600 hover:bg-stone-50'
                 )}
               >
@@ -341,7 +341,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
               <ShieldCheck className="w-3.5 h-3.5 shrink-0 mt-0.5 text-blue-600" />
               <div>
                 <p className="font-medium">Placement creates a governed record</p>
-                <p className="text-blue-700 mt-0.5">
+                <p className="text-stone-700 mt-0.5">
                   Once placed, this document becomes part of the submission dossier. Future moves
                   will require justification and leave an audit trail.
                 </p>
@@ -388,7 +388,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
               />
               <div className="flex-1 text-center">
                 <p className="text-xs text-stone-400">To</p>
-                <p className="text-xs font-mono font-medium text-blue-700">{selectedSection}</p>
+                <p className="text-xs font-mono font-medium text-stone-700">{selectedSection}</p>
                 <p className="text-xs text-stone-400 truncate">
                   {getSectionLabel(selectedSection)}
                 </p>

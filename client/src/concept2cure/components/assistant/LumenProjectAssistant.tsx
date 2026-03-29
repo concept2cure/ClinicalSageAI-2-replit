@@ -295,7 +295,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
         className={cn(
           'fixed bottom-6 right-6 z-50',
           'w-14 h-14 rounded-full',
-          'bg-violet-600',
+          'bg-stone-700',
           'shadow-sm',
           'flex items-center justify-center',
           'hover:scale-105 transition-transform duration-150',
@@ -321,7 +321,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 bg-stone-50">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-stone-700 flex items-center justify-center">
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div>
@@ -366,7 +366,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
             >
               {/* Avatar */}
               {message.role === 'assistant' && (
-                <div className="w-7 h-7 rounded-lg bg-violet-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-stone-700 flex items-center justify-center flex-shrink-0">
                   <Sparkles className="w-3.5 h-3.5 text-white" />
                 </div>
               )}
@@ -375,7 +375,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
               <div
                 className={cn(
                   'max-w-[80%] rounded-xl px-4 py-2.5',
-                  message.role === 'user' ? 'bg-violet-600 text-white' : 'bg-stone-100 text-stone-900'
+                  message.role === 'user' ? 'bg-stone-700 text-white' : 'bg-stone-100 text-stone-900'
                 )}
               >
                 <p className="text-sm whitespace-pre-wrap">{message.content}</p>
@@ -411,7 +411,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
         {/* Thinking indicator */}
         {isThinking && (
           <div className="flex gap-3">
-            <div className="w-7 h-7 rounded-lg bg-violet-600 flex items-center justify-center flex-shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-stone-700 flex items-center justify-center flex-shrink-0">
               <Sparkles className="w-3.5 h-3.5 text-white" />
             </div>
             <div className="bg-stone-100 rounded-xl px-4 py-2.5">
@@ -474,7 +474,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
                   className={cn(
                     'flex items-center gap-1.5 px-3 py-1.5 rounded-full',
                     'bg-stone-100 text-stone-700 text-xs',
-                    'hover:bg-violet-100 hover:text-violet-700 transition-colors duration-150'
+                    'hover:bg-violet-100 hover:text-stone-700 transition-colors duration-150'
                   )}
                 >
                   <Icon className="w-3 h-3" />

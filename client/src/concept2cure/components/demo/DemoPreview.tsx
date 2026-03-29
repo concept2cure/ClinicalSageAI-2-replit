@@ -97,7 +97,7 @@ const HeroPreview: React.FC = () => (
     </div>
     <div className="grid grid-cols-3 gap-2 mt-4 w-full max-w-lg">
       {['15+ Submission Types', '12+ AI Agents', '102 CMC Endpoints'].map((s) => (
-        <div key={s} className="bg-violet-50 rounded-lg py-2 px-3 text-xs font-medium text-violet-700 text-center">{s}</div>
+        <div key={s} className="bg-violet-50 rounded-lg py-2 px-3 text-xs font-medium text-stone-700 text-center">{s}</div>
       ))}
     </div>
   </div>
@@ -218,8 +218,8 @@ const SubGlobalPreview: React.FC = () => (
         {[
           { agency: 'FDA (US)', type: 'NDA', status: 'Filing', color: 'bg-emerald-50 text-emerald-700' },
           { agency: 'EMA (EU)', type: 'MAA', status: 'Drafting', color: 'bg-amber-50 text-amber-700' },
-          { agency: 'PMDA (Japan)', type: 'CTN', status: 'Planning', color: 'bg-blue-50 text-blue-700' },
-          { agency: 'NMPA (China)', type: 'NDA', status: 'Translation', color: 'bg-violet-50 text-violet-700' },
+          { agency: 'PMDA (Japan)', type: 'CTN', status: 'Planning', color: 'bg-blue-50 text-stone-700' },
+          { agency: 'NMPA (China)', type: 'NDA', status: 'Translation', color: 'bg-violet-50 text-stone-700' },
         ].map((a) => (
           <div key={a.agency} className="p-3 bg-stone-50 rounded-lg">
             <div className="flex justify-between items-start mb-2">
@@ -268,7 +268,7 @@ const ResSearchPreview: React.FC = () => (
       </div>
       <div className="flex gap-2 mb-3">
         {['ClinicalTrials.gov', 'PubMed', 'FDA', 'EMA'].map((s) => (
-          <StatusBadge key={s} status={s} color="bg-blue-50 text-blue-700" />
+          <StatusBadge key={s} status={s} color="bg-blue-50 text-stone-700" />
         ))}
       </div>
       <div className="flex items-center gap-2 text-xs text-emerald-600">
@@ -304,7 +304,7 @@ const ResIntelligencePreview: React.FC = () => (
   <div className="space-y-4">
     <MockCard title="Regulatory Intelligence Feed" icon={<Zap className="w-4 h-4 text-amber-500" />}>
       {[
-        { title: 'FDA Draft Guidance: AI/ML in Drug Development', type: 'Guidance', date: 'Today', severity: 'bg-blue-50 text-blue-700' },
+        { title: 'FDA Draft Guidance: AI/ML in Drug Development', type: 'Guidance', date: 'Today', severity: 'bg-blue-50 text-stone-700' },
         { title: 'EMA CHMP Positive Opinion — Semaglutide', type: 'Approval', date: '2 days ago', severity: 'bg-emerald-50 text-emerald-700' },
         { title: 'Warning Letter: CMC Deficiencies — BioPharm Inc', type: 'Enforcement', date: '5 days ago', severity: 'bg-red-50 text-red-700' },
         { title: 'PMDA Science Board: Real-World Evidence', type: 'Advisory', date: '1 week ago', severity: 'bg-amber-50 text-amber-700' },
@@ -370,12 +370,12 @@ const DocEditorPreview: React.FC = () => (
     <MockCard title="eCTD Co-Author" icon={<FileText className="w-4 h-4 text-blue-500" />}>
       <div className="bg-stone-50 rounded-lg p-4 font-mono text-xs text-stone-700 space-y-2 mb-3">
         <p className="font-semibold text-stone-900">2.7.4 Summary of Clinical Safety</p>
-        <p>The safety profile of [compound] was evaluated across <span className="bg-blue-100 text-blue-700 px-1 rounded">3 pivotal trials</span> enrolling a total of <span className="bg-blue-100 text-blue-700 px-1 rounded">4,200 subjects</span>.</p>
+        <p>The safety profile of [compound] was evaluated across <span className="bg-blue-100 text-stone-700 px-1 rounded">3 pivotal trials</span> enrolling a total of <span className="bg-blue-100 text-stone-700 px-1 rounded">4,200 subjects</span>.</p>
         <p className="text-stone-400 italic">AI suggestion: "Consider adding the treatment-emergent adverse events table reference (Table 14.3.1.1)..."</p>
       </div>
       <div className="flex gap-2">
         <StatusBadge status="Auto-Saved" color="bg-emerald-50 text-emerald-700" />
-        <StatusBadge status="Compliance: OK" color="bg-blue-50 text-blue-700" />
+        <StatusBadge status="Compliance: OK" color="bg-blue-50 text-stone-700" />
         <StatusBadge status="v3.2" color="bg-stone-100 text-stone-600" />
       </div>
     </MockCard>
@@ -531,7 +531,7 @@ const CMCManufacturingPreview: React.FC = () => (
             <p className="text-xs text-stone-900">{s.step}</p>
             <p className="text-xs text-stone-500">Scale: {s.scale}</p>
           </div>
-          <StatusBadge status={s.status} color={s.status === 'Production' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'} />
+          <StatusBadge status={s.status} color={s.status === 'Production' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-stone-700'} />
         </div>
       ))}
     </MockCard>
@@ -582,7 +582,7 @@ const AISwarmPreview: React.FC = () => (
           <div key={a.name} className="p-2 bg-stone-50 rounded-lg text-center">
             <Bot className={cn('w-4 h-4 mx-auto mb-1', a.status === 'Running' ? 'text-violet-500' : a.status === 'Complete' ? 'text-emerald-500' : 'text-stone-400')} />
             <p className="text-xs font-medium text-stone-700 truncate">{a.name}</p>
-            <StatusBadge status={a.status} color={a.status === 'Running' ? 'bg-violet-50 text-violet-700' : a.status === 'Complete' ? 'bg-emerald-50 text-emerald-700' : 'bg-stone-100 text-stone-500'} />
+            <StatusBadge status={a.status} color={a.status === 'Running' ? 'bg-violet-50 text-stone-700' : a.status === 'Complete' ? 'bg-emerald-50 text-emerald-700' : 'bg-stone-100 text-stone-500'} />
           </div>
         ))}
       </div>
@@ -601,7 +601,7 @@ const AISnowglobePreview: React.FC = () => (
           <div key={s.scenario} className="p-3 border border-stone-200 rounded-lg">
             <p className="text-xs font-medium text-stone-900 mb-2">{s.scenario}</p>
             <div className="space-y-1">
-              <p className="text-xs text-stone-600">Approval probability: <span className="font-semibold text-violet-700">{s.probability}</span></p>
+              <p className="text-xs text-stone-600">Approval probability: <span className="font-semibold text-stone-700">{s.probability}</span></p>
               <p className="text-xs text-stone-600">Est. timeline: {s.timeline}</p>
               <p className="text-xs text-stone-600">Risk: {s.risk}</p>
             </div>
@@ -959,7 +959,7 @@ const CollabPostmarketPreview: React.FC = () => (
         ].map((i) => (
           <div key={i.item} className="flex items-center justify-between p-2 bg-stone-50 rounded-lg text-xs">
             <span className="text-stone-700">{i.item}</span>
-            <StatusBadge status={i.status} color="bg-blue-50 text-blue-700" />
+            <StatusBadge status={i.status} color="bg-blue-50 text-stone-700" />
           </div>
         ))}
       </div>

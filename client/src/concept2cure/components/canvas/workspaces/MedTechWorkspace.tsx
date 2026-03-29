@@ -92,7 +92,7 @@ const PredicatePathfinder: React.FC<PredicatePathfinderProps> = ({ onSelectPredi
             <h3 className="font-semibold text-stone-900">Predicate Pathfinder</h3>
             <p className="text-sm text-stone-500">Search FDA 510(k) database for predicates</p>
           </div>
-          <button className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+          <button className="text-sm text-blue-600 hover:text-stone-700 font-medium flex items-center gap-1">
             <Filter className="w-4 h-4" />
             Filters
           </button>
@@ -139,7 +139,7 @@ const PredicatePathfinder: React.FC<PredicatePathfinderProps> = ({ onSelectPredi
                         {predicate.decisionType}
                       </span>
                       {predicate.similarityScore && (
-                        <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 text-xs font-medium">
+                        <span className="px-1.5 py-0.5 rounded bg-blue-100 text-stone-700 text-xs font-medium">
                           {Math.round(predicate.similarityScore * 100)}% match
                         </span>
                       )}

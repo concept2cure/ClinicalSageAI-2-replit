@@ -560,13 +560,13 @@ const MAUDEHazardMonitor: React.FC<{
                     'px-2 py-0.5 text-xs font-semibold rounded uppercase',
                     alert.eventType === 'death' && 'bg-red-100 text-red-700',
                     alert.eventType === 'injury' && 'bg-amber-100 text-amber-700',
-                    alert.eventType === 'malfunction' && 'bg-blue-100 text-blue-700'
+                    alert.eventType === 'malfunction' && 'bg-blue-100 text-stone-700'
                   )}
                 >
                   {alert.eventType}
                 </span>
                 {alert.isCompetitor && (
-                  <span className="px-1.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded">
+                  <span className="px-1.5 py-0.5 text-xs font-medium bg-blue-100 text-stone-700 rounded">
                     COMPETITOR
                   </span>
                 )}

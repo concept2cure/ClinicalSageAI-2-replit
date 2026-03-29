@@ -298,7 +298,7 @@ const PDUFACalendar: React.FC<{
                       </div>
                     </div>
                     {pdufa.priority && (
-                      <span className="mt-2 inline-block px-2 py-0.5 text-xs font-medium text-violet-700 bg-violet-100 rounded-full">
+                      <span className="mt-2 inline-block px-2 py-0.5 text-xs font-medium text-stone-700 bg-violet-100 rounded-full">
                         Priority Review
                       </span>
                     )}
@@ -371,7 +371,7 @@ const CommitmentTracker: React.FC<{
                         'px-2 py-0.5 text-xs font-medium rounded',
                         config.severity === 'critical' && 'bg-red-100 text-red-700',
                         config.severity === 'high' && 'bg-amber-100 text-amber-700',
-                        config.severity === 'medium' && 'bg-blue-100 text-blue-700',
+                        config.severity === 'medium' && 'bg-blue-100 text-stone-700',
                         config.severity === 'low' && 'bg-stone-100 text-stone-600'
                       )}>
                         {config.shortLabel}
@@ -523,7 +523,7 @@ const TherapeuticAreaCard: React.FC<{
           {/* Alerts */}
           <div className="flex items-center gap-2">
             {portfolio.upcomingPDUFAs > 0 && (
-              <span className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
+              <span className="px-2 py-1 text-xs font-medium text-stone-700 bg-blue-100 rounded-full">
                 {portfolio.upcomingPDUFAs} PDUFA
               </span>
             )}
@@ -655,7 +655,7 @@ export const PharmaPortfolioDashboard: React.FC<PharmaPortfolioDashboardProps> =
         <div className="grid grid-cols-5 gap-4">
           <div className="p-3 bg-blue-50 rounded-lg">
             <p className="text-xs text-blue-600">Total Revenue</p>
-            <p className="text-base font-medium text-blue-700">{formatCurrency(metrics.totalRevenue)}</p>
+            <p className="text-base font-medium text-stone-700">{formatCurrency(metrics.totalRevenue)}</p>
           </div>
           <div className="p-3 bg-stone-100 rounded-lg">
             <p className="text-xs text-stone-500">Products</p>
@@ -685,7 +685,7 @@ export const PharmaPortfolioDashboard: React.FC<PharmaPortfolioDashboardProps> =
           </div>
           <div className="p-3 bg-violet-50 rounded-lg">
             <p className="text-xs text-violet-600">At Risk (30d)</p>
-            <p className="text-base font-medium text-violet-700">{metrics.atRiskCommitments}</p>
+            <p className="text-base font-medium text-stone-700">{metrics.atRiskCommitments}</p>
           </div>
         </div>
       </div>

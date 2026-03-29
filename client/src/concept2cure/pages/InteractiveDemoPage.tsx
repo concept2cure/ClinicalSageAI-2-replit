@@ -157,7 +157,7 @@ const InteractiveDemoPage: React.FC = () => {
 
         <button
           onClick={() => navigate('/concept2cure/signup')}
-          className="px-4 py-1.5 text-sm font-medium text-white bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors shadow-sm"
+          className="px-4 py-1.5 text-sm font-medium text-white bg-stone-700 rounded-lg hover:bg-stone-800 transition-colors shadow-sm"
         >
           Sign Up Free
         </button>

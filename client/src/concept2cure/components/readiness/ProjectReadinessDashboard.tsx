@@ -104,7 +104,7 @@ export function ProjectReadinessDashboard({
             onClick={() => setActiveTab(tab.id)}
             className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               activeTab === tab.id
-                ? 'border-indigo-600 text-stone-600 dark:text-indigo-400'
+                ? 'border-stone-600 text-stone-600 dark:text-stone-400'
                 : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
             }`}
           >

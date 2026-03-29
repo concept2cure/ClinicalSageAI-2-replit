@@ -236,12 +236,12 @@ interface StatusPillProps {
 
 const statusVariants: Record<StatusVariant, string> = {
   default: 'bg-stone-100 text-stone-600',
-  info: 'bg-blue-100 text-blue-700',
+  info: 'bg-blue-100 text-stone-700',
   success: 'bg-emerald-100 text-emerald-700',
   warning: 'bg-amber-100 text-amber-700',
   danger: 'bg-red-100 text-red-700',
   purple: 'bg-purple-100 text-purple-700',
-  active: 'bg-blue-100 text-blue-700',
+  active: 'bg-blue-100 text-stone-700',
 };
 
 export function StatusPill({ label, variant = 'default', className, dot }: StatusPillProps) {
@@ -896,7 +896,7 @@ export function TabBar({ tabs, activeTab, onTabChange, className }: TabBarProps)
             {tab.count != null && (
               <span className={cn(
                 'text-xs rounded-full px-1.5 py-0.5 font-medium',
-                active ? 'bg-blue-100 text-blue-700' : 'bg-stone-100 text-stone-500',
+                active ? 'bg-blue-100 text-stone-700' : 'bg-stone-100 text-stone-500',
               )}>
                 {tab.count}
               </span>
@@ -963,7 +963,7 @@ export const LIFECYCLE: Record<ArtifactLifecycleStage, LifecycleStageConfig> = {
     label: 'In Review',
     variant: 'info',
     bg: 'bg-blue-50',
-    text: 'text-blue-700',
+    text: 'text-stone-700',
     dot: 'bg-stone-600',
     border: 'border-blue-200',
     order: 2,
@@ -1168,7 +1168,7 @@ export const SEVERITY: Record<SeverityLevel, SeverityConfig> = {
   critical: { label: 'Critical', variant: 'danger',  bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500',    border: 'border-red-200',    order: 0 },
   high:     { label: 'High',     variant: 'warning', bg: 'bg-orange-50', text: 'text-orange-700', dot: 'bg-orange-500', border: 'border-orange-200', order: 1 },
   medium:   { label: 'Medium',   variant: 'warning', bg: 'bg-amber-50',  text: 'text-amber-700',  dot: 'bg-amber-500',  border: 'border-amber-200',  order: 2 },
-  low:      { label: 'Low',      variant: 'info',    bg: 'bg-blue-50',   text: 'text-blue-700',   dot: 'bg-stone-600',   border: 'border-blue-200',   order: 3 },
+  low:      { label: 'Low',      variant: 'info',    bg: 'bg-blue-50',   text: 'text-stone-700',   dot: 'bg-stone-600',   border: 'border-blue-200',   order: 3 },
 };
 
 /** Normalise any severity/priority/impact string to a canonical level */

@@ -450,7 +450,7 @@ const ProductStep: React.FC<{
                 className={cn(
                   'p-3 rounded-lg border text-center transition-all duration-150',
                   isSelected
-                    ? 'border-stone-600 bg-blue-50 text-blue-700'
+                    ? 'border-stone-600 bg-blue-50 text-stone-700'
                     : 'border-stone-200 hover:border-blue-300 text-stone-600'
                 )}
               >
@@ -522,7 +522,7 @@ const TimelineStep: React.FC<{
                   <span className="text-base">{config.flag}</span>
                   <span className={cn(
                     'text-sm font-medium',
-                    isSelected ? 'text-blue-700' : 'text-stone-700'
+                    isSelected ? 'text-stone-700' : 'text-stone-700'
                   )}>
                     {config.label}
                   </span>
@@ -617,7 +617,7 @@ const SummaryStep: React.FC<{
       {/* What will be created */}
       <div className="mt-6 p-4 bg-blue-50 rounded-lg">
         <h4 className="text-sm font-semibold text-blue-800 mb-2">What will be created:</h4>
-        <ul className="text-sm text-blue-700 space-y-1">
+        <ul className="text-sm text-stone-700 space-y-1">
           <li>• Project workspace with eCTD structure</li>
           <li>• Document templates for selected modules</li>
           <li>• Timeline with milestones</li>

@@ -435,7 +435,7 @@ export const PMAWorkspace: React.FC<PMAWorkspaceProps> = ({
                 <div className={cn(
                   'p-2 rounded-lg',
                   getPhaseStatus(selectedPhase) === 'completed' ? 'bg-green-100 text-green-700' :
-                  getPhaseStatus(selectedPhase) === 'in_progress' ? 'bg-blue-100 text-blue-700' :
+                  getPhaseStatus(selectedPhase) === 'in_progress' ? 'bg-blue-100 text-stone-700' :
                   'bg-stone-100 text-stone-500'
                 )}>
                   {selectedPhase.icon}

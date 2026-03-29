@@ -698,7 +698,7 @@ export function CrossReferencePanel({
             <button
               onClick={scanDocument}
               disabled={isScanning}
-              className="flex items-center gap-1 text-blue-500 hover:text-blue-700 transition-colors disabled:opacity-50"
+              className="flex items-center gap-1 text-blue-500 hover:text-stone-700 transition-colors disabled:opacity-50"
             >
               <RefreshCw
                 className={cn('w-3 h-3', isScanning && 'animate-spin')}

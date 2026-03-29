@@ -1714,7 +1714,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             </button>
             <button
               onClick={() => setOperatingLayer('reports')}
-              className="text-[11px] px-2 py-0.5 rounded border border-blue-200 text-blue-700 hover:bg-blue-50"
+              className="text-[11px] px-2 py-0.5 rounded border border-blue-200 text-stone-700 hover:bg-blue-50"
             >
               Reports
             </button>
@@ -1840,7 +1840,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                     setLeftRailMode('dossier');
                     setMode('browse');
                   }}
-                  className="inline-flex items-center gap-1 rounded border border-blue-200 bg-white px-2 py-1 text-[11px] font-medium text-blue-700 hover:bg-blue-100"
+                  className="inline-flex items-center gap-1 rounded border border-blue-200 bg-white px-2 py-1 text-[11px] font-medium text-stone-700 hover:bg-blue-100"
                 >
                   Section tree
                 </button>
@@ -1861,13 +1861,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 </button>
                 <button
                   onClick={() => onNavigate?.('haq')}
-                  className="inline-flex items-center gap-1 rounded border border-blue-200 bg-white px-2 py-1 text-[11px] font-medium text-blue-700 hover:bg-blue-100"
+                  className="inline-flex items-center gap-1 rounded border border-blue-200 bg-white px-2 py-1 text-[11px] font-medium text-stone-700 hover:bg-blue-100"
                 >
                   HAQ path
                 </button>
                 <button
                   onClick={() => onNavigate?.('submissions')}
-                  className="inline-flex items-center gap-1 rounded border border-blue-200 bg-white px-2 py-1 text-[11px] font-medium text-blue-700 hover:bg-blue-100"
+                  className="inline-flex items-center gap-1 rounded border border-blue-200 bg-white px-2 py-1 text-[11px] font-medium text-stone-700 hover:bg-blue-100"
                 >
                   Assemble/export
                 </button>
@@ -2163,12 +2163,12 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   </div>
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {activeArtifact.ctdSection && (
-                      <span className="text-xs px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-700 font-medium">
+                      <span className="text-xs px-1.5 py-0.5 rounded-md bg-blue-50 text-stone-700 font-medium">
                         {activeArtifact.ctdSection}
                       </span>
                     )}
                     {activeArtifact.templateId && (
-                      <span className="text-xs px-1.5 py-0.5 rounded-md bg-violet-50 text-violet-700">
+                      <span className="text-xs px-1.5 py-0.5 rounded-md bg-violet-50 text-stone-700">
                         {activeArtifact.templateId.replace('tpl-', '')}
                       </span>
                     )}
@@ -2578,7 +2578,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                                   row.status === 'draft' && 'text-amber-700 border-amber-200',
                                   row.status === 'approved' &&
                                     'text-emerald-700 border-emerald-200',
-                                  row.status === 'review' && 'text-blue-700 border-blue-200',
+                                  row.status === 'review' && 'text-stone-700 border-blue-200',
                                   row.status === 'locked' && 'text-slate-700 border-slate-200'
                                 )}
                               >
@@ -3012,7 +3012,7 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
           {reqs.optional ? (
             <>
               <Info className="w-3 h-3 text-blue-500" />
-              <span className="text-xs text-blue-700 font-medium">Optional section</span>
+              <span className="text-xs text-stone-700 font-medium">Optional section</span>
             </>
           ) : (
             <>

@@ -130,7 +130,7 @@ const DOMAIN_ICONS: Record<string, React.ReactNode> = {
 const TIER_COLORS: Record<string, string> = {
   full_audit_trail: 'text-emerald-700 bg-emerald-50 border-emerald-200',
   partial: 'text-amber-700 bg-amber-50 border-amber-200',
-  advisory_only: 'text-blue-700 bg-blue-50 border-blue-200',
+  advisory_only: 'text-stone-700 bg-blue-50 border-blue-200',
 };
 
 const TIER_LABELS: Record<string, string> = {
@@ -142,7 +142,7 @@ const TIER_LABELS: Record<string, string> = {
 const SEVERITY_COLORS: Record<string, string> = {
   critical: 'text-red-700 bg-red-50 border-red-200',
   major: 'text-amber-700 bg-amber-50 border-amber-200',
-  minor: 'text-blue-700 bg-blue-50 border-blue-200',
+  minor: 'text-stone-700 bg-blue-50 border-blue-200',
 };
 
 // ── Component ────────────────────────────────────────────────
@@ -540,7 +540,7 @@ export default function IntelligentReportGenerator() {
                 onClick={() => setActiveTab(tab.key)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                   activeTab === tab.key
-                    ? 'bg-blue-100 text-blue-700'
+                    ? 'bg-blue-100 text-stone-700'
                     : 'text-stone-500 hover:bg-stone-100'
                 }`}
               >
@@ -627,7 +627,7 @@ export default function IntelligentReportGenerator() {
                       onClick={() => setSelectedSubtype(sub)}
                       className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
                         selectedSubtype === sub
-                          ? 'border-stone-600 bg-blue-100 text-blue-700'
+                          ? 'border-stone-600 bg-blue-100 text-stone-700'
                           : 'border-stone-200 text-stone-600 hover:bg-stone-50'
                       }`}
                     >
@@ -1165,7 +1165,7 @@ export default function IntelligentReportGenerator() {
               <button
                 onClick={loadProvenance}
                 disabled={provenanceLoading}
-                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+                className="flex items-center gap-1 text-xs text-blue-600 hover:text-stone-700"
               >
                 <RefreshCw className={`w-3 h-3 ${provenanceLoading ? 'animate-spin' : ''}`} />
                 Refresh
@@ -1321,7 +1321,7 @@ export default function IntelligentReportGenerator() {
               <button
                 onClick={handleComplianceValidation}
                 disabled={validating}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-blue-600 hover:text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-50"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-blue-600 hover:text-stone-700 border border-blue-200 rounded-lg hover:bg-blue-50"
               >
                 <RefreshCw className={`w-3 h-3 ${validating ? 'animate-spin' : ''}`} />
                 Re-validate
@@ -1405,7 +1405,7 @@ export default function IntelligentReportGenerator() {
                         <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
                           check.severity === 'critical' ? 'bg-red-100 text-red-700' :
                           check.severity === 'major' ? 'bg-amber-100 text-amber-700' :
-                          'bg-blue-100 text-blue-700'
+                          'bg-blue-100 text-stone-700'
                         }`}>
                           {check.severity}
                         </span>
@@ -1561,7 +1561,7 @@ export default function IntelligentReportGenerator() {
             <p className="text-sm">No report generated yet</p>
             <button
               onClick={() => setActiveTab('generate')}
-              className="mt-3 text-sm text-blue-600 hover:text-blue-700"
+              className="mt-3 text-sm text-blue-600 hover:text-stone-700"
             >
               Go to Generate tab
             </button>

@@ -988,7 +988,7 @@ export const ZenSignup: React.FC = () => {
               Already have an account?{' '}
               <button
                 onClick={() => setLocation('/login')}
-                className="text-blue-600 hover:text-blue-700 font-medium"
+                className="text-blue-600 hover:text-stone-700 font-medium"
               >
                 Sign in
               </button>

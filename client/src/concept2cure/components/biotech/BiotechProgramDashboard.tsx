@@ -400,7 +400,7 @@ const FDAInteractionTimeline: React.FC<{
               <span className="text-sm font-medium text-stone-900">{typeLabels[interaction.type]}</span>
               <span className={cn(
                 'text-xs font-medium px-2 py-0.5 rounded-full',
-                interaction.status === 'scheduled' && 'bg-blue-100 text-blue-700',
+                interaction.status === 'scheduled' && 'bg-blue-100 text-stone-700',
                 interaction.status === 'submitted' && 'bg-amber-100 text-amber-700',
                 interaction.status === 'planning' && 'bg-stone-100 text-stone-600'
               )}>
@@ -474,7 +474,7 @@ const FundingMilestoneCard: React.FC<{
           )} />
           <span className={cn(
             'text-xs font-medium px-2 py-0.5 rounded-full',
-            milestone.type === 'regulatory' && 'bg-blue-100 text-blue-700',
+            milestone.type === 'regulatory' && 'bg-blue-100 text-stone-700',
             milestone.type === 'clinical' && 'bg-emerald-100 text-emerald-700',
             milestone.type === 'scientific' && 'bg-purple-100 text-purple-700',
             milestone.type === 'commercial' && 'bg-amber-100 text-amber-700'
@@ -583,7 +583,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
             
             <div className="px-4 py-2 bg-blue-100 rounded-lg">
               <p className="text-xs text-blue-600">Upcoming FDA Meetings</p>
-              <p className="text-lg font-semibold text-blue-700">{metrics.upcomingFDAMeetings}</p>
+              <p className="text-lg font-semibold text-stone-700">{metrics.upcomingFDAMeetings}</p>
             </div>
           </div>
         </div>

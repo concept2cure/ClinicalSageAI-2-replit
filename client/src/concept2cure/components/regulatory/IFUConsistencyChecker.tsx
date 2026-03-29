@@ -124,7 +124,7 @@ const getSeverityColor = (severity: string): string => {
     case 'warning':
       return 'text-amber-700 bg-amber-50 border-amber-200';
     case 'info':
-      return 'text-blue-700 bg-blue-50 border-blue-200';
+      return 'text-stone-700 bg-blue-50 border-blue-200';
     default:
       return 'text-stone-700 bg-stone-50 border-stone-200';
   }
@@ -236,7 +236,7 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onResolve }) => {
 
             {/* Recommendation */}
             <div className="p-3 bg-blue-50 rounded-lg">
-              <div className="flex items-center gap-1 text-xs font-medium text-blue-700 mb-1">
+              <div className="flex items-center gap-1 text-xs font-medium text-stone-700 mb-1">
                 <Sparkles className="h-3 w-3" />
                 RI Recommendation
               </div>
@@ -325,7 +325,7 @@ const ScoreCard: React.FC<ScoreCardProps> = ({ result }) => {
               </Badge>
             )}
             {result.infoCount > 0 && (
-              <Badge className="bg-blue-100 text-blue-700 border-blue-200">
+              <Badge className="bg-blue-100 text-stone-700 border-blue-200">
                 {result.infoCount} Info
               </Badge>
             )}

@@ -153,7 +153,7 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
           <div className="space-y-4 animate-in fade-in slide-in-from-right-2 duration-200">
             <button
               onClick={() => setSelectedApp(null)}
-              className="text-xs text-blue-600 hover:text-blue-700 font-medium focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none rounded group/back"
+              className="text-xs text-blue-600 hover:text-stone-700 font-medium focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none rounded group/back"
             >
               <span className="inline-block transition-transform duration-150 group-hover/back:-translate-x-0.5">
                 ←

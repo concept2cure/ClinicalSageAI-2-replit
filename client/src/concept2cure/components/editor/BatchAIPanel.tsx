@@ -595,7 +595,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
             className={cn(
               'w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150',
               selectedAction && selectedSections.size > 0
-                ? 'bg-violet-600 hover:bg-stone-600 text-white'
+                ? 'bg-stone-700 hover:bg-stone-600 text-white'
                 : 'bg-stone-700 text-stone-500 cursor-not-allowed',
             )}
           >

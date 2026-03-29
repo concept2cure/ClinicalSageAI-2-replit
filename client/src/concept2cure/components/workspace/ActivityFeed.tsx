@@ -219,7 +219,7 @@ export function ActivityFeed({
                       {config.verb}{' '}
                       <button
                         onClick={() => item.documentId && onOpenDocument?.(item.documentId)}
-                        className="font-medium text-blue-600 hover:text-blue-700 hover:underline"
+                        className="font-medium text-blue-600 hover:text-stone-700 hover:underline"
                       >
                         {item.documentTitle}
                       </button>

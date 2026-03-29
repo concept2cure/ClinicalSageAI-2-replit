@@ -57,10 +57,10 @@ const submissionTypeConfig: Record<
   SubmissionType,
   { label: string; color: string; dotColor: string }
 > = {
-  '510K': { label: '510K', color: 'bg-blue-100 text-blue-700 border-blue-200', dotColor: 'bg-stone-600' },
+  '510K': { label: '510K', color: 'bg-blue-100 text-stone-700 border-blue-200', dotColor: 'bg-stone-600' },
   IND: { label: 'IND', color: 'bg-purple-100 text-purple-700 border-purple-200', dotColor: 'bg-purple-500' },
-  NDA: { label: 'NDA', color: 'bg-stone-100 text-stone-700 border-indigo-200', dotColor: 'bg-stone-600' },
-  BLA: { label: 'BLA', color: 'bg-violet-100 text-violet-700 border-violet-200', dotColor: 'bg-violet-500' },
+  NDA: { label: 'NDA', color: 'bg-stone-100 text-stone-700 border-stone-200', dotColor: 'bg-stone-600' },
+  BLA: { label: 'BLA', color: 'bg-violet-100 text-stone-700 border-violet-200', dotColor: 'bg-violet-500' },
   MAA: { label: 'MAA', color: 'bg-teal-100 text-teal-700 border-teal-200', dotColor: 'bg-teal-500' },
   PMA: { label: 'PMA', color: 'bg-red-100 text-red-700 border-red-200', dotColor: 'bg-red-500' },
   DE_NOVO: { label: 'De Novo', color: 'bg-cyan-100 text-cyan-700 border-cyan-200', dotColor: 'bg-cyan-500' },
@@ -633,7 +633,7 @@ export const ProjectsSidebar: React.FC = () => {
       {/* Header — brand + collapse */}
       <div className="flex h-14 items-center justify-between border-b border-stone-200/50 px-4">
         <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-lg bg-violet-600 flex items-center justify-center">
+          <div className="h-7 w-7 rounded-lg bg-stone-700 flex items-center justify-center">
             <Sparkles className="h-3.5 w-3.5 text-white" />
           </div>
           <span className="font-semibold text-sm text-stone-900">ClinicalSage</span>

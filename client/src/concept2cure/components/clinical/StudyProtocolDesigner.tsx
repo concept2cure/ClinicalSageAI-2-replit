@@ -592,11 +592,11 @@ const SampleSizePanel: React.FC<SampleSizePanelProps> = ({
           <div className="px-3 py-2">
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <p className="text-base font-semibold text-blue-700">{result.perArm}</p>
+                <p className="text-base font-semibold text-stone-700">{result.perArm}</p>
                 <p className="text-xs text-stone-500">Per Arm</p>
               </div>
               <div>
-                <p className="text-base font-semibold text-blue-700">{result.total}</p>
+                <p className="text-base font-semibold text-stone-700">{result.total}</p>
                 <p className="text-xs text-stone-500">Total</p>
               </div>
               <div>
@@ -805,7 +805,7 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
                     <selectedDesign.icon className="h-6 w-6 text-blue-600 mt-1" />
                     <div>
                       <h3 className="font-semibold text-blue-900">{selectedDesign.name}</h3>
-                      <p className="text-sm text-blue-700 mt-1">{selectedDesign.description}</p>
+                      <p className="text-sm text-stone-700 mt-1">{selectedDesign.description}</p>
                       <div className="mt-3 grid grid-cols-2 gap-4">
                         <div>
                           <p className="text-xs font-medium text-blue-800">Best For:</p>
@@ -948,7 +948,7 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
                         className={cn(
                           'text-xs mt-1',
                           section.status === 'not_started' && 'bg-stone-100 text-stone-600',
-                          section.status === 'ai_draft' && 'bg-blue-100 text-blue-700',
+                          section.status === 'ai_draft' && 'bg-blue-100 text-stone-700',
                           section.status === 'in_review' && 'bg-amber-100 text-amber-700',
                           section.status === 'approved' && 'bg-green-100 text-green-700'
                         )}

@@ -299,7 +299,7 @@ const PrecedentSearchInspector: React.FC<{
                       const parts = [rec.deviceName || rec.indication, rec.clearanceNumber, rec.applicant, rec.decisionOutcome].filter(Boolean);
                       onInsertCitation(parts.join(' — '));
                     }}
-                    className="mt-1.5 text-[10px] text-blue-500 hover:text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
+                    className="mt-1.5 text-[10px] text-blue-500 hover:text-stone-700 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
                   >
                     <Plus className="w-2.5 h-2.5" />
                     Insert as citation
@@ -1856,7 +1856,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               onClick={() => setShowFilters(!showFilters)}
               className={cn(
                 'flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors duration-150',
-                showFilters ? 'bg-blue-100 text-blue-700' : 'text-stone-500 hover:bg-stone-100'
+                showFilters ? 'bg-blue-100 text-stone-700' : 'text-stone-500 hover:bg-stone-100'
               )}
             >
               <Filter className="w-3 h-3" />
@@ -2130,7 +2130,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         {activeArtifact?.ctdSection && (
           <button
             onClick={() => setShowCtdInput(prev => !prev)}
-            className="text-xs px-2 py-0.5 rounded-md bg-violet-50 text-violet-700 font-semibold shrink-0 ring-1 ring-violet-200/60 hover:bg-violet-100 transition-colors cursor-pointer"
+            className="text-xs px-2 py-0.5 rounded-md bg-violet-50 text-stone-700 font-semibold shrink-0 ring-1 ring-violet-200/60 hover:bg-violet-100 transition-colors cursor-pointer"
             title="Edit CTD section placement"
           >
             CTD {activeArtifact.ctdSection}
@@ -2141,7 +2141,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           'text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md shrink-0',
           activeLifecycleStage === 'Draft' && 'bg-stone-100 text-stone-500',
           activeLifecycleStage === 'Review' && 'bg-amber-50 text-amber-700 ring-1 ring-amber-200/60',
-          activeLifecycleStage === 'Verify' && 'bg-blue-50 text-blue-700 ring-1 ring-stone-300/60',
+          activeLifecycleStage === 'Verify' && 'bg-blue-50 text-stone-700 ring-1 ring-stone-300/60',
           activeLifecycleStage === 'Publish' && 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/60',
         )}>
           {activeLifecycleStage}
@@ -2497,10 +2497,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse [animation-delay:150ms]" />
             <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse [animation-delay:300ms]" />
           </div>
-          <span className="text-sm text-violet-700 font-medium">Generating AI suggestion...</span>
+          <span className="text-sm text-stone-700 font-medium">Generating AI suggestion...</span>
           <button
             onClick={() => setAiLoading(false)}
-            className="ml-auto text-xs text-violet-500 hover:text-violet-700"
+            className="ml-auto text-xs text-violet-500 hover:text-stone-700"
           >
             Cancel
           </button>

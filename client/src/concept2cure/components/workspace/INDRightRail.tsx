@@ -298,7 +298,7 @@ const PlacementItem: React.FC<{ module: string; label: string; sections: string[
         aria-expanded={open}
         className="w-full flex items-center gap-2 px-2.5 py-2 text-left focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none rounded"
       >
-        <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-semibold leading-none flex-shrink-0">
+        <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-stone-700 font-semibold leading-none flex-shrink-0">
           M{module}
         </span>
         <span className="text-xs font-medium text-stone-700 flex-1">{label}</span>

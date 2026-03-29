@@ -210,7 +210,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
               {unreadCount > 0 && (
                 <button
                   onClick={markAllRead}
-                  className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-0.5"
+                  className="text-xs text-blue-600 hover:text-stone-700 flex items-center gap-0.5"
                   title="Mark all read"
                 >
                   <CheckCheck className="w-3 h-3" />

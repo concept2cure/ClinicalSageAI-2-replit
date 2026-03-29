@@ -296,7 +296,7 @@ const ViolationCard: React.FC<ViolationCardProps> = ({
           {violation.location?.section && (
             <button
               onClick={onClick}
-              className="flex items-center gap-2 text-xs text-blue-600 hover:text-blue-700"
+              className="flex items-center gap-2 text-xs text-blue-600 hover:text-stone-700"
             >
               <ExternalLink className="w-3 h-3" />
               Go to location

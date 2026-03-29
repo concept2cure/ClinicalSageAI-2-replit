@@ -124,7 +124,7 @@ export function ContinuityBriefing({ snapshot, onRefresh, isRefreshing }: Contin
       {/* Next actions */}
       {snapshot.nextActions.length > 0 && (
         <div>
-          <h4 className="text-xs font-medium uppercase text-stone-600 dark:text-indigo-400 mb-2">
+          <h4 className="text-xs font-medium uppercase text-stone-600 dark:text-stone-400 mb-2">
             Recommended Next
           </h4>
           <div className="space-y-1">

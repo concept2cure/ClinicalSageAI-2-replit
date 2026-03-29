@@ -218,7 +218,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
                         v{version.version}
                       </span>
                       {isLatest && (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-stone-700 font-medium">
                           Current
                         </span>
                       )}
@@ -272,7 +272,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
                           e.stopPropagation();
                           setShowDiff(!showDiff);
                         }}
-                        className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded hover:bg-blue-200 transition-colors duration-150"
+                        className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-stone-700 bg-blue-100 rounded hover:bg-blue-200 transition-colors duration-150"
                       >
                         <GitCompare className="w-3 h-3" />
                         {showDiff ? 'Hide Diff' : 'Compare'}

@@ -421,8 +421,8 @@ const ModuleHeader: React.FC<{
       <div
         className={cn(
           'w-10 h-10 rounded-lg flex items-center justify-center text-lg font-semibold flex-shrink-0',
-          moduleId === '1' && 'bg-blue-100 text-blue-700',
-          moduleId === '2' && 'bg-blue-100 text-blue-700',
+          moduleId === '1' && 'bg-blue-100 text-stone-700',
+          moduleId === '2' && 'bg-blue-100 text-stone-700',
           moduleId === '3' && 'bg-emerald-100 text-emerald-700',
           moduleId === '4' && 'bg-amber-100 text-amber-700',
           moduleId === '5' && 'bg-pink-100 text-pink-700'
@@ -557,9 +557,9 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
             <div
               className={cn(
                 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium',
-                dossier.status.overall === 'drafting' && 'bg-blue-100 text-blue-700',
+                dossier.status.overall === 'drafting' && 'bg-blue-100 text-stone-700',
                 dossier.status.overall === 'internal_review' && 'bg-amber-100 text-amber-700',
-                dossier.status.overall === 'qc' && 'bg-blue-100 text-blue-700',
+                dossier.status.overall === 'qc' && 'bg-blue-100 text-stone-700',
                 dossier.status.overall === 'ready' && 'bg-emerald-100 text-emerald-700',
                 dossier.status.overall === 'submitted' && 'bg-stone-100 text-stone-700'
               )}

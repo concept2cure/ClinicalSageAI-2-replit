@@ -189,7 +189,7 @@ const BranchNode: React.FC<BranchNodeProps> = ({
         {/* Branch icon */}
         <div className={cn(
           'w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0',
-          isActive ? 'bg-blue-100 text-blue-700' : 'bg-stone-100 text-stone-500'
+          isActive ? 'bg-blue-100 text-stone-700' : 'bg-stone-100 text-stone-500'
         )}>
           {depth === 0 ? (
             <GitCommit className="h-3.5 w-3.5" />

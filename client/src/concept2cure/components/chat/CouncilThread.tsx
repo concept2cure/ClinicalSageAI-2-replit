@@ -119,7 +119,7 @@ const AGENTS: Record<
   DRAFTER: {
     name: 'RI Author',
     title: 'The Heavy Lifter',
-    color: 'text-blue-700',
+    color: 'text-stone-700',
     bgColor: 'bg-blue-100',
     bubbleColor: 'bg-white border border-blue-200 text-stone-700',
     icon: <FileText className="w-4 h-4" />,
@@ -151,7 +151,7 @@ const AGENTS: Record<
   PATHFINDER: {
     name: 'CERV2',
     title: 'Regulatory Pathfinder',
-    color: 'text-blue-700',
+    color: 'text-stone-700',
     bgColor: 'bg-blue-100',
     bubbleColor: 'bg-blue-50 border border-blue-200 text-blue-900',
     icon: <ShieldCheck className="w-4 h-4" />,
@@ -190,7 +190,7 @@ const ThinkingIndicator: React.FC = () => (
 const CitationBadge: React.FC<{ citation: Citation }> = ({ citation }) => (
   <button
     onClick={citation.onClick}
-    className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors duration-150"
+    className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-blue-100 text-stone-700 rounded hover:bg-blue-200 transition-colors duration-150"
   >
     <FileText className="w-3 h-3" />
     {citation.label}

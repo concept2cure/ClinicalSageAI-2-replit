@@ -158,7 +158,7 @@ const STATUS_CONFIG: Record<CROProject['status'], {
   active: { label: 'Active', color: 'text-green-700', bgColor: 'bg-green-100' },
   on_hold: { label: 'On Hold', color: 'text-amber-700', bgColor: 'bg-amber-100' },
   at_risk: { label: 'At Risk', color: 'text-red-700', bgColor: 'bg-red-100' },
-  completed: { label: 'Completed', color: 'text-blue-700', bgColor: 'bg-blue-100' },
+  completed: { label: 'Completed', color: 'text-stone-700', bgColor: 'bg-blue-100' },
   cancelled: { label: 'Cancelled', color: 'text-stone-500', bgColor: 'bg-stone-100' },
 };
 
@@ -524,7 +524,7 @@ export const CROResourceDashboard: React.FC<CROResourceDashboardProps> = ({
         <div className="grid grid-cols-6 gap-4">
           <div className="p-3 bg-blue-50 rounded-lg">
             <p className="text-xs text-blue-600 mb-0.5">Total Contract Value</p>
-            <p className="text-lg font-semibold text-blue-700">{formatCurrency(metrics.totalContractValue)}</p>
+            <p className="text-lg font-semibold text-stone-700">{formatCurrency(metrics.totalContractValue)}</p>
           </div>
           <div className="p-3 bg-green-50 rounded-lg">
             <p className="text-xs text-green-600 mb-0.5">Billed YTD</p>
@@ -532,7 +532,7 @@ export const CROResourceDashboard: React.FC<CROResourceDashboardProps> = ({
           </div>
           <div className="p-3 bg-violet-50 rounded-lg">
             <p className="text-xs text-violet-600 mb-0.5">Active Projects</p>
-            <p className="text-lg font-semibold text-violet-700">{metrics.activeProjects}</p>
+            <p className="text-lg font-semibold text-stone-700">{metrics.activeProjects}</p>
           </div>
           <div className={cn(
             'p-3 rounded-lg',

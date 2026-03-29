@@ -135,7 +135,7 @@ const MEETING_TYPES = [
 
 const QUESTION_CATEGORIES = [
   { value: 'clinical', label: 'Clinical', color: 'bg-green-100 text-green-700' },
-  { value: 'nonclinical', label: 'Nonclinical', color: 'bg-blue-100 text-blue-700' },
+  { value: 'nonclinical', label: 'Nonclinical', color: 'bg-blue-100 text-stone-700' },
   { value: 'labeling', label: 'Labeling', color: 'bg-purple-100 text-purple-700' },
   { value: 'manufacturing', label: 'Manufacturing', color: 'bg-orange-100 text-orange-700' },
   { value: 'testing', label: 'Testing', color: 'bg-cyan-100 text-cyan-700' },
@@ -273,7 +273,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
               className="p-3 bg-white rounded-lg border border-stone-200 group"
             >
               <div className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-medium flex items-center justify-center">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-stone-700 text-xs font-medium flex items-center justify-center">
                   {idx + 1}
                 </span>
                 <div className="flex-1 min-w-0">

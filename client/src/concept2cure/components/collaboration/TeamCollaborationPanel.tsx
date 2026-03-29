@@ -563,7 +563,7 @@ export const TeamCollaborationPanel: React.FC<TeamCollaborationPanelProps> = ({
             <button className="p-1.5 text-stone-400 hover:text-stone-600 transition-colors duration-150">
               <Paperclip className="w-4 h-4" />
             </button>
-            <button className="p-1.5 text-blue-600 hover:text-blue-700 transition-colors duration-150">
+            <button className="p-1.5 text-blue-600 hover:text-stone-700 transition-colors duration-150">
               <Send className="w-4 h-4" />
             </button>
           </div>

@@ -931,7 +931,7 @@ export default function IVDRAnnexVIIIClassifier() {
                   <h4 className="font-semibold mb-2 text-blue-800">
                     Device-Specific Classification Justification
                   </h4>
-                  <p className="text-sm text-blue-700">
+                  <p className="text-sm text-stone-700">
                     Device <strong>"{answers.deviceName}"</strong> is classified as{' '}
                     <strong>Class {result.classification}</strong> because its intended purpose
                     triggers: {result.matchedRules.map(r => r.rule).join('; ')}.

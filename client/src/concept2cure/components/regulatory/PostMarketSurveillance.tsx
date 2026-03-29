@@ -1046,7 +1046,7 @@ function RiskBenefitTab() {
             <h4 className="font-semibold text-blue-800 mb-2">Overall Conclusion</h4>
             <div className="flex items-center gap-3">
               <Badge className="bg-green-600">Favorable</Badge>
-              <p className="text-sm text-blue-700">
+              <p className="text-sm text-stone-700">
                 The benefit-risk balance remains favorable for the approved indication when used in
                 accordance with the prescribing information.
               </p>

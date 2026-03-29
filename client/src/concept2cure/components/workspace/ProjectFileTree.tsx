@@ -243,7 +243,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                 className={cn(
                   'w-full flex items-center gap-1.5 px-2 py-[5px] text-left transition-all duration-150 group focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none rounded',
                   isFolderSelected
-                    ? 'bg-blue-50 text-blue-700'
+                    ? 'bg-blue-50 text-stone-700'
                     : 'text-stone-600 hover:bg-stone-50 hover:translate-x-px'
                 )}
                 data-testid={`folder-${folder.key}`}
@@ -308,7 +308,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
             {onCreateNew && (
               <button
                 onClick={onCreateNew}
-                className="mt-2 text-xs text-blue-600 hover:text-blue-700 font-medium"
+                className="mt-2 text-xs text-blue-600 hover:text-stone-700 font-medium"
               >
                 Create first document
               </button>
@@ -364,7 +364,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                 onOpenPlacement(contextMenu.artifact);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-2 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-blue-50 hover:text-stone-700 transition-colors flex items-center gap-2 focus-visible:outline-none"
               role="menuitem"
             >
               <MapPin className="w-3 h-3" />

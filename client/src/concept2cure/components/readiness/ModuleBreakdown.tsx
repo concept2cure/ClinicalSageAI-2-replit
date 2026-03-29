@@ -20,7 +20,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 const STATUS_TEXT_COLORS: Record<string, string> = {
   ready: 'text-green-700 dark:text-green-400',
-  on_track: 'text-blue-700 dark:text-blue-400',
+  on_track: 'text-stone-700 dark:text-blue-400',
   needs_attention: 'text-amber-700 dark:text-amber-400',
   at_risk: 'text-red-700 dark:text-red-400',
   in_progress: 'text-purple-700 dark:text-purple-400',

@@ -359,7 +359,7 @@ const OrganizationSection: React.FC = () => {
         <SettingRow label="Team Members" description={`${orgData.members} active members`}>
           <a
             href="/concept2cure/billing"
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+            className="text-sm text-blue-600 hover:text-stone-700 font-medium flex items-center gap-1"
           >
             Manage
             <ChevronRight className="w-4 h-4" />
@@ -369,7 +369,7 @@ const OrganizationSection: React.FC = () => {
         <SettingRow label="Billing" description={`Next billing: ${orgData.nextBilling}`}>
           <a
             href="/concept2cure/billing"
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+            className="text-sm text-blue-600 hover:text-stone-700 font-medium flex items-center gap-1"
           >
             View
             <ChevronRight className="w-4 h-4" />
@@ -379,7 +379,7 @@ const OrganizationSection: React.FC = () => {
         <SettingRow label="Usage" description="View token usage in billing dashboard">
           <a
             href="/concept2cure/billing"
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+            className="text-sm text-blue-600 hover:text-stone-700 font-medium flex items-center gap-1"
           >
             Dashboard
             <ChevronRight className="w-4 h-4" />
@@ -498,11 +498,11 @@ const SecuritySection: React.FC = () => {
         </SettingRow>
 
         <SettingRow label="Password" description="Last changed 30 days ago">
-          <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">Change</button>
+          <button className="text-sm text-blue-600 hover:text-stone-700 font-medium">Change</button>
         </SettingRow>
 
         <SettingRow label="Active Sessions" description="3 devices currently signed in">
-          <button className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+          <button className="text-sm text-blue-600 hover:text-stone-700 font-medium flex items-center gap-1">
             View
             <ChevronRight className="w-4 h-4" />
           </button>

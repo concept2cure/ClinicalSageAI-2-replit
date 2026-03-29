@@ -386,7 +386,7 @@ const IssueCard: React.FC<IssueCardProps> = ({ guard, onAction, onAutoFix }) => 
             <span className={`px-2 py-0.5 rounded text-xs font-medium ${
               guard.severity === 'error' ? 'bg-red-100 text-red-700' :
               guard.severity === 'warning' ? 'bg-amber-100 text-amber-700' :
-              'bg-blue-100 text-blue-700'
+              'bg-blue-100 text-stone-700'
             }`}>
               {config.label}
             </span>

@@ -116,17 +116,17 @@ const STATUS_CONFIG = {
 const ACTOR_CONFIG = {
   'dr-sage': {
     label: 'Dr. Sage',
-    bg: 'bg-blue-100 text-blue-700',
+    bg: 'bg-blue-100 text-stone-700',
     icons: [Bot],
   },
   ana: {
     label: 'AnA 1.0',
-    bg: 'bg-blue-100 text-blue-700',
+    bg: 'bg-blue-100 text-stone-700',
     icons: [Brain],
   },
   both: {
     label: 'Dr. Sage + AnA 1.0',
-    bg: 'bg-blue-50 text-blue-700',
+    bg: 'bg-blue-50 text-stone-700',
     icons: [Bot, Brain],
   },
 } as const;

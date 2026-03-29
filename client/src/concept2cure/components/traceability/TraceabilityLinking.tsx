@@ -90,7 +90,7 @@ export interface TraceabilityLinkingProps {
 const DocumentTypeBadge: React.FC<{ type: SourceDocument['documentType'] }> = ({ type }) => {
   const config = {
     clinical_study: { label: 'Clinical Study', color: 'bg-purple-100 text-purple-700' },
-    regulatory_guidance: { label: 'Guidance', color: 'bg-blue-100 text-blue-700' },
+    regulatory_guidance: { label: 'Guidance', color: 'bg-blue-100 text-stone-700' },
     literature: { label: 'Literature', color: 'bg-green-100 text-green-700' },
     internal_sop: { label: 'SOP', color: 'bg-orange-100 text-orange-700' },
     device_spec: { label: 'Device Spec', color: 'bg-cyan-100 text-cyan-700' },
@@ -224,7 +224,7 @@ const SourceDocumentCard: React.FC<SourceDocumentCardProps> = ({
             {onPreview && (
               <button
                 onClick={onPreview}
-                className="flex items-center gap-1 mt-2 text-blue-600 hover:text-blue-700"
+                className="flex items-center gap-1 mt-2 text-blue-600 hover:text-stone-700"
               >
                 <Eye className="w-3 h-3" />
                 Preview full document

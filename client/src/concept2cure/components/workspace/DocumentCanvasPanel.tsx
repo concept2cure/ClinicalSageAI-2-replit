@@ -222,7 +222,7 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
           <button
             onClick={() => onOpenFullEditor(artifactId)}
             aria-label="Open in Full Editor"
-            className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-none"
+            className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-blue-600 hover:text-stone-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-none"
           >
             <PenLine className="w-3.5 h-3.5" />
             Open in Editor

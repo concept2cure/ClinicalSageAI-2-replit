@@ -114,14 +114,14 @@ const EVENT_CONFIG: Record<EventType, {
   },
   meeting: {
     icon: Users,
-    color: 'text-blue-700',
+    color: 'text-stone-700',
     bgColor: 'bg-blue-100',
     borderColor: 'border-blue-300',
     label: 'Meeting',
   },
   filing: {
     icon: FileText,
-    color: 'text-violet-700',
+    color: 'text-stone-700',
     bgColor: 'bg-violet-100',
     borderColor: 'border-violet-300',
     label: 'Filing',
@@ -300,8 +300,8 @@ const UpcomingEventsSidebar: React.FC<{
               <div key={dateKey}>
                 <div className={cn(
                   'text-xs font-medium mb-2 px-2 py-1 rounded',
-                  isToday(date) && 'bg-blue-100 text-blue-700',
-                  isSelectedDay && !isToday(date) && 'bg-blue-100 text-blue-700',
+                  isToday(date) && 'bg-blue-100 text-stone-700',
+                  isSelectedDay && !isToday(date) && 'bg-blue-100 text-stone-700',
                   !isToday(date) && !isSelectedDay && 'text-stone-500'
                 )}>
                   {isToday(date) ? 'Today' : date.toLocaleDateString(undefined, {
@@ -522,7 +522,7 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
                     <span className={cn(
                       'w-6 h-6 flex items-center justify-center text-sm rounded-full',
                       isTodayDate && 'bg-stone-800 text-white font-semibold',
-                      !isTodayDate && isSelected && 'text-blue-700 font-medium',
+                      !isTodayDate && isSelected && 'text-stone-700 font-medium',
                       !isTodayDate && !isSelected && 'text-stone-700'
                     )}>
                       {date.getDate()}

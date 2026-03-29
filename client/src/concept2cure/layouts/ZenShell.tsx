@@ -141,7 +141,7 @@ const ZenHeader: React.FC<ZenHeaderProps> = ({
       </button>
       <button
         onClick={onToggleRightDrawer}
-        className={cn(zenClasses.buttonIcon, rightDrawerOpen && 'bg-blue-50 text-blue-700')}
+        className={cn(zenClasses.buttonIcon, rightDrawerOpen && 'bg-blue-50 text-stone-700')}
         aria-label="Toggle right drawer"
       >
         <PanelRight className="w-4 h-4" />
@@ -180,7 +180,7 @@ const ContextHeader: React.FC<ContextHeaderProps> = ({ projectName, projectType 
       <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">
         <Activity className="w-3 h-3" /> Live Sync
       </span>
-      <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-blue-700">
+      <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-stone-700">
         <Clock3 className="w-3 h-3" /> Updated now
       </span>
     </div>
@@ -297,7 +297,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
                 'w-full flex items-center gap-3 rounded-lg transition-colors duration-150',
                 isCollapsed ? 'justify-center p-2' : 'px-3 py-2',
                 activeProjectId === project.id
-                  ? 'bg-blue-50 text-blue-700'
+                  ? 'bg-blue-50 text-stone-700'
                   : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
               )}
               title={isCollapsed ? project.name : undefined}
@@ -306,7 +306,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
                 className={cn(
                   'flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold',
                   activeProjectId === project.id
-                    ? 'bg-blue-100 text-blue-700'
+                    ? 'bg-blue-100 text-stone-700'
                     : 'bg-stone-100 text-stone-600'
                 )}
               >
@@ -613,7 +613,7 @@ const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({ isOpen, onClose }
                 className={cn(
                   'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none',
                   index === selectedIndex
-                    ? 'bg-blue-50 text-blue-700'
+                    ? 'bg-blue-50 text-stone-700'
                     : 'text-stone-700 hover:bg-stone-50'
                 )}
               >
@@ -734,7 +734,7 @@ export const ZenShell: React.FC<ZenShellProps> = ({ children }) => {
       {/* Persistent AnA Access */}
       <button
         onClick={() => setCommandPaletteOpen(true)}
-        className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full bg-violet-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-violet-700"
+        className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full bg-stone-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-stone-800"
         aria-label="Persistent AnA access"
       >
         <Brain className="h-4 w-4" />

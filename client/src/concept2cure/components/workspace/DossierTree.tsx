@@ -274,7 +274,7 @@ function DossierNodeRow({
         className={cn(
           'w-full flex items-center gap-1 py-[4px] pr-2 text-left transition-all duration-150 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-400 focus-visible:outline-none',
           isSelected
-            ? 'bg-blue-50 text-blue-700'
+            ? 'bg-blue-50 text-stone-700'
             : 'text-stone-600 hover:bg-stone-50 hover:translate-x-px'
         )}
         style={{ paddingLeft: `${8 + depth * 14}px` }}
@@ -646,7 +646,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 onPlaceArtifact(contextMenu.ctdSection);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-2 focus-visible:bg-blue-50 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-blue-50 hover:text-stone-700 transition-colors flex items-center gap-2 focus-visible:bg-blue-50 focus-visible:outline-none"
               role="menuitem"
             >
               <MapPin className="w-3 h-3" />
@@ -696,7 +696,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 onOpenTransformCanvas(contextMenu.ctdSection);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-violet-700 hover:bg-blue-50 transition-colors flex items-center gap-2 focus-visible:bg-violet-50 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-blue-50 transition-colors flex items-center gap-2 focus-visible:bg-violet-50 focus-visible:outline-none"
               role="menuitem"
             >
               <Sparkles className="w-3 h-3" />
@@ -722,7 +722,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 onOpenProgramTwin();
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-blue-700 hover:bg-blue-50 transition-colors flex items-center gap-2 focus-visible:bg-blue-50 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-blue-50 transition-colors flex items-center gap-2 focus-visible:bg-blue-50 focus-visible:outline-none"
               role="menuitem"
             >
               <Target className="w-3 h-3" />

@@ -238,7 +238,7 @@ export const SlashCommandList = React.forwardRef<
                 onClick={() => selectItem(idx)}
                 className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
                   idx === selectedIndex
-                    ? 'bg-blue-50 text-blue-700'
+                    ? 'bg-blue-50 text-stone-700'
                     : 'hover:bg-stone-50 text-stone-700'
                 }`}
               >

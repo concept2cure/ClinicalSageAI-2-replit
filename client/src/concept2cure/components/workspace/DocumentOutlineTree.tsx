@@ -242,7 +242,7 @@ function OutlineNodeRow({ node, activeId, onNavigate }: OutlineNodeRowProps) {
         className={cn(
           'w-full flex items-center gap-1 py-[3px] pr-2 text-left transition-all duration-150',
           isActive
-            ? 'bg-blue-50 text-blue-700'
+            ? 'bg-blue-50 text-stone-700'
             : 'text-stone-600 hover:bg-stone-50 hover:translate-x-px'
         )}
         style={{ paddingLeft: `${8 + node.depth * 12}px` }}
@@ -454,7 +454,7 @@ export const DocumentOutlineTree: React.FC<DocumentOutlineTreeProps> = ({
             className={cn(
               'flex-1 py-1.5 text-xs font-semibold transition-colors text-center',
               subview === 'outline'
-                ? 'text-blue-700 bg-white border-b-2 border-stone-800'
+                ? 'text-stone-700 bg-white border-b-2 border-stone-800'
                 : 'text-stone-400 hover:text-stone-600'
             )}
             data-testid="outline-subview-outline"
@@ -466,7 +466,7 @@ export const DocumentOutlineTree: React.FC<DocumentOutlineTreeProps> = ({
             className={cn(
               'flex-1 py-1.5 text-xs font-semibold transition-colors text-center',
               subview === 'structure'
-                ? 'text-violet-700 bg-white border-b-2 border-violet-600'
+                ? 'text-stone-700 bg-white border-b-2 border-violet-600'
                 : 'text-stone-400 hover:text-stone-600'
             )}
             data-testid="outline-subview-structure"

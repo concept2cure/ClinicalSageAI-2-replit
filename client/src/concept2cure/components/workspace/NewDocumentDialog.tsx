@@ -350,7 +350,7 @@ export function NewDocumentDialog({
               <div className="flex items-center gap-2 p-2.5 rounded-lg bg-blue-50 border border-blue-200">
                 <FileCheck className="h-4 w-4 text-blue-500 shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-blue-700">{selectedTemplate.name}</p>
+                  <p className="text-xs font-medium text-stone-700">{selectedTemplate.name}</p>
                   <p className="text-[10px] text-blue-500">{selectedTemplate.sections.length} sections · {selectedTemplate.complexity}</p>
                 </div>
                 {mode === 'ai-generate' && (

@@ -293,7 +293,7 @@ export function ProjectDashboard({
             <h1 className="text-base font-semibold tracking-tight text-stone-900">{projectName}</h1>
             <div className="flex flex-wrap items-center gap-2">
               {projectType && (
-                <span className="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-stone-300">
+                <span className="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-stone-700 ring-1 ring-inset ring-stone-300">
                   {projectType}
                 </span>
               )}
@@ -486,7 +486,7 @@ export function ProjectDashboard({
               <button
                 type="button"
                 onClick={onCreateDocument}
-                className="mt-3 text-sm font-medium text-blue-600 hover:text-blue-700"
+                className="mt-3 text-sm font-medium text-blue-600 hover:text-stone-700"
               >
                 Create your first document
               </button>
@@ -511,7 +511,7 @@ export function ProjectDashboard({
 
                       {/* Title & metadata */}
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-stone-900 group-hover:text-blue-700">
+                        <p className="truncate text-sm font-medium text-stone-900 group-hover:text-stone-700">
                           {artifact.title}
                         </p>
                         <div className="mt-0.5 flex items-center gap-2">
@@ -705,7 +705,7 @@ export function ProjectDashboard({
                   <span className={cn(
                     'inline-flex min-w-[1.5rem] items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums',
                     hasContent
-                      ? 'bg-blue-50 text-blue-700'
+                      ? 'bg-blue-50 text-stone-700'
                       : 'bg-stone-50 text-stone-300',
                   )}>
                     {docCount}

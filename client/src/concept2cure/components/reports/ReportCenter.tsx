@@ -177,7 +177,7 @@ export const ReportCenter: React.FC<{ projectId?: string }> = ({ projectId }) =>
                 <span className={cn(
                   'text-xs px-2 py-0.5 rounded-full',
                   report.status === 'ready' && 'bg-emerald-100 text-emerald-700',
-                  report.status === 'draft' && 'bg-blue-100 text-blue-700',
+                  report.status === 'draft' && 'bg-blue-100 text-stone-700',
                   report.status === 'generating' && 'bg-amber-100 text-amber-700',
                   report.status === 'exported' && 'bg-stone-100 text-stone-700',
                 )}>

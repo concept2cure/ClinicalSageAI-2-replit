@@ -117,7 +117,7 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
         actions={
           <div className="flex items-center gap-1.5">
             {totalItems > 0 && (
-              <span className="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">
+              <span className="text-[9px] bg-blue-100 text-stone-700 px-1.5 py-0.5 rounded-full font-medium">
                 {totalItems}
               </span>
             )}
@@ -176,7 +176,7 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
                   </span>
                 )}
                 {approvalsNeeded > 0 && (
-                  <span className="text-[8px] bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded-full font-medium">
+                  <span className="text-[8px] bg-violet-100 text-stone-700 px-1.5 py-0.5 rounded-full font-medium">
                     {approvalsNeeded} awaiting approval
                   </span>
                 )}

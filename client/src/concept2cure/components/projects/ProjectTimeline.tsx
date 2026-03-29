@@ -144,7 +144,7 @@ const getStatusColors = (status: PhaseStatus) => {
       return {
         bg: 'bg-stone-600',
         border: 'border-stone-600',
-        text: 'text-blue-700',
+        text: 'text-stone-700',
         line: 'bg-blue-200',
       };
     case 'blocked':
@@ -366,7 +366,7 @@ const FullTimeline: React.FC<{
                       {phase.name}
                     </h4>
                     {isCurrent && (
-                      <span className="text-xs font-medium text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+                      <span className="text-xs font-medium text-stone-700 bg-blue-100 px-2 py-0.5 rounded-full">
                         In Progress
                       </span>
                     )}

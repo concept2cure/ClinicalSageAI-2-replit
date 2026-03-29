@@ -477,7 +477,7 @@ const STATUS_CONFIG: Record<
   },
   pending: {
     label: 'Pending',
-    color: 'bg-blue-100 text-blue-700',
+    color: 'bg-blue-100 text-stone-700',
     icon: <Clock className="w-4 h-4" />,
   },
   not_applicable: {

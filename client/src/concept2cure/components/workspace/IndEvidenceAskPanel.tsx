@@ -160,9 +160,9 @@ export function IndEvidenceAskPanel({
   return (
     <div className="rounded-lg border border-blue-200 bg-blue-50/40 p-3 space-y-3" data-testid="ind-evidence-ask-panel">
       <div className="flex items-center gap-2">
-        <Database className="w-4 h-4 text-blue-700" />
+        <Database className="w-4 h-4 text-stone-700" />
         <h3 className="text-sm font-semibold text-blue-900">Evidence & Ask</h3>
-        <Badge variant="outline" className="ml-auto text-[10px] border-blue-200 text-blue-700">
+        <Badge variant="outline" className="ml-auto text-[10px] border-blue-200 text-stone-700">
           Grounded answers
         </Badge>
       </div>
@@ -185,14 +185,14 @@ export function IndEvidenceAskPanel({
           <Button
             size="sm"
             variant="outline"
-            className="border-blue-300 text-blue-700"
+            className="border-blue-300 text-stone-700"
             onClick={addEvidence}
             disabled={addingEvidence || !evidenceTitle.trim() || !evidenceExcerpt.trim()}
           >
             {addingEvidence ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Upload className="w-3 h-3 mr-1" />}
             Save evidence
           </Button>
-          <label className="inline-flex items-center text-xs text-blue-700 gap-1 cursor-pointer">
+          <label className="inline-flex items-center text-xs text-stone-700 gap-1 cursor-pointer">
             <Paperclip className="w-3 h-3" />
             <span>{uploadingDocument ? 'Uploading...' : 'Upload document'}</span>
             <input
@@ -212,7 +212,7 @@ export function IndEvidenceAskPanel({
                 key={sq}
                 type="button"
                 onClick={() => setQuestion(sq)}
-                className="rounded border border-blue-200 bg-white px-2 py-1 text-[10px] text-blue-700 hover:bg-blue-100"
+                className="rounded border border-blue-200 bg-white px-2 py-1 text-[10px] text-stone-700 hover:bg-blue-100"
               >
                 {sq}
               </button>

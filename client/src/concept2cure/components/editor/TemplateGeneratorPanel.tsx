@@ -208,7 +208,7 @@ const TemplateGeneratorPanel: React.FC<TemplateGeneratorPanelProps> = ({
                         className="w-full text-left px-3 py-2.5 rounded-lg border border-stone-150 hover:border-violet-200 hover:bg-violet-50/30 transition-all duration-150 group"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-stone-700 group-hover:text-violet-700">
+                          <span className="text-sm font-medium text-stone-700 group-hover:text-stone-700">
                             {t.name}
                           </span>
                           <span className="text-[10px] text-stone-400">
@@ -370,7 +370,7 @@ const TemplateGeneratorPanel: React.FC<TemplateGeneratorPanelProps> = ({
               className={cn(
                 'w-full px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-150 flex items-center justify-center gap-2 shadow-sm',
                 isFormValid && !generating
-                  ? 'bg-violet-600 text-white hover:bg-violet-700'
+                  ? 'bg-stone-700 text-white hover:bg-stone-800'
                   : 'bg-stone-100 text-stone-400 cursor-not-allowed'
               )}
             >

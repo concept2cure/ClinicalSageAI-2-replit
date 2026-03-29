@@ -581,7 +581,7 @@ Submission type context: ${projectName || 'regulatory submission'}`,
                     {selected.priority}
                   </span>
                   {selected.ctdSection && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-mono">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-stone-700 font-mono">
                       Module {selected.ctdSection}
                     </span>
                   )}

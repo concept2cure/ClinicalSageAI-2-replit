@@ -360,7 +360,7 @@ export function AnAMemory({
             className={cn(
               'px-2 py-0.5 text-[10px] font-medium rounded-full whitespace-nowrap transition-colors duration-150',
               filterCategory === 'all'
-                ? 'bg-violet-600 text-white'
+                ? 'bg-stone-700 text-white'
                 : 'bg-stone-100 text-stone-600 hover:bg-stone-200',
             )}
           >
@@ -377,7 +377,7 @@ export function AnAMemory({
                 className={cn(
                   'px-2 py-0.5 text-[10px] font-medium rounded-full whitespace-nowrap transition-colors duration-150',
                   filterCategory === cat
-                    ? 'bg-violet-600 text-white'
+                    ? 'bg-stone-700 text-white'
                     : 'bg-stone-100 text-stone-600 hover:bg-stone-200',
                 )}
               >
@@ -427,7 +427,7 @@ export function AnAMemory({
               <button
                 onClick={handleAdd}
                 disabled={!newContent.trim()}
-                className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-white bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors disabled:opacity-50"
+                className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-white bg-stone-700 rounded-lg hover:bg-stone-800 transition-colors disabled:opacity-50"
               >
                 <Plus className="w-3 h-3" />
                 Add Memory

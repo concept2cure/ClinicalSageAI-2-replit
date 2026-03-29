@@ -171,14 +171,14 @@ const VersionItem: React.FC<VersionItemProps> = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span
-                className={cn('text-sm font-medium', isCurrent ? 'text-blue-700' : 'text-stone-900')}
+                className={cn('text-sm font-medium', isCurrent ? 'text-stone-700' : 'text-stone-900')}
               >
                 Version {version.versionNumber}
               </span>
               {isCurrent && (
                 <Badge
                   variant="secondary"
-                  className="text-xs px-1.5 py-0 bg-blue-100 text-blue-700"
+                  className="text-xs px-1.5 py-0 bg-blue-100 text-stone-700"
                 >
                   Current
                 </Badge>

@@ -395,7 +395,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                     setInvestigationInput(qp.query);
                     onAnalyzeEvidence();
                   }}
-                  className="w-full text-left px-2.5 py-1.5 text-xs text-stone-600 hover:bg-white hover:text-blue-700 rounded-md transition-colors flex items-center gap-2"
+                  className="w-full text-left px-2.5 py-1.5 text-xs text-stone-600 hover:bg-white hover:text-stone-700 rounded-md transition-colors flex items-center gap-2"
                 >
                   <Sparkles className="w-3 h-3 text-stone-400 shrink-0" />
                   {qp.label}
@@ -423,7 +423,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                         doc.ctdSection
                       );
                     }}
-                    className="w-full text-left px-2.5 py-1.5 text-xs text-stone-600 hover:bg-white hover:text-blue-700 rounded-md transition-colors flex items-center gap-2"
+                    className="w-full text-left px-2.5 py-1.5 text-xs text-stone-600 hover:bg-white hover:text-stone-700 rounded-md transition-colors flex items-center gap-2"
                   >
                     <Icon className="w-3 h-3 text-stone-400 shrink-0" />
                     <span className="truncate">
@@ -482,7 +482,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
             <p className="text-[13px] text-stone-500">
               {projectName}
               {submissionType && (
-                <span className="ml-2 px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-xs font-medium">
+                <span className="ml-2 px-2 py-0.5 rounded bg-blue-50 text-stone-700 text-xs font-medium">
                   {submissionType}
                 </span>
               )}
@@ -497,14 +497,14 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                 <Lightbulb className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <span className="text-[13px] font-semibold text-blue-800">Next recommended: Regulatory Strategy Note</span>
-                  <p className="text-[11px] text-blue-700 mt-0.5 line-clamp-1">{strategyData.recommendedStrategy}</p>
+                  <p className="text-[11px] text-stone-700 mt-0.5 line-clamp-1">{strategyData.recommendedStrategy}</p>
                   <div className="flex items-center gap-2 mt-1.5">
                     <button
                       onClick={() => {
                         const content = generateDocContent('Regulatory Strategy Note');
                         onDraftFromPrecedent(content, `Regulatory Strategy Note — ${projectName}`, '2.5');
                       }}
-                      className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 hover:text-blue-900"
+                      className="inline-flex items-center gap-1 text-xs font-medium text-stone-700 hover:text-blue-900"
                     >
                       Start drafting <ArrowRight className="w-3 h-3" />
                     </button>
@@ -526,7 +526,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                   {/* Why this recommendation */}
                   {strategyData.rationale && (
                     <div className="mt-1.5 pt-1.5 border-t border-blue-200/60">
-                      <span className="text-[11px] font-semibold text-blue-700">Why: </span>
+                      <span className="text-[11px] font-semibold text-stone-700">Why: </span>
                       <span className="text-[11px] text-blue-600">{strategyData.rationale}</span>
                     </div>
                   )}
@@ -1148,7 +1148,7 @@ const CSRStudyCard: React.FC<{
         </span>
         <div className="flex items-center gap-2 mt-1 flex-wrap">
           {csr.phase && (
-            <span className="text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-medium">
+            <span className="text-xs px-1.5 py-0.5 rounded bg-blue-50 text-stone-700 font-medium">
               {csr.phase}
             </span>
           )}
@@ -1209,7 +1209,7 @@ const CSRStudyCard: React.FC<{
             <span>{csr.phase || 'N/A'} · {csr.outcome || 'N/A'}</span>
             <span>{matchedPrecedents} precedents</span>
             <span>{(riskLabel || 'pending').toUpperCase()} risk</span>
-            <span className="text-blue-700 font-medium">CTD 5.3</span>
+            <span className="text-stone-700 font-medium">CTD 5.3</span>
           </div>
         </div>
         <div className="flex items-center gap-3 mt-2">
@@ -1256,7 +1256,7 @@ const PrecedentCard: React.FC<{
         </span>
         <div className="flex items-center gap-2 mt-1 flex-wrap">
           {precedent.submissionType && (
-            <span className="text-xs px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 font-medium">
+            <span className="text-xs px-1.5 py-0.5 rounded bg-violet-50 text-stone-700 font-medium">
               {precedent.submissionType}
             </span>
           )}
@@ -1289,7 +1289,7 @@ const PrecedentCard: React.FC<{
         <div className="mt-1.5 rounded border border-stone-200 bg-stone-50 px-2 py-1.5 text-[11px] flex flex-wrap gap-x-3 gap-y-0.5 text-stone-600">
           <span>{matchedPrecedents} precedents</span>
           <span>{(riskLabel || 'pending').toUpperCase()} risk</span>
-          <span className="text-blue-700 font-medium">CTD 2.7</span>
+          <span className="text-stone-700 font-medium">CTD 2.7</span>
         </div>
       </div>
       {precedent.confidenceScore != null && (
@@ -1325,8 +1325,8 @@ const MetricPill: React.FC<{
   color: string;
 }> = ({ label, value, loading, color }) => {
   const colorMap: Record<string, string> = {
-    violet: 'text-violet-700',
-    blue: 'text-blue-700',
+    violet: 'text-stone-700',
+    blue: 'text-stone-700',
     emerald: 'text-emerald-700',
     amber: 'text-amber-700',
     stone: 'text-stone-700',
@@ -1396,7 +1396,7 @@ const ActionButton: React.FC<{
 }> = ({ icon, label, onClick }) => (
   <button
     onClick={onClick}
-    className="w-full flex items-center gap-2 px-2.5 py-2 text-xs text-stone-600 hover:bg-white hover:text-blue-700 rounded-md border border-transparent hover:border-stone-200 transition-all duration-150"
+    className="w-full flex items-center gap-2 px-2.5 py-2 text-xs text-stone-600 hover:bg-white hover:text-stone-700 rounded-md border border-transparent hover:border-stone-200 transition-all duration-150"
   >
     {icon}
     <span className="flex-1 text-left">{label}</span>

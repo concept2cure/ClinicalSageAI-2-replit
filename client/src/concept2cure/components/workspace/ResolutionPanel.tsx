@@ -139,7 +139,7 @@ function ResolutionPlanCard({ plan, onCreateBundle }: {
         {plan.state === 'unresolved' && (
           <>
             <button
-              className="text-xs px-3 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors"
+              className="text-xs px-3 py-1 bg-blue-50 text-stone-700 rounded hover:bg-blue-100 transition-colors"
               onClick={() => transitionState.mutate({ planId: plan.id, targetState: 'proposed_resolution' })}
             >
               Propose Resolution
@@ -214,7 +214,7 @@ function ResolutionBundleCard({ bundle }: { bundle: any }) {
       <div className="flex gap-2 pt-1">
         {bundle.state === 'draft' && (
           <button
-            className="text-xs px-3 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors"
+            className="text-xs px-3 py-1 bg-blue-50 text-stone-700 rounded hover:bg-blue-100 transition-colors"
             onClick={() => transitionState.mutate({ bundleId: bundle.id, targetState: 'proposed' })}
           >
             Propose
@@ -332,7 +332,7 @@ export default function ResolutionPanel({ projectId, className = '' }: Resolutio
             {tab.label}
             {tab.count > 0 && (
               <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs ${
-                activeTab === tab.id ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
+                activeTab === tab.id ? 'bg-blue-100 text-stone-700' : 'bg-gray-100 text-gray-500'
               }`}>
                 {tab.count}
               </span>

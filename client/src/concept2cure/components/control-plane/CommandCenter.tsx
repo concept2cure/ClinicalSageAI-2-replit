@@ -414,7 +414,7 @@ function ApiKeysTab(props: {
                     type="checkbox"
                     checked={props.newKeyScopes.includes(scope)}
                     onChange={() => toggleScope(scope)}
-                    className="rounded border-gray-300 text-stone-600 focus:ring-indigo-500"
+                    className="rounded border-gray-300 text-stone-600 focus:ring-stone-500"
                   />
                   {SCOPE_LABELS[scope]}
                 </label>

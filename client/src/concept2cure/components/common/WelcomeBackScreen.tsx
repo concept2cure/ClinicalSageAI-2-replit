@@ -278,7 +278,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                       <span
                         className={cn(
                           'text-xs font-medium px-2 py-0.5 rounded-full',
-                          lastProject.type === '510K' && 'bg-blue-100 text-blue-700',
+                          lastProject.type === '510K' && 'bg-blue-100 text-stone-700',
                           lastProject.type === 'IND' && 'bg-purple-100 text-purple-700',
                           lastProject.type === 'NDA' && 'bg-emerald-100 text-emerald-700'
                         )}

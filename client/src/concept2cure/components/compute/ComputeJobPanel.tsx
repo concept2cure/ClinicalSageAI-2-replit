@@ -63,7 +63,7 @@ function statusTone(status: ComputeStatus) {
     case 'failed':
       return 'bg-red-50 text-red-700 border-red-200';
     case 'running':
-      return 'bg-blue-50 text-blue-700 border-blue-200';
+      return 'bg-blue-50 text-stone-700 border-blue-200';
     default:
       return 'bg-stone-50 text-stone-700 border-stone-200';
   }

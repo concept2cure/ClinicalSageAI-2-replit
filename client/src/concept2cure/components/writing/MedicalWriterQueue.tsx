@@ -551,7 +551,7 @@ export const MedicalWriterQueue: React.FC<MedicalWriterQueueProps> = ({
           </div>
           <div className="px-3 py-2 bg-blue-100 rounded-lg">
             <p className="text-xs text-blue-600">In Review</p>
-            <p className="text-lg font-semibold text-blue-700">{metrics.inReview}</p>
+            <p className="text-lg font-semibold text-stone-700">{metrics.inReview}</p>
           </div>
         </div>
         

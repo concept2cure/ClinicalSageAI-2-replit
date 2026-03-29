@@ -197,17 +197,17 @@ interface ClinicalDocAuthoringWorkspaceProps {
 const DOC_TYPE_CONFIG: Record<DocumentType, { label: string; shortLabel: string; color: string }> = {
   ctd_2_3: { label: 'Quality Overall Summary', shortLabel: 'CTD 2.3', color: 'bg-green-100 text-green-700' },
   ctd_2_4: { label: 'Nonclinical Overview', shortLabel: 'CTD 2.4', color: 'bg-emerald-100 text-emerald-700' },
-  ctd_2_5: { label: 'Clinical Overview', shortLabel: 'CTD 2.5', color: 'bg-blue-100 text-blue-700' },
+  ctd_2_5: { label: 'Clinical Overview', shortLabel: 'CTD 2.5', color: 'bg-blue-100 text-stone-700' },
   ctd_2_6: { label: 'Nonclinical Summaries', shortLabel: 'CTD 2.6', color: 'bg-teal-100 text-teal-700' },
   ctd_2_7: { label: 'Clinical Summary', shortLabel: 'CTD 2.7', color: 'bg-cyan-100 text-cyan-700' },
-  csr: { label: 'Clinical Study Report', shortLabel: 'CSR', color: 'bg-blue-100 text-blue-700' },
+  csr: { label: 'Clinical Study Report', shortLabel: 'CSR', color: 'bg-blue-100 text-stone-700' },
   ib: { label: "Investigator's Brochure", shortLabel: 'IB', color: 'bg-purple-100 text-purple-700' },
   protocol: { label: 'Protocol', shortLabel: 'Protocol', color: 'bg-amber-100 text-amber-700' },
   protocol_amendment: { label: 'Protocol Amendment', shortLabel: 'Amendment', color: 'bg-orange-100 text-orange-700' },
   informed_consent: { label: 'Informed Consent', shortLabel: 'ICF', color: 'bg-pink-100 text-pink-700' },
   regulatory_response: { label: 'Regulatory Response', shortLabel: 'Response', color: 'bg-red-100 text-red-700' },
   briefing_document: { label: 'Briefing Document', shortLabel: 'Briefing', color: 'bg-rose-100 text-rose-700' },
-  dsur: { label: 'DSUR', shortLabel: 'DSUR', color: 'bg-blue-100 text-blue-700' },
+  dsur: { label: 'DSUR', shortLabel: 'DSUR', color: 'bg-blue-100 text-stone-700' },
   psur: { label: 'PSUR', shortLabel: 'PSUR', color: 'bg-fuchsia-100 text-fuchsia-700' },
 };
 
@@ -226,7 +226,7 @@ const STATUS_CONFIG: Record<AuthoringStatus, { label: string; color: string; bgC
 const PRIORITY_CONFIG: Record<string, { label: string; color: string }> = {
   critical: { label: 'Critical', color: 'bg-red-100 text-red-700' },
   major: { label: 'Major', color: 'bg-amber-100 text-amber-700' },
-  minor: { label: 'Minor', color: 'bg-blue-100 text-blue-700' },
+  minor: { label: 'Minor', color: 'bg-blue-100 text-stone-700' },
   editorial: { label: 'Editorial', color: 'bg-stone-100 text-stone-600' },
 };
 
@@ -430,7 +430,7 @@ const ReviewCommentsPanel: React.FC<{
               onClick={() => setFilter(f)}
               className={cn(
                 'px-2 py-1 text-xs font-medium rounded transition-colors capitalize',
-                filter === f ? 'bg-blue-100 text-blue-700' : 'text-stone-500 hover:bg-stone-100'
+                filter === f ? 'bg-blue-100 text-stone-700' : 'text-stone-500 hover:bg-stone-100'
               )}
             >
               {f}
@@ -621,7 +621,7 @@ const DocumentList: React.FC<{
               onClick={() => setFilter(f)}
               className={cn(
                 'px-2 py-1 text-xs font-medium rounded transition-colors capitalize',
-                filter === f ? 'bg-blue-100 text-blue-700' : 'text-stone-500 hover:bg-stone-100'
+                filter === f ? 'bg-blue-100 text-stone-700' : 'text-stone-500 hover:bg-stone-100'
               )}
             >
               {f}
@@ -835,11 +835,11 @@ export const ClinicalDocAuthoringWorkspace: React.FC<ClinicalDocAuthoringWorkspa
           </div>
           <div className="p-3 bg-blue-50 rounded-lg">
             <p className="text-xs text-blue-600">In Draft</p>
-            <p className="text-base font-medium text-blue-700">{metrics.inDraft}</p>
+            <p className="text-base font-medium text-stone-700">{metrics.inDraft}</p>
           </div>
           <div className="p-3 bg-violet-50 rounded-lg">
             <p className="text-xs text-violet-600">In Review</p>
-            <p className="text-base font-medium text-violet-700">{metrics.inReview}</p>
+            <p className="text-base font-medium text-stone-700">{metrics.inReview}</p>
           </div>
           <div className={cn('p-3 rounded-lg', metrics.openComments > 0 ? 'bg-amber-50' : 'bg-stone-100')}>
             <p className={cn('text-xs', metrics.openComments > 0 ? 'text-amber-600' : 'text-stone-500')}>Open Comments</p>

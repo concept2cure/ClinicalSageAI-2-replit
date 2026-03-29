@@ -436,7 +436,7 @@ const ResourceUtilizationPanel: React.FC<{
             </span>
           )}
           {underUtilized.length > 0 && (
-            <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-full flex items-center gap-1">
+            <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-stone-700 rounded-full flex items-center gap-1">
               <TrendingDown className="w-3 h-3" />
               {underUtilized.length} available
             </span>
@@ -704,7 +704,7 @@ const ClientCard: React.FC<{
                           <span className="text-xs font-medium text-stone-500">{sow.sowNumber}</span>
                           <span className={cn(
                             'px-2 py-0.5 text-xs font-medium rounded-full',
-                            sow.status === 'active' && 'bg-blue-100 text-blue-700',
+                            sow.status === 'active' && 'bg-blue-100 text-stone-700',
                             sow.status === 'complete' && 'bg-green-100 text-green-700',
                             sow.status === 'on_hold' && 'bg-amber-100 text-amber-700'
                           )}>
@@ -811,7 +811,7 @@ export const CROClientPortal: React.FC<CROClientPortalProps> = ({
           </div>
           <div className="p-3 bg-blue-50 rounded-lg">
             <p className="text-xs text-blue-600">Active SOWs</p>
-            <p className="text-base font-medium text-blue-700">{metrics.activeSOWs}</p>
+            <p className="text-base font-medium text-stone-700">{metrics.activeSOWs}</p>
           </div>
           <div className="p-3 bg-green-50 rounded-lg">
             <p className="text-xs text-green-600">Contract Value</p>
@@ -831,7 +831,7 @@ export const CROClientPortal: React.FC<CROClientPortalProps> = ({
           </div>
           <div className="p-3 bg-violet-50 rounded-lg">
             <p className="text-xs text-violet-600">Utilization</p>
-            <p className="text-base font-medium text-violet-700">{metrics.avgUtilization}%</p>
+            <p className="text-base font-medium text-stone-700">{metrics.avgUtilization}%</p>
           </div>
         </div>
       </div>

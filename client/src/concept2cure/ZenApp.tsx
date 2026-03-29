@@ -2874,7 +2874,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         onClick={() => setRiViewMode('intelligence')}
                         className={cn(
                           'px-2 py-0.5 text-[11px] font-medium transition-colors',
-                          'bg-blue-100 text-blue-700'
+                          'bg-blue-100 text-stone-700'
                         )}
                       >
                         Intelligence
@@ -3668,7 +3668,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           const continueProject = sortedProjects[0];
           const restProjects = sortedProjects.slice(1, 12);
           const SUBMISSION_BADGE_MINI: Record<string, { label: string; color: string; bg: string }> = {
-            '510K': { label: '510(k)', color: 'text-blue-700', bg: 'bg-blue-50' },
+            '510K': { label: '510(k)', color: 'text-stone-700', bg: 'bg-blue-50' },
             IND: { label: 'IND', color: 'text-purple-700', bg: 'bg-purple-50' },
             NDA: { label: 'NDA', color: 'text-green-700', bg: 'bg-green-50' },
             BLA: { label: 'BLA', color: 'text-orange-700', bg: 'bg-orange-50' },

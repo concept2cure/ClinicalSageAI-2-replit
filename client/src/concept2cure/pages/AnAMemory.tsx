@@ -261,7 +261,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                 <h1 className="text-base font-semibold text-stone-900 tracking-tight">
                   AnA Memory
                 </h1>
-                <span className="inline-flex items-center rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-700 border border-blue-200">
+                <span className="inline-flex items-center rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-stone-700 border border-blue-200">
                   AnA v1.0
                 </span>
               </div>

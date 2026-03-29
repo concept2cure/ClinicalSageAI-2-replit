@@ -396,7 +396,7 @@ const Header: React.FC<{
         className={cn(
           'flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-150',
           cortexOpen
-            ? 'bg-blue-100 text-blue-700'
+            ? 'bg-blue-100 text-stone-700'
             : 'hover:bg-stone-100 text-stone-600'
         )}
       >

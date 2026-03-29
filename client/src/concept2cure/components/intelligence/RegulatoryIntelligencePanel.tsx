@@ -253,7 +253,7 @@ export function RegulatoryIntelligencePanel({
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 flex items-center justify-center gap-1 px-1 sm:px-2 py-2 text-xs font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-stone-600 text-blue-700 bg-blue-50/50'
+                  ? 'border-stone-600 text-stone-700 bg-blue-50/50'
                   : 'border-transparent text-stone-500 hover:text-stone-700 hover:bg-stone-50'
               }`}
             >
@@ -315,7 +315,7 @@ export function RegulatoryIntelligencePanel({
                 {/* Recommendations */}
                 {analysisResult.ana_1_0_ri_recommendations?.length > 0 && (
                   <div className="p-2.5 bg-violet-50 border border-violet-100 rounded-lg">
-                    <span className="text-xs font-semibold text-violet-700 uppercase tracking-wider">
+                    <span className="text-xs font-semibold text-stone-700 uppercase tracking-wider">
                       Recommendations
                     </span>
                     <ul className="mt-1.5 space-y-1">
@@ -464,7 +464,7 @@ export function RegulatoryIntelligencePanel({
             )}
             {compareResult && (
               <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-lg space-y-2">
-                <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-stone-700 uppercase tracking-wider">
                   Comparison Results
                 </span>
                 {compareResult.overallScore != null && (
@@ -508,7 +508,7 @@ export function RegulatoryIntelligencePanel({
                 )}
                 {compareResult.recommendations?.length > 0 && (
                   <div>
-                    <span className="text-xs font-medium text-violet-700">Recommendations</span>
+                    <span className="text-xs font-medium text-stone-700">Recommendations</span>
                     <ul className="mt-1 space-y-0.5">
                       {compareResult.recommendations.map((r, i) => (
                         <li key={i} className="flex items-start gap-1 text-xs text-stone-600">
@@ -745,7 +745,7 @@ export function RegulatoryIntelligencePanel({
                 {/* Testing requirements */}
                 {precedentStrategy.data.testingRequirements?.length > 0 && (
                   <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-lg">
-                    <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider">
+                    <span className="text-xs font-semibold text-stone-700 uppercase tracking-wider">
                       Required Testing
                     </span>
                     <ul className="mt-1.5 space-y-0.5">
@@ -854,7 +854,7 @@ export function RegulatoryIntelligencePanel({
                     '2.5'
                   );
                 }}
-                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors duration-150"
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-stone-700 text-white rounded-lg hover:bg-stone-800 transition-colors duration-150"
               >
                 <ArrowRight className="w-3.5 h-3.5" />
                 Save as Strategy Memo

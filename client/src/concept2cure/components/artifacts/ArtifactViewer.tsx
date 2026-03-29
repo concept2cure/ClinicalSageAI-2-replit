@@ -302,7 +302,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
               onClick={() => setShowVersions(!showVersions)}
               className={cn(
                 'p-2 rounded-lg transition-colors duration-150',
-                showVersions ? 'bg-blue-100 text-blue-700' : 'hover:bg-stone-100 text-stone-500'
+                showVersions ? 'bg-blue-100 text-stone-700' : 'hover:bg-stone-100 text-stone-500'
               )}
               title="Version history"
             >
@@ -373,7 +373,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
               onClick={() => setIsEditing(!isEditing)}
               className={cn(
                 'p-2 rounded-lg transition-colors duration-150',
-                isEditing ? 'bg-blue-100 text-blue-700' : 'hover:bg-stone-100 text-stone-500'
+                isEditing ? 'bg-blue-100 text-stone-700' : 'hover:bg-stone-100 text-stone-500'
               )}
               title={isEditing ? 'View mode' : 'Edit'}
             >

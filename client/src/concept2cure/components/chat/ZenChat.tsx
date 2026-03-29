@@ -218,7 +218,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
             'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors duration-150',
             isSaved
               ? 'bg-green-50 text-green-700 border border-green-200'
-              : 'bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100'
+              : 'bg-violet-50 text-stone-700 border border-violet-200 hover:bg-violet-100'
           )}
         >
           {isSaving ? (
@@ -272,7 +272,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
 
         <button
           onClick={() => onOpenEditor(artifact)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors duration-150"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-blue-100 transition-colors duration-150"
         >
           <PenTool className="w-3.5 h-3.5" />
           Edit Inline
@@ -359,7 +359,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           <div
             className={cn(
               'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm mt-0.5',
-              isUser ? 'bg-stone-800 text-white' : 'bg-violet-600'
+              isUser ? 'bg-stone-800 text-white' : 'bg-stone-700'
             )}
           >
             {isUser ? (
@@ -660,7 +660,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             {nextTask && (
               <button
                 onClick={() => onSuggestionClick(nextTask.taskTitle)}
-                className="w-full flex items-center gap-3 text-left text-sm font-medium text-blue-900 hover:text-blue-700 transition-colors py-1"
+                className="w-full flex items-center gap-3 text-left text-sm font-medium text-blue-900 hover:text-stone-700 transition-colors py-1"
               >
                 <ArrowUp className="w-3.5 h-3.5 rotate-45 flex-shrink-0" />
                 {nextTask.taskTitle}
@@ -669,7 +669,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             {lastWork && (
               <button
                 onClick={() => onSuggestionClick(`Continue: ${lastWork.contextTitle}`)}
-                className="w-full flex items-center gap-3 text-left text-sm text-blue-700 hover:text-blue-900 transition-colors py-1"
+                className="w-full flex items-center gap-3 text-left text-sm text-stone-700 hover:text-blue-900 transition-colors py-1"
               >
                 <ArrowUp className="w-3.5 h-3.5 rotate-45 flex-shrink-0" />
                 Continue: {lastWork.contextTitle}

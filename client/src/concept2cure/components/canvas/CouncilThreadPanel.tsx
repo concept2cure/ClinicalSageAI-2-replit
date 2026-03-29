@@ -143,7 +143,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 href={citation.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-xs text-blue-600 hover:text-blue-700 hover:underline"
+                className="flex items-center gap-2 text-xs text-blue-600 hover:text-stone-700 hover:underline"
               >
                 <FileText className="w-3 h-3" />
                 <span>{citation.title}</span>
@@ -480,7 +480,7 @@ export const CouncilThreadPanel: React.FC<CouncilThreadPanelProps> = ({
         </div>
         <button
           onClick={onNewThread}
-          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+          className="text-sm text-blue-600 hover:text-stone-700 font-medium"
         >
           New Thread
         </button>

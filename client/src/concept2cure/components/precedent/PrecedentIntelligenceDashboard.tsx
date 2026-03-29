@@ -269,13 +269,13 @@ export function PrecedentIntelligenceDashboard({
           <TabsList className="h-11 bg-transparent gap-1">
             <TabsTrigger
               value="search"
-              className="gap-1.5 data-[state=active]:bg-violet-50 data-[state=active]:text-violet-700"
+              className="gap-1.5 data-[state=active]:bg-violet-50 data-[state=active]:text-stone-700"
             >
               <Search className="w-3.5 h-3.5" /> Search
             </TabsTrigger>
             <TabsTrigger
               value="compare"
-              className="gap-1.5 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+              className="gap-1.5 data-[state=active]:bg-blue-50 data-[state=active]:text-stone-700"
             >
               <GitCompare className="w-3.5 h-3.5" /> Compare
             </TabsTrigger>
@@ -386,7 +386,7 @@ export function PrecedentIntelligenceDashboard({
                 <Button
                   onClick={() => setSearchActive(true)}
                   disabled={!searchSubmissionType}
-                  className="bg-violet-600 hover:bg-violet-700 text-white"
+                  className="bg-stone-700 hover:bg-stone-800 text-white"
                   size="sm"
                 >
                   {searchLoading ? (
@@ -706,7 +706,7 @@ export function PrecedentIntelligenceDashboard({
                     {/* Recommendations */}
                     {compareResult.recommendations.length > 0 && (
                       <div>
-                        <h4 className="text-xs font-medium text-violet-700 flex items-center gap-1 mb-2">
+                        <h4 className="text-xs font-medium text-stone-700 flex items-center gap-1 mb-2">
                           <Sparkles className="w-3.5 h-3.5" /> Recommendations
                         </h4>
                         <ul className="space-y-1">
@@ -1222,7 +1222,7 @@ export function PrecedentIntelligenceDashboard({
                           <p className="text-stone-500 mt-0.5">{c.description}</p>
                         </div>
                         <Badge variant="secondary" className={cn('text-xs flex-shrink-0',
-                          c.category === 'clinical' && 'bg-blue-50 text-blue-700',
+                          c.category === 'clinical' && 'bg-blue-50 text-stone-700',
                           c.category === 'cmc' && 'bg-purple-50 text-purple-700',
                           c.category === 'nonclinical' && 'bg-green-50 text-green-700',
                           c.category === 'administrative' && 'bg-stone-100 text-stone-700',

@@ -344,7 +344,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
             className={`px-2 py-0.5 text-xs rounded ${
               reportPurpose === 'inspection'
                 ? 'bg-red-100 text-red-700'
-                : 'bg-blue-100 text-blue-700'
+                : 'bg-blue-100 text-stone-700'
             }`}
           >
             {reportPurpose === 'inspection' ? '🔍 Inspection' : '✓ Internal QA'}
@@ -359,7 +359,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
             <button
               onClick={onExportAsArtifact}
               disabled={exportingAudit}
-              className="px-2 py-0.5 text-xs rounded bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-60"
+              className="px-2 py-0.5 text-xs rounded bg-blue-100 text-stone-700 hover:bg-blue-200 disabled:opacity-60"
               title="Save as inspection-ready artifact"
             >
               {exportingAudit ? (
@@ -770,7 +770,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
             {onOpenProvenance && (
               <button
                 onClick={onOpenProvenance}
-                className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded bg-violet-50 text-violet-700 hover:bg-violet-100 font-medium"
+                className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded bg-violet-50 text-stone-700 hover:bg-violet-100 font-medium"
               >
                 Open Provenance
               </button>

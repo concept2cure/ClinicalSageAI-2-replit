@@ -316,7 +316,7 @@ export function CSRWorkflow({ projectId, projectName, onSectionClick, onAIDraft,
                     <span className={cn(
                       'flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium',
                       state?.status === 'approved' ? 'bg-emerald-50 text-emerald-700' :
-                      state?.status === 'review' ? 'bg-blue-50 text-blue-700' :
+                      state?.status === 'review' ? 'bg-blue-50 text-stone-700' :
                       state?.status === 'drafting' ? 'bg-amber-50 text-amber-700' :
                       'bg-stone-50 text-stone-400'
                     )}>
@@ -361,7 +361,7 @@ export function CSRWorkflow({ projectId, projectName, onSectionClick, onAIDraft,
                             <span className={cn(
                               'flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium',
                               childState?.status === 'approved' ? 'bg-emerald-50 text-emerald-700' :
-                              childState?.status === 'review' ? 'bg-blue-50 text-blue-700' :
+                              childState?.status === 'review' ? 'bg-blue-50 text-stone-700' :
                               childState?.status === 'drafting' ? 'bg-amber-50 text-amber-700' :
                               'bg-stone-50 text-stone-400'
                             )}>

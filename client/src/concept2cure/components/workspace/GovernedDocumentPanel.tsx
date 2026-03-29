@@ -136,7 +136,7 @@ const STATUS_COLORS: Record<string, string> = {
   draft: 'bg-stone-100 text-stone-700 ring-stone-200',
   review: 'bg-amber-50 text-amber-700 ring-amber-200',
   approved: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-  locked: 'bg-blue-50 text-blue-700 ring-stone-300',
+  locked: 'bg-blue-50 text-stone-700 ring-stone-300',
 };
 
 const TRANSITION_LABELS: Record<string, string> = {
@@ -727,7 +727,7 @@ function StatusTab({
               </div>
             )}
             {artifact.publishedVersionId && (
-              <div className="flex items-center gap-1.5 text-xs text-blue-700 bg-blue-50 px-2 py-1 rounded ring-1 ring-stone-300/60">
+              <div className="flex items-center gap-1.5 text-xs text-stone-700 bg-blue-50 px-2 py-1 rounded ring-1 ring-stone-300/60">
                 <Lock className="w-3 h-3" />
                 <span>Published at v{artifact.publishedVersionId}</span>
                 {artifact.publishedAt && (
@@ -766,7 +766,7 @@ function StatusTab({
                   'w-full text-left px-2 py-1.5 rounded text-xs font-medium flex items-center gap-1.5 transition-colors disabled:opacity-60',
                   regression
                     ? 'text-amber-700 bg-amber-50 hover:bg-amber-100 ring-1 ring-amber-200/60'
-                    : 'text-blue-700 bg-blue-50 hover:bg-blue-100 ring-1 ring-stone-300/60'
+                    : 'text-stone-700 bg-blue-50 hover:bg-blue-100 ring-1 ring-stone-300/60'
                 )}
               >
                 {changingStatus ? (
@@ -851,7 +851,7 @@ function StatusTab({
         <div>
           <button
             onClick={onOpenDiff}
-            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 ring-1 ring-stone-300/60 transition-colors duration-150"
+            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-stone-700 bg-blue-50 hover:bg-blue-100 ring-1 ring-stone-300/60 transition-colors duration-150"
           >
             <GitBranch className="w-3 h-3" />
             Compare Versions
@@ -945,7 +945,7 @@ function GovernanceTrailTab({ projectId, artifactId }: { projectId: string | num
 
   const boundaryColor: Record<string, string> = {
     advisory: 'bg-stone-100 text-stone-600',
-    governed_draft: 'bg-blue-100 text-blue-700',
+    governed_draft: 'bg-blue-100 text-stone-700',
     approved: 'bg-green-100 text-green-700',
     locked: 'bg-amber-100 text-amber-700',
     submission_ready: 'bg-purple-100 text-purple-700',
@@ -1303,7 +1303,7 @@ function VersionsTab({
         <div className="mt-2">
           <button
             onClick={onOpenDiff}
-            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 ring-1 ring-stone-300/60 transition-colors duration-150"
+            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-stone-700 bg-blue-50 hover:bg-blue-100 ring-1 ring-stone-300/60 transition-colors duration-150"
           >
             <GitBranch className="w-3 h-3" />
             Compare Versions

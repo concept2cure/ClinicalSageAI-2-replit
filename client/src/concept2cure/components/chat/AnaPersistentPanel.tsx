@@ -160,7 +160,7 @@ function detectVerdictSignals(content: string): VerdictSignal[] {
     signals.push({
       type: 'verdict',
       label: 'Supportable with Revision',
-      color: 'text-blue-700',
+      color: 'text-stone-700',
       bgColor: 'bg-blue-50 border-blue-200',
     });
 
@@ -204,7 +204,7 @@ function detectVerdictSignals(content: string): VerdictSignal[] {
     signals.push({
       type: 'action',
       label: 'Escalation Recommended',
-      color: 'text-violet-700',
+      color: 'text-stone-700',
       bgColor: 'bg-violet-50 border-violet-200',
     });
   else if (/\bno[- ]go\b/.test(lower))
@@ -218,7 +218,7 @@ function detectVerdictSignals(content: string): VerdictSignal[] {
     signals.push({
       type: 'action',
       label: 'Proceed with Mitigation',
-      color: 'text-blue-700',
+      color: 'text-stone-700',
       bgColor: 'bg-blue-50 border-blue-200',
     });
 
@@ -3751,7 +3751,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 <span className="text-stone-300 dark:text-stone-600">·</span>
                 <span className={cn(
                   'text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded',
-                  contextProfile.productType.includes('510') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' :
+                  contextProfile.productType.includes('510') ? 'bg-blue-100 text-stone-700 dark:bg-blue-900/40 dark:text-blue-300' :
                   contextProfile.productType.includes('PMA') ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' :
                   contextProfile.productType.includes('NDA') ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' :
                   contextProfile.productType.includes('BLA') ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' :
@@ -3993,7 +3993,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             className="prose prose-sm prose-stone max-w-none mt-0.5
                               prose-p:text-stone-700 prose-p:leading-relaxed prose-p:my-1.5
                               prose-strong:text-stone-900
-                              prose-code:text-violet-700 prose-code:bg-violet-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
+                              prose-code:text-stone-700 prose-code:bg-violet-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
                               prose-pre:bg-stone-900 prose-pre:text-stone-100 prose-pre:rounded-xl prose-pre:p-3 prose-pre:text-xs
                               prose-blockquote:border-l-violet-400 prose-blockquote:text-stone-600
                               prose-ul:text-stone-700 prose-ol:text-stone-700
@@ -4224,7 +4224,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                   : msg.grounding.mode === 'inferred'
                                     ? 'text-amber-700 bg-amber-50'
                                     : msg.grounding.mode === 'actioned'
-                                      ? 'text-blue-700 bg-blue-50'
+                                      ? 'text-stone-700 bg-blue-50'
                                       : 'text-red-700 bg-red-50'
                               )}
                               title={
@@ -4626,7 +4626,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleSend(nextStep)}
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200/60 transition-colors max-w-full h-auto"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-stone-700 bg-blue-50 hover:bg-blue-100 border border-blue-200/60 transition-colors max-w-full h-auto"
                                 data-testid="ana-next-step-chip"
                               >
                                 <span className="truncate">{nextStep.length > 80 ? nextStep.slice(0, 77) + '...' : nextStep}</span>
@@ -4951,7 +4951,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 className={cn(
                   'h-auto flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
                   chatMode === 'deep-research'
-                    ? 'bg-violet-50 text-violet-700 hover:bg-violet-100'
+                    ? 'bg-violet-50 text-stone-700 hover:bg-violet-100'
                     : chatMode === 'nano-banana'
                       ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
                       : 'text-stone-500 hover:bg-stone-100 hover:text-stone-700'

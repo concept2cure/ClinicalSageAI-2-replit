@@ -772,7 +772,7 @@ function ThreadCard({
                 <div className="mt-2">
                   {replyTarget === thread.threadId ? (
                     <div className="flex gap-1">
-                      <input
+                      <Input
                         type="text"
                         value={replyBody}
                         onChange={e => onSetReplyBody(e.target.value)}
@@ -786,7 +786,7 @@ function ThreadCard({
                           }
                         }}
                       />
-                      <button
+                      <Button
                         onClick={onReply}
                         disabled={replying || !replyBody.trim()}
                         className="px-1.5 py-1 bg-stone-800 text-white rounded hover:bg-stone-900 disabled:opacity-60"
@@ -796,8 +796,8 @@ function ThreadCard({
                         ) : (
                           <Send className="w-3 h-3" />
                         )}
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         onClick={() => {
                           onSetReplyTarget(null);
                           onSetReplyBody('');
@@ -805,16 +805,16 @@ function ThreadCard({
                         className="px-1 py-1 text-stone-400 hover:bg-stone-100 rounded"
                       >
                         <X className="w-3 h-3" />
-                      </button>
+                      </Button>
                     </div>
                   ) : (
-                    <button
+                    <Button
                       onClick={() => onSetReplyTarget(thread.threadId)}
-                      className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+                      className="flex items-center gap-1 text-xs text-blue-600 hover:text-stone-700"
                     >
                       <CornerDownRight className="w-3 h-3" />
                       Reply
-                    </button>
+                    </Button>
                   )}
                 </div>
               )}
@@ -822,50 +822,50 @@ function ThreadCard({
               {/* Actions */}
               <div className="flex gap-1.5 mt-2 pt-1.5 border-t border-stone-200 flex-wrap">
                 {isOpen && onResolve && (
-                  <button
+                  <Button
                     onClick={onResolve}
                     className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700"
                   >
                     <CheckCircle2 className="w-3 h-3" />
                     Resolve
-                  </button>
+                  </Button>
                 )}
                 {!isOpen && onReopen && (
-                  <button
+                  <Button
                     onClick={onReopen}
                     className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700"
                   >
                     <RotateCcw className="w-3 h-3" />
                     Reopen
-                  </button>
+                  </Button>
                 )}
                 {isOpen && onShowNewTask && (
-                  <button
+                  <Button
                     onClick={() =>
                       onShowNewTask(showNewTask === thread.threadId ? null : thread.threadId)
                     }
-                    className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+                    className="flex items-center gap-1 text-xs text-blue-600 hover:text-stone-700"
                   >
                     <ListTodo className="w-3 h-3" />
                     Create Task
-                  </button>
+                  </Button>
                 )}
                 {isOpen && onRequestChanges && (
-                  <button
+                  <Button
                     onClick={() => setShowRequestChanges(!showRequestChanges)}
                     className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700"
                   >
                     <AlertTriangle className="w-3 h-3" />
                     Request Changes
-                  </button>
+                  </Button>
                 )}
               </div>
 
               {/* Create Task from Thread form */}
               {showNewTask === thread.threadId && onCreateTask && (
                 <div className="mt-2 p-1.5 bg-blue-50 rounded border border-blue-100 space-y-1.5">
-                  <p className="text-xs font-medium text-blue-700">Create linked task</p>
-                  <input
+                  <p className="text-xs font-medium text-stone-700">Create linked task</p>
+                  <Input
                     type="text"
                     value={newTaskTitle || ''}
                     onChange={e => onSetNewTaskTitle?.(e.target.value)}
@@ -891,7 +891,7 @@ function ThreadCard({
                         </option>
                       ))}
                     </select>
-                    <input
+                    <Input
                       type="date"
                       value={newTaskDueAt || ''}
                       onChange={e => onSetNewTaskDueAt?.(e.target.value)}
@@ -900,20 +900,20 @@ function ThreadCard({
                     />
                   </div>
                   <div className="flex gap-1 justify-end">
-                    <button
+                    <Button
                       onClick={() => onShowNewTask?.(null)}
                       className="px-1.5 py-0.5 text-xs text-stone-500 hover:bg-stone-100 rounded"
                     >
                       Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       onClick={() => onCreateTask(thread.threadId)}
                       disabled={creatingTask || !(newTaskTitle || '').trim()}
                       className="px-1.5 py-0.5 text-xs bg-stone-800 text-white rounded hover:bg-stone-900 disabled:opacity-60 flex items-center gap-0.5"
                     >
                       {creatingTask && <Loader2 className="w-2 h-2 animate-spin" />}
                       Create
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
@@ -931,7 +931,7 @@ function ThreadCard({
                     maxLength={10000}
                   />
                   <div className="flex gap-1 justify-end">
-                    <button
+                    <Button
                       onClick={() => {
                         setShowRequestChanges(false);
                         setRequestChangesBody('');
@@ -939,8 +939,8 @@ function ThreadCard({
                       className="px-1.5 py-0.5 text-xs text-stone-500 hover:bg-stone-100 rounded"
                     >
                       Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       onClick={() => {
                         onRequestChanges(thread.threadId, requestChangesBody);
                         setRequestChangesBody('');
@@ -950,7 +950,7 @@ function ThreadCard({
                       className="px-1.5 py-0.5 text-xs bg-amber-600 text-white rounded hover:bg-amber-700 disabled:opacity-60"
                     >
                       Submit
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
@@ -1029,22 +1029,22 @@ function TaskCard({ task, onResolve, onReopen, taskTypeOptions }: TaskCardProps)
       </div>
       <div className="flex gap-1.5 mt-1.5 pl-4">
         {isActive && onResolve && (
-          <button
+          <Button
             onClick={onResolve}
             className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700"
           >
             <CheckCircle2 className="w-3 h-3" />
             Resolve
-          </button>
+          </Button>
         )}
         {!isActive && onReopen && (
-          <button
+          <Button
             onClick={onReopen}
             className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700"
           >
             <RotateCcw className="w-3 h-3" />
             Reopen
-          </button>
+          </Button>
         )}
       </div>
     </div>

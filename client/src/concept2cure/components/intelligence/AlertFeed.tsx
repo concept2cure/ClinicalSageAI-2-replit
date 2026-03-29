@@ -204,7 +204,7 @@ function PriorityBadge({ priority }: { priority: AlertPriority }) {
   const config = {
     critical: { bg: 'bg-red-100 text-red-700', icon: AlertCircle },
     high: { bg: 'bg-amber-100 text-amber-700', icon: AlertTriangle },
-    medium: { bg: 'bg-blue-100 text-blue-700', icon: Info },
+    medium: { bg: 'bg-blue-100 text-stone-700', icon: Info },
     low: { bg: 'bg-stone-100 text-stone-600', icon: Info },
   }[priority];
 
@@ -220,10 +220,10 @@ function PriorityBadge({ priority }: { priority: AlertPriority }) {
 
 function SourceBadge({ source }: { source: AlertSource }) {
   const colors: Record<AlertSource, string> = {
-    FDA: 'bg-blue-50 text-blue-700 border-blue-200',
-    EMA: 'bg-blue-50 text-blue-700 border-blue-200',
+    FDA: 'bg-blue-50 text-stone-700 border-blue-200',
+    EMA: 'bg-blue-50 text-stone-700 border-blue-200',
     'Health Canada': 'bg-red-50 text-red-700 border-red-200',
-    ICH: 'bg-violet-50 text-violet-700 border-blue-200',
+    ICH: 'bg-violet-50 text-stone-700 border-blue-200',
     WHO: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     Internal: 'bg-stone-50 text-stone-600 border-stone-200',
   };
@@ -462,7 +462,7 @@ export function AlertFeed({
                             {alert.affectedSections.map(section => (
                               <span
                                 key={section}
-                                className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-mono"
+                                className="px-1.5 py-0.5 bg-blue-50 text-stone-700 rounded text-[10px] font-mono"
                               >
                                 §{section}
                               </span>
@@ -474,11 +474,11 @@ export function AlertFeed({
                       {/* Action required */}
                       {alert.actionRequired && (
                         <div className="p-2.5 bg-blue-50 border border-blue-200 rounded-lg">
-                          <div className="flex items-center gap-1.5 text-blue-700 font-medium mb-1">
+                          <div className="flex items-center gap-1.5 text-stone-700 font-medium mb-1">
                             <Shield className="w-3 h-3" />
                             Action Required
                           </div>
-                          <p className="text-blue-700/80 text-[11px] leading-relaxed">
+                          <p className="text-stone-700/80 text-[11px] leading-relaxed">
                             {alert.actionRequired}
                           </p>
                         </div>
