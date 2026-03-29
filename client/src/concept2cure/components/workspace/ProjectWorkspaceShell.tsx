@@ -2050,7 +2050,6 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             (Provenance, Compare, Audit, Versions, Review, Compliance, etc.)
             with better stage-aware progressive disclosure. */}
 
-        </div>
         {/* ── 3-pane body ───────────────────────────────────────────────────── */}
         <div className="flex-1 flex min-h-0">
           {/* Left: Tree panel with mode toggle — hidden in dashboard mode for full-width layout */}
