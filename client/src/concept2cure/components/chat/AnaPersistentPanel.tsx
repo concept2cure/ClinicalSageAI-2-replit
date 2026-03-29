@@ -2144,6 +2144,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             handleSend('Open my most recently edited section. Show me where I left off.');
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Resume my last section — show me where I left off.');
         }
       })();
@@ -2205,6 +2206,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend(
             authoringContext?.sectionCode
               ? `What is blocking section ${authoringContext.sectionCode} from promotion to review?`
@@ -2268,6 +2270,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             onRefreshIntelligence?.();
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Compare the current document against the last approved version.');
         }
       })();
@@ -2350,6 +2353,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Run preflight on this section.');
         }
       })();
@@ -2437,6 +2441,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend(`Run preflight on module ${moduleCode}.`);
         }
       })();
@@ -2522,6 +2527,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Run dossier preflight for this submission.');
         }
       })();
@@ -2733,6 +2739,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           }
           onRefreshIntelligence?.();
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Approve this artifact for the next governance stage.');
         }
       })();
@@ -2785,6 +2792,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           }
           onRefreshIntelligence?.();
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Lock this artifact for submission.');
         }
       })();
@@ -2840,6 +2848,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           }
           onRefreshIntelligence?.();
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Mark this artifact as submission-ready.');
         }
       })();
@@ -2894,6 +2903,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Prepare a governed correction draft for the current section.');
         }
       })();
@@ -2956,6 +2966,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Check consistency across linked sections.');
         }
       })();
@@ -3003,6 +3014,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('What changed after the last resolution?');
         }
       })();
@@ -3064,6 +3076,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend(`Show readiness for module ${moduleCode}.`);
         }
       })();
@@ -3117,6 +3130,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend(`Gather evidence for section ${sectionCode}.`);
         }
       })();
@@ -3178,6 +3192,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend(`What does ${body} expect in section ${sectionCode}?`);
         }
       })();
@@ -3237,6 +3252,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Check this section against linked sections for consistency.');
         }
       })();
@@ -3291,6 +3307,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend(`What is missing for ${body} in section ${sectionCode}?`);
         }
       })();
@@ -3341,6 +3358,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Explain the contradictions and how to resolve them.');
         }
       })();
@@ -3400,6 +3418,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('Plan resolution for the blocking contradictions.');
         }
       })();
@@ -3458,6 +3477,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ]);
           }
         } catch {
+          /* API failed — fall back to natural language */
           handleSend('What is the resolution status of this project?');
         }
       })();
@@ -4500,7 +4520,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               )
                                 .slice(0, 5)
                                 .map(action => (
-                                  <button
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
                                     key={action.type}
                                     disabled={isThinking}
                                     onClick={async () => {
@@ -4567,7 +4589,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                       }
                                     }}
                                     className={cn(
-                                      'inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors',
+                                      'h-auto inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors',
                                       isThinking
                                         ? 'border-[#E8E6DC] text-[#D8D5CA] cursor-not-allowed'
                                         : 'border-[#E8E6DC] text-[#6B6962] hover:bg-[#FAF9F5] hover:border-[#D8D5CA] hover:text-[#4D4B45]'
@@ -4575,7 +4597,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                   >
                                     {action.icon}
                                     {action.label}
-                                  </button>
+                                  </Button>
                                 ))}
                             </div>
                             {lastOrchestration.detectedSubmissionType && (
@@ -4685,23 +4707,27 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           {/* Clear conversation + browse capabilities */}
           {hasMessages && (
             <div className="flex justify-center gap-3 mb-2">
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setMessages([]);
                   threadIdRef.current = null;
                 }}
-                className="flex items-center gap-1.5 px-3 py-1 text-xs text-[#B0AEA5] hover:text-[#6B6962] hover:bg-[#F5F4EF] rounded-full transition-colors"
+                className="h-auto flex items-center gap-1.5 px-3 py-1 text-xs text-[#B0AEA5] hover:text-[#6B6962] hover:bg-[#F5F4EF] rounded-full transition-colors font-normal"
               >
                 <RotateCcw className="w-3 h-3" />
                 New thread
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setShowDomainPrompts(prev => !prev)}
-                className="flex items-center gap-1.5 px-3 py-1 text-xs text-[#B0AEA5] hover:text-[#6B6962] hover:bg-[#F5F4EF] rounded-full transition-colors"
+                className="h-auto flex items-center gap-1.5 px-3 py-1 text-xs text-[#B0AEA5] hover:text-[#6B6962] hover:bg-[#F5F4EF] rounded-full transition-colors font-normal"
               >
                 <Sparkles className="w-3 h-3" />
                 {showDomainPrompts ? 'Hide prompts' : 'Browse prompts'}
-              </button>
+              </Button>
             </div>
           )}
 
@@ -4747,7 +4773,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               aria-label="Slash commands"
             >
               {filteredSlashCommands.map((cmd, i) => (
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   key={cmd.command}
                   type="button"
                   role="option"
@@ -4755,7 +4783,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   onMouseDown={(e) => { e.preventDefault(); selectSlashCommand(cmd); }}
                   onMouseEnter={() => setSlashMenuIndex(i)}
                   className={cn(
-                    'w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors',
+                    'h-auto w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors rounded-none justify-start font-normal',
                     i === slashMenuIndex ? 'bg-[#FAF9F5]' : 'hover:bg-[#FAF9F5]/50'
                   )}
                 >
@@ -4768,7 +4796,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   <span className={cn('text-[10px] font-medium', SLASH_CATEGORY_COLORS[cmd.category] || 'text-stone-400')}>
                     {cmd.category}
                   </span>
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -4783,11 +4811,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           >
             {/* Mode selector — Claude.ai model-picker style */}
             <div className="relative flex-shrink-0 self-center" ref={modeDropdownRef}>
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 type="button"
                 onClick={() => setShowModeDropdown(prev => !prev)}
                 className={cn(
-                  'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
+                  'h-auto flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
                   chatMode === 'deep-research'
                     ? 'bg-violet-50 text-violet-700 hover:bg-violet-100'
                     : chatMode === 'nano-banana'
@@ -4810,7 +4840,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       : 'AnA'}
                 </span>
                 <ChevronDown className="w-3 h-3 opacity-50" />
-              </button>
+              </Button>
 
               {showModeDropdown && (
                 <div className="absolute bottom-full left-0 mb-1.5 w-56 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
