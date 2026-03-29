@@ -868,7 +868,7 @@ router.get('/ana/objectives', async (req: Request, res: Response) => {
   try {
     const organizationId = (req as any).user?.organizationId;
     if (!organizationId) {
-      return res.status(401).json({ success: false, error: 'Authentication required' });
+      return sendError(res, 401, 'Authentication required');
     }
 
     const { db } = await import('../db');
@@ -891,10 +891,10 @@ router.get('/ana/objectives', async (req: Request, res: Response) => {
       .orderBy(desc(anaClientObjectives.createdAt))
       .limit(50);
 
-    return res.json({ success: true, objectives });
+    return sendSuccess(res, { objectives });
   } catch (err: any) {
     console.error('[AnA Intelligence] GET objectives error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -907,7 +907,7 @@ router.post('/ana/objectives', async (req: Request, res: Response) => {
     const userId = (req as any).user?.id;
     const organizationId = (req as any).user?.organizationId;
     if (!organizationId) {
-      return res.status(401).json({ success: false, error: 'Authentication required' });
+      return sendError(res, 401, 'Authentication required');
     }
 
     const { db } = await import('../db');
@@ -922,10 +922,10 @@ router.post('/ana/objectives', async (req: Request, res: Response) => {
       })
       .returning();
 
-    return res.json({ success: true, objective });
+    return sendSuccess(res, { objective });
   } catch (err: any) {
     console.error('[AnA Intelligence] POST objectives error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -936,10 +936,10 @@ router.post('/ana/objectives', async (req: Request, res: Response) => {
 router.get('/ana/templates/company-types', async (_req: Request, res: Response) => {
   try {
     const { getCompanyTypes } = await import('../services/industry-context-templates');
-    return res.json({ success: true, types: getCompanyTypes() });
+    return sendSuccess(res, { types: getCompanyTypes() });
   } catch (err: any) {
     console.error('[AnA Intelligence] GET company-types error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
