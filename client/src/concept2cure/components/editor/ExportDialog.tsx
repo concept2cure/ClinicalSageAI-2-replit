@@ -230,22 +230,26 @@ export function ExportDialog({
 
         {/* Footer with export button */}
         <div className="flex items-center justify-between px-5 py-4 border-t border-stone-200 bg-stone-50">
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onClose}
-            className="px-3 py-1.5 text-xs font-medium text-stone-600 hover:text-stone-900 transition-colors duration-150"
+            className="text-xs font-medium text-stone-600 hover:text-stone-900"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="default"
+            size="sm"
             onClick={handleExport}
             disabled={exporting}
             className={cn(
-              'flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg transition-all duration-150',
+              'flex items-center gap-2 text-xs font-medium transition-all duration-150',
               exportResult === 'success'
-                ? 'bg-emerald-600 text-white'
+                ? 'bg-emerald-600 text-white hover:bg-emerald-700'
                 : exportResult === 'error'
-                ? 'bg-red-600 text-white'
-                : 'bg-stone-800 text-white hover:bg-stone-900 shadow-sm',
+                ? 'bg-red-600 text-white hover:bg-red-700'
+                : '',
               exporting && 'opacity-70',
             )}
           >
@@ -270,7 +274,7 @@ export function ExportDialog({
                 Export as {FORMATS.find(f => f.id === selectedFormat)?.label.split(' ')[0]}
               </>
             )}
-          </button>
+          </Button>
         </div>
       </div>
     </>

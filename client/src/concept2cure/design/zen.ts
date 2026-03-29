@@ -380,7 +380,7 @@ export const zenClasses = {
 
   // ─── Typography Hierarchy ────────────────────────────────────────────────────
   // RULE: Always use these — never ad-hoc font-size + weight combos
-  heading1: 'text-base font-medium tracking-tight text-stone-900',
+  heading1: 'text-lg font-semibold tracking-tight text-stone-900',
   heading2: 'text-lg font-semibold text-stone-900',
   heading3: 'text-base font-semibold text-stone-900',
   heading4: 'text-sm font-medium text-stone-700',
