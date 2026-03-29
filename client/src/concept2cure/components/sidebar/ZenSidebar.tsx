@@ -1057,9 +1057,15 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             </>
           )}
 
-          {/* ── SUBMISSION WORKFLOW — secondary nav ────────────────── */}
+          {/* ── SUBMISSION WORKSPACE — secondary nav ────────────────── */}
           <div className="mx-2 my-1 border-t border-stone-100" />
           <WorkspaceGroup label="Workspace" defaultOpen={true}>
+            <NavItem
+              icon={<Wrench className="w-3.5 h-3.5" />}
+              label="Tools"
+              active={activeNavId === 'documents' || activeNavId === 'tools'}
+              onClick={() => onNavigate?.('documents')}
+            />
             <NavItem
               icon={<PenLine className="w-3.5 h-3.5" />}
               label="Editor"
@@ -1082,7 +1088,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             />
             <NavItem
               icon={<Archive className="w-3.5 h-3.5" />}
-              label="Vault"
+              label="Data Room"
               active={activeNavId === 'vault'}
               onClick={() => onNavigate?.('vault')}
             />

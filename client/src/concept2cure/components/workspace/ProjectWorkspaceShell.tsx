@@ -2074,6 +2074,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           </div>
         )}
 
+        </div>
         {/* ── 3-pane body ───────────────────────────────────────────────────── */}
         <div className="flex-1 flex min-h-0">
           {/* Left: Tree panel with mode toggle — hidden in dashboard mode for full-width layout */}

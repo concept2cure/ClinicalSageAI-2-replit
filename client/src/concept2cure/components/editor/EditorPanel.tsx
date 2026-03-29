@@ -425,13 +425,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       return new Set(['comments', 'review', 'reviewers']);
     }
     if (status.includes('approv') || status === 'approved') {
-      return new Set(['compliance-scanner', 'crossref', 'proof']);
+      return new Set(['provenance', 'inconsistency', 'proof', 'compliance-scanner', 'crossref']);
     }
     if (status === 'locked' || status === 'published' || status === 'final') {
-      return new Set(['audit', 'submission-readiness', 'ga-readiness']);
+      return new Set(['submission-readiness', 'ga-readiness', 'health', 'audit']);
     }
     // Default: draft stage
-    return new Set(['intelligence', 'precedent', 'dataroom', 'batch-ai']);
+    return new Set(['intelligence', 'dataroom', 'templates', 'batch-ai']);
   }, [activeArtifact?.status]);
 
   // ── Sign/Approve state ────────────────────────────────────────────────
@@ -2290,7 +2290,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
       {/* Journey guidance removed — accessible via /checklist in conversation */}
 
-      {/* ── Ribbon toolbar — canonical InspectorRibbon ── */}
+      {/* ── Ribbon toolbar — 4-stage lifecycle InspectorRibbon ── */}
       <InspectorRibbon
         groups={
           [
@@ -2299,8 +2299,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               items: [
                 { id: 'intelligence', label: 'AI Assist', icon: <Brain className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('intelligence') },
                 { id: 'templates', label: 'Templates', icon: <FileText className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('templates') },
-                { id: 'precedent', label: 'Precedents', icon: <Scale className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('precedent') },
                 { id: 'dataroom', label: 'Sources', icon: <Database className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('dataroom') },
+                { id: 'batch-ai', label: 'Batch AI', icon: <Sparkles className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('batch-ai') },
               ],
             },
             {
@@ -2324,31 +2324,27 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   suggested: suggestedPanels.has('review'),
                 },
                 { id: 'reviewers', label: 'Reviewers', icon: <Users className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('reviewers') },
-                { id: 'versions', label: 'History', icon: <GitCompare className="w-3.5 h-3.5" /> },
+                { id: 'compare', label: 'Compare', icon: <GitCompare className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('compare') },
+                { id: 'versions', label: 'History', icon: <Layers className="w-3.5 h-3.5" /> },
               ],
             },
             {
               label: 'Verify',
               items: [
-                {
-                  id: 'compliance-scanner',
-                  label: 'Compliance',
-                  icon: <AlertTriangle className="w-3.5 h-3.5" />,
-                  suggested: suggestedPanels.has('compliance-scanner'),
-                },
+                { id: 'provenance', label: 'Provenance', icon: <ShieldCheck className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('provenance') },
+                { id: 'inconsistency', label: 'Consistency', icon: <AlertCircle className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('inconsistency') },
+                { id: 'proof', label: 'Proof', icon: <CheckCircle className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('proof') },
+                { id: 'compliance-scanner', label: 'Compliance', icon: <AlertTriangle className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('compliance-scanner') },
                 { id: 'crossref', label: 'Cross-Refs', icon: <Link2 className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('crossref') },
-                {
-                  id: 'provenance',
-                  label: 'Provenance',
-                  icon: <ShieldCheck className="w-3.5 h-3.5" />,
-                  suggested: suggestedPanels.has('provenance'),
-                },
-                {
-                  id: 'audit',
-                  label: 'Audit',
-                  icon: <ClipboardList className="w-3.5 h-3.5" />,
-                  suggested: suggestedPanels.has('audit'),
-                },
+              ],
+            },
+            {
+              label: 'Publish',
+              items: [
+                { id: 'submission-readiness', label: 'Readiness', icon: <CheckCircle className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('submission-readiness') },
+                { id: 'ga-readiness', label: 'GA Ready', icon: <ShieldCheck className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('ga-readiness') },
+                { id: 'health', label: 'Health', icon: <Scale className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('health') },
+                { id: 'audit', label: 'Audit', icon: <ClipboardList className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('audit') },
               ],
             },
           ] satisfies InspectorRibbonGroup[]

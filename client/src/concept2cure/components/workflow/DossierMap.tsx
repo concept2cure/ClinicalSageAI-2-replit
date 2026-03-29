@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { FolderOpen } from 'lucide-react';
+import { FolderOpen, FileText, Plus } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { queryKeys } from '@/concept2cure/hooks/queryKeys';
@@ -12,11 +12,19 @@ import {
   STATUS_ICON_MAP,
 } from '@/components/ui/workspace-primitives';
 
+interface DossierArtifact {
+  id: string;
+  title: string;
+  status?: string;
+  ctdSection?: string;
+}
+
 interface DossierMapProps {
   projectId?: string | number;
   projectName?: string;
   projectType?: string;
   onSectionClick: (sectionCode: string) => void;
+  onCreateForSection?: (sectionCode: string, sectionTitle: string) => void;
   onBack: () => void;
 }
 
@@ -120,11 +128,30 @@ function buildModuleTree(sections: Array<{ code: string; title: string; status: 
   return Array.from(moduleMap.values()).sort((a, b) => Number(a.code) - Number(b.code));
 }
 
+/** Derive section status from placed artifacts */
+function deriveSectionStatusFromArtifacts(
+  sectionCode: string,
+  artifacts: DossierArtifact[],
+  existingStatus: string
+): string {
+  const placed = artifacts.filter(a => a.ctdSection === sectionCode);
+  if (placed.length === 0) return existingStatus; // no artifact → keep existing status
+
+  // Derive from artifact statuses
+  const statuses = placed.map(a => (a.status || 'draft').toLowerCase());
+  if (statuses.every(s => s === 'locked' || s === 'published')) return 'approved';
+  if (statuses.every(s => s === 'approved' || s === 'locked' || s === 'published')) return 'approved';
+  if (statuses.some(s => s === 'review' || s === 'in_review' || s === 'in-review')) return 'in-review';
+  if (statuses.some(s => s === 'draft')) return 'drafting';
+  return existingStatus;
+}
+
 export const DossierMap: React.FC<DossierMapProps> = ({
   projectId,
   projectName,
   projectType,
   onSectionClick,
+  onCreateForSection,
   onBack,
 }) => {
   // Fetch project sections from existing API
@@ -134,6 +161,31 @@ export const DossierMap: React.FC<DossierMapProps> = ({
     enabled: !!projectId,
     staleTime: 60_000,
   });
+
+  // Fetch artifacts to derive live section readiness
+  const { data: artifacts } = useQuery<DossierArtifact[]>({
+    queryKey: queryKeys.projects.vaultArtifacts(String(projectId || 'none')),
+    queryFn: async () => {
+      if (!projectId) return [];
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts`);
+      if (!res.ok) return [];
+      const json = await res.json();
+      return (json.data ?? json.artifacts ?? json ?? []) as DossierArtifact[];
+    },
+    enabled: !!projectId,
+    staleTime: 30_000,
+  });
+
+  // Map artifacts by CTD section for quick lookup
+  const artifactsBySection = useMemo(() => {
+    const map = new Map<string, DossierArtifact[]>();
+    for (const a of artifacts || []) {
+      if (!a.ctdSection) continue;
+      if (!map.has(a.ctdSection)) map.set(a.ctdSection, []);
+      map.get(a.ctdSection)!.push(a);
+    }
+    return map;
+  }, [artifacts]);
 
   // For IND projects: also fetch IND status to get real section completion
   const upperType = (projectType || '').toUpperCase();
@@ -168,18 +220,40 @@ export const DossierMap: React.FC<DossierMapProps> = ({
   const isLoading = sectionsLoading;
 
   const structure = useMemo(() => {
+    let tree: DossierSection[];
     // Device projects: use device registry sections
     if (isDevice && deviceStatus?.sections && deviceStatus.sections.length > 0) {
-      return buildModuleTree(deviceStatus.sections);
+      tree = buildModuleTree(deviceStatus.sections);
     }
     // IND projects: use IND registry sections for complete Module 1-5 structure
-    if (isIND && indStatus?.sections && indStatus.sections.length > 0) {
-      return buildModuleTree(indStatus.sections);
+    else if (isIND && indStatus?.sections && indStatus.sections.length > 0) {
+      tree = buildModuleTree(indStatus.sections);
     }
     // Other projects: use project sections or fallback
-    if (sections && sections.length > 0) return buildModuleTree(sections);
-    return DEFAULT_CTD_STRUCTURE;
-  }, [sections, indStatus, deviceStatus, isIND, isDevice]);
+    else if (sections && sections.length > 0) {
+      tree = buildModuleTree(sections);
+    } else {
+      tree = DEFAULT_CTD_STRUCTURE;
+    }
+
+    // Overlay live artifact status onto section tree
+    if (artifacts && artifacts.length > 0) {
+      for (const mod of tree) {
+        for (const sec of mod.children || []) {
+          sec.status = deriveSectionStatusFromArtifacts(sec.code, artifacts, sec.status);
+        }
+        // Re-derive module status from updated children
+        const statuses = mod.children?.map(c => c.status) || [];
+        if (statuses.every(s => s === 'approved' || s === 'locked')) mod.status = 'approved';
+        else if (statuses.some(s => s === 'blocked')) mod.status = 'blocked';
+        else if (statuses.some(s => s === 'in-review' || s === 'internal_review' || s === 'qa_review')) mod.status = 'in-review';
+        else if (statuses.some(s => s === 'drafting' || s === 'data_gathering')) mod.status = 'drafting';
+        else mod.status = 'not-started';
+      }
+    }
+
+    return tree;
+  }, [sections, indStatus, deviceStatus, isIND, isDevice, artifacts]);
 
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-stone-50/50">
@@ -215,20 +289,42 @@ export const DossierMap: React.FC<DossierMapProps> = ({
                     {mod.children?.map(sec => {
                       const statusInfo = STATUS_ICON_MAP[sec.status] || STATUS_ICON_MAP['not-started'];
                       const Icon = statusInfo.icon;
+                      const sectionArtifacts = artifactsBySection.get(sec.code) || [];
+                      const hasArtifacts = sectionArtifacts.length > 0;
                       return (
-                        <button
+                        <div
                           key={sec.code}
-                          onClick={() => onSectionClick(sec.code)}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-stone-50 transition-colors text-left"
+                          className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-stone-50 transition-colors group"
                         >
-                          <Icon className={`w-3.5 h-3.5 ${statusInfo.color}`} />
-                          <span className="text-xs font-mono text-stone-400 w-10">{sec.code}</span>
-                          <span className="text-sm text-stone-800">{sec.title}</span>
+                          <button
+                            onClick={() => onSectionClick(sec.code)}
+                            className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                          >
+                            <Icon className={`w-3.5 h-3.5 ${statusInfo.color}`} />
+                            <span className="text-xs font-mono text-stone-400 w-10">{sec.code}</span>
+                            <span className="text-sm text-stone-800">{sec.title}</span>
+                            {hasArtifacts && (
+                              <span className="flex items-center gap-0.5 text-[10px] text-stone-400">
+                                <FileText className="w-3 h-3" />
+                                {sectionArtifacts.length}
+                              </span>
+                            )}
+                          </button>
+                          {!hasArtifacts && onCreateForSection && (
+                            <button
+                              onClick={() => onCreateForSection(sec.code, sec.title)}
+                              className="opacity-0 group-hover:opacity-100 text-[10px] text-stone-400 hover:text-stone-700 px-2 py-1 rounded hover:bg-stone-100 transition-all flex items-center gap-1 shrink-0"
+                              title={`Create draft for ${sec.code}`}
+                            >
+                              <Plus className="w-3 h-3" />
+                              Create
+                            </button>
+                          )}
                           <WorkspaceStatusBadge
                             status={sec.status}
-                            className="ml-auto"
+                            className="shrink-0"
                           />
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
