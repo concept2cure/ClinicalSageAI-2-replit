@@ -2757,11 +2757,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           return;
         }
         try {
-          const res = await fetch('/api/authoring-actions/lock-artifact', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ projectId, artifactId }),
-          });
+          const res = await apiRequest('POST', '/api/authoring-actions/lock-artifact', { projectId, artifactId });
           const data = await res.json();
           if (data.locked) {
             setMessages(prev => [
@@ -2813,11 +2809,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           return;
         }
         try {
-          const res = await fetch('/api/authoring-actions/mark-submission-ready', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ projectId, artifactId }),
-          });
+          const res = await apiRequest('POST', '/api/authoring-actions/mark-submission-ready', { projectId, artifactId });
           const data = await res.json();
           if (data.submissionReady) {
             const decisionNote = data.decisionId
@@ -3323,11 +3315,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         });
         const finding = sorted[0];
         try {
-          const res = await fetch('/api/authoring-actions/explain-contradiction-resolution', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ projectId, findingId: finding.id, finding }),
-          });
+          const res = await apiRequest('POST', '/api/authoring-actions/explain-contradiction-resolution', { projectId, findingId: finding.id, finding });
           const data = await res.json();
           if (data.status === 'data' || data.success) {
             setMessages(prev => [
@@ -3374,11 +3362,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         );
         const finding = blocking[0] || contradictions[0];
         try {
-          const res = await fetch('/api/authoring-actions/plan-contradiction-resolution', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ projectId, findingId: finding.id, finding }),
-          });
+          const res = await apiRequest('POST', '/api/authoring-actions/plan-contradiction-resolution', { projectId, findingId: finding.id, finding });
           const data = await res.json();
           if (data.status === 'data' || data.success) {
             const plan = data.data;
@@ -3431,9 +3415,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           return;
         }
         try {
-          const res = await fetch(`/api/authoring-actions/project-resolution-status/${projectId}`, {
-            headers: getAuthHeaders(),
-          });
+          const res = await apiRequest('GET', `/api/authoring-actions/project-resolution-status/${projectId}`);
           const data = await res.json();
           if (data.status === 'data' || data.success) {
             const plans = data.data?.plans;
@@ -3589,7 +3571,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               );
             })}
             {isThinking && (
-              <div className="px-4 py-3 bg-white">
+              <div className="px-4 py-3 bg-white" role="status" aria-live="polite" aria-busy="true">
                 <div className="flex gap-2.5 max-w-3xl mx-auto">
                   <div className="w-6 h-6 rounded-full bg-[#D97757] flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Sparkles className="w-3 h-3 text-white" />
@@ -3929,7 +3911,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               autoFocus
                             />
                             <div className="flex gap-2 mt-1.5">
-                              <button
+                              <Button
+                                variant="default"
+                                size="sm"
                                 onClick={() => {
                                   if (editText.trim()) {
                                     const msgIdx = messages.findIndex(m => m.id === msg.id);
@@ -3938,16 +3922,18 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                     handleSend(editText.trim());
                                   }
                                 }}
-                                className="px-3 py-1 text-xs font-medium text-white bg-stone-900 rounded-md hover:bg-stone-800"
+                                className="h-auto px-3 py-1 text-xs font-medium text-white bg-stone-900 rounded-md hover:bg-stone-800"
                               >
                                 Send
-                              </button>
-                              <button
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => setEditingMsgId(null)}
-                                className="px-3 py-1 text-xs text-stone-500 hover:text-stone-700"
+                                className="h-auto px-3 py-1 text-xs text-stone-500 hover:text-stone-700 font-normal"
                               >
                                 Cancel
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         ) : (
@@ -3955,13 +3941,15 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap flex-1">
                               {msg.content}
                             </p>
-                            <button
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={() => { setEditingMsgId(msg.id); setEditText(msg.content); }}
-                              className="opacity-0 group-hover/user:opacity-100 p-1 text-stone-400 hover:text-stone-600 rounded transition-opacity flex-shrink-0"
+                              className="h-auto w-auto opacity-0 group-hover/user:opacity-100 p-1 text-stone-400 hover:text-stone-600 rounded transition-opacity flex-shrink-0"
                               title="Edit message"
                             >
                               <Pencil className="w-3 h-3" />
-                            </button>
+                            </Button>
                           </div>
                         )
                       ) : (
@@ -4346,7 +4334,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                       );
                                     }
                                   } catch {
-                                    /* non-blocking */
+                                    /* non-blocking */ toast({ title: 'Save failed', description: 'Could not save to vault.', variant: 'destructive' });
                                   }
                                 }}
                                 className="p-1 text-stone-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors h-auto w-auto"
@@ -4361,7 +4349,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             contextProfile?.projectId &&
                             msg.content.length > 100 &&
                             authoringContext?.sectionCode && (
-                              <button
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 onClick={() => {
                                   // Extract draft content: try code block, then content after "---", then strip markdown metadata
                                   let insertContent = msg.content;
@@ -4398,11 +4388,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                     )
                                   );
                                 }}
-                                className="p-1 text-stone-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                className="h-auto w-auto p-1 text-stone-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                                 title="Insert into Editor"
                               >
                                 <FileEdit className="w-3 h-3" />
-                              </button>
+                              </Button>
                             )}
                           {(msg as any).insertedToEditor && (
                             <span className="text-[10px] text-blue-600 font-medium ml-1">
@@ -4663,7 +4653,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
             {/* Thinking indicator */}
             {isThinking && (
-              <div className="px-4 py-3 bg-white">
+              <div className="px-4 py-3 bg-white" role="status" aria-live="polite" aria-busy="true">
                 <div className="flex gap-2.5 max-w-3xl mx-auto">
                   <div className="w-6 h-6 rounded-full bg-[#D97757] flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Sparkles className="w-3 h-3 text-white" />
