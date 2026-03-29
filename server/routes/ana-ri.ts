@@ -678,6 +678,15 @@ router.post('/chat', async (req: Request, res: Response) => {
       memory: {
         atomCount: chatMemoryResult.atoms?.length || 0,
         diagnostics: chatMemoryResult.diagnostics || null,
+        // Lightweight atom summaries for transparency panel
+        atomSummaries: (chatMemoryResult.atoms || []).slice(0, 8).map(a => ({
+          id: a.id,
+          layer: a.layer,
+          title: a.title,
+          category: a.category,
+          confidence: a.metadata?.confidence ?? null,
+          source: a.metadata?.source?.documentName || null,
+        })),
       },
       evaluation: {
         grade: evaluation.grade,

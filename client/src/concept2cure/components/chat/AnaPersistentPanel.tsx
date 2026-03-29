@@ -286,6 +286,15 @@ interface AnaMessage {
   enrichmentFailures?: string[];
   /** Memory atom count used in this response */
   memoryAtomCount?: number;
+  /** Memory atom summaries for transparency */
+  memoryAtoms?: Array<{
+    id: number;
+    layer: string;
+    title: string;
+    category?: string;
+    confidence?: number | null;
+    source?: string | null;
+  }>;
 }
 
 interface SuggestedAction {
@@ -1902,6 +1911,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               enrichmentSources: data.enrichment?.sources || data.enrichmentSources || undefined,
               enrichmentFailures: data.enrichment?.meta?.sourcesFailed || data.enrichmentMeta?.sourcesFailed || undefined,
               memoryAtomCount: data.memory?.atomCount || undefined,
+              memoryAtoms: data.memory?.atomSummaries || undefined,
             },
           ]);
 
@@ -4169,13 +4179,44 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               {msg.enrichmentFailures.length} source{msg.enrichmentFailures.length !== 1 ? 's' : ''} unavailable
                             </span>
                           )}
-                          {/* Memory atom count */}
+                          {/* Memory atom count with expandable detail */}
                           {msg.memoryAtomCount && msg.memoryAtomCount > 0 && (
-                            <span
-                              className="text-[10px] text-stone-400 mr-1"
-                              title="Memory atoms used in context"
-                            >
-                              {msg.memoryAtomCount} mem
+                            <span className="relative group">
+                              <span
+                                className="text-[10px] text-stone-400 mr-1 cursor-help"
+                                title="Memory atoms used in context — hover for details"
+                              >
+                                {msg.memoryAtomCount} mem
+                              </span>
+                              {msg.memoryAtoms && msg.memoryAtoms.length > 0 && (
+                                <div className="hidden group-hover:block absolute bottom-full left-0 mb-1.5 w-64 bg-white border border-stone-200 rounded-lg shadow-lg p-2 z-50">
+                                  <p className="text-[10px] font-medium text-stone-500 uppercase tracking-wide mb-1.5">
+                                    Memory Context ({msg.memoryAtomCount} atoms)
+                                  </p>
+                                  <div className="space-y-1 max-h-40 overflow-y-auto">
+                                    {msg.memoryAtoms.map((atom) => (
+                                      <div key={atom.id} className="flex items-start gap-1.5 text-[10px]">
+                                        <span className={cn(
+                                          'flex-shrink-0 px-1 py-0.5 rounded font-medium',
+                                          atom.layer === 'working_memory' ? 'text-blue-600 bg-blue-50'
+                                            : atom.layer === 'project_memory' ? 'text-violet-600 bg-violet-50'
+                                            : 'text-emerald-600 bg-emerald-50'
+                                        )}>
+                                          {atom.layer === 'working_memory' ? 'WM' : atom.layer === 'project_memory' ? 'PM' : 'CM'}
+                                        </span>
+                                        <span className="text-stone-600 truncate flex-1" title={atom.title}>
+                                          {atom.title}
+                                        </span>
+                                        {atom.confidence != null && (
+                                          <span className="text-stone-400 flex-shrink-0">
+                                            {Math.round(atom.confidence * 100)}%
+                                          </span>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </span>
                           )}
                           {msg.evidenceUsage?.firecrawlRequested && (
