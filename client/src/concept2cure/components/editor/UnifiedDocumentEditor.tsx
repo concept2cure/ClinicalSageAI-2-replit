@@ -73,7 +73,6 @@ import {
   Search,
   X,
   Shield,
-  MessageSquare as MessageSquareIcon,
   Sparkles,
   Maximize2,
   Minimize2,
@@ -82,9 +81,7 @@ import {
   Layers,
   Clock,
   ChevronDown,
-  Palette,
   Replace,
-  Type,
 } from 'lucide-react';
 import InlineApprovalPanel from './InlineApprovalPanel';
 
@@ -529,29 +526,7 @@ const AI_TOOLBAR_ACTIONS = [
   },
 ];
 
-interface SmartToolbarProps {
-  onAIAction?: (action: string, selectedText: string) => void;
-  disabled?: boolean;
-}
-
-const SmartToolbar: React.FC<SmartToolbarProps> = ({ onAIAction, disabled }) => (
-  <div className="flex items-center gap-1 px-2 py-1.5 border-b border-stone-200 bg-stone-50">
-    <Sparkles className="w-3.5 h-3.5 text-purple-500 mr-1" />
-    <span className="text-xs font-semibold text-purple-600 mr-2 uppercase tracking-wider">AI</span>
-    {AI_TOOLBAR_ACTIONS.map(action => (
-      <button
-        key={action.id}
-        onClick={() => onAIAction?.(action.id, '')}
-        disabled={disabled}
-        title={action.description}
-        className="flex items-center gap-1 px-2 py-1 text-xs rounded-md hover:bg-purple-100 text-stone-600 hover:text-purple-700 transition-colors disabled:opacity-40"
-      >
-        <action.icon className="w-3.5 h-3.5" />
-        {action.label}
-      </button>
-    ))}
-  </div>
-);
+// SmartToolbar removed — AI actions consolidated into toolbar dropdown (Sprint 1A)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Find & Replace Bar (Sprint 1B)
@@ -1409,7 +1384,19 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   }
 
   return (
-    <div className={`flex flex-col h-full bg-white ${className}`}>
+    <div className={`flex flex-col h-full bg-white ${className}`} data-testid="unified-document-editor">
+      {/* Read-only / locked mode indicator — calm but clear */}
+      {!caps.editable && embedded && (
+        <div className="flex items-center gap-2 px-4 py-1.5 bg-stone-50 border-b border-stone-200 text-xs text-stone-500">
+          <Lock className="w-3 h-3" />
+          <span className="font-medium">
+            {caps.editable === false && resolvedMode === 'locked' ? 'Document locked' : 'Read-only mode'}
+          </span>
+          {resolvedMode === 'review' && (
+            <span className="text-amber-600 font-medium ml-1">— Review in progress</span>
+          )}
+        </div>
+      )}
       {/* Document Header — hidden when embedded in EditorPanel (which provides its own) */}
       {!embedded && (
         <div className="flex items-center justify-between px-4 py-2 border-b border-stone-200 bg-stone-50">
@@ -1534,9 +1521,9 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
             <BubbleMenu
               editor={editor}
               tippyOptions={{ duration: 100 }}
-              className="bg-stone-800 rounded-lg shadow-xl px-1.5 py-1 flex items-center gap-0.5 flex-wrap max-w-md"
+              className="bg-stone-800 rounded-lg shadow-xl px-1.5 py-1 flex items-center gap-0.5"
             >
-              {/* Formatting */}
+              {/* Formatting — selected-text actions only */}
               <button
                 onClick={() => editor.chain().focus().toggleBold().run()}
                 className={`p-1.5 rounded hover:bg-stone-700 ${editor.isActive('bold') ? 'text-blue-400' : 'text-white'}`}
@@ -1559,13 +1546,6 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                 <Underline className="w-3.5 h-3.5" />
               </button>
               <button
-                onClick={() => editor.chain().focus().toggleStrike().run()}
-                className={`p-1.5 rounded hover:bg-stone-700 ${editor.isActive('strike') ? 'text-blue-400' : 'text-white'}`}
-                title="Strikethrough"
-              >
-                <Strikethrough className="w-3.5 h-3.5" />
-              </button>
-              <button
                 onClick={() => editor.chain().focus().toggleHighlight().run()}
                 className={`p-1.5 rounded hover:bg-stone-700 ${editor.isActive('highlight') ? 'text-blue-400' : 'text-white'}`}
                 title="Highlight"
@@ -1573,24 +1553,6 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                 <span className="w-3.5 h-3.5 bg-yellow-400 rounded text-xs flex items-center justify-center font-semibold text-black">
                   H
                 </span>
-              </button>
-              {/* Color palette */}
-              {['#ef4444', '#3b82f6', '#10b981', '#f59e0b'].map(color => (
-                <button
-                  key={color}
-                  onClick={() => editor.chain().focus().setColor(color).run()}
-                  className="p-1 rounded hover:bg-stone-700"
-                  title={`Text color`}
-                >
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
-                </button>
-              ))}
-              <button
-                onClick={() => editor.chain().focus().unsetColor().run()}
-                className="p-1 rounded hover:bg-stone-700 text-stone-400"
-                title="Reset color"
-              >
-                <X className="w-3 h-3" />
               </button>
               <div className="w-px h-4 bg-stone-600 mx-0.5" />
               {/* Source link */}
@@ -1600,10 +1562,8 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                 title="Link to Source"
               >
                 <Link className="w-3.5 h-3.5" />
-                <span className="text-xs">Source</span>
               </button>
-              <div className="w-px h-4 bg-stone-600 mx-0.5" />
-              {/* AI Actions on selection */}
+              {/* AI Rewrite — primary AI action on selection */}
               <button
                 onClick={() => {
                   const { from, to } = editor.state.selection;
@@ -1614,40 +1574,6 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                 title="AI Rewrite Selection"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span className="text-xs">Rewrite</span>
-              </button>
-              <button
-                onClick={() => {
-                  const { from, to } = editor.state.selection;
-                  const text = editor.state.doc.textBetween(from, to, ' ');
-                  onAIAction?.('regulatory-tone', text);
-                }}
-                className="p-1.5 rounded hover:bg-purple-700 text-purple-300"
-                title="Regulatory Tone"
-              >
-                <FileCheck className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => {
-                  const { from, to } = editor.state.selection;
-                  const text = editor.state.doc.textBetween(from, to, ' ');
-                  onAIAction?.('expand', text);
-                }}
-                className="p-1.5 rounded hover:bg-purple-700 text-purple-300"
-                title="AI Expand — add detail and evidence"
-              >
-                <span className="text-[10px] font-semibold">+</span>
-              </button>
-              <button
-                onClick={() => {
-                  const { from, to } = editor.state.selection;
-                  const text = editor.state.doc.textBetween(from, to, ' ');
-                  onAIAction?.('summarize', text);
-                }}
-                className="p-1.5 rounded hover:bg-purple-700 text-purple-300"
-                title="AI Summarize — create concise version"
-              >
-                <span className="text-[10px] font-semibold">Σ</span>
               </button>
               <div className="w-px h-4 bg-stone-600 mx-0.5" />
               {/* Comment */}
@@ -1657,23 +1583,14 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                 title="Add Comment"
               >
                 <MessageSquare className="w-3.5 h-3.5" />
-                <span className="text-xs">Comment</span>
               </button>
-              <div className="w-px h-4 bg-stone-600 mx-1" />
+              {/* Approve */}
               <button
                 onClick={handleRequestApproval}
-                className="p-1.5 rounded hover:bg-stone-700 text-white flex items-center gap-1"
-                title="Request Approval / Annotate"
+                className="p-1.5 rounded hover:bg-stone-700 text-white"
+                title="Request Approval"
               >
-                <Shield className="w-4 h-4" />
-                <span className="text-xs">Approve</span>
-              </button>
-              <button
-                onClick={handleRequestApproval}
-                className="p-1.5 rounded hover:bg-stone-700 text-white flex items-center gap-1"
-                title="Comment on Selection"
-              >
-                <MessageSquareIcon className="w-4 h-4" />
+                <Shield className="w-3.5 h-3.5" />
               </button>
             </BubbleMenu>
           )}

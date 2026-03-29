@@ -112,7 +112,7 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
   onOpenInEditor,
   onCreateDraft,
 }) => {
-  const [activeTab, setActiveTab] = useState<TabId>('editor');
+  const [activeTab, setActiveTab] = useState<TabId>('editor'); // 'editor' tab now shows section overview, not a textarea
   const [editorContent, setEditorContent] = useState(initialContent || '');
   const [isSaving, setIsSaving] = useState(false);
   const [fetchedIssues, setFetchedIssues] = useState<SectionIssue[] | null>(null);
@@ -209,7 +209,7 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
   const isBlocked = readiness?.blocked || issues.some(i => i.severity === 'critical');
 
   const tabs: WorkspaceTab[] = [
-    { id: 'editor', label: 'Editor', icon: <FileText className="w-3.5 h-3.5" /> },
+    { id: 'editor', label: 'Overview', icon: <FileText className="w-3.5 h-3.5" /> },
     {
       id: 'issues',
       label: 'Issues',
@@ -303,66 +303,81 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
       {/* ── Tab content ─────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-auto min-h-0">
         {activeTab === 'editor' && (
-          <div className="p-6">
-            {/* When an existing document is linked, show a clear path to the full editor */}
+          <div className="p-6 space-y-4">
+            {/* Section cockpit — status, readiness, and primary action */}
             {onOpenInEditor ? (
-              <div className="space-y-4">
-                <div className="rounded-xl border border-stone-200 bg-white p-8 text-center">
-                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-stone-100">
-                    <PenLine className="h-6 w-6 text-stone-500" />
+              /* Document exists — route to full editor */
+              <div className="rounded-xl border border-stone-200 bg-white p-6">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 shrink-0">
+                    <PenLine className="h-5 w-5 text-blue-600" />
                   </div>
-                  <h3 className="text-base font-semibold text-stone-900 mb-1">
-                    Document exists for this section
-                  </h3>
-                  <p className="text-sm text-stone-500 mb-5 max-w-md mx-auto">
-                    Open the full document editor with rich text, comments, version history, compliance scanning, and AI assistance.
-                  </p>
-                  <Button onClick={onOpenInEditor} variant="default" size="default" className="gap-2">
-                    <ExternalLink className="h-4 w-4" />
-                    Open in Full Editor
-                  </Button>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-semibold text-stone-900 mb-0.5">
+                      Document linked to this section
+                    </h3>
+                    <p className="text-xs text-stone-500 mb-3">
+                      Rich text editing, compliance scanning, comments, and version history available in the full editor.
+                    </p>
+                    <Button onClick={onOpenInEditor} variant="default" size="sm" className="gap-1.5">
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      Open in Full Editor
+                    </Button>
+                  </div>
                 </div>
-
-                {/* Quick preview with textarea fallback */}
-                <details className="group">
-                  <summary className="cursor-pointer text-xs text-stone-400 hover:text-stone-600 transition-colors">
-                    Quick edit (plain text)
-                  </summary>
-                  <textarea
-                    value={editorContent}
-                    onChange={e => setEditorContent(e.target.value)}
-                    readOnly={section.status === 'locked' || section.status === 'approved'}
-                    placeholder={`Begin drafting ${section.title}...`}
-                    className="mt-2 w-full min-h-[200px] p-4 text-sm text-stone-800 bg-white border border-stone-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-stone-300 font-serif leading-relaxed"
-                  />
-                </details>
               </div>
             ) : section.status === 'not-started' && onCreateDraft ? (
-              /* Section has no document yet — prompt to create one */
-              <div className="rounded-xl border border-dashed border-stone-200 bg-white/80 p-10 text-center">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-stone-50">
-                  <FilePlus className="h-6 w-6 text-stone-400" />
+              /* No document — clean creation decision */
+              <div className="rounded-xl border border-dashed border-stone-200 bg-white/80 p-8 text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-stone-50">
+                  <FilePlus className="h-5 w-5 text-stone-400" />
                 </div>
-                <h3 className="text-base font-semibold text-stone-900 mb-2">
+                <h3 className="text-sm font-semibold text-stone-900 mb-1">
                   Start Section {section.code}
                 </h3>
-                <p className="text-sm text-stone-500 mb-6 max-w-md mx-auto leading-relaxed">
-                  Create a document to begin drafting. AnA can help you write content, and the editor includes compliance checking, evidence linking, and regulatory templates.
+                <p className="text-xs text-stone-500 mb-4 max-w-sm mx-auto">
+                  Create a document to begin drafting. AnA can help with content, or start from a template.
                 </p>
-                <Button onClick={onCreateDraft} variant="default" size="default" className="gap-2">
-                  <FilePlus className="h-4 w-4" />
+                <Button onClick={onCreateDraft} variant="default" size="sm" className="gap-1.5">
+                  <FilePlus className="h-3.5 w-3.5" />
                   Create Document
                 </Button>
               </div>
             ) : (
-              /* Fallback: plain textarea editor */
-              <textarea
-                value={editorContent}
-                onChange={e => setEditorContent(e.target.value)}
-                readOnly={section.status === 'locked' || section.status === 'approved'}
-                placeholder={`Begin drafting ${section.title}...\n\nAnA can help — ask her to "draft section ${section.code}" or "explain what blocks promotion".`}
-                className="w-full min-h-[400px] p-4 text-sm text-stone-800 bg-white border border-stone-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-stone-300 font-serif leading-relaxed"
-              />
+              /* Section exists but no explicit editor link — guide user */
+              <div className="rounded-xl border border-stone-100 bg-stone-50/50 p-6 text-center">
+                <p className="text-xs text-stone-500">
+                  Use the Issues, Evidence, and Versions tabs to review this section.
+                  {section.status !== 'locked' && section.status !== 'approved' && (
+                    <> Ask AnA to &quot;draft section {section.code}&quot; to generate content.</>
+                  )}
+                </p>
+              </div>
+            )}
+
+            {/* Quick readiness summary — always visible in the cockpit */}
+            {(readinessScore != null || isBlocked || issues.length > 0) && (
+              <div className="rounded-lg border border-stone-200 bg-white p-4">
+                <h4 className="text-xs font-semibold text-stone-600 mb-2">Section Status</h4>
+                <div className="flex items-center gap-4 text-xs">
+                  {readinessScore != null && (
+                    <span className={cn(
+                      'font-semibold',
+                      readinessScore >= 70 ? 'text-emerald-600' : readinessScore >= 40 ? 'text-amber-600' : 'text-red-600'
+                    )}>
+                      Readiness: {readinessScore}%
+                    </span>
+                  )}
+                  {issues.length > 0 && (
+                    <span className="text-stone-500">
+                      {issues.filter(i => i.severity === 'critical').length} critical · {issues.length} total issues
+                    </span>
+                  )}
+                  {isBlocked && (
+                    <span className="font-semibold text-red-600">Promotion blocked</span>
+                  )}
+                </div>
+              </div>
             )}
           </div>
         )}

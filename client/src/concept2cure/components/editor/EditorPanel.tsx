@@ -419,20 +419,23 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   }, [initialInspector]);
 
   // ── Contextual panel suggestions based on document lifecycle stage ────
-  const suggestedPanels = useMemo<Set<string>>(() => {
+  // Maps artifact status to the lifecycle stage label shown in the ribbon
+  const activeLifecycleStage = useMemo<string>(() => {
     const status = (activeArtifact?.status ?? 'draft').toLowerCase();
-    if (status === 'review' || status === 'in_review' || status === 'in-review') {
-      return new Set(['comments', 'review', 'reviewers']);
-    }
-    if (status.includes('approv') || status === 'approved') {
-      return new Set(['provenance', 'inconsistency', 'proof', 'compliance-scanner', 'crossref']);
-    }
-    if (status === 'locked' || status === 'published' || status === 'final') {
-      return new Set(['submission-readiness', 'ga-readiness', 'health', 'audit']);
-    }
-    // Default: draft stage
-    return new Set(['intelligence', 'dataroom', 'templates', 'batch-ai']);
+    if (status === 'review' || status === 'in_review' || status === 'in-review') return 'Review';
+    if (status.includes('approv') || status === 'approved') return 'Verify';
+    if (status === 'locked' || status === 'published' || status === 'final') return 'Publish';
+    return 'Draft';
   }, [activeArtifact?.status]);
+
+  const suggestedPanels = useMemo<Set<string>>(() => {
+    switch (activeLifecycleStage) {
+      case 'Review': return new Set(['comments', 'review', 'reviewers']);
+      case 'Verify': return new Set(['provenance', 'inconsistency', 'proof', 'compliance-scanner', 'crossref']);
+      case 'Publish': return new Set(['submission-readiness', 'ga-readiness', 'health', 'audit']);
+      default: return new Set(['intelligence', 'dataroom', 'templates', 'batch-ai']);
+    }
+  }, [activeLifecycleStage]);
 
   // ── Sign/Approve state ────────────────────────────────────────────────
   const [signing, setSigning] = useState(false);
@@ -2080,6 +2083,16 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             CTD {activeArtifact.ctdSection}
           </button>
         )}
+        {/* Lifecycle stage pill — signals where in the workflow this document sits */}
+        <span className={cn(
+          'text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md shrink-0',
+          activeLifecycleStage === 'Draft' && 'bg-stone-100 text-stone-500',
+          activeLifecycleStage === 'Review' && 'bg-amber-50 text-amber-700 ring-1 ring-amber-200/60',
+          activeLifecycleStage === 'Verify' && 'bg-blue-50 text-blue-700 ring-1 ring-blue-200/60',
+          activeLifecycleStage === 'Publish' && 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/60',
+        )}>
+          {activeLifecycleStage}
+        </span>
         <DocumentStatusTimeline
           currentStatus={activeArtifact?.status || 'draft'}
           documentTitle={activeArtifact?.title}

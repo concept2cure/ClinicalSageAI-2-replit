@@ -1955,81 +1955,40 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           </div>
         )}
 
-        {/* ── Doc-aware header (shown when editing) ─────────────────────────── */}
+        {/* ── Compact doc context bar (shown when editing) — document-led, minimal chrome */}
         {mode === 'edit' && activeArtifact && (
-          <div className="flex items-center gap-2.5 px-4 h-10 border-b border-stone-200 bg-stone-50/60 shrink-0">
-            <FileText className="w-4 h-4 text-stone-500" />
-            <span className="text-xs font-semibold text-stone-900 truncate">
+          <div className="flex items-center gap-2 px-4 h-8 border-b border-stone-100 bg-white shrink-0">
+            <FileText className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+            <span className="text-xs font-semibold text-stone-800 truncate">
               {activeArtifact.title}
             </span>
             {activeArtifact.ctdSection && (
-              <>
-                <span className="text-stone-300">/</span>
-                <span className="text-xs px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-medium">
-                  {activeArtifact.ctdSection} — {getSectionLabel(activeArtifact.ctdSection)}
-                </span>
-              </>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-medium shrink-0">
+                {activeArtifact.ctdSection}
+              </span>
             )}
-            {activeArtifact.templateId && (
-              <>
-                <span className="text-stone-200 text-xs">·</span>
-                <span className="text-xs px-2 py-0.5 rounded-md bg-violet-50 text-violet-700">
-                  Template: {activeArtifact.templateId}
-                </span>
-              </>
-            )}
-            <span className="text-stone-200 text-xs">·</span>
             <span
               className={cn(
-                'text-xs px-1.5 py-0.5 rounded font-medium',
+                'text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0',
                 activeArtifact.status === 'locked'
-                  ? 'bg-red-50 text-red-700'
+                  ? 'bg-red-50 text-red-600'
                   : activeArtifact.status === 'approved'
-                    ? 'bg-green-50 text-green-700'
+                    ? 'bg-green-50 text-green-600'
                     : activeArtifact.status === 'review'
-                      ? 'bg-yellow-50 text-yellow-700'
-                      : 'bg-stone-100 text-stone-500'
+                      ? 'bg-amber-50 text-amber-600'
+                      : 'bg-stone-50 text-stone-400'
               )}
             >
-              {activeArtifact.status || 'draft'}
+              {(activeArtifact.status || 'draft')}
             </span>
             {activeArtifact.version && (
-              <span className="text-xs text-stone-400 ml-0.5">v{activeArtifact.version}</span>
+              <span className="text-[10px] text-stone-400 tabular-nums">v{activeArtifact.version}</span>
             )}
-            {/* Doc-level actions */}
-            <div className="ml-auto flex items-center gap-1">
-              {activeArtifact.status !== 'locked' && (
-                <button
-                  onClick={() => handleCutDocument(activeArtifact)}
-                  className="p-1.5 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100"
-                  title="Cut — move to another section"
-                >
-                  <Scissors className="w-3.5 h-3.5" />
-                </button>
-              )}
-              <button
-                onClick={() =>
-                  handleOpenPlacementForDoc(
-                    activeArtifact,
-                    activeArtifact.ctdSection ? 'relocate' : 'place'
-                  )
-                }
-                className="p-1.5 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100"
-                title={activeArtifact.ctdSection ? 'Relocate in dossier' : 'Place in dossier'}
-              >
-                <MapPin className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => handleCopyCtdPath(activeArtifact)}
-                className="p-1.5 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100"
-                title="Copy CTD path"
-              >
-                <Copy className="w-3.5 h-3.5" />
-              </button>
-              <span className="w-px h-4 bg-stone-200 mx-1" />
+            {/* Essential doc-level actions — secondary actions available in EditorPanel overflow */}
+            <div className="ml-auto flex items-center gap-0.5">
               <button
                 onClick={() => openVerification(activeArtifact.id)}
-                className="p-1.5 text-stone-400 hover:text-emerald-600 rounded-md hover:bg-emerald-50"
+                className="p-1 text-stone-300 hover:text-emerald-600 rounded hover:bg-emerald-50 transition-colors"
                 title="Verify document"
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
@@ -2067,10 +2026,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               <button
                 onClick={openReviewPulse}
                 className={cn(
-                  'p-1.5 rounded-md',
+                  'p-1 rounded transition-colors',
                   phase4Panel === 'pulse'
                     ? 'text-rose-600 bg-rose-50'
-                    : 'text-stone-400 hover:text-rose-600 hover:bg-rose-50'
+                    : 'text-stone-300 hover:text-rose-600 hover:bg-rose-50'
                 )}
                 title="Review Pulse"
               >
@@ -2081,93 +2040,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           </div>
         )}
 
-        {/* ── Trust strip (provenance / compare / audit / version / status) ── */}
-        {mode === 'edit' && activeArtifact && (
-          <div className="flex items-center gap-3 px-4 h-7 border-b border-stone-100 bg-white shrink-0">
-            <span
-              role="button"
-              aria-label="Provenance tab"
-              tabIndex={0}
-              onClick={() => setDocumentTab('provenance')}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDocumentTab('provenance'); } }}
-              className={cn(
-                'flex items-center gap-1 text-[10px] font-medium cursor-pointer transition-colors',
-                documentTab === 'provenance' ? 'text-stone-700' : 'text-stone-400 hover:text-stone-600'
-              )}
-            >
-              <GitBranch className="w-3 h-3" />
-              Provenance
-            </span>
-            <span
-              role="button"
-              aria-label="Compare versions tab"
-              tabIndex={0}
-              onClick={() => setDocumentTab('versions')}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDocumentTab('versions'); } }}
-              className={cn(
-                'flex items-center gap-1 text-[10px] font-medium cursor-pointer transition-colors',
-                documentTab === 'versions' ? 'text-stone-700' : 'text-stone-400 hover:text-stone-600'
-              )}
-            >
-              <Eye className="w-3 h-3" />
-              Compare
-            </span>
-            <span
-              role="button"
-              aria-label="Audit trail tab"
-              tabIndex={0}
-              onClick={() => setDocumentTab('review')}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDocumentTab('review'); } }}
-              className={cn(
-                'flex items-center gap-1 text-[10px] font-medium cursor-pointer transition-colors',
-                documentTab === 'review' ? 'text-stone-700' : 'text-stone-400 hover:text-stone-600'
-              )}
-            >
-              <ShieldCheck className="w-3 h-3" />
-              Audit
-            </span>
-            <span className="w-px h-3 bg-stone-200" />
-            {activeArtifact.version && (
-              <span className="text-[10px] font-medium text-stone-400">
-                v{activeArtifact.version}
-              </span>
-            )}
-            <span
-              className={cn(
-                'flex items-center gap-1 text-[10px] font-medium',
-                activeArtifact.status === 'locked'
-                  ? 'text-emerald-600'
-                  : activeArtifact.status === 'approved'
-                    ? 'text-emerald-600'
-                    : activeArtifact.status === 'review'
-                      ? 'text-amber-600'
-                      : 'text-stone-400'
-              )}
-            >
-              {activeArtifact.status === 'locked' && <Lock className="w-3 h-3" />}
-              {(activeArtifact.status || 'draft').charAt(0).toUpperCase() + (activeArtifact.status || 'draft').slice(1)}
-            </span>
-          </div>
-        )}
-
-        {mode === 'edit' && activeArtifact && (
-          <div className="flex items-center gap-1 px-4 h-9 border-b border-stone-200 bg-white shrink-0 overflow-x-auto">
-            {DOCUMENT_TAB_ITEMS.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setDocumentTab(tab.id)}
-                className={cn(
-                  'px-2.5 py-1 text-xs rounded-md border whitespace-nowrap transition-colors',
-                  documentTab === tab.id
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white text-stone-600 border-stone-200 hover:bg-blue-50'
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Trust strip and document tabs removed from edit mode —
+            EditorPanel's InspectorRibbon provides all these capabilities
+            (Provenance, Compare, Audit, Versions, Review, Compliance, etc.)
+            with better stage-aware progressive disclosure. */}
 
         </div>
         {/* ── 3-pane body ───────────────────────────────────────────────────── */}
