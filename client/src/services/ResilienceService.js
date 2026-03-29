@@ -97,18 +97,7 @@ class ResilienceService {
     if (!authResult) {
       console.log('Server authentication failed, using local fallback');
 
-      // Using specific demo credentials as a fallback
-      // This should match the expected credentials used in the app
-      if (credentials.username === 'admin' && credentials.password === 'admin123') {
-        // Use fallback authentication
-        authResult = this.getFallbackUserData(credentials.username);
-        // Store auth in localStorage for persistence
-        this.setLocalAuth(authResult);
-        return authResult;
-      } else {
-        // Even fallback auth fails - wrong credentials
-        throw new Error('Invalid credentials. Use admin/admin123');
-      }
+      throw new Error('Authentication service unavailable. Please try again later.');
     }
 
     // Step 4: Store successful auth result
@@ -192,19 +181,6 @@ class ResilienceService {
     }
   }
 
-  /**
-   * Get fallback user data (only used when server is unavailable)
-   */
-  getFallbackUserData(username) {
-    return {
-      id: 1,
-      username: username,
-      role: 'admin',
-      name: 'Admin User',
-      organization: 'Concept2Cure',
-      email: 'admin@trialsage.com',
-    };
-  }
 }
 
 export default new ResilienceService();

@@ -13,8 +13,16 @@ import os
 from datetime import datetime
 
 # JWT secret key from environment variable
-JWT_SECRET = os.environ.get("JWT_SECRET", "trialsage_development_secret")
+JWT_SECRET = os.environ.get("JWT_SECRET", "")
 JWT_ALGORITHM = "HS256"
+
+
+
+def _allow_dev_auth_bypass() -> bool:
+    """Allow bypass only in explicitly opted-in local development."""
+    env = (os.environ.get("ENVIRONMENT") or "").lower()
+    bypass = (os.environ.get("ALLOW_DEV_AUTH_BYPASS") or "").lower()
+    return env == "development" and bypass in {"1", "true", "yes", "on"}
 
 class User(BaseModel):
     """User model derived from JWT claims."""
@@ -41,7 +49,7 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> User:
     """
     if not authorization:
         # During development, allow a default test token for easier testing
-        if os.environ.get("ENVIRONMENT") == "development":
+        if _allow_dev_auth_bypass():
             return User(
                 id=1,
                 username="trialsage_test",
@@ -59,17 +67,7 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> User:
     
     # Extract token from "Bearer {token}" format
     if not authorization.startswith("Bearer "):
-        # Special development tokens like "TS_1" for testing
-        if authorization in ["TS_1", "TS_DEV"]:
-            return User(
-                id=1,
-                username="admin",
-                email="admin@trialsage.ai",
-                tenant_id="default_tenant",
-                role="admin",
-                exp=datetime.now().timestamp() + 3600
-            )
-            
+        # Reject non-Bearer authorization schemes
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication scheme",
@@ -77,7 +75,13 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> User:
         )
     
     token = authorization.replace("Bearer ", "")
-    
+
+    if not JWT_SECRET:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="JWT secret is not configured",
+        )
+
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         user = User(**payload)
@@ -93,16 +97,6 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> User:
         return user
     except jwt.PyJWTError:
         # During development, allow some pre-defined tokens
-        if token in ["dev_token", "test_token"]:
-            return User(
-                id=1,
-                username="developer",
-                email="dev@trialsage.ai",
-                tenant_id="dev_tenant",
-                role="admin",
-                exp=datetime.now().timestamp() + 3600
-            )
-            
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
