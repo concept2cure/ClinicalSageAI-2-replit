@@ -1263,6 +1263,94 @@ const HelpSection: React.FC = () => {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// ANA INTELLIGENCE SECTION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+type IntelligenceTab = 'personal' | 'company' | 'project';
+
+const INTELLIGENCE_TABS: { id: IntelligenceTab; label: string; description: string }[] = [
+  { id: 'personal', label: 'Personal Preferences', description: 'How AnA adapts to your style' },
+  { id: 'company', label: 'Company Context', description: 'Organization-wide intelligence' },
+  { id: 'project', label: 'Project Context', description: 'Project-specific knowledge' },
+];
+
+const IntelligenceSection: React.FC<{
+  activeProjectId?: string | null;
+  activeProjectName?: string;
+}> = ({ activeProjectId, activeProjectName }) => {
+  const [activeTab, setActiveTab] = useState<IntelligenceTab>('personal');
+
+  return (
+    <div>
+      <SectionHeader
+        title="AnA Intelligence"
+        description="Teach AnA about you, your company, and your projects"
+      />
+
+      {/* Tab bar */}
+      <div className="flex items-center gap-1 p-1 bg-stone-100 rounded-lg mb-6">
+        {INTELLIGENCE_TABS.map(tab => {
+          const disabled = tab.id === 'project' && !activeProjectId;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => !disabled && setActiveTab(tab.id)}
+              disabled={disabled}
+              className={cn(
+                'flex-1 px-3 py-2 rounded-md text-sm font-medium transition-all duration-150',
+                activeTab === tab.id
+                  ? 'bg-white text-stone-900 shadow-sm'
+                  : disabled
+                    ? 'text-stone-300 cursor-not-allowed'
+                    : 'text-stone-500 hover:text-stone-700 hover:bg-stone-50'
+              )}
+              title={disabled ? 'Select a project first to edit project context' : tab.description}
+              aria-label={tab.label}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Editor content */}
+      <div className="rounded-xl border border-stone-200 bg-white overflow-hidden">
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
+              <span className="ml-2 text-sm text-stone-500">Loading editor...</span>
+            </div>
+          }
+        >
+          {activeTab === 'personal' && <UserContextEditor />}
+          {activeTab === 'company' && <CompanyContextEditor />}
+          {activeTab === 'project' && activeProjectId && (
+            <ProjectContextEditor
+              projectId={activeProjectId}
+              projectName={activeProjectName}
+            />
+          )}
+          {activeTab === 'project' && !activeProjectId && (
+            <div className="p-8 text-center">
+              <Brain className="w-8 h-8 text-stone-300 mx-auto mb-3" />
+              <p className="text-sm text-stone-500">
+                Select a project first to configure project-specific context.
+              </p>
+            </div>
+          )}
+        </Suspense>
+      </div>
+    </div>
+  );
+};
+
+// Wrapper to match React.FC signature for SECTION_COMPONENTS
+const IntelligenceSectionWrapper: React.FC = () => (
+  <IntelligenceSection />
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // SECTION MAP
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -1273,6 +1361,7 @@ const SECTION_COMPONENTS: Record<SettingsSection, React.FC> = {
   security: SecuritySection,
   appearance: AppearanceSection,
   integrations: IntegrationsSection,
+  'ana-intelligence': IntelligenceSectionWrapper,
   help: HelpSection,
 };
 
@@ -1280,9 +1369,21 @@ const SECTION_COMPONENTS: Record<SettingsSection, React.FC> = {
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export const ZenSettings: React.FC<ZenSettingsProps> = ({ isOpen, onClose }) => {
-  const [activeSection, setActiveSection] = useState<SettingsSection>('profile');
-  const ActiveComponent = SECTION_COMPONENTS[activeSection];
+export const ZenSettings: React.FC<ZenSettingsProps> = ({
+  isOpen,
+  onClose,
+  activeProjectId,
+  activeProjectName,
+  initialSection,
+}) => {
+  const [activeSection, setActiveSection] = useState<SettingsSection>(initialSection || 'profile');
+
+  // Sync initialSection when modal re-opens
+  useEffect(() => {
+    if (isOpen && initialSection) {
+      setActiveSection(initialSection);
+    }
+  }, [isOpen, initialSection]);
 
   return (
     <AnimatePresence>
@@ -1356,7 +1457,17 @@ export const ZenSettings: React.FC<ZenSettingsProps> = ({ isOpen, onClose }) => 
 
               {/* Content body */}
               <div className="flex-1 overflow-y-auto p-6 zen-scroll">
-                <ActiveComponent />
+                {activeSection === 'ana-intelligence' ? (
+                  <IntelligenceSection
+                    activeProjectId={activeProjectId}
+                    activeProjectName={activeProjectName}
+                  />
+                ) : (
+                  (() => {
+                    const ActiveComponent = SECTION_COMPONENTS[activeSection];
+                    return ActiveComponent ? <ActiveComponent /> : null;
+                  })()
+                )}
               </div>
             </div>
           </motion.div>

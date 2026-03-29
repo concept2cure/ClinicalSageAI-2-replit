@@ -48,6 +48,7 @@ import {
   Bot,
   FolderOpen,
   FileText,
+  Brain,
 } from 'lucide-react';
 import { ToolExecutionBlock, ThinkingBlock, DoneIndicator } from './ClaudeStyleBlocks';
 import { Button } from '@/components/ui/button';
@@ -3854,16 +3855,31 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               )}
 
               {/* Domain prompt browser — all capabilities organized by area */}
+              {/* Domain prompt browser + AnA Intelligence link */}
               <div className="mt-6 max-w-lg mx-auto">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowDomainPrompts(prev => !prev)}
-                  className="h-auto text-[11px] text-stone-400 hover:text-stone-600 transition-colors mx-auto flex items-center gap-1 font-normal"
-                >
-                  {showDomainPrompts ? 'Hide capabilities' : 'Browse all capabilities'}
-                  <ChevronDown className={cn('w-3 h-3 transition-transform', showDomainPrompts && 'rotate-180')} />
-                </Button>
+                <div className="flex items-center justify-center gap-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowDomainPrompts(prev => !prev)}
+                    className="h-auto text-[11px] text-stone-400 hover:text-stone-600 transition-colors flex items-center gap-1 font-normal"
+                  >
+                    {showDomainPrompts ? 'Hide capabilities' : 'Browse all capabilities'}
+                    <ChevronDown className={cn('w-3 h-3 transition-transform', showDomainPrompts && 'rotate-180')} />
+                  </Button>
+                  <span className="text-stone-300">|</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onNavigate?.('ana-intelligence')}
+                    className="h-auto text-[11px] text-stone-400 hover:text-stone-600 transition-colors flex items-center gap-1 font-normal"
+                    title="Teach AnA about your preferences, company, and project"
+                    aria-label="Open AnA Intelligence settings"
+                  >
+                    <Brain className="w-3 h-3" />
+                    Teach AnA
+                  </Button>
+                </div>
 
                 {showDomainPrompts && (
                   <div className="mt-3 space-y-1 text-left">
@@ -4859,6 +4875,17 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               >
                 <Sparkles className="w-3 h-3" />
                 {showDomainPrompts ? 'Hide prompts' : 'Browse prompts'}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onNavigate?.('ana-intelligence')}
+                className="h-auto flex items-center gap-1.5 px-3 py-1 text-xs text-[#B0AEA5] hover:text-[#6B6962] hover:bg-[#F5F4EF] rounded-full transition-colors font-normal"
+                title="Teach AnA about you, your company, and your project"
+                aria-label="Open AnA Intelligence settings"
+              >
+                <Brain className="w-3 h-3" />
+                Teach AnA
               </Button>
             </div>
           )}

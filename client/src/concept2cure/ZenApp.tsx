@@ -852,6 +852,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // Modals
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsSection, setSettingsSection] = useState<string | undefined>(undefined);
   const [projectSwitcherOpen, setProjectSwitcherOpen] = useState(false);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [editProjectOpen, setEditProjectOpen] = useState(false);
@@ -1590,6 +1591,18 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   }, [activeProjectId]);
 
   // ─────────────────────────────────────────────────────────────────────────────
+  // NAVIGATION HELPER — intercepts special paths before falling through to layoutMode
+  // ─────────────────────────────────────────────────────────────────────────────
+  const handleAnaPanelNavigate = useCallback((path: string) => {
+    if (path === 'ana-intelligence') {
+      setSettingsSection('ana-intelligence');
+      setSettingsOpen(true);
+      return;
+    }
+    setLayoutMode(path as LayoutMode);
+  }, []);
+
+  // ─────────────────────────────────────────────────────────────────────────────
   // KEYBOARD SHORTCUTS — use refs to avoid re-attaching listeners on every state change
   // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1768,6 +1781,12 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         case 'settings-account':
         case 'settings-org':
         case 'settings':
+          setSettingsOpen(true);
+          setCommandPaletteOpen(false);
+          break;
+        case 'settings-intelligence':
+        case 'ana-intelligence':
+          setSettingsSection('ana-intelligence');
           setSettingsOpen(true);
           setCommandPaletteOpen(false);
           break;
@@ -2475,7 +2494,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       submissionType={activeProject?.type || '510K'}
                       threadId={activeThreadId}
                       greeting={{ text: 'How can I help with your 510(k) submission?' }}
-                      onNavigate={path => setLayoutMode(path as LayoutMode)}
+                      onNavigate={handleAnaPanelNavigate}
                       onNewProject={() => setNewProjectOpen(true)}
                       onThreadChange={handleThreadChange}
                     />
@@ -2541,7 +2560,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       submissionType="PMA"
                       threadId={activeThreadId}
                       greeting={{ text: 'How can I help with your PMA submission?' }}
-                      onNavigate={path => setLayoutMode(path as LayoutMode)}
+                      onNavigate={handleAnaPanelNavigate}
                       onNewProject={() => setNewProjectOpen(true)}
                       onThreadChange={handleThreadChange}
                     />
@@ -2610,7 +2629,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       submissionType="CER"
                       threadId={activeThreadId}
                       greeting={{ text: 'How can I help with your Clinical Evaluation Report?' }}
-                      onNavigate={path => setLayoutMode(path as LayoutMode)}
+                      onNavigate={handleAnaPanelNavigate}
                       onNewProject={() => setNewProjectOpen(true)}
                       onThreadChange={handleThreadChange}
                     />
@@ -3556,7 +3575,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   }
                   suggestedActions={workspaceSuggestedActions}
                   onActionRun={handleActionRun}
-                  onNavigate={path => setLayoutMode(path as LayoutMode)}
+                  onNavigate={handleAnaPanelNavigate}
                   onDraftInsert={handleDraftInsert}
                   onNavigateToSection={handleNavigateToSection}
                   onOpenArtifact={handleOpenArtifact}
@@ -3854,7 +3873,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               externalMessage={externalChatMessage}
               suggestedActions={workspaceSuggestedActions}
               onActionRun={handleActionRun}
-              onNavigate={path => setLayoutMode(path as LayoutMode)}
+              onNavigate={handleAnaPanelNavigate}
               onDraftInsert={handleDraftInsert}
               onNavigateToSection={handleNavigateToSection}
               onOpenArtifact={handleOpenArtifact}
@@ -3941,7 +3960,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   : undefined
               }
               onActionRun={handleActionRun}
-              onNavigate={path => setLayoutMode(path as LayoutMode)}
+              onNavigate={handleAnaPanelNavigate}
               onDraftInsert={handleDraftInsert}
               onNavigateToSection={handleNavigateToSection}
               onOpenArtifact={handleOpenArtifact}
@@ -3992,7 +4011,13 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       />
 
       {/* Settings */}
-      <ZenSettings isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <ZenSettings
+        isOpen={settingsOpen}
+        onClose={() => { setSettingsOpen(false); setSettingsSection(undefined); }}
+        activeProjectId={activeProjectId}
+        activeProjectName={activeProject?.name}
+        initialSection={settingsSection as any}
+      />
 
       {/* Project switcher - Connected to data layer */}
       <ProjectSwitcher
