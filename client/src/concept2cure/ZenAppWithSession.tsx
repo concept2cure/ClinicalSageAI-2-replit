@@ -191,9 +191,8 @@ export const ZenAppWithSession: React.FC<ZenAppWithSessionProps> = ({
   // Main application with optional initial state
   return (
     <ZenApp
-      // These would need to be added to ZenApp props
-      // initialProjectId={initialProjectId}
-      // initialConversationId={initialConversationId}
+      initialProjectId={initialProjectId}
+      initialConversationId={initialConversationId}
     />
   );
 };

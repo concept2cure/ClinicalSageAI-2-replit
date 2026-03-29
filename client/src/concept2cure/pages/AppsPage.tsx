@@ -96,7 +96,7 @@ export const AppsPage: React.FC<AppsPageProps> = ({
   return (
     <WorkspaceCanvas maxWidth="3xl" testId="apps-page">
       <PageTitleHeader
-        title="Apps"
+        title="AI Assistants"
         subtitle={activeProjectId ? `for ${activeProjectName || 'current project'}` : undefined}
       />
 

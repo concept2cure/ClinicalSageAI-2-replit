@@ -227,12 +227,12 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
   return (
     <WorkspaceCanvas maxWidth="5xl" testId="vault-page">
       <PageTitleHeader
-        title="Data Room"
+        title="References"
         subtitle={`Evidence and files for ${projectName || 'project'}`}
       />
 
       {/* ── Tab bar ── */}
-      <div className="flex items-center gap-1 mt-4 mb-4 border-b border-stone-200" role="tablist" aria-label="Data Room tabs">
+      <div className="flex items-center gap-1 mt-4 mb-4 border-b border-stone-200" role="tablist" aria-label="References tabs">
         {([
           { id: 'browse' as const, label: 'Browse', icon: <Archive className="w-3.5 h-3.5" /> },
           { id: 'ask' as const, label: 'Ask', icon: <MessageSquareText className="w-3.5 h-3.5" /> },

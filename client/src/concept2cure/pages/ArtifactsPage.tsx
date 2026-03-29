@@ -102,7 +102,7 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onOpenArtifact }) 
   return (
     <WorkspaceCanvas maxWidth="5xl" testId="artifacts-page">
       <PageTitleHeader
-        title="Artifacts"
+        title="Documents"
         subtitle="Governed outputs across all projects"
         icon={<FileStack className="w-5 h-5 text-stone-500" />}
       />

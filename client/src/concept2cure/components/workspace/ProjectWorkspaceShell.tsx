@@ -2385,6 +2385,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 />
               ) : (
                 <TemplateTree
+                  submissionType={submissionType || projectType}
                   onCreateFromTemplate={handleCreateFromTemplate}
                   onOpenTransformCanvas={(ctdSection: string, templateKey: string) =>
                     openTransformCanvas(ctdSection, templateKey)

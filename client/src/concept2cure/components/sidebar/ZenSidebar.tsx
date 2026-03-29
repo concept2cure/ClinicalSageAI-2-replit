@@ -786,10 +786,10 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <IconBtn label="Projects" active={activeNavId === 'projects'} onClick={onOpenProjects}>
           <FolderOpen className="w-4 h-4" />
         </IconBtn>
-        <IconBtn label="Apps" active={activeNavId === 'apps'} onClick={() => onNavigate?.('apps')}>
+        <IconBtn label="AI Assistants" active={activeNavId === 'apps'} onClick={() => onNavigate?.('apps')}>
           <Sparkles className="w-4 h-4" />
         </IconBtn>
-        <IconBtn label="Artifacts" active={activeNavId === 'artifacts-center'} onClick={() => onNavigate?.('artifacts-center')}>
+        <IconBtn label="Documents" active={activeNavId === 'artifacts-center'} onClick={() => onNavigate?.('artifacts-center')}>
           <FileStack className="w-4 h-4" />
         </IconBtn>
         <IconBtn label="Setup" active={activeNavId === 'setup'} onClick={() => onNavigate?.('setup')}>
@@ -877,14 +877,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           />
           <NavItem
             icon={<Sparkles className="w-3.5 h-3.5" />}
-            label="Apps"
+            label="AI Assistants"
             active={activeNavId === 'apps'}
             accentColor="violet"
             onClick={() => onNavigate?.('apps')}
           />
           <NavItem
             icon={<FileStack className="w-3.5 h-3.5" />}
-            label="Artifacts"
+            label="Documents"
             active={activeNavId === 'artifacts-center'}
             onClick={() => onNavigate?.('artifacts-center')}
           />
@@ -1088,7 +1088,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             />
             <NavItem
               icon={<Archive className="w-3.5 h-3.5" />}
-              label="Data Room"
+              label="References"
               active={activeNavId === 'vault'}
               onClick={() => onNavigate?.('vault')}
             />

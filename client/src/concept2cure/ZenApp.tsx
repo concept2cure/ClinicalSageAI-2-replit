@@ -743,7 +743,12 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
 // MAIN ZEN APP
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export const ZenApp: React.FC = () => {
+interface ZenAppProps {
+  initialProjectId?: string;
+  initialConversationId?: string;
+}
+
+export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConversationId } = {}) => {
   // ─────────────────────────────────────────────────────────────────────────────
   // URL-DRIVEN PROJECT IDENTITY
   // ─────────────────────────────────────────────────────────────────────────────
@@ -864,7 +869,7 @@ export const ZenApp: React.FC = () => {
 
   // Layout mode — initialize from URL when deep-linked into a project
   const [layoutMode, setLayoutMode] = useState<LayoutMode>(
-    urlProjectId ? 'regulatory-workspace' : 'projects'
+    urlProjectId ? 'regulatory-workspace' : initialProjectId ? 'project-home' : 'projects'
   );
 
   // Active section code — tracks which dossier section is open in SectionWorkspace
@@ -923,11 +928,11 @@ export const ZenApp: React.FC = () => {
     urlProjectId ? 'editor' : 'intelligence'
   );
 
-  // Active selection — URL projectId takes precedence
+  // Active selection — URL projectId takes precedence, then session restore, then first project
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>(
-    urlProjectId ?? projects[0]?.id
+    urlProjectId ?? initialProjectId ?? projects[0]?.id
   );
-  const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
+  const [activeConversationId, setActiveConversationId] = useState<string | undefined>(initialConversationId);
   const [activeThreadId, setActiveThreadId] = useState<string | undefined>();
 
   // Sherpa project detail view state
