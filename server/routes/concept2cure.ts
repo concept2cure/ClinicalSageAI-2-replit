@@ -520,18 +520,17 @@ function estimateTokensFromBytes(bytes: number): number {
 // VALIDATION SCHEMAS
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Legacy enum kept for backward compat — still accepted in createProjectSchema */
+const LEGACY_SUBMISSION_TYPES = ['510K', 'FDA_510K', 'IND', 'NDA', 'BLA', 'MAA', 'PMA', 'DE_NOVO', 'EUA'] as const;
+
+/**
+ * SubmissionTypeEnum — accepts either a known legacy type or any non-empty string.
+ * Legacy aliases (FDA_510K) are normalized. New registry-based types pass through.
+ */
 const SubmissionTypeEnum = z
-  .enum([
-    '510K',
-    'FDA_510K', // Alias for backward compatibility
-    'IND',
-    'NDA',
-    'BLA',
-    'MAA',
-    'PMA',
-    'DE_NOVO',
-    'EUA',
-  ])
+  .string()
+  .min(1, 'Submission type is required')
+  .max(50)
   .transform(val => (val === 'FDA_510K' ? '510K' : val));
 
 
