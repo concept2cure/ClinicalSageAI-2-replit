@@ -30,18 +30,29 @@ import {
   ArrowRight,
   Save,
   RotateCcw,
+  Download,
+  Tag,
+  AlertTriangle,
+  CheckCircle,
+  Circle,
 } from 'lucide-react';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
+
+type HAQPriority = 'critical' | 'major' | 'minor';
+type HAQCategory = 'general' | 'quality' | 'nonclinical' | 'clinical' | 'administrative' | 'cmc';
 
 interface HAQuestion {
   id: string;
   questionNumber: string;
   questionText: string;
-  category: string;
+  category: HAQCategory;
+  priority: HAQPriority;
+  ctdSection?: string;
   status: 'pending' | 'drafting' | 'drafted' | 'reviewed' | 'finalized';
   responseText?: string;
   sources?: string[];
+  confidence?: number;
 }
 
 interface HAQSession {
@@ -125,31 +136,71 @@ export const HAQManager: React.FC<HAQManagerProps> = ({
     }
   }, [questions, projectId]);
 
+  // Auto-classify question category from text
+  const classifyQuestion = useCallback((text: string): { category: HAQCategory; ctdSection?: string; priority: HAQPriority } => {
+    const lower = text.toLowerCase();
+    // CTD section detection
+    if (lower.includes('module 3') || lower.includes('drug substance') || lower.includes('drug product') || lower.includes('cmc') || lower.includes('manufacturing')) {
+      return { category: 'cmc', ctdSection: '3', priority: 'major' };
+    }
+    if (lower.includes('module 4') || lower.includes('nonclinical') || lower.includes('toxicology') || lower.includes('pharmacology')) {
+      return { category: 'nonclinical', ctdSection: '4', priority: 'major' };
+    }
+    if (lower.includes('module 5') || lower.includes('clinical') || lower.includes('efficacy') || lower.includes('safety') || lower.includes('adverse')) {
+      return { category: 'clinical', ctdSection: '5', priority: 'critical' };
+    }
+    if (lower.includes('module 2') || lower.includes('summary') || lower.includes('overview')) {
+      return { category: 'general', ctdSection: '2', priority: 'major' };
+    }
+    if (lower.includes('module 1') || lower.includes('administrative') || lower.includes('cover letter') || lower.includes('form')) {
+      return { category: 'administrative', ctdSection: '1', priority: 'minor' };
+    }
+    if (lower.includes('quality')) {
+      return { category: 'quality', ctdSection: '3', priority: 'major' };
+    }
+    // Priority escalation keywords
+    if (lower.includes('critical') || lower.includes('deficiency') || lower.includes('complete response') || lower.includes('refuse to file')) {
+      return { category: 'general', priority: 'critical' };
+    }
+    return { category: 'general', priority: 'major' };
+  }, []);
+
   const handleIngestQuestions = useCallback(() => {
     if (!inputText.trim()) return;
 
     const lines = inputText.split(/\n(?=\d+[\.\)]\s)/).filter(l => l.trim());
     const existingCount = questions.length;
     const parsed: HAQuestion[] = lines.length > 0
-      ? lines.map((line, idx) => ({
-          id: `haq_${Date.now()}_${idx}`,
-          questionNumber: `Q${existingCount + idx + 1}`,
-          questionText: line.replace(/^\d+[\.\)]\s*/, '').trim(),
-          category: 'general',
-          status: 'pending' as const,
-        }))
-      : [{
-          id: `haq_${Date.now()}_0`,
-          questionNumber: `Q${existingCount + 1}`,
-          questionText: inputText.trim(),
-          category: 'general',
-          status: 'pending' as const,
-        }];
+      ? lines.map((line, idx) => {
+          const text = line.replace(/^\d+[\.\)]\s*/, '').trim();
+          const classification = classifyQuestion(text);
+          return {
+            id: `haq_${Date.now()}_${idx}`,
+            questionNumber: `Q${existingCount + idx + 1}`,
+            questionText: text,
+            category: classification.category,
+            priority: classification.priority,
+            ctdSection: classification.ctdSection,
+            status: 'pending' as const,
+          };
+        })
+      : (() => {
+          const classification = classifyQuestion(inputText.trim());
+          return [{
+            id: `haq_${Date.now()}_0`,
+            questionNumber: `Q${existingCount + 1}`,
+            questionText: inputText.trim(),
+            category: classification.category,
+            priority: classification.priority,
+            ctdSection: classification.ctdSection,
+            status: 'pending' as const,
+          }];
+        })();
 
     setQuestions(prev => [...prev, ...parsed]);
     setInputText('');
-    toast({ title: `${parsed.length} question${parsed.length > 1 ? 's' : ''} ingested` });
-  }, [inputText, questions.length, toast]);
+    toast({ title: `${parsed.length} question${parsed.length > 1 ? 's' : ''} ingested and classified` });
+  }, [inputText, questions.length, toast, classifyQuestion]);
 
   const handleDraftResponse = useCallback(async (questionId: string) => {
     const question = questions.find(q => q.id === questionId);
@@ -182,6 +233,7 @@ Submission type context: ${projectName || 'regulatory submission'}`,
                 status: 'drafted' as const,
                 responseText: data.answer || 'Response generation pending — please draft manually.',
                 sources: data.sources?.map(s => s.docTitle) || [],
+                confidence: data.confidence,
               }
             : q
         )
@@ -273,9 +325,50 @@ Submission type context: ${projectName || 'regulatory submission'}`,
     toast({ title: 'HAQ session cleared' });
   }, [projectId, questions.length, toast]);
 
+  const handleExportResponses = useCallback(() => {
+    if (questions.length === 0) return;
+    const sections = questions
+      .filter(q => q.responseText)
+      .map(q => {
+        const meta = [
+          q.ctdSection ? `CTD ${q.ctdSection}` : null,
+          q.category !== 'general' ? q.category.toUpperCase() : null,
+          `Priority: ${q.priority}`,
+          q.confidence ? `Confidence: ${Math.round(q.confidence * 100)}%` : null,
+        ].filter(Boolean).join(' | ');
+        return `## ${q.questionNumber}: ${q.questionText}\n\n**${meta}**\n\n${q.responseText}\n\n${
+          q.sources?.length ? `**Sources:** ${q.sources.map((s, i) => `[${i + 1}] ${s}`).join(', ')}` : ''
+        }`;
+      });
+    const content = `# Health Authority Question Responses\n\n**Project:** ${projectName || projectId}\n**Date:** ${new Date().toISOString().split('T')[0]}\n**Total Questions:** ${questions.length}\n**Drafted:** ${questions.filter(q => q.responseText).length}\n\n---\n\n${sections.join('\n\n---\n\n')}`;
+    const blob = new Blob([content], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `HAQ_Responses_${new Date().toISOString().split('T')[0]}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: 'HAQ responses exported' });
+  }, [questions, projectName, projectId, toast]);
+
+  const handleMarkReviewed = useCallback((questionId: string) => {
+    setQuestions(prev =>
+      prev.map(q => q.id === questionId ? { ...q, status: 'reviewed' as const } : q)
+    );
+    toast({ title: 'Marked as reviewed' });
+  }, [toast]);
+
+  const handleMarkFinalized = useCallback((questionId: string) => {
+    setQuestions(prev =>
+      prev.map(q => q.id === questionId ? { ...q, status: 'finalized' as const } : q)
+    );
+    toast({ title: 'Marked as finalized' });
+  }, [toast]);
+
   const selected = questions.find(q => q.id === selectedQuestion);
   const pendingCount = questions.filter(q => q.status === 'pending').length;
   const draftedCount = questions.filter(q => q.responseText).length;
+  const criticalCount = questions.filter(q => q.priority === 'critical').length;
 
   return (
     <WorkspaceCanvas maxWidth="3xl" testId="haq-manager">
@@ -283,6 +376,22 @@ Submission type context: ${projectName || 'regulatory submission'}`,
         title="HAQ Response Manager"
         description={projectName ? `for ${projectName}` : 'Health Authority Question workflow'}
       />
+
+      {/* ── Summary stats ── */}
+      {questions.length > 0 && (
+        <div className="flex items-center gap-4 mt-2 mb-2">
+          <span className="text-xs text-stone-500">{questions.length} questions</span>
+          <span className="text-xs text-stone-500">{draftedCount} drafted</span>
+          <span className="text-xs text-stone-500">{questions.filter(q => q.status === 'reviewed').length} reviewed</span>
+          <span className="text-xs text-stone-500">{questions.filter(q => q.status === 'finalized').length} finalized</span>
+          {criticalCount > 0 && (
+            <span className="text-xs text-red-600 flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3" />
+              {criticalCount} critical
+            </span>
+          )}
+        </div>
+      )}
 
       {/* ── Ingest area ── */}
       <div className="mt-4 mb-6">
@@ -344,6 +453,17 @@ Submission type context: ${projectName || 'regulatory submission'}`,
                   Open All in Editor
                 </Button>
               )}
+              {draftedCount > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleExportResponses}
+                  aria-label="Export HAQ responses"
+                >
+                  <Download className="w-3.5 h-3.5 mr-1.5" />
+                  Export
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="ghost"
@@ -374,30 +494,43 @@ Submission type context: ${projectName || 'regulatory submission'}`,
             <p className="text-xs font-medium text-stone-500 mb-2">
               {questions.length} question{questions.length !== 1 ? 's' : ''} · {draftedCount} drafted
             </p>
-            {questions.map(q => (
-              <Button
-                key={q.id}
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedQuestion(q.id)}
-                role="option"
-                aria-selected={selectedQuestion === q.id}
-                aria-label={`${q.questionNumber}: ${q.questionText.slice(0, 50)}`}
-                data-testid={`haq-question-${q.questionNumber}`}
-                className={cn(
-                  'w-full justify-start text-left h-auto py-2 px-3',
-                  selectedQuestion === q.id && 'bg-stone-100 border border-stone-200'
-                )}
-              >
-                <div className="w-full">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-stone-700 text-xs">{q.questionNumber}</span>
-                    <WorkspaceStatusBadge status={STATUS_TO_BADGE[q.status]} />
+            {questions.map(q => {
+              const PriorityIcon = q.priority === 'critical' ? AlertTriangle : q.priority === 'major' ? Circle : CheckCircle;
+              const priorityColor = q.priority === 'critical' ? 'text-red-500' : q.priority === 'major' ? 'text-amber-500' : 'text-stone-400';
+              return (
+                <Button
+                  key={q.id}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedQuestion(q.id)}
+                  role="option"
+                  aria-selected={selectedQuestion === q.id}
+                  aria-label={`${q.questionNumber}: ${q.questionText.slice(0, 50)}`}
+                  data-testid={`haq-question-${q.questionNumber}`}
+                  className={cn(
+                    'w-full justify-start text-left h-auto py-2 px-3',
+                    selectedQuestion === q.id && 'bg-stone-100 border border-stone-200'
+                  )}
+                >
+                  <div className="w-full">
+                    <div className="flex items-center gap-1.5">
+                      <PriorityIcon className={cn('w-3 h-3 shrink-0', priorityColor)} />
+                      <span className="font-medium text-stone-700 text-xs">{q.questionNumber}</span>
+                      {q.ctdSection && (
+                        <span className="text-[9px] px-1 py-0.5 rounded bg-stone-100 text-stone-500 font-mono">
+                          M{q.ctdSection}
+                        </span>
+                      )}
+                      <WorkspaceStatusBadge status={STATUS_TO_BADGE[q.status]} />
+                    </div>
+                    <p className="text-xs text-stone-500 mt-0.5 line-clamp-2">{q.questionText}</p>
+                    {q.category !== 'general' && (
+                      <span className="text-[9px] text-stone-400 mt-0.5 block capitalize">{q.category}</span>
+                    )}
                   </div>
-                  <p className="text-xs text-stone-500 mt-0.5 line-clamp-2">{q.questionText}</p>
-                </div>
-              </Button>
-            ))}
+                </Button>
+              );
+            })}
           </div>
 
           {/* Selected question detail */}
@@ -407,6 +540,31 @@ Submission type context: ${projectName || 'regulatory submission'}`,
                 <h3 className="text-sm font-semibold text-stone-800">
                   {selected.questionNumber}: {selected.questionText}
                 </h3>
+
+                {/* Classification metadata */}
+                <div className="flex items-center gap-2 mt-2">
+                  <span className={cn(
+                    'text-[10px] font-medium px-1.5 py-0.5 rounded',
+                    selected.priority === 'critical' && 'bg-red-50 text-red-700',
+                    selected.priority === 'major' && 'bg-amber-50 text-amber-700',
+                    selected.priority === 'minor' && 'bg-stone-100 text-stone-500',
+                  )}>
+                    {selected.priority}
+                  </span>
+                  {selected.ctdSection && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-mono">
+                      Module {selected.ctdSection}
+                    </span>
+                  )}
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-50 text-stone-500 capitalize">
+                    {selected.category}
+                  </span>
+                  {selected.confidence != null && (
+                    <span className="text-[10px] text-stone-400">
+                      {Math.round(selected.confidence * 100)}% confidence
+                    </span>
+                  )}
+                </div>
 
                 <div className="flex gap-2 mt-3">
                   {selected.status === 'pending' && (
@@ -433,6 +591,28 @@ Submission type context: ${projectName || 'regulatory submission'}`,
                     >
                       <ArrowRight className="w-3.5 h-3.5 mr-1.5" />
                       Open in Editor
+                    </Button>
+                  )}
+                  {selected.status === 'drafted' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleMarkReviewed(selected.id)}
+                      aria-label={`Mark ${selected.questionNumber} as reviewed`}
+                    >
+                      <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+                      Mark Reviewed
+                    </Button>
+                  )}
+                  {selected.status === 'reviewed' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleMarkFinalized(selected.id)}
+                      aria-label={`Finalize ${selected.questionNumber}`}
+                    >
+                      <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+                      Finalize
                     </Button>
                   )}
                 </div>
