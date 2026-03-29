@@ -17,6 +17,7 @@ import { getGateway } from '../services/ai-gateway/index.js';
 import type { GatewayMessage } from '../services/ai-gateway/types.js';
 import {
   orchestrate,
+  prefetchProjectIntelligence,
   type OrchestratorInput,
   type IntentLens,
   type UserRole,
@@ -388,6 +389,17 @@ router.post('/chat', async (req: Request, res: Response) => {
       }
     }
 
+    // Pre-fetch project intelligence profile for conversation continuity (non-blocking)
+    const projectId = project_context?.projectId
+      ? Number(project_context.projectId)
+      : authoring_context?.projectId
+        ? Number(authoring_context.projectId)
+        : null;
+    const intelligenceProfile = await prefetchProjectIntelligence(
+      projectId,
+      orgId ? Number(orgId) : null,
+    );
+
     // Orchestrate — build the complete system prompt
     const orchestratorInput: OrchestratorInput = {
       message,
@@ -408,6 +420,7 @@ router.post('/chat', async (req: Request, res: Response) => {
             workflowStage: authoring_context.workflowStage,
           }
         : undefined,
+      _projectIntelligenceProfile: intelligenceProfile,
     };
 
     const orchestration = orchestrate(orchestratorInput);

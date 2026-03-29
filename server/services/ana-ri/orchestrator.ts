@@ -27,13 +27,16 @@ import {
   getProjectIntelligence,
   computeReadinessScore,
   getProjectSignals,
+  enrichProjectIntelligence,
   type ProjectIntelligenceSummary,
   type RiskFactor,
   type OpenQuestion,
   type KeyDecision,
   type LearnedInsight,
   type ReadinessContext,
+  type IntelligenceUpdatePayload,
 } from '../intelligence/index.js';
+import { getGateway } from '../ai-gateway/index.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CTD Section Guidance — compact regulatory knowledge per section
@@ -1370,6 +1373,145 @@ function extractKeyRegTerms(text: string): string[] {
     if (matches) matches.forEach(m => terms.add(m.trim()));
   }
   return [...terms];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Thread Intelligence Extraction
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Extracted intelligence structure from conversation analysis.
+ */
+interface ExtractedIntelligence {
+  decisions: string[];
+  risks: string[];
+  openQuestions: string[];
+  insights: string[];
+}
+
+const EXTRACTION_PROMPT = `Analyze this conversation and extract regulatory intelligence. Return JSON:
+{
+  "decisions": ["decision text..."],
+  "risks": ["risk description..."],
+  "openQuestions": ["question..."],
+  "insights": ["insight..."]
+}
+Only include items that are NEW and SPECIFIC to this project. Skip generic advice. Be concise — one sentence per item. Return empty arrays if nothing qualifies.`;
+
+/**
+ * Extract intelligence from a conversation thread and persist to the project
+ * intelligence profile. Should be called non-blocking (fire-and-forget).
+ *
+ * Only processes the last 6 messages to keep extraction focused and cost-effective.
+ * Requires at least 6 messages (3+ exchanges) to have enough substance.
+ */
+export async function extractThreadIntelligence(
+  messages: Array<{ role: string; content: string }>,
+  projectId: number | string,
+  organizationId: number | string,
+): Promise<void> {
+  // Guard: need at least 6 messages (3 exchanges) for meaningful extraction
+  if (messages.length < 6) return;
+
+  const numericProjectId = typeof projectId === 'string' ? parseInt(projectId, 10) : projectId;
+  const numericOrgId = typeof organizationId === 'string' ? parseInt(organizationId, 10) : organizationId;
+
+  if (isNaN(numericProjectId) || isNaN(numericOrgId)) return;
+
+  const gw = getGateway();
+  if (!gw) return;
+
+  // Only use the last 6 messages to keep the extraction prompt short
+  const recentMessages = messages
+    .filter(m => m.role === 'user' || m.role === 'assistant')
+    .slice(-6);
+
+  if (recentMessages.length < 4) return; // Need at least 2 exchanges in the window
+
+  const conversationText = recentMessages
+    .map(m => `[${m.role}]: ${m.content.slice(0, 2000)}`)
+    .join('\n\n');
+
+  const extractionPrompt = `${EXTRACTION_PROMPT}\n\nConversation:\n${conversationText}`;
+
+  // Call AI gateway with short max_tokens for cost efficiency
+  const response = await gw.route({
+    taskType: 'structured_output',
+    messages: [{ role: 'user', content: extractionPrompt }],
+    maxTokens: 500,
+    temperature: 0.1,
+    jsonMode: true,
+  });
+
+  if (!response.content) return;
+
+  // Parse the structured response
+  let extracted: ExtractedIntelligence;
+  try {
+    const parsed = JSON.parse(response.content);
+    extracted = {
+      decisions: Array.isArray(parsed.decisions) ? parsed.decisions.filter((d: unknown) => typeof d === 'string' && d.length > 0) : [],
+      risks: Array.isArray(parsed.risks) ? parsed.risks.filter((r: unknown) => typeof r === 'string' && r.length > 0) : [],
+      openQuestions: Array.isArray(parsed.openQuestions) ? parsed.openQuestions.filter((q: unknown) => typeof q === 'string' && q.length > 0) : [],
+      insights: Array.isArray(parsed.insights) ? parsed.insights.filter((i: unknown) => typeof i === 'string' && i.length > 0) : [],
+    };
+  } catch (e: unknown) {
+    console.warn('[AnA RI] Intelligence extraction JSON parse failed:', e instanceof Error ? e.message : String(e));
+    return;
+  }
+
+  // Skip if nothing was extracted
+  const totalItems = extracted.decisions.length + extracted.risks.length +
+    extracted.openQuestions.length + extracted.insights.length;
+  if (totalItems === 0) return;
+
+  // Build the update payload for the project intelligence profile
+  const now = new Date().toISOString();
+  const payload: IntelligenceUpdatePayload = {};
+
+  if (extracted.decisions.length > 0) {
+    payload.keyDecisions = extracted.decisions.map(d => ({
+      decision: d,
+      rationale: 'Extracted from AnA conversation',
+      date: now,
+      source: 'ana-thread-extraction',
+    }));
+  }
+
+  if (extracted.risks.length > 0) {
+    payload.risks = extracted.risks.map(r => ({
+      risk: r,
+      likelihood: 'medium',
+      impact: 'medium',
+      mitigation: undefined,
+    }));
+  }
+
+  if (extracted.openQuestions.length > 0) {
+    payload.openQuestions = extracted.openQuestions.map(q => ({
+      question: q,
+      context: 'Raised during AnA conversation',
+      priority: 'medium',
+    }));
+  }
+
+  if (extracted.insights.length > 0) {
+    payload.learnedInsights = extracted.insights.map(i => ({
+      insight: i,
+      source: 'ana-thread-extraction',
+      confidence: 0.7,
+      extractedAt: now,
+    }));
+  }
+
+  // Persist to the project intelligence profile (additive merge)
+  await enrichProjectIntelligence(numericProjectId, numericOrgId, payload);
+
+  console.log(
+    `[AnA RI] Intelligence extracted: ${extracted.decisions.length} decisions, ` +
+    `${extracted.risks.length} risks, ${extracted.openQuestions.length} questions, ` +
+    `${extracted.insights.length} insights (project ${numericProjectId})`
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
