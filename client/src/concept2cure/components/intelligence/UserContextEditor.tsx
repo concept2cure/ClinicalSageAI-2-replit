@@ -67,13 +67,24 @@ export function UserContextEditor({ onClose }: UserContextEditorProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: profile, isLoading } = useQuery<UserProfileResponse>({
+  const { data: profile, isLoading, error } = useQuery<UserProfileResponse>({
     queryKey: queryKeys.anaIntelligence.userContext,
     queryFn: async () => {
       const res = await apiRequest('GET', '/api/client-intelligence/user/profile');
       return res.json();
     },
   });
+
+  // Show error toast when query fails
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: 'Failed to load preferences',
+        description: (error as Error).message || 'Could not load your preferences. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  }, [error, toast]);
 
   const { register, handleSubmit, setValue, watch, reset } = useForm<UserProfileForm>({
     defaultValues: {
@@ -149,6 +160,12 @@ export function UserContextEditor({ onClose }: UserContextEditorProps) {
       </CardHeader>
 
       <CardContent>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8 text-sm text-slate-500" role="status" aria-label="Loading preferences">
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-transparent mr-2" />
+            Loading your preferences...
+          </div>
+        ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           {/* Role */}
           <div className="space-y-1.5">
@@ -246,6 +263,7 @@ export function UserContextEditor({ onClose }: UserContextEditorProps) {
             </Button>
           </div>
         </form>
+        )}
       </CardContent>
     </Card>
   );

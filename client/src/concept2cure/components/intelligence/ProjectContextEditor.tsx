@@ -446,7 +446,7 @@ export function ProjectContextEditor({
   // ── Render ──────────────────────────────────────────────────────────────
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-sm">
+    <Card className="w-full max-w-2xl mx-auto shadow-sm" data-testid="project-context-editor">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -483,10 +483,10 @@ export function ProjectContextEditor({
         <DataStateWrapper<ProjectProfile>
           data={profile}
           isLoading={isLoading}
-          isError={isError}
-          error={error}
-          loadingLabel="Loading project context..."
-          emptyMessage="No project context found. Start editing to teach AnA about this project."
+          error={error as Error | null}
+          loadingMessage="Loading project context..."
+          emptyTitle="No project context found"
+          emptyDescription="Start editing to teach AnA about this project."
         >
           {(data) => (
             <div className="divide-y divide-slate-100">
@@ -757,7 +757,7 @@ export function ProjectContextEditor({
                     </div>
                   )}
                   <div className="mt-3">
-                    <DocumentUploadZone projectId={projectId} />
+                    <DocumentUploadZone scope="project" scopeId={String(projectId)} />
                   </div>
                 </Section>
               </div>

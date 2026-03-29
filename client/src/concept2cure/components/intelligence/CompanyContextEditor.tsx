@@ -25,7 +25,6 @@ import {
   X,
   ChevronDown,
   ChevronRight,
-  Upload,
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -37,6 +36,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { DocumentUploadZone } from './DocumentUploadZone';
 
@@ -213,23 +213,27 @@ function MarketChipSelector({
   };
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-2" role="group" aria-label="Regulatory markets">
       {REGULATORY_MARKETS.map((market) => {
         const isSelected = selected.includes(market);
         return (
-          <button
+          <Badge
             key={market}
-            type="button"
+            variant={isSelected ? 'default' : 'outline'}
+            className="cursor-pointer select-none transition-colors"
             onClick={() => toggle(market)}
-            className={cn(
-              'px-3 py-1.5 rounded-full text-sm font-medium transition-colors border',
-              isSelected
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600',
-            )}
+            role="checkbox"
+            aria-checked={isSelected}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggle(market);
+              }
+            }}
           >
             {market}
-          </button>
+          </Badge>
         );
       })}
     </div>
@@ -570,7 +574,7 @@ export function CompanyContextEditor({ onClose }: CompanyContextEditorProps) {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <Card className="mx-auto max-w-2xl border-slate-200 shadow-sm">
+    <Card className="mx-auto max-w-2xl border-slate-200 shadow-sm" data-testid="company-context-editor">
       <div className="p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
@@ -591,7 +595,7 @@ export function CompanyContextEditor({ onClose }: CompanyContextEditorProps) {
 
         {/* Document Upload Zone */}
         <div className="mb-5">
-          <DocumentUploadZone />
+          <DocumentUploadZone scope="company" />
         </div>
 
         {/* Content */}
@@ -599,8 +603,9 @@ export function CompanyContextEditor({ onClose }: CompanyContextEditorProps) {
           isLoading={isLoading}
           error={error as Error | null}
           data={profile ?? ({} as CompanyProfile)}
-          emptyMessage="Tell AnA about your company"
-          isEmpty={isEmpty && !isLoading}
+          emptyTitle="Tell AnA about your company"
+          emptyDescription="Fill in details below so AnA can tailor regulatory guidance to your needs."
+          isEmpty={() => isEmpty && !isLoading}
         >
           {(data) => (
             <div className="space-y-1">
@@ -634,10 +639,11 @@ export function CompanyContextEditor({ onClose }: CompanyContextEditorProps) {
 
               {/* Expandable sections */}
               <div className="pt-2">
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setShowExpandable((prev) => !prev)}
-                  className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 transition-colors py-1"
+                  className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 transition-colors"
                 >
                   {showExpandable ? (
                     <ChevronDown className="h-4 w-4" />
@@ -645,7 +651,7 @@ export function CompanyContextEditor({ onClose }: CompanyContextEditorProps) {
                     <ChevronRight className="h-4 w-4" />
                   )}
                   {showExpandable ? 'Show less' : `${expandableSections.length} more sections`}
-                </button>
+                </Button>
 
                 {showExpandable && (
                   <div className="mt-1 space-y-1">
