@@ -14,6 +14,7 @@
 
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
+// @ts-expect-error -- moduleResolution:node can't resolve package.json exports subpath
 import { BubbleMenu } from '@tiptap/react/menus';
 import {
   MODE_CAPABILITIES,
@@ -247,7 +248,7 @@ function slugify(text: string): string {
 }
 
 const HeadingWithId = Heading.extend({
-  renderHTML({ node, HTMLAttributes }) {
+  renderHTML({ node, HTMLAttributes }: { node: any; HTMLAttributes: Record<string, any> }) {
     const level = node.attrs.level;
     const text = node.textContent || '';
     const id = `outline-${slugify(text)}`;
@@ -550,7 +551,7 @@ const FindReplaceBar: React.FC<FindReplaceBarProps> = ({ editor, onClose }) => {
     (value: string) => {
       setFindText(value);
       if (editor) {
-        (editor.commands as Record<string, (arg: string) => boolean>).setSearchTerm(value);
+        (editor.commands as unknown as Record<string, (arg: string) => boolean>).setSearchTerm(value);
       }
     },
     [editor]
@@ -558,20 +559,20 @@ const FindReplaceBar: React.FC<FindReplaceBarProps> = ({ editor, onClose }) => {
 
   const handleReplace = useCallback(() => {
     if (editor) {
-      (editor.commands as Record<string, (arg: string) => boolean>).setReplaceTerm(replaceText);
-      (editor.commands as Record<string, () => boolean>).replaceCurrent();
+      (editor.commands as unknown as Record<string, (arg: string) => boolean>).setReplaceTerm(replaceText);
+      (editor.commands as unknown as Record<string, () => boolean>).replaceCurrent();
     }
   }, [editor, replaceText]);
 
   const handleReplaceAll = useCallback(() => {
     if (editor) {
-      (editor.commands as Record<string, (arg: string) => boolean>).setReplaceTerm(replaceText);
-      (editor.commands as Record<string, () => boolean>).replaceAll();
+      (editor.commands as unknown as Record<string, (arg: string) => boolean>).setReplaceTerm(replaceText);
+      (editor.commands as unknown as Record<string, () => boolean>).replaceAll();
     }
   }, [editor, replaceText]);
 
-  const results = editor?.storage?.searchAndReplace?.results ?? [];
-  const currentIndex = editor?.storage?.searchAndReplace?.currentIndex ?? -1;
+  const results = (editor?.storage as any)?.searchAndReplace?.results ?? [];
+  const currentIndex = (editor?.storage as any)?.searchAndReplace?.currentIndex ?? -1;
 
   return (
     <div className="flex items-center gap-2 px-3 py-2 border-b border-stone-200 bg-amber-50/50">
@@ -584,7 +585,7 @@ const FindReplaceBar: React.FC<FindReplaceBarProps> = ({ editor, onClose }) => {
         placeholder="Find..."
         className="w-40 px-2 py-1 text-xs bg-white border border-stone-200 rounded focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
         onKeyDown={e => {
-          if (e.key === 'Enter') (editor?.commands as Record<string, () => boolean>)?.nextMatch?.();
+          if (e.key === 'Enter') (editor?.commands as unknown as Record<string, () => boolean>)?.nextMatch?.();
           if (e.key === 'Escape') onClose();
         }}
       />
@@ -592,14 +593,14 @@ const FindReplaceBar: React.FC<FindReplaceBarProps> = ({ editor, onClose }) => {
         {results.length > 0 ? `${currentIndex + 1}/${results.length}` : 'No results'}
       </span>
       <button
-        onClick={() => (editor?.commands as Record<string, () => boolean>)?.prevMatch?.()}
+        onClick={() => (editor?.commands as unknown as Record<string, () => boolean>)?.prevMatch?.()}
         className="p-1 hover:bg-stone-200 rounded"
         title="Previous"
       >
         <ChevronDown className="w-3.5 h-3.5 rotate-180 text-stone-600" />
       </button>
       <button
-        onClick={() => (editor?.commands as Record<string, () => boolean>)?.nextMatch?.()}
+        onClick={() => (editor?.commands as unknown as Record<string, () => boolean>)?.nextMatch?.()}
         className="p-1 hover:bg-stone-200 rounded"
         title="Next"
       >
@@ -1201,7 +1202,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   const handleCloseFindReplace = useCallback(() => {
     setShowFindReplace(false);
     if (editor) {
-      (editor.commands as Record<string, () => boolean>).clearSearch?.();
+      (editor.commands as unknown as Record<string, () => boolean>).clearSearch?.();
     }
   }, [editor]);
 

@@ -101,7 +101,7 @@ import { canEscalateToEdit } from '../../contexts/DocumentModeContext';
 
 // ── Left-rail mode type ──────────────────────────────────────────────────────
 type LeftRailMode = 'files' | 'dossier' | 'templates' | 'outline' | 'registry';
-type OperatingLayer = 'document_studio' | 'vault' | 'reports';
+type OperatingLayer = 'document_studio' | 'vault' | 'reports' | 'documents';
 type WorkspaceWorkbench = 'cmc' | 'biostats' | 'device' | 'clinical';
 type ProjectNav =
   | 'submission_builder'
@@ -112,7 +112,10 @@ type ProjectNav =
   | 'publish'
   | 'haq'
   | 'vault'
-  | 'overview';
+  | 'overview'
+  | 'reports'
+  | 'activity'
+  | 'documents';
 type DocumentTab =
   | 'content'
   | 'evidence'
@@ -693,20 +696,6 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     [projectId, loadArtifacts]
   );
 
-  // If openArtifactId is provided, switch to edit mode for that artifact (gated)
-  useEffect(() => {
-    if (!openArtifactId) return;
-    const art = artifacts.find(a => a.id === openArtifactId);
-    if (!tryOpenForEdit(art?.status)) {
-      // Still select the doc for viewing, but don't enter edit mode
-      setSelectedDocId(openArtifactId);
-      setMode('browse');
-      return;
-    }
-    setSelectedDocId(openArtifactId);
-    setMode('edit');
-  }, [openArtifactId, artifacts, tryOpenForEdit]);
-
   // ── Resume where left off — persist last active artifact per project ───
   const resumeAttemptedRef = useRef(false);
 
@@ -800,6 +789,20 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     },
     [pushShellToast]
   );
+
+  // If openArtifactId is provided, switch to edit mode for that artifact (gated)
+  useEffect(() => {
+    if (!openArtifactId) return;
+    const art = artifacts.find(a => a.id === openArtifactId);
+    if (!tryOpenForEdit(art?.status)) {
+      // Still select the doc for viewing, but don't enter edit mode
+      setSelectedDocId(openArtifactId);
+      setMode('browse');
+      return;
+    }
+    setSelectedDocId(openArtifactId);
+    setMode('edit');
+  }, [openArtifactId, artifacts, tryOpenForEdit]);
 
   useEffect(() => {
     if (activeLayer === 'vault') {
@@ -1169,6 +1172,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     [artifacts, selectedDocId, pendingMove]
   );
 
+  const workflowStage: WorkflowStage = (() => {
+    if (mode === 'dashboard') return 'project-home';
+    if (mode === 'edit') return 'section-workspace';
+    if (leftRailMode === 'dossier') return 'dossier';
+    return 'documents';
+  })();
+
   // ── Cut (start pending move) — capability-gated ──────────────────────────
   const handleCutDocument = useCallback(
     (art: TreeArtifact) => {
@@ -1405,7 +1415,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         proposals: conversationSnapshot.proposals,
         canOpenArtifact: (artifactId: string, status: string) =>
           artifacts.some(a => a.id === artifactId) &&
-          MODE_CAPABILITIES[resolveDocumentMode(status)].canEdit,
+          MODE_CAPABILITIES[resolveDocumentMode(workflowStage, status)].editable,
       }),
     [artifacts, computeJobs, conversationSnapshot.proposals]
   );
@@ -1522,13 +1532,6 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
   // Outline available only when doc is open
   const outlineAvailable = mode === 'edit' && !!selectedDocId;
-
-  const workflowStage: WorkflowStage = (() => {
-    if (mode === 'dashboard') return 'project-home';
-    if (mode === 'edit') return 'section-workspace';
-    if (leftRailMode === 'dossier') return 'dossier';
-    return 'documents';
-  })();
 
   // ── No project guard ────────────────────────────────────────────────────
   if (!projectId) {

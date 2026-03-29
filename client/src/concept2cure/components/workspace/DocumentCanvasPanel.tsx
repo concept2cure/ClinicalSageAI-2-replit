@@ -124,6 +124,55 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
     }
   }, [projectId, artifactId, editContent]);
 
+  const handleDownload = useCallback(async (format: 'pdf' | 'docx' | 'xml') => {
+    if (!artifact) return;
+    setShowDownloadMenu(false);
+    try {
+      if (format === 'docx') {
+        const res = await apiRequest('POST', '/api/concept2cure/documents/generate', {
+          content: artifact.content || '',
+          title: artifact.title,
+          format: 'docx',
+        });
+        if (res.ok) {
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${artifact.title || 'document'}.docx`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      } else if (format === 'pdf') {
+        const res = await apiRequest('POST', '/api/concept2cure/documents/export/pdf', {
+          content: artifact.content || '',
+          title: artifact.title,
+        });
+        if (res.ok) {
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${artifact.title || 'document'}.pdf`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      } else {
+        // XML — client-side generation for eCTD-style export
+        const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>\n<document>\n  <title>${artifact.title || ''}</title>\n  <content><![CDATA[${artifact.content || ''}]]></content>\n  <metadata>\n    <type>${artifact.type || 'unknown'}</type>\n    <version>${artifact.version || 1}</version>\n    <ctdSection>${artifact.ctdSection || ''}</ctdSection>\n  </metadata>\n</document>`;
+        const blob = new Blob([xmlContent], { type: 'application/xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${artifact.title || 'document'}.xml`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch {
+      // Download failed silently — could add toast here
+    }
+  }, [artifact]);
+
   // ── Loading ─────────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
@@ -226,21 +275,21 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
                 <button
                   role="menuitem"
                   className="w-full text-left px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50"
-                  onClick={() => { setShowDownloadMenu(false); }}
+                  onClick={() => handleDownload('pdf')}
                 >
                   Download as PDF
                 </button>
                 <button
                   role="menuitem"
                   className="w-full text-left px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50"
-                  onClick={() => { setShowDownloadMenu(false); }}
+                  onClick={() => handleDownload('docx')}
                 >
                   Download as DOCX
                 </button>
                 <button
                   role="menuitem"
                   className="w-full text-left px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50"
-                  onClick={() => { setShowDownloadMenu(false); }}
+                  onClick={() => handleDownload('xml')}
                 >
                   Download as XML
                 </button>

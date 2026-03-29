@@ -72,10 +72,11 @@ import { useCollaboration } from '../../hooks/useCollaboration';
 import { SignatureWorkflow, SignatureList } from './SignatureWorkflow';
 import { SubmissionReadinessValidator } from '../submission/SubmissionReadinessValidator';
 import { ComplianceScannerPanel } from './ComplianceScannerPanel';
+import type { ComplianceIssue as ScannerComplianceIssue } from './extensions/ComplianceScanner';
 import { AnAMemory } from '../intelligence/AnAMemory';
 import ArtifactProofPanel from './ArtifactProofPanel';
 import EditorGAReadinessPanel from './EditorGAReadinessPanel';
-import { buildCapabilityModels, buildRemediationQueue } from './gaReadinessModel';
+import { buildReadinessChecks, buildCapabilityModels, buildRemediationQueue } from './gaReadinessModel';
 import { getCurrentUser } from '../../utils/getCurrentUser';
 import { useDocumentModeOptional, type DocumentMode } from '../../contexts/DocumentModeContext';
 import {
@@ -347,7 +348,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [showTemplateGenerator, setShowTemplateGenerator] = useState(false);
 
   // ── Reviewer data (fetched from API) ──────────────────────────────────────
-  const [reviewers, setReviewers] = useState<Array<{ id: string; name: string; email: string; role?: string; status: string; assignedAt: string; completedAt?: string; comment?: string }>>([]);
+  const [reviewers, setReviewers] = useState<Array<{ id: string; name: string; email: string; role?: string; avatarUrl?: string; status: 'pending' | 'in_progress' | 'approved' | 'changes_requested' | 'rejected'; assignedAt: string; completedAt?: string; comment?: string }>>([]);
   const [teamMembers, setTeamMembers] = useState<Array<{ id: string; name: string; email: string; role?: string }>>([]);
 
   // Fetch reviewers when active artifact changes
@@ -404,13 +405,16 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     | 'compliance-scanner'
     | 'ana-memory'
     | 'proof'
-    | 'ga-readiness';
+    | 'ga-readiness'
+    | 'sources'
+    | 'templates'
+    | 'precedent';
   const [activeInspector, setActiveInspector] = useState<InspectorPanel | null>(null);
-  const [complianceIssues, setComplianceIssues] = useState<Array<{ id: string; severity: string; message: string; suggestion?: string; category: string; from: number; to: number }>>([]);
+  const [complianceIssues, setComplianceIssues] = useState<ScannerComplianceIssue[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [lastScanTime, setLastScanTime] = useState(Date.now());
-  const toggleInspector = useCallback((panel: InspectorPanel) => {
-    setActiveInspector(prev => (prev === panel ? null : panel));
+  const toggleInspector = useCallback((panel: string) => {
+    setActiveInspector(prev => (prev === panel ? null : panel as InspectorPanel));
   }, []);
 
   // Auto-open inspector when initialInspector is set from parent
@@ -1304,7 +1308,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           submissionType: submissionType || undefined,
           projectId: projectId || undefined,
           artifactId: activeArtifact.id || undefined,
-          ctdSection: ctdSection || activeArtifact.ctdSection || undefined,
+          ctdSection: activeArtifact.ctdSection || initialCtdSection || undefined,
         });
         if (res.ok) {
           const payload = await res.json();
@@ -1330,7 +1334,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         setAiLoading(false);
       }
     },
-    [activeArtifact, submissionType, projectId, ctdSection]
+    [activeArtifact, submissionType, projectId, initialCtdSection]
   );
 
   // ── Accept AI result ─────────────────────────────────────────────────────
@@ -1475,7 +1479,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       '## Readiness Checks',
       ...gaChecks.map(
         check =>
-          `- **${check.label}** — ${check.status.toUpperCase()}\n  - ${check.detail}${check.inspectorTarget ? `\n  - Workflow: ${check.inspectorTarget}` : ''}`
+          `- **${check.label}** — ${check.status.toUpperCase()}\n  - ${check.detail}`
       ),
       '',
       '## Competitive Capability Snapshot',
@@ -2588,7 +2592,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             activeArtifact.status !== 'locked' && (() => {
               // Context-aware outline templates based on submission type and CTD section
               const uType = (submissionType || '').toUpperCase();
-              const section = activeArtifact.ctdSection || ctdSection || '';
+              const section = activeArtifact.ctdSection || initialCtdSection || '';
               const docTitle = activeArtifact.title || 'Document Title';
 
               const getOutlineTemplate = (): string => {
@@ -2678,7 +2682,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             submissionType={submissionType}
             showCompliance={true}
             showTraceability={false}
-            complianceIssues={complianceIssues}
+            complianceIssues={complianceIssues as any}
             onComplianceIssuesFound={(issues: any[]) => {
               setComplianceIssues(issues);
               setIsScanning(false);
@@ -2767,7 +2771,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         >
           <DocumentProvenancePanel
             projectId={projectId!}
-            artifactId={activeArtifact?.id}
+            artifactId={activeArtifact!.id}
             onClose={() => setActiveInspector(null)}
             onOpenCompare={openCompare}
             onOpenAudit={openAudit}
@@ -2779,7 +2783,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         >
           <DocumentVersionCompare
             projectId={projectId}
-            artifactId={activeArtifact.id}
+            artifactId={activeArtifact!.id}
             onClose={() => setActiveInspector(null)}
             onOpenAudit={openAudit}
             onOpenProvenance={openProvenance}
@@ -2789,7 +2793,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         <InspectorDrawer visible={activeInspector === 'audit' && !!projectId && !!activeArtifact}>
           <DocumentAuditReport
             projectId={projectId!}
-            artifactId={activeArtifact?.id}
+            artifactId={activeArtifact!.id}
             onClose={() => setActiveInspector(null)}
             onOpenProvenance={openProvenance}
             onOpenCompare={openCompare}
@@ -2832,9 +2836,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         >
           <InconsistencyPanel
             projectId={projectId}
-            activeArtifactId={activeArtifact.id}
-            activeArtifactTitle={activeArtifact.title}
-            activeContent={activeArtifact.content}
+            activeArtifactId={activeArtifact!.id}
+            activeArtifactTitle={activeArtifact!.title}
+            activeContent={activeArtifact!.content}
             onNavigateToArtifact={artifactId => {
               const target = artifacts.find(a => a.id === artifactId);
               if (target) {
@@ -2846,10 +2850,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         </InspectorDrawer>
         <InspectorDrawer visible={activeInspector === 'health' && !!activeArtifact}>
           <DocumentHealth
-            content={activeArtifact.content || ''}
-            documentType={activeArtifact.type}
+            content={activeArtifact!.content || ''}
+            documentType={activeArtifact!.type}
             submissionType={submissionType}
-            ctdSection={activeArtifact.ctdSection}
+            ctdSection={activeArtifact!.ctdSection}
             onFixIssue={async (dimId, idx) => {
               if (!activeArtifact) return;
               const fixActions: Record<string, string> = {
@@ -2869,14 +2873,14 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         </InspectorDrawer>
         <InspectorDrawer visible={activeInspector === 'versions' && !!activeArtifact}>
           <VersionTimeline
-            versions={(activeArtifact.versions || []).map((v, i) => ({
+            versions={(activeArtifact!.versions || []).map((v, i) => ({
               id: `v-${v.version || i}`,
               version: v.version || i + 1,
               content: v.content || '',
-              createdAt: v.createdAt || activeArtifact.createdAt,
+              createdAt: v.createdAt || activeArtifact!.createdAt,
             }))}
-            currentContent={activeArtifact.content || ''}
-            currentVersion={activeArtifact.version || 1}
+            currentContent={activeArtifact!.content || ''}
+            currentVersion={activeArtifact!.version || 1}
             onRestore={version => {
               setActiveArtifact(prev => (prev ? { ...prev, content: version.content } : null));
               pushToast(`Restored to version ${version.version}`, 'success');
@@ -2926,7 +2930,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         </InspectorDrawer>
         <InspectorDrawer visible={activeInspector === 'batch-ai' && !!activeArtifact} width="w-96">
           <BatchAIPanel
-            content={activeArtifact.content || ''}
+            content={activeArtifact!.content || ''}
             submissionType={submissionType}
             onApply={newContent => {
               setActiveArtifact(prev => (prev ? { ...prev, content: newContent } : null));
@@ -2937,7 +2941,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         </InspectorDrawer>
         <InspectorDrawer visible={activeInspector === 'crossref' && !!activeArtifact}>
           <CrossReferencePanel
-            content={activeArtifact.content || ''}
+            content={activeArtifact!.content || ''}
             projectId={projectId}
             artifacts={artifacts.map(a => ({
               id: a.id,
@@ -3025,9 +3029,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           className="overflow-y-auto"
         >
           <ReviewerAssignment
-            documentId={activeArtifact.id}
-            documentTitle={activeArtifact.title}
-            currentStatus={activeArtifact.status}
+            documentId={activeArtifact!.id}
+            documentTitle={activeArtifact!.title}
+            currentStatus={activeArtifact!.status}
             reviewers={reviewers}
             teamMembers={teamMembers}
             onAddReviewer={handleAddReviewer}
@@ -3107,16 +3111,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             issues={complianceIssues}
             isScanning={isScanning}
             lastScanTime={lastScanTime}
-            onNavigateToIssue={(issueId) => {
-              const issue = complianceIssues.find(i => i.id === issueId);
+            onNavigateToIssue={(issue) => {
               if (issue) {
                 // Scroll to issue location in editor
                 console.log(`[Compliance] Navigate to issue at position ${issue.from}-${issue.to}`);
               }
             }}
-            onFixIssue={(issueId, suggestion) => {
+            onFixIssue={(issue) => {
               // Apply suggested fix
-              setComplianceIssues(prev => prev.filter(i => i.id !== issueId));
+              setComplianceIssues(prev => prev.filter(i => i.id !== issue.id));
             }}
             onRescan={() => {
               setIsScanning(true);

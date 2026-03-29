@@ -37,7 +37,7 @@ import React, {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /** Canonical document mode — the single source of truth for editor behavior. */
-export type DocumentMode = 'none' | 'preview' | 'view' | 'edit' | 'readonly';
+export type DocumentMode = 'none' | 'preview' | 'view' | 'edit' | 'readonly' | 'draft' | 'review' | 'locked';
 
 /** Workflow stages in the biotech IND/eCTD authoring flow. */
 export type WorkflowStage =
@@ -200,6 +200,54 @@ const MODE_CAPABILITIES: Record<DocumentMode, ModeCapabilities> = {
   readonly: {
     editable: false,
     showToolbar: true,
+    showAIActions: false,
+    canSave: false,
+    canToggleLock: false,
+    slashCommands: false,
+    showEditButton: false,
+    showReviewToggle: false,
+    canvasVisible: true,
+    canApprove: false,
+    canSign: false,
+    canRelocate: false,
+    canRollback: false,
+    canMoveDocument: false,
+  },
+  draft: {
+    editable: true,
+    showToolbar: true,
+    showAIActions: true,
+    canSave: true,
+    canToggleLock: true,
+    slashCommands: true,
+    showEditButton: false,
+    showReviewToggle: false,
+    canvasVisible: true,
+    canApprove: false,
+    canSign: false,
+    canRelocate: true,
+    canRollback: true,
+    canMoveDocument: true,
+  },
+  review: {
+    editable: false,
+    showToolbar: true,
+    showAIActions: false,
+    canSave: false,
+    canToggleLock: false,
+    slashCommands: false,
+    showEditButton: false,
+    showReviewToggle: true,
+    canvasVisible: true,
+    canApprove: true,
+    canSign: true,
+    canRelocate: false,
+    canRollback: false,
+    canMoveDocument: false,
+  },
+  locked: {
+    editable: false,
+    showToolbar: false,
     showAIActions: false,
     canSave: false,
     canToggleLock: false,
