@@ -36,6 +36,9 @@ import {
 import { RegulatoryApplicationPicker } from './RegulatoryApplicationPicker';
 import { RegulatoryApplicationSummaryCard } from './RegulatoryApplicationSummaryCard';
 import { BootstrapPreviewPanel } from './BootstrapPreviewPanel';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -227,32 +230,36 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
       )}
 
       {/* Star button */}
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={e => {
           e.stopPropagation();
           onToggleStar();
         }}
         className={cn(
-          'absolute top-3 left-3 p-1 rounded-md transition-all duration-150',
+          'absolute top-3 left-3 h-6 w-6',
           project.starred
             ? 'text-amber-500'
             : 'text-stone-400 opacity-0 group-hover:opacity-100 hover:text-amber-500'
         )}
       >
         <Star className={cn('w-4 h-4', project.starred && 'fill-current')} />
-      </button>
+      </Button>
 
       {/* Menu button */}
       <div className="absolute top-3 right-3">
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={e => {
             e.stopPropagation();
             setShowMenu(!showMenu);
           }}
-          className="p-1 rounded-md text-stone-400 opacity-0 group-hover:opacity-100 hover:text-stone-600 hover:bg-stone-100 transition-all duration-150"
+          className="h-6 w-6 text-stone-400 opacity-0 group-hover:opacity-100 hover:text-stone-600"
         >
           <MoreHorizontal className="w-4 h-4" />
-        </button>
+        </Button>
 
         {/* Dropdown menu */}
         {showMenu && (
@@ -265,28 +272,30 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
               }}
             />
             <div className="absolute right-0 top-8 z-20 w-40 bg-white rounded-lg shadow-sm border border-stone-200 py-1 animate-in fade-in zoom-in-95 duration-100">
-              <button
+              <Button
+                variant="ghost"
                 onClick={e => {
                   e.stopPropagation();
                   onArchive();
                   setShowMenu(false);
                 }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50"
+                className="w-full flex items-center justify-start gap-2 px-3 py-2 h-auto text-sm text-stone-700 hover:bg-stone-50 rounded-none"
               >
                 <Archive className="w-4 h-4" />
                 Archive
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="ghost"
                 onClick={e => {
                   e.stopPropagation();
                   onDelete();
                   setShowMenu(false);
                 }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                className="w-full flex items-center justify-start gap-2 px-3 py-2 h-auto text-sm text-red-600 hover:bg-red-50 rounded-none"
               >
                 <Trash2 className="w-4 h-4" />
                 Delete
-              </button>
+              </Button>
             </div>
           </>
         )}
@@ -481,12 +490,12 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
             {/* Project name */}
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1.5">Project Name</label>
-              <input
+              <Input
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder="e.g., CardioFlow Heart Monitor"
-                className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/30 outline-none transition-all duration-150"
+                className="w-full px-4 py-2.5 rounded-lg"
                 autoFocus
               />
             </div>
@@ -498,14 +507,16 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
               </label>
               <div className="flex items-center gap-1.5">
                 {PROJECT_COLORS.map(c => (
-                  <button
+                  <Button
                     key={c}
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setColor(c)}
                     aria-label={`Select color ${c}`}
                     aria-pressed={color === c}
                     className={cn(
-                      'w-6 h-6 rounded-full transition-all duration-150 flex items-center justify-center',
+                      'w-6 h-6 rounded-full p-0 flex items-center justify-center',
                       color === c
                         ? 'ring-2 ring-offset-2 ring-stone-400 scale-110'
                         : 'hover:scale-110 hover:ring-1 hover:ring-stone-300'
@@ -515,7 +526,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
                     {color === c && (
                       <Check className="w-3 h-3 text-white drop-shadow-sm" />
                     )}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -526,17 +537,19 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
                 <label className="block text-sm font-medium text-stone-700">
                   Submission Type
                 </label>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => {
                     setUseGlobalRegistry(!useGlobalRegistry);
                     setRegistryEntry(null);
                   }}
-                  className="flex items-center gap-1 text-[11px] text-stone-400 hover:text-stone-600 transition-colors"
+                  className="h-auto px-1 py-0.5 text-[11px] text-stone-400 hover:text-stone-600"
                 >
                   <Globe className="w-3 h-3" />
                   {useGlobalRegistry ? 'Use quick types' : 'Browse global registry'}
-                </button>
+                </Button>
               </div>
 
               {useGlobalRegistry ? (
@@ -570,13 +583,14 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
                     const isSelected = type === submissionType;
 
                     return (
-                      <button
+                      <Button
                         key={submissionType}
                         type="button"
+                        variant="outline"
                         onClick={() => setType(submissionType)}
                         aria-pressed={isSelected}
                         className={cn(
-                          'flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none',
+                          'flex flex-col items-center gap-1 p-3 h-auto rounded-lg border-2',
                           isSelected
                             ? 'border-stone-800 bg-stone-50'
                             : 'border-stone-200 hover:border-stone-300'
@@ -593,7 +607,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
                         >
                           {config.label}
                         </span>
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -619,12 +633,12 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
               <label className="block text-sm font-medium text-stone-700 mb-1.5">
                 Sponsor / Client <span className="text-stone-400">(optional)</span>
               </label>
-              <input
+              <Input
                 type="text"
                 value={sponsor}
                 onChange={e => setSponsor(e.target.value)}
                 placeholder="e.g., Acme Biotech, Inc."
-                className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/30 outline-none transition-all duration-150"
+                className="w-full px-4 py-2.5 rounded-lg"
               />
             </div>
 
@@ -633,12 +647,12 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
               <label className="block text-sm font-medium text-stone-700 mb-1.5">
                 Product / Device / Molecule <span className="text-stone-400">(optional)</span>
               </label>
-              <input
+              <Input
                 type="text"
                 value={product}
                 onChange={e => setProduct(e.target.value)}
                 placeholder="e.g., CardioFlow HR-200, mRNA-7621"
-                className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/30 outline-none transition-all duration-150"
+                className="w-full px-4 py-2.5 rounded-lg"
               />
             </div>
 
@@ -648,20 +662,21 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
               <label className="block text-sm font-medium text-stone-700 mb-1.5">
                 Region / Agency
               </label>
-              <select
-                value={region}
-                onChange={e => setRegion(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-stone-200 text-stone-900 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/30 outline-none transition-all bg-white"
-              >
-                <option value="FDA">FDA (United States)</option>
-                <option value="EMA">EMA (European Union)</option>
-                <option value="MHRA">MHRA (United Kingdom)</option>
-                <option value="Health Canada">Health Canada</option>
-                <option value="TGA">TGA (Australia)</option>
-                <option value="PMDA">PMDA (Japan)</option>
-                <option value="ANVISA">ANVISA (Brazil)</option>
-                <option value="Other">Other</option>
-              </select>
+              <Select value={region} onValueChange={setRegion}>
+                <SelectTrigger className="w-full h-10">
+                  <SelectValue placeholder="Select region" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="FDA">FDA (United States)</SelectItem>
+                  <SelectItem value="EMA">EMA (European Union)</SelectItem>
+                  <SelectItem value="MHRA">MHRA (United Kingdom)</SelectItem>
+                  <SelectItem value="Health Canada">Health Canada</SelectItem>
+                  <SelectItem value="TGA">TGA (Australia)</SelectItem>
+                  <SelectItem value="PMDA">PMDA (Japan)</SelectItem>
+                  <SelectItem value="ANVISA">ANVISA (Brazil)</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             )}
 
@@ -682,23 +697,19 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
 
           {/* Footer */}
           <div className="px-6 py-4 border-t border-stone-200 flex justify-end gap-3">
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors duration-150"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               disabled={!name.trim() || (useGlobalRegistry && !registryEntry)}
-              className={cn(
-                'px-4 py-2 text-sm font-medium text-white rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none',
-                name.trim() && (!useGlobalRegistry || registryEntry) ? 'bg-stone-900 hover:bg-stone-800' : 'bg-stone-300 cursor-not-allowed'
-              )}
             >
               Create Project
-            </button>
+            </Button>
           </div>
         </form>
       </motion.div>
@@ -780,24 +791,24 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
             <h2 id="project-switcher-title" className="text-sm font-semibold text-stone-900">
               Switch Project
             </h2>
-            <button
+            <Button
+              size="sm"
               onClick={onCreateProject}
-              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-white bg-stone-900 hover:bg-stone-800 rounded-md transition-colors duration-150"
             >
               <Plus className="w-3 h-3" />
               New
-            </button>
+            </Button>
           </div>
 
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
-            <input
+            <Input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search projects..."
-              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-md border border-stone-200 text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/30 outline-none transition-all duration-150"
+              className="w-full pl-8 pr-3 py-1.5 text-xs"
               autoFocus
             />
           </div>
@@ -805,17 +816,16 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
           {/* Tabs */}
           <div className="flex gap-0.5 mt-2">
             {(['all', 'starred', 'archived'] as const).map(tab => (
-              <button
+              <Button
                 key={tab}
+                variant={filter === tab ? 'default' : 'ghost'}
+                size="sm"
                 onClick={() => setFilter(tab)}
-                className={cn(
-                  'px-2.5 py-1 text-xs font-medium rounded transition-colors capitalize focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none',
-                  filter === tab ? 'bg-stone-900 text-white' : 'text-stone-500 hover:bg-stone-100'
-                )}
+                className="px-2.5 py-1 text-xs font-medium capitalize"
                 aria-pressed={filter === tab}
               >
                 {tab}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -843,14 +853,15 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                     const tc = SUBMISSION_TYPES[project.type] ?? SUBMISSION_TYPE_FALLBACK;
                     const TypeIcon = tc.icon;
                     return (
-                      <button
+                      <Button
                         key={project.id}
+                        variant="ghost"
                         onClick={() => {
                           onSelectProject(project.id);
                           onClose();
                         }}
                         className={cn(
-                          'w-full flex items-center gap-3 px-4 py-2 text-left transition-colors duration-150',
+                          'w-full flex items-center gap-3 px-4 py-2 h-auto text-left rounded-none',
                           project.id === activeProjectId ? 'bg-stone-50' : 'hover:bg-stone-50'
                         )}
                       >
@@ -883,7 +894,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                           {tc.label}
                         </span>
                         <ChevronRight className="w-3 h-3 text-stone-400 shrink-0" />
-                      </button>
+                      </Button>
                     );
                   })}
                 </>

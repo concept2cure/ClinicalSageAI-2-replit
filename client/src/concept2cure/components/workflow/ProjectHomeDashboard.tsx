@@ -30,6 +30,7 @@ import {
   MessageSquare,
   ChevronRight,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -258,22 +259,26 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
           </div>
           <div className="flex items-center gap-0.5 flex-shrink-0">
             {onOpenSearch && (
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={onOpenSearch}
                 aria-label="Search documents"
-                className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-lg transition-colors"
+                className="h-7 w-7 text-stone-400 hover:text-stone-600"
               >
                 <Search className="w-3.5 h-3.5" />
-              </button>
+              </Button>
             )}
             {onOpenConfig && (
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={onOpenConfig}
                 aria-label="Project settings"
-                className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-lg transition-colors"
+                className="h-7 w-7 text-stone-400 hover:text-stone-600"
               >
                 <Settings2 className="w-3.5 h-3.5" />
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -283,25 +288,29 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
         {!artifactsLoading && summary.recentDocs.length > 0 && (
           <div className="mt-3 flex items-center gap-2 overflow-x-auto scrollbar-hide">
             {summary.recentDocs.map(doc => (
-              <button
+              <Button
                 key={doc.id}
+                variant="outline"
+                size="sm"
                 onClick={() => onOpenArtifact ? onOpenArtifact(doc.id) : onNavigate('documents')}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-stone-100 hover:border-stone-200 hover:bg-stone-50/50 transition-colors text-left flex-shrink-0 max-w-[200px] group"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 h-auto border-stone-100 hover:border-stone-200 hover:bg-stone-50/50 text-left flex-shrink-0 max-w-[200px] group"
               >
                 <FileText className="w-3 h-3 text-stone-400 flex-shrink-0" />
                 <span className="text-[12px] text-stone-600 truncate group-hover:text-stone-800">
                   {doc.title || 'Untitled'}
                 </span>
-              </button>
+              </Button>
             ))}
             {summary.docCount > 3 && (
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => onNavigate('documents')}
-                className="text-[11px] text-stone-400 hover:text-stone-600 flex-shrink-0 transition-colors flex items-center gap-0.5"
+                className="h-auto px-1 py-0.5 text-[11px] text-stone-400 hover:text-stone-600 flex-shrink-0"
               >
                 +{summary.docCount - 3} more
                 <ChevronRight className="w-3 h-3" />
-              </button>
+              </Button>
             )}
           </div>
         )}
@@ -335,10 +344,11 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
         {!artifactsLoading && (
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
             {suggestedPrompts.map((sp, idx) => (
-              <button
+              <Button
                 key={idx}
+                variant="outline"
                 onClick={() => onSuggestedPrompt?.(sp.prompt)}
-                className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl border border-stone-150 text-left hover:border-stone-300 hover:bg-stone-50/50 transition-all group"
+                className="flex items-start gap-2.5 px-3 py-2.5 h-auto rounded-xl border-stone-150 text-left hover:border-stone-300 hover:bg-stone-50/50 group"
               >
                 <span className="text-stone-400 group-hover:text-stone-600 mt-0.5 flex-shrink-0">
                   {sp.icon}
@@ -346,7 +356,7 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
                 <span className="text-[13px] text-stone-600 leading-snug group-hover:text-stone-800">
                   {sp.text}
                 </span>
-              </button>
+              </Button>
             ))}
           </div>
         )}

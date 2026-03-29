@@ -34,6 +34,8 @@ import {
   Lock,
   PenTool,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -251,9 +253,10 @@ const ViolationCard: React.FC<ViolationCardProps> = ({
 
   return (
     <div className={`border rounded-xl ${config.bgColor} ${config.borderColor}`}>
-      <button
+      <Button
+        variant="ghost"
         onClick={onToggle}
-        className="w-full p-5 flex items-start gap-3 text-left"
+        className="w-full p-5 h-auto flex items-start gap-3 text-left rounded-none"
       >
         <Icon className={`w-4 h-4 flex-shrink-0 mt-0.5 ${config.iconColor}`} />
         <div className="flex-1 min-w-0">
@@ -277,7 +280,7 @@ const ViolationCard: React.FC<ViolationCardProps> = ({
         ) : (
           <ChevronRight className="w-4 h-4 text-stone-400 flex-shrink-0" />
         )}
-      </button>
+      </Button>
 
       {isExpanded && (
         <div className="px-5 pb-5 ml-8 space-y-2">
@@ -294,13 +297,15 @@ const ViolationCard: React.FC<ViolationCardProps> = ({
             </div>
           )}
           {violation.location?.section && (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={onClick}
-              className="flex items-center gap-2 text-xs text-blue-600 hover:text-stone-700"
+              className="h-auto px-1 py-0.5 text-xs text-blue-600 hover:text-stone-700"
             >
               <ExternalLink className="w-3 h-3" />
               Go to location
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -427,23 +432,25 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
           </div>
           <div className="flex items-center gap-2">
             {onRefresh && (
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={onRefresh}
                 disabled={isLoading}
-                className="p-2 hover:bg-stone-100 rounded-lg transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none disabled:opacity-60"
                 title="Refresh"
               >
                 <RefreshCw className={`w-4 h-4 text-stone-600 ${isLoading ? 'animate-spin' : ''}`} />
-              </button>
+              </Button>
             )}
             {onExport && (
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={onExport}
-                className="p-2 hover:bg-stone-100 rounded-lg transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none"
                 title="Export Report"
               >
                 <Download className="w-4 h-4 text-stone-600" />
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -508,31 +515,33 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
         {/* Filters */}
         <div className="px-5 py-3 border-b border-stone-100 flex items-center gap-2">
           <Filter className="w-4 h-4 text-stone-400" />
-          <select
-            value={severityFilter}
-            onChange={e => setSeverityFilter(e.target.value as typeof severityFilter)}
-            className="px-2 py-1 bg-stone-100 border-0 rounded text-sm"
-          >
-            <option value="all">All Severities</option>
-            <option value="error">Errors</option>
-            <option value="warning">Warnings</option>
-            <option value="info">Info</option>
-          </select>
-          <select
-            value={categoryFilter}
-            onChange={e => setCategoryFilter(e.target.value as typeof categoryFilter)}
-            className="px-2 py-1 bg-stone-100 border-0 rounded text-sm"
-          >
-            <option value="all">All Categories</option>
-            <option value="structure">Structure</option>
-            <option value="content">Content</option>
-            <option value="citation">Citations</option>
-            <option value="format">Format</option>
-            <option value="completeness">Completeness</option>
-            <option value="regulatory">Regulatory</option>
-            <option value="data_integrity">Data Integrity</option>
-            <option value="signature">Signatures</option>
-          </select>
+          <Select value={severityFilter} onValueChange={(v) => setSeverityFilter(v as typeof severityFilter)}>
+            <SelectTrigger className="w-[140px] h-8 text-sm bg-stone-100 border-0">
+              <SelectValue placeholder="All Severities" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Severities</SelectItem>
+              <SelectItem value="error">Errors</SelectItem>
+              <SelectItem value="warning">Warnings</SelectItem>
+              <SelectItem value="info">Info</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={categoryFilter} onValueChange={(v) => setCategoryFilter(v as typeof categoryFilter)}>
+            <SelectTrigger className="w-[150px] h-8 text-sm bg-stone-100 border-0">
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              <SelectItem value="structure">Structure</SelectItem>
+              <SelectItem value="content">Content</SelectItem>
+              <SelectItem value="citation">Citations</SelectItem>
+              <SelectItem value="format">Format</SelectItem>
+              <SelectItem value="completeness">Completeness</SelectItem>
+              <SelectItem value="regulatory">Regulatory</SelectItem>
+              <SelectItem value="data_integrity">Data Integrity</SelectItem>
+              <SelectItem value="signature">Signatures</SelectItem>
+            </SelectContent>
+          </Select>
           <span className="text-xs text-stone-500 ml-auto">
             {filteredViolations.length} issues
           </span>

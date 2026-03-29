@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { queryKeys } from '@/concept2cure/hooks/queryKeys';
 import { DataStateWrapper } from '@/components/ui/statesV2';
+import { Button } from '@/components/ui/button';
 import {
   WorkspaceHeader,
   WorkspaceCanvas,
