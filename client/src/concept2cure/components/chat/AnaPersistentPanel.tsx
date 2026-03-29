@@ -47,6 +47,7 @@ import {
   FolderPlus,
   Bot,
   FolderOpen,
+  FileText,
 } from 'lucide-react';
 import { ToolExecutionBlock, ThinkingBlock, DoneIndicator } from './ClaudeStyleBlocks';
 import { Button } from '@/components/ui/button';
@@ -4506,12 +4507,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                   try {
                                     const res = await apiRequest('POST', '/api/ana-ri/generate', {
                                       action_type: act.type,
-                                      conversation_context: messages
-                                        .slice(
-                                          Math.max(0, messages.indexOf(msg) - 4),
-                                          messages.indexOf(msg) + 1,
-                                        )
-                                        .map(m => ({ role: m.role, content: m.content })),
+                                      conversation_context: (() => {
+                                        const idx = messages.findIndex(m => m.id === msg.id);
+                                        const end = idx >= 0 ? idx + 1 : messages.length;
+                                        const start = Math.max(0, end - 5);
+                                        return messages.slice(start, end).map(m => ({ role: m.role, content: m.content }));
+                                      })(),
                                       project_id: contextProfile.projectId,
                                       user_role: contextProfile?.userRole || undefined,
                                     });

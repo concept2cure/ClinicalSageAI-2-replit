@@ -1627,7 +1627,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         </div>
 
         {/* ── Collapsible context bars (AnA Shell, Context Band, CTD Flow) ──── */}
-        <div className={cn('overflow-hidden transition-all duration-200', showContextBars ? 'max-h-32' : 'max-h-0')}>
+        <div className={cn('overflow-hidden transition-all duration-200', showContextBars ? 'max-h-48' : 'max-h-0')}>
 
         {/* ── Work modes / workbench bar ─────────────────────────────────── */}
         {!isINDWorkspace && (
@@ -2344,6 +2344,19 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   onOpenTransformCanvas={(ctdSection: string) => openTransformCanvas(ctdSection)}
                   onOpenProgramTwin={openProgramTwin}
                   onOpenSubmissionApps={(ctdSection: string) => openSubmissionApps(ctdSection)}
+                  onCreateFromTemplate={(ctdSection: string) => {
+                    setLeftRailMode('templates');
+                    setSelectedCtdSection(ctdSection);
+                  }}
+                  onDraftWithAI={(ctdSection: string) => {
+                    setSelectedCtdSection(ctdSection);
+                    setShowNewDocDialog(true);
+                  }}
+                  onAttachExisting={(ctdSection: string) => {
+                    setSelectedCtdSection(ctdSection);
+                    setLeftRailMode('files');
+                    setMode('browse');
+                  }}
                 />
               ) : leftRailMode === 'outline' ? (
                 outlineAvailable ? (

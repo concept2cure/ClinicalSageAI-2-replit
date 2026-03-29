@@ -3659,7 +3659,7 @@ export const ZenApp: React.FC = () => {
                   <button
                     onClick={() => {
                       setActiveProjectId(continueProject.id);
-                      setLayoutMode('workspace');
+                      setLayoutMode('project-home');
                     }}
                     className={cn(
                       'w-full text-left rounded-xl border border-stone-200 bg-white p-5',
@@ -3726,7 +3726,7 @@ export const ZenApp: React.FC = () => {
                           key={project.id}
                           onClick={() => {
                             setActiveProjectId(project.id);
-                            setLayoutMode('workspace');
+                            setLayoutMode('project-home');
                           }}
                           className={cn(
                             'group text-left rounded-xl border overflow-hidden transition-all duration-150',
