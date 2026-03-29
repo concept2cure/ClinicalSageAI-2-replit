@@ -576,6 +576,16 @@ const createProjectSchema = z.object({
   pinned: z.boolean().optional(),
   targetAgency: z.string().max(50).optional(),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Invalid hex color').optional(),
+  /** New: canonical registry ID (e.g., 'US_IND', 'EU_MAA') — takes precedence over submissionType for bootstrap */
+  registryId: z.string().max(50).optional(),
+  /** New: registry-driven metadata fields */
+  applicationFamily: z.string().max(50).optional(),
+  applicationType: z.string().max(100).optional(),
+  agency: z.string().max(50).optional(),
+  country: z.string().max(100).optional(),
+  productClass: z.string().max(50).optional(),
+  dossierStandard: z.string().max(20).optional(),
+  lifecycleStage: z.string().max(30).optional(),
 });
 
 const updateProjectSchema = createProjectSchema.partial();
@@ -1415,7 +1425,7 @@ router.post('/projects', async (req: Request, res: Response) => {
     const clientWorkspaceId = getClientWorkspaceId(req);
     const data = createProjectSchema.parse(req.body);
 
-    // Auto-populate custom instructions based on submission type and product if not provided
+    // Auto-populate custom instructions based on registry entry or submission type
     if (!data.customInstructions) {
       data.customInstructions = generateDefaultCustomInstructions(
         data.submissionType,
@@ -1445,6 +1455,14 @@ router.post('/projects', async (req: Request, res: Response) => {
         ownerId: userId,
         metadata: {
           submissionType: data.submissionType,
+          registryId: data.registryId ?? null,
+          applicationFamily: data.applicationFamily ?? null,
+          applicationType: data.applicationType ?? null,
+          agency: data.agency ?? data.targetAgency ?? null,
+          country: data.country ?? null,
+          productClass: data.productClass ?? null,
+          dossierStandard: data.dossierStandard ?? null,
+          lifecycleStage: data.lifecycleStage ?? null,
           targetSubmissionDate: data.targetSubmissionDate,
           sponsor: data.sponsor,
           product: data.product,
@@ -1489,10 +1507,15 @@ router.post('/projects', async (req: Request, res: Response) => {
       id: projectId,
       name: newProject.name,
       submissionType: data.submissionType,
+      registryId: data.registryId ?? null,
+      applicationFamily: data.applicationFamily ?? null,
+      applicationType: data.applicationType ?? null,
       description: newProject.description,
       sponsor: data.sponsor,
       product: data.product,
       region: data.region,
+      agency: data.agency ?? data.targetAgency ?? null,
+      dossierStandard: data.dossierStandard ?? null,
       conversations: [],
       ownership: buildProjectOwnership([], normalizeProjectSettings(newProject.settings)),
       status: newProject.status,
@@ -1523,54 +1546,102 @@ router.post('/projects', async (req: Request, res: Response) => {
           logger.error('[projects] Failed to auto-create intelligence profile:', err);
         }
       })(),
-      // Initialize CTD sections based on submission type
+      // Initialize sections based on registry (or fallback to IND for backward compat)
       (async () => {
         try {
-          const { getAllINDSections } = await import('../../services/regulatory/ind-ectd-sections.js');
-          const allSections = getAllINDSections();
-          const client = await pool.connect();
-          try {
-            await client.query('BEGIN');
-            let inserted = 0;
-            for (const section of allSections) {
-              await client.query(
-                `INSERT INTO project_sections
-                   (organization_id, project_id, section_code, module, title, status, estimated_hours, priority, metadata)
-                 VALUES ($1, $2, $3, $4, $5, 'not_started', $6, $7, $8)
-                 ON CONFLICT DO NOTHING`,
-                [
-                  organizationId,
-                  newProject.id,
-                  section.code,
-                  section.module,
-                  section.title,
-                  section.estimatedHours,
-                  section.required ? 'high' : 'medium',
-                  JSON.stringify({
-                    required: section.required,
-                    requiredForAmendment: section.requiredForAmendment,
-                    aiDraftable: section.aiDraftable,
-                    authoringMode: section.authoringMode,
-                    role: section.role,
-                    regulatoryRef: section.regulatoryRef,
-                    format: section.format,
-                    parentCode: section.parentCode,
-                    depth: section.depth,
-                  }),
-                ]
-              );
-              inserted++;
+          const { bootstrapFromRegistry } = await import('../services/regulatory/projectBootstrapFromRegistry.js');
+          const bootstrapResult = await bootstrapFromRegistry({
+            registryId: data.registryId,
+            submissionType: data.submissionType,
+            product: data.product,
+            projectName: data.name,
+          });
+
+          if (bootstrapResult && bootstrapResult.sections.length > 0) {
+            const client = await pool.connect();
+            try {
+              await client.query('BEGIN');
+              let inserted = 0;
+              for (const section of bootstrapResult.sections) {
+                await client.query(
+                  `INSERT INTO project_sections
+                     (organization_id, project_id, section_code, module, title, status, estimated_hours, priority, metadata)
+                   VALUES ($1, $2, $3, $4, $5, 'not_started', $6, $7, $8)
+                   ON CONFLICT DO NOTHING`,
+                  [
+                    organizationId,
+                    newProject.id,
+                    section.sectionCode,
+                    section.module,
+                    section.title,
+                    section.estimatedHours,
+                    section.priority,
+                    JSON.stringify(section.metadata),
+                  ]
+                );
+                inserted++;
+              }
+              await client.query('COMMIT');
+              logger.info('Auto-initialized sections from registry', {
+                projectId,
+                registryId: bootstrapResult.entry.id,
+                sectionsInserted: inserted,
+                usedDeepAdapter: bootstrapResult.usedDeepAdapter,
+              });
+            } catch (err) {
+              await client.query('ROLLBACK');
+              throw err;
+            } finally {
+              client.release();
             }
-            await client.query('COMMIT');
-            logger.info('Auto-initialized CTD sections', { projectId, sectionsInserted: inserted });
-          } catch (err) {
-            await client.query('ROLLBACK');
-            throw err;
-          } finally {
-            client.release();
+          } else {
+            // Fallback: use legacy IND sections if registry bootstrap returned nothing
+            const { getAllINDSections } = await import('../../services/regulatory/ind-ectd-sections.js');
+            const allSections = getAllINDSections();
+            const client = await pool.connect();
+            try {
+              await client.query('BEGIN');
+              let inserted = 0;
+              for (const section of allSections) {
+                await client.query(
+                  `INSERT INTO project_sections
+                     (organization_id, project_id, section_code, module, title, status, estimated_hours, priority, metadata)
+                   VALUES ($1, $2, $3, $4, $5, 'not_started', $6, $7, $8)
+                   ON CONFLICT DO NOTHING`,
+                  [
+                    organizationId,
+                    newProject.id,
+                    section.code,
+                    section.module,
+                    section.title,
+                    section.estimatedHours,
+                    section.required ? 'high' : 'medium',
+                    JSON.stringify({
+                      required: section.required,
+                      requiredForAmendment: section.requiredForAmendment,
+                      aiDraftable: section.aiDraftable,
+                      authoringMode: section.authoringMode,
+                      role: section.role,
+                      regulatoryRef: section.regulatoryRef,
+                      format: section.format,
+                      parentCode: section.parentCode,
+                      depth: section.depth,
+                    }),
+                  ]
+                );
+                inserted++;
+              }
+              await client.query('COMMIT');
+              logger.info('Auto-initialized CTD sections (legacy fallback)', { projectId, sectionsInserted: inserted });
+            } catch (err) {
+              await client.query('ROLLBACK');
+              throw err;
+            } finally {
+              client.release();
+            }
           }
         } catch (err) {
-          logger.error('[projects] Failed to auto-initialize CTD sections:', err);
+          logger.error('[projects] Failed to auto-initialize sections:', err);
         }
       })(),
       // Create initial AnA conversation thread with onboarding message
@@ -8118,6 +8189,145 @@ router.get('/templates/:id', (req: Request, res: Response) => {
   } catch (error: any) {
     logger.error('Failed to fetch template', { error: error.message });
     return sendError(res, 500, 'Failed to fetch template');
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REGULATORY CATALOG — Registry-driven application type catalog
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/concept2cure/regulatory-catalog/regions
+ * List all supported regions with application type counts.
+ */
+router.get('/regulatory-catalog/regions', (_req: Request, res: Response) => {
+  try {
+    const { getRegionsWithCounts } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
+    return sendSuccess(res, getRegionsWithCounts());
+  } catch (error: any) {
+    logger.error('Failed to fetch regulatory regions', { error: error.message });
+    return sendError(res, 500, 'Failed to fetch regulatory regions');
+  }
+});
+
+/**
+ * GET /api/concept2cure/regulatory-catalog/agencies
+ * List all supported regulatory agencies with counts.
+ */
+router.get('/regulatory-catalog/agencies', (_req: Request, res: Response) => {
+  try {
+    const { getAgenciesWithCounts } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
+    return sendSuccess(res, getAgenciesWithCounts());
+  } catch (error: any) {
+    logger.error('Failed to fetch regulatory agencies', { error: error.message });
+    return sendError(res, 500, 'Failed to fetch regulatory agencies');
+  }
+});
+
+/**
+ * GET /api/concept2cure/regulatory-catalog/application-types
+ * List application types with optional filters.
+ * Query params: region, agency, family, productClass, query
+ */
+router.get('/regulatory-catalog/application-types', (req: Request, res: Response) => {
+  try {
+    const { getApplicationTypes } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
+    const filters: Record<string, string> = {};
+    if (req.query.region) filters.region = String(req.query.region);
+    if (req.query.agency) filters.agency = String(req.query.agency);
+    if (req.query.family) filters.family = String(req.query.family);
+    if (req.query.productClass) filters.productClass = String(req.query.productClass);
+    if (req.query.query) filters.query = String(req.query.query);
+    return sendSuccess(res, getApplicationTypes(Object.keys(filters).length > 0 ? filters : undefined));
+  } catch (error: any) {
+    logger.error('Failed to fetch application types', { error: error.message });
+    return sendError(res, 500, 'Failed to fetch application types');
+  }
+});
+
+/**
+ * GET /api/concept2cure/regulatory-catalog/families
+ * List all application families with metadata.
+ */
+router.get('/regulatory-catalog/families', (_req: Request, res: Response) => {
+  try {
+    const { getAllFamiliesSorted } = require('../../shared/regulatory/application-families.js');
+    return sendSuccess(res, getAllFamiliesSorted());
+  } catch (error: any) {
+    logger.error('Failed to fetch application families', { error: error.message });
+    return sendError(res, 500, 'Failed to fetch application families');
+  }
+});
+
+/**
+ * POST /api/concept2cure/regulatory-catalog/resolve
+ * Resolve a registry ID or legacy submission type to full entry with blueprints.
+ * Body: { registryId?: string, submissionType?: string }
+ */
+router.post('/regulatory-catalog/resolve', (req: Request, res: Response) => {
+  try {
+    const { resolve } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
+    const { registryId, submissionType } = req.body;
+    const idToResolve = registryId || submissionType;
+    if (!idToResolve) {
+      return sendError(res, 400, 'Either registryId or submissionType is required');
+    }
+    const result = resolve(idToResolve);
+    if (!result) {
+      return sendError(res, 404, `Could not resolve "${idToResolve}" to a known application type`);
+    }
+    return sendSuccess(res, result);
+  } catch (error: any) {
+    logger.error('Failed to resolve registry entry', { error: error.message });
+    return sendError(res, 500, 'Failed to resolve registry entry');
+  }
+});
+
+/**
+ * POST /api/concept2cure/regulatory-catalog/bootstrap-preview
+ * Preview what sections and tasks would be created for a given application type.
+ * Body: { registryId: string }
+ */
+router.post('/regulatory-catalog/bootstrap-preview', (req: Request, res: Response) => {
+  try {
+    const { getBootstrapPreview } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
+    const { registryId } = req.body;
+    if (!registryId) {
+      return sendError(res, 400, 'registryId is required');
+    }
+    const preview = getBootstrapPreview(registryId);
+    if (!preview) {
+      return sendError(res, 404, `Unknown registry ID: ${registryId}`);
+    }
+    return sendSuccess(res, preview);
+  } catch (error: any) {
+    logger.error('Failed to generate bootstrap preview', { error: error.message });
+    return sendError(res, 500, 'Failed to generate bootstrap preview');
+  }
+});
+
+/**
+ * GET /api/concept2cure/regulatory-catalog/search
+ * Search application types with ranked results.
+ * Query params: q (required), region, agency, family, limit
+ */
+router.get('/regulatory-catalog/search', (req: Request, res: Response) => {
+  try {
+    const { rankedSearch } = require('../services/regulatory/registry/registrySearch.js');
+    const q = String(req.query.q || '');
+    if (!q) {
+      return sendError(res, 400, 'Query parameter "q" is required');
+    }
+    const filters: Record<string, string | boolean> = { activeOnly: true };
+    if (req.query.region) filters.region = String(req.query.region);
+    if (req.query.agency) filters.agency = String(req.query.agency);
+    if (req.query.family) filters.family = String(req.query.family);
+    const limit = req.query.limit ? parseInt(String(req.query.limit), 10) : 20;
+    const results = rankedSearch(q, Object.keys(filters).length > 1 ? filters : undefined, limit);
+    return sendSuccess(res, results);
+  } catch (error: any) {
+    logger.error('Failed to search registry', { error: error.message });
+    return sendError(res, 500, 'Failed to search registry');
   }
 });
 
