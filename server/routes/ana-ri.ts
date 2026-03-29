@@ -392,16 +392,43 @@ router.post('/chat', async (req: Request, res: Response) => {
       }
     }
 
-    // Pre-fetch project intelligence profile for conversation continuity (non-blocking)
+    // Pre-fetch intelligence context in parallel (non-blocking)
     const projectId = project_context?.projectId
       ? Number(project_context.projectId)
       : authoring_context?.projectId
         ? Number(authoring_context.projectId)
         : null;
-    const intelligenceProfile = await prefetchProjectIntelligence(
-      projectId,
-      orgId ? Number(orgId) : null,
-    );
+    const organizationId = orgId ? Number(orgId) : null;
+
+    const [intelligenceProfile, feedbackContext, rimContext] = await Promise.all([
+      prefetchProjectIntelligence(projectId, organizationId).catch(() => null),
+      (async () => {
+        if (!projectId || !organizationId) return null;
+        try {
+          const summary = await getFeedbackSummary(projectId, organizationId);
+          if (summary) {
+            return {
+              totalFeedback: summary.totalFeedback || 0,
+              acceptanceRate: summary.acceptanceRate ?? 100,
+              topDismissedTypes: summary.topDismissedTypes || [],
+            };
+          }
+          return null;
+        } catch (e: unknown) {
+          console.warn('[AnA RI] Feedback prefetch failed:', e instanceof Error ? e.message : 'unknown');
+          return null;
+        }
+      })(),
+      (async () => {
+        if (!projectId) return null;
+        try {
+          return await preloadRIMContext(String(projectId), organizationId ?? undefined);
+        } catch (e: unknown) {
+          console.warn('[AnA RI] RIM context prefetch failed:', e instanceof Error ? e.message : 'unknown');
+          return null;
+        }
+      })(),
+    ]);
 
     // Orchestrate — build the complete system prompt
     const orchestratorInput: OrchestratorInput = {
@@ -421,9 +448,11 @@ router.post('/chat', async (req: Request, res: Response) => {
             artifactId: authoring_context.artifactId,
             artifactStatus: authoring_context.artifactStatus,
             workflowStage: authoring_context.workflowStage,
+            _rimContext: rimContext ?? undefined,
           }
         : undefined,
       _projectIntelligenceProfile: intelligenceProfile,
+      _feedbackContext: feedbackContext,
     };
 
     const orchestration = orchestrate(orchestratorInput);
@@ -863,7 +892,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       authoringContextBlock = parts.join('\n');
     }
 
-    // Pre-fetch project intelligence profile for conversation continuity (non-blocking)
+    // Pre-fetch intelligence context in parallel (non-blocking)
     const streamProjectId = project_context?.projectId
       ? Number(project_context.projectId)
       : project_id
@@ -871,10 +900,37 @@ router.post('/stream', async (req: Request, res: Response) => {
         : authoring_context?.projectId
           ? Number(authoring_context.projectId)
           : null;
-    const streamIntelligenceProfile = await prefetchProjectIntelligence(
-      streamProjectId,
-      orgId ? Number(orgId) : null,
-    );
+    const streamOrgId = orgId ? Number(orgId) : null;
+
+    const [streamIntelligenceProfile, streamFeedbackContext, streamRimContext] = await Promise.all([
+      prefetchProjectIntelligence(streamProjectId, streamOrgId).catch(() => null),
+      (async () => {
+        if (!streamProjectId || !streamOrgId) return null;
+        try {
+          const summary = await getFeedbackSummary(streamProjectId, streamOrgId);
+          if (summary) {
+            return {
+              totalFeedback: summary.totalFeedback || 0,
+              acceptanceRate: summary.acceptanceRate ?? 100,
+              topDismissedTypes: summary.topDismissedTypes || [],
+            };
+          }
+          return null;
+        } catch (e: unknown) {
+          console.warn('[AnA RI stream] Feedback prefetch failed:', e instanceof Error ? e.message : 'unknown');
+          return null;
+        }
+      })(),
+      (async () => {
+        if (!streamProjectId) return null;
+        try {
+          return await preloadRIMContext(String(streamProjectId), streamOrgId ?? undefined);
+        } catch (e: unknown) {
+          console.warn('[AnA RI stream] RIM context prefetch failed:', e instanceof Error ? e.message : 'unknown');
+          return null;
+        }
+      })(),
+    ]);
 
     // Orchestrate
     const orchestration = orchestrate({
@@ -894,9 +950,11 @@ router.post('/stream', async (req: Request, res: Response) => {
             artifactId: authoring_context.artifactId,
             artifactStatus: authoring_context.artifactStatus,
             workflowStage: authoring_context.workflowStage,
+            _rimContext: streamRimContext ?? undefined,
           }
         : undefined,
       _projectIntelligenceProfile: streamIntelligenceProfile,
+      _feedbackContext: streamFeedbackContext,
     });
 
     if (authoringContextBlock) {
