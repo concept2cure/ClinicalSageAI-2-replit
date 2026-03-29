@@ -33,6 +33,7 @@ import { TopBar } from './TopBar';
 import { SidebarNav } from './SidebarNav';
 import { usePortal, useModuleAccess } from '../core/portalContext';
 import { MODULE_REGISTRY } from '../core/moduleRegistry';
+import { isModuleEnabledByEntitlements, useAnaEntitlements } from '../hooks/useAnaEntitlements';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -101,10 +102,15 @@ export const PortalFrame: React.FC<PortalFrameProps> = ({
   const { hasAccess } = useModuleAccess();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const { enabledModuleIds, hasEntitlementPayload } = useAnaEntitlements();
+
   // Get accessible modules for command palette
   const accessibleModules = useMemo(() => {
-    return experience.modules.filter(moduleId => hasAccess(moduleId));
-  }, [experience.modules, hasAccess]);
+    return experience.modules.filter(moduleId => {
+      if (!hasAccess(moduleId)) return false;
+      return isModuleEnabledByEntitlements(moduleId, hasEntitlementPayload, enabledModuleIds);
+    });
+  }, [experience.modules, hasAccess, enabledModuleIds, hasEntitlementPayload]);
 
   // Define command item type
   interface CommandItem {

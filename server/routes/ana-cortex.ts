@@ -335,10 +335,14 @@ router.get('/observation-terms', async (req, res) => {
 // ── Chat endpoint — connects AnaPersistentPanel to the AI gateway ───────────
 router.post('/chat', async (req, res) => {
   try {
-    const { message, chatMode, context, conversationHistory, preferred_provider } = req.body || {};
+    const { message, chatMode, context, conversationHistory, preferred_provider, source_surface } = req.body || {};
     if (!message || typeof message !== 'string') {
       return res.status(400).json({ error: 'Message is required' });
     }
+    const correlationId =
+      String(req.headers['x-correlation-id'] || '').trim() ||
+      `ana-cortex-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    res.setHeader('x-correlation-id', correlationId);
 
     // Build document-aware system prompt
     // Use canonical AnA personality
@@ -414,6 +418,10 @@ ${context.activeDocumentExcerpt ? `\nDocument excerpt:\n"${context.activeDocumen
         screen: context?.screen,
         project: context?.project,
         activeDocument: context?.activeDocument,
+      },
+      _meta: {
+        correlationId,
+        ...(source_surface ? { sourceSurface: source_surface } : {}),
       },
     });
   } catch (error) {

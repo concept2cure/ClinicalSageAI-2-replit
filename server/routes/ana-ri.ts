@@ -185,6 +185,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       idempotency_key,
       thread_id,
       intent_lens,
+      source_surface,
       user_role,
       project_context,
       document_context,
@@ -194,6 +195,11 @@ router.post('/chat', async (req: Request, res: Response) => {
       preferred_provider,
       useFirecrawl,
     } = req.body;
+
+    const correlationId =
+      String(req.headers['x-correlation-id'] || '').trim() ||
+      `ana-ri-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    res.setHeader('x-correlation-id', correlationId);
 
     // Check idempotency cache — return cached response on client retry
     if (idempotency_key && typeof idempotency_key === 'string') {
@@ -636,6 +642,8 @@ router.post('/chat', async (req: Request, res: Response) => {
       usage: response.usage,
       persistenceFailed,
       _meta: {
+        ...(correlationId && { correlationId }),
+        ...(source_surface ? { sourceSurface: source_surface } : {}),
         ...(persistenceFailed && { persistenceWarning: 'Messages may not have been saved' }),
       },
       evidenceUsage,

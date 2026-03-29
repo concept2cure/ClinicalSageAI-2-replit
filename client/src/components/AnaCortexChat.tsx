@@ -27,6 +27,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { createCorrelationId } from '@/lib/correlation';
 
 interface Message {
   id: string;
@@ -155,11 +156,14 @@ export function AnaCortexChat({ className, initialMessage, placeholder }: AnaCor
     setIsLoading(true);
 
     try {
+      const correlationId = createCorrelationId('ana_cortex_ui');
       const response = await fetch('/api/ana-cortex/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-correlation-id': correlationId },
         body: JSON.stringify({
           message: userMessage.content,
+          idempotency_key: correlationId,
+          source_surface: 'ana_cortex_chat_page',
           context: { screen: 'ana-single-screen', threadId: threadId || undefined },
           conversationHistory: messages.map(m => ({ role: m.role, content: m.content })),
         }),
