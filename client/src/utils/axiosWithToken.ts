@@ -7,7 +7,7 @@ const axiosWithToken = axios.create();
 axiosWithToken.interceptors.request.use(
   config => {
     // Check for token in localStorage
-    const token = localStorage.getItem('auth_token') || 'TS_1'; // Fallback for development
+    const token = localStorage.getItem('auth_token');
 
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;

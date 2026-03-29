@@ -39,13 +39,19 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # Validate critical configuration at startup
+runtime_env = (os.getenv("ENVIRONMENT") or "development").lower()
 if not settings.JWT_SECRET_KEY or settings.JWT_SECRET_KEY == "regintel_development_key":
-    import warnings
-    warnings.warn(
-        "JWT_SECRET_KEY is not set or uses the insecure default. "
-        "Set JWT_SECRET_KEY environment variable with a strong random key.",
-        stacklevel=1,
-    )
+    if runtime_env in {"development", "local", "test"}:
+        import warnings
+        warnings.warn(
+            "JWT_SECRET_KEY is not set or uses the insecure default. "
+            "Set JWT_SECRET_KEY environment variable with a strong random key.",
+            stacklevel=1,
+        )
+    else:
+        raise RuntimeError(
+            "JWT_SECRET_KEY is not set or uses an insecure default in a non-development environment"
+        )
 
 # Ensure directories exist
 for directory in [settings.UPLOAD_DIR, settings.VALIDATION_LOGS_DIR, settings.DEFINE_OUTPUT_DIR]:
