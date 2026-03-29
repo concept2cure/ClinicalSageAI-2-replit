@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @fileoverview Welcome Back Screen
  * @module concept2cure/components/WelcomeBackScreen
@@ -153,30 +152,32 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
   const lastProject = getLastProject();
   const lastConversation = getLastConversation();
 
-  // Load pending items
+  // Load pending items from API
   useEffect(() => {
-    // In production, this would fetch from API
     const loadPendingItems = async () => {
       setIsLoading(true);
       try {
-        // Mock pending items
-        setPendingItems([
-          {
-            id: '1',
-            type: 'task',
-            title: 'Review CER statistical analysis',
-            description: 'XYZ-789 510(k)',
-            dueDate: new Date(Date.now() + 86400000).toISOString(),
-            priority: 'high',
-          },
-          {
-            id: '2',
-            type: 'milestone',
-            title: 'Pre-submission meeting',
-            description: 'ABC-123 IND',
-            dueDate: new Date(Date.now() + 172800000).toISOString(),
-          },
-        ]);
+        const token =
+          sessionStorage.getItem('trialsage_access_token') ||
+          localStorage.getItem('trialsage_access_token');
+        const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+        const res = await fetch('/api/concept2cure/tasks/pending', { headers });
+        if (res.ok) {
+          const json = await res.json();
+          const items = Array.isArray(json.data) ? json.data : [];
+          setPendingItems(items.slice(0, 5).map((t: any) => ({
+            id: String(t.id),
+            type: t.type || 'task',
+            title: t.title || t.name || 'Untitled',
+            description: t.description || t.projectName || undefined,
+            dueDate: t.dueDate || t.deadline || undefined,
+            priority: t.priority || undefined,
+          })));
+        } else {
+          setPendingItems([]);
+        }
+      } catch {
+        setPendingItems([]);
       } finally {
         setIsLoading(false);
       }
@@ -289,13 +290,12 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                       {lastProject.name}
                     </h4>
                     <p className="text-sm text-stone-500 flex items-center gap-4">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
-                        Last active 2 hours ago
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Users className="w-3.5 h-3.5" />3 team members
-                      </span>
+                      {lastProject.updatedAt && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5" />
+                          {getTimeAgo(typeof lastProject.updatedAt === 'string' ? lastProject.updatedAt : lastProject.updatedAt.toISOString())}
+                        </span>
+                      )}
                     </p>
                   </div>
 
@@ -425,7 +425,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
       <footer className="flex-shrink-0 border-t border-stone-200 bg-stone-50/50">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <p className="text-xs text-stone-500">
-            {projects.length} projects • Last login: Today at 9:14 AM
+            {projects.length} project{projects.length !== 1 ? 's' : ''}
           </p>
 
           <button
