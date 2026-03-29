@@ -23,7 +23,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { PreconditionBadges } from './PreconditionBadges';
+import { PreconditionBadges, type Precondition } from './PreconditionBadges';
 import {
   EnterpriseCard,
   CardSection,
@@ -46,13 +46,7 @@ export interface StepCardProps {
     assigneeRole?: string;
     assigneeUserId?: string;
     assigneeName?: string;
-    preconditions?: Array<{
-      id: string;
-      type: string;
-      target: string;
-      passed?: boolean;
-      errorMessage?: string;
-    }>;
+    preconditions?: Precondition[];
     effects?: Array<{
       id: string;
       type: string;
@@ -84,7 +78,7 @@ export interface StepCardProps {
 }
 
 // Step type → icon mapping
-const STEP_TYPE_ICONS: Record<string, React.ElementType> = {
+const STEP_TYPE_ICONS: Record<string, any> = {
   TASK: FileText,
   APPROVAL: Users,
   REVIEW: Users,

@@ -21,6 +21,7 @@ import {
   Layers,
   RotateCcw,
   CheckCircle,
+  Sparkles,
 } from 'lucide-react';
 
 // ── Types ────────────────────────────────────────────────────────────────────

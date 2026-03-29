@@ -391,6 +391,7 @@ export function ProjectTaskBoard({ projectId, projectType, compact }: ProjectTas
       <DataStateWrapper
         data={tasks}
         isLoading={isLoadingTasks}
+        error={null}
         emptyDescription="No tasks yet — generate milestones or create a task to get started"
       >
         {() => (

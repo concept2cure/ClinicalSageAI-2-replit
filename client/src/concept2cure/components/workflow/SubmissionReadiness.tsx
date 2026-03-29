@@ -228,7 +228,7 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
         retry={refetch}
         emptyTitle="No submission sections"
         emptyDescription="No sections found yet. Start by creating documents for your CTD sections, then return here to track submission readiness."
-        loadingComponent={<SkeletonTable rows={6} cols={3} />}
+        loadingComponent={<SkeletonTable rows={6} columns={3} />}
       >
         {(items) => (
           <WorkspaceCanvas>

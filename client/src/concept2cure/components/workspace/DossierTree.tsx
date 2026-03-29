@@ -406,10 +406,9 @@ function DossierNodeRow({
           metrics?.[node.ctdSection] &&
           metrics[node.ctdSection].evidenceCount === 0 &&
           metrics[node.ctdSection].precedentCount === 0 && (
-            <AlertCircle
-              className="w-3 h-3 text-amber-400 shrink-0"
-              title="No evidence or precedents linked"
-            />
+            <span title="No evidence or precedents linked">
+              <AlertCircle className="w-3 h-3 text-amber-400 shrink-0" />
+            </span>
           )}
         {docCount === 0 &&
           metrics?.[node.ctdSection] &&
