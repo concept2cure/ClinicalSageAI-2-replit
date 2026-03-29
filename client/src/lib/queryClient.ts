@@ -19,7 +19,7 @@ export function getCachedOrgId(): string {
   return _cachedOrgId;
 }
 
-function getCachedAuthToken(): string | null {
+export function getCachedAuthToken(): string | null {
   if (_cachedAuthToken === null) {
     _cachedAuthToken =
       localStorage.getItem('token') ||

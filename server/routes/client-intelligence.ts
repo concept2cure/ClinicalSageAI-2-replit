@@ -374,10 +374,10 @@ router.post('/memory/:id/supersede', async (req: Request, res: Response) => {
       : undefined;
 
     await supersedeClientMemoryEntry(entryId, organizationId, supersededById);
-    return res.json({ success: true });
+    return sendSuccess(res);
   } catch (err: any) {
     console.error('[ClientIntelligence] POST /memory/:id/supersede error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -389,10 +389,10 @@ router.delete('/memory/:id', async (req: Request, res: Response) => {
   try {
     const entryId = parseInt(req.params.id, 10);
     await archiveMemoryEntry(entryId);
-    return res.json({ success: true });
+    return sendSuccess(res);
   } catch (err: any) {
     console.error('[ClientIntelligence] DELETE /memory/:id error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -409,10 +409,10 @@ router.get('/context', async (req: Request, res: Response) => {
       : undefined;
 
     const context = await buildClientIntelligenceContext(organizationId, clientWorkspaceId);
-    return res.json({ success: true, context });
+    return sendSuccess(res, { context });
   } catch (err: any) {
     console.error('[ClientIntelligence] GET /context error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -428,10 +428,10 @@ router.get('/project/:projectId/profile', async (req: Request, res: Response) =>
   try {
     const projectId = parseInt(req.params.projectId, 10);
     const profile = await getProjectIntelligence(projectId);
-    return res.json({ success: true, profile });
+    return sendSuccess(res, { profile });
   } catch (err: any) {
     console.error('[ProjectIntelligence] GET profile error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -444,10 +444,10 @@ router.post('/project/:projectId/profile', async (req: Request, res: Response) =
     const { organizationId, userId } = getRequestContext(req);
     const projectId = parseInt(req.params.projectId, 10);
     const profile = await upsertProjectIntelligence(projectId, organizationId, req.body, userId);
-    return res.json({ success: true, profile });
+    return sendSuccess(res, { profile });
   } catch (err: any) {
     console.error('[ProjectIntelligence] POST profile error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -465,7 +465,7 @@ router.post(
       const file = req.file;
 
       if (!file) {
-        return res.status(400).json({ success: false, error: 'No file provided' });
+        return sendError(res, 400, 'No file provided');
       }
 
       // Get or create project profile
@@ -482,10 +482,10 @@ router.post(
         userId
       );
 
-      return res.json({ success: true, result });
+      return sendSuccess(res, { result });
     } catch (err: any) {
       console.error('[ProjectIntelligence] POST documents/upload error:', err);
-      return res.status(500).json({ success: false, error: err.message });
+      return sendError(res, 500, err.message);
     }
   }
 );
@@ -498,13 +498,13 @@ router.get('/project/:projectId/documents', async (req: Request, res: Response) 
   try {
     const projectId = parseInt(req.params.projectId, 10);
     const profile = await getProjectIntelligence(projectId);
-    if (!profile) return res.json({ success: true, documents: [] });
+    if (!profile) return sendSuccess(res, { documents: [] });
 
     const documents = await getProjectIngestedDocuments(profile.id);
-    return res.json({ success: true, documents });
+    return sendSuccess(res, { documents });
   } catch (err: any) {
     console.error('[ProjectIntelligence] GET documents error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -516,14 +516,14 @@ router.get('/project/:projectId/memory', async (req: Request, res: Response) => 
   try {
     const projectId = parseInt(req.params.projectId, 10);
     const profile = await getProjectIntelligence(projectId);
-    if (!profile) return res.json({ success: true, entries: [], totalCount: 0 });
+    if (!profile) return sendSuccess(res, { entries: [], totalCount: 0 });
 
     const category = req.query.category as string | undefined;
     const result = await getProjectMemoryEntries(profile.id, { category });
-    return res.json({ success: true, ...result });
+    return sendSuccess(res, { ...result });
   } catch (err: any) {
     console.error('[ProjectIntelligence] GET memory error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 
@@ -539,11 +539,11 @@ router.get('/project/:projectId/memory/semantic-search', async (req: Request, re
     const query = (req.query.query as string)?.trim();
 
     if (!query) {
-      return res.status(400).json({ success: false, error: 'query is required' });
+      return sendError(res, 400, 'query is required');
     }
 
     const profile = await getProjectIntelligence(projectId);
-    if (!profile) return res.json({ success: true, entries: [], totalCount: 0, query });
+    if (!profile) return sendSuccess(res, { entries: [], totalCount: 0, query });
 
     const category = req.query.category as string | undefined;
     const limit = parseInt(req.query.limit as string, 10) || 10;
@@ -559,10 +559,10 @@ router.get('/project/:projectId/memory/semantic-search', async (req: Request, re
       { category, limit, minSimilarity }
     );
 
-    return res.json({ success: true, ...result });
+    return sendSuccess(res, { ...result });
   } catch (err: any) {
     console.error('[ProjectIntelligence] GET semantic memory error:', err);
-    return res.status(500).json({ success: false, error: err.message });
+    return sendError(res, 500, err.message);
   }
 });
 

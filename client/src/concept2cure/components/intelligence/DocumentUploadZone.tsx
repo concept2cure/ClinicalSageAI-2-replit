@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { queryKeys } from '@/concept2cure/hooks/queryKeys';
+import { getCachedAuthToken, getCachedOrgId } from '@/lib/queryClient';
 import { Upload, FileText, CheckCircle2, AlertCircle, X } from 'lucide-react';
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -107,16 +108,9 @@ export function DocumentUploadZone({
         const formData = new FormData();
         formData.append('file', file);
 
-        // Build auth headers matching the project convention (see queryClient.ts)
-        const authToken =
-          localStorage.getItem('token') ||
-          localStorage.getItem('authToken') ||
-          localStorage.getItem('auth_token') ||
-          '';
-        const organizationId =
-          localStorage.getItem('organizationId') ||
-          localStorage.getItem('currentOrganizationId') ||
-          '1';
+        // Reuse the cached auth helpers from queryClient.ts (single source of truth)
+        const authToken = getCachedAuthToken();
+        const organizationId = getCachedOrgId();
 
         const headers: Record<string, string> = {
           'x-organization-id': organizationId,
