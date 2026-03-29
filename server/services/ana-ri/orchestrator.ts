@@ -11,8 +11,10 @@
 
 import {
   buildAnaRISystemPrompt,
+  getIntelligencePriorities,
   type AnaRIPromptOptions,
   type IntentLens,
+  type RoleIntelligencePriorities,
   type UserRole,
   type WorkstreamContext,
   type WorkstreamHandoff,
@@ -303,9 +305,11 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
   let systemPrompt = buildAnaRISystemPrompt(promptOptions);
 
   // 4b. Inject project intelligence profile (pre-fetched by route layer)
+  //     Role-based priorities filter WHAT intelligence surfaces, not just tone.
   let projectIntelligenceInjected = false;
   if (input._projectIntelligenceProfile) {
-    const profileBlock = formatProjectIntelligenceBlock(input._projectIntelligenceProfile);
+    const rolePriorities = getIntelligencePriorities(appliedRole);
+    const profileBlock = formatProjectIntelligenceBlock(input._projectIntelligenceProfile, rolePriorities);
     if (profileBlock) {
       systemPrompt += '\n\n' + profileBlock;
       projectIntelligenceInjected = true;
@@ -1537,17 +1541,26 @@ export async function extractThreadIntelligence(
 // Project Intelligence Profile — context injection for conversation continuity
 // ─────────────────────────────────────────────────────────────────────────────
 
-const MAX_PROFILE_ITEMS = 5;
-
 /**
  * Format a project intelligence profile into a concise system prompt block.
+ * When priorities are provided, filters and limits content based on the user's role.
  * Returns null if the profile has no meaningful content to inject.
  */
-function formatProjectIntelligenceBlock(profile: ProjectIntelligenceSummary): string | null {
+function formatProjectIntelligenceBlock(
+  profile: ProjectIntelligenceSummary,
+  priorities?: RoleIntelligencePriorities,
+): string | null {
   const parts: string[] = [];
 
+  // Limits — use priorities if provided, otherwise defaults that match prior behavior
+  const maxRisks = priorities?.maxRisks ?? 5;
+  const maxDecisions = priorities?.maxDecisions ?? 5;
+  const maxInsights = priorities?.maxInsights ?? 5;
+  const maxQuestions = priorities?.maxQuestions ?? 5;
+  const header = priorities?.intelligenceHeader ?? 'PROJECT INTELLIGENCE PROFILE';
+
   // Header
-  parts.push('## PROJECT INTELLIGENCE PROFILE');
+  parts.push(`## ${header}`);
   parts.push(`**Project ID:** ${profile.projectId} | **Status:** ${profile.profileStatus}`);
   if (profile.targetIndication || profile.targetPopulation) {
     const meta: string[] = [];
@@ -1556,83 +1569,105 @@ function formatProjectIntelligenceBlock(profile: ProjectIntelligenceSummary): st
     parts.push(meta.join(' | '));
   }
 
+  // Readiness directive (role-gated — prompts AnA to surface readiness proactively)
+  if (priorities?.includeReadiness) {
+    parts.push('');
+    parts.push('### Readiness');
+    parts.push('This user role prioritizes readiness visibility. Proactively surface readiness scores and gap analysis. Use /readiness data when available.');
+  }
+
   // Regulatory Strategy
   parts.push('');
   parts.push('### Regulatory Strategy');
   parts.push(profile.regulatoryStrategy || 'Not yet defined');
 
-  // Known Risks (top 5 by severity)
+  // Known Risks — filtered by riskFocus and limited by maxRisks
   const risks = profile.riskFactors as readonly RiskFactor[];
   if (risks.length > 0) {
     const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
-    const sortedRisks = [...risks].sort((a, b) => {
+    const riskFocusSet = priorities?.riskFocus
+      ? new Set(priorities.riskFocus as string[])
+      : null;
+    const filteredRisks = riskFocusSet
+      ? risks.filter((r) => riskFocusSet.has((r.impact ?? '').toLowerCase()))
+      : [...risks];
+    const sortedRisks = [...filteredRisks].sort((a, b) => {
       const aScore = severityOrder[a.impact?.toLowerCase() ?? ''] ?? 4;
       const bScore = severityOrder[b.impact?.toLowerCase() ?? ''] ?? 4;
       return aScore - bScore;
     });
-    const topRisks = sortedRisks.slice(0, MAX_PROFILE_ITEMS);
-    parts.push('');
-    parts.push(`### Known Risks (${risks.length})`);
-    for (const r of topRisks) {
-      parts.push(`- [${(r.impact || 'unknown').toUpperCase()}] ${r.risk} (likelihood: ${r.likelihood || 'unknown'})`);
-    }
-    if (risks.length > MAX_PROFILE_ITEMS) {
-      parts.push(`- ... and ${risks.length - MAX_PROFILE_ITEMS} more`);
+    const topRisks = sortedRisks.slice(0, maxRisks);
+    if (topRisks.length > 0) {
+      parts.push('');
+      parts.push(`### Known Risks (${filteredRisks.length})`);
+      for (const r of topRisks) {
+        parts.push(`- [${(r.impact || 'unknown').toUpperCase()}] ${r.risk} (likelihood: ${r.likelihood || 'unknown'})`);
+      }
+      if (filteredRisks.length > maxRisks) {
+        parts.push(`- ... and ${filteredRisks.length - maxRisks} more`);
+      }
     }
   }
 
-  // Open Questions (top 5 by priority)
+  // Open Questions — limited by maxQuestions
   const questions = profile.openQuestions as readonly OpenQuestion[];
-  if (questions.length > 0) {
+  if (questions.length > 0 && maxQuestions > 0) {
     const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
     const sortedQuestions = [...questions].sort((a, b) => {
       const aScore = priorityOrder[a.priority?.toLowerCase() ?? ''] ?? 4;
       const bScore = priorityOrder[b.priority?.toLowerCase() ?? ''] ?? 4;
       return aScore - bScore;
     });
-    const topQuestions = sortedQuestions.slice(0, MAX_PROFILE_ITEMS);
+    const topQuestions = sortedQuestions.slice(0, maxQuestions);
     parts.push('');
     parts.push(`### Open Questions (${questions.length})`);
     for (const q of topQuestions) {
       const priorityTag = q.priority ? `[${q.priority.toUpperCase()}] ` : '';
       parts.push(`- ${priorityTag}${q.question}`);
     }
-    if (questions.length > MAX_PROFILE_ITEMS) {
-      parts.push(`- ... and ${questions.length - MAX_PROFILE_ITEMS} more`);
+    if (questions.length > maxQuestions) {
+      parts.push(`- ... and ${questions.length - maxQuestions} more`);
     }
   }
 
-  // Key Decisions (most recent 5)
+  // Key Decisions — limited by maxDecisions
   const decisions = profile.keyDecisions as readonly KeyDecision[];
-  if (decisions.length > 0) {
+  if (decisions.length > 0 && maxDecisions > 0) {
     const sortedDecisions = [...decisions].sort((a, b) => {
       return (b.date || '').localeCompare(a.date || '');
     });
-    const topDecisions = sortedDecisions.slice(0, MAX_PROFILE_ITEMS);
+    const topDecisions = sortedDecisions.slice(0, maxDecisions);
     parts.push('');
     parts.push(`### Key Decisions (${decisions.length})`);
     for (const d of topDecisions) {
       const dateTag = d.date ? ` (${d.date})` : '';
       parts.push(`- ${d.decision}${dateTag} — ${d.rationale}`);
     }
-    if (decisions.length > MAX_PROFILE_ITEMS) {
-      parts.push(`- ... and ${decisions.length - MAX_PROFILE_ITEMS} more`);
+    if (decisions.length > maxDecisions) {
+      parts.push(`- ... and ${decisions.length - maxDecisions} more`);
     }
   }
 
-  // Learned Insights (top 5 by confidence)
+  // Learned Insights — limited by maxInsights
   const insights = profile.learnedInsights as readonly LearnedInsight[];
-  if (insights.length > 0) {
+  if (insights.length > 0 && maxInsights > 0) {
     const sortedInsights = [...insights].sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0));
-    const topInsights = sortedInsights.slice(0, MAX_PROFILE_ITEMS);
+    const topInsights = sortedInsights.slice(0, maxInsights);
     parts.push('');
     parts.push('### Learned Insights');
     for (const i of topInsights) {
       parts.push(`- ${i.insight} (source: ${i.source}, confidence: ${Math.round((i.confidence ?? 0) * 100)}%)`);
     }
-    if (insights.length > MAX_PROFILE_ITEMS) {
-      parts.push(`- ... and ${insights.length - MAX_PROFILE_ITEMS} more`);
+    if (insights.length > maxInsights) {
+      parts.push(`- ... and ${insights.length - maxInsights} more`);
     }
+  }
+
+  // Signal trends (role-gated)
+  if (priorities?.includeSignalTrends) {
+    parts.push('');
+    parts.push('### Signal Trends');
+    parts.push('Signal trend analysis is active for this role. Use /signals to inspect recent patterns.');
   }
 
   // Check if there's any meaningful content beyond the header

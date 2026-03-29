@@ -522,4 +522,107 @@ export function getCorePrompt(): string {
   return ANA_RI_CORE_PROMPT;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Role-Adaptive Intelligence Priorities
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface RoleIntelligencePriorities {
+  /** Which risk severity levels to surface first */
+  riskFocus: ('critical' | 'high' | 'medium' | 'low')[];
+  /** Max risks to show (CEO sees fewer but higher-severity) */
+  maxRisks: number;
+  /** Max decisions to show */
+  maxDecisions: number;
+  /** Max insights to show */
+  maxInsights: number;
+  /** Max open questions */
+  maxQuestions: number;
+  /** Whether to include readiness scores inline */
+  includeReadiness: boolean;
+  /** Whether to include signal trends */
+  includeSignalTrends: boolean;
+  /** Custom intelligence header */
+  intelligenceHeader: string;
+}
+
+const ROLE_INTELLIGENCE_PRIORITIES: Record<UserRole, RoleIntelligencePriorities> = {
+  ceo: {
+    riskFocus: ['critical', 'high'],
+    maxRisks: 3,
+    maxDecisions: 3,
+    maxInsights: 3,
+    maxQuestions: 2,
+    includeReadiness: true,
+    includeSignalTrends: false,
+    intelligenceHeader: 'EXECUTIVE INTELLIGENCE BRIEF',
+  },
+  ra_lead: {
+    riskFocus: ['critical', 'high', 'medium', 'low'],
+    maxRisks: 5,
+    maxDecisions: 5,
+    maxInsights: 5,
+    maxQuestions: 5,
+    includeReadiness: false,
+    includeSignalTrends: true,
+    intelligenceHeader: 'REGULATORY INTELLIGENCE PROFILE',
+  },
+  medical_writer: {
+    riskFocus: ['critical', 'high', 'medium', 'low'],
+    maxRisks: 3,
+    maxDecisions: 3,
+    maxInsights: 5,
+    maxQuestions: 3,
+    includeReadiness: false,
+    includeSignalTrends: false,
+    intelligenceHeader: 'WRITING INTELLIGENCE CONTEXT',
+  },
+  clinical_lead: {
+    riskFocus: ['critical', 'high', 'medium', 'low'],
+    maxRisks: 4,
+    maxDecisions: 4,
+    maxInsights: 4,
+    maxQuestions: 4,
+    includeReadiness: false,
+    includeSignalTrends: true,
+    intelligenceHeader: 'CLINICAL INTELLIGENCE SUMMARY',
+  },
+  cmc_lead: {
+    riskFocus: ['critical', 'high', 'medium', 'low'],
+    maxRisks: 3,
+    maxDecisions: 3,
+    maxInsights: 4,
+    maxQuestions: 3,
+    includeReadiness: false,
+    includeSignalTrends: false,
+    intelligenceHeader: 'CMC INTELLIGENCE CONTEXT',
+  },
+  investor: {
+    riskFocus: ['critical'],
+    maxRisks: 2,
+    maxDecisions: 2,
+    maxInsights: 2,
+    maxQuestions: 1,
+    includeReadiness: true,
+    includeSignalTrends: false,
+    intelligenceHeader: 'INVESTMENT INTELLIGENCE SNAPSHOT',
+  },
+  general: {
+    riskFocus: ['critical', 'high', 'medium', 'low'],
+    maxRisks: 5,
+    maxDecisions: 5,
+    maxInsights: 5,
+    maxQuestions: 5,
+    includeReadiness: false,
+    includeSignalTrends: false,
+    intelligenceHeader: 'PROJECT INTELLIGENCE',
+  },
+};
+
+/**
+ * Get role-adaptive intelligence priorities for filtering what data surfaces.
+ */
+export function getIntelligencePriorities(role: UserRole): RoleIntelligencePriorities {
+  return ROLE_INTELLIGENCE_PRIORITIES[role];
+}
+
 export { ROLE_OVERLAYS, INTENT_OVERLAYS };

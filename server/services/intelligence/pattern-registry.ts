@@ -23,7 +23,7 @@
 // VERSION — bumped when seed patterns change or matching logic changes
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export const PATTERN_REGISTRY_VERSION = '1.1.0';
+export const PATTERN_REGISTRY_VERSION = '1.2.0';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES

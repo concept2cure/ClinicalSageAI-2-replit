@@ -171,6 +171,73 @@ const REGULATORY_STRATEGY: DomainPromptGroup = {
     { id: 'str-pathway', label: 'Compare regulatory pathways for my product' },
     { id: 'str-jurisdictions', label: 'Analyze cross-jurisdictional requirements for my product' },
     { id: 'str-haq', label: 'Prepare for health authority questions' },
+    {
+      id: 'str-agency-deficiency',
+      label: 'Agency-Specific Deficiency Prediction',
+      description: 'Based on our submission type and target agency, predict the most likely deficiency questions. Use RIM pattern intelligence to identify agency-specific reviewer triggers and common rejection patterns.',
+    },
+    {
+      id: 'str-multi-region-timeline',
+      label: 'Multi-Region Timeline Optimization',
+      description: 'Analyze our multi-region submission plan and optimize the sequencing. Which agencies should we file with first? Where can parallel submissions save time? What bridging requirements create dependencies?',
+    },
+    {
+      id: 'str-ich-compliance',
+      label: 'ICH Guideline Compliance Check',
+      description: 'Scan our dossier for ICH guideline compliance. Identify which ICH guidelines apply to our submission type, flag deviations, and note where regional implementations differ from the harmonized standard.',
+    },
+    {
+      id: 'str-pv-readiness',
+      label: 'Pharmacovigilance System Readiness',
+      description: 'Assess our pharmacovigilance system readiness for each target market. Check PSMF (EU), REMS (US), J-RMP (Japan), and RMP requirements. Identify gaps in our safety reporting infrastructure.',
+    },
+  ],
+};
+
+const MULTI_AGENCY_STRATEGY: DomainPromptGroup = {
+  domain: 'multi-agency-strategy',
+  label: 'Multi-Agency Strategy',
+  prompts: [
+    {
+      id: 'mas-ema-scientific-advice',
+      label: 'EMA Scientific Advice Strategy',
+      description: 'Analyze our submission and recommend an EMA Scientific Advice strategy. What questions should we pose to the CHMP? Identify areas where rapporteur concerns are likely and suggest pre-emptive data packages.',
+    },
+    {
+      id: 'mas-pmda-bridging',
+      label: 'PMDA Bridging Study Assessment',
+      description: 'Evaluate whether our clinical data requires bridging studies for PMDA submission. Assess ethnic sensitivity factors, Japanese population exposure requirements, and pharmacokinetic bridging needs per ICH E5.',
+    },
+    {
+      id: 'mas-health-canada',
+      label: 'Health Canada NDS Alignment',
+      description: 'Review our dossier for Health Canada NDS alignment. Check bilingual labelling requirements, Canadian reference product comparison, and C-PHRM pediatric obligations.',
+    },
+    {
+      id: 'mas-china-mrct',
+      label: 'China NMPA MRCT Readiness',
+      description: 'Assess our multi-regional clinical trial data for NMPA submission readiness. Evaluate Chinese site data sufficiency, CDE-format benefit-risk requirements, and data localization compliance.',
+    },
+    {
+      id: 'mas-tga-pathway',
+      label: 'TGA Pathway Selection',
+      description: 'Recommend the optimal TGA registration pathway for our product. Compare CTN vs CTX approaches, evaluate scheduling classification rationale, and identify Australian-specific documentation requirements.',
+    },
+    {
+      id: 'mas-cross-jurisdiction',
+      label: 'Cross-Jurisdiction Harmonization',
+      description: 'Perform a cross-jurisdictional analysis of our submission. Identify where our CTD can be harmonized across FDA, EMA, PMDA, and Health Canada vs. where region-specific modules are needed. Flag ICH guideline deviations by region.',
+    },
+    {
+      id: 'mas-eu-pediatric-pip',
+      label: 'EU Paediatric Investigation Plan',
+      description: 'Evaluate our Paediatric Investigation Plan (PIP) compliance for EMA. Identify gaps in paediatric study obligations, assess waiver eligibility, and recommend PIP modification strategy if needed.',
+    },
+    {
+      id: 'mas-global-labelling',
+      label: 'Global Labelling Strategy',
+      description: 'Develop a global labelling strategy across our target markets. Compare SmPC (EU), USPI (US), Japanese PI, and local labelling requirements. Identify content that can be harmonized vs. region-specific adaptations needed.',
+    },
   ],
 };
 
@@ -247,6 +314,7 @@ export const ALL_DOMAIN_GROUPS: DomainPromptGroup[] = [
   CLINICAL,
   DEVICE,
   REGULATORY_STRATEGY,
+  MULTI_AGENCY_STRATEGY,
   LABELING,
   DOSSIER,
   KNOWLEDGE,
@@ -285,8 +353,8 @@ const CONTEXT_DOMAIN_MAP: Record<string, string[]> = {
   'publish':            ['doc-lifecycle', 'dossier', 'recommendations', 'risk'],
 
   // Strategy / intelligence
-  'strategy':           ['strategy', 'risk', 'recommendations', 'reports'],
-  'intelligence':       ['risk', 'strategy', 'recommendations', 'knowledge', 'context-transparency'],
+  'strategy':           ['strategy', 'multi-agency-strategy', 'risk', 'recommendations', 'reports'],
+  'intelligence':       ['risk', 'strategy', 'multi-agency-strategy', 'recommendations', 'knowledge', 'context-transparency'],
   'foresight':          ['risk', 'strategy', 'recommendations', 'project-status'],
   'precedent':          ['strategy', 'risk', 'authoring', 'recommendations'],
 
