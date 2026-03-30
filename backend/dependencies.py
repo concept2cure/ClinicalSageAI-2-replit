@@ -6,14 +6,16 @@ This module provides the common dependency functions to secure API endpoints.
 """
 
 from fastapi import Depends, HTTPException, status, Header
-from typing import Optional
+from typing import Optional, Union
 from pydantic import BaseModel
 import jwt
 import os
 from datetime import datetime
 
-# JWT secret key from environment variable
-JWT_SECRET = os.environ.get("JWT_SECRET", "trialsage_development_secret")
+# JWT secret key from environment variable (required in all deployed environments)
+JWT_SECRET = os.environ.get("JWT_SECRET")
+if not JWT_SECRET:
+    raise RuntimeError("JWT_SECRET is required and must be configured before startup")
 JWT_ALGORITHM = "HS256"
 
 class User(BaseModel):
@@ -23,7 +25,7 @@ class User(BaseModel):
     email: str
     tenant_id: str
     role: str
-    exp: Optional[datetime] = None
+    exp: Optional[Union[datetime, int, float]] = None
 
 async def get_current_user(authorization: Optional[str] = Header(None)) -> User:
     """
@@ -40,17 +42,6 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> User:
         HTTPException: If the token is invalid or missing
     """
     if not authorization:
-        # During development, allow a default test token for easier testing
-        if os.environ.get("ENVIRONMENT") == "development":
-            return User(
-                id=1,
-                username="trialsage_test",
-                email="test@trialsage.ai",
-                tenant_id="test_tenant",
-                role="admin",
-                exp=datetime.now().timestamp() + 3600
-            )
-        
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authorization header is missing",
@@ -59,17 +50,6 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> User:
     
     # Extract token from "Bearer {token}" format
     if not authorization.startswith("Bearer "):
-        # Special development tokens like "TS_1" for testing
-        if authorization in ["TS_1", "TS_DEV"]:
-            return User(
-                id=1,
-                username="admin",
-                email="admin@trialsage.ai",
-                tenant_id="default_tenant",
-                role="admin",
-                exp=datetime.now().timestamp() + 3600
-            )
-            
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication scheme",
@@ -83,26 +63,18 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> User:
         user = User(**payload)
         
         # Ensure token is not expired
-        if user.exp and datetime.now().timestamp() > user.exp:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Token has expired",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+        if user.exp:
+            now_ts = datetime.now().timestamp()
+            exp_ts = user.exp.timestamp() if isinstance(user.exp, datetime) else float(user.exp)
+            if now_ts > exp_ts:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Token has expired",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
             
         return user
     except jwt.PyJWTError:
-        # During development, allow some pre-defined tokens
-        if token in ["dev_token", "test_token"]:
-            return User(
-                id=1,
-                username="developer",
-                email="dev@trialsage.ai",
-                tenant_id="dev_tenant",
-                role="admin",
-                exp=datetime.now().timestamp() + 3600
-            )
-            
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",

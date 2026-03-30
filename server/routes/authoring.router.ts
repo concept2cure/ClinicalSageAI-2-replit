@@ -15,11 +15,11 @@ let jose: any = null;
 try {
   jose = require('jose');
   if (!jose) {
-    console.error('CRITICAL: JWT library (jose) not available. Authentication is compromised!');
+    throw new Error('JWT verifier library (jose) did not load');
   }
 } catch (e) {
-  console.error('WARNING: JWT library not available - using fallback auth');
-  // Continue for development but warn about security
+  // SECURITY: fail closed at startup if verifier is unavailable.
+  throw new Error('CRITICAL: JWT verifier unavailable. Refusing to start insecurely.');
 }
 
 const router = Router();
@@ -29,8 +29,8 @@ router.use(async (req: Request, res: Response, next: any) => {
   try {
     const auth = req.headers.authorization || (req.headers as any).Authorization;
 
-    // JWT is REQUIRED in production mode
-    if (process.env.NODE_ENV === 'production' && !auth) {
+    // JWT is REQUIRED in all deployed environments
+    if (!auth) {
       return res
         .status(401)
         .json({ error: 'Authentication required for 21 CFR Part 11 compliance' });
@@ -72,13 +72,37 @@ router.use(async (req: Request, res: Response, next: any) => {
     }
   } catch (error) {
     console.error('JWT middleware error:', error);
-    if (process.env.NODE_ENV === 'production') {
-      return res.status(500).json({ error: 'Authentication processing failed' });
-    }
+    return res.status(500).json({ error: 'Authentication processing failed' });
   }
   next();
 });
-const upload = multer({ storage: multer.memoryStorage() });
+const ALLOWED_UPLOAD_MIME_TYPES = new Set([
+  'application/pdf',
+  'text/plain',
+  'application/json',
+  'application/xml',
+  'text/xml',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]);
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: '/tmp',
+    filename: (_req, file, cb) => {
+      const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+      cb(null, `${Date.now()}-${safeName}`);
+    },
+  }),
+  limits: {
+    fileSize: 25 * 1024 * 1024,
+    files: 5,
+  },
+  fileFilter: (_req, file, cb) => {
+    if (!ALLOWED_UPLOAD_MIME_TYPES.has(file.mimetype)) {
+      return cb(new Error('Unsupported file type'));
+    }
+    cb(null, true);
+  },
+});
 
 // Use centralized database pool
 const pool = getPool();

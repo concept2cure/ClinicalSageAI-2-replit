@@ -2,7 +2,7 @@
  * Source Links API Routes
  *
  * Sentence-level source citation management for regulatory document traceability.
- * All endpoints enforce tenant isolation via x-organization-id header.
+ * All endpoints enforce tenant isolation via authenticated server-side context.
  *
  * @module server/routes/sourceLinks
  */
@@ -21,12 +21,20 @@ const logger = createScopedLogger('source-links-routes');
 const router = Router();
 
 /**
- * Extract and validate organizationId from request headers.
+ * Extract and validate organizationId from trusted authenticated context.
  */
 function getOrganizationId(req: Request): number {
-  const orgId = parseInt(req.headers['x-organization-id'] as string, 10);
+  const trustedOrgId =
+    (req as any).user?.organizationId ??
+    (req as any).user?.tenantId ??
+    (req as any).tenantContext?.organizationId;
+  const orgId = parseInt(String(trustedOrgId), 10);
   if (isNaN(orgId) || orgId <= 0) {
-    throw new Error('Missing or invalid x-organization-id header');
+    throw new Error('Missing or invalid authenticated organization context');
+  }
+  const headerOrgId = parseInt(String(req.headers['x-organization-id'] || ''), 10);
+  if (!isNaN(headerOrgId) && headerOrgId !== orgId) {
+    throw new Error('Organization header mismatch with authenticated organization context');
   }
   return orgId;
 }

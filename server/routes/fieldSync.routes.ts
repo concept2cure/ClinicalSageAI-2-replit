@@ -1,10 +1,42 @@
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import { smartFieldLinking } from '../services/SmartFieldLinking.js';
 import { db } from '../db';
 import { fda510kProjects } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 
 const router = express.Router();
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ||
+  'http://localhost:3000,http://localhost:5000,http://127.0.0.1:3000,http://127.0.0.1:5000,https://trialsage.com,https://app.trialsage.com')
+  .split(',')
+  .map(o => o.trim())
+  .filter(Boolean);
+
+function authenticateSse(req: express.Request, res: express.Response): boolean {
+  const auth = req.headers.authorization || '';
+  if (!auth.startsWith('Bearer ')) {
+    res.status(401).json({ success: false, error: 'Bearer token required' });
+    return false;
+  }
+  const jwtSecret = process.env.JWT_SECRET || process.env.AUTH_JWT_SECRET;
+  if (!jwtSecret) {
+    res.status(500).json({ success: false, error: 'Server misconfiguration: missing JWT secret' });
+    return false;
+  }
+  try {
+    jwt.verify(auth.slice(7), jwtSecret);
+    return true;
+  } catch {
+    res.status(401).json({ success: false, error: 'Invalid authentication token' });
+    return false;
+  }
+}
+
+function resolveSseOrigin(req: express.Request): string | null {
+  const origin = (req.headers.origin as string) || '';
+  if (!origin) return null;
+  return allowedOrigins.includes(origin) ? origin : null;
+}
 
 /**
  * Update a field value and synchronize across documents
@@ -115,6 +147,11 @@ router.get('/completeness/:projectId', async (req, res) => {
  * Subscribe to field updates via Server-Sent Events (SSE)
  */
 router.get('/subscribe/:projectId', (req, res) => {
+  if (!authenticateSse(req, res)) return;
+  const allowedOrigin = resolveSseOrigin(req);
+  if ((req.headers.origin as string) && !allowedOrigin) {
+    return res.status(403).json({ success: false, error: 'Origin not allowed' });
+  }
   const { projectId } = req.params;
   
   // Set SSE headers
@@ -122,7 +159,8 @@ router.get('/subscribe/:projectId', (req, res) => {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*'
+    ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin } : {}),
+    'Vary': 'Origin'
   });
   
   // Send initial connection message
