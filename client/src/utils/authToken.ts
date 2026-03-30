@@ -11,7 +11,10 @@
 
 const TOKEN_KEY = 'token';
 const LEGACY_TOKEN_KEYS = ['authToken', 'auth_token'];
+const ORG_ID_KEY = 'organizationId';
+const LEGACY_ORG_ID_KEYS = ['currentOrganizationId'];
 let memoryToken: string | null = null;
+let memoryOrgId: string | null = null;
 
 const canUseSessionStorage = (): boolean => {
   try {
@@ -73,15 +76,37 @@ export const clearAuthToken = (): void => {
 };
 
 /**
+ * Get the current organization ID.
+ * Checks localStorage (the login flow writes here) with fallback to legacy keys.
+ */
+export const getOrgId = (): string => {
+  if (memoryOrgId) return memoryOrgId;
+
+  for (const key of [ORG_ID_KEY, ...LEGACY_ORG_ID_KEYS]) {
+    const orgId = localStorage.getItem(key);
+    if (orgId) {
+      memoryOrgId = orgId;
+      return orgId;
+    }
+  }
+  return '1';
+};
+
+export const setOrgId = (orgId: string | number): void => {
+  const orgStr = String(orgId);
+  memoryOrgId = orgStr;
+  localStorage.setItem(ORG_ID_KEY, orgStr);
+  // Sync legacy key for backward compat
+  localStorage.setItem('currentOrganizationId', orgStr);
+};
+
+/**
  * Get auth headers for raw fetch calls.
  * Centralizes both token and org ID retrieval.
  */
 export const getAuthHeaders = (): Record<string, string> => {
   const token = getAuthToken() || '';
-  const orgId =
-    localStorage.getItem('organizationId') ||
-    localStorage.getItem('currentOrganizationId') ||
-    '1';
+  const orgId = getOrgId();
   return {
     'Content-Type': 'application/json',
     'x-organization-id': orgId,

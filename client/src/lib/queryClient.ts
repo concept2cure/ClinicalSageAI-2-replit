@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
-import { getAuthToken } from '@/utils/authToken';
+import { getAuthToken, getOrgId } from '@/utils/authToken';
 
 export type ApiRequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
@@ -7,34 +7,18 @@ interface GetQueryFnOptions {
   on401?: 'throw' | 'returnNull';
 }
 
-// Cache org ID to avoid repeated localStorage lookups on every API call.
-// Auth token is now delegated to the canonical authToken module.
-let _cachedOrgId: string | null = null;
-
-function getCachedOrgId(): string {
-  if (!_cachedOrgId) {
-    _cachedOrgId =
-      localStorage.getItem('organizationId') ||
-      localStorage.getItem('currentOrganizationId') ||
-      '1';
-  }
-  return _cachedOrgId;
-}
-
 function getCachedAuthToken(): string | null {
   return getAuthToken();
 }
 
-// Invalidate cache when localStorage changes (login/logout/org switch)
-if (typeof window !== 'undefined') {
-  window.addEventListener('storage', () => {
-    _cachedOrgId = null;
-  });
+function getCachedOrgId(): string {
+  return getOrgId();
 }
 
 /** Force-refresh the cached org/auth values (call after login or org switch). */
 export function invalidateApiCache() {
-  _cachedOrgId = null;
+  // No-op — auth state is now managed by authToken module.
+  // Kept for backward compatibility with callers.
 }
 
 export const apiRequest = async (
