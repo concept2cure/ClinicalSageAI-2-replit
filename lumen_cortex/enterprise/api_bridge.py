@@ -24,6 +24,8 @@ SECURITY:
 from __future__ import annotations
 
 import asyncio
+import base64
+import binascii
 import hashlib
 import hmac
 import json
@@ -63,8 +65,11 @@ from .exceptions import (
     LumenCortexError, ExtractionError, CitationError,
     ComplianceError, GraphError
 )
+from .config import get_settings
+from .metrics import MetricRegistry
 
 logger = logging.getLogger("LumenCortex.API")
+settings = get_settings()
 
 # ═══════════════════════════════════════════════════════════════════════════
 #                          REQUEST/RESPONSE MODELS
@@ -196,40 +201,119 @@ class ErrorResponse(BaseModel):
 #                          AUTHENTICATION & SECURITY
 # ═══════════════════════════════════════════════════════════════════════════
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
-# Simple JWT-like token validation (in production use proper JWT library)
+def _b64url_decode(raw: str) -> bytes:
+    """Decode base64-url data with optional padding."""
+    padding = '=' * (-len(raw) % 4)
+    return base64.urlsafe_b64decode(raw + padding)
+
+
+def _get_bridge_jwt_secret() -> str:
+    """Resolve bridge JWT secret with explicit env override."""
+    return os.getenv("LUMEN_API_BRIDGE_JWT_SECRET", "") or settings.jwt.secret_key.get_secret_value()
+
+
+def _decode_bearer_token(token: str) -> Dict[str, Any]:
+    """Decode and validate HS256 JWT for enterprise bridge access."""
+    secret_value = _get_bridge_jwt_secret()
+    if not secret_value:
+        raise ValueError("bridge JWT secret is not configured")
+
+    parts = token.split('.')
+    if len(parts) != 3:
+        raise ValueError("invalid token format")
+
+    header_b64, payload_b64, signature_b64 = parts
+    header = json.loads(_b64url_decode(header_b64).decode('utf-8'))
+    payload = json.loads(_b64url_decode(payload_b64).decode('utf-8'))
+    signature = _b64url_decode(signature_b64)
+
+    alg = header.get("alg")
+    if alg != "HS256":
+        raise ValueError("only HS256 is supported by bridge")
+
+    signing_input = f"{header_b64}.{payload_b64}".encode("utf-8")
+    secret = secret_value.encode("utf-8")
+    expected = hmac.new(secret, signing_input, hashlib.sha256).digest()
+    if not hmac.compare_digest(signature, expected):
+        raise ValueError("invalid token signature")
+
+    now = int(time.time())
+    exp = int(payload.get("exp", 0))
+    if exp <= now:
+        raise ValueError("token expired")
+
+    nbf = payload.get("nbf")
+    if nbf is not None and int(nbf) > now:
+        raise ValueError("token is not active yet")
+
+    expected_issuer = os.getenv("LUMEN_API_BRIDGE_JWT_ISSUER", settings.jwt.issuer)
+    expected_audience = os.getenv("LUMEN_API_BRIDGE_JWT_AUDIENCE", settings.jwt.audience)
+    if payload.get("iss") and payload.get("iss") != expected_issuer:
+        raise ValueError("invalid token issuer")
+
+    aud = payload.get("aud")
+    if aud:
+        audience_values = aud if isinstance(aud, list) else [aud]
+        if expected_audience not in audience_values:
+            raise ValueError("invalid token audience")
+
+    if not payload.get("sub"):
+        raise ValueError("missing subject")
+
+    return payload
+
+
 def decode_token(token: str) -> Dict[str, Any]:
-    """Decode and validate auth token"""
+    """Decode and validate HS256 JWT for enterprise bridge access."""
     try:
-        # In production: use jose or pyjwt for proper JWT validation
-        # This is a simplified version for demonstration
-        parts = token.split('.')
-        if len(parts) != 3:
-            raise ValueError("Invalid token format")
-
-        # Decode payload (base64)
-        import base64
-        payload = json.loads(base64.b64decode(parts[1] + '==').decode())
-
-        # Check expiration
-        if payload.get('exp', 0) < time.time():
-            raise ValueError("Token expired")
-
-        return payload
-    except Exception as e:
+        return _decode_bearer_token(token)
+    except (ValueError, json.JSONDecodeError, binascii.Error) as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid authentication token: {str(e)}"
+            detail=f"Authentication failed: {str(e)}"
         )
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
 ) -> Dict[str, Any]:
     """Extract user from auth token"""
+    static_service_token = (
+        os.getenv("LUMEN_CORTEX_ENTERPRISE_BRIDGE_TOKEN", "")
+        or os.getenv("LUMEN_API_BRIDGE_BEARER_TOKEN", "")
+    )
+    static_fallback_enabled = (
+        os.getenv("LUMEN_API_BRIDGE_ALLOW_STATIC_TOKEN", "false").lower() == "true"
+    )
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authorization bearer token"
+        )
+
     token = credentials.credentials
-    return decode_token(token)
+    if (
+        static_fallback_enabled
+        and static_service_token
+        and hmac.compare_digest(token, static_service_token)
+    ):
+        static_role = os.getenv("LUMEN_API_BRIDGE_STATIC_ROLE", "analyst")
+        return {
+            "sub": "ana-control-plane",
+            "role": static_role,
+            "iss": "bridge-static-token",
+        }
+
+    payload = decode_token(token)
+    role = payload.get("role")
+    if not role or not isinstance(role, str):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Token missing required role claim"
+        )
+    return payload
 
 
 async def get_compliance_context(
@@ -367,14 +451,74 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=settings.cors.allow_origins,
+    allow_credentials=settings.cors.allow_credentials,
+    allow_methods=settings.cors.allow_methods,
+    allow_headers=settings.cors.allow_headers,
+    max_age=settings.cors.max_age,
 )
 
 
 # Request ID middleware
+metrics_registry = MetricRegistry()
+api_requests_total = metrics_registry.counter(
+    "enterprise_api_requests_total",
+    "Total enterprise API requests",
+    ["method", "path", "status"]
+)
+api_request_latency_seconds = metrics_registry.histogram(
+    "enterprise_api_request_latency_seconds",
+    "Enterprise API request latency in seconds",
+    ["method", "path", "status"]
+)
+
+
+def _is_public_route(path: str) -> bool:
+    return path.startswith("/api/v2/health") or path.startswith("/api/v2/version")
+
+
+def _verify_request_signature(request: Request, body: bytes) -> None:
+    signing_secret = os.getenv("LUMEN_API_BRIDGE_HMAC_SECRET", "")
+    if not signing_secret:
+        return
+
+    if request.method in {"GET", "HEAD", "OPTIONS"}:
+        return
+
+    if _is_public_route(request.url.path):
+        return
+
+    timestamp = request.headers.get("x-lumen-timestamp")
+    signature = request.headers.get("x-lumen-signature")
+    if not timestamp or not signature:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing request signature headers"
+        )
+
+    try:
+        ts = int(timestamp)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid signature timestamp"
+        )
+
+    if abs(int(time.time()) - ts) > 300:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Signature timestamp outside allowed window"
+        )
+
+    message = f"{request.method}|{request.url.path}|{timestamp}|".encode("utf-8") + body
+    expected = hmac.new(signing_secret.encode("utf-8"), message, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(signature, expected):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid request signature"
+        )
+
+
 @app.middleware("http")
 async def add_request_id(request: Request, call_next):
     """Add unique request ID to each request"""
@@ -393,10 +537,31 @@ async def add_request_id(request: Request, call_next):
 async def audit_log(request: Request, call_next):
     """Log all API requests for audit trail"""
     start_time = time.time()
-
-    response = await call_next(request)
+    response: Response
+    try:
+        body = await request.body()
+        _verify_request_signature(request, body)
+        response = await call_next(request)
+    except HTTPException as exc:
+        response = JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "error": exc.detail,
+                "error_code": "REQUEST_REJECTED",
+                "request_id": getattr(request.state, 'request_id', 'unknown'),
+                "timestamp": datetime.utcnow().isoformat(),
+            },
+        )
 
     processing_time = (time.time() - start_time) * 1000
+    latency_seconds = processing_time / 1000.0
+    labels = {
+        "method": request.method,
+        "path": str(request.url.path),
+        "status": str(response.status_code)
+    }
+    api_requests_total.inc(labels=labels)
+    api_request_latency_seconds.observe(latency_seconds, labels=labels)
 
     # Log to audit trail
     if audit_trail:
@@ -429,6 +594,13 @@ async def health_check():
             "citation_enforcer": "ready" if citation_enforcer else "unavailable",
             "graph_rag": "ready" if graph_rag else "unavailable",
             "worm_storage": "ready" if worm_storage else "unavailable",
+            "request_signing": "enabled" if os.getenv("LUMEN_API_BRIDGE_HMAC_SECRET") else "disabled",
+            "static_token_fallback": (
+                "enabled"
+                if os.getenv("LUMEN_API_BRIDGE_ALLOW_STATIC_TOKEN", "false").lower() == "true"
+                else "disabled"
+            ),
+            "jwt_auth": "enabled" if _get_bridge_jwt_secret() else "disabled",
         }
     )
 
@@ -447,6 +619,34 @@ async def get_version():
             "hierarchical_graphrag",
             "cryptographic_compliance"
         ]
+    }
+
+
+@app.get("/api/v2/metrics")
+async def get_metrics(
+    context: ComplianceContext = Depends(get_compliance_context),
+):
+    """Expose enterprise bridge metrics as JSON."""
+    if not context.has_permission(Permission.AUDIT):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User lacks audit permission"
+        )
+    values = metrics_registry.collect()
+    return {
+        "metric_count": len(values),
+        "metrics": [
+            {
+                "name": metric.name,
+                "type": metric.type.value,
+                "labels": metric.labels,
+                "timestamp": metric.timestamp,
+                "value": getattr(metric, "value", None),
+                "count": getattr(metric, "count", None),
+                "sum": getattr(metric, "sum", None),
+            }
+            for metric in values
+        ],
     }
 
 
