@@ -4076,6 +4076,15 @@ try {
   console.error('❌ Failed to mount external evidence routes:', error);
 }
 
+// Mount Authoring Router (document workflows, reviews, tracked changes)
+try {
+  const authoringRouterModule = await import('./routes/authoring.router');
+  app.use('/api/authoring', authoringRouterModule.default);
+  console.log('✅ Authoring Router mounted (/api/authoring)');
+} catch (error) {
+  console.error('❌ Failed to mount Authoring Router:', error);
+}
+
 // Mount Authoring Actions routes (Wave 1 + Wave 2 AnA-first authoring actions)
 try {
   const authoringActionsModule = await import('./routes/authoring-actions');
@@ -8001,6 +8010,15 @@ async function startServer() {
     console.log('[Socket.io] Real-time server initialized');
   } catch (err: any) {
     console.warn('[Socket.io] Failed to initialize (non-blocking):', err?.message);
+  }
+
+  // Initialize Automation Engine — scheduled jobs (Bull queue + Redis)
+  try {
+    const { initScheduledJobs } = await import('./services/automation/scheduled-jobs.js');
+    await initScheduledJobs();
+    console.log('✅ Automation engine scheduled jobs initialized');
+  } catch (err: any) {
+    console.warn('⚠️ Automation engine initialization failed (non-blocking):', err?.message);
   }
 
   // Initialize Hocuspocus Y.js CRDT collaboration server

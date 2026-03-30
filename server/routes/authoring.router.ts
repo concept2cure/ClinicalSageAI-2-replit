@@ -5030,4 +5030,184 @@ router.get('/ai/compliance-scores/:documentId', async (req: Request, res: Respon
   }
 });
 
+// ── Tracked Change Decisions (persist accept/reject) ──────────────────────────
+
+const ensureTrackedChangeDecisionsTable = async () => {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS authoring_tracked_change_decisions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      artifact_id VARCHAR(255) NOT NULL,
+      change_id VARCHAR(255) NOT NULL,
+      decision VARCHAR(20) NOT NULL CHECK (decision IN ('accept', 'reject')),
+      user_id VARCHAR(255) NOT NULL,
+      user_name VARCHAR(255),
+      tenant_id INTEGER NOT NULL,
+      decided_at TIMESTAMP DEFAULT NOW(),
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_tracked_change_decisions_artifact
+    ON authoring_tracked_change_decisions (artifact_id, tenant_id)
+  `);
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_tracked_change_decisions_unique
+    ON authoring_tracked_change_decisions (artifact_id, change_id, tenant_id)
+  `);
+};
+
+let trackedChangeTableReady = false;
+
+// POST /api/authoring/documents/:id/tracked-change-decisions
+// Persist a single accept/reject decision for a tracked change
+router.post('/documents/:id/tracked-change-decisions', async (req: Request, res: Response) => {
+  try {
+    if (!trackedChangeTableReady) {
+      await ensureTrackedChangeDecisionsTable();
+      trackedChangeTableReady = true;
+    }
+
+    const { id: artifactId } = req.params;
+    const { changeId, decision } = req.body;
+    const tenantId = getTenantId(req);
+    const userId = (req.headers['x-user-id'] as string) || 'unknown';
+    const userName = (req.headers['x-user-name'] as string) || 'Unknown';
+
+    if (!changeId || !decision) {
+      return res.status(400).json({
+        success: false,
+        error: 'changeId and decision (accept|reject) are required',
+      });
+    }
+
+    if (decision !== 'accept' && decision !== 'reject') {
+      return res.status(400).json({
+        success: false,
+        error: 'decision must be "accept" or "reject"',
+      });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO authoring_tracked_change_decisions
+         (artifact_id, change_id, decision, user_id, user_name, tenant_id)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (artifact_id, change_id, tenant_id)
+       DO UPDATE SET decision = $3, user_id = $4, user_name = $5, decided_at = NOW()
+       RETURNING *`,
+      [artifactId, changeId, decision, userId, userName, tenantId]
+    );
+
+    // Audit trail for regulatory compliance
+    await createAuditEvent(
+      artifactId,
+      'tracked_change_decision',
+      userName,
+      { changeId, decision },
+      tenantId
+    );
+
+    res.json({ success: true, decision: result.rows[0] });
+  } catch (error) {
+    console.error('Error persisting tracked change decision:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to persist tracked change decision',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+// POST /api/authoring/documents/:id/tracked-change-decisions/bulk
+// Persist accept/reject for all pending changes at once
+router.post('/documents/:id/tracked-change-decisions/bulk', async (req: Request, res: Response) => {
+  try {
+    if (!trackedChangeTableReady) {
+      await ensureTrackedChangeDecisionsTable();
+      trackedChangeTableReady = true;
+    }
+
+    const { id: artifactId } = req.params;
+    const { changeIds, decision } = req.body;
+    const tenantId = getTenantId(req);
+    const userId = (req.headers['x-user-id'] as string) || 'unknown';
+    const userName = (req.headers['x-user-name'] as string) || 'Unknown';
+
+    if (!Array.isArray(changeIds) || changeIds.length === 0 || !decision) {
+      return res.status(400).json({
+        success: false,
+        error: 'changeIds (array) and decision (accept|reject) are required',
+      });
+    }
+
+    if (decision !== 'accept' && decision !== 'reject') {
+      return res.status(400).json({
+        success: false,
+        error: 'decision must be "accept" or "reject"',
+      });
+    }
+
+    // Upsert each decision
+    const results = [];
+    for (const changeId of changeIds) {
+      const result = await pool.query(
+        `INSERT INTO authoring_tracked_change_decisions
+           (artifact_id, change_id, decision, user_id, user_name, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (artifact_id, change_id, tenant_id)
+         DO UPDATE SET decision = $3, user_id = $4, user_name = $5, decided_at = NOW()
+         RETURNING *`,
+        [artifactId, changeId, decision, userId, userName, tenantId]
+      );
+      results.push(result.rows[0]);
+    }
+
+    // Single audit event for bulk action
+    await createAuditEvent(
+      artifactId,
+      'tracked_change_bulk_decision',
+      userName,
+      { changeIds, decision, count: changeIds.length },
+      tenantId
+    );
+
+    res.json({ success: true, decisions: results, count: results.length });
+  } catch (error) {
+    console.error('Error persisting bulk tracked change decisions:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to persist bulk tracked change decisions',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+// GET /api/authoring/documents/:id/tracked-change-decisions
+// Fetch all persisted decisions for an artifact
+router.get('/documents/:id/tracked-change-decisions', async (req: Request, res: Response) => {
+  try {
+    if (!trackedChangeTableReady) {
+      await ensureTrackedChangeDecisionsTable();
+      trackedChangeTableReady = true;
+    }
+
+    const { id: artifactId } = req.params;
+    const tenantId = getTenantId(req);
+
+    const result = await pool.query(
+      `SELECT * FROM authoring_tracked_change_decisions
+       WHERE artifact_id = $1 AND tenant_id = $2
+       ORDER BY decided_at DESC`,
+      [artifactId, tenantId]
+    );
+
+    res.json({ success: true, decisions: result.rows });
+  } catch (error) {
+    console.error('Error fetching tracked change decisions:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch tracked change decisions',
+    });
+  }
+});
+
 export default router;

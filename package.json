@@ -88,6 +88,7 @@
     "@aws-sdk/s3-request-presigner": "^3.758.0",
     "@google/generative-ai": "0.24.1",
     "@hocuspocus/provider": "3.4.4",
+    "@hocuspocus/server": "3.4.4",
     "@hookform/resolvers": "^3.9.1",
     "@jridgewell/trace-mapping": "^0.3.25",
     "@langchain/community": "^0.3.40",

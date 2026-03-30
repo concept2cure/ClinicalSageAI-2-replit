@@ -87,6 +87,9 @@ export interface DataConnector {
   /** Fetch a specific document/resource by ID */
   fetch(resourceId: string): Promise<ConnectorDocument>;
 
+  /** Upload a document to the connector destination */
+  upload?(file: Buffer, fileName: string, mimeType: string, folderPath?: string): Promise<{ id: string; url?: string }>;
+
   /** Set credentials for authenticated connectors */
   authenticate(credentials: ConnectorCredentials): Promise<void>;
 }

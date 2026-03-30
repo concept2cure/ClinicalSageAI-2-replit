@@ -175,6 +175,29 @@ export class OneDriveConnector implements DataConnector {
       retrievedAt: new Date(),
     };
   }
+  async upload(file: Buffer, fileName: string, mimeType: string, folderPath?: string): Promise<{ id: string; url?: string }> {
+    await this.refreshToken();
+    const uploadPath = folderPath
+      ? `${this.drivePath}/root:/${folderPath.replace(/^\/+/, '')}/${fileName}:/content`
+      : `${this.drivePath}/root:/${fileName}:/content`;
+
+    const res = await fetch(`${GRAPH_BASE}${uploadPath}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${this.accessToken}`,
+        'Content-Type': mimeType,
+      },
+      body: file,
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      throw new Error(`OneDrive upload failed: ${res.status} ${errText.slice(0, 200)}`);
+    }
+
+    const data = await res.json() as Record<string, unknown>;
+    return { id: String(data.id), url: String(data.webUrl || '') };
+  }
 }
 
 function formatBytes(bytes: number): string {

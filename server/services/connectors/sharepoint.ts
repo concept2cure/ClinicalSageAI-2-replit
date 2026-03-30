@@ -235,6 +235,31 @@ export class SharePointConnector implements DataConnector {
     await this.getAccessToken();
   }
 
+  async upload(file: Buffer, fileName: string, mimeType: string, folderPath?: string): Promise<{ id: string; url?: string }> {
+    const token = await this.getAccessToken();
+    // Upload to the root drive's specified folder, or root if no folder
+    const uploadPath = folderPath
+      ? `/me/drive/root:/${folderPath.replace(/^\/+/, '')}/${fileName}:/content`
+      : `/me/drive/root:/${fileName}:/content`;
+
+    const res = await fetch(`${SharePointConnector.GRAPH_BASE}${uploadPath}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': mimeType,
+      },
+      body: file,
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      throw new Error(`SharePoint upload failed: ${res.status} ${errText.slice(0, 200)}`);
+    }
+
+    const data = await res.json() as GraphDriveItem;
+    return { id: data.id, url: data.webUrl };
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
   // SharePoint-specific operations
   // ─────────────────────────────────────────────────────────────────────────

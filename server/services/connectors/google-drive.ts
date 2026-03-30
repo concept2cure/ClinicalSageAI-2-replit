@@ -58,7 +58,7 @@ export class GoogleDriveConnector implements DataConnector {
     const header = { alg: 'RS256', typ: 'JWT' };
     const payload: Record<string, unknown> = {
       iss: this.clientEmail,
-      scope: 'https://www.googleapis.com/auth/drive.readonly',
+      scope: 'https://www.googleapis.com/auth/drive',
       aud: TOKEN_URL,
       iat: now,
       exp: now + 3600,
@@ -214,6 +214,45 @@ export class GoogleDriveConnector implements DataConnector {
       url: String(meta.webViewLink || ''),
       retrievedAt: new Date(),
     };
+  }
+  async upload(file: Buffer, fileName: string, mimeType: string, folderPath?: string): Promise<{ id: string; url?: string }> {
+    await this.refreshToken();
+
+    // Google Drive uses multipart upload: metadata + content
+    const boundary = `----c2c-upload-${Date.now()}`;
+    const metadata: Record<string, unknown> = {
+      name: fileName,
+      mimeType,
+    };
+
+    // If folderPath provided, treat it as a parent folder ID
+    if (folderPath) {
+      metadata.parents = [folderPath];
+    }
+
+    const metaJson = JSON.stringify(metadata);
+    const multipartBody = Buffer.concat([
+      Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metaJson}\r\n--${boundary}\r\nContent-Type: ${mimeType}\r\n\r\n`),
+      file,
+      Buffer.from(`\r\n--${boundary}--`),
+    ]);
+
+    const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.accessToken}`,
+        'Content-Type': `multipart/related; boundary=${boundary}`,
+      },
+      body: multipartBody,
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      throw new Error(`Google Drive upload failed: ${res.status} ${errText.slice(0, 200)}`);
+    }
+
+    const data = await res.json() as Record<string, unknown>;
+    return { id: String(data.id), url: String(data.webViewLink || '') };
   }
 }
 

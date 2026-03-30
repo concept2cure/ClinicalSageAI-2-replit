@@ -113,4 +113,61 @@ export class VeevaVaultConnector implements DataConnector {
       throw new Error('Veeva Vault requires username/password or session ID');
     }
   }
+
+  async upload(file: Buffer, fileName: string, mimeType: string, folderPath?: string): Promise<{ id: string; url?: string }> {
+    if (!this.baseUrl || !this.sessionId) {
+      throw new Error('Veeva Vault not authenticated — call authenticate() first');
+    }
+
+    // Veeva Vault document creation: POST /api/v24.0/objects/documents with multipart
+    const boundary = `----c2c-veeva-${Date.now()}`;
+    const docType = folderPath || 'Regulatory';
+
+    const metaPart = [
+      `--${boundary}`,
+      'Content-Disposition: form-data; name="file"; filename="' + fileName + '"',
+      `Content-Type: ${mimeType}`,
+      '',
+    ].join('\r\n');
+
+    const fieldsPart = [
+      `--${boundary}`,
+      'Content-Disposition: form-data; name="name__v"',
+      '',
+      fileName.replace(/\.[^.]+$/, ''),
+      `--${boundary}`,
+      'Content-Disposition: form-data; name="type__v"',
+      '',
+      docType,
+      `--${boundary}`,
+      'Content-Disposition: form-data; name="lifecycle__v"',
+      '',
+      'General Lifecycle',
+    ].join('\r\n');
+
+    const body = Buffer.concat([
+      Buffer.from(fieldsPart + '\r\n'),
+      Buffer.from(metaPart + '\r\n'),
+      file,
+      Buffer.from(`\r\n--${boundary}--`),
+    ]);
+
+    const res = await fetch(`${this.baseUrl}/api/v24.0/objects/documents`, {
+      method: 'POST',
+      headers: {
+        Authorization: this.sessionId,
+        'Content-Type': `multipart/form-data; boundary=${boundary}`,
+      },
+      body,
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      throw new Error(`Veeva Vault upload failed: ${res.status} ${errText.slice(0, 200)}`);
+    }
+
+    const data = await res.json() as any;
+    const docId = data.id || data.document_id__v || 'unknown';
+    return { id: String(docId), url: `${this.baseUrl}/ui/#/document/${docId}` };
+  }
 }

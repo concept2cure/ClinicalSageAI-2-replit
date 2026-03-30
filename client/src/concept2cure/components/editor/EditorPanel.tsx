@@ -3459,19 +3459,49 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               setTrackedChanges(prev =>
                 prev.map(c => (c.id === changeId ? { ...c, accepted: true } : c))
               );
+              // Persist decision to server
+              if (activeArtifact?.id) {
+                apiRequest('POST', `/api/authoring/documents/${activeArtifact.id}/tracked-change-decisions`, {
+                  changeId,
+                  decision: 'accept',
+                }).catch(() => pushToast('Failed to persist change decision', 'error'));
+              }
             }}
             onRejectChange={changeId => {
               setTrackedChanges(prev =>
                 prev.map(c => (c.id === changeId ? { ...c, rejected: true } : c))
               );
+              // Persist decision to server
+              if (activeArtifact?.id) {
+                apiRequest('POST', `/api/authoring/documents/${activeArtifact.id}/tracked-change-decisions`, {
+                  changeId,
+                  decision: 'reject',
+                }).catch(() => pushToast('Failed to persist change decision', 'error'));
+              }
             }}
             onAcceptAll={() => {
+              const pendingIds = trackedChanges.filter(c => !c.accepted && !c.rejected).map(c => c.id);
               setTrackedChanges(prev => prev.map(c => ({ ...c, accepted: true })));
               pushToast('All changes accepted', 'success');
+              // Persist bulk decision to server
+              if (activeArtifact?.id && pendingIds.length > 0) {
+                apiRequest('POST', `/api/authoring/documents/${activeArtifact.id}/tracked-change-decisions/bulk`, {
+                  changeIds: pendingIds,
+                  decision: 'accept',
+                }).catch(() => pushToast('Failed to persist bulk decision', 'error'));
+              }
             }}
             onRejectAll={() => {
+              const pendingIds = trackedChanges.filter(c => !c.accepted && !c.rejected).map(c => c.id);
               setTrackedChanges(prev => prev.map(c => ({ ...c, rejected: true })));
               pushToast('All changes rejected', 'info');
+              // Persist bulk decision to server
+              if (activeArtifact?.id && pendingIds.length > 0) {
+                apiRequest('POST', `/api/authoring/documents/${activeArtifact.id}/tracked-change-decisions/bulk`, {
+                  changeIds: pendingIds,
+                  decision: 'reject',
+                }).catch(() => pushToast('Failed to persist bulk decision', 'error'));
+              }
             }}
             onCompleteReview={async (status, reviewComments) => {
               // Map review outcome to artifact status
