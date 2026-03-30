@@ -34,7 +34,13 @@ const createTaskSchema = z.object({
 
 // Get all projects
 router.get('/projects', asyncHandler(async (req: Request, res: Response) => {
-    const result = await query(`
+    const rawLimit = req.query.limit as string | undefined;
+    const rawOffset = req.query.offset as string | undefined;
+    const parsedLimit = rawLimit ? Number.parseInt(rawLimit, 10) : null;
+    const parsedOffset = rawOffset ? Number.parseInt(rawOffset, 10) : 0;
+    const limit = parsedLimit && parsedLimit > 0 ? Math.min(parsedLimit, 200) : null;
+    const offset = parsedOffset > 0 ? parsedOffset : 0;
+    let queryText = `
       SELECT
         p.id, p.name, p.description, p.submission_type, p.status, p.stage,
         p.target_agency, p.target_date, p.priority, p.completion_percentage,
@@ -46,7 +52,17 @@ router.get('/projects', asyncHandler(async (req: Request, res: Response) => {
       LEFT JOIN submission_tasks t ON p.id = t.project_id
       GROUP BY p.id
       ORDER BY p.created_at DESC
-    `);
+    `;
+
+    const params: any[] = [];
+    if (limit !== null) {
+      params.push(limit);
+      queryText += ` LIMIT $${params.length}`;
+      params.push(offset);
+      queryText += ` OFFSET $${params.length}`;
+    }
+
+    const result = await query(queryText, params);
 
     const projects = result.rows.map(p => ({
       ...p,
@@ -58,9 +74,18 @@ router.get('/projects', asyncHandler(async (req: Request, res: Response) => {
       completionPercentage: p.completion_percentage || 0,
     }));
 
+    const totalResult = await query('SELECT COUNT(*)::int AS total FROM submission_projects');
+    const total = Number(totalResult.rows[0]?.total ?? 0);
+
     res.json({
       success: true,
       data: projects,
+      meta: {
+        limit,
+        offset,
+        count: projects.length,
+        total,
+      },
     });
 }));
 
@@ -115,6 +140,12 @@ router.post('/projects', asyncHandler(async (req: Request, res: Response) => {
 // Get tasks for a project or all tasks
 router.get('/tasks', asyncHandler(async (req: Request, res: Response) => {
     const projectId = req.query.projectId;
+    const rawLimit = req.query.limit as string | undefined;
+    const rawOffset = req.query.offset as string | undefined;
+    const parsedLimit = rawLimit ? Number.parseInt(rawLimit, 10) : null;
+    const parsedOffset = rawOffset ? Number.parseInt(rawOffset, 10) : 0;
+    const limit = parsedLimit && parsedLimit > 0 ? Math.min(parsedLimit, 500) : null;
+    const offset = parsedOffset > 0 ? parsedOffset : 0;
 
     let queryText = `
       SELECT t.id, t.project_id, t.title, t.description, t.status, t.priority,
@@ -132,12 +163,28 @@ router.get('/tasks', asyncHandler(async (req: Request, res: Response) => {
     }
 
     queryText += ' ORDER BY t.due_date ASC NULLS LAST, t.priority DESC';
+    if (limit !== null) {
+      params.push(limit);
+      queryText += ` LIMIT $${params.length}`;
+      params.push(offset);
+      queryText += ` OFFSET $${params.length}`;
+    }
 
     const result = await query(queryText, params);
+    const totalResult = projectId
+      ? await query('SELECT COUNT(*)::int AS total FROM submission_tasks WHERE project_id = $1', [projectId])
+      : await query('SELECT COUNT(*)::int AS total FROM submission_tasks');
+    const total = Number(totalResult.rows[0]?.total ?? 0);
 
     res.json({
       success: true,
       data: result.rows,
+      meta: {
+        limit,
+        offset,
+        count: result.rows.length,
+        total,
+      },
     });
 }));
 

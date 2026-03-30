@@ -728,39 +728,58 @@ const SecurityAlerts: React.FC<SecurityAlertsProps> = ({ events }) => {
 
 export const ActivityMonitor: React.FC = () => {
   const [isLive, setIsLive] = useState(true);
+  const [isTabVisible, setIsTabVisible] = useState(
+    typeof document === 'undefined' ? true : document.visibilityState === 'visible'
+  );
   const [activeTab, setActiveTab] = useState('feed');
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<ActivityType | 'all'>('all');
   const [severityFilter, setSeverityFilter] = useState<ActivitySeverity | 'all'>('all');
 
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      setIsTabVisible(document.visibilityState === 'visible');
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, []);
+
   // Fetch tasks to derive activity events
   const { data: tasksData, isLoading: tasksLoading } = useQuery({
-    queryKey: ['activity-monitor-tasks'],
+    queryKey: ['activity-monitor-tasks', { limit: 100 }],
     queryFn: async () => {
-      const res = await apiRequest('GET', '/api/submission-center/tasks');
+      const res = await apiRequest('GET', '/api/submission-center/tasks?limit=100');
       return res.json();
     },
-    refetchInterval: isLive ? 30000 : false, // Auto-refresh when live
+    refetchInterval: isLive && isTabVisible ? 60000 : false, // Live only while tab is visible
+    refetchIntervalInBackground: false,
+    staleTime: 15000,
   });
 
   // Fetch proof audit entries
   const { data: auditData, isLoading: auditLoading } = useQuery({
-    queryKey: ['activity-monitor-audit'],
+    queryKey: ['activity-monitor-audit', { limit: 50 }],
     queryFn: async () => {
       const res = await apiRequest('GET', '/api/workflow/proofs/audit?limit=50');
       return res.json();
     },
     retry: 1,
-    refetchInterval: isLive ? 30000 : false,
+    refetchInterval: isLive && isTabVisible ? 60000 : false,
+    refetchIntervalInBackground: false,
+    staleTime: 15000,
   });
 
   // Fetch projects for session-like data
   const { data: projectsData } = useQuery({
-    queryKey: ['activity-monitor-projects'],
+    queryKey: ['activity-monitor-projects', { limit: 25 }],
     queryFn: async () => {
-      const res = await apiRequest('GET', '/api/submission-center/projects');
+      const res = await apiRequest('GET', '/api/submission-center/projects?limit=25');
       return res.json();
     },
+    staleTime: 30000,
   });
 
   // Build events from API data
