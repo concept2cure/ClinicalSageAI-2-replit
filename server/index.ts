@@ -1522,6 +1522,17 @@ try {
   console.error('❌ Failed to mount Intelligent Report Engine routes:', error);
 }
 
+
+// Mount Report OS routes (scope-aware reporting, program groups, run snapshots)
+try {
+  const reportOsModule = await import('./routes/report-os.js');
+  const reportOsRouter = reportOsModule.default;
+  app.use('/api/report-os', reportOsRouter);
+  console.log('✅ Report OS routes mounted (scopes, taxonomy, program groups, runs)');
+} catch (error) {
+  console.error('❌ Failed to mount Report OS routes:', error);
+}
+
 // Mount Safety Narrative Service routes (aggregate narratives, SAE, benefit-risk)
 try {
   const safetyNarrativeModule = await import('./routes/safety-narrative.js');
