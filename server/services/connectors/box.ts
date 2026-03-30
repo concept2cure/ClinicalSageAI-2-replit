@@ -189,6 +189,13 @@ export class BoxConnector implements DataConnector {
   }
 
   /**
+   * Upload a document to Box (DataConnector interface).
+   */
+  async upload(file: Buffer, fileName: string, mimeType: string, folderPath?: string): Promise<{ id: string; url?: string }> {
+    return this.uploadDocument({ name: fileName, buffer: file, mimeType, folderId: folderPath || '0' });
+  }
+
+  /**
    * Upload a document to Box.
    * Uses the Box Upload API (multipart form).
    */

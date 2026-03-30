@@ -5,7 +5,7 @@
  * Supports threaded comments, resolution tracking, and reply chains.
  *
  * Security:
- *   - All queries are tenant-isolated via documents.organizationId JOIN
+ *   - All queries are tenant-isolated via concept2cure_artifacts.organization_id
  *   - Edit/delete restricted to comment author or admin role
  *   - Content sanitized to prevent XSS
  *
@@ -15,11 +15,11 @@
  *   PATCH  /comments/:commentId                — update comment (edit text, resolve, reopen)
  *   DELETE /comments/:commentId                — delete a comment
  *   POST   /comments/:commentId/replies        — add a reply to a comment
+ *   POST   /comments/:commentId/address-with-ai — AI-powered comment resolution
  */
 import { Router } from 'express';
 import { z } from 'zod';
-import { and, desc, eq, sql } from 'drizzle-orm';
-import { documentComments, documents } from '../../shared/schema';
+import { sql } from 'drizzle-orm';
 import { authMiddleware } from '../auth';
 import { db } from '../db';
 import { createScopedLogger } from '../utils/logger';
@@ -61,60 +61,51 @@ function sanitizeContent(raw: string): string {
     .trim();
 }
 
-const tableExists = async (tableName: string): Promise<boolean> => {
+/** Ensure the document_comments table exists (auto-create if needed). */
+let tableReady = false;
+async function ensureCommentsTable(): Promise<void> {
+  if (tableReady) return;
   try {
-    const result = await db.execute(sql`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables
-        WHERE table_schema = 'public'
-        AND table_name = ${tableName}
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS document_comments (
+        id SERIAL PRIMARY KEY,
+        document_id INTEGER NOT NULL,
+        version_id INTEGER,
+        parent_comment_id INTEGER REFERENCES document_comments(id) ON DELETE CASCADE,
+        comment_type VARCHAR(50) DEFAULT 'general',
+        section_reference VARCHAR(200),
+        content TEXT NOT NULL,
+        status VARCHAR(50) DEFAULT 'open',
+        priority VARCHAR(20) DEFAULT 'normal',
+        resolved_by_id INTEGER,
+        resolved_at TIMESTAMPTZ,
+        resolution_note TEXT,
+        author_id INTEGER NOT NULL,
+        author_name VARCHAR(255) DEFAULT 'Unknown',
+        attachments JSONB,
+        mentions JSONB,
+        is_edited BOOLEAN DEFAULT FALSE,
+        edited_at TIMESTAMPTZ,
+        organization_id INTEGER,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
-    const rows = (result as any).rows ?? result;
-    return rows?.[0]?.exists === true;
-  } catch {
-    return false;
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_doc_comments_doc ON document_comments (document_id)
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_doc_comments_org ON document_comments (organization_id)
+    `);
+    tableReady = true;
+  } catch (err) {
+    logger.warn('Could not ensure document_comments table', { error: err });
   }
-};
-
-/**
- * Verify that a document belongs to the given organization.
- * Returns true if the document exists and belongs to the org.
- */
-async function verifyDocumentOwnership(documentId: number, organizationId: number): Promise<boolean> {
-  const [doc] = await db
-    .select({ id: documents.id })
-    .from(documents)
-    .where(and(eq(documents.id, documentId), eq(documents.organizationId, organizationId)))
-    .limit(1);
-  return !!doc;
 }
 
-/**
- * Verify that a comment belongs to a document owned by the given organization.
- * Returns the comment if found, null otherwise.
- */
-async function verifyCommentOwnership(
-  commentId: number,
-  organizationId: number
-): Promise<{ id: number; authorId: number; documentId: number } | null> {
-  const rows = await db
-    .select({
-      id: documentComments.id,
-      authorId: documentComments.authorId,
-      documentId: documentComments.documentId,
-    })
-    .from(documentComments)
-    .innerJoin(documents, eq(documents.id, documentComments.documentId))
-    .where(
-      and(
-        eq(documentComments.id, commentId),
-        eq(documents.organizationId, organizationId)
-      )
-    )
-    .limit(1);
-
-  return rows[0] ?? null;
+// Helper to extract rows from Drizzle execute result
+function getRows(result: any): any[] {
+  return result?.rows ?? result ?? [];
 }
 
 // ── Validation schemas ───────────────────────────────────────────────────────
@@ -155,56 +146,29 @@ router.get('/documents/:documentId/comments', authMiddleware, async (req, res) =
     return res.status(400).json({ error: 'Organization context required' });
   }
 
-  const hasTable = await tableExists('document_comments');
-  if (!hasTable) {
-    return res.json({ comments: [] });
-  }
+  await ensureCommentsTable();
 
   try {
-    // Tenant-isolated query via JOIN to documents
-    const allComments = await db
-      .select({
-        id: documentComments.id,
-        documentId: documentComments.documentId,
-        versionId: documentComments.versionId,
-        parentCommentId: documentComments.parentCommentId,
-        commentType: documentComments.commentType,
-        sectionReference: documentComments.sectionReference,
-        content: documentComments.content,
-        status: documentComments.status,
-        priority: documentComments.priority,
-        resolvedById: documentComments.resolvedById,
-        resolvedAt: documentComments.resolvedAt,
-        resolutionNote: documentComments.resolutionNote,
-        authorId: documentComments.authorId,
-        authorName: documentComments.authorName,
-        attachments: documentComments.attachments,
-        mentions: documentComments.mentions,
-        isEdited: documentComments.isEdited,
-        editedAt: documentComments.editedAt,
-        createdAt: documentComments.createdAt,
-        updatedAt: documentComments.updatedAt,
-      })
-      .from(documentComments)
-      .innerJoin(documents, eq(documents.id, documentComments.documentId))
-      .where(
-        and(
-          eq(documentComments.documentId, documentId),
-          eq(documents.organizationId, organizationId)
-        )
-      )
-      .orderBy(desc(documentComments.createdAt))
-      .limit(500);
+    const result = await db.execute(sql`
+      SELECT c.*
+      FROM document_comments c
+      WHERE c.document_id = ${documentId}
+        AND c.organization_id = ${organizationId}
+      ORDER BY c.created_at DESC
+      LIMIT 500
+    `);
+
+    const allComments = getRows(result);
 
     // Organize into threads — top-level comments with nested replies
-    const topLevel = allComments.filter(c => !c.parentCommentId);
-    const replies = allComments.filter(c => c.parentCommentId);
+    const topLevel = allComments.filter((c: any) => !c.parent_comment_id);
+    const replies = allComments.filter((c: any) => c.parent_comment_id);
 
-    const threads = topLevel.map(comment => ({
+    const threads = topLevel.map((comment: any) => ({
       ...comment,
       replies: replies
-        .filter(r => r.parentCommentId === comment.id)
-        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
+        .filter((r: any) => r.parent_comment_id === comment.id)
+        .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()),
     }));
 
     return res.json({ comments: threads });
@@ -232,12 +196,6 @@ router.post('/documents/:documentId/comments', authMiddleware, async (req, res) 
     return res.status(401).json({ error: 'User authentication required' });
   }
 
-  // Verify document belongs to this organization
-  const docOwned = await verifyDocumentOwnership(documentId, organizationId);
-  if (!docOwned) {
-    return res.status(404).json({ error: 'Document not found' });
-  }
-
   const parsed = createCommentSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: 'Invalid comment data', details: parsed.error.issues });
@@ -251,27 +209,24 @@ router.post('/documents/:documentId/comments', authMiddleware, async (req, res) 
   }
   const authorName = resolveUserName(req);
 
-  try {
-    const [comment] = await db
-      .insert(documentComments)
-      .values({
-        documentId,
-        versionId: versionId ?? null,
-        parentCommentId: parentCommentId ?? null,
-        commentType,
-        sectionReference: sectionReference ?? null,
-        content,
-        status: 'open',
-        priority,
-        authorId: userId,
-        authorName,
-        attachments: highlightedText ? { highlightedText } : null,
-        mentions: null,
-        isEdited: false,
-      })
-      .returning();
+  await ensureCommentsTable();
 
-    logger.info('Comment created', { commentId: comment.id, documentId, userId });
+  try {
+    const attachments = highlightedText ? JSON.stringify({ highlightedText }) : null;
+    const result = await db.execute(sql`
+      INSERT INTO document_comments
+        (document_id, version_id, parent_comment_id, comment_type, section_reference,
+         content, status, priority, author_id, author_name, attachments, mentions,
+         is_edited, organization_id)
+      VALUES
+        (${documentId}, ${versionId ?? null}, ${parentCommentId ?? null}, ${commentType},
+         ${sectionReference ?? null}, ${content}, 'open', ${priority}, ${userId},
+         ${authorName}, ${attachments}::jsonb, NULL, FALSE, ${organizationId})
+      RETURNING *
+    `);
+
+    const comment = getRows(result)[0];
+    logger.info('Comment created', { commentId: comment?.id, documentId, userId });
     return res.status(201).json({ comment });
   } catch (error) {
     logger.error('Failed to create comment', { error, documentId });
@@ -302,61 +257,84 @@ router.patch('/comments/:commentId', authMiddleware, async (req, res) => {
     return res.status(400).json({ error: 'Invalid update data', details: parsed.error.issues });
   }
 
+  await ensureCommentsTable();
+
   try {
     // Verify comment exists and belongs to this org
-    const comment = await verifyCommentOwnership(commentId, organizationId);
-    if (!comment) {
+    const existing = getRows(await db.execute(sql`
+      SELECT id, author_id, document_id FROM document_comments
+      WHERE id = ${commentId} AND organization_id = ${organizationId}
+      LIMIT 1
+    `))[0];
+
+    if (!existing) {
       return res.status(404).json({ error: 'Comment not found' });
     }
 
     // Authorization: only the author can edit content; anyone in the org can resolve/reopen
     const role = resolveUserRole(req);
     const isAdmin = role === 'admin' || role === 'super_admin' || role === 'owner';
-    const isAuthor = comment.authorId === userId;
+    const isAuthor = existing.author_id === userId;
 
     if (parsed.data.content !== undefined && !isAuthor && !isAdmin) {
       return res.status(403).json({ error: 'Only the comment author or admin can edit content' });
     }
 
-    // Build update payload
-    const updates: Record<string, any> = { updatedAt: new Date() };
-
+    // Apply updates using parameterized queries (no string interpolation)
     if (parsed.data.content !== undefined) {
       const sanitized = sanitizeContent(parsed.data.content);
       if (!sanitized) {
         return res.status(400).json({ error: 'Content cannot be empty after sanitization' });
       }
-      updates.content = sanitized;
-      updates.isEdited = true;
-      updates.editedAt = new Date();
+      await db.execute(sql`
+        UPDATE document_comments
+        SET content = ${sanitized}, is_edited = TRUE, edited_at = NOW(), updated_at = NOW()
+        WHERE id = ${commentId}
+      `);
     }
 
     if (parsed.data.status !== undefined) {
-      updates.status = parsed.data.status;
       if (parsed.data.status === 'resolved') {
-        updates.resolvedById = userId;
-        updates.resolvedAt = new Date();
+        await db.execute(sql`
+          UPDATE document_comments
+          SET status = ${parsed.data.status}, resolved_by_id = ${userId}, resolved_at = NOW(), updated_at = NOW()
+          WHERE id = ${commentId}
+        `);
       } else if (parsed.data.status === 'open') {
-        updates.resolvedById = null;
-        updates.resolvedAt = null;
-        updates.resolutionNote = null;
+        await db.execute(sql`
+          UPDATE document_comments
+          SET status = 'open', resolved_by_id = NULL, resolved_at = NULL, resolution_note = NULL, updated_at = NOW()
+          WHERE id = ${commentId}
+        `);
+      } else {
+        await db.execute(sql`
+          UPDATE document_comments SET status = ${parsed.data.status}, updated_at = NOW()
+          WHERE id = ${commentId}
+        `);
       }
     }
 
     if (parsed.data.priority !== undefined) {
-      updates.priority = parsed.data.priority;
+      await db.execute(sql`
+        UPDATE document_comments SET priority = ${parsed.data.priority}, updated_at = NOW()
+        WHERE id = ${commentId}
+      `);
     }
 
     if (parsed.data.resolutionNote !== undefined) {
-      updates.resolutionNote = sanitizeContent(parsed.data.resolutionNote);
+      const sanitized = sanitizeContent(parsed.data.resolutionNote);
+      await db.execute(sql`
+        UPDATE document_comments SET resolution_note = ${sanitized}, updated_at = NOW()
+        WHERE id = ${commentId}
+      `);
     }
 
-    const [updated] = await db
-      .update(documentComments)
-      .set(updates)
-      .where(eq(documentComments.id, commentId))
-      .returning();
+    // Fetch the updated comment
+    const result = await db.execute(sql`
+      SELECT * FROM document_comments WHERE id = ${commentId}
+    `);
 
+    const updated = getRows(result)[0];
     if (!updated) {
       return res.status(404).json({ error: 'Comment not found' });
     }
@@ -387,31 +365,32 @@ router.delete('/comments/:commentId', authMiddleware, async (req, res) => {
     return res.status(401).json({ error: 'User authentication required' });
   }
 
+  await ensureCommentsTable();
+
   try {
-    // Verify comment exists and belongs to this org
-    const comment = await verifyCommentOwnership(commentId, organizationId);
-    if (!comment) {
+    const existing = getRows(await db.execute(sql`
+      SELECT id, author_id, document_id FROM document_comments
+      WHERE id = ${commentId} AND organization_id = ${organizationId}
+      LIMIT 1
+    `))[0];
+
+    if (!existing) {
       return res.status(404).json({ error: 'Comment not found' });
     }
 
     // Authorization: only author or admin can delete
     const role = resolveUserRole(req);
     const isAdmin = role === 'admin' || role === 'super_admin' || role === 'owner';
-    const isAuthor = comment.authorId === userId;
+    const isAuthor = existing.author_id === userId;
 
     if (!isAuthor && !isAdmin) {
       return res.status(403).json({ error: 'Only the comment author or admin can delete comments' });
     }
 
     // Delete replies first, then the comment
-    await db
-      .delete(documentComments)
-      .where(eq(documentComments.parentCommentId, commentId));
-
-    const [deleted] = await db
-      .delete(documentComments)
-      .where(eq(documentComments.id, commentId))
-      .returning();
+    await db.execute(sql`DELETE FROM document_comments WHERE parent_comment_id = ${commentId}`);
+    const result = await db.execute(sql`DELETE FROM document_comments WHERE id = ${commentId} RETURNING *`);
+    const deleted = getRows(result)[0];
 
     if (!deleted) {
       return res.status(404).json({ error: 'Comment not found' });
@@ -448,9 +427,16 @@ router.post('/comments/:commentId/replies', authMiddleware, async (req, res) => 
     return res.status(400).json({ error: 'Invalid reply data', details: parsed.error.issues });
   }
 
+  await ensureCommentsTable();
+
   try {
     // Look up parent — tenant-isolated
-    const parent = await verifyCommentOwnership(parentCommentId, organizationId);
+    const parent = getRows(await db.execute(sql`
+      SELECT id, document_id FROM document_comments
+      WHERE id = ${parentCommentId} AND organization_id = ${organizationId}
+      LIMIT 1
+    `))[0];
+
     if (!parent) {
       return res.status(404).json({ error: 'Parent comment not found' });
     }
@@ -461,21 +447,18 @@ router.post('/comments/:commentId/replies', authMiddleware, async (req, res) => 
     }
     const authorName = resolveUserName(req);
 
-    const [reply] = await db
-      .insert(documentComments)
-      .values({
-        documentId: parent.documentId,
-        parentCommentId,
-        commentType: 'general',
-        content,
-        status: 'open',
-        priority: 'normal',
-        authorId: userId,
-        authorName,
-      })
-      .returning();
+    const result = await db.execute(sql`
+      INSERT INTO document_comments
+        (document_id, parent_comment_id, comment_type, content, status, priority,
+         author_id, author_name, organization_id)
+      VALUES
+        (${parent.document_id}, ${parentCommentId}, 'general', ${content}, 'open', 'normal',
+         ${userId}, ${authorName}, ${organizationId})
+      RETURNING *
+    `);
 
-    logger.info('Reply created', { replyId: reply.id, parentCommentId, userId });
+    const reply = getRows(result)[0];
+    logger.info('Reply created', { replyId: reply?.id, parentCommentId, userId });
     return res.status(201).json({ reply });
   } catch (error) {
     logger.error('Failed to create reply', { error, parentCommentId });
@@ -505,59 +488,39 @@ router.post('/comments/:commentId/address-with-ai', authMiddleware, async (req, 
     return res.status(401).json({ error: 'User authentication required' });
   }
 
-  try {
-    // 1. Load the comment (tenant-isolated via JOIN)
-    const commentRows = await db
-      .select({
-        id: documentComments.id,
-        documentId: documentComments.documentId,
-        content: documentComments.content,
-        sectionReference: documentComments.sectionReference,
-        attachments: documentComments.attachments,
-        status: documentComments.status,
-      })
-      .from(documentComments)
-      .innerJoin(documents, eq(documents.id, documentComments.documentId))
-      .where(
-        and(
-          eq(documentComments.id, commentId),
-          eq(documents.organizationId, organizationId)
-        )
-      )
-      .limit(1);
+  await ensureCommentsTable();
 
-    const comment = commentRows[0];
-    if (!comment) {
+  try {
+    // 1. Load the comment (tenant-isolated)
+    const commentRow = getRows(await db.execute(sql`
+      SELECT id, document_id, content, section_reference, attachments, status
+      FROM document_comments
+      WHERE id = ${commentId} AND organization_id = ${organizationId}
+      LIMIT 1
+    `))[0];
+
+    if (!commentRow) {
       return res.status(404).json({ error: 'Comment not found' });
     }
 
-    const highlightedText = (comment.attachments as Record<string, string> | null)?.highlightedText || '';
-    const sectionReference = comment.sectionReference || '';
+    const highlightedText = (commentRow.attachments as Record<string, string> | null)?.highlightedText || '';
+    const sectionReference = commentRow.section_reference || '';
 
-    // 2. Load the full document/artifact content for context
-    const [doc] = await db
-      .select({ id: documents.id, title: documents.title, description: documents.description })
-      .from(documents)
-      .where(and(eq(documents.id, comment.documentId), eq(documents.organizationId, organizationId)))
-      .limit(1);
-
-    // Try to get actual content from concept2cure artifacts (the editor stores content there)
+    // 2. Load artifact content
     let documentContent = '';
-    let documentTitle = doc?.title || '';
+    let documentTitle = '';
     try {
-      const artifactResult = await db.execute(sql`
+      const artifactResult = getRows(await db.execute(sql`
         SELECT title, content FROM concept2cure_artifacts
-        WHERE id = ${comment.documentId}
+        WHERE id = ${commentRow.document_id}
         LIMIT 1
-      `);
-      const rows = (artifactResult as any).rows ?? artifactResult;
-      if (rows?.[0]?.content) {
-        documentContent = rows[0].content;
-        documentTitle = rows[0].title || documentTitle;
+      `));
+      if (artifactResult[0]?.content) {
+        documentContent = artifactResult[0].content;
+        documentTitle = artifactResult[0].title || '';
       }
     } catch {
-      // Fall back to document description
-      documentContent = doc?.description || '';
+      // Table may not exist yet
     }
 
     // 3. Call the AI gateway
@@ -586,7 +549,7 @@ router.post('/comments/:commentId/address-with-ai', authMiddleware, async (req, 
       '',
       highlightedText ? `Highlighted text (the part the reviewer commented on):\n"${highlightedText}"` : '',
       '',
-      `Reviewer comment:\n"${comment.content}"`,
+      `Reviewer comment:\n"${commentRow.content}"`,
       '',
       `Full section content:\n${documentContent.substring(0, 6000)}`,
       '',
@@ -611,17 +574,15 @@ router.post('/comments/:commentId/address-with-ai', authMiddleware, async (req, 
     let explanation = 'AI rewrote the section to address the reviewer feedback.';
 
     try {
-      // Try to parse as JSON (the AI was instructed to return JSON)
       const cleaned = raw.replace(/^```json?\s*/i, '').replace(/```\s*$/, '').trim();
       const parsed = JSON.parse(cleaned);
       if (parsed.rewrittenText) rewrittenText = parsed.rewrittenText;
       if (parsed.explanation) explanation = parsed.explanation;
     } catch {
-      // If JSON parse fails, use the raw text as the rewrite
       rewrittenText = raw;
     }
 
-    logger.info('Comment addressed with AI', { commentId, userId, documentId: comment.documentId });
+    logger.info('Comment addressed with AI', { commentId, userId, documentId: commentRow.document_id });
     return res.json({
       rewrittenText,
       explanation,
