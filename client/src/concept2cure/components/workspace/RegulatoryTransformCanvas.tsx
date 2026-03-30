@@ -392,7 +392,6 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
               icon={<GitCompare className="w-3.5 h-3.5" />}
               label="Create comparison target"
               disabled
-              onClick={() => {}}
             />
           </div>
         </div>

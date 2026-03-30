@@ -14,6 +14,8 @@ import { Hocuspocus } from '@hocuspocus/server';
 import type { IncomingMessage } from 'http';
 import type { Server as HttpServer } from 'http';
 import type { WebSocket } from 'ws';
+import { createScopedLogger } from '../utils/logger.js';
+const log = createScopedLogger('hocuspocus');
 
 let hocuspocusInstance: Hocuspocus | null = null;
 
@@ -69,19 +71,19 @@ export function createHocuspocusServer(): Hocuspocus {
     },
 
     async onConnect({ documentName }: { documentName: string }) {
-      console.log(`[Hocuspocus] User connected to document: ${documentName}`);
+      log.debug(`[Hocuspocus] User connected to document: ${documentName}`);
     },
 
     async onDisconnect({ documentName }: { documentName: string }) {
-      console.log(`[Hocuspocus] User disconnected from document: ${documentName}`);
+      log.debug(`[Hocuspocus] User disconnected from document: ${documentName}`);
     },
 
     async onStoreDocument({ documentName, document }: any) {
-      console.log(`[Hocuspocus] Storing document state: ${documentName} (${document.getSize()} bytes)`);
+      log.debug(`[Hocuspocus] Storing document state: ${documentName} (${document.getSize()} bytes)`);
     },
 
     async onLoadDocument({ documentName, document }: any) {
-      console.log(`[Hocuspocus] Loading document: ${documentName}`);
+      log.debug(`[Hocuspocus] Loading document: ${documentName}`);
       return document;
     },
   });
@@ -106,7 +108,7 @@ export function attachHocuspocusToServer(httpServer: HttpServer): void {
     // Let other upgrade handlers (Socket.io, etc.) handle their own paths
   });
 
-  console.log('[Hocuspocus] CRDT collaboration server attached at /collab');
+  log.debug('[Hocuspocus] CRDT collaboration server attached at /collab');
 }
 
 /** Deterministic color assignment per user ID */

@@ -5,40 +5,6 @@
 /// <reference lib="DOM" />
 
 // ============================================================================
-// React Heatmap Grid
-// ============================================================================
-declare module 'react-heatmap-grid' {
-  import { ComponentType, CSSProperties, ReactNode } from 'react';
-
-  interface HeatMapGridProps {
-    data: number[][];
-    xLabels?: string[];
-    yLabels?: string[];
-    xLabelsLocation?: 'top' | 'bottom';
-    xLabelWidth?: number;
-    yLabelWidth?: number;
-    yLabelTextAlign?: 'left' | 'center' | 'right';
-    square?: boolean;
-    height?: number;
-    onClick?: (x: number, y: number) => void;
-    cellStyle?: (
-      background: string,
-      value: number,
-      min: number,
-      max: number,
-      data: number[][],
-      x: number,
-      y: number
-    ) => CSSProperties;
-    cellRender?: (value: number) => ReactNode;
-    background?: string;
-  }
-
-  const HeatMapGrid: ComponentType<HeatMapGridProps>;
-  export default HeatMapGrid;
-}
-
-// ============================================================================
 // Lodash Modules
 // ============================================================================
 declare module 'lodash/debounce' {
@@ -82,51 +48,6 @@ declare module 'lodash/throttle' {
   ): ThrottledFunc<T>;
 
   export default throttle;
-}
-
-// ============================================================================
-// jsPDF AutoTable Plugin
-// ============================================================================
-declare module 'jspdf-autotable' {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  import type { jsPDF } from 'jspdf';
-
-  interface AutoTableOptions {
-    startY?: number;
-    head?: any[][];
-    body?: any[][];
-    foot?: any[][];
-    columns?: any[];
-    margin?: { top?: number; right?: number; bottom?: number; left?: number } | number;
-    styles?: any;
-    headStyles?: any;
-    bodyStyles?: any;
-    footStyles?: any;
-    alternateRowStyles?: any;
-    columnStyles?: { [key: string]: any };
-    theme?: 'striped' | 'grid' | 'plain';
-    tableWidth?: 'auto' | 'wrap' | number;
-    showHead?: 'everyPage' | 'firstPage' | 'never';
-    showFoot?: 'everyPage' | 'lastPage' | 'never';
-    tableLineColor?: number | number[];
-    tableLineWidth?: number;
-    didParseCell?: (data: any) => void;
-    willDrawCell?: (data: any) => void;
-    didDrawCell?: (data: any) => void;
-    didDrawPage?: (data: any) => void;
-  }
-
-  // Extend jsPDF interface
-  module 'jspdf' {
-    interface jsPDF {
-      autoTable: (options: AutoTableOptions) => jsPDF;
-      lastAutoTable: {
-        finalY: number;
-        pageNumber: number;
-        startPageNumber: number;
-      };
-    }
-  }
 }
 
 // ============================================================================
@@ -293,27 +214,6 @@ declare const vi: {
   clearAllMocks: () => void;
   spyOn: <T extends object, M extends keyof T>(object: T, method: M) => any;
 };
-
-// ============================================================================
-// HuggingFace Inference Extensions
-// ============================================================================
-declare module '@huggingface/inference' {
-  export class HuggingFaceInference {
-    constructor(accessToken: string);
-    textGeneration(params: {
-      model: string;
-      inputs: string;
-      parameters?: {
-        max_new_tokens?: number;
-        temperature?: number;
-        top_p?: number;
-        do_sample?: boolean;
-      };
-    }): Promise<{ generated_text: string }>;
-    invoke(text: string): Promise<string>;
-    translation(params: { model: string; inputs: string }): Promise<{ translation_text: string }>;
-  }
-}
 
 // ============================================================================
 // Shepherd.js Tour Library

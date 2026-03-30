@@ -24,6 +24,8 @@ import type {
   RuleActionType,
   RuleTriggerEvent,
 } from './types';
+import { createScopedLogger } from '../../utils/logger.js';
+const log = createScopedLogger('rules-engine');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Condition Evaluator
@@ -107,7 +109,7 @@ export class ProjectRulesEngine {
 
   registerHandler(handler: ActionHandler): void {
     this.handlers.set(handler.type, handler);
-    console.log(`[RulesEngine] Registered action handler: ${handler.type}`);
+    log.debug(`[RulesEngine] Registered action handler: ${handler.type}`);
   }
 
   // ── Event Listener (for external hooks) ──────────────────────────────────
@@ -151,7 +153,7 @@ export class ProjectRulesEngine {
 
   private async processEvent(payload: RuleEventPayload): Promise<RuleExecutionResult[]> {
     const startTime = Date.now();
-    console.log(
+    log.debug(
       `[RulesEngine] Processing event: ${payload.event} for project ${payload.projectId}`
     );
 
@@ -161,18 +163,18 @@ export class ProjectRulesEngine {
       try {
         listener(payload);
       } catch (e) {
-        console.error('[RulesEngine] Event listener error:', e);
+        log.error('[RulesEngine] Event listener error:', e);
       }
     }
 
     // Find matching rules
     const rules = await this.findMatchingRules(payload);
     if (rules.length === 0) {
-      console.log(`[RulesEngine] No matching rules for ${payload.event}`);
+      log.debug(`[RulesEngine] No matching rules for ${payload.event}`);
       return [];
     }
 
-    console.log(`[RulesEngine] Found ${rules.length} candidate rules for ${payload.event}`);
+    log.debug(`[RulesEngine] Found ${rules.length} candidate rules for ${payload.event}`);
 
     const results: RuleExecutionResult[] = [];
 
@@ -184,7 +186,7 @@ export class ProjectRulesEngine {
 
     const totalMs = Date.now() - startTime;
     const triggered = results.filter(r => r.triggered).length;
-    console.log(
+    log.debug(
       `[RulesEngine] Processed ${payload.event}: ${triggered}/${rules.length} rules triggered in ${totalMs}ms`
     );
 
@@ -224,7 +226,7 @@ export class ProjectRulesEngine {
     if (rule.lastExecutedAt && rule.cooldownMinutes > 0) {
       const cooldownExpiry = new Date(rule.lastExecutedAt.getTime() + rule.cooldownMinutes * 60000);
       if (new Date() < cooldownExpiry) {
-        console.log(`[RulesEngine] Rule "${rule.name}" still in cooldown`);
+        log.debug(`[RulesEngine] Rule "${rule.name}" still in cooldown`);
         return {
           ruleId: rule.ruleId,
           ruleName: rule.name,
@@ -245,7 +247,7 @@ export class ProjectRulesEngine {
         [rule.ruleId]
       );
       if (todayCount.rows[0].count >= rule.maxExecutionsPerDay) {
-        console.log(`[RulesEngine] Rule "${rule.name}" hit daily execution limit`);
+        log.debug(`[RulesEngine] Rule "${rule.name}" hit daily execution limit`);
         return {
           ruleId: rule.ruleId,
           ruleName: rule.name,
@@ -293,7 +295,7 @@ export class ProjectRulesEngine {
     for (const action of rule.actions) {
       const handler = this.handlers.get(action.type);
       if (!handler) {
-        console.warn(`[RulesEngine] No handler registered for action type: ${action.type}`);
+        log.warn(`[RulesEngine] No handler registered for action type: ${action.type}`);
         actionResults.push({
           actionType: action.type,
           success: false,
@@ -308,7 +310,7 @@ export class ProjectRulesEngine {
         const result = await handler.execute(action, payload, rule);
         actionResults.push(result);
       } catch (error: any) {
-        console.error(`[RulesEngine] Action "${action.type}" failed:`, error.message);
+        log.error(`[RulesEngine] Action "${action.type}" failed:`, error.message);
         actionResults.push({
           actionType: action.type,
           success: false,
@@ -387,7 +389,7 @@ export class ProjectRulesEngine {
         ]
       );
     } catch (error) {
-      console.error('[RulesEngine] Failed to log execution:', error);
+      log.error('[RulesEngine] Failed to log execution:', error);
     }
   }
 

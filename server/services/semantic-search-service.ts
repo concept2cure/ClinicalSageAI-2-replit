@@ -1,4 +1,6 @@
 import { huggingFaceService, HFModel } from '../huggingface-service';
+import { createScopedLogger } from '../utils/logger.js';
+const log = createScopedLogger('semantic-search');
 
 /**
  * Semantic similarity calculation between two embeddings
@@ -62,7 +64,7 @@ export class SemanticSearchService {
    */
   async addDocument(id: number, content: string, metadata?: Record<string, any>): Promise<void> {
     try {
-      console.log(`Generating embedding for document ${id}...`);
+      log.debug(`Generating embedding for document ${id}...`);
 
       // Instead of using HuggingFace API, generate a local embedding
       // This is a simplified embedding approach that's compatible with our search
@@ -76,9 +78,9 @@ export class SemanticSearchService {
         metadata,
       });
 
-      console.log(`Document ${id} added to semantic search index using local embedding`);
+      log.debug(`Document ${id} added to semantic search index using local embedding`);
     } catch (error) {
-      console.error(`Failed to add document ${id} to semantic search index:`, error);
+      log.error(`Failed to add document ${id} to semantic search index:`, error);
 
       // Add with fallback embedding (all zeros) to prevent app from breaking
       this.documents.push({
@@ -88,7 +90,7 @@ export class SemanticSearchService {
         metadata,
       });
 
-      console.log(`Document ${id} added with fallback zero embedding`);
+      log.debug(`Document ${id} added with fallback zero embedding`);
     }
   }
 
@@ -182,7 +184,7 @@ export class SemanticSearchService {
     }
 
     try {
-      console.log(`Generating embedding for query: "${query.substring(0, 50)}..."`);
+      log.debug(`Generating embedding for query: "${query.substring(0, 50)}..."`);
 
       // Generate local embedding for the query using same method as document embeddings
       const queryEmbedding = this.generateLocalEmbedding(query);
@@ -196,10 +198,10 @@ export class SemanticSearchService {
       // Sort by similarity score (highest first) and limit results
       return results.sort((a, b) => b.score - a.score).slice(0, limit);
     } catch (error) {
-      console.error('Error performing semantic search:', error);
+      log.error('Error performing semantic search:', error);
 
       // Fallback: return documents based on simple keyword matching
-      console.log('Using keyword matching fallback search');
+      log.debug('Using keyword matching fallback search');
       const normalizedQuery = query.toLowerCase();
       const keywordResults = this.documents
         .map(doc => {

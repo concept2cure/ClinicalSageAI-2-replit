@@ -9,6 +9,8 @@
  */
 
 import nodemailer from 'nodemailer';
+import { createScopedLogger } from '../utils/logger.js';
+const log = createScopedLogger('email-service');
 
 // ---------------------------------------------------------------------------
 // SMTP Configuration
@@ -120,12 +122,8 @@ export async function sendPasswordResetEmail(
   const transporter = getTransporter();
 
   if (!transporter) {
-    console.log('──────────────────────────────────────────────');
-    console.log('[Email Service] SMTP not configured — logging reset link');
-    console.log(`  To:    ${email}`);
-    console.log(`  Token: ${resetToken}`);
-    console.log(`  URL:   ${resetUrl}`);
-    console.log('──────────────────────────────────────────────');
+    log.warn('SMTP not configured — password reset email not sent', { to: email });
+    log.debug('Dev reset link', { to: email, url: resetUrl });
     return;
   }
 
@@ -137,7 +135,7 @@ export async function sendPasswordResetEmail(
     html: buildResetEmailHtml(resetUrl),
   });
 
-  console.log(`[Email Service] Password reset email sent to ${email}`);
+  log.info('Password reset email sent', { to: email });
 }
 
 // ---------------------------------------------------------------------------
@@ -262,11 +260,8 @@ export async function sendLoginOtpEmail(email: string, code: string): Promise<vo
   const transporter = getTransporter();
 
   if (!transporter) {
-    console.log('──────────────────────────────────────────────');
-    console.log('[Email Service] SMTP not configured — logging OTP');
-    console.log(`  To:   ${email}`);
-    console.log(`  Code: ${code}`);
-    console.log('──────────────────────────────────────────────');
+    log.warn('SMTP not configured — login OTP email not sent', { to: email });
+    log.debug('Dev OTP code', { to: email, code });
     return;
   }
 
@@ -278,7 +273,7 @@ export async function sendLoginOtpEmail(email: string, code: string): Promise<vo
     html: buildOtpEmailHtml(code),
   });
 
-  console.log(`[Email Service] Login OTP email sent to ${email}`);
+  log.info('Login OTP email sent', { to: email });
 }
 
 /**
@@ -290,7 +285,7 @@ export async function sendWelcomeEmail(email: string, firstName: string): Promis
   const name = firstName || email.split('@')[0];
 
   if (!transporter) {
-    console.log(`[Email Service] SMTP not configured — welcome email for ${email} not sent`);
+    log.warn('SMTP not configured — welcome email not sent', { to: email });
     return;
   }
 
@@ -302,7 +297,7 @@ export async function sendWelcomeEmail(email: string, firstName: string): Promis
     html: buildWelcomeEmailHtml(name, loginUrl),
   });
 
-  console.log(`[Email Service] Welcome email sent to ${email}`);
+  log.info('Welcome email sent', { to: email });
 }
 
 // ---------------------------------------------------------------------------
@@ -321,7 +316,7 @@ export async function sendInvitationEmail(
   const signupUrl = `${process.env.APP_URL || 'https://concept2cure.com'}/concept2cure/signup?invite=${encodeURIComponent(email)}`;
 
   if (!transporter) {
-    console.log(`[Email Service] SMTP not configured — invitation email for ${email} not sent`);
+    log.warn('SMTP not configured — invitation email not sent', { to: email });
     return;
   }
 
@@ -370,5 +365,5 @@ export async function sendInvitationEmail(
 </html>`,
   });
 
-  console.log(`[Email Service] Invitation email sent to ${email}`);
+  log.info('Invitation email sent', { to: email });
 }

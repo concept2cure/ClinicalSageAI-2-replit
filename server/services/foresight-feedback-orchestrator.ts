@@ -18,6 +18,8 @@ import {
 import { and, eq, gte, lte, desc, sql, inArray } from 'drizzle-orm';
 import { ForesightKnowledgeGraph } from './foresight-knowledge-graph';
 import { ai } from '../lib/unified-ai-client';
+import { createScopedLogger } from '../utils/logger.js';
+const log = createScopedLogger('foresight-feedback');
 
 interface FeedbackData {
   predictionId: string;
@@ -70,7 +72,7 @@ export class ForesightFeedbackOrchestrator {
     recommendations: string[];
   }> {
     try {
-      console.log(`[FeedbackOrchestrator] Processing feedback for prediction ${feedback.predictionId}`);
+      log.debug(`[FeedbackOrchestrator] Processing feedback for prediction ${feedback.predictionId}`);
 
       // 1. Store feedback in database
       const [storedFeedback] = await db!.insert(clinicalFeedback).values({
@@ -154,7 +156,7 @@ export class ForesightFeedbackOrchestrator {
         recommendations
       };
     } catch (error) {
-      console.error('[FeedbackOrchestrator] Error processing feedback:', error);
+      log.error('[FeedbackOrchestrator] Error processing feedback:', error);
       throw error;
     }
   }
@@ -169,7 +171,7 @@ export class ForesightFeedbackOrchestrator {
     adaptiveActions: any[];
   }> {
     try {
-      console.log('[FeedbackOrchestrator] Running continuous monitoring');
+      log.debug('[FeedbackOrchestrator] Running continuous monitoring');
 
       // 1. Monitor prediction performance over time
       const recentPredictions = await this.getRecentPredictions(organizationId);
@@ -209,7 +211,7 @@ export class ForesightFeedbackOrchestrator {
         adaptiveActions
       };
     } catch (error) {
-      console.error('[FeedbackOrchestrator] Error in continuous monitoring:', error);
+      log.error('[FeedbackOrchestrator] Error in continuous monitoring:', error);
       throw error;
     }
   }
@@ -224,7 +226,7 @@ export class ForesightFeedbackOrchestrator {
     successFactors: any[];
   }> {
     try {
-      console.log('[FeedbackOrchestrator] Performing meta-learning analysis');
+      log.debug('[FeedbackOrchestrator] Performing meta-learning analysis');
 
       // Use GPT-5 for advanced meta-learning
       const metaLearningPrompt = `
@@ -280,7 +282,7 @@ export class ForesightFeedbackOrchestrator {
         successFactors: metaInsights.successFactors || []
       };
     } catch (error) {
-      console.error('[FeedbackOrchestrator] Error in meta-learning:', error);
+      log.error('[FeedbackOrchestrator] Error in meta-learning:', error);
       throw error;
     }
   }
@@ -298,7 +300,7 @@ export class ForesightFeedbackOrchestrator {
     confidenceLevels: number[];
   }> {
     try {
-      console.log('[FeedbackOrchestrator] Generating adaptive hypotheses');
+      log.debug('[FeedbackOrchestrator] Generating adaptive hypotheses');
 
       // Use advanced AI for hypothesis generation
       const hypothesisPrompt = `
@@ -346,7 +348,7 @@ export class ForesightFeedbackOrchestrator {
         confidenceLevels: hypothesisData.confidenceLevels || []
       };
     } catch (error) {
-      console.error('[FeedbackOrchestrator] Error generating hypotheses:', error);
+      log.error('[FeedbackOrchestrator] Error generating hypotheses:', error);
       throw error;
     }
   }
@@ -565,7 +567,7 @@ export class ForesightFeedbackOrchestrator {
     metrics: LearningMetrics
   ): Promise<void> {
     // Store learning metrics for tracking improvement over time
-    console.log('[FeedbackOrchestrator] Storing learning metrics:', metrics);
+    log.debug('[FeedbackOrchestrator] Storing learning metrics:', metrics);
   }
 
   private async getRecentPredictions(organizationId: string) {
@@ -644,7 +646,7 @@ export class ForesightFeedbackOrchestrator {
     patterns: any[]
   ): Promise<void> {
     // Update which areas need more active learning focus
-    console.log('[FeedbackOrchestrator] Updating active learning priorities based on patterns:', patterns.length);
+    log.debug('[FeedbackOrchestrator] Updating active learning priorities based on patterns:', patterns.length);
   }
 }
 

@@ -10,6 +10,8 @@
 import { Pool } from 'pg';
 import { AISentinel } from './sentinel';
 import { emitRuleEvent } from '../rules-engine';
+import { createScopedLogger } from '../../utils/logger.js';
+const log = createScopedLogger('sentinel-scheduler');
 
 export class SentinelScheduler {
   private intervals = new Map<number, NodeJS.Timeout>();
@@ -31,7 +33,7 @@ export class SentinelScheduler {
     if (this.running) return;
     this.running = true;
 
-    console.log('[SentinelScheduler] Starting background scanner...');
+    log.debug('[SentinelScheduler] Starting background scanner...');
 
     try {
       // Get all active organizations
@@ -43,9 +45,9 @@ export class SentinelScheduler {
         await this.scheduleOrg(org.id);
       }
 
-      console.log(`[SentinelScheduler] Scheduled scans for ${orgs.rows.length} organizations`);
+      log.debug(`[SentinelScheduler] Scheduled scans for ${orgs.rows.length} organizations`);
     } catch (error) {
-      console.error('[SentinelScheduler] Failed to start:', error);
+      log.error('[SentinelScheduler] Failed to start:', error);
     }
   }
 
@@ -60,7 +62,7 @@ export class SentinelScheduler {
 
     const config = await this.sentinel.getConfig(organizationId);
     if (!config.enabled) {
-      console.log(`[SentinelScheduler] Sentinel disabled for org ${organizationId}`);
+      log.debug(`[SentinelScheduler] Sentinel disabled for org ${organizationId}`);
       return;
     }
 
@@ -68,17 +70,17 @@ export class SentinelScheduler {
 
     // Run immediately, then on interval
     this.runScan(organizationId).catch(err =>
-      console.error(`[SentinelScheduler] Initial scan failed for org ${organizationId}:`, err)
+      log.error(`[SentinelScheduler] Initial scan failed for org ${organizationId}:`, err)
     );
 
     const timer = setInterval(() => {
       this.runScan(organizationId).catch(err =>
-        console.error(`[SentinelScheduler] Scan failed for org ${organizationId}:`, err)
+        log.error(`[SentinelScheduler] Scan failed for org ${organizationId}:`, err)
       );
     }, intervalMs);
 
     this.intervals.set(organizationId, timer);
-    console.log(
+    log.debug(
       `[SentinelScheduler] Scheduled org ${organizationId} every ${config.intervalMinutes}m`
     );
   }
@@ -87,7 +89,7 @@ export class SentinelScheduler {
    * Run a full scan and feed findings into the rules engine.
    */
   private async runScan(organizationId: number): Promise<void> {
-    console.log(`[SentinelScheduler] Running scan for org ${organizationId}`);
+    log.debug(`[SentinelScheduler] Running scan for org ${organizationId}`);
     const results = await this.sentinel.scan(organizationId);
 
     // Feed findings into rules engine as events
@@ -107,7 +109,7 @@ export class SentinelScheduler {
               analyzerType: finding.analyzerType,
             });
           } catch (err) {
-            console.error('[SentinelScheduler] Failed to emit rule event for finding:', err);
+            log.error('[SentinelScheduler] Failed to emit rule event for finding:', err);
           }
         }
       }
@@ -123,7 +125,7 @@ export class SentinelScheduler {
     }
     this.intervals.clear();
     this.running = false;
-    console.log('[SentinelScheduler] All scans stopped');
+    log.debug('[SentinelScheduler] All scans stopped');
   }
 }
 

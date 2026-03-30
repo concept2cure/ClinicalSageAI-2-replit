@@ -18,6 +18,8 @@
 
 import { IStorageProvider } from './storage-provider';
 import { LocalStorageProvider } from './local-provider';
+import { createScopedLogger } from '../../utils/logger.js';
+const log = createScopedLogger('storage');
 
 let _instance: IStorageProvider | null = null;
 
@@ -31,13 +33,13 @@ export function getStorageProvider(): IStorageProvider {
     case 'aws': {
       const { S3StorageProvider } = require('./s3-provider');
       _instance = new S3StorageProvider();
-      console.log('[Storage] Using S3 provider (bucket:', process.env.AWS_S3_BUCKET, ')');
+      log.debug('[Storage] Using S3 provider (bucket:', process.env.AWS_S3_BUCKET, ')');
       break;
     }
     case 'local':
     default: {
       _instance = new LocalStorageProvider();
-      console.log('[Storage] Using local filesystem provider (storage/vault/)');
+      log.debug('[Storage] Using local filesystem provider (storage/vault/)');
       break;
     }
   }

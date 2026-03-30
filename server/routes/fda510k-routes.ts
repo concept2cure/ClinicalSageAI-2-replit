@@ -25,6 +25,9 @@ import axios, { AxiosInstance } from 'axios';
 import { createHash } from 'crypto';
 import { create510kDeprecationNotice } from '../middleware/deprecation';
 import { searchPredicates } from '../services/FDA510kService';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('fda510k-routes');
 
 // Load environment variables
 dotenv.config();
@@ -134,7 +137,7 @@ router.get('/predicates', async (req: Request, res: Response) => {
     const result = await searchPredicates(query, Number.isFinite(limit) ? limit : 25);
     return res.status(200).json(result);
   } catch (error: any) {
-    console.error('[fda510k] predicate search failed:', error.message);
+    log.error('[fda510k] predicate search failed:', error.message);
     return res.status(502).json({ error: 'openFDA service unavailable' });
   }
 });
@@ -434,7 +437,7 @@ const errorHandler = (err: any, req: Request, res: Response, next: NextFunction)
   const duration = Date.now() - startTime;
 
   // Log error with context
-  console.error('API Error:', {
+  log.error('API Error:', {
     error: err.message,
     statusCode: err.statusCode || 500,
     code: err.code || ErrorCode.INTERNAL_ERROR,
@@ -490,7 +493,7 @@ const requestMiddleware = (req: Request, res: Response, next: NextFunction) => {
   (req as any).requestId = `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
   // Log request
-  console.log('Incoming request:', {
+  log.debug('Incoming request:', {
     path: req.path,
     method: req.method,
     requestId: (req as any).requestId,
@@ -499,7 +502,7 @@ const requestMiddleware = (req: Request, res: Response, next: NextFunction) => {
   // Add timing header
   res.on('finish', () => {
     const duration = Date.now() - (req as any).startTime;
-    console.log('Request completed:', {
+    log.debug('Request completed:', {
       path: req.path,
       method: req.method,
       statusCode: res.statusCode,
@@ -526,7 +529,7 @@ const extractTenantContext = (req: Request, res: Response, next: NextFunction) =
 
   // Log when using default org ID for monitoring
   if (!organizationId) {
-    console.log('Using default organization ID for request:', {
+    log.debug('Using default organization ID for request:', {
       path: req.path,
       method: req.method,
       defaultOrgId: finalOrgId,
@@ -584,14 +587,14 @@ const callFDAAPI = async (url: string, organizationId?: string, retries = 3): Pr
       // Add delay if this is a retry
       if (attempt > 0) {
         const delay = getRetryDelay(attempt);
-        console.log(
+        log.debug(
           `Retrying FDA API call after ${Math.round(delay)}ms (attempt ${attempt + 1}/${retries})`
         );
         await new Promise(resolve => setTimeout(resolve, delay));
       }
 
       // Log attempt without sensitive data
-      console.log('FDA API call attempt:', {
+      log.debug('FDA API call attempt:', {
         attempt: attempt + 1,
         endpoint: url.split('?')[0].replace(/https:\/\/api\.fda\.gov/, '[FDA]'),
         organizationId: organizationId ? '[REDACTED]' : null,
@@ -603,7 +606,7 @@ const callFDAAPI = async (url: string, organizationId?: string, retries = 3): Pr
 
       // Check if response is valid
       if (response.status === 200 && response.data) {
-        console.log('FDA API call successful:', {
+        log.debug('FDA API call successful:', {
           endpoint: url.split('?')[0].replace(/https:\/\/api\.fda\.gov/, '[FDA]'),
           duration,
           resultCount: response.data.results?.length || 0,
@@ -614,7 +617,7 @@ const callFDAAPI = async (url: string, organizationId?: string, retries = 3): Pr
 
       // Handle 404 as no results found
       if (response.status === 404) {
-        console.log('FDA API returned 404 - no results found');
+        log.debug('FDA API returned 404 - no results found');
         return null;
       }
 
@@ -641,7 +644,7 @@ const callFDAAPI = async (url: string, organizationId?: string, retries = 3): Pr
         error.response?.status < 500 &&
         error.response?.status !== 429
       ) {
-        console.error('FDA API client error (not retrying):', {
+        log.error('FDA API client error (not retrying):', {
           endpoint: url.split('?')[0].replace(/https:\/\/api\.fda\.gov/, '[FDA]'),
           status: error.response?.status,
           duration,
@@ -664,7 +667,7 @@ const callFDAAPI = async (url: string, organizationId?: string, retries = 3): Pr
 
       // Log retry-able error
       if (attempt < retries - 1) {
-        console.warn('FDA API call failed, will retry:', {
+        log.warn('FDA API call failed, will retry:', {
           attempt: attempt + 1,
           endpoint: url.split('?')[0].replace(/https:\/\/api\.fda\.gov/, '[FDA]'),
           error: error.message?.substring(0, 100), // Truncate error message
@@ -675,7 +678,7 @@ const callFDAAPI = async (url: string, organizationId?: string, retries = 3): Pr
   }
 
   // All retries exhausted
-  console.error('FDA API call failed after all retries:', {
+  log.error('FDA API call failed after all retries:', {
     endpoint: url.split('?')[0].replace(/https:\/\/api\.fda\.gov/, '[FDA]'),
     attempts: retries,
     totalDuration: Date.now() - startTime,
@@ -1282,7 +1285,7 @@ router.post(
       const validatedData = PathwayAnalysisSchema.parse(sanitizedBody);
       const tenantContext = (req as any).tenantContext;
 
-      console.log('Regulatory pathway analysis request:', {
+      log.debug('Regulatory pathway analysis request:', {
         deviceName: validatedData.deviceName,
         deviceClass: validatedData.deviceClass,
         organizationId: tenantContext.organizationId,
@@ -1728,7 +1731,7 @@ router.delete('/cache/clear', async (req: Request, res: Response, next: NextFunc
     const tenantContext = (req as any).tenantContext;
 
     // In production, add proper admin authentication check here
-    console.log('Cache clear requested:', {
+    log.debug('Cache clear requested:', {
       organizationId: tenantContext.organizationId,
     });
 
@@ -1757,7 +1760,7 @@ router.post('/search-predicates-literature', async (req: Request, res: Response,
 router.use(errorHandler);
 
 // Log router initialization
-console.log('FDA 510(k) API routes initialized (simplified version)', {
+log.debug('FDA 510(k) API routes initialized (simplified version)', {
   version: '2.0.0-simplified',
   features: [
     'Input validation',

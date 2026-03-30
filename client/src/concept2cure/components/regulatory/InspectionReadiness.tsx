@@ -941,10 +941,10 @@ export function InspectionReadiness() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Early Access Banner */}
-      <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-50 border border-amber-200 text-amber-700 text-xs">
-        <span className="font-semibold px-1.5 py-0.5 bg-amber-200 text-amber-800 rounded text-xs uppercase tracking-wider">Early Access</span>
-        <span>This module displays sample data for demonstration. Live data integration coming soon.</span>
+      {/* Beta Banner */}
+      <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-stone-50 border border-stone-200 text-stone-600 text-xs">
+        <span className="font-semibold px-1.5 py-0.5 bg-stone-200 text-stone-700 rounded text-xs uppercase tracking-wider">Beta</span>
+        <span>This module is in beta. Data shown may be illustrative while integration is finalized.</span>
       </div>
       {/* Header */}
       <div className="flex items-center justify-between">

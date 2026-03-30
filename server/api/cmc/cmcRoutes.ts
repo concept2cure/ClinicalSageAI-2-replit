@@ -15,6 +15,9 @@ import {
   workflowTasks,
 } from '../../../shared/cmc-schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
+import { createScopedLogger } from '../../utils/logger.js';
+
+const log = createScopedLogger('cmc-routes');
 
 const router = express.Router();
 
@@ -48,9 +51,9 @@ router.post('/generate-blueprint', async (req, res) => {
     const { drugName } = validationResult.data;
 
     // Log the received data
-    console.log(`[CMC] CMC Blueprint request for: ${drugName}`);
-    console.log(`[CMC] Request timestamp: ${new Date().toISOString()}`);
-    console.log(`[CMC] Request from IP: ${req.ip}`);
+    log.debug(`[CMC] CMC Blueprint request for: ${drugName}`);
+    log.debug(`[CMC] Request timestamp: ${new Date().toISOString()}`);
+    log.debug(`[CMC] Request from IP: ${req.ip}`);
 
     // TODO: Implement actual CMC blueprint generation logic
     // For now, return a success response
@@ -69,7 +72,7 @@ router.post('/generate-blueprint', async (req, res) => {
 
     res.status(200).json(response);
   } catch (error) {
-    console.error('[CMC] Error in generate-blueprint endpoint:', error);
+    log.error('[CMC] Error in generate-blueprint endpoint:', error);
     res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to process CMC blueprint request',
@@ -108,8 +111,8 @@ router.post('/generate-enhanced-blueprint', async (req, res) => {
 
     const data = validationResult.data;
 
-    console.log(`[CMC Enhanced] Blueprint request for: ${data.drugName}`);
-    console.log(`[CMC Enhanced] Structured inputs:`, data.structuredInputs);
+    log.debug(`[CMC Enhanced] Blueprint request for: ${data.drugName}`);
+    log.debug(`[CMC Enhanced] Structured inputs:`, data.structuredInputs);
 
     // Generate enhanced blueprint
     const enhancedBlueprint = await EnhancedCMCService.generateEnhancedBlueprint(data);
@@ -122,7 +125,7 @@ router.post('/generate-enhanced-blueprint', async (req, res) => {
 
     res.status(200).json(response);
   } catch (error) {
-    console.error('[CMC Enhanced] Error in generate-enhanced-blueprint endpoint:', error);
+    log.error('[CMC Enhanced] Error in generate-enhanced-blueprint endpoint:', error);
     res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to generate enhanced CMC blueprint',
@@ -141,7 +144,7 @@ router.get('/compliance-monitor', async (req, res) => {
       lastUpdate: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('[CMC] Error in compliance monitor:', error);
+    log.error('[CMC] Error in compliance monitor:', error);
     res.status(500).json({
       error: 'Failed to retrieve compliance updates',
     });
@@ -159,7 +162,7 @@ router.post('/mock-inspection', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('[CMC] Error in mock inspection:', error);
+    log.error('[CMC] Error in mock inspection:', error);
     res.status(500).json({
       error: 'Failed to perform mock inspection',
     });
@@ -177,7 +180,7 @@ router.get('/templates', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('[CMC] Error fetching templates:', error);
+    log.error('[CMC] Error fetching templates:', error);
     res.status(500).json({
       error: 'Failed to retrieve CMC templates',
     });
@@ -195,7 +198,7 @@ router.get('/terminology', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('[CMC] Error fetching terminology:', error);
+    log.error('[CMC] Error fetching terminology:', error);
     res.status(500).json({
       error: 'Failed to retrieve controlled terminology',
     });
@@ -248,7 +251,7 @@ router.post('/validate-content', async (req, res) => {
       );
       specs = specResult.rows;
     } catch (e) {
-      console.warn('[CMC] Could not query quality_specifications, using fallback:', e);
+      log.warn('[CMC] Could not query quality_specifications, using fallback:', e);
     }
 
     // Build compliance score from specs and content analysis
@@ -328,7 +331,7 @@ router.post('/validate-content', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('[CMC] Error validating content:', error);
+    log.error('[CMC] Error validating content:', error);
     res.status(500).json({
       error: 'Failed to validate content',
     });
@@ -411,7 +414,7 @@ router.post('/save-document', async (req, res) => {
         complianceScore: 92,
       };
     } catch (e) {
-      console.error('[CMC] Error persisting document to cmc_documents:', e);
+      log.error('[CMC] Error persisting document to cmc_documents:', e);
       // Fallback to in-memory response if DB fails
       savedDocument = {
         id: Date.now().toString(),
@@ -432,7 +435,7 @@ router.post('/save-document', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('[CMC] Error saving document:', error);
+    log.error('[CMC] Error saving document:', error);
     res.status(500).json({
       error: 'Failed to save document to VAULT',
     });
@@ -482,7 +485,7 @@ router.post('/qbd-analysis', async (req, res) => {
       });
     }
 
-    console.log(`[CMC] QbD analysis request for: ${validationResult.data.drugName}`);
+    log.debug(`[CMC] QbD analysis request for: ${validationResult.data.drugName}`);
 
     const qbdAnalysis = await EnhancedCMCService.performQbDAnalysis(validationResult.data);
 
@@ -492,7 +495,7 @@ router.post('/qbd-analysis', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('[CMC] Error in qbd-analysis endpoint:', error);
+    log.error('[CMC] Error in qbd-analysis endpoint:', error);
     res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to perform QbD analysis',
@@ -523,7 +526,7 @@ router.post('/method-validation', async (req, res) => {
       });
     }
 
-    console.log(`[CMC] Method validation request for: ${validationResult.data.drugName}`);
+    log.debug(`[CMC] Method validation request for: ${validationResult.data.drugName}`);
 
     const methodValidation = await EnhancedCMCService.generateMethodValidation(
       validationResult.data
@@ -535,7 +538,7 @@ router.post('/method-validation', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('[CMC] Error in method-validation endpoint:', error);
+    log.error('[CMC] Error in method-validation endpoint:', error);
     res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to generate method validation protocol',
@@ -546,7 +549,7 @@ router.post('/method-validation', async (req, res) => {
 // GET /api/cmc/regulatory-updates - Real-time regulatory intelligence
 router.get('/regulatory-updates', async (req, res) => {
   try {
-    console.log('[CMC] Regulatory updates request');
+    log.debug('[CMC] Regulatory updates request');
 
     const updates = await EnhancedCMCService.monitorRegulatoryChanges();
 
@@ -556,7 +559,7 @@ router.get('/regulatory-updates', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('[CMC] Error in regulatory-updates endpoint:', error);
+    log.error('[CMC] Error in regulatory-updates endpoint:', error);
     res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to retrieve regulatory updates',
@@ -590,7 +593,7 @@ router.post('/risk-assessment', async (req, res) => {
       });
     }
 
-    console.log(`[CMC] Risk assessment request for: ${validationResult.data.drugName}`);
+    log.debug(`[CMC] Risk assessment request for: ${validationResult.data.drugName}`);
 
     const riskAlerts = await EnhancedCMCService.generateRiskAlerts(validationResult.data);
 
@@ -600,7 +603,7 @@ router.post('/risk-assessment', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('[CMC] Error in risk-assessment endpoint:', error);
+    log.error('[CMC] Error in risk-assessment endpoint:', error);
     res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to perform risk assessment',
@@ -626,7 +629,7 @@ router.post('/compliance-check', async (req, res) => {
       });
     }
 
-    console.log(`[CMC] Compliance check request for: ${validationResult.data.drugName}`);
+    log.debug(`[CMC] Compliance check request for: ${validationResult.data.drugName}`);
 
     const complianceScore = EnhancedCMCService.calculateComplianceScore(
       validationResult.data.structuredInputs || {}
@@ -646,7 +649,7 @@ router.post('/compliance-check', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('[CMC] Error in compliance-check endpoint:', error);
+    log.error('[CMC] Error in compliance-check endpoint:', error);
     res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to perform compliance check',
@@ -674,7 +677,7 @@ router.post('/insights/take-action', async (req, res) => {
 
     const { insightId, action, type } = validationResult.data;
 
-    console.log(`[CMC] Taking action on insight ${insightId}: ${action}`);
+    log.debug(`[CMC] Taking action on insight ${insightId}: ${action}`);
 
     // Persist task to project_workflows table
     let taskResult: any;
@@ -731,7 +734,7 @@ router.post('/insights/take-action', async (req, res) => {
         _persisted: true,
       };
     } catch (e) {
-      console.warn('[CMC] Could not persist to project_workflows, returning in-memory:', e);
+      log.warn('[CMC] Could not persist to project_workflows, returning in-memory:', e);
       taskResult = {
         taskId: `task_${Date.now()}`,
         action,
@@ -751,7 +754,7 @@ router.post('/insights/take-action', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('[CMC] Error taking action on insight:', error);
+    log.error('[CMC] Error taking action on insight:', error);
     res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to take action on insight',
@@ -779,7 +782,7 @@ router.post('/compliance/check-rules', async (req, res) => {
 
     const { insightId, type, section } = validationResult.data;
 
-    console.log(
+    log.debug(
       `[CMC] Checking compliance rules for insight ${insightId} (type: ${type}, section: ${section})`
     );
 
@@ -864,7 +867,7 @@ router.post('/compliance/check-rules', async (req, res) => {
         ];
       }
     } catch (e) {
-      console.warn('[CMC] Could not query compliance_tracking:', e);
+      log.warn('[CMC] Could not query compliance_tracking:', e);
       rules = [
         { rule: 'ICH Q8', status: 'violation', severity: 'medium', description: 'DB unavailable - default check' },
       ];
@@ -891,7 +894,7 @@ router.post('/compliance/check-rules', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('[CMC] Error checking compliance rules:', error);
+    log.error('[CMC] Error checking compliance rules:', error);
     res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to check compliance rules',

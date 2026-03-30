@@ -45,10 +45,12 @@ let manifestSchema: any;
 try {
   manifestSchema = require('../config/schemas/estarManifest.json');
 } catch (error) {
-  console.error('Error loading eSTAR manifest schema:', error);
+  log.error('Error loading eSTAR manifest schema:', error);
   manifestSchema = {};
 }
 import { ai } from '../lib/unified-ai-client';
+import { createScopedLogger } from '../utils/logger.js';
+const log = createScopedLogger('estar-builder');
 
 /**
  * Digital signature utility for signing eSTAR manifests
@@ -80,7 +82,7 @@ export class DigitalSigner {
       
       return doc.toString({ prettyPrint: true });
     } catch (error: unknown) {
-      console.error('Error adding signature to manifest:', error);
+      log.error('Error adding signature to manifest:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new Error('Failed to sign manifest: ' + errorMessage);
     }
@@ -136,7 +138,7 @@ export class DigitalSigner {
         return { valid: false, message: 'Invalid signature, document may have been tampered with' };
       }
     } catch (error: unknown) {
-      console.error('Error verifying signature:', error);
+      log.error('Error verifying signature:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return { valid: false, message: `Verification error: ${errorMessage}` };
     }
@@ -194,8 +196,8 @@ export class ESGClient {
       //
       // For now, we validate the package and return a clear production status.
       // Replace the block below with actual ESG API call when ready.
-      console.log(`[ESGClient] PRODUCTION submission for: ${options.metadata.deviceName} (${options.metadata.sequence})`);
-      console.warn('[ESGClient] FDA ESG API integration pending — API key is configured but real ESG HTTP client is not yet implemented.');
+      log.debug(`[ESGClient] PRODUCTION submission for: ${options.metadata.deviceName} (${options.metadata.sequence})`);
+      log.warn('[ESGClient] FDA ESG API integration pending — API key is configured but real ESG HTTP client is not yet implemented.');
 
       return {
         success: false,
@@ -209,7 +211,7 @@ export class ESGClient {
     const submissionDate = new Date().toISOString();
     const trackingId = `SIM-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-    console.warn(`[ESGClient] SIMULATION mode — no FDA_ESG_API_KEY configured. Device: ${options.metadata.deviceName}`);
+    log.warn(`[ESGClient] SIMULATION mode — no FDA_ESG_API_KEY configured. Device: ${options.metadata.deviceName}`);
 
     return {
       success: true,
@@ -234,7 +236,7 @@ export class eSTARPlusBuilder {
    * @returns Validation result with issues if any
    */
   static async validatePackage(projectId: string, strictMode: boolean = false): Promise<ValidationResult> {
-    console.log(`Validating eSTAR package for project ${projectId}`);
+    log.debug(`Validating eSTAR package for project ${projectId}`);
     
     // Initialize validation result
     const validationResult: ValidationResult = {
@@ -291,7 +293,7 @@ export class eSTARPlusBuilder {
       
       return validationResult;
     } catch (error) {
-      console.error('Error validating eSTAR package:', error);
+      log.error('Error validating eSTAR package:', error);
       return {
         valid: false,
         issues: [
@@ -588,7 +590,7 @@ export class eSTARPlusBuilder {
       
       return issues;
     } catch (error) {
-      console.error('Error validating against FDA schema:', error);
+      log.error('Error validating against FDA schema:', error);
       issues.push({
         severity: 'error',
         message: `Schema validation error: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -644,7 +646,7 @@ export class eSTARPlusBuilder {
       
       return issues;
     } catch (error) {
-      console.error('Error validating attachments:', error);
+      log.error('Error validating attachments:', error);
       issues.push({
         severity: 'error',
         message: `Attachment validation error: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -680,7 +682,7 @@ export class eSTARPlusBuilder {
       // Process each section - convert to PDF and XHTML
       for (const sec of sections) {
         if (!sec.filePathDOCX) {
-          console.warn(`No DOCX path for section ${sec.name}, skipping conversion`);
+          log.warn(`No DOCX path for section ${sec.name}, skipping conversion`);
           continue;
         }
         
@@ -700,7 +702,7 @@ export class eSTARPlusBuilder {
           sec.xhtml = outXhtml;
           sec.pdf = outPdf;
         } catch (error: unknown) {
-          console.error(`Error processing section ${sec.name}:`, error);
+          log.error(`Error processing section ${sec.name}:`, error);
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           throw new Error(`Failed to process section ${sec.name}: ${errorMessage}`);
         }
@@ -743,7 +745,7 @@ export class eSTARPlusBuilder {
       
       return { zipPath };
     } catch (error: unknown) {
-      console.error('Error building eSTAR package:', error);
+      log.error('Error building eSTAR package:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new Error(`Failed to build eSTAR package: ${errorMessage}`);
     }
@@ -802,7 +804,7 @@ export class eSTARPlusBuilder {
         downloadUrl
       };
     } catch (error: unknown) {
-      console.error('Error previewing eSTAR package:', error);
+      log.error('Error previewing eSTAR package:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new Error(`Failed to preview eSTAR package: ${errorMessage}`);
     }
@@ -841,7 +843,7 @@ export class eSTARPlusBuilder {
         submissionDate: new Date().toISOString()
       };
     } catch (error) {
-      console.error(`Error fetching project metadata for ${projectId}:`, error);
+      log.error(`Error fetching project metadata for ${projectId}:`, error);
       throw new Error(
         `Unable to retrieve project metadata for project ${projectId}. ` +
         'Ensure the project exists and the database connection is available.'
@@ -878,7 +880,7 @@ export class eSTARPlusBuilder {
       });
       
       if (!sections || sections.length === 0) {
-        console.warn(`No completed sections found for project: ${projectId}`);
+        log.warn(`No completed sections found for project: ${projectId}`);
         return [];
       }
       
@@ -889,7 +891,7 @@ export class eSTARPlusBuilder {
         filePathDOCX: section.filePathDOCX || undefined
       }));
     } catch (error) {
-      console.error('Error fetching project sections:', error);
+      log.error('Error fetching project sections:', error);
       return [];
     }
   }
@@ -927,7 +929,7 @@ export class eSTARPlusBuilder {
       // Sign manifest
       return DigitalSigner.signPackage(manifest);
     } catch (error) {
-      console.error('Error generating test manifest:', error);
+      log.error('Error generating test manifest:', error);
       throw new Error('Failed to generate test manifest');
     }
   }
@@ -1009,7 +1011,7 @@ export class eSTARPlusBuilder {
       
       return createdSections;
     } catch (error) {
-      console.error('Error creating default sections:', error);
+      log.error('Error creating default sections:', error);
       throw new Error('Failed to create default sections');
     }
   }
@@ -1048,7 +1050,7 @@ export class eSTARPlusBuilder {
         throw new Error('No response from AI service');
       }
     } catch (error) {
-      console.error('Error generating cover letter:', error);
+      log.error('Error generating cover letter:', error);
       
       // Return a simple cover letter template if AI generation fails
       return `
@@ -1140,7 +1142,7 @@ ${meta.manufacturer}
       return root.end({ prettyPrint: true });
       
     } catch (error: unknown) {
-      console.error('Error building manifest:', error);
+      log.error('Error building manifest:', error);
       if (error instanceof Error) {
         throw new Error(`Failed to build manifest: ${error.message}`);
       } else {
@@ -1179,11 +1181,11 @@ ${meta.manufacturer}
       };
       
       if (!validate(mockJsonData)) {
-        console.warn('Manifest validation errors:', validate.errors);
+        log.warn('Manifest validation errors:', validate.errors);
         // In production, this should throw an error
       }
     } catch (error: unknown) {
-      console.error('Error validating manifest:', error);
+      log.error('Error validating manifest:', error);
       if (error instanceof Error) {
         throw new Error(`Manifest validation failed: ${error.message}`);
       } else {
@@ -1214,7 +1216,7 @@ ${meta.manufacturer}
     
     fs.writeFileSync(outputPath, mockContent);
     
-    console.log(`Mock conversion: ${inputPath} -> ${outputPath} (${format})`);
+    log.debug(`Mock conversion: ${inputPath} -> ${outputPath} (${format})`);
   }
   
   /**
@@ -1226,12 +1228,12 @@ ${meta.manufacturer}
   private static async performAIQualityCheck(sectionName: string, pdfPath: string): Promise<void> {
     try {
       // In a real implementation, this would analyze the PDF
-      console.log(`AI quality check: ${sectionName} (${pdfPath})`);
+      log.debug(`AI quality check: ${sectionName} (${pdfPath})`);
       
       // Here we would use PDF parsing and AI analysis
       // This is a simplified mock version
     } catch (error) {
-      console.warn(`AI quality check warning for ${sectionName}:`, error);
+      log.warn(`AI quality check warning for ${sectionName}:`, error);
     }
   }
   
@@ -1279,7 +1281,7 @@ ${meta.manufacturer}
         throw new Error('No response from AI service');
       }
     } catch (error) {
-      console.error('Error generating AI compliance report:', error);
+      log.error('Error generating AI compliance report:', error);
       
       // Return a basic report if AI generation fails
       return `
@@ -1339,7 +1341,7 @@ The package contains ${sections.length} sections including: ${sections.map(s => 
     // Create mock ZIP file
     fs.writeFileSync(zipPath, 'Mock ZIP File Content');
     
-    console.log(`Created mock ZIP file: ${zipPath} with ${filesToZip.length} files`);
+    log.debug(`Created mock ZIP file: ${zipPath} with ${filesToZip.length} files`);
   }
 
   /**
@@ -1358,7 +1360,7 @@ The package contains ${sections.length} sections including: ${sections.map(s => 
       
       return sections;
     } catch (error) {
-      console.error('Error fetching project sections:', error);
+      log.error('Error fetching project sections:', error);
       return [];
     }
   }
@@ -1384,7 +1386,7 @@ The package contains ${sections.length} sections including: ${sections.map(s => 
     score: number;
   }> {
     try {
-      console.log(`Validating eSTAR package for project ${projectId} with strictMode=${strictMode}`);
+      log.debug(`Validating eSTAR package for project ${projectId} with strictMode=${strictMode}`);
       
       // 1. Load project sections
       const sections = await this.getProjectSections(projectId);
@@ -1439,7 +1441,7 @@ The package contains ${sections.length} sections including: ${sections.map(s => 
         score: complianceScore
       };
     } catch (error) {
-      console.error('Error validating eSTAR package:', error);
+      log.error('Error validating eSTAR package:', error);
       throw error;
     }
   }

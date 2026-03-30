@@ -17,7 +17,7 @@ import {
 } from '../services/ai/stability.js';
 // Temporarily commented out missing csv-parse dependency
 // import { parse } from 'csv-parse/sync';
-import dayjs from 'dayjs';
+import { addMonths, format } from 'date-fns';
 import { insertAllDayEvent, calendarEnabled } from '../services/calendar';
 // Stub for barcode generation - would import BWIPJS from "bwip-js" in production
 const BWIPJS = {
@@ -2511,7 +2511,7 @@ router.post('/studies/:id/timepoints/bulk-assign', async (req, res) => {
   );
   const ins: any[] = [];
   for (const tp of tps) {
-    const due = tp.planned_date || dayjs().add(tp.month, 'month').toDate();
+    const due = tp.planned_date || addMonths(new Date(), tp.month);
     const { rows } = await pool.query<any>(
       `insert into stab_assignments (study_id,tp_id,user_id,role,due_date) values ($1,$2,$3,$4,$5) returning *`,
       [id, tp.tp_id, b.user_id, b.role || 'Sampler', due]
@@ -2535,7 +2535,7 @@ router.post('/studies/:id/timepoints/push-calendar', async (req, res) => {
   const ids: any[] = [];
   if (calendarEnabled()) {
     for (const tp of tps) {
-      const date = dayjs(tp.planned_date || undefined).format('YYYY-MM-DD');
+      const date = format(tp.planned_date ? new Date(tp.planned_date) : new Date(), 'yyyy-MM-dd');
       const ev = await insertAllDayEvent({
         summary: `Stability sampling ${tp.kind} ${tp.label}`,
         description: `Study ${id} — ${tp.kind} ${tp.label}`,

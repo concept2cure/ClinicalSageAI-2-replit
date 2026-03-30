@@ -569,7 +569,7 @@ const categoryLabels: Record<string, string> = {
 const statusLabel: Record<Status, string> = {
   active: "Active",
   beta: "Beta",
-  "coming-soon": "Coming Soon",
+  "coming-soon": "In Development",
 };
 
 // ---------------------------------------------------------------------------
@@ -742,7 +742,7 @@ export function AgentShowcase() {
           </p>
           <p className="text-xs text-stone-400 mt-3">
             {counts.active} active · {counts.beta} in beta · {counts.coming}{" "}
-            coming soon
+            in development
           </p>
         </div>
 

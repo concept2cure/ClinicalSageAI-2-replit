@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import dayjs from 'dayjs';
+import { format } from 'date-fns';
 import InfoTip from '@/components/InfoTip';
 import HelpDrawer from '@/components/HelpDrawer';
 import { toast } from '@/hooks/use-toast';
@@ -82,7 +82,7 @@ export default function SamplingWorkbench({ studyId }: { studyId: string }) {
               >
                 <div>
                   {tp.kind} {tp.label} • planned{' '}
-                  {tp.planned_date ? dayjs(tp.planned_date).format('YYYY-MM-DD') : '—'}
+                  {tp.planned_date ? format(new Date(tp.planned_date), 'yyyy-MM-dd') : '—'}
                 </div>
                 <Button variant="outline" onClick={() => create(tp)}>
                   Create Sample + Label
@@ -124,7 +124,7 @@ export default function SamplingWorkbench({ studyId }: { studyId: string }) {
                 <div>
                   {s.sample_code} •{' '}
                   {s.collected_at
-                    ? `collected ${dayjs(s.collected_at).format('YYYY-MM-DD HH:mm')}`
+                    ? `collected ${format(new Date(s.collected_at), 'yyyy-MM-dd HH:mm')}`
                     : 'pending'}
                 </div>
                 <div className="flex items-center gap-2">

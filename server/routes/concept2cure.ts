@@ -1082,7 +1082,8 @@ async function getOwnershipDerivationData(
     .where(
       and(inArray(projectActivities.projectId, projectIds), eq(projectActivities.organizationId, organizationId))
     )
-    .orderBy(desc(projectActivities.createdAt));
+    .orderBy(desc(projectActivities.createdAt))
+    .limit(500);
   for (const row of activityRows) {
     const list = activitiesByProject.get(row.projectId) || [];
     if (list.length >= 50) continue;
@@ -1117,7 +1118,8 @@ async function getOwnershipDerivationData(
         inArray(regulatoryAuditLogs.entityId, projectEntityIds)
       )
     )
-    .orderBy(desc(regulatoryAuditLogs.timestamp));
+    .orderBy(desc(regulatoryAuditLogs.timestamp))
+    .limit(500);
   for (const row of auditRows) {
     const numeric = Number.parseInt((row.entityId || '').replace('proj_', ''), 10);
     if (!numeric || Number.isNaN(numeric)) continue;
@@ -9721,7 +9723,7 @@ router.get('/projects/:projectId/tasks', async (req: Request, res: Response) => 
 
     let query = db.select().from(projectTasks).where(eq(projectTasks.projectId, projectId));
 
-    const tasks = await query.orderBy(projectTasks.dueDate);
+    const tasks = await query.orderBy(projectTasks.dueDate).limit(500);
 
     // Filter in application layer for optional params
     let filtered = tasks;
@@ -9882,7 +9884,7 @@ router.get('/projects/:projectId/tasks/summary', async (req: Request, res: Respo
     const projectId = parseInt(req.params.projectId, 10);
     if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
 
-    const tasks = await db.select().from(projectTasks).where(eq(projectTasks.projectId, projectId));
+    const tasks = await db.select().from(projectTasks).where(eq(projectTasks.projectId, projectId)).limit(1000);
 
     const now = new Date();
     const byStatus: Record<string, number> = {};
@@ -10047,10 +10049,11 @@ router.get('/projects/:projectId/context', async (req: Request, res: Response) =
     const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
     if (!project) return sendError(res, 'Project not found', 404);
 
-    // Fetch tasks
+    // Fetch tasks (limit to recent 50 — only 10 are returned to client)
     const tasks = await db.select().from(projectTasks)
       .where(eq(projectTasks.projectId, projectId))
-      .orderBy(desc(projectTasks.createdAt));
+      .orderBy(desc(projectTasks.createdAt))
+      .limit(50);
 
     // Build task summary
     const taskSummary = {
@@ -12101,7 +12104,8 @@ router.get('/projects/:projectId/reviews/project-queue', async (req: Request, re
           eq(concept2cureReviewThreads.status, 'open')
         )
       )
-      .orderBy(desc(concept2cureReviewThreads.updatedAt));
+      .orderBy(desc(concept2cureReviewThreads.updatedAt))
+      .limit(500);
 
     // All open/in_progress tasks in project
     const projectTasks = await db
@@ -12132,7 +12136,8 @@ router.get('/projects/:projectId/reviews/project-queue', async (req: Request, re
           inArray(concept2cureReviewTasks.status, ['open', 'in_progress'])
         )
       )
-      .orderBy(concept2cureReviewTasks.dueAt, desc(concept2cureReviewTasks.updatedAt));
+      .orderBy(concept2cureReviewTasks.dueAt, desc(concept2cureReviewTasks.updatedAt))
+      .limit(500);
 
     const now = new Date();
     const overdueProjectTasks = projectTasks.filter(t => t.dueAt && new Date(t.dueAt) < now);
@@ -12251,7 +12256,8 @@ router.get('/projects/:projectId/review-pulse', async (req: Request, res: Respon
           eq(concept2cureReviewThreads.projectId, projectDbId),
           eq(concept2cureReviewThreads.orgId, organizationId)
         )
-      );
+      )
+      .limit(1000);
 
     const openThreads = allThreads.filter(t => t.status === 'open');
     const resolvedThreads = allThreads.filter(t => t.status === 'resolved');
@@ -12282,7 +12288,8 @@ router.get('/projects/:projectId/review-pulse', async (req: Request, res: Respon
           eq(concept2cureReviewTasks.projectId, projectDbId),
           eq(concept2cureReviewTasks.orgId, organizationId)
         )
-      );
+      )
+      .limit(1000);
 
     const activeTasks = allTasks.filter(t => ['open', 'in_progress'].includes(t.status));
     const overdueTasks = activeTasks.filter(t => t.dueAt && new Date(t.dueAt) < now);
@@ -12304,7 +12311,8 @@ router.get('/projects/:projectId/review-pulse', async (req: Request, res: Respon
           eq(concept2cureArtifacts.projectId, projectDbId),
           eq(concept2cureArtifacts.organizationId, organizationId)
         )
-      );
+      )
+      .limit(500);
 
     const artifactReadiness = artifacts.map(a => {
       const artThreads = openThreads.filter(t => t.artifactId === a.id);

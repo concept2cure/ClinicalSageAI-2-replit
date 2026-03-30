@@ -7,6 +7,9 @@ import {
   isApiKeyAvailable,
 } from '../openai-service';
 import { SQL } from 'drizzle-orm/sql';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('clinical-intelligence');
 
 /**
  * Comprehensive semantic models for CSR and CER standardization
@@ -613,16 +616,16 @@ class ClinicalIntelligenceService {
 
   private constructor() {
     // Initialize service
-    console.log(
+    log.debug(
       'Initializing Clinical Intelligence Service with comprehensive semantic frameworks'
     );
-    console.log(
+    log.debug(
       `Loaded ${SEMANTIC_MODELS.csr.ichE3Framework.sections.length} ICH E3 sections for CSR analysis`
     );
-    console.log(
+    log.debug(
       `Loaded ${SEMANTIC_MODELS.cer.meddevFramework.sections.length} MEDDEV sections for CER analysis`
     );
-    console.log(`Loaded ${CROSS_DOCUMENT_MAPPINGS.length} cross-document semantic mappings`);
+    log.debug(`Loaded ${CROSS_DOCUMENT_MAPPINGS.length} cross-document semantic mappings`);
 
     // Start processing queue
     const self = this;
@@ -647,7 +650,7 @@ class ClinicalIntelligenceService {
   ): Promise<boolean> {
     try {
       if (!isApiKeyAvailable()) {
-        console.error('OpenAI API key not available');
+        log.error('OpenAI API key not available');
         return false;
       }
 
@@ -660,7 +663,7 @@ class ClinicalIntelligenceService {
           .where(eq(clinicalEvaluationReports.cer_id, documentId));
 
         if (!cer) {
-          console.error(`CER ${documentId} not found`);
+          log.error(`CER ${documentId} not found`);
           return false;
         }
 
@@ -673,7 +676,7 @@ class ClinicalIntelligenceService {
         );
 
         if (!csr) {
-          console.error(`CSR ${documentId} not found`);
+          log.error(`CSR ${documentId} not found`);
           return false;
         }
 
@@ -684,7 +687,7 @@ class ClinicalIntelligenceService {
       const embeddings = await generateEmbeddings(documentText);
 
       if (!embeddings) {
-        console.error(`Failed to generate embeddings for ${documentType} ${documentId}`);
+        log.error(`Failed to generate embeddings for ${documentType} ${documentId}`);
         return false;
       }
 
@@ -704,7 +707,7 @@ class ClinicalIntelligenceService {
 
       return true;
     } catch (error) {
-      console.error(`Error generating document embeddings: ${error.message}`);
+      log.error(`Error generating document embeddings: ${error.message}`);
       return false;
     }
   }
@@ -718,7 +721,7 @@ class ClinicalIntelligenceService {
   ): Promise<SemanticVariable[]> {
     try {
       if (!isApiKeyAvailable()) {
-        console.error('OpenAI API key not available');
+        log.error('OpenAI API key not available');
         return [];
       }
 
@@ -732,7 +735,7 @@ class ClinicalIntelligenceService {
           .where(eq(clinicalEvaluationReports.cer_id, documentId));
 
         if (!cer) {
-          console.error(`CER ${documentId} not found`);
+          log.error(`CER ${documentId} not found`);
           return [];
         }
 
@@ -750,7 +753,7 @@ class ClinicalIntelligenceService {
         ]);
 
         if (!csr) {
-          console.error(`CSR ${documentId} not found`);
+          log.error(`CSR ${documentId} not found`);
           return [];
         }
 
@@ -797,7 +800,7 @@ class ClinicalIntelligenceService {
       const response = await generateStructuredResponse(prompt);
 
       if (!response) {
-        console.error(`Failed to extract semantic variables for ${documentType} ${documentId}`);
+        log.error(`Failed to extract semantic variables for ${documentType} ${documentId}`);
         return [];
       }
 
@@ -813,11 +816,11 @@ class ClinicalIntelligenceService {
 
         return variables;
       } catch (error) {
-        console.error(`Error parsing variables response: ${error.message}`);
+        log.error(`Error parsing variables response: ${error.message}`);
         return [];
       }
     } catch (error) {
-      console.error(`Error extracting semantic variables: ${error.message}`);
+      log.error(`Error extracting semantic variables: ${error.message}`);
       return [];
     }
   }
@@ -865,7 +868,7 @@ class ClinicalIntelligenceService {
       const response = await generateStructuredResponse(prompt);
 
       if (!response) {
-        console.error(`Failed to analyze semantic connections for ${documentId}`);
+        log.error(`Failed to analyze semantic connections for ${documentId}`);
         return [];
       }
 
@@ -879,11 +882,11 @@ class ClinicalIntelligenceService {
 
         return connections;
       } catch (error) {
-        console.error(`Error parsing connections response: ${error.message}`);
+        log.error(`Error parsing connections response: ${error.message}`);
         return [];
       }
     } catch (error) {
-      console.error(`Error analyzing semantic connections: ${error.message}`);
+      log.error(`Error analyzing semantic connections: ${error.message}`);
       return [];
     }
   }
@@ -896,7 +899,7 @@ class ClinicalIntelligenceService {
    * This ensures every document uploaded gets processed through our semantic framework
    */
   public addToProcessingQueue(documentId: string, documentType: 'CSR' | 'CER'): void {
-    console.log(`Adding ${documentType} ${documentId} to semantic processing queue`);
+    log.debug(`Adding ${documentType} ${documentId} to semantic processing queue`);
 
     // Check if already in queue
     const exists = this.processingQueue.some(
@@ -905,7 +908,7 @@ class ClinicalIntelligenceService {
 
     if (!exists && !this.processedDocuments.has(`${documentType}_${documentId}`)) {
       this.processingQueue.push({ documentId, documentType });
-      console.log(`Queue size: ${this.processingQueue.length}`);
+      log.debug(`Queue size: ${this.processingQueue.length}`);
     }
   }
 
@@ -924,18 +927,18 @@ class ClinicalIntelligenceService {
       const item = this.processingQueue.shift();
 
       if (!item) {
-        console.log('No items in queue to process');
+        log.debug('No items in queue to process');
         return;
       }
 
       const { documentId, documentType } = item;
-      console.log(`Processing ${documentType} ${documentId} through semantic framework`);
+      log.debug(`Processing ${documentType} ${documentId} through semantic framework`);
 
       // Generate embeddings
       const embeddingResult = await this.generateDocumentEmbeddings(documentId, documentType);
 
       if (!embeddingResult) {
-        console.error(`Failed to generate embeddings for ${documentType} ${documentId}`);
+        log.error(`Failed to generate embeddings for ${documentType} ${documentId}`);
         // Re-add to queue for retry, but at the end
         this.processingQueue.push({ documentId, documentType });
         return;
@@ -945,7 +948,7 @@ class ClinicalIntelligenceService {
       const analysisResult = await this.performSemanticAnalysis(documentId, documentType);
 
       if (analysisResult.variables.length === 0) {
-        console.error(`Failed to extract variables for ${documentType} ${documentId}`);
+        log.error(`Failed to extract variables for ${documentType} ${documentId}`);
         // Re-add to queue for retry, but at the end
         this.processingQueue.push({ documentId, documentType });
         return;
@@ -955,17 +958,17 @@ class ClinicalIntelligenceService {
       this.processedDocuments.add(`${documentType}_${documentId}`);
 
       // Log success
-      console.log(
+      log.debug(
         `Successfully processed ${documentType} ${documentId} through semantic framework`
       );
-      console.log(`- Extracted ${analysisResult.variables.length} semantic variables`);
-      console.log(`- Identified ${analysisResult.connections.length} variable connections`);
-      console.log(`- Discovered ${analysisResult.clusters.length} variable clusters`);
-      console.log(`- Mapped ${analysisResult.causal_paths.length} causal pathways`);
-      console.log(
+      log.debug(`- Extracted ${analysisResult.variables.length} semantic variables`);
+      log.debug(`- Identified ${analysisResult.connections.length} variable connections`);
+      log.debug(`- Discovered ${analysisResult.clusters.length} variable clusters`);
+      log.debug(`- Mapped ${analysisResult.causal_paths.length} causal pathways`);
+      log.debug(
         `- Applied ${analysisResult.semantic_frameworks?.length || 0} semantic frameworks`
       );
-      console.log(`- Referenced ${analysisResult.data_standards?.length || 0} data standards`);
+      log.debug(`- Referenced ${analysisResult.data_standards?.length || 0} data standards`);
 
       // Update document with processing status
       if (documentType === 'CER') {
@@ -985,7 +988,7 @@ class ClinicalIntelligenceService {
         );
       }
     } catch (error) {
-      console.error(`Error in queue processing: ${error}`);
+      log.error(`Error in queue processing: ${error}`);
     } finally {
       this.isProcessing = false;
 
@@ -1074,7 +1077,7 @@ class ClinicalIntelligenceService {
         regulatory_alignment: regulatoryAlignment,
       };
     } catch (error) {
-      console.error(`Error performing semantic analysis: ${error.message}`);
+      log.error(`Error performing semantic analysis: ${error.message}`);
       return {
         variables: [],
         connections: [],
@@ -1150,14 +1153,14 @@ class ClinicalIntelligenceService {
       const response = await generateStructuredResponse(prompt);
 
       if (!response) {
-        console.error('Failed to identify variable clusters');
+        log.error('Failed to identify variable clusters');
         return [];
       }
 
       // Parse the response
       return JSON.parse(response);
     } catch (error) {
-      console.error(`Error identifying variable clusters: ${error.message}`);
+      log.error(`Error identifying variable clusters: ${error.message}`);
       return [];
     }
   }
@@ -1208,14 +1211,14 @@ class ClinicalIntelligenceService {
       const response = await generateStructuredResponse(prompt);
 
       if (!response) {
-        console.error('Failed to analyze causal pathways');
+        log.error('Failed to analyze causal pathways');
         return [];
       }
 
       // Parse the response
       return JSON.parse(response);
     } catch (error) {
-      console.error(`Error analyzing causal pathways: ${error.message}`);
+      log.error(`Error analyzing causal pathways: ${error.message}`);
       return [];
     }
   }
@@ -1322,7 +1325,7 @@ class ClinicalIntelligenceService {
       const response = await generateStructuredResponse(prompt);
 
       if (!response) {
-        console.error('Failed to perform cross-document analysis');
+        log.error('Failed to perform cross-document analysis');
         return {
           common_variables: commonVariables,
           cross_document_connections: [],
@@ -1339,7 +1342,7 @@ class ClinicalIntelligenceService {
         key_insights: analysisResult.key_insights || [],
       };
     } catch (error) {
-      console.error(`Error in cross-document analysis: ${error.message}`);
+      log.error(`Error in cross-document analysis: ${error.message}`);
       return {
         common_variables: [],
         cross_document_connections: [],
@@ -1436,7 +1439,7 @@ class ClinicalIntelligenceService {
       const response = await generateStructuredResponse(prompt);
 
       if (!response) {
-        console.error('Failed to generate clinical trial insights');
+        log.error('Failed to generate clinical trial insights');
         return {
           key_variables: keyVariables,
           risk_factors: [],
@@ -1455,7 +1458,7 @@ class ClinicalIntelligenceService {
         design_considerations: insightsResult.design_considerations || [],
       };
     } catch (error) {
-      console.error(`Error generating clinical trial insights: ${error.message}`);
+      log.error(`Error generating clinical trial insights: ${error.message}`);
       return {
         key_variables: [],
         risk_factors: [],

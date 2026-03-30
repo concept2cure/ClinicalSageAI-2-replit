@@ -653,8 +653,9 @@ const ValidatorRunner: React.FC = () => {
             </div>
 
             <button
-              onClick={() => {}}
-              className="inline-flex items-center p-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              disabled
+              title="Validation settings"
+              className="inline-flex items-center p-2 border border-gray-200 rounded-md text-sm font-medium text-gray-400 bg-gray-50 cursor-not-allowed"
             >
               <Settings className="h-4 w-4" />
             </button>

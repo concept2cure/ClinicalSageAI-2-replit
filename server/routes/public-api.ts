@@ -21,6 +21,9 @@ import { csrSearchService } from '../services/csr-search-service.js';
 import { getRegulatoryPathwayIntelligence } from '../services/regulatory-pathway-intelligence.js';
 import { getEndpointRecommenderService } from '../services/endpoint-recommender-service.js';
 import { precedentEngine } from '../services/precedent-engine.js';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('public-api');
 
 // In-memory sliding window rate limiter per API key
 const rateLimitWindows = new Map<number, { count: number; resetAt: number }>();
@@ -135,7 +138,7 @@ function requireQuota(featureId: string) {
       }
     } catch {
       // Quota check failure should not block the request — log and continue
-      console.warn('[public-api] Quota check failed for org', req.apiOrganizationId, featureId);
+      log.warn('[public-api] Quota check failed for org', req.apiOrganizationId, featureId);
     }
 
     next();
@@ -256,7 +259,7 @@ router.use(requireApiKey);
 
 // Log every authenticated API request for observability
 router.use((req: ApiRequest, _res: Response, next: NextFunction) => {
-  console.log(
+  log.debug(
     `[public-api] ${req.method} ${req.path} org=${req.apiOrganizationId} key=${req.apiKeyId}`,
   );
   next();
@@ -298,7 +301,7 @@ router.get('/csr/search', requireScope('csr:read'), requireQuota('api_csr_search
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[public-api] CSR search error:', message);
+    log.error('[public-api] CSR search error:', message);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -337,7 +340,7 @@ router.get('/regulatory/pathways', requireScope('regulatory:read'), requireQuota
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[public-api] Regulatory pathways error:', message);
+    log.error('[public-api] Regulatory pathways error:', message);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -373,7 +376,7 @@ router.get('/endpoints/recommend', requireScope('endpoints:read'), requireQuota(
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[public-api] Endpoint recommend error:', message);
+    log.error('[public-api] Endpoint recommend error:', message);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -419,7 +422,7 @@ router.get('/precedent/search', requireScope('precedent:read'), requireQuota('ap
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[public-api] Precedent search error:', message);
+    log.error('[public-api] Precedent search error:', message);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -464,7 +467,7 @@ router.get('/trial-design/suggest', requireScope('trial-design:read'), requireQu
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[public-api] Trial design error:', message);
+    log.error('[public-api] Trial design error:', message);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });

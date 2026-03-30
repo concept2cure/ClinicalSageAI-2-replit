@@ -2,6 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import { HuggingFaceService } from '../huggingface-service';
 import { getHuggingfaceModels } from '../config/huggingface-models';
+import { createScopedLogger } from '../utils/logger.js';
+const log = createScopedLogger('regulatory-intelligence');
 
 interface RegulatoryRequirement {
   agency: string;
@@ -57,7 +59,7 @@ export class RegulatoryIntelligenceService {
     }
 
     try {
-      console.log('Initializing Regulatory Intelligence Service...');
+      log.debug('Initializing Regulatory Intelligence Service...');
 
       // Create necessary directories
       const fs = require('fs');
@@ -65,7 +67,7 @@ export class RegulatoryIntelligenceService {
 
       if (!fs.existsSync(regulatoryDir)) {
         fs.mkdirSync(regulatoryDir, { recursive: true });
-        console.log('Created regulatory data directory');
+        log.debug('Created regulatory data directory');
 
         // Initialize with default data since directory didn't exist
         this.initializeDefaultRegulatoryData();
@@ -75,10 +77,10 @@ export class RegulatoryIntelligenceService {
       }
 
       this.initialized = true;
-      console.log('Regulatory Intelligence Service initialized successfully');
+      log.debug('Regulatory Intelligence Service initialized successfully');
       return true;
     } catch (error) {
-      console.error('Error initializing Regulatory Intelligence Service:', error);
+      log.error('Error initializing Regulatory Intelligence Service:', error);
       return false;
     }
   }
@@ -124,11 +126,11 @@ export class RegulatoryIntelligenceService {
         this.initializeDefaultGuidance();
       }
 
-      console.log(
+      log.debug(
         `Loaded ${this.regulatoryRequirements.length} regulatory requirements and ${this.regulatoryGuidance.length} guidance documents`
       );
     } catch (error) {
-      console.error('Error loading regulatory data:', error);
+      log.error('Error loading regulatory data:', error);
       this.initializeDefaultRegulatoryData();
     }
   }
@@ -662,7 +664,7 @@ export class RegulatoryIntelligenceService {
 
       return analysisText;
     } catch (error) {
-      console.error('Error analyzing protocol compliance:', error);
+      log.error('Error analyzing protocol compliance:', error);
       throw error;
     }
   }

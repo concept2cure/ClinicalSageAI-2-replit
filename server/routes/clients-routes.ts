@@ -15,6 +15,9 @@ import { authMiddleware } from '../auth';
 // Create a new router for client endpoints
 const router = Router();
 
+import { createScopedLogger } from '../utils/logger.js';
+const log = createScopedLogger('clients-routes');
+
 // SECURITY: All client endpoints require authentication
 router.use(authMiddleware);
 
@@ -58,7 +61,7 @@ router.get('/all', async (req, res) => {
       return res.status(403).json({ success: false, error: 'Organization context required' });
     }
 
-    console.log(`Fetching client workspaces for organization: ${userOrgId}`);
+    log.debug(`Fetching client workspaces for organization: ${userOrgId}`);
 
     const clients = await db
       .select({
@@ -82,7 +85,7 @@ router.get('/all', async (req, res) => {
       .leftJoin(organizations, eq(clientWorkspaces.organizationId, organizations.id))
       .where(eq(clientWorkspaces.organizationId, userOrgId));
 
-    console.log(`Found ${clients.length} total client workspaces across all organizations`);
+    log.debug(`Found ${clients.length} total client workspaces across all organizations`);
 
     // Transform data to match frontend expectations — compute real metrics
     const transformedClients = await Promise.all(clients.map(async client => {
@@ -110,7 +113,7 @@ router.get('/all', async (req, res) => {
       clients: transformedClients,
     });
   } catch (error) {
-    console.error('Error fetching all clients:', error);
+    log.error('Error fetching all clients:', error);
     return res.status(500).json({
       success: false,
       error: 'Failed to fetch clients',
@@ -133,7 +136,7 @@ router.get('/', async (req, res) => {
       });
     }
 
-    console.log(`Fetching client workspaces for organization: ${organizationId}`);
+    log.debug(`Fetching client workspaces for organization: ${organizationId}`);
 
     // Fetch client workspaces from database
     const clients = await db
@@ -158,7 +161,7 @@ router.get('/', async (req, res) => {
       .leftJoin(organizations, eq(clientWorkspaces.organizationId, organizations.id))
       .where(eq(clientWorkspaces.organizationId, parseInt(organizationId as string)));
 
-    console.log(`Found ${clients.length} client workspaces for organization ${organizationId}`);
+    log.debug(`Found ${clients.length} client workspaces for organization ${organizationId}`);
 
     // Transform data with real metrics
     const transformedClients = await Promise.all(clients.map(async client => {
@@ -185,7 +188,7 @@ router.get('/', async (req, res) => {
       clients: transformedClients,
     });
   } catch (error) {
-    console.error('Error fetching clients:', error);
+    log.error('Error fetching clients:', error);
     return res.status(500).json({
       success: false,
       error: 'Failed to fetch client workspaces',
@@ -209,7 +212,7 @@ router.post('/', async (req, res) => {
       });
     }
 
-    console.log('Creating new client workspace:', { name, slug, organizationId });
+    log.debug('Creating new client workspace:', { name, slug, organizationId });
 
     // Create new client in database
     const [newClient] = await db
@@ -231,7 +234,7 @@ router.post('/', async (req, res) => {
       })
       .returning();
 
-    console.log('Client workspace created in database:', newClient);
+    log.debug('Client workspace created in database:', newClient);
 
     // Transform response to match frontend expectations
     const responseClient = {
@@ -262,7 +265,7 @@ router.post('/', async (req, res) => {
       message: 'Client workspace created successfully',
     });
   } catch (error) {
-    console.error('Error creating client:', error);
+    log.error('Error creating client:', error);
 
     // Handle duplicate slug error specifically
     if (error.code === '23505' && error.constraint === 'unique_org_slug') {
@@ -288,7 +291,7 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    console.log(`Fetching client details for ID: ${id}`);
+    log.debug(`Fetching client details for ID: ${id}`);
 
     // Fetch client from database
     const [client] = await db
@@ -314,14 +317,14 @@ router.get('/:id', async (req, res) => {
       .where(eq(clientWorkspaces.id, parseInt(id)));
 
     if (!client) {
-      console.log(`Client not found for ID: ${id}`);
+      log.debug(`Client not found for ID: ${id}`);
       return res.status(404).json({
         success: false,
         error: 'Client workspace not found',
       });
     }
 
-    console.log(`Client found:`, client.name);
+    log.debug(`Client found:`, client.name);
 
     // Compute real workspace metrics
     const metrics = await getWorkspaceMetrics(client.id);
@@ -371,7 +374,7 @@ router.get('/:id', async (req, res) => {
       client: clientData,
     });
   } catch (error) {
-    console.error(`Error fetching client ${req.params.id}:`, error);
+    log.error(`Error fetching client ${req.params.id}:`, error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch client details',
@@ -388,7 +391,7 @@ router.patch('/:id', async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
-    console.log(`Updating client workspace ${id} with data:`, updates);
+    log.debug(`Updating client workspace ${id} with data:`, updates);
 
     // Prepare update data, filtering out any undefined values
     const updateData: any = {};
@@ -420,7 +423,7 @@ router.patch('/:id', async (req, res) => {
       });
     }
 
-    console.log(`Successfully updated client workspace ${id}:`, updatedClient.name);
+    log.debug(`Successfully updated client workspace ${id}:`, updatedClient.name);
 
     // CRITICAL: Also update the workspace settings to keep them synchronized
     if (updates.name || updates.slug || updates.description) {
@@ -449,7 +452,7 @@ router.patch('/:id', async (req, res) => {
           })
           .where(eq(clientWorkspaceSettings.clientWorkspaceId, parseInt(id)));
 
-        console.log(`✅ Synchronized workspace settings with Edit Client changes`);
+        log.debug(`✅ Synchronized workspace settings with Edit Client changes`);
       } else {
         // Create new workspace settings if they don't exist
         await db.insert(clientWorkspaceSettings).values({
@@ -501,7 +504,7 @@ router.patch('/:id', async (req, res) => {
           },
         });
 
-        console.log(`✅ Created new workspace settings with Edit Client data`);
+        log.debug(`✅ Created new workspace settings with Edit Client data`);
       }
     }
 
@@ -525,7 +528,7 @@ router.patch('/:id', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(`Error updating client ${req.params.id}:`, error);
+    log.error(`Error updating client ${req.params.id}:`, error);
     res.status(500).json({
       success: false,
       error: 'Failed to update client workspace',
@@ -541,7 +544,7 @@ router.get('/:id/security-settings', async (req, res) => {
   try {
     const { id } = req.params;
 
-    console.log(`Fetching security settings for client: ${id}`);
+    log.debug(`Fetching security settings for client: ${id}`);
 
     // Try to fetch existing security settings from database
     const [existingSettings] = await db
@@ -626,7 +629,7 @@ router.get('/:id/security-settings', async (req, res) => {
       ...settings,
     });
   } catch (error) {
-    console.error(`Error fetching security settings for client ${req.params.id}:`, error);
+    log.error(`Error fetching security settings for client ${req.params.id}:`, error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch security settings',
@@ -643,7 +646,7 @@ router.patch('/:id/security-settings', async (req, res) => {
     const { id } = req.params;
     const settings = req.body;
 
-    console.log('Updating security settings for client', id, ':', Object.keys(settings));
+    log.debug('Updating security settings for client', id, ':', Object.keys(settings));
 
     // Validate that client ID exists
     if (!id) {
@@ -687,7 +690,7 @@ router.patch('/:id/security-settings', async (req, res) => {
         .where(eq(clientSecuritySettings.clientWorkspaceId, parseInt(id)))
         .returning();
 
-      console.log(`Updated security settings for client ${id}`);
+      log.debug(`Updated security settings for client ${id}`);
     } else {
       // Create new settings
       const [newSettings] = await db
@@ -703,7 +706,7 @@ router.patch('/:id/security-settings', async (req, res) => {
         })
         .returning();
 
-      console.log(`Created new security settings for client ${id}`);
+      log.debug(`Created new security settings for client ${id}`);
     }
 
     res.json({
@@ -712,7 +715,7 @@ router.patch('/:id/security-settings', async (req, res) => {
       ...settings,
     });
   } catch (error) {
-    console.error(`Error updating security settings for client ${req.params.id}:`, error);
+    log.error(`Error updating security settings for client ${req.params.id}:`, error);
     res.status(500).json({
       success: false,
       error: 'Failed to update security settings',
@@ -729,7 +732,7 @@ router.delete('/:id', async (req, res) => {
     const { id } = req.params;
     const clientId = parseInt(id);
 
-    console.log(`Deleting client workspace ${id} with cascade deletion from database`);
+    log.debug(`Deleting client workspace ${id} with cascade deletion from database`);
 
     // Start a transaction for safe cascade deletion
     const result = await db.transaction(async tx => {
@@ -750,7 +753,7 @@ router.delete('/:id', async (req, res) => {
         .where(eq(projectModules.clientWorkspaceId, clientId))
         .returning();
 
-      console.log(`Deleted ${deletedProjectModules.length} project modules for client ${id}`);
+      log.debug(`Deleted ${deletedProjectModules.length} project modules for client ${id}`);
 
       // Delete projects associated with this client
       const deletedProjects = await tx
@@ -758,7 +761,7 @@ router.delete('/:id', async (req, res) => {
         .where(eq(projects.clientWorkspaceId, clientId))
         .returning();
 
-      console.log(`Deleted ${deletedProjects.length} projects for client ${id}`);
+      log.debug(`Deleted ${deletedProjects.length} projects for client ${id}`);
 
       // Delete client workspace settings if they exist
       await tx
@@ -783,7 +786,7 @@ router.delete('/:id', async (req, res) => {
       };
     });
 
-    console.log(
+    log.debug(
       `Successfully deleted client workspace ${id}: ${result.client.name} (${result.deletedProjects} projects, ${result.deletedProjectModules} project modules)`
     );
 
@@ -794,7 +797,7 @@ router.delete('/:id', async (req, res) => {
       deletedProjectModules: result.deletedProjectModules,
     });
   } catch (error) {
-    console.error(`Error deleting client ${req.params.id}:`, error);
+    log.error(`Error deleting client ${req.params.id}:`, error);
 
     if (error.message === 'Client workspace not found') {
       return res.status(404).json({
@@ -818,7 +821,7 @@ router.get('/:id/settings', async (req, res) => {
   try {
     const { id } = req.params;
 
-    console.log(`Fetching workspace settings for client: ${id}`);
+    log.debug(`Fetching workspace settings for client: ${id}`);
 
     // Try to fetch existing workspace settings from database
     const [existingSettings] = await db
@@ -912,7 +915,7 @@ router.get('/:id/settings', async (req, res) => {
       ...settings,
     });
   } catch (error) {
-    console.error(`Error fetching workspace settings for client ${req.params.id}:`, error);
+    log.error(`Error fetching workspace settings for client ${req.params.id}:`, error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch workspace settings',
@@ -929,7 +932,7 @@ router.patch('/:id/settings', async (req, res) => {
     const { id } = req.params;
     const settings = req.body;
 
-    console.log('Updating workspace settings for client', id);
+    log.debug('Updating workspace settings for client', id);
 
     // Validate that client ID exists
     if (!id) {
@@ -974,7 +977,7 @@ router.patch('/:id/settings', async (req, res) => {
         .where(eq(clientWorkspaceSettings.clientWorkspaceId, parseInt(id)))
         .returning();
 
-      console.log(`Updated workspace settings for client ${id}`);
+      log.debug(`Updated workspace settings for client ${id}`);
     } else {
       // Create new settings
       const [newSettings] = await db
@@ -991,7 +994,7 @@ router.patch('/:id/settings', async (req, res) => {
         })
         .returning();
 
-      console.log(`Created new workspace settings for client ${id}`);
+      log.debug(`Created new workspace settings for client ${id}`);
     }
 
     // CRITICAL: Also update the main client_workspaces table to keep name/slug synchronized
@@ -1014,7 +1017,7 @@ router.patch('/:id/settings', async (req, res) => {
           .set(clientUpdates)
           .where(eq(clientWorkspaces.id, parseInt(id)));
 
-        console.log(`✅ Synchronized client_workspaces table with updates:`, clientUpdates);
+        log.debug(`✅ Synchronized client_workspaces table with updates:`, clientUpdates);
       }
     }
 
@@ -1024,7 +1027,7 @@ router.patch('/:id/settings', async (req, res) => {
       ...settings,
     });
   } catch (error) {
-    console.error(`Error updating workspace settings for client ${req.params.id}:`, error);
+    log.error(`Error updating workspace settings for client ${req.params.id}:`, error);
     res.status(500).json({
       success: false,
       error: 'Failed to update workspace settings',

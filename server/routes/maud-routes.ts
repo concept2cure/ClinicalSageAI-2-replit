@@ -11,6 +11,10 @@ import express from 'express';
 import axios from 'axios';
 import { Request, Response } from 'express';
 import { z } from 'zod';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('maud-routes');
+
 // Import middleware - fallback to a basic middleware if the tenant one isn't available
 let validateTenantAccess;
 try {
@@ -18,11 +22,11 @@ try {
 } catch (error) {
   // Fallback middleware that just passes along the request
   validateTenantAccess = (req: Request, res: Response, next: Function) => {
-    console.log('Using fallback tenant middleware');
+    log.debug('Using fallback tenant middleware');
     // Extract organization ID from headers if available
     const organizationId = req.headers['x-organization-id'] as string;
     if (organizationId) {
-      console.log(`Request for organization: ${organizationId}`);
+      log.debug(`Request for organization: ${organizationId}`);
     }
     next();
   };
@@ -92,7 +96,7 @@ router.get(
 
       // If we found a validation with status="validated", return it
       if (dbValidation && dbValidation.status === 'validated') {
-        console.log(`Found validated document ${documentId} in database`);
+        log.debug(`Found validated document ${documentId} in database`);
 
         // Format the response to match our API contract
         const response = {
@@ -115,7 +119,7 @@ router.get(
       if (pendingRequests && pendingRequests.length > 0) {
         const pendingRequest = pendingRequests[0];
 
-        console.log(
+        log.debug(
           `Found pending validation request ${pendingRequest.request_id} for document ${documentId}`
         );
 
@@ -159,13 +163,13 @@ router.get(
 
         // Save validation in the background (don't await)
         saveValidation(validationToSave)
-          .then(() => console.log(`Saved validation ${validationToSave.validation_id} to database`))
-          .catch(err => console.error('Error saving validation to database:', err));
+          .then(() => log.debug(`Saved validation ${validationToSave.validation_id} to database`))
+          .catch(err => log.error('Error saving validation to database:', err));
       }
 
       return res.status(200).json(response.data);
     } catch (error) {
-      console.error('Error fetching MAUD validation status:', error);
+      log.error('Error fetching MAUD validation status:', error);
 
       // Handle different error types
       if (axios.isAxiosError(error)) {
@@ -230,13 +234,13 @@ router.post('/validate', requireMaudApiKey, async (req: Request, res: Response) 
     });
 
     // Log successful validation submission
-    console.log(
+    log.debug(
       `Validation submitted for document ${validationRequest.documentId} with ${validationRequest.algorithms.length} algorithms`
     );
 
     return res.status(201).json(response.data);
   } catch (error) {
-    console.error('Error submitting for MAUD validation:', error);
+    log.error('Error submitting for MAUD validation:', error);
 
     // Handle different error types
     if (axios.isAxiosError(error)) {
@@ -281,7 +285,7 @@ router.get('/algorithms', requireMaudApiKey, async (req: Request, res: Response)
 
     return res.status(200).json(response.data);
   } catch (error) {
-    console.error('Error fetching MAUD algorithms:', error);
+    log.error('Error fetching MAUD algorithms:', error);
 
     // Handle different error types
     if (axios.isAxiosError(error)) {
@@ -329,7 +333,7 @@ router.get(
 
       // If we found history in the database and have enough records, return it
       if (dbHistory && dbHistory.length >= limit) {
-        console.log(
+        log.debug(
           `Found ${dbHistory.length} validation history records for document ${documentId} in database`
         );
 
@@ -389,17 +393,17 @@ router.get(
               };
 
               await saveValidation(validationToSave);
-              console.log(`Saved validation history ${validationToSave.validation_id} to database`);
+              log.debug(`Saved validation history ${validationToSave.validation_id} to database`);
             } catch (err: any) {
-              console.error('Error saving validation history to database:', err.message);
+              log.error('Error saving validation history to database:', err.message);
             }
           })
-        ).catch(err => console.error('Error in batch saving validation history:', err));
+        ).catch(err => log.error('Error in batch saving validation history:', err));
       }
 
       return res.status(200).json(response.data);
     } catch (error) {
-      console.error('Error fetching MAUD validation history:', error);
+      log.error('Error fetching MAUD validation history:', error);
 
       // Handle different error types
       if (axios.isAxiosError(error)) {
@@ -412,7 +416,7 @@ router.get(
           const dbHistory = await getValidationHistory(documentId, organizationId);
 
           if (dbHistory && dbHistory.length > 0) {
-            console.log(
+            log.debug(
               `Returning ${dbHistory.length} cached validation history records due to API error`
             );
 
@@ -435,7 +439,7 @@ router.get(
             return res.status(200).json(formattedHistory);
           }
         } catch (dbError) {
-          console.error('Error fetching history from database fallback:', dbError);
+          log.error('Error fetching history from database fallback:', dbError);
         }
 
         return res.status(status).json({
@@ -491,11 +495,11 @@ router.post('/export-certificate', requireMaudApiKey, async (req: Request, res: 
     );
 
     // Log successful certificate export
-    console.log(`Certificate exported for document ${documentId}, validation ${validationId}`);
+    log.debug(`Certificate exported for document ${documentId}, validation ${validationId}`);
 
     return res.status(200).json(response.data);
   } catch (error) {
-    console.error('Error exporting MAUD validation certificate:', error);
+    log.error('Error exporting MAUD validation certificate:', error);
 
     // Handle different error types
     if (axios.isAxiosError(error)) {

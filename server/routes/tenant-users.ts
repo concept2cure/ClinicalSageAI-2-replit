@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('tenant-users');
 
 const router = Router();
 
@@ -32,7 +35,7 @@ const updateUserRoleSchema = z.object({
 router.get('/:tenantId', async (req, res) => {
   try {
     if (!pool) {
-      console.error('Database pool not available');
+      log.error('Database pool not available');
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
@@ -62,10 +65,10 @@ router.get('/:tenantId', async (req, res) => {
     `;
 
     const result = await pool.query(query, [tenantId]);
-    console.log(`Retrieved ${result.rows.length} users for organization ${tenantId}`);
+    log.debug(`Retrieved ${result.rows.length} users for organization ${tenantId}`);
     res.json(result.rows);
   } catch (error) {
-    console.error('Error retrieving tenant users', error);
+    log.error('Error retrieving tenant users', error);
     res.status(500).json({ error: 'Failed to retrieve tenant users' });
   }
 });
@@ -77,11 +80,11 @@ router.get('/:tenantId', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     if (!pool) {
-      console.error('Database pool not available');
+      log.error('Database pool not available');
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
-    console.log('Create user request received');
+    log.debug('Create user request received');
 
     // Parse and validate the request body
     const validatedData = createUserSchema.parse(req.body);
@@ -125,8 +128,8 @@ router.post('/', async (req, res) => {
       });
     }
 
-    console.log('Created user atomically:', result.data);
-    console.log('Quota info:', result.quotaInfo);
+    log.debug('Created user atomically:', result.data);
+    log.debug('Quota info:', result.quotaInfo);
 
     // Return the created user with quota info
     res.status(201).json({
@@ -134,7 +137,7 @@ router.post('/', async (req, res) => {
       quotaInfo: result.quotaInfo,
     });
   } catch (error) {
-    console.error('Error creating user:', error);
+    log.error('Error creating user:', error);
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid user data', details: error.errors });
     }
@@ -146,11 +149,11 @@ router.post('/', async (req, res) => {
 router.post('/legacy', async (req, res) => {
   try {
     if (!pool) {
-      console.error('Database pool not available');
+      log.error('Database pool not available');
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
-    console.log('Create legacy user request received');
+    log.debug('Create legacy user request received');
 
     // Parse and validate the request body
     const validatedData = createUserSchema.parse(req.body);
@@ -194,7 +197,7 @@ router.post('/legacy', async (req, res) => {
           validatedData.department || null,
           userId,
         ]);
-        console.log(
+        log.debug(
           `Updated existing user ${userId} with title: ${validatedData.title}, department: ${validatedData.department}`
         );
       }
@@ -252,10 +255,10 @@ router.post('/legacy', async (req, res) => {
     const userResult = await pool.query(getUserQuery, [userId, organizationId]);
     const newUser = userResult.rows[0];
 
-    console.log('Created user in organization:', newUser);
+    log.debug('Created user in organization:', newUser);
     res.status(201).json(newUser);
   } catch (error) {
-    console.error('Error creating user:', error);
+    log.error('Error creating user:', error);
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid user data', details: error.errors });
     }
@@ -270,7 +273,7 @@ router.post('/legacy', async (req, res) => {
 router.patch('/:organizationId/:userId', async (req, res) => {
   try {
     if (!pool) {
-      console.error('Database pool not available');
+      log.error('Database pool not available');
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
@@ -296,10 +299,10 @@ router.patch('/:organizationId/:userId', async (req, res) => {
       return res.status(404).json({ error: 'User not found in organization' });
     }
 
-    console.log('Updated user role:', result.rows[0]);
+    log.debug('Updated user role:', result.rows[0]);
     res.json({ message: 'User role updated successfully' });
   } catch (error) {
-    console.error('Error updating user role:', error);
+    log.error('Error updating user role:', error);
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid role data', details: error.errors });
     }
@@ -314,7 +317,7 @@ router.patch('/:organizationId/:userId', async (req, res) => {
 router.delete('/:organizationId/:userId', async (req, res) => {
   try {
     if (!pool) {
-      console.error('Database pool not available');
+      log.error('Database pool not available');
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
@@ -337,10 +340,10 @@ router.delete('/:organizationId/:userId', async (req, res) => {
       return res.status(404).json({ error: 'User not found in organization' });
     }
 
-    console.log('Removed user from organization:', result.rows[0]);
+    log.debug('Removed user from organization:', result.rows[0]);
     res.json({ message: 'User removed from organization successfully' });
   } catch (error) {
-    console.error('Error removing user from organization:', error);
+    log.error('Error removing user from organization:', error);
     res.status(500).json({ error: 'Failed to remove user from organization' });
   }
 });
