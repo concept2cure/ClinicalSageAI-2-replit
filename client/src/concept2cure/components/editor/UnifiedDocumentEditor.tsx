@@ -38,7 +38,9 @@ import TaskItem from '@tiptap/extension-task-item';
 import TextAlign from '@tiptap/extension-text-align';
 import Superscript from '@tiptap/extension-superscript';
 import Subscript from '@tiptap/extension-subscript';
+import LinkExtension from '@tiptap/extension-link';
 import { Node, mergeAttributes } from '@tiptap/core';
+import { DOMParser as PMDOMParser } from '@tiptap/pm/model';
 
 /**
  * Lightweight Image node compatible with @tiptap/core 3.7.x.
@@ -138,6 +140,17 @@ import {
   IndentIncrease,
   IndentDecrease,
   Trash2,
+  SeparatorHorizontal,
+  LinkIcon,
+  Unlink,
+  Copy,
+  Scissors,
+  ClipboardPaste,
+  Type,
+  RotateCcw,
+  RotateCw,
+  Palette,
+  ArrowUpRight,
 } from 'lucide-react';
 import InlineApprovalPanel from './InlineApprovalPanel';
 
@@ -345,6 +358,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onToggleFindReplace,
 }) => {
   const [aiDropdownOpen, setAiDropdownOpen] = useState(false);
+  const [linkPopoverOpen, setLinkPopoverOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
 
   if (!editor) return null;
 
@@ -639,6 +654,73 @@ const Toolbar: React.FC<ToolbarProps> = ({
         title="Upload Image"
       >
         <ImagePlus className="w-4 h-4" />
+      </ToolButton>
+
+      {/* Link insert/remove */}
+      <div className="relative">
+        <ToolButton
+          onClick={() => {
+            if (editor.isActive('link')) {
+              editor.chain().focus().unsetLink().run();
+            } else {
+              const href = editor.getAttributes('link').href || '';
+              setLinkUrl(href);
+              setLinkPopoverOpen(prev => !prev);
+            }
+          }}
+          isActive={editor.isActive('link')}
+          title={editor.isActive('link') ? 'Remove Link' : 'Insert Link'}
+        >
+          {editor.isActive('link') ? (
+            <Unlink className="w-4 h-4" />
+          ) : (
+            <LinkIcon className="w-4 h-4" />
+          )}
+        </ToolButton>
+        {linkPopoverOpen && (
+          <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-stone-200 rounded-lg shadow-sm p-2 flex items-center gap-1.5 w-72">
+            <input
+              autoFocus
+              type="url"
+              value={linkUrl}
+              onChange={e => setLinkUrl(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && linkUrl.trim()) {
+                  editor.chain().focus().setLink({ href: linkUrl.trim() }).run();
+                  setLinkPopoverOpen(false);
+                  setLinkUrl('');
+                }
+                if (e.key === 'Escape') {
+                  setLinkPopoverOpen(false);
+                  setLinkUrl('');
+                }
+              }}
+              placeholder="https://..."
+              className="flex-1 px-2 py-1.5 text-xs border border-stone-200 rounded-md focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
+            />
+            <button
+              onClick={() => {
+                if (linkUrl.trim()) {
+                  editor.chain().focus().setLink({ href: linkUrl.trim() }).run();
+                }
+                setLinkPopoverOpen(false);
+                setLinkUrl('');
+              }}
+              disabled={!linkUrl.trim()}
+              className="px-2 py-1.5 text-xs font-medium bg-stone-800 text-white rounded-md hover:bg-stone-900 disabled:opacity-40 transition-colors"
+            >
+              Apply
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Horizontal Rule */}
+      <ToolButton
+        onClick={() => editor.chain().focus().setHorizontalRule().run()}
+        title="Horizontal Rule"
+      >
+        <SeparatorHorizontal className="w-4 h-4" />
       </ToolButton>
 
       <div className="w-px h-5 bg-stone-200 mx-0.5" />
@@ -1358,6 +1440,14 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   // Sprint 3 state — Inline comments
   const [comments, setComments] = useState<CommentThread[]>([]);
 
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    hasSelection: boolean;
+    selectedText: string;
+  } | null>(null);
+
   // Slash command extension (memoized to avoid re-creation)
   const slashCommandExt = useMemo(() => createSlashCommandExtension(onAIAction), [onAIAction]);
 
@@ -1372,6 +1462,11 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Superscript,
       Subscript,
+      LinkExtension.configure({
+        openOnClick: false,
+        autolink: true,
+        HTMLAttributes: { class: 'text-blue-600 underline cursor-pointer' },
+      }),
       TiptapImage,
       Placeholder.configure({
         placeholder: 'Start writing your regulatory document... Type "/" for commands',
@@ -1431,6 +1526,49 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
     ],
     content: initialContent,
     editable: caps.editable,
+    editorProps: {
+      handlePaste: (view, event) => {
+        // Clean up Microsoft Word HTML on paste for seamless formatting
+        const html = event.clipboardData?.getData('text/html');
+        if (html && (html.includes('urn:schemas-microsoft-com') || html.includes('mso-') || html.includes('MsoNormal'))) {
+          event.preventDefault();
+          // Strip Word-specific XML/styles while preserving structure
+          let clean = html
+            .replace(/<o:p[^>]*>[\s\S]*?<\/o:p>/gi, '')
+            .replace(/<\/?o:[^>]*>/gi, '')
+            .replace(/<\/?v:[^>]*>/gi, '')
+            .replace(/<\/?w:[^>]*>/gi, '')
+            .replace(/class="Mso[^"]*"/gi, '')
+            .replace(/style="[^"]*mso-[^"]*"/gi, '')
+            .replace(/<!\[if[^>]*>[\s\S]*?<!\[endif\]>/gi, '')
+            .replace(/<!--\[if[\s\S]*?endif\]-->/gi, '')
+            .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+            .replace(/<xml>[\s\S]*?<\/xml>/gi, '')
+            .replace(/\s+style=""/gi, '')
+            .replace(/<span\s*>/gi, '')
+            .replace(/<\/span>/gi, '')
+            .replace(/<font[^>]*>/gi, '')
+            .replace(/<\/font>/gi, '')
+            // Preserve meaningful styles (bold, italic, underline, color)
+            .replace(/style="([^"]*)"/gi, (_, styles: string) => {
+              const keepStyles: string[] = [];
+              if (/font-weight:\s*(bold|[7-9]00)/i.test(styles)) keepStyles.push('font-weight:bold');
+              if (/font-style:\s*italic/i.test(styles)) keepStyles.push('font-style:italic');
+              if (/text-decoration:\s*underline/i.test(styles)) keepStyles.push('text-decoration:underline');
+              const colorMatch = styles.match(/(?:^|;)\s*color:\s*([^;]+)/i);
+              if (colorMatch) keepStyles.push(`color:${colorMatch[1].trim()}`);
+              return keepStyles.length > 0 ? `style="${keepStyles.join(';')}"` : '';
+            });
+          // Create a temporary DOM element, parse via ProseMirror's built-in parser
+          const temp = document.createElement('div');
+          temp.innerHTML = clean;
+          const slice = PMDOMParser.fromSchema(view.state.schema).parseSlice(temp);
+          view.dispatch(view.state.tr.replaceSelection(slice));
+          return true;
+        }
+        return false;
+      },
+    },
     onUpdate: ({ editor }) => {
       onLiveContentChange?.(editor.getHTML());
     },
@@ -1445,6 +1583,15 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
       if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
         e.preventDefault();
         setShowFindReplace(prev => !prev);
+      }
+      // Ctrl+Shift+V — paste as plain text
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'V') {
+        e.preventDefault();
+        navigator.clipboard.readText().then(text => {
+          if (editor && text) {
+            editor.chain().focus().insertContent(text).run();
+          }
+        }).catch(() => { /* clipboard access denied */ });
       }
     };
     window.addEventListener('keydown', handler);
@@ -1485,6 +1632,32 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
     editorEl.addEventListener('click', handleClick);
     return () => editorEl.removeEventListener('click', handleClick);
   }, [editor, sources]);
+
+  // Context menu handler — right-click opens Word-like context menu
+  useEffect(() => {
+    if (!editor) return;
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      const { from, to } = editor.state.selection;
+      const text = editor.state.doc.textBetween(from, to, ' ');
+      setContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        hasSelection: text.trim().length > 0,
+        selectedText: text,
+      });
+    };
+    const handleDismiss = () => setContextMenu(null);
+    const editorEl = editor.view.dom;
+    editorEl.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('click', handleDismiss);
+    document.addEventListener('scroll', handleDismiss, true);
+    return () => {
+      editorEl.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('click', handleDismiss);
+      document.removeEventListener('scroll', handleDismiss, true);
+    };
+  }, [editor]);
 
   // Add comment handler
   const handleAddComment = useCallback(() => {
@@ -1965,6 +2138,262 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
           />
         )}
       </div>
+
+      {/* ── Right-click context menu ─────────────────────────────────── */}
+      {contextMenu && (
+        <div
+          className="fixed z-[100] bg-white border border-stone-200 rounded-lg shadow-sm py-1 w-52 animate-in fade-in duration-100"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          role="menu"
+          aria-label="Editor context menu"
+          data-testid="editor-context-menu"
+          onContextMenu={e => e.preventDefault()}
+        >
+          {/* Cut / Copy / Paste */}
+          <button
+            role="menuitem"
+            disabled={!contextMenu.hasSelection}
+            onClick={() => {
+              document.execCommand('cut');
+              setContextMenu(null);
+            }}
+            className="w-full flex items-center gap-2.5 px-3 py-1.5 text-[12px] text-stone-700 hover:bg-stone-50 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+          >
+            <Scissors className="w-3.5 h-3.5 text-stone-400" />
+            Cut
+            <span className="ml-auto text-[10px] text-stone-400">Ctrl+X</span>
+          </button>
+          <button
+            role="menuitem"
+            disabled={!contextMenu.hasSelection}
+            onClick={() => {
+              document.execCommand('copy');
+              setContextMenu(null);
+            }}
+            className="w-full flex items-center gap-2.5 px-3 py-1.5 text-[12px] text-stone-700 hover:bg-stone-50 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+          >
+            <Copy className="w-3.5 h-3.5 text-stone-400" />
+            Copy
+            <span className="ml-auto text-[10px] text-stone-400">Ctrl+C</span>
+          </button>
+          <button
+            role="menuitem"
+            onClick={async () => {
+              try {
+                const text = await navigator.clipboard.readText();
+                editor.chain().focus().insertContent(text).run();
+              } catch {
+                document.execCommand('paste');
+              }
+              setContextMenu(null);
+            }}
+            className="w-full flex items-center gap-2.5 px-3 py-1.5 text-[12px] text-stone-700 hover:bg-stone-50 transition-colors"
+          >
+            <ClipboardPaste className="w-3.5 h-3.5 text-stone-400" />
+            Paste
+            <span className="ml-auto text-[10px] text-stone-400">Ctrl+V</span>
+          </button>
+          <button
+            role="menuitem"
+            onClick={async () => {
+              try {
+                const text = await navigator.clipboard.readText();
+                // Strip HTML, insert plain text
+                editor.chain().focus().insertContent(text.replace(/<[^>]+>/g, '')).run();
+              } catch {
+                document.execCommand('paste');
+              }
+              setContextMenu(null);
+            }}
+            className="w-full flex items-center gap-2.5 px-3 py-1.5 text-[12px] text-stone-700 hover:bg-stone-50 transition-colors"
+          >
+            <Type className="w-3.5 h-3.5 text-stone-400" />
+            Paste as Plain Text
+            <span className="ml-auto text-[10px] text-stone-400">Ctrl+Shift+V</span>
+          </button>
+
+          <div className="border-t border-stone-100 my-1" />
+
+          {/* Select All */}
+          <button
+            role="menuitem"
+            onClick={() => {
+              editor.chain().focus().selectAll().run();
+              setContextMenu(null);
+            }}
+            className="w-full flex items-center gap-2.5 px-3 py-1.5 text-[12px] text-stone-700 hover:bg-stone-50 transition-colors"
+          >
+            <FileText className="w-3.5 h-3.5 text-stone-400" />
+            Select All
+            <span className="ml-auto text-[10px] text-stone-400">Ctrl+A</span>
+          </button>
+
+          <div className="border-t border-stone-100 my-1" />
+
+          {/* Formatting group — only when text is selected */}
+          {contextMenu.hasSelection && (
+            <>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  editor.chain().focus().toggleBold().run();
+                  setContextMenu(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 text-[12px] text-stone-700 hover:bg-stone-50 transition-colors"
+              >
+                <Bold className="w-3.5 h-3.5 text-stone-400" />
+                Bold
+                <span className="ml-auto text-[10px] text-stone-400">Ctrl+B</span>
+              </button>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  editor.chain().focus().toggleItalic().run();
+                  setContextMenu(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 text-[12px] text-stone-700 hover:bg-stone-50 transition-colors"
+              >
+                <Italic className="w-3.5 h-3.5 text-stone-400" />
+                Italic
+                <span className="ml-auto text-[10px] text-stone-400">Ctrl+I</span>
+              </button>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  editor.chain().focus().toggleUnderline().run();
+                  setContextMenu(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 text-[12px] text-stone-700 hover:bg-stone-50 transition-colors"
+              >
+                <Underline className="w-3.5 h-3.5 text-stone-400" />
+                Underline
+                <span className="ml-auto text-[10px] text-stone-400">Ctrl+U</span>
+              </button>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  editor.chain().focus().toggleHighlight().run();
+                  setContextMenu(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 text-[12px] text-stone-700 hover:bg-stone-50 transition-colors"
+              >
+                <Palette className="w-3.5 h-3.5 text-stone-400" />
+                Highlight
+              </button>
+
+              <div className="border-t border-stone-100 my-1" />
+
+              {/* Link */}
+              <button
+                role="menuitem"
+                onClick={() => {
+                  const href = prompt('Enter URL:');
+                  if (href) editor.chain().focus().setLink({ href }).run();
+                  setContextMenu(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 text-[12px] text-stone-700 hover:bg-stone-50 transition-colors"
+              >
+                <LinkIcon className="w-3.5 h-3.5 text-stone-400" />
+                Insert Link
+              </button>
+
+              {/* Link to Source */}
+              <button
+                role="menuitem"
+                onClick={() => {
+                  handleLinkToSource();
+                  setContextMenu(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 text-[12px] text-stone-700 hover:bg-stone-50 transition-colors"
+              >
+                <ArrowUpRight className="w-3.5 h-3.5 text-stone-400" />
+                Link to Source
+              </button>
+
+              {/* Comment */}
+              <button
+                role="menuitem"
+                onClick={() => {
+                  handleAddComment();
+                  setContextMenu(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 text-[12px] text-stone-700 hover:bg-stone-50 transition-colors"
+              >
+                <MessageSquare className="w-3.5 h-3.5 text-stone-400" />
+                Add Comment
+              </button>
+
+              <div className="border-t border-stone-100 my-1" />
+
+              {/* AI Actions */}
+              {onAIAction && (
+                <button
+                  role="menuitem"
+                  onClick={() => {
+                    onAIAction('rewrite', contextMenu.selectedText);
+                    setContextMenu(null);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-1.5 text-[12px] text-purple-700 hover:bg-purple-50 transition-colors"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                  AI Rewrite
+                </button>
+              )}
+            </>
+          )}
+
+          {/* Insert group — always available */}
+          {!contextMenu.hasSelection && (
+            <>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+                  setContextMenu(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 text-[12px] text-stone-700 hover:bg-stone-50 transition-colors"
+              >
+                <TableIcon className="w-3.5 h-3.5 text-stone-400" />
+                Insert Table
+              </button>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  editor.chain().focus().setHorizontalRule().run();
+                  setContextMenu(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 text-[12px] text-stone-700 hover:bg-stone-50 transition-colors"
+              >
+                <SeparatorHorizontal className="w-3.5 h-3.5 text-stone-400" />
+                Horizontal Rule
+              </button>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = 'image/*';
+                  input.onchange = () => {
+                    const file = input.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      editor.chain().focus().setImage({ src: reader.result as string, alt: file.name }).run();
+                    };
+                    reader.readAsDataURL(file);
+                  };
+                  input.click();
+                  setContextMenu(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 text-[12px] text-stone-700 hover:bg-stone-50 transition-colors"
+              >
+                <ImagePlus className="w-3.5 h-3.5 text-stone-400" />
+                Insert Image
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Status Bar */}
       <StatusBar editor={editor} complianceScore={complianceScore} collaborators={collaborators} />

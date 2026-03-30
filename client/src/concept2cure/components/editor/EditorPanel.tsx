@@ -23,6 +23,7 @@ import {
   ShieldCheck,
   AlertTriangle,
   CheckCircle,
+  X,
   XCircle,
   Brain,
   GitCompare,
@@ -354,6 +355,64 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [unlockReason, setUnlockReason] = useState('');
   const [openArtifactNotFound, setOpenArtifactNotFound] = useState(false);
   const [showTemplateGenerator, setShowTemplateGenerator] = useState(false);
+
+  // ── Multi-tab support — keep multiple documents open simultaneously ────
+  const [openTabs, setOpenTabs] = useState<Array<{ id: string; title: string }>>([]);
+
+  /** Open a document in a tab (add to tabs if not present, switch to it) */
+  const openInTab = useCallback((artifact: Artifact) => {
+    setOpenTabs(prev => {
+      const exists = prev.some(t => t.id === artifact.id);
+      if (exists) return prev;
+      return [...prev, { id: artifact.id, title: artifact.title }];
+    });
+    setActiveArtifact(artifact);
+    setShowArtifactList(false);
+    recordDocumentAccess({
+      id: String(artifact.id),
+      title: artifact.title,
+      projectId: String(projectId),
+      ctdSection: artifact.ctdSection,
+      status: artifact.status,
+    });
+  }, [projectId]);
+
+  /** Close a tab and switch to an adjacent one or back to document list */
+  const closeTab = useCallback((tabId: string) => {
+    setOpenTabs(prev => {
+      const idx = prev.findIndex(t => t.id === tabId);
+      const next = prev.filter(t => t.id !== tabId);
+      // If closing the active tab, switch to nearest remaining or show list
+      if (activeArtifact?.id === tabId) {
+        if (next.length > 0) {
+          const switchIdx = Math.min(idx, next.length - 1);
+          const switchTo = artifacts.find(a => a.id === next[switchIdx].id);
+          if (switchTo) {
+            setActiveArtifact(switchTo);
+          } else {
+            setActiveArtifact(null);
+            setShowArtifactList(true);
+          }
+        } else {
+          setActiveArtifact(null);
+          setShowArtifactList(true);
+        }
+      }
+      return next;
+    });
+  }, [activeArtifact?.id, artifacts]);
+
+  // Sync: whenever activeArtifact changes, ensure it's in the tab list
+  useEffect(() => {
+    if (!activeArtifact) return;
+    setOpenTabs(prev => {
+      if (prev.some(t => t.id === activeArtifact.id)) {
+        // Update title if it changed
+        return prev.map(t => t.id === activeArtifact.id ? { ...t, title: activeArtifact.title } : t);
+      }
+      return [...prev, { id: activeArtifact.id, title: activeArtifact.title }];
+    });
+  }, [activeArtifact?.id, activeArtifact?.title]);
 
   // ── Reviewer data (fetched from API) ──────────────────────────────────────
   const [reviewers, setReviewers] = useState<Array<{ id: string; name: string; email: string; role?: string; avatarUrl?: string; status: 'pending' | 'in_progress' | 'approved' | 'changes_requested' | 'rejected'; assignedAt: string; completedAt?: string; comment?: string }>>([]);
@@ -2038,17 +2097,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 <Button variant="ghost"
                   key={a.id}
                   data-testid="artifact-row"
-                  onClick={() => {
-                    setActiveArtifact(a);
-                    setShowArtifactList(false);
-                    recordDocumentAccess({
-                      id: String(a.id),
-                      title: a.title,
-                      projectId: String(projectId),
-                      ctdSection: a.ctdSection,
-                      status: a.status,
-                    });
-                  }}
+                  onClick={() => openInTab(a)}
                   className="w-full text-left px-4 py-3 rounded-lg border border-transparent hover:border-stone-200 hover:bg-stone-50/80 hover:shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all group relative"
                 >
                   {/* Title row */}
@@ -2360,7 +2409,66 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         </div>
       </div>
 
-      {/* Journey guidance removed — accessible via /checklist in conversation */}
+      {/* ── Multi-document tab bar ────────────────────────────────────── */}
+      {openTabs.length > 1 && (
+        <div
+          className="flex items-center h-8 px-1 border-b border-stone-100 bg-stone-50/60 overflow-x-auto shrink-0 gap-px"
+          role="tablist"
+          aria-label="Open documents"
+          data-testid="document-tabs"
+        >
+          {openTabs.map(tab => {
+            const isActive = activeArtifact?.id === tab.id;
+            return (
+              <div
+                key={tab.id}
+                role="tab"
+                aria-selected={isActive}
+                tabIndex={isActive ? 0 : -1}
+                onClick={() => {
+                  const artifact = artifacts.find(a => a.id === tab.id);
+                  if (artifact) setActiveArtifact(artifact);
+                }}
+                className={cn(
+                  'group flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium cursor-pointer transition-colors duration-200 max-w-[180px] shrink-0 select-none',
+                  isActive
+                    ? 'bg-white text-stone-900 shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
+                    : 'text-stone-500 hover:text-stone-700 hover:bg-stone-100/80',
+                )}
+              >
+                <FileText className="w-3 h-3 shrink-0" />
+                <span className="truncate">{tab.title}</span>
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    closeTab(tab.id);
+                  }}
+                  className={cn(
+                    'ml-0.5 p-0.5 rounded transition-colors duration-200 shrink-0',
+                    isActive
+                      ? 'text-stone-400 hover:text-stone-700 hover:bg-stone-100'
+                      : 'opacity-0 group-hover:opacity-100 text-stone-400 hover:text-stone-700 hover:bg-stone-200',
+                  )}
+                  aria-label={`Close ${tab.title}`}
+                >
+                  <X className="w-2.5 h-2.5" />
+                </button>
+              </div>
+            );
+          })}
+          {/* Quick open another document */}
+          <button
+            onClick={() => {
+              setShowArtifactList(true);
+            }}
+            className="flex items-center justify-center w-6 h-6 rounded text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors duration-200 shrink-0 ml-0.5"
+            aria-label="Open another document"
+            title="Open document"
+          >
+            <Plus className="w-3 h-3" />
+          </button>
+        </div>
+      )}
 
       {/* ── Ribbon toolbar — 4-stage lifecycle InspectorRibbon ── */}
       <InspectorRibbon
