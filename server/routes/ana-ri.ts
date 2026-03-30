@@ -1113,16 +1113,20 @@ router.post('/stream', async (req: Request, res: Response) => {
         executedCommands: executedCommands.length > 0 ? executedCommands : undefined,
         enrichmentSources: enrichment.sources.length > 0 ? enrichment.sources : undefined,
         evidence: streamEvidenceVerdict || undefined,
-        evidenceDiscipline: streamEvidenceCheck ? {
-          compliant: streamEvidenceCheck.compliant,
-          labels: streamEvidenceCheck.totalLabels,
-          hasOverclaims: streamEvidenceCheck.hasOverclaims,
-        } : undefined,
-        structure: streamStructureCheck ? {
-          valid: streamStructureCheck.valid,
-          score: streamStructureCheck.score,
-          maxScore: streamStructureCheck.maxScore,
-        } : undefined,
+        evidenceDiscipline: streamEvidenceCheck
+          ? {
+              compliant: streamEvidenceCheck.compliant,
+              labels: streamEvidenceCheck.totalLabels,
+              hasOverclaims: streamEvidenceCheck.hasOverclaims,
+            }
+          : undefined,
+        structure: streamStructureCheck
+          ? {
+              valid: streamStructureCheck.valid,
+              score: streamStructureCheck.score,
+              maxScore: streamStructureCheck.maxScore,
+            }
+          : undefined,
         queueMeta: streamQueueMeta,
       })}\n\n`
     );
