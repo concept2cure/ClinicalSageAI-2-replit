@@ -17,6 +17,7 @@ import { getAuthHeaders } from '@/utils/authToken';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { useAIAction } from '../../hooks/useAIAction';
+import { useAnaQueueState } from '../../hooks/useAnaQueueState';
 import type { AIActionType, AIActionSourceSurface } from '../../hooks/useAIAction';
 import {
   Sparkles,
@@ -658,7 +659,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
   const [messages, setMessages] = useState<AnaMessage[]>([]);
   const [input, setInput] = useState('');
-  const [isThinking, setIsThinking] = useState(false);
+  const queue = useAnaQueueState();
+  const isThinking = !queue.state.canSubmit;
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [chatMode, setChatMode] = useState<'standard' | 'deep-research' | 'nano-banana'>(
@@ -1309,7 +1311,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       // Cap in-memory messages to prevent unbounded growth
       setMessages(prev => [...prev.slice(-199), userMsg]);
       setInput('');
-      setIsThinking(true);
+      queue.startTurn();
 
       // Deep Research mode — launch a job and stream progress
       if (chatMode === 'deep-research') {
@@ -1360,7 +1362,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       : m
                   )
                 );
-                setIsThinking(false);
+                queue.blockTurn('deep_research_error');
+                queue.reset();
                 return;
               }
 
@@ -1412,7 +1415,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       )
                     );
                   })
-                  .finally(() => setIsThinking(false));
+                  .finally(() => queue.completeTurn());
                 return;
               }
             } catch {
@@ -1453,7 +1456,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 }
               })
               .catch(() => {})
-              .finally(() => setIsThinking(false));
+              .finally(() => queue.completeTurn());
           };
         } catch (err) {
           const errorMsg = err instanceof Error ? err.message : 'Unknown error';
@@ -1466,7 +1469,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               timestamp: new Date(),
             },
           ]);
-          setIsThinking(false);
+          queue.blockTurn('deep_research_launch_failed');
+          queue.reset();
         }
         return;
       }
@@ -1809,7 +1813,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           ]);
         }
       } finally {
-        setIsThinking(false);
+        queue.completeTurn();
         // Return focus to input after send completes
         inputRef.current?.focus();
       }
@@ -4029,7 +4033,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                         ]);
                                         return;
                                       }
-                                      setIsThinking(true);
+                                      queue.startTurn();
                                       try {
                                         const res = await apiRequest(
                                           'POST',
@@ -4064,15 +4068,15 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                               timestamp: new Date(),
                                             },
                                           ]);
-                                          setIsThinking(false);
+                                          queue.completeTurn();
                                         } else {
-                                          // Fallback: send as chat prompt (handleSend manages isThinking)
+                                          // Fallback: send as chat prompt (handleSend manages queue)
                                           handleSend(
                                             `Please generate a ${action.label.toLowerCase()} based on our conversation above.`
                                           );
                                         }
                                       } catch {
-                                        // Fallback: send as chat prompt (handleSend manages isThinking)
+                                        // Fallback: send as chat prompt (handleSend manages queue)
                                         handleSend(
                                           `Please generate a ${action.label.toLowerCase()} based on our conversation above.`
                                         );
