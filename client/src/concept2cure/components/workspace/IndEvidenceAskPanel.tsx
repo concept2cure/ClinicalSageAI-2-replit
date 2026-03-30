@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { apiRequest } from '@/lib/queryClient';
+import { getAuthHeaders } from '@/utils/authToken';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -111,23 +112,13 @@ export function IndEvidenceAskPanel({
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const token =
-        localStorage.getItem('token') ||
-        localStorage.getItem('authToken') ||
-        localStorage.getItem('auth_token') ||
-        '';
-      const organizationId =
-        localStorage.getItem('organizationId') ||
-        localStorage.getItem('currentOrganizationId') ||
-        '1';
+      const uploadHeaders = getAuthHeaders();
+      delete uploadHeaders['Content-Type']; // let browser set multipart boundary
       await fetch(`/api/client-intelligence/project/${projectId}/documents/upload`, {
         method: 'POST',
         credentials: 'include',
         body: fd,
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          'x-organization-id': organizationId,
-        },
+        headers: uploadHeaders,
       });
       await loadProjectDocs();
     } finally {
@@ -158,7 +149,10 @@ export function IndEvidenceAskPanel({
   };
 
   return (
-    <div className="rounded-lg border border-blue-200 bg-blue-50/40 p-3 space-y-3" data-testid="ind-evidence-ask-panel">
+    <div
+      className="rounded-lg border border-blue-200 bg-blue-50/40 p-3 space-y-3"
+      data-testid="ind-evidence-ask-panel"
+    >
       <div className="flex items-center gap-2">
         <Database className="w-4 h-4 text-stone-700" />
         <h3 className="text-sm font-semibold text-blue-900">Evidence & Ask</h3>
@@ -189,7 +183,11 @@ export function IndEvidenceAskPanel({
             onClick={addEvidence}
             disabled={addingEvidence || !evidenceTitle.trim() || !evidenceExcerpt.trim()}
           >
-            {addingEvidence ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Upload className="w-3 h-3 mr-1" />}
+            {addingEvidence ? (
+              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+            ) : (
+              <Upload className="w-3 h-3 mr-1" />
+            )}
             Save evidence
           </Button>
           <label className="inline-flex items-center text-xs text-stone-700 gap-1 cursor-pointer">
@@ -224,12 +222,12 @@ export function IndEvidenceAskPanel({
             placeholder="What supports dosing rationale in this IND?"
             className="bg-white"
           />
-          <Button
-            size="sm"
-            onClick={askEvidence}
-            disabled={!canAsk || asking}
-          >
-            {asking ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <MessageSquareText className="w-3 h-3 mr-1" />}
+          <Button size="sm" onClick={askEvidence} disabled={!canAsk || asking}>
+            {asking ? (
+              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+            ) : (
+              <MessageSquareText className="w-3 h-3 mr-1" />
+            )}
             Ask evidence
           </Button>
           {answer && (
@@ -244,12 +242,17 @@ export function IndEvidenceAskPanel({
         <div className="space-y-1">
           <div className="text-[11px] font-semibold text-blue-900">Sources</div>
           {sources.slice(0, 3).map((source, idx) => (
-            <div key={`${source.docTitle || 'source'}-${idx}`} className="rounded border border-blue-100 bg-white p-2">
+            <div
+              key={`${source.docTitle || 'source'}-${idx}`}
+              className="rounded border border-blue-100 bg-white p-2"
+            >
               <div className="flex items-center gap-1 text-xs font-medium text-zinc-800">
                 <FileText className="w-3 h-3" />
                 {source.docTitle || `Source ${idx + 1}`}
               </div>
-              {source.excerpt && <p className="text-[11px] text-zinc-600 mt-1 line-clamp-2">{source.excerpt}</p>}
+              {source.excerpt && (
+                <p className="text-[11px] text-zinc-600 mt-1 line-clamp-2">{source.excerpt}</p>
+              )}
             </div>
           ))}
         </div>
@@ -259,7 +262,11 @@ export function IndEvidenceAskPanel({
           <div className="text-[11px] font-semibold text-blue-900">Project documents</div>
           <div className="flex flex-wrap gap-1">
             {projectDocs.slice(0, 6).map((doc, idx) => (
-              <Badge key={`${doc.id || doc.fileName || idx}`} variant="outline" className="text-[10px]">
+              <Badge
+                key={`${doc.id || doc.fileName || idx}`}
+                variant="outline"
+                className="text-[10px]"
+              >
                 {doc.fileName || doc.originalName || doc.title || `Document ${idx + 1}`}
               </Badge>
             ))}

@@ -12,6 +12,7 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { getAuthHeaders } from '@/utils/authToken';
 import { queryKeys } from '@/concept2cure/hooks/queryKeys';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -90,13 +91,22 @@ type VaultTab = 'browse' | 'ask';
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, onOpenDocument, onDraftFromSource }) => {
+export const VaultPage: React.FC<VaultPageProps> = ({
+  projectId,
+  projectName,
+  onOpenDocument,
+  onDraftFromSource,
+}) => {
   const [activeTab, setActiveTab] = useState<VaultTab>('browse');
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
 
   // ── Browse state ──
-  const { data: artifacts, isLoading, error } = useQuery<VaultItem[]>({
+  const {
+    data: artifacts,
+    isLoading,
+    error,
+  } = useQuery<VaultItem[]>({
     queryKey: queryKeys.projects.vaultArtifacts(projectId || 'none'),
     queryFn: async () => {
       if (!projectId) return [];
@@ -120,7 +130,10 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
   const loadProjectDocs = useCallback(async () => {
     if (!projectId) return;
     try {
-      const res = await apiRequest('GET', `/api/client-intelligence/project/${projectId}/documents`);
+      const res = await apiRequest(
+        'GET',
+        `/api/client-intelligence/project/${projectId}/documents`
+      );
       const json = await res.json();
       setProjectDocs(json.documents || []);
     } catch {
@@ -132,19 +145,27 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
     loadProjectDocs();
   }, [loadProjectDocs]);
 
-  const suggestedQuestions = useMemo(() => [
-    'What are the highest-risk evidence gaps in this project?',
-    'Which uploaded documents best support the submission package?',
-    'Summarize the strongest source-backed claims across all sections.',
-  ], []);
+  const suggestedQuestions = useMemo(
+    () => [
+      'What are the highest-risk evidence gaps in this project?',
+      'Which uploaded documents best support the submission package?',
+      'Summarize the strongest source-backed claims across all sections.',
+    ],
+    []
+  );
 
   const handleAsk = useCallback(async () => {
     if (!question.trim() || question.trim().length < 3 || !projectId) return;
     setAsking(true);
     try {
-      const docContext = projectDocs.length > 0
-        ? `Prefer these project documents: ${projectDocs.slice(0, 8).map(d => d.fileName || d.originalName || d.title).filter(Boolean).join(', ')}`
-        : undefined;
+      const docContext =
+        projectDocs.length > 0
+          ? `Prefer these project documents: ${projectDocs
+              .slice(0, 8)
+              .map(d => d.fileName || d.originalName || d.title)
+              .filter(Boolean)
+              .join(', ')}`
+          : undefined;
       const res = await apiRequest('POST', '/api/evidence/ask', {
         question: question.trim(),
         projectId,
@@ -162,42 +183,43 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
     }
   }, [question, projectId, projectDocs]);
 
-  const handleUpload = useCallback(async (file?: File | null) => {
-    if (!projectId || !file) return;
-    setUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('auth_token') || '';
-      const organizationId = localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
-      await fetch(`/api/client-intelligence/project/${projectId}/documents/upload`, {
-        method: 'POST',
-        credentials: 'include',
-        body: fd,
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          'x-organization-id': organizationId,
-        },
-      });
-      await loadProjectDocs();
-      toast({ title: 'Document uploaded successfully' });
-    } catch {
-      toast({ title: 'Upload failed', variant: 'destructive' });
-    } finally {
-      setUploading(false);
-    }
-  }, [projectId, loadProjectDocs, toast]);
+  const handleUpload = useCallback(
+    async (file?: File | null) => {
+      if (!projectId || !file) return;
+      setUploading(true);
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        const uploadHeaders = getAuthHeaders();
+        delete uploadHeaders['Content-Type']; // let browser set multipart boundary
+        await fetch(`/api/client-intelligence/project/${projectId}/documents/upload`, {
+          method: 'POST',
+          credentials: 'include',
+          body: fd,
+          headers: uploadHeaders,
+        });
+        await loadProjectDocs();
+        toast({ title: 'Document uploaded successfully' });
+      } catch {
+        toast({ title: 'Upload failed', variant: 'destructive' });
+      } finally {
+        setUploading(false);
+      }
+    },
+    [projectId, loadProjectDocs, toast]
+  );
 
   // Filter items by search
   const filteredItems = useMemo(() => {
     const items = artifacts ?? [];
     const q = searchQuery.trim().toLowerCase();
     return q
-      ? items.filter(a =>
-          (a.title || '').toLowerCase().includes(q) ||
-          (a.ctdSection || '').toLowerCase().includes(q) ||
-          (a.type || '').toLowerCase().includes(q) ||
-          (a.folder || '').toLowerCase().includes(q)
+      ? items.filter(
+          a =>
+            (a.title || '').toLowerCase().includes(q) ||
+            (a.ctdSection || '').toLowerCase().includes(q) ||
+            (a.type || '').toLowerCase().includes(q) ||
+            (a.folder || '').toLowerCase().includes(q)
         )
       : items;
   }, [artifacts, searchQuery]);
@@ -232,11 +254,15 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
       />
 
       {/* ── Tab bar ── */}
-      <div className="flex items-center gap-1 mt-4 mb-4 border-b border-stone-200" role="tablist" aria-label="References tabs">
-        {([
+      <div
+        className="flex items-center gap-1 mt-4 mb-4 border-b border-stone-200"
+        role="tablist"
+        aria-label="References tabs"
+      >
+        {[
           { id: 'browse' as const, label: 'Browse', icon: <Archive className="w-3.5 h-3.5" /> },
           { id: 'ask' as const, label: 'Ask', icon: <MessageSquareText className="w-3.5 h-3.5" /> },
-        ]).map(tab => (
+        ].map(tab => (
           <button
             key={tab.id}
             role="tab"
@@ -292,7 +318,11 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
             isLoading={isLoading}
             error={error}
             emptyTitle={searchQuery ? 'No matching files' : 'No files or artifacts yet'}
-            emptyDescription={searchQuery ? 'Try a different search term' : 'Upload evidence documents or create artifacts from the Tools workbench'}
+            emptyDescription={
+              searchQuery
+                ? 'Try a different search term'
+                : 'Upload evidence documents or create artifacts from the Tools workbench'
+            }
           >
             {() => (
               <div className="space-y-4">
@@ -306,12 +336,15 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
                     </div>
                     <div className="space-y-0.5">
                       {items.map(item => {
-                        const statusCfg = STATUS_LABEL[item.status || 'draft'] ?? STATUS_LABEL.draft;
+                        const statusCfg =
+                          STATUS_LABEL[item.status || 'draft'] ?? STATUS_LABEL.draft;
                         const meta = [
                           item.ctdSection,
                           item.version ? `v${item.version}` : null,
                           statusCfg.label,
-                        ].filter(Boolean).join(' · ');
+                        ]
+                          .filter(Boolean)
+                          .join(' · ');
                         return (
                           <div
                             key={item.id}
@@ -323,8 +356,14 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
                             >
                               <FileText className="w-4 h-4 text-stone-300 flex-shrink-0" />
                               <div className="flex-1 min-w-0">
-                                <span className="text-sm text-stone-700 truncate block">{item.title}</span>
-                                {meta && <span className="text-[11px] text-stone-400 truncate block mt-0.5">{meta}</span>}
+                                <span className="text-sm text-stone-700 truncate block">
+                                  {item.title}
+                                </span>
+                                {meta && (
+                                  <span className="text-[11px] text-stone-400 truncate block mt-0.5">
+                                    {meta}
+                                  </span>
+                                )}
                               </div>
                             </button>
                             {onDraftFromSource && (
@@ -388,19 +427,28 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
               disabled={!question.trim() || question.trim().length < 3 || asking}
               className="shrink-0 self-end"
             >
-              {asking ? <Spinner size="sm" className="mr-1.5" /> : <MessageSquareText className="w-4 h-4 mr-1.5" />}
+              {asking ? (
+                <Spinner size="sm" className="mr-1.5" />
+              ) : (
+                <MessageSquareText className="w-4 h-4 mr-1.5" />
+              )}
               Ask
             </Button>
           </div>
 
           {/* Answer */}
           {answer && (
-            <div className="rounded-lg border border-stone-200 bg-white p-4" data-testid="vault-ask-answer">
+            <div
+              className="rounded-lg border border-stone-200 bg-white p-4"
+              data-testid="vault-ask-answer"
+            >
               <div className="flex items-center gap-2 mb-2">
                 <Database className="w-4 h-4 text-stone-500" />
                 <span className="text-xs font-medium text-stone-500">Grounded Answer</span>
               </div>
-              <div className="text-sm text-stone-700 whitespace-pre-wrap leading-relaxed">{answer}</div>
+              <div className="text-sm text-stone-700 whitespace-pre-wrap leading-relaxed">
+                {answer}
+              </div>
             </div>
           )}
 
@@ -410,10 +458,15 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
               <p className="text-xs font-medium text-stone-500 mb-2">Sources ({sources.length})</p>
               <div className="space-y-1.5">
                 {sources.map((source, idx) => (
-                  <div key={`${source.docTitle || 'src'}-${idx}`} className="rounded-lg border border-stone-200 bg-white p-3">
+                  <div
+                    key={`${source.docTitle || 'src'}-${idx}`}
+                    className="rounded-lg border border-stone-200 bg-white p-3"
+                  >
                     <div className="flex items-center gap-2">
                       <FileText className="w-3.5 h-3.5 text-stone-400" />
-                      <span className="text-sm font-medium text-stone-700">{source.docTitle || `Source ${idx + 1}`}</span>
+                      <span className="text-sm font-medium text-stone-700">
+                        {source.docTitle || `Source ${idx + 1}`}
+                      </span>
                       {source.relevanceScore != null && (
                         <span className="ml-auto text-[10px] text-stone-400">
                           {Math.round(source.relevanceScore * 100)}% relevant
@@ -421,7 +474,9 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
                       )}
                     </div>
                     {source.excerpt && (
-                      <p className="text-xs text-stone-500 mt-1.5 line-clamp-3 leading-relaxed">{source.excerpt}</p>
+                      <p className="text-xs text-stone-500 mt-1.5 line-clamp-3 leading-relaxed">
+                        {source.excerpt}
+                      </p>
                     )}
                   </div>
                 ))}
@@ -432,7 +487,9 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
           {/* Project documents list */}
           {projectDocs.length > 0 && (
             <div className="pt-3 border-t border-stone-100">
-              <p className="text-xs font-medium text-stone-500 mb-2">Project documents ({projectDocs.length})</p>
+              <p className="text-xs font-medium text-stone-500 mb-2">
+                Project documents ({projectDocs.length})
+              </p>
               <div className="flex flex-wrap gap-1.5">
                 {projectDocs.map((doc, idx) => (
                   <span
@@ -452,7 +509,9 @@ export const VaultPage: React.FC<VaultPageProps> = ({ projectId, projectName, on
             <div className="flex flex-col items-center py-8 text-center">
               <Upload className="w-8 h-8 text-stone-300 mb-2" />
               <p className="text-sm text-stone-500 mb-1">Upload evidence to get grounded answers</p>
-              <p className="text-xs text-stone-400">Upload source documents, clinical data, or literature above</p>
+              <p className="text-xs text-stone-400">
+                Upload source documents, clinical data, or literature above
+              </p>
             </div>
           )}
         </div>

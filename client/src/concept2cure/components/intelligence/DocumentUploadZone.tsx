@@ -4,17 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { queryKeys } from '@/concept2cure/hooks/queryKeys';
+import { getAuthToken, getOrgId } from '@/utils/authToken';
 import { Upload, FileText, CheckCircle2, AlertCircle, X } from 'lucide-react';
-
-/** Read auth token from localStorage (same keys as queryClient.ts) */
-function getAuthToken(): string {
-  return localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('auth_token') || '';
-}
-
-/** Read organization ID from localStorage (same keys as queryClient.ts) */
-function getOrgId(): string {
-  return localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
-}
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -130,7 +121,7 @@ export function DocumentUploadZone({
 
         // Simulate progress (XHR would give real progress, fetch does not)
         const progressInterval = setInterval(() => {
-          setUploadState((prev) => ({
+          setUploadState(prev => ({
             ...prev,
             progress: Math.min(prev.progress + 8, 85),
           }));
@@ -174,7 +165,10 @@ export function DocumentUploadZone({
 
         // Invalidate relevant caches
         queryClient.invalidateQueries({
-          queryKey: queryKeys.anaIntelligence.documents(scope, scope === 'project' ? scopeId : undefined),
+          queryKey: queryKeys.anaIntelligence.documents(
+            scope,
+            scope === 'project' ? scopeId : undefined
+          ),
         });
         if (scope === 'project' && scopeId) {
           queryClient.invalidateQueries({
@@ -193,7 +187,7 @@ export function DocumentUploadZone({
         toast({ title: 'Upload failed', description: errorMessage, variant: 'destructive' });
       }
     },
-    [scope, scopeId, onUploadComplete, queryClient, toast],
+    [scope, scopeId, onUploadComplete, queryClient, toast]
   );
 
   // ── Event Handlers ──────────────────────────────────────────────────────
@@ -219,7 +213,7 @@ export function DocumentUploadZone({
       const file = e.dataTransfer.files[0];
       if (file) uploadFile(file);
     },
-    [uploadFile],
+    [uploadFile]
   );
 
   const handleFileSelect = useCallback(
@@ -229,7 +223,7 @@ export function DocumentUploadZone({
       // Reset so the same file can be re-selected
       if (fileInputRef.current) fileInputRef.current.value = '';
     },
-    [uploadFile],
+    [uploadFile]
   );
 
   const handleBrowseClick = useCallback(() => {
@@ -316,7 +310,7 @@ export function DocumentUploadZone({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={isUploading ? undefined : handleBrowseClick}
-        onKeyDown={(e) => {
+        onKeyDown={e => {
           if (!isUploading && (e.key === 'Enter' || e.key === ' ')) {
             e.preventDefault();
             handleBrowseClick();
@@ -350,9 +344,7 @@ export function DocumentUploadZone({
                   style={{ width: `${uploadState.progress}%` }}
                 />
               </div>
-              <p className="text-center text-xs text-muted-foreground">
-                {uploadState.progress}%
-              </p>
+              <p className="text-center text-xs text-muted-foreground">{uploadState.progress}%</p>
             </div>
           </>
         ) : (
@@ -362,12 +354,8 @@ export function DocumentUploadZone({
             />
             {!compact && (
               <div className="text-center">
-                <p className="text-sm font-medium text-foreground">
-                  Drop a document here
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  or click to browse
-                </p>
+                <p className="text-sm font-medium text-foreground">Drop a document here</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">or click to browse</p>
               </div>
             )}
             {compact && (

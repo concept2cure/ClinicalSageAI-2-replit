@@ -36,6 +36,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
+import { getAuthHeaders } from '@/utils/authToken';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -72,9 +73,21 @@ interface INDAutoDraftWizardProps {
 }
 
 const MODULE_OPTIONS = [
-  { module: 1, label: 'Module 1 — Administrative', description: 'Cover letter, FDA forms, table of contents' },
-  { module: 2, label: 'Module 2 — CTD Summaries', description: 'Overviews, quality/nonclinical/clinical summaries' },
-  { module: 3, label: 'Module 3 — Quality (CMC)', description: 'Drug substance and drug product data' },
+  {
+    module: 1,
+    label: 'Module 1 — Administrative',
+    description: 'Cover letter, FDA forms, table of contents',
+  },
+  {
+    module: 2,
+    label: 'Module 2 — CTD Summaries',
+    description: 'Overviews, quality/nonclinical/clinical summaries',
+  },
+  {
+    module: 3,
+    label: 'Module 3 — Quality (CMC)',
+    description: 'Drug substance and drug product data',
+  },
   { module: 4, label: 'Module 4 — Nonclinical', description: 'Pharmacology, PK, toxicology' },
   { module: 5, label: 'Module 5 — Clinical', description: 'Clinical study reports and references' },
 ];
@@ -163,12 +176,15 @@ export function INDAutoDraftWizard({
     setPendingFiles(prev => prev.filter((_, i) => i !== index));
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    if (e.dataTransfer.files.length > 0) {
-      handleFilesSelected(e.dataTransfer.files);
-    }
-  }, [handleFilesSelected]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      if (e.dataTransfer.files.length > 0) {
+        handleFilesSelected(e.dataTransfer.files);
+      }
+    },
+    [handleFilesSelected]
+  );
 
   const handleUpload = useCallback(async () => {
     if (pendingFiles.length === 0) return;
@@ -185,16 +201,13 @@ export function INDAutoDraftWizard({
       }
 
       // File upload requires raw fetch (apiRequest sets Content-Type: application/json)
-      const authToken = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
-      const orgId = sessionStorage.getItem('organization_id') || localStorage.getItem('organization_id') || '';
+      const uploadHeaders = getAuthHeaders();
+      delete uploadHeaders['Content-Type']; // let browser set multipart boundary
       const res = await fetch('/api/knowledge-base/ind-autodraft/upload', {
         method: 'POST',
         body: formData,
         credentials: 'include',
-        headers: {
-          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-          'x-organization-id': orgId,
-        },
+        headers: uploadHeaders,
       });
 
       if (!res.ok) {
@@ -263,12 +276,15 @@ export function INDAutoDraftWizard({
 
   // ── Step 4: Open in editor ────────────────────────────────────────────
 
-  const handleOpenSection = useCallback((section: GeneratedSection) => {
-    if (section.artifactId && onOpenArtifact) {
-      onOpenArtifact(section.artifactId);
-      handleClose();
-    }
-  }, [onOpenArtifact, handleClose]);
+  const handleOpenSection = useCallback(
+    (section: GeneratedSection) => {
+      if (section.artifactId && onOpenArtifact) {
+        onOpenArtifact(section.artifactId);
+        handleClose();
+      }
+    },
+    [onOpenArtifact, handleClose]
+  );
 
   const handleOpenAll = useCallback(() => {
     const first = generatedSections.find(s => s.artifactId);
@@ -303,12 +319,17 @@ export function INDAutoDraftWizard({
             IND AutoDraft
           </DialogTitle>
           <DialogDescription className="text-[13px] text-stone-500">
-            Generate a complete IND draft from your source documents — no prompt engineering required.
+            Generate a complete IND draft from your source documents — no prompt engineering
+            required.
           </DialogDescription>
         </DialogHeader>
 
         {/* Step indicator */}
-        <div className="flex items-center gap-1 px-1 py-2" role="navigation" aria-label="Wizard steps">
+        <div
+          className="flex items-center gap-1 px-1 py-2"
+          role="navigation"
+          aria-label="Wizard steps"
+        >
           {stepTitles.map((title, i) => {
             const stepNum = (i + 1) as 1 | 2 | 3 | 4;
             const isActive = step === stepNum;
@@ -366,9 +387,7 @@ export function INDAutoDraftWizard({
                 }}
               >
                 <Upload className="w-8 h-8 text-stone-300 mx-auto mb-3" />
-                <p className="text-[13px] text-stone-600 font-medium">
-                  Drop source documents here
-                </p>
+                <p className="text-[13px] text-stone-600 font-medium">Drop source documents here</p>
                 <p className="text-[11px] text-stone-400 mt-1">
                   PDF, DOCX, XLSX, TXT, CSV — nonclinical reports, CMC data, protocols, IBs
                 </p>
@@ -463,7 +482,10 @@ export function INDAutoDraftWizard({
               )}
 
               {uploadError && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-red-50 rounded-md" role="alert">
+                <div
+                  className="flex items-center gap-2 px-3 py-2 bg-red-50 rounded-md"
+                  role="alert"
+                >
                   <AlertCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
                   <span className="text-[12px] text-red-700">{uploadError}</span>
                 </div>
@@ -586,7 +608,11 @@ export function INDAutoDraftWizard({
                 <Sparkles className="w-8 h-8 text-stone-400 mx-auto" />
                 <div>
                   <p className="text-[13px] text-stone-700 font-medium">
-                    {generating ? 'Generating IND draft...' : generateError ? 'Generation failed' : 'Ready to generate'}
+                    {generating
+                      ? 'Generating IND draft...'
+                      : generateError
+                        ? 'Generation failed'
+                        : 'Ready to generate'}
                   </p>
                   {currentSection && (
                     <p
@@ -611,7 +637,10 @@ export function INDAutoDraftWizard({
               </div>
 
               {generateError && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-red-50 rounded-md mx-4" role="alert">
+                <div
+                  className="flex items-center gap-2 px-3 py-2 bg-red-50 rounded-md mx-4"
+                  role="alert"
+                >
                   <AlertCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
                   <span className="text-[12px] text-red-700">{generateError}</span>
                 </div>
@@ -625,11 +654,12 @@ export function INDAutoDraftWizard({
                     aria-label="Start IND generation"
                   >
                     <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                    Generate {selectedModules.length} module{selectedModules.length !== 1 ? 's' : ''}
+                    Generate {selectedModules.length} module
+                    {selectedModules.length !== 1 ? 's' : ''}
                   </Button>
                   <p className="text-[10px] text-stone-400 text-center mt-2">
-                    {uploadedFiles.length} source document{uploadedFiles.length !== 1 ? 's' : ''} will
-                    be used as context for generation.
+                    {uploadedFiles.length} source document{uploadedFiles.length !== 1 ? 's' : ''}{' '}
+                    will be used as context for generation.
                   </p>
                 </div>
               )}

@@ -39,6 +39,7 @@ import {
   type TenantArchetypeConfig,
   type ComplianceConfig,
 } from '../../core/regulatoryCompliance';
+import { getAuthHeaders } from '@/utils/authToken';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -230,10 +231,30 @@ const MODULE_ADDONS: {
   description: string;
   monthlyAddon: number;
 }[] = [
-  { id: 'deep_research', name: 'Deep Research', description: 'Multi-source evidence synthesis', monthlyAddon: 149 },
-  { id: 'ctd_builder', name: 'CTD Builder', description: 'Submission module automation', monthlyAddon: 249 },
-  { id: 'safety_narrative', name: 'Safety Narrative', description: 'Signal-driven narrative acceleration', monthlyAddon: 179 },
-  { id: 'multi_agency_export', name: 'Multi-Agency Export', description: 'FDA/EMA/PMDA packaging accelerator', monthlyAddon: 199 },
+  {
+    id: 'deep_research',
+    name: 'Deep Research',
+    description: 'Multi-source evidence synthesis',
+    monthlyAddon: 149,
+  },
+  {
+    id: 'ctd_builder',
+    name: 'CTD Builder',
+    description: 'Submission module automation',
+    monthlyAddon: 249,
+  },
+  {
+    id: 'safety_narrative',
+    name: 'Safety Narrative',
+    description: 'Signal-driven narrative acceleration',
+    monthlyAddon: 179,
+  },
+  {
+    id: 'multi_agency_export',
+    name: 'Multi-Agency Export',
+    description: 'FDA/EMA/PMDA packaging accelerator',
+    monthlyAddon: 199,
+  },
 ];
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -271,10 +292,11 @@ function estimatePricing(data: OnboardingData): PricingEstimate {
   const basePrice = pricing?.baseMonthly || 0;
   const seatCost = (pricing?.perUserMonthly || 0) * Math.max(data.estimatedSeats, 0);
   const storageCost = (pricing?.storagePerGBMonthly || 0) * Math.max(data.estimatedStorageGB, 0);
-  const modulesCost = MODULE_ADDONS
-    .filter(module => data.selectedModules.includes(module.id))
-    .reduce((sum, module) => sum + module.monthlyAddon, 0);
-  const preDiscountMonthly = basePrice + seatCost + storageCost + selectedModel.monthlyAddon + modulesCost;
+  const modulesCost = MODULE_ADDONS.filter(module =>
+    data.selectedModules.includes(module.id)
+  ).reduce((sum, module) => sum + module.monthlyAddon, 0);
+  const preDiscountMonthly =
+    basePrice + seatCost + storageCost + selectedModel.monthlyAddon + modulesCost;
   const discount = data.billingCycle === 'annual' ? pricing?.annualDiscount || 0 : 0;
   const finalMonthly = preDiscountMonthly * (1 - discount);
 
@@ -436,8 +458,7 @@ export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps
         const res = await fetch('/api/billing/checkout', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+            ...getAuthHeaders(),
           },
           body: JSON.stringify({
             tier: data.subscriptionTier,
@@ -587,7 +608,22 @@ export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps
               >
                 {checkoutLoading ? (
                   <>
-                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      />
+                    </svg>
                     Redirecting to Payment...
                   </>
                 ) : data.subscriptionTier === 'starter' ? (
@@ -954,7 +990,9 @@ function SubscriptionStep({ data, updateData }: StepProps) {
                   })
                 }
                 className={`p-4 border rounded-xl text-left transition ${
-                  selected ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-primary-300'
+                  selected
+                    ? 'border-primary-500 bg-primary-50'
+                    : 'border-gray-200 hover:border-primary-300'
                 }`}
               >
                 <p className="font-medium text-gray-900">{module.name}</p>
@@ -979,7 +1017,9 @@ function SubscriptionStep({ data, updateData }: StepProps) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Storage (GB)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Estimated Storage (GB)
+          </label>
           <input
             type="number"
             min={1}
@@ -996,11 +1036,26 @@ function SubscriptionStep({ data, updateData }: StepProps) {
       {pricing && (
         <div className="p-4 bg-gray-50 rounded-lg">
           <div className="text-sm text-gray-600 mb-3 space-y-1">
-            <div className="flex justify-between"><span>Base Plan</span><span>${pricingEstimate.basePrice.toLocaleString()}/mo</span></div>
-            <div className="flex justify-between"><span>Seats ({data.estimatedSeats})</span><span>${pricingEstimate.seatCost.toLocaleString()}/mo</span></div>
-            <div className="flex justify-between"><span>Storage ({data.estimatedStorageGB} GB)</span><span>${pricingEstimate.storageCost.toLocaleString()}/mo</span></div>
-            <div className="flex justify-between"><span>Model Pack ({selectedModel.name})</span><span>${selectedModel.monthlyAddon.toLocaleString()}/mo</span></div>
-            <div className="flex justify-between"><span>Module Add-ons ({data.selectedModules.length})</span><span>${pricingEstimate.modulesCost.toLocaleString()}/mo</span></div>
+            <div className="flex justify-between">
+              <span>Base Plan</span>
+              <span>${pricingEstimate.basePrice.toLocaleString()}/mo</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Seats ({data.estimatedSeats})</span>
+              <span>${pricingEstimate.seatCost.toLocaleString()}/mo</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Storage ({data.estimatedStorageGB} GB)</span>
+              <span>${pricingEstimate.storageCost.toLocaleString()}/mo</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Model Pack ({selectedModel.name})</span>
+              <span>${selectedModel.monthlyAddon.toLocaleString()}/mo</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Module Add-ons ({data.selectedModules.length})</span>
+              <span>${pricingEstimate.modulesCost.toLocaleString()}/mo</span>
+            </div>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-gray-600">Estimated Monthly Cost</span>
@@ -1384,7 +1439,9 @@ function ReviewStep({ data, updateData }: StepProps) {
 
       <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
         <h4 className="font-medium text-emerald-900 mb-2">Estimated Monthly Total</h4>
-        <p className="text-2xl font-bold text-emerald-900">${pricingEstimate.finalMonthly.toLocaleString()}/mo</p>
+        <p className="text-2xl font-bold text-emerald-900">
+          ${pricingEstimate.finalMonthly.toLocaleString()}/mo
+        </p>
         <p className="text-xs text-emerald-800 mt-1">
           Includes base plan, {data.estimatedSeats} seat(s), {data.estimatedStorageGB} GB storage,
           {` ${model.name}`}, and {data.selectedModules.length} module add-on(s).

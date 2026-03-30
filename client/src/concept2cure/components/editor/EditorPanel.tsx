@@ -44,7 +44,13 @@ import {
   Upload,
   Cloud,
 } from 'lucide-react';
-import { useClaimCheck, usePrecedentSearch, type ClaimCheckResult, type PrecedentRecord, type SearchParams } from '../../hooks/usePrecedentEngine';
+import {
+  useClaimCheck,
+  usePrecedentSearch,
+  type ClaimCheckResult,
+  type PrecedentRecord,
+  type SearchParams,
+} from '../../hooks/usePrecedentEngine';
 import { RegulatoryIntelligencePanel } from '../intelligence/RegulatoryIntelligencePanel';
 import { useGenerateDocx, downloadBlob } from '../../hooks/useDocumentFactory';
 import DocumentProvenancePanel from '../provenance/DocumentProvenancePanel';
@@ -81,7 +87,11 @@ import { AnAMemory } from '../intelligence/AnAMemory';
 import { INDAutoDraftWizard } from './INDAutoDraftWizard';
 import ArtifactProofPanel from './ArtifactProofPanel';
 import EditorGAReadinessPanel from './EditorGAReadinessPanel';
-import { buildReadinessChecks, buildCapabilityModels, buildRemediationQueue } from './gaReadinessModel';
+import {
+  buildReadinessChecks,
+  buildCapabilityModels,
+  buildRemediationQueue,
+} from './gaReadinessModel';
 import { getCurrentUser } from '../../utils/getCurrentUser';
 import { useDocumentModeOptional, type DocumentMode } from '../../contexts/DocumentModeContext';
 import {
@@ -96,7 +106,14 @@ import { useYjsProvider } from '../../hooks/useYjsProvider';
 import { LoadingState } from '@/components/ui/statesV2';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { getAuthHeaders } from '@/utils/authToken';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface Artifact {
@@ -146,7 +163,13 @@ interface EditorPanelProps {
   onNavigateToProject?: () => void;
 }
 
-type AIAction = 'rewrite' | 'expand' | 'summarize' | 'regulatory-tone' | 'add-references' | 'generate-table';
+type AIAction =
+  | 'rewrite'
+  | 'expand'
+  | 'summarize'
+  | 'regulatory-tone'
+  | 'add-references'
+  | 'generate-table';
 
 const AI_ACTIONS: { id: AIAction; label: string; description: string }[] = [
   { id: 'rewrite', label: 'Rewrite', description: 'Improve clarity and precision' },
@@ -192,7 +215,8 @@ const PrecedentSearchInspector: React.FC<{
           <Scale className="w-3.5 h-3.5 text-stone-500" />
           <span className="text-[13px] font-semibold text-stone-700">Precedent Search</span>
         </div>
-        <Button variant="ghost"
+        <Button
+          variant="ghost"
           onClick={onClose}
           className="text-stone-400 hover:text-stone-600 transition-colors p-1"
           aria-label="Close precedent panel"
@@ -212,7 +236,8 @@ const PrecedentSearchInspector: React.FC<{
             placeholder="Search precedents..."
             className="flex-1 text-[12px] px-2.5 py-1.5 rounded-md border border-stone-200 bg-white focus:border-stone-400 focus:outline-none transition-colors"
           />
-          <Button variant="default"
+          <Button
+            variant="default"
             onClick={handleSearch}
             disabled={isLoading}
             className="px-2.5 py-1.5 text-[11px] font-medium bg-stone-800 text-white rounded-md hover:bg-stone-700 disabled:opacity-50 transition-colors"
@@ -232,8 +257,12 @@ const PrecedentSearchInspector: React.FC<{
         {!searchParams && !results && (
           <div className="px-3 py-6 text-center">
             <Scale className="w-5 h-5 text-stone-300 mx-auto mb-2" />
-            <p className="text-[12px] text-stone-400">Search regulatory precedents to strengthen your submission</p>
-            <p className="text-[10px] text-stone-400 mt-1">Results from FDA clearances, approvals, and advisory committees</p>
+            <p className="text-[12px] text-stone-400">
+              Search regulatory precedents to strengthen your submission
+            </p>
+            <p className="text-[10px] text-stone-400 mt-1">
+              Results from FDA clearances, approvals, and advisory committees
+            </p>
           </div>
         )}
 
@@ -261,7 +290,10 @@ const PrecedentSearchInspector: React.FC<{
               const outcome = (rec.decisionOutcome || '').toLowerCase();
               const outcomeStyle = PRECEDENT_SEVERITY[outcome] || 'text-stone-500 bg-stone-50';
               return (
-                <div key={rec.id} className="px-3 py-2.5 hover:bg-stone-50/50 transition-colors group">
+                <div
+                  key={rec.id}
+                  className="px-3 py-2.5 hover:bg-stone-50/50 transition-colors group"
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <p className="text-[12px] text-stone-700 font-medium truncate">
@@ -269,26 +301,37 @@ const PrecedentSearchInspector: React.FC<{
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
                         {rec.clearanceNumber && (
-                          <span className="text-[10px] text-stone-400 font-mono">{rec.clearanceNumber}</span>
+                          <span className="text-[10px] text-stone-400 font-mono">
+                            {rec.clearanceNumber}
+                          </span>
                         )}
                         {rec.applicant && (
-                          <span className="text-[10px] text-stone-400 truncate">{rec.applicant}</span>
+                          <span className="text-[10px] text-stone-400 truncate">
+                            {rec.applicant}
+                          </span>
                         )}
                         {rec.decisionDate && (
                           <span className="text-[10px] text-stone-400 tabular-nums">
-                            {new Date(rec.decisionDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                            {new Date(rec.decisionDate).toLocaleDateString('en-US', {
+                              month: 'short',
+                              year: 'numeric',
+                            })}
                           </span>
                         )}
                       </div>
                     </div>
                     {rec.decisionOutcome && (
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${outcomeStyle}`}>
+                      <span
+                        className={`text-[9px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${outcomeStyle}`}
+                      >
                         {rec.decisionOutcome}
                       </span>
                     )}
                   </div>
                   {rec.strategySummary && (
-                    <p className="text-[11px] text-stone-500 mt-1 line-clamp-2 leading-relaxed">{rec.strategySummary}</p>
+                    <p className="text-[11px] text-stone-500 mt-1 line-clamp-2 leading-relaxed">
+                      {rec.strategySummary}
+                    </p>
                   )}
                   {rec.similarityScore != null && rec.similarityScore > 0 && (
                     <div className="mt-1 flex items-center gap-1">
@@ -298,13 +341,21 @@ const PrecedentSearchInspector: React.FC<{
                           style={{ width: `${Math.min(rec.similarityScore * 100, 100)}%` }}
                         />
                       </div>
-                      <span className="text-[9px] text-stone-400 tabular-nums">{Math.round(rec.similarityScore * 100)}% match</span>
+                      <span className="text-[9px] text-stone-400 tabular-nums">
+                        {Math.round(rec.similarityScore * 100)}% match
+                      </span>
                     </div>
                   )}
                   {/* Insert citation button — appears on hover */}
-                  <Button variant="ghost"
+                  <Button
+                    variant="ghost"
                     onClick={() => {
-                      const parts = [rec.deviceName || rec.indication, rec.clearanceNumber, rec.applicant, rec.decisionOutcome].filter(Boolean);
+                      const parts = [
+                        rec.deviceName || rec.indication,
+                        rec.clearanceNumber,
+                        rec.applicant,
+                        rec.decisionOutcome,
+                      ].filter(Boolean);
                       onInsertCitation(parts.join(' — '));
                     }}
                     className="mt-1.5 text-[10px] text-blue-500 hover:text-stone-700 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
@@ -367,7 +418,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     result: {
       overallScore: number;
       hallucinationRisk: 'low' | 'medium' | 'high';
-      summary: { total: number; verified: number; partiallyVerified: number; unverified: number; contradicted: number };
+      summary: {
+        total: number;
+        verified: number;
+        partiallyVerified: number;
+        unverified: number;
+        contradicted: number;
+      };
     } | null;
   }>({ running: false, result: null });
 
@@ -375,47 +432,53 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [openTabs, setOpenTabs] = useState<Array<{ id: string; title: string }>>([]);
 
   /** Open a document in a tab (add to tabs if not present, switch to it) */
-  const openInTab = useCallback((artifact: Artifact) => {
-    setOpenTabs(prev => {
-      const exists = prev.some(t => t.id === artifact.id);
-      if (exists) return prev;
-      return [...prev, { id: artifact.id, title: artifact.title }];
-    });
-    setActiveArtifact(artifact);
-    setShowArtifactList(false);
-    recordDocumentAccess({
-      id: String(artifact.id),
-      title: artifact.title,
-      projectId: String(projectId),
-      ctdSection: artifact.ctdSection,
-      status: artifact.status,
-    });
-  }, [projectId]);
+  const openInTab = useCallback(
+    (artifact: Artifact) => {
+      setOpenTabs(prev => {
+        const exists = prev.some(t => t.id === artifact.id);
+        if (exists) return prev;
+        return [...prev, { id: artifact.id, title: artifact.title }];
+      });
+      setActiveArtifact(artifact);
+      setShowArtifactList(false);
+      recordDocumentAccess({
+        id: String(artifact.id),
+        title: artifact.title,
+        projectId: String(projectId),
+        ctdSection: artifact.ctdSection,
+        status: artifact.status,
+      });
+    },
+    [projectId]
+  );
 
   /** Close a tab and switch to an adjacent one or back to document list */
-  const closeTab = useCallback((tabId: string) => {
-    setOpenTabs(prev => {
-      const idx = prev.findIndex(t => t.id === tabId);
-      const next = prev.filter(t => t.id !== tabId);
-      // If closing the active tab, switch to nearest remaining or show list
-      if (activeArtifact?.id === tabId) {
-        if (next.length > 0) {
-          const switchIdx = Math.min(idx, next.length - 1);
-          const switchTo = artifacts.find(a => a.id === next[switchIdx].id);
-          if (switchTo) {
-            setActiveArtifact(switchTo);
+  const closeTab = useCallback(
+    (tabId: string) => {
+      setOpenTabs(prev => {
+        const idx = prev.findIndex(t => t.id === tabId);
+        const next = prev.filter(t => t.id !== tabId);
+        // If closing the active tab, switch to nearest remaining or show list
+        if (activeArtifact?.id === tabId) {
+          if (next.length > 0) {
+            const switchIdx = Math.min(idx, next.length - 1);
+            const switchTo = artifacts.find(a => a.id === next[switchIdx].id);
+            if (switchTo) {
+              setActiveArtifact(switchTo);
+            } else {
+              setActiveArtifact(null);
+              setShowArtifactList(true);
+            }
           } else {
             setActiveArtifact(null);
             setShowArtifactList(true);
           }
-        } else {
-          setActiveArtifact(null);
-          setShowArtifactList(true);
         }
-      }
-      return next;
-    });
-  }, [activeArtifact?.id, artifacts]);
+        return next;
+      });
+    },
+    [activeArtifact?.id, artifacts]
+  );
 
   // Sync: whenever activeArtifact changes, ensure it's in the tab list
   useEffect(() => {
@@ -423,15 +486,31 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     setOpenTabs(prev => {
       if (prev.some(t => t.id === activeArtifact.id)) {
         // Update title if it changed
-        return prev.map(t => t.id === activeArtifact.id ? { ...t, title: activeArtifact.title } : t);
+        return prev.map(t =>
+          t.id === activeArtifact.id ? { ...t, title: activeArtifact.title } : t
+        );
       }
       return [...prev, { id: activeArtifact.id, title: activeArtifact.title }];
     });
   }, [activeArtifact?.id, activeArtifact?.title]);
 
   // ── Reviewer data (fetched from API) ──────────────────────────────────────
-  const [reviewers, setReviewers] = useState<Array<{ id: string; name: string; email: string; role?: string; avatarUrl?: string; status: 'pending' | 'in_progress' | 'approved' | 'changes_requested' | 'rejected'; assignedAt: string; completedAt?: string; comment?: string }>>([]);
-  const [teamMembers, setTeamMembers] = useState<Array<{ id: string; name: string; email: string; role?: string }>>([]);
+  const [reviewers, setReviewers] = useState<
+    Array<{
+      id: string;
+      name: string;
+      email: string;
+      role?: string;
+      avatarUrl?: string;
+      status: 'pending' | 'in_progress' | 'approved' | 'changes_requested' | 'rejected';
+      assignedAt: string;
+      completedAt?: string;
+      comment?: string;
+    }>
+  >([]);
+  const [teamMembers, setTeamMembers] = useState<
+    Array<{ id: string; name: string; email: string; role?: string }>
+  >([]);
 
   // Fetch reviewers when active artifact changes
   useEffect(() => {
@@ -441,22 +520,29 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     }
     (async () => {
       try {
-        const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/reviewers`);
+        const res = await apiRequest(
+          'GET',
+          `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/reviewers`
+        );
         if (res.ok) {
           const json = await res.json();
           const data = json?.data ?? [];
-          setReviewers(data.map((r: any) => ({
-            id: String(r.id || r.assignmentId),
-            name: r.name || r.reviewerName || 'Unknown',
-            email: r.email || '',
-            role: r.role,
-            status: r.decision || r.status || 'pending',
-            assignedAt: r.assignedAt || r.createdAt || new Date().toISOString(),
-            completedAt: r.completedAt,
-            comment: r.comment || r.notes,
-          })));
+          setReviewers(
+            data.map((r: any) => ({
+              id: String(r.id || r.assignmentId),
+              name: r.name || r.reviewerName || 'Unknown',
+              email: r.email || '',
+              role: r.role,
+              status: r.decision || r.status || 'pending',
+              assignedAt: r.assignedAt || r.createdAt || new Date().toISOString(),
+              completedAt: r.completedAt,
+              comment: r.comment || r.notes,
+            }))
+          );
         }
-      } catch { /* non-blocking */ }
+      } catch {
+        /* non-blocking */
+      }
     })();
   }, [projectId, activeArtifact?.id]);
 
@@ -472,14 +558,18 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         if (res.ok) {
           const json = await res.json();
           const members = json?.data ?? json?.members ?? [];
-          setTeamMembers(members.map((m: any) => ({
-            id: String(m.id || m.userId),
-            name: m.name || m.displayName || m.username || 'Unknown',
-            email: m.email || '',
-            role: m.role || m.projectRole,
-          })));
+          setTeamMembers(
+            members.map((m: any) => ({
+              id: String(m.id || m.userId),
+              name: m.name || m.displayName || m.username || 'Unknown',
+              email: m.email || '',
+              role: m.role || m.projectRole,
+            }))
+          );
         }
-      } catch { /* non-blocking — team list is supplementary */ }
+      } catch {
+        /* non-blocking — team list is supplementary */
+      }
     })();
   }, [projectId]);
 
@@ -519,7 +609,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [isScanning, setIsScanning] = useState(false);
   const [lastScanTime, setLastScanTime] = useState(Date.now());
   const toggleInspector = useCallback((panel: string) => {
-    setActiveInspector(prev => (prev === panel ? null : panel as InspectorPanel));
+    setActiveInspector(prev => (prev === panel ? null : (panel as InspectorPanel)));
   }, []);
 
   // Auto-open inspector when initialInspector is set from parent
@@ -539,10 +629,14 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
   const suggestedPanels = useMemo<Set<string>>(() => {
     switch (activeLifecycleStage) {
-      case 'Review': return new Set(['comments', 'review', 'reviewers']);
-      case 'Verify': return new Set(['provenance', 'inconsistency', 'proof', 'compliance-scanner', 'crossref']);
-      case 'Publish': return new Set(['submission-readiness', 'ga-readiness', 'health', 'audit']);
-      default: return new Set(['intelligence', 'dataroom', 'templates', 'batch-ai']);
+      case 'Review':
+        return new Set(['comments', 'review', 'reviewers']);
+      case 'Verify':
+        return new Set(['provenance', 'inconsistency', 'proof', 'compliance-scanner', 'crossref']);
+      case 'Publish':
+        return new Set(['submission-readiness', 'ga-readiness', 'health', 'audit']);
+      default:
+        return new Set(['intelligence', 'dataroom', 'templates', 'batch-ai']);
     }
   }, [activeLifecycleStage]);
 
@@ -573,76 +667,100 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   );
 
   // ── Claim validation (after pushToast is defined) ────────────────────
-  const runClaimValidation = useCallback(async (content: string) => {
-    if (!projectId || !content) return;
-    setClaimValidation(prev => ({ ...prev, running: true }));
-    try {
-      const res = await apiRequest('POST', '/api/concept2cure/ai/validate-claims', {
-        content,
-        projectId,
-        artifactId: activeArtifact?.id,
-      });
-      if (res.ok) {
-        const payload = await res.json();
-        const data = payload.data || payload;
-        if (data.hallucinationRisk === 'high') {
-          pushToast(`${data.summary?.unverified || 0} unverified claims detected — review recommended`, 'error');
+  const runClaimValidation = useCallback(
+    async (content: string) => {
+      if (!projectId || !content) return;
+      setClaimValidation(prev => ({ ...prev, running: true }));
+      try {
+        const res = await apiRequest('POST', '/api/concept2cure/ai/validate-claims', {
+          content,
+          projectId,
+          artifactId: activeArtifact?.id,
+        });
+        if (res.ok) {
+          const payload = await res.json();
+          const data = payload.data || payload;
+          if (data.hallucinationRisk === 'high') {
+            pushToast(
+              `${data.summary?.unverified || 0} unverified claims detected — review recommended`,
+              'error'
+            );
+          }
+          setClaimValidation({ running: false, result: data });
+        } else {
+          setClaimValidation(prev => ({ ...prev, running: false }));
         }
-        setClaimValidation({ running: false, result: data });
-      } else {
+      } catch {
         setClaimValidation(prev => ({ ...prev, running: false }));
       }
-    } catch {
-      setClaimValidation(prev => ({ ...prev, running: false }));
-    }
-  }, [projectId, activeArtifact?.id, pushToast]);
+    },
+    [projectId, activeArtifact?.id, pushToast]
+  );
 
   // ── Reviewer CRUD handlers (after pushToast is defined) ──────────────
-  const handleAddReviewer = useCallback(async (memberId: string) => {
-    if (!projectId || !activeArtifact?.id) return;
-    try {
-      const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/reviewers`, {
-        reviewerIds: [Number(memberId)],
-      });
-      if (res.ok) {
-        const refreshRes = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/reviewers`);
-        if (refreshRes.ok) {
-          const json = await refreshRes.json();
-          const data = json?.data ?? [];
-          setReviewers(data.map((r: any) => ({
-            id: String(r.id || r.assignmentId),
-            name: r.name || r.reviewerName || 'Unknown',
-            email: r.email || '',
-            role: r.role,
-            status: r.decision || r.status || 'pending',
-            assignedAt: r.assignedAt || r.createdAt || new Date().toISOString(),
-            completedAt: r.completedAt,
-            comment: r.comment || r.notes,
-          })));
+  const handleAddReviewer = useCallback(
+    async (memberId: string) => {
+      if (!projectId || !activeArtifact?.id) return;
+      try {
+        const res = await apiRequest(
+          'POST',
+          `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/reviewers`,
+          {
+            reviewerIds: [Number(memberId)],
+          }
+        );
+        if (res.ok) {
+          const refreshRes = await apiRequest(
+            'GET',
+            `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/reviewers`
+          );
+          if (refreshRes.ok) {
+            const json = await refreshRes.json();
+            const data = json?.data ?? [];
+            setReviewers(
+              data.map((r: any) => ({
+                id: String(r.id || r.assignmentId),
+                name: r.name || r.reviewerName || 'Unknown',
+                email: r.email || '',
+                role: r.role,
+                status: r.decision || r.status || 'pending',
+                assignedAt: r.assignedAt || r.createdAt || new Date().toISOString(),
+                completedAt: r.completedAt,
+                comment: r.comment || r.notes,
+              }))
+            );
+          }
+          pushToast('Reviewer assigned', 'success');
+        } else {
+          pushToast('Failed to assign reviewer', 'error');
         }
-        pushToast('Reviewer assigned', 'success');
-      } else {
+      } catch {
         pushToast('Failed to assign reviewer', 'error');
       }
-    } catch {
-      pushToast('Failed to assign reviewer', 'error');
-    }
-  }, [projectId, activeArtifact?.id, pushToast]);
+    },
+    [projectId, activeArtifact?.id, pushToast]
+  );
 
-  const handleRemoveReviewer = useCallback(async (assignmentId: string) => {
-    if (!projectId || !activeArtifact?.id) return;
-    try {
-      const res = await apiRequest('DELETE', `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/reviewers/${assignmentId}`);
-      if (res.ok) {
-        setReviewers(prev => prev.filter(r => r.id !== assignmentId));
-        pushToast('Reviewer removed', 'success');
-      } else {
+  const handleRemoveReviewer = useCallback(
+    async (assignmentId: string) => {
+      if (!projectId || !activeArtifact?.id) return;
+      try {
+        const res = await apiRequest(
+          'DELETE',
+          `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/reviewers/${assignmentId}`
+        );
+        if (res.ok) {
+          setReviewers(prev => prev.filter(r => r.id !== assignmentId));
+          pushToast('Reviewer removed', 'success');
+        } else {
+          pushToast('Failed to remove reviewer', 'error');
+        }
+      } catch {
         pushToast('Failed to remove reviewer', 'error');
       }
-    } catch {
-      pushToast('Failed to remove reviewer', 'error');
-    }
-  }, [projectId, activeArtifact?.id, pushToast]);
+    },
+    [projectId, activeArtifact?.id, pushToast]
+  );
 
   // ── CTD Section assignment state ──────────────────────────────────────
   const [showCtdInput, setShowCtdInput] = useState(false);
@@ -671,7 +789,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     projectId: projectId ? String(projectId) : undefined,
     userName: currentUser?.name || 'Anonymous',
     userColor: '#3B82F6',
-    enabled: !!activeArtifact?.id && (currentDocumentMode === 'edit' || currentDocumentMode === 'draft'),
+    enabled:
+      !!activeArtifact?.id && (currentDocumentMode === 'edit' || currentDocumentMode === 'draft'),
   });
 
   // ── Artifact list filters (P5) ────────────────────────────────────────
@@ -1459,9 +1578,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             setAiProvenance(provenance || null);
             const srcCount = provenance?.sourcesRetrieved || 0;
             const claimCount = provenance?.claims?.length || 0;
-            const msg = srcCount > 0
-              ? `AI suggestion ready — ${srcCount} source${srcCount !== 1 ? 's' : ''} cited, ${claimCount} claim${claimCount !== 1 ? 's' : ''} traced`
-              : 'AI suggestion ready — review below';
+            const msg =
+              srcCount > 0
+                ? `AI suggestion ready — ${srcCount} source${srcCount !== 1 ? 's' : ''} cited, ${claimCount} claim${claimCount !== 1 ? 's' : ''} traced`
+                : 'AI suggestion ready — review below';
             pushToast(msg, 'success');
           } else {
             pushToast('AI returned empty result', 'error');
@@ -1495,7 +1615,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     if (aiProvenance?.sources?.length) {
       finalContent = applySourceTraceabilityToHtml(htmlContent, aiProvenance);
       const srcCount = aiProvenance.sources.length;
-      pushToast(`Applied ${srcCount} source traceability link${srcCount !== 1 ? 's' : ''}`, 'success');
+      pushToast(
+        `Applied ${srcCount} source traceability link${srcCount !== 1 ? 's' : ''}`,
+        'success'
+      );
     }
 
     setActiveArtifact({ ...activeArtifact, content: finalContent });
@@ -1543,7 +1666,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const handleImportDocument = useCallback(() => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.docx,.doc,.pdf,.txt,.csv,.tsv,.html,.htm,.md,.rtf,.png,.jpg,.jpeg,.gif,.webp,.svg,.bmp,.tiff';
+    input.accept =
+      '.docx,.doc,.pdf,.txt,.csv,.tsv,.html,.htm,.md,.rtf,.png,.jpg,.jpeg,.gif,.webp,.svg,.bmp,.tiff';
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
@@ -1573,7 +1697,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           );
           html = result.value;
           if (result.messages.length > 0) {
-            console.warn('[Import] Mammoth warnings:', result.messages.map((m: any) => m.message));
+            console.warn(
+              '[Import] Mammoth warnings:',
+              result.messages.map((m: any) => m.message)
+            );
           }
         }
         // ── PDF — Server-side extraction via API ──
@@ -1581,25 +1708,25 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           const formData = new FormData();
           formData.append('file', file);
           try {
-            const pdfAuthToken = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
-            const pdfOrgId = sessionStorage.getItem('organization_id') || localStorage.getItem('organization_id') || '';
+            const pdfHeaders = getAuthHeaders();
+            delete pdfHeaders['Content-Type']; // let browser set multipart boundary
             const res = await fetch('/api/knowledge-base/extract-pdf', {
               method: 'POST',
               body: formData,
               credentials: 'include',
-              headers: {
-                ...(pdfAuthToken ? { Authorization: `Bearer ${pdfAuthToken}` } : {}),
-                'x-organization-id': pdfOrgId,
-              },
+              headers: pdfHeaders,
             });
             if (res.ok) {
               const data = await res.json();
               html = data.html || data.content || data.text || '';
               if (!html && data.pages) {
                 // If pages array returned, concatenate
-                html = (data.pages as any[]).map((p: any, i: number) =>
-                  `<h2>Page ${i + 1}</h2><p>${(p.text || p.content || '').replace(/\n/g, '</p><p>')}</p>`
-                ).join('');
+                html = (data.pages as any[])
+                  .map(
+                    (p: any, i: number) =>
+                      `<h2>Page ${i + 1}</h2><p>${(p.text || p.content || '').replace(/\n/g, '</p><p>')}</p>`
+                  )
+                  .join('');
               }
             } else {
               // Fallback: read as binary and extract text client-side
@@ -1612,7 +1739,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         }
         // ── Images — Embed as base64 with OCR annotation ──
         else if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'tiff'].includes(ext)) {
-          const dataUrl = await new Promise<string>((resolve) => {
+          const dataUrl = await new Promise<string>(resolve => {
             const reader = new FileReader();
             reader.onload = () => resolve(reader.result as string);
             reader.readAsDataURL(file);
@@ -1623,16 +1750,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           try {
             const formData = new FormData();
             formData.append('file', file);
-            const ocrAuthToken = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
-            const ocrOrgId = sessionStorage.getItem('organization_id') || localStorage.getItem('organization_id') || '';
+            const ocrHeaders = getAuthHeaders();
+            delete ocrHeaders['Content-Type']; // let browser set multipart boundary
             const ocrRes = await fetch('/api/knowledge-base/ocr', {
               method: 'POST',
               body: formData,
               credentials: 'include',
-              headers: {
-                ...(ocrAuthToken ? { Authorization: `Bearer ${ocrAuthToken}` } : {}),
-                'x-organization-id': ocrOrgId,
-              },
+              headers: ocrHeaders,
             });
             if (ocrRes.ok) {
               const ocrData = await ocrRes.json();
@@ -1657,7 +1781,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
               .replace(/\*(.+?)\*/g, '<em>$1</em>')
               .replace(/^- (.+)$/gm, '<li>$1</li>')
-              .replace(/(<li>.*<\/li>\n?)+/g, (match) => `<ul>${match}</ul>`)
+              .replace(/(<li>.*<\/li>\n?)+/g, match => `<ul>${match}</ul>`)
               .replace(/\n\n/g, '</p><p>')
               .replace(/\n/g, '<br/>');
             html = `<p>${html}</p>`;
@@ -1669,10 +1793,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         else if (['csv', 'tsv'].includes(ext)) {
           const text = await file.text();
           const delimiter = ext === 'tsv' ? '\t' : ',';
-          const rows = text.trim().split('\n').map(row => {
-            // Basic CSV parsing (handles simple cases)
-            return row.split(delimiter).map(cell => cell.replace(/^"|"$/g, '').trim());
-          });
+          const rows = text
+            .trim()
+            .split('\n')
+            .map(row => {
+              // Basic CSV parsing (handles simple cases)
+              return row.split(delimiter).map(cell => cell.replace(/^"|"$/g, '').trim());
+            });
           if (rows.length > 0) {
             const headerRow = rows[0];
             const bodyRows = rows.slice(1);
@@ -1684,9 +1811,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         else if (['html', 'htm'].includes(ext)) {
           html = await file.text();
           // Strip <html>, <head>, <body> wrapper tags
-          html = html.replace(/<html[^>]*>/gi, '').replace(/<\/html>/gi, '')
+          html = html
+            .replace(/<html[^>]*>/gi, '')
+            .replace(/<\/html>/gi, '')
             .replace(/<head>[\s\S]*?<\/head>/gi, '')
-            .replace(/<body[^>]*>/gi, '').replace(/<\/body>/gi, '');
+            .replace(/<body[^>]*>/gi, '')
+            .replace(/<\/body>/gi, '');
         }
         // ── RTF — Basic text extraction ──
         else if (ext === 'rtf') {
@@ -1716,12 +1846,16 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           pushToast(`Imported "${file.name}" into current document`, 'success');
         } else if (projectId) {
           try {
-            const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
-              title,
-              content: html,
-              type: 'regulatory_document',
-              category: 'document',
-            });
+            const res = await apiRequest(
+              'POST',
+              `/api/concept2cure/projects/${projectId}/artifacts`,
+              {
+                title,
+                content: html,
+                type: 'regulatory_document',
+                category: 'document',
+              }
+            );
             if (res.ok) {
               const payload = await res.json();
               const created = payload.data ?? payload;
@@ -1835,8 +1969,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       '',
       '## Readiness Checks',
       ...gaChecks.map(
-        check =>
-          `- **${check.label}** — ${check.status.toUpperCase()}\n  - ${check.detail}`
+        check => `- **${check.label}** — ${check.status.toUpperCase()}\n  - ${check.detail}`
       ),
       '',
       '## Competitive Capability Snapshot',
@@ -2080,7 +2213,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             Select a project to access its regulatory documents, version history, and audit trail.
           </p>
           {onNavigateToProject && (
-            <Button variant="ghost"
+            <Button
+              variant="ghost"
               onClick={onNavigateToProject}
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none"
             >
@@ -2105,7 +2239,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             The artifact may still be processing or the ID could not be matched.
           </p>
           <div className="flex items-center justify-center gap-3">
-            <Button variant="ghost"
+            <Button
+              variant="ghost"
               onClick={() => {
                 setOpenArtifactNotFound(false);
                 loadArtifacts();
@@ -2114,7 +2249,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             >
               Refresh documents
             </Button>
-            <Button variant="ghost"
+            <Button
+              variant="ghost"
               onClick={() => {
                 setOpenArtifactNotFound(false);
                 setShowArtifactList(true);
@@ -2160,7 +2296,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             )}
           </div>
           <div className="flex items-center gap-1.5">
-            <Button variant="ghost"
+            <Button
+              variant="ghost"
               onClick={() => setShowAutoDraft(true)}
               className="flex items-center gap-1 px-2 py-1 text-xs text-stone-600 hover:bg-stone-100 rounded-md transition-colors duration-150"
               title="AutoDraft IND — generate a complete IND from source documents"
@@ -2169,7 +2306,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               <Sparkles className="w-3 h-3" />
               AutoDraft IND
             </Button>
-            <Button variant="ghost"
+            <Button
+              variant="ghost"
               onClick={handleImportDocument}
               className="flex items-center gap-1 px-2 py-1 text-xs text-stone-500 hover:bg-stone-100 rounded-md transition-colors duration-150"
               title="Import Document (Word, PDF, Image, CSV, Text)"
@@ -2178,7 +2316,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               Import
             </Button>
             {artifacts.length > 0 && (
-              <Button variant="ghost"
+              <Button
+                variant="ghost"
                 onClick={() => setShowFilters(!showFilters)}
                 className={cn(
                   'flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors duration-150',
@@ -2201,44 +2340,45 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             className="flex items-center gap-2 px-4 py-2 border-b border-stone-200 bg-stone-50/20 flex-wrap"
             data-testid="artifact-filters"
           >
-            <Select value={filterStatus} onValueChange={(val) => setFilterStatus(val)}>
-            <SelectTrigger className="h-7 text-xs w-auto min-w-[100px] border-stone-200 bg-white">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {statusOptions.map(s => (
-                <SelectItem key={s} value={s}>
-                  {s === 'all' ? 'All Status' : s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-            <Select value={filterType} onValueChange={(val) => setFilterType(val)}>
-            <SelectTrigger className="h-7 text-xs w-auto min-w-[100px] border-stone-200 bg-white">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {typeOptions.map(t => (
-                <SelectItem key={t} value={t}>
-                  {t === 'all' ? 'All Types' : t.replace(/_/g, ' ')}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-            <Select value={filterCtd} onValueChange={(val) => setFilterCtd(val)}>
-            <SelectTrigger className="h-7 text-xs w-auto min-w-[100px] border-stone-200 bg-white">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ctdOptions.map(c => (
-                <SelectItem key={c} value={c}>
-                  {c === 'all' ? 'All CTD Sections' : `CTD ${c}`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Select value={filterStatus} onValueChange={val => setFilterStatus(val)}>
+              <SelectTrigger className="h-7 text-xs w-auto min-w-[100px] border-stone-200 bg-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map(s => (
+                  <SelectItem key={s} value={s}>
+                    {s === 'all' ? 'All Status' : s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filterType} onValueChange={val => setFilterType(val)}>
+              <SelectTrigger className="h-7 text-xs w-auto min-w-[100px] border-stone-200 bg-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {typeOptions.map(t => (
+                  <SelectItem key={t} value={t}>
+                    {t === 'all' ? 'All Types' : t.replace(/_/g, ' ')}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filterCtd} onValueChange={val => setFilterCtd(val)}>
+              <SelectTrigger className="h-7 text-xs w-auto min-w-[100px] border-stone-200 bg-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ctdOptions.map(c => (
+                  <SelectItem key={c} value={c}>
+                    {c === 'all' ? 'All CTD Sections' : `CTD ${c}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {(filterStatus !== 'all' || filterType !== 'all' || filterCtd !== 'all') && (
-              <Button variant="ghost"
+              <Button
+                variant="ghost"
                 onClick={() => {
                   setFilterStatus('all');
                   setFilterType('all');
@@ -2266,7 +2406,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               placeholder="New document title..."
               className="flex-1 px-3 py-2 text-sm border border-stone-200 rounded-lg focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
             />
-            <Button variant="default"
+            <Button
+              variant="default"
               onClick={handleCreateNew}
               disabled={creatingNew || !newDocTitle.trim()}
               className="px-4 py-2 text-sm font-medium bg-stone-800 text-white rounded-lg hover:bg-stone-900 disabled:opacity-60 flex items-center gap-1.5 shadow-sm"
@@ -2288,7 +2429,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               { label: 'Device Description', prefix: 'DD' },
               { label: 'Risk Analysis', prefix: 'RA' },
             ].map(tpl => (
-              <Button variant="ghost"
+              <Button
+                variant="ghost"
                 key={tpl.prefix}
                 onClick={() => setNewDocTitle(tpl.label)}
                 className="text-xs px-2.5 py-1 rounded-md border border-stone-200 text-stone-500 hover:border-blue-200 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-150"
@@ -2333,7 +2475,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   : `${artifacts.length} document${artifacts.length !== 1 ? 's' : ''} hidden by filters.`}
               </p>
               {artifacts.length > 0 && (
-                <Button variant="ghost"
+                <Button
+                  variant="ghost"
                   onClick={() => {
                     setFilterStatus('all');
                     setFilterType('all');
@@ -2345,7 +2488,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 </Button>
               )}
               {artifacts.length === 0 && (
-                <Button variant="default"
+                <Button
+                  variant="default"
                   onClick={() => {
                     setNewDocTitle('Untitled Document');
                   }}
@@ -2359,7 +2503,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           ) : (
             <div className="space-y-0.5" data-testid="artifact-list">
               {filtered.map(a => (
-                <Button variant="ghost"
+                <Button
+                  variant="ghost"
                   key={a.id}
                   data-testid="artifact-row"
                   onClick={() => openInTab(a)}
@@ -2422,7 +2567,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         <nav className="flex items-center gap-1 text-xs min-w-0" aria-label="Breadcrumb">
           {projectName && onNavigateToProject && (
             <>
-              <Button variant="ghost"
+              <Button
+                variant="ghost"
                 onClick={onNavigateToProject}
                 className="text-stone-400 hover:text-stone-700 shrink-0 px-1.5 py-0.5 rounded hover:bg-stone-100 transition-colors truncate max-w-[120px]"
                 title={projectName}
@@ -2432,7 +2578,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               <ChevronDown className="w-3 h-3 text-stone-300 shrink-0 -rotate-90" />
             </>
           )}
-          <Button variant="ghost"
+          <Button
+            variant="ghost"
             onClick={() => {
               setActiveArtifact(null);
               setShowArtifactList(true);
@@ -2448,7 +2595,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           </span>
         </nav>
         {activeArtifact?.ctdSection && (
-          <Button variant="ghost"
+          <Button
+            variant="ghost"
             onClick={() => setShowCtdInput(prev => !prev)}
             className="text-xs px-2 py-0.5 rounded-md bg-violet-50 text-stone-700 font-semibold shrink-0 ring-1 ring-violet-200/60 hover:bg-violet-100 transition-colors cursor-pointer"
             title="Edit CTD section placement"
@@ -2457,13 +2605,18 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           </Button>
         )}
         {/* Lifecycle stage pill — signals where in the workflow this document sits */}
-        <span className={cn(
-          'text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md shrink-0',
-          activeLifecycleStage === 'Draft' && 'bg-stone-100 text-stone-500',
-          activeLifecycleStage === 'Review' && 'bg-amber-50 text-amber-700 ring-1 ring-amber-200/60',
-          activeLifecycleStage === 'Verify' && 'bg-blue-50 text-stone-700 ring-1 ring-stone-300/60',
-          activeLifecycleStage === 'Publish' && 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/60',
-        )}>
+        <span
+          className={cn(
+            'text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md shrink-0',
+            activeLifecycleStage === 'Draft' && 'bg-stone-100 text-stone-500',
+            activeLifecycleStage === 'Review' &&
+              'bg-amber-50 text-amber-700 ring-1 ring-amber-200/60',
+            activeLifecycleStage === 'Verify' &&
+              'bg-blue-50 text-stone-700 ring-1 ring-stone-300/60',
+            activeLifecycleStage === 'Publish' &&
+              'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/60'
+          )}
+        >
           {activeLifecycleStage}
         </span>
         <DocumentStatusTimeline
@@ -2503,7 +2656,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         {/* Minimal document metadata — version only, details in inspector */}
         {activeArtifact && (
           <div className="flex items-center gap-1.5 ml-2">
-            <Button variant="ghost"
+            <Button
+              variant="ghost"
               onClick={() => toggleInspector('versions')}
               className="text-[11px] text-stone-400 hover:text-stone-600 tabular-nums transition-colors"
               title="View version history"
@@ -2511,7 +2665,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               v{activeArtifact.version}
             </Button>
             {integrityVerified === false && (
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" title="Content modified since last verification" />
+              <span
+                className="w-1.5 h-1.5 rounded-full bg-amber-400"
+                title="Content modified since last verification"
+              />
             )}
           </div>
         )}
@@ -2519,7 +2676,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         <div className="flex-1" />
 
         {/* DOCX Import */}
-        <Button variant="ghost"
+        <Button
+          variant="ghost"
           onClick={handleImportDocument}
           className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors duration-150"
           title="Import Document (Word, PDF, Image, CSV, Text)"
@@ -2528,7 +2686,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         </Button>
 
         {/* Keyboard shortcuts */}
-        <Button variant="ghost"
+        <Button
+          variant="ghost"
           onClick={() => setShowShortcuts(true)}
           className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors duration-150"
           title="Keyboard shortcuts (Ctrl+Shift+/)"
@@ -2540,7 +2699,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
         {/* Overflow: Save, Export, Sign, Review, CTD, Audit export */}
         <div className="relative">
-          <Button variant="ghost"
+          <Button
+            variant="ghost"
             onClick={() => setOverflowOpen(!overflowOpen)}
             aria-label="More actions"
             aria-expanded={overflowOpen}
@@ -2560,7 +2720,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               className="absolute right-0 top-full mt-1 w-48 bg-white border border-stone-200 rounded-lg shadow-sm z-50 py-1"
             >
               {/* Save */}
-              <Button variant="ghost"
+              <Button
+                variant="ghost"
                 role="menuitem"
                 onClick={() => {
                   activeArtifact && handleSave(activeArtifact.content, {});
@@ -2572,7 +2733,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 Save
               </Button>
               {/* Export */}
-              <Button variant="ghost"
+              <Button
+                variant="ghost"
                 role="menuitem"
                 onClick={() => {
                   setShowExportDialog(true);
@@ -2584,7 +2746,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 Export…
               </Button>
               {/* Save To… (external storage) */}
-              <Button variant="ghost"
+              <Button
+                variant="ghost"
                 role="menuitem"
                 onClick={() => {
                   setShowSaveToDialog(true);
@@ -2595,7 +2758,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 <Cloud className="w-3 h-3 text-stone-400" />
                 Save To…
               </Button>
-              <Button variant="ghost"
+              <Button
+                variant="ghost"
                 role="menuitem"
                 onClick={() => {
                   handleExportMarkdown();
@@ -2606,7 +2770,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 <Download className="w-3 h-3 text-stone-400" />
                 Markdown (.md)
               </Button>
-              <Button variant="ghost"
+              <Button
+                variant="ghost"
                 role="menuitem"
                 onClick={() => {
                   handleExportLaunchChecklist();
@@ -2619,7 +2784,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               </Button>
               <div className="border-t border-stone-200 my-1" />
               {/* Sign — opens Part 11 compliant dialog */}
-              <Button variant="ghost"
+              <Button
+                variant="ghost"
                 role="menuitem"
                 onClick={() => {
                   setShowSignatureDialog(true);
@@ -2633,7 +2799,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               </Button>
               {/* Status change — forward transitions only; regressions use lock overlay / GovernedDocumentPanel */}
               {activeArtifact?.status !== 'locked' && (
-                <Button variant="ghost"
+                <Button
+                  variant="ghost"
                   role="menuitem"
                   onClick={() => {
                     const current = activeArtifact?.status || 'draft';
@@ -2658,7 +2825,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 </Button>
               )}
               <div className="border-t border-stone-200 my-1" />
-              <Button variant="ghost"
+              <Button
+                variant="ghost"
                 onClick={() => {
                   handleClaimCheck();
                   setOverflowOpen(false);
@@ -2669,7 +2837,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 <ShieldCheck className="w-3 h-3 inline mr-1.5 text-amber-500" />
                 Check Claims
               </Button>
-              <Button variant="ghost"
+              <Button
+                variant="ghost"
                 onClick={() => {
                   setShowCtdInput(!showCtdInput);
                   setOverflowOpen(false);
@@ -2679,7 +2848,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 <MapPin className="w-3 h-3 inline mr-1.5 text-stone-400" />
                 Set CTD Section
               </Button>
-              <Button variant="ghost"
+              <Button
+                variant="ghost"
                 onClick={() => {
                   handleExportAudit();
                   setOverflowOpen(false);
@@ -2719,7 +2889,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   'group flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium cursor-pointer transition-colors duration-200 max-w-[180px] shrink-0 select-none',
                   isActive
                     ? 'bg-white text-stone-900 shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
-                    : 'text-stone-500 hover:text-stone-700 hover:bg-stone-100/80',
+                    : 'text-stone-500 hover:text-stone-700 hover:bg-stone-100/80'
                 )}
               >
                 <FileText className="w-3 h-3 shrink-0" />
@@ -2733,7 +2903,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                     'ml-0.5 p-0.5 rounded transition-colors duration-200 shrink-0',
                     isActive
                       ? 'text-stone-400 hover:text-stone-700 hover:bg-stone-100'
-                      : 'opacity-0 group-hover:opacity-100 text-stone-400 hover:text-stone-700 hover:bg-stone-200',
+                      : 'opacity-0 group-hover:opacity-100 text-stone-400 hover:text-stone-700 hover:bg-stone-200'
                   )}
                   aria-label={`Close ${tab.title}`}
                 >
@@ -2763,10 +2933,30 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             {
               label: 'Draft',
               items: [
-                { id: 'intelligence', label: 'AI Assist', icon: <Brain className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('intelligence') },
-                { id: 'templates', label: 'Templates', icon: <FileText className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('templates') },
-                { id: 'dataroom', label: 'Sources', icon: <Database className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('dataroom') },
-                { id: 'batch-ai', label: 'Batch AI', icon: <Sparkles className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('batch-ai') },
+                {
+                  id: 'intelligence',
+                  label: 'AI Assist',
+                  icon: <Brain className="w-3.5 h-3.5" />,
+                  suggested: suggestedPanels.has('intelligence'),
+                },
+                {
+                  id: 'templates',
+                  label: 'Templates',
+                  icon: <FileText className="w-3.5 h-3.5" />,
+                  suggested: suggestedPanels.has('templates'),
+                },
+                {
+                  id: 'dataroom',
+                  label: 'Sources',
+                  icon: <Database className="w-3.5 h-3.5" />,
+                  suggested: suggestedPanels.has('dataroom'),
+                },
+                {
+                  id: 'batch-ai',
+                  label: 'Batch AI',
+                  icon: <Sparkles className="w-3.5 h-3.5" />,
+                  suggested: suggestedPanels.has('batch-ai'),
+                },
               ],
             },
             {
@@ -2789,28 +2979,83 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   pulse: isReviewMode,
                   suggested: suggestedPanels.has('review'),
                 },
-                { id: 'reviewers', label: 'Reviewers', icon: <Users className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('reviewers') },
-                { id: 'compare', label: 'Compare', icon: <GitCompare className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('compare') },
+                {
+                  id: 'reviewers',
+                  label: 'Reviewers',
+                  icon: <Users className="w-3.5 h-3.5" />,
+                  suggested: suggestedPanels.has('reviewers'),
+                },
+                {
+                  id: 'compare',
+                  label: 'Compare',
+                  icon: <GitCompare className="w-3.5 h-3.5" />,
+                  suggested: suggestedPanels.has('compare'),
+                },
                 { id: 'versions', label: 'History', icon: <Layers className="w-3.5 h-3.5" /> },
               ],
             },
             {
               label: 'Verify',
               items: [
-                { id: 'provenance', label: 'Provenance', icon: <ShieldCheck className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('provenance') },
-                { id: 'inconsistency', label: 'Consistency', icon: <AlertCircle className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('inconsistency') },
-                { id: 'proof', label: 'Proof', icon: <CheckCircle className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('proof') },
-                { id: 'compliance-scanner', label: 'Compliance', icon: <AlertTriangle className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('compliance-scanner') },
-                { id: 'crossref', label: 'Cross-Refs', icon: <Link2 className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('crossref') },
+                {
+                  id: 'provenance',
+                  label: 'Provenance',
+                  icon: <ShieldCheck className="w-3.5 h-3.5" />,
+                  suggested: suggestedPanels.has('provenance'),
+                },
+                {
+                  id: 'inconsistency',
+                  label: 'Consistency',
+                  icon: <AlertCircle className="w-3.5 h-3.5" />,
+                  suggested: suggestedPanels.has('inconsistency'),
+                },
+                {
+                  id: 'proof',
+                  label: 'Proof',
+                  icon: <CheckCircle className="w-3.5 h-3.5" />,
+                  suggested: suggestedPanels.has('proof'),
+                },
+                {
+                  id: 'compliance-scanner',
+                  label: 'Compliance',
+                  icon: <AlertTriangle className="w-3.5 h-3.5" />,
+                  suggested: suggestedPanels.has('compliance-scanner'),
+                },
+                {
+                  id: 'crossref',
+                  label: 'Cross-Refs',
+                  icon: <Link2 className="w-3.5 h-3.5" />,
+                  suggested: suggestedPanels.has('crossref'),
+                },
               ],
             },
             {
               label: 'Publish',
               items: [
-                { id: 'submission-readiness', label: 'Readiness', icon: <CheckCircle className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('submission-readiness') },
-                { id: 'ga-readiness', label: 'GA Ready', icon: <ShieldCheck className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('ga-readiness') },
-                { id: 'health', label: 'Health', icon: <Scale className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('health') },
-                { id: 'audit', label: 'Audit', icon: <ClipboardList className="w-3.5 h-3.5" />, suggested: suggestedPanels.has('audit') },
+                {
+                  id: 'submission-readiness',
+                  label: 'Readiness',
+                  icon: <CheckCircle className="w-3.5 h-3.5" />,
+                  suggested: suggestedPanels.has('submission-readiness'),
+                },
+                {
+                  id: 'ga-readiness',
+                  label: 'GA Ready',
+                  icon: <ShieldCheck className="w-3.5 h-3.5" />,
+                  suggested: suggestedPanels.has('ga-readiness'),
+                },
+                {
+                  id: 'health',
+                  label: 'Health',
+                  icon: <Scale className="w-3.5 h-3.5" />,
+                  suggested: suggestedPanels.has('health'),
+                },
+                {
+                  id: 'audit',
+                  label: 'Audit',
+                  icon: <ClipboardList className="w-3.5 h-3.5" />,
+                  suggested: suggestedPanels.has('audit'),
+                },
               ],
             },
           ] satisfies InspectorRibbonGroup[]
@@ -2832,13 +3077,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               <span className="text-xs text-violet-500 ml-1">Review changes before applying</span>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="ghost"
+              <Button
+                variant="ghost"
                 onClick={() => setAiResult(null)}
                 className="px-3 py-1.5 text-xs font-medium text-stone-600 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors duration-150"
               >
                 Dismiss
               </Button>
-              <Button variant="ghost"
+              <Button
+                variant="ghost"
                 onClick={handleAcceptAI}
                 className="px-4 py-1.5 text-xs font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm flex items-center gap-1.5"
               >
@@ -2898,7 +3145,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse [animation-delay:300ms]" />
           </div>
           <span className="text-sm text-stone-700 font-medium">Generating AI suggestion...</span>
-          <Button variant="ghost"
+          <Button
+            variant="ghost"
             onClick={() => setAiLoading(false)}
             className="ml-auto text-xs text-violet-500 hover:text-stone-700"
           >
@@ -2918,7 +3166,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           {claimValidation.running ? (
             <>
               <Loader2 className="h-3.5 w-3.5 text-stone-400 animate-spin" />
-              <span className="text-[13px] text-stone-500">Validating claims against Data Room...</span>
+              <span className="text-[13px] text-stone-500">
+                Validating claims against Data Room...
+              </span>
             </>
           ) : claimValidation.result ? (
             <>
@@ -2933,7 +3183,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 )}
               />
               <span className="text-[13px] text-stone-600">
-                Claims validated: {claimValidation.result.summary.verified}/{claimValidation.result.summary.total} verified
+                Claims validated: {claimValidation.result.summary.verified}/
+                {claimValidation.result.summary.total} verified
                 {claimValidation.result.summary.unverified > 0 && (
                   <span className="text-amber-600 ml-1">
                     ({claimValidation.result.summary.unverified} unverified)
@@ -2982,7 +3233,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         <div className="border-b border-red-300 bg-red-50 px-3 py-1.5 text-xs flex items-center gap-2 text-red-800">
           <Lock className="w-3.5 h-3.5 text-red-600 shrink-0" />
           <span className="font-semibold">{lockRejection}</span>
-          <Button variant="ghost"
+          <Button
+            variant="ghost"
             onClick={() => setLockRejection(null)}
             className="ml-auto text-red-400 hover:text-red-600"
           >
@@ -3004,7 +3256,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           {claimResult.warnings?.length > 0 && (
             <span className="text-xs opacity-70">({claimResult.warnings.length} warnings)</span>
           )}
-          <Button variant="ghost"
+          <Button
+            variant="ghost"
             onClick={() => setClaimResult(null)}
             className="ml-auto text-stone-400 hover:text-stone-600"
           >
@@ -3025,13 +3278,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             placeholder="e.g. 3.2.S"
             className="w-28 px-2 py-1 text-xs border border-stone-200 rounded bg-white focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-1 outline-none"
           />
-          <Button variant="ghost"
+          <Button
+            variant="ghost"
             onClick={handleCtdSection}
             className="text-xs text-emerald-600 hover:text-emerald-800 font-medium"
           >
             Save
           </Button>
-          <Button variant="ghost"
+          <Button
+            variant="ghost"
             onClick={() => setShowCtdInput(false)}
             className="text-xs text-stone-400 hover:text-stone-600"
           >
@@ -3067,7 +3322,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                     placeholder="Reason for unlocking (min 5 chars)"
                     className="w-full px-2 py-1.5 text-xs border border-red-200 rounded-lg mb-2 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 outline-none"
                   />
-                  <Button variant="ghost"
+                  <Button
+                    variant="ghost"
                     onClick={() => {
                       handleStatusChange('draft', unlockReason.trim());
                       setUnlockReason('');
@@ -3096,7 +3352,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           {activeArtifact &&
             (!activeArtifact.content ||
               activeArtifact.content.replace(/<[^>]*>/g, '').trim().length < 10) &&
-            activeArtifact.status !== 'locked' && (() => {
+            activeArtifact.status !== 'locked' &&
+            (() => {
               // Context-aware outline templates based on submission type and CTD section
               const uType = (submissionType || '').toUpperCase();
               const section = activeArtifact.ctdSection || initialCtdSection || '';
@@ -3104,7 +3361,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
               const getOutlineTemplate = (): string => {
                 // CTD Module 2 sections
-                if (section.startsWith('2.4') || section.startsWith('2.5') || uType === 'IND' || uType === 'NDA' || uType === 'BLA') {
+                if (
+                  section.startsWith('2.4') ||
+                  section.startsWith('2.5') ||
+                  uType === 'IND' ||
+                  uType === 'NDA' ||
+                  uType === 'BLA'
+                ) {
                   return `<h1>${docTitle}</h1><h2>1. Overview</h2><p></p><h2>2. Pharmacology</h2><p></p><h2>3. Pharmacokinetics</h2><p></p><h2>4. Toxicology</h2><p></p><h2>5. Clinical Efficacy</h2><p></p><h2>6. Clinical Safety</h2><p></p><h2>7. Benefit-Risk Assessment</h2><p></p><h2>8. References</h2><p></p>`;
                 }
                 // Device submissions
@@ -3112,27 +3375,32 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   return `<h1>${docTitle}</h1><h2>1. Device Description</h2><p></p><h2>2. Intended Use / Indications for Use</h2><p></p><h2>3. Predicate Device Comparison</h2><p></p><h2>4. Substantial Equivalence Discussion</h2><p></p><h2>5. Performance Testing</h2><p></p><h2>6. Biocompatibility</h2><p></p><h2>7. Sterilization & Shelf Life</h2><p></p><h2>8. Labeling</h2><p></p>`;
                 }
                 // CSR
-                if (section.includes('csr') || docTitle.toLowerCase().includes('clinical study report')) {
+                if (
+                  section.includes('csr') ||
+                  docTitle.toLowerCase().includes('clinical study report')
+                ) {
                   return `<h1>${docTitle}</h1><h2>1. Synopsis</h2><p></p><h2>2. Study Design</h2><p></p><h2>3. Study Objectives</h2><p></p><h2>4. Investigational Plan</h2><p></p><h2>5. Study Participants</h2><p></p><h2>6. Efficacy Evaluation</h2><p></p><h2>7. Safety Evaluation</h2><p></p><h2>8. Discussion & Conclusions</h2><p></p>`;
                 }
                 // Default
                 return `<h1>${docTitle}</h1><h2>1. Introduction</h2><p></p><h2>2. Background</h2><p></p><h2>3. Methods</h2><p></p><h2>4. Results</h2><p></p><h2>5. Discussion</h2><p></p><h2>6. Conclusions</h2><p></p><h2>7. References</h2><p></p>`;
               };
 
-              const outlineLabel = uType === '510K' || uType === 'PMA' || uType === 'DE_NOVO'
-                ? 'Device Outline'
-                : section.startsWith('2.') || uType === 'IND' || uType === 'NDA' || uType === 'BLA'
-                  ? 'CTD Outline'
-                  : 'Standard Outline';
+              const outlineLabel =
+                uType === '510K' || uType === 'PMA' || uType === 'DE_NOVO'
+                  ? 'Device Outline'
+                  : section.startsWith('2.') ||
+                      uType === 'IND' ||
+                      uType === 'NDA' ||
+                      uType === 'BLA'
+                    ? 'CTD Outline'
+                    : 'Standard Outline';
 
               return (
                 <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-center pt-20 pointer-events-none">
                   <div className="pointer-events-auto bg-white/95 backdrop-blur-sm border border-stone-200 rounded-xl shadow-sm p-5 max-w-md w-full mx-4">
                     <div className="text-center mb-4">
                       <PenTool className="w-6 h-6 text-stone-400 mx-auto mb-2" />
-                      <h3 className="text-sm font-semibold text-stone-900">
-                        {docTitle}
-                      </h3>
+                      <h3 className="text-sm font-semibold text-stone-900">{docTitle}</h3>
                       <p className="text-xs text-stone-500 mt-1">
                         {section
                           ? `CTD ${section} — choose how to begin`
@@ -3140,14 +3408,16 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                       </p>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
-                      <Button variant="ghost"
+                      <Button
+                        variant="ghost"
                         onClick={() => handleAIEdit('expand')}
                         className="flex items-center gap-2 px-3 py-2.5 text-xs font-medium text-stone-700 bg-stone-50 border border-stone-200 rounded-lg hover:bg-stone-100 hover:border-stone-300 transition-colors text-left"
                       >
                         <Sparkles className="w-3.5 h-3.5 shrink-0 text-stone-500" />
                         AI Generate Draft
                       </Button>
-                      <Button variant="ghost"
+                      <Button
+                        variant="ghost"
                         onClick={() => {
                           setActiveArtifact({ ...activeArtifact, content: getOutlineTemplate() });
                           setIsDirty(true);
@@ -3157,14 +3427,16 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                         <FileText className="w-3.5 h-3.5 shrink-0 text-stone-500" />
                         {outlineLabel}
                       </Button>
-                      <Button variant="ghost"
+                      <Button
+                        variant="ghost"
                         onClick={() => toggleInspector('templates')}
                         className="flex items-center gap-2 px-3 py-2.5 text-xs font-medium text-stone-700 bg-stone-50 border border-stone-200 rounded-lg hover:bg-stone-100 hover:border-stone-300 transition-colors text-left"
                       >
                         <Layers className="w-3.5 h-3.5 shrink-0 text-stone-500" />
                         From Template
                       </Button>
-                      <Button variant="ghost"
+                      <Button
+                        variant="ghost"
                         onClick={() => toggleInspector('dataroom')}
                         className="flex items-center gap-2 px-3 py-2.5 text-xs font-medium text-stone-700 bg-stone-50 border border-stone-200 rounded-lg hover:bg-stone-100 hover:border-stone-300 transition-colors text-left"
                       >
@@ -3206,12 +3478,18 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 return;
               }
               handleAIEdit(
-                action as 'rewrite' | 'expand' | 'summarize' | 'regulatory-tone' | 'add-references' | 'generate-table'
+                action as
+                  | 'rewrite'
+                  | 'expand'
+                  | 'summarize'
+                  | 'regulatory-tone'
+                  | 'add-references'
+                  | 'generate-table'
               );
             }}
             onAddComment={handleAddCommentFromEditor}
             cancelCommentId={cancelCommentId}
-            onSelectionUpdate={(editor) => {
+            onSelectionUpdate={editor => {
               if (!editor || !collaboration.emitCursorMove) return;
               const { from } = editor.state.selection;
               const coords = editor.view.coordsAtPos(from);
@@ -3412,7 +3690,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               // Wrap in HTML if not already
               const htmlContent = content.startsWith('<')
                 ? content
-                : content.split('\n\n').map(p => `<p>${p}</p>`).join('\n');
+                : content
+                    .split('\n\n')
+                    .map(p => `<p>${p}</p>`)
+                    .join('\n');
               if (activeArtifact) {
                 setActiveArtifact(prev => (prev ? { ...prev, content: htmlContent } : null));
               } else {
@@ -3427,11 +3708,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         <InspectorDrawer visible={activeInspector === 'precedent'} width="w-96">
           <PrecedentSearchInspector
             submissionType={submissionType || ''}
-            onInsertCitation={(text) => {
+            onInsertCitation={text => {
               /* Insert precedent citation at cursor */
               if (activeArtifact) {
                 const citation = `<p class="precedent-citation" style="border-left:2px solid #e5e7eb;padding-left:8px;color:#6b7280;font-size:13px">${text}</p>`;
-                setActiveArtifact(prev => prev ? { ...prev, content: (prev.content || '') + citation } : null);
+                setActiveArtifact(prev =>
+                  prev ? { ...prev, content: (prev.content || '') + citation } : null
+                );
                 pushToast('Precedent citation inserted', 'success');
               }
             }}
@@ -3536,7 +3819,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               // Wrap plain text in HTML if needed
               const htmlContent = rewrittenText.startsWith('<')
                 ? rewrittenText
-                : rewrittenText.split('\n\n').map(p => `<p>${p}</p>`).join('');
+                : rewrittenText
+                    .split('\n\n')
+                    .map(p => `<p>${p}</p>`)
+                    .join('');
               setActiveArtifact({ ...activeArtifact, content: htmlContent });
               pushToast('AI rewrite applied and comment resolved', 'success');
             }}
@@ -3561,7 +3847,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 // Find the assignment ID for this reviewer
                 const reviewer = reviewers.find(r => r.id === reviewerId);
                 if (!reviewer) return;
-                const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/reviewers/${reviewer.id}/remind`);
+                const res = await apiRequest(
+                  'POST',
+                  `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/reviewers/${reviewer.id}/remind`
+                );
                 if (res.ok) {
                   pushToast('Reminder sent to reviewer', 'success');
                 } else {
@@ -3589,10 +3878,14 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               );
               // Persist decision to server
               if (activeArtifact?.id) {
-                apiRequest('POST', `/api/authoring/documents/${activeArtifact.id}/tracked-change-decisions`, {
-                  changeId,
-                  decision: 'accept',
-                }).catch(() => pushToast('Failed to persist change decision', 'error'));
+                apiRequest(
+                  'POST',
+                  `/api/authoring/documents/${activeArtifact.id}/tracked-change-decisions`,
+                  {
+                    changeId,
+                    decision: 'accept',
+                  }
+                ).catch(() => pushToast('Failed to persist change decision', 'error'));
               }
             }}
             onRejectChange={changeId => {
@@ -3601,34 +3894,50 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               );
               // Persist decision to server
               if (activeArtifact?.id) {
-                apiRequest('POST', `/api/authoring/documents/${activeArtifact.id}/tracked-change-decisions`, {
-                  changeId,
-                  decision: 'reject',
-                }).catch(() => pushToast('Failed to persist change decision', 'error'));
+                apiRequest(
+                  'POST',
+                  `/api/authoring/documents/${activeArtifact.id}/tracked-change-decisions`,
+                  {
+                    changeId,
+                    decision: 'reject',
+                  }
+                ).catch(() => pushToast('Failed to persist change decision', 'error'));
               }
             }}
             onAcceptAll={() => {
-              const pendingIds = trackedChanges.filter(c => !c.accepted && !c.rejected).map(c => c.id);
+              const pendingIds = trackedChanges
+                .filter(c => !c.accepted && !c.rejected)
+                .map(c => c.id);
               setTrackedChanges(prev => prev.map(c => ({ ...c, accepted: true })));
               pushToast('All changes accepted', 'success');
               // Persist bulk decision to server
               if (activeArtifact?.id && pendingIds.length > 0) {
-                apiRequest('POST', `/api/authoring/documents/${activeArtifact.id}/tracked-change-decisions/bulk`, {
-                  changeIds: pendingIds,
-                  decision: 'accept',
-                }).catch(() => pushToast('Failed to persist bulk decision', 'error'));
+                apiRequest(
+                  'POST',
+                  `/api/authoring/documents/${activeArtifact.id}/tracked-change-decisions/bulk`,
+                  {
+                    changeIds: pendingIds,
+                    decision: 'accept',
+                  }
+                ).catch(() => pushToast('Failed to persist bulk decision', 'error'));
               }
             }}
             onRejectAll={() => {
-              const pendingIds = trackedChanges.filter(c => !c.accepted && !c.rejected).map(c => c.id);
+              const pendingIds = trackedChanges
+                .filter(c => !c.accepted && !c.rejected)
+                .map(c => c.id);
               setTrackedChanges(prev => prev.map(c => ({ ...c, rejected: true })));
               pushToast('All changes rejected', 'info');
               // Persist bulk decision to server
               if (activeArtifact?.id && pendingIds.length > 0) {
-                apiRequest('POST', `/api/authoring/documents/${activeArtifact.id}/tracked-change-decisions/bulk`, {
-                  changeIds: pendingIds,
-                  decision: 'reject',
-                }).catch(() => pushToast('Failed to persist bulk decision', 'error'));
+                apiRequest(
+                  'POST',
+                  `/api/authoring/documents/${activeArtifact.id}/tracked-change-decisions/bulk`,
+                  {
+                    changeIds: pendingIds,
+                    decision: 'reject',
+                  }
+                ).catch(() => pushToast('Failed to persist bulk decision', 'error'));
               }
             }}
             onCompleteReview={async (status, reviewComments) => {
@@ -3676,13 +3985,16 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             issues={complianceIssues}
             isScanning={isScanning}
             lastScanTime={lastScanTime}
-            onNavigateToIssue={(issue) => {
+            onNavigateToIssue={issue => {
               if (issue) {
                 // TODO: integrate with editor ref to scroll to issue.from position
-                pushToast(`Compliance issue at position ${issue.from}–${issue.to}: ${issue.message}`, 'info');
+                pushToast(
+                  `Compliance issue at position ${issue.from}–${issue.to}: ${issue.message}`,
+                  'info'
+                );
               }
             }}
-            onFixIssue={(issue) => {
+            onFixIssue={issue => {
               // Apply suggested fix
               setComplianceIssues(prev => prev.filter(i => i.id !== issue.id));
             }}
@@ -3750,7 +4062,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           projectId={projectId}
           artifactId={activeArtifact.id}
           ctdSection={activeArtifact.ctdSection}
-          onSaveComplete={(dest) => {
+          onSaveComplete={dest => {
             pushToast(`Saved to ${dest}`, 'success');
           }}
         />
@@ -3781,7 +4093,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               ))}
             </ul>
             <div className="flex items-center justify-end gap-2">
-              <Button variant="ghost"
+              <Button
+                variant="ghost"
                 onClick={() =>
                   setQualityGateDialog({ show: false, targetStatus: '', warnings: [] })
                 }
@@ -3789,7 +4102,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               >
                 Go Back & Fix
               </Button>
-              <Button variant="ghost"
+              <Button
+                variant="ghost"
                 onClick={() => {
                   const target = qualityGateDialog.targetStatus;
                   setQualityGateDialog({ show: false, targetStatus: '', warnings: [] });
@@ -3838,13 +4152,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <div className="flex items-center justify-between mt-3">
               <span className="text-[10px] text-stone-400">Ctrl+Enter to submit</span>
               <div className="flex items-center gap-2">
-                <Button variant="ghost"
+                <Button
+                  variant="ghost"
                   onClick={handleCancelComment}
                   className="px-3 py-1.5 text-xs text-stone-500 hover:text-stone-700 rounded-md hover:bg-stone-100"
                 >
                   Cancel
                 </Button>
-                <Button variant="default"
+                <Button
+                  variant="default"
                   onClick={() => handleSubmitComment(pendingCommentText)}
                   disabled={!pendingCommentText.trim()}
                   className="px-4 py-1.5 text-xs font-medium bg-stone-800 text-white rounded-md hover:bg-stone-900 disabled:opacity-50"
@@ -3892,7 +4208,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               {t.type === 'info' && <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" />}
               {t.message}
               {t.onUndo && (
-                <Button variant="ghost"
+                <Button
+                  variant="ghost"
                   onClick={() => {
                     t.onUndo?.();
                     setToasts(prev => prev.filter(x => x.id !== t.id));
@@ -3902,7 +4219,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   Undo
                 </Button>
               )}
-              <Button variant="ghost"
+              <Button
+                variant="ghost"
                 onClick={() => setToasts(prev => prev.filter(x => x.id !== t.id))}
                 className="ml-1 opacity-60 hover:opacity-100"
               >
@@ -3949,7 +4267,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           open={showAutoDraft}
           onOpenChange={setShowAutoDraft}
           projectId={String(projectId)}
-          onOpenArtifact={(artifactId) => {
+          onOpenArtifact={artifactId => {
             setShowAutoDraft(false);
             // Find the artifact in the list or trigger a reload
             const existing = artifacts.find(a => a.id === artifactId);

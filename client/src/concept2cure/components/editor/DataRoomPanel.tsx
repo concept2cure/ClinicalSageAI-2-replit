@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { getAuthHeaders } from '@/utils/authToken';
 import {
   Database,
   Search,
@@ -66,7 +67,8 @@ interface DataRoomPanelProps {
 
 function getFileIcon(type: string) {
   const t = type?.toLowerCase() || '';
-  if (t.includes('pdf') || t.includes('document')) return <FileText className="w-4 h-4 text-red-500" />;
+  if (t.includes('pdf') || t.includes('document'))
+    return <FileText className="w-4 h-4 text-red-500" />;
   if (t.includes('spreadsheet') || t.includes('excel') || t.includes('csv'))
     return <FileSpreadsheet className="w-4 h-4 text-green-500" />;
   if (t.includes('image') || t.includes('jpeg') || t.includes('png'))
@@ -121,24 +123,34 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
         const all = payload.data ?? payload;
         // Show ALL project documents — source files, authored documents, evidence
         // Every document in the project is accessible from the Data Room
-        const sourceFiles: SourceFile[] = (Array.isArray(all) ? all : [])
-          .map((a: Record<string, unknown>) => {
-            const cat = (a.category as string || '').toLowerCase();
-            const typ = (a.type as string || '').toLowerCase();
-            const isSource = cat === 'source' || cat === 'evidence' || cat === 'upload'
-              || typ === 'source_document' || typ.includes('upload');
+        const sourceFiles: SourceFile[] = (Array.isArray(all) ? all : []).map(
+          (a: Record<string, unknown>) => {
+            const cat = ((a.category as string) || '').toLowerCase();
+            const typ = ((a.type as string) || '').toLowerCase();
+            const isSource =
+              cat === 'source' ||
+              cat === 'evidence' ||
+              cat === 'upload' ||
+              typ === 'source_document' ||
+              typ.includes('upload');
             return {
               id: a.id as string,
               title: (a.title as string) || 'Untitled',
               type: (a.type as string) || 'document',
-              category: isSource ? (a.category as string || 'source') : (a.category as string || 'document'),
+              category: isSource
+                ? (a.category as string) || 'source'
+                : (a.category as string) || 'document',
               uploadedAt: (a.createdAt as string) || new Date().toISOString(),
               status: 'ready' as const,
-              excerpt: typeof a.content === 'string' ? (a.content as string).replace(/<[^>]+>/g, '').slice(0, 200) : undefined,
+              excerpt:
+                typeof a.content === 'string'
+                  ? (a.content as string).replace(/<[^>]+>/g, '').slice(0, 200)
+                  : undefined,
               metadata: (a.metadata as SourceFile['metadata']) || undefined,
               ctdSection: a.ctdSection as string | undefined,
             };
-          });
+          }
+        );
         setSources(sourceFiles);
       }
     } catch {
@@ -158,15 +170,14 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
       if (!projectId) return;
       setExtracting(sourceId);
       try {
-        const res = await apiRequest('POST', '/api/concept2cure/ai/extract-metadata',
-          { projectId, artifactId: sourceId }
-        );
+        const res = await apiRequest('POST', '/api/concept2cure/ai/extract-metadata', {
+          projectId,
+          artifactId: sourceId,
+        });
         if (res.ok) {
           const payload = await res.json();
           const metadata = payload.data ?? payload;
-          setSources((prev) =>
-            prev.map((s) => (s.id === sourceId ? { ...s, metadata } : s))
-          );
+          setSources(prev => prev.map(s => (s.id === sourceId ? { ...s, metadata } : s)));
         }
       } catch {
         // silent
@@ -183,45 +194,58 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
     if (search.trim()) {
       const q = search.toLowerCase();
       filtered = filtered.filter(
-        (s) =>
+        s =>
           s.title.toLowerCase().includes(q) ||
           s.type.toLowerCase().includes(q) ||
           s.excerpt?.toLowerCase().includes(q)
       );
     }
     if (filterType === 'sources') {
-      filtered = filtered.filter((s) => {
+      filtered = filtered.filter(s => {
         const cat = s.category.toLowerCase();
         const typ = s.type.toLowerCase();
-        return cat === 'source' || cat === 'evidence' || cat === 'upload'
-          || typ === 'source_document' || typ.includes('upload');
+        return (
+          cat === 'source' ||
+          cat === 'evidence' ||
+          cat === 'upload' ||
+          typ === 'source_document' ||
+          typ.includes('upload')
+        );
       });
     } else if (filterType === 'authored') {
-      filtered = filtered.filter((s) => {
+      filtered = filtered.filter(s => {
         const cat = s.category.toLowerCase();
         return cat === 'document' || cat === 'interactive' || cat === 'visualization';
       });
     } else if (filterType !== 'all') {
-      filtered = filtered.filter((s) => s.type === filterType || s.category === filterType);
+      filtered = filtered.filter(s => s.type === filterType || s.category === filterType);
     }
     return filtered;
   }, [sources, search, filterType]);
 
   const typeOptions = useMemo(() => {
-    const types = new Set(sources.map((s) => s.type));
+    const types = new Set(sources.map(s => s.type));
     return Array.from(types);
   }, [sources]);
 
-  const sourceDocCount = useMemo(() => sources.filter(s => {
-    const cat = s.category.toLowerCase();
-    const typ = s.type.toLowerCase();
-    return cat === 'source' || cat === 'evidence' || typ === 'source_document';
-  }).length, [sources]);
+  const sourceDocCount = useMemo(
+    () =>
+      sources.filter(s => {
+        const cat = s.category.toLowerCase();
+        const typ = s.type.toLowerCase();
+        return cat === 'source' || cat === 'evidence' || typ === 'source_document';
+      }).length,
+    [sources]
+  );
 
-  const authoredCount = useMemo(() => sources.filter(s => {
-    const cat = s.category.toLowerCase();
-    return cat === 'document' || cat === 'interactive' || cat === 'visualization';
-  }).length, [sources]);
+  const authoredCount = useMemo(
+    () =>
+      sources.filter(s => {
+        const cat = s.category.toLowerCase();
+        return cat === 'document' || cat === 'interactive' || cat === 'visualization';
+      }).length,
+    [sources]
+  );
 
   return (
     <div className={cn('flex flex-col h-full bg-white border-l border-stone-200', className)}>
@@ -242,7 +266,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => setSearch(e.target.value)}
             placeholder="Search sources..."
             className="w-full pl-8 pr-8 py-1.5 text-xs bg-white border border-stone-200 rounded-lg focus-visible:ring-2 outline-none focus:ring-emerald-500"
           />
@@ -269,26 +293,22 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
             <Filter className="w-3 h-3" />
             Filter
           </button>
-          <label
-            className="flex items-center gap-1 px-2 py-1 text-xs rounded border border-stone-200 text-stone-600 hover:bg-stone-50 ml-auto cursor-pointer"
-          >
+          <label className="flex items-center gap-1 px-2 py-1 text-xs rounded border border-stone-200 text-stone-600 hover:bg-stone-50 ml-auto cursor-pointer">
             <Upload className="w-3 h-3" />
             Upload
             <input
               type="file"
               className="hidden"
               accept=".pdf,.docx,.xlsx,.csv,.txt,.md"
-              onChange={async (e) => {
+              onChange={async e => {
                 const file = e.target.files?.[0];
                 if (!file || !projectId) return;
                 const formData = new FormData();
                 formData.append('file', file);
                 formData.append('projectId', projectId);
                 try {
-                  const orgId = localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
-                  const token = localStorage.getItem('token') || localStorage.getItem('authToken') || '';
-                  const headers: Record<string, string> = { 'x-organization-id': orgId };
-                  if (token) headers['Authorization'] = `Bearer ${token}`;
+                  const headers: Record<string, string> = getAuthHeaders();
+                  delete headers['Content-Type']; // let browser set multipart boundary
                   const res = await fetch('/api/concept2cure/documents/upload', {
                     method: 'POST',
                     body: formData,
@@ -327,20 +347,22 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                 {label}
               </button>
             ))}
-            {typeOptions.filter(t => !['source_document', 'document'].includes(t)).map((t) => (
-              <button
-                key={t}
-                onClick={() => setFilterType(t)}
-                className={cn(
-                  'px-2 py-0.5 text-xs rounded-full border transition-colors',
-                  filterType === t
-                    ? 'bg-emerald-100 border-emerald-300 text-emerald-700'
-                    : 'border-stone-200 text-stone-500 hover:bg-stone-50'
-                )}
-              >
-                {t}
-              </button>
-            ))}
+            {typeOptions
+              .filter(t => !['source_document', 'document'].includes(t))
+              .map(t => (
+                <button
+                  key={t}
+                  onClick={() => setFilterType(t)}
+                  className={cn(
+                    'px-2 py-0.5 text-xs rounded-full border transition-colors',
+                    filterType === t
+                      ? 'bg-emerald-100 border-emerald-300 text-emerald-700'
+                      : 'border-stone-200 text-stone-500 hover:bg-stone-50'
+                  )}
+                >
+                  {t}
+                </button>
+              ))}
           </div>
         )}
       </div>
@@ -365,22 +387,17 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
           <div className="flex flex-col items-center justify-center py-8 text-stone-500">
             <Database className="w-8 h-8 mb-2 opacity-40" />
             <p className="text-xs">
-              {sources.length === 0
-                ? 'No files in this project yet'
-                : 'No files match your search'}
+              {sources.length === 0 ? 'No files in this project yet' : 'No files match your search'}
             </p>
             {sources.length === 0 && (
-              <button
-                onClick={onUpload}
-                className="mt-2 text-xs text-emerald-600 hover:underline"
-              >
+              <button onClick={onUpload} className="mt-2 text-xs text-emerald-600 hover:underline">
                 Upload your first source
               </button>
             )}
           </div>
         ) : (
           <div className="p-2 space-y-1.5">
-            {filteredSources.map((source) => {
+            {filteredSources.map(source => {
               const isExpanded = expandedSource === source.id;
               return (
                 <div
@@ -400,24 +417,26 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                     <GripVertical className="w-3 h-3 text-stone-400 mt-0.5 flex-shrink-0 cursor-grab" />
                     {getFileIcon(source.type)}
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-stone-900 truncate">
-                        {source.title}
-                      </p>
+                      <p className="text-xs font-medium text-stone-900 truncate">{source.title}</p>
                       <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                         {source.ctdSection && (
                           <span className="text-[10px] px-1.5 py-0.5 bg-blue-50 rounded text-blue-600 font-medium">
                             {source.ctdSection}
                           </span>
                         )}
-                        <span className={cn(
-                          'text-xs px-1.5 py-0.5 rounded',
-                          source.category === 'source' || source.type === 'source_document'
-                            ? 'bg-emerald-50 text-emerald-600'
-                            : 'bg-stone-100 text-stone-500'
-                        )}>
+                        <span
+                          className={cn(
+                            'text-xs px-1.5 py-0.5 rounded',
+                            source.category === 'source' || source.type === 'source_document'
+                              ? 'bg-emerald-50 text-emerald-600'
+                              : 'bg-stone-100 text-stone-500'
+                          )}
+                        >
                           {source.category === 'source' || source.type === 'source_document'
                             ? 'Source'
-                            : source.type === 'document' ? 'Authored' : source.type}
+                            : source.type === 'document'
+                              ? 'Authored'
+                              : source.type}
                         </span>
                         <span className="text-xs text-stone-400 flex items-center gap-1">
                           <Clock className="w-2.5 h-2.5" />
@@ -452,9 +471,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                   {isExpanded && (
                     <div className="px-3 pb-3 border-t border-stone-200">
                       {source.excerpt && (
-                        <p className="text-xs text-stone-500 mt-2 line-clamp-3">
-                          {source.excerpt}
-                        </p>
+                        <p className="text-xs text-stone-500 mt-2 line-clamp-3">{source.excerpt}</p>
                       )}
                       {/* AI Metadata */}
                       {source.metadata ? (
@@ -469,9 +486,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                           )}
                           {source.metadata.endpoints && source.metadata.endpoints.length > 0 && (
                             <div>
-                              <span className="text-xs font-medium text-stone-600">
-                                Endpoints:
-                              </span>
+                              <span className="text-xs font-medium text-stone-600">Endpoints:</span>
                               <div className="flex flex-wrap gap-1 mt-0.5">
                                 {source.metadata.endpoints.map((ep, i) => (
                                   <span
@@ -484,18 +499,19 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                               </div>
                             </div>
                           )}
-                          {source.metadata.keyFindings && source.metadata.keyFindings.length > 0 && (
-                            <div>
-                              <span className="text-xs font-medium text-stone-600">
-                                Key Findings:
-                              </span>
-                              {source.metadata.keyFindings.map((f, i) => (
-                                <p key={i} className="text-xs text-stone-500 ml-2">
-                                  {f}
-                                </p>
-                              ))}
-                            </div>
-                          )}
+                          {source.metadata.keyFindings &&
+                            source.metadata.keyFindings.length > 0 && (
+                              <div>
+                                <span className="text-xs font-medium text-stone-600">
+                                  Key Findings:
+                                </span>
+                                {source.metadata.keyFindings.map((f, i) => (
+                                  <p key={i} className="text-xs text-stone-500 ml-2">
+                                    {f}
+                                  </p>
+                                ))}
+                              </div>
+                            )}
                           {source.metadata.sampleSize && (
                             <div className="text-xs text-stone-600">
                               N = {source.metadata.sampleSize}
@@ -504,7 +520,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                         </div>
                       ) : (
                         <button
-                          onClick={(e) => {
+                          onClick={e => {
                             e.stopPropagation();
                             handleExtractMetadata(source.id);
                           }}
@@ -522,7 +538,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                       {/* Actions */}
                       <div className="flex items-center gap-2 mt-2 pt-2 border-t border-stone-200">
                         <button
-                          onClick={(e) => {
+                          onClick={e => {
                             e.stopPropagation();
                             onSourceSelect?.(source);
                           }}
@@ -531,9 +547,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                           <ExternalLink className="w-3 h-3" />
                           Open
                         </button>
-                        <span className="text-xs text-stone-400">
-                          Drag into editor to cite
-                        </span>
+                        <span className="text-xs text-stone-400">Drag into editor to cite</span>
                       </div>
                     </div>
                   )}

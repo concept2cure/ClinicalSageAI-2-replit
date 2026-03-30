@@ -17,6 +17,7 @@
  */
 
 import { useState, useCallback, useRef } from 'react';
+import { getAuthHeaders } from '@/utils/authToken';
 
 export interface StreamMetadata {
   model?: string;
@@ -74,101 +75,87 @@ export function useClaudeStream(): UseClaudeStreamReturn {
     setIsStreaming(false);
   }, []);
 
-  const startStream = useCallback(
-    async (url: string, body: Record<string, unknown>) => {
-      // Reset state
-      setStreamingContent('');
-      setThinking('');
-      setError(null);
-      setMetadata(null);
-      setIsStreaming(true);
+  const startStream = useCallback(async (url: string, body: Record<string, unknown>) => {
+    // Reset state
+    setStreamingContent('');
+    setThinking('');
+    setError(null);
+    setMetadata(null);
+    setIsStreaming(true);
 
-      // Create abort controller
-      const controller = new AbortController();
-      abortControllerRef.current = controller;
+    // Create abort controller
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
-      // Get auth headers
-      const organizationId =
-        localStorage.getItem('organizationId') ||
-        localStorage.getItem('currentOrganizationId') ||
-        '1';
-      const authToken =
-        localStorage.getItem('token') ||
-        localStorage.getItem('authToken') ||
-        localStorage.getItem('auth_token');
+    // Get auth headers from centralized authToken module
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(),
+        },
+        credentials: 'include',
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
 
-      try {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-organization-id': organizationId,
-            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-          },
-          credentials: 'include',
-          body: JSON.stringify(body),
-          signal: controller.signal,
-        });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Stream request failed: ${response.status}`);
+      }
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || `Stream request failed: ${response.status}`);
-        }
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No response stream available');
 
-        const reader = response.body?.getReader();
-        if (!reader) throw new Error('No response stream available');
+      const decoder = new TextDecoder();
+      let buffer = '';
 
-        const decoder = new TextDecoder();
-        let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
 
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const jsonStr = line.slice(6).trim();
+          if (!jsonStr) continue;
 
-          for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
-            const jsonStr = line.slice(6).trim();
-            if (!jsonStr) continue;
+          try {
+            const event = JSON.parse(jsonStr);
 
-            try {
-              const event = JSON.parse(jsonStr);
-
-              if (event.type === 'text') {
-                setStreamingContent(prev => prev + (event.content || ''));
-              } else if (event.type === 'thinking') {
-                setThinking(prev => prev + (event.thinking || event.thinkingContent || ''));
-              } else if (event.type === 'done') {
-                setMetadata({
-                  model: event.model,
-                  provider: event.provider,
-                  usage: event.usage,
-                  cacheHit: event.cacheHit,
-                  latencyMs: event.latencyMs,
-                  toolsUsed: event.toolsUsed,
-                });
-              } else if (event.type === 'error') {
-                setError(event.error || 'Stream error');
-              }
-            } catch {
-              // Skip malformed events
+            if (event.type === 'text') {
+              setStreamingContent(prev => prev + (event.content || ''));
+            } else if (event.type === 'thinking') {
+              setThinking(prev => prev + (event.thinking || event.thinkingContent || ''));
+            } else if (event.type === 'done') {
+              setMetadata({
+                model: event.model,
+                provider: event.provider,
+                usage: event.usage,
+                cacheHit: event.cacheHit,
+                latencyMs: event.latencyMs,
+                toolsUsed: event.toolsUsed,
+              });
+            } else if (event.type === 'error') {
+              setError(event.error || 'Stream error');
             }
+          } catch {
+            // Skip malformed events
           }
         }
-      } catch (err: any) {
-        if (err.name !== 'AbortError') {
-          setError(err.message || 'Stream failed');
-        }
-      } finally {
-        setIsStreaming(false);
-        abortControllerRef.current = null;
       }
-    },
-    []
-  );
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        setError(err.message || 'Stream failed');
+      }
+    } finally {
+      setIsStreaming(false);
+      abortControllerRef.current = null;
+    }
+  }, []);
 
   return {
     streamingContent,

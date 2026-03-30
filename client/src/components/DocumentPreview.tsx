@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { getAuthHeaders } from '@/utils/authToken';
 import {
   Dialog,
   DialogContent,
@@ -49,36 +50,14 @@ export default function DocumentPreview({
     setState({ status: 'loading' });
 
     try {
-      const organizationId =
-        localStorage.getItem('organizationId') ||
-        localStorage.getItem('currentOrganizationId') ||
-        '1';
-
-      const authToken =
-        localStorage.getItem('token') ||
-        localStorage.getItem('authToken') ||
-        localStorage.getItem('auth_token');
-
-      const headers: Record<string, string> = {
-        'x-organization-id': organizationId,
-      };
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-      }
-
-      const response = await fetch(
-        `/api/documents/${documentId}/preview?format=html`,
-        {
-          headers,
-          credentials: 'include',
-        }
-      );
+      const response = await fetch(`/api/documents/${documentId}/preview?format=html`, {
+        headers: getAuthHeaders(),
+        credentials: 'include',
+      });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData?.error || `Request failed with status ${response.status}`
-        );
+        throw new Error(errorData?.error || `Request failed with status ${response.status}`);
       }
 
       const contentType = response.headers.get('Content-Type') || '';
@@ -122,12 +101,7 @@ export default function DocumentPreview({
 
   // Write HTML content into the sandboxed iframe once loaded
   useEffect(() => {
-    if (
-      state.status === 'loaded' &&
-      !state.isPdf &&
-      state.html &&
-      iframeRef.current
-    ) {
+    if (state.status === 'loaded' && !state.isPdf && state.html && iframeRef.current) {
       const iframe = iframeRef.current;
       const doc = iframe.contentDocument || iframe.contentWindow?.document;
       if (doc) {
@@ -148,9 +122,7 @@ export default function DocumentPreview({
           <DialogTitle className="text-base font-semibold truncate">
             {title || `Document #${documentId}`}
           </DialogTitle>
-          <DialogDescription className="text-xs text-gray-500">
-            Read-only preview
-          </DialogDescription>
+          <DialogDescription className="text-xs text-gray-500">Read-only preview</DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 min-h-0 overflow-hidden">
@@ -169,9 +141,7 @@ export default function DocumentPreview({
             <div className="flex items-center justify-center h-full px-8">
               <div className="text-center max-w-md">
                 <div className="text-red-500 text-3xl mb-3">!</div>
-                <p className="text-sm font-medium text-gray-900 mb-1">
-                  Preview unavailable
-                </p>
+                <p className="text-sm font-medium text-gray-900 mb-1">Preview unavailable</p>
                 <p className="text-xs text-gray-500 mb-4">{state.message}</p>
                 <button
                   onClick={fetchPreview}
@@ -185,11 +155,7 @@ export default function DocumentPreview({
 
           {/* PDF preview */}
           {state.status === 'loaded' && state.isPdf && (
-            <iframe
-              src={state.pdfUrl}
-              className="w-full h-full border-0"
-              title="PDF preview"
-            />
+            <iframe src={state.pdfUrl} className="w-full h-full border-0" title="PDF preview" />
           )}
 
           {/* HTML preview in sandboxed iframe */}
