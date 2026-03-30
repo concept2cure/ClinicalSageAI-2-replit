@@ -113,11 +113,28 @@ export interface EvidenceDisciplineResult {
   totalLabels: number;
   /** Whether any substantive claims lack evidence labels */
   hasUnlabeledClaims: boolean;
+  /** Ratio of [KNOWN] labels to total labels (0-1) — higher is better grounded */
+  knownRatio: number;
+  /** Whether strong/absolute language is used without [KNOWN] backing */
+  hasOverclaims: boolean;
+  /** Number of overclaim instances detected */
+  overclaimCount: number;
 }
+
+/** Patterns that indicate strong absolute language needing [KNOWN] backing */
+const OVERCLAIM_ENFORCEMENT_PATTERNS = [
+  /(?:definitive|unequivocal|certain|absolute|irrefutable|conclusive|comprehensive)\s+(?:evidence|data|proof|support)/i,
+  /(?:has been|is)\s+(?:fully|completely|thoroughly)\s+(?:demonstrated|established|proven|validated)/i,
+  /(?:there is no|zero)\s+(?:risk|concern|deficiency|gap|issue)/i,
+  /(?:guarantees?|ensures?|eliminates?\s+(?:all|any|every)\s+(?:risk|concern))/i,
+];
 
 /**
  * Check whether a response properly uses evidence discipline labels.
  * Returns compliance status and counts.
+ *
+ * Enhanced with overclaim detection: strong language without [KNOWN] backing
+ * now triggers non-compliance.
  */
 export function checkEvidenceDiscipline(response: string): EvidenceDisciplineResult {
   const knownMatches = response.match(/\[KNOWN[^\]]*\]/gi) || [];
@@ -125,6 +142,7 @@ export function checkEvidenceDiscipline(response: string): EvidenceDisciplineRes
   const missingMatches = response.match(/\[MISSING[^\]]*\]/gi) || [];
 
   const totalLabels = knownMatches.length + inferredMatches.length + missingMatches.length;
+  const knownRatio = totalLabels > 0 ? knownMatches.length / totalLabels : 0;
 
   // Check for substantive responses that should have labels but don't
   const isSubstantive =
@@ -134,13 +152,36 @@ export function checkEvidenceDiscipline(response: string): EvidenceDisciplineRes
 
   const hasUnlabeledClaims = isSubstantive && totalLabels === 0;
 
+  // Overclaim detection: strong language without nearby [KNOWN] labels
+  let overclaimCount = 0;
+  if (isSubstantive) {
+    for (const pattern of OVERCLAIM_ENFORCEMENT_PATTERNS) {
+      const globalPattern = new RegExp(pattern.source, 'gi');
+      let hasMatch = false;
+      let execResult = globalPattern.exec(response);
+      while (execResult !== null) {
+        hasMatch = true;
+        execResult = globalPattern.exec(response);
+      }
+      // If overclaim pattern found and no [KNOWN] labels exist, flag it
+      if (hasMatch && knownMatches.length === 0) {
+        overclaimCount++;
+      }
+    }
+  }
+
+  const hasOverclaims = overclaimCount > 0 && knownMatches.length === 0;
+
   return {
-    compliant: !hasUnlabeledClaims,
+    compliant: !hasUnlabeledClaims && !hasOverclaims,
     knownCount: knownMatches.length,
     inferredCount: inferredMatches.length,
     missingCount: missingMatches.length,
     totalLabels,
     hasUnlabeledClaims,
+    knownRatio,
+    hasOverclaims,
+    overclaimCount,
   };
 }
 
@@ -446,7 +487,13 @@ export function getGenerationStats(): {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Re-export the canonical contract from shared types — single source of truth
-export type { CanonicalDocumentContract, ArtifactSourceSystem, ArtifactStatus, ArtifactProvenance, GenerationGuardResult } from '../../../shared/types/document-contract.js';
+export type {
+  CanonicalDocumentContract,
+  ArtifactSourceSystem,
+  ArtifactStatus,
+  ArtifactProvenance,
+  GenerationGuardResult,
+} from '../../../shared/types/document-contract.js';
 export { validateDocumentContract } from '../../../shared/types/document-contract.js';
 
 /**
