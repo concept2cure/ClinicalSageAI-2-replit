@@ -24,7 +24,8 @@ function authenticateSse(req: express.Request, res: express.Response): boolean {
     return false;
   }
   try {
-    jwt.verify(auth.slice(7), jwtSecret);
+    const jwtAlgorithm = process.env.JWT_ALGORITHM || 'HS256';
+    jwt.verify(auth.slice(7), jwtSecret, { algorithms: [jwtAlgorithm] });
     return true;
   } catch {
     res.status(401).json({ success: false, error: 'Invalid authentication token' });

@@ -20,7 +20,8 @@ function authenticateSse(req, res) {
     return false;
   }
   try {
-    jwt.verify(auth.slice(7), jwtSecret);
+    const jwtAlgorithm = process.env.JWT_ALGORITHM || 'HS256';
+    jwt.verify(auth.slice(7), jwtSecret, { algorithms: [jwtAlgorithm] });
     return true;
   } catch {
     res.status(401).json({ error: 'Invalid authentication token' });

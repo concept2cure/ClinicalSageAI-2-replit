@@ -19,6 +19,7 @@ import { createScopedLogger } from '../utils/logger';
 
 const logger = createScopedLogger('source-links-routes');
 const router = Router();
+const ORG_MISMATCH_ERROR = 'Organization header mismatch with authenticated organization context';
 
 /**
  * Extract and validate organizationId from trusted authenticated context.
@@ -34,7 +35,7 @@ function getOrganizationId(req: Request): number {
   }
   const headerOrgId = parseInt(String(req.headers['x-organization-id'] || ''), 10);
   if (!isNaN(headerOrgId) && headerOrgId !== orgId) {
-    throw new Error('Organization header mismatch with authenticated organization context');
+    throw new Error(ORG_MISMATCH_ERROR);
   }
   return orgId;
 }
@@ -68,6 +69,9 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
     return res.json({ sources, total: sources.length });
   } catch (error: any) {
     logger.error('Failed to get source links', { error: error.message });
+    if (error.message === ORG_MISMATCH_ERROR) {
+      return res.status(403).json({ error: error.message });
+    }
     if (error.message.includes('Missing or invalid')) {
       return res.status(400).json({ error: error.message });
     }
@@ -104,6 +108,9 @@ router.post('/:id/sources', async (req: Request, res: Response) => {
     return res.status(201).json({ source });
   } catch (error: any) {
     logger.error('Failed to add source link', { error: error.message });
+    if (error.message === ORG_MISMATCH_ERROR) {
+      return res.status(403).json({ error: error.message });
+    }
     if (error.message.includes('Missing or invalid')) {
       return res.status(400).json({ error: error.message });
     }
@@ -129,6 +136,9 @@ router.delete('/:id/sources/:linkId', async (req: Request, res: Response) => {
     logger.error('Failed to remove source link', { error: error.message });
     if (error.message.includes('not found')) {
       return res.status(404).json({ error: error.message });
+    }
+    if (error.message === ORG_MISMATCH_ERROR) {
+      return res.status(403).json({ error: error.message });
     }
     if (error.message.includes('Missing or invalid')) {
       return res.status(400).json({ error: error.message });
