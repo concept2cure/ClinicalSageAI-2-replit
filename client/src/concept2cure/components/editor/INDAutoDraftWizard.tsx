@@ -184,10 +184,17 @@ export function INDAutoDraftWizard({
         formData.append('sessionId', sessionId);
       }
 
+      // File upload requires raw fetch (apiRequest sets Content-Type: application/json)
+      const authToken = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
+      const orgId = sessionStorage.getItem('organization_id') || localStorage.getItem('organization_id') || '';
       const res = await fetch('/api/knowledge-base/ind-autodraft/upload', {
         method: 'POST',
         body: formData,
         credentials: 'include',
+        headers: {
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          'x-organization-id': orgId,
+        },
       });
 
       if (!res.ok) {

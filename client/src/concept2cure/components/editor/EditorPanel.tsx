@@ -1581,10 +1581,16 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           const formData = new FormData();
           formData.append('file', file);
           try {
+            const pdfAuthToken = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
+            const pdfOrgId = sessionStorage.getItem('organization_id') || localStorage.getItem('organization_id') || '';
             const res = await fetch('/api/knowledge-base/extract-pdf', {
               method: 'POST',
               body: formData,
               credentials: 'include',
+              headers: {
+                ...(pdfAuthToken ? { Authorization: `Bearer ${pdfAuthToken}` } : {}),
+                'x-organization-id': pdfOrgId,
+              },
             });
             if (res.ok) {
               const data = await res.json();
@@ -1617,10 +1623,16 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           try {
             const formData = new FormData();
             formData.append('file', file);
+            const ocrAuthToken = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
+            const ocrOrgId = sessionStorage.getItem('organization_id') || localStorage.getItem('organization_id') || '';
             const ocrRes = await fetch('/api/knowledge-base/ocr', {
               method: 'POST',
               body: formData,
               credentials: 'include',
+              headers: {
+                ...(ocrAuthToken ? { Authorization: `Bearer ${ocrAuthToken}` } : {}),
+                'x-organization-id': ocrOrgId,
+              },
             });
             if (ocrRes.ok) {
               const ocrData = await ocrRes.json();
