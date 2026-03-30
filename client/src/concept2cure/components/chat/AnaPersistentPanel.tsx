@@ -229,6 +229,8 @@ interface AnaMessage {
     quotaConsumed?: number;
     quotaRemaining?: number;
   };
+  /** Flag to highlight prompts restored for inline editing */
+  recalledToInput?: boolean;
 }
 
 interface SuggestedAction {
@@ -1924,6 +1926,24 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     navigator.clipboard.writeText(content);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleRecallPrompt = (messageId: string, content: string) => {
+    setInput(content);
+    setMessages(prev =>
+      prev.map(m => ({
+        ...m,
+        recalledToInput: m.id === messageId,
+      }))
+    );
+    setTimeout(() => {
+      inputRef.current?.focus();
+      const inputEl = inputRef.current;
+      if (inputEl) {
+        const end = inputEl.value.length;
+        inputEl.setSelectionRange(end, end);
+      }
+    }, 0);
   };
 
   const handleSuggestedAction = (action: SuggestedAction) => {
@@ -3742,9 +3762,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         {isUser ? 'You' : 'AnA'}
                       </span>
                       {isUser ? (
-                        <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5">
-                          {msg.content}
-                        </p>
+                        <>
+                          <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5">
+                            {msg.content}
+                          </p>
+                          {(msg as any).recalledToInput && (
+                            <p className="mt-1 text-[10px] font-medium text-[#D97757]">
+                              Editing prompt in composer
+                            </p>
+                          )}
+                        </>
                       ) : (
                         <>
                           <div
@@ -3870,6 +3897,38 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             </button>
                           )}
                         </>
+                      )}
+                      {isUser && (
+                        <div
+                          className={cn(
+                            'flex items-center gap-0.5 mt-1 transition-opacity duration-150',
+                            showActions === msg.id ? 'opacity-100' : 'opacity-0'
+                          )}
+                        >
+                          <button
+                            onClick={() => handleRecallPrompt(msg.id, msg.content)}
+                            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
+                            title="Edit and resend this prompt"
+                          >
+                            <RotateCcw className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => handleCopy(msg.id, msg.content)}
+                            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
+                            title="Copy"
+                          >
+                            {copiedId === msg.id ? (
+                              <Check className="w-3 h-3 text-green-600" />
+                            ) : (
+                              <Copy className="w-3 h-3" />
+                            )}
+                          </button>
+                          {(msg as any).recalledToInput && (
+                            <span className="text-[10px] text-stone-600 font-medium ml-1">
+                              Loaded to input
+                            </span>
+                          )}
+                        </div>
                       )}
                       {!isUser && (
                         <div
