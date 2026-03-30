@@ -5,13 +5,14 @@
 
 import express from 'express';
 import { pool as db } from '../utils/database.js';
+import { getSecureOrgId } from '../utils/tenantContext';
 const router = express.Router();
 
 // Get content plan for a project
 router.get('/:projectId', async (req, res) => {
   try {
     const { projectId } = req.params;
-    const organizationId = req.headers['x-organization-id'];
+    const organizationId = getSecureOrgId(req);
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
@@ -202,7 +203,7 @@ router.put('/:projectId/section/:sectionId', async (req, res) => {
   try {
     const { projectId, sectionId } = req.params;
     const { owner, dueDate, status, completionPercentage } = req.body;
-    const organizationId = req.headers['x-organization-id'];
+    const organizationId = getSecureOrgId(req);
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
@@ -242,7 +243,7 @@ router.post('/:projectId/section/:sectionId/evidence', async (req, res) => {
   try {
     const { projectId, sectionId } = req.params;
     const { evidenceId, evidenceType, source } = req.body;
-    const organizationId = req.headers['x-organization-id'];
+    const organizationId = getSecureOrgId(req);
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
+import { getAuthToken } from './authToken';
 
 /**
  * Higher-order component (HOC) to protect routes that require authentication
@@ -15,7 +16,7 @@ const withAuthGuard = Component => {
 
     useEffect(() => {
       // Check if user is authenticated
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
 
       if (!token) {
         // Redirect to login page if no token found

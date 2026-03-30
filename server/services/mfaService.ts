@@ -112,12 +112,19 @@ function getEncryptionKey(): Buffer {
   if (process.env.NODE_ENV === 'production') {
     console.error('[mfa] CRITICAL: MFA_ENCRYPTION_KEY not set in production. MFA secrets may be at risk.');
   }
-  const jwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET;
+  const jwtSecret = process.env.JWT_SECRET;
   if (!jwtSecret) {
     throw new Error('MFA_ENCRYPTION_KEY or JWT_SECRET must be set for MFA functionality');
   }
   console.warn('[mfa] MFA_ENCRYPTION_KEY not set — deriving from JWT_SECRET. Set MFA_ENCRYPTION_KEY for production.');
   return crypto.createHash('sha256').update(jwtSecret).digest();
+}
+
+function requireJwtSecret(): string {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET must be configured for MFA token operations');
+  }
+  return process.env.JWT_SECRET;
 }
 
 function encrypt(plaintext: string): string {
@@ -412,7 +419,7 @@ export function createMfaChallengeToken(
   organizationUuid: string | null,
   role: string,
 ): string {
-  const jwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'dev-secret';
+  const jwtSecret = requireJwtSecret();
 
   return jwt.sign(
     {
@@ -439,7 +446,7 @@ export function verifyMfaChallengeToken(token: string): {
   role: string;
 } | null {
   try {
-    const jwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'dev-secret';
+    const jwtSecret = requireJwtSecret();
 
     const decoded = jwt.verify(token, jwtSecret) as {
       userId: string;

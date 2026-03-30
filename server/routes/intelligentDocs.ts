@@ -20,6 +20,7 @@ import crypto from 'crypto';
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
 import { asyncHandler } from '../middleware/errorHandler';
+import { getSecureOrgId } from '../utils/tenantContext';
 
 const router = Router();
 
@@ -71,12 +72,12 @@ interface AuthenticatedRequest extends Request {
 }
 
 const requireOrganization = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  const orgId = req.headers['x-organization-id'] as string || req.query.organizationId as string;
+  const orgId = getSecureOrgId(req);
   if (!orgId) {
-    return res.status(400).json({ error: 'Organization ID required' });
+    return res.status(401).json({ error: 'Organization context required' });
   }
   req.organizationId = orgId;
-  req.userId = req.headers['x-user-id'] as string || 'system';
+  req.userId = req.user?.id ? String(req.user.id) : req.userId || 'system';
   next();
 };
 

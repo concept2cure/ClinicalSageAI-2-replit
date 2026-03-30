@@ -48,6 +48,7 @@ import './services/auditService.js';
 import './services/roleBasedAccess.js';
 import { authMiddleware } from './auth.js';
 import { sanitizeAskAnaInput } from './routes/ask-ana-utils';
+import { getSecureOrgId } from './utils/tenantContext';
 
 // Import database and schema for workflow persistence
 import { drizzle } from 'drizzle-orm/node-postgres';
@@ -63,7 +64,14 @@ import { fda510kStageProgress, fda510kProjects, projects, draftingTasks } from '
     ? [] // At least one DB URL is set
     : ['DATABASE_URL']; // None set — require DATABASE_URL
 
-  if (isProduction) {
+  const jwtEnvByNodeEnv: Record<string, string> = {
+    development: 'JWT_SECRET_DEV',
+    staging: 'JWT_SECRET_STAGING',
+    production: 'JWT_SECRET_PROD',
+  };
+  const envSpecificJwt = jwtEnvByNodeEnv[process.env.NODE_ENV || 'development'];
+  const hasJwtSecret = Boolean(process.env.JWT_SECRET || (envSpecificJwt && process.env[envSpecificJwt]));
+  if (!hasJwtSecret) {
     required.push('JWT_SECRET');
   }
 
@@ -4553,7 +4561,7 @@ app.get('/api/510k-workflow/:projectId/stage-data', async (req, res) => {
 
 // GET all 510k workflows
 app.get('/api/510k-workflow', async (req, res) => {
-  const organizationId = req.query.organizationId || req.headers['x-organization-id'];
+  const organizationId = getSecureOrgId(req);
   if (!organizationId) {
     return res.status(401).json({ error: 'Organization context required' });
   }
@@ -4576,7 +4584,7 @@ app.get('/api/510k-workflow', async (req, res) => {
 // GET 510k workflow data
 app.get('/api/510k-workflow/:projectId', async (req, res) => {
   const { projectId } = req.params;
-  const organizationId = (req.query.organizationId || req.headers['x-organization-id']) as string;
+  const organizationId = getSecureOrgId(req);
 
   if (!organizationId) {
     return res.status(400).json({ success: false, error: 'Organization ID required' });
@@ -4610,7 +4618,11 @@ app.get('/api/510k-workflow/:projectId', async (req, res) => {
 // Generate 510k Document
 app.post('/api/510k-workflow/:projectId/generate-document', async (req, res) => {
   const { projectId } = req.params;
-  const organizationId = req.body.organizationId || req.headers['x-organization-id'];
+  const organizationId = getSecureOrgId(req);
+
+  if (!organizationId) {
+    return res.status(401).json({ success: false, error: 'Organization context required' });
+  }
 
   try {
     const storage = await getStorage();
@@ -6255,7 +6267,10 @@ app.get('/api/advisor/check-readiness', async (req: Request, res: Response) => {
 // eCTD Templates endpoint
 app.get('/api/ectd/templates', async (req: Request, res: Response) => {
   try {
-    const organizationId = req.headers['x-organization-id'] || 'default';
+    const organizationId = getSecureOrgId(req);
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
 
     try {
       const result = await pool.query(
@@ -6305,7 +6320,10 @@ app.get('/api/ectd/templates', async (req: Request, res: Response) => {
 app.get('/api/ectd/templates/:id', async (req: Request, res: Response) => {
   try {
     const templateId = req.params.id;
-    const organizationId = req.headers['x-organization-id'] || 'default';
+    const organizationId = getSecureOrgId(req);
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
 
     try {
       const result = await pool.query(

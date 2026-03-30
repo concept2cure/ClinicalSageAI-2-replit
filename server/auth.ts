@@ -3,11 +3,10 @@
  *
  * This file contains middleware functions for authentication and authorization.
  *
- * Note: This is a simplified version without JWT for development purposes
  */
 import { Request, Response, NextFunction } from 'express';
-import { eq } from 'drizzle-orm';
-import { users } from '../shared/schema';
+import { and, eq } from 'drizzle-orm';
+import { organizationUsers, users } from '../shared/schema';
 import { createScopedLogger } from './utils/logger';
 import { db } from './db';
 import jwt from 'jsonwebtoken';
@@ -49,92 +48,74 @@ declare global {
 
 /**
  * Authentication middleware
- * Validates JWT tokens (from /api/auth/login) or legacy API keys.
+ * Validates Bearer JWT tokens only.
  * Sets req.userId, req.userRole, req.userEmail, req.tenantId, req.tenantContext.
  */
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
   // Attach database to request for consistent access
   req.db = db;
 
-  // Get token from Authorization header or x-api-key
-  const apiKey =
-    req.headers['x-api-key'] ||
-    (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')
-      ? req.headers.authorization.substring(7)
-      : null);
+  const authHeader = req.headers.authorization;
+  const token =
+    authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7).trim() : null;
 
-  if (!apiKey) {
-    return res.status(401).json({ error: 'Authentication required' });
+  if (!token) {
+    return res.status(401).json({ error: 'Bearer token required' });
   }
 
-  try {
-    // 1. Try JWT verification first (primary auth method)
+  const authenticate = async () => {
     try {
-      const decoded = jwt.verify(apiKey, config.jwt.secret) as {
+      const decoded = jwt.verify(token, config.jwt.secret) as {
         userId?: string;
         email?: string;
         organizationId?: string;
-        role?: string;
       };
 
-      if (decoded.userId) {
-        req.userId = parseInt(decoded.userId) || decoded.userId;
-        req.userRole = decoded.role || 'user';
-        req.userEmail = decoded.email;
-        req.tenantId = decoded.organizationId ? parseInt(decoded.organizationId) : 0;
-        // SECURITY: Set req.user with organizationId from JWT so that
-        // downstream tenant middleware (tenantContextMiddleware,
-        // tenantIsolationMiddleware) derives org context from the token.
-        req.user = {
-          id: req.userId,
-          userId: req.userId,
-          email: decoded.email,
-          role: decoded.role || 'user',
-          organizationId: decoded.organizationId || null,
-        };
-        req.tenantContext = {
-          organizationId: decoded.organizationId ? parseInt(decoded.organizationId) : 0,
-          userId: req.userId,
-          role: decoded.role || 'user',
-        };
-        return next();
+      if (!decoded.userId || !decoded.organizationId) {
+        return res.status(401).json({ error: 'Invalid token payload' });
       }
-    } catch (_jwtError) {
-      // Not a valid JWT — fall through to API key check
-    }
 
-    // 2. Fallback to DEV_API_KEY (for automated tools / CI)
-    // SECURITY: Completely blocked in production. In dev, requires explicit env var.
-    if (process.env.NODE_ENV !== 'production') {
-      const devApiKey = process.env.DEV_API_KEY;
-      if (devApiKey && devApiKey.length >= 32 && apiKey === devApiKey) {
-        req.userId = 1;
-        req.userRole = 'admin';
-        req.userEmail = 'dev@example.com';
-        req.tenantId = 1;
-        req.user = {
-          id: 1,
-          userId: 1,
-          email: 'dev@example.com',
-          role: 'admin',
-          organizationId: '1',
-        };
-        req.tenantContext = {
-          organizationId: 1,
-          userId: 1,
-          role: 'admin',
-        };
-        logger.debug('Authenticated via DEV_API_KEY (non-production)');
-        return next();
-      }
-    }
+      const userId = parseInt(decoded.userId, 10) || decoded.userId;
+      const organizationId = parseInt(decoded.organizationId, 10);
+      const membership =
+        Number.isFinite(Number(userId)) && Number.isFinite(organizationId)
+          ? await db
+              .select({ role: organizationUsers.role })
+              .from(organizationUsers)
+              .where(
+                and(
+                  eq(organizationUsers.userId, Number(userId)),
+                  eq(organizationUsers.organizationId, organizationId)
+                )
+              )
+              .limit(1)
+          : [];
+      const resolvedRole = membership[0]?.role || 'viewer';
 
-    // No valid authentication
-    return res.status(401).json({ error: 'Invalid token or API key' });
-  } catch (error) {
-    logger.error('Authentication error', error);
-    return res.status(500).json({ error: 'Authentication failed' });
-  }
+      req.userId = userId;
+      req.userRole = resolvedRole;
+      req.userEmail = decoded.email;
+      req.tenantId = decoded.organizationId ? parseInt(decoded.organizationId) : 0;
+      req.user = {
+        id: req.userId,
+        userId: req.userId,
+        email: decoded.email,
+        role: resolvedRole,
+        organizationId: decoded.organizationId,
+      };
+      req.tenantContext = {
+        organizationId: parseInt(decoded.organizationId, 10),
+        userId: req.userId,
+        role: resolvedRole,
+      };
+      return next();
+    } catch (error) {
+      logger.error('Authentication error', error);
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+  };
+
+  void authenticate();
 }
 
 /**
@@ -163,7 +144,7 @@ export function requireSuperAdminRole(req: Request, res: Response, next: NextFun
 
 /**
  * Login function
- * Authenticates user and returns API key
+ * Authenticates user and returns JWT bearer token
  */
 export async function login(email: string, password: string) {
   try {
@@ -188,9 +169,29 @@ export async function login(email: string, password: string) {
       throw new Error('Invalid password');
     }
 
-    // Generate a secure API key token for the session
-    const crypto = await import('crypto');
-    const token = crypto.randomBytes(32).toString('hex');
+    const membership = await db
+      .select({
+        organizationId: organizationUsers.organizationId,
+        role: organizationUsers.role,
+      })
+      .from(organizationUsers)
+      .where(eq(organizationUsers.userId, user[0].id))
+      .limit(1);
+
+    if (membership.length === 0) {
+      throw new Error('User has no organization membership');
+    }
+
+    const token = jwt.sign(
+      {
+        userId: String(user[0].id),
+        email: user[0].email,
+        organizationId: String(membership[0].organizationId),
+        role: membership[0].role,
+      },
+      config.jwt.secret,
+      { expiresIn: config.jwt.expiresIn }
+    );
 
     return {
       token,
@@ -198,7 +199,7 @@ export async function login(email: string, password: string) {
         id: user[0].id,
         name: user[0].name || '',
         email: user[0].email,
-        role: 'user', // Default role — looked up from organizationUsers in real auth flow
+        role: membership[0].role,
       },
     };
   } catch (error) {

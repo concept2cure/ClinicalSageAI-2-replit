@@ -4,9 +4,20 @@ import { db } from '../db';
 import { fda510kDocuments, fda510kProjects } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import PDFDocument from 'pdfkit';
+import { getSecureOrgId } from '../utils/tenantContext';
 
 const router = Router();
 const orchestrationService = new DocumentOrchestrationService();
+
+function resolveActorContext(req: any, res: Response): { userId: string; organizationId: string } | null {
+  const organizationId = getSecureOrgId(req);
+  const userId = req.user?.id ? String(req.user.id) : req.userId ? String(req.userId) : null;
+  if (!organizationId || !userId) {
+    res.status(401).json({ success: false, error: 'Authenticated organization/user context required' });
+    return null;
+  }
+  return { userId, organizationId };
+}
 
 /**
  * Generate all documents for a 510(k) project
@@ -14,16 +25,15 @@ const orchestrationService = new DocumentOrchestrationService();
 router.post('/api/510k/:projectId/generate-documents', async (req, res) => {
   try {
     const { projectId } = req.params;
-    const userId = req.headers['x-user-id'] as string;
-    const organizationId = req.headers['x-organization-id'] as string;
-    if (!organizationId) {
-      return res.status(401).json({ success: false, error: 'Organization context required' });
+    const actor = resolveActorContext(req, res);
+    if (!actor) {
+      return;
     }
 
     const result = await orchestrationService.orchestrateDocumentGeneration(
       projectId,
-      userId,
-      organizationId
+      actor.userId,
+      actor.organizationId
     );
 
     res.json(result);
@@ -42,13 +52,15 @@ router.post('/api/510k/:projectId/generate-documents', async (req, res) => {
 router.post('/api/510k/documents/:documentId/lock', async (req, res) => {
   try {
     const { documentId } = req.params;
-    const userId = req.headers['x-user-id'] as string;
-    const organizationId = req.headers['x-organization-id'] as string;
+    const actor = resolveActorContext(req, res);
+    if (!actor) {
+      return;
+    }
 
     const lockedDocument = await orchestrationService.lockDocument(
       documentId,
-      userId,
-      organizationId
+      actor.userId,
+      actor.organizationId
     );
 
     res.json({
@@ -70,13 +82,15 @@ router.post('/api/510k/documents/:documentId/lock', async (req, res) => {
 router.post('/api/510k/documents/:documentId/version', async (req, res) => {
   try {
     const { documentId } = req.params;
-    const userId = req.headers['x-user-id'] as string;
-    const organizationId = req.headers['x-organization-id'] as string;
+    const actor = resolveActorContext(req, res);
+    if (!actor) {
+      return;
+    }
 
     const newVersion = await orchestrationService.createDocumentVersion(
       documentId,
-      userId,
-      organizationId
+      actor.userId,
+      actor.organizationId
     );
 
     res.json({

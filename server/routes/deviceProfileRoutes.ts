@@ -1,14 +1,26 @@
 import { Router } from 'express';
 import * as deviceProfileService from '../services/deviceProfileService';
+import { getSecureOrgId } from '../utils/tenantContext';
 
 const router = Router();
+
+const requireOrganizationId = (req: any, res: any): string | null => {
+  const organizationId = getSecureOrgId(req);
+  if (!organizationId) {
+    res.status(401).json({ error: 'Organization context required' });
+    return null;
+  }
+  return organizationId;
+};
 
 // Create a new device profile
 router.post('/', (req, res) => {
   try {
+    const organizationId = requireOrganizationId(req, res);
+    if (!organizationId) return;
     const profile = deviceProfileService.createProfile(
       req.body,
-      req.body.organizationId,
+      organizationId,
       req.body.clientWorkspaceId
     );
     res.status(201).json(profile);
@@ -20,7 +32,8 @@ router.post('/', (req, res) => {
 // List all device profiles (optionally filtered by organization)
 router.get('/', (req, res) => {
   try {
-    const organizationId = req.query.organizationId || undefined;
+    const organizationId = requireOrganizationId(req, res);
+    if (!organizationId) return;
     const profiles = deviceProfileService.listProfiles(organizationId as string);
     res.json(profiles);
   } catch (error) {
@@ -32,7 +45,8 @@ router.get('/', (req, res) => {
 router.get('/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const organizationId = req.query.organizationId || undefined;
+    const organizationId = requireOrganizationId(req, res);
+    if (!organizationId) return;
     const profile = deviceProfileService.getProfile(id, organizationId as string);
 
     if (!profile) {
@@ -49,7 +63,8 @@ router.get('/:id', (req, res) => {
 router.put('/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const organizationId = req.body.organizationId || req.query.organizationId || undefined;
+    const organizationId = requireOrganizationId(req, res);
+    if (!organizationId) return;
     const profile = deviceProfileService.updateProfile(id, req.body, organizationId as string);
     res.json(profile);
   } catch (error) {
@@ -64,7 +79,8 @@ router.put('/:id', (req, res) => {
 router.delete('/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const organizationId = req.query.organizationId || undefined;
+    const organizationId = requireOrganizationId(req, res);
+    if (!organizationId) return;
     const success = deviceProfileService.deleteProfile(id, organizationId as string);
 
     if (!success) {

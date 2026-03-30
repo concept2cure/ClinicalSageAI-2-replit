@@ -1,4 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
+import { clearAuthToken, getAuthToken } from '../utils/authToken';
 
 export type ApiRequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
@@ -21,11 +22,7 @@ export function getCachedOrgId(): string {
 
 export function getCachedAuthToken(): string | null {
   if (_cachedAuthToken === null) {
-    _cachedAuthToken =
-      localStorage.getItem('token') ||
-      localStorage.getItem('authToken') ||
-      localStorage.getItem('auth_token') ||
-      '';
+    _cachedAuthToken = getAuthToken() || '';
   }
   return _cachedAuthToken || null;
 }
@@ -94,6 +91,8 @@ export const getQueryFn = (options: GetQueryFnOptions = {}) => {
     });
 
     if (response.status === 401) {
+      clearAuthToken();
+      _cachedAuthToken = null;
       if (options.on401 === 'returnNull') {
         return null;
       }

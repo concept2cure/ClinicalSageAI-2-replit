@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAuthToken, clearAuthToken } from './authToken';
 
 /**
  * Axios instance configured with authentication token for secure API calls
@@ -14,7 +15,7 @@ const axiosWithToken = axios.create({
 // Request interceptor to add the token to every request
 axiosWithToken.interceptors.request.use(
   config => {
-    const token = localStorage.getItem('token');
+    const token = getAuthToken();
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
@@ -38,7 +39,7 @@ axiosWithToken.interceptors.response.use(
         // Unauthorized - token is invalid or expired
         console.log('Unauthorized access, redirecting to login');
         // Optional: redirect to login page or refresh token
-        localStorage.removeItem('token');
+        clearAuthToken();
         window.location.href = '/concept2cure/login';
       }
 
