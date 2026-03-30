@@ -3457,7 +3457,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       ) : (
                         <div
                           className="prose prose-sm prose-stone max-w-none mt-0.5
-                            prose-p:text-[#4D4B45] prose-p:leading-relaxed prose-p:my-1.5
+                            prose-p:text-[#4D4B45] prose-p:leading-relaxed prose-p:my-1
                             prose-strong:text-[#141413]
                             prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
                             prose-blockquote:border-l-stone-300 prose-blockquote:text-[#6B6962] prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
@@ -3791,7 +3791,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         <>
                           <div
                             className="prose prose-sm prose-zinc max-w-none mt-0.5
-                              prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1.5
+                              prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1
                               prose-strong:text-zinc-900
                               prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
                               prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3 prose-pre:text-xs

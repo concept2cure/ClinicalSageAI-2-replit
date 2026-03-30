@@ -204,19 +204,19 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
 
   return (
     <div className="mt-2 p-3 bg-stone-50 border border-stone-200 rounded-xl">
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-2 mb-1.5">
         <FileText className="w-4 h-4 text-[#C4623F]" />
         <span className="text-sm font-medium text-stone-900 truncate flex-1">
           {artifact.title}
         </span>
         <span className="text-xs text-stone-400">{wordCount.toLocaleString()} words</span>
       </div>
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-1.5 flex-wrap">
         <button
           onClick={() => onSave(artifact)}
           disabled={isSaving || isSaved}
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors duration-150',
+            'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors duration-150',
             isSaved
               ? 'bg-green-50 text-green-700 border border-green-200'
               : 'bg-[#FBF0EB] text-stone-700 border border-[#E8C7BA] hover:bg-[#F6E6DF]'
@@ -236,7 +236,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
         <div className="relative">
           <button
             onClick={() => setShowExportMenu(!showExportMenu)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50 transition-colors duration-150"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50 transition-colors duration-150"
           >
             <Download className="w-3.5 h-3.5" />
             Export
@@ -273,7 +273,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
 
         <button
           onClick={() => onOpenEditor(artifact)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-stone-100 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-200 transition-colors duration-150"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-stone-100 px-2.5 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-200 transition-colors duration-150"
         >
           <PenTool className="w-3.5 h-3.5" />
           Edit Inline
@@ -414,14 +414,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 className="prose prose-sm prose-stone max-w-none
                   prose-headings:font-semibold prose-headings:text-stone-900 prose-headings:leading-snug
                   prose-h1:text-lg prose-h2:text-base prose-h3:text-sm
-                  prose-p:text-stone-700 prose-p:leading-relaxed prose-p:my-2
+                  prose-p:text-stone-700 prose-p:leading-relaxed prose-p:my-1.5
                   prose-strong:text-stone-900 prose-strong:font-semibold
                   prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono prose-code:before:content-none prose-code:after:content-none
-                  prose-pre:bg-stone-900 prose-pre:text-stone-100 prose-pre:rounded-xl prose-pre:p-4 prose-pre:text-xs
-                  prose-blockquote:border-l-[#D8D5CA] prose-blockquote:text-stone-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
-                  prose-ul:text-stone-700 prose-ol:text-stone-700 prose-ul:my-2 prose-ol:my-2
+                  prose-pre:bg-stone-900 prose-pre:text-stone-100 prose-pre:rounded-xl prose-pre:p-3.5 prose-pre:text-xs
+                  prose-blockquote:border-l-[#D8D5CA] prose-blockquote:text-stone-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-1.5
+                  prose-ul:text-stone-700 prose-ol:text-stone-700 prose-ul:my-1.5 prose-ol:my-1.5
                   prose-li:my-1
-                  prose-table:text-sm prose-th:bg-stone-50 prose-th:font-semibold prose-td:border-stone-200
+                  prose-table:text-[13px] prose-th:bg-stone-50 prose-th:font-semibold prose-td:border-stone-200
                   prose-a:text-[#D97757] prose-a:font-medium prose-a:underline prose-a:decoration-[#E8C7BA] prose-a:underline-offset-2 hover:prose-a:text-[#C4623F]
                   [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                 dangerouslySetInnerHTML={{ __html: htmlContent }}
@@ -449,7 +449,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               message.artifacts &&
               message.artifacts.length > 0 &&
               onSaveArtifact && (
-                <div className="mt-3 space-y-2">
+                <div className="mt-2.5 space-y-1.5">
                   {message.artifacts.map(artifact => (
                     <ArtifactActions
                       key={artifact.id}
