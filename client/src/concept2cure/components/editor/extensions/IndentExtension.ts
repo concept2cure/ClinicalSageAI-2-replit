@@ -10,6 +10,14 @@ import { Extension } from '@tiptap/core';
 const MAX_INDENT = 10;
 const INDENT_REM_STEP = 2;
 const INDENT_PX_STEP = 32;
+const BLOCKED_SHORTCUT_CONTEXTS = [
+  'table',
+  'bulletList',
+  'orderedList',
+  'taskList',
+  'taskItem',
+  'codeBlock',
+];
 
 export function clampIndentLevel(value: number): number {
   if (!Number.isFinite(value)) return 0;
@@ -34,20 +42,13 @@ export function parseIndentFromMarginLeft(marginLeft: string | undefined | null)
 
 export function canHandleIndentShortcut(editor: {
   storage?: { aiAutocomplete?: { ghostText?: string | null } };
+  isEditable?: boolean;
   isActive: (name: string) => boolean;
 }): boolean {
+  if (editor.isEditable === false) return false;
   if (editor.storage?.aiAutocomplete?.ghostText) return false;
 
-  const blockedContexts = [
-    'table',
-    'bulletList',
-    'orderedList',
-    'taskList',
-    'taskItem',
-    'codeBlock',
-  ];
-
-  return !blockedContexts.some(node => editor.isActive(node));
+  return !BLOCKED_SHORTCUT_CONTEXTS.some(node => editor.isActive(node));
 }
 
 export const Indent = Extension.create({
@@ -65,7 +66,7 @@ export const Indent = Extension.create({
             },
             renderHTML: (attributes) => {
               if (!attributes.indent || attributes.indent <= 0) return {};
-              return { style: `margin-left: ${attributes.indent * 2}rem` };
+              return { style: `margin-left: ${attributes.indent * INDENT_REM_STEP}rem` };
             },
           },
         },
