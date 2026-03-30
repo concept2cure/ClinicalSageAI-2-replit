@@ -229,6 +229,8 @@ interface AnaMessage {
     quotaConsumed?: number;
     quotaRemaining?: number;
   };
+  /** Visual cue when a user prompt is restored into the composer */
+  recalledToInput?: boolean;
 }
 
 interface SuggestedAction {
@@ -694,6 +696,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const initialMessageSentRef = useRef(false);
   // Thread persistence — reuse thread_id across messages for continuous conversation
   const threadIdRef = useRef<string | null>(null);
+  const lastSubmittedPromptRef = useRef<string | null>(null);
+  const draftStorageKey = useMemo(() => {
+    const projectScope = contextProfile?.projectId || 'global';
+    return `ana:persistent:draft:${projectScope}:${mode}:${chatMode}`;
+  }, [contextProfile?.projectId, mode, chatMode]);
 
   const screenName = contextProfile?.screenName || 'default';
   const screenLabel = SCREEN_LABELS[screenName] || '';
@@ -1283,6 +1290,25 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
   }, [input]);
 
+  // Restore draft on scope changes.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const savedDraft = localStorage.getItem(draftStorageKey);
+    if (savedDraft) {
+      setInput(savedDraft);
+    }
+  }, [draftStorageKey]);
+
+  // Persist draft as user types.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!input.trim()) {
+      localStorage.removeItem(draftStorageKey);
+      return;
+    }
+    localStorage.setItem(draftStorageKey, input);
+  }, [input, draftStorageKey]);
+
   // Handle initial message (auto-send once)
   useEffect(() => {
     if (initialMessage && !initialMessageSentRef.current) {
@@ -1297,6 +1323,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     async (messageText?: string) => {
       const text = messageText || input.trim();
       if (!text || isThinking) return;
+      lastSubmittedPromptRef.current = text;
 
       const userMsg: AnaMessage = {
         id: `u-${Date.now()}`,
@@ -1308,6 +1335,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       // Cap in-memory messages to prevent unbounded growth
       setMessages(prev => [...prev.slice(-199), userMsg]);
       setInput('');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(draftStorageKey);
+      }
       queue.startTurn();
 
       // Deep Research mode — launch a job and stream progress
@@ -1824,6 +1854,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       intentLens,
       selectedProvider,
       useFirecrawl,
+      draftStorageKey,
     ]
   );
 
@@ -1870,6 +1901,28 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+      return;
+    }
+
+    // Claude-like recall: ArrowUp on empty composer restores the latest prompt.
+    if (e.key === 'ArrowUp' && !input.trim()) {
+      const inputEl = inputRef.current;
+      const caretAtStart =
+        !!inputEl &&
+        (inputEl.selectionStart ?? 0) === 0 &&
+        (inputEl.selectionEnd ?? 0) === 0;
+      if (!inputEl || caretAtStart) {
+        if (lastSubmittedPromptRef.current) {
+          e.preventDefault();
+          handleRecallPrompt('last-submitted', lastSubmittedPromptRef.current);
+          return;
+        }
+        const lastUserMessage = [...messages].reverse().find(message => message.role === 'user');
+        if (lastUserMessage) {
+          e.preventDefault();
+          handleRecallPrompt(lastUserMessage.id, lastUserMessage.content);
+        }
+      }
     }
   };
 
@@ -1877,6 +1930,27 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     navigator.clipboard.writeText(content);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleRecallPrompt = (messageId: string, content: string) => {
+    setInput(content);
+    setMessages(prev =>
+      prev.map(m => ({
+        ...m,
+        recalledToInput: m.id === messageId,
+      }))
+    );
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(draftStorageKey, content);
+    }
+    setTimeout(() => {
+      inputRef.current?.focus();
+      const inputEl = inputRef.current;
+      if (inputEl) {
+        const end = inputEl.value.length;
+        inputEl.setSelectionRange(end, end);
+      }
+    }, 0);
   };
 
   const handleSuggestedAction = (action: SuggestedAction) => {
@@ -3370,12 +3444,26 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         {isUser ? 'You' : 'AnA'}
                       </span>
                       {isUser ? (
-                        <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5">
-                          {msg.content}
-                        </p>
+                        <>
+                          <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5">
+                            {msg.content}
+                          </p>
+                          {msg.recalledToInput && (
+                            <p className="mt-1 text-xs font-medium text-stone-600">
+                              Editing prompt in composer
+                            </p>
+                          )}
+                        </>
                       ) : (
                         <div
-                          className="prose prose-sm prose-stone max-w-none mt-0.5 prose-p:text-[#4D4B45] prose-p:leading-relaxed prose-p:my-1.5 prose-strong:text-[#141413] [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+                          className="prose prose-sm prose-stone max-w-none mt-0.5
+                            prose-p:text-[#4D4B45] prose-p:leading-relaxed prose-p:my-1.5
+                            prose-strong:text-[#141413]
+                            prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
+                            prose-blockquote:border-l-stone-300 prose-blockquote:text-[#6B6962] prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
+                            prose-ul:text-[#4D4B45] prose-ol:text-[#4D4B45] prose-ul:my-2 prose-ol:my-2 prose-li:my-1
+                            prose-a:text-[#D97757] prose-a:underline prose-a:decoration-[#E8C7BA] prose-a:underline-offset-2 hover:prose-a:text-[#C4623F]
+                            [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                           dangerouslySetInnerHTML={{ __html: htmlContent }}
                         />
                       )}
@@ -3666,7 +3754,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 <div
                   key={msg.id}
                   className={cn('group px-4 py-3', isUser ? 'bg-[#FAF9F5]/60' : 'bg-white')}
-                  onMouseEnter={() => !isUser && setShowActions(msg.id)}
+                  onMouseEnter={() => setShowActions(msg.id)}
                   onMouseLeave={() => setShowActions(null)}
                 >
                   <div className="flex gap-2.5 max-w-3xl mx-auto">
@@ -3689,20 +3777,27 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         {isUser ? 'You' : 'AnA'}
                       </span>
                       {isUser ? (
-                        <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5">
-                          {msg.content}
-                        </p>
+                        <>
+                          <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5">
+                            {msg.content}
+                          </p>
+                          {msg.recalledToInput && (
+                            <p className="mt-1 text-xs font-medium text-stone-600">
+                              Editing prompt in composer
+                            </p>
+                          )}
+                        </>
                       ) : (
                         <>
                           <div
                             className="prose prose-sm prose-zinc max-w-none mt-0.5
                               prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1.5
                               prose-strong:text-zinc-900
-                              prose-code:text-violet-700 prose-code:bg-violet-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
+                              prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
                               prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3 prose-pre:text-xs
-                              prose-blockquote:border-l-violet-400 prose-blockquote:text-zinc-600
-                              prose-ul:text-zinc-700 prose-ol:text-zinc-700
-                              prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
+                              prose-blockquote:border-l-stone-300 prose-blockquote:text-zinc-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
+                              prose-ul:text-zinc-700 prose-ol:text-zinc-700 prose-ul:my-2 prose-ol:my-2 prose-li:my-1
+                              prose-a:text-[#D97757] prose-a:underline prose-a:decoration-[#E8C7BA] prose-a:underline-offset-2 hover:prose-a:text-[#C4623F]
                               [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                             dangerouslySetInnerHTML={{ __html: htmlContent }}
                           />
@@ -3818,10 +3913,43 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           )}
                         </>
                       )}
+                      {isUser && (
+                        <div
+                          className={cn(
+                            'flex items-center gap-1 mt-1.5 transition-opacity duration-150',
+                            showActions === msg.id ? 'opacity-100' : 'opacity-0'
+                          )}
+                        >
+                          <button
+                            onClick={() => handleRecallPrompt(msg.id, msg.content)}
+                            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
+                            title="Recall this prompt to edit"
+                            aria-label="Recall this prompt to edit"
+                          >
+                            <RotateCcw className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => handleCopy(msg.id, msg.content)}
+                            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
+                            title="Copy"
+                          >
+                            {copiedId === msg.id ? (
+                              <Check className="w-3 h-3 text-green-600" />
+                            ) : (
+                              <Copy className="w-3 h-3" />
+                            )}
+                          </button>
+                          {msg.recalledToInput && (
+                            <span className="text-xs text-stone-600 font-medium ml-1">
+                              Loaded to input
+                            </span>
+                          )}
+                        </div>
+                      )}
                       {!isUser && (
                         <div
                           className={cn(
-                            'flex items-center gap-0.5 mt-1 transition-opacity duration-150',
+                            'flex items-center gap-1 mt-1.5 transition-opacity duration-150',
                             showActions === msg.id ? 'opacity-100' : 'opacity-0'
                           )}
                         >
@@ -4547,6 +4675,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               ))}
             </div>
           )}
+          <p className="mt-1.5 pl-1 text-[11px] text-[#B0AEA5]">
+            Type <span className="font-semibold text-[#6B6962]">/</span> for commands. Use{' '}
+            <span className="font-semibold text-[#6B6962]">↑</span> on empty input to recall your
+            last prompt.
+          </p>
         </div>
       </div>
     </div>

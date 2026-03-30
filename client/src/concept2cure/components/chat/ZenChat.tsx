@@ -82,6 +82,7 @@ interface Message {
   isStreaming?: boolean;
   artifacts?: CortexArtifact[];
   error?: string;
+  recalledToInput?: boolean;
 }
 
 interface Attachment {
@@ -285,6 +286,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
 interface MessageBubbleProps {
   message: Message;
   onCopy: () => void;
+  onRecallPrompt?: () => void;
   onRegenerate?: () => void;
   onFeedback?: (positive: boolean) => void;
   onNavigate?: (href: string) => void;
@@ -300,6 +302,7 @@ interface MessageBubbleProps {
 const MessageBubble: React.FC<MessageBubbleProps> = ({
   message,
   onCopy,
+  onRecallPrompt,
   onRegenerate,
   onFeedback,
   onNavigate,
@@ -397,9 +400,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               <TypingIndicator />
             ) : isUser ? (
               // User messages: plain text (preserving whitespace)
-              <p className="text-stone-900 leading-relaxed whitespace-pre-wrap text-sm">
-                {message.content}
-              </p>
+              <>
+                <p className="text-stone-900 leading-relaxed whitespace-pre-wrap text-sm">
+                  {message.content}
+                </p>
+                {message.recalledToInput && (
+                  <p className="mt-1 text-xs font-medium text-stone-600">Editing prompt in composer</p>
+                )}
+              </>
             ) : (
               // Assistant messages: rendered markdown
               <div
@@ -410,11 +418,11 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   prose-strong:text-stone-900 prose-strong:font-semibold
                   prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono prose-code:before:content-none prose-code:after:content-none
                   prose-pre:bg-stone-900 prose-pre:text-stone-100 prose-pre:rounded-xl prose-pre:p-4 prose-pre:text-xs
-                  prose-blockquote:border-l-violet-400 prose-blockquote:text-stone-600 prose-blockquote:not-italic
-                  prose-ul:text-stone-700 prose-ol:text-stone-700
-                  prose-li:my-0.5
+                  prose-blockquote:border-l-[#D8D5CA] prose-blockquote:text-stone-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
+                  prose-ul:text-stone-700 prose-ol:text-stone-700 prose-ul:my-2 prose-ol:my-2
+                  prose-li:my-1
                   prose-table:text-sm prose-th:bg-stone-50 prose-th:font-semibold prose-td:border-stone-200
-                  prose-a:text-[#D97757] prose-a:no-underline hover:prose-a:underline
+                  prose-a:text-[#D97757] prose-a:font-medium prose-a:underline prose-a:decoration-[#E8C7BA] prose-a:underline-offset-2 hover:prose-a:text-[#C4623F]
                   [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                 dangerouslySetInnerHTML={{ __html: htmlContent }}
               />
@@ -477,10 +485,20 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             {!message.isStreaming && (
               <div
                 className={cn(
-                  'flex items-center gap-0.5 mt-2 transition-opacity duration-150',
+                  'flex items-center gap-1 mt-1.5 transition-opacity duration-150',
                   showActions ? 'opacity-100' : 'opacity-0 pointer-events-none'
                 )}
               >
+                {isUser && (
+                  <button
+                    onClick={onRecallPrompt}
+                    className="p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-md transition-colors duration-150"
+                    title="Recall this prompt to edit"
+                    aria-label="Recall this prompt to edit"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 <button
                   onClick={handleCopy}
                   className="p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-md transition-colors duration-150"
@@ -492,6 +510,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                     <Copy className="w-3.5 h-3.5" />
                   )}
                 </button>
+                {isUser && message.recalledToInput && (
+                  <span className="text-xs text-stone-600 font-medium ml-1">Loaded to input</span>
+                )}
                 {!isUser && (
                   <>
                     <button
@@ -743,6 +764,7 @@ interface ChatInputProps {
   onChange: (value: string) => void;
   onSend: () => void;
   onStop?: () => void;
+  onRecallLastPrompt?: () => void;
   isGenerating?: boolean;
   placeholder?: string;
 }
@@ -752,6 +774,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   onChange,
   onSend,
   onStop,
+  onRecallLastPrompt,
   isGenerating = false,
   placeholder = 'Message AnA...',
 }) => {
@@ -774,6 +797,18 @@ const ChatInput: React.FC<ChatInputProps> = ({
       e.preventDefault();
       if (value.trim() && !isGenerating) {
         onSend();
+      }
+      return;
+    }
+
+    // Claude-like recall: ArrowUp on empty composer restores latest prompt.
+    if (e.key === 'ArrowUp' && !value.trim() && !isGenerating) {
+      const textarea = textareaRef.current;
+      const caretAtStart =
+        !!textarea && (textarea.selectionStart ?? 0) === 0 && (textarea.selectionEnd ?? 0) === 0;
+      if (!textarea || caretAtStart) {
+        e.preventDefault();
+        onRecallLastPrompt?.();
       }
     }
   };
@@ -833,6 +868,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
         {/* Disclaimer */}
         <p className="text-center text-xs text-stone-400 mt-2">
+          Type <span className="font-semibold text-stone-500">/</span> for commands. Press{' '}
+          <span className="font-semibold text-stone-500">↑</span> on empty input to recall your last prompt.{' '}
           AnA can make mistakes. Verify critical regulatory decisions with qualified experts.
         </p>
       </div>
@@ -939,7 +976,14 @@ export const ZenChat: React.FC<ZenChatProps> = ({
 
   // Local state
   const [input, setInput] = useState('');
+  const [recalledMessageId, setRecalledMessageId] = useState<string | null>(null);
+  const lastSubmittedPromptRef = useRef<string | null>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const draftStorageKey = useMemo(() => {
+    const projectScope = projectId || 'global';
+    const threadScope = threadId || initialThreadId || 'new';
+    return `ana:draft:${projectScope}:${threadScope}`;
+  }, [projectId, threadId, initialThreadId]);
 
   // Convert Cortex messages to local format
   const messages: Message[] = cortexMessages.map(m => ({
@@ -1005,12 +1049,36 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     scrollToBottom();
   }, [displayMessages, scrollToBottom]);
 
+  // Restore draft from local storage by project/thread scope.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const savedDraft = localStorage.getItem(draftStorageKey);
+    if (savedDraft) {
+      setInput(savedDraft);
+    }
+  }, [draftStorageKey]);
+
+  // Persist draft as user types.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!input.trim()) {
+      localStorage.removeItem(draftStorageKey);
+      return;
+    }
+    localStorage.setItem(draftStorageKey, input);
+  }, [input, draftStorageKey]);
+
   // Send message - use real API
   const handleSend = async () => {
     if (!input.trim() || isLoading || isStreaming) return;
 
     const messageText = input.trim();
+    lastSubmittedPromptRef.current = messageText;
+    setRecalledMessageId(null);
     setInput('');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(draftStorageKey);
+    }
 
     try {
       // Use streaming for better UX
@@ -1030,6 +1098,37 @@ export const ZenChat: React.FC<ZenChatProps> = ({
       streamMessage(lastUserMsg.content);
     }
   }, [displayMessages, isLoading, isStreaming, streamMessage]);
+
+  // Recall a previous user prompt into the composer for quick edits.
+  const handleRecallPrompt = useCallback((messageId: string) => {
+    const target = displayMessages.find(message => message.id === messageId && message.role === 'user');
+    if (!target) return;
+
+    setRecalledMessageId(messageId);
+    setInput(target.content);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(draftStorageKey, target.content);
+    }
+    scrollToBottom(false);
+  }, [displayMessages, draftStorageKey, scrollToBottom]);
+
+  const handleRecallLatestPrompt = useCallback(() => {
+    if (lastSubmittedPromptRef.current) {
+      setRecalledMessageId('last-submitted');
+      setInput(lastSubmittedPromptRef.current);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(draftStorageKey, lastSubmittedPromptRef.current);
+      }
+      return;
+    }
+    const lastUserMessage = [...displayMessages].reverse().find(message => message.role === 'user');
+    if (!lastUserMessage) return;
+    setRecalledMessageId(lastUserMessage.id);
+    setInput(lastUserMessage.content);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(draftStorageKey, lastUserMessage.content);
+    }
+  }, [displayMessages, draftStorageKey]);
 
   // Stop generating
   const handleStop = () => {
@@ -1204,9 +1303,14 @@ export const ZenChat: React.FC<ZenChatProps> = ({
             {displayMessages.map(message => (
               <MessageBubble
                 key={message.id}
-                message={message}
+                message={
+                  message.id === recalledMessageId && message.role === 'user'
+                    ? { ...message, recalledToInput: true }
+                    : message
+                }
                 userInitials={userInitials}
                 onCopy={() => handleCopy(message.content)}
+                onRecallPrompt={message.role === 'user' ? () => handleRecallPrompt(message.id) : undefined}
                 onRegenerate={message.role === 'assistant' ? handleRegenerate : undefined}
                 onFeedback={(positive: boolean) => {
                   apiRequest('POST', '/api/concept2cure/feedback', { messageId: message.id, positive }).catch(() => {});
@@ -1234,8 +1338,13 @@ export const ZenChat: React.FC<ZenChatProps> = ({
         onChange={setInput}
         onSend={handleSend}
         onStop={handleStop}
+        onRecallLastPrompt={handleRecallLatestPrompt}
         isGenerating={isLoading || isStreaming}
-        placeholder={isConnected ? 'Ask AnA anything...' : 'Connecting...'}
+        placeholder={
+          isConnected
+            ? 'Ask AnA anything... try /summary, /gap-check, /timeline, or /draft'
+            : 'Connecting...'
+        }
       />
     </div>
   );
