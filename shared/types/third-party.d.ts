@@ -261,27 +261,6 @@ declare const vi: {
 };
 
 // ============================================================================
-// HuggingFace Inference Extensions
-// ============================================================================
-declare module '@huggingface/inference' {
-  export class HuggingFaceInference {
-    constructor(accessToken: string);
-    textGeneration(params: {
-      model: string;
-      inputs: string;
-      parameters?: {
-        max_new_tokens?: number;
-        temperature?: number;
-        top_p?: number;
-        do_sample?: boolean;
-      };
-    }): Promise<{ generated_text: string }>;
-    invoke(text: string): Promise<string>;
-    translation(params: { model: string; inputs: string }): Promise<{ translation_text: string }>;
-  }
-}
-
-// ============================================================================
 // Shepherd.js Tour Library
 // ============================================================================
 declare module 'shepherd.js' {

@@ -1,6 +1,8 @@
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import { Server } from 'http';
 import jwt from 'jsonwebtoken';
+import { createScopedLogger } from './utils/logger.js';
+const log = createScopedLogger('socket-server');
 
 // Define types for socket events
 interface TaskData {
@@ -199,11 +201,11 @@ export function initializeSocketServer(server: Server) {
       } else {
         // Allow unauthenticated connections but isolate them to a default org
         socket.orgId = 'default';
-        console.warn(`[Socket.io] Connection ${socket.id} has no auth token — using default org scope`);
+        log.warn(`[Socket.io] Connection ${socket.id} has no auth token — using default org scope`);
       }
       next();
     } catch (err: any) {
-      console.warn(`[Socket.io] Auth failed for ${socket.id}: ${err?.message} — using default org scope`);
+      log.warn(`[Socket.io] Auth failed for ${socket.id}: ${err?.message} — using default org scope`);
       (socket as AuthenticatedSocket).orgId = 'default';
       next();
     }
@@ -211,7 +213,7 @@ export function initializeSocketServer(server: Server) {
 
   ioInstance.on('connection', (socket: AuthenticatedSocket) => {
     const orgId = socket.orgId || 'default';
-    console.log(`New WebSocket connection: ${socket.id} (org: ${orgId})`);
+    log.debug(`New WebSocket connection: ${socket.id} (org: ${orgId})`);
 
     // Helper to build tenant-scoped room names
     const scopedRoom = (roomName: string) => `org_${orgId}_${roomName}`;
@@ -219,7 +221,7 @@ export function initializeSocketServer(server: Server) {
     // Join room based on organization/project (tenant-scoped)
     socket.on('join-room', (data: { room: string }) => {
       const room = scopedRoom(data.room);
-      console.log(`Socket ${socket.id} joining room: ${room}`);
+      log.debug(`Socket ${socket.id} joining room: ${room}`);
       socket.join(room);
       socket.emit('room-joined', { room: data.room });
     });
@@ -302,7 +304,7 @@ export function initializeSocketServer(server: Server) {
           .map(([, lock]) => lock)
       });
 
-      console.log(`User ${user.name} joined document ${documentId} (org: ${orgId})`);
+      log.debug(`User ${user.name} joined document ${documentId} (org: ${orgId})`);
     });
 
     // Handle cursor movement
@@ -599,28 +601,28 @@ export function initializeSocketServer(server: Server) {
 
     // Handle task events
     socket.on('task-created', (task: TaskData) => {
-      console.log('Broadcasting task-created:', task);
+      log.debug('Broadcasting task-created:', task);
       socket.broadcast.emit('task-created', task);
     });
 
     socket.on('task-updated', (task: TaskData) => {
-      console.log('Broadcasting task-updated:', task);
+      log.debug('Broadcasting task-updated:', task);
       socket.broadcast.emit('task-updated', task);
     });
 
     socket.on('task-deleted', (taskId: string) => {
-      console.log('Broadcasting task-deleted:', taskId);
+      log.debug('Broadcasting task-deleted:', taskId);
       socket.broadcast.emit('task-deleted', taskId);
     });
 
     socket.on('task-escalated', (task: TaskData) => {
-      console.log('Broadcasting task-escalated:', task);
+      log.debug('Broadcasting task-escalated:', task);
       socket.broadcast.emit('task-escalated', task);
     });
 
     // Handle batch operations
     socket.on('batch-update', (data: BatchUpdateData) => {
-      console.log('Broadcasting batch-update:', data);
+      log.debug('Broadcasting batch-update:', data);
       socket.broadcast.emit('batch-update', data);
     });
 
@@ -631,30 +633,30 @@ export function initializeSocketServer(server: Server) {
 
     // Handle notification events
     socket.on('notification-sent', (notification: any) => {
-      console.log('Broadcasting notification:', notification);
+      log.debug('Broadcasting notification:', notification);
       socket.broadcast.emit('notification-received', notification);
     });
 
     // Handle recurring task events
     socket.on('recurring-task-created', (task: TaskData) => {
-      console.log('Broadcasting recurring task:', task);
+      log.debug('Broadcasting recurring task:', task);
       socket.broadcast.emit('recurring-task-created', task);
     });
 
     // Handle compliance events
     socket.on('compliance-check', (data: any) => {
-      console.log('Broadcasting compliance check:', data);
+      log.debug('Broadcasting compliance check:', data);
       socket.broadcast.emit('compliance-update', data);
     });
 
     // Handle time tracking events
     socket.on('timer-started', (data: { taskId: string; userId: string }) => {
-      console.log('Broadcasting timer started:', data);
+      log.debug('Broadcasting timer started:', data);
       socket.broadcast.emit('timer-started', data);
     });
 
     socket.on('timer-stopped', (data: { taskId: string; userId: string; duration: number }) => {
-      console.log('Broadcasting timer stopped:', data);
+      log.debug('Broadcasting timer stopped:', data);
       socket.broadcast.emit('timer-stopped', data);
     });
 
@@ -683,7 +685,7 @@ export function initializeSocketServer(server: Server) {
       fieldSubscriptions.get(projectId)!.add(subscription);
       socketToProject.set(socket.id, projectId);
 
-      console.log(`User ${userName || userId} subscribed to fields for project ${projectId}`);
+      log.debug(`User ${userName || userId} subscribed to fields for project ${projectId}`);
       socket.emit('field-subscription-confirmed', { projectId, fields });
     });
 
@@ -693,7 +695,7 @@ export function initializeSocketServer(server: Server) {
       const roomName = scopedRoom(`project_fields_${projectId}`);
 
       // Log the field update
-      console.log(`Field update: ${field} in project ${projectId} by ${userName || userId}`);
+      log.debug(`Field update: ${field} in project ${projectId} by ${userName || userId}`);
 
       // Import SmartFieldLinking service
       const { smartFieldLinking } = await import('./services/SmartFieldLinking.js');
@@ -726,7 +728,7 @@ export function initializeSocketServer(server: Server) {
         // Send confirmation to the sender
         socket.emit('field-update-success', { field, value });
       } catch (error) {
-        console.error('Field update error:', error);
+        log.error('Field update error:', error);
         socket.emit('field-update-error', {
           field,
           error: error instanceof Error ? error.message : 'Failed to update field'
@@ -747,7 +749,7 @@ export function initializeSocketServer(server: Server) {
           ...completeness
         });
       } catch (error) {
-        console.error('Error checking field completeness:', error);
+        log.error('Error checking field completeness:', error);
         socket.emit('field-completeness-error', {
           projectId,
           error: error instanceof Error ? error.message : 'Failed to check completeness'
@@ -773,11 +775,11 @@ export function initializeSocketServer(server: Server) {
       }
 
       socketToProject.delete(socket.id);
-      console.log(`Socket ${socket.id} unsubscribed from project ${projectId} fields`);
+      log.debug(`Socket ${socket.id} unsubscribed from project ${projectId} fields`);
     });
 
     socket.on('disconnect', () => {
-      console.log('WebSocket disconnected:', socket.id);
+      log.debug('WebSocket disconnected:', socket.id);
 
       // Handle document collaboration cleanup
       const userInfo = socketToUser.get(socket.id);
@@ -804,11 +806,11 @@ export function initializeSocketServer(server: Server) {
 
     // Error handling
     socket.on('error', (error: Error) => {
-      console.error('Socket error:', error);
+      log.error('Socket error:', error);
     });
   });
 
-  console.log('✅ Socket.io server initialized with collaboration features');
+  log.debug('✅ Socket.io server initialized with collaboration features');
   return io;
 }
 
