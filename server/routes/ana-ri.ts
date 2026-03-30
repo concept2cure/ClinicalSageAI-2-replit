@@ -66,10 +66,7 @@ import {
   buildKernelExecutionContext,
   recordKernelSuccess,
 } from '../services/ana-kernel-orchestrator.js';
-import {
-  getKernelPolicyHint,
-  recordKernelPolicyOutcome,
-} from '../services/kernel-adaptive-policy.js';
+import { getKernelPolicyHint } from '../services/kernel-adaptive-policy.js';
 import { buildMemoryContextForChat } from '../services/memory-context-assembler.js';
 import {
   getIntelligencePrefix,
@@ -86,9 +83,11 @@ import {
   getFirecrawlQuotaStatus,
   recordSuccessfulFirecrawlScrape,
 } from '../integrations/firecrawl/usage';
-import { routeEvidenceRequest } from '../services/research-intelligence';
-import { persistEvidence } from '../services/research-intelligence';
-import { normalizeEvidence } from '../services/research-intelligence';
+import {
+  routeEvidenceRequest,
+  persistEvidence,
+  normalizeEvidence,
+} from '../services/research-intelligence';
 
 const router = Router();
 
@@ -152,8 +151,15 @@ function ensureGateway() {
 }
 
 // ─── Shared validation constants ─────────────────────────────────────────────
-const VALID_LENSES: IntentLens[] = ['auto', 'audit', 'improve', 'risk', 'strategy', 'compare'];
-const VALID_ROLES: UserRole[] = [
+const VALID_LENSES = new Set<IntentLens>([
+  'auto',
+  'audit',
+  'improve',
+  'risk',
+  'strategy',
+  'compare',
+]);
+const VALID_ROLES = new Set<UserRole>([
   'ceo',
   'ra_lead',
   'medical_writer',
@@ -161,15 +167,7 @@ const VALID_ROLES: UserRole[] = [
   'cmc_lead',
   'investor',
   'general',
-];
-
-interface CommandContext {
-  userId: number;
-  organizationId: number;
-  activeProjectId?: number;
-  userName?: string;
-  userRole?: string;
-}
+]);
 
 // ─── Request context extraction (typed, replaces (req as any) casts) ─────────
 function extractRequestContext(req: Request) {
@@ -217,11 +215,13 @@ router.post('/chat', async (req: Request, res: Response) => {
 
     // Validate intent_lens if provided
     const validatedLens: IntentLens | undefined =
-      intent_lens && VALID_LENSES.includes(intent_lens) ? (intent_lens as IntentLens) : undefined;
+      intent_lens && VALID_LENSES.has(intent_lens as IntentLens)
+        ? (intent_lens as IntentLens)
+        : undefined;
 
     // Validate user_role if provided
     const validatedRole: UserRole | undefined =
-      user_role && VALID_ROLES.includes(user_role) ? (user_role as UserRole) : undefined;
+      user_role && VALID_ROLES.has(user_role as UserRole) ? (user_role as UserRole) : undefined;
 
     // Resolve org/user context
     const { orgId, userId } = extractRequestContext(req);
@@ -280,7 +280,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     }
 
     // Optional governed external evidence pre-routing (AnA-owned orchestration)
-    let evidenceUsage: any = {
+    const evidenceUsage: any = {
       firecrawlRequested: Boolean(useFirecrawl),
       firecrawlUsed: false,
       quotaConsumed: 0,
@@ -572,7 +572,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     });
 
     // Unified kernel success recording (KDR + adaptive-policy outcome)
-    void recordKernelSuccess({
+    recordKernelSuccess({
       route: '/api/ana-ri/chat',
       threadId: resolvedThreadId || null,
       projectId: req.body.project_context?.projectId
@@ -600,7 +600,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     // RIM interception — capture intelligence signals (non-blocking)
     const projectIdForRim = req.body.project_id || req.body.context?.projectId;
     if (response.content && projectIdForRim) {
-      void interceptChatResponse({
+      interceptChatResponse({
         organizationId: orgId ? Number(orgId) : 0,
         projectId: projectIdForRim ? Number(projectIdForRim) : 0,
         userId: typeof userId === 'number' ? userId : undefined,
@@ -624,7 +624,7 @@ router.post('/chat', async (req: Request, res: Response) => {
         const guidance = await processResponseActions(response.content, {
           projectId:
             typeof chatProjectIdForActions === 'string'
-              ? parseInt(chatProjectIdForActions, 10)
+              ? Number.parseInt(chatProjectIdForActions, 10)
               : chatProjectIdForActions,
           organizationId: Number(orgId),
           userId: typeof userId === 'number' ? userId : 0,
@@ -722,7 +722,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     return sendSuccess(res, responsePayload);
   } catch (error: any) {
     console.error('[AnA RI] Chat error:', error);
-    void logKernelDecision({
+    logKernelDecision({
       requestId: `ana-ri-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
       route: '/api/ana-ri/chat',
       orchestratorName: 'kernel-router-v1',
@@ -732,7 +732,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       outcome: 'failed',
       errorMessage: error?.message || 'unknown error',
       decisionRationale: 'AnA RI route failed before completion.',
-    });
+    }).catch(() => {});
     return sendError(res, 500, error?.message || 'Internal server error', null, 'INTERNAL_ERROR');
   }
 });
@@ -773,10 +773,12 @@ router.post('/stream', async (req: Request, res: Response) => {
     const { orgId, userId } = extractRequestContext(req);
 
     const validatedLens: IntentLens | undefined =
-      intent_lens && VALID_LENSES.includes(intent_lens) ? (intent_lens as IntentLens) : undefined;
+      intent_lens && VALID_LENSES.has(intent_lens as IntentLens)
+        ? (intent_lens as IntentLens)
+        : undefined;
 
     const validatedRole: UserRole | undefined =
-      user_role && VALID_ROLES.includes(user_role) ? (user_role as UserRole) : undefined;
+      user_role && VALID_ROLES.has(user_role as UserRole) ? (user_role as UserRole) : undefined;
 
     const effectiveRole: UserRole =
       validatedRole ||
@@ -1015,7 +1017,7 @@ router.post('/stream', async (req: Request, res: Response) => {
 
     // RIM interception — capture intelligence signals (non-blocking)
     if (fullContent && project_id) {
-      void interceptChatResponse({
+      interceptChatResponse({
         organizationId: orgId ? Number(orgId) : 0,
         projectId: project_id ? Number(project_id) : 0,
         userId: typeof userId === 'number' ? userId : undefined,
@@ -1032,7 +1034,7 @@ router.post('/stream', async (req: Request, res: Response) => {
     if (fullContent && project_id && orgId) {
       try {
         const guidance = await processResponseActions(fullContent, {
-          projectId: typeof project_id === 'string' ? parseInt(project_id, 10) : project_id,
+          projectId: typeof project_id === 'string' ? Number.parseInt(project_id, 10) : project_id,
           organizationId: Number(orgId),
           userId: typeof userId === 'number' ? userId : 0,
           userName: 'AnA',
@@ -1053,7 +1055,7 @@ router.post('/stream', async (req: Request, res: Response) => {
           organizationId: Number(orgId),
           activeProjectId: project_id
             ? typeof project_id === 'string'
-              ? parseInt(project_id, 10)
+              ? Number.parseInt(project_id, 10)
               : project_id
             : undefined,
         };
