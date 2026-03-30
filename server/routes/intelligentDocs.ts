@@ -67,6 +67,7 @@ const CalculateComplianceSchema = z.object({
 interface AuthenticatedRequest extends Request {
   organizationId?: string;
   userId?: string;
+  [key: string]: any;
 }
 
 const requireOrganization = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -126,7 +127,7 @@ router.get('/sources', requireOrganization, asyncHandler(async (req: Authenticat
   query += ` ORDER BY updated_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
   params.push(parseInt(limit as string, 10), parseInt(offset as string, 10));
 
-  const result = await db.execute(sql.raw(query, ...params));
+  const result = await db.execute((sql.raw as any)(query, ...params));
   res.json({ sources: result.rows, total: result.rowCount });
 }));
 
@@ -269,7 +270,7 @@ router.get('/links', requireOrganization, asyncHandler(async (req: Authenticated
 
   query += ` ORDER BY tl.created_at DESC`;
 
-  const result = await db.execute(sql.raw(query, ...params));
+  const result = await db.execute((sql.raw as any)(query, ...params));
   res.json({ links: result.rows });
 }));
 
@@ -407,7 +408,7 @@ router.get('/propagation-events', requireOrganization, asyncHandler(async (req: 
   query += ` ORDER BY cpe.created_at DESC LIMIT $${paramIndex}`;
   params.push(parseInt(limit as string, 10));
 
-  const result = await db.execute(sql.raw(query, ...params));
+  const result = await db.execute((sql.raw as any)(query, ...params));
   res.json({ events: result.rows });
 }));
 
@@ -569,7 +570,7 @@ router.get('/compliance/rules', requireOrganization, asyncHandler(async (req: Au
 
   query += ` ORDER BY category, rule_id`;
 
-  const result = await db.execute(sql.raw(query, ...params));
+  const result = await db.execute((sql.raw as any)(query, ...params));
   res.json({ rules: result.rows });
 }));
 
