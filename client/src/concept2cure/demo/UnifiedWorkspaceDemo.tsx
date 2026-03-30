@@ -496,7 +496,7 @@ export const UnifiedWorkspaceDemo: React.FC = () => {
         return (
           <div className="p-6">
             <h2 className="text-base font-medium">{currentView} View</h2>
-            <p className="text-stone-500 mt-2">Coming soon...</p>
+            <p className="text-stone-500 mt-2">This view is in development.</p>
           </div>
         );
     }

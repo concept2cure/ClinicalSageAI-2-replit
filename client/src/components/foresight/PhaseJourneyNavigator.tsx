@@ -224,8 +224,8 @@ const PhaseJourneyNavigator: React.FC = () => {
                       'outline'
                     }
                   >
-                    {module.status === 'active' ? 'Active' : 
-                     module.status === 'coming_soon' ? 'Coming Soon' : 
+                    {module.status === 'active' ? 'Active' :
+                     module.status === 'coming_soon' ? 'In Development' :
                      'Locked'}
                   </Badge>
                 </div>
@@ -241,8 +241,8 @@ const PhaseJourneyNavigator: React.FC = () => {
                   disabled={module.status !== 'active'}
                   data-testid={`button-launch-${module.id}`}
                 >
-                  {module.status === 'active' ? 'Launch Module' : 
-                   module.status === 'coming_soon' ? 'Coming Soon' : 
+                  {module.status === 'active' ? 'Launch Module' :
+                   module.status === 'coming_soon' ? 'In Development' :
                    'Unlock with Upgrade'}
                 </Button>
               </CardContent>
