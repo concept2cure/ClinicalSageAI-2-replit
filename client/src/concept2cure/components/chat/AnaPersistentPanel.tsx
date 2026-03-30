@@ -654,6 +654,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   defaultChatMode = 'standard',
   projectIntelligence,
 }) => {
+  // Enhancement rule (in-place): evolve this single chat surface, do not rebuild parallel UIs.
   // AI Action system — unified execution spine (Phase 1)
   const aiAction = useAIAction();
 
@@ -694,6 +695,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const initialMessageSentRef = useRef(false);
   // Thread persistence — reuse thread_id across messages for continuous conversation
   const threadIdRef = useRef<string | null>(null);
+  const draftStorageKey = useMemo(() => {
+    const projectScope = contextProfile?.projectId || 'global';
+    return `ana:persistent:draft:${projectScope}:${mode}:${chatMode}`;
+  }, [contextProfile?.projectId, mode, chatMode]);
 
   const screenName = contextProfile?.screenName || 'default';
   const screenLabel = SCREEN_LABELS[screenName] || '';
@@ -1283,6 +1288,25 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
   }, [input]);
 
+  // Restore draft when project/mode changes.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const savedDraft = localStorage.getItem(draftStorageKey);
+    if (savedDraft) {
+      setInput(savedDraft);
+    }
+  }, [draftStorageKey]);
+
+  // Persist draft as user types.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!input.trim()) {
+      localStorage.removeItem(draftStorageKey);
+      return;
+    }
+    localStorage.setItem(draftStorageKey, input);
+  }, [input, draftStorageKey]);
+
   // Handle initial message (auto-send once)
   useEffect(() => {
     if (initialMessage && !initialMessageSentRef.current) {
@@ -1308,6 +1332,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       // Cap in-memory messages to prevent unbounded growth
       setMessages(prev => [...prev.slice(-199), userMsg]);
       setInput('');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(draftStorageKey);
+      }
       queue.startTurn();
 
       // Deep Research mode — launch a job and stream progress
@@ -1824,6 +1851,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       intentLens,
       selectedProvider,
       useFirecrawl,
+      draftStorageKey,
     ]
   );
 
@@ -1838,6 +1866,25 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   };
 
   const selectSlashCommand = (cmd: SlashCommand) => {
+    if (cmd.command === '/help') {
+      setSlashMenuOpen(false);
+      handleSuggestedAction({
+        id: 'open-capabilities',
+        label: 'Browse all capabilities',
+        intent: 'open_capabilities',
+      });
+      return;
+    }
+
+    if (cmd.command === '/clear') {
+      setMessages([]);
+      threadIdRef.current = null;
+      setInput('');
+      setSlashMenuOpen(false);
+      inputRef.current?.focus();
+      return;
+    }
+
     setInput(cmd.command + ' ');
     setSlashMenuOpen(false);
     inputRef.current?.focus();
@@ -1888,6 +1935,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         status: 'running',
         ts: Date.now(),
       });
+    }
+
+    // Shared capability entrypoint: keep users in existing flow.
+    if (action.intent === 'open_capabilities') {
+      onNavigate?.('/concept2cure?panel=capabilities');
+      return;
     }
 
     // ── Wave 1 Authoring Actions — real operational behavior ──────────
@@ -4268,7 +4321,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 className={cn(
                   'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
                   chatMode === 'deep-research'
-                    ? 'bg-violet-50 text-violet-700 hover:bg-violet-100'
+                    ? 'bg-[#FBF0EB] text-[#D97757] hover:bg-[#F6E6DF]'
                     : chatMode === 'nano-banana'
                       ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
                       : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
@@ -4547,6 +4600,22 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               ))}
             </div>
           )}
+          <p className="mt-1.5 pl-1 text-[11px] text-[#B0AEA5]">
+            Type <span className="font-semibold text-[#6B6962]">/</span> for commands.
+            {onNavigate ? (
+              <>
+                {' '}
+                <button
+                  type="button"
+                  onClick={() => onNavigate('/concept2cure?panel=capabilities')}
+                  className="font-semibold text-[#6B6962] underline decoration-[#D8D5CA] underline-offset-2 hover:text-[#4D4B45]"
+                >
+                  Browse all capabilities
+                </button>
+                .
+              </>
+            ) : null}
+          </p>
         </div>
       </div>
     </div>
