@@ -42,7 +42,7 @@ router.get(
   requireOrganizationContext,
   async (req, res) => {
     try {
-      const tenantId = parseInt(req.params.tenantId);
+      const tenantId = parseInt(req.params.tenantId as string);
       if (isNaN(tenantId)) {
         return res.status(400).json({ error: 'Invalid tenant ID' });
       }
@@ -69,33 +69,34 @@ router.get(
       const { category, riskLevel, sectionCode, active } = req.query;
 
       // Build query with optional filters
-      let query = getDb(req)
-        .select()
-        .from(ctqFactors)
-        .where(eq(ctqFactors.organizationId, tenantId));
+      const conditions: SQL[] = [eq(ctqFactors.organizationId, tenantId)];
 
       if (category) {
-        query = query.where(eq(ctqFactors.category, category as string));
+        conditions.push(eq(ctqFactors.category, category as string));
       }
 
       if (riskLevel) {
-        query = query.where(eq(ctqFactors.riskLevel, riskLevel as string));
+        conditions.push(eq(ctqFactors.riskLevel, riskLevel as string));
       }
 
       if (sectionCode) {
-        query = query.where(eq(ctqFactors.sectionCode, sectionCode as string));
+        conditions.push(eq((ctqFactors as any).sectionCode, sectionCode as string));
       }
 
       if (active !== undefined) {
         const isActive = active === 'true';
-        query = query.where(eq(ctqFactors.active, isActive));
+        conditions.push(eq((ctqFactors as any).active, isActive));
       }
 
-      const factors = await query.orderBy(ctqFactors.riskLevel, ctqFactors.sectionCode);
+      const factors = await (getDb(req) as any)
+        .select()
+        .from(ctqFactors)
+        .where(and(...conditions))
+        .orderBy(ctqFactors.riskLevel, (ctqFactors as any).sectionCode);
 
       return res.json(factors);
     } catch (error) {
-      logger.error(`Error fetching CTQ factors for tenant ${req.params.tenantId}`, error);
+      logger.error(`Error fetching CTQ factors for tenant ${req.params.tenantId}`, { error });
       return res.status(500).json({ error: 'Failed to fetch CTQ factors' });
     }
   }
@@ -110,8 +111,8 @@ router.get(
   requireOrganizationContext,
   async (req, res) => {
     try {
-      const tenantId = parseInt(req.params.tenantId);
-      const factorId = parseInt(req.params.factorId);
+      const tenantId = parseInt(req.params.tenantId as string);
+      const factorId = parseInt(req.params.factorId as string);
 
       if (isNaN(tenantId) || isNaN(factorId)) {
         return res.status(400).json({ error: 'Invalid tenant ID or factor ID' });
@@ -136,7 +137,7 @@ router.get(
       }
 
       // Get the factor
-      const factor = await getDb(req)
+      const factor = await (getDb(req) as any)
         .select()
         .from(ctqFactors)
         .where(and(eq(ctqFactors.id, factorId), eq(ctqFactors.organizationId, tenantId)))
@@ -150,7 +151,7 @@ router.get(
     } catch (error) {
       logger.error(
         `Error fetching CTQ factor ${req.params.factorId} for tenant ${req.params.tenantId}`,
-        error
+        { error }
       );
       return res.status(500).json({ error: 'Failed to fetch CTQ factor' });
     }
@@ -166,7 +167,7 @@ router.post(
   requireOrganizationContext,
   async (req, res) => {
     try {
-      const tenantId = parseInt(req.params.tenantId);
+      const tenantId = parseInt(req.params.tenantId as string);
 
       if (isNaN(tenantId)) {
         return res.status(400).json({ error: 'Invalid tenant ID' });
@@ -201,7 +202,7 @@ router.post(
       const factorData = validationResult.data;
 
       // Create the CTQ factor using the tenant database helper
-      const tenantDb = getDb(req);
+      const tenantDb = (getDb(req) as any);
       const createdFactor = await tenantDb.insert(ctqFactors, {
         ...factorData,
         createdById: req.userId,
@@ -210,7 +211,7 @@ router.post(
 
       return res.status(201).json(createdFactor[0]);
     } catch (error) {
-      logger.error(`Error creating CTQ factor for tenant ${req.params.tenantId}`, error);
+      logger.error(`Error creating CTQ factor for tenant ${req.params.tenantId}`, { error });
       return res.status(500).json({ error: 'Failed to create CTQ factor' });
     }
   }
@@ -225,8 +226,8 @@ router.patch(
   requireOrganizationContext,
   async (req, res) => {
     try {
-      const tenantId = parseInt(req.params.tenantId);
-      const factorId = parseInt(req.params.factorId);
+      const tenantId = parseInt(req.params.tenantId as string);
+      const factorId = parseInt(req.params.factorId as string);
 
       if (isNaN(tenantId) || isNaN(factorId)) {
         return res.status(400).json({ error: 'Invalid tenant ID or factor ID' });
@@ -249,7 +250,7 @@ router.patch(
       }
 
       // Check if factor exists
-      const existingFactor = await getDb(req)
+      const existingFactor = await (getDb(req) as any)
         .select()
         .from(ctqFactors)
         .where(and(eq(ctqFactors.id, factorId), eq(ctqFactors.organizationId, tenantId)))
@@ -272,7 +273,7 @@ router.patch(
       const factorData = validationResult.data;
 
       // Update the CTQ factor using the tenant database helper
-      const tenantDb = getDb(req);
+      const tenantDb = (getDb(req) as any);
       const updatedFactor = await tenantDb.update(
         ctqFactors,
         {
@@ -287,7 +288,7 @@ router.patch(
     } catch (error) {
       logger.error(
         `Error updating CTQ factor ${req.params.factorId} for tenant ${req.params.tenantId}`,
-        error
+        { error }
       );
       return res.status(500).json({ error: 'Failed to update CTQ factor' });
     }
@@ -303,8 +304,8 @@ router.delete(
   requireOrganizationContext,
   async (req, res) => {
     try {
-      const tenantId = parseInt(req.params.tenantId);
-      const factorId = parseInt(req.params.factorId);
+      const tenantId = parseInt(req.params.tenantId as string);
+      const factorId = parseInt(req.params.factorId as string);
 
       if (isNaN(tenantId) || isNaN(factorId)) {
         return res.status(400).json({ error: 'Invalid tenant ID or factor ID' });
@@ -323,7 +324,7 @@ router.delete(
       }
 
       // Check if factor exists
-      const existingFactor = await getDb(req)
+      const existingFactor = await (getDb(req) as any)
         .select()
         .from(ctqFactors)
         .where(and(eq(ctqFactors.id, factorId), eq(ctqFactors.organizationId, tenantId)))
@@ -334,7 +335,7 @@ router.delete(
       }
 
       // Check if factor is in use by any section gating rules
-      const isInUse = await getDb(req).execute(
+      const isInUse = await (getDb(req) as any).execute(
         `
       SELECT 1 FROM qmp_section_gating
       WHERE organization_id = $1 AND ctq_factors @> $2::jsonb
@@ -352,14 +353,14 @@ router.delete(
       }
 
       // Delete the CTQ factor using the tenant database helper
-      const tenantDb = getDb(req);
+      const tenantDb = (getDb(req) as any);
       await tenantDb.delete(ctqFactors, eq(ctqFactors.id, factorId));
 
       return res.status(204).end();
     } catch (error) {
       logger.error(
         `Error deleting CTQ factor ${req.params.factorId} for tenant ${req.params.tenantId}`,
-        error
+        { error }
       );
       return res.status(500).json({ error: 'Failed to delete CTQ factor' });
     }
@@ -375,7 +376,7 @@ router.post(
   requireOrganizationContext,
   async (req, res) => {
     try {
-      const tenantId = parseInt(req.params.tenantId);
+      const tenantId = parseInt(req.params.tenantId as string);
 
       if (isNaN(tenantId)) {
         return res.status(400).json({ error: 'Invalid tenant ID' });
@@ -410,7 +411,7 @@ router.post(
       }
 
       const { operation, factorIds, data } = validationResult.data;
-      const tenantDb = getDb(req);
+      const tenantDb = (getDb(req) as any);
 
       // Perform the batch operation
       switch (operation) {
@@ -443,7 +444,7 @@ router.post(
           }
 
           // Clone factors from a template
-          const templateFactors = await getDb(req)
+          const templateFactors = await (getDb(req) as any)
             .select()
             .from(ctqFactors)
             .where(eq(ctqFactors.organizationId, parseInt(data.templateId)));
@@ -520,7 +521,7 @@ router.post(
           return res.status(400).json({ error: 'Unsupported batch operation' });
       }
     } catch (error) {
-      logger.error(`Error performing batch operation for tenant ${req.params.tenantId}`, error);
+      logger.error(`Error performing batch operation for tenant ${req.params.tenantId}`, { error });
       return res.status(500).json({ error: 'Failed to perform batch operation' });
     }
   }
