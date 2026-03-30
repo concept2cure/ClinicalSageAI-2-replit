@@ -806,6 +806,7 @@ interface ChatInputProps {
   onChange: (value: string) => void;
   onSend: () => void;
   onStop?: () => void;
+  onRecallLastPrompt?: () => void;
   isGenerating?: boolean;
   placeholder?: string;
   slashCommands: SlashCommand[];
@@ -818,6 +819,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   onChange,
   onSend,
   onStop,
+  onRecallLastPrompt,
   isGenerating = false,
   placeholder = 'Message AnA...',
   slashCommands,
@@ -881,6 +883,18 @@ const ChatInput: React.FC<ChatInputProps> = ({
       e.preventDefault();
       if (value.trim() && !isGenerating) {
         onSend();
+      }
+      return;
+    }
+
+    // Claude-like recall: ArrowUp on empty composer restores latest prompt.
+    if (e.key === 'ArrowUp' && !value.trim() && !isGenerating) {
+      const textarea = textareaRef.current;
+      const caretAtStart =
+        !!textarea && (textarea.selectionStart ?? 0) === 0 && (textarea.selectionEnd ?? 0) === 0;
+      if (!textarea || caretAtStart) {
+        e.preventDefault();
+        onRecallLastPrompt?.();
       }
     }
   };
@@ -1087,6 +1101,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
   // Local state
   const [input, setInput] = useState('');
   const [recalledMessageId, setRecalledMessageId] = useState<string | null>(null);
+  const lastSubmittedPromptRef = useRef<string | null>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const draftStorageKey = useMemo(() => {
     const projectScope = projectId || 'global';
@@ -1182,6 +1197,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     if (!input.trim() || isLoading || isStreaming) return;
 
     const messageText = input.trim();
+    lastSubmittedPromptRef.current = messageText;
     setRecalledMessageId(null);
     setInput('');
     if (typeof window !== 'undefined') {
@@ -1228,6 +1244,24 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     }
     scrollToBottom(false);
   }, [displayMessages, draftStorageKey, scrollToBottom]);
+
+  const handleRecallLatestPrompt = useCallback(() => {
+    if (lastSubmittedPromptRef.current) {
+      setRecalledMessageId('last-submitted');
+      setInput(lastSubmittedPromptRef.current);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(draftStorageKey, lastSubmittedPromptRef.current);
+      }
+      return;
+    }
+    const lastUserMessage = [...displayMessages].reverse().find(message => message.role === 'user');
+    if (!lastUserMessage) return;
+    setRecalledMessageId(lastUserMessage.id);
+    setInput(lastUserMessage.content);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(draftStorageKey, lastUserMessage.content);
+    }
+  }, [displayMessages, draftStorageKey]);
 
   // Stop generating
   const handleStop = () => {
@@ -1439,6 +1473,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
         onChange={setInput}
         onSend={handleSend}
         onStop={handleStop}
+        onRecallLastPrompt={handleRecallLatestPrompt}
         isGenerating={isLoading || isStreaming}
         placeholder={
           isConnected

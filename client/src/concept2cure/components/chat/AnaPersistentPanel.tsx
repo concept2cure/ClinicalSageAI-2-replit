@@ -662,6 +662,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
   const [messages, setMessages] = useState<AnaMessage[]>([]);
   const [input, setInput] = useState('');
+  const lastSubmittedPromptRef = useRef<string | null>(null);
   const queue = useAnaQueueState();
   const isThinking = !queue.state.canSubmit;
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -1323,6 +1324,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     async (messageText?: string) => {
       const text = messageText || input.trim();
       if (!text || isThinking) return;
+      lastSubmittedPromptRef.current = text;
 
       const userMsg: AnaMessage = {
         id: `u-${Date.now()}`,
@@ -1919,6 +1921,28 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+      return;
+    }
+
+    // Claude-like recall: ArrowUp on empty composer restores the latest user prompt.
+    if (e.key === 'ArrowUp' && !input.trim()) {
+      const inputEl = inputRef.current;
+      const caretAtStart =
+        !!inputEl &&
+        (inputEl.selectionStart ?? 0) === 0 &&
+        (inputEl.selectionEnd ?? 0) === 0;
+      if (!inputEl || caretAtStart) {
+        if (lastSubmittedPromptRef.current) {
+          e.preventDefault();
+          handleRecallPrompt('last-submitted', lastSubmittedPromptRef.current);
+          return;
+        }
+        const lastUserMessage = [...messages].reverse().find(message => message.role === 'user');
+        if (lastUserMessage) {
+          e.preventDefault();
+          handleRecallPrompt(lastUserMessage.id, lastUserMessage.content);
+        }
+      }
     }
   };
 
