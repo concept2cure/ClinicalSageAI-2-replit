@@ -42,7 +42,6 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
       const response = await fetch(`/api/510k/${projectId}/documents`, {
         headers: {
           'x-organization-id': orgId,
-          'x-user-id': localStorage.getItem('userId') || '1',
         },
       });
 
@@ -75,7 +74,6 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
         headers: {
           'Content-Type': 'application/json',
           'x-organization-id': orgId,
-          'x-user-id': localStorage.getItem('userId') || '1',
         },
       });
 
@@ -114,7 +112,6 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
         headers: {
           'Content-Type': 'application/json',
           'x-organization-id': orgId,
-          'x-user-id': localStorage.getItem('userId') || '1',
         },
       });
 
@@ -148,7 +145,6 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
         headers: {
           'Content-Type': 'application/json',
           'x-organization-id': orgId,
-          'x-user-id': localStorage.getItem('userId') || '1',
         },
       });
 
@@ -180,7 +176,6 @@ const DocumentGenerationPanel = ({ projectId, projectData }) => {
       const response = await fetch(`/api/510k/documents/${documentId}/pdf/${formType}`, {
         headers: {
           'x-organization-id': orgId,
-          'x-user-id': localStorage.getItem('userId') || 'system',
         },
       });
 

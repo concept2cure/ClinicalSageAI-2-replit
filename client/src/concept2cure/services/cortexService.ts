@@ -201,17 +201,24 @@ export class CortexService {
   }
 
   private getAuthHeaders(): Record<string, string> {
-    const token =
-      sessionStorage.getItem('trialsage_access_token') ||
-      localStorage.getItem('trialsage_access_token');
-
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    // SECURITY: Cookie-based auth posture.
+    // Do not read bearer tokens from browser storage in this service.
+    // Phase-2 migration: remove remaining storage-token readers in other modules.
+    return {};
   }
 
   private withAuthHeaders(headers: Record<string, string> = {}): Record<string, string> {
     return {
       ...headers,
       ...this.getAuthHeaders(),
+    };
+  }
+
+  private withAuthInit(init: RequestInit = {}): RequestInit {
+    return {
+      ...init,
+      credentials: 'include',
+      headers: this.withAuthHeaders((init.headers as Record<string, string>) || {}),
     };
   }
 
@@ -224,9 +231,10 @@ export class CortexService {
    */
   async getHealth(): Promise<CortexHealth> {
     try {
-      const response = await fetch(`${CORTEX_CONFIG.baseUrl}${CORTEX_CONFIG.healthEndpoint}`, {
-        headers: this.withAuthHeaders(),
-      });
+      const response = await fetch(
+        `${CORTEX_CONFIG.baseUrl}${CORTEX_CONFIG.healthEndpoint}`,
+        this.withAuthInit()
+      );
       if (!response.ok) {
         return {
           status: 'unhealthy',
@@ -270,9 +278,10 @@ export class CortexService {
    * Get Cortex statistics
    */
   async getStats(): Promise<CortexStats> {
-    const response = await fetch(`${CORTEX_CONFIG.baseUrl}${CORTEX_CONFIG.statsEndpoint}`, {
-      headers: this.withAuthHeaders(),
-    });
+    const response = await fetch(
+      `${CORTEX_CONFIG.baseUrl}${CORTEX_CONFIG.statsEndpoint}`,
+      this.withAuthInit()
+    );
     if (!response.ok) {
       throw new CortexServiceError('Failed to fetch stats', 'STATS_ERROR', response.status);
     }
@@ -329,9 +338,9 @@ export class CortexService {
     this.abortController = new AbortController();
 
     try {
-      const response = await fetch(`${CORTEX_CONFIG.baseUrl}${CORTEX_CONFIG.chatEndpoint}`, {
+      const response = await fetch(`${CORTEX_CONFIG.baseUrl}${CORTEX_CONFIG.chatEndpoint}`, this.withAuthInit({
         method: 'POST',
-        headers: this.withAuthHeaders({ 'Content-Type': 'application/json' }),
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: params.message,
           thread_id: params.threadId,
@@ -343,7 +352,7 @@ export class CortexService {
           project_context: params.projectContext || undefined,
         }),
         signal: this.abortController.signal,
-      });
+      }));
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({ error: 'Unknown error' }));
@@ -419,9 +428,9 @@ export class CortexService {
     this.abortController = new AbortController();
 
     try {
-      const response = await fetch(`${CORTEX_CONFIG.baseUrl}${CORTEX_CONFIG.chatEndpoint}`, {
+      const response = await fetch(`${CORTEX_CONFIG.baseUrl}${CORTEX_CONFIG.chatEndpoint}`, this.withAuthInit({
         method: 'POST',
-        headers: this.withAuthHeaders({ 'Content-Type': 'application/json' }),
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: params.message,
           thread_id: params.threadId,
@@ -433,7 +442,7 @@ export class CortexService {
           project_context: params.projectContext || undefined,
         }),
         signal: this.abortController.signal,
-      });
+      }));
 
       if (!response.ok) {
         throw new CortexServiceError('Stream request failed', 'STREAM_ERROR', response.status);
@@ -538,9 +547,9 @@ export class CortexService {
     minScore?: number;
     filters?: Record<string, unknown>;
   }): Promise<CortexSearchResult[]> {
-    const response = await fetch(`${CORTEX_CONFIG.baseUrl}${CORTEX_CONFIG.searchEndpoint}`, {
+    const response = await fetch(`${CORTEX_CONFIG.baseUrl}${CORTEX_CONFIG.searchEndpoint}`, this.withAuthInit({
       method: 'POST',
-      headers: this.withAuthHeaders({ 'Content-Type': 'application/json' }),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         query: params.query,
         atom_types: params.types,
@@ -548,7 +557,7 @@ export class CortexService {
         min_similarity: params.minScore ?? 0.5,
         ...params.filters,
       }),
-    });
+    }));
 
     if (!response.ok) {
       throw new CortexServiceError('Search failed', 'SEARCH_ERROR', response.status);
@@ -594,9 +603,7 @@ export class CortexService {
           limit: String(params.limit ?? 10),
           ...(params.edgeTypes ? { edge_types: params.edgeTypes.join(',') } : {}),
         }),
-      {
-        headers: this.withAuthHeaders(),
-      }
+      this.withAuthInit()
     );
 
     if (!response.ok) {
@@ -643,9 +650,10 @@ export class CortexService {
     if (params?.limit) queryParams.set('limit', String(params.limit));
     if (params?.since) queryParams.set('since', params.since.toISOString());
 
-    const response = await fetch(`${CORTEX_CONFIG.baseUrl}/advisory/signals?${queryParams}`, {
-      headers: this.withAuthHeaders(),
-    });
+    const response = await fetch(
+      `${CORTEX_CONFIG.baseUrl}/advisory/signals?${queryParams}`,
+      this.withAuthInit()
+    );
 
     if (!response.ok) {
       // Return empty array if endpoint not available
@@ -674,9 +682,10 @@ export class CortexService {
    * Get submission predictions
    */
   async getPredictions(submissionId: string): Promise<SubmissionPrediction[]> {
-    const response = await fetch(`${CORTEX_CONFIG.baseUrl}/advisory/predictions/${submissionId}`, {
-      headers: this.withAuthHeaders(),
-    });
+    const response = await fetch(
+      `${CORTEX_CONFIG.baseUrl}/advisory/predictions/${submissionId}`,
+      this.withAuthInit()
+    );
 
     if (!response.ok) {
       return [];
@@ -720,9 +729,7 @@ export class CortexService {
   }> {
     const response = await fetch(
       `${CORTEX_CONFIG.baseUrl}${CORTEX_CONFIG.advisoryEndpoint}/${projectId}`,
-      {
-        headers: this.withAuthHeaders(),
-      }
+      this.withAuthInit()
     );
 
     if (!response.ok) {
@@ -769,9 +776,7 @@ export class CortexService {
     if (params?.limit) queryParams.set('limit', String(params.limit));
     if (params?.offset) queryParams.set('offset', String(params.offset));
 
-    const response = await fetch(`${CORTEX_CONFIG.baseUrl}/threads?${queryParams}`, {
-      headers: this.withAuthHeaders(),
-    });
+    const response = await fetch(`${CORTEX_CONFIG.baseUrl}/threads?${queryParams}`, this.withAuthInit());
 
     if (!response.ok) {
       return [];
@@ -798,9 +803,7 @@ export class CortexService {
    * Get thread with messages
    */
   async getThread(threadId: string): Promise<CortexThread | null> {
-    const response = await fetch(`${CORTEX_CONFIG.baseUrl}/threads/${threadId}`, {
-      headers: this.withAuthHeaders(),
-    });
+    const response = await fetch(`${CORTEX_CONFIG.baseUrl}/threads/${threadId}`, this.withAuthInit());
 
     if (!response.ok) {
       return null;
@@ -836,10 +839,9 @@ export class CortexService {
    * Delete a thread
    */
   async deleteThread(threadId: string): Promise<void> {
-    const response = await fetch(`${CORTEX_CONFIG.baseUrl}/threads/${threadId}`, {
+    const response = await fetch(`${CORTEX_CONFIG.baseUrl}/threads/${threadId}`, this.withAuthInit({
       method: 'DELETE',
-      headers: this.withAuthHeaders(),
-    });
+    }));
 
     if (!response.ok && response.status !== 404) {
       throw new CortexServiceError('Failed to delete thread', 'DELETE_ERROR', response.status);
@@ -851,11 +853,11 @@ export class CortexService {
    */
   async updateThreadTitle(threadId: string, title: string): Promise<void> {
     try {
-      await fetch(`${CORTEX_CONFIG.baseUrl}/threads/${threadId}`, {
+      await fetch(`${CORTEX_CONFIG.baseUrl}/threads/${threadId}`, this.withAuthInit({
         method: 'PATCH',
-        headers: { ...this.withAuthHeaders(), 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title }),
-      });
+      }));
     } catch {
       // Non-critical — silently ignore title update failures
     }

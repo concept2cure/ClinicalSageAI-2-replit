@@ -10,12 +10,31 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const config = require('../config/environment').config;
 
+const DEFAULT_ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:5000',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5000',
+  'https://trialsage.com',
+  'https://app.trialsage.com',
+];
+
+const configuredAllowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(o => o.trim())
+  .filter(Boolean);
+const allowedOrigins = configuredAllowedOrigins.length
+  ? configuredAllowedOrigins
+  : DEFAULT_ALLOWED_ORIGINS;
+
 // Base CORS configuration
 const corsOptions = {
-  // In production, restrict to specific domains
-  origin: config.isProduction
-    ? ['https://trialsage.com', 'https://app.trialsage.com', /\.trialsage\.com$/]
-    : true, // Allow all in development
+  origin(origin, callback) {
+    // Allow non-browser clients with no Origin (health checks, internal jobs)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(null, false);
+  },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Organization-ID', 'X-Client-Workspace-ID'],
   credentials: true,

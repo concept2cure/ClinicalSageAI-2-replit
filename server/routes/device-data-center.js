@@ -20,9 +20,25 @@ const upload = multer({
   }
 });
 
-// Middleware to get organizationId from headers
+// Middleware to enforce authenticated tenant context only
 router.use((req, res, next) => {
-  req.organizationId = parseInt(req.headers['x-organization-id']) || 7;
+  const trustedOrgId =
+    req.user?.organizationId ||
+    req.user?.tenantId ||
+    req.tenantContext?.organizationId ||
+    null;
+
+  const parsedOrgId = parseInt(String(trustedOrgId), 10);
+  if (!Number.isFinite(parsedOrgId) || parsedOrgId <= 0) {
+    return res.status(401).json({ error: 'Authentication required: trusted organization context missing' });
+  }
+
+  const headerOrgId = req.headers['x-organization-id'];
+  if (headerOrgId && parseInt(String(headerOrgId), 10) !== parsedOrgId) {
+    return res.status(403).json({ error: 'Organization header mismatch with authenticated context' });
+  }
+
+  req.organizationId = parsedOrgId;
   next();
 });
 

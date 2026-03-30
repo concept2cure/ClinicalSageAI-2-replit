@@ -1,6 +1,39 @@
 import express from 'express';
+import jwt from 'jsonwebtoken';
 
 const router = express.Router();
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ||
+  'http://localhost:3000,http://localhost:5000,http://127.0.0.1:3000,http://127.0.0.1:5000,https://trialsage.com,https://app.trialsage.com')
+  .split(',')
+  .map(o => o.trim())
+  .filter(Boolean);
+
+function authenticateSse(req, res) {
+  const auth = req.headers.authorization || '';
+  if (!auth.startsWith('Bearer ')) {
+    res.status(401).json({ error: 'Bearer token required' });
+    return false;
+  }
+  const jwtSecret = process.env.JWT_SECRET || process.env.AUTH_JWT_SECRET;
+  if (!jwtSecret) {
+    res.status(500).json({ error: 'Server misconfiguration: missing JWT secret' });
+    return false;
+  }
+  try {
+    const jwtAlgorithm = process.env.JWT_ALGORITHM || 'HS256';
+    jwt.verify(auth.slice(7), jwtSecret, { algorithms: [jwtAlgorithm] });
+    return true;
+  } catch {
+    res.status(401).json({ error: 'Invalid authentication token' });
+    return false;
+  }
+}
+
+function resolveSseOrigin(req) {
+  const origin = req.headers.origin || '';
+  if (!origin) return null;
+  return allowedOrigins.includes(origin) ? origin : null;
+}
 
 // Store active SSE connections per leafId
 const sseConnections = new Map();
@@ -358,13 +391,19 @@ router.post('/:leafId/save', async (req, res) => {
 
 // SSE endpoint for real-time patches
 router.get('/:leafId/patches/stream', async (req, res) => {
+  if (!authenticateSse(req, res)) return;
+  const allowedOrigin = resolveSseOrigin(req);
+  if (req.headers.origin && !allowedOrigin) {
+    return res.status(403).json({ error: 'Origin not allowed' });
+  }
   const { leafId } = req.params;
-  
+
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*'
+    ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin } : {}),
+    'Vary': 'Origin'
   });
   
   // Store this connection
