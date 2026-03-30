@@ -56,3 +56,4 @@ test-results/
 playwright-report/
 test-artifacts/
 generated_documents/
+.claude/worktrees/
