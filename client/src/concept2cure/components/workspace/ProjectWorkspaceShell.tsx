@@ -858,6 +858,12 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     }
   }, [documentTab, mode]);
 
+  useEffect(() => {
+    if (mode === 'edit' && showContextBars) {
+      setShowContextBars(false);
+    }
+  }, [mode, showContextBars]);
+
   // ── Global keyboard shortcuts ────────────────────────────────────────────
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -1531,6 +1537,11 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         : 'Select a section'
       : FOLDER_LABELS[selectedFolder] || selectedFolder;
   const browseDocs = leftRailMode === 'dossier' ? sectionDocs : folderDocs;
+  const workflowStep = useMemo(() => {
+    if (mode === 'edit') return 3;
+    if (mode === 'browse') return selectedDocId ? 2 : 1;
+    return 1;
+  }, [mode, selectedDocId]);
 
   // Outline available only when doc is open
   const outlineAvailable = mode === 'edit' && !!selectedDocId;
@@ -1624,11 +1635,37 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           <button
             onClick={() => setShowContextBars(prev => !prev)}
             className="flex items-center justify-center w-5 h-5 rounded text-stone-300 hover:text-stone-600 hover:bg-stone-100 transition-colors"
-            title={showContextBars ? 'Hide advanced controls' : 'Show advanced controls'}
-            aria-label={showContextBars ? 'Hide advanced controls' : 'Show advanced controls'}
+            title={showContextBars ? 'Hide advanced controls' : 'Show workflow controls'}
+            aria-label={showContextBars ? 'Hide advanced controls' : 'Show workflow controls'}
           >
             {showContextBars ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
           </button>
+        </div>
+
+        <div className="flex items-center gap-1.5 px-4 h-8 border-b border-stone-100 bg-stone-50/60 shrink-0 overflow-x-auto">
+          <span className="text-[10px] uppercase tracking-wide text-stone-400 font-medium whitespace-nowrap">Workflow</span>
+          {['Select section', 'Open document', 'Draft & review', 'Readiness', 'Package'].map((step, idx) => (
+            <React.Fragment key={step}>
+              <span
+                className={cn(
+                  'text-[11px] px-1.5 py-0.5 rounded-md border whitespace-nowrap',
+                  idx + 1 <= workflowStep
+                    ? 'border-blue-200 bg-blue-50 text-blue-700'
+                    : 'border-stone-200 bg-white text-stone-500'
+                )}
+              >
+                {idx + 1}. {step}
+              </span>
+              {idx < 4 && <ChevronRight className="w-3 h-3 text-stone-300 shrink-0" />}
+            </React.Fragment>
+          ))}
+          <span className="ml-auto text-[11px] text-stone-500 whitespace-nowrap">
+            {mode === 'edit'
+              ? 'Focused edit mode'
+              : mode === 'browse'
+                ? 'Browse then open a document'
+                : 'Start from project home'}
+          </span>
         </div>
 
         {/* ── Collapsible context bars (AnA Shell, Context Band, CTD Flow) ──── */}

@@ -3171,9 +3171,12 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                           : 'border-transparent text-stone-500 hover:text-stone-700',
                       )}
                     >
-                      {tab === 'readiness' ? 'Readiness' : 'Package Builder'}
+                      {tab === 'readiness' ? 'Readiness' : 'Package Manifest'}
                     </button>
                   ))}
+                </div>
+                <div className="border-b border-amber-200 bg-amber-50/60 px-4 py-2 text-xs text-amber-800">
+                  Beta note: package generation currently exports a submission manifest JSON for internal review and handoff.
                 </div>
 
                 {submissionTab === 'readiness' ? (
@@ -3259,7 +3262,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                           const url = URL.createObjectURL(blob);
                           const a = document.createElement('a');
                           a.href = url;
-                          a.download = `submission-package-${activeProjectId}-${Date.now()}.json`;
+                          a.download = `submission-package-manifest-${activeProjectId}-${Date.now()}.json`;
                           a.click();
                           URL.revokeObjectURL(url);
                         } catch (err) {
