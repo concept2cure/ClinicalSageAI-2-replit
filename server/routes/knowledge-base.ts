@@ -32,6 +32,7 @@ import {
   TableRow as DocxTableRow,
   TableCell as DocxTableCell,
   WidthType,
+  ImageRun,
 } from 'docx';
 import { db } from '../db.js';
 import { eq, desc } from 'drizzle-orm';
@@ -214,7 +215,7 @@ function parseInlineHtml(html: string): TextRun[] {
       if (decoded.trim() || decoded === ' ') {
         const opts: Record<string, unknown> = { text: decoded };
         for (const tag of tagStack) {
-          const t = tag.toLowerCase();
+          const t = tag.split(/[\s/]/)[0].toLowerCase();
           if (t === 'strong' || t === 'b') opts.bold = true;
           if (t === 'em' || t === 'i') opts.italics = true;
           if (t === 'u') opts.underline = { type: 'single' };
@@ -222,6 +223,25 @@ function parseInlineHtml(html: string): TextRun[] {
           if (t === 'sup') opts.superScript = true;
           if (t === 'sub') opts.subScript = true;
           if (t === 'mark') opts.shading = { fill: 'FFFF00' };
+        }
+        // Parse inline style for color from span tags in the stack
+        for (const openTag of tagStack) {
+          const colorMatch = openTag.match(/style\s*=\s*["'][^"']*color:\s*([^;"']+)/i);
+          if (colorMatch) {
+            const c = colorMatch[1].trim().replace('#', '');
+            if (/^[0-9a-fA-F]{3,6}$/.test(c)) opts.color = c.length === 3
+              ? c.split('').map((ch: string) => ch + ch).join('')
+              : c;
+          }
+          const sizeMatch = openTag.match(/style\s*=\s*["'][^"']*font-size:\s*([0-9.]+)(px|pt|rem|em)/i);
+          if (sizeMatch) {
+            const val = parseFloat(sizeMatch[1]);
+            const unit = sizeMatch[2];
+            // Convert to half-points (DOCX size unit)
+            if (unit === 'pt') opts.size = Math.round(val * 2);
+            else if (unit === 'px') opts.size = Math.round(val * 1.5);
+            else if (unit === 'rem' || unit === 'em') opts.size = Math.round(val * 24);
+          }
         }
         runs.push(new TextRun(opts as any));
       }
@@ -237,17 +257,44 @@ function parseInlineHtml(html: string): TextRun[] {
       const isClosing = tagFull.startsWith('/');
       const tagName = (isClosing ? tagFull.slice(1) : tagFull.split(/[\s/]/)[0]).toLowerCase();
       if (tagName === 'br') { flushText(); runs.push(new TextRun({ break: 1 } as any)); i = end + 1; continue; }
-      if (['img', 'hr', 'input'].includes(tagName) || tagFull.endsWith('/')) { i = end + 1; continue; }
+      if (['hr', 'input'].includes(tagName) || tagFull.endsWith('/')) { i = end + 1; continue; }
+      // Handle inline images — extract src for ImageRun
+      if (tagName === 'img') {
+        flushText();
+        const srcMatch = tagFull.match(/src\s*=\s*["']([^"']+)["']/i);
+        if (srcMatch && srcMatch[1].startsWith('data:image')) {
+          // Embed base64 images directly in DOCX
+          const base64Data = srcMatch[1].split(',')[1];
+          if (base64Data) {
+            const ext = srcMatch[1].match(/data:image\/(png|jpeg|jpg|gif|webp)/i);
+            const imgType = ext ? ext[1].toLowerCase().replace('jpg', 'jpeg') : 'png';
+            try {
+              runs.push(new ImageRun({
+                data: Buffer.from(base64Data, 'base64'),
+                transformation: { width: 400, height: 300 },
+                type: imgType === 'png' ? 'png' : 'jpg',
+              } as any));
+            } catch { /* skip image if ImageRun fails */ }
+          }
+        }
+        i = end + 1; continue;
+      }
       if (['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'ul', 'ol',
         'table', 'tr', 'td', 'th', 'thead', 'tbody', 'blockquote', 'pre', 'code'].includes(tagName)) {
         i = end + 1; continue;
       }
       flushText();
       if (isClosing) {
-        const idx = tagStack.lastIndexOf(tagName);
-        if (idx !== -1) tagStack.splice(idx, 1);
+        // Remove last matching tag (by name prefix)
+        for (let j = tagStack.length - 1; j >= 0; j--) {
+          if (tagStack[j] === tagName || tagStack[j].startsWith(tagName + ' ')) {
+            tagStack.splice(j, 1);
+            break;
+          }
+        }
       } else {
-        tagStack.push(tagName);
+        // Preserve full tag with attributes (for style parsing)
+        tagStack.push(tagFull);
       }
       i = end + 1;
     } else {
@@ -301,6 +348,13 @@ function htmlToDocxElements(html: string): (Paragraph | DocxTable)[] {
     return '';
   });
 
+  // Track list context for ordered vs unordered
+  let inOrderedList = false;
+  processed = processed.replace(/<ol[^>]*>/gi, () => { inOrderedList = true; return '\n__OL_START__\n'; });
+  processed = processed.replace(/<\/ol>/gi, () => { inOrderedList = false; return '\n__OL_END__\n'; });
+  processed = processed.replace(/<ul[^>]*>/gi, '\n__UL_START__\n');
+  processed = processed.replace(/<\/ul>/gi, '\n__UL_END__\n');
+
   // Split remaining content by block-level closing tags
   const lines = processed
     .replace(/<\/(p|div|h[1-6]|blockquote|pre|li)>/gi, '\n')
@@ -351,14 +405,24 @@ function htmlToDocxElements(html: string): (Paragraph | DocxTable)[] {
       continue;
     }
 
-    // List items
+    // List context markers
+    if (line.trim() === '__OL_START__') { inOrderedList = true; continue; }
+    if (line.trim() === '__OL_END__') { inOrderedList = false; continue; }
+    if (line.trim() === '__UL_START__' || line.trim() === '__UL_END__') continue;
+
+    // List items — numbered or bullet depending on context
     const liMatch = line.match(/^<li[^>]*>([\s\S]*?)$/i);
     if (liMatch) {
-      elements.push(new Paragraph({
+      const paraOpts: any = {
         children: parseInlineHtml(liMatch[1]),
-        bullet: { level: 0 },
         spacing: { after: 60 },
-      }));
+      };
+      if (inOrderedList) {
+        paraOpts.numbering = { reference: 'default-numbering', level: 0 };
+      } else {
+        paraOpts.bullet = { level: 0 };
+      }
+      elements.push(new Paragraph(paraOpts));
       continue;
     }
 
@@ -481,6 +545,17 @@ async function renderDocxNodeFallback(
   }
 
   const doc = new Document({
+    numbering: {
+      config: [{
+        reference: 'default-numbering',
+        levels: [{
+          level: 0,
+          format: 'decimal' as any,
+          text: '%1.',
+          alignment: AlignmentType.START,
+        }],
+      }],
+    },
     sections: [{ children }],
   });
   return Buffer.from(await Packer.toBuffer(doc));

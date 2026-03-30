@@ -82,9 +82,8 @@ import { ComplianceScanner } from './extensions/ComplianceScanner';
 import { TrackChanges } from './extensions/TrackChangesExtension';
 import { PageBreak } from './extensions/PageBreakExtension';
 import { Indent } from './extensions/IndentExtension';
-// Collaboration extensions require @tiptap/core >=3.19 — dynamically loaded when ydoc is provided
-// import Collaboration from '@tiptap/extension-collaboration';
-// import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
+import Collaboration from '@tiptap/extension-collaboration';
+import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 import {
   Bold,
   Italic,
@@ -138,6 +137,7 @@ import {
   Minus,
   IndentIncrease,
   IndentDecrease,
+  Trash2,
 } from 'lucide-react';
 import InlineApprovalPanel from './InlineApprovalPanel';
 
@@ -600,18 +600,43 @@ const Toolbar: React.FC<ToolbarProps> = ({
           >
             <SplitSquareHorizontal className="w-4 h-4" />
           </ToolButton>
+          <ToolButton
+            onClick={() => editor.chain().focus().toggleHeaderRow().run()}
+            title="Toggle Header Row"
+          >
+            <span className="text-[9px] font-bold">H</span>
+            <span className="text-[9px] ml-px">Row</span>
+          </ToolButton>
+          <ToolButton
+            onClick={() => editor.chain().focus().deleteTable().run()}
+            title="Delete Table"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-red-400" />
+          </ToolButton>
         </>
       )}
 
       <div className="w-px h-5 bg-stone-200 mx-0.5" />
 
-      {/* Image Insert */}
+      {/* Image Insert — URL or File Upload */}
       <ToolButton
         onClick={() => {
-          const url = window.prompt('Image URL:');
-          if (url) editor.chain().focus().setImage({ src: url }).run();
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = 'image/*';
+          input.onchange = () => {
+            const file = input.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+              const src = reader.result as string;
+              editor.chain().focus().setImage({ src, alt: file.name }).run();
+            };
+            reader.readAsDataURL(file);
+          };
+          input.click();
         }}
-        title="Insert Image"
+        title="Upload Image"
       >
         <ImagePlus className="w-4 h-4" />
       </ToolButton>
@@ -1394,8 +1419,14 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
         authorId: getCurrentUser()?.id ?? 'unknown',
         authorName: getCurrentUser()?.name ?? 'Unknown',
       }),
-      // Y.js CRDT collaboration extensions are passed via collabExtensions prop
-      // Requires @tiptap/core >=3.19 — will activate after tiptap upgrade
+      // Y.js CRDT collaboration — activates when ydoc is provided
+      ...(ydoc ? [
+        Collaboration.configure({ document: ydoc }),
+        ...(yjsProvider && currentUser ? [CollaborationCursor.configure({
+          provider: yjsProvider,
+          user: { name: currentUser.name, color: currentUser.color || '#3B82F6' },
+        })] : []),
+      ] : []),
       ...(collabExtensions || []),
     ],
     content: initialContent,
