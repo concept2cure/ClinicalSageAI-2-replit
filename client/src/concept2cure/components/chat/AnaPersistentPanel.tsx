@@ -3925,7 +3925,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       {isUser && (
                         <div
                           className={cn(
-                            'flex items-center gap-0.5 mt-1 transition-opacity duration-150',
+                            'flex items-center gap-1 mt-1.5 transition-opacity duration-150',
                             showActions === msg.id ? 'opacity-100' : 'opacity-0'
                           )}
                         >
@@ -3949,7 +3949,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             )}
                           </button>
                           {(msg as any).recalledToInput && (
-                            <span className="text-[10px] text-stone-600 font-medium ml-1">
+                            <span className="text-[11px] text-stone-600 font-medium ml-1">
                               Loaded to input
                             </span>
                           )}
@@ -3958,7 +3958,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       {!isUser && (
                         <div
                           className={cn(
-                            'flex items-center gap-0.5 mt-1 transition-opacity duration-150',
+                            'flex items-center gap-1 mt-1.5 transition-opacity duration-150',
                             showActions === msg.id ? 'opacity-100' : 'opacity-0'
                           )}
                         >
@@ -3966,7 +3966,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           {msg.modelProvider && (
                             <span
                               className={cn(
-                                'text-[10px] font-medium px-1.5 py-0.5 rounded mr-1',
+                                'text-[11px] font-medium px-1.5 py-0.5 rounded mr-1',
                                 msg.modelProvider === 'anthropic'
                                   ? 'text-[#CC785C] bg-[#FBF0EB]'
                                   : msg.modelProvider === 'openai'
@@ -3988,7 +3988,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           {msg.evidenceUsage?.firecrawlRequested && (
                             <span
                               className={cn(
-                                'text-[10px] font-medium px-1.5 py-0.5 rounded mr-1',
+                                'text-[11px] font-medium px-1.5 py-0.5 rounded mr-1',
                                 msg.evidenceUsage.firecrawlUsed
                                   ? 'text-[#D97757] bg-[#FBF0EB]'
                                   : 'text-zinc-500 bg-zinc-50'
@@ -4122,12 +4122,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               </button>
                             )}
                           {(msg as any).insertedToEditor && (
-                            <span className="text-[10px] text-blue-600 font-medium ml-1">
+                            <span className="text-[11px] text-blue-600 font-medium ml-1">
                               Inserted
                             </span>
                           )}
                           {msg.savedAsArtifact && (
-                            <span className="text-[10px] text-emerald-600 font-medium ml-1">
+                            <span className="text-[11px] text-emerald-600 font-medium ml-1">
                               Saved
                             </span>
                           )}

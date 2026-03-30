@@ -413,7 +413,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   {message.content}
                 </p>
                 {(message as any).recalledToInput && (
-                  <p className="mt-1 text-[11px] font-medium text-stone-600">Editing prompt in composer</p>
+                  <p className="mt-1 text-xs font-medium text-stone-600">Editing prompt in composer</p>
                 )}
               </>
             ) : (
@@ -493,7 +493,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             {!message.isStreaming && (
               <div
                 className={cn(
-                  'flex items-center gap-0.5 mt-2 transition-opacity duration-150',
+                  'flex items-center gap-1 mt-1.5 transition-opacity duration-150',
                   showActions ? 'opacity-100' : 'opacity-0 pointer-events-none'
                 )}
               >
@@ -519,7 +519,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   )}
                 </button>
                 {isUser && (message as any).recalledToInput && (
-                  <span className="text-[11px] text-stone-600 font-medium ml-1">Loaded to input</span>
+                  <span className="text-xs text-stone-600 font-medium ml-1">Loaded to input</span>
                 )}
                 {!isUser && (
                   <>
