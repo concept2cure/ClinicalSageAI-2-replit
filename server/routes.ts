@@ -29,6 +29,8 @@ import aiAssistanceRoutes from './routes/ai-assistance.js';
 import contentPlanRoutes from './routes/content-plan.js';
 import intelligentReportsRoutes from './routes/intelligent-reports';
 import operatingSystemRoutes from './routes/operating-system';
+import commentRoutes from './routes/comment-routes';
+import hallucinationCheckRoutes from './routes/hallucination-check';
 import { createScopedLogger } from './utils/logger.js';
 
 const log = createScopedLogger('routes');
@@ -684,6 +686,12 @@ export default function registerRoutes(app: Express): void {
 
   // Operating System Foundation — Assumptions, Decisions, Governance Boundaries, Contradiction Links
   app.use('/api/operating-system', operatingSystemRoutes);
+
+  // Comment CRUD + AI-powered comment resolution
+  app.use('/api/comments', commentRoutes);
+
+  // Zero-hallucination validation layer — claim verification against Data Room
+  app.use('/api/concept2cure/ai', hallucinationCheckRoutes);
   
   // Basic health and status routes are now available
   log.debug('✅ Basic API routes mounted');

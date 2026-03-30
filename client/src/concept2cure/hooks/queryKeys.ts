@@ -47,6 +47,20 @@ export const queryKeys = {
     pending: () => ['concept2cure', 'reviews', 'pending'] as const,
   },
 
+  // ── Comments ──────────────────────────────────────────────────────────────
+  comments: {
+    document: (documentId: number | string) =>
+      ['concept2cure', 'comments', 'document', documentId] as const,
+    addressWithAI: (commentId: string) =>
+      ['concept2cure', 'comments', 'address-ai', commentId] as const,
+  },
+
+  // ── Claim Validation (zero-hallucination) ────────────────────────────────
+  claimValidation: {
+    validate: (projectId: string, artifactId?: string) =>
+      ['concept2cure', 'claim-validation', projectId, artifactId] as const,
+  },
+
   // ── Chat ───────────────────────────────────────────────────────────────────
   chat: {
     thread: (threadId: string) => ['concept2cure', 'chat', 'thread', threadId] as const,

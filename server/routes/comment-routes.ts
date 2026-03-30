@@ -483,4 +483,155 @@ router.post('/comments/:commentId/replies', authMiddleware, async (req, res) => 
   }
 });
 
+// ── POST /comments/:commentId/address-with-ai ────────────────────────────────
+/**
+ * AI-powered comment resolution: takes a reviewer comment + its highlighted text
+ * and the full artifact content, calls the AI gateway to rewrite the section
+ * addressing the feedback, and returns the rewritten text + explanation.
+ */
+router.post('/comments/:commentId/address-with-ai', authMiddleware, async (req, res) => {
+  const commentId = Number(req.params.commentId);
+  if (!Number.isFinite(commentId)) {
+    return res.status(400).json({ error: 'Invalid comment id' });
+  }
+
+  const organizationId = resolveOrganizationId(req);
+  if (!organizationId) {
+    return res.status(400).json({ error: 'Organization context required' });
+  }
+
+  const userId = resolveUserId(req);
+  if (!userId) {
+    return res.status(401).json({ error: 'User authentication required' });
+  }
+
+  try {
+    // 1. Load the comment (tenant-isolated via JOIN)
+    const commentRows = await db
+      .select({
+        id: documentComments.id,
+        documentId: documentComments.documentId,
+        content: documentComments.content,
+        sectionReference: documentComments.sectionReference,
+        attachments: documentComments.attachments,
+        status: documentComments.status,
+      })
+      .from(documentComments)
+      .innerJoin(documents, eq(documents.id, documentComments.documentId))
+      .where(
+        and(
+          eq(documentComments.id, commentId),
+          eq(documents.organizationId, organizationId)
+        )
+      )
+      .limit(1);
+
+    const comment = commentRows[0];
+    if (!comment) {
+      return res.status(404).json({ error: 'Comment not found' });
+    }
+
+    const highlightedText = (comment.attachments as Record<string, string> | null)?.highlightedText || '';
+    const sectionReference = comment.sectionReference || '';
+
+    // 2. Load the full document/artifact content for context
+    const [doc] = await db
+      .select({ id: documents.id, title: documents.title, description: documents.description })
+      .from(documents)
+      .where(and(eq(documents.id, comment.documentId), eq(documents.organizationId, organizationId)))
+      .limit(1);
+
+    // Try to get actual content from concept2cure artifacts (the editor stores content there)
+    let documentContent = '';
+    let documentTitle = doc?.title || '';
+    try {
+      const artifactResult = await db.execute(sql`
+        SELECT title, content FROM concept2cure_artifacts
+        WHERE id = ${comment.documentId}
+        LIMIT 1
+      `);
+      const rows = (artifactResult as any).rows ?? artifactResult;
+      if (rows?.[0]?.content) {
+        documentContent = rows[0].content;
+        documentTitle = rows[0].title || documentTitle;
+      }
+    } catch {
+      // Fall back to document description
+      documentContent = doc?.description || '';
+    }
+
+    // 3. Call the AI gateway
+    const { getGateway } = await import('../services/ai-gateway/gateway.js');
+    const gw = getGateway();
+    if (gw.getEnabledProviders().length === 0) {
+      return res.status(503).json({ error: 'AI service not configured' });
+    }
+
+    const systemPrompt = [
+      'You are a senior regulatory medical writer with expertise in FDA and EMA submissions.',
+      'A reviewer has left a comment on a document section. Your task is to rewrite the section',
+      'to address the reviewer\'s feedback while preserving regulatory accuracy and tone.',
+      '',
+      'Return your response in this exact JSON format:',
+      '{"rewrittenText": "...", "explanation": "..."}',
+      '',
+      'The rewrittenText should be the improved section content.',
+      'The explanation should be 1-2 sentences describing what you changed and why.',
+      'Do NOT include any markdown formatting or code fences — return only valid JSON.',
+    ].join('\n');
+
+    const userMessage = [
+      `Document: "${documentTitle}"`,
+      sectionReference ? `Section: ${sectionReference}` : '',
+      '',
+      highlightedText ? `Highlighted text (the part the reviewer commented on):\n"${highlightedText}"` : '',
+      '',
+      `Reviewer comment:\n"${comment.content}"`,
+      '',
+      `Full section content:\n${documentContent.substring(0, 6000)}`,
+      '',
+      'Please rewrite the section (or the highlighted portion if specified) to address this feedback.',
+    ].filter(Boolean).join('\n');
+
+    const gwResponse = await gw.route({
+      taskType: 'document_drafting',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage },
+      ],
+      temperature: 0.4,
+      maxTokens: 4000,
+      callerModule: 'comment-routes/address-with-ai',
+    });
+
+    const raw = gwResponse.content || '';
+
+    // 4. Parse the AI response
+    let rewrittenText = raw;
+    let explanation = 'AI rewrote the section to address the reviewer feedback.';
+
+    try {
+      // Try to parse as JSON (the AI was instructed to return JSON)
+      const cleaned = raw.replace(/^```json?\s*/i, '').replace(/```\s*$/, '').trim();
+      const parsed = JSON.parse(cleaned);
+      if (parsed.rewrittenText) rewrittenText = parsed.rewrittenText;
+      if (parsed.explanation) explanation = parsed.explanation;
+    } catch {
+      // If JSON parse fails, use the raw text as the rewrite
+      rewrittenText = raw;
+    }
+
+    logger.info('Comment addressed with AI', { commentId, userId, documentId: comment.documentId });
+    return res.json({
+      rewrittenText,
+      explanation,
+      commentId,
+      model: gwResponse.model || 'unknown',
+    });
+  } catch (error) {
+    logger.error('Failed to address comment with AI', { error, commentId });
+    return res.status(500).json({ error: 'Failed to generate AI response' });
+  }
+});
+
 export default router;

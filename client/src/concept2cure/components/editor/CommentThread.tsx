@@ -11,8 +11,12 @@ import {
   CornerDownRight,
   AtSign,
   Send,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { apiRequest } from "@/lib/queryClient";
 
 interface CommentThread {
   id: string;
@@ -40,6 +44,8 @@ interface CommentThreadPanelProps {
   onDelete: (commentId: string) => void;
   onNavigateToComment: (commentId: string) => void;
   onClose?: () => void;
+  /** Called when user applies an AI rewrite — passes the rewritten text for the comment */
+  onApplyAIRewrite?: (commentId: string, rewrittenText: string) => void;
 }
 
 type FilterMode = "all" | "open" | "resolved" | "mine";
@@ -200,6 +206,55 @@ function ReplyInput({
   );
 }
 
+/** AI Rewrite Preview — shown after "Address with AI" is clicked */
+function AIRewritePreview({
+  rewrittenText,
+  explanation,
+  onApply,
+  onDismiss,
+}: {
+  rewrittenText: string;
+  explanation: string;
+  onApply: () => void;
+  onDismiss: () => void;
+}) {
+  return (
+    <div
+      className="mt-2 ml-8 rounded-md border border-violet-200 bg-violet-50/40 p-3 space-y-2 transition-all duration-200"
+      role="region"
+      aria-label="AI rewrite suggestion"
+    >
+      <div className="flex items-center gap-1.5">
+        <Sparkles className="h-3 w-3 text-violet-500" />
+        <span className="text-[11px] font-semibold text-violet-700">AI Suggestion</span>
+      </div>
+      <p className="text-[10px] text-stone-500 italic">{explanation}</p>
+      <div className="rounded border border-violet-100 bg-white p-2 text-xs text-stone-700 leading-relaxed max-h-40 overflow-y-auto">
+        {rewrittenText.length > 600 ? rewrittenText.substring(0, 600) + '...' : rewrittenText}
+      </div>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          onClick={onApply}
+          className="px-3 py-1 text-[11px] font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700 transition-colors duration-150 flex items-center gap-1"
+          aria-label="Apply AI rewrite"
+        >
+          <Check className="h-3 w-3" />
+          Apply
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={onDismiss}
+          className="px-3 py-1 text-[11px] font-medium text-stone-600 bg-white border border-stone-200 rounded-md hover:bg-stone-50 transition-colors duration-150"
+          aria-label="Dismiss AI rewrite"
+        >
+          Dismiss
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function CommentCard({
   comment,
   currentUserId,
@@ -208,6 +263,7 @@ function CommentCard({
   onReply,
   onDelete,
   onNavigateToComment,
+  onApplyAIRewrite,
 }: {
   comment: CommentThread;
   currentUserId?: string;
@@ -216,7 +272,41 @@ function CommentCard({
   onReply: (commentId: string, text: string) => void;
   onDelete: (commentId: string) => void;
   onNavigateToComment: (commentId: string) => void;
+  onApplyAIRewrite?: (commentId: string, rewrittenText: string) => void;
 }) {
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiRewrite, setAiRewrite] = useState<{ text: string; explanation: string } | null>(null);
+
+  const handleAddressWithAI = async () => {
+    setAiLoading(true);
+    setAiRewrite(null);
+    try {
+      const res = await apiRequest('POST', `/api/comments/comments/${comment.id}/address-with-ai`, {});
+      if (res.ok) {
+        const data = await res.json();
+        setAiRewrite({
+          text: data.rewrittenText || '',
+          explanation: data.explanation || 'Section rewritten to address feedback.',
+        });
+      } else {
+        // Silently fail — the user can try again
+        console.warn('[CommentThread] AI address failed');
+      }
+    } catch {
+      console.warn('[CommentThread] AI service unavailable');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleApplyRewrite = () => {
+    if (aiRewrite && onApplyAIRewrite) {
+      onApplyAIRewrite(comment.id, aiRewrite.text);
+      onResolve(comment.id);
+    }
+    setAiRewrite(null);
+  };
+
   return (
     <div
       className={cn(
@@ -262,16 +352,34 @@ function CommentCard({
               <MessageSquare className="h-3.5 w-3.5" />
             </button>
           ) : (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onResolve(comment.id);
-              }}
-              title="Resolve"
-              className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-emerald-500 transition-colors duration-150"
-            >
-              <CheckCircle className="h-3.5 w-3.5" />
-            </button>
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddressWithAI();
+                }}
+                disabled={aiLoading}
+                title="Address with AI"
+                aria-label="Address comment with AI"
+                className="p-1 rounded hover:bg-violet-50 text-muted-foreground hover:text-violet-600 transition-colors duration-150 disabled:opacity-50"
+              >
+                {aiLoading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" />
+                )}
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onResolve(comment.id);
+                }}
+                title="Resolve"
+                className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-emerald-500 transition-colors duration-150"
+              >
+                <CheckCircle className="h-3.5 w-3.5" />
+              </button>
+            </>
           )}
           <button
             onClick={(e) => {
@@ -340,6 +448,24 @@ function CommentCard({
         </div>
       )}
 
+      {/* AI Rewrite Loading */}
+      {aiLoading && (
+        <div className="mt-2 ml-8 flex items-center gap-2 text-xs text-violet-600" role="status" aria-live="polite">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          <span>Generating AI suggestion...</span>
+        </div>
+      )}
+
+      {/* AI Rewrite Preview */}
+      {aiRewrite && (
+        <AIRewritePreview
+          rewrittenText={aiRewrite.text}
+          explanation={aiRewrite.explanation}
+          onApply={handleApplyRewrite}
+          onDismiss={() => setAiRewrite(null)}
+        />
+      )}
+
       {/* Reply input */}
       {!comment.resolved && (
         <ReplyInput commentId={comment.id} onReply={onReply} />
@@ -357,6 +483,7 @@ export function CommentThreadPanel({
   onDelete,
   onNavigateToComment,
   onClose,
+  onApplyAIRewrite,
 }: CommentThreadPanelProps) {
   const [filter, setFilter] = useState<FilterMode>("open");
   const [showFilterMenu, setShowFilterMenu] = useState(false);
@@ -506,6 +633,7 @@ export function CommentThreadPanel({
               onReply={onReply}
               onDelete={onDelete}
               onNavigateToComment={onNavigateToComment}
+              onApplyAIRewrite={onApplyAIRewrite}
             />
           ))
         )}

@@ -359,6 +359,16 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [openArtifactNotFound, setOpenArtifactNotFound] = useState(false);
   const [showTemplateGenerator, setShowTemplateGenerator] = useState(false);
 
+  // ── Claim validation (zero-hallucination layer) ──────────────────────────
+  const [claimValidation, setClaimValidation] = useState<{
+    running: boolean;
+    result: {
+      overallScore: number;
+      hallucinationRisk: 'low' | 'medium' | 'high';
+      summary: { total: number; verified: number; partiallyVerified: number; unverified: number; contradicted: number };
+    } | null;
+  }>({ running: false, result: null });
+
   // ── Multi-tab support — keep multiple documents open simultaneously ────
   const [openTabs, setOpenTabs] = useState<Array<{ id: string; title: string }>>([]);
 
@@ -559,6 +569,31 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     },
     []
   );
+
+  // ── Claim validation (after pushToast is defined) ────────────────────
+  const runClaimValidation = useCallback(async (content: string) => {
+    if (!projectId || !content) return;
+    setClaimValidation(prev => ({ ...prev, running: true }));
+    try {
+      const res = await apiRequest('POST', '/api/concept2cure/ai/validate-claims', {
+        content,
+        projectId,
+        artifactId: activeArtifact?.id,
+      });
+      if (res.ok) {
+        const payload = await res.json();
+        const data = payload.data || payload;
+        if (data.hallucinationRisk === 'high') {
+          pushToast(`${data.summary?.unverified || 0} unverified claims detected — review recommended`, 'error');
+        }
+        setClaimValidation({ running: false, result: data });
+      } else {
+        setClaimValidation(prev => ({ ...prev, running: false }));
+      }
+    } catch {
+      setClaimValidation(prev => ({ ...prev, running: false }));
+    }
+  }, [projectId, activeArtifact?.id, pushToast]);
 
   // ── Reviewer CRUD handlers (after pushToast is defined) ──────────────
   const handleAddReviewer = useCallback(async (memberId: string) => {
@@ -1464,7 +1499,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     setActiveArtifact({ ...activeArtifact, content: finalContent });
     setAiResult(null);
     setAiProvenance(null);
-  }, [aiResult, aiProvenance, activeArtifact]);
+
+    // Auto-run claim validation in background after AI edit is accepted
+    runClaimValidation(finalContent);
+  }, [aiResult, aiProvenance, activeArtifact, runClaimValidation]);
 
   // ── DOCX Export (real generation via knowledge-base → shadow service) ───
   const generateDocxMutation = useGenerateDocx();
@@ -2846,6 +2884,64 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         </div>
       )}
 
+      {/* ── Claim Validation Badge ───────────────────────────────────────── */}
+      {(claimValidation.running || claimValidation.result) && (
+        <div
+          className="border-b border-stone-100 bg-stone-50/60 px-4 py-2 flex items-center gap-2"
+          role="status"
+          aria-live="polite"
+          data-testid="claim-validation-badge"
+        >
+          {claimValidation.running ? (
+            <>
+              <Loader2 className="h-3.5 w-3.5 text-stone-400 animate-spin" />
+              <span className="text-[13px] text-stone-500">Validating claims against Data Room...</span>
+            </>
+          ) : claimValidation.result ? (
+            <>
+              <ShieldCheck
+                className={cn(
+                  'h-3.5 w-3.5',
+                  claimValidation.result.hallucinationRisk === 'low'
+                    ? 'text-emerald-500'
+                    : claimValidation.result.hallucinationRisk === 'medium'
+                      ? 'text-amber-500'
+                      : 'text-red-500'
+                )}
+              />
+              <span className="text-[13px] text-stone-600">
+                Claims validated: {claimValidation.result.summary.verified}/{claimValidation.result.summary.total} verified
+                {claimValidation.result.summary.unverified > 0 && (
+                  <span className="text-amber-600 ml-1">
+                    ({claimValidation.result.summary.unverified} unverified)
+                  </span>
+                )}
+              </span>
+              {claimValidation.result.hallucinationRisk !== 'low' && (
+                <span
+                  className={cn(
+                    'ml-1 px-1.5 py-0.5 rounded text-[10px] font-medium',
+                    claimValidation.result.hallucinationRisk === 'medium'
+                      ? 'bg-amber-100 text-amber-700'
+                      : 'bg-red-100 text-red-700'
+                  )}
+                >
+                  {claimValidation.result.hallucinationRisk} risk
+                </span>
+              )}
+              <Button
+                variant="ghost"
+                onClick={() => setClaimValidation({ running: false, result: null })}
+                className="ml-auto p-1 text-stone-400 hover:text-stone-600"
+                aria-label="Dismiss validation"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </>
+          ) : null}
+        </div>
+      )}
+
       {signResult && (
         <div
           className={`border-b px-3 py-1.5 text-xs flex items-center gap-2 ${signResult.success ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'}`}
@@ -3411,6 +3507,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               } else {
                 pushToast('Comment location not found in document', 'info');
               }
+            }}
+            onApplyAIRewrite={(commentId, rewrittenText) => {
+              if (!activeArtifact) return;
+              // Wrap plain text in HTML if needed
+              const htmlContent = rewrittenText.startsWith('<')
+                ? rewrittenText
+                : rewrittenText.split('\n\n').map(p => `<p>${p}</p>`).join('');
+              setActiveArtifact({ ...activeArtifact, content: htmlContent });
+              pushToast('AI rewrite applied and comment resolved', 'success');
             }}
             onClose={() => setActiveInspector(null)}
           />
