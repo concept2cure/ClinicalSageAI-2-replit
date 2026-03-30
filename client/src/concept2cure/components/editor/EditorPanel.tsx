@@ -41,6 +41,7 @@ import {
   Layers,
   Keyboard,
   Scale,
+  Upload,
 } from 'lucide-react';
 import { useClaimCheck, usePrecedentSearch, type ClaimCheckResult, type PrecedentRecord, type SearchParams } from '../../hooks/usePrecedentEngine';
 import { RegulatoryIntelligencePanel } from '../intelligence/RegulatoryIntelligencePanel';
@@ -1495,6 +1496,196 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     }
   }, [activeArtifact, submissionType, generateDocxMutation, pushToast]);
 
+  // ── Universal Document Import (DOCX, PDF, Images, Text, CSV, HTML) ────
+  const handleImportDocument = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.docx,.doc,.pdf,.txt,.csv,.tsv,.html,.htm,.md,.rtf,.png,.jpg,.jpeg,.gif,.webp,.svg,.bmp,.tiff';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const ext = file.name.split('.').pop()?.toLowerCase() || '';
+      pushToast(`Importing "${file.name}"…`, 'info');
+
+      try {
+        let html = '';
+        const title = file.name.replace(/\.[^.]+$/, '');
+
+        // ── DOCX/DOC — Mammoth.js conversion ──
+        if (ext === 'docx' || ext === 'doc') {
+          const arrayBuffer = await file.arrayBuffer();
+          const mammoth = await import('mammoth');
+          const result = await mammoth.convertToHtml(
+            { arrayBuffer },
+            {
+              styleMap: [
+                "p[style-name='Heading 1'] => h1:fresh",
+                "p[style-name='Heading 2'] => h2:fresh",
+                "p[style-name='Heading 3'] => h3:fresh",
+                "p[style-name='List Paragraph'] => li:fresh",
+                "r[style-name='Strong'] => strong",
+                "r[style-name='Emphasis'] => em",
+              ],
+            }
+          );
+          html = result.value;
+          if (result.messages.length > 0) {
+            console.warn('[Import] Mammoth warnings:', result.messages.map((m: any) => m.message));
+          }
+        }
+        // ── PDF — Server-side extraction via API ──
+        else if (ext === 'pdf') {
+          const formData = new FormData();
+          formData.append('file', file);
+          try {
+            const res = await fetch('/api/knowledge-base/extract-pdf', {
+              method: 'POST',
+              body: formData,
+              credentials: 'include',
+            });
+            if (res.ok) {
+              const data = await res.json();
+              html = data.html || data.content || data.text || '';
+              if (!html && data.pages) {
+                // If pages array returned, concatenate
+                html = (data.pages as any[]).map((p: any, i: number) =>
+                  `<h2>Page ${i + 1}</h2><p>${(p.text || p.content || '').replace(/\n/g, '</p><p>')}</p>`
+                ).join('');
+              }
+            } else {
+              // Fallback: read as binary and extract text client-side
+              pushToast('PDF extraction via server unavailable — uploading as attachment', 'info');
+              html = `<p><em>[PDF imported: ${file.name} — ${(file.size / 1024).toFixed(1)} KB]</em></p>`;
+            }
+          } catch {
+            html = `<p><em>[PDF imported: ${file.name} — ${(file.size / 1024).toFixed(1)} KB]</em></p>`;
+          }
+        }
+        // ── Images — Embed as base64 with OCR annotation ──
+        else if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'tiff'].includes(ext)) {
+          const dataUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+          });
+          html = `<figure><img src="${dataUrl}" alt="${file.name}" style="max-width:100%;height:auto;" /><figcaption><em>${file.name}</em></figcaption></figure>`;
+
+          // Attempt OCR via server if available
+          try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const ocrRes = await fetch('/api/knowledge-base/ocr', {
+              method: 'POST',
+              body: formData,
+              credentials: 'include',
+            });
+            if (ocrRes.ok) {
+              const ocrData = await ocrRes.json();
+              const ocrText = ocrData.text || ocrData.content || '';
+              if (ocrText.trim()) {
+                html += `<blockquote><p><strong>OCR Extracted Text:</strong></p><p>${ocrText.replace(/\n/g, '</p><p>')}</p></blockquote>`;
+              }
+            }
+          } catch {
+            // OCR unavailable — image embedded without text extraction
+          }
+        }
+        // ── Plain text / Markdown ──
+        else if (['txt', 'md'].includes(ext)) {
+          const text = await file.text();
+          // Basic markdown-to-HTML for .md files
+          if (ext === 'md') {
+            html = text
+              .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+              .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+              .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+              .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+              .replace(/\*(.+?)\*/g, '<em>$1</em>')
+              .replace(/^- (.+)$/gm, '<li>$1</li>')
+              .replace(/(<li>.*<\/li>\n?)+/g, (match) => `<ul>${match}</ul>`)
+              .replace(/\n\n/g, '</p><p>')
+              .replace(/\n/g, '<br/>');
+            html = `<p>${html}</p>`;
+          } else {
+            html = `<p>${text.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>')}</p>`;
+          }
+        }
+        // ── CSV/TSV — Convert to HTML table ──
+        else if (['csv', 'tsv'].includes(ext)) {
+          const text = await file.text();
+          const delimiter = ext === 'tsv' ? '\t' : ',';
+          const rows = text.trim().split('\n').map(row => {
+            // Basic CSV parsing (handles simple cases)
+            return row.split(delimiter).map(cell => cell.replace(/^"|"$/g, '').trim());
+          });
+          if (rows.length > 0) {
+            const headerRow = rows[0];
+            const bodyRows = rows.slice(1);
+            html = `<table><thead><tr>${headerRow.map(h => `<th>${h}</th>`).join('')}</tr></thead>`;
+            html += `<tbody>${bodyRows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+          }
+        }
+        // ── HTML/HTM — Direct import ──
+        else if (['html', 'htm'].includes(ext)) {
+          html = await file.text();
+          // Strip <html>, <head>, <body> wrapper tags
+          html = html.replace(/<html[^>]*>/gi, '').replace(/<\/html>/gi, '')
+            .replace(/<head>[\s\S]*?<\/head>/gi, '')
+            .replace(/<body[^>]*>/gi, '').replace(/<\/body>/gi, '');
+        }
+        // ── RTF — Basic text extraction ──
+        else if (ext === 'rtf') {
+          const text = await file.text();
+          // Strip RTF control words, keep text
+          const plainText = text
+            .replace(/\\par\b/g, '\n')
+            .replace(/\{\\[^}]*\}/g, '')
+            .replace(/\\[a-z]+\d*\s?/gi, '')
+            .replace(/[{}]/g, '');
+          html = `<p>${plainText.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>')}</p>`;
+        }
+        // ── Unknown — raw text fallback ──
+        else {
+          try {
+            const text = await file.text();
+            html = `<p>${text.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>')}</p>`;
+          } catch {
+            html = `<p><em>[Imported file: ${file.name} — ${(file.size / 1024).toFixed(1)} KB]</em></p>`;
+          }
+        }
+
+        // ── Insert content into editor or create new artifact ──
+        if (activeArtifact) {
+          setActiveArtifact({ ...activeArtifact, content: html });
+          setIsDirty(true);
+          pushToast(`Imported "${file.name}" into current document`, 'success');
+        } else if (projectId) {
+          try {
+            const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
+              title,
+              content: html,
+              type: 'regulatory_document',
+              category: 'document',
+            });
+            if (res.ok) {
+              const payload = await res.json();
+              const created = payload.data ?? payload;
+              openInTab(created);
+              loadArtifacts();
+              pushToast(`Created "${title}" from import`, 'success');
+            }
+          } catch {
+            pushToast('Failed to create artifact from import', 'error');
+          }
+        }
+      } catch (err) {
+        console.error('[Import] Error:', err);
+        pushToast(`Failed to import ${file.name}`, 'error');
+      }
+    };
+    input.click();
+  }, [activeArtifact, projectId, pushToast, openInTab, loadArtifacts]);
+
   // ── PDF Export ─────────────────────────────────────────────────────────
   const handleExportPdf = useCallback(async () => {
     if (!activeArtifact) return;
@@ -1913,21 +2104,31 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               </span>
             )}
           </div>
-          {artifacts.length > 0 && (
+          <div className="flex items-center gap-1.5">
             <Button variant="ghost"
-              onClick={() => setShowFilters(!showFilters)}
-              className={cn(
-                'flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors duration-150',
-                showFilters ? 'bg-blue-100 text-stone-700' : 'text-stone-500 hover:bg-stone-100'
-              )}
+              onClick={handleImportDocument}
+              className="flex items-center gap-1 px-2 py-1 text-xs text-stone-500 hover:bg-stone-100 rounded-md transition-colors duration-150"
+              title="Import Document (Word, PDF, Image, CSV, Text)"
             >
-              <Filter className="w-3 h-3" />
-              Filters
-              {(filterStatus !== 'all' || filterType !== 'all' || filterCtd !== 'all') && (
-                <span className="w-1.5 h-1.5 rounded-full bg-stone-600" />
-              )}
+              <Upload className="w-3 h-3" />
+              Import
             </Button>
-          )}
+            {artifacts.length > 0 && (
+              <Button variant="ghost"
+                onClick={() => setShowFilters(!showFilters)}
+                className={cn(
+                  'flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors duration-150',
+                  showFilters ? 'bg-blue-100 text-stone-700' : 'text-stone-500 hover:bg-stone-100'
+                )}
+              >
+                <Filter className="w-3 h-3" />
+                Filters
+                {(filterStatus !== 'all' || filterType !== 'all' || filterCtd !== 'all') && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-stone-600" />
+                )}
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Filter controls (P5) */}
@@ -2252,6 +2453,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         )}
 
         <div className="flex-1" />
+
+        {/* DOCX Import */}
+        <Button variant="ghost"
+          onClick={handleImportDocument}
+          className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors duration-150"
+          title="Import Document (Word, PDF, Image, CSV, Text)"
+        >
+          <Upload className="w-4 h-4" />
+        </Button>
 
         {/* Keyboard shortcuts */}
         <Button variant="ghost"

@@ -39,7 +39,8 @@ import TextAlign from '@tiptap/extension-text-align';
 import Superscript from '@tiptap/extension-superscript';
 import Subscript from '@tiptap/extension-subscript';
 import LinkExtension from '@tiptap/extension-link';
-import { Node, mergeAttributes } from '@tiptap/core';
+import FontFamily from '@tiptap/extension-font-family';
+import { Node, mergeAttributes, Extension } from '@tiptap/core'; // eslint-disable-line no-duplicate-imports
 import { DOMParser as PMDOMParser } from '@tiptap/pm/model';
 
 /**
@@ -73,6 +74,71 @@ const TiptapImage = Node.create({
     };
   },
 });
+
+/**
+ * FontSize extension — applies font-size via TextStyle mark.
+ * Usage: editor.chain().focus().setFontSize('14px').run()
+ */
+const FontSize = Extension.create({
+  name: 'fontSize',
+  addGlobalAttributes() {
+    return [{
+      types: ['textStyle'],
+      attributes: {
+        fontSize: {
+          default: null,
+          parseHTML: (el) => (el as HTMLElement).style.fontSize || null,
+          renderHTML: (attrs) => {
+            if (!attrs.fontSize) return {};
+            return { style: `font-size: ${attrs.fontSize}` };
+          },
+        },
+      },
+    }];
+  },
+  addCommands() {
+    return {
+      setFontSize: (size: string) => ({ chain }: any) => {
+        return chain().setMark('textStyle', { fontSize: size }).run();
+      },
+      unsetFontSize: () => ({ chain }: any) => {
+        return chain().setMark('textStyle', { fontSize: null }).removeEmptyTextStyle().run();
+      },
+    } as any;
+  },
+});
+
+/**
+ * LineHeight extension — applies line-height to paragraph/heading nodes.
+ * Usage: editor.chain().focus().setLineHeight('1.5').run()
+ */
+const LineHeight = Extension.create({
+  name: 'lineHeight',
+  addGlobalAttributes() {
+    return [{
+      types: ['paragraph', 'heading'],
+      attributes: {
+        lineHeight: {
+          default: null,
+          parseHTML: (el) => (el as HTMLElement).style.lineHeight || null,
+          renderHTML: (attrs) => {
+            if (!attrs.lineHeight) return {};
+            return { style: `line-height: ${attrs.lineHeight}` };
+          },
+        },
+      },
+    }];
+  },
+  addCommands() {
+    return {
+      setLineHeight: (height: string) => ({ commands }: any) => {
+        return commands.updateAttributes('paragraph', { lineHeight: height }) &&
+               commands.updateAttributes('heading', { lineHeight: height });
+      },
+    } as any;
+  },
+});
+
 import { SearchAndReplace } from './extensions/SearchAndReplace';
 import { createSlashCommandExtension } from './extensions/SlashCommandMenu';
 import { CommentMark, type CommentThread } from './extensions/CommentMark';
@@ -151,6 +217,12 @@ import {
   RotateCw,
   Palette,
   ArrowUpRight,
+  ZoomIn,
+  ZoomOut,
+  Printer,
+  ListTree,
+  Upload,
+  WrapText,
 } from 'lucide-react';
 import InlineApprovalPanel from './InlineApprovalPanel';
 
@@ -345,6 +417,11 @@ interface ToolbarProps {
   onAIAction?: (action: string, selectedText: string) => void;
   showFindReplace: boolean;
   onToggleFindReplace: () => void;
+  zoomLevel?: number;
+  onZoomChange?: (zoom: number) => void;
+  onPrintPreview?: () => void;
+  onGenerateTOC?: () => void;
+  onImportDocx?: () => void;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -356,12 +433,40 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onAIAction,
   showFindReplace,
   onToggleFindReplace,
+  zoomLevel = 100,
+  onZoomChange,
+  onPrintPreview,
+  onGenerateTOC,
+  onImportDocx,
 }) => {
   const [aiDropdownOpen, setAiDropdownOpen] = useState(false);
   const [linkPopoverOpen, setLinkPopoverOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
+  const [lineSpacingOpen, setLineSpacingOpen] = useState(false);
 
   if (!editor) return null;
+
+  const FONT_FAMILIES = [
+    { label: 'Default', value: '' },
+    { label: 'Arial', value: 'Arial, sans-serif' },
+    { label: 'Times New Roman', value: 'Times New Roman, serif' },
+    { label: 'Calibri', value: 'Calibri, sans-serif' },
+    { label: 'Georgia', value: 'Georgia, serif' },
+    { label: 'Courier New', value: 'Courier New, monospace' },
+    { label: 'Verdana', value: 'Verdana, sans-serif' },
+    { label: 'Garamond', value: 'Garamond, serif' },
+  ];
+  const FONT_SIZES = ['8', '9', '10', '11', '12', '14', '16', '18', '20', '24', '28', '36', '48', '72'];
+  const LINE_SPACINGS = [
+    { label: '1.0', value: '1' },
+    { label: '1.15', value: '1.15' },
+    { label: '1.5', value: '1.5' },
+    { label: '2.0', value: '2' },
+    { label: '2.5', value: '2.5' },
+    { label: '3.0', value: '3' },
+  ];
+  const currentFontFamily = editor.getAttributes('textStyle').fontFamily || '';
+  const currentFontSize = editor.getAttributes('textStyle').fontSize || '';
 
   const ToolButton: React.FC<{
     onClick: () => void;
@@ -399,6 +504,49 @@ const Toolbar: React.FC<ToolbarProps> = ({
       >
         <Redo className="w-4 h-4" />
       </ToolButton>
+
+      <div className="w-px h-5 bg-stone-200 mx-0.5" />
+
+      {/* Font Family */}
+      <select
+        value={currentFontFamily}
+        onChange={e => {
+          const val = e.target.value;
+          if (val) {
+            editor.chain().focus().setFontFamily(val).run();
+          } else {
+            editor.chain().focus().unsetFontFamily().run();
+          }
+        }}
+        className="h-7 px-1 text-[11px] text-stone-700 bg-white border border-stone-200 rounded-md focus-visible:ring-1 focus-visible:ring-stone-400 outline-none cursor-pointer max-w-[100px]"
+        title="Font Family"
+      >
+        {FONT_FAMILIES.map(f => (
+          <option key={f.value} value={f.value} style={{ fontFamily: f.value || 'inherit' }}>
+            {f.label}
+          </option>
+        ))}
+      </select>
+
+      {/* Font Size */}
+      <select
+        value={currentFontSize.replace('px', '')}
+        onChange={e => {
+          const val = e.target.value;
+          if (val) {
+            (editor.commands as any).setFontSize(`${val}px`);
+          } else {
+            (editor.commands as any).unsetFontSize();
+          }
+        }}
+        className="h-7 w-12 px-1 text-[11px] text-stone-700 bg-white border border-stone-200 rounded-md focus-visible:ring-1 focus-visible:ring-stone-400 outline-none cursor-pointer text-center"
+        title="Font Size"
+      >
+        <option value="">—</option>
+        {FONT_SIZES.map(s => (
+          <option key={s} value={s}>{s}</option>
+        ))}
+      </select>
 
       <div className="w-px h-5 bg-stone-200 mx-0.5" />
 
@@ -516,6 +664,32 @@ const Toolbar: React.FC<ToolbarProps> = ({
       >
         <IndentDecrease className="w-4 h-4" />
       </ToolButton>
+
+      {/* Line Spacing */}
+      <div className="relative">
+        <ToolButton
+          onClick={() => setLineSpacingOpen(prev => !prev)}
+          title="Line Spacing"
+        >
+          <WrapText className="w-4 h-4" />
+        </ToolButton>
+        {lineSpacingOpen && (
+          <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-stone-200 rounded-lg shadow-sm py-1 w-28">
+            {LINE_SPACINGS.map(ls => (
+              <button
+                key={ls.value}
+                onClick={() => {
+                  (editor.commands as any).setLineHeight(ls.value);
+                  setLineSpacingOpen(false);
+                }}
+                className="w-full text-left px-3 py-1.5 text-[11px] text-stone-700 hover:bg-stone-50 transition-colors"
+              >
+                {ls.label} spacing
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="w-px h-5 bg-stone-200 mx-0.5" />
 
@@ -795,6 +969,50 @@ const Toolbar: React.FC<ToolbarProps> = ({
       )}
 
       <div className="flex-1" />
+
+      {/* DOCX Import */}
+      {onImportDocx && (
+        <ToolButton onClick={onImportDocx} title="Import Word Document (.docx)">
+          <Upload className="w-4 h-4" />
+        </ToolButton>
+      )}
+
+      {/* Table of Contents */}
+      {onGenerateTOC && (
+        <ToolButton onClick={onGenerateTOC} title="Generate Table of Contents">
+          <ListTree className="w-4 h-4" />
+        </ToolButton>
+      )}
+
+      {/* Print Preview */}
+      {onPrintPreview && (
+        <ToolButton onClick={onPrintPreview} title="Print Preview">
+          <Printer className="w-4 h-4" />
+        </ToolButton>
+      )}
+
+      {/* Zoom Controls */}
+      {onZoomChange && (
+        <div className="flex items-center gap-0.5">
+          <ToolButton
+            onClick={() => onZoomChange(Math.max(50, zoomLevel - 10))}
+            disabled={zoomLevel <= 50}
+            title="Zoom Out"
+          >
+            <ZoomOut className="w-3.5 h-3.5" />
+          </ToolButton>
+          <span className="text-[10px] text-stone-500 tabular-nums w-8 text-center">{zoomLevel}%</span>
+          <ToolButton
+            onClick={() => onZoomChange(Math.min(200, zoomLevel + 10))}
+            disabled={zoomLevel >= 200}
+            title="Zoom In"
+          >
+            <ZoomIn className="w-3.5 h-3.5" />
+          </ToolButton>
+        </div>
+      )}
+
+      <div className="w-px h-5 bg-stone-200 mx-0.5" />
 
       {/* Lock / Save */}
       <ToolButton onClick={onToggleLock} title={isLocked ? 'Unlock Document' : 'Lock Document'}>
@@ -1440,6 +1658,11 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   // Sprint 3 state — Inline comments
   const [comments, setComments] = useState<CommentThread[]>([]);
 
+  // Zoom state
+  const [zoomLevel, setZoomLevel] = useState(100);
+  // Print preview state
+  const [isPrintPreview, setIsPrintPreview] = useState(false);
+
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -1467,6 +1690,9 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
         autolink: true,
         HTMLAttributes: { class: 'text-blue-600 underline cursor-pointer' },
       }),
+      FontFamily,
+      FontSize,
+      LineHeight,
       TiptapImage,
       Placeholder.configure({
         placeholder: 'Start writing your regulatory document... Type "/" for commands',
@@ -1933,6 +2159,30 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
           onAIAction={caps.showAIActions ? onAIAction : undefined}
           showFindReplace={showFindReplace}
           onToggleFindReplace={() => setShowFindReplace(prev => !prev)}
+          zoomLevel={zoomLevel}
+          onZoomChange={setZoomLevel}
+          onPrintPreview={() => setIsPrintPreview(prev => !prev)}
+          onGenerateTOC={() => {
+            if (!editor) return;
+            // Generate TOC from headings in the document
+            const headings: { level: number; text: string; id: string }[] = [];
+            editor.state.doc.descendants((node) => {
+              if (node.type.name === 'heading') {
+                const level = node.attrs.level || 1;
+                const text = node.textContent;
+                const id = node.attrs.id || text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+                headings.push({ level, text, id });
+              }
+            });
+            if (headings.length === 0) return;
+            // Build TOC HTML
+            const tocHtml = `<div class="toc-block" style="border:1px solid #e7e5e4;border-radius:8px;padding:16px;margin:16px 0;background:#fafaf9;">
+              <p style="font-size:13px;font-weight:600;color:#44403c;margin-bottom:8px;">Table of Contents</p>
+              ${headings.map(h => `<p style="margin:2px 0;padding-left:${(h.level - 1) * 16}px;"><a href="#${h.id}" style="color:#2563eb;text-decoration:none;font-size:${h.level === 1 ? '13px' : '12px'};">${h.text}</a></p>`).join('')}
+            </div><p></p>`;
+            // Insert at cursor position
+            editor.chain().focus().insertContent(tocHtml).run();
+          }}
         />
       )}
 
@@ -2106,12 +2356,37 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
           )}
 
           {/* Editor Content */}
-          <div className="p-8 max-w-4xl mx-auto">
+          <div
+            className={`p-8 max-w-4xl mx-auto transition-transform origin-top ${isPrintPreview ? 'bg-white shadow-lg border border-stone-200 my-4 mx-auto' : ''}`}
+            style={{
+              transform: `scale(${zoomLevel / 100})`,
+              transformOrigin: 'top center',
+              width: zoomLevel !== 100 ? `${10000 / zoomLevel}%` : undefined,
+              ...(isPrintPreview ? { maxWidth: '8.5in', minHeight: '11in', padding: '1in' } : {}),
+            }}
+          >
             <EditorContent
               editor={editor}
               className="prose prose-slate max-w-none min-h-[500px] outline-none"
             />
           </div>
+          {isPrintPreview && (
+            <div className="flex items-center justify-center py-2 bg-stone-100 border-t border-stone-200">
+              <button
+                onClick={() => window.print()}
+                className="flex items-center gap-1.5 px-4 py-2 bg-stone-800 text-white rounded-md text-xs font-medium hover:bg-stone-900 transition-colors"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                Print
+              </button>
+              <button
+                onClick={() => setIsPrintPreview(false)}
+                className="ml-2 flex items-center gap-1.5 px-4 py-2 bg-stone-100 text-stone-700 border border-stone-200 rounded-md text-xs font-medium hover:bg-stone-200 transition-colors"
+              >
+                Exit Preview
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Side Panels */}
