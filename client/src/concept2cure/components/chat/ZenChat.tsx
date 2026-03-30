@@ -204,7 +204,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
   return (
     <div className="mt-2 p-3 bg-stone-50 border border-stone-200 rounded-xl">
       <div className="flex items-center gap-2 mb-2">
-        <FileText className="w-4 h-4 text-violet-500" />
+        <FileText className="w-4 h-4 text-stone-700" />
         <span className="text-sm font-medium text-stone-900 truncate flex-1">
           {artifact.title}
         </span>
@@ -218,7 +218,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
             'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors duration-150',
             isSaved
               ? 'bg-green-50 text-green-700 border border-green-200'
-              : 'bg-violet-50 text-stone-700 border border-violet-200 hover:bg-violet-100'
+              : 'bg-stone-100 text-stone-800 border border-stone-200 hover:bg-stone-200'
           )}
         >
           {isSaving ? (
@@ -249,7 +249,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
                   onClick={() => { onExportDocx(artifact); setShowExportMenu(false); }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50"
                 >
-                  <FileText className="w-4 h-4 text-violet-500" />
+                  <FileText className="w-4 h-4 text-stone-700" />
                   <div className="text-left">
                     <div className="font-medium text-xs">Word Document (.docx)</div>
                     <div className="text-xs text-stone-400">MS Word, Google Docs compatible</div>
@@ -272,7 +272,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
 
         <button
           onClick={() => onOpenEditor(artifact)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-blue-100 transition-colors duration-150"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-stone-100 px-3 py-1.5 text-xs font-medium text-stone-800 hover:bg-stone-200 transition-colors duration-150"
         >
           <PenTool className="w-3.5 h-3.5" />
           Edit Inline
@@ -653,14 +653,14 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
         {/* Continue previous work — only if there's context */}
         {(nextTask || lastWork) && (
-          <div className="mb-8 rounded-xl border border-blue-200 bg-blue-50/40 p-4">
-            <div className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">
+          <div className="mb-8 rounded-xl border border-stone-200 bg-stone-50 p-4">
+            <div className="text-xs font-semibold text-stone-600 uppercase tracking-wider mb-2">
               Pick up where you left off
             </div>
             {nextTask && (
               <button
                 onClick={() => onSuggestionClick(nextTask.taskTitle)}
-                className="w-full flex items-center gap-3 text-left text-sm font-medium text-blue-900 hover:text-stone-700 transition-colors py-1"
+                className="w-full flex items-center gap-3 text-left text-sm font-medium text-stone-900 hover:text-stone-700 transition-colors py-1"
               >
                 <ArrowUp className="w-3.5 h-3.5 rotate-45 flex-shrink-0" />
                 {nextTask.taskTitle}
@@ -669,7 +669,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             {lastWork && (
               <button
                 onClick={() => onSuggestionClick(`Continue: ${lastWork.contextTitle}`)}
-                className="w-full flex items-center gap-3 text-left text-sm text-stone-700 hover:text-blue-900 transition-colors py-1"
+                className="w-full flex items-center gap-3 text-left text-sm text-stone-700 hover:text-stone-900 transition-colors py-1"
               >
                 <ArrowUp className="w-3.5 h-3.5 rotate-45 flex-shrink-0" />
                 Continue: {lastWork.contextTitle}
@@ -712,10 +712,10 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               <button
                 key={i}
                 onClick={() => onSuggestionClick('prompt' in item ? (item as { prompt: string }).prompt : item.title)}
-                className="w-full group flex items-center gap-4 p-4 rounded-xl border border-stone-200 bg-white hover:border-blue-200 hover:shadow-sm text-left transition-all duration-150"
+                className="w-full group flex items-center gap-4 p-4 rounded-xl border border-stone-200 bg-white hover:border-stone-300 hover:shadow-sm text-left transition-all duration-150"
               >
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-stone-900 group-hover:text-blue-900">
+                  <div className="text-sm font-medium text-stone-900 group-hover:text-stone-700">
                     {item.title}
                   </div>
                   <div className="text-xs text-stone-500 mt-0.5">{item.description}</div>
@@ -787,7 +787,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           className={cn(
             'flex items-end gap-2 px-4 py-3 bg-white border rounded-xl transition-all duration-150',
             isFocused
-              ? 'border-blue-300 ring-4 ring-blue-50 shadow-sm'
+              ? 'border-stone-300 ring-4 ring-stone-100 shadow-sm'
               : 'border-stone-200 hover:border-stone-300'
           )}
         >
