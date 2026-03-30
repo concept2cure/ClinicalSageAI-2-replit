@@ -59,7 +59,7 @@ function requireConfigured(_req: Request, res: Response, next: NextFunction) {
 }
 
 async function requireProgramAccess(req: Request, res: Response, next: NextFunction) {
-  const programId = req.params.programId;
+  const programId = req.params.programId as string;
   if (!programId) {
     return res.status(422).json({ error: 'programId is required' });
   }
@@ -196,7 +196,7 @@ router.post(
   requireConfigured,
   requireProgramAccess,
   async (req: Request, res: Response) => {
-    const programId = req.params.programId;
+    const programId = req.params.programId as string;
     const userId = (req as any).user?.id || 'unknown';
     const organizationId = String((req as any).user?.organizationId || '');
 
@@ -383,7 +383,7 @@ router.get(
   requireConfigured,
   requireProgramAccess,
   async (req: Request, res: Response) => {
-    const { packetId } = req.params;
+    const { packetId } = req.params as Record<string, string>;
 
     try {
       const result = await shadowFetch<{ packet: Record<string, unknown> }>(
@@ -418,7 +418,7 @@ router.get(
   requireConfigured,
   requireProgramAccess,
   async (req: Request, res: Response) => {
-    const programId = req.params.programId;
+    const programId = req.params.programId as string;
 
     try {
       const result = await shadowFetch<{
@@ -450,7 +450,7 @@ router.post(
   requireConfigured,
   requireProgramAccess,
   async (req: Request, res: Response) => {
-    const { packetId, programId } = req.params;
+    const { packetId, programId } = req.params as Record<string, string>;
     const userId = (req as any).user?.id || 'unknown';
     const organizationId = String((req as any).user?.organizationId || '');
 
@@ -519,7 +519,7 @@ router.patch(
   requireConfigured,
   requireProgramAccess,
   async (req: Request, res: Response) => {
-    const { packetId, programId } = req.params;
+    const { packetId, programId } = req.params as Record<string, string>;
     const userId = (req as any).user?.id || 'unknown';
     const organizationId = String((req as any).user?.organizationId || '');
 
@@ -591,7 +591,7 @@ router.post(
   requireConfigured,
   requireProgramAccess,
   async (req: Request, res: Response) => {
-    const programId = req.params.programId;
+    const programId = req.params.programId as string;
     const userId = (req as any).user?.id || 'unknown';
     const organizationId = String((req as any).user?.organizationId || '');
 
@@ -697,7 +697,7 @@ router.get(
   requireConfigured,
   requireProgramAccess,
   async (req: Request, res: Response) => {
-    const { manifestHash } = req.params;
+    const { manifestHash } = req.params as Record<string, string>;
 
     try {
       const result = await shadowFetch<Record<string, unknown>>(
@@ -733,7 +733,7 @@ router.get(
   requireConfigured,
   requireProgramAccess,
   async (req: Request, res: Response) => {
-    const { manifestHash } = req.params;
+    const { manifestHash } = req.params as Record<string, string>;
 
     try {
       const result = await shadowFetch<string>(
@@ -773,7 +773,7 @@ router.post(
   requireConfigured,
   requireProgramAccess,
   async (req: Request, res: Response) => {
-    const { manifestHash, programId } = req.params;
+    const { manifestHash, programId } = req.params as Record<string, string>;
     const userId = (req as any).user?.id || 'unknown';
     const organizationId = String((req as any).user?.organizationId || '');
 
@@ -845,7 +845,7 @@ router.post(
   requireConfigured,
   requireProgramAccess,
   async (req: Request, res: Response) => {
-    const { packetId, programId } = req.params;
+    const { packetId, programId } = req.params as Record<string, string>;
     const userId = (req as any).user?.id || 'unknown';
     const organizationId = String((req as any).user?.organizationId || '');
 
@@ -902,7 +902,7 @@ router.get(
   requireConfigured,
   requireProgramAccess,
   async (req: Request, res: Response) => {
-    const { programId } = req.params;
+    const { programId } = req.params as Record<string, string>;
     const subjectHash = (req.query.subject_hash as string) || '';
     const userId = (req as any).user?.id || 'unknown';
     const organizationId = String((req as any).user?.organizationId || '');
@@ -955,7 +955,7 @@ router.post(
   requireConfigured,
   requireProgramAccess,
   async (req: Request, res: Response) => {
-    const { programId } = req.params;
+    const { programId } = req.params as Record<string, string>;
     const userId = (req as any).user?.id || 'unknown';
     const organizationId = String((req as any).user?.organizationId || '');
 
@@ -1009,7 +1009,7 @@ router.post(
   requireConfigured,
   requireProgramAccess,
   async (req: Request, res: Response) => {
-    const { programId } = req.params;
+    const { programId } = req.params as Record<string, string>;
     const userId = (req as any).user?.id || 'unknown';
     const { manifestHash, requestId } = req.body || {};
 
@@ -1046,7 +1046,7 @@ router.get(
   requireConfigured,
   requireProgramAccess,
   async (req: Request, res: Response) => {
-    const { programId, proofPackId } = req.params;
+    const { programId, proofPackId } = req.params as Record<string, string>;
     const userId = (req as any).user?.id || 'unknown';
     const organizationId = String((req as any).user?.organizationId || '');
     const requestId = (req.query.request_id as string) || '';
@@ -1120,7 +1120,7 @@ router.get(
   requireConfigured,
   requireProgramAccess,
   async (req: Request, res: Response) => {
-    const { programId, proofPackId } = req.params;
+    const { programId, proofPackId } = req.params as Record<string, string>;
     const requestId = (req.query.request_id as string) || '';
 
     try {
@@ -1150,7 +1150,7 @@ router.post(
   requireConfigured,
   requireProgramAccess,
   async (req: Request, res: Response) => {
-    const { programId } = req.params;
+    const { programId } = req.params as Record<string, string>;
     const { kNumber, signals } = req.body;
 
     if (!kNumber || !Array.isArray(signals)) {
@@ -1197,7 +1197,7 @@ router.get(
   requireConfigured,
   requireProgramAccess,
   async (req: Request, res: Response) => {
-    const { programId, kNumber } = req.params;
+    const { programId, kNumber } = req.params as Record<string, string>;
 
     try {
       const result = await shadowFetch<Record<string, unknown>>(
@@ -1226,8 +1226,8 @@ router.get(
   requireConfigured,
   requireProgramAccess,
   async (req: Request, res: Response) => {
-    const { programId, kNumber } = req.params;
-    const maxDepth = req.query.maxDepth ?? '2';
+    const { programId, kNumber } = req.params as Record<string, string>;
+    const maxDepth = (req.query.maxDepth as string) ?? '2';
 
     try {
       const result = await shadowFetch<Record<string, unknown>>(
@@ -1261,7 +1261,7 @@ router.post(
   async (req: Request, res: Response) => {
     const userId = (req as any).user?.id || 'unknown';
     const { proofPackId, artifactType, requestId, idempotencyKey } = req.body || {};
-    const programId = req.params.programId;
+    const programId = req.params.programId as string;
 
     if (!proofPackId || !artifactType) {
       return res.status(400).json({ error: 'proofPackId and artifactType are required' });
@@ -1297,8 +1297,8 @@ router.get(
   requireConfigured,
   requireProgramAccess,
   async (req: Request, res: Response) => {
-    const { renderJobId } = req.params;
-    const programId = req.params.programId;
+    const { renderJobId } = req.params as Record<string, string>;
+    const programId = req.params.programId as string;
     const userId = (req as any).user?.id || 'unknown';
 
     try {
@@ -1353,7 +1353,7 @@ router.get(
   requireConfigured,
   requireProgramAccess,
   async (req: Request, res: Response) => {
-    const { proofPackId, programId } = req.params;
+    const { proofPackId, programId } = req.params as Record<string, string>;
 
     try {
       const result = await shadowFetch<Record<string, unknown>>(

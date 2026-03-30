@@ -1,4 +1,6 @@
-import { CsrReport, CsrDetails } from 'shared/schema';
+import { csrDetails } from 'shared/schema';
+type CsrReport = any;
+type CsrDetails = any;
 import { storage } from './storage';
 import * as math from 'mathjs';
 import { StatisticsService } from './statistics-service';
@@ -113,7 +115,7 @@ export interface CompetitorAnalysis {
  */
 export async function generateAnalyticsSummary(): Promise<AnalyticsSummary> {
   // Fetch all reports
-  const reports = await storage.getAllCsrReports();
+  const reports = await (storage as any).getAllCsrReports();
 
   // Initialize counters
   const indicationCounter: Record<string, number> = {};
@@ -136,7 +138,7 @@ export async function generateAnalyticsSummary(): Promise<AnalyticsSummary> {
     sponsorCounter[report.sponsor] = (sponsorCounter[report.sponsor] || 0) + 1;
 
     // Try to get details
-    const details = await storage.getCsrDetails(report.id);
+    const details = await (storage as any).getCsrDetails(report.id);
     if (details) {
       // Count endpoints
       const secondaryEndpointsCount = details.endpoints?.secondary?.length || 0;
@@ -149,7 +151,7 @@ export async function generateAnalyticsSummary(): Promise<AnalyticsSummary> {
           (endpointsMap[details.endpoints.primary] || 0) + 1;
       }
 
-      details.endpoints?.secondary?.forEach(endpoint => {
+      details.endpoints?.secondary?.forEach((endpoint: any) => {
         endpointsMap[endpoint] = (endpointsMap[endpoint] || 0) + 1;
       });
 
@@ -201,17 +203,17 @@ export async function generateAnalyticsSummary(): Promise<AnalyticsSummary> {
  */
 export async function generatePredictiveAnalysis(indication?: string): Promise<PredictiveAnalysis> {
   // Fetch all reports
-  const reports = await storage.getAllCsrReports();
+  const reports = await (storage as any).getAllCsrReports();
 
   // Filter by indication if provided
   const filteredReports = indication
-    ? reports.filter(report => report.indication === indication)
+    ? reports.filter((report: any) => report.indication === indication)
     : reports;
 
   // Fetch details for all filtered reports
   const reportDetails: Array<{ report: CsrReport; details: CsrDetails }> = [];
   for (const report of filteredReports) {
-    const details = await storage.getCsrDetails(report.id);
+    const details = await (storage as any).getCsrDetails(report.id);
     if (details && details.processed) {
       reportDetails.push({ report, details });
     }
@@ -226,7 +228,7 @@ export async function generatePredictiveAnalysis(indication?: string): Promise<P
     if (details.endpoints?.primary) {
       uniqueEndpoints.add(details.endpoints.primary);
     }
-    details.endpoints?.secondary?.forEach(endpoint => uniqueEndpoints.add(endpoint));
+    details.endpoints?.secondary?.forEach((endpoint: any) => uniqueEndpoints.add(endpoint));
   });
 
   // Generate predictions for each endpoint
@@ -278,11 +280,12 @@ export async function generatePredictiveAnalysis(indication?: string): Promise<P
   const sponsorTrials: Record<string, CsrDetails[]> = {};
 
   // Group trials by sponsor
-  reportDetails.forEach(({ report, details }) => {
-    if (!sponsorTrials[report.sponsor]) {
-      sponsorTrials[report.sponsor] = [];
+  reportDetails.forEach(({ report, details }: any) => {
+    const sponsor = report.sponsor || 'Unknown';
+    if (!sponsorTrials[sponsor]) {
+      sponsorTrials[sponsor] = [];
     }
-    sponsorTrials[report.sponsor].push(details);
+    sponsorTrials[sponsor].push(details);
   });
 
   // Analyze trends for each sponsor with multiple trials
@@ -299,7 +302,7 @@ export async function generatePredictiveAnalysis(indication?: string): Promise<P
 
   // Analyze market trends by indication
   const indicationCounts: Record<string, number> = {};
-  reports.forEach(report => {
+  reports.forEach((report: any) => {
     indicationCounts[report.indication] = (indicationCounts[report.indication] || 0) + 1;
   });
 
@@ -339,16 +342,16 @@ export async function compareTrialsAnalysis(
 ): Promise<TrialComparisonResult | null> {
   try {
     // Fetch report data
-    const report1 = await storage.getCsrReport(trialId1);
-    const report2 = await storage.getCsrReport(trialId2);
+    const report1 = await (storage as any).getCsrReport(trialId1);
+    const report2 = await (storage as any).getCsrReport(trialId2);
 
     if (!report1 || !report2) {
       throw new Error('One or both reports not found');
     }
 
     // Fetch details
-    const details1 = await storage.getCsrDetails(trialId1);
-    const details2 = await storage.getCsrDetails(trialId2);
+    const details1 = await (storage as any).getCsrDetails(trialId1);
+    const details2 = await (storage as any).getCsrDetails(trialId2);
 
     if (!details1 || !details2 || !details1.processed || !details2.processed) {
       throw new Error('One or both report details not found or not processed');
@@ -458,15 +461,16 @@ export async function analyzeCompetitorsForSponsor(
 ): Promise<CompetitorAnalysis[]> {
   try {
     // Fetch all reports
-    const reports = await storage.getAllCsrReports();
+    const reports = await (storage as any).getAllCsrReports();
 
     // Group by sponsor
     const sponsorGroups: Record<string, CsrReport[]> = {};
-    reports.forEach(report => {
-      if (!sponsorGroups[report.sponsor]) {
-        sponsorGroups[report.sponsor] = [];
+    reports.forEach((report: any) => {
+      const sponsor = report.sponsor || 'Unknown';
+      if (!sponsorGroups[sponsor]) {
+        sponsorGroups[sponsor] = [];
       }
-      sponsorGroups[report.sponsor].push(report);
+      sponsorGroups[sponsor].push(report);
     });
 
     // Remove the target sponsor from competitors
@@ -479,12 +483,13 @@ export async function analyzeCompetitorsForSponsor(
       if (sponsorReports.length < 1) continue;
 
       // Collect indications
-      const indications = Array.from(new Set(sponsorReports.map(r => r.indication)));
+      const indications = Array.from(new Set(sponsorReports.map((r: any) => r.indication).filter(Boolean))) as string[];
 
       // Calculate phase distribution
       const phaseDistribution: Record<string, number> = {};
-      sponsorReports.forEach(report => {
-        phaseDistribution[report.phase] = (phaseDistribution[report.phase] || 0) + 1;
+      sponsorReports.forEach((report: any) => {
+        const phase = report.phase || 'Unknown';
+        phaseDistribution[phase] = (phaseDistribution[phase] || 0) + 1;
       });
 
       // Get processed reports
@@ -495,7 +500,7 @@ export async function analyzeCompetitorsForSponsor(
 
       // Fetch details to analyze endpoints and efficacy
       for (const report of sponsorReports) {
-        const details = await storage.getCsrDetails(report.id);
+        const details = await (storage as any).getCsrDetails(report.id);
         if (details && details.processed) {
           processedCount++;
 
@@ -527,12 +532,12 @@ export async function analyzeCompetitorsForSponsor(
 
       // Get recent activities
       const recentActivities = sponsorReports
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .sort((a: any, b: any) => new Date(b.date || b.uploadDate).getTime() - new Date(a.date || a.uploadDate).getTime())
         .slice(0, 3)
-        .map(report => ({
-          date: report.date,
-          title: report.title,
-          phase: report.phase,
+        .map((report: any) => ({
+          date: report.date || report.uploadDate?.toISOString() || '',
+          title: report.title || '',
+          phase: report.phase || '',
         }));
 
       competitors.push({

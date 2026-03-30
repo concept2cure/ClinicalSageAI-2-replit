@@ -410,7 +410,7 @@ export function RegulatoryIntelligencePanel({
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-medium text-stone-900">
-                        {p.deviceName || p.applicantName || 'Unknown Device'}
+                        {p.deviceName || p.applicant || 'Unknown Device'}
                       </span>
                       <span className="text-xs font-mono text-blue-600">
                         {p.clearanceNumber}
@@ -427,9 +427,9 @@ export function RegulatoryIntelligencePanel({
                         {p.decisionOutcome}
                       </span>
                       <span className="text-stone-400">{p.submissionType}</span>
-                      {p.similarity != null && (
+                      {(p as any).similarity != null && (
                         <span className="text-stone-500 ml-auto">
-                          {Math.round(p.similarity * 100)}% similar
+                          {Math.round((p as any).similarity * 100)}% similar
                         </span>
                       )}
                     </div>
@@ -487,7 +487,7 @@ export function RegulatoryIntelligencePanel({
                       {compareResult.similarities.map((s, i) => (
                         <li key={i} className="flex items-start gap-1 text-xs text-stone-600">
                           <CheckCircle className="w-3 h-3 flex-shrink-0 mt-0.5 text-emerald-500" />
-                          {typeof s === 'string' ? s : s.description || s.area}
+                          {typeof s === 'string' ? s : (s as any).description || (s as any).area || s.dimension}
                         </li>
                       ))}
                     </ul>
@@ -500,7 +500,7 @@ export function RegulatoryIntelligencePanel({
                       {compareResult.differences.map((d, i) => (
                         <li key={i} className="flex items-start gap-1 text-xs text-stone-600">
                           <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5 text-amber-500" />
-                          {typeof d === 'string' ? d : d.description || d.area}
+                          {typeof d === 'string' ? d : (d as any).description || (d as any).area || d.dimension}
                         </li>
                       ))}
                     </ul>
@@ -717,29 +717,30 @@ export function RegulatoryIntelligencePanel({
                       Recommended Strategy
                     </span>
                   </div>
-                  {precedentStrategy.data.recommendedStrategy && (
+                  {precedentStrategy.data.recommendedStrategy && (() => {
+                    const rs = precedentStrategy.data.recommendedStrategy as any;
+                    return (
                     <div className="p-2 bg-white rounded border border-blue-200 mb-2">
                       <span className="text-xs font-medium text-stone-900">
-                        {precedentStrategy.data.recommendedStrategy.pathway ||
-                          precedentStrategy.data.recommendedStrategy.name ||
-                          'Recommended Pathway'}
+                        {typeof rs === 'string' ? rs : (rs.pathway || rs.name || 'Recommended Pathway')}
                       </span>
-                      {precedentStrategy.data.recommendedStrategy.confidence != null && (
+                      {typeof rs !== 'string' && rs.confidence != null && (
                         <div className="mt-1.5">
                           <ScoreBar
-                            value={precedentStrategy.data.recommendedStrategy.confidence}
+                            value={rs.confidence}
                             label="Confidence"
                             color="bg-violet-500"
                           />
                         </div>
                       )}
-                      {precedentStrategy.data.recommendedStrategy.rationale && (
+                      {typeof rs !== 'string' && rs.rationale && (
                         <p className="text-xs text-stone-600 mt-1">
-                          {precedentStrategy.data.recommendedStrategy.rationale}
+                          {rs.rationale}
                         </p>
                       )}
                     </div>
-                  )}
+                    );
+                  })()}
                 </div>
 
                 {/* Testing requirements */}
@@ -749,7 +750,7 @@ export function RegulatoryIntelligencePanel({
                       Required Testing
                     </span>
                     <ul className="mt-1.5 space-y-0.5">
-                      {precedentStrategy.data.testingRequirements.map((t, i) => (
+                      {precedentStrategy.data.testingRequirements.map((t: any, i: number) => (
                         <li key={i} className="flex items-start gap-1 text-xs text-stone-600">
                           <CheckCircle className="w-3 h-3 flex-shrink-0 mt-0.5 text-blue-500" />
                           {typeof t === 'string' ? t : t.requirement || t.name}
@@ -787,7 +788,7 @@ export function RegulatoryIntelligencePanel({
                       Key Risks
                     </span>
                     <ul className="mt-1.5 space-y-0.5">
-                      {precedentStrategy.data.keyRisks.map((r, i) => (
+                      {precedentStrategy.data.keyRisks.map((r: any, i: number) => (
                         <li key={i} className="flex items-start gap-1 text-xs text-stone-600">
                           <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5 text-red-400" />
                           {typeof r === 'string' ? r : r.description || r.risk}
@@ -810,11 +811,11 @@ export function RegulatoryIntelligencePanel({
                           className="flex items-center justify-between px-2 py-1.5 bg-stone-50 rounded border border-stone-200 text-xs"
                         >
                           <span className="text-stone-700">
-                            {typeof alt === 'string' ? alt : alt.pathway || alt.name}
+                            {typeof alt === 'string' ? alt : (alt as any).pathway || (alt as any).name || alt.strategy}
                           </span>
-                          {typeof alt !== 'string' && alt.confidence != null && (
+                          {typeof alt !== 'string' && ((alt as any).confidence != null || alt.successRate != null) && (
                             <span className="text-stone-500">
-                              {Math.round(alt.confidence * 100)}%
+                              {Math.round(((alt as any).confidence ?? alt.successRate) * 100)}%
                             </span>
                           )}
                         </div>
@@ -830,17 +831,18 @@ export function RegulatoryIntelligencePanel({
               <button
                 onClick={() => {
                   const d = precedentStrategy.data;
+                  const rs = d.recommendedStrategy as any;
                   const sections = [
                     `<h1>Regulatory Strategy Memo — ${submissionType || 'Submission'}</h1>`,
                     `<p><strong>Indication:</strong> ${indication || 'General'}</p>`,
                     d.recommendedStrategy
-                      ? `<h2>Recommended Strategy</h2><p>${d.recommendedStrategy.pathway || d.recommendedStrategy.name || ''}</p><p>${d.recommendedStrategy.rationale || ''}</p>`
+                      ? `<h2>Recommended Strategy</h2><p>${typeof rs === 'string' ? rs : (rs.pathway || rs.name || '')}</p><p>${typeof rs === 'string' ? '' : (rs.rationale || '')}</p>`
                       : '',
                     d.testingRequirements?.length
-                      ? `<h2>Required Testing</h2><ul>${d.testingRequirements.map(t => `<li>${typeof t === 'string' ? t : t.requirement || t.name}</li>`).join('')}</ul>`
+                      ? `<h2>Required Testing</h2><ul>${d.testingRequirements.map((t: any) => `<li>${typeof t === 'string' ? t : t.requirement || t.name}</li>`).join('')}</ul>`
                       : '',
                     d.keyRisks?.length
-                      ? `<h2>Key Risks</h2><ul>${d.keyRisks.map(r => `<li>${typeof r === 'string' ? r : r.description || r.risk}</li>`).join('')}</ul>`
+                      ? `<h2>Key Risks</h2><ul>${d.keyRisks.map((r: any) => `<li>${typeof r === 'string' ? r : r.description || r.risk}</li>`).join('')}</ul>`
                       : '',
                     d.supportingPrecedents?.length
                       ? `<h2>Supporting Precedents</h2><ul>${d.supportingPrecedents.map(p => `<li>${typeof p === 'string' ? p : p.clearanceNumber || p.deviceName || ''}</li>`).join('')}</ul>`

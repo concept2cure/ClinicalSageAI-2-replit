@@ -12,6 +12,10 @@
  * @see statesV2.tsx for async state wrappers
  */
 
+declare module '@figma/code-connect' {
+  const figma: { connect: (component: any, url: string, config: any) => void; enum: (name: string, map: any) => any; string: (name: string) => any; boolean: (name: string) => any; children: (name: string) => any; instance: (name: string) => any };
+  export default figma;
+}
 import figma from '@figma/code-connect';
 
 // ─── Workspace Layout ───────────────────────────────────────────────────────
@@ -69,7 +73,7 @@ figma.connect(WorkspaceHeader, 'FIGMA_URL_PLACEHOLDER/WorkspaceHeader', {
       Locked: 'locked',
     }),
   },
-  example: ({ title, breadcrumb, typeBadge, statusKey }) => (
+  example: ({ title, breadcrumb, typeBadge, statusKey }: any) => (
     <WorkspaceHeader
       title={title}
       breadcrumb={breadcrumb}
@@ -97,7 +101,7 @@ figma.connect(WorkspaceHeaderRich, 'FIGMA_URL_PLACEHOLDER/WorkspaceHeaderRich', 
       Blocked: 'blocked',
     }),
   },
-  example: ({ title, breadcrumb, statusKey }) => (
+  example: ({ title, breadcrumb, statusKey }: any) => (
     <WorkspaceHeaderRich
       title={title}
       breadcrumb={breadcrumb}
@@ -117,7 +121,7 @@ figma.connect(PageTitleHeader, 'FIGMA_URL_PLACEHOLDER/PageTitleHeader', {
     title: figma.string('Title'),
     description: figma.string('Description'),
   },
-  example: ({ title, description }) => <PageTitleHeader title={title} description={description} />,
+  example: ({ title, description }: any) => <PageTitleHeader title={title} description={description} />,
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -139,7 +143,7 @@ figma.connect(WorkspaceStatusBadge, 'FIGMA_URL_PLACEHOLDER/StatusBadge', {
       'Needs Review': 'needs-review',
     }),
   },
-  example: ({ statusKey }) => (
+  example: ({ statusKey }: any) => (
     <WorkspaceStatusBadge status={statusKey} config={WORKFLOW_STATUS_CONFIG[statusKey]} />
   ),
 });
@@ -158,7 +162,7 @@ figma.connect(WorkspaceCanvas, 'FIGMA_URL_PLACEHOLDER/Canvas', {
       Full: 'full',
     }),
   },
-  example: ({ maxWidth }) => <WorkspaceCanvas maxWidth={maxWidth}>{/* content */}</WorkspaceCanvas>,
+  example: ({ maxWidth }: any) => <WorkspaceCanvas maxWidth={maxWidth}>{/* content */}</WorkspaceCanvas>,
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -202,7 +206,7 @@ figma.connect(ConversationBubble, 'FIGMA_URL_PLACEHOLDER/ConversationBubble', {
     }),
     isStreaming: figma.boolean('Streaming'),
   },
-  example: ({ role, isStreaming }) => (
+  example: ({ role, isStreaming }: any) => (
     <ConversationBubble content="Message content" role={role} isStreaming={isStreaming} />
   ),
 });
@@ -227,7 +231,7 @@ figma.connect(MetricCard, 'FIGMA_URL_PLACEHOLDER/MetricCard', {
       Large: 'lg',
     }),
   },
-  example: ({ label, value, trend, size }) => (
+  example: ({ label, value, trend, size }: any) => (
     <MetricCard label={label} value={value} trend={trend} size={size} />
   ),
 });
@@ -243,7 +247,7 @@ figma.connect(ActionBar, 'FIGMA_URL_PLACEHOLDER/ActionBar', {
     subtitle: figma.string('Subtitle'),
     sticky: figma.boolean('Sticky'),
   },
-  example: ({ title, subtitle, sticky }) => (
+  example: ({ title, subtitle, sticky }: any) => (
     <ActionBar
       title={title}
       subtitle={subtitle}

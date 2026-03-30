@@ -9,7 +9,15 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import type { Artifact, ArtifactVersion } from '../../types';
+import type { Artifact, ArtifactVersion as BaseArtifactVersion } from '../../types';
+
+/** Extended version type used by VersionHistory — runtime data may include extra fields */
+type ArtifactVersion = BaseArtifactVersion & {
+  id?: string;
+  versionNumber?: number;
+  changeType?: string;
+  changeSummary?: string;
+};
 import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -263,8 +271,8 @@ interface DiffViewProps {
 const DiffView: React.FC<DiffViewProps> = ({ versionA, versionB }) => {
   // Simple line-by-line diff visualization
   // In production, use a proper diff library
-  const linesA = versionA.content.split('\n');
-  const linesB = versionB.content.split('\n');
+  const linesA = (typeof versionA.content === 'string' ? versionA.content : JSON.stringify(versionA.content, null, 2)).split('\n');
+  const linesB = (typeof versionB.content === 'string' ? versionB.content : JSON.stringify(versionB.content, null, 2)).split('\n');
 
   return (
     <div className="space-y-4">
@@ -281,7 +289,7 @@ const DiffView: React.FC<DiffViewProps> = ({ versionA, versionB }) => {
 
       <ScrollArea className="h-[400px] border rounded-lg">
         <div className="font-mono text-xs p-4">
-          {linesB.map((line, idx) => {
+          {linesB.map((line: string, idx: number) => {
             const oldLine = linesA[idx];
             const isNew = oldLine === undefined;
             const isChanged = oldLine !== line && oldLine !== undefined;

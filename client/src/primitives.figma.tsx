@@ -11,6 +11,10 @@
  * @see figma.config.json for parser/import-path configuration
  */
 
+declare module '@figma/code-connect' {
+  const figma: { connect: (component: any, url: string, config: any) => void };
+  export default figma;
+}
 import figma from '@figma/code-connect';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -39,7 +43,7 @@ figma.connect(Button, 'FIGMA_URL_PLACEHOLDER/Button', {
     }),
     disabled: figma.boolean('Disabled'),
   },
-  example: ({ label, variant, size, disabled }) => (
+  example: ({ label, variant, size, disabled }: any) => (
     <Button variant={variant} size={size} disabled={disabled}>
       {label}
     </Button>
@@ -63,7 +67,7 @@ figma.connect(Badge, 'FIGMA_URL_PLACEHOLDER/Badge', {
       Destructive: 'destructive',
     }),
   },
-  example: ({ label, variant }) => <Badge variant={variant}>{label}</Badge>,
+  example: ({ label, variant }: any) => <Badge variant={variant}>{label}</Badge>,
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -84,7 +88,7 @@ figma.connect(Input, 'FIGMA_URL_PLACEHOLDER/Input', {
     }),
     disabled: figma.boolean('Disabled'),
   },
-  example: ({ placeholder, type, disabled }) => (
+  example: ({ placeholder, type, disabled }: any) => (
     <Input type={type} placeholder={placeholder} disabled={disabled} />
   ),
 });
@@ -108,7 +112,7 @@ figma.connect(Card, 'FIGMA_URL_PLACEHOLDER/Card', {
     title: figma.string('Title'),
     description: figma.string('Description'),
   },
-  example: ({ title, description }) => (
+  example: ({ title, description }: any) => (
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
@@ -139,7 +143,7 @@ figma.connect(Dialog, 'FIGMA_URL_PLACEHOLDER/Dialog', {
     description: figma.string('Description'),
     open: figma.boolean('Open'),
   },
-  example: ({ title, description, open }) => (
+  example: ({ title, description, open }: any) => (
     <Dialog open={open}>
       <DialogContent>
         <DialogHeader>
@@ -166,7 +170,7 @@ figma.connect(Tabs, 'FIGMA_URL_PLACEHOLDER/Tabs', {
   props: {
     defaultValue: figma.string('Default Tab'),
   },
-  example: ({ defaultValue }) => (
+  example: ({ defaultValue }: any) => (
     <Tabs defaultValue={defaultValue}>
       <TabsList>
         <TabsTrigger value="tab1">Tab 1</TabsTrigger>
@@ -195,7 +199,7 @@ figma.connect(Select, 'FIGMA_URL_PLACEHOLDER/Select', {
   props: {
     placeholder: figma.string('Placeholder'),
   },
-  example: ({ placeholder }) => (
+  example: ({ placeholder }: any) => (
     <Select>
       <SelectTrigger>
         <SelectValue placeholder={placeholder} />
@@ -224,7 +228,7 @@ figma.connect(Alert, 'FIGMA_URL_PLACEHOLDER/Alert', {
       Destructive: 'destructive',
     }),
   },
-  example: ({ title, description, variant }) => (
+  example: ({ title, description, variant }: any) => (
     <Alert variant={variant}>
       <AlertTitle>{title}</AlertTitle>
       <AlertDescription>{description}</AlertDescription>
@@ -274,7 +278,7 @@ figma.connect(Progress, 'FIGMA_URL_PLACEHOLDER/Progress', {
   props: {
     value: figma.string('Value'),
   },
-  example: ({ value }) => <Progress value={Number(value)} />,
+  example: ({ value }: any) => <Progress value={Number(value)} />,
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -288,7 +292,7 @@ figma.connect(Tooltip, 'FIGMA_URL_PLACEHOLDER/Tooltip', {
   props: {
     label: figma.string('Label'),
   },
-  example: ({ label }) => (
+  example: ({ label }: any) => (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger>Hover target</TooltipTrigger>
@@ -336,7 +340,7 @@ figma.connect(Switch, 'FIGMA_URL_PLACEHOLDER/Switch', {
     checked: figma.boolean('Checked'),
     disabled: figma.boolean('Disabled'),
   },
-  example: ({ checked, disabled }) => <Switch checked={checked} disabled={disabled} />,
+  example: ({ checked, disabled }: any) => <Switch checked={checked} disabled={disabled} />,
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -351,7 +355,7 @@ figma.connect(Checkbox, 'FIGMA_URL_PLACEHOLDER/Checkbox', {
     checked: figma.boolean('Checked'),
     disabled: figma.boolean('Disabled'),
   },
-  example: ({ checked, disabled }) => <Checkbox checked={checked} disabled={disabled} />,
+  example: ({ checked, disabled }: any) => <Checkbox checked={checked} disabled={disabled} />,
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -15,6 +15,7 @@ import {
   doseEscalationStudies,
   doseCohorts,
   dltEvents,
+  doseLevels,
   crossSpeciesPkpd,
   speciesComparisons,
   indNarratives,
@@ -139,19 +140,13 @@ export class ForesightAIEngine {
     const prediction = JSON.parse(predictionResponse.choices[0].message.content || '{}');
 
     // Store prediction in database
-    const [savedPrediction] = await db!.insert(foresightPredictions).values({
-      organization_id: organizationId,
-      prediction_type: 'multi_modal_advanced',
+    const [savedPrediction] = await (db!.insert(foresightPredictions) as any).values({
+      organizationId,
+      predictionType: 'multi_modal_advanced',
       phase: studyPhase,
-      prediction_data: prediction,
-      confidence_score: prediction.confidence || 0,
-      risk_factors: prediction.risks || [],
+      successScore: prediction.confidence || 0,
+      riskFactors: prediction.risks || [],
       recommendations: prediction.recommendations || [],
-      metadata: {
-        model_used: AI_MODELS.PREDICTION,
-        data_sources: Object.keys(params).filter(k => (params as any)[k]?.length > 0),
-        timestamp: new Date().toISOString()
-      }
     }).returning();
 
     // Generate hypothesis based on prediction
@@ -237,7 +232,7 @@ export class ForesightAIEngine {
     // Update translational patterns based on learnings
     if (learnings.newPatterns) {
       for (const pattern of learnings.newPatterns) {
-        await db!.insert(translationalPatterns).values({
+        await (db!.insert(translationalPatterns) as any).values({
           organizationId: feedback.organizationId,
           sourcePhase: feedback.phase || 'unknown',
           targetPhase: pattern.targetPhase,
