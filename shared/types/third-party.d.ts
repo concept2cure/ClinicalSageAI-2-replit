@@ -5,40 +5,6 @@
 /// <reference lib="DOM" />
 
 // ============================================================================
-// React Heatmap Grid
-// ============================================================================
-declare module 'react-heatmap-grid' {
-  import { ComponentType, CSSProperties, ReactNode } from 'react';
-
-  interface HeatMapGridProps {
-    data: number[][];
-    xLabels?: string[];
-    yLabels?: string[];
-    xLabelsLocation?: 'top' | 'bottom';
-    xLabelWidth?: number;
-    yLabelWidth?: number;
-    yLabelTextAlign?: 'left' | 'center' | 'right';
-    square?: boolean;
-    height?: number;
-    onClick?: (x: number, y: number) => void;
-    cellStyle?: (
-      background: string,
-      value: number,
-      min: number,
-      max: number,
-      data: number[][],
-      x: number,
-      y: number
-    ) => CSSProperties;
-    cellRender?: (value: number) => ReactNode;
-    background?: string;
-  }
-
-  const HeatMapGrid: ComponentType<HeatMapGridProps>;
-  export default HeatMapGrid;
-}
-
-// ============================================================================
 // Lodash Modules
 // ============================================================================
 declare module 'lodash/debounce' {

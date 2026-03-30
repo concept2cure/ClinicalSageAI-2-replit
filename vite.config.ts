@@ -10,6 +10,10 @@ export default defineConfig({
     ...(process.env.NODE_ENV !== 'production' && process.env.REPL_ID !== undefined
       ? [await import('@replit/vite-plugin-cartographer').then(m => m.cartographer())]
       : []),
+    // Bundle analysis — run with ANALYZE=true to generate stats
+    ...(process.env.ANALYZE === 'true'
+      ? [await import('rollup-plugin-visualizer').then(m => m.visualizer({ open: true, filename: 'dist/bundle-stats.html', gzipSize: true }))]
+      : []),
   ],
   resolve: {
     alias: {
@@ -79,6 +83,21 @@ export default defineConfig({
           // PDF generation libraries (heavy, used on-demand)
           if (id.includes('/pdfmake') || id.includes('/pdf-lib') || id.includes('jspdf')) {
             return 'vendor-pdf';
+          }
+
+          // Tiptap editor extensions — heavy, only needed in editor views
+          if (id.includes('/@tiptap/') || id.includes('/prosemirror') || id.includes('/y-prosemirror')) {
+            return 'vendor-tiptap';
+          }
+
+          // Real-time collaboration (Yjs, Socket.io client)
+          if (id.includes('/yjs') || id.includes('/y-protocols') || id.includes('/socket.io-client')) {
+            return 'vendor-realtime';
+          }
+
+          // Lucide icons — large icon set, split from main
+          if (id.includes('/lucide-react')) {
+            return 'vendor-icons';
           }
         },
       },

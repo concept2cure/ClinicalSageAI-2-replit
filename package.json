@@ -73,7 +73,9 @@
     "audit:last-20-prs:plan:strict": "node scripts/audits/execute-last-pr-audit-build-plan.mjs --limit 20 --strict",
     "audit:last-20-prs:plan:auto-install": "node scripts/audits/execute-last-pr-audit-build-plan.mjs --limit 20 --auto-install",
     "test:ops-audits": "node --test tests/ops/*.test.mjs",
-    "audit:prune-artifacts": "node scripts/audits/prune-generated-audit-artifacts.mjs --retain-days 14"
+    "audit:prune-artifacts": "node scripts/audits/prune-generated-audit-artifacts.mjs --retain-days 14",
+    "audit:dead-code": "npx knip --no-exit-code --reporter compact",
+    "audit:bundle": "ANALYZE=true vite build"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
@@ -126,7 +128,6 @@
     "@sentry/react": "^8.0.0",
     "@stripe/react-stripe-js": "^3.6.0",
     "@stripe/stripe-js": "^7.0.0",
-    "@supabase/supabase-js": "2.98.0",
     "@tailwindcss/postcss": "4.2.2",
     "@tanstack/react-query": "^5.60.5",
     "@tiptap/extension-character-count": "3.8.0",
@@ -200,7 +201,6 @@
     "marked": "17.0.5",
     "mathjs": "^14.4.0",
     "memorystore": "^1.6.7",
-    "ml-stat": "^1.3.3",
     "multer": "^1.4.5-lts.2",
     "node-cron": "^3.0.3",
     "node-html-parser": "7.0.1",
@@ -223,12 +223,9 @@
     "react-dnd": "16.0.1",
     "react-dnd-html5-backend": "16.0.1",
     "react-dom": "^18.3.1",
-    "react-grid-heatmap": "^1.3.0",
-    "react-heatmap-grid": "^0.9.1",
     "react-highlight-words": "^0.20.0",
     "react-hook-form": "^7.53.1",
     "react-resizable-panels": "^2.1.4",
-    "react-toastify": "11.0.5",
     "react-window": "^1.8.10",
     "reactflow": "11.11.4",
     "recharts": "^2.13.0",

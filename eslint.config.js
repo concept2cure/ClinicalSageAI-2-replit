@@ -122,7 +122,7 @@ export default [
     rules: {
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
-      'no-console': 'off',
+      'no-console': ['warn', { allow: ['warn', 'error', 'info'] }],
       'no-case-declarations': 'warn',
       'no-undef': 'warn',
       'no-empty': 'warn',
@@ -133,8 +133,23 @@ export default [
       'no-control-regex': 'warn',
       'no-dupe-class-members': 'warn',
       'no-redeclare': 'warn',
+      'no-debugger': 'error',
+      'no-alert': 'error',
+      'no-eval': 'error',
+      'no-implied-eval': 'error',
+      'prefer-const': 'warn',
+      'no-var': 'error',
+      'eqeqeq': ['warn', 'always', { null: 'ignore' }],
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
+      'no-restricted-imports': ['error', {
+        paths: [
+          {
+            name: '@/components/ui/states',
+            message: 'Deprecated. Use @/components/ui/statesV2 instead.',
+          },
+        ],
+      }],
     },
   },
 ];
