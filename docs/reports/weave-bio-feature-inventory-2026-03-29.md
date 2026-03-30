@@ -1,6 +1,6 @@
 # Weave.bio Comprehensive Feature Inventory
 
-> Research date: 2026-03-29
+> Research date: 2026-03-29, updated 2026-03-30
 > Purpose: Competitive intelligence for Concept2Cure document system convergence sprint
 
 ---
@@ -12,7 +12,7 @@
 - **Positioning**: "AI-native platform for regulatory workflows" -- the only AI-native platform built to manage regulatory content across the entire lifecycle of a therapeutic candidate
 - **Key Partners**: Takeda (validation partner), Parexel (CRO design partner), Boehringer Ingelheim, Gilead (SAB)
 - **Recognition**: "Biotech AI Innovation of the Year" 2024
-- **Security**: AWS infrastructure, zero data retention, enterprise security controls
+- **Security**: AWS infrastructure, OpenAI ZDR policy, AES-256 at rest, SSL/TLS in transit, SAML SSO, MFA, RBAC, 14-day rolling backups
 
 ---
 
@@ -299,7 +299,73 @@
 
 ---
 
-## 12. Platform Architecture Summary
+## 12. Security, Privacy & Compliance (CONFIRMED -- from weave.bio/data-security-privacy/)
+
+### Encryption & Data Protection
+- **Encryption in transit**: SSL/TLS for all data in transit [CONFIRMED]
+- **Encryption at rest**: AES-256 encryption for all data at rest [CONFIRMED]
+- **Zero Data Retention (ZDR)**: Formal ZDR policy with OpenAI -- neither Weave nor OpenAI uses customer data for ML training [CONFIRMED]
+- **Data segregation**: Logical partitioning ensures customer data remains separate (multi-tenant isolation) [CONFIRMED]
+
+### Authentication & Access Control
+- **Multi-factor authentication (MFA)**: Supported for all users [CONFIRMED]
+- **SAML SSO**: Single sign-on with any SAML-compatible identity provider [CONFIRMED]
+- **Username/password + MFA**: Alternative login method [CONFIRMED]
+- **Role-based access controls (RBAC)**: Users have access only to their specific data [CONFIRMED]
+- **Strict need-to-know access**: Internal access given only when required for product/customer operations [CONFIRMED]
+- **Immediate access revocation**: Access removed immediately when no longer needed [CONFIRMED]
+
+### Infrastructure
+- **Cloud provider**: AWS [CONFIRMED]
+- **LLM provider**: OpenAI (primary), AWS Bedrock (content extraction) [CONFIRMED]
+- **Bedrock data handling**: AWS Bedrock does not retain any customer data [CONFIRMED]
+- **Rolling backups**: 14-day rolling backup window [CONFIRMED]
+- **Hot-standby databases**: Available for server outage recovery [CONFIRMED]
+
+### Data Lifecycle
+- **Data deletion on contract end**: Uploaded files and generated content deleted within 30 days of contract termination [CONFIRMED]
+- **Explicit permission required**: Weave requests explicit permission before using customer data for any purpose beyond product operations [CONFIRMED]
+
+### Authorized Users
+- **Contracted customers**: Direct access to their data [CONFIRMED]
+- **Partners on projects**: Working on unique projects in the system [CONFIRMED]
+- **Approved consultants**: Provisioned at customer request [CONFIRMED]
+- **Weave employees**: Only provisioned employees have access [CONFIRMED]
+
+### What's NOT Publicly Confirmed
+- SOC 2 Type II certification status (not mentioned on security page)
+- ISO 27001 certification
+- HIPAA compliance status
+- 21 CFR Part 11 compliance (electronic signatures, audit trails)
+- GDPR-specific data handling documentation
+- Penetration testing / vulnerability assessment cadence
+- Data residency options (e.g., EU-only hosting)
+- BAA (Business Associate Agreement) availability
+
+---
+
+## 13. Integrations
+
+### Confirmed Integrations
+- **Veeva Vault**: Import from and export to Veeva [CONFIRMED]
+- **OpenAI**: LLM provider for AI generation [CONFIRMED]
+- **AWS Bedrock**: Content extraction from uploaded files [CONFIRMED]
+- **SAML identity providers**: SSO integration with corporate IdPs [CONFIRMED]
+
+### What's NOT Publicly Confirmed
+- Public API or developer SDK
+- Webhook/event system
+- Integration with eCTD publishing tools (LORENZ, Extedo, Celegence)
+- EHR/EDC system integration
+- CTMS (Clinical Trial Management System) integration
+- Statistical software integration (SAS, R)
+- SharePoint/OneDrive integration
+- Slack/Teams notifications
+- JIRA/project management integration
+
+---
+
+## 14. Platform Architecture Summary
 
 ```
 The Weave Platform
@@ -355,6 +421,20 @@ The Weave Platform
 |   +-- Redline suggestions
 |   +-- Approval workflows
 |   +-- Progress tracking
+|
++-- Security & Infrastructure
+|   +-- AWS cloud hosting
+|   +-- AES-256 at rest / SSL/TLS in transit
+|   +-- OpenAI ZDR (zero data retention)
+|   +-- SAML SSO + MFA + RBAC
+|   +-- Logical tenant isolation
+|   +-- 14-day rolling backups + hot standby
+|
++-- Integrations
+    +-- Veeva Vault import/export
+    +-- OpenAI (LLM)
+    +-- AWS Bedrock (extraction)
+    +-- SAML identity providers
 ```
 
 ---
@@ -414,3 +494,8 @@ The Weave Platform
 - [Weave Bio Webflow (legacy site)](https://weave-bio.webflow.io/)
 - [Weave Bio Solutions](https://weave-bio.webflow.io/solutions)
 - [HLTH: HAQ Manager with Takeda](https://hlth.com/insights/news/weave-bio-launches-haq-manager-with-takeda-to-extend-ai-automation-into-regulatory-review-2025-11-07)
+- [Weave Bio Data Security & Privacy](https://www.weave.bio/data-security-privacy/) -- security/privacy details (2026-03-30 research)
+- [Weave RFP Checklist & Platform Overview PDF](https://23328296.fs1.hubspotusercontent-na1.net/hubfs/23328296/Website%20Files/Weave%20RFP%20Checklist%20&%20Platform%20Overview_July2025.pdf) -- detailed capability checklist (403'd, title confirmed)
+- [Weave RFP Checklist Landing Page](https://www.weave.bio/resources/weave-rfp-checklist-platform-overview/)
+- [Weave Submission Builder (alternate URL)](https://www.weave.bio/platform/submission-builder/)
+- [DIP-AI: Best Regulatory Writing Automation Tools 2025](https://www.dip-ai.com/use-cases/en/the-best-regulatory-writing-automation) -- competitive landscape
