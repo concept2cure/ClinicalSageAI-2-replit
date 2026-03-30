@@ -3932,7 +3932,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           <button
                             onClick={() => handleRecallPrompt(msg.id, msg.content)}
                             className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
-                            title="Edit and resend this prompt"
+                            title="Recall this prompt to edit"
+                            aria-label="Recall this prompt to edit"
                           >
                             <RotateCcw className="w-3 h-3" />
                           </button>
@@ -4685,6 +4686,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           )}
           <p className="mt-1.5 pl-1 text-[11px] text-[#B0AEA5]">
             Type <span className="font-semibold text-[#6B6962]">/</span> for commands.
+            {' '}
+            Use <span className="font-semibold text-[#6B6962]">↑</span> on an empty input to recall your last prompt.
             {onNavigate ? (
               <>
                 {' '}

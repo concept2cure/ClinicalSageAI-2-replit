@@ -501,7 +501,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   <button
                     onClick={onRecallPrompt}
                     className="p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-md transition-colors duration-150"
-                    title="Edit and resend this prompt"
+                    title="Recall this prompt to edit"
+                    aria-label="Recall this prompt to edit"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                   </button>
@@ -977,6 +978,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
         {/* Disclaimer */}
         <p className="text-center text-xs text-stone-400 mt-2">
           Type <span className="font-semibold text-stone-500">/</span> for commands.
+          {' '}
+          Press <span className="font-semibold text-stone-500">↑</span> on empty input to recall your last prompt.
           {onOpenPromptLibrary ? (
             <>
               {' '}
