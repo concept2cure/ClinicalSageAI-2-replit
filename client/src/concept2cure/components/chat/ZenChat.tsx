@@ -45,6 +45,7 @@ import {
   PenTool,
   Loader2,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 // Configure marked for safe, clean HTML output
 marked.setOptions({ breaks: true, gfm: true });
@@ -89,6 +90,14 @@ interface Attachment {
   name: string;
   type: 'document' | 'image' | 'data';
   size: number;
+}
+
+interface SlashCommand {
+  id: string;
+  label: string;
+  hint: string;
+  prompt: string;
+  icon: React.ReactNode;
 }
 
 interface ZenChatProps {
@@ -566,6 +575,41 @@ const QUICK_START_PROMPTS = [
   },
 ];
 
+const SLASH_COMMANDS: SlashCommand[] = [
+  {
+    id: 'summary',
+    label: '/summary',
+    hint: 'Summarize current project risks and status',
+    prompt:
+      'Summarize my current project status, top regulatory risks, and the most important next action.',
+    icon: <Sparkles className="h-3.5 w-3.5" />,
+  },
+  {
+    id: 'gap-check',
+    label: '/gap-check',
+    hint: 'Run a readiness gap check',
+    prompt:
+      'Run a submission readiness gap check and list missing evidence, high-risk claims, and remediation steps.',
+    icon: <AlertCircle className="h-3.5 w-3.5" />,
+  },
+  {
+    id: 'timeline',
+    label: '/timeline',
+    hint: 'Generate milestone plan',
+    prompt:
+      'Create a milestone timeline with dependencies and critical path for this submission.',
+    icon: <ChevronDown className="h-3.5 w-3.5" />,
+  },
+  {
+    id: 'draft',
+    label: '/draft',
+    hint: 'Start drafting a section now',
+    prompt:
+      'Help me draft a regulatory section. Ask me for section name, agency, and intended claim strength first.',
+    icon: <FileText className="h-3.5 w-3.5" />,
+  },
+];
+
 /**
  * Segment-aware smart suggestions based on submission type.
  * Every suggestion leads to a tangible document or artifact.
@@ -745,6 +789,9 @@ interface ChatInputProps {
   onStop?: () => void;
   isGenerating?: boolean;
   placeholder?: string;
+  slashCommands: SlashCommand[];
+  onApplySlashCommand: (command: SlashCommand) => void;
+  onOpenPromptLibrary?: () => void;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({
@@ -754,9 +801,30 @@ const ChatInput: React.FC<ChatInputProps> = ({
   onStop,
   isGenerating = false,
   placeholder = 'Message AnA...',
+  slashCommands,
+  onApplySlashCommand,
+  onOpenPromptLibrary,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isFocused, setIsFocused] = useState(false);
+  const [selectedSlashIndex, setSelectedSlashIndex] = useState(0);
+
+  const slashQuery = value.trimStart().startsWith('/')
+    ? value.trimStart().slice(1).toLowerCase()
+    : '';
+  const filteredSlashCommands = useMemo(() => {
+    if (!value.trimStart().startsWith('/')) return [];
+    if (!slashQuery) return slashCommands;
+    return slashCommands.filter(
+      command =>
+        command.label.toLowerCase().includes(slashQuery) ||
+        command.hint.toLowerCase().includes(slashQuery)
+    );
+  }, [value, slashCommands, slashQuery]);
+
+  useEffect(() => {
+    setSelectedSlashIndex(0);
+  }, [slashQuery]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -770,6 +838,26 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   // Handle Enter key
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (filteredSlashCommands.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedSlashIndex(prev =>
+          Math.min(prev + 1, filteredSlashCommands.length - 1)
+        );
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedSlashIndex(prev => Math.max(prev - 1, 0));
+        return;
+      }
+      if ((e.key === 'Enter' || e.key === 'Tab') && !e.shiftKey) {
+        e.preventDefault();
+        onApplySlashCommand(filteredSlashCommands[selectedSlashIndex]);
+        return;
+      }
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       if (value.trim() && !isGenerating) {
@@ -783,6 +871,28 @@ const ChatInput: React.FC<ChatInputProps> = ({
   return (
     <div className="border-t border-stone-200 bg-white px-4 py-4">
       <div className="max-w-3xl mx-auto">
+        {filteredSlashCommands.length > 0 && (
+          <div className="mb-2 rounded-xl border border-stone-200 bg-white p-1 shadow-sm">
+            {filteredSlashCommands.slice(0, 6).map((command, index) => (
+              <Button
+                key={command.id}
+                type="button"
+                variant="ghost"
+                onClick={() => onApplySlashCommand(command)}
+                className={cn(
+                  'h-auto w-full justify-start gap-2 rounded-lg px-3 py-2 text-left',
+                  index === selectedSlashIndex
+                    ? 'bg-stone-100 text-stone-900 hover:bg-stone-100'
+                    : 'text-stone-700 hover:bg-stone-50'
+                )}
+              >
+                <span className="text-stone-500">{command.icon}</span>
+                <span className="text-xs font-semibold">{command.label}</span>
+                <span className="truncate text-xs text-stone-500">{command.hint}</span>
+              </Button>
+            ))}
+          </div>
+        )}
         <div
           className={cn(
             'flex items-end gap-2 px-4 py-3 bg-white border rounded-xl transition-all duration-150',
@@ -833,6 +943,21 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
         {/* Disclaimer */}
         <p className="text-center text-xs text-stone-400 mt-2">
+          Type <span className="font-semibold text-stone-500">/</span> for commands.
+          {onOpenPromptLibrary ? (
+            <>
+              {' '}
+              <button
+                type="button"
+                onClick={onOpenPromptLibrary}
+                className="font-semibold text-stone-600 underline decoration-stone-300 underline-offset-2 hover:text-stone-800"
+              >
+                Browse all capabilities
+              </button>
+              .
+            </>
+          ) : null}
+          {' '}
           AnA can make mistakes. Verify critical regulatory decisions with qualified experts.
         </p>
       </div>
@@ -911,6 +1036,9 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     }
     setLocation(href);
   };
+  const handleOpenPromptLibrary = useCallback(() => {
+    handleNavigate('/concept2cure?panel=capabilities');
+  }, [handleNavigate]);
   const userInitials = (() => {
     if (!userName) return 'U';
     const parts = userName.trim().split(/\s+/);
@@ -940,6 +1068,11 @@ export const ZenChat: React.FC<ZenChatProps> = ({
   // Local state
   const [input, setInput] = useState('');
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const draftStorageKey = useMemo(() => {
+    const projectScope = projectId || 'global';
+    const threadScope = threadId || initialThreadId || 'new';
+    return `ana:draft:${projectScope}:${threadScope}`;
+  }, [projectId, threadId, initialThreadId]);
 
   // Convert Cortex messages to local format
   const messages: Message[] = cortexMessages.map(m => ({
@@ -1005,12 +1138,34 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     scrollToBottom();
   }, [displayMessages, scrollToBottom]);
 
+  // Load message draft per project/thread context.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const savedDraft = localStorage.getItem(draftStorageKey);
+    if (savedDraft) {
+      setInput(savedDraft);
+    }
+  }, [draftStorageKey]);
+
+  // Persist message draft as user types.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!input.trim()) {
+      localStorage.removeItem(draftStorageKey);
+      return;
+    }
+    localStorage.setItem(draftStorageKey, input);
+  }, [input, draftStorageKey]);
+
   // Send message - use real API
   const handleSend = async () => {
     if (!input.trim() || isLoading || isStreaming) return;
 
     const messageText = input.trim();
     setInput('');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(draftStorageKey);
+    }
 
     try {
       // Use streaming for better UX
@@ -1023,11 +1178,20 @@ export const ZenChat: React.FC<ZenChatProps> = ({
   };
 
   // Regenerate the last assistant response
-  const handleRegenerate = useCallback(() => {
-    // Find the last user message to re-send
-    const lastUserMsg = [...displayMessages].reverse().find(m => m.role === 'user');
-    if (lastUserMsg && !isLoading && !isStreaming) {
-      streamMessage(lastUserMsg.content);
+  const handleRegenerate = useCallback((assistantMessageId?: string) => {
+    if (isLoading || isStreaming) return;
+
+    const assistantIndex = assistantMessageId
+      ? displayMessages.findIndex(message => message.id === assistantMessageId)
+      : displayMessages.length - 1;
+    const startIndex = assistantIndex >= 0 ? assistantIndex : displayMessages.length - 1;
+
+    for (let index = startIndex; index >= 0; index -= 1) {
+      const candidate = displayMessages[index];
+      if (candidate.role === 'user') {
+        streamMessage(candidate.content);
+        return;
+      }
     }
   }, [displayMessages, isLoading, isStreaming, streamMessage]);
 
@@ -1170,12 +1334,14 @@ export const ZenChat: React.FC<ZenChatProps> = ({
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
             {(chatError as any).failedMessage && (
-              <button
+              <Button
+                type="button"
+                variant="ghost"
                 onClick={() => streamMessage((chatError as any).failedMessage)}
-                className="text-xs underline hover:text-red-900"
+                className="h-auto px-1 py-0 text-xs underline hover:text-red-900"
               >
                 Retry
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -1207,7 +1373,11 @@ export const ZenChat: React.FC<ZenChatProps> = ({
                 message={message}
                 userInitials={userInitials}
                 onCopy={() => handleCopy(message.content)}
-                onRegenerate={message.role === 'assistant' ? handleRegenerate : undefined}
+                onRegenerate={
+                  message.role === 'assistant'
+                    ? () => handleRegenerate(message.id)
+                    : undefined
+                }
                 onFeedback={(positive: boolean) => {
                   apiRequest('POST', '/api/concept2cure/feedback', { messageId: message.id, positive }).catch(() => {});
                 }}
@@ -1235,7 +1405,14 @@ export const ZenChat: React.FC<ZenChatProps> = ({
         onSend={handleSend}
         onStop={handleStop}
         isGenerating={isLoading || isStreaming}
-        placeholder={isConnected ? 'Ask AnA anything...' : 'Connecting...'}
+        placeholder={
+          isConnected
+            ? 'Ask AnA anything... try /summary, /gap-check, /timeline, or /draft'
+            : 'Connecting...'
+        }
+        slashCommands={SLASH_COMMANDS}
+        onApplySlashCommand={command => setInput(command.prompt)}
+        onOpenPromptLibrary={handleOpenPromptLibrary}
       />
     </div>
   );
