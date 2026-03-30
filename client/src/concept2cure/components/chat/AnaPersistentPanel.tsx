@@ -320,6 +320,35 @@ interface SuggestedAction {
   description?: string;
 }
 
+type QueueWorkStatus =
+  | 'queued'
+  | 'working'
+  | 'waiting_action'
+  | 'completed'
+  | 'blocked'
+  | 'failed';
+
+interface QueueContextSnapshot {
+  threadId: string | null;
+  contextProfile: AnaPersistentPanelProps['contextProfile'];
+  authoringContext: AnaPersistentPanelProps['authoringContext'];
+  chatMode: 'standard' | 'deep-research' | 'nano-banana';
+  intentLens: IntentLens;
+  selectedProvider: AIProviderChoice;
+  useFirecrawl: boolean;
+}
+
+interface ConversationQueueItem {
+  id: string;
+  text: string;
+  createdAt: number;
+  status: QueueWorkStatus;
+  contextSnapshot: QueueContextSnapshot;
+  error?: string;
+}
+
+const ANA_QUEUE_STORAGE_KEY = 'ana_conversation_queue_v1';
+
 // ─── AnA RI Types ─────────────────────────────────────────────────────────────
 
 type IntentLens = 'auto' | 'audit' | 'improve' | 'risk' | 'strategy' | 'compare';
@@ -769,6 +798,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const [messages, setMessages] = useState<AnaMessage[]>([]);
   const [input, setInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
+  const [conversationQueue, setConversationQueue] = useState<ConversationQueueItem[]>([]);
+  const queueRef = useRef<ConversationQueueItem[]>([]);
+  const [activeQueueItemId, setActiveQueueItemId] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
@@ -1379,14 +1411,83 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [externalMessage]);
 
+  useEffect(() => {
+    queueRef.current = conversationQueue;
+  }, [conversationQueue]);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(ANA_QUEUE_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return;
+      const restored = parsed.filter(
+        (item: any) =>
+          item &&
+          typeof item.id === 'string' &&
+          typeof item.text === 'string' &&
+          typeof item.createdAt === 'number' &&
+          item.contextSnapshot
+      ) as ConversationQueueItem[];
+      if (restored.length > 0) {
+        setConversationQueue(restored);
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `receipt-${Date.now()}-restore`,
+            role: 'assistant',
+            content: `♻️ **Queue restored** — recovered ${restored.length} pending turn${restored.length === 1 ? '' : 's'} from this session.`,
+            timestamp: new Date(),
+          },
+        ]);
+      }
+    } catch {
+      // Non-blocking: ignore malformed persisted queue state
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      const persistable = conversationQueue.filter(item => item.status !== 'completed');
+      if (persistable.length === 0) {
+        sessionStorage.removeItem(ANA_QUEUE_STORAGE_KEY);
+      } else {
+        sessionStorage.setItem(ANA_QUEUE_STORAGE_KEY, JSON.stringify(persistable));
+      }
+    } catch {
+      // Non-blocking: storage quota or serialization failures should not break chat
+    }
+  }, [conversationQueue]);
+
+  const appendQueueReceipt = useCallback((content: string) => {
+    setMessages(prev => [
+      ...prev,
+      {
+        id: `receipt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        role: 'assistant',
+        content,
+        timestamp: new Date(),
+      },
+    ]);
+  }, []);
+
   // ── Stop generating ──────────────────────────────────────────────────────────
   const handleStop = useCallback(() => {
     if (abortRef.current) {
       abortRef.current.abort();
       abortRef.current = null;
     }
+    if (activeQueueItemId) {
+      setConversationQueue(prev =>
+        prev.map(item =>
+          item.id === activeQueueItemId ? { ...item, status: 'blocked', error: 'Manually stopped by user.' } : item
+        )
+      );
+      appendQueueReceipt('⛔ **Blocked** — active turn was manually stopped. Queued follow-ups remain intact.');
+    }
     setIsThinking(false);
-  }, []);
+    setActiveQueueItemId(null);
+  }, [activeQueueItemId, appendQueueReceipt]);
 
   // ── Regenerate last assistant message ────────────────────────────────────────
   const handleRegenerate = useCallback(() => {
@@ -1407,35 +1508,109 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   }, [messages]); // handleSend added below after it's defined
 
   const handleSend = useCallback(
-    async (messageText?: string) => {
+    async (messageText?: string, options?: { queueItemId?: string }) => {
       const text = messageText || input.trim();
-      if (!text || isThinking) return;
+      if (!text) return;
+
+      let queueItemId = options?.queueItemId;
+      if (!queueItemId) {
+        queueItemId = `q-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const contextSnapshot: QueueContextSnapshot = {
+          threadId: threadIdRef.current,
+          contextProfile,
+          authoringContext,
+          chatMode,
+          intentLens,
+          selectedProvider,
+          useFirecrawl,
+        };
+        setConversationQueue(prev => [
+          ...prev,
+          {
+            id: queueItemId,
+            text,
+            createdAt: Date.now(),
+            status: isThinking ? 'queued' : 'working',
+            contextSnapshot,
+          },
+        ]);
+        // Always persist user intent in visible conversation immediately.
+        setMessages(prev => [
+          ...prev.slice(-199),
+          {
+            id: `u-${Date.now()}`,
+            role: 'user',
+            content: text,
+            timestamp: new Date(),
+          },
+        ]);
+        setInput('');
+
+        if (isThinking) {
+          appendQueueReceipt(
+            `🕒 **Queued** — I'll process this next after the active response handoff:\n> ${text}`
+          );
+          return;
+        }
+      }
+      if (isThinking) return;
 
       // Create AbortController for this request so user can stop generation
       const controller = new AbortController();
       abortRef.current = controller;
+      const activeTurnTimeout = window.setTimeout(() => {
+        controller.abort('ana_turn_timeout');
+      }, 90_000);
+      setIsThinking(true);
+      setActiveQueueItemId(queueItemId);
+      setConversationQueue(prev =>
+        prev.map(item => (item.id === queueItemId ? { ...item, status: 'working', error: undefined } : item))
+      );
+      appendQueueReceipt('⚙️ **Working** — processing active turn.');
 
-      const userMsg: AnaMessage = {
-        id: `u-${Date.now()}`,
-        role: 'user',
-        content: text,
-        timestamp: new Date(),
+      const queueItem = queueRef.current.find(item => item.id === queueItemId);
+      const carryContext = queueItem?.contextSnapshot;
+      if (carryContext?.threadId && !threadIdRef.current) {
+        threadIdRef.current = carryContext.threadId;
+      }
+      const turnChatMode = carryContext?.chatMode || chatMode;
+      const turnContextProfile = carryContext?.contextProfile || contextProfile;
+      const turnAuthoringContext = carryContext?.authoringContext || authoringContext;
+      const turnIntentLens = carryContext?.intentLens || intentLens;
+      const turnSelectedProvider = carryContext?.selectedProvider || selectedProvider;
+      const turnUseFirecrawl =
+        carryContext?.useFirecrawl !== undefined ? carryContext.useFirecrawl : useFirecrawl;
+      let turnFinalStatus: QueueWorkStatus = 'completed';
+      let turnStatusDetail = '';
+      const finalizeTurnState = (status: QueueWorkStatus, detail: string) => {
+        clearTimeout(activeTurnTimeout);
+        setConversationQueue(prev =>
+          prev.map(item =>
+            item.id === queueItemId
+              ? { ...item, status, error: status === 'failed' || status === 'blocked' ? detail : undefined }
+              : item
+          )
+        );
+        if (status === 'failed' || status === 'blocked') {
+          appendQueueReceipt(`⛔ **Blocked / Failed** — ${detail}`);
+        } else if (status === 'waiting_action') {
+          appendQueueReceipt(`🟡 **Waiting on action** — ${detail}`);
+        } else {
+          appendQueueReceipt(`✅ **Completed** — ${detail}`);
+        }
+        setIsThinking(false);
+        setActiveQueueItemId(null);
       };
 
-      // Cap in-memory messages to prevent unbounded growth
-      setMessages(prev => [...prev.slice(-199), userMsg]);
-      setInput('');
-      setIsThinking(true);
-
       // Deep Research mode — launch a job and stream progress
-      if (chatMode === 'deep-research') {
+      if (turnChatMode === 'deep-research') {
         try {
           // Launch job
           const launchRes = await apiRequest('POST', '/api/deep-research/jobs', {
             query: { indication: text, keywords: text.split(/\s+/).filter(w => w.length > 3) },
             connectorIds: ['clinical_trials_gov', 'pubmed', 'fda_drugs', 'ema_epar'],
             depth: 'standard',
-            projectId: contextProfile?.projectId || null,
+            projectId: turnContextProfile?.projectId || null,
           });
 
           if (!launchRes.ok) {
@@ -1476,7 +1651,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       : m
                   )
                 );
-                setIsThinking(false);
+                finalizeTurnState('failed', data.error || 'Deep research stream failed.');
                 return;
               }
 
@@ -1528,7 +1703,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       )
                     );
                   })
-                  .finally(() => setIsThinking(false));
+                  .finally(() =>
+                    finalizeTurnState('completed', 'Deep research turn completed. Safe handoff ready.')
+                  );
                 return;
               }
             } catch {
@@ -1569,7 +1746,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 }
               })
               .catch(() => { toast({ title: 'Research poll failed', description: 'Could not check research job status.', variant: 'destructive' }); })
-              .finally(() => setIsThinking(false));
+              .finally(() =>
+                finalizeTurnState('completed', 'Deep research polling completed. Safe handoff ready.')
+              );
           };
         } catch (err) {
           const errorMsg = err instanceof Error ? err.message : 'Unknown error';
@@ -1582,7 +1761,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               timestamp: new Date(),
             },
           ]);
-          setIsThinking(false);
+          finalizeTurnState('failed', errorMsg || 'Deep research launch failed.');
         }
         return;
       }
@@ -1591,7 +1770,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       try {
         let data: any;
 
-        if (chatMode === 'nano-banana') {
+        if (turnChatMode === 'nano-banana') {
           // Route to Visual AI (Gemini image gen) endpoint
           const response = await apiRequest('POST', '/api/nano-banana/chat', {
             message: text,
@@ -1628,35 +1807,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           ]);
         } else {
           // Standard mode → AnA RI orchestrated chat (falls back to Cortex)
-          const anaRiPayload = {
-            message: text,
-            intent_lens: intentLens !== 'auto' ? intentLens : undefined,
-            user_role: contextProfile?.userRole || undefined,
-            project_context: contextProfile?.activeProject
-              ? {
-                  productName: contextProfile.activeProject,
-                  submissionType: contextProfile.productType,
-                }
-              : undefined,
-            submission_type: contextProfile?.productType || undefined,
-            context: {
-              screen: contextProfile?.screenName,
-              project: contextProfile?.activeProject,
-              projectId: contextProfile?.projectId,
-              productType: contextProfile?.productType,
-              userRole: contextProfile?.userRole,
-              screenName: contextProfile?.screenName,
-            },
-            conversation_history: messages.slice(-10).map(m => ({
-              role: m.role,
-              content: m.content,
-            })),
-          };
-
-          // Try AnA RI first, fallback to Cortex
           // Build authoring context payload for section/artifact-aware chat
-          const authoringPayload = authoringContext
-            ? serializeContextForChat(authoringContext)
+          const authoringPayload = turnAuthoringContext
+            ? serializeContextForChat(turnAuthoringContext)
             : {};
 
           // Use raw fetch for chat calls to avoid apiRequest throwing on errors.
@@ -1720,35 +1873,37 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           let rawData: any = null;
           let chatSucceeded = false;
           let anaErrorCode: string | null = null;
+          let streamedAssistantAlreadyRendered = false;
+          let streamedAssistantMessageId: string | null = null;
 
           // ── Build chat body (reused for retries) ──
           const chatBody = JSON.stringify({
             message: text,
             idempotency_key: correlationId,
-            chatMode,
-            useFirecrawl,
+            chatMode: turnChatMode,
+            useFirecrawl: turnUseFirecrawl,
             thread_id: threadIdRef.current || undefined,
-            project_id: contextProfile?.projectId || undefined,
-            submission_type: contextProfile?.productType || undefined,
+            project_id: turnContextProfile?.projectId || undefined,
+            submission_type: turnContextProfile?.productType || undefined,
             source_surface: 'ana_persistent_panel',
-            preferred_provider: selectedProvider !== 'auto' ? selectedProvider : undefined,
+            preferred_provider: turnSelectedProvider !== 'auto' ? turnSelectedProvider : undefined,
             authoring_context: authoringPayload,
             context: {
-              screen: contextProfile?.screenName,
-              project: contextProfile?.activeProject,
-              projectId: contextProfile?.projectId,
-              productType: contextProfile?.productType,
-              userRole: contextProfile?.userRole,
-              ...(contextProfile?.moduleContext || {}),
-              ...(authoringContext
+              screen: turnContextProfile?.screenName,
+              project: turnContextProfile?.activeProject,
+              projectId: turnContextProfile?.projectId,
+              productType: turnContextProfile?.productType,
+              userRole: turnContextProfile?.userRole,
+              ...(turnContextProfile?.moduleContext || {}),
+              ...(turnAuthoringContext
                 ? {
-                    sectionCode: authoringContext.sectionCode,
-                    artifactId: authoringContext.artifactId,
-                    artifactVersionId: authoringContext.artifactVersionId,
-                    workflowStage: authoringContext.workflowStage,
-                    sectionTitle: authoringContext.sectionTitle,
-                    moduleCode: authoringContext.moduleCode,
-                    artifactStatus: authoringContext.artifactStatus,
+                    sectionCode: turnAuthoringContext.sectionCode,
+                    artifactId: turnAuthoringContext.artifactId,
+                    artifactVersionId: turnAuthoringContext.artifactVersionId,
+                    workflowStage: turnAuthoringContext.workflowStage,
+                    sectionTitle: turnAuthoringContext.sectionTitle,
+                    moduleCode: turnAuthoringContext.moduleCode,
+                    artifactStatus: turnAuthoringContext.artifactStatus,
                   }
                 : {}),
             },
@@ -1758,9 +1913,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             })),
           });
 
-          // ── Attempt 1: AnA RI endpoint ──
+          // ── Attempt 1: AnA RI stream endpoint (primary path for safe handoff) ──
           try {
-            let anaRes = await fetch('/api/ana-ri/chat', {
+            let anaRes = await fetch('/api/ana-ri/stream', {
               method: 'POST',
               headers: chatHeaders,
               credentials: 'include',
@@ -1774,16 +1929,123 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               if (refreshed) {
                 chatHeaders = buildChatHeaders();
                 chatHeaders['x-correlation-id'] = correlationId;
-                anaRes = await fetch('/api/ana-ri/chat', {
+                anaRes = await fetch('/api/ana-ri/stream', {
                   method: 'POST',
                   headers: chatHeaders,
                   credentials: 'include',
+                  signal: controller.signal,
                   body: chatBody,
                 });
               }
             }
             if (anaRes.ok) {
-              rawData = await anaRes.json();
+              const streamAssistantId = `a-stream-${Date.now()}`;
+              let streamedContent = '';
+              let streamDonePayload: any = null;
+              streamedAssistantAlreadyRendered = true;
+              streamedAssistantMessageId = streamAssistantId;
+              setMessages(prev => [
+                ...prev,
+                {
+                  id: streamAssistantId,
+                  role: 'assistant',
+                  content: '',
+                  timestamp: new Date(),
+                },
+              ]);
+
+              const reader = anaRes.body?.getReader();
+              if (!reader) {
+                throw new Error('Stream response did not include a readable body.');
+              }
+              const decoder = new TextDecoder();
+              let buffer = '';
+
+              const applyStreamChunk = (chunk: string) => {
+                streamedContent += chunk;
+                setMessages(prev =>
+                  prev.map(m => (m.id === streamAssistantId ? { ...m, content: streamedContent } : m))
+                );
+              };
+
+              let streamEndedWithError = false;
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                const events = buffer.split('\n\n');
+                buffer = events.pop() || '';
+
+                for (const event of events) {
+                  const dataLines = event
+                    .split('\n')
+                    .filter(line => line.trimStart().startsWith('data:'))
+                    .map(line => line.replace(/^data:\s*/, ''));
+                  if (dataLines.length === 0) continue;
+                  const payloadRaw = dataLines.join('\n');
+                  let payload: any = null;
+                  try {
+                    payload = JSON.parse(payloadRaw);
+                  } catch {
+                    continue;
+                  }
+
+                  if (payload?.type === 'thread_id' && payload.thread_id) {
+                    threadIdRef.current = payload.thread_id;
+                  } else if (payload?.type === 'orchestration' && payload.orchestration) {
+                    setLastOrchestration(payload.orchestration);
+                  } else if (payload?.type === 'text' || payload?.type === 'chunk') {
+                    if (payload.content) applyStreamChunk(String(payload.content));
+                  } else if (payload?.type === 'grounding_strip') {
+                    const stripChars = Number(payload.stripFromEnd || 0);
+                    if (stripChars > 0) {
+                      streamedContent = streamedContent.slice(0, Math.max(0, streamedContent.length - stripChars));
+                      setMessages(prev =>
+                        prev.map(m =>
+                          m.id === streamAssistantId ? { ...m, content: streamedContent } : m
+                        )
+                      );
+                    }
+                  } else if (payload?.type === 'done') {
+                    streamDonePayload = payload;
+                  } else if (payload?.type === 'error') {
+                    streamEndedWithError = true;
+                    anaErrorCode = payload?.queueMeta?.blocked_reason || payload?.error || 'STREAM_ERROR';
+                  } else if (payload?.type === 'warning') {
+                    // non-blocking warning event
+                  }
+                }
+              }
+
+              if (streamEndedWithError) {
+                streamedAssistantAlreadyRendered = false;
+                setMessages(prev => prev.filter(m => m.id !== streamAssistantId));
+                throw new Error(typeof anaErrorCode === 'string' ? anaErrorCode : 'Streaming failed.');
+              }
+
+              rawData = {
+                success: true,
+                data: {
+                  response: streamedContent,
+                  thread_id: threadIdRef.current || undefined,
+                  model: streamDonePayload?.model,
+                  provider: streamDonePayload?.provider,
+                  usage: streamDonePayload?.usage,
+                  latencyMs: streamDonePayload?.latencyMs,
+                  executedActions: streamDonePayload?.executedActions,
+                  executedCommands: streamDonePayload?.executedCommands,
+                  enrichmentSources: streamDonePayload?.enrichmentSources,
+                  enrichmentMeta: streamDonePayload?.enrichmentMeta,
+                  grounding: streamDonePayload?.grounding,
+                  memory: streamDonePayload?.memoryMeta
+                    ? {
+                        atomCount: streamDonePayload.memoryMeta.atomCount,
+                        diagnostics: streamDonePayload.memoryMeta.diagnostics,
+                      }
+                    : undefined,
+                  queueMeta: streamDonePayload?.queueMeta,
+                },
+              };
               chatSucceeded = true;
             } else {
               const errBody = await anaRes.text().catch(() => '');
@@ -1799,7 +2061,40 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             console.warn('[AnA RI] Network error:', anaErr?.message);
           }
 
-          // ── Attempt 2: Cortex fallback ──
+          // ── Attempt 2: AnA RI /chat fallback ──
+          if (!chatSucceeded) {
+            try {
+              let anaChatRes = await fetch('/api/ana-ri/chat', {
+                method: 'POST',
+                headers: chatHeaders,
+                credentials: 'include',
+                signal: controller.signal,
+                body: chatBody,
+              });
+              if (anaChatRes.status === 401) {
+                const refreshed = await refreshTokenOnce();
+                if (refreshed) {
+                  chatHeaders = buildChatHeaders();
+                  chatHeaders['x-correlation-id'] = correlationId;
+                  anaChatRes = await fetch('/api/ana-ri/chat', {
+                    method: 'POST',
+                    headers: chatHeaders,
+                    credentials: 'include',
+                    signal: controller.signal,
+                    body: chatBody,
+                  });
+                }
+              }
+              if (anaChatRes.ok) {
+                rawData = await anaChatRes.json();
+                chatSucceeded = true;
+              }
+            } catch (anaChatErr: any) {
+              console.warn('[AnA RI /chat fallback] error:', anaChatErr?.message);
+            }
+          }
+
+          // ── Attempt 3: Cortex fallback ──
           if (!chatSucceeded) {
             try {
               let cortexRes = await fetch('/api/cortex/chat', {
@@ -1808,18 +2103,18 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 credentials: 'include',
                 body: JSON.stringify({
                   message: text,
-                  chatMode,
+                  chatMode: turnChatMode,
                   idempotency_key: correlationId,
                   source_surface: 'ana_persistent_panel',
-                  project_id: contextProfile?.projectId || undefined,
-                  submission_type: contextProfile?.productType || undefined,
-                  preferred_provider: selectedProvider !== 'auto' ? selectedProvider : undefined,
+                  project_id: turnContextProfile?.projectId || undefined,
+                  submission_type: turnContextProfile?.productType || undefined,
+                  preferred_provider: turnSelectedProvider !== 'auto' ? turnSelectedProvider : undefined,
                   context: {
-                    screen: contextProfile?.screenName,
-                    project: contextProfile?.activeProject,
-                    projectId: contextProfile?.projectId,
-                    productType: contextProfile?.productType,
-                    userRole: contextProfile?.userRole,
+                    screen: turnContextProfile?.screenName,
+                    project: turnContextProfile?.activeProject,
+                    projectId: turnContextProfile?.projectId,
+                    productType: turnContextProfile?.productType,
+                    userRole: turnContextProfile?.userRole,
                   },
                   conversationHistory: messages.slice(-10).map(m => ({
                     role: m.role,
@@ -1839,19 +2134,19 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     credentials: 'include',
                     body: JSON.stringify({
                       message: text,
-                      chatMode,
+                      chatMode: turnChatMode,
                       idempotency_key: correlationId,
                       source_surface: 'ana_persistent_panel',
-                      project_id: contextProfile?.projectId || undefined,
-                      submission_type: contextProfile?.productType || undefined,
+                      project_id: turnContextProfile?.projectId || undefined,
+                      submission_type: turnContextProfile?.productType || undefined,
                       preferred_provider:
-                        selectedProvider !== 'auto' ? selectedProvider : undefined,
+                        turnSelectedProvider !== 'auto' ? turnSelectedProvider : undefined,
                       context: {
-                        screen: contextProfile?.screenName,
-                        project: contextProfile?.activeProject,
-                        projectId: contextProfile?.projectId,
-                        productType: contextProfile?.productType,
-                        userRole: contextProfile?.userRole,
+                        screen: turnContextProfile?.screenName,
+                        project: turnContextProfile?.activeProject,
+                        projectId: turnContextProfile?.projectId,
+                        productType: turnContextProfile?.productType,
+                        userRole: turnContextProfile?.userRole,
                       },
                       conversationHistory: messages.slice(-10).map(m => ({
                         role: m.role,
@@ -1913,39 +2208,78 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             }
           }
 
-          setMessages(prev => [
-            ...prev,
-            {
-              id: `a-${Date.now()}`,
-              role: 'assistant',
-              content: assistantContent,
-              timestamp: new Date(),
-              executedActions: data.executedActions || undefined,
-              executedCommands: data.executedCommands || undefined,
-              modelProvider: data.provider || data.modelProvider || undefined,
-              modelName: data.model || data.modelName || undefined,
-              evidenceUsage: data.evidenceUsage || undefined,
-              // Claude-style: tool executions and thinking
-              toolExecutions: data.toolExecutions || undefined,
-              thinking: data.thinking || undefined,
-              isComplete: true,
-              tokenUsage: data.usage ? {
-                inputTokens: data.usage.prompt_tokens || data.usage.inputTokens,
-                outputTokens: data.usage.completion_tokens || data.usage.outputTokens,
-              } : undefined,
-              // Grounding, enrichment, and memory metadata
-              grounding: data.grounding || undefined,
-              groundingContext: data.orchestration?.groundingContext || data.groundingContext || undefined,
-              enrichmentSources: data.enrichment?.sources || data.enrichmentSources || undefined,
-              enrichmentFailures: data.enrichment?.meta?.sourcesFailed || data.enrichmentMeta?.sourcesFailed || undefined,
-              memoryAtomCount: data.memory?.atomCount || undefined,
-              memoryAtoms: data.memory?.atomSummaries || undefined,
-            },
-          ]);
+          if (!streamedAssistantAlreadyRendered) {
+            setMessages(prev => [
+              ...prev,
+              {
+                id: `a-${Date.now()}`,
+                role: 'assistant',
+                content: assistantContent,
+                timestamp: new Date(),
+                executedActions: data.executedActions || undefined,
+                executedCommands: data.executedCommands || undefined,
+                modelProvider: data.provider || data.modelProvider || undefined,
+                modelName: data.model || data.modelName || undefined,
+                evidenceUsage: data.evidenceUsage || undefined,
+                // Claude-style: tool executions and thinking
+                toolExecutions: data.toolExecutions || undefined,
+                thinking: data.thinking || undefined,
+                isComplete: true,
+                tokenUsage: data.usage ? {
+                  inputTokens: data.usage.prompt_tokens || data.usage.inputTokens,
+                  outputTokens: data.usage.completion_tokens || data.usage.outputTokens,
+                } : undefined,
+                // Grounding, enrichment, and memory metadata
+                grounding: data.grounding || undefined,
+                groundingContext: data.orchestration?.groundingContext || data.groundingContext || undefined,
+                enrichmentSources: data.enrichment?.sources || data.enrichmentSources || undefined,
+                enrichmentFailures: data.enrichment?.meta?.sourcesFailed || data.enrichmentMeta?.sourcesFailed || undefined,
+                memoryAtomCount: data.memory?.atomCount || undefined,
+                memoryAtoms: data.memory?.atomSummaries || undefined,
+              },
+            ]);
+          } else if (streamedAssistantMessageId) {
+            setMessages(prev =>
+              prev.map(m =>
+                m.id === streamedAssistantMessageId
+                  ? {
+                      ...m,
+                      content: assistantContent,
+                      executedActions: data.executedActions || undefined,
+                      executedCommands: data.executedCommands || undefined,
+                      modelProvider: data.provider || data.modelProvider || undefined,
+                      modelName: data.model || data.modelName || undefined,
+                      grounding: data.grounding || undefined,
+                      enrichmentSources: data.enrichment?.sources || data.enrichmentSources || undefined,
+                      enrichmentFailures:
+                        data.enrichment?.meta?.sourcesFailed ||
+                        data.enrichmentMeta?.sourcesFailed ||
+                        undefined,
+                      memoryAtomCount: data.memory?.atomCount || undefined,
+                      isComplete: true,
+                    }
+                  : m
+              )
+            );
+          }
+
+          const hasBlockedActions =
+            Array.isArray(data?.executedActions) &&
+            data.executedActions.some((a: any) => a && a.executed === false);
+          if (data?.queueMeta?.turn_status === 'blocked') {
+            turnFinalStatus = 'blocked';
+            turnStatusDetail = data?.queueMeta?.blocked_reason || 'Server flagged this turn as blocked.';
+          } else if (hasBlockedActions) {
+            turnFinalStatus = 'waiting_action';
+            turnStatusDetail = 'Awaiting required action before continuing.';
+          } else {
+            turnFinalStatus = 'completed';
+            turnStatusDetail = 'Safe handoff complete. Ready for next queued turn.';
+          }
 
           // Auto-persist substantial AI responses as artifacts when project context exists
-          if (contextProfile?.projectId && assistantContent.length > 500) {
-            const numericProjectId = String(contextProfile.projectId).replace(/^proj_/, '');
+          if (turnContextProfile?.projectId && assistantContent.length > 500) {
+            const numericProjectId = String(turnContextProfile.projectId).replace(/^proj_/, '');
             // Extract code blocks > 200 chars as artifacts
             const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
             let match;
@@ -1971,6 +2305,24 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         }
       } catch (err: any) {
         console.error('[AnA Chat Error]', err?.message || err, err);
+        if (controller.signal.aborted) {
+          const timeoutMessage =
+            String(controller.signal.reason || '').includes('timeout')
+              ? 'Active turn timed out after 90s.'
+              : 'Active turn was aborted.';
+          setMessages(prev => [
+            ...prev,
+            {
+              id: `a-${Date.now()}`,
+              role: 'assistant',
+              content: `⛔ ${timeoutMessage} Queued follow-ups are preserved and will continue.`,
+              timestamp: new Date(),
+            },
+          ]);
+          turnFinalStatus = 'failed';
+          turnStatusDetail = timeoutMessage;
+          return;
+        }
         // Try cortex fallback on any error using raw fetch (apiRequest throws and breaks fallback chains)
         try {
           const fbToken =
@@ -1996,12 +2348,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               message: text,
               chatMode: 'standard',
               source_surface: 'ana_persistent_panel_fallback',
-              preferred_provider: selectedProvider !== 'auto' ? selectedProvider : undefined,
+              preferred_provider: turnSelectedProvider !== 'auto' ? turnSelectedProvider : undefined,
               context: {
-                screen: contextProfile?.screenName,
-                projectId: contextProfile?.projectId,
-                productType: contextProfile?.productType,
-                userRole: contextProfile?.userRole,
+                screen: turnContextProfile?.screenName,
+                projectId: turnContextProfile?.projectId,
+                productType: turnContextProfile?.productType,
+                userRole: turnContextProfile?.userRole,
               },
               conversationHistory: messages.slice(-10).map(m => ({
                 role: m.role,
@@ -2029,6 +2381,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               timestamp: new Date(),
             },
           ]);
+          turnFinalStatus = 'completed';
+          turnStatusDetail = 'Fallback response completed. Safe handoff ready.';
         } catch (fallbackErr: any) {
           console.error('[AnA Fallback Error]', fallbackErr?.message || fallbackErr);
           setMessages(prev => [
@@ -2041,15 +2395,36 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               isError: true,
             },
           ]);
+          turnFinalStatus = 'failed';
+          turnStatusDetail = fallbackErr?.message || 'Active turn failed before completion.';
         }
       } finally {
-        setIsThinking(false);
+        finalizeTurnState(turnFinalStatus, turnStatusDetail || 'Turn completed.');
         // Return focus to input after send completes
         inputRef.current?.focus();
       }
     },
-    [input, isThinking, messages, contextProfile, chatMode, intentLens, selectedProvider, useFirecrawl]
+    [
+      input,
+      isThinking,
+      messages,
+      contextProfile,
+      chatMode,
+      intentLens,
+      selectedProvider,
+      useFirecrawl,
+      authoringContext,
+      appendQueueReceipt,
+    ]
   );
+
+  useEffect(() => {
+    if (isThinking) return;
+    if (conversationQueue.some(item => item.status === 'waiting_action')) return;
+    const nextQueued = conversationQueue.find(item => item.status === 'queued');
+    if (!nextQueued) return;
+    void handleSend(nextQueued.text, { queueItemId: nextQueued.id });
+  }, [conversationQueue, isThinking, handleSend]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
@@ -3553,6 +3928,34 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
   const hasMessages = messages.length > 0;
   const isCompact = mode === 'compact';
+  const queuedCount = conversationQueue.filter(item => item.status === 'queued').length;
+  const blockedCount = conversationQueue.filter(
+    item => item.status === 'blocked' || item.status === 'failed'
+  ).length;
+  const waitingActionCount = conversationQueue.filter(item => item.status === 'waiting_action').length;
+  const activeQueueItem = conversationQueue.find(item => item.id === activeQueueItemId) || null;
+  const retryableItem = conversationQueue.find(
+    item => item.status === 'blocked' || item.status === 'failed'
+  );
+
+  const handleResumeWaitingQueue = () => {
+    setConversationQueue(prev =>
+      prev.map(item =>
+        item.status === 'waiting_action' ? { ...item, status: 'completed', error: undefined } : item
+      )
+    );
+    appendQueueReceipt('▶️ **Queue resumed** — waiting-action turns marked complete and queued work can continue.');
+  };
+
+  const handleRetryFailedTurn = () => {
+    if (!retryableItem) return;
+    setConversationQueue(prev =>
+      prev.map(item =>
+        item.id === retryableItem.id ? { ...item, status: 'queued', error: undefined } : item
+      )
+    );
+    appendQueueReceipt(`🔁 **Retry queued** — requeued failed turn: "${retryableItem.text.slice(0, 80)}".`);
+  };
 
   // ── Compact mode: just input bar + expandable overlay ──
   if (isCompact) {
@@ -3630,6 +4033,38 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         {/* Input bar */}
         <div className="px-4 py-2.5 bg-white relative">
           <div className="max-w-3xl mx-auto relative">
+            {(activeQueueItem || queuedCount > 0 || waitingActionCount > 0 || blockedCount > 0) && (
+              <div className="mb-2 rounded-lg border border-[#E8E6DC] bg-[#FAF9F5] px-3 py-2 text-[11px] text-[#6B6962]">
+                {activeQueueItem && <span className="font-medium">Working: {activeQueueItem.text.slice(0, 56)}</span>}
+                {queuedCount > 0 && <span className="ml-2">Queued: {queuedCount}</span>}
+                {waitingActionCount > 0 && <span className="ml-2 text-amber-700">Waiting action: {waitingActionCount}</span>}
+                {blockedCount > 0 && <span className="ml-2 text-amber-700">Blocked/Failed: {blockedCount}</span>}
+                <div className="mt-1.5 flex items-center gap-1.5">
+                  {waitingActionCount > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      onClick={handleResumeWaitingQueue}
+                      className="h-auto px-2 py-1 text-[10px] border border-amber-200 text-amber-700 hover:bg-amber-50 rounded"
+                    >
+                      Resume queue
+                    </Button>
+                  )}
+                  {retryableItem && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      onClick={handleRetryFailedTurn}
+                      className="h-auto px-2 py-1 text-[10px] border border-stone-200 text-stone-700 hover:bg-stone-100 rounded"
+                    >
+                      Retry failed
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
             {/* Slash command autocomplete dropdown */}
             {slashMenuOpen && filteredSlashCommands.length > 0 && (
               <div
@@ -3700,6 +4135,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   onClick={() => {
                     setMessages([]);
                     threadIdRef.current = null;
+                    setConversationQueue([]);
+                    setActiveQueueItemId(null);
+                    sessionStorage.removeItem(ANA_QUEUE_STORAGE_KEY);
                   }}
                   className="h-auto w-auto flex-shrink-0 p-1.5 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg transition-colors"
                   title="New thread"
@@ -3711,10 +4149,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 variant="ghost"
                 size="icon"
                 onClick={() => handleSend()}
-                disabled={!input.trim() || isThinking}
+                disabled={!input.trim()}
                 className={cn(
                   'h-auto w-auto flex-shrink-0 p-2 rounded-full transition-colors duration-150',
-                  input.trim() && !isThinking
+                  input.trim()
                     ? 'bg-[#141413] text-white hover:bg-[#2D2C28]'
                     : 'bg-[#E8E6DC] text-[#B0AEA5] cursor-not-allowed'
                 )}
@@ -4852,6 +5290,38 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       {/* ── Bottom input bar — always visible ── */}
       <div className="flex-shrink-0 px-4 py-3 border-t border-[#F5F4EF] bg-white">
         <div className="max-w-3xl mx-auto relative">
+          {(activeQueueItem || queuedCount > 0 || waitingActionCount > 0 || blockedCount > 0) && (
+            <div className="mb-2 rounded-lg border border-[#E8E6DC] bg-[#FAF9F5] px-3 py-2 text-[11px] text-[#6B6962]">
+              {activeQueueItem && <span className="font-medium">Working: {activeQueueItem.text.slice(0, 72)}</span>}
+              {queuedCount > 0 && <span className="ml-2">Queued: {queuedCount}</span>}
+              {waitingActionCount > 0 && <span className="ml-2 text-amber-700">Waiting action: {waitingActionCount}</span>}
+              {blockedCount > 0 && <span className="ml-2 text-amber-700">Blocked/Failed: {blockedCount}</span>}
+              <div className="mt-1.5 flex items-center gap-1.5">
+                {waitingActionCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    onClick={handleResumeWaitingQueue}
+                    className="h-auto px-2 py-1 text-[10px] border border-amber-200 text-amber-700 hover:bg-amber-50 rounded"
+                  >
+                    Resume queue
+                  </Button>
+                )}
+                {retryableItem && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    onClick={handleRetryFailedTurn}
+                    className="h-auto px-2 py-1 text-[10px] border border-stone-200 text-stone-700 hover:bg-stone-100 rounded"
+                  >
+                    Retry failed
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
           {/* Clear conversation + browse capabilities */}
           {hasMessages && (
             <div className="flex justify-center gap-3 mb-2">
@@ -4861,6 +5331,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 onClick={() => {
                   setMessages([]);
                   threadIdRef.current = null;
+                  setConversationQueue([]);
+                  setActiveQueueItemId(null);
+                  sessionStorage.removeItem(ANA_QUEUE_STORAGE_KEY);
                 }}
                 className="h-auto flex items-center gap-1.5 px-3 py-1 text-xs text-[#B0AEA5] hover:text-[#6B6962] hover:bg-[#F5F4EF] rounded-full transition-colors font-normal"
               >

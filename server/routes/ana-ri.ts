@@ -190,6 +190,22 @@ function stripGroundingBlock(content: string): string {
   return content.replace(/\n*```ana-grounding\s*\n[\s\S]*?```\s*$/, '').trimEnd();
 }
 
+function buildQueueMeta(params: {
+  threadId?: string | null;
+  persistenceFailed?: boolean;
+  blocked?: boolean;
+  error?: string | null;
+}) {
+  const blocked = Boolean(params.blocked || params.persistenceFailed || params.error);
+  return {
+    thread_id: params.threadId || null,
+    handoff_ready: !blocked,
+    turn_status: blocked ? 'blocked' : 'completed',
+    can_process_next: !blocked,
+    blocked_reason: params.error || (params.persistenceFailed ? 'thread_persistence_failed' : null),
+  };
+}
+
 // AI Gateway instance
 let gateway: ReturnType<typeof getGateway> | null = null;
 function ensureGateway() {
@@ -837,6 +853,10 @@ router.post('/chat', async (req: Request, res: Response) => {
       persistenceFailed,
       executedActions,
       executedCommands,
+      queueMeta: buildQueueMeta({
+        threadId: resolvedThreadId,
+        persistenceFailed,
+      }),
       _meta: {
         ...(correlationId && { correlationId }),
         ...(source_surface ? { sourceSurface: source_surface } : {}),
@@ -1356,6 +1376,10 @@ router.post('/stream', async (req: Request, res: Response) => {
           atomCount: memoryResult.atoms?.length || 0,
           diagnostics: memoryResult.diagnostics || null,
         },
+        queueMeta: buildQueueMeta({
+          threadId,
+          persistenceFailed,
+        }),
       })}\n\n`
     );
 
@@ -1370,6 +1394,10 @@ router.post('/stream', async (req: Request, res: Response) => {
         `data: ${JSON.stringify({
           type: 'error',
           error: 'An error occurred while generating the response',
+          queueMeta: buildQueueMeta({
+            blocked: true,
+            error: error instanceof Error ? error.message : 'stream_error',
+          }),
         })}\n\n`
       );
       res.end();
