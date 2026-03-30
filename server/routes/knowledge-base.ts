@@ -1443,19 +1443,7 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
           return res.status(400).json({ error: 'Veeva Vault not configured. Set up credentials in Connector Library.' });
         }
         await connector.authenticate(credentials);
-        // Upload document
-        const uploadResult = await (connector as any).uploadDocument?.({
-          name: fileName,
-          buffer: fileBuffer,
-          mimeType,
-          metadata: {
-            ...metadata,
-            projectId,
-            artifactId,
-            source: 'ClinicalSageAI',
-          },
-          folderPath: folderPath || '/',
-        });
+        const uploadResult = await connector.upload(fileBuffer, fileName, mimeType, folderPath || '/');
         result = { success: true, fileId: uploadResult?.id, url: uploadResult?.url, message: 'Saved to Veeva Vault' };
         break;
       }
@@ -1468,12 +1456,7 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
           return res.status(400).json({ error: 'SharePoint not configured. Set up credentials in Connector Library.' });
         }
         await connector.authenticate(credentials);
-        const uploadResult = await (connector as any).uploadDocument?.({
-          name: fileName,
-          buffer: fileBuffer,
-          mimeType,
-          folderPath: folderPath || '/Shared Documents',
-        });
+        const uploadResult = await connector.upload(fileBuffer, fileName, mimeType, folderPath || '/Shared Documents');
         result = { success: true, fileId: uploadResult?.id, url: uploadResult?.url, message: 'Saved to SharePoint' };
         break;
       }
@@ -1486,12 +1469,7 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
           return res.status(400).json({ error: 'OneDrive not configured. Set up credentials in Connector Library.' });
         }
         await connector.authenticate(credentials);
-        const uploadResult = await (connector as any).uploadDocument?.({
-          name: fileName,
-          buffer: fileBuffer,
-          mimeType,
-          folderPath: folderPath || '/ClinicalSageAI',
-        });
+        const uploadResult = await connector.upload(fileBuffer, fileName, mimeType, folderPath || '/ClinicalSageAI');
         result = { success: true, fileId: uploadResult?.id, url: uploadResult?.url, message: 'Saved to OneDrive' };
         break;
       }
@@ -1504,12 +1482,7 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
           return res.status(400).json({ error: 'Google Drive not configured. Set up credentials in Connector Library.' });
         }
         await connector.authenticate(credentials);
-        const uploadResult = await (connector as any).uploadDocument?.({
-          name: fileName,
-          buffer: fileBuffer,
-          mimeType,
-          folderPath: folderPath || 'ClinicalSageAI',
-        });
+        const uploadResult = await connector.upload(fileBuffer, fileName, mimeType, folderPath || 'ClinicalSageAI');
         result = { success: true, fileId: uploadResult?.id, url: uploadResult?.url, message: 'Saved to Google Drive' };
         break;
       }
