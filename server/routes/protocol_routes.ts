@@ -5,6 +5,9 @@ import fs from 'fs';
 import { protocolAnalyzerService } from '../protocol-analyzer-service';
 import { protocolOptimizerService } from '../protocol-optimizer-service';
 import { huggingFaceService } from '../huggingface-service';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('protocol-routes');
 
 const router = express.Router();
 
@@ -17,7 +20,7 @@ async function getSimilarCsrs(db: any, indication: string, phase: string) {
 
     // Check if we have a real database connection
     if (db && db.query) {
-      console.log(
+      log.debug(
         `Searching for CSRs with therapeutic area: ${therapeuticArea} and phase: ${phase}`
       );
 
@@ -48,7 +51,7 @@ async function getSimilarCsrs(db: any, indication: string, phase: string) {
       const result = await db.query(query, params);
 
       if (result && result.rows && result.rows.length > 0) {
-        console.log(`Found ${result.rows.length} matching CSRs`);
+        log.debug(`Found ${result.rows.length} matching CSRs`);
 
         // Transform the data to the format we need
         return result.rows.map((row: any) => ({
@@ -72,7 +75,7 @@ async function getSimilarCsrs(db: any, indication: string, phase: string) {
     }
 
     // If no database results or database connection failed, try the reports API
-    console.log('No database results, using reports API');
+    log.debug('No database results, using reports API');
 
     // Use the reports API to retrieve trial data
     const apiResponse = await fetch('/api/reports', {
@@ -99,16 +102,16 @@ async function getSimilarCsrs(db: any, indication: string, phase: string) {
       });
 
       if (filteredReports.length > 0) {
-        console.log(`Found ${filteredReports.length} matching reports from API`);
+        log.debug(`Found ${filteredReports.length} matching reports from API`);
         return filteredReports.slice(0, 5); // Limit to 5 reports
       }
     }
 
     // If no results from either approach, return empty array
-    console.log('No matching CSR data found');
+    log.debug('No matching CSR data found');
     return [];
   } catch (error) {
-    console.error('Error fetching similar CSRs:', error);
+    log.error('Error fetching similar CSRs:', error);
     return [];
   }
 }
@@ -270,7 +273,7 @@ async function enrichCsrsWithDetailedInsights(
             }
           }
         } catch (error) {
-          console.error(`Error fetching detailed insights for CSR ${csr.id}:`, error);
+          log.error(`Error fetching detailed insights for CSR ${csr.id}:`, error);
         }
 
         // If we don't have detailed insights, derive some based on the CSR properties
@@ -391,7 +394,7 @@ async function enrichCsrsWithDetailedInsights(
 
     return enrichedCsrs;
   } catch (error) {
-    console.error('Error enriching CSRs with detailed insights:', error);
+    log.error('Error enriching CSRs with detailed insights:', error);
     return csrs; // Return original CSRs if enrichment fails
   }
 }
@@ -582,7 +585,7 @@ async function generateAcademicReferences(indication: string, phase: string) {
 
     if (academicServiceResponse.ok) {
       const academicData = await academicServiceResponse.json();
-      console.log(
+      log.debug(
         `Found ${academicData.length || 0} academic references from Academic Knowledge Service`
       );
 
@@ -619,17 +622,17 @@ async function generateAcademicReferences(indication: string, phase: string) {
         protocolKnowledge.academic_sources &&
         protocolKnowledge.academic_sources.length > 0
       ) {
-        console.log(
+        log.debug(
           `Found ${protocolKnowledge.academic_sources.length} academic sources from Protocol Knowledge Service`
         );
         return protocolKnowledge.academic_sources;
       }
     }
 
-    console.log('No academic references found from knowledge services');
+    log.debug('No academic references found from knowledge services');
     return [];
   } catch (error) {
-    console.error('Error retrieving academic references:', error);
+    log.error('Error retrieving academic references:', error);
     return [];
   }
 }
@@ -728,7 +731,7 @@ router.post('/analyze-file', upload.single('file'), async (req, res) => {
       protocol,
     });
   } catch (error: any) {
-    console.error('Error processing protocol file:', error);
+    log.error('Error processing protocol file:', error);
     return res.status(500).json({
       success: false,
       message: error.message || 'Failed to process protocol file',
@@ -759,7 +762,7 @@ router.post('/parse-file', upload.single('file'), async (req, res) => {
         const pdfBuffer = fs.readFileSync(filePath);
         extractedText = await extractTextFromPdf(pdfBuffer);
       } catch (pdfError) {
-        console.error('PDF extraction error:', pdfError);
+        log.error('PDF extraction error:', pdfError);
         return res.status(422).json({
           success: false,
           message: 'Could not extract text from the PDF file',
@@ -790,13 +793,13 @@ router.post('/parse-file', upload.single('file'), async (req, res) => {
     fs.unlinkSync(filePath);
 
     // Log the activity with more details for debugging
-    console.log(
+    log.debug(
       `Protocol file parsed successfully: ${req.file.originalname} (${req.file.size} bytes)`
     );
 
     res.json(protocolData);
   } catch (error) {
-    console.error('Error parsing protocol file:', error);
+    log.error('Error parsing protocol file:', error);
     res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Failed to parse protocol file',
@@ -819,11 +822,11 @@ router.post('/parse-text', express.json(), async (req, res) => {
     const protocolData = await analyzeProtocolText(text);
 
     // Log successful text parsing
-    console.log(`Protocol text parsed successfully: ${text.substring(0, 50)}...`);
+    log.debug(`Protocol text parsed successfully: ${text.substring(0, 50)}...`);
 
     res.json(protocolData);
   } catch (error) {
-    console.error('Error analyzing protocol text:', error);
+    log.error('Error analyzing protocol text:', error);
     res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Failed to analyze protocol text',
@@ -848,7 +851,7 @@ router.post('/deep-analyze', express.json(), async (req, res) => {
 
     // Check if HuggingFace API key is available
     if (!huggingFaceService.isApiKeyAvailable()) {
-      console.warn('HuggingFace API key is not available, returning basic analysis only');
+      log.warn('HuggingFace API key is not available, returning basic analysis only');
       return res.json(basicAnalysis);
     }
 
@@ -858,15 +861,15 @@ router.post('/deep-analyze', express.json(), async (req, res) => {
         text,
         basicAnalysis
       );
-      console.log('Deep AI analysis completed successfully');
+      log.debug('Deep AI analysis completed successfully');
       res.json(enhancedAnalysis);
     } catch (aiError) {
-      console.error('Error in AI enhancement:', aiError);
+      log.error('Error in AI enhancement:', aiError);
       // Fall back to basic analysis if AI enhancement fails
       res.json(basicAnalysis);
     }
   } catch (error) {
-    console.error('Error performing deep analysis:', error);
+    log.error('Error performing deep analysis:', error);
     res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Failed to perform deep analysis',
@@ -936,7 +939,7 @@ router.post('/optimize', express.json(), async (req, res) => {
       overallQualityScore: calculateOverallScore(indication, phase, enhancedCsrInsights.length),
     });
   } catch (error: any) {
-    console.error('Error optimizing protocol:', error);
+    log.error('Error optimizing protocol:', error);
     return res.status(500).json({
       success: false,
       message: error.message || 'Failed to optimize protocol',
@@ -965,7 +968,7 @@ router.post('/upload-and-optimize', upload.single('file'), async (req, res) => {
         const pdfBuffer = fs.readFileSync(filePath);
         text = await extractTextFromPdf(pdfBuffer);
       } catch (pdfError) {
-        console.error('PDF extraction error:', pdfError);
+        log.error('PDF extraction error:', pdfError);
         return res.status(422).json({
           success: false,
           message: 'Could not extract text from the PDF file',
@@ -979,7 +982,7 @@ router.post('/upload-and-optimize', upload.single('file'), async (req, res) => {
         // In a production environment, we would use specific DOCX/DOC libraries
         text = await extractTextFromPdf(docBuffer);
       } catch (docError) {
-        console.error('Document extraction error:', docError);
+        log.error('Document extraction error:', docError);
         return res.status(422).json({
           success: false,
           message: `Could not extract text from the ${fileExtension} file`,
@@ -1068,7 +1071,7 @@ router.post('/upload-and-optimize', upload.single('file'), async (req, res) => {
       ),
     });
   } catch (error: any) {
-    console.error('Error processing and optimizing protocol file:', error);
+    log.error('Error processing and optimizing protocol file:', error);
     return res.status(500).json({
       success: false,
       message: error.message || 'Failed to process and optimize protocol file',
@@ -1133,7 +1136,7 @@ router.post('/optimize-deep', express.json(), async (req, res) => {
       recommendations,
     });
   } catch (error: any) {
-    console.error('Error in deep optimization:', error);
+    log.error('Error in deep optimization:', error);
     return res.status(500).json({
       success: false,
       message: error.message || 'Failed to optimize protocol',
@@ -1326,7 +1329,7 @@ router.post('/generate', express.json(), async (req, res) => {
 
     return res.json(enhancedProtocol);
   } catch (error: any) {
-    console.error('Error generating protocol:', error);
+    log.error('Error generating protocol:', error);
     return res.status(500).json({
       success: false,
       message: error.message || 'Failed to generate protocol',

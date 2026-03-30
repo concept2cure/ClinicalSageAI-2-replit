@@ -46,6 +46,9 @@ import {
 import { getIntelligencePrefix } from './lumen-context-builder.js';
 import { getTamperProofAuditLog } from '../lib/tamper-proof-audit';
 import { getGracefulDegradationService } from '../lib/graceful-degradation';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('multi-agent-council');
 
 // Types
 export type AgentRole = 'DRAFTER' | 'STATISTICIAN' | 'CRITIC' | 'SYNTHESIZER';
@@ -167,7 +170,7 @@ export class MultiAgentCouncilService {
       providerPriority: ['KIMI', 'OPENAI'], // Kimi AI is PRIMARY
     });
 
-    console.log(
+    log.debug(
       '[MultiAgentCouncil] Initialized with multi-provider LLM (Kimi AI primary, OpenAI secondary)'
     );
   }
@@ -219,7 +222,7 @@ export class MultiAgentCouncilService {
 
       // Log provider usage for monitoring
       if (response.fallbackUsed) {
-        console.warn(
+        log.warn(
           `[Council:${correlationId}] ${operation}: Used fallback provider ${response.provider}`
         );
 
@@ -240,7 +243,7 @@ export class MultiAgentCouncilService {
       return response;
     } catch (error) {
       if (error instanceof CircuitBreakerError) {
-        console.error(`[Council:${correlationId}] All LLM providers unavailable: ${error.message}`);
+        log.error(`[Council:${correlationId}] All LLM providers unavailable: ${error.message}`);
 
         // Log to tamper-proof audit
         const auditLog = getTamperProofAuditLog(this.pool);
@@ -275,7 +278,7 @@ export class MultiAgentCouncilService {
     const result = this.promptProtection.analyze(content);
 
     if (result.detected.length > 0) {
-      console.warn(
+      log.warn(
         `[Council:${correlationId}] Prompt injection patterns detected in ${context}: ` +
           `${result.detected.length} patterns, risk score ${result.riskScore}`
       );
@@ -294,7 +297,7 @@ export class MultiAgentCouncilService {
           },
           { correlationId }
         )
-        .catch(err => console.error('Failed to log security event:', err));
+        .catch(err => log.error('Failed to log security event:', err));
     }
 
     if (result.blocked) {
@@ -329,7 +332,7 @@ export class MultiAgentCouncilService {
 
         if (attempt < maxRetries) {
           const delay = this.RETRY_DELAY_MS * Math.pow(2, attempt - 1);
-          console.warn(
+          log.warn(
             `[Council] ${operation} attempt ${attempt} failed, ` +
               `retrying in ${delay}ms: ${lastError.message}`
           );
@@ -483,17 +486,17 @@ export class MultiAgentCouncilService {
       );
     }
 
-    console.log(`[Council:${correlationId}] Starting council execution for session ${sessionId}`);
+    log.debug(`[Council:${correlationId}] Starting council execution for session ${sessionId}`);
 
     try {
       // Update status: DRAFTING
       await this.updateSessionStatus(sessionId, 'DRAFTING', 'DRAFTER');
 
       // Step 1: Drafter with retry
-      console.log(`[Council:${correlationId}] Step 1: Drafter Agent starting...`);
+      log.debug(`[Council:${correlationId}] Step 1: Drafter Agent starting...`);
       const draftText = await this.withRetry(() => this.executeDrafter(sessionId), 'DRAFTER');
       const draftHash = this.computeHash(draftText);
-      console.log(
+      log.debug(
         `[Council:${correlationId}] Draft completed: ${draftText.length} chars, hash=${draftHash.substring(0, 16)}...`
       );
 
@@ -501,12 +504,12 @@ export class MultiAgentCouncilService {
       await this.updateSessionStatus(sessionId, 'VERIFYING', 'STATISTICIAN');
 
       // Step 2: Statistician with retry
-      console.log(`[Council:${correlationId}] Step 2: Statistician Agent starting...`);
+      log.debug(`[Council:${correlationId}] Step 2: Statistician Agent starting...`);
       const statisticianResult = await this.withRetry(
         () => this.executeStatistician(sessionId, draftText),
         'STATISTICIAN'
       );
-      console.log(
+      log.debug(
         `[Council:${correlationId}] Statistician completed: ` +
           `${statisticianResult.totalClaims} claims, ${statisticianResult.discrepancyCount} discrepancies`
       );
@@ -515,12 +518,12 @@ export class MultiAgentCouncilService {
       await this.updateSessionStatus(sessionId, 'REVIEWING', 'CRITIC');
 
       // Step 3: Critic with retry
-      console.log(`[Council:${correlationId}] Step 3: Critic Agent starting...`);
+      log.debug(`[Council:${correlationId}] Step 3: Critic Agent starting...`);
       const criticResult = await this.withRetry(
         () => this.executeCritic(sessionId, draftText, statisticianResult),
         'CRITIC'
       );
-      console.log(
+      log.debug(
         `[Council:${correlationId}] Critic completed: ` +
           `${criticResult.issues.length} issues, assessment=${criticResult.overallAssessment}`
       );
@@ -529,13 +532,13 @@ export class MultiAgentCouncilService {
       await this.updateSessionStatus(sessionId, 'SYNTHESIZING', 'SYNTHESIZER');
 
       // Step 4: Synthesizer with retry
-      console.log(`[Council:${correlationId}] Step 4: Synthesizer Agent starting...`);
+      log.debug(`[Council:${correlationId}] Step 4: Synthesizer Agent starting...`);
       const finalText = await this.withRetry(
         () => this.executeSynthesizer(sessionId, draftText, statisticianResult, criticResult),
         'SYNTHESIZER'
       );
       const finalHash = this.computeHash(finalText);
-      console.log(
+      log.debug(
         `[Council:${correlationId}] Synthesis completed: ${finalText.length} chars, hash=${finalHash.substring(0, 16)}...`
       );
 
@@ -543,7 +546,7 @@ export class MultiAgentCouncilService {
       const totalDurationMs = Date.now() - startTime;
       await this.completeSession(sessionId, finalText, statisticianResult, criticResult);
 
-      console.log(
+      log.debug(
         `[Council:${correlationId}] Session ${sessionId} completed in ${totalDurationMs}ms`
       );
 
@@ -723,7 +726,7 @@ export class MultiAgentCouncilService {
               { correlationId, resourceType: 'council_session', resourceId: sessionId }
             );
 
-            console.log(
+            log.debug(
               `[Statistician:${correlationId}] CORRECTION: "${verification.claim}" - claimed "${verification.claimedValue}", actual "${actualValue}"`
             );
           } else {
@@ -869,7 +872,7 @@ export class MultiAgentCouncilService {
     }
 
     // API bindings require HTTP implementation
-    console.warn(`[Council] API data binding ${binding.binding_code} not yet implemented`);
+    log.warn(`[Council] API data binding ${binding.binding_code} not yet implemented`);
     return {
       value: '',
       query: `api:${queryName}`,
@@ -1130,7 +1133,7 @@ export class MultiAgentCouncilService {
        WHERE id = $1`,
       [sessionId]
     );
-    console.error(`[Council] Session ${sessionId} failed: ${errorMessage}`);
+    log.error(`[Council] Session ${sessionId} failed: ${errorMessage}`);
   }
 
   private async logExecution(

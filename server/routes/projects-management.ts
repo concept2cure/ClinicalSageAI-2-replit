@@ -6,6 +6,9 @@ import { and, eq } from 'drizzle-orm';
 import { getActiveLicenseForOrganization } from '../services/quotaEnforcementService.js';
 import { getRequestActor, getTenantContext } from '../utils/tenantContext';
 import { emitRuleEvent } from '../services/rules-engine';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('projects-management');
 
 const router = Router();
 
@@ -44,7 +47,7 @@ router.get('/', async (req, res) => {
     }
     const { organizationId, clientWorkspaceId } = tenantContext;
 
-    console.log(
+    log.debug(
       '🔍 GET projects request - organizationId:',
       organizationId,
       'from:',
@@ -73,11 +76,11 @@ router.get('/', async (req, res) => {
       ? orgProjects.filter(project => project.clientWorkspaceId === clientWorkspaceId)
       : orgProjects;
 
-    console.log('🔍 Retrieved projects for org', organizationId, ':', orgProjects.length);
-    console.log('🔍 Projects data:', orgProjects);
+    log.debug('🔍 Retrieved projects for org', organizationId, ':', orgProjects.length);
+    log.debug('🔍 Projects data:', orgProjects);
     res.json(filteredProjects);
   } catch (error) {
-    console.error('Error fetching projects:', error);
+    log.error('Error fetching projects:', error);
     res.status(500).json({ error: 'Failed to fetch projects' });
   }
 });
@@ -120,7 +123,7 @@ router.get('/:projectId', async (req, res) => {
 
     res.json(project);
   } catch (error) {
-    console.error('Error fetching project:', error);
+    log.error('Error fetching project:', error);
     res.status(500).json({ error: 'Failed to fetch project' });
   }
 });
@@ -131,7 +134,7 @@ router.get('/:projectId', async (req, res) => {
  */
 router.post('/', async (req, res) => {
   try {
-    console.log('Create project request received');
+    log.debug('Create project request received');
 
     const validatedData = createProjectSchema.parse(req.body);
 
@@ -151,7 +154,7 @@ router.post('/', async (req, res) => {
 
     if (availableClients.length === 0) {
       // Auto-create a default client workspace for the organization
-      console.log(
+      log.debug(
         `No client workspaces found for organization ${validatedData.organizationId}. Creating default workspace.`
       );
 
@@ -186,12 +189,12 @@ router.post('/', async (req, res) => {
         .returning();
 
       clientWorkspaceId = newClientWorkspace.id;
-      console.log(
+      log.debug(
         `Created default client workspace ${clientWorkspaceId} (${newClientWorkspace.name}) for organization ${validatedData.organizationId}`
       );
     } else {
       clientWorkspaceId = availableClients[0].id;
-      console.log(
+      log.debug(
         `Using existing client workspace ${clientWorkspaceId} (${availableClients[0].name}) for project creation`
       );
     }
@@ -224,8 +227,8 @@ router.post('/', async (req, res) => {
       });
     }
 
-    console.log('Created project atomically:', result.data);
-    console.log('Quota info:', result.quotaInfo);
+    log.debug('Created project atomically:', result.data);
+    log.debug('Quota info:', result.quotaInfo);
 
     try {
       const now = new Date();
@@ -257,7 +260,7 @@ router.post('/', async (req, res) => {
         },
       });
     } catch (auditError) {
-      console.error('Audit trail creation failed (non-blocking):', auditError);
+      log.error('Audit trail creation failed (non-blocking):', auditError);
     }
 
     // Emit rules engine event for project creation
@@ -266,12 +269,12 @@ router.post('/', async (req, res) => {
         project: result.data,
       });
     } catch (ruleError) {
-      console.error('Rules engine event emission failed (non-blocking):', ruleError);
+      log.error('Rules engine event emission failed (non-blocking):', ruleError);
     }
 
     res.status(201).json(result.data);
   } catch (error) {
-    console.error('Error creating project:', error);
+    log.error('Error creating project:', error);
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid project data', details: error.errors });
     }
@@ -345,13 +348,13 @@ router.delete('/:projectId', async (req, res) => {
         },
       });
     } catch (auditError) {
-      console.error('Audit trail creation failed (non-blocking):', auditError);
+      log.error('Audit trail creation failed (non-blocking):', auditError);
     }
 
-    console.log(`Deleted project ${projectId} (${existingProject.name})`);
+    log.debug(`Deleted project ${projectId} (${existingProject.name})`);
     res.json({ message: 'Project deleted successfully', projectId });
   } catch (error) {
-    console.error('Error deleting project:', error);
+    log.error('Error deleting project:', error);
     res.status(500).json({ error: 'Failed to delete project' });
   }
 });
@@ -432,7 +435,7 @@ router.patch('/:projectId', async (req, res) => {
         },
       });
     } catch (auditError) {
-      console.error('Audit trail creation failed (non-blocking):', auditError);
+      log.error('Audit trail creation failed (non-blocking):', auditError);
     }
 
     // Emit rules engine events for project updates
@@ -451,12 +454,12 @@ router.patch('/:projectId', async (req, res) => {
         });
       }
     } catch (ruleError) {
-      console.error('Rules engine event emission failed (non-blocking):', ruleError);
+      log.error('Rules engine event emission failed (non-blocking):', ruleError);
     }
 
     res.json(updatedProject);
   } catch (error) {
-    console.error('Error updating project:', error);
+    log.error('Error updating project:', error);
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid project data', details: error.errors });
     }

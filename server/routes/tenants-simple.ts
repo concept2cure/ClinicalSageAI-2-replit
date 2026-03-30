@@ -5,6 +5,9 @@ import { Router } from 'express';
 import { z } from 'zod';
 import postgres from 'postgres';
 import { authMiddleware } from '../auth';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('tenants-simple');
 
 const router = Router();
 
@@ -100,11 +103,11 @@ router.get('/', async (req, res) => {
       ORDER BY created_at DESC
     `;
 
-    console.log('Retrieved tenants from database:', result.length);
+    log.debug('Retrieved tenants from database:', result.length);
 
     return res.json(result);
   } catch (error) {
-    console.error('Error retrieving tenants', error);
+    log.error('Error retrieving tenants', error);
     res.status(500).json({ error: 'Failed to retrieve tenants' });
   }
 });
@@ -115,7 +118,7 @@ router.get('/', async (req, res) => {
  */
 router.post('/', async (req, res) => {
   try {
-    console.log('Create tenant request received');
+    log.debug('Create tenant request received');
 
     // Validate request body
     const validatedData = createTenantSchema.parse(req.body);
@@ -144,10 +147,10 @@ router.post('/', async (req, res) => {
     `;
 
     const newTenant = result[0];
-    console.log('Created tenant in database:', newTenant);
+    log.debug('Created tenant in database:', newTenant);
     res.status(201).json(newTenant);
   } catch (error) {
-    console.error('Error creating tenant:', error);
+    log.error('Error creating tenant:', error);
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid tenant data', details: error.errors });
     }
@@ -188,10 +191,10 @@ router.patch('/:id', async (req, res) => {
     }
 
     const updatedTenant = result[0];
-    console.log('Updated tenant in database:', updatedTenant);
+    log.debug('Updated tenant in database:', updatedTenant);
     res.json(updatedTenant);
   } catch (error) {
-    console.error('Error updating tenant:', error);
+    log.error('Error updating tenant:', error);
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid tenant data', details: error.errors });
     }
@@ -242,7 +245,7 @@ router.get('/:tenantId/users', async (req, res) => {
 
     res.json(result);
   } catch (error) {
-    console.error('Error retrieving tenant users', error);
+    log.error('Error retrieving tenant users', error);
     res.status(500).json({ error: 'Failed to retrieve tenant users' });
   }
 });
@@ -283,21 +286,21 @@ router.delete('/:id', async (req, res) => {
       // 1. Delete projects (if projects table exists)
       try {
         await sql`DELETE FROM projects WHERE organization_id = ${tenantId}`;
-        console.log(`Deleted projects for organization ${tenantId}`);
+        log.debug(`Deleted projects for organization ${tenantId}`);
       } catch (error) {
-        console.log('Projects table might not exist or already empty:', (error as any).message);
+        log.debug('Projects table might not exist or already empty:', (error as any).message);
       }
 
       // 2. Delete organization_users relationships
       await sql`DELETE FROM organization_users WHERE organization_id = ${tenantId}`;
-      console.log(`Deleted organization_users for organization ${tenantId}`);
+      log.debug(`Deleted organization_users for organization ${tenantId}`);
 
       // 3. Delete client_workspaces
       try {
         await sql`DELETE FROM client_workspaces WHERE organization_id = ${tenantId}`;
-        console.log(`Deleted client_workspaces for organization ${tenantId}`);
+        log.debug(`Deleted client_workspaces for organization ${tenantId}`);
       } catch (error) {
-        console.log(
+        log.debug(
           'Client workspaces table might not exist or already empty:',
           (error as any).message
         );
@@ -305,7 +308,7 @@ router.delete('/:id', async (req, res) => {
 
       // 4. Finally delete the organization itself
       await sql`DELETE FROM organizations WHERE id = ${tenantId}`;
-      console.log(`Deleted organization ${tenantId}: ${orgName}`);
+      log.debug(`Deleted organization ${tenantId}: ${orgName}`);
 
       res.json({
         success: true,
@@ -314,7 +317,7 @@ router.delete('/:id', async (req, res) => {
       });
     });
   } catch (error) {
-    console.error('Error deleting organization:', error);
+    log.error('Error deleting organization:', error);
     res.status(500).json({ error: 'Failed to delete organization' });
   }
 });
@@ -357,7 +360,7 @@ router.post('/:id/api-key', async (req, res) => {
       message: 'API key generated successfully',
     });
   } catch (error) {
-    console.error('Error generating API key:', error);
+    log.error('Error generating API key:', error);
     res.status(500).json({ error: 'Failed to generate API key' });
   }
 });

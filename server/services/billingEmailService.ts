@@ -12,6 +12,9 @@
  */
 
 import nodemailer from 'nodemailer';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('billing-email');
 
 // ---------------------------------------------------------------------------
 // SMTP Configuration (same pattern as emailService.ts)
@@ -136,12 +139,12 @@ async function sendOrLog(
   const transporter = getTransporter();
 
   if (!transporter) {
-    console.log('----------------------------------------------');
-    console.log('[Billing Email] SMTP not configured - logging email');
-    console.log(`  To:      ${to}`);
-    console.log(`  Subject: ${subject}`);
-    console.log(`  Body:    ${plainText.substring(0, 200)}...`);
-    console.log('----------------------------------------------');
+    log.debug('----------------------------------------------');
+    log.debug('[Billing Email] SMTP not configured - logging email');
+    log.debug(`  To:      ${to}`);
+    log.debug(`  Subject: ${subject}`);
+    log.debug(`  Body:    ${plainText.substring(0, 200)}...`);
+    log.debug('----------------------------------------------');
     return;
   }
 
@@ -153,7 +156,7 @@ async function sendOrLog(
     html,
   });
 
-  console.log(`[Billing Email] Sent "${subject}" to ${to}`);
+  log.debug(`[Billing Email] Sent "${subject}" to ${to}`);
 }
 
 // ---------------------------------------------------------------------------

@@ -6,6 +6,9 @@ import path from 'path';
 import { huggingFaceService } from '../huggingface-service';
 import { performDeepCsrSearch, isOpenAIApiKeyAvailable } from '../deep-csr-analyzer';
 import { generateSearchContextSummary } from '../openai-service';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('csr-search');
 
 // Constants
 const PROCESSED_CSR_DIR = path.join(process.cwd(), 'data/processed_csrs');
@@ -36,26 +39,26 @@ export class CSRSearchService {
   async initialize() {
     if (isInitialized) return;
 
-    console.log('🔍 Initializing CSR Search Service with Deep Semantic Integration...');
+    log.debug('🔍 Initializing CSR Search Service with Deep Semantic Integration...');
 
     // Create directory if it doesn't exist
     if (!fs.existsSync(PROCESSED_CSR_DIR)) {
       fs.mkdirSync(PROCESSED_CSR_DIR, { recursive: true });
-      console.log(`Created directory: ${PROCESSED_CSR_DIR}`);
+      log.debug(`Created directory: ${PROCESSED_CSR_DIR}`);
     }
 
     // Load CSR data into memory
     await this.loadEmbeddings();
 
     isInitialized = true;
-    console.log(`✅ CSR Search Service initialized with ${embeddingStore.length} CSRs`);
+    log.debug(`✅ CSR Search Service initialized with ${embeddingStore.length} CSRs`);
 
     // Log availability of semantic search capabilities
     const semanticSearchAvailable = isOpenAIApiKeyAvailable();
     if (semanticSearchAvailable) {
-      console.log('✅ Deep semantic search capabilities are available');
+      log.debug('✅ Deep semantic search capabilities are available');
     } else {
-      console.warn('⚠️ Deep semantic search is NOT available (missing OPENAI_API_KEY)');
+      log.warn('⚠️ Deep semantic search is NOT available (missing OPENAI_API_KEY)');
     }
   }
 
@@ -87,14 +90,14 @@ export class CSRSearchService {
 
             embeddingStore.push(data);
           } catch (error) {
-            console.error(`Error loading CSR file ${filename}:`, error);
+            log.error(`Error loading CSR file ${filename}:`, error);
           }
         }
       }
 
-      console.log(`Loaded ${embeddingStore.length} CSRs into memory`);
+      log.debug(`Loaded ${embeddingStore.length} CSRs into memory`);
     } catch (error) {
-      console.error('Error loading CSR embeddings:', error);
+      log.error('Error loading CSR embeddings:', error);
     }
   }
 
@@ -151,7 +154,7 @@ export class CSRSearchService {
     // Use deep semantic search if a query is provided and API key is available
     if (params.query_text && params.query_text.trim() && isOpenAIApiKeyAvailable()) {
       try {
-        console.log('Using deep semantic search for query:', params.query_text);
+        log.debug('Using deep semantic search for query:', params.query_text);
 
         // Construct search options
         const searchOptions = {
@@ -163,7 +166,7 @@ export class CSRSearchService {
         const semanticResults = await performDeepCsrSearch(params.query_text, searchOptions);
 
         if (semanticResults.error) {
-          console.error('Semantic search error:', semanticResults.error);
+          log.error('Semantic search error:', semanticResults.error);
           // Fall back to basic search
         } else {
           // Process and filter semantic results
@@ -212,7 +215,7 @@ export class CSRSearchService {
                     csr
                   );
                 } catch (error) {
-                  console.error('Error generating context summary:', error);
+                  log.error('Error generating context summary:', error);
                   csr.context_summary = ''; // Set empty summary on error
                 }
               })
@@ -225,14 +228,14 @@ export class CSRSearchService {
           };
         }
       } catch (error) {
-        console.error('Error in semantic search:', error);
+        log.error('Error in semantic search:', error);
         // Fall back to basic search
       }
     }
 
     // If we get here, either semantic search failed, is unavailable, or no query was provided
     // Fall back to basic embedding-based search
-    console.log('Using basic vector search with filters');
+    log.debug('Using basic vector search with filters');
 
     // Start with all CSRs in memory
     let results = [...embeddingStore];
@@ -287,7 +290,7 @@ export class CSRSearchService {
 
         results = scoredResults;
       } catch (error) {
-        console.error('Error getting query embedding:', error);
+        log.error('Error getting query embedding:', error);
         // Continue with filtered results but without similarity ranking
       }
     }
@@ -304,7 +307,7 @@ export class CSRSearchService {
             // Generate a context summary explaining why this result matches
             csr.context_summary = await generateSearchContextSummary(params.query_text || '', csr);
           } catch (error) {
-            console.error('Error generating context summary:', error);
+            log.error('Error generating context summary:', error);
             csr.context_summary = ''; // Set empty summary on error
           }
         })
@@ -337,7 +340,7 @@ export class CSRSearchService {
           const content = fs.readFileSync(filePath, 'utf8');
           return JSON.parse(content);
         } catch (error) {
-          console.error(`Error loading CSR file ${filePath}:`, error);
+          log.error(`Error loading CSR file ${filePath}:`, error);
         }
       }
       return null;
@@ -351,7 +354,7 @@ export class CSRSearchService {
    */
   getBasicResults(query: string, limit: number = 10): { csrs: CSRData[]; results_count: number } {
     if (!isInitialized) {
-      console.log('Service not initialized, returning empty results');
+      log.debug('Service not initialized, returning empty results');
       return { csrs: [], results_count: 0 };
     }
 

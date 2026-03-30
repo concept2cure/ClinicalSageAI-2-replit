@@ -2,6 +2,9 @@ import { huggingFaceService, HFModel } from '../huggingface-service';
 import { semanticSearchService } from './semantic-search-service';
 import fs from 'fs';
 import path from 'path';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('academic-knowledge');
 
 interface AcademicPaper {
   id: string;
@@ -69,7 +72,7 @@ export class AcademicKnowledgeService {
     }
 
     try {
-      console.log('Initializing academic knowledge service...');
+      log.debug('Initializing academic knowledge service...');
 
       // Load resources from the academic_resources directory
       await this.loadResourcesFromDisk();
@@ -78,9 +81,9 @@ export class AcademicKnowledgeService {
       await this.indexResourcesForSearch();
 
       this.resourcesIndexed = true;
-      console.log(`Academic knowledge service initialized with ${this.resources.length} resources`);
+      log.debug(`Academic knowledge service initialized with ${this.resources.length} resources`);
     } catch (error) {
-      console.error('Error initializing academic knowledge service:', error);
+      log.error('Error initializing academic knowledge service:', error);
       throw error;
     }
   }
@@ -92,14 +95,14 @@ export class AcademicKnowledgeService {
     try {
       // Check if the directory exists
       if (!fs.existsSync(this.academicDocsDir)) {
-        console.log('Academic resources directory not found, creating it...');
+        log.debug('Academic resources directory not found, creating it...');
         fs.mkdirSync(this.academicDocsDir, { recursive: true });
         return;
       }
 
       // Read all files in the directory
       const files = fs.readdirSync(this.academicDocsDir);
-      console.log(`Found ${files.length} files in academic resources directory`);
+      log.debug(`Found ${files.length} files in academic resources directory`);
 
       // Process each file
       for (const file of files) {
@@ -123,13 +126,13 @@ export class AcademicKnowledgeService {
           // Add to resources array
           this.resources.push(resource);
         } catch (fileError) {
-          console.error(`Error processing academic resource file ${file}:`, fileError);
+          log.error(`Error processing academic resource file ${file}:`, fileError);
         }
       }
 
-      console.log(`Loaded ${this.resources.length} academic resources`);
+      log.debug(`Loaded ${this.resources.length} academic resources`);
     } catch (error) {
-      console.error('Error loading academic resources from disk:', error);
+      log.error('Error loading academic resources from disk:', error);
       throw error;
     }
   }
@@ -139,7 +142,7 @@ export class AcademicKnowledgeService {
    */
   private async indexResourcesForSearch(): Promise<void> {
     try {
-      console.log('Indexing academic resources for semantic search...');
+      log.debug('Indexing academic resources for semantic search...');
 
       // Clear any existing index
       semanticSearchService.clearIndex();
@@ -162,13 +165,13 @@ export class AcademicKnowledgeService {
             year: resource.year,
           });
         } catch (indexError) {
-          console.error(`Error indexing academic resource ${resource.id}:`, indexError);
+          log.error(`Error indexing academic resource ${resource.id}:`, indexError);
         }
       }
 
-      console.log('Finished indexing academic resources');
+      log.debug('Finished indexing academic resources');
     } catch (error) {
-      console.error('Error indexing academic resources for search:', error);
+      log.error('Error indexing academic resources for search:', error);
       throw error;
     }
   }
@@ -208,7 +211,7 @@ export class AcademicKnowledgeService {
 
       return resource.id;
     } catch (error) {
-      console.error('Error adding academic resource:', error);
+      log.error('Error adding academic resource:', error);
       throw error;
     }
   }
@@ -281,7 +284,7 @@ export class AcademicKnowledgeService {
 
       return results;
     } catch (error) {
-      console.error('Error searching academic resources:', error);
+      log.error('Error searching academic resources:', error);
       throw error;
     }
   }
@@ -400,7 +403,7 @@ Format your response as a concise, structured analysis (max 400 words).
 
       return aiResponse;
     } catch (error) {
-      console.error('Error generating academic insights:', error);
+      log.error('Error generating academic insights:', error);
       return 'Error generating insights from academic resources.';
     }
   }
