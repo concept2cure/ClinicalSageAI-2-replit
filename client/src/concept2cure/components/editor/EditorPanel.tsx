@@ -78,6 +78,7 @@ import { SubmissionReadinessValidator } from '../submission/SubmissionReadinessV
 import { ComplianceScannerPanel } from './ComplianceScannerPanel';
 import type { ComplianceIssue as ScannerComplianceIssue } from './extensions/ComplianceScanner';
 import { AnAMemory } from '../intelligence/AnAMemory';
+import { INDAutoDraftWizard } from './INDAutoDraftWizard';
 import ArtifactProofPanel from './ArtifactProofPanel';
 import EditorGAReadinessPanel from './EditorGAReadinessPanel';
 import { buildReadinessChecks, buildCapabilityModels, buildRemediationQueue } from './gaReadinessModel';
@@ -358,6 +359,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [unlockReason, setUnlockReason] = useState('');
   const [openArtifactNotFound, setOpenArtifactNotFound] = useState(false);
   const [showTemplateGenerator, setShowTemplateGenerator] = useState(false);
+  const [showAutoDraft, setShowAutoDraft] = useState(false);
 
   // ── Claim validation (zero-hallucination layer) ──────────────────────────
   const [claimValidation, setClaimValidation] = useState<{
@@ -2147,6 +2149,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           </div>
           <div className="flex items-center gap-1.5">
             <Button variant="ghost"
+              onClick={() => setShowAutoDraft(true)}
+              className="flex items-center gap-1 px-2 py-1 text-xs text-stone-600 hover:bg-stone-100 rounded-md transition-colors duration-150"
+              title="AutoDraft IND — generate a complete IND from source documents"
+              aria-label="Open IND AutoDraft wizard"
+            >
+              <Sparkles className="w-3 h-3" />
+              AutoDraft IND
+            </Button>
+            <Button variant="ghost"
               onClick={handleImportDocument}
               className="flex items-center gap-1 px-2 py-1 text-xs text-stone-500 hover:bg-stone-100 rounded-md transition-colors duration-150"
               title="Import Document (Word, PDF, Image, CSV, Text)"
@@ -3916,6 +3927,33 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             ]);
             pushToast('Electronic signature applied successfully', 'success');
             loadArtifacts();
+          }}
+        />
+      )}
+
+      {/* IND AutoDraft Wizard */}
+      {projectId && (
+        <INDAutoDraftWizard
+          open={showAutoDraft}
+          onOpenChange={setShowAutoDraft}
+          projectId={String(projectId)}
+          onOpenArtifact={(artifactId) => {
+            setShowAutoDraft(false);
+            // Find the artifact in the list or trigger a reload
+            const existing = artifacts.find(a => a.id === artifactId);
+            if (existing) {
+              openInTab(existing);
+            } else {
+              loadArtifacts().then(() => {
+                // After reload, try to open the artifact
+                const found = artifacts.find(a => a.id === artifactId);
+                if (found) openInTab(found);
+              });
+            }
+          }}
+          onComplete={() => {
+            loadArtifacts();
+            pushToast('IND AutoDraft complete — sections saved as artifacts', 'success');
           }}
         />
       )}

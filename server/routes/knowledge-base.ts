@@ -1623,4 +1623,388 @@ async function getConnectorCredentials(
   return null;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// IND AutoDraft — Zero-Prompt IND Generation
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * In-memory session store for AutoDraft uploads.
+ * Key = sessionId, Value = { files: extracted text per file, metadata }
+ */
+const autoDraftSessions = new Map<
+  string,
+  {
+    files: Array<{
+      name: string;
+      size: number;
+      extractedText: string;
+      detectedType: string;
+    }>;
+    createdAt: number;
+  }
+>();
+
+// Clean up sessions older than 2 hours
+setInterval(() => {
+  const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
+  for (const [id, session] of autoDraftSessions) {
+    if (session.createdAt < twoHoursAgo) {
+      autoDraftSessions.delete(id);
+    }
+  }
+}, 30 * 60 * 1000);
+
+/**
+ * Detect document type from filename and extracted content.
+ */
+function detectDocumentType(filename: string, text: string): string {
+  const lower = filename.toLowerCase();
+  const textLower = text.slice(0, 2000).toLowerCase();
+
+  if (lower.includes('protocol') || textLower.includes('clinical protocol') || textLower.includes('study protocol')) return 'Protocol';
+  if (lower.includes('ib') || lower.includes('investigator') || textLower.includes("investigator's brochure") || textLower.includes('investigator brochure')) return 'Investigator Brochure';
+  if (lower.includes('cmc') || textLower.includes('chemistry, manufacturing') || textLower.includes('drug substance') || textLower.includes('drug product')) return 'CMC Data';
+  if (lower.includes('tox') || textLower.includes('toxicology') || textLower.includes('toxicological')) return 'Toxicology Report';
+  if (lower.includes('pharm') || textLower.includes('pharmacology') || textLower.includes('pharmacokinetic')) return 'Pharmacology Report';
+  if (lower.includes('nonclinical') || lower.includes('non-clinical') || textLower.includes('nonclinical') || textLower.includes('non-clinical')) return 'Nonclinical Report';
+  if (lower.includes('clinical') || textLower.includes('clinical study report') || textLower.includes('clinical trial')) return 'Clinical Report';
+  if (lower.includes('stability') || textLower.includes('stability data') || textLower.includes('stability study')) return 'Stability Data';
+  return 'Source Document';
+}
+
+/**
+ * Simple metadata extraction from combined text.
+ */
+function detectMetadataFromText(texts: string[]): { drugName: string; indication: string; phase: string } {
+  const combined = texts.join('\n').slice(0, 10000);
+  const result = { drugName: '', indication: '', phase: '' };
+
+  // Detect phase
+  const phaseMatch = combined.match(/phase\s*(I{1,3}|[1-4]|1\/2|2a|2b|3a|3b)/i);
+  if (phaseMatch) {
+    const raw = phaseMatch[1];
+    if (raw === 'I' || raw === '1') result.phase = 'Phase 1';
+    else if (raw === 'II' || raw === '2') result.phase = 'Phase 2';
+    else if (raw === 'III' || raw === '3') result.phase = 'Phase 3';
+    else result.phase = `Phase ${raw}`;
+  }
+
+  // Detect drug name — look for common patterns
+  const drugPatterns = [
+    /(?:drug|compound|molecule|product|study\s+drug|investigational\s+product)[:\s]+([A-Z][A-Za-z0-9\-]+(?:\s+[A-Z][A-Za-z0-9\-]+)?)/,
+    /(?:INN|USAN)[:\s]+([A-Za-z]+(?:mab|nib|zumab|tinib|ciclib|navir|prazole|sartan|olol|pril|dipine|statin|oxacin|mycin|cillin))/i,
+  ];
+  for (const pat of drugPatterns) {
+    const m = combined.match(pat);
+    if (m) {
+      result.drugName = m[1].trim();
+      break;
+    }
+  }
+
+  // Detect indication
+  const indicationPatterns = [
+    /(?:indication|disease|condition|treatment\s+of|therapy\s+for)[:\s]+([A-Za-z\s\-,]+?)(?:\.|;|\n)/i,
+  ];
+  for (const pat of indicationPatterns) {
+    const m = combined.match(pat);
+    if (m) {
+      result.indication = m[1].trim().slice(0, 100);
+      break;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * POST /api/knowledge-base/ind-autodraft/upload
+ *
+ * Accepts multipart file upload of source documents.
+ * Extracts text, detects document types and metadata.
+ * Returns sessionId + file metadata.
+ */
+router.post('/ind-autodraft/upload', upload.array('files', 20), async (req: Request, res: Response) => {
+  try {
+    const files = (req as any).files as Express.Multer.File[];
+    if (!files || files.length === 0) {
+      return res.status(400).json({ error: 'No files provided' });
+    }
+
+    // Use existing sessionId or create new one
+    let sessionId = req.body?.sessionId || crypto.randomUUID();
+    let session = autoDraftSessions.get(sessionId);
+    if (!session) {
+      session = { files: [], createdAt: Date.now() };
+      autoDraftSessions.set(sessionId, session);
+    }
+
+    const processedFiles: Array<{
+      name: string;
+      size: number;
+      extractedLength: number;
+      detectedType: string;
+    }> = [];
+
+    for (const file of files) {
+      let extractedText = '';
+      const ext = file.originalname.split('.').pop()?.toLowerCase() || '';
+
+      try {
+        if (ext === 'pdf') {
+          // Use pdf.js-extract for PDF extraction
+          try {
+            const { PDFExtract } = await import('pdf.js-extract');
+            const pdfExtract = new PDFExtract();
+            const data = await pdfExtract.extractBuffer(file.buffer, {});
+            extractedText = data.pages
+              .map((page: any) => page.content.map((item: any) => item.str).join(' '))
+              .join('\n\n');
+          } catch {
+            // Fallback: treat as unextractable
+            extractedText = `[PDF file: ${file.originalname} — ${(file.size / 1024).toFixed(1)} KB. Text extraction unavailable.]`;
+          }
+        } else if (ext === 'docx' || ext === 'doc') {
+          try {
+            const mammoth = await import('mammoth');
+            const result = await mammoth.extractRawText({ buffer: file.buffer });
+            extractedText = result.value;
+          } catch {
+            extractedText = `[DOCX file: ${file.originalname} — ${(file.size / 1024).toFixed(1)} KB. Text extraction unavailable.]`;
+          }
+        } else if (ext === 'xlsx' || ext === 'csv') {
+          // Basic text extraction for spreadsheets
+          if (ext === 'csv') {
+            extractedText = file.buffer.toString('utf-8');
+          } else {
+            extractedText = `[XLSX file: ${file.originalname} — ${(file.size / 1024).toFixed(1)} KB. Tabular data included as source context.]`;
+          }
+        } else if (ext === 'txt') {
+          extractedText = file.buffer.toString('utf-8');
+        } else {
+          extractedText = `[File: ${file.originalname} — unsupported format]`;
+        }
+      } catch (err: any) {
+        console.error(`[ind-autodraft] Text extraction failed for ${file.originalname}:`, err.message);
+        extractedText = `[File: ${file.originalname} — extraction failed]`;
+      }
+
+      const detectedType = detectDocumentType(file.originalname, extractedText);
+
+      session.files.push({
+        name: file.originalname,
+        size: file.size,
+        extractedText,
+        detectedType,
+      });
+
+      processedFiles.push({
+        name: file.originalname,
+        size: file.size,
+        extractedLength: extractedText.length,
+        detectedType,
+      });
+    }
+
+    // Detect metadata from all extracted texts
+    const allTexts = session.files.map(f => f.extractedText);
+    const detectedMetadata = detectMetadataFromText(allTexts);
+
+    res.json({
+      sessionId,
+      files: processedFiles,
+      detectedMetadata,
+    });
+  } catch (err: any) {
+    console.error('[ind-autodraft] Upload failed:', err.message);
+    res.status(500).json({ error: 'Upload processing failed', detail: err.message });
+  }
+});
+
+/**
+ * POST /api/knowledge-base/ind-autodraft/generate
+ *
+ * Generates IND sections from uploaded source documents.
+ * Uses the IND section registry for prompts and the AI gateway for generation.
+ * Saves each section as an artifact in the project.
+ */
+router.post('/ind-autodraft/generate', async (req: Request, res: Response) => {
+  try {
+    const { sessionId, projectId, modules, metadata } = req.body as {
+      sessionId: string;
+      projectId: string;
+      modules: number[];
+      metadata: { drugName: string; indication: string; phase: string; sponsor: string };
+    };
+
+    if (!sessionId || !projectId || !modules?.length) {
+      return res.status(400).json({ error: 'Missing required fields: sessionId, projectId, modules' });
+    }
+
+    const session = autoDraftSessions.get(sessionId);
+    if (!session || session.files.length === 0) {
+      return res.status(404).json({ error: 'Session not found or no files uploaded' });
+    }
+
+    // Import AI gateway and IND section registry
+    const { getGateway } = await import('../services/ai-gateway/index.js');
+    const {
+      IND_SECTIONS,
+      getGenerationPrompt,
+    } = await import('../services/ind/ind-section-registry.js');
+
+    const gw = getGateway();
+
+    // Filter sections to the selected modules
+    const selectedSections = IND_SECTIONS.filter(s => modules.includes(s.module));
+
+    // Build source context from uploaded files (truncated to fit context window)
+    const sourceContext = session.files
+      .map(f => {
+        // Truncate individual files to ~15K chars to stay within context limits
+        const text = f.extractedText.slice(0, 15000);
+        return `--- Source: ${f.name} (${f.detectedType}) ---\n${text}`;
+      })
+      .join('\n\n');
+
+    // Cap total source context at ~80K chars
+    const truncatedSource = sourceContext.slice(0, 80000);
+
+    const generatedSections: Array<{
+      code: string;
+      title: string;
+      content: string;
+      wordCount: number;
+      sourceCount: number;
+      artifactId?: string;
+    }> = [];
+
+    // Generate each section
+    for (const section of selectedSections) {
+      try {
+        const sectionPrompt = getGenerationPrompt(section.code, {
+          productName: metadata.drugName,
+          indication: metadata.indication,
+          phase: metadata.phase,
+          sponsor: metadata.sponsor,
+        });
+
+        const systemPrompt = [
+          'You are a senior regulatory affairs writer producing content for an FDA IND submission.',
+          'Write in formal regulatory language suitable for FDA submission.',
+          'Follow ICH M4 CTD structure with proper section headings and sub-headings.',
+          'Produce comprehensive, publication-quality content.',
+          'Base your writing on the source documents provided below.',
+          'Where source data is insufficient, note it as "[Data to be provided]" rather than fabricating data.',
+          '',
+          '=== SOURCE DOCUMENTS ===',
+          truncatedSource,
+          '=== END SOURCE DOCUMENTS ===',
+        ].join('\n');
+
+        const response = await gw.route({
+          taskType: 'document_drafting',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: sectionPrompt },
+          ],
+          temperature: 0.3,
+          maxTokens: 8192,
+          callerModule: 'ind-autodraft',
+          projectId,
+        });
+
+        const content = response.content || '';
+        const wordCount = content.split(/\s+/).filter(Boolean).length;
+        const title = `${section.code} ${section.title}`;
+
+        // Save as artifact in the project
+        let artifactId: string | undefined;
+        try {
+          const user = (req as any).user;
+          const orgId = user?.organizationId || user?.organization_id || 1;
+
+          // Create artifact via the concept2cure artifacts table
+          const [artifact] = await db.insert(concept2cureArtifacts).values({
+            projectId: Number(projectId),
+            organizationId: orgId,
+            title,
+            content,
+            type: 'regulatory_document',
+            category: 'document',
+            ctdSection: section.code,
+            status: 'draft',
+            version: 1,
+            createdBy: user?.id || user?.userId || null,
+          } as any).returning();
+
+          if (artifact) {
+            artifactId = String(artifact.id);
+
+            // Create initial version
+            await db.insert(concept2cureArtifactVersions).values({
+              artifactId: artifact.id,
+              version: 1,
+              content,
+              changedBy: user?.id || user?.userId || null,
+              changeDescription: 'Generated by IND AutoDraft',
+            } as any).catch(() => {
+              // Version table may have different schema — non-fatal
+            });
+
+            // Emit provenance event
+            await emitKBProvenanceEvent({
+              artifactDbId: artifact.id,
+              organizationId: orgId,
+              userId: user?.id || user?.userId,
+              action: 'autodraft_generate',
+              details: {
+                sectionCode: section.code,
+                sectionTitle: section.title,
+                module: section.module,
+                wordCount,
+                sourceFileCount: session.files.length,
+                aiModel: response.model,
+              },
+              sourceDescription: `IND AutoDraft — ${title}`,
+              backendRoute: 'POST /api/knowledge-base/ind-autodraft/generate',
+            }).catch(() => {
+              // Provenance logging failure is non-fatal
+            });
+          }
+        } catch (dbErr: any) {
+          console.error(`[ind-autodraft] Failed to save artifact for ${section.code}:`, dbErr.message);
+          // Continue even if save fails — still return the content
+        }
+
+        generatedSections.push({
+          code: section.code,
+          title: section.title,
+          content,
+          wordCount,
+          sourceCount: session.files.length,
+          artifactId,
+        });
+      } catch (genErr: any) {
+        console.error(`[ind-autodraft] Failed to generate ${section.code}:`, genErr.message);
+        generatedSections.push({
+          code: section.code,
+          title: section.title,
+          content: `[Generation failed: ${genErr.message}]`,
+          wordCount: 0,
+          sourceCount: 0,
+        });
+      }
+    }
+
+    // Clean up session
+    autoDraftSessions.delete(sessionId);
+
+    res.json({ sections: generatedSections });
+  } catch (err: any) {
+    console.error('[ind-autodraft] Generate failed:', err.message);
+    res.status(500).json({ error: 'IND generation failed', detail: err.message });
+  }
+});
+
 export default router;
