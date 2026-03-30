@@ -13,7 +13,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
-import { getAuthHeaders } from '@/utils/authToken';
+import { getAuthHeaders, getOrgId } from '@/utils/authToken';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { useAIAction } from '../../hooks/useAIAction';
@@ -699,10 +699,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const screenLabel = SCREEN_LABELS[screenName] || '';
 
   useEffect(() => {
-    const tenantId =
-      contextProfile?.organizationId ||
-      localStorage.getItem('organizationId') ||
-      localStorage.getItem('currentOrganizationId');
+    const tenantId = contextProfile?.organizationId || getOrgId();
     if (!tenantId) return;
 
     fetch(`/api/firecrawl/quota-status?tenantId=${tenantId}`, {
@@ -725,7 +722,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         }
       })
       .catch(() => {
-        // Non-blocking UI hint only
+        console.warn('[AnA] Firecrawl quota check failed — non-blocking');
       });
   }, [contextProfile?.organizationId]);
 
