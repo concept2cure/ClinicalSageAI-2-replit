@@ -1,4 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
+import { getAuthToken } from '@/utils/authToken';
 
 export type ApiRequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
@@ -6,42 +7,34 @@ interface GetQueryFnOptions {
   on401?: 'throw' | 'returnNull';
 }
 
-// Cache localStorage reads to avoid repeated lookups on every API call.
-// Invalidated on storage events (other tabs) and re-read lazily.
+// Cache org ID to avoid repeated localStorage lookups on every API call.
+// Auth token is now delegated to the canonical authToken module.
 let _cachedOrgId: string | null = null;
-let _cachedAuthToken: string | null = null;
 
-export function getCachedOrgId(): string {
+function getCachedOrgId(): string {
   if (!_cachedOrgId) {
     _cachedOrgId =
-      localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
+      localStorage.getItem('organizationId') ||
+      localStorage.getItem('currentOrganizationId') ||
+      '1';
   }
   return _cachedOrgId;
 }
 
-export function getCachedAuthToken(): string | null {
-  if (_cachedAuthToken === null) {
-    _cachedAuthToken =
-      localStorage.getItem('token') ||
-      localStorage.getItem('authToken') ||
-      localStorage.getItem('auth_token') ||
-      '';
-  }
-  return _cachedAuthToken || null;
+function getCachedAuthToken(): string | null {
+  return getAuthToken();
 }
 
 // Invalidate cache when localStorage changes (login/logout/org switch)
 if (typeof window !== 'undefined') {
   window.addEventListener('storage', () => {
     _cachedOrgId = null;
-    _cachedAuthToken = null;
   });
 }
 
 /** Force-refresh the cached org/auth values (call after login or org switch). */
 export function invalidateApiCache() {
   _cachedOrgId = null;
-  _cachedAuthToken = null;
 }
 
 export const apiRequest = async (
