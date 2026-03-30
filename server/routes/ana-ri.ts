@@ -1078,6 +1078,10 @@ router.post('/stream', async (req: Request, res: Response) => {
       );
     }
 
+    // Evidence discipline + structure checks (parity with /chat)
+    const streamEvidenceCheck = fullContent ? checkEvidenceDiscipline(fullContent) : null;
+    const streamStructureCheck = fullContent ? validateResponseStructure(fullContent) : null;
+
     // Evidence validation — semantic grounding check (non-blocking)
     const streamEvidenceVerdict = fullContent ? validateEvidence(fullContent, 'ana-ri') : null;
 
@@ -1109,6 +1113,16 @@ router.post('/stream', async (req: Request, res: Response) => {
         executedCommands: executedCommands.length > 0 ? executedCommands : undefined,
         enrichmentSources: enrichment.sources.length > 0 ? enrichment.sources : undefined,
         evidence: streamEvidenceVerdict || undefined,
+        evidenceDiscipline: streamEvidenceCheck ? {
+          compliant: streamEvidenceCheck.compliant,
+          labels: streamEvidenceCheck.totalLabels,
+          hasOverclaims: streamEvidenceCheck.hasOverclaims,
+        } : undefined,
+        structure: streamStructureCheck ? {
+          valid: streamStructureCheck.valid,
+          score: streamStructureCheck.score,
+          maxScore: streamStructureCheck.maxScore,
+        } : undefined,
         queueMeta: streamQueueMeta,
       })}\n\n`
     );
