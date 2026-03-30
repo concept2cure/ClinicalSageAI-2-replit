@@ -123,6 +123,15 @@ const DESTINATIONS: SaveDestination[] = [
     requiresSetup: true,
     category: 'cloud',
   },
+  {
+    id: 'box',
+    label: 'Box',
+    description: 'Upload to your Box enterprise account',
+    icon: FolderOpen,
+    iconColor: 'text-blue-500 bg-blue-50',
+    requiresSetup: true,
+    category: 'cloud',
+  },
 ];
 
 // ── Component ──────────────────────────────────────────────────────────────

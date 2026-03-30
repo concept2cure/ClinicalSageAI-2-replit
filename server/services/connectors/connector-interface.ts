@@ -491,4 +491,41 @@ export const CONNECTOR_CATALOG: ConnectorCatalogEntry[] = [
       ],
     },
   },
+  {
+    id: 'box',
+    name: 'Box',
+    type: 'api',
+    category: 'dms',
+    description: 'Connect to Box for enterprise document management. Search, retrieve, and upload regulatory documents.',
+    requiredTier: 'professional',
+    requiresCredentials: true,
+    documentationUrl: 'https://developer.box.com/reference/',
+    icon: 'box',
+    setupGuide: {
+      overview: 'Connect to your Box enterprise account to search, retrieve, and upload regulatory documents via the Box API v2.',
+      prerequisites: [
+        'Box enterprise account with admin access',
+        'Box custom application created in the Box Developer Console',
+        'Client Credentials Grant (Server Authentication) enabled',
+        'Application authorized by Box admin',
+      ],
+      credentialFields: [
+        { field: 'clientId', label: 'Client ID', placeholder: 'Your Box app Client ID', secret: false },
+        { field: 'clientSecret', label: 'Client Secret', placeholder: 'Your Box app Client Secret', secret: true },
+        { field: 'baseUrl', label: 'Enterprise ID', placeholder: 'Your Box Enterprise ID (numeric)', secret: false },
+      ],
+      steps: [
+        { step: 1, title: 'Create a Box application', instructions: 'Go to Box Developer Console (developer.box.com) > My Apps > Create New App. Choose "Custom App" and select "Server Authentication (Client Credentials Grant)".' },
+        { step: 2, title: 'Configure scopes', instructions: 'In the app Configuration tab, enable the scopes: "Read all files and folders stored in Box", "Write all files and folders stored in Box", and "Manage users". Set App Access Level to "App + Enterprise Access".' },
+        { step: 3, title: 'Authorize the application', instructions: 'Submit the app for authorization. A Box admin must approve it in Admin Console > Apps > Custom Apps Manager. Copy the Client ID, Client Secret, and Enterprise ID from the General Settings tab.' },
+        { step: 4, title: 'Enter credentials', instructions: 'Enter the Client ID, Client Secret, and Enterprise ID below. Click "Test Connection" to verify access.' },
+      ],
+      troubleshooting: [
+        'Error "invalid_client": Verify the Client ID and Client Secret are correct and from the right application.',
+        'Error "unauthorized_client": The application has not been authorized by a Box admin. Submit it for approval in the Developer Console.',
+        'Error "enterprise_not_found": The Enterprise ID is incorrect. Find it in Admin Console > Account & Billing > Account Info.',
+        'If uploads fail with "access_denied", ensure the app has write scopes enabled and the service account has folder access.',
+      ],
+    },
+  },
 ];

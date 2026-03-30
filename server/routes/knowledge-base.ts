@@ -1514,6 +1514,19 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
         break;
       }
 
+      case 'box': {
+        const { BoxConnector } = await import('../services/connectors/box.js');
+        const connector = new BoxConnector();
+        const credentials = await getConnectorCredentials(orgId, 'box');
+        if (!credentials) {
+          return res.status(400).json({ error: 'Box not configured. Set up credentials in Connector Library.' });
+        }
+        await connector.authenticate(credentials);
+        const uploadResult = await connector.upload(fileBuffer, fileName, mimeType, folderPath || 'ClinicalSageAI');
+        result = { success: true, fileId: uploadResult?.id, url: uploadResult?.url, message: 'Saved to Box' };
+        break;
+      }
+
       case 'vault_dms': {
         // Save to internal vault/DMS linked to project
         const s3Mod = await import('../services/s3-storage.js') as any;

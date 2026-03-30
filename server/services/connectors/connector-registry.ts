@@ -28,6 +28,7 @@ import { SharePointConnector } from './sharepoint.js';
 import { FHIRR4Connector } from './fhir-r4.js';
 import { OneDriveConnector } from './onedrive.js';
 import { GoogleDriveConnector } from './google-drive.js';
+import { BoxConnector } from './box.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ENCRYPTION
@@ -79,6 +80,7 @@ function initializeConnectors(): void {
   connectors.set('fhir-r4', new FHIRR4Connector());
   connectors.set('onedrive', new OneDriveConnector());
   connectors.set('google_drive', new GoogleDriveConnector());
+  connectors.set('box', new BoxConnector());
 }
 
 /**
