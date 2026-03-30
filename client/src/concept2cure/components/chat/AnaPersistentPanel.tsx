@@ -4307,7 +4307,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
                         <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
                       </div>
-                      <span className="text-xs text-[#D97757] font-medium">
+                      <span className="text-xs text-[#D97757] font-medium animate-pulse">
                         {thinkingMsg || 'Thinking...'}
                       </span>
                     </div>
@@ -4678,7 +4678,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           <p className="mt-1.5 pl-1 text-[11px] text-[#B0AEA5]">
             Type <span className="font-semibold text-[#6B6962]">/</span> for commands. Use{' '}
             <span className="font-semibold text-[#6B6962]">↑</span> on empty input to recall your
-            last prompt.
+            last prompt. Shift+Enter for a new line.
           </p>
         </div>
       </div>
