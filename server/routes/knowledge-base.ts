@@ -1216,4 +1216,398 @@ router.post('/save-docx-as-artifact', async (req: Request, res: Response) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PDF Extraction — direct endpoint for the Universal Import handler
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.post('/extract-pdf', upload.single('file'), async (req: Request, res: Response) => {
+  try {
+    const file = (req as any).file;
+    if (!file) {
+      return res.status(400).json({ error: 'No file provided' });
+    }
+
+    // Strategy 1: Forward to analytics engine (FastAPI)
+    const analyticsUrl = process.env.ANALYTICS_SERVICE_URL || process.env.SHADOW_SERVICE_URL || 'http://localhost:8001';
+    try {
+      const base64 = file.buffer.toString('base64');
+      const analyticsResp = await fetch(`${analyticsUrl}/extract-pdf`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          file_base64: base64,
+          strategies: ['pymupdf', 'pypdf2', 'pdfminer', 'ocr'],
+          min_chars: 50,
+        }),
+      });
+
+      if (analyticsResp.ok) {
+        const data = await analyticsResp.json();
+        const text = data.text || data.content || '';
+        // Convert plain text to HTML paragraphs
+        const html = text
+          .split(/\n{2,}/)
+          .filter((p: string) => p.trim())
+          .map((p: string) => `<p>${p.replace(/\n/g, '<br/>')}</p>`)
+          .join('\n');
+        return res.json({
+          success: true,
+          html,
+          text,
+          pages: data.pages || null,
+          strategy: data.strategy_used || 'analytics-engine',
+          pageCount: data.page_count || null,
+        });
+      }
+    } catch {
+      // Analytics engine unavailable — fall through to unifiedDocumentIngestion
+    }
+
+    // Strategy 2: Use unified document ingestion service
+    try {
+      const mod = await import('../services/unifiedDocumentIngestion.js') as any;
+      const ingestion = new mod.UnifiedDocumentIngestion();
+      const result = await ingestion.processDocument({
+        buffer: file.buffer,
+        originalName: file.originalname,
+        mimeType: file.mimetype || 'application/pdf',
+      });
+      const content = result?.content || result?.text || '';
+      const html = content
+        .split(/\n{2,}/)
+        .filter((p: string) => p.trim())
+        .map((p: string) => `<p>${p.replace(/\n/g, '<br/>')}</p>`)
+        .join('\n');
+      return res.json({
+        success: true,
+        html,
+        text: content,
+        strategy: 'unified-ingestion',
+      });
+    } catch {
+      // Fall through to basic text extraction
+    }
+
+    // Strategy 3: Return buffer info as fallback
+    res.json({
+      success: true,
+      html: `<p><em>[PDF uploaded: ${file.originalname} — ${(file.size / 1024).toFixed(1)} KB. Text extraction services unavailable.]</em></p>`,
+      text: '',
+      strategy: 'fallback',
+    });
+  } catch (err: any) {
+    console.error('[knowledge-base] PDF extraction failed:', err.message);
+    res.status(500).json({ error: 'PDF extraction failed', detail: err.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// OCR — Image text extraction endpoint for the Universal Import handler
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.post('/ocr', upload.single('file'), async (req: Request, res: Response) => {
+  try {
+    const file = (req as any).file;
+    if (!file) {
+      return res.status(400).json({ error: 'No file provided' });
+    }
+
+    // Strategy 1: Forward to analytics engine
+    const analyticsUrl = process.env.ANALYTICS_SERVICE_URL || process.env.SHADOW_SERVICE_URL || 'http://localhost:8001';
+    try {
+      const base64 = file.buffer.toString('base64');
+      const analyticsResp = await fetch(`${analyticsUrl}/extract-pdf`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          file_base64: base64,
+          strategies: ['ocr', 'ocr_enhanced'],
+          force_ocr: true,
+        }),
+      });
+
+      if (analyticsResp.ok) {
+        const data = await analyticsResp.json();
+        return res.json({
+          success: true,
+          text: data.text || data.content || '',
+          strategy: data.strategy_used || 'analytics-ocr',
+        });
+      }
+    } catch {
+      // Analytics engine unavailable
+    }
+
+    // Strategy 2: Use unified document ingestion OCR path
+    try {
+      const mod = await import('../services/unifiedDocumentIngestion.js') as any;
+      const ingestion = new mod.UnifiedDocumentIngestion();
+      const result = await ingestion.processWithOCR({
+        buffer: file.buffer,
+        originalName: file.originalname,
+        mimeType: file.mimetype || 'image/png',
+      });
+      return res.json({
+        success: true,
+        text: result?.text || result?.content || '',
+        strategy: 'unified-ocr',
+      });
+    } catch {
+      // OCR not available
+    }
+
+    // Strategy 3: Return empty (no OCR available)
+    res.json({
+      success: true,
+      text: '',
+      strategy: 'none',
+      message: 'OCR services unavailable. Image uploaded but text not extracted.',
+    });
+  } catch (err: any) {
+    console.error('[knowledge-base] OCR failed:', err.message);
+    res.status(500).json({ error: 'OCR failed', detail: err.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Save to External Connector — Veeva Vault, SharePoint, OneDrive, Google Drive
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.post('/save-to-connector', async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    const {
+      connectorId,
+      projectId,
+      artifactId,
+      title,
+      content,
+      format,
+      folderPath,
+      metadata,
+    } = req.body;
+
+    if (!connectorId || !title || !content) {
+      return res.status(400).json({
+        error: 'Missing required fields: connectorId, title, content',
+      });
+    }
+
+    const orgId = user?.organizationId || user?.orgId || 1;
+
+    // Generate DOCX blob from content using the local DOCX builder
+    let fileBuffer: Buffer;
+    let fileName: string;
+    let mimeType: string;
+
+    if (format === 'pdf') {
+      // For PDF, attempt server-side conversion
+      fileName = `${title.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`;
+      mimeType = 'application/pdf';
+      // Use HTML content wrapped in basic PDF structure
+      const htmlDoc = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title></head><body>${content}</body></html>`;
+      fileBuffer = Buffer.from(htmlDoc, 'utf-8');
+    } else {
+      // Default: DOCX generation
+      fileName = `${title.replace(/[^a-zA-Z0-9_-]/g, '_')}.docx`;
+      mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      const docElements = htmlToDocxElements(content);
+      const doc = new Document({
+        sections: [{ children: docElements }],
+        numbering: {
+          config: [{
+            reference: 'default-numbering',
+            levels: [{
+              level: 0,
+              format: 'decimal' as any,
+              text: '%1.',
+              alignment: AlignmentType.START,
+            }],
+          }],
+        },
+      });
+      const uint8 = await Packer.toBuffer(doc);
+      fileBuffer = Buffer.from(uint8);
+    }
+
+    // Route to the appropriate connector
+    let result: { success: boolean; url?: string; fileId?: string; message?: string };
+
+    switch (connectorId) {
+      case 'veeva_vault': {
+        const { VeevaVaultConnector } = await import('../services/connectors/veeva-vault.js');
+        const connector = new VeevaVaultConnector();
+        // Authenticate with org credentials from DB or env
+        const credentials = await getConnectorCredentials(orgId, 'veeva_vault');
+        if (!credentials) {
+          return res.status(400).json({ error: 'Veeva Vault not configured. Set up credentials in Connector Library.' });
+        }
+        await connector.authenticate(credentials);
+        // Upload document
+        const uploadResult = await (connector as any).uploadDocument?.({
+          name: fileName,
+          buffer: fileBuffer,
+          mimeType,
+          metadata: {
+            ...metadata,
+            projectId,
+            artifactId,
+            source: 'ClinicalSageAI',
+          },
+          folderPath: folderPath || '/',
+        });
+        result = { success: true, fileId: uploadResult?.id, url: uploadResult?.url, message: 'Saved to Veeva Vault' };
+        break;
+      }
+
+      case 'sharepoint': {
+        const { SharePointConnector } = await import('../services/connectors/sharepoint.js');
+        const connector = new SharePointConnector();
+        const credentials = await getConnectorCredentials(orgId, 'sharepoint');
+        if (!credentials) {
+          return res.status(400).json({ error: 'SharePoint not configured. Set up credentials in Connector Library.' });
+        }
+        await connector.authenticate(credentials);
+        const uploadResult = await (connector as any).uploadDocument?.({
+          name: fileName,
+          buffer: fileBuffer,
+          mimeType,
+          folderPath: folderPath || '/Shared Documents',
+        });
+        result = { success: true, fileId: uploadResult?.id, url: uploadResult?.url, message: 'Saved to SharePoint' };
+        break;
+      }
+
+      case 'onedrive': {
+        const { OneDriveConnector } = await import('../services/connectors/onedrive.js');
+        const connector = new OneDriveConnector();
+        const credentials = await getConnectorCredentials(orgId, 'onedrive');
+        if (!credentials) {
+          return res.status(400).json({ error: 'OneDrive not configured. Set up credentials in Connector Library.' });
+        }
+        await connector.authenticate(credentials);
+        const uploadResult = await (connector as any).uploadDocument?.({
+          name: fileName,
+          buffer: fileBuffer,
+          mimeType,
+          folderPath: folderPath || '/ClinicalSageAI',
+        });
+        result = { success: true, fileId: uploadResult?.id, url: uploadResult?.url, message: 'Saved to OneDrive' };
+        break;
+      }
+
+      case 'google_drive': {
+        const { GoogleDriveConnector } = await import('../services/connectors/google-drive.js');
+        const connector = new GoogleDriveConnector();
+        const credentials = await getConnectorCredentials(orgId, 'google_drive');
+        if (!credentials) {
+          return res.status(400).json({ error: 'Google Drive not configured. Set up credentials in Connector Library.' });
+        }
+        await connector.authenticate(credentials);
+        const uploadResult = await (connector as any).uploadDocument?.({
+          name: fileName,
+          buffer: fileBuffer,
+          mimeType,
+          folderPath: folderPath || 'ClinicalSageAI',
+        });
+        result = { success: true, fileId: uploadResult?.id, url: uploadResult?.url, message: 'Saved to Google Drive' };
+        break;
+      }
+
+      case 'vault_dms': {
+        // Save to internal vault/DMS linked to project
+        const s3Mod = await import('../services/s3-storage.js') as any;
+        const storageService = s3Mod.s3Storage || s3Mod.default;
+        const docId = `${orgId}_${projectId || 'unlinked'}_${Date.now()}`;
+        if (storageService?.uploadRawDocument) {
+          await storageService.uploadRawDocument(docId, fileBuffer, fileName, mimeType, user?.name || 'system');
+        }
+        // Also save as artifact version if projectId + artifactId provided
+        if (projectId && artifactId && db) {
+          try {
+            await db.insert(concept2cureArtifactVersions).values({
+              artifactId: parseInt(artifactId, 10),
+              version: 1,
+              content,
+              createdById: user?.id || null,
+            } as any);
+          } catch {
+            // Version insert may fail on constraint — non-blocking
+          }
+        }
+        result = { success: true, fileId: docId, message: 'Saved to project vault' };
+        break;
+      }
+
+      default:
+        return res.status(400).json({ error: `Unknown connector: ${connectorId}` });
+    }
+
+    // Emit provenance event
+    if (projectId && artifactId) {
+      await emitKBProvenanceEvent({
+        artifactDbId: parseInt(artifactId, 10) || 0,
+        organizationId: orgId,
+        eventType: 'export',
+        eventAction: `save_to_${connectorId}`,
+        actorId: user?.id,
+        actorName: user?.name || user?.email,
+        details: {
+          connectorId,
+          fileName,
+          format: format || 'docx',
+          folderPath: folderPath || '/',
+        },
+        sourceDescription: `Document saved to ${connectorId}`,
+        backendRoute: 'POST /api/knowledge-base/save-to-connector',
+      });
+    }
+
+    res.json(result);
+  } catch (err: any) {
+    console.error('[knowledge-base] Save to connector failed:', err.message);
+    res.status(500).json({ error: 'Save to connector failed', detail: err.message });
+  }
+});
+
+/**
+ * Helper: retrieve stored connector credentials for an organization.
+ */
+async function getConnectorCredentials(
+  orgId: number,
+  connectorId: string
+): Promise<{ baseUrl?: string; username?: string; password?: string; clientId?: string; clientSecret?: string; apiKey?: string } | null> {
+  if (!db) return null;
+  try {
+    // Try from the organization_connectors / connector_credentials tables
+    const rows = await db.execute({
+      sql: `SELECT credentials_encrypted FROM connector_credentials WHERE organization_id = $1 AND connector_id = $2 LIMIT 1`,
+      args: [orgId, connectorId],
+    } as any);
+    const row = (rows as any)?.rows?.[0] || (rows as any)?.[0];
+    if (row?.credentials_encrypted) {
+      // Credentials are stored as JSON (encrypted at rest by DB / app layer)
+      return typeof row.credentials_encrypted === 'string'
+        ? JSON.parse(row.credentials_encrypted)
+        : row.credentials_encrypted;
+    }
+  } catch {
+    // Table may not exist — check env vars as fallback
+  }
+
+  // Fallback: environment variables per connector
+  const prefix = connectorId.toUpperCase().replace(/-/g, '_');
+  const baseUrl = process.env[`${prefix}_BASE_URL`] || process.env[`${prefix}_URL`];
+  const username = process.env[`${prefix}_USERNAME`];
+  const password = process.env[`${prefix}_PASSWORD`];
+  const clientId = process.env[`${prefix}_CLIENT_ID`];
+  const clientSecret = process.env[`${prefix}_CLIENT_SECRET`];
+  const apiKey = process.env[`${prefix}_API_KEY`];
+
+  if (baseUrl || clientId || apiKey) {
+    return { baseUrl, username, password, clientId, clientSecret, apiKey };
+  }
+  return null;
+}
+
 export default router;

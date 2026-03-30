@@ -42,6 +42,7 @@ import {
   Keyboard,
   Scale,
   Upload,
+  Cloud,
 } from 'lucide-react';
 import { useClaimCheck, usePrecedentSearch, type ClaimCheckResult, type PrecedentRecord, type SearchParams } from '../../hooks/usePrecedentEngine';
 import { RegulatoryIntelligencePanel } from '../intelligence/RegulatoryIntelligencePanel';
@@ -63,6 +64,7 @@ import { CommentThreadPanel } from './CommentThread';
 import { ReviewModePanel } from './ReviewMode';
 import { DocumentStatusTimeline } from './DocumentStatusTimeline';
 import type { CommentThread } from './extensions/CommentMark';
+import { SaveToDialog } from './SaveToDialog';
 import { useComments } from '../../hooks/useComments';
 import { recordDocumentAccess } from '../../hooks/useRecentDocuments';
 import TemplateGeneratorPanel from './TemplateGeneratorPanel';
@@ -678,6 +680,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [pendingCommentText, setPendingCommentText] = useState('');
   const [showNewCommentDialog, setShowNewCommentDialog] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [showSaveToDialog, setShowSaveToDialog] = useState(false);
   const [pendingCommentHighlight, setPendingCommentHighlight] = useState('');
   const pendingCommentClientIdRef = useRef<string>('');
   const [cancelCommentId, setCancelCommentId] = useState<string | null>(null);
@@ -2519,6 +2522,18 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 <Download className="w-3 h-3 text-stone-400" />
                 Export…
               </Button>
+              {/* Save To… (external storage) */}
+              <Button variant="ghost"
+                role="menuitem"
+                onClick={() => {
+                  setShowSaveToDialog(true);
+                  setOverflowOpen(false);
+                }}
+                className="w-full text-left px-3 py-1.5 hover:bg-stone-50 text-xs text-stone-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+              >
+                <Cloud className="w-3 h-3 text-stone-400" />
+                Save To…
+              </Button>
               <Button variant="ghost"
                 role="menuitem"
                 onClick={() => {
@@ -3563,6 +3578,22 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 await handleExportMarkdown();
                 break;
             }
+          }}
+        />
+      )}
+
+      {/* ── Save To Dialog (Vault, Cloud, Local) ── */}
+      {activeArtifact && (
+        <SaveToDialog
+          isOpen={showSaveToDialog}
+          onClose={() => setShowSaveToDialog(false)}
+          documentTitle={activeArtifact.title}
+          documentContent={activeArtifact.content || ''}
+          projectId={projectId}
+          artifactId={activeArtifact.id}
+          ctdSection={activeArtifact.ctdSection}
+          onSaveComplete={(dest) => {
+            pushToast(`Saved to ${dest}`, 'success');
           }}
         />
       )}
