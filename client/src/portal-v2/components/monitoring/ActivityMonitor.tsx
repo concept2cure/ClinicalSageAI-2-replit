@@ -728,19 +728,34 @@ const SecurityAlerts: React.FC<SecurityAlertsProps> = ({ events }) => {
 
 export const ActivityMonitor: React.FC = () => {
   const [isLive, setIsLive] = useState(true);
+  const [isTabVisible, setIsTabVisible] = useState(
+    typeof document === 'undefined' ? true : document.visibilityState === 'visible'
+  );
   const [activeTab, setActiveTab] = useState('feed');
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<ActivityType | 'all'>('all');
   const [severityFilter, setSeverityFilter] = useState<ActivitySeverity | 'all'>('all');
 
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      setIsTabVisible(document.visibilityState === 'visible');
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, []);
+
   // Fetch tasks to derive activity events
   const { data: tasksData, isLoading: tasksLoading } = useQuery({
     queryKey: ['activity-monitor-tasks'],
     queryFn: async () => {
-      const res = await apiRequest('GET', '/api/submission-center/tasks');
+      const res = await apiRequest('GET', '/api/submission-center/tasks?limit=100');
       return res.json();
     },
-    refetchInterval: isLive ? 30000 : false, // Auto-refresh when live
+    refetchInterval: isLive && isTabVisible ? 60000 : false, // Live only while tab is visible
+    refetchIntervalInBackground: false,
   });
 
   // Fetch proof audit entries
@@ -751,14 +766,15 @@ export const ActivityMonitor: React.FC = () => {
       return res.json();
     },
     retry: 1,
-    refetchInterval: isLive ? 30000 : false,
+    refetchInterval: isLive && isTabVisible ? 60000 : false,
+    refetchIntervalInBackground: false,
   });
 
   // Fetch projects for session-like data
   const { data: projectsData } = useQuery({
     queryKey: ['activity-monitor-projects'],
     queryFn: async () => {
-      const res = await apiRequest('GET', '/api/submission-center/projects');
+      const res = await apiRequest('GET', '/api/submission-center/projects?limit=25');
       return res.json();
     },
   });
