@@ -123,10 +123,20 @@ export interface EvidenceDisciplineResult {
 
 /** Patterns that indicate strong absolute language needing [KNOWN] backing */
 const OVERCLAIM_ENFORCEMENT_PATTERNS = [
+  // Absolute certainty language + evidence
   /(?:definitive|unequivocal|certain|absolute|irrefutable|conclusive|comprehensive)\s+(?:evidence|data|proof|support)/i,
+  // Completeness language
   /(?:has been|is)\s+(?:fully|completely|thoroughly)\s+(?:demonstrated|established|proven|validated)/i,
+  // Zero-risk language
   /(?:there is no|zero)\s+(?:risk|concern|deficiency|gap|issue)/i,
+  // Guarantee language
   /(?:guarantees?|ensures?|eliminates?\s+(?:all|any|every)\s+(?:risk|concern))/i,
+  // Superlative claims without qualification
+  /(?:the\s+)?(?:best|only|first|most\s+effective|unprecedented|unmatched|superior)\s+(?:approach|method|strategy|treatment|therapy|device|product)/i,
+  // False equivalence (claiming equivalence without evidence)
+  /(?:identical|equivalent|same\s+as|interchangeable)\s+(?:to\s+|with\s+)?(?:the\s+)?(?:predicate|reference|approved|marketed)/i,
+  // Confabulation patterns (citing generic "studies" without specifics)
+  /(?:studies\s+(?:show|demonstrate|confirm|prove)|research\s+(?:proves?|confirms?|establishes?))\s+(?:that\s+)?(?:this|the|it)/i,
 ];
 
 /**
