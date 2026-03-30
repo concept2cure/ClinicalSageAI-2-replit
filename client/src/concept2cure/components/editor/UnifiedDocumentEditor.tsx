@@ -490,13 +490,13 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <AlignJustify className="w-4 h-4" />
       </ToolButton>
       <ToolButton
-        onClick={() => (editor as any).commands.indent()}
+        onClick={() => (editor as any).chain().focus().indent().run()}
         title="Indent (Tab)"
       >
         <IndentIncrease className="w-4 h-4" />
       </ToolButton>
       <ToolButton
-        onClick={() => (editor as any).commands.outdent()}
+        onClick={() => (editor as any).chain().focus().outdent().run()}
         title="Outdent (Shift+Tab)"
       >
         <IndentDecrease className="w-4 h-4" />
