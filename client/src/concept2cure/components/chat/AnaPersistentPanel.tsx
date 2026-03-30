@@ -3472,7 +3472,15 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         </p>
                       ) : (
                         <div
-                          className="prose prose-sm prose-stone max-w-none mt-0.5 prose-p:text-[#4D4B45] prose-p:leading-relaxed prose-p:my-1.5 prose-strong:text-[#141413] [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+                          className="prose prose-sm prose-stone max-w-none mt-0.5
+                            prose-p:text-[#4D4B45] prose-p:leading-relaxed prose-p:my-2
+                            prose-strong:text-[#141413]
+                            prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
+                            prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3.5 prose-pre:text-xs
+                            prose-blockquote:border-l-stone-300 prose-blockquote:text-[#6B6962] prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
+                            prose-ul:text-[#4D4B45] prose-ol:text-[#4D4B45] prose-ul:my-2 prose-ol:my-2 prose-li:my-1
+                            prose-a:text-[#D97757] prose-a:underline prose-a:decoration-[#E8C7BA] prose-a:underline-offset-2 hover:prose-a:text-[#C4623F]
+                            [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                           dangerouslySetInnerHTML={{ __html: htmlContent }}
                         />
                       )}
@@ -3800,13 +3808,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         <>
                           <div
                             className="prose prose-sm prose-zinc max-w-none mt-0.5
-                              prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1.5
+                              prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-2
                               prose-strong:text-zinc-900
-                              prose-code:text-violet-700 prose-code:bg-violet-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
-                              prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3 prose-pre:text-xs
-                              prose-blockquote:border-l-violet-400 prose-blockquote:text-zinc-600
-                              prose-ul:text-zinc-700 prose-ol:text-zinc-700
-                              prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
+                              prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
+                              prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3.5 prose-pre:text-xs
+                              prose-blockquote:border-l-stone-300 prose-blockquote:text-zinc-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
+                              prose-ul:text-zinc-700 prose-ol:text-zinc-700 prose-ul:my-2 prose-ol:my-2 prose-li:my-1
+                              prose-a:text-[#D97757] prose-a:underline prose-a:decoration-[#E8C7BA] prose-a:underline-offset-2 hover:prose-a:text-[#C4623F]
                               [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                             dangerouslySetInnerHTML={{ __html: htmlContent }}
                           />
