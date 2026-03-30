@@ -4,6 +4,9 @@ import * as path from 'path';
 import { db } from './db';
 // Removed csrReports and csrDetails - these tables don't exist in the schema
 import { sql } from 'drizzle-orm';
+import { createScopedLogger } from './utils/logger.js';
+
+const log = createScopedLogger('agent-service');
 
 // Use environment variables for API keys
 const HF_API_KEY = process.env.HF_API_KEY;
@@ -80,7 +83,7 @@ export class StudyDesignAgentService {
 
       return { response: responseText };
     } catch (error: any) {
-      console.error('Study Design Agent error:', error);
+      log.error('Study Design Agent error:', error);
       throw new Error(`Failed to get response from AI: ${error.message}`);
     }
   }
@@ -107,7 +110,7 @@ export class StudyDesignAgentService {
       fs.appendFileSync(this.logFile, JSON.stringify(logEntry) + '\n', 'utf8');
     } catch (error) {
       // Log but don't break on logging errors
-      console.warn('Failed to log agent interaction:', error);
+      log.warn('Failed to log agent interaction:', error);
     }
   }
 
@@ -140,7 +143,7 @@ export class StudyDesignAgentService {
           }
         }
       } catch (error) {
-        console.warn(`Error loading CSR ${csrId}:`, error);
+        log.warn(`Error loading CSR ${csrId}:`, error);
         // Continue with other CSRs
       }
     }
@@ -186,7 +189,7 @@ export class StudyDesignAgentService {
       // For now, return empty array until the proper tables are available
       return [];
     } catch (error) {
-      console.error('Error finding relevant CSRs:', error);
+      log.error('Error finding relevant CSRs:', error);
       return [];
     }
   }
@@ -249,7 +252,7 @@ export class StudyDesignAgentService {
 
       return sortedSources;
     } catch (error) {
-      console.error('Error retrieving academic evidence:', error);
+      log.error('Error retrieving academic evidence:', error);
       return [];
     }
   }

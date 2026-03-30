@@ -1,5 +1,8 @@
 import express from 'express';
 import { dynamicContentAssembly } from '../services/DynamicContentAssembly.js';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('content-assembly');
 
 const router = express.Router();
 
@@ -29,7 +32,7 @@ router.post('/assemble/:projectId', async (req, res) => {
       assembly
     });
   } catch (error) {
-    console.error('Error assembling document:', error);
+    log.error('Error assembling document:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to assemble document'
@@ -54,7 +57,7 @@ router.get('/completeness/:projectId', async (req, res) => {
       report
     });
   } catch (error) {
-    console.error('Error generating completeness report:', error);
+    log.error('Error generating completeness report:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to generate completeness report'
@@ -84,7 +87,7 @@ router.get('/preview/:projectId/:documentType', async (req, res) => {
     res.setHeader('Content-Type', contentType);
     res.send(preview);
   } catch (error) {
-    console.error('Error generating preview:', error);
+    log.error('Error generating preview:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to generate preview'
@@ -131,7 +134,7 @@ router.post('/validate/:projectId', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error validating document:', error);
+    log.error('Error validating document:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to validate document'
@@ -167,7 +170,7 @@ router.get('/live-preview/:projectId/:documentType', async (req, res) => {
       timestamp: new Date()
     })}\n\n`);
   } catch (error) {
-    console.error('Error generating initial preview:', error);
+    log.error('Error generating initial preview:', error);
   }
   
   // Set up interval for periodic updates
@@ -190,7 +193,7 @@ router.get('/live-preview/:projectId/:documentType', async (req, res) => {
         timestamp: new Date()
       })}\n\n`);
     } catch (error) {
-      console.error('Error generating update:', error);
+      log.error('Error generating update:', error);
     }
   }, 5000); // Update every 5 seconds
   

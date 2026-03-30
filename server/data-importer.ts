@@ -13,6 +13,9 @@ export type InsertCsrDetails = typeof csrDetails.$inferInsert;
 import { extractTextFromPdf } from './openai-service';
 import { validatePdfFile, getPdfMetadata, savePdfFile } from './pdf-processor';
 import { analyzeCsrContent, generateCsrSummary } from './openai-service';
+import { createScopedLogger } from './utils/logger.js';
+
+const log = createScopedLogger('data-importer');
 
 // Directory paths
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
@@ -34,7 +37,7 @@ export async function fetchClinicalTrialDataLegacy(
   downloadPdfs: boolean = true
 ): Promise<{ success: boolean; message: string; data?: any }> {
   return new Promise((resolve, reject) => {
-    console.log(`Fetching ${maxRecords} clinical trial records, downloadPdfs=${downloadPdfs}`);
+    log.debug(`Fetching ${maxRecords} clinical trial records, downloadPdfs=${downloadPdfs}`);
 
     const scriptPath = path.join(process.cwd(), 'server/scripts/fetch_clinical_trials.py');
     const pythonProcess = spawn('python3', [
@@ -48,13 +51,13 @@ export async function fetchClinicalTrialDataLegacy(
 
     pythonProcess.stdout.on('data', data => {
       const chunk = data.toString();
-      console.log(chunk);
+      log.debug(chunk);
       output += chunk;
     });
 
     pythonProcess.stderr.on('data', data => {
       const chunk = data.toString();
-      console.error(chunk);
+      log.error(chunk);
       errorOutput += chunk;
     });
 
@@ -106,7 +109,7 @@ export async function fetchClinicalTrialData(
   downloadPdfs: boolean = true
 ): Promise<{ success: boolean; message: string; data?: any }> {
   return new Promise((resolve, reject) => {
-    console.log(`Fetching ${maxRecords} clinical trial records using V2 API`);
+    log.debug(`Fetching ${maxRecords} clinical trial records using V2 API`);
 
     // Use the newer v2 API script which is working successfully
     const scriptPath = path.join(process.cwd(), 'server/scripts/fetch_trials_v2_api.py');
@@ -124,13 +127,13 @@ export async function fetchClinicalTrialData(
 
     pythonProcess.stdout.on('data', data => {
       const chunk = data.toString();
-      console.log(chunk);
+      log.debug(chunk);
       output += chunk;
     });
 
     pythonProcess.stderr.on('data', data => {
       const chunk = data.toString();
-      console.error(chunk);
+      log.error(chunk);
       errorOutput += chunk;
     });
 
@@ -227,7 +230,7 @@ export async function importTrialsFromCsv(
 
               // Skip records that don't have basic required fields
               if (!reportData.title || !reportData.sponsor || !reportData.indication) {
-                console.warn(`Skipping record with incomplete data: ${JSON.stringify(reportData)}`);
+                log.warn(`Skipping record with incomplete data: ${JSON.stringify(reportData)}`);
                 continue;
               }
 
@@ -250,7 +253,7 @@ export async function importTrialsFromCsv(
                   .set(reportData)
                   .where(sql => sql`${csrReports.id} = ${reportId}`);
 
-                console.log(`Updated existing report: ${reportData.title} (ID: ${reportId})`);
+                log.debug(`Updated existing report: ${reportData.title} (ID: ${reportId})`);
               } else {
                 // Insert new record
                 const [newReport] = await db
@@ -260,7 +263,7 @@ export async function importTrialsFromCsv(
                 reportId = newReport.id;
                 importCount++;
 
-                console.log(`Inserted new report: ${reportData.title} (ID: ${reportId})`);
+                log.debug(`Inserted new report: ${reportData.title} (ID: ${reportId})`);
               }
 
               // Process the details if we have the associated PDF
@@ -350,16 +353,16 @@ export async function importTrialsFromCsv(
 
                     // Insert the details
                     await db.insert(csrDetails).values(detailsData as InsertCsrDetails);
-                    console.log(`Added details for report ID ${reportId}`);
+                    log.debug(`Added details for report ID ${reportId}`);
                   } else {
-                    console.log(`Details already exist for report ID ${reportId}, skipping`);
+                    log.debug(`Details already exist for report ID ${reportId}, skipping`);
                   }
                 } catch (error) {
-                  console.error(`Error processing PDF for report ID ${reportId}:`, error);
+                  log.error(`Error processing PDF for report ID ${reportId}:`, error);
                 }
               }
             } catch (error) {
-              console.error(`Error importing row: ${JSON.stringify(row)}`, error);
+              log.error(`Error importing row: ${JSON.stringify(row)}`, error);
             }
           }
 
@@ -428,7 +431,7 @@ export async function importTrialsFromJson(
 
         // Skip records that don't have basic required fields
         if (!reportData.title || !reportData.sponsor || !reportData.indication) {
-          console.warn(`Skipping record with incomplete data: ${JSON.stringify(reportData)}`);
+          log.warn(`Skipping record with incomplete data: ${JSON.stringify(reportData)}`);
           continue;
         }
 
@@ -451,7 +454,7 @@ export async function importTrialsFromJson(
             .set(reportData)
             .where(sql => sql`${csrReports.id} = ${reportId}`);
 
-          console.log(`Updated existing report: ${reportData.title} (ID: ${reportId})`);
+          log.debug(`Updated existing report: ${reportData.title} (ID: ${reportId})`);
         } else {
           // Insert new record
           const [newReport] = await db
@@ -461,7 +464,7 @@ export async function importTrialsFromJson(
           reportId = newReport.id;
           importCount++;
 
-          console.log(`Inserted new report: ${reportData.title} (ID: ${reportId})`);
+          log.debug(`Inserted new report: ${reportData.title} (ID: ${reportId})`);
         }
 
         // Add the related details if we have them
@@ -522,16 +525,16 @@ export async function importTrialsFromJson(
 
               // Insert the details
               await db.insert(csrDetails).values(detailsData as InsertCsrDetails);
-              console.log(`Added details for report ID ${reportId}`);
+              log.debug(`Added details for report ID ${reportId}`);
             } else {
-              console.log(`Details already exist for report ID ${reportId}, skipping`);
+              log.debug(`Details already exist for report ID ${reportId}, skipping`);
             }
           } catch (error) {
-            console.error(`Error adding details for report ID ${reportId}:`, error);
+            log.error(`Error adding details for report ID ${reportId}:`, error);
           }
         }
       } catch (error) {
-        console.error(`Error importing item: ${JSON.stringify(item)}`, error);
+        log.error(`Error importing item: ${JSON.stringify(item)}`, error);
       }
     }
 
@@ -594,7 +597,7 @@ export async function importTrialsFromApiV2(
       try {
         // Skip records that don't have basic required fields
         if (!report.title || !report.sponsor || !report.indication) {
-          console.warn(`Skipping record with incomplete data: ${JSON.stringify(report)}`);
+          log.warn(`Skipping record with incomplete data: ${JSON.stringify(report)}`);
           continue;
         }
 
@@ -617,7 +620,7 @@ export async function importTrialsFromApiV2(
             .set(report)
             .where(sql => sql`${csrReports.id} = ${reportId}`);
 
-          console.log(`Updated existing report: ${report.title} (ID: ${reportId})`);
+          log.debug(`Updated existing report: ${report.title} (ID: ${reportId})`);
         } else {
           // Insert new record
           const [newReport] = await db
@@ -627,7 +630,7 @@ export async function importTrialsFromApiV2(
           reportId = newReport.id;
           importCount++;
 
-          console.log(`Inserted new report: ${report.title} (ID: ${reportId})`);
+          log.debug(`Inserted new report: ${report.title} (ID: ${reportId})`);
         }
 
         // Add the related details
@@ -648,15 +651,15 @@ export async function importTrialsFromApiV2(
 
             // Insert the details
             await db.insert(csrDetails).values(detailsWithReportId as InsertCsrDetails);
-            console.log(`Added details for report ID ${reportId}`);
+            log.debug(`Added details for report ID ${reportId}`);
           } else {
-            console.log(`Details already exist for report ID ${reportId}, skipping`);
+            log.debug(`Details already exist for report ID ${reportId}, skipping`);
           }
         } catch (error: any) {
-          console.error(`Error adding details for report ID ${reportId}:`, error);
+          log.error(`Error adding details for report ID ${reportId}:`, error);
         }
       } catch (error: any) {
-        console.error(`Error importing study: ${JSON.stringify(report)}`, error);
+        log.error(`Error importing study: ${JSON.stringify(report)}`, error);
       }
     }
 
@@ -666,7 +669,7 @@ export async function importTrialsFromApiV2(
       count: importCount,
     };
   } catch (error: any) {
-    console.error('Error in importTrialsFromApiV2:', error);
+    log.error('Error in importTrialsFromApiV2:', error);
     return { success: false, message: `Error: ${error.message}`, count: 0 };
   }
 }
@@ -675,67 +678,67 @@ export async function importTrialsFromApiV2(
  * Schedule periodic data updates
  */
 export function scheduleDataUpdates(intervalHours: number = 24): NodeJS.Timeout {
-  console.log(`Scheduling data updates every ${intervalHours} hours`);
+  log.debug(`Scheduling data updates every ${intervalHours} hours`);
 
   const intervalMs = intervalHours * 60 * 60 * 1000;
 
   const timer = setInterval(async () => {
-    console.log(`Running scheduled data update at ${new Date().toISOString()}`);
+    log.debug(`Running scheduled data update at ${new Date().toISOString()}`);
 
     try {
       // Fetch new data using the API v2 endpoint
       const fetchResult = await fetchClinicalTrialData(100, true);
-      console.log(`Data fetch result: ${fetchResult.message}`);
+      log.debug(`Data fetch result: ${fetchResult.message}`);
 
       if (fetchResult.success && fetchResult.data) {
         // Import the data directly using the v2 importer
         const importResult = await importTrialsFromApiV2(fetchResult.data);
-        console.log(`Data import result: ${importResult.message}`);
+        log.debug(`Data import result: ${importResult.message}`);
       } else {
         // Fallback to the old method of importing from a file
         const latestJsonFile = findLatestDataFile('json');
         if (latestJsonFile) {
           const importResult = await importTrialsFromJson(latestJsonFile);
-          console.log(`Data import result (fallback): ${importResult.message}`);
+          log.debug(`Data import result (fallback): ${importResult.message}`);
         } else {
-          console.log('No JSON data file found to import');
+          log.debug('No JSON data file found to import');
         }
       }
     } catch (error) {
-      console.error('Error during scheduled data update:', error);
+      log.error('Error during scheduled data update:', error);
     }
   }, intervalMs);
 
   // Run once immediately
   setTimeout(async () => {
-    console.log('Running initial data update...');
+    log.debug('Running initial data update...');
     try {
       // Check if we already have data in the database
       const reportCount = await db.select({ count: sql`count(*)` }).from(csrReports);
       if (reportCount[0].count === 0) {
         // Fetch new data if the database is empty using the API v2 endpoint
         const fetchResult = await fetchClinicalTrialData(25, false);
-        console.log(`Initial data fetch result: ${fetchResult.message}`);
+        log.debug(`Initial data fetch result: ${fetchResult.message}`);
 
         if (fetchResult.success && fetchResult.data) {
           // Import the data directly using the v2 importer
           const importResult = await importTrialsFromApiV2(fetchResult.data);
-          console.log(`Initial data import result: ${importResult.message}`);
+          log.debug(`Initial data import result: ${importResult.message}`);
         } else {
           // Fallback to the old method of importing from a file
           const latestJsonFile = findLatestDataFile('json');
           if (latestJsonFile) {
             const importResult = await importTrialsFromJson(latestJsonFile);
-            console.log(`Initial data import result (fallback): ${importResult.message}`);
+            log.debug(`Initial data import result (fallback): ${importResult.message}`);
           } else {
-            console.log('No JSON data file found for initial import');
+            log.debug('No JSON data file found for initial import');
           }
         }
       } else {
-        console.log(`Database already has ${reportCount[0].count} reports, skipping initial fetch`);
+        log.debug(`Database already has ${reportCount[0].count} reports, skipping initial fetch`);
       }
     } catch (error) {
-      console.error('Error during initial data update:', error);
+      log.error('Error during initial data update:', error);
     }
   }, 5000);
 

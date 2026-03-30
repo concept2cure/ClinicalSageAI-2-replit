@@ -29,6 +29,9 @@ import aiAssistanceRoutes from './routes/ai-assistance.js';
 import contentPlanRoutes from './routes/content-plan.js';
 import intelligentReportsRoutes from './routes/intelligent-reports';
 import operatingSystemRoutes from './routes/operating-system';
+import { createScopedLogger } from './utils/logger.js';
+
+const log = createScopedLogger('routes');
 
 // Create a simple router for basic API routes
 const router = express.Router();
@@ -155,10 +158,10 @@ router.post('/510k-workflow/:projectId', async (req, res) => {
           });
         }
         
-        console.log(`✅ Auto-populated documents for project ${projectId} with ${templateData.metadata.mappedFields} fields`);
+        log.debug(`✅ Auto-populated documents for project ${projectId} with ${templateData.metadata.mappedFields} fields`);
       } catch (docError) {
         // Log but don't fail the main save operation
-        console.error('Warning: Could not auto-populate documents:', docError);
+        log.error('Warning: Could not auto-populate documents:', docError);
       }
     }
     
@@ -169,7 +172,7 @@ router.post('/510k-workflow/:projectId', async (req, res) => {
       autoPopulated: true 
     });
   } catch (error) {
-    console.error('Error saving 510k workflow data:', error);
+    log.error('Error saving 510k workflow data:', error);
     res.status(500).json({ 
       success: false, 
       error: 'Failed to save workflow data' 
@@ -209,7 +212,7 @@ router.get('/510k-workflow/:projectId', async (req, res) => {
       sections: sections
     });
   } catch (error) {
-    console.error('Error fetching 510k workflow data:', error);
+    log.error('Error fetching 510k workflow data:', error);
     res.status(500).json({ 
       success: false, 
       error: 'Failed to fetch workflow data' 
@@ -283,7 +286,7 @@ router.post('/510k-workflow/:projectId/generate-document', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error generating 510k document:', error);
+    log.error('Error generating 510k document:', error);
     res.status(500).json({ 
       success: false, 
       error: 'Failed to generate document' 
@@ -334,14 +337,14 @@ router.get('/submission-status', async (req, res) => {
       compliance: { score: 0, status: 'pending' },
     });
   } catch (error) {
-    console.error('Error fetching submission status:', error);
+    log.error('Error fetching submission status:', error);
     res.status(500).json({ error: 'Failed to fetch submission status' });
   }
 });
 
 // Audit log endpoint for tracking user actions
 router.post('/audit-log', (req, res) => {
-  console.log('Audit log entry:', req.body);
+  log.debug('Audit log entry:', req.body);
   res.status(200).json({ success: true });
 });
 
@@ -384,7 +387,7 @@ router.get('/cer/jobs', async (req, res) => {
     if (error.code === '42P01') {
       return res.json({ data: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 } });
     }
-    console.error('Error fetching CER jobs:', error);
+    log.error('Error fetching CER jobs:', error);
     res.status(500).json({ error: 'Failed to fetch CER jobs' });
   }
 });
@@ -438,7 +441,7 @@ router.get('/cer/jobs/:id', async (req, res) => {
     if (error.code === '42P01') {
       return res.status(404).json({ error: 'CER job not found' });
     }
-    console.error('Error fetching CER job:', error);
+    log.error('Error fetching CER job:', error);
     res.status(500).json({ error: 'Failed to fetch CER job' });
   }
 });
@@ -491,7 +494,7 @@ router.post('/cer/jobs/:id/review', async (req, res) => {
     if (error.code === '42P01') {
       return res.status(503).json({ error: 'Required tables not yet created' });
     }
-    console.error('Error recording CER review:', error);
+    log.error('Error recording CER review:', error);
     res.status(500).json({ error: 'Failed to record review' });
   }
 });
@@ -551,7 +554,7 @@ router.post('/cer/generate-full', async (req, res) => {
     if (error.code === '42P01') {
       return res.status(503).json({ error: 'cer_reports table not yet created' });
     }
-    console.error('Error creating CER job:', error);
+    log.error('Error creating CER job:', error);
     res.status(500).json({ error: 'Failed to create CER job' });
   }
 });
@@ -598,7 +601,7 @@ router.get('/cer/jobs/:id/status', async (req, res) => {
     if (error.code === '42P01') {
       return res.status(404).json({ error: 'CER job not found' });
     }
-    console.error('Error fetching CER job status:', error);
+    log.error('Error fetching CER job status:', error);
     res.status(500).json({ error: 'Failed to fetch CER job status' });
   }
 });
@@ -683,18 +686,18 @@ export default function registerRoutes(app: Express): void {
   app.use('/api/operating-system', operatingSystemRoutes);
   
   // Basic health and status routes are now available
-  console.log('✅ Basic API routes mounted');
-  console.log('✅ Regulatory management routes mounted');
-  console.log('✅ Template usage routes mounted');
-  console.log('✅ IND routes mounted');
-  console.log('✅ Template hydration test routes mounted');
-  console.log('✅ Unified Task Management routes mounted successfully');
-  console.log('✅ Notification System routes mounted successfully');
-  console.log('✅ Submission Center API routes mounted successfully');
-  console.log('✅ Comprehensive Task Management APIs mounted successfully');
-  console.log('✅ Module Management routes mounted successfully');
-  console.log('✅ SharePoint File Management API routes mounted successfully');
-  console.log('✅ Claude Intelligence API routes mounted (draft, stream, review, vision, batch)');
+  log.debug('✅ Basic API routes mounted');
+  log.debug('✅ Regulatory management routes mounted');
+  log.debug('✅ Template usage routes mounted');
+  log.debug('✅ IND routes mounted');
+  log.debug('✅ Template hydration test routes mounted');
+  log.debug('✅ Unified Task Management routes mounted successfully');
+  log.debug('✅ Notification System routes mounted successfully');
+  log.debug('✅ Submission Center API routes mounted successfully');
+  log.debug('✅ Comprehensive Task Management APIs mounted successfully');
+  log.debug('✅ Module Management routes mounted successfully');
+  log.debug('✅ SharePoint File Management API routes mounted successfully');
+  log.debug('✅ Claude Intelligence API routes mounted (draft, stream, review, vision, batch)');
 
   // Register Device Profile API routes directly
   const DeviceProfileService = require('./services/DeviceProfileService').default;
@@ -702,7 +705,7 @@ export default function registerRoutes(app: Express): void {
 
   // Add a simple test route
   app.get('/api/test', (req, res) => {
-    console.log('Test route hit!');
+    log.debug('Test route hit!');
     res.json({ success: true, message: 'Test route works!' });
   });
 
@@ -736,13 +739,13 @@ export default function registerRoutes(app: Express): void {
       
       query += ' ORDER BY created_at DESC';
       
-      console.log('Fetching projects with query:', query, 'params:', params);
+      log.debug('Fetching projects with query:', query, 'params:', params);
       const result = await pool.query(query, params);
-      console.log('Found projects:', result.rows?.length || 0);
+      log.debug('Found projects:', result.rows?.length || 0);
       
       res.json(result.rows || []);
     } catch (error) {
-      console.error('Failed to fetch projects:', error);
+      log.error('Failed to fetch projects:', error);
       res.status(500).json({ error: 'Failed to fetch projects' });
     }
   });
@@ -751,7 +754,7 @@ export default function registerRoutes(app: Express): void {
   app.use(
     '/api',
     (err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-      console.error('API Error:', err);
+      log.error('API Error:', err);
       res.status(err.status || 500).json({
         error: err.message || 'Internal Server Error',
         context: err.context || 'API',

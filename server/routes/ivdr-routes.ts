@@ -17,6 +17,9 @@ import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { z } from 'zod';
 import { registerExportGovernanceQuick } from '../services/compute/exportGovernance';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('ivdr-routes');
 
 // ─── Zod Schemas for IVDR Input Validation ───────────────────────────────────
 
@@ -91,7 +94,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
   function safeError(res: Response, error: any, code: string, label: string): Response {
     // 42P01 = undefined_table — IVDR tables not yet migrated
     if (error?.code === '42P01') {
-      console.warn(`[IVDR] ${label}: table not found — denying until migrated`);
+      log.warn(`[IVDR] ${label}: table not found — denying until migrated`);
       return res.status(503).json({
         error: 'IVDR tables not yet provisioned — run migrations',
         code: 'IVDR_NOT_PROVISIONED',
@@ -111,7 +114,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
         code: 'IVDR_NO_TENANT',
       });
     }
-    console.error(`[IVDR] ${label}:`, error);
+    log.error(`[IVDR] ${label}:`, error);
     return res.status(500).json({
       error: `${label} failed`,
       code,

@@ -32,6 +32,8 @@ import type {
 } from './types';
 import { GatewayAuditLogger } from './audit';
 import { GatewayPolicyEngine } from './policy';
+import { createScopedLogger } from '../../utils/logger.js';
+const log = createScopedLogger('ai-gateway');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Default Model Registry
@@ -254,7 +256,7 @@ export class AIGateway {
     this.initProviderHealth();
     this.initProviderClients();
 
-    console.log(
+    log.debug(
       `[AI Gateway] Initialized — providers: ${this.getEnabledProviders().join(', ')}, strategy: ${this.config.defaultStrategy}, deterministic: ${this.config.deterministicMode}`
     );
   }
@@ -315,7 +317,7 @@ export class AIGateway {
     // Select model — fall back to deterministic if no providers available
     const selectedModel = this.selectModel(request, strategy);
     if (!selectedModel) {
-      console.warn(
+      log.warn(
         '[AI Gateway] No providers available — falling back to demo mode. Set ANTHROPIC_API_KEY in .env to enable live AI.'
       );
       return this.buildDeterministicResponse(request, requestId, startTime);
@@ -337,7 +339,7 @@ export class AIGateway {
       lastError = error;
       triedProviders.push(selectedModel.provider);
       this.recordFailure(selectedModel.provider, error);
-      console.warn(
+      log.warn(
         `[AI Gateway] ${selectedModel.provider}/${selectedModel.model} failed: ${error.message}`
       );
     }
@@ -346,7 +348,7 @@ export class AIGateway {
     const fallbacks = this.getFallbackModels(request.taskType, triedProviders);
     for (const fallback of fallbacks) {
       try {
-        console.log(`[AI Gateway] Falling back to ${fallback.provider}/${fallback.model}`);
+        log.debug(`[AI Gateway] Falling back to ${fallback.provider}/${fallback.model}`);
         const response = await this.retryWithBackoff(
           () => this.executeProvider(fallback, request, requestId, startTime), 1, 1000
         );
@@ -357,7 +359,7 @@ export class AIGateway {
         lastError = error;
         triedProviders.push(fallback.provider);
         this.recordFailure(fallback.provider, error);
-        console.warn(
+        log.warn(
           `[AI Gateway] Fallback ${fallback.provider}/${fallback.model} failed: ${error.message}`
         );
       }
@@ -464,7 +466,7 @@ export class AIGateway {
    */
   setDeterministicMode(enabled: boolean): void {
     this.config.deterministicMode = enabled;
-    console.log(`[AI Gateway] Deterministic mode: ${enabled}`);
+    log.debug(`[AI Gateway] Deterministic mode: ${enabled}`);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -804,7 +806,7 @@ export class AIGateway {
       if (Date.now() - lastChunkTime > chunkTimeoutMs) {
         streamStalled = true;
         clearInterval(chunkWatchdog);
-        console.warn(
+        log.warn(
           `[AI Gateway] Stream stalled — no chunk received for ${chunkTimeoutMs / 1000}s. ` +
           `Accumulated ${content.length} chars so far. Aborting stream.`
         );
@@ -851,7 +853,7 @@ export class AIGateway {
         }
       }
     } catch (streamErr: any) {
-      console.error('[AI Gateway] Stream interrupted:', streamErr?.message);
+      log.error('[AI Gateway] Stream interrupted:', streamErr?.message);
       // Return whatever content was accumulated so far (partial response)
       if (!content) throw streamErr; // Re-throw if nothing was captured
     } finally {
@@ -861,7 +863,7 @@ export class AIGateway {
     // If stream stalled but we have partial content, mark finish reason accordingly
     if (streamStalled && content) {
       stopReason = 'chunk_timeout';
-      console.warn(`[AI Gateway] Returning partial response (${content.length} chars) after stream stall`);
+      log.warn(`[AI Gateway] Returning partial response (${content.length} chars) after stream stall`);
     }
 
     return {
@@ -1101,7 +1103,7 @@ export class AIGateway {
       // Exponential backoff: 60s, 120s, 240s, max 5min
       const backoffRound = Math.floor(health.consecutiveFailures / 3) - 1;
       const backoffMs = Math.min(300_000, 60_000 * Math.pow(2, backoffRound));
-      console.warn(
+      log.warn(
         `[AI Gateway] Provider ${provider} marked unhealthy after ${health.consecutiveFailures} failures — recovery in ${backoffMs / 1000}s`
       );
 
@@ -1111,7 +1113,7 @@ export class AIGateway {
         if (!health.healthy) {
           health.healthy = true;
           health.consecutiveFailures = 0;
-          console.log(
+          log.debug(
             `[AI Gateway] Provider ${provider} auto-recovered after ${Math.round((backoffMs + jitter) / 1000)}s backoff`
           );
         }
@@ -1166,7 +1168,7 @@ export class AIGateway {
         metadata: request.metadata,
       });
     } catch (auditError: any) {
-      console.error(`[AI Gateway] Audit log failed: ${auditError.message}`);
+      log.error(`[AI Gateway] Audit log failed: ${auditError.message}`);
     }
   }
 
@@ -1237,9 +1239,9 @@ export class AIGateway {
     if (openaiConfig?.enabled && openaiConfig.apiKey) {
       try {
         this.openaiClient = new OpenAI({ apiKey: openaiConfig.apiKey });
-        console.log('  ✅ OpenAI provider ready');
+        log.debug('  ✅ OpenAI provider ready');
       } catch (e: any) {
-        console.warn(`  ⚠️ OpenAI provider init failed: ${e.message}`);
+        log.warn(`  ⚠️ OpenAI provider init failed: ${e.message}`);
       }
     }
 
@@ -1248,9 +1250,9 @@ export class AIGateway {
     if (anthropicConfig?.enabled && anthropicConfig.apiKey) {
       try {
         this.anthropicClient = new Anthropic({ apiKey: anthropicConfig.apiKey });
-        console.log('  ✅ Anthropic provider ready');
+        log.debug('  ✅ Anthropic provider ready');
       } catch (e: any) {
-        console.warn(`  ⚠️ Anthropic provider init failed: ${e.message}`);
+        log.warn(`  ⚠️ Anthropic provider init failed: ${e.message}`);
       }
     }
 
@@ -1262,9 +1264,9 @@ export class AIGateway {
           apiKey: moonshotConfig.apiKey,
           baseURL: moonshotConfig.baseUrl || 'https://api.moonshot.ai/v1',
         });
-        console.log('  ✅ Moonshot/Kimi provider ready');
+        log.debug('  ✅ Moonshot/Kimi provider ready');
       } catch (e: any) {
-        console.warn(`  ⚠️ Moonshot provider init failed: ${e.message}`);
+        log.warn(`  ⚠️ Moonshot provider init failed: ${e.message}`);
       }
     }
   }

@@ -2,6 +2,9 @@ import sgMail from '@sendgrid/mail';
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
+import { createScopedLogger } from './utils/logger.js';
+
+const log = createScopedLogger('notification');
 
 // Configure SendGrid if API key is available
 if (process.env.SENDGRID_API_KEY) {
@@ -49,7 +52,7 @@ export class NotificationService {
 
       fs.appendFileSync(NOTIFICATION_LOG_PATH, JSON.stringify(entry) + '\n');
     } catch (error) {
-      console.error('Error logging notification:', error);
+      log.error('Error logging notification:', error);
     }
   }
 
@@ -65,7 +68,7 @@ export class NotificationService {
     try {
       fs.appendFileSync(NOTIFICATION_LOG_PATH, JSON.stringify(notification) + '\n');
     } catch (error) {
-      console.error('Error adding notification:', error);
+      log.error('Error adding notification:', error);
     }
   }
 
@@ -86,7 +89,7 @@ export class NotificationService {
 
       return logs;
     } catch (error) {
-      console.error('Error retrieving notification logs:', error);
+      log.error('Error retrieving notification logs:', error);
       return [];
     }
   }
@@ -96,7 +99,7 @@ export class NotificationService {
    */
   async sendEmailNotification(options: EmailNotificationOptions): Promise<boolean> {
     if (!process.env.SENDGRID_API_KEY) {
-      console.warn('SendGrid API key not configured. Email notification skipped.');
+      log.warn('SendGrid API key not configured. Email notification skipped.');
       return false;
     }
 
@@ -112,7 +115,7 @@ export class NotificationService {
       await sgMail.send(msg);
       return true;
     } catch (error) {
-      console.error('Error sending email notification:', error);
+      log.error('Error sending email notification:', error);
       return false;
     }
   }
@@ -122,7 +125,7 @@ export class NotificationService {
    */
   async sendSlackNotification(options: SlackNotificationOptions): Promise<boolean> {
     if (!process.env.SLACK_BOT_TOKEN || !process.env.SLACK_CHANNEL_ID) {
-      console.warn('Slack credentials not configured. Slack notification skipped.');
+      log.warn('Slack credentials not configured. Slack notification skipped.');
       return false;
     }
 
@@ -145,7 +148,7 @@ export class NotificationService {
 
       return true;
     } catch (error) {
-      console.error('Error sending Slack notification:', error);
+      log.error('Error sending Slack notification:', error);
       return false;
     }
   }

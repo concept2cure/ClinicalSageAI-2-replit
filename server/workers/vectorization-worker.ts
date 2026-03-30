@@ -16,6 +16,9 @@ import { getOpenAIClient } from '../services/openai-client';
 import pdfParse from 'pdf-parse';
 import { pool } from '../db';
 import * as crypto from 'crypto';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('vectorization-worker');
 
 interface ProcessingJob {
   id: string;
@@ -150,7 +153,7 @@ async function generateEmbeddings(texts: string[]): Promise<number[][]> {
       return embedding;
     });
   } catch (error: any) {
-    console.error('Error generating embeddings:', error.message);
+    log.error('Error generating embeddings:', error.message);
     throw error;
   } finally {
     maybeLogEmbeddingCacheStats();
@@ -168,7 +171,7 @@ function maybeLogEmbeddingCacheStats(): void {
     return;
   }
   const hitRate = ((embeddingCacheHits / total) * 100).toFixed(1);
-  console.log(
+  log.debug(
     `[vectorization-worker] embedding cache stats: hits=${embeddingCacheHits}, misses=${embeddingCacheMisses}, hitRate=${hitRate}%, size=${embeddingCache.size}`
   );
 }
@@ -200,7 +203,7 @@ async function extractText(content: Buffer, fileType: string): Promise<string> {
       const data = await pdfParse(content);
       return data.text;
     } catch (error) {
-      console.error('PDF parsing error:', error);
+      log.error('PDF parsing error:', error);
       return '';
     }
   } else if (fileType.startsWith('text/') || fileType === 'application/json') {
@@ -208,7 +211,7 @@ async function extractText(content: Buffer, fileType: string): Promise<string> {
   } else if (fileType.includes('word') || fileType.includes('document')) {
     // For Word documents, we'd use mammoth or similar
     // For now, return placeholder
-    console.log('Word document extraction not implemented');
+    log.debug('Word document extraction not implemented');
     return '';
   }
 
@@ -222,7 +225,7 @@ async function processDocument(job: ProcessingJob): Promise<void> {
   const client = await requirePool().connect();
 
   try {
-    console.log(`Processing document: ${job.title} (${job.document_id})`);
+    log.debug(`Processing document: ${job.title} (${job.document_id})`);
 
     // Mark job as processing
     await client.query(
@@ -246,7 +249,7 @@ async function processDocument(job: ProcessingJob): Promise<void> {
     let text = docResult.rows[0]?.content_text || '';
 
     if (!text) {
-      console.log(`No text content for document ${job.document_id}, skipping`);
+      log.debug(`No text content for document ${job.document_id}, skipping`);
       await client.query(
         `
         UPDATE vault.processing_queue
@@ -260,7 +263,7 @@ async function processDocument(job: ProcessingJob): Promise<void> {
 
     // Chunk the text
     const textChunks = chunkText(text);
-    console.log(`Created ${textChunks.length} chunks for document ${job.title}`);
+    log.debug(`Created ${textChunks.length} chunks for document ${job.title}`);
 
     // Generate embeddings in batches
     const chunks: DocumentChunk[] = [];
@@ -280,7 +283,7 @@ async function processDocument(job: ProcessingJob): Promise<void> {
           });
         }
       } catch (embeddingError: any) {
-        console.error(`Embedding error for batch ${i}:`, embeddingError.message);
+        log.error(`Embedding error for batch ${i}:`, embeddingError.message);
         // Store chunks without embeddings
         for (let j = 0; j < batch.length; j++) {
           chunks.push({
@@ -344,11 +347,11 @@ async function processDocument(job: ProcessingJob): Promise<void> {
 
     await client.query('COMMIT');
 
-    console.log(`✅ Completed processing ${job.title}: ${chunks.length} chunks`);
+    log.debug(`✅ Completed processing ${job.title}: ${chunks.length} chunks`);
   } catch (error: any) {
     await client.query('ROLLBACK');
 
-    console.error(`Error processing document ${job.document_id}:`, error.message);
+    log.error(`Error processing document ${job.document_id}:`, error.message);
 
     // Mark job as failed
     await client.query(
@@ -407,11 +410,11 @@ async function getPendingJobs(limit: number = 10): Promise<ProcessingJob[]> {
  * Main worker loop
  */
 async function runWorker(): Promise<void> {
-  console.log('🚀 Starting Evidence Vault Vectorization Worker');
-  console.log(`   Model: ${EMBEDDING_MODEL}`);
-  console.log(`   Chunk size: ${CHUNK_SIZE} tokens`);
-  console.log(`   Overlap: ${CHUNK_OVERLAP} tokens`);
-  console.log(`   Batch size: ${BATCH_SIZE}`);
+  log.debug('🚀 Starting Evidence Vault Vectorization Worker');
+  log.debug(`   Model: ${EMBEDDING_MODEL}`);
+  log.debug(`   Chunk size: ${CHUNK_SIZE} tokens`);
+  log.debug(`   Overlap: ${CHUNK_OVERLAP} tokens`);
+  log.debug(`   Batch size: ${BATCH_SIZE}`);
 
   while (true) {
     try {
@@ -423,7 +426,7 @@ async function runWorker(): Promise<void> {
         continue;
       }
 
-      console.log(`📋 Found ${jobs.length} pending jobs`);
+      log.debug(`📋 Found ${jobs.length} pending jobs`);
 
       // Process jobs sequentially to respect rate limits
       for (const job of jobs) {
@@ -437,7 +440,7 @@ async function runWorker(): Promise<void> {
         await new Promise(resolve => setTimeout(resolve, 500));
       }
     } catch (error: any) {
-      console.error('Worker error:', error.message);
+      log.error('Worker error:', error.message);
       await new Promise(resolve => setTimeout(resolve, 10000));
     }
   }
@@ -536,7 +539,7 @@ export { runWorker, processDocument, getPendingJobs };
 // Run as standalone worker if executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   runWorker().catch(error => {
-    console.error('Fatal worker error:', error);
+    log.error('Fatal worker error:', error);
     process.exit(1);
   });
 }

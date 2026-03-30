@@ -8,6 +8,8 @@ import { semanticSearchService } from './semantic-search-service';
 import { RegulatoryIntelligenceService } from './regulatory-intelligence-service';
 import { academicDocumentProcessor } from './academic-document-processor';
 import { getIntelligencePrefix } from './lumen-context-builder.js';
+import { createScopedLogger } from '../utils/logger.js';
+const log = createScopedLogger('study-design-agent');
 
 // Create a singleton instance of the regulatory intelligence service
 const regulatoryIntelligenceService = new RegulatoryIntelligenceService();
@@ -54,7 +56,7 @@ export class StudyDesignAgentService {
     }
 
     try {
-      console.log('Initializing Study Design Agent service...');
+      log.debug('Initializing Study Design Agent service...');
 
       // Clinical intelligence service initializes on first use
 
@@ -71,15 +73,15 @@ export class StudyDesignAgentService {
       for (const dir of requiredDirs) {
         if (!fs.existsSync(dir)) {
           fs.mkdirSync(dir, { recursive: true });
-          console.log(`Created directory: ${dir}`);
+          log.debug(`Created directory: ${dir}`);
         }
       }
 
       this.initialized = true;
-      console.log('Study Design Agent service initialized successfully');
+      log.debug('Study Design Agent service initialized successfully');
       return true;
     } catch (error) {
-      console.error('Error initializing Study Design Agent service:', error);
+      log.error('Error initializing Study Design Agent service:', error);
       return false;
     }
   }
@@ -122,7 +124,7 @@ export class StudyDesignAgentService {
       memoryService.addMessage(conversationId, userMessage);
 
       // Get relevant reports through basic search
-      console.log('Getting relevant CSR reports...');
+      log.debug('Getting relevant CSR reports...');
       const dbInstance = this.getDb();
       const reports = await dbInstance.select().from(csrReports);
 
@@ -141,10 +143,10 @@ export class StudyDesignAgentService {
       // Add relevant report data
       const relevantReports = filteredReports.slice(0, 5);
       const reportNames = relevantReports.map((r: (typeof reports)[number]) => r.title).join(', ');
-      console.log(`Found relevant CSR reports: ${reportNames}`);
+      log.debug(`Found relevant CSR reports: ${reportNames}`);
 
       // Generate a response based on the query and relevant reports without using external AI
-      console.log('Generating response based on local data...');
+      log.debug('Generating response based on local data...');
 
       // Determine query type and generate appropriate response
       const queryType = this.categorizeQuery(queryData.query);
@@ -205,7 +207,7 @@ export class StudyDesignAgentService {
 
       return response;
     } catch (error) {
-      console.error('Error generating study design agent response:', error);
+      log.error('Error generating study design agent response:', error);
 
       // Return an error response
       return {

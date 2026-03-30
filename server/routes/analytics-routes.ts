@@ -12,6 +12,9 @@ import { eq, like, count, sql } from 'drizzle-orm';
 import { protocolAnalyzerService } from '../protocol-analyzer-service';
 import { protocolOptimizerService } from '../protocol-optimizer-service';
 import { analyzeText } from '../openai-service';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('analytics-routes');
 
 const execPromise = util.promisify(exec);
 const router = Router();
@@ -58,7 +61,7 @@ router.post('/upload-protocol', upload.single('file'), async (req, res) => {
     }
 
     // Log file information for troubleshooting
-    console.log(
+    log.debug(
       `Processing protocol upload: ${req.file.originalname} (${req.file.mimetype}, ${req.file.size} bytes)`
     );
 
@@ -91,7 +94,7 @@ router.post('/upload-protocol', upload.single('file'), async (req, res) => {
           throw new Error('Insufficient text extracted from PDF');
         }
       } catch (error) {
-        console.error('PDF extraction error:', error);
+        log.error('PDF extraction error:', error);
         return res.status(500).json({
           success: false,
           message: 'Failed to extract text from PDF',
@@ -126,7 +129,7 @@ For best results, please use PDF format.`;
       const result = await execPromise(`python ${analyzerScriptPath} "${extractedText}"`);
       analysisOutput = result.stdout;
     } catch (error) {
-      console.error('Analysis execution error:', error);
+      log.error('Analysis execution error:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to analyze protocol content',
@@ -154,10 +157,10 @@ For best results, please use PDF format.`;
           fs.unlinkSync(tempScoreFile);
         }
       } catch (e) {
-        console.error('Error cleaning up temp file:', e);
+        log.error('Error cleaning up temp file:', e);
       }
     } catch (error) {
-      console.error('Confidence scoring error:', error);
+      log.error('Confidence scoring error:', error);
       confidenceOutput = JSON.stringify({
         confidence_score: 0,
         issues: ['Error calculating confidence score'],
@@ -180,10 +183,10 @@ For best results, please use PDF format.`;
       const missingFields = requiredFields.filter(field => analysisResult[field] === undefined);
 
       if (missingFields.length > 0) {
-        console.warn(`Analysis missing fields: ${missingFields.join(', ')}`);
+        log.warn(`Analysis missing fields: ${missingFields.join(', ')}`);
       }
     } catch (error) {
-      console.error('Error parsing analysis output:', error);
+      log.error('Error parsing analysis output:', error);
       analysisResult = {
         risk_factors: [],
         indication: '',
@@ -218,7 +221,7 @@ For best results, please use PDF format.`;
 
     res.json(result);
   } catch (error) {
-    console.error('Error processing protocol:', error);
+    log.error('Error processing protocol:', error);
     res.status(500).json({
       success: false,
       message: 'Error processing protocol',
@@ -253,7 +256,7 @@ router.post('/analyze-protocol-text', async (req, res) => {
       });
     }
 
-    console.log(`Processing protocol text analysis (${text.length} characters)`);
+    log.debug(`Processing protocol text analysis (${text.length} characters)`);
 
     // Save the text to a temporary file for processing
     const tempDir = path.join(process.cwd(), 'temp');
@@ -267,7 +270,7 @@ router.post('/analyze-protocol-text', async (req, res) => {
     try {
       fs.writeFileSync(tempFilePath, text);
     } catch (error) {
-      console.error('Error saving temporary file:', error);
+      log.error('Error saving temporary file:', error);
       return res.status(500).json({
         success: false,
         message: 'Error processing protocol text',
@@ -289,10 +292,10 @@ router.post('/analyze-protocol-text', async (req, res) => {
           fs.unlinkSync(tempFilePath);
         }
       } catch (e) {
-        console.error('Error cleaning up temp file:', e);
+        log.error('Error cleaning up temp file:', e);
       }
 
-      console.error('Analysis execution error:', error);
+      log.error('Analysis execution error:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to analyze protocol text',
@@ -308,7 +311,7 @@ router.post('/analyze-protocol-text', async (req, res) => {
       );
       confidenceOutput = scoreResult.stdout;
     } catch (error) {
-      console.error('Confidence scoring error:', error);
+      log.error('Confidence scoring error:', error);
       confidenceOutput = JSON.stringify({
         confidence_score: 0,
         issues: ['Error calculating confidence score'],
@@ -322,7 +325,7 @@ router.post('/analyze-protocol-text', async (req, res) => {
         fs.unlinkSync(tempFilePath);
       }
     } catch (e) {
-      console.error('Error cleaning up temp file:', e);
+      log.error('Error cleaning up temp file:', e);
     }
 
     let analysisResult;
@@ -340,10 +343,10 @@ router.post('/analyze-protocol-text', async (req, res) => {
       const missingFields = requiredFields.filter(field => analysisResult[field] === undefined);
 
       if (missingFields.length > 0) {
-        console.warn(`Analysis missing fields: ${missingFields.join(', ')}`);
+        log.warn(`Analysis missing fields: ${missingFields.join(', ')}`);
       }
     } catch (error) {
-      console.error('Error parsing analysis output:', error);
+      log.error('Error parsing analysis output:', error);
       analysisResult = {
         risk_factors: [],
         indication: '',
@@ -378,7 +381,7 @@ router.post('/analyze-protocol-text', async (req, res) => {
 
     res.json(result);
   } catch (error) {
-    console.error('Error analyzing protocol text:', error);
+    log.error('Error analyzing protocol text:', error);
     res.status(500).json({
       success: false,
       message: 'Error analyzing protocol text',
@@ -413,7 +416,7 @@ async function findSimilarCsrs(indication: string, phase: string) {
       success: true, // Assuming all CSRs in the database are from successful studies
     }));
   } catch (error) {
-    console.error('Error finding similar CSRs:', error);
+    log.error('Error finding similar CSRs:', error);
     return [];
   }
 }
@@ -675,7 +678,7 @@ router.post('/demo-analysis', async (req, res) => {
       });
     }
 
-    console.log(`Analyzing protocol with session ID: ${session_id}`);
+    log.debug(`Analyzing protocol with session ID: ${session_id}`);
 
     // Create session directory if it doesn't exist
     const sessionDir = path.join(process.cwd(), 'exports', session_id);
@@ -711,7 +714,7 @@ For each recommendation, include specific citations to relevant regulatory guide
     try {
       detailedAnalysis = await analyzeText(content, systemPrompt);
     } catch (error) {
-      console.error('Error generating detailed analysis:', error);
+      log.error('Error generating detailed analysis:', error);
       detailedAnalysis =
         'Unable to generate detailed AI analysis - falling back to standard analysis.';
     }
@@ -932,7 +935,7 @@ For each recommendation, include specific citations to relevant regulatory guide
     // Return the response
     res.json(response);
   } catch (error) {
-    console.error('Error in demo analysis:', error);
+    log.error('Error in demo analysis:', error);
     res.status(500).json({
       error: 'Failed to analyze protocol',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -1075,7 +1078,7 @@ router.get('/dashboard', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error generating analytics dashboard:', error);
+    log.error('Error generating analytics dashboard:', error);
     res.status(500).json({
       error: 'Failed to generate analytics dashboard',
       message: (error as Error).message,
@@ -1331,7 +1334,7 @@ router.get('/export', async (req, res) => {
       res.status(400).json({ error: 'Unsupported export format. Use json, csv, or pdf.' });
     }
   } catch (error) {
-    console.error('Error exporting analytics report:', error);
+    log.error('Error exporting analytics report:', error);
     res.status(500).json({
       error: 'Failed to export analytics report',
       message: (error as Error).message,
