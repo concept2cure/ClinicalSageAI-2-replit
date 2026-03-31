@@ -1,7 +1,7 @@
 # Stage 2 — Post-Cut Smoke Notes
 
 Stage: Stage 2 — Proof-Driven Low-Risk Deletions and Deprecation Fence  
-Branch / commit reviewed: `cursor/critical-files-management-f38a` (post-cut workspace state)
+Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `d481b7da76e5723da94be4ac06506b5cb8a71879`
 
 ## Smoke checklist and outcomes
 

@@ -1,7 +1,7 @@
 # Stage 2 — Delete proof pack
 
 Stage: Stage 2 — Proof-Driven Low-Risk Deletions and Deprecation Fence  
-Branch / commit reviewed: `cursor/critical-files-management-f38a` (post-cut branch HEAD)  
+Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `d481b7da` (`d481b7da76e5723da94be4ac06506b5cb8a71879`)  
 Method: importer/mount/entrypoint proof from current code + Stage 1 ownership constraints
 
 ## Candidate classification table (required one row each)
