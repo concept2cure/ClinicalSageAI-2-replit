@@ -47,6 +47,7 @@ import { ProgramTwinPanel } from './ProgramTwinPanel';
 import { SubmissionAppsPanel } from './SubmissionAppsPanel';
 import { ReviewPulseDashboard } from './ReviewPulseDashboard';
 import { NotificationCenter } from './NotificationCenter';
+import { CommunicationCenter } from './CommunicationCenter';
 import { ComputeJobPanel } from '../compute/ComputeJobPanel';
 import { IndEvidenceAskPanel } from './IndEvidenceAskPanel';
 import {
@@ -114,7 +115,7 @@ type ProjectNav =
   | 'publish'
   | 'haq'
   | 'vault'
-  | 'overview'
+  | 'communication_center'
   | 'reports'
   | 'activity'
   | 'documents';
@@ -229,7 +230,7 @@ const WORKBENCHES: WorkbenchConfig[] = [
 ];
 
 const PROJECT_NAV_ITEMS: Array<{ id: ProjectNav; label: string }> = [
-  { id: 'overview', label: 'Overview' },
+  { id: 'communication_center', label: 'Communication Center' },
   { id: 'submission_builder', label: 'Documents' },
   { id: 'verify', label: 'Verify' },
   { id: 'review', label: 'Review' },
@@ -546,7 +547,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const editorContainerRef = useRef<HTMLDivElement>(null);
 
   // ── Phase 4 overlay state ──────────────────────────────────────────────
-  type Phase4Panel = 'none' | 'transform' | 'verification' | 'twin' | 'apps' | 'pulse';
+  type Phase4Panel = 'none' | 'transform' | 'verification' | 'twin' | 'apps' | 'pulse' | 'communication_center';
   const [phase4Panel, setPhase4Panel] = useState<Phase4Panel>('none');
   const [phase4Ctx, setPhase4Ctx] = useState<{
     ctdSection?: string;
@@ -819,8 +820,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       setProjectNav('activity');
       return;
     }
-    if (mode === 'dashboard') {
-      setProjectNav('overview');
+    if (phase4Panel === 'communication_center' || mode === 'dashboard') {
+      setProjectNav('communication_center');
       return;
     }
     setProjectNav('documents');
@@ -1763,9 +1764,9 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               key={item.id}
               onClick={() => {
                 setProjectNav(item.id);
-                if (item.id === 'overview') {
+                if (item.id === 'communication_center') {
                   setMode('dashboard');
-                  setPhase4Panel('none');
+                  setPhase4Panel('communication_center');
                 } else if (item.id === 'submission_builder') {
                   setActiveLayer('document_studio');
                   setLeftRailMode('dossier');
@@ -2456,6 +2457,21 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                       setSelectedDocId(artifactId);
                       setMode('edit');
                     }}
+                  />
+                </div>
+              ) : phase4Panel === 'communication_center' ? (
+                <div className="flex-1 overflow-y-auto px-6 py-4">
+                  <CommunicationCenter
+                    projectId={projectId}
+                    projectName={projectName || 'Project'}
+                    submissionType={(submissionType as any) || (projectType as any) || 'NDA'}
+                    artifacts={artifacts.map(a => ({
+                      id: a.id,
+                      title: a.title,
+                      ctdSection: a.ctdSection,
+                      status: a.status || 'draft',
+                      version: a.version || 1,
+                    }))}
                   />
                 </div>
               ) : mode === 'dashboard' ? (
