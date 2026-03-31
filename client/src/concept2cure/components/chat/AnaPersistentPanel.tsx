@@ -19,6 +19,22 @@ import DOMPurify from 'dompurify';
 import { useAIAction } from '../../hooks/useAIAction';
 import { useAnaQueueState } from '../../hooks/useAnaQueueState';
 import type { AIActionType, AIActionSourceSurface } from '../../hooks/useAIAction';
+
+// ── Conversation Queue ──────────────────────────────────────────────────────
+type QueueWorkStatus = 'queued' | 'working' | 'waiting_action' | 'completed' | 'blocked' | 'failed';
+
+interface ConversationQueueItem {
+  id: string;
+  prompt: string;
+  contextSnapshot: { projectId?: number | null; sectionCode?: string | null };
+  status: QueueWorkStatus;
+  enqueuedAt: number;
+  startedAt?: number;
+  completedAt?: number;
+  result?: string;
+  error?: string;
+}
+
 import {
   Sparkles,
   ArrowUp,
@@ -679,9 +695,14 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const aiAction = useAIAction();
 
   const [messages, setMessages] = useState<AnaMessage[]>([]);
+  const [conversationQueue, setConversationQueue] = React.useState<ConversationQueueItem[]>([]);
+  const [activeQueueItemId, setActiveQueueItemId] = React.useState<string | null>(null);
+  const ANA_QUEUE_STORAGE_KEY = 'ana_conversation_queue';
   const [input, setInput] = useState('');
   const lastSubmittedPromptRef = useRef<string | null>(null);
   const queue = useAnaQueueState();
+  const isLoading = queue.state.status === 'queued' || queue.state.status === 'post_processing';
+  const isStreaming = queue.state.status === 'streaming';
   const isThinking = !queue.state.canSubmit;
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
@@ -723,6 +744,33 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
   const screenName = contextProfile?.screenName || 'default';
   const screenLabel = SCREEN_LABELS[screenName] || '';
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const savedQueue = window.localStorage.getItem(ANA_QUEUE_STORAGE_KEY);
+    if (!savedQueue) return;
+
+    try {
+      const parsedQueue = JSON.parse(savedQueue) as ConversationQueueItem[];
+      if (Array.isArray(parsedQueue)) {
+        setConversationQueue(parsedQueue.filter(item => item.status === 'queued'));
+      }
+    } catch {
+      window.localStorage.removeItem(ANA_QUEUE_STORAGE_KEY);
+    }
+  }, [ANA_QUEUE_STORAGE_KEY]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    if (conversationQueue.length === 0) {
+      window.localStorage.removeItem(ANA_QUEUE_STORAGE_KEY);
+      return;
+    }
+
+    window.localStorage.setItem(ANA_QUEUE_STORAGE_KEY, JSON.stringify(conversationQueue));
+  }, [ANA_QUEUE_STORAGE_KEY, conversationQueue]);
 
   useEffect(() => {
     const tenantId = contextProfile?.organizationId || getOrgId();
@@ -1346,7 +1394,25 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
   const handleSend = useCallback(
     async (messageText?: string) => {
-      const text = messageText || input.trim();
+      const text = (messageText || input).trim();
+
+      // If already working, enqueue instead of dropping
+      if ((isStreaming || isLoading) && text) {
+        const queueItem: ConversationQueueItem = {
+          id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          prompt: text,
+          contextSnapshot: {
+            projectId: contextProfile?.projectId ? Number(contextProfile.projectId) || null : null,
+            sectionCode: authoringContext?.sectionCode ?? null,
+          },
+          status: 'queued',
+          enqueuedAt: Date.now(),
+        };
+        setConversationQueue(prev => [...prev, queueItem]);
+        setInput('');
+        return;
+      }
+
       if (!text || isThinking) return;
       lastSubmittedPromptRef.current = text;
 
@@ -1873,7 +1939,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       }
     },
     [
+      authoringContext,
+      conversationQueue,
       input,
+      isLoading,
+      isStreaming,
       isThinking,
       messages,
       contextProfile,
@@ -1884,6 +1954,34 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       draftStorageKey,
     ]
   );
+
+  useEffect(() => {
+    if (!activeQueueItemId || isThinking) return;
+
+    setConversationQueue(prev => prev.filter(item => item.id !== activeQueueItemId));
+    setActiveQueueItemId(null);
+  }, [activeQueueItemId, isThinking]);
+
+  useEffect(() => {
+    if (isThinking || activeQueueItemId) return;
+
+    const nextQueueItem = conversationQueue.find(item => item.status === 'queued');
+    if (!nextQueueItem) return;
+
+    setActiveQueueItemId(nextQueueItem.id);
+    setConversationQueue(prev =>
+      prev.map(item =>
+        item.id === nextQueueItem.id
+          ? {
+              ...item,
+              status: 'working',
+              startedAt: Date.now(),
+            }
+          : item
+      )
+    );
+    void handleSend(nextQueueItem.prompt);
+  }, [activeQueueItemId, conversationQueue, handleSend, isThinking]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
@@ -1954,9 +2052,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     if (e.key === 'ArrowUp' && !input.trim()) {
       const inputEl = inputRef.current;
       const caretAtStart =
-        !!inputEl &&
-        (inputEl.selectionStart ?? 0) === 0 &&
-        (inputEl.selectionEnd ?? 0) === 0;
+        !!inputEl && (inputEl.selectionStart ?? 0) === 0 && (inputEl.selectionEnd ?? 0) === 0;
       if (!inputEl || caretAtStart) {
         if (lastSubmittedPromptRef.current) {
           e.preventDefault();
@@ -3793,6 +3889,23 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   </span>
                 )}
               </div>
+              {/* Queue Status Banner */}
+              {conversationQueue.length > 0 && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-stone-50 border-t border-stone-100 text-[11px] text-stone-500">
+                  {activeQueueItemId && <span className="text-amber-600">● Working</span>}
+                  {conversationQueue.filter(i => i.status === 'queued').length > 0 && (
+                    <span>
+                      Queued: {conversationQueue.filter(i => i.status === 'queued').length}
+                    </span>
+                  )}
+                  <button
+                    onClick={() => setConversationQueue([])}
+                    className="ml-auto text-stone-400 hover:text-stone-600"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
               <textarea
                 ref={inputRef}
                 value={input}
@@ -4851,6 +4964,21 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             </div>
 
             {/* Input */}
+            {/* Queue Status Banner */}
+            {conversationQueue.length > 0 && (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-stone-50 border-t border-stone-100 text-[11px] text-stone-500">
+                {activeQueueItemId && <span className="text-amber-600">● Working</span>}
+                {conversationQueue.filter(i => i.status === 'queued').length > 0 && (
+                  <span>Queued: {conversationQueue.filter(i => i.status === 'queued').length}</span>
+                )}
+                <button
+                  onClick={() => setConversationQueue([])}
+                  className="ml-auto text-stone-400 hover:text-stone-600"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
             <textarea
               ref={inputRef}
               value={input}
@@ -4926,9 +5054,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             </div>
           )}
           <p className="mt-1.5 pl-1 text-[11px] text-[#B0AEA5]">
-            Type <span className="font-semibold text-[#6B6962]">/</span> for commands.
-            {' '}
-            Use <span className="font-semibold text-[#6B6962]">↑</span> on an empty input to recall your last prompt.
+            Type <span className="font-semibold text-[#6B6962]">/</span> for commands. Use{' '}
+            <span className="font-semibold text-[#6B6962]">↑</span> on an empty input to recall your
+            last prompt.
             {onNavigate ? (
               <>
                 {' '}

@@ -72,7 +72,9 @@ import { fda510kStageProgress, fda510kProjects, projects, draftingTasks } from '
     production: 'JWT_SECRET_PROD',
   };
   const envSpecificJwt = jwtEnvByNodeEnv[process.env.NODE_ENV || 'development'];
-  const hasJwtSecret = Boolean(process.env.JWT_SECRET || (envSpecificJwt && process.env[envSpecificJwt]));
+  const hasJwtSecret = Boolean(
+    process.env.JWT_SECRET || (envSpecificJwt && process.env[envSpecificJwt])
+  );
   if (!hasJwtSecret) {
     required.push('JWT_SECRET');
   }
@@ -7857,6 +7859,25 @@ async function startServer() {
     console.log(`🔐 Login: http://localhost:${PORT}/auth`);
   });
 }
+
+// ── Route Bootstrap Manifests (available for future migration) ──────────────
+// The server/bootstrap/ directory contains declarative route manifests that can
+// progressively replace the inline try/catch import blocks above.
+//
+// Manifests:
+//   register-core-routes.ts         — templates, AI, CMC, enterprise, control-plane
+//   register-ai-routes.ts           — AnA, chat, IND, regulatory, claims, claude-intel
+//   register-concept2cure-routes.ts — concept2cure + compute
+//   register-integrations-routes.ts — foresight (deprecated, sunset 2026-04-01)
+//   register-admin-routes.ts        — reserved placeholder
+//
+// To migrate a group:
+//   import { registerCoreRoutes } from './bootstrap/register-core-routes';
+//   await registerCoreRoutes({ app, pool, aiCircuitBreaker });
+//
+// See server/bootstrap/types.ts for the RouteBootstrapContext interface.
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Start the server
 startServer().catch(err => {
   console.error('Failed to start server:', err);

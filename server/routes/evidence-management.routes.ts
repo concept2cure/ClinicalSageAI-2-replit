@@ -11,6 +11,9 @@ import { db } from '../db';
 import { sql } from 'drizzle-orm';
 import EvidenceManagementService from '../services/EvidenceManagementService';
 import { getSecureOrgId } from '../utils/tenantContext';
+import { extractWithTika } from '../services/ingestion/tikaClient';
+import { extractWithGrobid, looksScholarlyDocument } from '../services/literature/grobidClient';
+import { indexGovernedDocument } from '../services/search/opensearchClient';
 
 const router = Router();
 const evidenceService = new EvidenceManagementService();
@@ -74,14 +77,14 @@ router.get('/requirements/:projectId', async (req: Request, res: Response) => {
 
     // Get all files mapped to requirements
     const files = await db.execute(sql`
-      SELECT 
+      SELECT
         fda_requirement,
         fda_section,
         regulatory_status,
         COUNT(*) as file_count,
         COUNT(CASE WHEN regulatory_status = 'approved' THEN 1 END) as approved_count
       FROM device_data_center
-      WHERE 
+      WHERE
         project_id = ${projectId}
         AND organization_id = ${organizationId}
       GROUP BY fda_requirement, fda_section, regulatory_status
@@ -98,18 +101,18 @@ router.get('/requirements/:projectId', async (req: Request, res: Response) => {
         requirements[file.fda_requirement] = {
           total: 0,
           approved: 0,
-          sections: {}
+          sections: {},
         };
       }
-      
+
       requirements[file.fda_requirement].total += parseInt(file.file_count);
       requirements[file.fda_requirement].approved += parseInt(file.approved_count);
-      
+
       if (file.fda_section) {
         requirements[file.fda_requirement].sections[file.fda_section] = {
           count: file.file_count,
           approved: file.approved_count,
-          status: file.regulatory_status
+          status: file.regulatory_status,
         };
       }
     }
@@ -127,9 +130,8 @@ router.get('/requirements/:projectId', async (req: Request, res: Response) => {
       total: totalRequired,
       percentage: Math.round((completedCount / totalRequired) * 100),
       projectId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-
   } catch (error) {
     console.error('[Evidence Management] Error fetching requirements:', error);
     res.status(500).json({ error: 'Failed to fetch requirement status' });
@@ -154,11 +156,29 @@ router.post('/upload', upload.array('files', 5), async (req: Request, res: Respo
 
     for (const file of files) {
       try {
-        // Extract data from file content (simplified for now)
+        // Read file buffer from disk (secure disk storage from PR #311)
         const rawContent = await fs.readFile(file.path);
         const fileContent = rawContent.toString('utf8').substring(0, 10000);
+
+        // Tika extraction pipeline (non-blocking)
+        const tikaResult = await extractWithTika({
+          buffer: rawContent,
+          filename: file.originalname,
+          mimeType: file.mimetype,
+        }).catch(() => null);
+
+        // GROBID scholarly extraction for PDFs that look like papers/CSRs (non-blocking)
+        const grobidResult = looksScholarlyDocument(
+          file.originalname,
+          tikaResult?.text || fileContent
+        )
+          ? await extractWithGrobid({ buffer: rawContent, filename: file.originalname }).catch(
+              () => null
+            )
+          : null;
+
         const extractedData = await evidenceService.extractDataFromFile(
-          fileContent,
+          tikaResult?.text || fileContent,
           file.originalname,
           file.mimetype
         );
@@ -207,12 +227,29 @@ router.post('/upload', upload.array('files', 5), async (req: Request, res: Respo
           await evidenceService.mapToFDARequirements(fileId, extractedData);
         }
 
+        // Index in OpenSearch for governed full-text search (non-blocking)
+        indexGovernedDocument({
+          id: fileId,
+          organizationId,
+          projectId: project_id ? Number(project_id) : null,
+          docType: 'evidence',
+          section: fda_section || null,
+          title: file.originalname,
+          source: 'evidence-upload',
+          tags: [fda_requirement, file.mimetype].filter(Boolean) as string[],
+          lifecycleState: 'draft',
+          content: tikaResult?.text || fileContent,
+          createdAt: new Date().toISOString(),
+        }).catch(() => undefined);
+
         uploadedFiles.push({
           id: fileId,
           name: file.originalname,
           size: file.size,
           extractedData,
-          fdaRequirement: fda_requirement || extractedData.test_type
+          tikaParser: tikaResult?.parser ?? null,
+          grobidTitle: grobidResult?.title ?? null,
+          fdaRequirement: fda_requirement || extractedData.test_type,
         });
       } finally {
         await fs.unlink(file.path).catch(() => {
@@ -225,9 +262,8 @@ router.post('/upload', upload.array('files', 5), async (req: Request, res: Respo
       success: true,
       files: uploadedFiles,
       count: uploadedFiles.length,
-      message: `Successfully uploaded ${uploadedFiles.length} file(s)`
+      message: `Successfully uploaded ${uploadedFiles.length} file(s)`,
     });
-
   } catch (error) {
     console.error('[Evidence Management] Upload error:', error);
     res.status(500).json({ error: 'Failed to upload files' });
@@ -249,9 +285,8 @@ router.get('/gap-analysis/:projectId', async (req: Request, res: Response) => {
       success: true,
       projectId,
       analysis,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-
   } catch (error) {
     console.error('[Evidence Management] Gap analysis error:', error);
     res.status(500).json({ error: 'Failed to perform gap analysis' });
@@ -275,9 +310,8 @@ router.post('/generate-citations', async (req: Request, res: Response) => {
     res.json({
       success: true,
       citations,
-      count: citations.length
+      count: citations.length,
     });
-
   } catch (error) {
     console.error('[Evidence Management] Citation generation error:', error);
     res.status(500).json({ error: 'Failed to generate citations' });
@@ -296,9 +330,8 @@ router.post('/link-workflow', async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      message: `File linked to workflow stage ${workflowStage}`
+      message: `File linked to workflow stage ${workflowStage}`,
     });
-
   } catch (error) {
     console.error('[Evidence Management] Workflow linking error:', error);
     res.status(500).json({ error: 'Failed to link to workflow' });
@@ -320,9 +353,8 @@ router.get('/stage-evidence/:projectId/:stage', async (req: Request, res: Respon
       projectId,
       stage: parseInt(stage),
       evidence,
-      count: evidence.length
+      count: evidence.length,
     });
-
   } catch (error) {
     console.error('[Evidence Management] Stage evidence error:', error);
     res.status(500).json({ error: 'Failed to fetch stage evidence' });
@@ -344,9 +376,8 @@ router.post('/auto-populate/:formId', async (req: Request, res: Response) => {
       success: true,
       formId,
       formData,
-      fieldsPopulated: Object.keys(formData).length
+      fieldsPopulated: Object.keys(formData).length,
     });
-
   } catch (error) {
     console.error('[Evidence Management] Auto-populate error:', error);
     res.status(500).json({ error: 'Failed to auto-populate form' });
@@ -366,9 +397,8 @@ router.post('/review/submit/:fileId', async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      message: 'Evidence submitted for review'
+      message: 'Evidence submitted for review',
     });
-
   } catch (error) {
     console.error('[Evidence Management] Review submission error:', error);
     res.status(500).json({ error: 'Failed to submit for review' });
@@ -388,9 +418,8 @@ router.post('/review/approve/:fileId', async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      message: 'Evidence approved'
+      message: 'Evidence approved',
     });
-
   } catch (error) {
     console.error('[Evidence Management] Approval error:', error);
     res.status(500).json({ error: 'Failed to approve evidence' });
@@ -414,9 +443,8 @@ router.post('/review/request-changes/:fileId', async (req: Request, res: Respons
 
     res.json({
       success: true,
-      message: 'Changes requested'
+      message: 'Changes requested',
     });
-
   } catch (error) {
     console.error('[Evidence Management] Change request error:', error);
     res.status(500).json({ error: 'Failed to request changes' });
@@ -436,9 +464,8 @@ router.get('/export/:projectId', async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      package: evidencePackage
+      package: evidencePackage,
     });
-
   } catch (error) {
     console.error('[Evidence Management] Export error:', error);
     res.status(500).json({ error: 'Failed to export evidence package' });
@@ -455,7 +482,7 @@ router.get('/analytics/:projectId', async (req: Request, res: Response) => {
     const organizationId = req.organizationId;
 
     const analytics = await db.execute(sql`
-      SELECT 
+      SELECT
         COUNT(*) as total_files,
         COUNT(CASE WHEN regulatory_status = 'approved' THEN 1 END) as approved_files,
         COUNT(CASE WHEN regulatory_status = 'under_review' THEN 1 END) as under_review,
@@ -463,7 +490,7 @@ router.get('/analytics/:projectId', async (req: Request, res: Response) => {
         COUNT(DISTINCT fda_requirement) as requirements_covered,
         COUNT(CASE WHEN fda_requirement IS NULL THEN 1 END) as unmapped_files
       FROM device_data_center
-      WHERE 
+      WHERE
         project_id = ${projectId}
         AND organization_id = ${organizationId}
     `);
@@ -481,9 +508,8 @@ router.get('/analytics/:projectId', async (req: Request, res: Response) => {
       requirementsCovered: parseInt(analytics[0]?.requirements_covered || 0),
       unmappedFiles: parseInt(analytics[0]?.unmapped_files || 0),
       gaps: gapAnalysis.gaps.length,
-      completeness: gapAnalysis.completeness
+      completeness: gapAnalysis.completeness,
     });
-
   } catch (error) {
     console.error('[Evidence Management] Analytics error:', error);
     res.status(500).json({ error: 'Failed to fetch analytics' });
