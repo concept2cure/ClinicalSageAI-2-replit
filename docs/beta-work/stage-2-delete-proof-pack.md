@@ -1,7 +1,7 @@
 # Stage 2 — Delete proof pack
 
 Stage: Stage 2 — Proof-Driven Low-Risk Deletions and Deprecation Fence  
-Branch / commit reviewed: `cursor/critical-files-management-f38a` (working tree based on `8329440c`)  
+Branch / commit reviewed: `cursor/critical-files-management-f38a` (post-cut branch HEAD)  
 Method: importer/mount/entrypoint proof from current code + Stage 1 ownership constraints
 
 ## Candidate classification table (required one row each)
@@ -23,6 +23,12 @@ Method: importer/mount/entrypoint proof from current code + Stage 1 ownership co
 | Do not touch protected organs | **Pass** (no protected file edits) |
 | Stop if deleting requires protected-organ edits | **Pass** (none required) |
 | Stop on fuzzy proof | **Pass with fence** for ambiguous files (not deleted) |
+
+## Validation notes
+
+- Attempted command: `npm run typecheck`
+- Result: environment-level blocker (`tsc: not found`), so full TypeScript compile validation was not runnable in this agent environment.
+- Mitigation used in this stage: explicit importer/mount/path verification with `rg` + direct file-read evidence captured in this proof pack and smoke notes.
 
 ## Protected files check (explicit)
 
