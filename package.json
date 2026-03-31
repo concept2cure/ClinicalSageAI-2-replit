@@ -220,6 +220,7 @@
     "js-yaml": "^4.1.0",
     "jsdom": "27.4.0",
     "jose": "6.2.2",
+    "jsdom": "27.4.0",
     "jsonwebtoken": "9.0.2",
     "jspdf": "2.5.2",
     "jspdf-autotable": "3.8.4",

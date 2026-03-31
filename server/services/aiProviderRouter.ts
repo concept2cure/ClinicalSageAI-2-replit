@@ -35,6 +35,8 @@ import { getOpenAIClient } from './openai-client';
 import Anthropic from '@anthropic-ai/sdk';
 import { Pool } from 'pg';
 import crypto from 'crypto';
+import { LiteLLMAdapter } from './ai/LiteLLMAdapter';
+import { LangfuseService } from './observability/langfuseService';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //                          TYPE DEFINITIONS
@@ -268,9 +270,13 @@ export class AIProviderRouter {
   private pool: Pool;
   private providerHealth: Map<AIProvider, ProviderHealth> = new Map();
   private defaultStrategy: RoutingStrategy = 'task_based';
+  private liteLLMAdapter: LiteLLMAdapter;
+  private langfuse: LangfuseService;
 
   constructor(pool: Pool) {
     this.pool = pool;
+    this.liteLLMAdapter = new LiteLLMAdapter();
+    this.langfuse = new LangfuseService();
     this.initializeProviders();
     this.initializeHealthTracking();
   }
@@ -589,23 +595,51 @@ export class AIProviderRouter {
       .slice(0, 16);
 
     let result: { content: string; usage: { inputTokens: number; outputTokens: number } };
+    let liteLLMResult: AIResponse | null = null;
     let success = true;
     let errorMessage: string | undefined;
+    let executedModelConfig = modelConfig;
 
     try {
+      await this.langfuse.emitEvent({
+        name: 'ai_request_start',
+        traceId: requestId,
+        metadata: {
+          organizationId: request.organizationId,
+          userId: request.userId,
+          projectId: request.projectId,
+          taskType: request.taskType,
+          selectedModel: modelConfig.model,
+          selectedProvider: modelConfig.provider,
+          strategy: strategy || this.defaultStrategy,
+        },
+        input: { messagesCount: request.messages.length },
+      });
+
       // Execute against selected provider
-      switch (modelConfig.provider) {
-        case 'openai':
-          result = await this.executeOpenAI(request, modelConfig.model);
-          break;
-        case 'anthropic':
-          result = await this.executeAnthropic(request, modelConfig.model);
-          break;
-        case 'moonshot':
-          result = await this.executeMoonshot(request, modelConfig.model);
-          break;
-        default:
-          throw new Error(`Unsupported provider: ${modelConfig.provider}`);
+      if (this.liteLLMAdapter.isEnabled()) {
+        liteLLMResult = await this.liteLLMAdapter.execute(request, modelConfig);
+        result = {
+          content: liteLLMResult.content,
+          usage: {
+            inputTokens: liteLLMResult.usage.inputTokens,
+            outputTokens: liteLLMResult.usage.outputTokens,
+          },
+        };
+      } else {
+        switch (modelConfig.provider) {
+          case 'openai':
+            result = await this.executeOpenAI(request, modelConfig.model);
+            break;
+          case 'anthropic':
+            result = await this.executeAnthropic(request, modelConfig.model);
+            break;
+          case 'moonshot':
+            result = await this.executeMoonshot(request, modelConfig.model);
+            break;
+          default:
+            throw new Error(`Unsupported provider: ${modelConfig.provider}`);
+        }
       }
     } catch (error) {
       success = false;
@@ -624,13 +658,34 @@ export class AIProviderRouter {
         const fallbackConfig = MODEL_CONFIGS[fallbackModels[0]];
 
         try {
-          if (fallbackConfig.provider === 'openai') {
+          await this.langfuse.emitEvent({
+            name: 'ai_fallback_attempt',
+            traceId: requestId,
+            metadata: {
+              fromProvider: modelConfig.provider,
+              toProvider: fallbackConfig.provider,
+              fromModel: modelConfig.model,
+              toModel: fallbackConfig.model,
+              taskType: request.taskType,
+            },
+          });
+          if (this.liteLLMAdapter.isEnabled()) {
+            liteLLMResult = await this.liteLLMAdapter.execute(request, fallbackConfig);
+            result = {
+              content: liteLLMResult.content,
+              usage: {
+                inputTokens: liteLLMResult.usage.inputTokens,
+                outputTokens: liteLLMResult.usage.outputTokens,
+              },
+            };
+          } else if (fallbackConfig.provider === 'openai') {
             result = await this.executeOpenAI(request, fallbackConfig.model);
           } else if (fallbackConfig.provider === 'anthropic') {
             result = await this.executeAnthropic(request, fallbackConfig.model);
           } else {
             throw new Error('No fallback available');
           }
+          executedModelConfig = fallbackConfig;
           success = true;
           errorMessage = undefined;
         } catch (fallbackError) {
@@ -641,22 +696,23 @@ export class AIProviderRouter {
       }
     }
 
-    const latencyMs = Date.now() - startTime;
+    const latencyMs = liteLLMResult?.latencyMs ?? Date.now() - startTime;
 
     // Update provider health
-    this.updateProviderHealth(modelConfig.provider, success, latencyMs);
+    this.updateProviderHealth(executedModelConfig.provider, success, latencyMs);
 
     // Calculate cost
     const estimatedCost =
-      (result.usage.inputTokens / 1000) * modelConfig.costPer1kInput +
-      (result.usage.outputTokens / 1000) * modelConfig.costPer1kOutput;
+      liteLLMResult?.usage.estimatedCost ??
+      (result.usage.inputTokens / 1000) * executedModelConfig.costPer1kInput +
+        (result.usage.outputTokens / 1000) * executedModelConfig.costPer1kOutput;
 
     // Log audit entry
     await this.logAudit({
       id: requestId,
       timestamp: new Date(),
-      provider: modelConfig.provider,
-      model: modelConfig.model,
+      provider: executedModelConfig.provider,
+      model: executedModelConfig.model,
       taskType: request.taskType,
       inputTokens: result.usage.inputTokens,
       outputTokens: result.usage.outputTokens,
@@ -670,10 +726,31 @@ export class AIProviderRouter {
       requestHash,
     });
 
+    await this.langfuse.emitEvent({
+      name: success ? 'ai_request_success' : 'ai_request_failure',
+      traceId: requestId,
+      metadata: {
+        provider: executedModelConfig.provider,
+        model: executedModelConfig.model,
+        taskType: request.taskType,
+        organizationId: request.organizationId,
+        userId: request.userId,
+        projectId: request.projectId,
+      },
+      output: {
+        latencyMs,
+        usage: result.usage,
+        estimatedCost,
+        success,
+        errorMessage,
+      },
+      level: success ? 'DEFAULT' : 'ERROR',
+    });
+
     return {
       content: result.content,
-      provider: modelConfig.provider,
-      model: modelConfig.model,
+      provider: executedModelConfig.provider,
+      model: executedModelConfig.model,
       usage: {
         inputTokens: result.usage.inputTokens,
         outputTokens: result.usage.outputTokens,
@@ -683,6 +760,13 @@ export class AIProviderRouter {
       latencyMs,
       requestId,
       cached: false,
+    };
+  }
+
+  getIntegrationStatus() {
+    return {
+      litellm: this.liteLLMAdapter.getDiagnostics(),
+      langfuse: this.langfuse.diagnostics(),
     };
   }
 

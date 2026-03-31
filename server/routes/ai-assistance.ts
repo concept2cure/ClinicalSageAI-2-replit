@@ -9,6 +9,8 @@ export function setAIService(service: AIProviderRouter) {
   openaiService = service;
 }
 import { z } from 'zod';
+import { getOtelDiagnostics } from '../services/telemetry/opentelemetry';
+import { opaClient } from '../services/policy/opaClient';
 
 // Unified AI Client — routes through Claude via AI Gateway (primary provider)
 let unifiedAI: { complete: (messages: any, options?: any) => Promise<string> } | null = null;
@@ -386,6 +388,13 @@ router.get('/health', async (req, res) => {
     providers: {
       aiGateway: unifiedAI ? 'available' : 'unavailable',
       legacyOpenAI: process.env.OPENAI_API_KEY && openaiService ? 'available' : 'unavailable',
+    },
+    integrations: {
+      ...(openaiService && typeof (openaiService as any).getIntegrationStatus === 'function'
+        ? (openaiService as any).getIntegrationStatus()
+        : {}),
+      opentelemetry: getOtelDiagnostics(),
+      opa: opaClient.diagnostics(),
     },
   };
 

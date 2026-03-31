@@ -9,6 +9,7 @@ import {
   listComputeJobs,
 } from '../services/compute/computeService';
 import { startGovernedWorkflow } from '../services/workflow/temporalBridge';
+import { createPolicyGuard } from '../services/policy/opaMiddleware';
 
 const router = Router();
 
@@ -63,31 +64,41 @@ router.get('/projects/:projectId/jobs/:jobId', async (req, res) => {
   return res.json({ success: true, data: detail });
 });
 
-router.post('/projects/:projectId/jobs', async (req, res) => {
-  try {
-    const projectId = Number(req.params.projectId);
-    const organizationId = Number(req.tenantContext?.organizationId || req.tenantId);
-    const requestedById = Number(req.userId || 0);
-    const payload = createJobSchema.parse(req.body || {});
+router.post(
+  '/projects/:projectId/jobs',
+  createPolicyGuard({
+    action: 'compute.execute',
+    module: 'compute',
+    resourceType: 'compute_job',
+  }),
+  async (req, res) => {
+    try {
+      const projectId = Number(req.params.projectId);
+      const organizationId = Number(req.tenantContext?.organizationId || req.tenantId);
+      const requestedById = Number(req.userId || 0);
+      const payload = createJobSchema.parse(req.body || {});
 
-    const result = await enqueueAndRunComputeJob({
-      projectId,
-      organizationId,
-      requestedById,
-      surfaceKey: payload.surfaceKey,
-      intentType: payload.intentType,
-      title: payload.title,
-      content: payload.content,
-      ctdSection: payload.ctdSection,
-      format: payload.format,
-      metadata: payload.metadata,
-    });
+      const result = await enqueueAndRunComputeJob({
+        projectId,
+        organizationId,
+        requestedById,
+        surfaceKey: payload.surfaceKey,
+        intentType: payload.intentType,
+        title: payload.title,
+        content: payload.content,
+        ctdSection: payload.ctdSection,
+        format: payload.format,
+        metadata: payload.metadata,
+      });
 
-    res.status(201).json({ success: true, data: result });
-  } catch (error: any) {
-    res.status(500).json({ success: false, error: error?.message || 'Failed to execute compute job' });
+      res.status(201).json({ success: true, data: result });
+    } catch (error: any) {
+      res
+        .status(500)
+        .json({ success: false, error: error?.message || 'Failed to execute compute job' });
+    }
   }
-});
+);
 
 
 

@@ -1,5 +1,6 @@
 import { config as dotenvConfig } from 'dotenv';
 dotenvConfig({ override: true });
+import { initializeOpenTelemetry } from './services/telemetry/opentelemetry';
 
 // Initialize Sentry error monitoring early, before other imports
 import './utils/sentry';
@@ -8,6 +9,7 @@ import './utils/sentry';
 // This MUST be at the very top before ANY database connections are made
 import dns from 'dns';
 dns.setDefaultResultOrder('ipv4first');
+await initializeOpenTelemetry();
 
 import express from 'express';
 import { createServer } from 'http';
