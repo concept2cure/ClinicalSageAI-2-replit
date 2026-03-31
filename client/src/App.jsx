@@ -296,12 +296,10 @@ function MainApp() {
       !isDashboardPage &&
       !isConcept2CurePage);
 
-  // Define CSR navigation items as per specifications
+  // Keep top-nav links aligned to routes that are actually mounted in this shell.
+  // Stage 7 honesty pass: remove dead-signage links that route to non-mounted pages.
   const csrNavItems = [
-    { label: 'Dashboard', path: '/csr-intelligence' },
-    { label: 'Search', path: '/csr/search' },
-    { label: 'Library', path: '/csr-library' },
-    { label: 'Compare', path: '/csr/compare-list' }, // Link to the comparison list page
+    { label: 'Library', path: '/csr' },
   ];
 
   // Only show CSR nav items on CSR pages

@@ -191,17 +191,17 @@ export default function UnifiedTopNavV3({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link href="/dashboard">
+                <Link href="/concept2cure">
                   <span className="px-3 py-1 text-xs font-medium bg-indigo-50 rounded text-indigo-600 transition-all duration-200 ease-in-out hover:bg-indigo-500 hover:text-white focus:ring-2 focus:ring-indigo-300 active:scale-95 flex items-center cursor-pointer">
                     <SwitchCamera className="h-3 w-3 mr-1" />
-                    <span className="hidden sm:inline">Switch Module</span>
-                    <span className="sm:hidden">Modules</span>
+                    <span className="hidden sm:inline">Open Workspace</span>
+                    <span className="sm:hidden">Workspace</span>
                   </span>
                 </Link>
               </TooltipTrigger>
               <TooltipContent>
                 <p className="text-xs max-w-xs">
-                  Switch between platform modules (CER, IND Wizard, VAULT, etc.)
+                  Open the canonical Concept2Cure workspace shell.
                 </p>
               </TooltipContent>
             </Tooltip>

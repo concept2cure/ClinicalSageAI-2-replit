@@ -831,9 +831,11 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   const nav = useMemo(() => {
     const h = (id: string) => () => onNavigate?.(id);
     return {
+      projects: h('projects'),
       apps: h('apps'),
       'artifacts-center': h('artifacts-center'),
       setup: h('setup'),
+      'project-home': h('project-home'),
       'submission-builder': h('submission-builder'),
       overview: h('overview'),
       'task-board': h('task-board'),
@@ -879,17 +881,21 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <IconBtn label="Projects" active={activeNavId === 'projects'} onClick={onOpenProjects}>
           <FolderOpen className="w-4 h-4" />
         </IconBtn>
-        <IconBtn label="AI Assistants" active={activeNavId === 'apps'} onClick={nav.apps}>
+        <IconBtn
+          label="Workspace Home"
+          active={activeNavId === 'project-home'}
+          onClick={nav['project-home']}
+        >
           <Sparkles className="w-4 h-4" />
         </IconBtn>
         <IconBtn
           label="Documents"
-          active={activeNavId === 'artifacts-center'}
-          onClick={nav['artifacts-center']}
+          active={activeNavId === 'submission-builder'}
+          onClick={nav['submission-builder']}
         >
           <FileStack className="w-4 h-4" />
         </IconBtn>
-        <IconBtn label="Setup" active={activeNavId === 'setup'} onClick={nav.setup}>
+        <IconBtn label="Intelligence" active={activeNavId === 'ri-copilot'} onClick={nav['ri-copilot']}>
           <Settings className="w-4 h-4" />
         </IconBtn>
 
@@ -988,22 +994,22 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           />
           <NavItem
             icon={<Sparkles className="w-3.5 h-3.5" />}
-            label="AI Assistants"
-            active={activeNavId === 'apps'}
+            label="Workspace Home"
+            active={activeNavId === 'project-home'}
             accentColor="violet"
-            onClick={nav.apps}
+            onClick={nav['project-home']}
           />
           <NavItem
             icon={<FileStack className="w-3.5 h-3.5" />}
             label="Documents"
-            active={activeNavId === 'artifacts-center'}
-            onClick={nav['artifacts-center']}
+            active={activeNavId === 'submission-builder'}
+            onClick={nav['submission-builder']}
           />
           <NavItem
             icon={<Settings className="w-3.5 h-3.5" />}
-            label="Setup"
-            active={activeNavId === 'setup'}
-            onClick={nav.setup}
+            label="Intelligence"
+            active={activeNavId === 'ri-copilot'}
+            onClick={nav['ri-copilot']}
           />
         </div>
 
