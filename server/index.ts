@@ -1463,6 +1463,7 @@ try {
       name: 'Conversation Health',
     },
     { path: '/api/billing', mod: './routes/billing-dashboard.js', name: 'Billing Dashboard' },
+    { path: '/api/report-os', mod: './routes/report-os.js', name: 'Report OS' },
   ] as const;
   const litIntResults = await Promise.allSettled(litIntConfig.map(c => import(c.mod)));
   litIntResults.forEach((r, i) => {
