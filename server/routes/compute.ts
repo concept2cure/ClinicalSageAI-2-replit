@@ -8,6 +8,7 @@ import {
   getComputeJobDetail,
   listComputeJobs,
 } from '../services/compute/computeService';
+import { startGovernedWorkflow } from '../services/workflow/temporalBridge';
 
 const router = Router();
 
@@ -85,6 +86,39 @@ router.post('/projects/:projectId/jobs', async (req, res) => {
     res.status(201).json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error?.message || 'Failed to execute compute job' });
+  }
+});
+
+
+
+const startWorkflowSchema = z.object({
+  workflowType: z.enum([
+    'evidence_ingestion_enrichment',
+    'document_compile_export',
+    'report_generation_verify',
+    'submission_package_compile',
+  ]),
+  payload: z.record(z.any()).default({}),
+});
+
+router.post('/projects/:projectId/workflows', async (req, res) => {
+  try {
+    const projectId = Number(req.params.projectId);
+    const organizationId = Number(req.tenantContext?.organizationId || req.tenantId);
+    const requestedById = Number(req.userId || 0);
+    const parsed = startWorkflowSchema.parse(req.body || {});
+
+    const workflow = await startGovernedWorkflow({
+      organizationId,
+      projectId,
+      requestedById,
+      workflowType: parsed.workflowType,
+      payload: parsed.payload,
+    });
+
+    return res.status(202).json({ success: true, data: workflow });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, error: error?.message || 'Failed to start workflow' });
   }
 });
 

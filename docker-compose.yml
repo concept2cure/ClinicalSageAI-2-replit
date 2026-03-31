@@ -64,3 +64,37 @@ services:
         limits:
           cpus: '1'
           memory: 1G
+
+  tika:
+    image: apache/tika:latest
+    ports:
+      - '9998:9998'
+    profiles: ['session-b']
+    restart: unless-stopped
+
+  grobid:
+    image: lfoppiano/grobid:0.8.0
+    ports:
+      - '8070:8070'
+    profiles: ['session-b']
+    restart: unless-stopped
+
+  opensearch:
+    image: opensearchproject/opensearch:2.19.0
+    environment:
+      - discovery.type=single-node
+      - plugins.security.disabled=true
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - '9200:9200'
+    profiles: ['session-b']
+    restart: unless-stopped
+
+  temporal:
+    image: temporalio/auto-setup:1.25.2
+    environment:
+      - DB=sqlite
+    ports:
+      - '7233:7233'
+    profiles: ['session-b']
+    restart: unless-stopped
