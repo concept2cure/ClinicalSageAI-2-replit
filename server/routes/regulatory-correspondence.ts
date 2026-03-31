@@ -16,8 +16,10 @@ import {
   submissionCreateSchema,
   submissionStateSchema,
 } from './regulatory-correspondence.validation';
+import { authMiddleware } from '../auth';
 
 const router = Router();
+router.use(authMiddleware);
 
 const memSubmissions = new Map<string, Submission>();
 const memCorrespondence = new Map<string, Correspondence>();
@@ -124,7 +126,9 @@ function parseIssues(text: string, correspondenceId: string): CorrespondenceIssu
 }
 
 function getActorContext(req: Request) {
-  const orgId = Number(req.body.organizationId || req.query.organizationId || req.headers['x-organization-id'] || 1);
+  const orgId = Number(
+    req.body.organizationId || req.query.organizationId || req.headers['x-organization-id'] || 1
+  );
   const userId = Number(req.body.userId || req.headers['x-user-id'] || 1);
   return { orgId, userId };
 }
@@ -184,7 +188,9 @@ function badRequest(res: Response, error: unknown) {
 
 router.post('/submissions', async (req, res) => {
   if (!REG_CORRESPONDENCE_ENABLED) {
-    return res.status(403).json({ error: 'Regulatory Correspondence OS is disabled by feature flag.' });
+    return res
+      .status(403)
+      .json({ error: 'Regulatory Correspondence OS is disabled by feature flag.' });
   }
   const parsed = submissionCreateSchema.safeParse(req.body);
   if (!parsed.success) return badRequest(res, parsed.error.flatten());
@@ -272,7 +278,9 @@ router.get('/submissions/:submissionId', async (req, res) => {
 
 router.patch('/submissions/:submissionId/state', async (req, res) => {
   if (!REG_CORRESPONDENCE_ENABLED) {
-    return res.status(403).json({ error: 'Regulatory Correspondence OS is disabled by feature flag.' });
+    return res
+      .status(403)
+      .json({ error: 'Regulatory Correspondence OS is disabled by feature flag.' });
   }
   const parsed = submissionStateSchema.safeParse(req.body);
   if (!parsed.success) return badRequest(res, parsed.error.flatten());
@@ -313,7 +321,9 @@ router.patch('/submissions/:submissionId/state', async (req, res) => {
 
 router.post('/correspondence/intake', async (req, res) => {
   if (!REG_CORRESPONDENCE_ENABLED) {
-    return res.status(403).json({ error: 'Regulatory Correspondence OS is disabled by feature flag.' });
+    return res
+      .status(403)
+      .json({ error: 'Regulatory Correspondence OS is disabled by feature flag.' });
   }
   const parsed = correspondenceIntakeSchema.safeParse(req.body);
   if (!parsed.success) return badRequest(res, parsed.error.flatten());
@@ -327,7 +337,12 @@ router.post('/correspondence/intake', async (req, res) => {
       .createHash('sha256')
       .update(`${file.filename || 'attachment'}:${file.size || 0}`)
       .digest('hex');
-    return { id: `att_${checksum.slice(0, 16)}`, checksumSha256: checksum, fileName: file.filename || 'attachment', malwareStatus: 'pending' };
+    return {
+      id: `att_${checksum.slice(0, 16)}`,
+      checksumSha256: checksum,
+      fileName: file.filename || 'attachment',
+      malwareStatus: 'pending',
+    };
   });
 
   const record: Correspondence = {
@@ -459,12 +474,17 @@ router.get('/correspondence', async (req, res) => {
       clauses.push(`submission_id = $${params.length}`);
     }
     const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
-    const { rows } = await pool!.query(`SELECT * FROM c2c_correspondence ${where} ORDER BY received_at DESC NULLS LAST, created_at DESC`, params);
+    const { rows } = await pool!.query(
+      `SELECT * FROM c2c_correspondence ${where} ORDER BY received_at DESC NULLS LAST, created_at DESC`,
+      params
+    );
     return res.json({ data: rows });
   }
 
   const data = Array.from(memCorrespondence.values()).filter(
-    row => (projectId ? row.projectId === projectId : true) && (submissionId ? row.submissionId === submissionId : true)
+    row =>
+      (projectId ? row.projectId === projectId : true) &&
+      (submissionId ? row.submissionId === submissionId : true)
   );
   return res.json({ data });
 });
@@ -498,7 +518,9 @@ router.get('/correspondence/:correspondenceId', async (req, res) => {
 
 router.patch('/issues/:issueId/review', async (req, res) => {
   if (!REG_CORRESPONDENCE_ENABLED) {
-    return res.status(403).json({ error: 'Regulatory Correspondence OS is disabled by feature flag.' });
+    return res
+      .status(403)
+      .json({ error: 'Regulatory Correspondence OS is disabled by feature flag.' });
   }
   const parsed = issueReviewSchema.safeParse(req.body);
   if (!parsed.success) return badRequest(res, parsed.error.flatten());
@@ -542,7 +564,9 @@ router.patch('/issues/:issueId/review', async (req, res) => {
 
 router.post('/response-packages', async (req, res) => {
   if (!REG_CORRESPONDENCE_ENABLED) {
-    return res.status(403).json({ error: 'Regulatory Correspondence OS is disabled by feature flag.' });
+    return res
+      .status(403)
+      .json({ error: 'Regulatory Correspondence OS is disabled by feature flag.' });
   }
   const parsed = responsePackageCreateSchema.safeParse(req.body);
   if (!parsed.success) return badRequest(res, parsed.error.flatten());
@@ -627,7 +651,9 @@ router.get('/timeline', async (req, res) => {
 
 router.get('/mailbox-connections', async (req, res) => {
   if (!REG_CORRESPONDENCE_ENABLED) {
-    return res.status(403).json({ error: 'Regulatory Correspondence OS is disabled by feature flag.' });
+    return res
+      .status(403)
+      .json({ error: 'Regulatory Correspondence OS is disabled by feature flag.' });
   }
   const orgId = Number(req.query.organizationId || req.headers['x-organization-id'] || 1);
   const pool = getDbClientOrNull();
@@ -639,13 +665,17 @@ router.get('/mailbox-connections', async (req, res) => {
     return res.json({ data: rows });
   }
 
-  const data = Array.from(memMailboxConnections.values()).filter(row => row.organizationId === orgId);
+  const data = Array.from(memMailboxConnections.values()).filter(
+    row => row.organizationId === orgId
+  );
   return res.json({ data });
 });
 
 router.post('/mailbox-connections', async (req, res) => {
   if (!REG_CORRESPONDENCE_ENABLED) {
-    return res.status(403).json({ error: 'Regulatory Correspondence OS is disabled by feature flag.' });
+    return res
+      .status(403)
+      .json({ error: 'Regulatory Correspondence OS is disabled by feature flag.' });
   }
   const parsed = mailboxConnectionSchema.safeParse(req.body);
   if (!parsed.success) return badRequest(res, parsed.error.flatten());
@@ -696,7 +726,9 @@ router.post('/mailbox-connections', async (req, res) => {
 
 router.get('/analytics/deficiency-patterns', async (req, res) => {
   if (!REG_CORRESPONDENCE_ENABLED) {
-    return res.status(403).json({ error: 'Regulatory Correspondence OS is disabled by feature flag.' });
+    return res
+      .status(403)
+      .json({ error: 'Regulatory Correspondence OS is disabled by feature flag.' });
   }
   const projectId = req.query.projectId ? Number(req.query.projectId) : null;
   const pool = getDbClientOrNull();
@@ -717,14 +749,11 @@ router.get('/analytics/deficiency-patterns', async (req, res) => {
   }
 
   const allIssues = Array.from(memIssues.values()).flat();
-  const stats = allIssues.reduce(
-    (acc, issue) => {
-      const key = issue.category;
-      acc[key] = (acc[key] || 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>
-  );
+  const stats = allIssues.reduce((acc, issue) => {
+    const key = issue.category;
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
   return res.json({
     data: Object.entries(stats)
       .map(([category, count]) => ({ category, count }))

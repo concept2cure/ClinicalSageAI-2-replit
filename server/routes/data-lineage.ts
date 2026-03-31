@@ -25,8 +25,10 @@ import {
   checkLineageIntegrity,
   getLineageSummary,
 } from '../services/data-lineage-service';
+import { authMiddleware } from '../auth';
 
 const router = Router();
+router.use(authMiddleware);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRACE ENDPOINTS

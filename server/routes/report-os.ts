@@ -18,8 +18,10 @@ import { z } from 'zod';
 import { REPORT_TYPE_SEED } from '../services/report-os/taxonomy';
 import { resolveScope } from '../services/report-os/scope-model';
 import { computeInitialRun } from '../services/report-os/orchestrator';
+import { authMiddleware } from '../auth';
 
 const router = Router();
+router.use(authMiddleware);
 const canSeedTaxonomy = () =>
   process.env.NODE_ENV !== 'production' ||
   (process.env.REPORT_OS_ALLOW_SEED === 'true' &&
@@ -98,7 +100,10 @@ router.post('/taxonomy/seed', async (_req: Request, res: Response) => {
 
 router.get('/taxonomy', async (_req: Request, res: Response) => {
   try {
-    const rows = await db.select().from(reportTypeRegistry).where(eq(reportTypeRegistry.enabled, true));
+    const rows = await db
+      .select()
+      .from(reportTypeRegistry)
+      .where(eq(reportTypeRegistry.enabled, true));
     return res.json({ data: rows });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
@@ -118,7 +123,10 @@ router.get('/program-groups', async (req: Request, res: Response) => {
       .where(
         includeArchived
           ? eq(reportProgramGroups.organizationId, organizationId)
-          : and(eq(reportProgramGroups.organizationId, organizationId), eq(reportProgramGroups.status, 'active'))
+          : and(
+              eq(reportProgramGroups.organizationId, organizationId),
+              eq(reportProgramGroups.status, 'active')
+            )
       )
       .orderBy(desc(reportProgramGroups.updatedAt));
 
@@ -159,8 +167,15 @@ router.post('/program-groups', async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.flatten() });
     }
-    const { organizationId, clientWorkspaceId, name, description, projectIds, createdBy, metadata } =
-      parsed.data;
+    const {
+      organizationId,
+      clientWorkspaceId,
+      name,
+      description,
+      projectIds,
+      createdBy,
+      metadata,
+    } = parsed.data;
     const orgId = organizationId;
 
     const [group] = await db
@@ -176,7 +191,9 @@ router.post('/program-groups', async (req: Request, res: Response) => {
       })
       .returning();
 
-    const uniqueProjectIds = [...new Set(projectIds.map((id: any) => Number(id)).filter(Number.isFinite))];
+    const uniqueProjectIds = [
+      ...new Set(projectIds.map((id: any) => Number(id)).filter(Number.isFinite)),
+    ];
     if (uniqueProjectIds.length > 0) {
       await db.insert(reportProgramGroupProjects).values(
         uniqueProjectIds.map(projectId => ({
@@ -215,8 +232,12 @@ router.patch('/program-groups/:id', async (req: Request, res: Response) => {
     if (!updated) return res.status(404).json({ error: 'Program group not found' });
 
     if (Array.isArray(projectIds)) {
-      await db.delete(reportProgramGroupProjects).where(eq(reportProgramGroupProjects.programGroupId, id));
-      const uniqueProjectIds = [...new Set(projectIds.map((v: any) => Number(v)).filter(Number.isFinite))];
+      await db
+        .delete(reportProgramGroupProjects)
+        .where(eq(reportProgramGroupProjects.programGroupId, id));
+      const uniqueProjectIds = [
+        ...new Set(projectIds.map((v: any) => Number(v)).filter(Number.isFinite)),
+      ];
       if (uniqueProjectIds.length > 0) {
         await db.insert(reportProgramGroupProjects).values(
           uniqueProjectIds.map(projectId => ({
@@ -270,15 +291,19 @@ router.post('/program-groups/:id/snapshots', async (req: Request, res: Response)
     const memberships = await db
       .select({ projectId: reportProgramGroupProjects.projectId })
       .from(reportProgramGroupProjects)
-      .innerJoin(reportProgramGroups, eq(reportProgramGroups.id, reportProgramGroupProjects.programGroupId))
+      .innerJoin(
+        reportProgramGroups,
+        eq(reportProgramGroups.id, reportProgramGroupProjects.programGroupId)
+      )
       .where(
-        and(eq(reportProgramGroupProjects.programGroupId, id), eq(reportProgramGroups.organizationId, orgId))
+        and(
+          eq(reportProgramGroupProjects.programGroupId, id),
+          eq(reportProgramGroups.organizationId, orgId)
+        )
       );
 
     const projectIds = memberships.map(m => m.projectId).sort((a, b) => a - b);
-    const projectSetHash = createHash('sha256')
-      .update(JSON.stringify(projectIds))
-      .digest('hex');
+    const projectSetHash = createHash('sha256').update(JSON.stringify(projectIds)).digest('hex');
 
     const [snapshot] = await db
       .insert(reportProgramGroupSnapshots)
@@ -305,14 +330,25 @@ router.post('/runs', async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.flatten() });
     }
-    const { organizationId: orgId, clientWorkspaceId, scopeType, scopeId, reportTypeId, requestedBy } = parsed.data;
+    const {
+      organizationId: orgId,
+      clientWorkspaceId,
+      scopeType,
+      scopeId,
+      reportTypeId,
+      requestedBy,
+    } = parsed.data;
 
-    const type = await db.select().from(reportTypeRegistry).where(eq(reportTypeRegistry.typeId, reportTypeId)).limit(1);
+    const type = await db
+      .select()
+      .from(reportTypeRegistry)
+      .where(eq(reportTypeRegistry.typeId, reportTypeId))
+      .limit(1);
     if (!type[0]) {
       return res.status(404).json({ error: `Unknown reportTypeId: ${reportTypeId}` });
     }
 
-    if (!((type[0].allowedScopes as ReportScope[]).includes(scopeType))) {
+    if (!(type[0].allowedScopes as ReportScope[]).includes(scopeType)) {
       return res.status(400).json({
         error: `Report type ${reportTypeId} does not allow scope ${scopeType}`,
         allowedScopes: type[0].allowedScopes,
@@ -453,7 +489,11 @@ router.get('/runs', async (req: Request, res: Response) => {
       .from(reportRuns)
       .where(
         scopeType && scopeId
-          ? and(eq(reportRuns.organizationId, organizationId), eq(reportRuns.scopeType, scopeType), eq(reportRuns.scopeId, scopeId))
+          ? and(
+              eq(reportRuns.organizationId, organizationId),
+              eq(reportRuns.scopeType, scopeType),
+              eq(reportRuns.scopeId, scopeId)
+            )
           : eq(reportRuns.organizationId, organizationId)
       )
       .orderBy(desc(reportRuns.createdAt))
@@ -473,9 +513,7 @@ router.get('/health', async (_req: Request, res: Response) => {
     const [typeCount] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(reportTypeRegistry);
-    const [runCount] = await db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(reportRuns);
+    const [runCount] = await db.select({ count: sql<number>`count(*)::int` }).from(reportRuns);
     const [snapshotCount] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(reportSnapshots);
