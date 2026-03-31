@@ -26,7 +26,10 @@ import {
   buildFallbackMarker,
   buildEmptyEvidenceVerdict,
 } from '../server/services/ana-ri/response-contract';
-import { checkEvidenceDiscipline } from '../server/services/ana-ri/enforcement';
+import {
+  checkEvidenceDiscipline,
+  validateArtifactQuality,
+} from '../server/services/ana-ri/enforcement';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -310,5 +313,69 @@ describe('Evidence Discipline (Upgraded)', () => {
     const result = checkEvidenceDiscipline(response);
     expect(result.compliant).toBe(true);
     expect(result.hasUnlabeledClaims).toBe(false);
+  });
+
+  it('detects superlative claims without KNOWN labels', () => {
+    const response = `## Assessment\n\nThis is the best approach for managing **risk** in regulatory submissions. The most effective strategy eliminates uncertainty and ensures a clean pathway.\n\n## Reviewer Concerns\nUnlikely to trigger concerns.\n\n## Recommended Actions\nProceed immediately.`;
+    const result = checkEvidenceDiscipline(response);
+    expect(result.hasOverclaims).toBe(true);
+    expect(result.compliant).toBe(false);
+  });
+
+  it('detects false equivalence claims without KNOWN labels', () => {
+    const response = `## Assessment\n\nThe device is equivalent to the predicate in all material respects. The **safety** profile is identical to the marketed reference device. Performance testing confirms equivalent results across all endpoints evaluated.\n\n## Reviewer Concerns\nNone expected.\n\n## Recommended Actions\nSubmit 510(k) with confidence.`;
+    const result = checkEvidenceDiscipline(response);
+    expect(result.hasOverclaims).toBe(true);
+    expect(result.compliant).toBe(false);
+  });
+
+  it('detects confabulation patterns without KNOWN labels', () => {
+    const response = `## Assessment\n\nStudies show that this approach significantly reduces **risk** of adverse events in the target population. Research confirms that the mechanism of action is well-understood.\n\n## Reviewer Concerns\nMinimal.\n\n## Recommended Actions\nNo additional studies needed.`;
+    const result = checkEvidenceDiscipline(response);
+    expect(result.hasOverclaims).toBe(true);
+    expect(result.compliant).toBe(false);
+  });
+
+  it('allows superlatives when KNOWN labels back claims', () => {
+    const response = `## Assessment\n\n[KNOWN: FDA guidance 2024] This is the best approach for **risk** management per current regulatory standards.\n\n## Reviewer Concerns\n[INFERRED] May request additional justification.\n\n## Recommended Actions\nPrepare supplemental materials.`;
+    const result = checkEvidenceDiscipline(response);
+    expect(result.hasOverclaims).toBe(false);
+    expect(result.compliant).toBe(true);
+  });
+
+  it('handles mixed overclaim patterns (multiple hits)', () => {
+    const response = `## Assessment\n\nThe definitive evidence establishes **safety** beyond doubt. Studies confirm that this is the only approach with zero risk. The data guarantees regulatory approval.\n\n## Reviewer Concerns\nThere is no concern about the submission.\n\n## Recommended Actions\nNone — evidence is absolute.`;
+    const result = checkEvidenceDiscipline(response);
+    expect(result.overclaimCount).toBeGreaterThanOrEqual(3);
+    expect(result.compliant).toBe(false);
+  });
+});
+
+// ── Artifact Quality Gate Tests ──────────────────────────────────────────────
+
+describe('Artifact Quality Gate', () => {
+  it('rejects very short content', () => {
+    const result = validateArtifactQuality('Short.', 'risk_memo');
+    expect(result.pass).toBe(false);
+    expect(result.grade).toBe('rejected');
+  });
+
+  it('rejects content with excessive filler', () => {
+    const content = `## Assessment\n\nI'd be happy to help with this analysis. Let me know if you'd like more details. Feel free to ask questions. Here's an example of a risk memo.\n\nI hope this helps! Don't hesitate to reach out. As an AI, I cannot provide medical advice.\n\n## Recommended Actions\nTBD`;
+    const result = validateArtifactQuality(content, 'general');
+    expect(result.issues.length).toBeGreaterThan(0);
+  });
+
+  it('passes well-structured analytical content', () => {
+    const content = `## Risk Assessment\n\nThe primary safety signal involves hepatotoxicity based on preclinical findings.\n\n[KNOWN: Study 101] Dose-dependent ALT elevations observed in 12% of subjects.\n[INFERRED: Mechanistic analysis] Likely related to CYP3A4 metabolism.\n[MISSING: Long-term data] No 12-month hepatic monitoring data available.\n\n## Root Cause Analysis\n\nThe hepatotoxicity is driven by reactive metabolite formation due to CYP3A4-mediated oxidation at the para-hydroxyl position. This mechanism is consistent with ICH S7A guidance on safety pharmacology.\n\n## Recommended Actions\n\n1. Conduct a dedicated hepatic safety study per FDA guidance\n2. Provide PK/PD modeling data to support dose justification\n3. Draft a risk management plan per ICH E2E`;
+    const result = validateArtifactQuality(content, 'risk_memo');
+    expect(result.pass).toBe(true);
+    expect(result.grade).toBe('high');
+  });
+
+  it('flags content missing semantic depth for analytical types', () => {
+    const content = `## Risk Assessment\n\nThere are some risks. The product has issues.\n\n## Concerns\n\nReviewers might have questions.\n\n## Recommended Actions\n\nDo more work on the submission. Gather additional data. Review the guidelines.`;
+    const result = validateArtifactQuality(content, 'risk_memo');
+    expect(result.issues.some(i => i.includes('semantic depth'))).toBe(true);
   });
 });

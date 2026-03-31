@@ -16,6 +16,7 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import * as Y from 'yjs';
 import { HocuspocusProvider } from '@hocuspocus/provider';
+import { getAuthToken } from '@/utils/authToken';
 
 export interface YjsCollaborator {
   clientId: number;
@@ -45,8 +46,16 @@ interface UseYjsProviderReturn {
 
 // Deterministic color palette for collaborators
 const COLLAB_COLORS = [
-  '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
-  '#EC4899', '#06B6D4', '#F97316', '#6366F1', '#14B8A6',
+  '#3B82F6',
+  '#EF4444',
+  '#10B981',
+  '#F59E0B',
+  '#8B5CF6',
+  '#EC4899',
+  '#06B6D4',
+  '#F97316',
+  '#6366F1',
+  '#14B8A6',
 ];
 
 function getCollabColor(index: number): string {
@@ -143,16 +152,6 @@ export function useYjsProvider({
 function buildWsUrl(): string {
   const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   return `${proto}//${window.location.host}/collab`;
-}
-
-/** Get JWT token for Hocuspocus auth */
-function getAuthToken(): string {
-  try {
-    const stored = localStorage.getItem('concept2cure_token') || localStorage.getItem('token');
-    return stored || '';
-  } catch {
-    return '';
-  }
 }
 
 export default useYjsProvider;

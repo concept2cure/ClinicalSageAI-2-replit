@@ -238,20 +238,20 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
   );
 
   return (
-    <div className="flex-shrink-0 border-b border-stone-100 bg-white/80 backdrop-blur-sm" data-testid="project-context-strip">
+    <div className="flex-shrink-0 border-b border-stone-200/70 bg-white/90 backdrop-blur-sm" data-testid="project-context-strip">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4">
         {/* ── Project identity: one line ──────────────────────────────────── */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <h1 className="text-[15px] font-semibold text-stone-800 truncate">{project.name}</h1>
+            <h1 className="text-[15px] font-semibold text-stone-900 truncate">{project.name}</h1>
             {typeLabel && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 font-medium uppercase tracking-tight flex-shrink-0">
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-600 font-medium uppercase tracking-tight flex-shrink-0">
                 {typeLabel}
               </span>
             )}
             {/* Quiet status — just enough to orient */}
             {!artifactsLoading && summary.docCount > 0 && (
-              <span className="text-[10px] text-stone-400 flex-shrink-0">
+              <span className="text-[10px] text-stone-500 flex-shrink-0">
                 {summary.docCount} doc{summary.docCount !== 1 ? 's' : ''}
                 {summary.review > 0 && <> · <span className="text-amber-500">{summary.review} in review</span></>}
               </span>
@@ -264,7 +264,7 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
                 size="icon"
                 onClick={onOpenSearch}
                 aria-label="Search documents"
-                className="h-7 w-7 text-stone-400 hover:text-stone-600"
+                className="h-7 w-7 text-stone-500 hover:text-stone-700"
               >
                 <Search className="w-3.5 h-3.5" />
               </Button>
@@ -275,7 +275,7 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
                 size="icon"
                 onClick={onOpenConfig}
                 aria-label="Project settings"
-                className="h-7 w-7 text-stone-400 hover:text-stone-600"
+                className="h-7 w-7 text-stone-500 hover:text-stone-700"
               >
                 <Settings2 className="w-3.5 h-3.5" />
               </Button>
@@ -293,7 +293,7 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => onOpenArtifact ? onOpenArtifact(doc.id) : onNavigate('documents')}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 h-auto border-stone-100 hover:border-stone-200 hover:bg-stone-50/50 text-left flex-shrink-0 max-w-[200px] group"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 h-auto border-stone-200/80 hover:border-stone-300 hover:bg-stone-50 text-left flex-shrink-0 max-w-[200px] group"
               >
                 <FileText className="w-3 h-3 text-stone-400 flex-shrink-0" />
                 <span className="text-[12px] text-stone-600 truncate group-hover:text-stone-800">
@@ -306,7 +306,7 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={() => onNavigate('documents')}
-                className="h-auto px-1 py-0.5 text-[11px] text-stone-400 hover:text-stone-600 flex-shrink-0"
+                className="h-auto px-1 py-0.5 text-[11px] text-stone-500 hover:text-stone-700 flex-shrink-0"
               >
                 +{summary.docCount - 3} more
                 <ChevronRight className="w-3 h-3" />
@@ -348,7 +348,7 @@ export const ProjectHomeDashboard: React.FC<ProjectHomeDashboardProps> = ({
                 key={idx}
                 variant="outline"
                 onClick={() => onSuggestedPrompt?.(sp.prompt)}
-                className="flex items-start gap-2.5 px-3 py-2.5 h-auto rounded-xl border-stone-150 text-left hover:border-stone-300 hover:bg-stone-50/50 group"
+                className="flex items-start gap-2.5 px-3 py-2.5 h-auto rounded-xl border-stone-200 text-left hover:border-stone-300 hover:bg-stone-50 group"
               >
                 <span className="text-stone-400 group-hover:text-stone-600 mt-0.5 flex-shrink-0">
                   {sp.icon}

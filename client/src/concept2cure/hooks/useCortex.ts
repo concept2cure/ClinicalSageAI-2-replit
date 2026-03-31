@@ -11,6 +11,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useVisibleInterval } from './useVisibleInterval';
+import { getAuthHeaders } from '@/utils/authToken';
 import {
   cortexService,
   cortexQueryKeys,
@@ -93,14 +94,16 @@ function useProjectContext(projectId?: string) {
   } | null>(null);
 
   useEffect(() => {
-    if (!projectId) { setContext(null); return; }
-    const token = sessionStorage.getItem('concept2cure_token') || localStorage.getItem('concept2cure_token');
-    const headers: Record<string, string> = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (!projectId) {
+      setContext(null);
+      return;
+    }
 
-    fetch(`/api/concept2cure/projects/${projectId}/context`, { headers })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data) setContext(data); })
+    fetch(`/api/concept2cure/projects/${projectId}/context`, { headers: getAuthHeaders() })
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (data) setContext(data);
+      })
       .catch(() => {});
   }, [projectId]);
 

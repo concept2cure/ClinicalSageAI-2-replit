@@ -16,12 +16,12 @@
 
 import { getPool } from '../../db.ts';
 import { tagArtifact, type TagArtifactResult } from '../artifact-tagger.js';
-import { logGeneration } from './enforcement.js';
-
+import { logGeneration, validateArtifactQuality } from './enforcement.js';
 
 const pool = {
   query: (...args: Parameters<ReturnType<typeof getPool>['query']>) => getPool().query(...args),
-  connect: (...args: Parameters<ReturnType<typeof getPool>['connect']>) => getPool().connect(...args),
+  connect: (...args: Parameters<ReturnType<typeof getPool>['connect']>) =>
+    getPool().connect(...args),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -33,7 +33,11 @@ import { contradictionEngineService } from '../contradiction-engine-service.js';
 import { crossJurisdictionalEngine } from '../cross-jurisdictional-intelligence.js';
 import { getEndpointRecommenderService } from '../endpoint-recommender-service.js';
 import { runRIMAssessment, type RIMContext } from '../intelligence/rim.js';
-import { buildEvidenceChain, computeConfidence, type EvidenceSource } from '../intelligence/evidence-confidence-model.js';
+import {
+  buildEvidenceChain,
+  computeConfidence,
+  type EvidenceSource,
+} from '../intelligence/evidence-confidence-model.js';
 import { intelligentReportEngine } from '../intelligent-report-engine.js';
 import { clinicalIntelligenceService } from '../clinical-intelligence-service.js';
 
@@ -92,8 +96,14 @@ export async function createProject(
         therapeutic_area, created_by_id, created_at, updated_at)
        VALUES ($1, $2, $3, 'active', $4, $5, $6, NOW(), NOW())
        RETURNING id, name, status`,
-      [ctx.organizationId, params.name, params.description || '', params.submissionType || null,
-       params.therapeuticArea || null, ctx.userId]
+      [
+        ctx.organizationId,
+        params.name,
+        params.description || '',
+        params.submissionType || null,
+        params.therapeuticArea || null,
+        ctx.userId,
+      ]
     );
     const project = result.rows[0];
     const typeLabel = params.submissionType ? ` (${params.submissionType.toUpperCase()})` : '';
@@ -101,12 +111,22 @@ export async function createProject(
     return {
       success: true,
       action: 'create_project',
-      data: { projectId: project.id, name: project.name, status: project.status, submissionType: params.submissionType },
+      data: {
+        projectId: project.id,
+        name: project.name,
+        status: project.status,
+        submissionType: params.submissionType,
+      },
       message: `Created project "${params.name}"${typeLabel}${areaLabel} — ID: ${project.id}, status: active.`,
     };
   } catch (err: unknown) {
     const errMsg = err instanceof Error ? err.message : 'unknown error';
-    return { success: false, action: 'create_project', message: `Failed to create project "${params.name}": ${errMsg}.`, error: errMsg };
+    return {
+      success: false,
+      action: 'create_project',
+      message: `Failed to create project "${params.name}": ${errMsg}.`,
+      error: errMsg,
+    };
   }
 }
 
@@ -129,7 +149,12 @@ export async function listProjects(ctx: CommandContext): Promise<CommandResult> 
       message: `Found ${result.rows.length} project(s).`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'list_projects', message: 'Failed to list projects.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'list_projects',
+      message: 'Failed to list projects.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -140,7 +165,16 @@ export async function updateProject(
   updates: Record<string, unknown>
 ): Promise<CommandResult> {
   try {
-    const allowedFields = ['name', 'description', 'status', 'submission_type', 'therapeutic_area', 'phase', 'priority', 'risk_level'];
+    const allowedFields = [
+      'name',
+      'description',
+      'status',
+      'submission_type',
+      'therapeutic_area',
+      'phase',
+      'priority',
+      'risk_level',
+    ];
     const setClauses: string[] = [];
     const values: unknown[] = [projectId, ctx.organizationId];
     let paramIdx = 3;
@@ -171,7 +205,12 @@ export async function updateProject(
       message: `Project ${projectId} updated: ${fieldList}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'update_project', message: `Failed to update project ${projectId}: ${err instanceof Error ? err.message : 'unknown error'}.`, error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'update_project',
+      message: `Failed to update project ${projectId}: ${err instanceof Error ? err.message : 'unknown error'}.`,
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -194,6 +233,28 @@ export async function createArtifact(
   }
 ): Promise<CommandResult> {
   try {
+    // Quality gate — reject garbage before persisting
+    const qualityResult = validateArtifactQuality(params.content, params.type || 'general');
+    if (!qualityResult.pass) {
+      logGeneration({
+        timestamp: new Date().toISOString(),
+        route: 'ana-ri/command',
+        action: 'create_artifact',
+        projectId: params.projectId,
+        organizationId: ctx.organizationId,
+        userId: ctx.userId,
+        artifactCreated: false,
+        anaRiOrchestrated: true,
+        qualityGrade: qualityResult.grade,
+      });
+      return {
+        success: false,
+        action: 'create_artifact',
+        message: `Quality gate rejected "${params.title}": ${qualityResult.issues.join('; ')}.`,
+        error: `Quality grade: ${qualityResult.grade}`,
+      };
+    }
+
     const result = await tagArtifact({
       projectId: params.projectId,
       organizationId: ctx.organizationId,
@@ -222,16 +283,29 @@ export async function createArtifact(
       anaRiOrchestrated: true,
     });
 
-    const sectionLabel = params.ctdSection && params.ctdSection !== 'unassigned' ? ` in section ${params.ctdSection}` : '';
+    const sectionLabel =
+      params.ctdSection && params.ctdSection !== 'unassigned'
+        ? ` in section ${params.ctdSection}`
+        : '';
     const statusLabel = params.status || 'draft';
     return {
       success: true,
       action: 'create_artifact',
-      data: { artifactId: result.artifactId, isNew: result.isNew, sectionCode: result.sectionCode, title: params.title },
+      data: {
+        artifactId: result.artifactId,
+        isNew: result.isNew,
+        sectionCode: result.sectionCode,
+        title: params.title,
+      },
       message: `Created "${params.title}"${sectionLabel} — ID: ${result.artifactId}, status: ${statusLabel}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'create_artifact', message: `Failed to create artifact "${params.title}": ${err instanceof Error ? err.message : 'unknown error'}.`, error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'create_artifact',
+      message: `Failed to create artifact "${params.title}": ${err instanceof Error ? err.message : 'unknown error'}.`,
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -256,7 +330,11 @@ export async function updateArtifact(
     );
 
     if (existing.rows.length === 0) {
-      return { success: false, action: 'update_artifact', message: `Artifact ${params.artifactId} not found in project ${params.projectId}.` };
+      return {
+        success: false,
+        action: 'update_artifact',
+        message: `Artifact ${params.artifactId} not found in project ${params.projectId}.`,
+      };
     }
 
     const current = existing.rows[0];
@@ -298,11 +376,21 @@ export async function updateArtifact(
     return {
       success: true,
       action: 'update_artifact',
-      data: { artifactId: result.artifactId, versionId: result.versionId, title: current.title, ctdSection: current.ctd_section },
+      data: {
+        artifactId: result.artifactId,
+        versionId: result.versionId,
+        title: current.title,
+        ctdSection: current.ctd_section,
+      },
       message: `Updated "${current.title}"${sectionLabel}${newVersion}. ${params.changeDescription || 'Content revised by AnA.'}`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'update_artifact', message: `Failed to update artifact ${params.artifactId}: ${err instanceof Error ? err.message : 'unknown error'}.`, error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'update_artifact',
+      message: `Failed to update artifact ${params.artifactId}: ${err instanceof Error ? err.message : 'unknown error'}.`,
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -325,7 +413,11 @@ export async function updateArtifactStatus(
     );
 
     if (existing.rows.length === 0) {
-      return { success: false, action: 'update_artifact_status', message: `Artifact ${params.artifactId} not found.` };
+      return {
+        success: false,
+        action: 'update_artifact_status',
+        message: `Artifact ${params.artifactId} not found.`,
+      };
     }
 
     const current = existing.rows[0];
@@ -343,7 +435,8 @@ export async function updateArtifactStatus(
     }
 
     // Guard: warn about approved → draft regression (but allow it)
-    const isRegression = fromStatus === 'approved' && (toStatus === 'draft' || toStatus === 'review');
+    const isRegression =
+      fromStatus === 'approved' && (toStatus === 'draft' || toStatus === 'review');
 
     await pool.query(
       `UPDATE concept2cure_artifacts
@@ -361,11 +454,22 @@ export async function updateArtifactStatus(
     return {
       success: true,
       action: 'update_artifact_status',
-      data: { artifactId: params.artifactId, previousStatus: fromStatus, status: toStatus, title: current.title, isRegression },
+      data: {
+        artifactId: params.artifactId,
+        previousStatus: fromStatus,
+        status: toStatus,
+        title: current.title,
+        isRegression,
+      },
       message: `"${current.title}"${sectionLabel} status changed: ${transitionLabel}.${regressionWarning}`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'update_artifact_status', message: `Failed to update status for artifact ${params.artifactId}: ${err instanceof Error ? err.message : 'unknown error'}.`, error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'update_artifact_status',
+      message: `Failed to update status for artifact ${params.artifactId}: ${err instanceof Error ? err.message : 'unknown error'}.`,
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -387,10 +491,12 @@ export async function placeInDossier(
       [params.artifactId, params.projectId, ctx.organizationId, params.ctdSection]
     );
     // Fetch title for human-readable message
-    const artInfo = await pool.query(
-      `SELECT title FROM concept2cure_artifacts WHERE artifact_id = $1 AND organization_id = $2`,
-      [params.artifactId, ctx.organizationId]
-    ).catch(() => ({ rows: [] as any[] }));
+    const artInfo = await pool
+      .query(
+        `SELECT title FROM concept2cure_artifacts WHERE artifact_id = $1 AND organization_id = $2`,
+        [params.artifactId, ctx.organizationId]
+      )
+      .catch(() => ({ rows: [] as any[] }));
     const artTitle = artInfo.rows[0]?.title || `Artifact ${params.artifactId}`;
     const moduleLabel = params.dossierModule ? ` (Module ${params.dossierModule})` : '';
 
@@ -401,7 +507,12 @@ export async function placeInDossier(
       message: `Placed "${artTitle}" in CTD section ${params.ctdSection}${moduleLabel}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'place_in_dossier', message: `Failed to place artifact ${params.artifactId} in section ${params.ctdSection}: ${err instanceof Error ? err.message : 'unknown error'}.`, error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'place_in_dossier',
+      message: `Failed to place artifact ${params.artifactId} in section ${params.ctdSection}: ${err instanceof Error ? err.message : 'unknown error'}.`,
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -439,7 +550,12 @@ export async function listArtifacts(
       message: `Found ${result.rows.length} artifact(s) in project ${projectId}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'list_artifacts', message: 'Failed to list artifacts.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'list_artifacts',
+      message: 'Failed to list artifacts.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -467,12 +583,21 @@ export async function createTask(
           priority, due_date, module_type, status, created_by_id, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'todo', $9, NOW(), NOW())
        RETURNING id, name, status, priority`,
-      [params.projectId, ctx.organizationId, params.title, params.description || '',
-       params.assigneeId || null, params.priority || 'medium',
-       params.dueDate || null, params.moduleType || null, ctx.userId]
+      [
+        params.projectId,
+        ctx.organizationId,
+        params.title,
+        params.description || '',
+        params.assigneeId || null,
+        params.priority || 'medium',
+        params.dueDate || null,
+        params.moduleType || null,
+        ctx.userId,
+      ]
     );
     const task = result.rows[0];
-    const priorityLabel = params.priority && params.priority !== 'medium' ? `, priority: ${params.priority}` : '';
+    const priorityLabel =
+      params.priority && params.priority !== 'medium' ? `, priority: ${params.priority}` : '';
     const dueLabel = params.dueDate ? `, due: ${params.dueDate}` : '';
     return {
       success: true,
@@ -481,7 +606,12 @@ export async function createTask(
       message: `Created task "${params.title}" — ID: ${task.id}${priorityLabel}${dueLabel}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'create_task', message: `Failed to create task "${params.title}": ${err instanceof Error ? err.message : 'unknown error'}.`, error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'create_task',
+      message: `Failed to create task "${params.title}": ${err instanceof Error ? err.message : 'unknown error'}.`,
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -495,7 +625,15 @@ export async function updateTask(
   }
 ): Promise<CommandResult> {
   try {
-    const allowedFields = ['name', 'description', 'status', 'priority', 'assignee_id', 'due_date', 'module_type'];
+    const allowedFields = [
+      'name',
+      'description',
+      'status',
+      'priority',
+      'assignee_id',
+      'due_date',
+      'module_type',
+    ];
     const setClauses: string[] = [];
     const values: unknown[] = [params.taskId, params.projectId, ctx.organizationId];
     let paramIdx = 4;
@@ -526,7 +664,12 @@ export async function updateTask(
       message: `Task ${params.taskId} updated.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'update_task', message: 'Failed to update task.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'update_task',
+      message: 'Failed to update task.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -544,11 +687,24 @@ export async function listTasks(
     const values: unknown[] = [projectId, ctx.organizationId];
     let paramIdx = 3;
 
-    if (filters?.status) { query += ` AND status = $${paramIdx}`; values.push(filters.status); paramIdx++; }
-    if (filters?.priority) { query += ` AND priority = $${paramIdx}`; values.push(filters.priority); paramIdx++; }
-    if (filters?.assigneeId) { query += ` AND assignee_id = $${paramIdx}`; values.push(filters.assigneeId); paramIdx++; }
+    if (filters?.status) {
+      query += ` AND status = $${paramIdx}`;
+      values.push(filters.status);
+      paramIdx++;
+    }
+    if (filters?.priority) {
+      query += ` AND priority = $${paramIdx}`;
+      values.push(filters.priority);
+      paramIdx++;
+    }
+    if (filters?.assigneeId) {
+      query += ` AND assignee_id = $${paramIdx}`;
+      values.push(filters.assigneeId);
+      paramIdx++;
+    }
 
-    query += ' ORDER BY CASE priority WHEN \'urgent\' THEN 0 WHEN \'critical\' THEN 1 WHEN \'high\' THEN 2 WHEN \'medium\' THEN 3 ELSE 4 END, due_date ASC NULLS LAST LIMIT 100';
+    query +=
+      " ORDER BY CASE priority WHEN 'urgent' THEN 0 WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END, due_date ASC NULLS LAST LIMIT 100";
     const result = await pool.query(query, values);
 
     return {
@@ -558,7 +714,12 @@ export async function listTasks(
       message: `Found ${result.rows.length} task(s) in project ${projectId}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'list_tasks', message: 'Failed to list tasks.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'list_tasks',
+      message: 'Failed to list tasks.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -582,8 +743,12 @@ export async function checkDossierReadiness(
     );
 
     const total = artifacts.rows.length;
-    const placed = artifacts.rows.filter((a: any) => a.ctd_section && a.ctd_section !== 'unassigned').length;
-    const approved = artifacts.rows.filter((a: any) => a.status === 'approved' || a.status === 'locked').length;
+    const placed = artifacts.rows.filter(
+      (a: any) => a.ctd_section && a.ctd_section !== 'unassigned'
+    ).length;
+    const approved = artifacts.rows.filter(
+      (a: any) => a.status === 'approved' || a.status === 'locked'
+    ).length;
     const draft = artifacts.rows.filter((a: any) => a.status === 'draft').length;
     const inReview = artifacts.rows.filter((a: any) => a.status === 'review').length;
     const unplaced = total - placed;
@@ -599,7 +764,12 @@ export async function checkDossierReadiness(
       success: true,
       action: 'check_dossier_readiness',
       data: {
-        total, placed, unplaced, approved, draft, inReview,
+        total,
+        placed,
+        unplaced,
+        approved,
+        draft,
+        inReview,
         readinessPercent: readiness,
         issues,
         artifacts: artifacts.rows,
@@ -607,7 +777,12 @@ export async function checkDossierReadiness(
       message: `Dossier readiness: ${readiness}% (${approved}/${total} approved). ${issues.length > 0 ? 'Issues: ' + issues.join('; ') : 'No blocking issues.'}`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'check_dossier_readiness', message: 'Failed to check readiness.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'check_dossier_readiness',
+      message: 'Failed to check readiness.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -666,7 +841,12 @@ export async function loadUserContext(ctx: CommandContext): Promise<CommandResul
     return {
       success: true,
       action: 'load_user_context',
-      data: { user: { id: ctx.userId }, projects: [], recentConversations: [], recentArtifacts: [] },
+      data: {
+        user: { id: ctx.userId },
+        projects: [],
+        recentConversations: [],
+        recentArtifacts: [],
+      },
       message: 'Loaded partial context (some tables may not exist yet).',
     };
   }
@@ -703,7 +883,12 @@ export async function loadConversationHistory(
       message: `Found ${result.rows.length} conversation(s).`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'load_conversation_history', message: 'Could not load conversation history.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'load_conversation_history',
+      message: 'Could not load conversation history.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -718,13 +903,15 @@ export async function exportPersonalData(
       return {
         success: false,
         action: 'export_personal_data',
-        message: 'Forbidden: only the data subject or a privacy/admin role can export personal data.',
+        message:
+          'Forbidden: only the data subject or a privacy/admin role can export personal data.',
       };
     }
     const safeQuery = async (sql: string, values: unknown[]) => {
       try {
         return await pool.query(sql, values);
-      } catch { /* query failure in non-critical lookup — return empty to allow graceful degradation */
+      } catch {
+        /* query failure in non-critical lookup — return empty to allow graceful degradation */
         return { rows: [] as any[] };
       }
     };
@@ -777,7 +964,12 @@ export async function exportPersonalData(
       message: `Personal data export prepared for subject ${dataSubjectId}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'export_personal_data', message: 'Personal data export failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'export_personal_data',
+      message: 'Personal data export failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -813,42 +1005,54 @@ export async function erasePersonalData(
       [ctx.organizationId, dataSubjectId]
     );
 
-    const convResult = await client.query(
-      `UPDATE concept2cure_conversations
+    const convResult = await client
+      .query(
+        `UPDATE concept2cure_conversations
        SET title = '[ERASED CONVERSATION]',
            summary = '[REDACTED PER GDPR ART.17]',
            updated_at = NOW()
        WHERE organization_id = $1 AND created_by_id = $2
        RETURNING id`,
-      [ctx.organizationId, dataSubjectId]
-    ).catch(() => ({ rows: [] as any[] }));
+        [ctx.organizationId, dataSubjectId]
+      )
+      .catch(() => ({ rows: [] as any[] }));
 
-    const artResult = await client.query(
-      `UPDATE concept2cure_artifacts
+    const artResult = await client
+      .query(
+        `UPDATE concept2cure_artifacts
        SET title = CONCAT('[ERASED] ', COALESCE(title, 'artifact')),
            content = '[REDACTED PER GDPR ART.17]',
            metadata = COALESCE(metadata, '{}'::jsonb) || '{"gdpr_erased": true}'::jsonb,
            updated_at = NOW()
        WHERE organization_id = $1 AND created_by_id = $2
        RETURNING artifact_id`,
-      [ctx.organizationId, dataSubjectId]
-    ).catch(() => ({ rows: [] as any[] }));
+        [ctx.organizationId, dataSubjectId]
+      )
+      .catch(() => ({ rows: [] as any[] }));
 
-    const commentResult = await client.query(
-      `UPDATE concept2cure_thread_comments
+    const commentResult = await client
+      .query(
+        `UPDATE concept2cure_thread_comments
        SET body = '[REDACTED PER GDPR ART.17]',
            updated_at = NOW()
        WHERE org_id = $1 AND author_id = $2
        RETURNING id`,
-      [ctx.organizationId, dataSubjectId]
-    ).catch(() => ({ rows: [] as any[] }));
+        [ctx.organizationId, dataSubjectId]
+      )
+      .catch(() => ({ rows: [] as any[] }));
 
-    await client.query(
-      `INSERT INTO gdpr_data_subject_requests
+    await client
+      .query(
+        `INSERT INTO gdpr_data_subject_requests
         (organization_id, data_subject_id, request_type, status, response_deadline, completed_at, response_details)
        VALUES ($1, $2, 'erasure', 'completed', NOW(), NOW(), $3)`,
-      [ctx.organizationId, String(dataSubjectId), `AnA erasure workflow completed. Reason: ${reason}`]
-    ).catch(() => undefined);
+        [
+          ctx.organizationId,
+          String(dataSubjectId),
+          `AnA erasure workflow completed. Reason: ${reason}`,
+        ]
+      )
+      .catch(() => undefined);
 
     await client.query('COMMIT');
 
@@ -866,7 +1070,12 @@ export async function erasePersonalData(
     };
   } catch (err: unknown) {
     await client.query('ROLLBACK').catch(() => undefined);
-    return { success: false, action: 'erase_personal_data', message: 'Erasure workflow failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'erase_personal_data',
+      message: 'Erasure workflow failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   } finally {
     client.release();
   }
@@ -894,8 +1103,14 @@ export async function createSubmissionPackage(
           target_date, status, created_at, updated_at)
        VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, 'active', NOW(), NOW())
        RETURNING package_id, title, package_family, status`,
-      [ctx.organizationId, params.projectId, params.packageFamily,
-       params.title, params.description || '', params.targetDate || null]
+      [
+        ctx.organizationId,
+        params.projectId,
+        params.packageFamily,
+        params.title,
+        params.description || '',
+        params.targetDate || null,
+      ]
     );
     const pkg = result.rows[0];
     return {
@@ -905,7 +1120,12 @@ export async function createSubmissionPackage(
       message: `Submission package "${params.title}" created (${params.packageFamily.toUpperCase()}).`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'create_submission_package', message: 'Failed to create submission package.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'create_submission_package',
+      message: 'Failed to create submission package.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -934,20 +1154,38 @@ export async function createReviewThread(
           assignee_id, assignee_name, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, 'open', $6, $7, $8, $9, $10, NOW(), NOW())
        RETURNING id, thread_id, title, status`,
-      [threadId, ctx.organizationId, params.projectId, params.artifactId,
-       params.title, params.priority || 'medium',
-       ctx.userId, ctx.userName || 'AnA RI',
-       params.assigneeId || null, params.assigneeName || null]
+      [
+        threadId,
+        ctx.organizationId,
+        params.projectId,
+        params.artifactId,
+        params.title,
+        params.priority || 'medium',
+        ctx.userId,
+        ctx.userName || 'AnA RI',
+        params.assigneeId || null,
+        params.assigneeName || null,
+      ]
     );
     const thread = result.rows[0];
     return {
       success: true,
       action: 'create_review_thread',
-      data: { threadId: thread?.id, externalId: thread?.thread_id, title: params.title, artifactId: params.artifactId },
+      data: {
+        threadId: thread?.id,
+        externalId: thread?.thread_id,
+        title: params.title,
+        artifactId: params.artifactId,
+      },
       message: `Review thread "${params.title}" created on artifact ${params.artifactId}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'create_review_thread', message: 'Failed to create review thread.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'create_review_thread',
+      message: 'Failed to create review thread.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -968,17 +1206,33 @@ export async function addReviewComment(
           body, kind, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, 'comment', NOW(), NOW())
        RETURNING id, comment_id`,
-      [commentId, ctx.organizationId, params.threadId, params.artifactId,
-       ctx.userId, ctx.userName || 'AnA RI', params.body]
+      [
+        commentId,
+        ctx.organizationId,
+        params.threadId,
+        params.artifactId,
+        ctx.userId,
+        ctx.userName || 'AnA RI',
+        params.body,
+      ]
     );
     return {
       success: true,
       action: 'add_review_comment',
-      data: { commentId: result.rows[0]?.id, externalId: result.rows[0]?.comment_id, threadId: params.threadId },
+      data: {
+        commentId: result.rows[0]?.id,
+        externalId: result.rows[0]?.comment_id,
+        threadId: params.threadId,
+      },
       message: `Comment added to review thread ${params.threadId}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'add_review_comment', message: 'Failed to add comment.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'add_review_comment',
+      message: 'Failed to add comment.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -1039,7 +1293,12 @@ export async function searchArtifacts(
         message: `Found ${fallback.rows.length} artifact(s) matching "${params.query}".`,
       };
     } catch (fallbackErr: unknown) {
-      return { success: false, action: 'search_artifacts', message: 'Search failed.', error: fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr) };
+      return {
+        success: false,
+        action: 'search_artifacts',
+        message: 'Search failed.',
+        error: fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr),
+      };
     }
   }
 }
@@ -1067,7 +1326,12 @@ export async function listTeamMembers(ctx: CommandContext): Promise<CommandResul
       message: `Found ${result.rows.length} team member(s).`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'list_team_members', message: 'Failed to list team.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'list_team_members',
+      message: 'Failed to list team.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -1100,7 +1364,12 @@ export async function listArtifactVersions(
       message: `Found ${result.rows.length} version(s) of artifact ${params.artifactId}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'list_artifact_versions', message: 'Failed to load version history.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'list_artifact_versions',
+      message: 'Failed to load version history.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -1126,7 +1395,11 @@ export async function runComplianceScan(
     );
 
     if (artifact.rows.length === 0) {
-      return { success: false, action: 'run_compliance_scan', message: `Artifact ${params.artifactId} not found.` };
+      return {
+        success: false,
+        action: 'run_compliance_scan',
+        message: `Artifact ${params.artifactId} not found.`,
+      };
     }
 
     const doc = artifact.rows[0];
@@ -1139,21 +1412,37 @@ export async function runComplianceScan(
     // Document-level checks
     if (/\[insert|TBD|TODO|placeholder|coming soon/i.test(content)) {
       const match = content.match(/\b(TBD|TODO|\[insert[^\]]*\]|placeholder|coming soon)\b/i);
-      issues.push({ rule: 'PLACEHOLDER', severity: 'critical', finding: `Contains placeholder text: "${match?.[0]}"` });
+      issues.push({
+        rule: 'PLACEHOLDER',
+        severity: 'critical',
+        finding: `Contains placeholder text: "${match?.[0]}"`,
+      });
     }
 
     if (doc.ctd_section && content.length < 200) {
-      issues.push({ rule: 'LENGTH', severity: 'major', finding: `Section ${doc.ctd_section} has insufficient content (${content.length} chars)` });
+      issues.push({
+        rule: 'LENGTH',
+        severity: 'major',
+        finding: `Section ${doc.ctd_section} has insufficient content (${content.length} chars)`,
+      });
     }
 
     if (doc.ctd_section && /^[23]\./.test(doc.ctd_section)) {
       if (!/\b(?:ICH|CFR|FDA|EMA|ISO)\b/.test(content)) {
-        issues.push({ rule: 'REG-REF', severity: 'major', finding: 'No regulatory references found in Module 2/3 section' });
+        issues.push({
+          rule: 'REG-REF',
+          severity: 'major',
+          finding: 'No regulatory references found in Module 2/3 section',
+        });
       }
     }
 
     if (content.length > 500 && !/\[(?:KNOWN|INFERRED|MISSING)/.test(content)) {
-      issues.push({ rule: 'EVIDENCE', severity: 'minor', finding: 'Content lacks evidence classification labels [KNOWN/INFERRED/MISSING]' });
+      issues.push({
+        rule: 'EVIDENCE',
+        severity: 'minor',
+        finding: 'Content lacks evidence classification labels [KNOWN/INFERRED/MISSING]',
+      });
     }
 
     // Section-level checks
@@ -1164,16 +1453,29 @@ export async function runComplianceScan(
       const sectionTitle = header.replace(/^#{1,3}\s+/, '').trim();
       const headerIdx = content.indexOf(header);
       const nextHeaderIdx = content.indexOf('\n#', headerIdx + header.length);
-      const sectionContent = content.slice(headerIdx, nextHeaderIdx > -1 ? nextHeaderIdx : undefined);
+      const sectionContent = content.slice(
+        headerIdx,
+        nextHeaderIdx > -1 ? nextHeaderIdx : undefined
+      );
       let sectionIssueCount = 0;
 
       if (sectionContent.length < 100 && !/summary|overview|context/i.test(sectionTitle)) {
-        issues.push({ rule: 'SECTION-LENGTH', severity: 'minor', finding: `Section "${sectionTitle}" is very short (${sectionContent.length} chars)`, section: sectionTitle });
+        issues.push({
+          rule: 'SECTION-LENGTH',
+          severity: 'minor',
+          finding: `Section "${sectionTitle}" is very short (${sectionContent.length} chars)`,
+          section: sectionTitle,
+        });
         sectionIssueCount++;
       }
 
       if (/\b(TBD|TODO|\[insert)/i.test(sectionContent)) {
-        issues.push({ rule: 'SECTION-PLACEHOLDER', severity: 'critical', finding: `Section "${sectionTitle}" contains placeholder text`, section: sectionTitle });
+        issues.push({
+          rule: 'SECTION-PLACEHOLDER',
+          severity: 'critical',
+          finding: `Section "${sectionTitle}" contains placeholder text`,
+          section: sectionTitle,
+        });
         sectionIssueCount++;
       }
 
@@ -1199,16 +1501,27 @@ export async function runComplianceScan(
         ctdSection: doc.ctd_section,
         overallScore,
         compliant: criticalCount === 0,
-        summary: { critical: criticalCount, major: majorCount, minor: minorCount, total: issues.length },
+        summary: {
+          critical: criticalCount,
+          major: majorCount,
+          minor: minorCount,
+          total: issues.length,
+        },
         issues,
         sectionResults,
       },
-      message: issues.length === 0
-        ? `Artifact "${doc.title}" passed compliance scan (score: ${overallScore}/100).`
-        : `Compliance scan: ${overallScore}/100 — ${criticalCount} critical, ${majorCount} major, ${minorCount} minor issue(s) in "${doc.title}".`,
+      message:
+        issues.length === 0
+          ? `Artifact "${doc.title}" passed compliance scan (score: ${overallScore}/100).`
+          : `Compliance scan: ${overallScore}/100 — ${criticalCount} critical, ${majorCount} major, ${minorCount} minor issue(s) in "${doc.title}".`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'run_compliance_scan', message: 'Compliance scan failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'run_compliance_scan',
+      message: 'Compliance scan failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -1235,7 +1548,11 @@ export async function exportArtifact(
     );
 
     if (artifact.rows.length === 0) {
-      return { success: false, action: 'export_artifact', message: `Artifact ${params.artifactId} not found.` };
+      return {
+        success: false,
+        action: 'export_artifact',
+        message: `Artifact ${params.artifactId} not found.`,
+      };
     }
 
     const doc = artifact.rows[0];
@@ -1277,7 +1594,12 @@ export async function exportArtifact(
       message: `Exported "${doc.title}" content (version ${doc.version}). Full PDF generation requires the PDF service.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'export_artifact', message: 'Export failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'export_artifact',
+      message: 'Export failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -1306,7 +1628,11 @@ export async function compareVersions(
     );
 
     if (versions.rows.length < 2) {
-      return { success: false, action: 'compare_versions', message: `Could not find both versions ${params.versionA} and ${params.versionB}.` };
+      return {
+        success: false,
+        action: 'compare_versions',
+        message: `Could not find both versions ${params.versionA} and ${params.versionB}.`,
+      };
     }
 
     const [older, newer] = versions.rows;
@@ -1358,7 +1684,12 @@ export async function compareVersions(
       message: `Version ${older.version} → ${newer.version}: +${diff.additions} lines, -${diff.deletions} lines. ${addedSections.length} section(s) added, ${removedSections.length} removed.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'compare_versions', message: 'Version comparison failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'compare_versions',
+      message: 'Version comparison failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -1403,7 +1734,11 @@ export async function reviewVersionImpact(
     );
 
     if (versions.rows.length < 2) {
-      return { success: false, action: 'review_version_impact', message: `Could not find both versions.` };
+      return {
+        success: false,
+        action: 'review_version_impact',
+        message: `Could not find both versions.`,
+      };
     }
 
     // Load artifact metadata for context
@@ -1446,7 +1781,11 @@ export async function reviewVersionImpact(
     const { buildAnaRISystemPrompt } = await import('./persona.js');
 
     let gw;
-    try { gw = getGateway(); } catch { /* gateway unavailable */ }
+    try {
+      gw = getGateway();
+    } catch {
+      /* gateway unavailable */
+    }
 
     if (!gw) {
       // Fallback: return structural diff without AI reasoning
@@ -1563,7 +1902,10 @@ What should be done BEFORE this version is submitted? Be specific.`;
         });
         savedArtifactId = tagResult.artifactId;
       } catch (err: unknown) {
-        console.error('[AnA RI] Failed to persist version impact artifact:', err instanceof Error ? err.message : String(err));
+        console.error(
+          '[AnA RI] Failed to persist version impact artifact:',
+          err instanceof Error ? err.message : String(err)
+        );
       }
     }
 
@@ -1599,7 +1941,12 @@ What should be done BEFORE this version is submitted? Be specific.`;
       message: `Version Impact Review for "${artifactMeta.title}" (v${older.version} → v${newer.version}): +${diff.additions}/-${diff.deletions} lines analyzed.${savedArtifactId ? ` Saved as artifact #${savedArtifactId}.` : ''}`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'review_version_impact', message: 'Version impact review failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'review_version_impact',
+      message: 'Version impact review failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -1625,9 +1972,15 @@ export async function createMilestone(
           target_date, gate_status, sort_order, created_by_id, created_at, updated_at)
        VALUES (gen_random_uuid()::text, $1, $2, $3, $4, $5, 'open', $6, $7, NOW(), NOW())
        RETURNING id, milestone_id, title, gate_status`,
-      [ctx.organizationId, params.packageId, params.title,
-       params.description || '', params.targetDate || null,
-       params.sortOrder || 0, ctx.userId]
+      [
+        ctx.organizationId,
+        params.packageId,
+        params.title,
+        params.description || '',
+        params.targetDate || null,
+        params.sortOrder || 0,
+        ctx.userId,
+      ]
     );
     const ms = result.rows[0];
     return {
@@ -1637,7 +1990,12 @@ export async function createMilestone(
       message: `Milestone "${params.title}" created.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'create_milestone', message: 'Failed to create milestone.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'create_milestone',
+      message: 'Failed to create milestone.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -1650,7 +2008,14 @@ export async function updateMilestone(
   }
 ): Promise<CommandResult> {
   try {
-    const allowedFields = ['title', 'description', 'target_date', 'gate_status', 'sort_order', 'block_reasons'];
+    const allowedFields = [
+      'title',
+      'description',
+      'target_date',
+      'gate_status',
+      'sort_order',
+      'block_reasons',
+    ];
     const setClauses: string[] = [];
     const values: unknown[] = [params.milestoneId, ctx.organizationId];
     let paramIdx = 3;
@@ -1679,7 +2044,12 @@ export async function updateMilestone(
       message: `Milestone ${params.milestoneId} updated.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'update_milestone', message: 'Failed to update milestone.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'update_milestone',
+      message: 'Failed to update milestone.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -1703,7 +2073,12 @@ export async function listMilestones(
       message: `Found ${result.rows.length} milestone(s).`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'list_milestones', message: 'Failed to list milestones.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'list_milestones',
+      message: 'Failed to list milestones.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -1742,16 +2117,28 @@ export async function revertToVersion(
     );
 
     if (artifactResult.rows.length === 0) {
-      return { success: false, action: 'revert_to_version', message: `Artifact ${params.artifactId} not found.` };
+      return {
+        success: false,
+        action: 'revert_to_version',
+        message: `Artifact ${params.artifactId} not found.`,
+      };
     }
 
     const artifact = artifactResult.rows[0];
     if (artifact.status === 'locked') {
-      return { success: false, action: 'revert_to_version', message: 'Document is locked. Change status to draft or review before reverting.' };
+      return {
+        success: false,
+        action: 'revert_to_version',
+        message: 'Document is locked. Change status to draft or review before reverting.',
+      };
     }
 
     if (params.targetVersion >= artifact.version) {
-      return { success: false, action: 'revert_to_version', message: `Cannot revert to version ${params.targetVersion} — current version is ${artifact.version}.` };
+      return {
+        success: false,
+        action: 'revert_to_version',
+        message: `Cannot revert to version ${params.targetVersion} — current version is ${artifact.version}.`,
+      };
     }
 
     // Load the target version content
@@ -1762,7 +2149,11 @@ export async function revertToVersion(
     );
 
     if (versionResult.rows.length === 0) {
-      return { success: false, action: 'revert_to_version', message: `Version ${params.targetVersion} not found.` };
+      return {
+        success: false,
+        action: 'revert_to_version',
+        message: `Version ${params.targetVersion} not found.`,
+      };
     }
 
     const oldContent = versionResult.rows[0].content;
@@ -1796,7 +2187,12 @@ export async function revertToVersion(
       message: `Artifact ${params.artifactId} reverted to version ${params.targetVersion} content (created as new version ${result.versionId}).`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'revert_to_version', message: 'Revert failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'revert_to_version',
+      message: 'Revert failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -1805,18 +2201,28 @@ export async function revertToVersion(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Generate SAP via biostats orchestrator and save as artifact */
-export async function generateSAP(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function generateSAP(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
-    const res = await pool.query(
-      `SELECT id FROM projects WHERE id = $1 AND organization_id = $2`,
-      [params.projectId || ctx.activeProjectId, ctx.organizationId]
-    );
-    if (res.rows.length === 0) return { success: false, action: 'generate_sap', message: 'Project not found' };
+    const res = await pool.query(`SELECT id FROM projects WHERE id = $1 AND organization_id = $2`, [
+      params.projectId || ctx.activeProjectId,
+      ctx.organizationId,
+    ]);
+    if (res.rows.length === 0)
+      return { success: false, action: 'generate_sap', message: 'Project not found' };
 
     // Call the biostats workflow endpoint internally
-    const { executeWorkflow } = await import('../ana-biostats/orchestrator.js').catch(() => ({ executeWorkflow: null }));
+    const { executeWorkflow } = await import('../ana-biostats/orchestrator.js').catch(() => ({
+      executeWorkflow: null,
+    }));
     if (!executeWorkflow) {
-      return { success: false, action: 'generate_sap', message: 'Biostatistics orchestrator not available.' };
+      return {
+        success: false,
+        action: 'generate_sap',
+        message: 'Biostatistics orchestrator not available.',
+      };
     }
 
     const result = await executeWorkflow({
@@ -1824,7 +2230,7 @@ export async function generateSAP(ctx: CommandContext, params: Record<string, un
       studyType: params.studyType || 'superiority',
       endpointType: params.endpointType || 'continuous',
       alpha: params.alpha || 0.05,
-      power: params.power || 0.80,
+      power: params.power || 0.8,
       effectSize: params.effectSize || 0.5,
       attrition: params.attrition || 0.15,
       indication: params.indication,
@@ -1838,20 +2244,38 @@ export async function generateSAP(ctx: CommandContext, params: Record<string, un
     return {
       success: true,
       action: 'generate_sap',
-      data: { sampleSize: result?.computation?.sampleSize, power: result?.computation?.power, documentId: result?.document?.id },
+      data: {
+        sampleSize: result?.computation?.sampleSize,
+        power: result?.computation?.power,
+        documentId: result?.document?.id,
+      },
       message: `SAP generated. Sample size: ${result?.computation?.sampleSize || 'calculated'}. Document saved.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'generate_sap', message: 'SAP generation failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'generate_sap',
+      message: 'SAP generation failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
 /** Compute sample size and power */
-export async function computeSampleSize(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function computeSampleSize(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
-    const { compute } = await import('../ana-biostats/computation-engine.js').catch(() => ({ compute: null }));
+    const { compute } = await import('../ana-biostats/computation-engine.js').catch(() => ({
+      compute: null,
+    }));
     if (!compute) {
-      return { success: false, action: 'compute_sample_size', message: 'Computation engine not available.' };
+      return {
+        success: false,
+        action: 'compute_sample_size',
+        message: 'Computation engine not available.',
+      };
     }
 
     const result = await compute({
@@ -1859,7 +2283,7 @@ export async function computeSampleSize(ctx: CommandContext, params: Record<stri
       studyType: params.studyType || 'superiority',
       endpointType: params.endpointType || 'continuous',
       alpha: params.alpha || 0.05,
-      power: params.power || 0.80,
+      power: params.power || 0.8,
       effectSize: params.effectSize || 0.5,
       attrition: params.attrition || 0.15,
       allocationRatio: params.allocationRatio || 1,
@@ -1872,16 +2296,30 @@ export async function computeSampleSize(ctx: CommandContext, params: Record<stri
       message: `Sample size: ${result.sampleSize || 'N/A'} per arm (${result.totalSampleSize || 'N/A'} total). Power: ${result.achievedPower ? Math.round(result.achievedPower * 100) + '%' : 'N/A'}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'compute_sample_size', message: 'Computation failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'compute_sample_size',
+      message: 'Computation failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
 /** Compute dose escalation design */
-export async function computeDoseEscalation(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function computeDoseEscalation(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
-    const { ForesightAIEngine } = await import('../foresight-ai-engine.js').catch(() => ({ ForesightAIEngine: null }));
+    const { ForesightAIEngine } = await import('../foresight-ai-engine.js').catch(() => ({
+      ForesightAIEngine: null,
+    }));
     if (!ForesightAIEngine) {
-      return { success: false, action: 'compute_dose_escalation', message: 'Foresight engine not available.' };
+      return {
+        success: false,
+        action: 'compute_dose_escalation',
+        message: 'Foresight engine not available.',
+      };
     }
     const engine = new ForesightAIEngine();
     const result = await engine.calculateOptimalDoseEscalation(params.studyId || 'design-mode');
@@ -1892,20 +2330,33 @@ export async function computeDoseEscalation(ctx: CommandContext, params: Record<
       message: `Dose escalation designed. Method: ${result?.method || params.method || '3+3'}. ${result?.recommendation || 'See results for details.'}`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'compute_dose_escalation', message: 'Dose escalation computation failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'compute_dose_escalation',
+      message: 'Dose escalation computation failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
 /** Assess statistical defensibility */
-export async function assessDefensibility(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function assessDefensibility(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     const projectId = params.projectId || ctx.activeProjectId;
-    if (!projectId) return { success: false, action: 'assess_defensibility', message: 'No project context.' };
+    if (!projectId)
+      return { success: false, action: 'assess_defensibility', message: 'No project context.' };
 
     // Use the statistical defensibility service
     const mod = await import('../statistical-defensibility-service.js').catch(() => null);
     if (!mod || !mod.assessDefensibility) {
-      return { success: false, action: 'assess_defensibility', message: 'Defensibility service not available.' };
+      return {
+        success: false,
+        action: 'assess_defensibility',
+        message: 'Defensibility service not available.',
+      };
     }
 
     const result = await mod.assessDefensibility({
@@ -1921,12 +2372,20 @@ export async function assessDefensibility(ctx: CommandContext, params: Record<st
       message: `Defensibility score: ${result?.overallScore || 'N/A'}/100. ${result?.summary || 'Assessment complete.'}`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'assess_defensibility', message: 'Assessment failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'assess_defensibility',
+      message: 'Assessment failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
 /** Design a clinical trial */
-export async function designTrial(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function designTrial(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   return {
     success: true,
     action: 'design_trial',
@@ -1946,43 +2405,75 @@ export async function designTrial(ctx: CommandContext, params: Record<string, un
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Draft a CTD section using AI */
-export async function draftSection(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function draftSection(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     const sectionId = params.sectionId;
-    if (!sectionId) return { success: false, action: 'draft_section', message: 'sectionId required.' };
-    const res = await pool.query(
-      `SELECT id, code, title FROM doc_sections WHERE id = $1 LIMIT 1`, [sectionId]
-    );
-    if (res.rows.length === 0) return { success: false, action: 'draft_section', message: `Section ${sectionId} not found.` };
+    if (!sectionId)
+      return { success: false, action: 'draft_section', message: 'sectionId required.' };
+    const res = await pool.query(`SELECT id, code, title FROM doc_sections WHERE id = $1 LIMIT 1`, [
+      sectionId,
+    ]);
+    if (res.rows.length === 0)
+      return {
+        success: false,
+        action: 'draft_section',
+        message: `Section ${sectionId} not found.`,
+      };
     // The actual AI drafting is handled by the authoring router endpoint
     // Here we trigger it via internal call pattern
     return {
-      success: true, action: 'draft_section',
+      success: true,
+      action: 'draft_section',
       data: { sectionId, code: res.rows[0].code, title: res.rows[0].title },
       message: `Section ${res.rows[0].code || sectionId} ready for AI drafting. Use the /draft slash command or ask me to draft it.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'draft_section', message: 'Draft failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'draft_section',
+      message: 'Draft failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
 /** Scan section for deficiencies */
-export async function scanDeficiencies(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function scanDeficiencies(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     const sectionId = params.sectionId || params.artifactId;
-    if (!sectionId) return { success: false, action: 'scan_deficiencies', message: 'sectionId or artifactId required.' };
+    if (!sectionId)
+      return {
+        success: false,
+        action: 'scan_deficiencies',
+        message: 'sectionId or artifactId required.',
+      };
     return {
-      success: true, action: 'scan_deficiencies',
+      success: true,
+      action: 'scan_deficiencies',
       data: { sectionId },
       message: `Deficiency scan queued for section ${sectionId}. Results will appear in the compliance panel.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'scan_deficiencies', message: 'Scan failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'scan_deficiencies',
+      message: 'Scan failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
 /** Freeze a document (immutable snapshot + SHA256 hash) */
-export async function freezeDocument(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function freezeDocument(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     const docId = params.docId || params.documentId;
     if (!docId) return { success: false, action: 'freeze_document', message: 'docId required.' };
@@ -1991,39 +2482,66 @@ export async function freezeDocument(ctx: CommandContext, params: Record<string,
       `SELECT id, title, status FROM authoring_documents WHERE id = $1 AND organization_id = $2`,
       [docId, ctx.organizationId]
     );
-    if (res.rows.length === 0) return { success: false, action: 'freeze_document', message: `Document ${docId} not found.` };
-    if (res.rows[0].status === 'FROZEN') return { success: true, action: 'freeze_document', message: `Document "${res.rows[0].title}" is already frozen.` };
+    if (res.rows.length === 0)
+      return { success: false, action: 'freeze_document', message: `Document ${docId} not found.` };
+    if (res.rows[0].status === 'FROZEN')
+      return {
+        success: true,
+        action: 'freeze_document',
+        message: `Document "${res.rows[0].title}" is already frozen.`,
+      };
 
     // Mark as frozen
-    await pool.query(`UPDATE authoring_documents SET status = 'FROZEN', updated_at = NOW() WHERE id = $1`, [docId]);
+    await pool.query(
+      `UPDATE authoring_documents SET status = 'FROZEN', updated_at = NOW() WHERE id = $1`,
+      [docId]
+    );
     return {
-      success: true, action: 'freeze_document',
+      success: true,
+      action: 'freeze_document',
       data: { docId, title: res.rows[0].title },
       message: `Document "${res.rows[0].title}" frozen. No further edits possible without creating a new version.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'freeze_document', message: 'Freeze failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'freeze_document',
+      message: 'Freeze failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
 /** Sign a document (electronic signature) */
-export async function signDocument(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function signDocument(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     const docId = params.docId || params.documentId;
     const meaning = params.meaning || 'APPROVER';
     if (!docId) return { success: false, action: 'sign_document', message: 'docId required.' };
     return {
-      success: true, action: 'sign_document',
+      success: true,
+      action: 'sign_document',
       data: { docId, meaning, requiresPin: true },
       message: `Electronic signature requested for document ${docId} as ${meaning}. User must confirm with their PIN in the document panel.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'sign_document', message: 'Signature request failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'sign_document',
+      message: 'Signature request failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
 /** Export document as PDF/DOCX */
-export async function exportDocument(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function exportDocument(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     const docId = params.docId || params.documentId;
     const format = params.format || 'docx';
@@ -2034,34 +2552,54 @@ export async function exportDocument(ctx: CommandContext, params: Record<string,
         `INSERT INTO doc_exports (doc_id, format, exported_by, created_at) VALUES ($1, $2, $3, NOW())`,
         [docId, format, ctx.userId]
       );
-    } catch { /* table might not exist */ }
+    } catch {
+      /* table might not exist */
+    }
     return {
-      success: true, action: 'export_document',
+      success: true,
+      action: 'export_document',
       data: { docId, format },
       message: `Document ${docId} export as ${format.toUpperCase()} initiated. Download will be available in the exports panel.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'export_document', message: 'Export failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'export_document',
+      message: 'Export failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
 /** Generate compliance checklist for document */
-export async function generateChecklist(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function generateChecklist(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     const docId = params.docId || params.documentId;
     if (!docId) return { success: false, action: 'generate_checklist', message: 'docId required.' };
     return {
-      success: true, action: 'generate_checklist',
+      success: true,
+      action: 'generate_checklist',
       data: { docId },
       message: `Compliance checklist generated for document ${docId}. View in the document checklist panel.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'generate_checklist', message: 'Checklist generation failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'generate_checklist',
+      message: 'Checklist generation failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
 /** Submit document to regulatory workflow */
-export async function submitDocument(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function submitDocument(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     const docId = params.docId || params.documentId;
     if (!docId) return { success: false, action: 'submit_document', message: 'docId required.' };
@@ -2069,15 +2607,25 @@ export async function submitDocument(ctx: CommandContext, params: Record<string,
       `SELECT id, title, status FROM authoring_documents WHERE id = $1 AND organization_id = $2`,
       [docId, ctx.organizationId]
     );
-    if (res.rows.length === 0) return { success: false, action: 'submit_document', message: `Document ${docId} not found.` };
-    await pool.query(`UPDATE authoring_documents SET status = 'SUBMITTED', updated_at = NOW() WHERE id = $1`, [docId]);
+    if (res.rows.length === 0)
+      return { success: false, action: 'submit_document', message: `Document ${docId} not found.` };
+    await pool.query(
+      `UPDATE authoring_documents SET status = 'SUBMITTED', updated_at = NOW() WHERE id = $1`,
+      [docId]
+    );
     return {
-      success: true, action: 'submit_document',
+      success: true,
+      action: 'submit_document',
       data: { docId, title: res.rows[0].title },
       message: `Document "${res.rows[0].title}" submitted. Status updated to SUBMITTED. Audit trail recorded.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'submit_document', message: 'Submission failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'submit_document',
+      message: 'Submission failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -2086,27 +2634,42 @@ export async function submitDocument(ctx: CommandContext, params: Record<string,
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Search regulatory precedents by indication, submission type, or therapeutic area */
-export async function searchPrecedents(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function searchPrecedents(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
-    const results = await precedentEngine.search({
-      submissionType: params.submissionType,
-      indication: params.indication,
-      therapeuticArea: params.therapeuticArea,
-      query: params.query,
-      limit: params.limit || 10,
-    }, ctx.organizationId);
+    const results = await precedentEngine.search(
+      {
+        submissionType: params.submissionType,
+        indication: params.indication,
+        therapeuticArea: params.therapeuticArea,
+        query: params.query,
+        limit: params.limit || 10,
+      },
+      ctx.organizationId
+    );
     return {
-      success: true, action: 'search_precedents',
+      success: true,
+      action: 'search_precedents',
       data: { precedents: results, count: results.length },
       message: `Found ${results.length} regulatory precedent(s) matching your search.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'search_precedents', message: 'Precedent search failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'search_precedents',
+      message: 'Precedent search failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
 /** Analyze CRL (Complete Response Letter) trigger risks */
-export async function analyzeCRLTriggers(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function analyzeCRLTriggers(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     const result = await precedentEngine.analyzeCRLTriggers({
       submissionType: params.submissionType || 'NDA',
@@ -2115,17 +2678,26 @@ export async function analyzeCRLTriggers(ctx: CommandContext, params: Record<str
       query: params.query,
     });
     return {
-      success: true, action: 'analyze_crl_triggers',
+      success: true,
+      action: 'analyze_crl_triggers',
       data: { analysis: result },
       message: `CRL trigger analysis complete. Identified risk factors based on regulatory precedents.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'analyze_crl_triggers', message: 'CRL trigger analysis failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'analyze_crl_triggers',
+      message: 'CRL trigger analysis failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
 /** Analyze RTF (Refuse to File) trigger risks */
-export async function analyzeRTFTriggers(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function analyzeRTFTriggers(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     const result = await precedentEngine.analyzeRTFTriggers({
       submissionType: params.submissionType || 'NDA',
@@ -2134,17 +2706,26 @@ export async function analyzeRTFTriggers(ctx: CommandContext, params: Record<str
       query: params.query,
     });
     return {
-      success: true, action: 'analyze_rtf_triggers',
+      success: true,
+      action: 'analyze_rtf_triggers',
       data: { analysis: result },
       message: `RTF trigger analysis complete. Identified filing risk factors.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'analyze_rtf_triggers', message: 'RTF trigger analysis failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'analyze_rtf_triggers',
+      message: 'RTF trigger analysis failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
 /** Recommend regulatory submission strategy based on precedents */
-export async function recommendStrategy(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function recommendStrategy(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     const result = await precedentEngine.recommendStrategy({
       submissionType: params.submissionType,
@@ -2153,31 +2734,47 @@ export async function recommendStrategy(ctx: CommandContext, params: Record<stri
       query: params.query,
     });
     return {
-      success: true, action: 'recommend_strategy',
+      success: true,
+      action: 'recommend_strategy',
       data: { strategy: result },
       message: `Strategy recommendation generated based on regulatory precedent analysis.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'recommend_strategy', message: 'Strategy recommendation failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'recommend_strategy',
+      message: 'Strategy recommendation failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
 /** Check a regulatory claim against precedent evidence */
-export async function checkClaim(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function checkClaim(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
-    if (!params.claim) return { success: false, action: 'check_claim', message: 'claim text is required.' };
+    if (!params.claim)
+      return { success: false, action: 'check_claim', message: 'claim text is required.' };
     const result = await precedentEngine.checkClaim(params.claim, {
       submissionType: params.submissionType,
       therapeuticArea: params.therapeuticArea,
       indication: params.indication,
     });
     return {
-      success: true, action: 'check_claim',
+      success: true,
+      action: 'check_claim',
       data: { claimCheck: result },
       message: `Claim checked against regulatory precedents. Assessment complete.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'check_claim', message: 'Claim check failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'check_claim',
+      message: 'Claim check failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -2186,87 +2783,166 @@ export async function checkClaim(ctx: CommandContext, params: Record<string, unk
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Run full submission twin assessment (claims, evidence, drift, challenges, readiness) */
-export async function runSubmissionAssessment(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function runSubmissionAssessment(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     const packageId = params.packageId;
-    if (!packageId) return { success: false, action: 'run_submission_assessment', message: 'packageId is required.' };
-    const result = await submissionTwinService.runFullAssessment(packageId, ctx.organizationId, ctx.userId);
+    if (!packageId)
+      return {
+        success: false,
+        action: 'run_submission_assessment',
+        message: 'packageId is required.',
+      };
+    const result = await submissionTwinService.runFullAssessment(
+      packageId,
+      ctx.organizationId,
+      ctx.userId
+    );
     return {
-      success: true, action: 'run_submission_assessment',
+      success: true,
+      action: 'run_submission_assessment',
       data: { assessment: result },
       message: `Full submission twin assessment complete for package ${packageId}. ${result.claims?.length ?? 0} claim(s), ${result.driftAlerts?.length ?? 0} drift alert(s), ${result.challenges?.length ?? 0} challenge(s), ${result.weakZones?.length ?? 0} weak zone(s).`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'run_submission_assessment', message: 'Submission assessment failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'run_submission_assessment',
+      message: 'Submission assessment failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
 /** Simulate regulatory reviewer challenges on a submission */
-export async function simulateChallenges(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function simulateChallenges(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     const packageId = params.packageId;
     const assessmentId = params.assessmentId;
-    if (!packageId) return { success: false, action: 'simulate_challenges', message: 'packageId is required.' };
-    if (!assessmentId) return { success: false, action: 'simulate_challenges', message: 'assessmentId is required. Run run_submission_assessment first.' };
+    if (!packageId)
+      return { success: false, action: 'simulate_challenges', message: 'packageId is required.' };
+    if (!assessmentId)
+      return {
+        success: false,
+        action: 'simulate_challenges',
+        message: 'assessmentId is required. Run run_submission_assessment first.',
+      };
     const lenses = params.lenses || ['clinical', 'statistical', 'cmc', 'safety'];
-    const challenges = await submissionTwinService.simulateChallenges(packageId, ctx.organizationId, assessmentId, lenses);
+    const challenges = await submissionTwinService.simulateChallenges(
+      packageId,
+      ctx.organizationId,
+      assessmentId,
+      lenses
+    );
     return {
-      success: true, action: 'simulate_challenges',
+      success: true,
+      action: 'simulate_challenges',
       data: { challenges, count: challenges.length },
       message: `Simulated ${challenges.length} potential reviewer challenge(s) across ${lenses.join(', ')} lenses.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'simulate_challenges', message: 'Challenge simulation failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'simulate_challenges',
+      message: 'Challenge simulation failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
 /** Detect narrative drift in a submission package */
-export async function detectDrift(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function detectDrift(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     const packageId = params.packageId;
-    if (!packageId) return { success: false, action: 'detect_drift', message: 'packageId is required.' };
+    if (!packageId)
+      return { success: false, action: 'detect_drift', message: 'packageId is required.' };
     const drifts = await submissionTwinService.detectDrift(packageId, ctx.organizationId);
     return {
-      success: true, action: 'detect_drift',
+      success: true,
+      action: 'detect_drift',
       data: { drifts, count: drifts.length },
-      message: drifts.length > 0
-        ? `Detected ${drifts.length} narrative drift(s) in the submission package. Review recommended.`
-        : `No narrative drift detected. Submission narrative is consistent.`,
+      message:
+        drifts.length > 0
+          ? `Detected ${drifts.length} narrative drift(s) in the submission package. Review recommended.`
+          : `No narrative drift detected. Submission narrative is consistent.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'detect_drift', message: 'Drift detection failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'detect_drift',
+      message: 'Drift detection failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
 /** Predict next best artifact to work on */
-export async function predictNextArtifact(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function predictNextArtifact(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     const packageId = params.packageId;
-    if (!packageId) return { success: false, action: 'predict_next_artifact', message: 'packageId is required.' };
-    const prediction = await submissionTwinService.predictNextBestArtifact(packageId, ctx.organizationId);
+    if (!packageId)
+      return { success: false, action: 'predict_next_artifact', message: 'packageId is required.' };
+    const prediction = await submissionTwinService.predictNextBestArtifact(
+      packageId,
+      ctx.organizationId
+    );
     return {
-      success: true, action: 'predict_next_artifact',
+      success: true,
+      action: 'predict_next_artifact',
       data: { prediction },
       message: `Next best artifact prediction generated. Focus on what maximizes submission readiness.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'predict_next_artifact', message: 'Prediction failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'predict_next_artifact',
+      message: 'Prediction failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
 /** Compute submission readiness and fragility scores */
-export async function computeReadiness(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function computeReadiness(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     const packageId = params.packageId;
-    if (!packageId) return { success: false, action: 'compute_readiness', message: 'packageId is required.' };
-    const result = await submissionTwinService.computeReadinessAndFragility(packageId, ctx.organizationId);
+    if (!packageId)
+      return { success: false, action: 'compute_readiness', message: 'packageId is required.' };
+    const result = await submissionTwinService.computeReadinessAndFragility(
+      packageId,
+      ctx.organizationId
+    );
     return {
-      success: true, action: 'compute_readiness',
-      data: { readinessScore: result.readinessScore, fragilityScore: result.fragilityScore, weakZones: result.weakZones },
+      success: true,
+      action: 'compute_readiness',
+      data: {
+        readinessScore: result.readinessScore,
+        fragilityScore: result.fragilityScore,
+        weakZones: result.weakZones,
+      },
       message: `Readiness: ${result.readinessScore}% | Fragility: ${result.fragilityScore}% | ${result.weakZones.length} weak zone(s) identified.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'compute_readiness', message: 'Readiness computation failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'compute_readiness',
+      message: 'Readiness computation failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -2275,40 +2951,68 @@ export async function computeReadiness(ctx: CommandContext, params: Record<strin
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Scan a project for cross-artifact contradictions */
-export async function scanContradictions(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function scanContradictions(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     const projectId = params.projectId || ctx.activeProjectId;
-    if (!projectId) return { success: false, action: 'scan_contradictions', message: 'projectId is required.' };
+    if (!projectId)
+      return { success: false, action: 'scan_contradictions', message: 'projectId is required.' };
     const result = await contradictionEngineService.scanProject(ctx.organizationId, projectId);
     const { findings, summary } = result;
     const criticalCount = (summary.bySeverity['critical'] || 0) + (summary.bySeverity['high'] || 0);
     return {
-      success: true, action: 'scan_contradictions',
+      success: true,
+      action: 'scan_contradictions',
       data: { findings, summary, totalCount: summary.total, criticalCount },
       message: `Found ${summary.total} contradiction(s): ${criticalCount} critical/high severity. ${summary.total === 0 ? 'Documents are internally consistent.' : 'Review recommended.'}`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'scan_contradictions', message: 'Contradiction scan failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'scan_contradictions',
+      message: 'Contradiction scan failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
 /** Check if contradictions block promotion of an artifact */
-export async function checkPromotionBlockers(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function checkPromotionBlockers(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     const artifactId = params.artifactId;
-    if (!artifactId) return { success: false, action: 'check_promotion_blockers', message: 'artifactId is required.' };
+    if (!artifactId)
+      return {
+        success: false,
+        action: 'check_promotion_blockers',
+        message: 'artifactId is required.',
+      };
     const projectId = params.projectId || ctx.activeProjectId || 0;
-    const result = await contradictionEngineService.checkPromotionBlocked(ctx.organizationId, projectId, artifactId);
+    const result = await contradictionEngineService.checkPromotionBlocked(
+      ctx.organizationId,
+      projectId,
+      artifactId
+    );
     const blocked = result.blocked;
     return {
-      success: true, action: 'check_promotion_blockers',
+      success: true,
+      action: 'check_promotion_blockers',
       data: { blocked, artifactId },
       message: blocked
         ? `Promotion BLOCKED for artifact ${artifactId}. Unresolved contradictions must be resolved first.`
         : `Artifact ${artifactId} is clear for promotion. No blocking contradictions found.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'check_promotion_blockers', message: 'Promotion check failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'check_promotion_blockers',
+      message: 'Promotion check failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -2317,7 +3021,10 @@ export async function checkPromotionBlockers(ctx: CommandContext, params: Record
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Analyze cross-jurisdictional regulatory divergences and harmonization strategies */
-export async function analyzeJurisdictions(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function analyzeJurisdictions(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     const targetAgencies = params.targetAgencies || params.agencies || ['FDA', 'EMA'];
     const result = await crossJurisdictionalEngine.analyze({
@@ -2327,7 +3034,8 @@ export async function analyzeJurisdictions(ctx: CommandContext, params: Record<s
       productType: params.productType,
     });
     return {
-      success: true, action: 'analyze_jurisdictions',
+      success: true,
+      action: 'analyze_jurisdictions',
       data: {
         divergences: result.divergences,
         reliancePathways: result.reliancePathways,
@@ -2338,7 +3046,12 @@ export async function analyzeJurisdictions(ctx: CommandContext, params: Record<s
       message: `Cross-jurisdictional analysis complete for ${targetAgencies.join(', ')}. ${result.divergences?.length || 0} divergence(s), ${result.reliancePathways?.length || 0} reliance pathway(s), ${result.filingSequences?.length || 0} filing sequence option(s).`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'analyze_jurisdictions', message: 'Jurisdictional analysis failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'analyze_jurisdictions',
+      message: 'Jurisdictional analysis failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -2347,41 +3060,68 @@ export async function analyzeJurisdictions(ctx: CommandContext, params: Record<s
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Recommend clinical trial endpoints for an indication */
-export async function recommendEndpoints(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function recommendEndpoints(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
-    if (!params.indication) return { success: false, action: 'recommend_endpoints', message: 'indication is required.' };
+    if (!params.indication)
+      return { success: false, action: 'recommend_endpoints', message: 'indication is required.' };
     const service = getEndpointRecommenderService();
     const recommendations = await service.getComprehensiveEndpointRecommendations(
       params.indication,
       params.phase,
       params.count || 10,
-      params.therapeuticArea,
+      params.therapeuticArea
     );
     return {
-      success: true, action: 'recommend_endpoints',
+      success: true,
+      action: 'recommend_endpoints',
       data: { recommendations, count: recommendations.length },
       message: `Generated ${recommendations.length} endpoint recommendation(s) for ${params.indication}${params.phase ? ` (Phase ${params.phase})` : ''}.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'recommend_endpoints', message: 'Endpoint recommendation failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'recommend_endpoints',
+      message: 'Endpoint recommendation failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
 /** Evaluate a specific endpoint for an indication */
-export async function evaluateEndpoint(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function evaluateEndpoint(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     if (!params.endpoint || !params.indication) {
-      return { success: false, action: 'evaluate_endpoint', message: 'endpoint and indication are required.' };
+      return {
+        success: false,
+        action: 'evaluate_endpoint',
+        message: 'endpoint and indication are required.',
+      };
     }
     const service = getEndpointRecommenderService();
-    const evaluation = await service.evaluateEndpoint(params.endpoint, params.indication, params.phase);
+    const evaluation = await service.evaluateEndpoint(
+      params.endpoint,
+      params.indication,
+      params.phase
+    );
     return {
-      success: true, action: 'evaluate_endpoint',
+      success: true,
+      action: 'evaluate_endpoint',
       data: { evaluation },
       message: `Endpoint "${params.endpoint}" scored ${evaluation.score}/100 for ${params.indication}. ${evaluation.feedback}`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'evaluate_endpoint', message: 'Endpoint evaluation failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'evaluate_endpoint',
+      message: 'Endpoint evaluation failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -2390,10 +3130,14 @@ export async function evaluateEndpoint(ctx: CommandContext, params: Record<strin
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Run a full RIM (Regulatory Intelligence Model) assessment on content */
-export async function runRIMScan(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function runRIMScan(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     const projectId = params.projectId || ctx.activeProjectId;
-    if (!projectId) return { success: false, action: 'run_rim_scan', message: 'projectId is required.' };
+    if (!projectId)
+      return { success: false, action: 'run_rim_scan', message: 'projectId is required.' };
     const rimCtx: RIMContext = {
       organizationId: ctx.organizationId,
       projectId,
@@ -2407,7 +3151,8 @@ export async function runRIMScan(ctx: CommandContext, params: Record<string, unk
     };
     const assessment = await runRIMAssessment(rimCtx);
     return {
-      success: true, action: 'run_rim_scan',
+      success: true,
+      action: 'run_rim_scan',
       data: {
         rimScore: assessment.rimScore,
         judgment: assessment.judgment,
@@ -2420,7 +3165,12 @@ export async function runRIMScan(ctx: CommandContext, params: Record<string, unk
       message: `RIM assessment complete. Score: ${assessment.rimScore ?? 'N/A'}/100 — ${assessment.rimVerdict}. ${assessment.patternMatches?.length || 0} pattern(s) detected. ${assessment.topActions?.length || 0} recommended action(s).`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'run_rim_scan', message: 'RIM assessment failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'run_rim_scan',
+      message: 'RIM assessment failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -2429,10 +3179,17 @@ export async function runRIMScan(ctx: CommandContext, params: Record<string, unk
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Generate a regulatory report (sealed, audited, 21 CFR Part 11 compliant) */
-export async function generateReport(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function generateReport(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     if (!params.domain || !params.title) {
-      return { success: false, action: 'generate_report', message: 'domain and title are required.' };
+      return {
+        success: false,
+        action: 'generate_report',
+        message: 'domain and title are required.',
+      };
     }
     const projectId = params.projectId || ctx.activeProjectId;
     const report = await (intelligentReportEngine as any).generateReport({
@@ -2445,12 +3202,22 @@ export async function generateReport(ctx: CommandContext, params: Record<string,
       parameters: params.parameters || {},
     });
     return {
-      success: true, action: 'generate_report',
-      data: { reportId: report?.record?.id, verificationCode: report?.verificationCode, title: params.title },
+      success: true,
+      action: 'generate_report',
+      data: {
+        reportId: report?.record?.id,
+        verificationCode: report?.verificationCode,
+        title: params.title,
+      },
       message: `Report "${params.title}" generated (domain: ${params.domain}). Cryptographically sealed with verification code.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'generate_report', message: 'Report generation failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'generate_report',
+      message: 'Report generation failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -2459,37 +3226,68 @@ export async function generateReport(ctx: CommandContext, params: Record<string,
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Generate clinical trial insights for an indication and phase */
-export async function generateClinicalInsights(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function generateClinicalInsights(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
-    if (!params.indication) return { success: false, action: 'generate_clinical_insights', message: 'indication is required.' };
-    const insights = await clinicalIntelligenceService.generateClinicalTrialInsights(params.indication, params.phase || 'Phase 2');
+    if (!params.indication)
+      return {
+        success: false,
+        action: 'generate_clinical_insights',
+        message: 'indication is required.',
+      };
+    const insights = await clinicalIntelligenceService.generateClinicalTrialInsights(
+      params.indication,
+      params.phase || 'Phase 2'
+    );
     return {
-      success: true, action: 'generate_clinical_insights',
+      success: true,
+      action: 'generate_clinical_insights',
       data: { insights },
       message: `Clinical trial insights generated for ${params.indication} (${params.phase || 'Phase 2'}).`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'generate_clinical_insights', message: 'Clinical insights generation failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'generate_clinical_insights',
+      message: 'Clinical insights generation failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
 /** Perform cross-document semantic analysis */
-export async function analyzeCrossDocument(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
+export async function analyzeCrossDocument(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
   try {
     const documentIds = params.documentIds;
     if (!documentIds || !Array.isArray(documentIds) || documentIds.length < 2) {
-      return { success: false, action: 'analyze_cross_document', message: 'documentIds array (minimum 2) is required.' };
+      return {
+        success: false,
+        action: 'analyze_cross_document',
+        message: 'documentIds array (minimum 2) is required.',
+      };
     }
     const result = await clinicalIntelligenceService.performCrossDocumentAnalysis(
-      documentIds, params.documentType || 'CSR'
+      documentIds,
+      params.documentType || 'CSR'
     );
     return {
-      success: true, action: 'analyze_cross_document',
+      success: true,
+      action: 'analyze_cross_document',
       data: { analysis: result },
       message: `Cross-document analysis complete across ${documentIds.length} documents.`,
     };
   } catch (err: unknown) {
-    return { success: false, action: 'analyze_cross_document', message: 'Cross-document analysis failed.', error: err instanceof Error ? err.message : String(err) };
+    return {
+      success: false,
+      action: 'analyze_cross_document',
+      message: 'Cross-document analysis failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -2498,42 +3296,75 @@ export async function analyzeCrossDocument(ctx: CommandContext, params: Record<s
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type CommandName =
-  | 'create_project' | 'list_projects' | 'update_project'
-  | 'create_artifact' | 'update_artifact' | 'update_artifact_status'
-  | 'list_artifacts' | 'place_in_dossier'
-  | 'create_task' | 'update_task' | 'list_tasks'
-  | 'check_dossier_readiness' | 'create_submission_package'
-  | 'create_review_thread' | 'add_review_comment'
-  | 'search_artifacts' | 'list_team_members'
-  | 'list_artifact_versions' | 'run_compliance_scan'
-  | 'export_artifact' | 'compare_versions' | 'review_version_impact'
-  | 'create_milestone' | 'update_milestone' | 'list_milestones'
+  | 'create_project'
+  | 'list_projects'
+  | 'update_project'
+  | 'create_artifact'
+  | 'update_artifact'
+  | 'update_artifact_status'
+  | 'list_artifacts'
+  | 'place_in_dossier'
+  | 'create_task'
+  | 'update_task'
+  | 'list_tasks'
+  | 'check_dossier_readiness'
+  | 'create_submission_package'
+  | 'create_review_thread'
+  | 'add_review_comment'
+  | 'search_artifacts'
+  | 'list_team_members'
+  | 'list_artifact_versions'
+  | 'run_compliance_scan'
+  | 'export_artifact'
+  | 'compare_versions'
+  | 'review_version_impact'
+  | 'create_milestone'
+  | 'update_milestone'
+  | 'list_milestones'
   | 'revert_to_version'
-  | 'load_user_context' | 'load_conversation_history'
-  | 'export_personal_data' | 'erase_personal_data'
-  | 'generate_sap' | 'compute_sample_size' | 'compute_dose_escalation'
-  | 'assess_defensibility' | 'design_trial'
-  | 'draft_section' | 'scan_deficiencies' | 'freeze_document'
-  | 'sign_document' | 'export_document' | 'generate_checklist'
+  | 'load_user_context'
+  | 'load_conversation_history'
+  | 'export_personal_data'
+  | 'erase_personal_data'
+  | 'generate_sap'
+  | 'compute_sample_size'
+  | 'compute_dose_escalation'
+  | 'assess_defensibility'
+  | 'design_trial'
+  | 'draft_section'
+  | 'scan_deficiencies'
+  | 'freeze_document'
+  | 'sign_document'
+  | 'export_document'
+  | 'generate_checklist'
   | 'submit_document'
   // Precedent Engine
-  | 'search_precedents' | 'analyze_crl_triggers' | 'analyze_rtf_triggers'
-  | 'recommend_strategy' | 'check_claim'
+  | 'search_precedents'
+  | 'analyze_crl_triggers'
+  | 'analyze_rtf_triggers'
+  | 'recommend_strategy'
+  | 'check_claim'
   // Submission Twin
-  | 'run_submission_assessment' | 'simulate_challenges' | 'detect_drift'
-  | 'predict_next_artifact' | 'compute_readiness'
+  | 'run_submission_assessment'
+  | 'simulate_challenges'
+  | 'detect_drift'
+  | 'predict_next_artifact'
+  | 'compute_readiness'
   // Contradiction Engine
-  | 'scan_contradictions' | 'check_promotion_blockers'
+  | 'scan_contradictions'
+  | 'check_promotion_blockers'
   // Cross-Jurisdictional
   | 'analyze_jurisdictions'
   // Endpoint Recommender
-  | 'recommend_endpoints' | 'evaluate_endpoint'
+  | 'recommend_endpoints'
+  | 'evaluate_endpoint'
   // RIM Intelligence
   | 'run_rim_scan'
   // Report Engine
   | 'generate_report'
   // Clinical Intelligence
-  | 'generate_clinical_insights' | 'analyze_cross_document';
+  | 'generate_clinical_insights'
+  | 'analyze_cross_document';
 
 export interface CommandDefinition {
   name: CommandName;
@@ -2543,83 +3374,403 @@ export interface CommandDefinition {
 }
 
 export const COMMAND_REGISTRY: CommandDefinition[] = [
-  { name: 'create_project', description: 'Create a new regulatory project', parameters: 'name, submissionType?, therapeuticArea?, description?', example: '"Create an IND project for our oncology compound"' },
-  { name: 'list_projects', description: 'List all projects in the organization', parameters: 'none', example: '"Show me all my projects"' },
-  { name: 'update_project', description: 'Update project metadata', parameters: 'projectId, updates (name, status, priority, etc.)', example: '"Update project 5 priority to high"' },
-  { name: 'create_artifact', description: 'Create a new document/artifact in a project', parameters: 'projectId, title, content, ctdSection?, type?', example: '"Create a Module 2.5 Clinical Overview draft"' },
-  { name: 'update_artifact', description: 'Update an existing artifact (creates new version)', parameters: 'projectId, artifactId, content, changeDescription?', example: '"Update artifact 12 with revised safety narrative"' },
-  { name: 'update_artifact_status', description: 'Change artifact lifecycle status', parameters: 'projectId, artifactId, status (draft/review/approved/locked)', example: '"Move artifact 12 to review status"' },
-  { name: 'list_artifacts', description: 'List artifacts in a project', parameters: 'projectId, status?, ctdSection?', example: '"Show all draft artifacts in project 5"' },
-  { name: 'place_in_dossier', description: 'Place artifact in a CTD dossier section', parameters: 'projectId, artifactId, ctdSection', example: '"Place artifact 12 in section 2.7.4"' },
-  { name: 'create_task', description: 'Create a task in a project', parameters: 'projectId, title, priority?, assigneeId?, dueDate?, description?', example: '"Create a high-priority task to complete safety tables"' },
-  { name: 'update_task', description: 'Update task status or details', parameters: 'projectId, taskId, updates (status, priority, etc.)', example: '"Mark task 8 as completed"' },
-  { name: 'list_tasks', description: 'List tasks in a project', parameters: 'projectId, status?, priority?', example: '"Show all pending high-priority tasks"' },
-  { name: 'check_dossier_readiness', description: 'Check submission readiness of the dossier', parameters: 'projectId', example: '"How ready is the dossier for project 5?"' },
-  { name: 'load_user_context', description: 'Load my full context (projects, history, artifacts)', parameters: 'none', example: '"What am I working on?"' },
-  { name: 'load_conversation_history', description: 'Load my past conversations', parameters: 'projectId?, limit?', example: '"Show my recent conversations for this project"' },
-  { name: 'export_personal_data', description: 'Export personal data package for a data subject (GDPR access/portability)', parameters: 'dataSubjectId? (defaults to current user)', example: '"Export my personal data package"' },
-  { name: 'erase_personal_data', description: 'Erase/redact user-generated personal data for GDPR right-to-erasure workflow', parameters: 'dataSubjectId? (defaults to current user), reason?', example: '"Delete my personal data and redact prior authored content"' },
-  { name: 'create_submission_package', description: 'Create a submission package for regulatory filing', parameters: 'projectId, title, packageFamily (ind/510k/cer/nda/bla/pma), targetDate?', example: '"Create an IND submission package for project 5"' },
-  { name: 'create_review_thread', description: 'Create a review thread on an artifact with comments', parameters: 'projectId, artifactId, title, content, assigneeId?', example: '"Create a review thread on artifact 12 asking about safety data gaps"' },
-  { name: 'add_review_comment', description: 'Add a comment to an existing review thread', parameters: 'threadId, content', example: '"Add a comment to review thread 5 noting the updated safety tables"' },
-  { name: 'list_artifact_versions', description: 'Show version history of an artifact', parameters: 'projectId, artifactId', example: '"Show me the version history of artifact 12"' },
-  { name: 'run_compliance_scan', description: 'Run a compliance scan on an artifact', parameters: 'projectId, artifactId', example: '"Scan artifact 12 for compliance issues"' },
-  { name: 'search_artifacts', description: 'Search artifacts by content or title', parameters: 'query, projectId?, limit?', example: '"Find all artifacts mentioning hepatotoxicity"' },
-  { name: 'list_team_members', description: 'List team members in the organization', parameters: 'none', example: '"Who is on my team?"' },
-  { name: 'export_artifact', description: 'Export an artifact to DOCX format', parameters: 'projectId, artifactId, format (docx/pdf)', example: '"Export artifact 12 as a Word document"' },
-  { name: 'compare_versions', description: 'Compare two versions of an artifact (structural diff)', parameters: 'artifactId, versionA, versionB', example: '"What changed between version 1 and version 3 of artifact 12?"' },
-  { name: 'review_version_impact', description: 'Analyze the REGULATORY IMPACT of changes between two versions — classifies changes, assesses reviewer sensitivity, rates defensibility. Can save as governed artifact.', parameters: 'projectId, artifactId, versionA, versionB, submissionType?, saveAsArtifact?', example: '"What is the regulatory impact of the changes to the Clinical Overview? Save it."' },
-  { name: 'create_milestone', description: 'Create a submission milestone with target date', parameters: 'packageId, title, targetDate?, description?', example: '"Create a milestone for Pre-IND meeting by June 15"' },
-  { name: 'update_milestone', description: 'Update a milestone status or details', parameters: 'milestoneId, updates (gateStatus, targetDate, etc.)', example: '"Mark milestone 3 as completed"' },
-  { name: 'list_milestones', description: 'List milestones for a submission package', parameters: 'packageId', example: '"Show all milestones for the IND package"' },
-  { name: 'revert_to_version', description: 'Revert artifact to a previous version (non-destructive)', parameters: 'projectId, artifactId, targetVersion, confirmed=true', example: '"Revert artifact 12 to version 2"' },
-  { name: 'generate_sap', description: 'Generate a Statistical Analysis Plan and save as artifact', parameters: 'projectId, indication, phase, primaryEndpoint, sampleSize?, alpha?, power?, missingDataStrategy?', example: '"Generate a SAP for our Phase 2 oncology trial"' },
-  { name: 'compute_sample_size', description: 'Calculate sample size and power for a study design', parameters: 'endpointType (continuous/binary/survival), effectSize, alpha?, power?, allocationRatio?, dropoutRate?', example: '"Calculate sample size for a binary endpoint with 15% treatment difference"' },
-  { name: 'compute_dose_escalation', description: 'Design dose escalation with MTD estimation', parameters: 'method (3plus3/boin/crm/fibonacci), startingDose, doseLevels, targetDLTRate?', example: '"Design a BOIN dose escalation starting at 10mg with 5 dose levels"' },
-  { name: 'assess_defensibility', description: 'Run 7-dimension statistical defensibility assessment', parameters: 'projectId, artifactId?', example: '"Assess the statistical defensibility of our study design"' },
-  { name: 'design_trial', description: 'Design a clinical trial (parallel, crossover, adaptive, basket, umbrella, group sequential)', parameters: 'indication, phase, designType, primaryEndpoint, comparator?, adaptiveFeatures?', example: '"Design an adaptive Phase 2/3 oncology trial with interim analysis"' },
-  { name: 'draft_section', description: 'Draft a CTD section using AI (submission-ready prose)', parameters: 'sectionId', example: '"Draft section 2.5 Clinical Overview"' },
-  { name: 'scan_deficiencies', description: 'Scan a section/artifact for regulatory deficiencies', parameters: 'sectionId or artifactId', example: '"Scan the safety narrative for deficiencies"' },
-  { name: 'freeze_document', description: 'Freeze a document (immutable snapshot, no further edits)', parameters: 'docId', example: '"Freeze the Module 2.7 Clinical Summary for submission"' },
-  { name: 'sign_document', description: 'Request electronic signature on a document (21 CFR Part 11)', parameters: 'docId, meaning (AUTHOR/REVIEWER/APPROVER)', example: '"Sign the Protocol as APPROVER"' },
-  { name: 'export_document', description: 'Export document as PDF or DOCX', parameters: 'docId, format (pdf/docx)', example: '"Export the Clinical Overview as a Word document"' },
-  { name: 'generate_checklist', description: 'Generate regulatory compliance checklist for a document', parameters: 'docId', example: '"Generate a compliance checklist for the CMC module"' },
-  { name: 'submit_document', description: 'Submit document to regulatory workflow', parameters: 'docId', example: '"Submit the IND cover letter"' },
+  {
+    name: 'create_project',
+    description: 'Create a new regulatory project',
+    parameters: 'name, submissionType?, therapeuticArea?, description?',
+    example: '"Create an IND project for our oncology compound"',
+  },
+  {
+    name: 'list_projects',
+    description: 'List all projects in the organization',
+    parameters: 'none',
+    example: '"Show me all my projects"',
+  },
+  {
+    name: 'update_project',
+    description: 'Update project metadata',
+    parameters: 'projectId, updates (name, status, priority, etc.)',
+    example: '"Update project 5 priority to high"',
+  },
+  {
+    name: 'create_artifact',
+    description: 'Create a new document/artifact in a project',
+    parameters: 'projectId, title, content, ctdSection?, type?',
+    example: '"Create a Module 2.5 Clinical Overview draft"',
+  },
+  {
+    name: 'update_artifact',
+    description: 'Update an existing artifact (creates new version)',
+    parameters: 'projectId, artifactId, content, changeDescription?',
+    example: '"Update artifact 12 with revised safety narrative"',
+  },
+  {
+    name: 'update_artifact_status',
+    description: 'Change artifact lifecycle status',
+    parameters: 'projectId, artifactId, status (draft/review/approved/locked)',
+    example: '"Move artifact 12 to review status"',
+  },
+  {
+    name: 'list_artifacts',
+    description: 'List artifacts in a project',
+    parameters: 'projectId, status?, ctdSection?',
+    example: '"Show all draft artifacts in project 5"',
+  },
+  {
+    name: 'place_in_dossier',
+    description: 'Place artifact in a CTD dossier section',
+    parameters: 'projectId, artifactId, ctdSection',
+    example: '"Place artifact 12 in section 2.7.4"',
+  },
+  {
+    name: 'create_task',
+    description: 'Create a task in a project',
+    parameters: 'projectId, title, priority?, assigneeId?, dueDate?, description?',
+    example: '"Create a high-priority task to complete safety tables"',
+  },
+  {
+    name: 'update_task',
+    description: 'Update task status or details',
+    parameters: 'projectId, taskId, updates (status, priority, etc.)',
+    example: '"Mark task 8 as completed"',
+  },
+  {
+    name: 'list_tasks',
+    description: 'List tasks in a project',
+    parameters: 'projectId, status?, priority?',
+    example: '"Show all pending high-priority tasks"',
+  },
+  {
+    name: 'check_dossier_readiness',
+    description: 'Check submission readiness of the dossier',
+    parameters: 'projectId',
+    example: '"How ready is the dossier for project 5?"',
+  },
+  {
+    name: 'load_user_context',
+    description: 'Load my full context (projects, history, artifacts)',
+    parameters: 'none',
+    example: '"What am I working on?"',
+  },
+  {
+    name: 'load_conversation_history',
+    description: 'Load my past conversations',
+    parameters: 'projectId?, limit?',
+    example: '"Show my recent conversations for this project"',
+  },
+  {
+    name: 'export_personal_data',
+    description: 'Export personal data package for a data subject (GDPR access/portability)',
+    parameters: 'dataSubjectId? (defaults to current user)',
+    example: '"Export my personal data package"',
+  },
+  {
+    name: 'erase_personal_data',
+    description: 'Erase/redact user-generated personal data for GDPR right-to-erasure workflow',
+    parameters: 'dataSubjectId? (defaults to current user), reason?',
+    example: '"Delete my personal data and redact prior authored content"',
+  },
+  {
+    name: 'create_submission_package',
+    description: 'Create a submission package for regulatory filing',
+    parameters: 'projectId, title, packageFamily (ind/510k/cer/nda/bla/pma), targetDate?',
+    example: '"Create an IND submission package for project 5"',
+  },
+  {
+    name: 'create_review_thread',
+    description: 'Create a review thread on an artifact with comments',
+    parameters: 'projectId, artifactId, title, content, assigneeId?',
+    example: '"Create a review thread on artifact 12 asking about safety data gaps"',
+  },
+  {
+    name: 'add_review_comment',
+    description: 'Add a comment to an existing review thread',
+    parameters: 'threadId, content',
+    example: '"Add a comment to review thread 5 noting the updated safety tables"',
+  },
+  {
+    name: 'list_artifact_versions',
+    description: 'Show version history of an artifact',
+    parameters: 'projectId, artifactId',
+    example: '"Show me the version history of artifact 12"',
+  },
+  {
+    name: 'run_compliance_scan',
+    description: 'Run a compliance scan on an artifact',
+    parameters: 'projectId, artifactId',
+    example: '"Scan artifact 12 for compliance issues"',
+  },
+  {
+    name: 'search_artifacts',
+    description: 'Search artifacts by content or title',
+    parameters: 'query, projectId?, limit?',
+    example: '"Find all artifacts mentioning hepatotoxicity"',
+  },
+  {
+    name: 'list_team_members',
+    description: 'List team members in the organization',
+    parameters: 'none',
+    example: '"Who is on my team?"',
+  },
+  {
+    name: 'export_artifact',
+    description: 'Export an artifact to DOCX format',
+    parameters: 'projectId, artifactId, format (docx/pdf)',
+    example: '"Export artifact 12 as a Word document"',
+  },
+  {
+    name: 'compare_versions',
+    description: 'Compare two versions of an artifact (structural diff)',
+    parameters: 'artifactId, versionA, versionB',
+    example: '"What changed between version 1 and version 3 of artifact 12?"',
+  },
+  {
+    name: 'review_version_impact',
+    description:
+      'Analyze the REGULATORY IMPACT of changes between two versions — classifies changes, assesses reviewer sensitivity, rates defensibility. Can save as governed artifact.',
+    parameters: 'projectId, artifactId, versionA, versionB, submissionType?, saveAsArtifact?',
+    example: '"What is the regulatory impact of the changes to the Clinical Overview? Save it."',
+  },
+  {
+    name: 'create_milestone',
+    description: 'Create a submission milestone with target date',
+    parameters: 'packageId, title, targetDate?, description?',
+    example: '"Create a milestone for Pre-IND meeting by June 15"',
+  },
+  {
+    name: 'update_milestone',
+    description: 'Update a milestone status or details',
+    parameters: 'milestoneId, updates (gateStatus, targetDate, etc.)',
+    example: '"Mark milestone 3 as completed"',
+  },
+  {
+    name: 'list_milestones',
+    description: 'List milestones for a submission package',
+    parameters: 'packageId',
+    example: '"Show all milestones for the IND package"',
+  },
+  {
+    name: 'revert_to_version',
+    description: 'Revert artifact to a previous version (non-destructive)',
+    parameters: 'projectId, artifactId, targetVersion, confirmed=true',
+    example: '"Revert artifact 12 to version 2"',
+  },
+  {
+    name: 'generate_sap',
+    description: 'Generate a Statistical Analysis Plan and save as artifact',
+    parameters:
+      'projectId, indication, phase, primaryEndpoint, sampleSize?, alpha?, power?, missingDataStrategy?',
+    example: '"Generate a SAP for our Phase 2 oncology trial"',
+  },
+  {
+    name: 'compute_sample_size',
+    description: 'Calculate sample size and power for a study design',
+    parameters:
+      'endpointType (continuous/binary/survival), effectSize, alpha?, power?, allocationRatio?, dropoutRate?',
+    example: '"Calculate sample size for a binary endpoint with 15% treatment difference"',
+  },
+  {
+    name: 'compute_dose_escalation',
+    description: 'Design dose escalation with MTD estimation',
+    parameters: 'method (3plus3/boin/crm/fibonacci), startingDose, doseLevels, targetDLTRate?',
+    example: '"Design a BOIN dose escalation starting at 10mg with 5 dose levels"',
+  },
+  {
+    name: 'assess_defensibility',
+    description: 'Run 7-dimension statistical defensibility assessment',
+    parameters: 'projectId, artifactId?',
+    example: '"Assess the statistical defensibility of our study design"',
+  },
+  {
+    name: 'design_trial',
+    description:
+      'Design a clinical trial (parallel, crossover, adaptive, basket, umbrella, group sequential)',
+    parameters: 'indication, phase, designType, primaryEndpoint, comparator?, adaptiveFeatures?',
+    example: '"Design an adaptive Phase 2/3 oncology trial with interim analysis"',
+  },
+  {
+    name: 'draft_section',
+    description: 'Draft a CTD section using AI (submission-ready prose)',
+    parameters: 'sectionId',
+    example: '"Draft section 2.5 Clinical Overview"',
+  },
+  {
+    name: 'scan_deficiencies',
+    description: 'Scan a section/artifact for regulatory deficiencies',
+    parameters: 'sectionId or artifactId',
+    example: '"Scan the safety narrative for deficiencies"',
+  },
+  {
+    name: 'freeze_document',
+    description: 'Freeze a document (immutable snapshot, no further edits)',
+    parameters: 'docId',
+    example: '"Freeze the Module 2.7 Clinical Summary for submission"',
+  },
+  {
+    name: 'sign_document',
+    description: 'Request electronic signature on a document (21 CFR Part 11)',
+    parameters: 'docId, meaning (AUTHOR/REVIEWER/APPROVER)',
+    example: '"Sign the Protocol as APPROVER"',
+  },
+  {
+    name: 'export_document',
+    description: 'Export document as PDF or DOCX',
+    parameters: 'docId, format (pdf/docx)',
+    example: '"Export the Clinical Overview as a Word document"',
+  },
+  {
+    name: 'generate_checklist',
+    description: 'Generate regulatory compliance checklist for a document',
+    parameters: 'docId',
+    example: '"Generate a compliance checklist for the CMC module"',
+  },
+  {
+    name: 'submit_document',
+    description: 'Submit document to regulatory workflow',
+    parameters: 'docId',
+    example: '"Submit the IND cover letter"',
+  },
 
   // ── Precedent Engine ──────────────────────────────────────────────────────
-  { name: 'search_precedents', description: 'Search regulatory precedents by indication, submission type, or therapeutic area', parameters: 'query?, indication?, submissionType?, therapeuticArea?, limit?', example: '"Find precedents for oncology NDA submissions"' },
-  { name: 'analyze_crl_triggers', description: 'Analyze Complete Response Letter (CRL) trigger risks based on regulatory precedents', parameters: 'submissionType?, indication?, therapeuticArea?, query?', example: '"What CRL risks does our NDA face?"' },
-  { name: 'analyze_rtf_triggers', description: 'Analyze Refuse to File (RTF) trigger risks', parameters: 'submissionType?, indication?, therapeuticArea?, query?', example: '"Check RTF risks for our submission"' },
-  { name: 'recommend_strategy', description: 'Recommend regulatory submission strategy based on precedent analysis', parameters: 'submissionType?, indication?, therapeuticArea?, query?', example: '"What submission strategy should we use for this oncology compound?"' },
-  { name: 'check_claim', description: 'Check a specific regulatory claim against precedent evidence', parameters: 'claim, submissionType?, indication?, therapeuticArea?', example: '"Is the claim that our drug shows superior efficacy defensible?"' },
+  {
+    name: 'search_precedents',
+    description: 'Search regulatory precedents by indication, submission type, or therapeutic area',
+    parameters: 'query?, indication?, submissionType?, therapeuticArea?, limit?',
+    example: '"Find precedents for oncology NDA submissions"',
+  },
+  {
+    name: 'analyze_crl_triggers',
+    description:
+      'Analyze Complete Response Letter (CRL) trigger risks based on regulatory precedents',
+    parameters: 'submissionType?, indication?, therapeuticArea?, query?',
+    example: '"What CRL risks does our NDA face?"',
+  },
+  {
+    name: 'analyze_rtf_triggers',
+    description: 'Analyze Refuse to File (RTF) trigger risks',
+    parameters: 'submissionType?, indication?, therapeuticArea?, query?',
+    example: '"Check RTF risks for our submission"',
+  },
+  {
+    name: 'recommend_strategy',
+    description: 'Recommend regulatory submission strategy based on precedent analysis',
+    parameters: 'submissionType?, indication?, therapeuticArea?, query?',
+    example: '"What submission strategy should we use for this oncology compound?"',
+  },
+  {
+    name: 'check_claim',
+    description: 'Check a specific regulatory claim against precedent evidence',
+    parameters: 'claim, submissionType?, indication?, therapeuticArea?',
+    example: '"Is the claim that our drug shows superior efficacy defensible?"',
+  },
 
   // ── Submission Twin ───────────────────────────────────────────────────────
-  { name: 'run_submission_assessment', description: 'Run a full submission twin assessment (claims, evidence integrity, drift, challenges, readiness, fragility)', parameters: 'packageId', example: '"Run a full assessment on submission package 3"' },
-  { name: 'simulate_challenges', description: 'Simulate regulatory reviewer challenges on a submission package', parameters: 'packageId, assessmentId, lenses? (clinical/statistical/cmc/safety)', example: '"Simulate reviewer challenges for package 3 from a clinical and statistical lens"' },
-  { name: 'detect_drift', description: 'Detect narrative drift (inconsistencies across documents) in a submission package', parameters: 'packageId', example: '"Check if our submission has any narrative drift"' },
-  { name: 'predict_next_artifact', description: 'Predict the next best artifact to work on to maximize submission readiness', parameters: 'packageId', example: '"What should I work on next for submission package 3?"' },
-  { name: 'compute_readiness', description: 'Compute submission readiness score and fragility analysis with weak zones', parameters: 'packageId', example: '"How ready is submission package 3?"' },
+  {
+    name: 'run_submission_assessment',
+    description:
+      'Run a full submission twin assessment (claims, evidence integrity, drift, challenges, readiness, fragility)',
+    parameters: 'packageId',
+    example: '"Run a full assessment on submission package 3"',
+  },
+  {
+    name: 'simulate_challenges',
+    description: 'Simulate regulatory reviewer challenges on a submission package',
+    parameters: 'packageId, assessmentId, lenses? (clinical/statistical/cmc/safety)',
+    example: '"Simulate reviewer challenges for package 3 from a clinical and statistical lens"',
+  },
+  {
+    name: 'detect_drift',
+    description:
+      'Detect narrative drift (inconsistencies across documents) in a submission package',
+    parameters: 'packageId',
+    example: '"Check if our submission has any narrative drift"',
+  },
+  {
+    name: 'predict_next_artifact',
+    description: 'Predict the next best artifact to work on to maximize submission readiness',
+    parameters: 'packageId',
+    example: '"What should I work on next for submission package 3?"',
+  },
+  {
+    name: 'compute_readiness',
+    description: 'Compute submission readiness score and fragility analysis with weak zones',
+    parameters: 'packageId',
+    example: '"How ready is submission package 3?"',
+  },
 
   // ── Contradiction Engine ──────────────────────────────────────────────────
-  { name: 'scan_contradictions', description: 'Scan a project for cross-artifact contradictions (assumption drift, decision-action inconsistency, cross-jurisdictional divergence)', parameters: 'projectId?', example: '"Are there any contradictions in our project documents?"' },
-  { name: 'check_promotion_blockers', description: 'Check if unresolved contradictions block artifact promotion', parameters: 'artifactId', example: '"Can I promote artifact 12 or are there blockers?"' },
+  {
+    name: 'scan_contradictions',
+    description:
+      'Scan a project for cross-artifact contradictions (assumption drift, decision-action inconsistency, cross-jurisdictional divergence)',
+    parameters: 'projectId?',
+    example: '"Are there any contradictions in our project documents?"',
+  },
+  {
+    name: 'check_promotion_blockers',
+    description: 'Check if unresolved contradictions block artifact promotion',
+    parameters: 'artifactId',
+    example: '"Can I promote artifact 12 or are there blockers?"',
+  },
 
   // ── Cross-Jurisdictional Intelligence ─────────────────────────────────────
-  { name: 'analyze_jurisdictions', description: 'Analyze cross-jurisdictional regulatory divergences, harmonization frameworks, reliance pathways, and optimal filing sequences', parameters: 'targetAgencies (e.g. FDA,EMA,PMDA), submissionType?, therapeuticArea?, productType?', example: '"Compare FDA vs EMA vs PMDA requirements for our biologics submission"' },
+  {
+    name: 'analyze_jurisdictions',
+    description:
+      'Analyze cross-jurisdictional regulatory divergences, harmonization frameworks, reliance pathways, and optimal filing sequences',
+    parameters:
+      'targetAgencies (e.g. FDA,EMA,PMDA), submissionType?, therapeuticArea?, productType?',
+    example: '"Compare FDA vs EMA vs PMDA requirements for our biologics submission"',
+  },
 
   // ── Endpoint Recommender ──────────────────────────────────────────────────
-  { name: 'recommend_endpoints', description: 'Recommend clinical trial endpoints for a given indication with evidence and regulatory guidance', parameters: 'indication, phase?, therapeuticArea?, count?', example: '"What endpoints should we use for a Phase 3 NSCLC trial?"' },
-  { name: 'evaluate_endpoint', description: 'Evaluate a specific endpoint for regulatory defensibility and precedent support', parameters: 'endpoint, indication, phase?', example: '"How defensible is PFS as our primary endpoint for breast cancer?"' },
+  {
+    name: 'recommend_endpoints',
+    description:
+      'Recommend clinical trial endpoints for a given indication with evidence and regulatory guidance',
+    parameters: 'indication, phase?, therapeuticArea?, count?',
+    example: '"What endpoints should we use for a Phase 3 NSCLC trial?"',
+  },
+  {
+    name: 'evaluate_endpoint',
+    description: 'Evaluate a specific endpoint for regulatory defensibility and precedent support',
+    parameters: 'endpoint, indication, phase?',
+    example: '"How defensible is PFS as our primary endpoint for breast cancer?"',
+  },
 
   // ── RIM Intelligence ──────────────────────────────────────────────────────
-  { name: 'run_rim_scan', description: 'Run a full Regulatory Intelligence Model (RIM) assessment — pattern detection, judgment scoring, signal capture, and recommended actions', parameters: 'projectId?, text?, artifactId?, sectionCode?, submissionType?, targetAgency?', example: '"Run a RIM assessment on the Clinical Overview section"' },
+  {
+    name: 'run_rim_scan',
+    description:
+      'Run a full Regulatory Intelligence Model (RIM) assessment — pattern detection, judgment scoring, signal capture, and recommended actions',
+    parameters: 'projectId?, text?, artifactId?, sectionCode?, submissionType?, targetAgency?',
+    example: '"Run a RIM assessment on the Clinical Overview section"',
+  },
 
   // ── Report Engine ─────────────────────────────────────────────────────────
-  { name: 'generate_report', description: 'Generate a sealed regulatory report (21 CFR Part 11 compliant, cryptographically sealed). Domains: regulatory_submission, clinical_study, cmc_manufacturing, pharmacovigilance, quality_management, compliance_attestation, strategic_intelligence, device_regulatory, biostatistics', parameters: 'domain, title, projectId?, targetRegulatory?, parameters?', example: '"Generate a clinical study report for our Phase 2 trial"' },
+  {
+    name: 'generate_report',
+    description:
+      'Generate a sealed regulatory report (21 CFR Part 11 compliant, cryptographically sealed). Domains: regulatory_submission, clinical_study, cmc_manufacturing, pharmacovigilance, quality_management, compliance_attestation, strategic_intelligence, device_regulatory, biostatistics',
+    parameters: 'domain, title, projectId?, targetRegulatory?, parameters?',
+    example: '"Generate a clinical study report for our Phase 2 trial"',
+  },
 
   // ── Clinical Intelligence ─────────────────────────────────────────────────
-  { name: 'generate_clinical_insights', description: 'Generate clinical trial insights for an indication — key variables, risk factors, design recommendations', parameters: 'indication, phase?', example: '"Generate clinical insights for NSCLC Phase 3"' },
-  { name: 'analyze_cross_document', description: 'Perform semantic cross-document analysis to find connections, gaps, and inconsistencies', parameters: 'documentIds (array of 2+), documentType? (CSR/CER)', example: '"Compare documents 10, 12, and 15 for cross-document patterns"' },
+  {
+    name: 'generate_clinical_insights',
+    description:
+      'Generate clinical trial insights for an indication — key variables, risk factors, design recommendations',
+    parameters: 'indication, phase?',
+    example: '"Generate clinical insights for NSCLC Phase 3"',
+  },
+  {
+    name: 'analyze_cross_document',
+    description:
+      'Perform semantic cross-document analysis to find connections, gaps, and inconsistencies',
+    parameters: 'documentIds (array of 2+), documentType? (CSR/CER)',
+    example: '"Compare documents 10, 12, and 15 for cross-document patterns"',
+  },
 ];
 
 /**
@@ -2643,7 +3794,9 @@ export function buildCommandContextForPrompt(): string {
     lines.push('');
   }
 
-  lines.push('When executing commands, include the command name and parameters in your response using this format:');
+  lines.push(
+    'When executing commands, include the command name and parameters in your response using this format:'
+  );
   lines.push('');
   lines.push('```command');
   lines.push('{"command": "command_name", "params": {...}}');
@@ -2676,7 +3829,9 @@ export function parseCommandBlocks(responseText: string): ParsedCommand[] {
       if (parsed.command && COMMAND_REGISTRY.some(c => c.name === parsed.command)) {
         commands.push({ command: parsed.command as CommandName, params: parsed.params || {} });
       }
-    } catch { /* skip malformed */ }
+    } catch {
+      /* skip malformed */
+    }
   }
   return commands;
 }
@@ -2686,10 +3841,13 @@ export function parseCommandBlocks(responseText: string): ParsedCommand[] {
  */
 export async function executeCommands(
   commands: ParsedCommand[],
-  ctx: CommandContext,
+  ctx: CommandContext
 ): Promise<CommandResult[]> {
   const results: CommandResult[] = [];
-  const commandMap: Record<string, (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>> = {
+  const commandMap: Record<
+    string,
+    (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>
+  > = {
     create_project: createProject,
     list_projects: listProjects,
     update_project: updateProject,
@@ -2767,9 +3925,15 @@ export async function executeCommands(
       try {
         const result = await handler(ctx, cmd.params);
         results.push(result);
-        console.log(`[AnA Command] Executed ${cmd.command}: ${result.success ? 'OK' : 'FAILED'} — ${result.message}`);
+        console.log(
+          `[AnA Command] Executed ${cmd.command}: ${result.success ? 'OK' : 'FAILED'} — ${result.message}`
+        );
       } catch (err: unknown) {
-        results.push({ success: false, action: cmd.command, message: `Execution failed: ${err instanceof Error ? err.message : String(err)}` });
+        results.push({
+          success: false,
+          action: cmd.command,
+          message: `Execution failed: ${err instanceof Error ? err.message : String(err)}`,
+        });
       }
     }
   }
@@ -2781,7 +3945,7 @@ export async function executeCommands(
  */
 export async function processCommandsInResponse(
   responseText: string,
-  ctx: CommandContext,
+  ctx: CommandContext
 ): Promise<{ executedCommands: CommandResult[]; cleanedText: string }> {
   const commands = parseCommandBlocks(responseText);
   if (commands.length === 0) return { executedCommands: [], cleanedText: responseText };
