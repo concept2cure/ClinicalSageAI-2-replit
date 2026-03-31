@@ -42,6 +42,20 @@ Make the visible UI stop lying by implication. Expose only beta-safe surfaces th
 | Sidebar “Overview” (project tab) | `onNavigate('overview')` | No explicit `overview` map; falls back to projects | Relabel to honest destination |
 | Sidebar workspace tools/editor/intelligence/review/vault/submit | mapped via `SIDEBAR_NAV_TO_LAYOUT` | Real shell navigation | Expose |
 
+## Wave A / Batch A2 follow-up (explicit nav contract hardening)
+
+- Primary sidebar ids are now explicitly mapped in `SIDEBAR_NAV_TO_LAYOUT`:
+  - `project-home`
+  - `overview`
+  - `apps`
+  - `artifacts-center`
+  - `setup`
+  - `submit`
+  - `work`
+  - `review-tab`
+- `ZenApp` sidebar handler no longer uses `?? 'projects'` for primary nav ids.
+- Result: promoted sidebar labels now route deterministically instead of relying on fallback behavior.
+
 ## Contradictions fixed in Stage 7
 
 1. **Top-nav false promise:** “Switch Module” implied dedicated module switcher but pointed to an unmounted route.  
