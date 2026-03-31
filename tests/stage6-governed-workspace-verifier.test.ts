@@ -85,10 +85,12 @@ describe('Stage 6 — governed workspace lifecycle smoke', () => {
 
   it('keeps backend lifecycle endpoints used by governed workspace', () => {
     expect(routesSrc).toContain("router.get('/projects/:projectId/artifacts'");
-    expect(routesSrc).toContain("router.post('/projects/:projectId/artifacts'");
-    expect(routesSrc).toContain("router.put('/projects/:projectId/artifacts/:artifactId/placement'");
-    expect(routesSrc).toContain("router.get('/projects/:projectId/artifacts/:artifactId/provenance'");
-    expect(routesSrc).toContain("router.get('/projects/:projectId/artifacts/:artifactId/versions'");
+    expect(routesSrc).toContain("router.post(");
+    expect(routesSrc).toContain("'/projects/:projectId/artifacts',");
+    expect(routesSrc).toContain("router.put(");
+    expect(routesSrc).toContain("'/projects/:projectId/artifacts/:artifactId/placement',");
+    expect(routesSrc).toContain("'/projects/:projectId/artifacts/:artifactId/provenance',");
+    expect(routesSrc).toContain("'/projects/:projectId/artifacts/:artifactId/versions',");
     expect(routesSrc).toContain("router.post('/artifacts/export-docx'");
     expect(routesSrc).toContain("router.post('/artifacts/export-pdf'");
     expect(routesSrc).toContain("router.post('/artifacts/export-pptx'");

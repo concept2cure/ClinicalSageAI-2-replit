@@ -1,7 +1,9 @@
 # Stage 6 — Governed Workspace and Document Lifecycle Hardening
 
 Stage: Stage 6 — Governed Workspace and Document Lifecycle Hardening  
-Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `40004a38` (`40004a38`) as pre-Stage-6 baseline
+Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `40004a38` (`40004a38`) as pre-Stage-6 baseline  
+Stage 6 implementation commit: `b540c9f5` (`b540c9f5`)  
+Stage 6 validation snapshot commit: `b540c9f5` (`b540c9f5`)
 
 ## Scope reviewed
 
