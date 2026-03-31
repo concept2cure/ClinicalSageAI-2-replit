@@ -90,8 +90,8 @@ interface Project {
 
 /** Submission type → hex color fallback for the sidebar project dot */
 const SIDEBAR_TYPE_COLORS: Record<string, string> = {
-  '510K': '#3b82f6', IND: '#8b5cf6', NDA: '#22c55e', BLA: '#f97316',
-  PMA: '#ef4444', MAA: '#ec4899', DE_NOVO: '#f59e0b', EUA: '#06b6d4', IVDR: '#10b981',
+  '510K': '#6B6962', IND: '#8A7F74', NDA: '#7D8578', BLA: '#88766B',
+  PMA: '#7A7F86', MAA: '#837A89', DE_NOVO: '#8A806D', EUA: '#778087', IVDR: '#76867D',
 };
 
 export interface ZenSidebarProps {
@@ -125,15 +125,15 @@ export interface ZenSidebarProps {
 
 // 3-color palette: stone (default), blue (device/diagnostics), violet (pharma/biotech)
 const SUBMISSION_BADGE: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; color: string; bg: string }> = {
-  '510K': { label: '510(k)', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
-  IND: { label: 'IND', icon: Beaker, color: 'text-violet-600', bg: 'bg-violet-50' },
-  NDA: { label: 'NDA', icon: Pill, color: 'text-violet-600', bg: 'bg-violet-50' },
-  BLA: { label: 'BLA', icon: Activity, color: 'text-violet-600', bg: 'bg-violet-50' },
-  PMA: { label: 'PMA', icon: Heart, color: 'text-blue-600', bg: 'bg-blue-50' },
-  MAA: { label: 'MAA', icon: Microscope, color: 'text-violet-600', bg: 'bg-violet-50' },
-  DE_NOVO: { label: 'De Novo', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
-  EUA: { label: 'EUA', icon: Activity, color: 'text-blue-600', bg: 'bg-blue-50' },
-  IVDR: { label: 'IVDR', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
+  '510K': { label: '510(k)', icon: FileText, color: 'text-[#6B6962]', bg: 'bg-[#F5F4EF]' },
+  IND: { label: 'IND', icon: Beaker, color: 'text-[#6B6962]', bg: 'bg-[#FBF0EB]' },
+  NDA: { label: 'NDA', icon: Pill, color: 'text-[#6B6962]', bg: 'bg-[#FBF0EB]' },
+  BLA: { label: 'BLA', icon: Activity, color: 'text-[#6B6962]', bg: 'bg-[#FBF0EB]' },
+  PMA: { label: 'PMA', icon: Heart, color: 'text-[#6B6962]', bg: 'bg-[#F5F4EF]' },
+  MAA: { label: 'MAA', icon: Microscope, color: 'text-[#6B6962]', bg: 'bg-[#FBF0EB]' },
+  DE_NOVO: { label: 'De Novo', icon: FileText, color: 'text-[#6B6962]', bg: 'bg-[#F5F4EF]' },
+  EUA: { label: 'EUA', icon: Activity, color: 'text-[#6B6962]', bg: 'bg-[#F5F4EF]' },
+  IVDR: { label: 'IVDR', icon: FileText, color: 'text-[#6B6962]', bg: 'bg-[#F5F4EF]' },
 };
 
 const FALLBACK_BADGE = { label: 'PRJ', icon: FolderOpen, color: 'text-stone-500', bg: 'bg-stone-100' };
@@ -207,9 +207,9 @@ const NavItem: React.FC<{
   onClick: () => void;
 }> = ({ icon, label, active, accentColor, badge, subtitle, onClick }) => {
   const accentMap = {
-    blue: { bg: 'bg-blue-100', text: 'text-blue-600', iconColor: 'text-blue-500' },
-    violet: { bg: 'bg-violet-100', text: 'text-violet-600', iconColor: 'text-violet-500' },
-    emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', iconColor: 'text-emerald-500' },
+    blue: { bg: 'bg-stone-200/80', text: 'text-stone-700', iconColor: 'text-stone-600' },
+    violet: { bg: 'bg-stone-200/80', text: 'text-stone-700', iconColor: 'text-stone-600' },
+    emerald: { bg: 'bg-stone-100', text: 'text-stone-700', iconColor: 'text-stone-600' },
   };
   const accent = accentColor && accentMap[accentColor];
 
@@ -224,11 +224,7 @@ const NavItem: React.FC<{
             ? `${accent.bg} ${accent.text} font-medium`
             : 'bg-stone-200/80 text-stone-900 font-medium'
           : accent
-            ? cn(
-                'text-stone-600',
-                accent.bg === 'bg-blue-100' && 'hover:bg-blue-100 hover:text-blue-600',
-                accent.bg === 'bg-emerald-50' && 'hover:bg-emerald-50 hover:text-emerald-700'
-              )
+            ? 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
             : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
       )}
     >
@@ -392,7 +388,7 @@ const ProjectRow: React.FC<{
   const isPinned = project.starred || project.pinned;
 
   return (
-    <div className="mb-0.5">
+    <div className="mb-0.5" data-testid="project-row">
       <div
         className={cn(
           'group relative flex items-center gap-2 mx-1 px-2.5 py-2 rounded-lg cursor-pointer select-none transition-all duration-150',
@@ -428,6 +424,7 @@ const ProjectRow: React.FC<{
 
         {/* Project name — clicking selects the project */}
         <span
+          data-testid="project-select"
           onClick={onSelect}
           role="button"
           tabIndex={0}
@@ -573,7 +570,7 @@ const IconBtn: React.FC<{
   accentText?: string;
   onClick: () => void;
   children: React.ReactNode;
-}> = ({ label, active, accentBg = 'bg-blue-100', accentText = 'text-blue-500', onClick, children }) => (
+}> = ({ label, active, accentBg = 'bg-stone-200/80', accentText = 'text-stone-700', onClick, children }) => (
   <button
     onClick={onClick}
     aria-label={label}
@@ -817,7 +814,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             <ChevronRight className="w-4 h-4" />
           </button>
           <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center">
-            <span className="text-[10px] font-bold text-blue-600 leading-none">{avatarInitial}</span>
+            <span className="text-[10px] font-bold text-stone-700 leading-none">{avatarInitial}</span>
           </div>
         </div>
       </aside>
@@ -1110,7 +1107,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-stone-500 hover:bg-stone-100 hover:text-stone-800 text-xs focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors"
           >
             <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
-              <span className="text-[10px] font-bold text-blue-600 leading-none">
+              <span className="text-[10px] font-bold text-stone-700 leading-none">
                 {avatarInitial}
               </span>
             </div>

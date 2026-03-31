@@ -1243,6 +1243,26 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     setActiveToolPanel('ana-biostats');
   }, [layoutMode]);
 
+  // Project-scoped artifacts for workspace navigation/actions
+  // (must be declared before callbacks that reference projectArtifacts)
+  const { data: projectArtifacts = [] } = useQuery({
+    queryKey: ['project-artifacts', activeProjectId],
+    queryFn: async () => {
+      if (!activeProjectId) return [];
+      const token =
+        sessionStorage.getItem('trialsage_access_token') ||
+        localStorage.getItem('trialsage_access_token');
+      const res = await fetch(`/api/concept2cure/projects/${activeProjectId}/artifacts`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : (data?.data ?? data?.artifacts ?? []);
+    },
+    enabled: !!activeProjectId,
+    staleTime: 30_000,
+  });
+
   // ── P2: Navigate to section — real navigation ──
   const handleNavigateToSection = useCallback((sectionCode: string) => {
     setActiveSectionCode(sectionCode);
@@ -1449,25 +1469,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
   // External message to send into AnA chat (triggered by suggested prompts, dashboard actions)
   const [externalChatMessage, setExternalChatMessage] = useState<{ text: string; ts: number } | null>(null);
-
-  // Project-scoped artifacts for the Outputs tab (must come after activeProjectId is declared)
-  const { data: projectArtifacts = [] } = useQuery({
-    queryKey: ['project-artifacts', activeProjectId],
-    queryFn: async () => {
-      if (!activeProjectId) return [];
-      const token =
-        sessionStorage.getItem('trialsage_access_token') ||
-        localStorage.getItem('trialsage_access_token');
-      const res = await fetch(`/api/concept2cure/projects/${activeProjectId}/artifacts`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
-      return Array.isArray(data) ? data : (data?.data ?? data?.artifacts ?? []);
-    },
-    enabled: !!activeProjectId,
-    staleTime: 30_000,
-  });
 
   // Instructions + knowledge for Instructions tab (lifted so it doesn't remount per tab)
   const workspaceKnowledge = useProjectKnowledge(activeProjectId ?? null);
@@ -2934,42 +2935,44 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 </ErrorBoundary>
               </div>
             ) : (
-              <ProjectWorkspaceShell
-                projectId={activeProjectId}
-                projectName={activeProject?.name}
-                projectType={activeProject?.type}
-                submissionType={activeProject?.type}
-                industryMode={industryMode}
-                onBackToProjects={() => setLayoutMode('projects')}
-                onSelectProject={() => setProjectSwitcherOpen(true)}
-                onSwitchToIntelligence={() => setRiViewMode('intelligence')}
-                initialContent={pendingEditorContent?.content}
-                initialTitle={pendingEditorContent?.title}
-                initialCtdSection={pendingEditorContent?.ctdSection}
-                onInitialContentConsumed={() => setPendingEditorContent(null)}
-                openArtifactId={openArtifactId}
-                onOpenArtifactConsumed={() => setOpenArtifactId(undefined)}
-                onActiveDocumentChange={doc => {
-                  if (doc) {
-                    setActiveArtifactId(doc.id);
-                    setActiveArtifactVersion(doc.version != null ? String(doc.version) : undefined);
-                    setActiveArtifactStatus(doc.status);
-                    if (doc.ctdSection) setActiveSectionCode(doc.ctdSection);
-                  } else {
-                    setActiveArtifactId(undefined);
-                    setActiveArtifactVersion(undefined);
-                    setActiveArtifactStatus(undefined);
-                  }
-                }}
-                onNavigate={mode => {
-                  if (mode === 'haq') {
-                    setLayoutMode('documents');
-                    setToolsSubView('haq');
-                    return;
-                  }
-                  setLayoutMode(mode as LayoutMode);
-                }}
-              />
+              <div className="flex-1 min-h-0" data-testid="workspace-submission-builder">
+                <ProjectWorkspaceShell
+                  projectId={activeProjectId}
+                  projectName={activeProject?.name}
+                  projectType={activeProject?.type}
+                  submissionType={activeProject?.type}
+                  industryMode={industryMode}
+                  onBackToProjects={() => setLayoutMode('projects')}
+                  onSelectProject={() => setProjectSwitcherOpen(true)}
+                  onSwitchToIntelligence={() => setRiViewMode('intelligence')}
+                  initialContent={pendingEditorContent?.content}
+                  initialTitle={pendingEditorContent?.title}
+                  initialCtdSection={pendingEditorContent?.ctdSection}
+                  onInitialContentConsumed={() => setPendingEditorContent(null)}
+                  openArtifactId={openArtifactId}
+                  onOpenArtifactConsumed={() => setOpenArtifactId(undefined)}
+                  onActiveDocumentChange={doc => {
+                    if (doc) {
+                      setActiveArtifactId(doc.id);
+                      setActiveArtifactVersion(doc.version != null ? String(doc.version) : undefined);
+                      setActiveArtifactStatus(doc.status);
+                      if (doc.ctdSection) setActiveSectionCode(doc.ctdSection);
+                    } else {
+                      setActiveArtifactId(undefined);
+                      setActiveArtifactVersion(undefined);
+                      setActiveArtifactStatus(undefined);
+                    }
+                  }}
+                  onNavigate={mode => {
+                    if (mode === 'haq') {
+                      setLayoutMode('documents');
+                      setToolsSubView('haq');
+                      return;
+                    }
+                    setLayoutMode(mode as LayoutMode);
+                  }}
+                />
+              </div>
             ))}
 
           {/* ── Project Home: AnA-first with light context strip ── */}
@@ -4131,6 +4134,7 @@ const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
   // Global destinations
   projects: 'projects',
   home: 'projects',
+  setup: 'setup',
   documents: 'regulatory-workspace',
   submissions: 'submissions',
   reports: 'report-engine',
