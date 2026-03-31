@@ -42,6 +42,9 @@ const DOMPurify = (DOMPurifyImport as any).default || DOMPurifyImport;
 import multer from 'multer';
 import path from 'path';
 import {
+  type GovernedDocumentActionContract,
+} from '../../shared/types/document-contract';
+import {
   regulatoryAuditLogs,
   projects,
   users,
@@ -76,6 +79,7 @@ import {
   interceptFeedback,
 } from '../services/intelligence/rim-interceptors.js';
 import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
+import { validateGovernedArtifactMutation } from '../services/concept2cure/governedDocumentContractService';
 import {
   buildWorkingMemoryPrompt,
   storeWorkingMemory,
@@ -4920,6 +4924,31 @@ router.post(
       // Sanitize content
       const sanitizedContent = sanitizeContent(data.content);
       const sanitizedTitle = sanitizeContent(data.title);
+      const contractValidation = validateGovernedArtifactMutation({
+        req,
+        projectId: numericProjectId,
+        artifactId: null,
+        documentType: data.type,
+        generationMode: data.metadata?.generationMethod === 'ai' ? 'ai_generated' : 'manual',
+        lifecycleStatus: 'draft',
+        title: sanitizedTitle,
+        content: sanitizedContent,
+        ctdSection: data.ctdSection || null,
+        sourceRefs: Array.isArray(data.metadata?.sourceRefs)
+          ? (data.metadata?.sourceRefs as string[])
+          : undefined,
+        exportAllowed: false,
+        eventType: 'artifact.created',
+      });
+      if (!contractValidation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          contractValidation.errors,
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
       const contentHash = calculateContentHash(sanitizedContent);
       const artifactId = `artifact_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
 
@@ -5235,6 +5264,30 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
 
     // Update ctdSection if provided
     const newCtdSection = ctdSection !== undefined ? ctdSection : dbArtifact.ctdSection;
+
+    const updateContractValidation = validateGovernedArtifactMutation({
+      req,
+      projectId: dbArtifact.projectId,
+      artifactId: dbArtifact.id,
+      documentType: dbArtifact.type,
+      generationMode: 'amendment',
+      lifecycleStatus: (dbArtifact.status as GovernedDocumentActionContract['lifecycleStatus']) || 'draft',
+      title: newTitle || dbArtifact.title,
+      content: newContent || dbArtifact.content || '',
+      ctdSection: newCtdSection,
+      sourceRefs: undefined,
+      exportAllowed: ['approved', 'locked', 'published'].includes(String(dbArtifact.status || '')),
+      eventType: 'artifact.updated',
+    });
+    if (!updateContractValidation.valid) {
+      return sendError(
+        res,
+        400,
+        'Governed document contract validation failed',
+        updateContractValidation.errors,
+        'GOVERNED_CONTRACT_INVALID'
+      );
+    }
 
     // Update artifact record
     const [updatedArtifact] = await db
