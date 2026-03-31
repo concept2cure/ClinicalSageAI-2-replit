@@ -3740,7 +3740,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   <button
                     onClick={() => {
                       setActiveProjectId(continueProject.id);
-                      setLayoutMode('project-home');
+                      setRiViewMode('editor');
+                      setLayoutMode('regulatory-workspace');
+                      navigate(`/concept2cure/project/${continueProject.id}`);
                     }}
                     className={cn(
                       'w-full text-left rounded-xl border border-stone-200 bg-white p-5',
@@ -3776,12 +3778,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                             {continueProject.description}
                           </p>
                         )}
-                        <div className="flex items-center gap-3 text-[11px] text-stone-400">
+                        <div className="flex items-center text-[11px] text-stone-400">
                           <span>{relTime(continueProject.lastUpdated)}</span>
-                          <span className="flex items-center gap-1">
-                            <MessageSquare className="w-3 h-3" />
-                            {continueProject.conversationCount} {continueProject.conversationCount === 1 ? 'chat' : 'chats'}
-                          </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 text-stone-400 group-hover:text-stone-600 transition-colors flex-shrink-0 mt-1">
@@ -3807,7 +3805,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                           key={project.id}
                           onClick={() => {
                             setActiveProjectId(project.id);
-                            setLayoutMode('project-home');
+                            setRiViewMode('editor');
+                            setLayoutMode('regulatory-workspace');
+                            navigate(`/concept2cure/project/${project.id}`);
                           }}
                           className={cn(
                             'group text-left rounded-xl border overflow-hidden transition-all duration-150',
@@ -4028,7 +4028,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         onSelectProject={id => {
           setActiveProjectId(id);
           setProjectSwitcherOpen(false);
-          setLayoutMode('project-home');
+          setRiViewMode('editor');
+          setLayoutMode('regulatory-workspace');
           navigate(`/concept2cure/project/${id}`);
           // Clear conversation when switching projects
           setActiveConversationId(undefined);
