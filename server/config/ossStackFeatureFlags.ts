@@ -62,6 +62,12 @@ export const OSS_STACK_FEATURE_FLAGS: readonly OssStackFeatureFlagDefinition[] =
     defaultEnabled: false,
     envVar: 'OSS_COMPUTE_E2B_PILOT',
   },
+  {
+    key: 'oss.ana.enterprise_citation_bridge',
+    description: 'Enable AnA citation validation bridge to Python enterprise enforcement.',
+    defaultEnabled: false,
+    envVar: 'OSS_ANA_ENTERPRISE_CITATION_BRIDGE',
+  },
 ] as const;
 
 export function getOssFeatureFlagBootstrapMap(): Record<string, boolean> {

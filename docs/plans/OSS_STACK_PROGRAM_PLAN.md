@@ -59,6 +59,7 @@ Introduce Docling, Unstructured, Qdrant, Byaldi (pilot), OPA, OpenTelemetry, Lan
 - `oss.obs.langfuse_enabled`
 - `oss.workflow.temporal_enabled`
 - `oss.compute.e2b_pilot`
+- `oss.ana.enterprise_citation_bridge`
 
 ## Benchmark-gated capabilities
 - Byaldi pilot (must beat baseline retrieval quality without governance regressions).
