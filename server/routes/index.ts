@@ -26,6 +26,7 @@ import cmcDashboardRoutes from './cmc-dashboard';
 import anaFeaturesRoutes from './ana-features';
 import regulatoryPathwayIntelligenceRoutes from './regulatory-pathway-intelligence';
 import submissionOpsRoutes from './submission-ops';
+import regulatoryCorrespondenceRoutes from './regulatory-correspondence';
 import supportAdminRoutes from './support-admin';
 import { authMiddleware } from '../auth';
 
@@ -81,6 +82,7 @@ router.use('/regulatory-intelligence-engine', regulatoryPathwayIntelligenceRoute
 
 // Phase 15 Submission Operations Command Center
 router.use('/submission-ops', submissionOpsRoutes);
+router.use('/regulatory-correspondence', regulatoryCorrespondenceRoutes);
 
 // Support Administration (tickets, knowledge base, settings, analytics)
 router.use('/support', supportAdminRoutes);
