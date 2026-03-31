@@ -73,7 +73,7 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
       return res.status(403).json({ error: error.message });
     }
     if (error.message.includes('Missing or invalid')) {
-      return res.status(400).json({ error: error.message });
+      return res.status(401).json({ error: error.message });
     }
     return res.status(500).json({ error: 'Failed to retrieve source links' });
   }
@@ -112,7 +112,7 @@ router.post('/:id/sources', async (req: Request, res: Response) => {
       return res.status(403).json({ error: error.message });
     }
     if (error.message.includes('Missing or invalid')) {
-      return res.status(400).json({ error: error.message });
+      return res.status(401).json({ error: error.message });
     }
     return res.status(500).json({ error: 'Failed to add source link' });
   }
@@ -141,7 +141,7 @@ router.delete('/:id/sources/:linkId', async (req: Request, res: Response) => {
       return res.status(403).json({ error: error.message });
     }
     if (error.message.includes('Missing or invalid')) {
-      return res.status(400).json({ error: error.message });
+      return res.status(401).json({ error: error.message });
     }
     return res.status(500).json({ error: 'Failed to remove source link' });
   }
@@ -188,7 +188,7 @@ router.post('/:id/sources/analyze', async (req: Request, res: Response) => {
       return res.status(404).json({ error: error.message });
     }
     if (error.message.includes('Missing or invalid')) {
-      return res.status(400).json({ error: error.message });
+      return res.status(401).json({ error: error.message });
     }
     return res.status(500).json({ error: 'Failed to analyze document sources' });
   }

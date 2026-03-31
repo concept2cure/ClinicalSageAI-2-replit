@@ -1,3 +1,5 @@
+import { clearAuthToken, getAuthToken, setAuthToken } from '../utils/authToken';
+
 export const authService = {
   async login(credentials) {
     const response = await fetch('/api/auth/login', {
@@ -17,24 +19,16 @@ export const authService = {
   },
 
   async logout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('auth_token');
+    clearAuthToken();
     window.location.href = '/login';
   },
 
   getToken() {
-    return (
-      localStorage.getItem('token') ||
-      localStorage.getItem('authToken') ||
-      localStorage.getItem('auth_token')
-    );
+    return getAuthToken();
   },
 
   setToken(token, user) {
-    localStorage.setItem('token', token);
-    localStorage.setItem('authToken', token);
-    localStorage.setItem('auth_token', token);
+    setAuthToken(token);
     // Persist organizationId from user payload for API headers
     if (user?.organizationId) {
       localStorage.setItem('organizationId', String(user.organizationId));
@@ -47,9 +41,7 @@ export const authService = {
   },
 
   clearToken() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('auth_token');
+    clearAuthToken();
   },
 
   isAuthenticated() {

@@ -12,6 +12,7 @@ import {
   users,
   projects,
 } from '../../shared/schema';
+import { getSecureOrgId } from '../utils/tenantContext';
 
 const router = Router();
 const storage = { db };
@@ -228,8 +229,9 @@ async function getOptimalAssignee(organizationId: number, taskData: any) {
 router.post('/tasks', async (req: Request, res: Response) => {
   try {
     const validatedData = createTaskSchema.parse(req.body);
-    const organizationId = req.body.organizationId;
-    if (!organizationId) {
+    const organizationIdRaw = getSecureOrgId(req);
+    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     const taskId = `TASK-${Date.now()}-${uuidv4().substr(0, 8)}`;
@@ -259,7 +261,7 @@ router.post('/tasks', async (req: Request, res: Response) => {
         completionPercentage: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
-        createdById: req.body.userId,
+        createdById: req.userId ? Number(req.userId) : null,
       })
       .returningAll()
       .executeTakeFirst();
@@ -281,8 +283,9 @@ router.post('/tasks', async (req: Request, res: Response) => {
 router.post('/tasks/bulk-create', async (req: Request, res: Response) => {
   try {
     const validatedData = bulkCreateTasksSchema.parse(req.body);
-    const organizationId = req.body.organizationId;
-    if (!organizationId) {
+    const organizationIdRaw = getSecureOrgId(req);
+    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     const createdTasks = [];
@@ -322,7 +325,7 @@ router.post('/tasks/bulk-create', async (req: Request, res: Response) => {
           completionPercentage: 0,
           createdAt: new Date(),
           updatedAt: new Date(),
-          createdById: req.body.userId,
+          createdById: req.userId ? Number(req.userId) : null,
         })
         .returningAll()
         .executeTakeFirst();

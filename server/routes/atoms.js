@@ -3,12 +3,12 @@ import { db } from '../db';
 import { and, eq, ilike, sql, desc } from 'drizzle-orm';
 // Using leaves as content atom storage since lumenDataAtoms not in schema
 import { leaves } from '@shared/schema';
+import { getSecureOrgId } from '../utils/tenantContext';
 const lumenDataAtoms = leaves; // Alias for compatibility
 
 const router = express.Router();
 
-const resolveOrganizationId = req =>
-  req.organizationId || req.query.organizationId || req.body?.organizationId;
+const resolveOrganizationId = req => getSecureOrgId(req);
 
 /**
  * GET /api/atoms - Get all content atoms
@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
   try {
     const orgId = resolveOrganizationId(req);
     if (!orgId) {
-      return res.status(400).json({
+      return res.status(401).json({
         success: false,
         error: 'organizationId is required',
       });
@@ -83,7 +83,7 @@ router.get('/:id', async (req, res) => {
     const { id } = req.params;
 
     if (!orgId) {
-      return res.status(400).json({
+      return res.status(401).json({
         success: false,
         error: 'organizationId is required',
       });
@@ -136,7 +136,7 @@ router.post('/', async (req, res) => {
 
     if (!orgId || !sourceType || !atomType || !title || !content) {
       return res.status(400).json({
-        error: 'Missing required fields: organizationId, sourceType, atomType, title, content',
+        error: 'Missing required fields: sourceType, atomType, title, content',
       });
     }
 
@@ -180,7 +180,7 @@ router.put('/:id', async (req, res) => {
     const { id } = req.params;
 
     if (!orgId) {
-      return res.status(400).json({
+      return res.status(401).json({
         error: 'organizationId is required',
       });
     }
@@ -225,7 +225,7 @@ router.delete('/:id', async (req, res) => {
     const { id } = req.params;
 
     if (!orgId) {
-      return res.status(400).json({
+      return res.status(401).json({
         error: 'organizationId is required',
       });
     }

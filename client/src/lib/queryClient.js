@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { QueryClient } from '@tanstack/react-query';
+import { getAuthToken, clearAuthToken } from '../utils/authToken';
 
 // Create axios instance with default config
 export const api = axios.create({
@@ -18,10 +19,7 @@ api.interceptors.request.use(
       config.headers['x-organization-id'] = orgId;
     }
     // Include JWT auth token if available (stored by authService on login)
-    const authToken =
-      localStorage.getItem('token') ||
-      localStorage.getItem('authToken') ||
-      localStorage.getItem('auth_token');
+    const authToken = getAuthToken();
     if (authToken) {
       config.headers['Authorization'] = `Bearer ${authToken}`;
     }
@@ -78,6 +76,9 @@ export const apiRequest = async (url, options = {}) => {
     const response = await api(requestConfig);
     return response.data;
   } catch (error) {
+    if (error?.response?.status === 401) {
+      clearAuthToken();
+    }
     const errorMessage = error.response?.data?.error || error.message || 'An error occurred';
     console.error(`[API Error ${method}]: ${errorMessage}`, error);
     throw new Error(errorMessage);

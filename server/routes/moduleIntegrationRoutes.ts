@@ -14,6 +14,7 @@ import {
 import { WorkflowService } from '../services/WorkflowService';
 import { cacheResponse } from '../middleware/enterprise-performance';
 import { asyncHandler } from '../middleware/errorHandler';
+import { getSecureOrgId } from '../utils/tenantContext';
 
 const router = Router();
 const moduleIntegrationService = new ModuleIntegrationService(db);
@@ -21,8 +22,10 @@ const workflowService = new WorkflowService(db);
 
 // Middleware to handle tenant context
 const setTenantContext = (req, res, next) => {
-  // Extract organization ID from query params or headers
-  const organizationId = req.query.organizationId || req.headers['x-organization-id'];
+  const organizationId = getSecureOrgId(req);
+  if (!organizationId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
   req.tenantContext = { organizationId };
   next();
 };
@@ -35,7 +38,10 @@ router.use(setTenantContext);
  * POST /api/module-integration/register-document
  */
 router.post('/register-document', asyncHandler(async (req, res) => {
-  const document = await moduleIntegrationService.registerDocument(req.body);
+  const document = await moduleIntegrationService.registerDocument({
+    ...req.body,
+    organizationId: req.tenantContext.organizationId,
+  });
   res.status(201).json(document);
 }));
 
@@ -44,7 +50,8 @@ router.post('/register-document', asyncHandler(async (req, res) => {
  * GET /api/module-integration/document-exists
  */
 router.get('/document-exists', asyncHandler(async (req, res) => {
-  const { moduleType, originalId, organizationId } = req.query;
+  const { moduleType, originalId } = req.query;
+  const organizationId = req.tenantContext.organizationId;
   const exists = await moduleIntegrationService.documentExists(
     moduleType as string,
     originalId as string,
@@ -59,7 +66,7 @@ router.get('/document-exists', asyncHandler(async (req, res) => {
  */
 router.get('/documents/:moduleType', asyncHandler(async (req, res) => {
   const { moduleType } = req.params;
-  const { organizationId } = req.query;
+  const organizationId = req.tenantContext.organizationId;
   const documents = await moduleIntegrationService.getDocumentsByModule(
     moduleType,
     organizationId as string
@@ -112,7 +119,7 @@ router.patch('/documents/:id', asyncHandler(async (req, res) => {
  */
 router.get('/templates/:moduleType', cacheResponse({ ttl: 60_000 }), asyncHandler(async (req, res) => {
   const { moduleType } = req.params;
-  const { organizationId } = req.query;
+  const organizationId = req.tenantContext.organizationId;
   const templates = await workflowService.getWorkflowTemplatesByModule(
     moduleType,
     organizationId as string
@@ -125,7 +132,10 @@ router.get('/templates/:moduleType', cacheResponse({ ttl: 60_000 }), asyncHandle
  * POST /api/module-integration/templates
  */
 router.post('/templates', asyncHandler(async (req, res) => {
-  const template = await workflowService.createWorkflowTemplate(req.body);
+  const template = await workflowService.createWorkflowTemplate({
+    ...req.body,
+    organizationId: req.tenantContext.organizationId,
+  });
   res.status(201).json(template);
 }));
 
@@ -149,12 +159,19 @@ router.get('/templates/:id', asyncHandler(async (req, res) => {
  * POST /api/module-integration/workflows
  */
 router.post('/workflows', asyncHandler(async (req, res) => {
-  const { documentId, templateId, startedBy, metadata } = req.body;
+  const { documentId, templateId, metadata } = req.body;
+  const startedByUserId = req.userId;
+  if (!startedByUserId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
   const workflow = await workflowService.startWorkflow(
     documentId,
     templateId,
-    startedBy,
-    metadata
+    startedByUserId,
+    {
+      ...(metadata || {}),
+      organizationId: req.tenantContext.organizationId,
+    }
   );
   res.status(201).json(workflow);
 }));
@@ -164,7 +181,11 @@ router.post('/workflows', asyncHandler(async (req, res) => {
  * POST /api/module-integration/approve-step
  */
 router.post('/approve-step', asyncHandler(async (req, res) => {
-  const { approvalId, userId, comments } = req.body;
+  const { approvalId, comments } = req.body;
+  const userId = req.userId;
+  if (!userId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
   const result = await workflowService.approveWorkflowStep(approvalId, userId, comments);
   res.json(result);
 }));
@@ -174,7 +195,11 @@ router.post('/approve-step', asyncHandler(async (req, res) => {
  * POST /api/module-integration/reject-step
  */
 router.post('/reject-step', asyncHandler(async (req, res) => {
-  const { approvalId, userId, comments } = req.body;
+  const { approvalId, comments } = req.body;
+  const userId = req.userId;
+  if (!userId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
   const result = await workflowService.rejectWorkflowStep(approvalId, userId, comments);
   res.json(result);
 }));
@@ -184,7 +209,7 @@ router.post('/reject-step', asyncHandler(async (req, res) => {
  * GET /api/module-integration/documents-in-review
  */
 router.get('/documents-in-review', asyncHandler(async (req, res) => {
-  const { organizationId } = req.query;
+  const organizationId = req.tenantContext.organizationId;
   const documents = await moduleIntegrationService.getDocumentsInReview(organizationId as string);
   res.json(documents);
 }));
@@ -194,7 +219,8 @@ router.get('/documents-in-review', asyncHandler(async (req, res) => {
  * GET /api/module-integration/active-workflows
  */
 router.get('/active-workflows', asyncHandler(async (req, res) => {
-  const { organizationId, page, pageSize } = req.query;
+  const { page, pageSize } = req.query;
+  const organizationId = req.tenantContext.organizationId;
   const workflows = await workflowService.getActiveWorkflows(
     organizationId as string,
     parseInt(page as string, 10) || 1,
@@ -208,7 +234,8 @@ router.get('/active-workflows', asyncHandler(async (req, res) => {
  * GET /api/module-integration/completed-workflows
  */
 router.get('/completed-workflows', asyncHandler(async (req, res) => {
-  const { organizationId, page, pageSize } = req.query;
+  const { page, pageSize } = req.query;
+  const organizationId = req.tenantContext.organizationId;
   const workflows = await workflowService.getCompletedWorkflows(
     organizationId as string,
     parseInt(page as string, 10) || 1,
@@ -222,7 +249,11 @@ router.get('/completed-workflows', asyncHandler(async (req, res) => {
  * GET /api/module-integration/pending-approvals
  */
 router.get('/pending-approvals', asyncHandler(async (req, res) => {
-  const { organizationId, userId } = req.query;
+  const userId = req.userId;
+  if (!userId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  const organizationId = req.tenantContext.organizationId;
   const approvals = await workflowService.getPendingApprovals(
     organizationId as string,
     userId as string

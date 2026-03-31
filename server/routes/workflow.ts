@@ -23,6 +23,7 @@ import {
 } from '../../services/proof/validation';
 import { authMiddleware } from '../auth';
 import logger from '../utils/logger';
+import { getSecureOrgId } from '../utils/tenantContext';
 
 const router = Router();
 const certificateGenerator = new ComplianceCertificateGenerator();
@@ -30,7 +31,7 @@ const proofVerifier = new ProofVerificationService();
 
 // Helper to get tenant-scoped audit service
 const getProofAudit = (req: Request): ProofAuditService => {
-  const orgId = req.headers['x-organization-id'] as string | undefined;
+  const orgId = getSecureOrgId(req) || undefined;
   return orgId 
     ? ProofAuditService.getInstanceForTenant(orgId) 
     : ProofAuditService.getInstance();
@@ -76,8 +77,8 @@ router.get('/proofs/certificate/:workflowRunId', async (req, res) => {
     const proofAudit = getProofAudit(req);
     
     // M5: Audit UI proof view event
-    const organizationId = req.headers['x-organization-id'] as string | undefined;
-    const userId = (req as unknown as { user?: { id?: string } }).user?.id;
+    const organizationId = getSecureOrgId(req) || undefined;
+    const userId = req.user?.id ? String(req.user.id) : undefined;
     await proofAudit.logUIProofView(req.params.workflowRunId, {
       organizationId,
       actorId: userId,
@@ -108,8 +109,8 @@ router.post('/proofs/verify', async (req, res) => {
     const proofAudit = getProofAudit(req);
     
     // M5: Audit UI verification request event
-    const organizationId = req.headers['x-organization-id'] as string | undefined;
-    const userId = (req as unknown as { user?: { id?: string } }).user?.id;
+    const organizationId = getSecureOrgId(req) || undefined;
+    const userId = req.user?.id ? String(req.user.id) : undefined;
     await proofAudit.logUIVerificationRequest(certificate.workflowRunId, {
       organizationId,
       actorId: userId,
@@ -141,7 +142,7 @@ router.get('/proofs/audit', (req, res) => {
     
     // Get tenant-scoped audit service
     const proofAudit = getProofAudit(req);
-    const organizationId = req.headers['x-organization-id'] as string | undefined;
+    const organizationId = getSecureOrgId(req) || undefined;
     
     // Verify hash chain before returning entries (M8: Audit integrity)
     const chainStatus = proofAudit.verifyHashChain();

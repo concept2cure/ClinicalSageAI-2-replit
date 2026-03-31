@@ -5,30 +5,58 @@
 
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
+import fs from 'fs/promises';
+import path from 'path';
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
 import EvidenceManagementService from '../services/EvidenceManagementService';
-
-import { extractWithTika } from '../services/ingestion/tikaClient';
-import { extractWithGrobid, looksScholarlyDocument } from '../services/literature/grobidClient';
-import { indexGovernedDocument } from '../services/search/opensearchClient';
+import { getSecureOrgId } from '../utils/tenantContext';
 
 const router = Router();
 const evidenceService = new EvidenceManagementService();
 
 // Configure multer for file uploads
-const storage = multer.memoryStorage();
+const evidenceUploadDir = path.join(process.cwd(), 'uploads', 'evidence');
+const storage = multer.diskStorage({
+  destination: async (_req, _file, cb) => {
+    try {
+      await fs.mkdir(evidenceUploadDir, { recursive: true });
+      cb(null, evidenceUploadDir);
+    } catch (error) {
+      cb(error as Error, evidenceUploadDir);
+    }
+  },
+  filename: (_req, file, cb) => {
+    const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+    cb(null, `${Date.now()}-${safeName}`);
+  },
+});
+const ALLOWED_UPLOAD_MIME_TYPES = new Set([
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/msword',
+  'text/plain',
+  'text/csv',
+]);
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 50 * 1024 * 1024 // 50MB limit
-  }
+    fileSize: 10 * 1024 * 1024, // 10MB per file
+    files: 5,
+  },
+  fileFilter: (_req, file, cb) => {
+    if (!ALLOWED_UPLOAD_MIME_TYPES.has(file.mimetype)) {
+      return cb(new Error(`Unsupported file type: ${file.mimetype}`));
+    }
+    cb(null, true);
+  },
 });
 
 // Middleware to get organization ID
 router.use((req: Request, res: Response, next) => {
-  const parsedOrgId = parseInt(req.headers['x-organization-id'] as string);
-  if (!parsedOrgId) {
+  const orgId = getSecureOrgId(req);
+  const parsedOrgId = orgId ? parseInt(orgId, 10) : NaN;
+  if (!parsedOrgId || Number.isNaN(parsedOrgId)) {
     return res.status(401).json({ error: 'Organization context required' });
   }
   req.organizationId = parsedOrgId;
@@ -112,7 +140,7 @@ router.get('/requirements/:projectId', async (req: Request, res: Response) => {
  * POST /api/evidence-management/upload
  * Upload evidence files with requirement mapping
  */
-router.post('/upload', upload.array('files', 10), async (req: Request, res: Response) => {
+router.post('/upload', upload.array('files', 5), async (req: Request, res: Response) => {
   try {
     const files = req.files as Express.Multer.File[];
     const { fda_requirement, fda_section, workflow_stage, project_id } = req.body;
@@ -125,29 +153,20 @@ router.post('/upload', upload.array('files', 10), async (req: Request, res: Resp
     const uploadedFiles = [];
 
     for (const file of files) {
-      const tikaResult = await extractWithTika({
-        buffer: file.buffer,
-        filename: file.originalname,
-        mimeType: file.mimetype,
-      }).catch(() => null);
+      try {
+        // Extract data from file content (simplified for now)
+        const rawContent = await fs.readFile(file.path);
+        const fileContent = rawContent.toString('utf8').substring(0, 10000);
+        const extractedData = await evidenceService.extractDataFromFile(
+          fileContent,
+          file.originalname,
+          file.mimetype
+        );
 
-      const fallbackContent = file.buffer.toString('utf8').substring(0, 10000);
-      const fileContent = (tikaResult?.text || fallbackContent).substring(0, 10000);
+        // Create file record
+        const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-      const grobidResult = looksScholarlyDocument(file.originalname, fileContent)
-        ? await extractWithGrobid({ buffer: file.buffer, filename: file.originalname }).catch(() => null)
-        : null;
-
-      const extractedData = await evidenceService.extractDataFromFile(
-        fileContent,
-        file.originalname,
-        file.mimetype
-      );
-
-      // Create file record
-      const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      await db.execute(sql`
+        await db.execute(sql`
         INSERT INTO device_data_center (
           id,
           file_name,
@@ -175,45 +194,31 @@ router.post('/upload', upload.array('files', 10), async (req: Request, res: Resp
           ${fda_requirement || extractedData.test_type},
           ${fda_section || null},
           ${workflow_stage || null},
-          ${JSON.stringify({ ...extractedData, tika: tikaResult?.metadata || null, grobid: grobidResult || null, parser: tikaResult ? 'tika' : 'legacy_fallback' })}::jsonb,
+          ${JSON.stringify(extractedData)}::jsonb,
           ${fileContent.substring(0, 5000)},
           'draft',
           NOW(),
           NOW()
         )
-      `);
+        `);
 
-      // If no requirement was specified, try to auto-map
-      if (!fda_requirement) {
-        await evidenceService.mapToFDARequirements(fileId, extractedData);
+        // If no requirement was specified, try to auto-map
+        if (!fda_requirement) {
+          await evidenceService.mapToFDARequirements(fileId, extractedData);
+        }
+
+        uploadedFiles.push({
+          id: fileId,
+          name: file.originalname,
+          size: file.size,
+          extractedData,
+          fdaRequirement: fda_requirement || extractedData.test_type
+        });
+      } finally {
+        await fs.unlink(file.path).catch(() => {
+          // Best effort temp-file cleanup
+        });
       }
-
-      await indexGovernedDocument({
-        id: fileId,
-        organizationId,
-        projectId: project_id ? Number(project_id) : null,
-        artifactId: null,
-        docType: 'evidence_document',
-        title: file.originalname,
-        source: 'evidence-management-upload',
-        provenance: 'device_data_center',
-        tags: [fda_requirement || extractedData.test_type || 'evidence'],
-        lifecycleState: 'draft',
-        content: fileContent,
-      }).catch(() => undefined);
-
-      uploadedFiles.push({
-        id: fileId,
-        name: file.originalname,
-        size: file.size,
-        extractedData: {
-          ...extractedData,
-          parser: tikaResult ? 'tika' : 'legacy_fallback',
-          scholarly: Boolean(grobidResult),
-          references: grobidResult?.references?.length || 0,
-        },
-        fdaRequirement: fda_requirement || extractedData.test_type
-      });
     }
 
     res.json({
