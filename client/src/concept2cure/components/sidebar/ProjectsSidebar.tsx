@@ -57,15 +57,51 @@ const submissionTypeConfig: Record<
   SubmissionType,
   { label: string; color: string; dotColor: string }
 > = {
-  '510K': { label: '510K', color: 'bg-blue-100 text-stone-700 border-blue-200', dotColor: 'bg-stone-600' },
-  IND: { label: 'IND', color: 'bg-purple-100 text-purple-700 border-purple-200', dotColor: 'bg-purple-500' },
-  NDA: { label: 'NDA', color: 'bg-stone-100 text-stone-700 border-stone-200', dotColor: 'bg-stone-600' },
-  BLA: { label: 'BLA', color: 'bg-violet-100 text-stone-700 border-violet-200', dotColor: 'bg-violet-500' },
-  MAA: { label: 'MAA', color: 'bg-teal-100 text-teal-700 border-teal-200', dotColor: 'bg-teal-500' },
-  PMA: { label: 'PMA', color: 'bg-red-100 text-red-700 border-red-200', dotColor: 'bg-red-500' },
-  DE_NOVO: { label: 'De Novo', color: 'bg-cyan-100 text-cyan-700 border-cyan-200', dotColor: 'bg-cyan-500' },
-  EUA: { label: 'EUA', color: 'bg-orange-100 text-orange-700 border-orange-200', dotColor: 'bg-orange-500' },
-  IVDR: { label: 'IVDR', color: 'bg-green-100 text-green-700 border-green-200', dotColor: 'bg-green-500' },
+  '510K': {
+    label: '510K',
+    color: 'bg-stone-100 text-stone-700 border-stone-200',
+    dotColor: 'bg-stone-600',
+  },
+  IND: {
+    label: 'IND',
+    color: 'bg-[#FBF0EB] text-[#6B6962] border-[#E8C7BA]',
+    dotColor: 'bg-[#D97757]',
+  },
+  NDA: {
+    label: 'NDA',
+    color: 'bg-stone-100 text-stone-700 border-stone-200',
+    dotColor: 'bg-stone-600',
+  },
+  BLA: {
+    label: 'BLA',
+    color: 'bg-[#F5F4EF] text-[#6B6962] border-[#E8E6DC]',
+    dotColor: 'bg-[#8A877D]',
+  },
+  MAA: {
+    label: 'MAA',
+    color: 'bg-[#F5F4EF] text-[#6B6962] border-[#E8E6DC]',
+    dotColor: 'bg-[#8A877D]',
+  },
+  PMA: {
+    label: 'PMA',
+    color: 'bg-[#F5F4EF] text-[#6B6962] border-[#E8E6DC]',
+    dotColor: 'bg-[#8A877D]',
+  },
+  DE_NOVO: {
+    label: 'De Novo',
+    color: 'bg-[#FBF0EB] text-[#6B6962] border-[#E8C7BA]',
+    dotColor: 'bg-[#D97757]',
+  },
+  EUA: {
+    label: 'EUA',
+    color: 'bg-[#FBF0EB] text-[#6B6962] border-[#E8C7BA]',
+    dotColor: 'bg-[#D97757]',
+  },
+  IVDR: {
+    label: 'IVDR',
+    color: 'bg-[#F5F4EF] text-[#6B6962] border-[#E8E6DC]',
+    dotColor: 'bg-[#8A877D]',
+  },
 };
 
 const SubmissionBadge: React.FC<{ type: SubmissionType; compact?: boolean }> = ({
@@ -356,7 +392,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({
           {/* New conversation link */}
           <button
             onClick={onNewConversation}
-            className="w-full flex items-center gap-2 px-2 py-1.5 text-[12px] text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+            className="w-full flex items-center gap-2 px-2 py-1.5 text-[12px] text-stone-600 hover:bg-stone-100/70 hover:text-stone-800 rounded-md transition-colors"
           >
             <Plus className="h-3 w-3" />
             New chat

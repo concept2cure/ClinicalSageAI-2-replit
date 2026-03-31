@@ -87,7 +87,6 @@ import {
   WifiOff,
   FileText,
   Plus,
-  ArrowLeft,
   CircleDot,
   Play,
   Pause,
@@ -125,6 +124,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { LoadingState } from '@/components/ui/statesV2';
+import { WorkspaceHeader as CanonicalWorkspaceHeader } from '@/components/ui/workspace-primitives';
 
 // Canonical loading fallback for Suspense boundaries
 const ModuleLoadingFallback = () => (
@@ -1590,6 +1590,38 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     setActiveToolPanel(null);
   }, [activeProjectId]);
 
+  const openProjectWorkspace = useCallback(
+    (
+      projectId: string,
+      options?: {
+        closeProjectSwitcher?: boolean;
+        clearConversation?: boolean;
+      }
+    ) => {
+      if (!projectId) return;
+      setActiveProjectId(projectId);
+      setRiViewMode('editor');
+      setLayoutMode('regulatory-workspace');
+      navigate(`/concept2cure/project/${projectId}`);
+
+      if (options?.closeProjectSwitcher) {
+        setProjectSwitcherOpen(false);
+      }
+
+      const shouldClearConversation = options?.clearConversation ?? true;
+      if (shouldClearConversation) {
+        setActiveConversationId(undefined);
+        setActiveThreadId(undefined);
+      }
+    },
+    [navigate]
+  );
+
+  const getProjectReturnLayout = useCallback(
+    () => (activeProjectId ? 'project-home' : 'projects'),
+    [activeProjectId]
+  );
+
   // ─────────────────────────────────────────────────────────────────────────────
   // NAVIGATION HELPER — intercepts special paths before falling through to layoutMode
   // ─────────────────────────────────────────────────────────────────────────────
@@ -2155,35 +2187,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  // ── Workspace header — shared nav bar for non-chat modules ─────────────────
-  const WorkspaceHeader = ({
-    title,
-    subtitle,
-    icon,
-    onBack,
-    backLabel,
-  }: {
-    title: string;
-    subtitle?: string;
-    icon?: React.ReactNode;
-    onBack: () => void;
-    backLabel?: string;
-  }) => (
-    <div className="flex items-center gap-3 px-4 h-12 border-b border-stone-100 bg-white flex-shrink-0">
-      <button
-        onClick={onBack}
-        className="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-900 transition-colors"
-      >
-        <ChevronLeft className="w-4 h-4" />
-        <span>{backLabel || 'Back'}</span>
-      </button>
-      <div className="w-px h-4 bg-stone-200" />
-      {icon && <span className="text-stone-400">{icon}</span>}
-      <span className="text-sm font-medium text-stone-900">{title}</span>
-      {subtitle && <span className="text-xs text-stone-400 ml-1 hidden sm:inline">{subtitle}</span>}
-    </div>
-  );
-
   return (
     <div className="zen flex h-screen w-full overflow-hidden bg-white">
       {/* CSS Variables */}
@@ -2245,8 +2248,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           setActiveThreadId(id);
         }}
         onSelectProject={id => {
-          setActiveProjectId(id);
-          setLayoutMode('project-home');
+          openProjectWorkspace(id, { clearConversation: false });
         }}
         onNewChat={handleNewChat}
         onOpenProjects={() => setProjectSwitcherOpen(true)}
@@ -2871,19 +2873,19 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             (riViewMode === 'intelligence' ? (
               <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ri-copilot">
                 {/* Intelligence mode header */}
-                <div className="flex items-center gap-2 px-3 h-9 border-b border-stone-100 bg-white flex-shrink-0">
+                <div className="flex items-center gap-2 px-3 h-9 border-b border-stone-200 bg-white flex-shrink-0">
                   <button
-                    onClick={() => setLayoutMode('projects')}
-                    className="flex items-center gap-1 text-xs text-stone-400 hover:text-stone-700 transition-colors"
+                    onClick={() => setLayoutMode(getProjectReturnLayout())}
+                    className="flex items-center gap-1 text-xs text-stone-500 hover:text-stone-700 transition-colors"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
                     <span>Home</span>
                   </button>
                   <span className="text-stone-200">·</span>
-                  <Brain className="w-3.5 h-3.5 text-blue-500" />
+                  <Brain className="w-3.5 h-3.5 text-stone-500" />
                   <span className="text-xs font-medium text-stone-800">Intelligence</span>
                   {activeProject && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 font-medium">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-600 font-medium">
                       {activeProject.name}
                     </span>
                   )}
@@ -2894,7 +2896,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         onClick={() => setRiViewMode('intelligence')}
                         className={cn(
                           'px-2 py-0.5 text-[11px] font-medium transition-colors',
-                          'bg-blue-100 text-stone-700'
+                          'bg-stone-200 text-stone-800'
                         )}
                       >
                         Intelligence
@@ -3278,21 +3280,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           {!embeddedModule && layoutMode === 'task-board' && activeProjectId && (
             <Suspense fallback={<ModuleLoadingFallback />}>
               <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-stone-50/50">
-                <div className="sticky top-0 z-10 border-b border-stone-200 bg-white/95 backdrop-blur-sm px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setLayoutMode('project-home')}
-                      className="text-stone-500 hover:text-stone-700"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                    </button>
-                    <div>
-                      <h1 className="text-lg font-semibold text-stone-900">Tasks & Milestones</h1>
-                      <p className="text-xs text-stone-500">{activeProject?.name || 'Project'}</p>
-                    </div>
-                  </div>
-                </div>
+                <CanonicalWorkspaceHeader
+                  title="Tasks & Milestones"
+                  subtitle={activeProject?.name || 'Project'}
+                  onBack={() => setLayoutMode(getProjectReturnLayout())}
+                />
                 <div className="flex-1 min-h-0 p-6">
                   <ProjectTaskBoardView
                     projectId={activeProjectId}
@@ -3342,7 +3334,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   setRiViewMode('editor');
                   setLayoutMode('regulatory-workspace');
                 }}
-                onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+                onBack={() => setLayoutMode(getProjectReturnLayout())}
               />
             </Suspense>
           )}
@@ -3386,7 +3378,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   setRiViewMode('editor');
                   setLayoutMode('regulatory-workspace');
                 }}
-                onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+                onBack={() => setLayoutMode(getProjectReturnLayout())}
               />
             </Suspense>
           )}
@@ -3395,21 +3387,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           {!embeddedModule && (layoutMode === 'template-library' || layoutMode === 'templates') && (
             <Suspense fallback={<ModuleLoadingFallback />}>
               <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-stone-50/50">
-                <div className="sticky top-0 z-10 border-b border-stone-200 bg-white/95 backdrop-blur-sm px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
-                      className="text-stone-500 hover:text-stone-700"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                    </button>
-                    <div>
-                      <h1 className="text-lg font-semibold text-stone-900">Template Library</h1>
-                      <p className="text-xs text-stone-500">Regulatory document templates</p>
-                    </div>
-                  </div>
-                </div>
+                <CanonicalWorkspaceHeader
+                  title="Template Library"
+                  subtitle="Regulatory document templates"
+                  onBack={() => setLayoutMode(getProjectReturnLayout())}
+                />
                 <TemplateLibraryView
                   onSelectTemplate={(template) => {
                     const sectionCode = template.ctdSection;
@@ -3439,7 +3421,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     setRiViewMode('editor');
                     setLayoutMode('regulatory-workspace');
                   }}
-                  onClose={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+                  onClose={() => setLayoutMode(getProjectReturnLayout())}
                 />
               </div>
             </Suspense>
@@ -3688,14 +3670,14 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           const continueProject = sortedProjects[0];
           const restProjects = sortedProjects.slice(1, 12);
           const SUBMISSION_BADGE_MINI: Record<string, { label: string; color: string; bg: string }> = {
-            '510K': { label: '510(k)', color: 'text-stone-700', bg: 'bg-blue-50' },
-            IND: { label: 'IND', color: 'text-purple-700', bg: 'bg-purple-50' },
-            NDA: { label: 'NDA', color: 'text-green-700', bg: 'bg-green-50' },
-            BLA: { label: 'BLA', color: 'text-orange-700', bg: 'bg-orange-50' },
-            PMA: { label: 'PMA', color: 'text-red-700', bg: 'bg-red-50' },
-            MAA: { label: 'MAA', color: 'text-pink-700', bg: 'bg-pink-50' },
-            DE_NOVO: { label: 'De Novo', color: 'text-amber-700', bg: 'bg-amber-50' },
-            EUA: { label: 'EUA', color: 'text-cyan-700', bg: 'bg-cyan-50' },
+            '510K': { label: '510(k)', color: 'text-stone-700', bg: 'bg-stone-100' },
+            IND: { label: 'IND', color: 'text-[#6B6962]', bg: 'bg-[#FBF0EB]' },
+            NDA: { label: 'NDA', color: 'text-stone-700', bg: 'bg-stone-100' },
+            BLA: { label: 'BLA', color: 'text-[#6B6962]', bg: 'bg-[#F5F4EF]' },
+            PMA: { label: 'PMA', color: 'text-[#6B6962]', bg: 'bg-[#F5F4EF]' },
+            MAA: { label: 'MAA', color: 'text-[#6B6962]', bg: 'bg-[#F5F4EF]' },
+            DE_NOVO: { label: 'De Novo', color: 'text-[#6B6962]', bg: 'bg-[#FBF0EB]' },
+            EUA: { label: 'EUA', color: 'text-[#6B6962]', bg: 'bg-[#FBF0EB]' },
           };
           const fallbackBadge = { label: 'Project', color: 'text-stone-600', bg: 'bg-stone-50' };
           const relTime = (d: Date | string) => {
@@ -3739,8 +3721,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   </p>
                   <button
                     onClick={() => {
-                      setActiveProjectId(continueProject.id);
-                      setLayoutMode('project-home');
+                      openProjectWorkspace(continueProject.id, { clearConversation: false });
                     }}
                     className={cn(
                       'w-full text-left rounded-xl border border-stone-200 bg-white p-5',
@@ -3776,12 +3757,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                             {continueProject.description}
                           </p>
                         )}
-                        <div className="flex items-center gap-3 text-[11px] text-stone-400">
+                        <div className="flex items-center text-[11px] text-stone-400">
                           <span>{relTime(continueProject.lastUpdated)}</span>
-                          <span className="flex items-center gap-1">
-                            <MessageSquare className="w-3 h-3" />
-                            {continueProject.conversationCount} {continueProject.conversationCount === 1 ? 'chat' : 'chats'}
-                          </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 text-stone-400 group-hover:text-stone-600 transition-colors flex-shrink-0 mt-1">
@@ -3806,8 +3783,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         <button
                           key={project.id}
                           onClick={() => {
-                            setActiveProjectId(project.id);
-                            setLayoutMode('project-home');
+                            openProjectWorkspace(project.id, { clearConversation: false });
                           }}
                           className={cn(
                             'group text-left rounded-xl border overflow-hidden transition-all duration-150',
@@ -4030,13 +4006,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         projects={projects}
         activeProjectId={activeProjectId}
         onSelectProject={id => {
-          setActiveProjectId(id);
-          setProjectSwitcherOpen(false);
-          setLayoutMode('project-home');
-          navigate(`/concept2cure/project/${id}`);
-          // Clear conversation when switching projects
-          setActiveConversationId(undefined);
-          setActiveThreadId(undefined);
+          openProjectWorkspace(id, {
+            closeProjectSwitcher: true,
+            clearConversation: true,
+          });
         }}
         onCreateProject={() => {
           setProjectSwitcherOpen(false);

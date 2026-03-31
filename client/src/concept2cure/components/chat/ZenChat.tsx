@@ -82,6 +82,7 @@ interface Message {
   isStreaming?: boolean;
   artifacts?: CortexArtifact[];
   error?: string;
+  recalledToInput?: boolean;
 }
 
 interface Attachment {
@@ -203,22 +204,22 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
 
   return (
     <div className="mt-2 p-3 bg-stone-50 border border-stone-200 rounded-xl">
-      <div className="flex items-center gap-2 mb-2">
-        <FileText className="w-4 h-4 text-violet-500" />
+      <div className="flex items-center gap-2 mb-1.5">
+        <FileText className="w-4 h-4 text-[#C4623F]" />
         <span className="text-sm font-medium text-stone-900 truncate flex-1">
           {artifact.title}
         </span>
         <span className="text-xs text-stone-400">{wordCount.toLocaleString()} words</span>
       </div>
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-1.5 flex-wrap">
         <button
           onClick={() => onSave(artifact)}
           disabled={isSaving || isSaved}
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors duration-150',
+            'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors duration-150',
             isSaved
               ? 'bg-green-50 text-green-700 border border-green-200'
-              : 'bg-violet-50 text-stone-700 border border-violet-200 hover:bg-violet-100'
+              : 'bg-[#FBF0EB] text-stone-700 border border-[#E8C7BA] hover:bg-[#F6E6DF]'
           )}
         >
           {isSaving ? (
@@ -235,7 +236,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
         <div className="relative">
           <button
             onClick={() => setShowExportMenu(!showExportMenu)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50 transition-colors duration-150"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50 transition-colors duration-150"
           >
             <Download className="w-3.5 h-3.5" />
             Export
@@ -249,7 +250,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
                   onClick={() => { onExportDocx(artifact); setShowExportMenu(false); }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50"
                 >
-                  <FileText className="w-4 h-4 text-violet-500" />
+                  <FileText className="w-4 h-4 text-[#C4623F]" />
                   <div className="text-left">
                     <div className="font-medium text-xs">Word Document (.docx)</div>
                     <div className="text-xs text-stone-400">MS Word, Google Docs compatible</div>
@@ -272,7 +273,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
 
         <button
           onClick={() => onOpenEditor(artifact)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-blue-100 transition-colors duration-150"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-stone-100 px-2.5 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-200 transition-colors duration-150"
         >
           <PenTool className="w-3.5 h-3.5" />
           Edit Inline
@@ -285,6 +286,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
 interface MessageBubbleProps {
   message: Message;
   onCopy: () => void;
+  onRecallPrompt?: () => void;
   onRegenerate?: () => void;
   onFeedback?: (positive: boolean) => void;
   onNavigate?: (href: string) => void;
@@ -300,6 +302,7 @@ interface MessageBubbleProps {
 const MessageBubble: React.FC<MessageBubbleProps> = ({
   message,
   onCopy,
+  onRecallPrompt,
   onRegenerate,
   onFeedback,
   onNavigate,
@@ -397,24 +400,29 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               <TypingIndicator />
             ) : isUser ? (
               // User messages: plain text (preserving whitespace)
-              <p className="text-stone-900 leading-relaxed whitespace-pre-wrap text-sm">
-                {message.content}
-              </p>
+              <>
+                <p className="text-stone-900 leading-relaxed whitespace-pre-wrap text-sm">
+                  {message.content}
+                </p>
+                {message.recalledToInput && (
+                  <p className="mt-1 text-xs font-medium text-stone-600">Editing prompt in composer</p>
+                )}
+              </>
             ) : (
               // Assistant messages: rendered markdown
               <div
                 className="prose prose-sm prose-stone max-w-none
                   prose-headings:font-semibold prose-headings:text-stone-900 prose-headings:leading-snug
                   prose-h1:text-lg prose-h2:text-base prose-h3:text-sm
-                  prose-p:text-stone-700 prose-p:leading-relaxed prose-p:my-2
+                  prose-p:text-stone-700 prose-p:leading-relaxed prose-p:my-1.5
                   prose-strong:text-stone-900 prose-strong:font-semibold
                   prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono prose-code:before:content-none prose-code:after:content-none
-                  prose-pre:bg-stone-900 prose-pre:text-stone-100 prose-pre:rounded-xl prose-pre:p-4 prose-pre:text-xs
-                  prose-blockquote:border-l-violet-400 prose-blockquote:text-stone-600 prose-blockquote:not-italic
-                  prose-ul:text-stone-700 prose-ol:text-stone-700
-                  prose-li:my-0.5
-                  prose-table:text-sm prose-th:bg-stone-50 prose-th:font-semibold prose-td:border-stone-200
-                  prose-a:text-[#D97757] prose-a:no-underline hover:prose-a:underline
+                  prose-pre:bg-stone-900 prose-pre:text-stone-100 prose-pre:rounded-xl prose-pre:p-3.5 prose-pre:text-xs
+                  prose-blockquote:border-l-[#D8D5CA] prose-blockquote:text-stone-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-1.5
+                  prose-ul:text-stone-700 prose-ol:text-stone-700 prose-ul:my-1.5 prose-ol:my-1.5
+                  prose-li:my-1
+                  prose-table:text-[13px] prose-th:bg-stone-50 prose-th:font-semibold prose-td:border-stone-200
+                  prose-a:text-[#D97757] prose-a:font-medium prose-a:underline prose-a:decoration-[#E8C7BA] prose-a:underline-offset-2 hover:prose-a:text-[#C4623F]
                   [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                 dangerouslySetInnerHTML={{ __html: htmlContent }}
               />
@@ -441,7 +449,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               message.artifacts &&
               message.artifacts.length > 0 &&
               onSaveArtifact && (
-                <div className="mt-3 space-y-2">
+                <div className="mt-2.5 space-y-1.5">
                   {message.artifacts.map(artifact => (
                     <ArtifactActions
                       key={artifact.id}
@@ -477,10 +485,20 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             {!message.isStreaming && (
               <div
                 className={cn(
-                  'flex items-center gap-0.5 mt-2 transition-opacity duration-150',
+                  'flex items-center gap-1 mt-1.5 transition-opacity duration-150',
                   showActions ? 'opacity-100' : 'opacity-0 pointer-events-none'
                 )}
               >
+                {isUser && (
+                  <button
+                    onClick={onRecallPrompt}
+                    className="p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-md transition-colors duration-150"
+                    title="Recall this prompt to edit"
+                    aria-label="Recall this prompt to edit"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 <button
                   onClick={handleCopy}
                   className="p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-md transition-colors duration-150"
@@ -492,6 +510,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                     <Copy className="w-3.5 h-3.5" />
                   )}
                 </button>
+                {isUser && message.recalledToInput && (
+                  <span className="text-xs text-stone-600 font-medium ml-1">Loaded to input</span>
+                )}
                 {!isUser && (
                   <>
                     <button
@@ -653,14 +674,14 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
         {/* Continue previous work — only if there's context */}
         {(nextTask || lastWork) && (
-          <div className="mb-8 rounded-xl border border-blue-200 bg-blue-50/40 p-4">
-            <div className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">
+          <div className="mb-8 rounded-xl border border-stone-200 bg-stone-50/70 p-4">
+            <div className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2">
               Pick up where you left off
             </div>
             {nextTask && (
               <button
                 onClick={() => onSuggestionClick(nextTask.taskTitle)}
-                className="w-full flex items-center gap-3 text-left text-sm font-medium text-blue-900 hover:text-stone-700 transition-colors py-1"
+                className="w-full flex items-center gap-3 text-left text-sm font-medium text-stone-900 hover:text-stone-700 transition-colors py-1"
               >
                 <ArrowUp className="w-3.5 h-3.5 rotate-45 flex-shrink-0" />
                 {nextTask.taskTitle}
@@ -669,7 +690,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             {lastWork && (
               <button
                 onClick={() => onSuggestionClick(`Continue: ${lastWork.contextTitle}`)}
-                className="w-full flex items-center gap-3 text-left text-sm text-stone-700 hover:text-blue-900 transition-colors py-1"
+                className="w-full flex items-center gap-3 text-left text-sm text-stone-700 hover:text-stone-900 transition-colors py-1"
               >
                 <ArrowUp className="w-3.5 h-3.5 rotate-45 flex-shrink-0" />
                 Continue: {lastWork.contextTitle}
@@ -712,10 +733,10 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               <button
                 key={i}
                 onClick={() => onSuggestionClick('prompt' in item ? (item as { prompt: string }).prompt : item.title)}
-                className="w-full group flex items-center gap-4 p-4 rounded-xl border border-stone-200 bg-white hover:border-blue-200 hover:shadow-sm text-left transition-all duration-150"
+                className="w-full group flex items-center gap-4 p-4 rounded-xl border border-stone-200 bg-white hover:border-stone-300 hover:shadow-sm text-left transition-all duration-150"
               >
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-stone-900 group-hover:text-blue-900">
+                  <div className="text-sm font-medium text-stone-900 group-hover:text-stone-700">
                     {item.title}
                   </div>
                   <div className="text-xs text-stone-500 mt-0.5">{item.description}</div>
@@ -743,6 +764,7 @@ interface ChatInputProps {
   onChange: (value: string) => void;
   onSend: () => void;
   onStop?: () => void;
+  onRecallLastPrompt?: () => void;
   isGenerating?: boolean;
   placeholder?: string;
 }
@@ -752,6 +774,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   onChange,
   onSend,
   onStop,
+  onRecallLastPrompt,
   isGenerating = false,
   placeholder = 'Message AnA...',
 }) => {
@@ -775,6 +798,18 @@ const ChatInput: React.FC<ChatInputProps> = ({
       if (value.trim() && !isGenerating) {
         onSend();
       }
+      return;
+    }
+
+    // Claude-like recall: ArrowUp on empty composer restores latest prompt.
+    if (e.key === 'ArrowUp' && !value.trim() && !isGenerating) {
+      const textarea = textareaRef.current;
+      const caretAtStart =
+        !!textarea && (textarea.selectionStart ?? 0) === 0 && (textarea.selectionEnd ?? 0) === 0;
+      if (!textarea || caretAtStart) {
+        e.preventDefault();
+        onRecallLastPrompt?.();
+      }
     }
   };
 
@@ -787,7 +822,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           className={cn(
             'flex items-end gap-2 px-4 py-3 bg-white border rounded-xl transition-all duration-150',
             isFocused
-              ? 'border-blue-300 ring-4 ring-blue-50 shadow-sm'
+              ? 'border-stone-300 ring-4 ring-stone-100 shadow-sm'
               : 'border-stone-200 hover:border-stone-300'
           )}
         >
@@ -833,7 +868,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
         {/* Disclaimer */}
         <p className="text-center text-xs text-stone-400 mt-2">
-          AnA can make mistakes. Verify critical regulatory decisions with qualified experts.
+          Type <span className="font-semibold text-stone-500">/</span> for commands. Press{' '}
+          <span className="font-semibold text-stone-500">↑</span> on empty input to recall your last prompt.
+          Shift+Enter for a new line. AnA can make mistakes. Verify critical regulatory decisions
+          with qualified experts.
         </p>
       </div>
     </div>
@@ -939,7 +977,14 @@ export const ZenChat: React.FC<ZenChatProps> = ({
 
   // Local state
   const [input, setInput] = useState('');
+  const [recalledMessageId, setRecalledMessageId] = useState<string | null>(null);
+  const lastSubmittedPromptRef = useRef<string | null>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const draftStorageKey = useMemo(() => {
+    const projectScope = projectId || 'global';
+    const threadScope = threadId || initialThreadId || 'new';
+    return `ana:draft:${projectScope}:${threadScope}`;
+  }, [projectId, threadId, initialThreadId]);
 
   // Convert Cortex messages to local format
   const messages: Message[] = cortexMessages.map(m => ({
@@ -1005,12 +1050,36 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     scrollToBottom();
   }, [displayMessages, scrollToBottom]);
 
+  // Restore draft from local storage by project/thread scope.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const savedDraft = localStorage.getItem(draftStorageKey);
+    if (savedDraft) {
+      setInput(savedDraft);
+    }
+  }, [draftStorageKey]);
+
+  // Persist draft as user types.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!input.trim()) {
+      localStorage.removeItem(draftStorageKey);
+      return;
+    }
+    localStorage.setItem(draftStorageKey, input);
+  }, [input, draftStorageKey]);
+
   // Send message - use real API
   const handleSend = async () => {
     if (!input.trim() || isLoading || isStreaming) return;
 
     const messageText = input.trim();
+    lastSubmittedPromptRef.current = messageText;
+    setRecalledMessageId(null);
     setInput('');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(draftStorageKey);
+    }
 
     try {
       // Use streaming for better UX
@@ -1030,6 +1099,37 @@ export const ZenChat: React.FC<ZenChatProps> = ({
       streamMessage(lastUserMsg.content);
     }
   }, [displayMessages, isLoading, isStreaming, streamMessage]);
+
+  // Recall a previous user prompt into the composer for quick edits.
+  const handleRecallPrompt = useCallback((messageId: string) => {
+    const target = displayMessages.find(message => message.id === messageId && message.role === 'user');
+    if (!target) return;
+
+    setRecalledMessageId(messageId);
+    setInput(target.content);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(draftStorageKey, target.content);
+    }
+    scrollToBottom(false);
+  }, [displayMessages, draftStorageKey, scrollToBottom]);
+
+  const handleRecallLatestPrompt = useCallback(() => {
+    if (lastSubmittedPromptRef.current) {
+      setRecalledMessageId('last-submitted');
+      setInput(lastSubmittedPromptRef.current);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(draftStorageKey, lastSubmittedPromptRef.current);
+      }
+      return;
+    }
+    const lastUserMessage = [...displayMessages].reverse().find(message => message.role === 'user');
+    if (!lastUserMessage) return;
+    setRecalledMessageId(lastUserMessage.id);
+    setInput(lastUserMessage.content);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(draftStorageKey, lastUserMessage.content);
+    }
+  }, [displayMessages, draftStorageKey]);
 
   // Stop generating
   const handleStop = () => {
@@ -1204,9 +1304,14 @@ export const ZenChat: React.FC<ZenChatProps> = ({
             {displayMessages.map(message => (
               <MessageBubble
                 key={message.id}
-                message={message}
+                message={
+                  message.id === recalledMessageId && message.role === 'user'
+                    ? { ...message, recalledToInput: true }
+                    : message
+                }
                 userInitials={userInitials}
                 onCopy={() => handleCopy(message.content)}
+                onRecallPrompt={message.role === 'user' ? () => handleRecallPrompt(message.id) : undefined}
                 onRegenerate={message.role === 'assistant' ? handleRegenerate : undefined}
                 onFeedback={(positive: boolean) => {
                   apiRequest('POST', '/api/concept2cure/feedback', { messageId: message.id, positive }).catch(() => {});
@@ -1234,8 +1339,13 @@ export const ZenChat: React.FC<ZenChatProps> = ({
         onChange={setInput}
         onSend={handleSend}
         onStop={handleStop}
+        onRecallLastPrompt={handleRecallLatestPrompt}
         isGenerating={isLoading || isStreaming}
-        placeholder={isConnected ? 'Ask AnA anything...' : 'Connecting...'}
+        placeholder={
+          isConnected
+            ? 'Ask AnA anything... try /summary, /gap-check, /timeline, or /draft'
+            : 'Connecting...'
+        }
       />
     </div>
   );
