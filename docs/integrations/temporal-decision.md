@@ -1,32 +1,35 @@
 # Temporal Integration Decision
 
-## Upstream references checked
-- TypeScript SDK docs: https://docs.temporal.io/develop/typescript
-- TS SDK API reference: https://typescript.temporal.io/
-- Self-host deployment reference (official compose repo): https://github.com/temporalio/docker-compose
+Checked upstream docs on 2026-03-31:
+- https://docs.temporal.io/develop/typescript
+- https://docs.temporal.io/develop/typescript/core-application
+- https://docs.temporal.io/develop/typescript/temporal-client
+- https://docs.temporal.io/self-hosted-guide
 
 ## Required runtime(s)
-- Temporal server cluster/runtime.
-- Temporal worker process (Node/TypeScript) and client-side starter.
+- Temporal server/cluster (self-hosted or Temporal Cloud).
+- TypeScript worker runtime for workflows/activities.
+- Backend API runtime for workflow start/signaling.
 
-## Docker required?
-- **Local dev:** optional but recommended for quick bootstrap.
-- **Production:** dedicated Temporal deployment (self-hosted or managed cloud).
+## Docker service required?
+- **Local dev**: recommended via Temporal dev server / docker compose stack.
+- **Production**: managed cluster or self-hosted cluster.
 
 ## Required env vars
-- `OSS_WORKFLOW_TEMPORAL_ENABLED`
+- `TEMPORAL_ENABLED` (default `false`)
 - `TEMPORAL_ADDRESS` (e.g. `localhost:7233`)
-- `TEMPORAL_NAMESPACE`
-- `TEMPORAL_TASK_QUEUE`
+- `TEMPORAL_NAMESPACE` (default `default`)
+- `TEMPORAL_TASK_QUEUE` (e.g. `concept2cure-governed`)
 
-## Local dev impact
-- Keep Bull and cron running for existing tasks.
-- Start with narrow governed workflows only.
+## Expected local dev impact
+- Optional additional infra service.
+- Workflows can remain fallback/local when disabled.
 
 ## Expected production topology
-- Separate Temporal server + worker deployment with typed workflow/activity code.
-- App/API acts as workflow starter and state observer.
+- Temporal frontend/history/matching/worker services (or Temporal Cloud) + dedicated Concept2Cure workers.
+- Activity workers interact with existing DB/services using idempotent contracts.
 
 ## Fit for this repo
-- Introduce a governed workflow spine boundary now; keep backward-compatible fallback while Temporal rollout is phased.
-- First workflow target: evidence ingestion/enrichment and export/report compile path.
+- Start with narrowly scoped governed workflows (evidence ingestion + compile/export class).
+- Keep Bull/cron for low-risk legacy tasks during parity period.
+- Preserve existing job tables for audit/inspectability; add temporal transport behind feature flag.

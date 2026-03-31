@@ -65,6 +65,7 @@ services:
           cpus: '1'
           memory: 1G
 
+<<<<<<< HEAD
   # Optional: Apache Tika for broad document text + metadata extraction
   tika:
     image: apache/tika:2.9.2.1
@@ -82,6 +83,22 @@ services:
     profiles: ['ingestion-spine']
 
   # Optional: OpenSearch for hybrid lexical + semantic retrieval
+=======
+  tika:
+    image: apache/tika:latest
+    ports:
+      - '9998:9998'
+    profiles: ['session-b']
+    restart: unless-stopped
+
+  grobid:
+    image: lfoppiano/grobid:0.8.0
+    ports:
+      - '8070:8070'
+    profiles: ['session-b']
+    restart: unless-stopped
+
+>>>>>>> origin/codex/complete-integration-recon-for-session-b
   opensearch:
     image: opensearchproject/opensearch:2.19.0
     environment:
@@ -90,6 +107,7 @@ services:
       - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
     ports:
       - '9200:9200'
+<<<<<<< HEAD
     restart: unless-stopped
     profiles: ['search-spine']
 
@@ -120,3 +138,16 @@ services:
       - temporal-postgres
     restart: unless-stopped
     profiles: ['workflow-spine']
+=======
+    profiles: ['session-b']
+    restart: unless-stopped
+
+  temporal:
+    image: temporalio/auto-setup:1.25.2
+    environment:
+      - DB=sqlite
+    ports:
+      - '7233:7233'
+    profiles: ['session-b']
+    restart: unless-stopped
+>>>>>>> origin/codex/complete-integration-recon-for-session-b

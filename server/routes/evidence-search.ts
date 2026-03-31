@@ -4,29 +4,9 @@
  * as HTTP endpoints for the Evidence Search UI.
  */
 import { Router, Request, Response } from 'express';
-import { opensearchAdapter } from '../services/search/opensearchAdapter';
-import { authMiddleware } from '../auth';
-import { tenantContextMiddleware } from '../middleware/tenantContext';
+import { searchGovernedDocuments } from '../services/search/opensearchClient';
 
 const router = Router();
-
-router.use(authMiddleware);
-router.use(tenantContextMiddleware);
-
-async function searchWithOpenSearch(orgId: number, query: string, limit: number) {
-  const rows = await opensearchAdapter.hybridSearch({ organizationId: orgId, query, limit });
-  return rows.map((row: any) => ({
-    id: row.id,
-    title: row.title || 'Untitled',
-    type: row.docType || 'document',
-    source: 'opensearch_hybrid',
-    content: String(row.text || '').slice(0, 200),
-    ctdSection: row.section || null,
-    status: row.lifecycleState || null,
-    relevanceScore: Number(row.score || 0),
-  }));
-}
-
 
 /**
  * GET /api/evidence-search/search
@@ -45,8 +25,6 @@ router.get('/search', async (req: Request, res: Response) => {
       });
     }
 
-    const orgId = Number((req as any).tenantContext?.organizationId || req.query.organizationId || 0);
-
     let results: Array<{
       id: string;
       title: string;
@@ -59,29 +37,48 @@ router.get('/search', async (req: Request, res: Response) => {
       createdAt?: Date | null;
     }> = [];
 
-    if (orgId > 0) {
-      const osResults = await searchWithOpenSearch(orgId, query, limit);
-      if (osResults.length > 0) {
-        results = osResults;
-      }
-    }
+
+    const orgId = Number((req as any).organizationId || (req as any).tenantId || 0);
 
     try {
-      // Use the semantic search service if available
-      const { semanticSearchService } = await import('../services/semantic-search-service');
-      if (semanticSearchService && results.length === 0) {
-        const searchResults = await semanticSearchService.search(query, limit);
-        results = (searchResults || []).map((r: any) => ({
-          id: r.document?.id || r.id,
-          title: r.document?.title || r.title || 'Untitled',
-          type: r.document?.type || type || 'document',
-          source: 'semantic_search',
-          content: r.document?.content?.substring(0, 200) || '',
-          relevanceScore: r.score || 0,
+      const osResp = await searchGovernedDocuments({
+        query,
+        organizationId: orgId,
+        size: limit,
+      });
+      const hits = osResp?.hits?.hits || [];
+      if (hits.length > 0) {
+        results = hits.map((h: any) => ({
+          id: h._source?.id || h._id,
+          title: h._source?.title || 'Untitled',
+          type: h._source?.docType || type || 'document',
+          source: 'opensearch_hybrid',
+          content: String(h._source?.content || '').substring(0, 200),
+          relevanceScore: Number(h._score || 0),
         }));
       }
     } catch {
-      // Semantic search unavailable, will fall back to basic search
+      // OpenSearch unavailable, continue to current paths.
+    }
+
+    if (results.length === 0) {
+      try {
+        // Use the semantic search service if available
+        const { semanticSearchService } = await import('../services/semantic-search-service');
+        if (semanticSearchService) {
+          const searchResults = await semanticSearchService.search(query, limit);
+          results = (searchResults || []).map((r: any) => ({
+            id: r.document?.id || r.id,
+            title: r.document?.title || r.title || 'Untitled',
+            type: r.document?.type || type || 'document',
+            source: 'semantic_search',
+            content: r.document?.content?.substring(0, 200) || '',
+            relevanceScore: r.score || 0,
+          }));
+        }
+      } catch {
+        // Semantic search unavailable, will fall back to basic search
+      }
     }
 
     // If semantic search returned nothing, try basic text search on vault documents
@@ -164,50 +161,6 @@ router.get('/gather/:productId', async (req: Request, res: Response) => {
     });
   } catch {
     return res.status(500).json({ success: false, error: 'Failed to gather evidence' });
-  }
-});
-
-
-
-router.get('/search-compare', async (req: Request, res: Response) => {
-  try {
-    const query = String(req.query.q || '');
-    const limit = parseInt(req.query.limit as string) || 20;
-    const orgId = Number((req as any).tenantContext?.organizationId || req.query.organizationId || 0);
-    if (!query || query.trim().length < 2 || !orgId) {
-      return res.status(400).json({ success: false, error: 'organizationId and q (>=2 chars) are required' });
-    }
-
-    const hybrid = await searchWithOpenSearch(orgId, query, limit);
-
-    let baseline: any[] = [];
-    try {
-      const { semanticSearchService } = await import('../services/semantic-search-service');
-      if (semanticSearchService) {
-        const searchResults = await semanticSearchService.search(query, limit);
-        baseline = (searchResults || []).map((r: any) => ({
-          id: r.document?.id || r.id,
-          title: r.document?.title || r.title || 'Untitled',
-          score: r.score || 0,
-        }));
-      }
-    } catch {
-      baseline = [];
-    }
-
-    return res.json({
-      success: true,
-      data: {
-        query,
-        organizationId: orgId,
-        hybrid,
-        baseline,
-        hybridCount: hybrid.length,
-        baselineCount: baseline.length,
-      },
-    });
-  } catch {
-    return res.status(500).json({ success: false, error: 'Comparison failed' });
   }
 });
 

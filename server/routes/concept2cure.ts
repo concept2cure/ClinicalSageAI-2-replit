@@ -41,9 +41,7 @@ import DOMPurifyImport from 'isomorphic-dompurify';
 const DOMPurify = (DOMPurifyImport as any).default || DOMPurifyImport;
 import multer from 'multer';
 import path from 'path';
-import {
-  type GovernedDocumentActionContract,
-} from '../../shared/types/document-contract';
+import { type GovernedDocumentActionContract } from '../../shared/types/document-contract';
 import {
   regulatoryAuditLogs,
   projects,
@@ -5271,7 +5269,8 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
       artifactId: dbArtifact.id,
       documentType: dbArtifact.type,
       generationMode: 'amendment',
-      lifecycleStatus: (dbArtifact.status as GovernedDocumentActionContract['lifecycleStatus']) || 'draft',
+      lifecycleStatus:
+        (dbArtifact.status as GovernedDocumentActionContract['lifecycleStatus']) || 'draft',
       title: newTitle || dbArtifact.title,
       content: newContent || dbArtifact.content || '',
       ctdSection: newCtdSection,

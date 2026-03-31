@@ -9,6 +9,10 @@ import { db } from '../db';
 import { sql } from 'drizzle-orm';
 import EvidenceManagementService from '../services/EvidenceManagementService';
 
+import { extractWithTika } from '../services/ingestion/tikaClient';
+import { extractWithGrobid, looksScholarlyDocument } from '../services/literature/grobidClient';
+import { indexGovernedDocument } from '../services/search/opensearchClient';
+
 const router = Router();
 const evidenceService = new EvidenceManagementService();
 
@@ -121,8 +125,19 @@ router.post('/upload', upload.array('files', 10), async (req: Request, res: Resp
     const uploadedFiles = [];
 
     for (const file of files) {
-      // Extract data from file content (simplified for now)
-      const fileContent = file.buffer.toString('utf8').substring(0, 10000);
+      const tikaResult = await extractWithTika({
+        buffer: file.buffer,
+        filename: file.originalname,
+        mimeType: file.mimetype,
+      }).catch(() => null);
+
+      const fallbackContent = file.buffer.toString('utf8').substring(0, 10000);
+      const fileContent = (tikaResult?.text || fallbackContent).substring(0, 10000);
+
+      const grobidResult = looksScholarlyDocument(file.originalname, fileContent)
+        ? await extractWithGrobid({ buffer: file.buffer, filename: file.originalname }).catch(() => null)
+        : null;
+
       const extractedData = await evidenceService.extractDataFromFile(
         fileContent,
         file.originalname,
@@ -160,7 +175,7 @@ router.post('/upload', upload.array('files', 10), async (req: Request, res: Resp
           ${fda_requirement || extractedData.test_type},
           ${fda_section || null},
           ${workflow_stage || null},
-          ${JSON.stringify(extractedData)}::jsonb,
+          ${JSON.stringify({ ...extractedData, tika: tikaResult?.metadata || null, grobid: grobidResult || null, parser: tikaResult ? 'tika' : 'legacy_fallback' })}::jsonb,
           ${fileContent.substring(0, 5000)},
           'draft',
           NOW(),
@@ -173,11 +188,30 @@ router.post('/upload', upload.array('files', 10), async (req: Request, res: Resp
         await evidenceService.mapToFDARequirements(fileId, extractedData);
       }
 
+      await indexGovernedDocument({
+        id: fileId,
+        organizationId,
+        projectId: project_id ? Number(project_id) : null,
+        artifactId: null,
+        docType: 'evidence_document',
+        title: file.originalname,
+        source: 'evidence-management-upload',
+        provenance: 'device_data_center',
+        tags: [fda_requirement || extractedData.test_type || 'evidence'],
+        lifecycleState: 'draft',
+        content: fileContent,
+      }).catch(() => undefined);
+
       uploadedFiles.push({
         id: fileId,
         name: file.originalname,
         size: file.size,
-        extractedData,
+        extractedData: {
+          ...extractedData,
+          parser: tikaResult ? 'tika' : 'legacy_fallback',
+          scholarly: Boolean(grobidResult),
+          references: grobidResult?.references?.length || 0,
+        },
         fdaRequirement: fda_requirement || extractedData.test_type
       });
     }

@@ -8,7 +8,7 @@ import {
   getComputeJobDetail,
   listComputeJobs,
 } from '../services/compute/computeService';
-import { temporalWorkflowSpine } from '../services/workflows/temporal/temporalWorkflowSpine';
+import { startGovernedWorkflow } from '../services/workflow/temporalBridge';
 
 const router = Router();
 
@@ -28,22 +28,6 @@ router.use(limiter);
 router.use(authMiddleware);
 router.use(tenantContextMiddleware);
 router.use(requireOrganizationContext);
-
-
-const startWorkflowSchema = z.object({
-  workflowType: z.enum([
-    'evidence_ingestion_enrichment',
-    'document_export_compile',
-    'report_generation_verify',
-  ]),
-  artifactId: z.string().optional(),
-  payload: z.record(z.any()).default({}),
-});
-
-const transitionSchema = z.object({
-  status: z.enum(['running', 'waiting_approval', 'completed', 'failed']),
-  details: z.record(z.any()).optional(),
-});
 
 const createJobSchema = z.object({
   surfaceKey: z.enum(['ri_copilot', 'cmc_module3', 'ectd_ind', 'governed_export']),
@@ -107,61 +91,34 @@ router.post('/projects/:projectId/jobs', async (req, res) => {
 
 
 
-router.post('/projects/:projectId/governed-workflow-runs', async (req, res) => {
+const startWorkflowSchema = z.object({
+  workflowType: z.enum([
+    'evidence_ingestion_enrichment',
+    'document_compile_export',
+    'report_generation_verify',
+    'submission_package_compile',
+  ]),
+  payload: z.record(z.any()).default({}),
+});
+
+router.post('/projects/:projectId/workflows', async (req, res) => {
   try {
     const projectId = Number(req.params.projectId);
     const organizationId = Number(req.tenantContext?.organizationId || req.tenantId);
-    const payload = startWorkflowSchema.parse(req.body || {});
+    const requestedById = Number(req.userId || 0);
+    const parsed = startWorkflowSchema.parse(req.body || {});
 
-    const started = await temporalWorkflowSpine.startWorkflow({
-      workflowType: payload.workflowType,
+    const workflow = await startGovernedWorkflow({
       organizationId,
       projectId,
-      artifactId: payload.artifactId,
-      payload: payload.payload || {},
-      triggeredBy: String(req.userId || 'system'),
+      requestedById,
+      workflowType: parsed.workflowType,
+      payload: parsed.payload,
     });
 
-    await temporalWorkflowSpine.markTransition(started.runId, 'running', { trigger: 'api' });
-
-    return res.status(201).json({ success: true, data: started });
+    return res.status(202).json({ success: true, data: workflow });
   } catch (error: any) {
-    return res.status(500).json({ success: false, error: error?.message || 'Failed to start governed workflow' });
-  }
-});
-
-
-
-router.get('/projects/:projectId/governed-workflow-runs/:runId', async (req, res) => {
-  try {
-    const run = await temporalWorkflowSpine.getWorkflowRun(req.params.runId);
-    if (!run) {
-      return res.status(404).json({ success: false, error: 'Workflow run not found' });
-    }
-
-    if (Number((run as any).organization_id) !== Number(req.tenantContext?.organizationId || req.tenantId)) {
-      return res.status(403).json({ success: false, error: 'Workflow run not in organization scope' });
-    }
-
-    return res.json({ success: true, data: run });
-  } catch (error: any) {
-    return res.status(500).json({ success: false, error: error?.message || 'Failed to load workflow run' });
-  }
-});
-
-router.post('/projects/:projectId/governed-workflow-runs/:runId/transitions', async (req, res) => {
-  try {
-    const payload = transitionSchema.parse(req.body || {});
-    await temporalWorkflowSpine.markTransition(req.params.runId, payload.status, {
-      ...(payload.details || {}),
-      actor: String(req.userId || 'system'),
-      source: 'api-transition',
-    });
-
-    const run = await temporalWorkflowSpine.getWorkflowRun(req.params.runId);
-    return res.json({ success: true, data: run });
-  } catch (error: any) {
-    return res.status(500).json({ success: false, error: error?.message || 'Failed to update workflow run' });
+    return res.status(500).json({ success: false, error: error?.message || 'Failed to start workflow' });
   }
 });
 

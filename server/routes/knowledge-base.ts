@@ -43,7 +43,9 @@ import {
   concept2cureProvenanceEvents,
 } from '../../shared/schema.js';
 import crypto from 'crypto';
-import { tikaIngestionService } from '../services/ingestion/tikaIngestionService';
+import { extractWithTika } from '../services/ingestion/tikaClient';
+import { extractWithGrobid, looksScholarlyDocument } from '../services/literature/grobidClient';
+import { indexGovernedDocument } from '../services/search/opensearchClient';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
@@ -1289,38 +1291,7 @@ router.post('/extract-pdf', upload.single('file'), async (req: Request, res: Res
       // Fall through to basic text extraction
     }
 
-    // Strategy 3: Tika-backed normalized extraction path (feature-flagged)
-    try {
-      const tika = await tikaIngestionService.extractFromBuffer({
-        filename: file.originalname,
-        mimeType: file.mimetype || 'application/pdf',
-        buffer: file.buffer,
-      });
-
-      const html = (tika.extractedText || '')
-        .split(/\n{2,}/)
-        .filter((p: string) => p.trim())
-        .map((p: string) => `<p>${p.replace(/\n/g, '<br/>')}</p>`)
-        .join('\n');
-
-      if (tika.extractedText.trim().length > 0) {
-        return res.json({
-          success: true,
-          html,
-          text: tika.extractedText,
-          strategy: 'tika-normalized',
-          metadata: {
-            normalizedMimeType: tika.normalizedMimeType,
-            parserProvider: tika.parserProvider,
-            warnings: tika.warnings,
-          },
-        });
-      }
-    } catch {
-      // Continue to fallback response
-    }
-
-    // Strategy 4: Return buffer info as fallback
+    // Strategy 3: Return buffer info as fallback
     res.json({
       success: true,
       html: `<p><em>[PDF uploaded: ${file.originalname} — ${(file.size / 1024).toFixed(1)} KB. Text extraction services unavailable.]</em></p>`,
@@ -1753,10 +1724,19 @@ router.post('/ind-autodraft/upload', upload.array('files', 20), async (req: Requ
 
     for (const file of files) {
       let extractedText = '';
+      let tikaResult: Awaited<ReturnType<typeof extractWithTika>> = null;
       const ext = file.originalname.split('.').pop()?.toLowerCase() || '';
 
       try {
-        if (ext === 'pdf') {
+        tikaResult = await extractWithTika({
+          buffer: file.buffer,
+          filename: file.originalname,
+          mimeType: file.mimetype,
+        }).catch(() => null);
+
+        if (tikaResult?.text?.trim()) {
+          extractedText = tikaResult.text;
+        } else if (ext === 'pdf') {
           // Use pdf.js-extract for PDF extraction
           try {
             const { PDFExtract } = await import('pdf.js-extract');
@@ -1794,7 +1774,32 @@ router.post('/ind-autodraft/upload', upload.array('files', 20), async (req: Requ
         extractedText = `[File: ${file.originalname} — extraction failed]`;
       }
 
+      const grobidResult = looksScholarlyDocument(file.originalname, extractedText)
+        ? await extractWithGrobid({ buffer: file.buffer, filename: file.originalname }).catch(() => null)
+        : null;
+      if (grobidResult?.abstract && !extractedText.includes(grobidResult.abstract)) {
+        extractedText = `${grobidResult.abstract}
+
+${extractedText}`;
+      }
+
       const detectedType = detectDocumentType(file.originalname, extractedText);
+
+      const orgId = Number((req as any).organizationId || (req as any).tenantId || 0);
+      if (orgId > 0) {
+        await indexGovernedDocument({
+          id: `kb_${sessionId}_${file.originalname}`.replace(/[^a-zA-Z0-9_.-]/g, '_'),
+          organizationId: orgId,
+          projectId: req.body?.projectId ? Number(req.body.projectId) : null,
+          docType: detectedType,
+          title: file.originalname,
+          source: 'knowledge-base-ind-autodraft',
+          provenance: grobidResult ? 'grobid' : tikaResult ? 'tika' : 'legacy',
+          tags: [detectedType, grobidResult ? 'scholarly' : 'general'],
+          lifecycleState: 'draft',
+          content: extractedText.slice(0, 20000),
+        }).catch(() => undefined);
+      }
 
       session.files.push({
         name: file.originalname,

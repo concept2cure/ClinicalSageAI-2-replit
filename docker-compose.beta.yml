@@ -1,0 +1,102 @@
+version: '3.9'
+
+# Beta Environment — Human Testing & QA
+# Usage: docker compose -f docker-compose.beta.yml up --build
+#
+# Required .env variables:
+#   DATABASE_URL, JWT_SECRET, ANTHROPIC_API_KEY
+# Optional:
+#   OPENAI_API_KEY, SENDGRID_API_KEY, STRIPE_SECRET_KEY, SENTRY_DSN
+
+services:
+  # ---------- Database ----------
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-concept2cure}
+    ports:
+      - '${DB_PORT:-5432}:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-postgres}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - c2c-beta
+
+  # ---------- Redis (queues + caching) ----------
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - c2c-beta
+
+  # ---------- Application ----------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.optimized
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - '${APP_PORT:-5000}:5000'
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-concept2cure}?sslmode=disable
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
+      VITE_SHOW_DEMO_LOGIN: ${VITE_SHOW_DEMO_LOGIN:-true}
+      # Beta feature flags
+      BETA_MODE: 'true'
+      ENABLE_DEBUG_ENDPOINTS: 'false'
+      LOG_LEVEL: info
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '50m'
+        max-file: '5'
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    networks:
+      - c2c-beta
+
+volumes:
+  pgdata:
+    driver: local
+  redisdata:
+    driver: local
+
+networks:
+  c2c-beta:
+    driver: bridge

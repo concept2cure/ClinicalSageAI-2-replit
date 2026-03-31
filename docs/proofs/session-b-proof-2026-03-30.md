@@ -1,36 +1,47 @@
-# Session B Proof — 2026-03-30
+# Session B Proof Notes (2026-03-30)
 
 ## What was implemented
-1. Recon completed and documented in `docs/audits/session-b-infra-recon-2026-03-30.md`.
-2. Upstream integration decision docs added for Tika, GROBID, Temporal, OpenSearch.
-3. Tika-backed ingestion normalizer service added (`server/services/ingestion/tikaIngestionService.ts`) with feature flags + fallback.
-4. GROBID literature extraction service added (`server/services/literature/grobidLiteratureService.ts`) with selective scholarly routing + fallback.
-5. Literature ingest endpoint added (`POST /api/literature-review/ingest`) to route uploads through Tika + GROBID and optional OpenSearch indexing.
-6. Temporal workflow spine boundary added (`server/services/workflows/temporal/temporalWorkflowSpine.ts`) and wired via compute endpoint (`POST /api/concept2cure/compute/projects/:projectId/governed-workflow-runs`) using existing `workflow_runs` persistence (no ad-hoc table creation).
-7. OpenSearch adapter added (`server/services/search/opensearchAdapter.ts`) and evidence search route updated to prefer hybrid retrieval when enabled.
-8. Docker compose updated with optional profile-based services for Tika, GROBID, OpenSearch, Temporal.
-9. Session B env/setup doc added: `docs/integrations/session-b-env-setup.md`.
-10. Basic integration guard tests added: `server/test/__tests__/sessionBIntegrations.test.ts`.
-11. Firecrawl evidence ingest now dual-writes to OpenSearch indexing when persistence succeeds (`server/routes/firecrawl.ts`).
-12. Temporal workflow inspection + transition endpoints added under compute route (`GET/POST governed-workflow-runs/:runId`).
-13. OSS feature-flag registry now includes Session B toggles for Tika, GROBID, and OpenSearch adapters.
+1. **Tika integration path**
+   - Added `server/services/ingestion/tikaClient.ts`.
+   - Wired into evidence upload and knowledge-base autodraft upload with fallback behavior.
+2. **GROBID integration path**
+   - Added `server/services/literature/grobidClient.ts`.
+   - Added selective scholarly detection + structured extraction attachment in evidence/knowledge flows.
+3. **Temporal integration path**
+   - Added `server/services/workflow/temporalBridge.ts`.
+   - Added compute route endpoint to start governed workflows with feature-gated temporal transport, idempotency-key reuse, and durable local fallback completion states.
+4. **OpenSearch integration path**
+   - Added `server/services/search/opensearchClient.ts`.
+   - Dual-write indexing from firecrawl and evidence/knowledge upload paths.
+   - Added evidence search path that attempts OpenSearch hybrid query first, then existing semantic/basic fallback.
+5. **Runtime wiring**
+   - Added optional compose profile services for Tika, GROBID, OpenSearch, and Temporal.
+   - Added env/setup notes in `docs/integrations/session-b-env-setup.md`.
 
 ## Search comparison notes
-- `server/routes/evidence-search.ts` now attempts OpenSearch hybrid retrieval first when `organizationId` is available.
-- Added `GET /api/evidence-search/search-compare` as a comparison harness returning hybrid vs baseline semantic result sets.
-- If OpenSearch is disabled/unavailable, route falls back to existing semantic search and then DB text fallback.
+- Evidence search route now executes an OpenSearch attempt first when enabled and org-scoped.
+- If unavailable/disabled, it preserves existing semantic and relational fallback.
+- This allows side-by-side behavior without cutting over from pgvector.
 
 ## Workflow proof notes
-- New workflow spine persists run state into existing `workflow_runs` and supports transition logging in metadata.
-- Feature-gated engine marker:
-  - `temporal-bridge` when `OSS_WORKFLOW_TEMPORAL_ENABLED=true`
-  - `legacy-db-fallback` when disabled
+- New compute workflow endpoint (`/api/compute/projects/:projectId/workflows`) starts a governed workflow record.
+- With Temporal disabled, execution runs through local fallback with retry attempts and explicit completed/failed status transitions in DB job + attempt records.
+- With Temporal enabled and SDK available, workflow start is routed to Temporal client/task queue.
 
-## Validation command list
-1. `npm run typecheck` → failed in this environment due missing type packages in node_modules.
-2. `npx vitest run server/test/__tests__/sessionBIntegrations.test.ts` → failed because npm registry access is blocked (`403`) in this environment.
+## Validation commands run
+- `npm run -s typecheck`  
+  - Result: failed in this environment due missing ambient type packages (`@types/node`, `@types/react`, etc.) in current install context.
 
 ## Exact files changed
+- `server/services/ingestion/tikaClient.ts`
+- `server/services/literature/grobidClient.ts`
+- `server/services/search/opensearchClient.ts`
+- `server/services/workflow/temporalBridge.ts`
+- `server/routes/evidence-management.routes.ts`
+- `server/routes/knowledge-base.ts`
+- `server/routes/firecrawl.ts`
+- `server/routes/evidence-search.ts`
+- `server/routes/compute.ts`
 - `docker-compose.yml`
 - `docs/audits/session-b-infra-recon-2026-03-30.md`
 - `docs/integrations/tika-decision.md`
@@ -39,14 +50,3 @@
 - `docs/integrations/opensearch-decision.md`
 - `docs/integrations/session-b-env-setup.md`
 - `docs/proofs/session-b-proof-2026-03-30.md`
-- `server/config/ossStackFeatureFlags.ts`
-- `server/routes/compute.ts`
-- `server/routes/evidence-search.ts`
-- `server/routes/firecrawl.ts`
-- `server/routes/knowledge-base.ts`
-- `server/routes/literature-review.ts`
-- `server/services/ingestion/tikaIngestionService.ts`
-- `server/services/literature/grobidLiteratureService.ts`
-- `server/services/search/opensearchAdapter.ts`
-- `server/services/workflows/temporal/temporalWorkflowSpine.ts`
-- `server/test/__tests__/sessionBIntegrations.test.ts`

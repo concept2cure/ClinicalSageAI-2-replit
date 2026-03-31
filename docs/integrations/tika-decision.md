@@ -1,31 +1,34 @@
 # Apache Tika Integration Decision
 
-## Upstream references checked
-- Tika Server endpoint/reference docs: https://cwiki.apache.org/confluence/display/TIKA/TikaServer
-- Tika 2.x API docs: https://tika.apache.org/2.9.2/api/
-- Docker image (runtime packaging): https://hub.docker.com/r/apache/tika
+Checked upstream docs on 2026-03-31:
+- https://tika.apache.org/
+- https://hub.docker.com/r/apache/tika
+- https://cwiki.apache.org/confluence/display/TIKA/TikaServer
 
 ## Required runtime(s)
-- Java runtime packaged in `apache/tika` image.
-- HTTP service expected for Node-side integration.
+- Java runtime inside Tika container (or JVM if running jar directly).
+- Node runtime in this repo uses HTTP calls only.
 
-## Docker required?
-- **Local dev:** recommended (simple, isolated).
-- **Production:** optional; may run as standalone service/pod.
+## Docker service required?
+- **Recommended for local/dev**: yes (stable and isolated).
+- **Not strictly required**: remote/shared Tika endpoint also works.
 
 ## Required env vars
-- `TIKA_ENABLED` (feature gate)
-- `TIKA_BASE_URL` (default `http://localhost:9998`)
-- `TIKA_TIMEOUT_MS` (optional request timeout)
+- `TIKA_ENABLED` (default `false`)
+- `TIKA_BASE_URL` (e.g. `http://localhost:9998`)
+- Optional: `TIKA_TIMEOUT_MS`, `TIKA_OCR_LANGUAGE`
 
-## Local dev impact
-- Optional service start only when ingestion-spine profile is enabled.
-- Existing parsing remains fallback path when Tika disabled/unavailable.
+## Expected local dev impact
+- One extra optional service if enabled.
+- Slightly higher latency per upload for parse+metadata extraction.
+- Fallback parser remains active when unavailable.
 
 ## Expected production topology
-- Dedicated Tika service behind internal network.
-- App calls Tika for broad extraction normalization before domain-specific parsing.
+- Tika as separate stateless service behind internal network.
+- Horizontal scale by running multiple replicas behind a service endpoint.
+- No direct DB access from Tika.
 
 ## Fit for this repo
-- Promote existing Tika client + intake pipeline path to be the canonical broad extractor.
-- Keep Docling/Unstructured fallback and preserve current persistence contracts.
+- Use Tika as broad extraction normalizer in existing upload flows (`knowledge-base`, `evidence-management`, imported evidence) without creating new API domains.
+- Persist normalized output in existing evidence/artifact contracts.
+- Keep route-level fallback and non-fatal parser degradation.
