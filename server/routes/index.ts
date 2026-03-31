@@ -2,6 +2,12 @@
  * API Routes Index
  *
  * This file centralizes all API route registrations.
+ *
+ * Stage 2 beta cleanup fence (proof-required status).
+ * This alternate aggregator is not proven mounted by `server/index.ts`
+ * in the current live bootstrap path.
+ * It is NOT a removal candidate until unused proof is explicit.
+ * Do not add new behavior here unless mount ownership is explicitly decided.
  */
 import { Router } from 'express';
 import tenantsRoutes from './tenants';

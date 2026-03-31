@@ -109,3 +109,22 @@ Stage 2 cleanup must account for three routing hazards that can cause silent reg
 - start with proof-driven candidates only,
 - do not touch protected files structurally until parity tests are in place,
 - resolve `/client-portal/*` ownership decision before any portal tree removals.
+
+## Stage 2 outcome update (post-cut)
+
+Applied under Stage 2 objective ("proof-driven low-risk deletions and deprecation fence"):
+
+- **Deleted now (proof-backed):**
+  - `server/routes_update.ts`
+  - `client/src/hooks/use-auth.jsx`
+- **Deprecated/fenced only (no structural rewrite):**
+  - `client/src/main.jsx`
+  - `client/src/portal-v2/ClientPortalV2.tsx`
+  - `client/src/portal-v2/index.ts`
+  - `server/routes/index.ts` (explicitly retained as **proof-required before candidacy**, not a removal candidate)
+- **Supporting config cleanup:**
+  - Removed deleted `client/src/hooks/use-auth.jsx` entry from `tsconfig.json` `exclude`.
+
+Stage 2 evidence artifacts:
+- `docs/beta-work/stage-2-delete-proof-pack.md`
+- `docs/beta-work/stage-2-post-cut-smoke-notes.md`
