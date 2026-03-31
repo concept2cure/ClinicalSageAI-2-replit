@@ -3,8 +3,8 @@
 Stage: Stage 7 — UI-Only Beta Honesty Pass  
 Branch: `cursor/critical-files-management-f38a`  
 Baseline commit: `45ed2dfc` (`45ed2dfc`)  
-Stage 7 implementation commits: `082ef07c` + working-tree Stage 7 UI honesty updates in this pass  
-Validation snapshot: pending final Stage 7 commit in this pass
+Stage 7 implementation commit chain: `082ef07c` -> `185ab0fd` -> `d8046d56` -> `7e49bcac` -> `d097be99`  
+Validation snapshot commit: `d097be99` (`d097be99`)
 
 ## Founder-recommended partner demo path
 
@@ -39,6 +39,11 @@ Use these checks while demoing:
 - Login deep-link returns to intended `/concept2cure/project/:projectId` path.
 - Sidebar and governed workspace shell render without redirect surprise.
 - No obvious dead-end CTA in top nav.
+
+## Validation run (latest)
+
+- `npx playwright test tests/e2e/workspace-smoke.e2e.ts --grep "PULSE-" --project=chromium`  
+  Result at current snapshot: **PASS (4/4)**
 
 ## Current known runtime risk (separate from Stage 7 honesty labels)
 

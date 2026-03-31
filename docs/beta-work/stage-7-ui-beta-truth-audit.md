@@ -2,9 +2,9 @@
 
 Stage: Stage 7 — UI-Only Beta Honesty Pass  
 Branch: `cursor/critical-files-management-f38a`  
-Stage 7 implementation commit: `082ef07c` (`082ef07c`) baseline before this UI honesty cleanup  
-Stage 7 UI honesty cleanup commit: `185ab0fd` (`185ab0fd`)  
-Branch / commit reviewed for archival evidence: `185ab0fd`
+Stage 7 implementation baseline: `082ef07c` (`082ef07c`)  
+Stage 7 cleanup chain: `185ab0fd` -> `d8046d56` -> `7e49bcac` -> `d097be99`  
+Branch / commit reviewed for archival evidence (current): `d097be99`
 
 ## Wave A / Batch A1 follow-on (canonical shell exposure policy)
 
@@ -55,6 +55,39 @@ Make the visible UI stop lying by implication. Expose only beta-safe surfaces th
   - `review-tab`
 - `ZenApp` sidebar handler no longer uses `?? 'projects'` for primary nav ids.
 - Result: promoted sidebar labels now route deterministically instead of relying on fallback behavior.
+
+## Wave A / Batch A3 follow-up (top-nav calm utility pass)
+
+- Simplified `UnifiedTopNavV3` into truthful utility chrome:
+  - retained: back/forward, canonical workspace home, settings/client/org controls, Ask RI action
+  - removed/de-emphasized: decorative gradient-heavy CTA competition and dead-signage pressure
+- Added compact utility button style aligned to calm shell language.
+- Reduced top-nav visual noise without removing capability.
+
+## Wave A / Batch A4 exposure matrix lock (this pass)
+
+### Exposed (primary beta path)
+
+- Canonical shell entry and auth:
+  - `/`
+  - `/concept2cure/login`
+  - `/concept2cure/signup`
+  - `/concept2cure`
+  - `/concept2cure/*`
+- Promoted workspace actions:
+  - Sidebar workspace Editor / Intelligence / References / Review / Submit
+  - Top utility: Open Workspace, Ask RI
+
+### Exposed as compatibility fences (non-primary)
+
+- `/login`, `/sign-in`, `/auth` -> `/concept2cure/login`
+- `/client-portal`, `/client-portal/*` -> `/concept2cure`
+- `/billing`, `/billing/*` -> `/concept2cure/billing`
+
+### Secondary / deep-link module surfaces (routable, not first-rank CTA)
+
+- Module-heavy routes mounted in `App.jsx` (CMC, CERV2 variants, admin surfaces, reports, tools, etc.)
+- Kept available to avoid capability loss, but explicitly marked as secondary in shell comments and docs.
 
 ## Contradictions fixed in Stage 7
 
