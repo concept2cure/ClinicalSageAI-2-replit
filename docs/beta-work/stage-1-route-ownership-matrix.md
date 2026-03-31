@@ -1,7 +1,7 @@
 # Stage 1 — Route Ownership Matrix
 
 Stage: Stage 1 — Repo Truth Refresh and Canonical Ownership Map  
-Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `11dd2bbba54193f85d75eb55ada201967e7d75d0`
+Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `8a09e9d45388c9d7e3241b3ff06eeec6444f30da`
 
 ## Scope
 
@@ -90,6 +90,17 @@ This matrix covers route ownership across:
 3. **`/client-portal/*` links vs route ownership mismatch**  
    - Links exist in many files, but no proven mount in `App.jsx`; unknowns fall to `/concept2cure`.  
    - Evidence: `client/src/App.jsx:927-928` and grep output for `/client-portal`.
+
+## Stage 1 known cleanup hazards (must be treated as Stage 2 risks)
+
+These are explicitly flagged as cleanup hazards, not just route notes:
+
+1. **Layered `/login` ownership hazard**  
+   Cleanup can easily break auth flow because `/login` is handled in multiple layers (`App` outer redirect, `MainApp`, `ZenRouter`).
+2. **Duplicate `/` ownership hazard**  
+   Two `/` route entries in `MainApp` increase regression risk from route-order edits; one appears overshadowed.
+3. **`/client-portal/*` ownership hazard**  
+   Many link emitters target `/client-portal/*`, but explicit mount ownership in `App.jsx` is unproven; route cleanup without ownership decision can strand user paths.
 
 ---
 

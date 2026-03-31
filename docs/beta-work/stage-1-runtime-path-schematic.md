@@ -1,7 +1,7 @@
 # Stage 1 — Runtime Path Schematic
 
 Stage: Stage 1 — Repo Truth Refresh and Canonical Ownership Map  
-Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `11dd2bbba54193f85d75eb55ada201967e7d75d0`
+Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `8a09e9d45388c9d7e3241b3ff06eeec6444f30da`
 
 ## 1) Browser bootstrap path (proven from code)
 
@@ -98,7 +98,11 @@ server/index.ts
 ```
 
 Evidence:
-- `package.json:dev/start` scripts (verified during Stage 1 shell checks)
+- `package.json:27` (`dev` -> `tsx ... server/index.ts`)
+- `package.json:33` (`start` -> `node dist/index.js`)
+- `package.json:32` (`build` -> `node scripts/build-server.mjs`)
+- `scripts/build-server.mjs:16` (`entryPoints` includes `server/index.ts`)
+- `scripts/build-server.mjs:21` (`outfile` is `dist/index.js`)
 - `server/index.ts:51` (`authMiddleware` import)
 - `server/index.ts:522` (`/api/auth` mount)
 - `server/index.ts:600-624` (global `/api` auth gate)
@@ -152,9 +156,18 @@ Evidence:
 
 1. `client/src/main.jsx` exists but not loaded by `client/index.html`.
 2. `client/src/portal-v2/ClientPortalV2.tsx` defines `/client-portal/*` routes but no explicit `App.jsx` route mount to this component was proven in Stage 1.
-3. `server/routes/index.ts` defines `mountApiRoutes` but no usage in `server/index.ts` was proven in Stage 1.
+3. `server/routes/index.ts` defines `mountApiRoutes` but no usage in `server/index.ts` was proven in Stage 1; this remains ambiguous and proof-required before candidacy for cleanup.
 
-## 9) Stage 1 validation status
+## 9) Stage 1 known cleanup hazards (must be carried into Stage 2)
+
+1. **Layered `/login` ownership hazard**  
+   `/login` is handled in outer `App` redirect logic and also appears in inner switches; route cleanup can easily create auth-loop or unreachable branch regressions.
+2. **Duplicate `/` ownership hazard**  
+   `App.jsx` includes duplicate `/` route definitions in `MainApp` switch; ordering mistakes can silently alter root behavior.
+3. **`/client-portal/*` ambiguity hazard**  
+   Many links target `/client-portal/*`, but explicit live ownership through `App.jsx` mount is not proven for `ClientPortalV2.tsx`; cleanup here is high-regression unless ownership is decided first.
+
+## 10) Stage 1 validation status
 
 - Live browser bootstrap path proven from code: **PASS**
 - Live root shell identified from code: **PASS**

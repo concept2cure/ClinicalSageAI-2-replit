@@ -1,7 +1,7 @@
 # Stage 1 — Repo Truth Refresh and Canonical Ownership Map
 
 Stage: Stage 1 — Repo Truth Refresh and Canonical Ownership Map  
-Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `11dd2bbba54193f85d75eb55ada201967e7d75d0`  
+Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `8a09e9d4` (`8a09e9d45388c9d7e3241b3ff06eeec6444f30da`)  
 Method: direct file review + importer/mount/path proof from current repo head only
 
 ## Files opened for evidence (Stage 1 scope)
@@ -63,15 +63,19 @@ These remain protected for Stage 1 and too risky to chop prior to parity proof:
 12. `client/src/concept2cure/ZenApp.tsx` — canonical in-product shell.
 13. `client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx` — governed workspace lifecycle owner.
 
-## Candidate files for Stage 2 proof-driven removal (do not remove in Stage 1)
+## Stage 2 proof-driven removal queue (do not remove in Stage 1)
 
 | File | Current status | Why candidate | Proof required in Stage 2 |
 |---|---|---|---|
 | `client/src/main.jsx` | dormant-candidate | Duplicate bootstrap not loaded by `index.html` | importer proof + boot parity note |
 | `client/src/hooks/use-auth.jsx` | dormant-candidate | Deprecated empty export | importer proof (none in client src) |
 | `server/routes_update.ts` | dormant-candidate | Snippet-like file, no runtime mount/import proof | importer proof + mount-path proof |
-| `server/routes/index.ts` | ambiguous | Alternate route aggregator not wired from primary bootstrap | proof no secondary entry depends on it |
+| `server/routes/index.ts` | ambiguous / proof-required | Alternate route aggregator not wired from primary bootstrap | **prove-unused before candidacy**; do not treat as removal candidate yet |
 | `client/src/portal-v2/ClientPortalV2.tsx` | dormant-candidate | Rich `/client-portal/*` router appears unmounted from `App.jsx` | explicit route ownership decision for `/client-portal/*` |
+
+## Stage 1 known cleanup hazards
+
+Stage 2 cleanup must account for three routing hazards that can cause silent regressions: layered `/login` ownership across outer `App` and nested route switches, duplicate `/` ownership in `MainApp` (first-match overshadowing), and unresolved `/client-portal/*` ownership where many links exist but explicit live-shell mount ownership remains ambiguous.
 
 ## Contradictions vs prior risky-file report
 
