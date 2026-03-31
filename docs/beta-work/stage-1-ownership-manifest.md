@@ -128,3 +128,17 @@ Applied under Stage 2 objective ("proof-driven low-risk deletions and deprecatio
 Stage 2 evidence artifacts:
 - `docs/beta-work/stage-2-delete-proof-pack.md`
 - `docs/beta-work/stage-2-post-cut-smoke-notes.md`
+
+## Stage 3 canonical auth/db declarations (stabilization)
+
+- **Canonical auth runtime gate:** `server/auth.ts` (`authMiddleware`) mounted at `server/index.ts` for global `/api` protection.
+- **Compatibility auth layers retained:** `server/middleware/auth.ts`, `server/middleware/auth.js`, and `server/middleware/authAdapter.ts` (no deletions in Stage 3).
+- **Canonical DB runtime spine:** `server/db.ts`.
+- **Compatibility DB facade retained:** `server/db.js`, now with export-shape parity helpers added for safer compatibility (`getPool`, `getDb`, `runMigrations`, `ensureAuthTables`, `transaction`, `healthCheck`).
+- **Explicit do-not-delete-yet list (Stage 3):**
+  - `server/auth.ts`
+  - `server/middleware/auth.ts`
+  - `server/middleware/auth.js`
+  - `server/middleware/authAdapter.ts`
+  - `server/db.ts`
+  - `server/db.js`
