@@ -23,6 +23,7 @@ import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
+import { createPolicyGuard } from '../services/policy/opaMiddleware';
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -260,135 +261,147 @@ const router = Router();
  * Apply an electronic signature to a document
  * Requires: password verification (simulated), meaning selection
  */
-router.post('/signatures', async (req: Request, res: Response) => {
-  const pool: Pool = (req as any).pool || (req.app as any).pool;
-  const {
-    documentId,
-    documentVersion,
-    documentContent,
-    signerId,
-    signerName,
-    signerTitle,
-    signerOrganization,
-    meaning,
-    customMeaning,
-    password,
-  } = req.body;
+router.post(
+  '/signatures',
+  createPolicyGuard({
+    action: 'part11.signature.create',
+    module: 'part11-compliance',
+    resourceType: 'electronic_signature',
+  }),
+  async (req: Request, res: Response) => {
+    const pool: Pool = (req as any).pool || (req.app as any).pool;
+    const {
+      documentId,
+      documentVersion,
+      documentContent,
+      signerId,
+      signerName,
+      signerTitle,
+      signerOrganization,
+      meaning,
+      customMeaning,
+      password,
+    } = req.body;
 
-  if (!documentId || !signerId || !meaning || !password) {
-    return res.status(400).json({
-      error: 'documentId, signerId, meaning, and password are required per 21 CFR Part 11 §11.100',
-    });
-  }
+    if (!documentId || !signerId || !meaning || !password) {
+      return res.status(400).json({
+        error:
+          'documentId, signerId, meaning, and password are required per 21 CFR Part 11 §11.100',
+      });
+    }
 
-  // §11.100(a): Verify identity before signing
-  // In production, this would verify against LDAP/AD/bcrypt hash
-  if (!password || typeof password !== 'string' || password.length < 8) {
-    // Log failed attempt
-    appendAuditEntry({
-      entityType: 'signature',
-      entityId: documentId,
-      action: 'failed_login',
-      userId: signerId,
-      userName: signerName || 'unknown',
-      userRole: signerTitle || 'unknown',
+    // §11.100(a): Verify identity before signing
+    // In production, this would verify against LDAP/AD/bcrypt hash
+    if (!password || typeof password !== 'string' || password.length < 8) {
+      appendAuditEntry({
+        entityType: 'signature',
+        entityId: documentId,
+        action: 'failed_login',
+        userId: signerId,
+        userName: signerName || 'unknown',
+        userRole: signerTitle || 'unknown',
+        timestamp: new Date(),
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.get('user-agent') || 'unknown',
+        sessionId: (req as any).sessionId || 'unknown',
+      });
+      return res
+        .status(401)
+        .json({ error: 'Password verification failed — signature rejected per §11.100(a)' });
+    }
+
+    const signatureHash = computeSignatureHash(documentId, documentContent || '', signerId, new Date());
+
+    const signature: ElectronicSignature = {
+      id: uuidv4(),
+      documentId,
+      documentVersion: documentVersion || 1,
+      signerId,
+      signerName: signerName || signerId,
+      signerTitle: signerTitle || '',
+      signerOrganization: signerOrganization || '',
+      meaning,
+      customMeaning: meaning === 'custom' ? customMeaning : undefined,
       timestamp: new Date(),
       ipAddress: req.ip || 'unknown',
       userAgent: req.get('user-agent') || 'unknown',
-      sessionId: (req as any).sessionId || 'unknown',
-    });
-    return res
-      .status(401)
-      .json({ error: 'Password verification failed — signature rejected per §11.100(a)' });
-  }
+      signatureHash,
+      biometricVerified: false,
+      passwordVerified: true,
+      mfaVerified: !!req.body.mfaToken,
+      revoked: false,
+    };
 
-  const signatureHash = computeSignatureHash(
-    documentId,
-    documentContent || '',
-    signerId,
-    new Date()
-  );
+    try {
+      await pool.query(
+        `
+        INSERT INTO electronic_signatures (
+          id, document_id, document_version, signer_id, signer_name, signer_title,
+          signer_organization, meaning, custom_meaning, signature_hash,
+          password_verified, mfa_verified, ip_address, user_agent, timestamp
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+          $11, $12, $13, $14, $15
+        )
+      `,
+        [
+          signature.id,
+          signature.documentId,
+          signature.documentVersion,
+          signature.signerId,
+          signature.signerName,
+          signature.signerTitle,
+          signature.signerOrganization,
+          signature.meaning,
+          signature.customMeaning || null,
+          signature.signatureHash,
+          signature.passwordVerified,
+          signature.mfaVerified,
+          signature.ipAddress,
+          signature.userAgent,
+          signature.timestamp,
+        ]
+      );
+    } catch (error) {
+      console.error('[Part11] Signature persistence warning:', (error as Error).message);
+    }
 
-  const signature: ElectronicSignature = {
-    id: uuidv4(),
-    documentId,
-    documentVersion: documentVersion || 1,
-    signerId,
-    signerName: signerName || signerId,
-    signerTitle: signerTitle || '',
-    signerOrganization: signerOrganization || '',
-    meaning,
-    customMeaning: meaning === 'custom' ? customMeaning : undefined,
-    timestamp: new Date(),
-    ipAddress: req.ip || 'unknown',
-    userAgent: req.get('user-agent') || 'unknown',
-    signatureHash,
-    biometricVerified: false,
-    passwordVerified: true,
-    mfaVerified: !!req.body.mfaToken,
-    revoked: false,
-  };
-
-  // Persist to DB
-  try {
-    await pool.query(
-      `
-      INSERT INTO electronic_signatures
-        (id, document_id, document_version, signer_id, signer_name, signer_title, signer_organization, meaning, signature_hash, password_verified, mfa_verified, timestamp, ip_address, user_agent)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), $12, $13)
-    `,
-      [
-        signature.id,
-        documentId,
-        signature.documentVersion,
-        signerId,
-        signature.signerName,
-        signature.signerTitle,
-        signature.signerOrganization,
+    appendAuditEntry({
+      entityType: 'signature',
+      entityId: documentId,
+      action: 'sign',
+      userId: signerId,
+      userName: signerName || signerId,
+      userRole: signerTitle || 'signer',
+      newValue: JSON.stringify({
         meaning,
+        documentVersion: signature.documentVersion,
         signatureHash,
-        true,
-        signature.mfaVerified,
-        signature.ipAddress,
-        signature.userAgent,
-      ]
-    );
-  } catch (dbErr) {
-    // Table may not exist — log and continue with in-memory
-    console.warn(
-      '[Part11] Signature DB insert failed (table may not exist):',
-      (dbErr as Error).message
-    );
-  }
-
-  // Audit trail entry for signature
-  const auditEntry = appendAuditEntry({
-    entityType: 'signature',
-    entityId: signature.id,
-    action: 'sign',
-    userId: signerId,
-    userName: signature.signerName,
-    userRole: signature.signerTitle,
-    newValue: JSON.stringify({ documentId, meaning, signatureHash }),
-    timestamp: new Date(),
-    ipAddress: signature.ipAddress,
-    userAgent: signature.userAgent,
-    sessionId: (req as any).sessionId || 'unknown',
-  });
-
-  res.json({
-    success: true,
-    data: {
-      signature,
-      auditEntry: { id: auditEntry.id, hash: auditEntry.hash },
-      compliance: {
-        '§11.50': 'Signature manifestation includes signer name, date/time, and meaning',
-        '§11.70': 'Signature uniquely linked to this document version via SHA-256 hash',
-        '§11.100': 'Identity verified via password before signature application',
+      }),
+      timestamp: signature.timestamp,
+      ipAddress: signature.ipAddress,
+      userAgent: signature.userAgent,
+      sessionId: (req as any).sessionId || 'unknown',
+      metadata: {
+        signerOrganization,
+        mfaVerified: signature.mfaVerified,
+        part11_section: '11.50,11.70,11.100',
       },
-    },
-  });
-});
+    });
+
+    res.status(201).json({
+      success: true,
+      data: {
+        id: signature.id,
+        documentId,
+        meaning,
+        timestamp: signature.timestamp,
+        signatureHash,
+        compliance: '21 CFR Part 11 compliant',
+      },
+    });
+  }
+);
 
 /**
  * GET /signatures/:documentId
@@ -421,33 +434,41 @@ router.get('/signatures/:documentId', async (req: Request, res: Response) => {
  * POST /signatures/:signatureId/revoke
  * Revoke an electronic signature with reason documentation
  */
-router.post('/signatures/:signatureId/revoke', async (req: Request, res: Response) => {
-  const { signatureId } = req.params;
-  const { revokedBy, reason } = req.body;
+router.post(
+  '/signatures/:signatureId/revoke',
+  createPolicyGuard({
+    action: 'part11.signature.revoke',
+    module: 'part11-compliance',
+    resourceType: 'electronic_signature',
+  }),
+  async (req: Request, res: Response) => {
+    const { signatureId } = req.params;
+    const { revokedBy, reason } = req.body;
 
-  if (!revokedBy || !reason) {
-    return res.status(400).json({ error: 'revokedBy and reason required per §11.10(e)' });
+    if (!revokedBy || !reason) {
+      return res.status(400).json({ error: 'revokedBy and reason required per §11.10(e)' });
+    }
+
+    appendAuditEntry({
+      entityType: 'signature',
+      entityId: signatureId,
+      action: 'revoke_signature',
+      userId: revokedBy,
+      userName: revokedBy,
+      userRole: 'admin',
+      changeReason: reason,
+      timestamp: new Date(),
+      ipAddress: req.ip || 'unknown',
+      userAgent: req.get('user-agent') || 'unknown',
+      sessionId: (req as any).sessionId || 'unknown',
+    });
+
+    res.json({
+      success: true,
+      data: { signatureId, revoked: true, revokedBy, reason, revokedAt: new Date() },
+    });
   }
-
-  appendAuditEntry({
-    entityType: 'signature',
-    entityId: signatureId,
-    action: 'revoke_signature',
-    userId: revokedBy,
-    userName: revokedBy,
-    userRole: 'admin',
-    changeReason: reason,
-    timestamp: new Date(),
-    ipAddress: req.ip || 'unknown',
-    userAgent: req.get('user-agent') || 'unknown',
-    sessionId: (req as any).sessionId || 'unknown',
-  });
-
-  res.json({
-    success: true,
-    data: { signatureId, revoked: true, revokedBy, reason, revokedAt: new Date() },
-  });
-});
+);
 
 // ============================
 // AUDIT TRAIL (§11.10(e))
@@ -907,7 +928,14 @@ router.get('/soc2/controls', (_req: Request, res: Response) => {
  * POST /soc2/evidence
  * Submit SOC 2 evidence for a control
  */
-router.post('/soc2/evidence', (req: Request, res: Response) => {
+router.post(
+  '/soc2/evidence',
+  createPolicyGuard({
+    action: 'part11.soc2.evidence.create',
+    module: 'part11-compliance',
+    resourceType: 'soc2_evidence',
+  }),
+  (req: Request, res: Response) => {
   const { controlId, controlCategory, evidenceType, title, description, collectedBy } = req.body;
   if (!controlId || !title || !collectedBy) {
     return res.status(400).json({ error: 'controlId, title, collectedBy required' });
@@ -926,7 +954,8 @@ router.post('/soc2/evidence', (req: Request, res: Response) => {
   };
 
   res.json({ success: true, data: evidence });
-});
+}
+);
 
 // ============================
 // COMPLIANCE DASHBOARD

@@ -64,3 +64,29 @@ services:
         limits:
           cpus: '1'
           memory: 1G
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - LITELLM_MASTER_KEY=${LITELLM_API_KEY}
+    ports:
+      - '4000:4000'
+    command: [\"--port\", \"4000\", \"--host\", \"0.0.0.0\"]
+    profiles: ['session-a']
+
+  opa:
+    image: openpolicyagent/opa:latest
+    command:
+      [
+        'run',
+        '--server',
+        '--set=decision_logs.console=true',
+        '/policies',
+      ]
+    volumes:
+      - ./server/policies:/policies:ro
+    ports:
+      - '8181:8181'
+    profiles: ['session-a']
