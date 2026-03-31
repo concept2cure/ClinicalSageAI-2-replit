@@ -36,6 +36,7 @@ import * as metricsModule from '../metrics.js';
 import { authMiddleware } from '../auth';
 import { requireOrganizationContext, tenantContextMiddleware } from '../middleware/tenantContext';
 import { createRedisRateLimiter } from '../middleware/redisRateLimiter';
+import { cacheResponse } from '../middleware/enterprise-performance';
 import DOMPurifyImport from 'isomorphic-dompurify';
 const DOMPurify = (DOMPurifyImport as any).default || DOMPurifyImport;
 import multer from 'multer';
@@ -69,7 +70,11 @@ import {
 import * as crypto from 'crypto';
 import { guardEmptyContent, guardDemoContent } from '../middleware/documentLoopGuards';
 import { computeConversationHealth } from '../services/conversation-health.js';
-import { interceptComplianceScan, interceptArtifactChange, interceptFeedback } from '../services/intelligence/rim-interceptors.js';
+import {
+  interceptComplianceScan,
+  interceptArtifactChange,
+  interceptFeedback,
+} from '../services/intelligence/rim-interceptors.js';
 import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
 import {
   buildWorkingMemoryPrompt,
@@ -489,8 +494,8 @@ function normalizeKnowledge(settings: Record<string, unknown>): ProjectKnowledge
     typeof settings.customInstructions === 'string'
       ? settings.customInstructions
       : typeof knowledge.customInstructions === 'string'
-        ? knowledge.customInstructions
-        : '';
+      ? knowledge.customInstructions
+      : '';
   const context = typeof knowledge.context === 'string' ? knowledge.context : '';
 
   return {
@@ -521,7 +526,17 @@ function estimateTokensFromBytes(bytes: number): number {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Legacy enum kept for backward compat — still accepted in createProjectSchema */
-const LEGACY_SUBMISSION_TYPES = ['510K', 'FDA_510K', 'IND', 'NDA', 'BLA', 'MAA', 'PMA', 'DE_NOVO', 'EUA'] as const;
+const LEGACY_SUBMISSION_TYPES = [
+  '510K',
+  'FDA_510K',
+  'IND',
+  'NDA',
+  'BLA',
+  'MAA',
+  'PMA',
+  'DE_NOVO',
+  'EUA',
+] as const;
 
 /**
  * SubmissionTypeEnum — accepts either a known legacy type or any non-empty string.
@@ -533,28 +548,31 @@ const SubmissionTypeEnum = z
   .max(50)
   .transform(val => (val === 'FDA_510K' ? '510K' : val));
 
-
 // Submission-type-specific default instruction templates
 const submissionTypeInstructionTemplates: Record<string, (product: string) => string> = {
-  '510K': (product) =>
+  '510K': product =>
     `You are an FDA 510(k) regulatory expert for ${product}. Focus on substantial equivalence analysis, predicate device comparison, performance data requirements, and 510(k) submission readiness. Reference all project documents, predicate device information, and intelligence when responding.`,
-  IND: (product) =>
+  IND: product =>
     `You are an FDA IND (Investigational New Drug) regulatory expert for ${product}. Focus on preclinical data requirements, clinical trial protocol design, CMC (Chemistry, Manufacturing, and Controls) documentation, and IND submission strategy. Reference all project documents and intelligence when responding.`,
-  NDA: (product) =>
+  NDA: product =>
     `You are an FDA NDA (New Drug Application) regulatory expert for ${product}. Focus on clinical efficacy and safety data, labeling strategy, risk-benefit analysis, CMC compliance, and NDA submission readiness. Reference all project documents and intelligence when responding.`,
-  BLA: (product) =>
+  BLA: product =>
     `You are an FDA BLA (Biologics License Application) regulatory expert for ${product}. Focus on biological product characterization, manufacturing process validation, clinical immunogenicity data, and BLA submission strategy. Reference all project documents and intelligence when responding.`,
-  MAA: (product) =>
+  MAA: product =>
     `You are an EMA MAA (Marketing Authorisation Application) regulatory expert for ${product}. Focus on EU regulatory requirements, CTD Module structure, scientific advice alignment, and MAA submission readiness across EU member states. Reference all project documents and intelligence when responding.`,
-  PMA: (product) =>
+  PMA: product =>
     `You are an FDA PMA (Premarket Approval) regulatory expert for ${product}. Focus on clinical evidence requirements, device safety and effectiveness, manufacturing quality systems, and PMA submission strategy. Reference all project documents and intelligence when responding.`,
-  DE_NOVO: (product) =>
+  DE_NOVO: product =>
     `You are an FDA De Novo classification regulatory expert for ${product}. Focus on risk-benefit analysis for novel devices, classification rationale, special controls development, and De Novo submission readiness. Reference all project documents and intelligence when responding.`,
-  EUA: (product) =>
+  EUA: product =>
     `You are an FDA EUA (Emergency Use Authorization) regulatory expert for ${product}. Focus on known and potential benefits vs. risks, available alternatives analysis, emergency use criteria, and EUA submission strategy. Reference all project documents and intelligence when responding.`,
 };
 
-function generateDefaultCustomInstructions(submissionType: string, product?: string | null, projectName?: string): string {
+function generateDefaultCustomInstructions(
+  submissionType: string,
+  product?: string | null,
+  projectName?: string
+): string {
   const productLabel = product || projectName || 'this product';
   const templateFn = submissionTypeInstructionTemplates[submissionType];
   if (templateFn) {
@@ -574,7 +592,10 @@ const createProjectSchema = z.object({
   region: z.string().max(100).optional(),
   pinned: z.boolean().optional(),
   targetAgency: z.string().max(50).optional(),
-  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Invalid hex color').optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, 'Invalid hex color')
+    .optional(),
   /** New: canonical registry ID (e.g., 'US_IND', 'EU_MAA') — takes precedence over submissionType for bootstrap */
   registryId: z.string().max(50).optional(),
   /** New: registry-driven metadata fields */
@@ -950,7 +971,10 @@ async function getOwnershipDerivationData(
   activitiesByProject: Map<number, AuditEntry[]>;
 }> {
   const approvalsByProject = new Map<number, Array<Record<string, unknown>>>();
-  const reviewTasksByProject = new Map<number, Array<{ status: string | null; taskType: string | null }>>();
+  const reviewTasksByProject = new Map<
+    number,
+    Array<{ status: string | null; taskType: string | null }>
+  >();
   const reportsByProject = new Map<number, OwnershipReportRef[]>();
   const activitiesByProject = new Map<number, AuditEntry[]>();
 
@@ -968,7 +992,10 @@ async function getOwnershipDerivationData(
       signatureHash: concept2cureSignatures.signatureHash,
     })
     .from(concept2cureSignatures)
-    .innerJoin(concept2cureArtifacts, eq(concept2cureSignatures.artifactId, concept2cureArtifacts.id))
+    .innerJoin(
+      concept2cureArtifacts,
+      eq(concept2cureSignatures.artifactId, concept2cureArtifacts.id)
+    )
     .where(
       and(
         inArray(concept2cureArtifacts.projectId, projectIds),
@@ -1047,7 +1074,10 @@ async function getOwnershipDerivationData(
       createdAt: concept2cureSubmissionSnapshots.createdAt,
     })
     .from(concept2cureSubmissionSnapshots)
-    .innerJoin(concept2cureArtifacts, eq(concept2cureSubmissionSnapshots.artifactId, concept2cureArtifacts.id))
+    .innerJoin(
+      concept2cureArtifacts,
+      eq(concept2cureSubmissionSnapshots.artifactId, concept2cureArtifacts.id)
+    )
     .where(
       and(
         inArray(concept2cureArtifacts.projectId, projectIds),
@@ -1080,7 +1110,10 @@ async function getOwnershipDerivationData(
     })
     .from(projectActivities)
     .where(
-      and(inArray(projectActivities.projectId, projectIds), eq(projectActivities.organizationId, organizationId))
+      and(
+        inArray(projectActivities.projectId, projectIds),
+        eq(projectActivities.organizationId, organizationId)
+      )
     )
     .orderBy(desc(projectActivities.createdAt))
     .limit(500);
@@ -1161,7 +1194,12 @@ async function getArtifactsFromDb(projectId: number, organizationId: number): Pr
 
   const artifactIds = dbArtifacts.map(art => art.id);
   const dbVersions = await db
-    .select()
+    .select({
+      artifactId: concept2cureArtifactVersions.artifactId,
+      version: concept2cureArtifactVersions.version,
+      content: concept2cureArtifactVersions.content,
+      createdAt: concept2cureArtifactVersions.createdAt,
+    })
     .from(concept2cureArtifactVersions)
     .where(inArray(concept2cureArtifactVersions.artifactId, artifactIds))
     .orderBy(concept2cureArtifactVersions.version);
@@ -1216,111 +1254,115 @@ async function getArtifactsFromDb(projectId: number, organizationId: number): Pr
  * @param req.tenantContext.organizationId - Required organization context
  * @returns {Project[]} Array of projects sorted by updatedAt descending
  */
-router.get('/projects', async (req: Request, res: Response) => {
-  try {
-    const organizationId = getOrganizationId(req);
+router.get(
+  '/projects',
+  cacheResponse({ ttl: 30_000, keyGenerator: req => `projects:${(req as any).organizationId}` }),
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
 
-    // Use raw SQL to avoid Drizzle ORM schema mismatch (parent_project_id doesn't exist in DB)
-    const result = await pool.query(
-      `SELECT id, name, description, status, type, metadata, settings, created_at, updated_at
+      // Use raw SQL to avoid Drizzle ORM schema mismatch (parent_project_id doesn't exist in DB)
+      const result = await pool.query(
+        `SELECT id, name, description, status, type, metadata, settings, created_at, updated_at
        FROM projects
        WHERE organization_id = $1
          AND actual_end_date IS NULL
        ORDER BY updated_at DESC
        LIMIT 100`,
-      [organizationId]
-    );
+        [organizationId]
+      );
 
-    // Batch-load all conversations for all projects (2 queries total instead of 2*N)
-    const projectIds = result.rows.map((p: any) => p.id);
-    const allConversationsByProject = new Map<number, Conversation[]>();
-    const derivationData = await getOwnershipDerivationData(projectIds, organizationId);
+      // Batch-load all conversations for all projects (2 queries total instead of 2*N)
+      const projectIds = result.rows.map((p: any) => p.id);
+      const allConversationsByProject = new Map<number, Conversation[]>();
+      const derivationData = await getOwnershipDerivationData(projectIds, organizationId);
 
-    if (projectIds.length > 0) {
-      const allDbConvs = await db
-        .select()
-        .from(concept2cureConversations)
-        .where(
-          and(
-            inArray(concept2cureConversations.projectId, projectIds),
-            eq(concept2cureConversations.organizationId, organizationId),
-            eq(concept2cureConversations.status, 'active')
-          )
-        )
-        .orderBy(desc(concept2cureConversations.updatedAt));
-
-      if (allDbConvs.length > 0) {
-        const convIds = allDbConvs.map(c => c.id);
-        const allDbMsgs = await db
+      if (projectIds.length > 0) {
+        const allDbConvs = await db
           .select()
-          .from(concept2cureMessages)
-          .where(inArray(concept2cureMessages.conversationId, convIds))
-          .orderBy(concept2cureMessages.createdAt);
+          .from(concept2cureConversations)
+          .where(
+            and(
+              inArray(concept2cureConversations.projectId, projectIds),
+              eq(concept2cureConversations.organizationId, organizationId),
+              eq(concept2cureConversations.status, 'active')
+            )
+          )
+          .orderBy(desc(concept2cureConversations.updatedAt));
 
-        const msgsByConv = new Map<number, Message[]>();
-        for (const m of allDbMsgs) {
-          const list = msgsByConv.get(m.conversationId) || [];
-          list.push({
-            id: m.messageId,
-            role: m.role as 'user' | 'assistant',
-            content: m.content,
-            timestamp: m.createdAt,
-            attachments: m.attachments as Message['attachments'],
-            artifactId: m.artifactId || undefined,
-            edited: m.edited || false,
-          });
-          msgsByConv.set(m.conversationId, list);
-        }
+        if (allDbConvs.length > 0) {
+          const convIds = allDbConvs.map(c => c.id);
+          const allDbMsgs = await db
+            .select()
+            .from(concept2cureMessages)
+            .where(inArray(concept2cureMessages.conversationId, convIds))
+            .orderBy(concept2cureMessages.createdAt);
 
-        for (const conv of allDbConvs) {
-          const list = allConversationsByProject.get(conv.projectId) || [];
-          list.push({
-            id: conv.conversationId,
-            projectId: `proj_${conv.projectId}`,
-            title: conv.title,
-            messages: msgsByConv.get(conv.id) || [],
-            parentConversationId: conv.parentConversationId?.toString(),
-            forkMessageIndex: conv.forkMessageIndex || undefined,
-            threadId: conv.threadId || undefined,
-            createdAt: conv.createdAt,
-            updatedAt: conv.updatedAt,
-          });
-          allConversationsByProject.set(conv.projectId, list);
+          const msgsByConv = new Map<number, Message[]>();
+          for (const m of allDbMsgs) {
+            const list = msgsByConv.get(m.conversationId) || [];
+            list.push({
+              id: m.messageId,
+              role: m.role as 'user' | 'assistant',
+              content: m.content,
+              timestamp: m.createdAt,
+              attachments: m.attachments as Message['attachments'],
+              artifactId: m.artifactId || undefined,
+              edited: m.edited || false,
+            });
+            msgsByConv.set(m.conversationId, list);
+          }
+
+          for (const conv of allDbConvs) {
+            const list = allConversationsByProject.get(conv.projectId) || [];
+            list.push({
+              id: conv.conversationId,
+              projectId: `proj_${conv.projectId}`,
+              title: conv.title,
+              messages: msgsByConv.get(conv.id) || [],
+              parentConversationId: conv.parentConversationId?.toString(),
+              forkMessageIndex: conv.forkMessageIndex || undefined,
+              threadId: conv.threadId || undefined,
+              createdAt: conv.createdAt,
+              updatedAt: conv.updatedAt,
+            });
+            allConversationsByProject.set(conv.projectId, list);
+          }
         }
       }
+
+      const response = result.rows.map((p: any) => {
+        const conversations = allConversationsByProject.get(p.id) || [];
+        return {
+          id: `proj_${p.id}`,
+          name: p.name,
+          submissionType: p.metadata?.submissionType || p.type || 'IND',
+          description: p.description,
+          status: p.status || 'active',
+          sponsor: p.metadata?.sponsor,
+          product: p.metadata?.product,
+          region: p.metadata?.region,
+          pinned: (p.metadata as any)?.pinned ?? false,
+          targetAgency: (p.metadata as any)?.targetAgency ?? null,
+          color: (p.metadata as any)?.color ?? null,
+          organizationId,
+          conversations,
+          ownership: buildProjectOwnership(conversations, normalizeProjectSettings(p.settings)),
+          createdAt: p.created_at,
+          updatedAt: p.updated_at,
+        };
+      });
+
+      return sendSuccess(res, response);
+    } catch (error: any) {
+      logger.error('Failed to fetch projects', {
+        error: error.message,
+        organizationId: req.tenantContext?.organizationId,
+      });
+      return sendError(res, 500, 'Failed to fetch projects');
     }
-
-    const response = result.rows.map((p: any) => {
-      const conversations = allConversationsByProject.get(p.id) || [];
-      return {
-        id: `proj_${p.id}`,
-        name: p.name,
-        submissionType: p.metadata?.submissionType || p.type || 'IND',
-        description: p.description,
-        status: p.status || 'active',
-        sponsor: p.metadata?.sponsor,
-        product: p.metadata?.product,
-        region: p.metadata?.region,
-        pinned: (p.metadata as any)?.pinned ?? false,
-        targetAgency: (p.metadata as any)?.targetAgency ?? null,
-        color: (p.metadata as any)?.color ?? null,
-        organizationId,
-        conversations,
-        ownership: buildProjectOwnership(conversations, normalizeProjectSettings(p.settings)),
-        createdAt: p.created_at,
-        updatedAt: p.updated_at,
-      };
-    });
-
-    return sendSuccess(res, response);
-  } catch (error: any) {
-    logger.error('Failed to fetch projects', {
-      error: error.message,
-      organizationId: req.tenantContext?.organizationId,
-    });
-    return sendError(res, 500, 'Failed to fetch projects');
   }
-});
+);
 
 /**
  * GET /api/concept2cure/projects/:id
@@ -1384,7 +1426,9 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
 /**
  * Returns submission-type-aware suggested actions for display after project creation.
  */
-function getSuggestedActionsForType(submissionType: string): Array<{ id: string; label: string; command: string }> {
+function getSuggestedActionsForType(
+  submissionType: string
+): Array<{ id: string; label: string; command: string }> {
   const base = [
     { id: 'dossier-map', label: 'Start Dossier Map', command: '/dossier' },
     { id: 'add-docs', label: 'Add Documents', command: '/upload' },
@@ -1400,7 +1444,10 @@ function getSuggestedActionsForType(submissionType: string): Array<{ id: string;
 
   // Drug submissions
   if (['IND', 'NDA', 'BLA', 'ANDA'].includes(upperType)) {
-    return [...base, { id: 'clinical-review', label: 'Review Clinical Data', command: '/clinical' }];
+    return [
+      ...base,
+      { id: 'clinical-review', label: 'Review Clinical Data', command: '/clinical' },
+    ];
   }
 
   // EU submissions
@@ -1431,7 +1478,7 @@ router.post('/projects', async (req: Request, res: Response) => {
       data.customInstructions = generateDefaultCustomInstructions(
         data.submissionType,
         data.product,
-        data.name,
+        data.name
       );
     }
 
@@ -1540,7 +1587,9 @@ router.post('/projects', async (req: Request, res: Response) => {
       // Create intelligence profile
       (async () => {
         try {
-          const { getOrCreateProfile } = await import('../services/intelligence/project-intelligence-service.js');
+          const { getOrCreateProfile } = await import(
+            '../services/intelligence/project-intelligence-service.js'
+          );
           await getOrCreateProfile(newProject.id, organizationId);
           logger.info('Auto-created intelligence profile', { projectId });
         } catch (err) {
@@ -1550,7 +1599,9 @@ router.post('/projects', async (req: Request, res: Response) => {
       // Initialize sections based on registry (or fallback to IND for backward compat)
       (async () => {
         try {
-          const { bootstrapFromRegistry } = await import('../services/regulatory/projectBootstrapFromRegistry.js');
+          const { bootstrapFromRegistry } = await import(
+            '../services/regulatory/projectBootstrapFromRegistry.js'
+          );
           const bootstrapResult = await bootstrapFromRegistry({
             registryId: data.registryId,
             submissionType: data.submissionType,
@@ -1597,7 +1648,9 @@ router.post('/projects', async (req: Request, res: Response) => {
             }
           } else {
             // Fallback: use legacy IND sections if registry bootstrap returned nothing
-            const { getAllINDSections } = await import('../../services/regulatory/ind-ectd-sections.js');
+            const { getAllINDSections } = await import(
+              '../../services/regulatory/ind-ectd-sections.js'
+            );
             const allSections = getAllINDSections();
             const client = await pool.connect();
             try {
@@ -1633,7 +1686,10 @@ router.post('/projects', async (req: Request, res: Response) => {
                 inserted++;
               }
               await client.query('COMMIT');
-              logger.info('Auto-initialized CTD sections (legacy fallback)', { projectId, sectionsInserted: inserted });
+              logger.info('Auto-initialized CTD sections (legacy fallback)', {
+                projectId,
+                sectionsInserted: inserted,
+              });
             } catch (err) {
               await client.query('ROLLBACK');
               throw err;
@@ -1655,7 +1711,13 @@ router.post('/projects', async (req: Request, res: Response) => {
           await pool.query(
             `INSERT INTO ai_threads (id, organization_id, project_id, title, created_by, created_at, updated_at)
              VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
-            [initialThreadId, organizationId, newProject.id, `${productName} — Getting Started`, userId]
+            [
+              initialThreadId,
+              organizationId,
+              newProject.id,
+              `${productName} — Getting Started`,
+              userId,
+            ]
           );
 
           await pool.query(
@@ -1668,7 +1730,9 @@ router.post('/projects', async (req: Request, res: Response) => {
           if (err?.code !== '42P01') {
             logger.error('[projects] Failed to auto-create initial AnA thread:', err);
           } else {
-            logger.warn('[projects] ai_threads/ai_messages table missing — skipping onboarding thread');
+            logger.warn(
+              '[projects] ai_threads/ai_messages table missing — skipping onboarding thread'
+            );
           }
         }
       })(),
@@ -1749,7 +1813,9 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
           region: data.region ? sanitizeContent(data.region) : null,
         }),
         ...(data.pinned !== undefined && { pinned: data.pinned }),
-        ...(data.targetAgency !== undefined && { targetAgency: data.targetAgency ? sanitizeContent(data.targetAgency) : null }),
+        ...(data.targetAgency !== undefined && {
+          targetAgency: data.targetAgency ? sanitizeContent(data.targetAgency) : null,
+        }),
         ...(data.color !== undefined && { color: data.color }),
       };
     }
@@ -1843,12 +1909,12 @@ router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Re
         payload.reusableSnippetsKnowledge !== undefined
           ? payload.reusableSnippetsKnowledge.map(sanitizeContent)
           : Array.isArray(existingPreferences.reusableSnippetsKnowledge)
-            ? (existingPreferences.reusableSnippetsKnowledge as string[])
-            : [],
+          ? (existingPreferences.reusableSnippetsKnowledge as string[])
+          : [],
       currentWorkbenchContext:
         payload.currentWorkbenchContext !== undefined
           ? payload.currentWorkbenchContext
-          : ((existingPreferences.currentWorkbenchContext as WorkbenchMode) || 'project-home'),
+          : (existingPreferences.currentWorkbenchContext as WorkbenchMode) || 'project-home',
     };
 
     const mergedSettings = {
@@ -2005,80 +2071,88 @@ router.get('/projects/:projectId/knowledge', async (req: Request, res: Response)
  * GET /api/concept2cure/projects/:projectId/activity
  * Returns a merged activity feed: explicit project_activities + recent artifact updates.
  */
-router.get('/projects/:projectId/activity', async (req: Request, res: Response) => {
-  try {
-    const organizationId = getOrganizationId(req);
-    const numericProjectId = parseInt(req.params.projectId.replace('proj_', ''), 10);
+router.get(
+  '/projects/:projectId/activity',
+  cacheResponse({
+    ttl: 30_000,
+    keyGenerator: req => `activity:${(req as any).organizationId}:${req.params.projectId}`,
+  }),
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const numericProjectId = parseInt(req.params.projectId.replace('proj_', ''), 10);
 
-    if (isNaN(numericProjectId)) {
-      return sendError(res, 400, 'Invalid project ID');
-    }
+      if (isNaN(numericProjectId)) {
+        return sendError(res, 400, 'Invalid project ID');
+      }
 
-    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-    if (!hasAccess) {
-      return sendError(res, 404, 'Project not found');
-    }
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) {
+        return sendError(res, 404, 'Project not found');
+      }
 
-    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+      const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
 
-    // Fetch from projectActivities table
-    const activities = await pool.query(
-      `SELECT pa.id, pa.activity_type, pa.entity_type, pa.entity_id, pa.description, pa.details, pa.created_at,
+      // Fetch from projectActivities table
+      const activities = await pool.query(
+        `SELECT pa.id, pa.activity_type, pa.entity_type, pa.entity_id, pa.description, pa.details, pa.created_at,
               u.full_name as user_name, u.email as user_email
        FROM project_activities pa
        LEFT JOIN users u ON u.id = pa.user_id
        WHERE pa.project_id = $1 AND pa.organization_id = $2
        ORDER BY pa.created_at DESC
        LIMIT $3`,
-      [numericProjectId, organizationId, limit]
-    );
+        [numericProjectId, organizationId, limit]
+      );
 
-    // Also get recently modified artifacts as activity items
-    const recentArtifacts = await pool.query(
-      `SELECT id, artifact_id, title, status, category, type, updated_at, created_at, version
+      // Also get recently modified artifacts as activity items
+      const recentArtifacts = await pool.query(
+        `SELECT id, artifact_id, title, status, category, type, updated_at, created_at, version
        FROM concept2cure_artifacts
        WHERE project_id = $1 AND organization_id = $2
        ORDER BY updated_at DESC
        LIMIT 10`,
-      [numericProjectId, organizationId]
-    );
+        [numericProjectId, organizationId]
+      );
 
-    // Merge and sort by timestamp
-    const feed = [
-      ...activities.rows.map((a: any) => ({
-        id: `act-${a.id}`,
-        type: 'activity' as const,
-        activityType: a.activity_type,
-        entityType: a.entity_type,
-        entityId: a.entity_id,
-        description: a.description,
-        details: a.details,
-        userName: a.user_name || a.user_email || 'System',
-        timestamp: a.created_at,
-      })),
-      ...recentArtifacts.rows.map((a: any) => ({
-        id: `doc-${a.id}`,
-        type: 'document_update' as const,
-        activityType: a.version > 1 ? 'update' : 'create',
-        entityType: 'document',
-        entityId: a.artifact_id || a.id,
-        description: a.version > 1
-          ? `Updated "${a.title || 'Untitled'}" to v${a.version}`
-          : `Created "${a.title || 'Untitled'}"`,
-        details: { status: a.status, category: a.category, type: a.type },
-        userName: null,
-        timestamp: a.updated_at || a.created_at,
-      })),
-    ]
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, limit);
+      // Merge and sort by timestamp
+      const feed = [
+        ...activities.rows.map((a: any) => ({
+          id: `act-${a.id}`,
+          type: 'activity' as const,
+          activityType: a.activity_type,
+          entityType: a.entity_type,
+          entityId: a.entity_id,
+          description: a.description,
+          details: a.details,
+          userName: a.user_name || a.user_email || 'System',
+          timestamp: a.created_at,
+        })),
+        ...recentArtifacts.rows.map((a: any) => ({
+          id: `doc-${a.id}`,
+          type: 'document_update' as const,
+          activityType: a.version > 1 ? 'update' : 'create',
+          entityType: 'document',
+          entityId: a.artifact_id || a.id,
+          description:
+            a.version > 1
+              ? `Updated "${a.title || 'Untitled'}" to v${a.version}`
+              : `Created "${a.title || 'Untitled'}"`,
+          details: { status: a.status, category: a.category, type: a.type },
+          userName: null,
+          timestamp: a.updated_at || a.created_at,
+        })),
+      ]
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, limit);
 
-    return sendSuccess(res, feed);
-  } catch (error: any) {
-    logger.error('Failed to fetch project activity', { error: error.message });
-    return sendError(res, 500, 'Failed to fetch project activity');
+      return sendSuccess(res, feed);
+    } catch (error: any) {
+      logger.error('Failed to fetch project activity', { error: error.message });
+      return sendError(res, 500, 'Failed to fetch project activity');
+    }
   }
-});
+);
 
 /**
  * PATCH /api/concept2cure/projects/:projectId/knowledge
@@ -2154,9 +2228,17 @@ router.patch('/projects/:projectId/knowledge', async (req: Request, res: Respons
 
 /** Known app IDs — server-side allowlist prevents arbitrary injection */
 const KNOWN_APP_IDS = new Set([
-  'deep-research', 'precedent-intelligence', '510k-workspace', 'pma-workspace',
-  'cer-generator', 'safety-narrative', 'biostatistics', 'csr-builder',
-  'cmc-platform', 'compliance-monitor', 'evidence-engine',
+  'deep-research',
+  'precedent-intelligence',
+  '510k-workspace',
+  'pma-workspace',
+  'cer-generator',
+  'safety-narrative',
+  'biostatistics',
+  'csr-builder',
+  'cmc-platform',
+  'compliance-monitor',
+  'evidence-engine',
 ]);
 
 const MAX_CONNECTED_APPS = 20;
@@ -2175,10 +2257,14 @@ function buildAppMemoryContext(apps: ConnectedAppRecord[]): string {
 }
 
 /** Merge appContext into the project settings.knowledge object */
-function syncKnowledgeAppContext(settings: Record<string, unknown>, appContext: string): Record<string, unknown> {
-  const knowledge = settings.knowledge && typeof settings.knowledge === 'object'
-    ? { ...(settings.knowledge as Record<string, unknown>) }
-    : {};
+function syncKnowledgeAppContext(
+  settings: Record<string, unknown>,
+  appContext: string
+): Record<string, unknown> {
+  const knowledge =
+    settings.knowledge && typeof settings.knowledge === 'object'
+      ? { ...(settings.knowledge as Record<string, unknown>) }
+      : {};
   knowledge.appContext = appContext;
   return { ...settings, knowledge };
 }
@@ -2263,7 +2349,11 @@ router.post('/projects/:projectId/apps', async (req: Request, res: Response) => 
 
     // Enforce max connected apps
     if (apps.length >= MAX_CONNECTED_APPS) {
-      return sendError(res, 400, `Maximum of ${MAX_CONNECTED_APPS} connected apps reached. Disconnect one first.`);
+      return sendError(
+        res,
+        400,
+        `Maximum of ${MAX_CONNECTED_APPS} connected apps reached. Disconnect one first.`
+      );
     }
 
     // Sanitize memoryRole if provided
@@ -2291,7 +2381,11 @@ router.post('/projects/:projectId/apps', async (req: Request, res: Response) => 
 
     await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, project, updatedProject);
 
-    logger.info('App connected to project', { projectId: numericId, appId, totalConnected: updatedApps.length });
+    logger.info('App connected to project', {
+      projectId: numericId,
+      appId,
+      totalConnected: updatedApps.length,
+    });
 
     return sendSuccess(res, {
       app: newApp,
@@ -2359,7 +2453,11 @@ router.delete('/projects/:projectId/apps/:appId', async (req: Request, res: Resp
 
     await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, project, updatedProject);
 
-    logger.info('App disconnected from project', { projectId: numericId, appId, totalConnected: updatedApps.length });
+    logger.info('App disconnected from project', {
+      projectId: numericId,
+      appId,
+      totalConnected: updatedApps.length,
+    });
 
     return sendSuccess(res, {
       disconnected: appId,
@@ -2460,9 +2558,10 @@ router.post(
       try {
         const userId = getUserId(req);
         const artifactId = `artifact_upload_${Date.now()}_${crypto.randomBytes(5).toString('hex')}`;
-        const contentForArtifact = extractedText && extractedText.length > 10
-          ? extractedText
-          : `[Uploaded file: ${safeOriginalName}] (${file.mimetype}, ${file.size} bytes)`;
+        const contentForArtifact =
+          extractedText && extractedText.length > 10
+            ? extractedText
+            : `[Uploaded file: ${safeOriginalName}] (${file.mimetype}, ${file.size} bytes)`;
         const contentHash = calculateContentHash(contentForArtifact);
 
         const [newArtifact] = await db
@@ -2751,7 +2850,9 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
           data.sectionTitle || '',
           data.ctdSection ? `CTD section ${data.ctdSection}` : '',
           data.text.substring(0, 200),
-        ].filter(Boolean).join(' ');
+        ]
+          .filter(Boolean)
+          .join(' ');
 
         const searchResults = await embeddingService.searchHybrid(
           searchQuery,
@@ -2807,7 +2908,15 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
                     excerpt_hash_sha256, excerpt_preview, score)
                  VALUES ($1, $2, 'atom', $3, $4, $5, $6, $7)
                  RETURNING id`,
-                [retrievalRunId, i + 1, s.id, s.title, excerptHash, s.content.substring(0, 500), s.score]
+                [
+                  retrievalRunId,
+                  i + 1,
+                  s.id,
+                  s.title,
+                  excerptHash,
+                  s.content.substring(0, 500),
+                  s.score,
+                ]
               );
               chunkRows.push({
                 id: crResult.rows[0].id,
@@ -2837,11 +2946,17 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
     let rimBlock = '';
     if (data.projectId) {
       try {
-        const { computeReadinessScore, generateRecommendations } = await import('../services/intelligence/index.js');
+        const { computeReadinessScore, generateRecommendations } = await import(
+          '../services/intelligence/index.js'
+        );
         const projId = Number(data.projectId);
         const [readiness, recs] = await Promise.all([
           computeReadinessScore({ organizationId, projectId: projId }).catch(() => null),
-          generateRecommendations({ organizationId, projectId: projId, triggeredBy: 'ai_edit' }).catch(() => null),
+          generateRecommendations({
+            organizationId,
+            projectId: projId,
+            triggeredBy: 'ai_edit',
+          }).catch(() => null),
         ]);
 
         const rimParts: string[] = [];
@@ -2850,8 +2965,12 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
           const dims = readiness.dimensions;
           rimParts.push(
             `Submission readiness: ${Math.round(readiness.overallScore)}% overall ` +
-            `(completeness ${Math.round(dims.completeness)}%, quality ${Math.round(dims.quality)}%, ` +
-            `consistency ${Math.round(dims.consistency)}%, compliance ${Math.round(dims.compliance)}%).`
+              `(completeness ${Math.round(dims.completeness)}%, quality ${Math.round(
+                dims.quality
+              )}%, ` +
+              `consistency ${Math.round(dims.consistency)}%, compliance ${Math.round(
+                dims.compliance
+              )}%).`
           );
           if (readiness.gaps && readiness.gaps.length > 0) {
             const topGaps = readiness.gaps
@@ -2859,7 +2978,9 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
               .slice(0, 3);
             if (topGaps.length > 0) {
               rimParts.push(
-                'Key gaps: ' + topGaps.map((g: any) => `${g.description} (${g.severity})`).join('; ') + '.'
+                'Key gaps: ' +
+                  topGaps.map((g: any) => `${g.description} (${g.severity})`).join('; ') +
+                  '.'
               );
             }
           }
@@ -2867,12 +2988,16 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
 
         if (recs?.recommendations) {
           const activeRecs = recs.recommendations
-            .filter((r: any) => r.status === 'active' && (r.severity === 'critical' || r.severity === 'high'))
+            .filter(
+              (r: any) =>
+                r.status === 'active' && (r.severity === 'critical' || r.severity === 'high')
+            )
             .slice(0, 3);
           if (activeRecs.length > 0) {
             rimParts.push(
               'Active recommendations: ' +
-              activeRecs.map((r: any) => r.suggestedAction).join('; ') + '.'
+                activeRecs.map((r: any) => r.suggestedAction).join('; ') +
+                '.'
             );
           }
         }
@@ -3001,13 +3126,14 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
           }
 
           const status: SourceCitation['status'] =
-            refs.size > 0 ? 'SUPPORTED' : (isClaim ? 'UNSUPPORTED' : 'SUPPORTED');
+            refs.size > 0 ? 'SUPPORTED' : isClaim ? 'UNSUPPORTED' : 'SUPPORTED';
 
           // Persist claim + citation linkages
           if (generationRunId) {
             try {
               const claimHash = aiEditSha256(sentence);
-              const bestScore = citLinks.length > 0 ? Math.max(...citLinks.map(c => c.score)) : null;
+              const bestScore =
+                citLinks.length > 0 ? Math.max(...citLinks.map(c => c.score)) : null;
               const claimResult = await pool.query(
                 `INSERT INTO ai_claims
                    (generation_run_id, claim_index, claim_text, claim_hash_sha256, confidence, status)
@@ -3041,12 +3167,12 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
     // ── STEP 6: AUTO-PERSIST source links for artifact ────────────────────
     if (data.artifactId && sourceCitationResults.length > 0) {
       try {
-        const artifactIdNum = typeof data.artifactId === 'string'
-          ? parseInt(data.artifactId, 10) : data.artifactId;
+        const artifactIdNum =
+          typeof data.artifactId === 'string' ? parseInt(data.artifactId, 10) : data.artifactId;
         if (!isNaN(artifactIdNum)) {
           for (const cit of sourceCitationResults) {
             if (cit.sourceRefs.length > 0) {
-              const bestRef = cit.sourceRefs.reduce((a, b) => a.score > b.score ? a : b);
+              const bestRef = cit.sourceRefs.reduce((a, b) => (a.score > b.score ? a : b));
               await pool.query(
                 `INSERT INTO source_citations
                    (document_id, organization_id, sentence_index, sentence_text,
@@ -3158,14 +3284,53 @@ const PROMPT_TEMPLATES: PromptTemplate[] = [
     id: 'ctd-clinical-overview',
     name: 'Clinical Overview (2.5)',
     category: 'ctd',
-    description: 'Generate a comprehensive CTD Module 2.5 Clinical Overview with proper regulatory structure.',
+    description:
+      'Generate a comprehensive CTD Module 2.5 Clinical Overview with proper regulatory structure.',
     variables: [
-      { name: 'PRODUCT_NAME', label: 'Product Name', placeholder: 'e.g., Pembrolizumab', required: true, type: 'text' },
-      { name: 'INDICATION', label: 'Indication', placeholder: 'e.g., Non-small cell lung cancer', required: true, type: 'text' },
-      { name: 'MECHANISM', label: 'Mechanism of Action', placeholder: 'e.g., PD-1 checkpoint inhibitor', required: false, type: 'text' },
-      { name: 'PHASE', label: 'Development Phase', placeholder: 'e.g., Phase III', required: true, type: 'select', options: ['Phase I', 'Phase II', 'Phase III', 'Phase IV'] },
-      { name: 'KEY_STUDIES', label: 'Pivotal Studies', placeholder: 'e.g., KEYNOTE-024, KEYNOTE-189', required: false, type: 'textarea' },
-      { name: 'REGION', label: 'Target Agency', placeholder: 'FDA', required: true, type: 'select', options: ['FDA', 'EMA', 'PMDA', 'Health Canada'] },
+      {
+        name: 'PRODUCT_NAME',
+        label: 'Product Name',
+        placeholder: 'e.g., Pembrolizumab',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'INDICATION',
+        label: 'Indication',
+        placeholder: 'e.g., Non-small cell lung cancer',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'MECHANISM',
+        label: 'Mechanism of Action',
+        placeholder: 'e.g., PD-1 checkpoint inhibitor',
+        required: false,
+        type: 'text',
+      },
+      {
+        name: 'PHASE',
+        label: 'Development Phase',
+        placeholder: 'e.g., Phase III',
+        required: true,
+        type: 'select',
+        options: ['Phase I', 'Phase II', 'Phase III', 'Phase IV'],
+      },
+      {
+        name: 'KEY_STUDIES',
+        label: 'Pivotal Studies',
+        placeholder: 'e.g., KEYNOTE-024, KEYNOTE-189',
+        required: false,
+        type: 'textarea',
+      },
+      {
+        name: 'REGION',
+        label: 'Target Agency',
+        placeholder: 'FDA',
+        required: true,
+        type: 'select',
+        options: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+      },
     ],
     systemPrompt: `You are a senior regulatory medical writer drafting CTD Module 2.5 (Clinical Overview) for {{PRODUCT_NAME}} for the treatment of {{INDICATION}}.
 Target agency: {{REGION}}.
@@ -3182,7 +3347,8 @@ Follow ICH M4E(R2) guidelines. Structure the overview as:
 6. Benefits and Risks Conclusions
 
 Use formal regulatory language, third-person passive voice, and cite pivotal study data where provided.`,
-    outputGuidance: 'Output publication-ready regulatory prose with proper CTD subheadings. 800-1500 words.',
+    outputGuidance:
+      'Output publication-ready regulatory prose with proper CTD subheadings. 800-1500 words.',
     estimatedWords: 1200,
   },
   {
@@ -3191,11 +3357,51 @@ Use formal regulatory language, third-person passive voice, and cite pivotal stu
     category: 'ctd',
     description: 'Generate CTD Module 2.3 Quality Overall Summary for drug substance and product.',
     variables: [
-      { name: 'PRODUCT_NAME', label: 'Product Name', placeholder: 'e.g., Amlodipine Besylate', required: true, type: 'text' },
-      { name: 'DOSAGE_FORM', label: 'Dosage Form', placeholder: 'e.g., Tablets, 5mg and 10mg', required: true, type: 'text' },
-      { name: 'ROUTE', label: 'Route of Administration', placeholder: 'e.g., Oral', required: true, type: 'select', options: ['Oral', 'Intravenous', 'Subcutaneous', 'Intramuscular', 'Topical', 'Inhalation', 'Ophthalmic'] },
-      { name: 'MANUFACTURER', label: 'Manufacturer', placeholder: 'e.g., PharmaCo Manufacturing LLC', required: false, type: 'text' },
-      { name: 'REGION', label: 'Target Agency', placeholder: 'FDA', required: true, type: 'select', options: ['FDA', 'EMA', 'PMDA', 'Health Canada'] },
+      {
+        name: 'PRODUCT_NAME',
+        label: 'Product Name',
+        placeholder: 'e.g., Amlodipine Besylate',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'DOSAGE_FORM',
+        label: 'Dosage Form',
+        placeholder: 'e.g., Tablets, 5mg and 10mg',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'ROUTE',
+        label: 'Route of Administration',
+        placeholder: 'e.g., Oral',
+        required: true,
+        type: 'select',
+        options: [
+          'Oral',
+          'Intravenous',
+          'Subcutaneous',
+          'Intramuscular',
+          'Topical',
+          'Inhalation',
+          'Ophthalmic',
+        ],
+      },
+      {
+        name: 'MANUFACTURER',
+        label: 'Manufacturer',
+        placeholder: 'e.g., PharmaCo Manufacturing LLC',
+        required: false,
+        type: 'text',
+      },
+      {
+        name: 'REGION',
+        label: 'Target Agency',
+        placeholder: 'FDA',
+        required: true,
+        type: 'select',
+        options: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+      },
     ],
     systemPrompt: `You are drafting CTD Module 2.3 (Quality Overall Summary) for {{PRODUCT_NAME}} ({{DOSAGE_FORM}}, {{ROUTE}}).
 Manufacturer: {{MANUFACTURER}}.
@@ -3216,14 +3422,62 @@ Reference ICH Q1A-Q1F for stability, Q3A/Q3B for impurities, Q6A/Q6B for specifi
     category: 'csr',
     description: 'Generate a Clinical Study Report synopsis per ICH E3 guidelines.',
     variables: [
-      { name: 'STUDY_TITLE', label: 'Study Title', placeholder: 'A Phase III, Randomized, Double-Blind...', required: true, type: 'textarea' },
-      { name: 'PROTOCOL', label: 'Protocol Number', placeholder: 'e.g., ABC-123-001', required: true, type: 'text' },
-      { name: 'PRODUCT_NAME', label: 'Investigational Product', placeholder: 'e.g., Drug X 100mg', required: true, type: 'text' },
-      { name: 'INDICATION', label: 'Indication', placeholder: 'e.g., Major depressive disorder', required: true, type: 'text' },
-      { name: 'DESIGN', label: 'Study Design', placeholder: 'e.g., Randomized, double-blind, placebo-controlled', required: true, type: 'text' },
-      { name: 'SAMPLE_SIZE', label: 'Sample Size', placeholder: 'e.g., N=450', required: false, type: 'text' },
-      { name: 'PRIMARY_ENDPOINT', label: 'Primary Endpoint', placeholder: 'e.g., Change from baseline in MADRS', required: true, type: 'text' },
-      { name: 'DURATION', label: 'Treatment Duration', placeholder: 'e.g., 8 weeks', required: false, type: 'text' },
+      {
+        name: 'STUDY_TITLE',
+        label: 'Study Title',
+        placeholder: 'A Phase III, Randomized, Double-Blind...',
+        required: true,
+        type: 'textarea',
+      },
+      {
+        name: 'PROTOCOL',
+        label: 'Protocol Number',
+        placeholder: 'e.g., ABC-123-001',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'PRODUCT_NAME',
+        label: 'Investigational Product',
+        placeholder: 'e.g., Drug X 100mg',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'INDICATION',
+        label: 'Indication',
+        placeholder: 'e.g., Major depressive disorder',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'DESIGN',
+        label: 'Study Design',
+        placeholder: 'e.g., Randomized, double-blind, placebo-controlled',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'SAMPLE_SIZE',
+        label: 'Sample Size',
+        placeholder: 'e.g., N=450',
+        required: false,
+        type: 'text',
+      },
+      {
+        name: 'PRIMARY_ENDPOINT',
+        label: 'Primary Endpoint',
+        placeholder: 'e.g., Change from baseline in MADRS',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'DURATION',
+        label: 'Treatment Duration',
+        placeholder: 'e.g., 8 weeks',
+        required: false,
+        type: 'text',
+      },
     ],
     systemPrompt: `You are writing a CSR Synopsis per ICH E3 for:
 Study: {{STUDY_TITLE}}
@@ -3246,7 +3500,8 @@ Structure per ICH E3:
 - Efficacy Results (primary and key secondary)
 - Safety Results (AEs, SAEs, deaths, discontinuations)
 - Conclusions`,
-    outputGuidance: 'Structured synopsis with all ICH E3 required elements. Use [brackets] for missing data. 500-800 words.',
+    outputGuidance:
+      'Structured synopsis with all ICH E3 required elements. Use [brackets] for missing data. 500-800 words.',
     estimatedWords: 700,
   },
   {
@@ -3255,13 +3510,55 @@ Structure per ICH E3:
     category: 'safety',
     description: 'Generate an individual patient safety narrative for serious adverse events.',
     variables: [
-      { name: 'PRODUCT_NAME', label: 'Product Name', placeholder: 'e.g., Drug X', required: true, type: 'text' },
-      { name: 'PROTOCOL', label: 'Protocol Number', placeholder: 'e.g., ABC-123-001', required: true, type: 'text' },
-      { name: 'SUBJECT_ID', label: 'Subject ID', placeholder: 'e.g., 001-0042', required: true, type: 'text' },
-      { name: 'EVENT', label: 'Adverse Event', placeholder: 'e.g., Hepatotoxicity, Grade 3', required: true, type: 'text' },
-      { name: 'DEMOGRAPHICS', label: 'Demographics', placeholder: 'e.g., 58-year-old male, 82kg', required: false, type: 'text' },
-      { name: 'MEDICAL_HISTORY', label: 'Relevant Medical History', placeholder: 'e.g., Hypertension, Type 2 diabetes', required: false, type: 'textarea' },
-      { name: 'OUTCOME', label: 'Outcome', placeholder: 'e.g., Resolved with dose reduction', required: false, type: 'text' },
+      {
+        name: 'PRODUCT_NAME',
+        label: 'Product Name',
+        placeholder: 'e.g., Drug X',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'PROTOCOL',
+        label: 'Protocol Number',
+        placeholder: 'e.g., ABC-123-001',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'SUBJECT_ID',
+        label: 'Subject ID',
+        placeholder: 'e.g., 001-0042',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'EVENT',
+        label: 'Adverse Event',
+        placeholder: 'e.g., Hepatotoxicity, Grade 3',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'DEMOGRAPHICS',
+        label: 'Demographics',
+        placeholder: 'e.g., 58-year-old male, 82kg',
+        required: false,
+        type: 'text',
+      },
+      {
+        name: 'MEDICAL_HISTORY',
+        label: 'Relevant Medical History',
+        placeholder: 'e.g., Hypertension, Type 2 diabetes',
+        required: false,
+        type: 'textarea',
+      },
+      {
+        name: 'OUTCOME',
+        label: 'Outcome',
+        placeholder: 'e.g., Resolved with dose reduction',
+        required: false,
+        type: 'text',
+      },
     ],
     systemPrompt: `You are writing an individual patient safety narrative for a regulatory submission.
 Product: {{PRODUCT_NAME}}
@@ -3292,12 +3589,49 @@ Use [brackets] for any missing data elements.`,
     category: 'ind',
     description: 'Generate an IND cover letter for FDA submission.',
     variables: [
-      { name: 'PRODUCT_NAME', label: 'Product Name', placeholder: 'e.g., ABC-1234', required: true, type: 'text' },
-      { name: 'INDICATION', label: 'Indication', placeholder: 'e.g., Advanced melanoma', required: true, type: 'text' },
-      { name: 'SPONSOR', label: 'Sponsor Name', placeholder: 'e.g., BioPharma Inc.', required: true, type: 'text' },
-      { name: 'IND_NUMBER', label: 'IND Number', placeholder: 'e.g., IND 123456 (or New)', required: false, type: 'text' },
-      { name: 'SUBMISSION_TYPE', label: 'Submission Type', placeholder: 'Initial IND', required: true, type: 'select', options: ['Initial IND', 'IND Amendment', 'IND Annual Report', 'IND Safety Report'] },
-      { name: 'DIVISION', label: 'FDA Review Division', placeholder: 'e.g., Division of Oncology Products 1', required: false, type: 'text' },
+      {
+        name: 'PRODUCT_NAME',
+        label: 'Product Name',
+        placeholder: 'e.g., ABC-1234',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'INDICATION',
+        label: 'Indication',
+        placeholder: 'e.g., Advanced melanoma',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'SPONSOR',
+        label: 'Sponsor Name',
+        placeholder: 'e.g., BioPharma Inc.',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'IND_NUMBER',
+        label: 'IND Number',
+        placeholder: 'e.g., IND 123456 (or New)',
+        required: false,
+        type: 'text',
+      },
+      {
+        name: 'SUBMISSION_TYPE',
+        label: 'Submission Type',
+        placeholder: 'Initial IND',
+        required: true,
+        type: 'select',
+        options: ['Initial IND', 'IND Amendment', 'IND Annual Report', 'IND Safety Report'],
+      },
+      {
+        name: 'DIVISION',
+        label: 'FDA Review Division',
+        placeholder: 'e.g., Division of Oncology Products 1',
+        required: false,
+        type: 'text',
+      },
     ],
     systemPrompt: `You are drafting an IND cover letter for FDA.
 Product: {{PRODUCT_NAME}}
@@ -3389,16 +3723,22 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
           (req as any).tenantContext?.organizationUuid ||
           (req.headers['x-org-uuid'] as string | undefined);
 
-        const searchQuery = Object.values(data.variables).filter(Boolean).join(' ').substring(0, 300);
+        const searchQuery = Object.values(data.variables)
+          .filter(Boolean)
+          .join(' ')
+          .substring(0, 300);
         const searchResults = await embeddingService.searchHybrid(searchQuery, 5, 0.65, orgUuid);
         if (searchResults.length > 0) {
           sourcesRetrieved = searchResults.length;
           evidenceBlock =
             '\n\n--- RETRIEVED EVIDENCE FROM DATA ROOM (cite as [SRC-n]) ---\n' +
-            searchResults.map((r: any, i: number) => {
-              const content = r.content.length > 500 ? r.content.substring(0, 500) + '…' : r.content;
-              return `[SRC-${i + 1}] "${r.title}"\n${content}`;
-            }).join('\n\n') +
+            searchResults
+              .map((r: any, i: number) => {
+                const content =
+                  r.content.length > 500 ? r.content.substring(0, 500) + '…' : r.content;
+                return `[SRC-${i + 1}] "${r.title}"\n${content}`;
+              })
+              .join('\n\n') +
             '\n--- END EVIDENCE ---\n\n' +
             'Cite evidence inline using [SRC-n] where supported. Do NOT fabricate citations.';
         }
@@ -3411,11 +3751,17 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
     let rimBlock = '';
     if (data.projectId) {
       try {
-        const { computeReadinessScore, generateRecommendations } = await import('../services/intelligence/index.js');
+        const { computeReadinessScore, generateRecommendations } = await import(
+          '../services/intelligence/index.js'
+        );
         const projId = Number(data.projectId);
         const [readiness, recs] = await Promise.all([
           computeReadinessScore({ organizationId, projectId: projId }).catch(() => null),
-          generateRecommendations({ organizationId, projectId: projId, triggeredBy: 'template_gen' }).catch(() => null),
+          generateRecommendations({
+            organizationId,
+            projectId: projId,
+            triggeredBy: 'template_gen',
+          }).catch(() => null),
         ]);
 
         const rimParts: string[] = [];
@@ -3423,24 +3769,39 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
           const dims = readiness.dimensions;
           rimParts.push(
             `Submission readiness: ${Math.round(readiness.overallScore)}% ` +
-            `(completeness ${Math.round(dims.completeness)}%, quality ${Math.round(dims.quality)}%, ` +
-            `consistency ${Math.round(dims.consistency)}%, compliance ${Math.round(dims.compliance)}%).`
+              `(completeness ${Math.round(dims.completeness)}%, quality ${Math.round(
+                dims.quality
+              )}%, ` +
+              `consistency ${Math.round(dims.consistency)}%, compliance ${Math.round(
+                dims.compliance
+              )}%).`
           );
           if (readiness.gaps?.length > 0) {
             const topGaps = readiness.gaps
               .filter((g: any) => g.severity === 'critical' || g.severity === 'high')
               .slice(0, 3);
             if (topGaps.length > 0) {
-              rimParts.push('Key gaps: ' + topGaps.map((g: any) => `${g.description} (${g.severity})`).join('; ') + '.');
+              rimParts.push(
+                'Key gaps: ' +
+                  topGaps.map((g: any) => `${g.description} (${g.severity})`).join('; ') +
+                  '.'
+              );
             }
           }
         }
         if (recs?.recommendations) {
           const activeRecs = recs.recommendations
-            .filter((r: any) => r.status === 'active' && (r.severity === 'critical' || r.severity === 'high'))
+            .filter(
+              (r: any) =>
+                r.status === 'active' && (r.severity === 'critical' || r.severity === 'high')
+            )
             .slice(0, 3);
           if (activeRecs.length > 0) {
-            rimParts.push('Active recommendations: ' + activeRecs.map((r: any) => r.suggestedAction).join('; ') + '.');
+            rimParts.push(
+              'Active recommendations: ' +
+                activeRecs.map((r: any) => r.suggestedAction).join('; ') +
+                '.'
+            );
           }
         }
         if (rimParts.length > 0) {
@@ -3465,7 +3826,10 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
     const gwResponse = await gw.route({
       taskType: 'document_drafting',
       messages: [
-        { role: 'system', content: prompt + evidenceBlock + rimBlock + '\n\n' + template.outputGuidance },
+        {
+          role: 'system',
+          content: prompt + evidenceBlock + rimBlock + '\n\n' + template.outputGuidance,
+        },
         { role: 'user', content: 'Generate the document content now.' },
       ],
       temperature: 0.35,
@@ -3506,7 +3870,7 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
         wordCount,
         latencyMs,
         sourcesRetrieved,
-        wordsPerMinute: latencyMs > 0 ? Math.round((wordCount / (latencyMs / 60000))) : 0,
+        wordsPerMinute: latencyMs > 0 ? Math.round(wordCount / (latencyMs / 60000)) : 0,
       },
     });
   } catch (error: any) {
@@ -3550,7 +3914,9 @@ router.post('/ai/autocomplete', async (req: Request, res: Response) => {
       context?.documentType ? `Document type: ${context.documentType}.` : '',
       'Return ONLY the completion text — no explanation, no quotes, no preamble.',
       'If you cannot predict a useful continuation, return an empty string.',
-    ].filter(Boolean).join(' ');
+    ]
+      .filter(Boolean)
+      .join(' ');
 
     const gwResponse = await gw.route({
       taskType: 'document_drafting',
@@ -3602,7 +3968,9 @@ router.post('/ai/compliance-scan', async (req: Request, res: Response) => {
       'Return a JSON array of issues: [{"type": "error|warning|info", "rule": "21 CFR 314.50(d)", "message": "...", "suggestion": "..."}]',
       'Focus on: missing required content, regulatory language violations, formatting issues, and cross-reference gaps.',
       'Return ONLY valid JSON array, no other text.',
-    ].filter(Boolean).join(' ');
+    ]
+      .filter(Boolean)
+      .join(' ');
 
     // Use only first 3000 chars to keep latency low
     const truncated = content.replace(/<[^>]+>/g, ' ').slice(0, 3000);
@@ -3769,23 +4137,33 @@ router.post('/ai/batch-edit', async (req: Request, res: Response) => {
     }
 
     const actionPrompts: Record<string, string> = {
-      'rewrite': 'Rewrite this section for clarity, precision, and professional regulatory language. Maintain all factual content.',
-      'expand': 'Expand this section with more detail, evidence references, and supporting data. Keep regulatory tone.',
-      'summarize': 'Create a concise executive summary of this section. Keep key data points and conclusions.',
-      'regulatory-tone': 'Rewrite in formal FDA/EMA regulatory submission language. Use "shall" for requirements, "should" for recommendations.',
-      'add-references': 'Add reference placeholders [Ref X] where claims need supporting evidence. Note what type of reference is needed.',
+      rewrite:
+        'Rewrite this section for clarity, precision, and professional regulatory language. Maintain all factual content.',
+      expand:
+        'Expand this section with more detail, evidence references, and supporting data. Keep regulatory tone.',
+      summarize:
+        'Create a concise executive summary of this section. Keep key data points and conclusions.',
+      'regulatory-tone':
+        'Rewrite in formal FDA/EMA regulatory submission language. Use "shall" for requirements, "should" for recommendations.',
+      'add-references':
+        'Add reference placeholders [Ref X] where claims need supporting evidence. Note what type of reference is needed.',
     };
 
     const systemPrompt = [
       actionPrompts[action] || `Apply the "${action}" transformation to this text.`,
       submissionType ? `Submission type: ${submissionType}.` : '',
       'Return ONLY the transformed text — no preamble, no explanation.',
-    ].filter(Boolean).join(' ');
+    ]
+      .filter(Boolean)
+      .join(' ');
 
     const results = [];
     for (const section of sections.slice(0, 20)) {
       try {
-        const text = (section.content || '').replace(/<[^>]+>/g, ' ').trim().slice(0, 3000);
+        const text = (section.content || '')
+          .replace(/<[^>]+>/g, ' ')
+          .trim()
+          .slice(0, 3000);
         if (text.length < 10) {
           results.push({ sectionTitle: section.title, result: section.content, error: null });
           continue;
@@ -3915,10 +4293,16 @@ router.post('/ai/check-inconsistency', async (req: Request, res: Response) => {
     const otherSections = allArtifacts.slice(0, 10).map((a: any) => ({
       id: a.id,
       title: a.title,
-      excerpt: (a.content || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 500),
+      excerpt: (a.content || '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 500),
     }));
 
-    const prompt = `You are a regulatory document consistency checker. A user changed content in the section "${changedSectionTitle || 'Unknown'}".
+    const prompt = `You are a regulatory document consistency checker. A user changed content in the section "${
+      changedSectionTitle || 'Unknown'
+    }".
 
 Changed content:
 "${changedText.slice(0, 1500)}"
@@ -3973,7 +4357,11 @@ If no sections are affected, return an empty array []. Only return the JSON arra
       sections = [];
     }
 
-    logger.info('Inconsistency check completed', { userId, projectId, affectedCount: sections.length });
+    logger.info('Inconsistency check completed', {
+      userId,
+      projectId,
+      affectedCount: sections.length,
+    });
     return sendSuccess(res, { sections });
   } catch (error: any) {
     logger.error('Inconsistency check failed', { error: error.message });
@@ -4356,50 +4744,54 @@ router.post(
  * Returns all artifacts across all projects for the organization (gallery view).
  * Includes project name for display in the cross-project artifacts gallery.
  */
-router.get('/artifacts', async (req: Request, res: Response) => {
-  try {
-    const organizationId = getOrganizationId(req);
+router.get(
+  '/artifacts',
+  cacheResponse({ ttl: 60_000, keyGenerator: req => `artifacts:${(req as any).organizationId}` }),
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
 
-    const allArtifacts = await db
-      .select({
-        artifactId: concept2cureArtifacts.artifactId,
-        projectId: concept2cureArtifacts.projectId,
-        type: concept2cureArtifacts.type,
-        category: concept2cureArtifacts.category,
-        title: concept2cureArtifacts.title,
-        status: concept2cureArtifacts.status,
-        ctdSection: concept2cureArtifacts.ctdSection,
-        version: concept2cureArtifacts.version,
-        createdAt: concept2cureArtifacts.createdAt,
-        updatedAt: concept2cureArtifacts.updatedAt,
-        projectName: projects.name,
-      })
-      .from(concept2cureArtifacts)
-      .leftJoin(projects, eq(concept2cureArtifacts.projectId, projects.id))
-      .where(eq(concept2cureArtifacts.organizationId, organizationId))
-      .orderBy(desc(concept2cureArtifacts.updatedAt))
-      .limit(200);
+      const allArtifacts = await db
+        .select({
+          artifactId: concept2cureArtifacts.artifactId,
+          projectId: concept2cureArtifacts.projectId,
+          type: concept2cureArtifacts.type,
+          category: concept2cureArtifacts.category,
+          title: concept2cureArtifacts.title,
+          status: concept2cureArtifacts.status,
+          ctdSection: concept2cureArtifacts.ctdSection,
+          version: concept2cureArtifacts.version,
+          createdAt: concept2cureArtifacts.createdAt,
+          updatedAt: concept2cureArtifacts.updatedAt,
+          projectName: projects.name,
+        })
+        .from(concept2cureArtifacts)
+        .leftJoin(projects, eq(concept2cureArtifacts.projectId, projects.id))
+        .where(eq(concept2cureArtifacts.organizationId, organizationId))
+        .orderBy(desc(concept2cureArtifacts.updatedAt))
+        .limit(200);
 
-    const result = allArtifacts.map(a => ({
-      id: a.artifactId,
-      projectId: `proj_${a.projectId}`,
-      title: a.title,
-      type: a.type,
-      category: a.category,
-      status: a.status || 'draft',
-      ctdSection: a.ctdSection,
-      version: a.version,
-      projectName: a.projectName || 'Unknown Project',
-      createdAt: a.createdAt,
-      updatedAt: a.updatedAt,
-    }));
+      const result = allArtifacts.map(a => ({
+        id: a.artifactId,
+        projectId: `proj_${a.projectId}`,
+        title: a.title,
+        type: a.type,
+        category: a.category,
+        status: a.status || 'draft',
+        ctdSection: a.ctdSection,
+        version: a.version,
+        projectName: a.projectName || 'Unknown Project',
+        createdAt: a.createdAt,
+        updatedAt: a.updatedAt,
+      }));
 
-    return sendSuccess(res, result);
-  } catch (error: any) {
-    logger.error('Failed to fetch all artifacts', { error: error.message });
-    return sendError(res, 500, 'Failed to fetch artifacts');
+      return sendSuccess(res, result);
+    } catch (error: any) {
+      logger.error('Failed to fetch all artifacts', { error: error.message });
+      return sendError(res, 500, 'Failed to fetch artifacts');
+    }
   }
-});
+);
 
 /**
  * GET /api/concept2cure/projects/all/artifacts-summary
@@ -4419,7 +4811,9 @@ router.get('/projects/all/artifacts-summary', async (req: Request, res: Response
     const total = allArtifacts.length;
     const draft = allArtifacts.filter(a => a.status === 'draft').length;
     const review = allArtifacts.filter(a => a.status === 'review').length;
-    const approved = allArtifacts.filter(a => a.status === 'approved' || a.status === 'locked').length;
+    const approved = allArtifacts.filter(
+      a => a.status === 'approved' || a.status === 'locked'
+    ).length;
 
     return sendSuccess(res, { total, draft, review, approved });
   } catch (error: any) {
@@ -4454,201 +4848,241 @@ router.get('/projects/:projectId/artifacts', async (req: Request, res: Response)
  * POST /api/concept2cure/projects/:projectId/artifacts
  * Create a new artifact (database-backed with version control).
  */
-router.post('/projects/:projectId/artifacts', guardEmptyContent, guardDemoContent, async (req: Request, res: Response) => {
-  try {
-    const organizationId = getOrganizationId(req);
-    const userId = getUserId(req);
-    const numericProjectId = parseInt(req.params.projectId.replace('proj_', ''), 10);
+router.post(
+  '/projects/:projectId/artifacts',
+  guardEmptyContent,
+  guardDemoContent,
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const userId = getUserId(req);
+      const numericProjectId = parseInt(req.params.projectId.replace('proj_', ''), 10);
 
-    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-    if (!hasAccess || isNaN(numericProjectId)) {
-      return sendError(res, 404, 'Project not found');
-    }
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess || isNaN(numericProjectId)) {
+        return sendError(res, 404, 'Project not found');
+      }
 
-    const data = createArtifactSchema.parse(req.body);
+      const data = createArtifactSchema.parse(req.body);
 
-    // Sanitize content
-    const sanitizedContent = sanitizeContent(data.content);
-    const sanitizedTitle = sanitizeContent(data.title);
-    const contentHash = calculateContentHash(sanitizedContent);
-    const artifactId = `artifact_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+      // Sanitize content
+      const sanitizedContent = sanitizeContent(data.content);
+      const sanitizedTitle = sanitizeContent(data.title);
+      const contentHash = calculateContentHash(sanitizedContent);
+      const artifactId = `artifact_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
 
-    // Find conversation DB ID if provided
-    let conversationDbId: number | null = null;
-    if (data.conversationId) {
-      const [conv] = await db
-        .select({ id: concept2cureConversations.id })
-        .from(concept2cureConversations)
-        .where(
-          and(
-            eq(concept2cureConversations.conversationId, data.conversationId),
-            eq(concept2cureConversations.organizationId, organizationId)
+      // Find conversation DB ID if provided
+      let conversationDbId: number | null = null;
+      if (data.conversationId) {
+        const [conv] = await db
+          .select({ id: concept2cureConversations.id })
+          .from(concept2cureConversations)
+          .where(
+            and(
+              eq(concept2cureConversations.conversationId, data.conversationId),
+              eq(concept2cureConversations.organizationId, organizationId)
+            )
           )
-        )
-        .limit(1);
-      if (conv) conversationDbId = conv.id;
-    }
+          .limit(1);
+        if (conv) conversationDbId = conv.id;
+      }
 
-    // Insert artifact into database
-    const ctdSection =
-      data.ctdSection ||
-      ((data.metadata as Record<string, unknown>)?.ctdSection as string | undefined);
-    const [newDbArtifact] = await db
-      .insert(concept2cureArtifacts)
-      .values({
+      // Insert artifact into database
+      const ctdSection =
+        data.ctdSection ||
+        ((data.metadata as Record<string, unknown>)?.ctdSection as string | undefined);
+      const [newDbArtifact] = await db
+        .insert(concept2cureArtifacts)
+        .values({
+          organizationId,
+          projectId: numericProjectId,
+          conversationId: conversationDbId,
+          artifactId,
+          type: data.type,
+          category: data.category,
+          title: sanitizedTitle,
+          content: sanitizedContent,
+          contentHash,
+          version: 1,
+          metadata: data.metadata || {},
+          ctdSection: data.ctdSection || null,
+          createdById: userId,
+          ...(ctdSection ? { ctdSection } : {}),
+        })
+        .returning();
+
+      // Insert first version
+      await db.insert(concept2cureArtifactVersions).values({
         organizationId,
-        projectId: numericProjectId,
-        conversationId: conversationDbId,
-        artifactId,
+        artifactId: newDbArtifact.id,
+        version: 1,
+        content: sanitizedContent,
+        contentHash,
+        createdById: userId,
+      });
+
+      const newArtifact: Artifact = {
+        id: artifactId,
+        projectId: req.params.projectId,
+        conversationId: data.conversationId,
         type: data.type,
         category: data.category,
         title: sanitizedTitle,
         content: sanitizedContent,
-        contentHash,
-        version: 1,
-        metadata: data.metadata || {},
         ctdSection: data.ctdSection || null,
-        createdById: userId,
-        ...(ctdSection ? { ctdSection } : {}),
-      })
-      .returning();
+        version: 1,
+        versions: [{ version: 1, content: sanitizedContent, createdAt: newDbArtifact.createdAt }],
+        metadata: data.metadata,
+        createdAt: newDbArtifact.createdAt,
+        updatedAt: newDbArtifact.updatedAt,
+      };
 
-    // Insert first version
-    await db.insert(concept2cureArtifactVersions).values({
-      organizationId,
-      artifactId: newDbArtifact.id,
-      version: 1,
-      content: sanitizedContent,
-      contentHash,
-      createdById: userId,
-    });
-
-    const newArtifact: Artifact = {
-      id: artifactId,
-      projectId: req.params.projectId,
-      conversationId: data.conversationId,
-      type: data.type,
-      category: data.category,
-      title: sanitizedTitle,
-      content: sanitizedContent,
-      ctdSection: data.ctdSection || null,
-      version: 1,
-      versions: [{ version: 1, content: sanitizedContent, createdAt: newDbArtifact.createdAt }],
-      metadata: data.metadata,
-      createdAt: newDbArtifact.createdAt,
-      updatedAt: newDbArtifact.updatedAt,
-    };
-
-    // Log audit entry with content hash
-    await logAuditEntry(req, 'CREATE', 'artifact', artifactId, null, {
-      projectId: req.params.projectId,
-      type: newArtifact.type,
-      title: newArtifact.title,
-      contentLength: sanitizedContent.length,
-      contentHash,
-    });
-
-    // Emit provenance: document creation event
-    await emitProvenanceEvent({
-      artifactDbId: newDbArtifact.id,
-      organizationId,
-      eventType: 'generation',
-      eventAction: data.metadata?.generationMethod === 'ai' ? 'ai_generate' : 'human_create',
-      actorId: userId,
-      actorName: (req as any).userName || req.userEmail,
-      actorEmail: req.userEmail,
-      details: {
-        title: sanitizedTitle,
-        type: data.type,
-        category: data.category,
+      // Log audit entry with content hash
+      await logAuditEntry(req, 'CREATE', 'artifact', artifactId, null, {
+        projectId: req.params.projectId,
+        type: newArtifact.type,
+        title: newArtifact.title,
         contentLength: sanitizedContent.length,
         contentHash,
-        ctdSection: ctdSection || null,
-        conversationId: data.conversationId || null,
-      },
-      sourceDescription: data.conversationId
-        ? `Created from conversation ${data.conversationId}`
-        : 'Manual document creation',
-      backendRoute: 'POST /api/concept2cure/projects/:projectId/artifacts',
-      backendService: 'concept2cure',
-      ipAddress: getClientIp(req),
-    });
+      });
 
-    // RIM: capture artifact creation signal (non-blocking)
-    interceptArtifactChange({
-      organizationId,
-      projectId: parseInt(req.params.projectId, 10),
-      userId,
-      artifactId,
-      artifactVersionId: newDbArtifact.id?.toString(),
-      sectionCode: ctdSection || undefined,
-      changeType: 'create',
-      title: sanitizedTitle,
-      contentLength: sanitizedContent.length,
-      source: data.metadata?.generationMethod === 'ai' ? 'lumen_cortex' : 'manual',
-      content: sanitizedContent,
-    });
+      // Emit provenance: document creation event
+      await emitProvenanceEvent({
+        artifactDbId: newDbArtifact.id,
+        organizationId,
+        eventType: 'generation',
+        eventAction: data.metadata?.generationMethod === 'ai' ? 'ai_generate' : 'human_create',
+        actorId: userId,
+        actorName: (req as any).userName || req.userEmail,
+        actorEmail: req.userEmail,
+        details: {
+          title: sanitizedTitle,
+          type: data.type,
+          category: data.category,
+          contentLength: sanitizedContent.length,
+          contentHash,
+          ctdSection: ctdSection || null,
+          conversationId: data.conversationId || null,
+        },
+        sourceDescription: data.conversationId
+          ? `Created from conversation ${data.conversationId}`
+          : 'Manual document creation',
+        backendRoute: 'POST /api/concept2cure/projects/:projectId/artifacts',
+        backendService: 'concept2cure',
+        ipAddress: getClientIp(req),
+      });
 
-    // Emit generation trace: artifact_created
-    const traceId = (data.metadata as Record<string, unknown>)?.traceId as string || createTraceId();
-    emitTraceEvent({
-      traceId,
-      timestamp: new Date().toISOString(),
-      event: 'artifact_created',
-      sourceSystem: (data.metadata as Record<string, unknown>)?.sourceSystem as any || 'document_builder',
-      projectId: numericProjectId,
-      artifactId,
-      userId,
-      metadata: {
-        documentType: data.type,
-        ctdSection: ctdSection || null,
+      // RIM: capture artifact creation signal (non-blocking)
+      interceptArtifactChange({
+        organizationId,
+        projectId: parseInt(req.params.projectId, 10),
+        userId,
+        artifactId,
+        artifactVersionId: newDbArtifact.id?.toString(),
+        sectionCode: ctdSection || undefined,
+        changeType: 'create',
+        title: sanitizedTitle,
         contentLength: sanitizedContent.length,
-        generationMethod: (data.metadata as Record<string, unknown>)?.generationMethod || 'unknown',
-      },
-    });
+        source: data.metadata?.generationMethod === 'ai' ? 'lumen_cortex' : 'manual',
+        content: sanitizedContent,
+      });
 
-    // ── AUTO-EMBED: Insert into lumen_data_atoms + generate embedding ────
-    // All artifacts become searchable evidence for AI source traceability
-    try {
-      const plainText = sanitizedContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-      if (plainText.length > 40) {
-        const atomResult = await pool.query(
-          `INSERT INTO lumen_data_atoms
+      // Data Lineage: record source→artifact lineage (non-blocking)
+      try {
+        const { recordLineage } = await import('../services/data-lineage-service');
+        if (data.conversationId) {
+          recordLineage({
+            organizationId,
+            projectId: numericProjectId,
+            sourceObjectType: 'conversation',
+            sourceObjectId: data.conversationId,
+            sourceTitle: `Conversation ${data.conversationId}`,
+            targetObjectType: 'artifact',
+            targetObjectId: artifactId,
+            targetTitle: sanitizedTitle,
+            targetField: ctdSection || undefined,
+            linkageType:
+              data.metadata?.generationMethod === 'ai' ? 'generated_from' : 'derived_from',
+            transformationType:
+              data.metadata?.generationMethod === 'ai' ? 'ai_generation' : 'manual_edit',
+            createdById: userId,
+            metadata: { contentHash, version: 1 },
+          }).catch(() => {});
+        }
+      } catch {
+        /* non-blocking */
+      }
+
+      // Emit generation trace: artifact_created
+      const traceId =
+        ((data.metadata as Record<string, unknown>)?.traceId as string) || createTraceId();
+      emitTraceEvent({
+        traceId,
+        timestamp: new Date().toISOString(),
+        event: 'artifact_created',
+        sourceSystem:
+          ((data.metadata as Record<string, unknown>)?.sourceSystem as any) || 'document_builder',
+        projectId: numericProjectId,
+        artifactId,
+        userId,
+        metadata: {
+          documentType: data.type,
+          ctdSection: ctdSection || null,
+          contentLength: sanitizedContent.length,
+          generationMethod:
+            (data.metadata as Record<string, unknown>)?.generationMethod || 'unknown',
+        },
+      });
+
+      // ── AUTO-EMBED: Insert into lumen_data_atoms + generate embedding ────
+      // All artifacts become searchable evidence for AI source traceability
+      try {
+        const plainText = sanitizedContent
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        if (plainText.length > 40) {
+          const atomResult = await pool.query(
+            `INSERT INTO lumen_data_atoms
              (organization_id, source_type, source_id, atom_type, title, content, tags, confidence, status)
            VALUES ($1, 'artifact', $2, $3, $4, $5, $6, 0.85, 'active')
            ON CONFLICT DO NOTHING
            RETURNING id`,
-          [
-            organizationId,
-            artifactId,
-            data.category === 'source' ? 'source_document' : 'authored_document',
-            sanitizedTitle,
-            plainText.substring(0, 16000),
-            `{${data.category},${data.type}${ctdSection ? `,${ctdSection}` : ''}}`,
-          ]
-        );
-        if (atomResult.rows.length > 0) {
-          const atomId = atomResult.rows[0].id;
-          const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
-          const embeddingService = getEmbeddingService(pool);
-          await embeddingService.embedAtom(atomId);
+            [
+              organizationId,
+              artifactId,
+              data.category === 'source' ? 'source_document' : 'authored_document',
+              sanitizedTitle,
+              plainText.substring(0, 16000),
+              `{${data.category},${data.type}${ctdSection ? `,${ctdSection}` : ''}}`,
+            ]
+          );
+          if (atomResult.rows.length > 0) {
+            const atomId = atomResult.rows[0].id;
+            const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
+            const embeddingService = getEmbeddingService(pool);
+            await embeddingService.embedAtom(atomId);
+          }
         }
+      } catch (embedErr: any) {
+        // Non-fatal �� artifact created successfully, embedding can be retried
+        logger.warn('Auto-embedding failed for new artifact', {
+          artifactId,
+          error: embedErr.message,
+        });
       }
-    } catch (embedErr: any) {
-      // Non-fatal �� artifact created successfully, embedding can be retried
-      logger.warn('Auto-embedding failed for new artifact', { artifactId, error: embedErr.message });
-    }
 
-    logger.info('Created artifact', { projectId: req.params.projectId, artifactId });
-    return sendSuccess(res.status(201), newArtifact);
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+      logger.info('Created artifact', { projectId: req.params.projectId, artifactId });
+      return sendSuccess(res.status(201), newArtifact);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+      }
+      logConcept2cureError('create artifact', error, { projectId: req.params.projectId });
+      return sendError(res, 500, 'Failed to create artifact');
     }
-    logConcept2cureError('create artifact', error, { projectId: req.params.projectId });
-    return sendError(res, 500, 'Failed to create artifact');
   }
-});
+);
 
 /**
  * PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId
@@ -4843,7 +5277,10 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
     // ── RE-EMBED on content change for Data Room searchability ────────
     if (newVersion > dbArtifact.version && sanitizedContent) {
       try {
-        const plainText = sanitizedContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        const plainText = sanitizedContent
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
         if (plainText.length > 40) {
           const atomResult = await pool.query(
             `UPDATE lumen_data_atoms
@@ -4997,7 +5434,9 @@ router.put(
           reason: reason.trim(),
           title: dbArtifact.title,
         },
-        sourceDescription: `${operation}: ${previousSection || '(unassigned)'} → ${toSection} — ${reason.trim()}`,
+        sourceDescription: `${operation}: ${
+          previousSection || '(unassigned)'
+        } → ${toSection} — ${reason.trim()}`,
         backendRoute: 'PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement',
         backendService: 'concept2cure',
         ipAddress: getClientIp(req),
@@ -5031,144 +5470,151 @@ router.put(
  * completion percentage, template coverage, and evidence linkage.
  * Computed from real artifact + provenance data only. No synthetic rollups.
  */
-router.get('/projects/:projectId/dossier-metrics', async (req: Request, res: Response) => {
-  try {
-    const organizationId = getOrganizationId(req);
-    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-    if (!hasAccess) {
-      return sendError(res, 404, 'Project not found');
-    }
+router.get(
+  '/projects/:projectId/dossier-metrics',
+  cacheResponse({
+    ttl: 90_000,
+    keyGenerator: req => `dossier-metrics:${(req as any).organizationId}:${req.params.projectId}`,
+  }),
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) {
+        return sendError(res, 404, 'Project not found');
+      }
 
-    // Get project DB id
-    const projectDbIdStr = req.params.projectId;
-    const projectDbId = parseInt(projectDbIdStr, 10);
-    if (isNaN(projectDbId)) {
-      return sendError(res, 400, 'Invalid project ID');
-    }
+      // Get project DB id
+      const projectDbIdStr = req.params.projectId;
+      const projectDbId = parseInt(projectDbIdStr, 10);
+      if (isNaN(projectDbId)) {
+        return sendError(res, 400, 'Invalid project ID');
+      }
 
-    // Fetch all artifacts for project
-    const allArtifacts = await db
-      .select({
-        id: concept2cureArtifacts.id,
-        artifactId: concept2cureArtifacts.artifactId,
-        ctdSection: concept2cureArtifacts.ctdSection,
-        status: concept2cureArtifacts.status,
-        templateId: concept2cureArtifacts.templateId,
-        type: concept2cureArtifacts.type,
-      })
-      .from(concept2cureArtifacts)
-      .where(
-        and(
-          eq(concept2cureArtifacts.projectId, projectDbId),
-          eq(concept2cureArtifacts.organizationId, organizationId)
-        )
-      );
-
-    // Fetch provenance events related to evidence (source_input events)
-    const artifactIds = allArtifacts.map(a => a.id);
-    let evidenceEvents: { artifactId: number; eventType: string; eventAction: string }[] = [];
-    if (artifactIds.length > 0) {
-      evidenceEvents = await db
+      // Fetch all artifacts for project
+      const allArtifacts = await db
         .select({
-          artifactId: concept2cureProvenanceEvents.artifactId,
-          eventType: concept2cureProvenanceEvents.eventType,
-          eventAction: concept2cureProvenanceEvents.eventAction,
+          id: concept2cureArtifacts.id,
+          artifactId: concept2cureArtifacts.artifactId,
+          ctdSection: concept2cureArtifacts.ctdSection,
+          status: concept2cureArtifacts.status,
+          templateId: concept2cureArtifacts.templateId,
+          type: concept2cureArtifacts.type,
         })
-        .from(concept2cureProvenanceEvents)
+        .from(concept2cureArtifacts)
         .where(
           and(
-            inArray(concept2cureProvenanceEvents.artifactId, artifactIds),
-            eq(concept2cureProvenanceEvents.organizationId, organizationId)
+            eq(concept2cureArtifacts.projectId, projectDbId),
+            eq(concept2cureArtifacts.organizationId, organizationId)
           )
         );
+
+      // Fetch provenance events related to evidence (source_input events)
+      const artifactIds = allArtifacts.map(a => a.id);
+      let evidenceEvents: { artifactId: number; eventType: string; eventAction: string }[] = [];
+      if (artifactIds.length > 0) {
+        evidenceEvents = await db
+          .select({
+            artifactId: concept2cureProvenanceEvents.artifactId,
+            eventType: concept2cureProvenanceEvents.eventType,
+            eventAction: concept2cureProvenanceEvents.eventAction,
+          })
+          .from(concept2cureProvenanceEvents)
+          .where(
+            and(
+              inArray(concept2cureProvenanceEvents.artifactId, artifactIds),
+              eq(concept2cureProvenanceEvents.organizationId, organizationId)
+            )
+          );
+      }
+
+      // Build per-artifact evidence map
+      const artifactEvidenceMap = new Map<number, { sourceInputs: number; generations: number }>();
+      for (const ev of evidenceEvents) {
+        const entry = artifactEvidenceMap.get(ev.artifactId) || { sourceInputs: 0, generations: 0 };
+        if (ev.eventType === 'source_input') entry.sourceInputs++;
+        if (ev.eventType === 'generation') entry.generations++;
+        artifactEvidenceMap.set(ev.artifactId, entry);
+      }
+
+      // Aggregate per CTD section
+      const sectionMetrics: Record<
+        string,
+        {
+          artifactCount: number;
+          draftCount: number;
+          reviewCount: number;
+          approvedCount: number;
+          lockedCount: number;
+          templateCoverageAvailable: boolean;
+          evidenceCount: number;
+          precedentCount: number;
+        }
+      > = {};
+
+      for (const art of allArtifacts) {
+        const section = art.ctdSection || '_unplaced';
+        if (!sectionMetrics[section]) {
+          sectionMetrics[section] = {
+            artifactCount: 0,
+            draftCount: 0,
+            reviewCount: 0,
+            approvedCount: 0,
+            lockedCount: 0,
+            templateCoverageAvailable: false,
+            evidenceCount: 0,
+            precedentCount: 0,
+          };
+        }
+        const m = sectionMetrics[section];
+        m.artifactCount++;
+        const s = (art.status || 'draft').toLowerCase();
+        if (s === 'approved') m.approvedCount++;
+        else if (s === 'locked' || s === 'published') m.lockedCount++;
+        else if (s === 'review' || s === 'under_review') m.reviewCount++;
+        else m.draftCount++;
+        if (art.templateId) m.templateCoverageAvailable = true;
+        const evidence = artifactEvidenceMap.get(art.id);
+        if (evidence) {
+          m.evidenceCount += evidence.sourceInputs;
+          m.precedentCount += evidence.generations;
+        }
+      }
+
+      // Compute completion per section
+      const result: Record<
+        string,
+        {
+          artifactCount: number;
+          draftCount: number;
+          reviewCount: number;
+          approvedCount: number;
+          lockedCount: number;
+          completionPercent: number;
+          templateCoverageAvailable: boolean;
+          evidenceCount: number;
+          precedentCount: number;
+        }
+      > = {};
+
+      for (const [section, m] of Object.entries(sectionMetrics)) {
+        let completionPercent = 0;
+        if (m.artifactCount > 0) {
+          // Weighted: locked=100, approved=85, review=60, draft=30
+          const weighted =
+            m.lockedCount * 100 + m.approvedCount * 85 + m.reviewCount * 60 + m.draftCount * 30;
+          completionPercent = Math.round(weighted / m.artifactCount);
+        }
+        result[section] = { ...m, completionPercent };
+      }
+
+      return sendSuccess(res, result);
+    } catch (error: any) {
+      logConcept2cureError('dossier-metrics', error, { projectId: req.params.projectId });
+      return sendError(res, 500, 'Failed to compute dossier metrics');
     }
-
-    // Build per-artifact evidence map
-    const artifactEvidenceMap = new Map<number, { sourceInputs: number; generations: number }>();
-    for (const ev of evidenceEvents) {
-      const entry = artifactEvidenceMap.get(ev.artifactId) || { sourceInputs: 0, generations: 0 };
-      if (ev.eventType === 'source_input') entry.sourceInputs++;
-      if (ev.eventType === 'generation') entry.generations++;
-      artifactEvidenceMap.set(ev.artifactId, entry);
-    }
-
-    // Aggregate per CTD section
-    const sectionMetrics: Record<
-      string,
-      {
-        artifactCount: number;
-        draftCount: number;
-        reviewCount: number;
-        approvedCount: number;
-        lockedCount: number;
-        templateCoverageAvailable: boolean;
-        evidenceCount: number;
-        precedentCount: number;
-      }
-    > = {};
-
-    for (const art of allArtifacts) {
-      const section = art.ctdSection || '_unplaced';
-      if (!sectionMetrics[section]) {
-        sectionMetrics[section] = {
-          artifactCount: 0,
-          draftCount: 0,
-          reviewCount: 0,
-          approvedCount: 0,
-          lockedCount: 0,
-          templateCoverageAvailable: false,
-          evidenceCount: 0,
-          precedentCount: 0,
-        };
-      }
-      const m = sectionMetrics[section];
-      m.artifactCount++;
-      const s = (art.status || 'draft').toLowerCase();
-      if (s === 'approved') m.approvedCount++;
-      else if (s === 'locked' || s === 'published') m.lockedCount++;
-      else if (s === 'review' || s === 'under_review') m.reviewCount++;
-      else m.draftCount++;
-      if (art.templateId) m.templateCoverageAvailable = true;
-      const evidence = artifactEvidenceMap.get(art.id);
-      if (evidence) {
-        m.evidenceCount += evidence.sourceInputs;
-        m.precedentCount += evidence.generations;
-      }
-    }
-
-    // Compute completion per section
-    const result: Record<
-      string,
-      {
-        artifactCount: number;
-        draftCount: number;
-        reviewCount: number;
-        approvedCount: number;
-        lockedCount: number;
-        completionPercent: number;
-        templateCoverageAvailable: boolean;
-        evidenceCount: number;
-        precedentCount: number;
-      }
-    > = {};
-
-    for (const [section, m] of Object.entries(sectionMetrics)) {
-      let completionPercent = 0;
-      if (m.artifactCount > 0) {
-        // Weighted: locked=100, approved=85, review=60, draft=30
-        const weighted =
-          m.lockedCount * 100 + m.approvedCount * 85 + m.reviewCount * 60 + m.draftCount * 30;
-        completionPercent = Math.round(weighted / m.artifactCount);
-      }
-      result[section] = { ...m, completionPercent };
-    }
-
-    return sendSuccess(res, result);
-  } catch (error: any) {
-    logConcept2cureError('dossier-metrics', error, { projectId: req.params.projectId });
-    return sendError(res, 500, 'Failed to compute dossier metrics');
   }
-});
+);
 
 /**
  * POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures
@@ -6291,19 +6737,42 @@ router.put(
       // Hard block promotion if unresolved contradictions with blocks_promotion authority
       if (status === 'approved' || status === 'locked') {
         try {
-          const { contradictionEngineService } = await import('../services/contradiction-engine-service');
-          const { blocked, blockingFindings, warningFindings } = await contradictionEngineService.checkPromotionBlocked(
-            organizationId, Number(req.params.projectId), artifact.id
+          const { contradictionEngineService } = await import(
+            '../services/contradiction-engine-service'
           );
+          const { blocked, blockingFindings, warningFindings } =
+            await contradictionEngineService.checkPromotionBlocked(
+              organizationId,
+              Number(req.params.projectId),
+              artifact.id
+            );
           if (blocked) {
-            return sendError(res, 409, `Promotion blocked by ${blockingFindings.length} unresolved contradiction finding(s). Resolve contradictions before promoting.`, {
-              blockingFindings: blockingFindings.map(f => ({ id: f.id, title: f.title, severity: f.severity, contradictionType: f.contradictionType, authorityState: f.authorityState })),
-              warningFindings: warningFindings.map(f => ({ id: f.id, title: f.title, severity: f.severity })),
-            });
+            return sendError(
+              res,
+              409,
+              `Promotion blocked by ${blockingFindings.length} unresolved contradiction finding(s). Resolve contradictions before promoting.`,
+              {
+                blockingFindings: blockingFindings.map(f => ({
+                  id: f.id,
+                  title: f.title,
+                  severity: f.severity,
+                  contradictionType: f.contradictionType,
+                  authorityState: f.authorityState,
+                })),
+                warningFindings: warningFindings.map(f => ({
+                  id: f.id,
+                  title: f.title,
+                  severity: f.severity,
+                })),
+              }
+            );
           }
         } catch (contradictionError) {
           // Log but don't block on contradiction check failure (table may not exist yet)
-          console.warn('Contradiction check skipped:', contradictionError instanceof Error ? contradictionError.message : contradictionError);
+          console.warn(
+            'Contradiction check skipped:',
+            contradictionError instanceof Error ? contradictionError.message : contradictionError
+          );
         }
       }
 
@@ -6359,7 +6828,11 @@ router.put(
               return sendError(
                 res,
                 400,
-                `Cannot approve: ${nonApprovals.length} reviewer(s) did not approve (decisions: ${nonApprovals.map(d => d.decision).join(', ')})`
+                `Cannot approve: ${
+                  nonApprovals.length
+                } reviewer(s) did not approve (decisions: ${nonApprovals
+                  .map(d => d.decision)
+                  .join(', ')})`
               );
             }
           }
@@ -7507,37 +7980,32 @@ router.delete(
  * List organization team members who can be assigned as reviewers.
  * Returns users in the same organization as the project.
  */
-router.get(
-  '/projects/:projectId/team',
-  async (req: Request, res: Response) => {
-    try {
-      const organizationId = getOrganizationId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+router.get('/projects/:projectId/team', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-      // Get all users in this organization
-      const members = await db
-        .select({
-          id: users.id,
-          name: users.name,
-          email: users.email,
-          role: organizationUsers.role,
-          title: users.title,
-          department: users.department,
-          avatar: users.avatar,
-          status: users.status,
-        })
-        .from(organizationUsers)
-        .innerJoin(users, eq(organizationUsers.userId, users.id))
-        .where(
-          and(
-            eq(organizationUsers.organizationId, organizationId),
-            eq(users.status, 'active')
-          )
-        )
-        .orderBy(users.name);
+    // Get all users in this organization
+    const members = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: organizationUsers.role,
+        title: users.title,
+        department: users.department,
+        avatar: users.avatar,
+        status: users.status,
+      })
+      .from(organizationUsers)
+      .innerJoin(users, eq(organizationUsers.userId, users.id))
+      .where(and(eq(organizationUsers.organizationId, organizationId), eq(users.status, 'active')))
+      .orderBy(users.name);
 
-      return sendSuccess(res, members.map(m => ({
+    return sendSuccess(
+      res,
+      members.map(m => ({
         id: String(m.id),
         userId: m.id,
         name: m.name,
@@ -7546,13 +8014,13 @@ router.get(
         title: m.title,
         department: m.department,
         avatar: m.avatar,
-      })));
-    } catch (error: any) {
-      logConcept2cureError('get team members', error, { projectId: req.params.projectId });
-      return sendError(res, 500, 'Failed to fetch team members');
-    }
+      }))
+    );
+  } catch (error: any) {
+    logConcept2cureError('get team members', error, { projectId: req.params.projectId });
+    return sendError(res, 500, 'Failed to fetch team members');
   }
-);
+});
 
 /**
  * POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind
@@ -7614,7 +8082,9 @@ router.post(
         reviewerId: assignment.reviewerId,
       });
     } catch (error: any) {
-      logConcept2cureError('send review reminder', error, { assignmentId: req.params.assignmentId });
+      logConcept2cureError('send review reminder', error, {
+        assignmentId: req.params.assignmentId,
+      });
       return sendError(res, 500, 'Failed to send reminder');
     }
   }
@@ -7950,112 +8420,115 @@ router.get(
  * Persist a HAQ (Health Authority Question) session to the database.
  * Stores as a JSON artifact so it survives beyond sessionStorage.
  */
-router.put(
-  '/projects/:projectId/haq-session',
-  async (req: Request, res: Response) => {
-    try {
-      const organizationId = getOrganizationId(req);
-      const userId = getUserId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+router.put('/projects/:projectId/haq-session', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const userId = getUserId(req);
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-      const { questions } = req.body;
-      if (!Array.isArray(questions)) {
-        return sendError(res, 400, 'questions must be an array');
-      }
-
-      // Check for existing HAQ session artifact
-      const [existing] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.projectId, Number(req.params.projectId)),
-            eq(concept2cureArtifacts.organizationId, organizationId),
-            eq(concept2cureArtifacts.type, 'haq_session')
-          )
-        )
-        .limit(1);
-
-      if (existing) {
-        // Update existing session
-        await db
-          .update(concept2cureArtifacts)
-          .set({
-            content: JSON.stringify({ questions }),
-            updatedAt: new Date(),
-            metadata: sql`jsonb_set(COALESCE(metadata, '{}'), '{questionCount}', ${JSON.stringify(questions.length)}::jsonb)`,
-          })
-          .where(eq(concept2cureArtifacts.id, existing.id));
-
-        return sendSuccess(res, { artifactId: existing.artifactId, updated: true, questionCount: questions.length });
-      } else {
-        // Create new HAQ session artifact
-        const artifactId = `haq_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
-        await db.insert(concept2cureArtifacts).values({
-          artifactId,
-          projectId: Number(req.params.projectId),
-          organizationId,
-          createdById: userId,
-          title: 'HAQ Session',
-          type: 'haq_session',
-          category: 'data',
-          content: JSON.stringify({ questions }),
-          status: 'draft',
-          version: 1,
-          metadata: { questionCount: questions.length, sourceSystem: 'haq_manager' },
-        });
-
-        return sendSuccess(res, { artifactId, created: true, questionCount: questions.length });
-      }
-    } catch (error: any) {
-      logConcept2cureError('save HAQ session', error, { projectId: req.params.projectId });
-      return sendError(res, 500, 'Failed to save HAQ session');
+    const { questions } = req.body;
+    if (!Array.isArray(questions)) {
+      return sendError(res, 400, 'questions must be an array');
     }
+
+    // Check for existing HAQ session artifact
+    const [existing] = await db
+      .select()
+      .from(concept2cureArtifacts)
+      .where(
+        and(
+          eq(concept2cureArtifacts.projectId, Number(req.params.projectId)),
+          eq(concept2cureArtifacts.organizationId, organizationId),
+          eq(concept2cureArtifacts.type, 'haq_session')
+        )
+      )
+      .limit(1);
+
+    if (existing) {
+      // Update existing session
+      await db
+        .update(concept2cureArtifacts)
+        .set({
+          content: JSON.stringify({ questions }),
+          updatedAt: new Date(),
+          metadata: sql`jsonb_set(COALESCE(metadata, '{}'), '{questionCount}', ${JSON.stringify(
+            questions.length
+          )}::jsonb)`,
+        })
+        .where(eq(concept2cureArtifacts.id, existing.id));
+
+      return sendSuccess(res, {
+        artifactId: existing.artifactId,
+        updated: true,
+        questionCount: questions.length,
+      });
+    } else {
+      // Create new HAQ session artifact
+      const artifactId = `haq_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+      await db.insert(concept2cureArtifacts).values({
+        artifactId,
+        projectId: Number(req.params.projectId),
+        organizationId,
+        createdById: userId,
+        title: 'HAQ Session',
+        type: 'haq_session',
+        category: 'data',
+        content: JSON.stringify({ questions }),
+        status: 'draft',
+        version: 1,
+        metadata: { questionCount: questions.length, sourceSystem: 'haq_manager' },
+      });
+
+      return sendSuccess(res, { artifactId, created: true, questionCount: questions.length });
+    }
+  } catch (error: any) {
+    logConcept2cureError('save HAQ session', error, { projectId: req.params.projectId });
+    return sendError(res, 500, 'Failed to save HAQ session');
   }
-);
+});
 
 /**
  * GET /api/concept2cure/projects/:projectId/haq-session
  * Load the most recent HAQ session for a project.
  */
-router.get(
-  '/projects/:projectId/haq-session',
-  async (req: Request, res: Response) => {
-    try {
-      const organizationId = getOrganizationId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+router.get('/projects/:projectId/haq-session', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-      const [session] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.projectId, Number(req.params.projectId)),
-            eq(concept2cureArtifacts.organizationId, organizationId),
-            eq(concept2cureArtifacts.type, 'haq_session')
-          )
+    const [session] = await db
+      .select()
+      .from(concept2cureArtifacts)
+      .where(
+        and(
+          eq(concept2cureArtifacts.projectId, Number(req.params.projectId)),
+          eq(concept2cureArtifacts.organizationId, organizationId),
+          eq(concept2cureArtifacts.type, 'haq_session')
         )
-        .orderBy(desc(concept2cureArtifacts.updatedAt))
-        .limit(1);
+      )
+      .orderBy(desc(concept2cureArtifacts.updatedAt))
+      .limit(1);
 
-      if (!session) {
-        return sendSuccess(res, { questions: [] });
-      }
-
-      try {
-        const parsed = JSON.parse(session.content || '{}');
-        return sendSuccess(res, { questions: parsed.questions || [], artifactId: session.artifactId });
-      } catch {
-        return sendSuccess(res, { questions: [] });
-      }
-    } catch (error: any) {
-      logConcept2cureError('load HAQ session', error, { projectId: req.params.projectId });
-      return sendError(res, 500, 'Failed to load HAQ session');
+    if (!session) {
+      return sendSuccess(res, { questions: [] });
     }
+
+    try {
+      const parsed = JSON.parse(session.content || '{}');
+      return sendSuccess(res, {
+        questions: parsed.questions || [],
+        artifactId: session.artifactId,
+      });
+    } catch {
+      return sendSuccess(res, { questions: [] });
+    }
+  } catch (error: any) {
+    logConcept2cureError('load HAQ session', error, { projectId: req.params.projectId });
+    return sendError(res, 500, 'Failed to load HAQ session');
   }
-);
+});
 
 /**
  * GET /api/concept2cure/reviews/pending
@@ -8439,7 +8912,9 @@ router.get('/templates/:id', (req: Request, res: Response) => {
  */
 router.get('/regulatory-catalog/regions', (_req: Request, res: Response) => {
   try {
-    const { getRegionsWithCounts } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
+    const {
+      getRegionsWithCounts,
+    } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
     return sendSuccess(res, getRegionsWithCounts());
   } catch (error: any) {
     logger.error('Failed to fetch regulatory regions', { error: error.message });
@@ -8453,7 +8928,9 @@ router.get('/regulatory-catalog/regions', (_req: Request, res: Response) => {
  */
 router.get('/regulatory-catalog/agencies', (_req: Request, res: Response) => {
   try {
-    const { getAgenciesWithCounts } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
+    const {
+      getAgenciesWithCounts,
+    } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
     return sendSuccess(res, getAgenciesWithCounts());
   } catch (error: any) {
     logger.error('Failed to fetch regulatory agencies', { error: error.message });
@@ -8468,14 +8945,19 @@ router.get('/regulatory-catalog/agencies', (_req: Request, res: Response) => {
  */
 router.get('/regulatory-catalog/application-types', (req: Request, res: Response) => {
   try {
-    const { getApplicationTypes } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
+    const {
+      getApplicationTypes,
+    } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
     const filters: Record<string, string> = {};
     if (req.query.region) filters.region = String(req.query.region);
     if (req.query.agency) filters.agency = String(req.query.agency);
     if (req.query.family) filters.family = String(req.query.family);
     if (req.query.productClass) filters.productClass = String(req.query.productClass);
     if (req.query.query) filters.query = String(req.query.query);
-    return sendSuccess(res, getApplicationTypes(Object.keys(filters).length > 0 ? filters : undefined));
+    return sendSuccess(
+      res,
+      getApplicationTypes(Object.keys(filters).length > 0 ? filters : undefined)
+    );
   } catch (error: any) {
     logger.error('Failed to fetch application types', { error: error.message });
     return sendError(res, 500, 'Failed to fetch application types');
@@ -8527,7 +9009,9 @@ router.post('/regulatory-catalog/resolve', (req: Request, res: Response) => {
  */
 router.post('/regulatory-catalog/bootstrap-preview', (req: Request, res: Response) => {
   try {
-    const { getBootstrapPreview } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
+    const {
+      getBootstrapPreview,
+    } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
     const { registryId } = req.body;
     if (!registryId) {
       return sendError(res, 400, 'registryId is required');
@@ -8589,7 +9073,10 @@ function shouldEnforceExportReviewGate(): boolean {
   return process.env.NODE_ENV === 'production';
 }
 
-function applyExportGovernanceHeaders(res: Response, governance: z.infer<typeof exportGovernanceSchema>): void {
+function applyExportGovernanceHeaders(
+  res: Response,
+  governance: z.infer<typeof exportGovernanceSchema>
+): void {
   res.setHeader('X-Concept2Cure-AI-Generated', String(governance.aiGenerated));
   res.setHeader('X-Concept2Cure-Human-Review-Approved', String(governance.humanReviewApproved));
   res.setHeader('X-Concept2Cure-Review-Required', 'true');
@@ -8601,10 +9088,19 @@ function applyExportGovernanceHeaders(res: Response, governance: z.infer<typeof 
   }
 }
 
-function validateExportGovernance(req: Request, res: Response): z.infer<typeof exportGovernanceSchema> | null {
+function validateExportGovernance(
+  req: Request,
+  res: Response
+): z.infer<typeof exportGovernanceSchema> | null {
   const parsed = exportGovernanceSchema.safeParse(req.body?.governance ?? {});
   if (!parsed.success) {
-    sendError(res, 400, 'Invalid export governance payload', parsed.error.flatten(), 'VALIDATION_ERROR');
+    sendError(
+      res,
+      400,
+      'Invalid export governance payload',
+      parsed.error.flatten(),
+      'VALIDATION_ERROR'
+    );
     return null;
   }
 
@@ -8617,7 +9113,11 @@ function validateExportGovernance(req: Request, res: Response): z.infer<typeof e
       'Human review approval is required before export in this environment',
       {
         required: 'governance.humanReviewApproved=true',
-        reviewerFields: ['governance.reviewerName', 'governance.reviewerRole', 'governance.reviewTimestamp'],
+        reviewerFields: [
+          'governance.reviewerName',
+          'governance.reviewerRole',
+          'governance.reviewTimestamp',
+        ],
       },
       'HUMAN_REVIEW_REQUIRED'
     );
@@ -8649,7 +9149,10 @@ router.post('/artifacts/export-docx', async (req: Request, res: Response) => {
     const buffer = await generateDocxBuffer(title, exportBody);
 
     const safeFilename = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    );
     res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.docx"`);
     res.setHeader('Content-Length', buffer.length);
     return res.send(buffer);
@@ -8710,7 +9213,11 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
     y -= titleFontSize + 20;
 
     // Date line
-    const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const dateStr = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
     page.drawText(dateStr, {
       x: margin,
       y: y,
@@ -8765,12 +9272,24 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
       if (line.startsWith('# ')) {
         y -= 10;
         const text = line.slice(2);
-        page.drawText(text, { x: margin, y, size: titleFontSize, font: timesBold, color: rgb(0.1, 0.1, 0.1) });
+        page.drawText(text, {
+          x: margin,
+          y,
+          size: titleFontSize,
+          font: timesBold,
+          color: rgb(0.1, 0.1, 0.1),
+        });
         y -= titleFontSize + 8;
       } else if (line.startsWith('## ')) {
         y -= 8;
         const text = line.slice(3);
-        page.drawText(text, { x: margin, y, size: headingFontSize, font: timesBold, color: rgb(0.15, 0.15, 0.15) });
+        page.drawText(text, {
+          x: margin,
+          y,
+          size: headingFontSize,
+          font: timesBold,
+          color: rgb(0.15, 0.15, 0.15),
+        });
         y -= headingFontSize + 6;
       } else if (line.startsWith('### ')) {
         y -= 6;
@@ -8786,7 +9305,13 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
           const testLine = currentLine ? currentLine + ' ' + word : word;
           const width = timesRoman.widthOfTextAtSize(testLine, fontSize);
           if (width > maxWidth - 20) {
-            page.drawText(currentLine, { x: margin + 10, y, size: fontSize, font: timesRoman, color: rgb(0.2, 0.2, 0.2) });
+            page.drawText(currentLine, {
+              x: margin + 10,
+              y,
+              size: fontSize,
+              font: timesRoman,
+              color: rgb(0.2, 0.2, 0.2),
+            });
             y -= fontSize + 4;
             currentLine = word;
           } else {
@@ -8794,7 +9319,13 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
           }
         }
         if (currentLine) {
-          page.drawText(currentLine, { x: margin + 10, y, size: fontSize, font: timesRoman, color: rgb(0.2, 0.2, 0.2) });
+          page.drawText(currentLine, {
+            x: margin + 10,
+            y,
+            size: fontSize,
+            font: timesRoman,
+            color: rgb(0.2, 0.2, 0.2),
+          });
           y -= fontSize + 4;
         }
       } else if (line.trim() === '') {
@@ -8810,11 +9341,23 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
           if (width > maxWidth) {
             if (y < margin + 40) {
               const pageNum = pdfDoc.getPageCount();
-              page.drawText(`Page ${pageNum}`, { x: pageWidth / 2 - 20, y: margin / 2, size: 9, font: timesRoman, color: rgb(0.5, 0.5, 0.5) });
+              page.drawText(`Page ${pageNum}`, {
+                x: pageWidth / 2 - 20,
+                y: margin / 2,
+                size: 9,
+                font: timesRoman,
+                color: rgb(0.5, 0.5, 0.5),
+              });
               page = pdfDoc.addPage([pageWidth, pageHeight]);
               y = pageHeight - margin;
             }
-            page.drawText(currentLine, { x: margin, y, size: fontSize, font: timesRoman, color: rgb(0.2, 0.2, 0.2) });
+            page.drawText(currentLine, {
+              x: margin,
+              y,
+              size: fontSize,
+              font: timesRoman,
+              color: rgb(0.2, 0.2, 0.2),
+            });
             y -= fontSize + 4;
             currentLine = word;
           } else {
@@ -8822,7 +9365,13 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
           }
         }
         if (currentLine) {
-          page.drawText(currentLine, { x: margin, y, size: fontSize, font: timesRoman, color: rgb(0.2, 0.2, 0.2) });
+          page.drawText(currentLine, {
+            x: margin,
+            y,
+            size: fontSize,
+            font: timesRoman,
+            color: rgb(0.2, 0.2, 0.2),
+          });
           y -= fontSize + 4;
         }
       }
@@ -8830,7 +9379,13 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
 
     // Add page number to last page
     const pageNum = pdfDoc.getPageCount();
-    page.drawText(`Page ${pageNum}`, { x: pageWidth / 2 - 20, y: margin / 2, size: 9, font: timesRoman, color: rgb(0.5, 0.5, 0.5) });
+    page.drawText(`Page ${pageNum}`, {
+      x: pageWidth / 2 - 20,
+      y: margin / 2,
+      size: 9,
+      font: timesRoman,
+      color: rgb(0.5, 0.5, 0.5),
+    });
 
     const pdfBytes = await pdfDoc.save();
     const safeTitle = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
@@ -8868,7 +9423,9 @@ router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
     // If Nano Banana is enabled and configured, generate the full presentation with cover
     if (nanoBanana) {
       try {
-        const { isConfigured, generatePresentation } = await import('../services/nanoBananaService');
+        const { isConfigured, generatePresentation } = await import(
+          '../services/nanoBananaService'
+        );
         if (isConfigured()) {
           const result = await generatePresentation({
             topic: title,
@@ -8877,7 +9434,10 @@ router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
             generateImages: true,
           });
           const safeFilename = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
-          res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+          res.setHeader(
+            'Content-Type',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+          );
           res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.pptx"`);
           res.setHeader('Content-Length', result.pptxBuffer.length);
           return res.send(result.pptxBuffer);
@@ -8892,7 +9452,10 @@ router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
     const buffer = await generatePptxBuffer(title, exportBody);
 
     const safeFilename = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    );
     res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.pptx"`);
     res.setHeader('Content-Length', buffer.length);
     return res.send(buffer);
@@ -9034,8 +9597,8 @@ router.get('/documents/download/:filename', async (req: Request, res: Response) 
       isDocx
         ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         : isJson
-          ? 'application/json'
-          : 'application/octet-stream'
+        ? 'application/json'
+        : 'application/octet-stream'
     );
     res.setHeader('Content-Disposition', `attachment; filename="${safe}"`);
 
@@ -9621,7 +10184,10 @@ router.get('/projects/:projectId/change-impact', async (req: Request, res: Respo
 // Regulatory-aware task management connected to submission workflows
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const SUBMISSION_MILESTONES: Record<string, Array<{ name: string; category: string; order: number }>> = {
+const SUBMISSION_MILESTONES: Record<
+  string,
+  Array<{ name: string; category: string; order: number }>
+> = {
   IND: [
     { name: 'Pre-IND Meeting Request', category: 'regulatory', order: 1 },
     { name: 'Pre-IND Briefing Document', category: 'document-prep', order: 2 },
@@ -9764,21 +10330,24 @@ router.post('/projects/:projectId/tasks', async (req: Request, res: Response) =>
     const [project] = await db.select().from(projects).where(eq(projects.id, projectId));
     if (!project) return sendError(res, 404, 'Project not found');
 
-    const [task] = await db.insert(projectTasks).values({
-      organizationId: project.organizationId,
-      projectId,
-      name: data.name,
-      description: data.description || null,
-      status: data.status,
-      priority: data.priority,
-      moduleType: data.moduleType || null,
-      dueDate: data.dueDate ? new Date(data.dueDate) : null,
-      assigneeId: data.assigneeId || null,
-      parentTaskId: data.parentTaskId || null,
-      estimatedHours: data.estimatedHours || null,
-      dependsOn: data.dependsOn || null,
-      metadata: data.metadata || null,
-    }).returning();
+    const [task] = await db
+      .insert(projectTasks)
+      .values({
+        organizationId: project.organizationId,
+        projectId,
+        name: data.name,
+        description: data.description || null,
+        status: data.status,
+        priority: data.priority,
+        moduleType: data.moduleType || null,
+        dueDate: data.dueDate ? new Date(data.dueDate) : null,
+        assigneeId: data.assigneeId || null,
+        parentTaskId: data.parentTaskId || null,
+        estimatedHours: data.estimatedHours || null,
+        dependsOn: data.dependsOn || null,
+        metadata: data.metadata || null,
+      })
+      .returning();
 
     return sendSuccess(res, task);
   } catch (error: any) {
@@ -9798,7 +10367,8 @@ router.put('/projects/:projectId/tasks/:taskId', async (req: Request, res: Respo
     if (updates.dueDate) updates.dueDate = new Date(updates.dueDate);
     updates.updatedAt = new Date();
 
-    const [updated] = await db.update(projectTasks)
+    const [updated] = await db
+      .update(projectTasks)
       .set(updates)
       .where(eq(projectTasks.id, taskId))
       .returning();
@@ -9836,13 +10406,21 @@ router.post('/projects/:projectId/tasks/bulk', async (req: Request, res: Respons
     const { submissionType, targetDate } = req.body;
     const milestones = SUBMISSION_MILESTONES[submissionType?.toUpperCase()];
     if (!milestones) {
-      return sendError(res, 400, `Unknown submission type: ${submissionType}. Supported: ${Object.keys(SUBMISSION_MILESTONES).join(', ')}`);
+      return sendError(
+        res,
+        400,
+        `Unknown submission type: ${submissionType}. Supported: ${Object.keys(
+          SUBMISSION_MILESTONES
+        ).join(', ')}`
+      );
     }
 
     const [project] = await db.select().from(projects).where(eq(projects.id, projectId));
     if (!project) return sendError(res, 404, 'Project not found');
 
-    const target = targetDate ? new Date(targetDate) : new Date(Date.now() + 180 * 24 * 60 * 60 * 1000); // 6 months default
+    const target = targetDate
+      ? new Date(targetDate)
+      : new Date(Date.now() + 180 * 24 * 60 * 60 * 1000); // 6 months default
     const totalMilestones = milestones.length;
 
     // Distribute milestones evenly between now and target date
@@ -9857,10 +10435,18 @@ router.post('/projects/:projectId/tasks/bulk', async (req: Request, res: Respons
         name: m.name,
         description: `${submissionType.toUpperCase()} milestone: ${m.name}`,
         status: 'todo' as const,
-        priority: m.category === 'submission' || m.category === 'milestone' ? ('high' as const) : ('medium' as const),
+        priority:
+          m.category === 'submission' || m.category === 'milestone'
+            ? ('high' as const)
+            : ('medium' as const),
         moduleType: m.category,
         dueDate,
-        metadata: { submissionType, milestoneOrder: m.order, category: m.category, autoGenerated: true },
+        metadata: {
+          submissionType,
+          milestoneOrder: m.order,
+          category: m.category,
+          autoGenerated: true,
+        },
       };
     });
 
@@ -9884,7 +10470,11 @@ router.get('/projects/:projectId/tasks/summary', async (req: Request, res: Respo
     const projectId = parseInt(req.params.projectId, 10);
     if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
 
-    const tasks = await db.select().from(projectTasks).where(eq(projectTasks.projectId, projectId)).limit(1000);
+    const tasks = await db
+      .select()
+      .from(projectTasks)
+      .where(eq(projectTasks.projectId, projectId))
+      .limit(1000);
 
     const now = new Date();
     const byStatus: Record<string, number> = {};
@@ -9906,7 +10496,10 @@ router.get('/projects/:projectId/tasks/summary', async (req: Request, res: Respo
     const completionRate = total > 0 ? (completed / total) * 100 : 100;
     const overdueRate = total > 0 ? (overdue / total) * 100 : 0;
     const blockedCount = byStatus['blocked'] || 0;
-    const healthScore = Math.max(0, Math.round(completionRate - overdueRate * 1.5 - blockedCount * 5));
+    const healthScore = Math.max(
+      0,
+      Math.round(completionRate - overdueRate * 1.5 - blockedCount * 5)
+    );
 
     return sendSuccess(res, {
       total,
@@ -9929,7 +10522,11 @@ router.get('/submission-milestones/:type', (req: Request, res: Response) => {
   const type = req.params.type.toUpperCase();
   const milestones = SUBMISSION_MILESTONES[type];
   if (!milestones) {
-    return sendError(res, 404, `No milestones for type: ${type}. Supported: ${Object.keys(SUBMISSION_MILESTONES).join(', ')}`);
+    return sendError(
+      res,
+      404,
+      `No milestones for type: ${type}. Supported: ${Object.keys(SUBMISSION_MILESTONES).join(', ')}`
+    );
   }
   return sendSuccess(res, milestones);
 });
@@ -9950,31 +10547,35 @@ router.get('/submission-milestones', (_req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const cmcDataSchema = z.object({
-  drugSubstance: z.object({
-    substanceName: z.string().optional(),
-    inn: z.string().optional(),
-    cas: z.string().optional(),
-    molecularFormula: z.string().optional(),
-    molecularWeight: z.string().optional(),
-    manufacturingRoute: z.string().optional(),
-    structureDescription: z.string().optional(),
-    polymorph: z.string().optional(),
-    solubility: z.string().optional(),
-    meltingPoint: z.string().optional(),
-    hygroscopicity: z.string().optional(),
-  }).optional(),
-  drugProduct: z.object({
-    productName: z.string().optional(),
-    dosageForm: z.string().optional(),
-    routeOfAdmin: z.string().optional(),
-    strength: z.string().optional(),
-    containerClosure: z.string().optional(),
-    composition: z.string().optional(),
-    excipients: z.string().optional(),
-    overages: z.string().optional(),
-    shelfLife: z.string().optional(),
-    storageConditions: z.string().optional(),
-  }).optional(),
+  drugSubstance: z
+    .object({
+      substanceName: z.string().optional(),
+      inn: z.string().optional(),
+      cas: z.string().optional(),
+      molecularFormula: z.string().optional(),
+      molecularWeight: z.string().optional(),
+      manufacturingRoute: z.string().optional(),
+      structureDescription: z.string().optional(),
+      polymorph: z.string().optional(),
+      solubility: z.string().optional(),
+      meltingPoint: z.string().optional(),
+      hygroscopicity: z.string().optional(),
+    })
+    .optional(),
+  drugProduct: z
+    .object({
+      productName: z.string().optional(),
+      dosageForm: z.string().optional(),
+      routeOfAdmin: z.string().optional(),
+      strength: z.string().optional(),
+      containerClosure: z.string().optional(),
+      composition: z.string().optional(),
+      excipients: z.string().optional(),
+      overages: z.string().optional(),
+      shelfLife: z.string().optional(),
+      storageConditions: z.string().optional(),
+    })
+    .optional(),
   specifications: z.array(z.any()).optional(),
   stabilityStudies: z.array(z.any()).optional(),
   impurities: z.array(z.any()).optional(),
@@ -10022,7 +10623,8 @@ router.put('/projects/:projectId/cmc', async (req: Request, res: Response) => {
       cmcDrugSubstance: parsed.data.drugSubstance || existingMetadata.cmcDrugSubstance,
       cmcDrugProduct: parsed.data.drugProduct || existingMetadata.cmcDrugProduct,
       cmcSpecifications: parsed.data.specifications || existingMetadata.cmcSpecifications || [],
-      cmcStabilityStudies: parsed.data.stabilityStudies || existingMetadata.cmcStabilityStudies || [],
+      cmcStabilityStudies:
+        parsed.data.stabilityStudies || existingMetadata.cmcStabilityStudies || [],
       cmcImpurities: parsed.data.impurities || existingMetadata.cmcImpurities || [],
       cmcLastUpdated: new Date().toISOString(),
     };
@@ -10050,7 +10652,9 @@ router.get('/projects/:projectId/context', async (req: Request, res: Response) =
     if (!project) return sendError(res, 'Project not found', 404);
 
     // Fetch tasks (limit to recent 50 — only 10 are returned to client)
-    const tasks = await db.select().from(projectTasks)
+    const tasks = await db
+      .select()
+      .from(projectTasks)
       .where(eq(projectTasks.projectId, projectId))
       .orderBy(desc(projectTasks.createdAt))
       .limit(50);
@@ -10222,7 +10826,9 @@ router.post('/projects/:projectId/tasks/assess', async (req: Request, res: Respo
     const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
     if (!project) return sendError(res, 'Project not found', 404);
 
-    const tasks = await db.select().from(projectTasks)
+    const tasks = await db
+      .select()
+      .from(projectTasks)
       .where(eq(projectTasks.projectId, projectId))
       .orderBy(desc(projectTasks.createdAt));
 
@@ -10241,19 +10847,30 @@ router.post('/projects/:projectId/tasks/assess', async (req: Request, res: Respo
       const completionRate = (completedTasks / totalTasks) * 100;
       const overdueRate = (overdueTasks / totalTasks) * 100;
       const blockedRate = (blockedTasks / totalTasks) * 100;
-      healthScore = Math.max(0, Math.min(100, Math.round(
-        completionRate * 0.4 + (100 - overdueRate * 3) * 0.3 + (100 - blockedRate * 5) * 0.3
-      )));
+      healthScore = Math.max(
+        0,
+        Math.min(
+          100,
+          Math.round(
+            completionRate * 0.4 + (100 - overdueRate * 3) * 0.3 + (100 - blockedRate * 5) * 0.3
+          )
+        )
+      );
     }
 
     // Generate risk assessment
     const risks: string[] = [];
-    if (overdueTasks > 0) risks.push(`${overdueTasks} task${overdueTasks > 1 ? 's' : ''} overdue — review deadlines`);
-    if (blockedTasks > 0) risks.push(`${blockedTasks} task${blockedTasks > 1 ? 's' : ''} blocked — resolve dependencies`);
+    if (overdueTasks > 0)
+      risks.push(`${overdueTasks} task${overdueTasks > 1 ? 's' : ''} overdue — review deadlines`);
+    if (blockedTasks > 0)
+      risks.push(
+        `${blockedTasks} task${blockedTasks > 1 ? 's' : ''} blocked — resolve dependencies`
+      );
     if (totalTasks > 0 && inProgressTasks === 0 && completedTasks < totalTasks) {
       risks.push('No tasks in progress — workflow may be stalled');
     }
-    if (totalTasks === 0) risks.push('No tasks defined — generate milestones for this submission type');
+    if (totalTasks === 0)
+      risks.push('No tasks defined — generate milestones for this submission type');
 
     // Generate next recommended actions
     const nextActions: Array<{ action: string; priority: string; reason: string }> = [];
@@ -10270,7 +10887,9 @@ router.post('/projects/:projectId/tasks/assess', async (req: Request, res: Respo
       nextActions.push({
         action: 'Review overdue tasks',
         priority: 'urgent',
-        reason: `${overdueTasks} task${overdueTasks > 1 ? 's have' : ' has'} passed ${overdueTasks > 1 ? 'their' : 'its'} due date.`,
+        reason: `${overdueTasks} task${overdueTasks > 1 ? 's have' : ' has'} passed ${
+          overdueTasks > 1 ? 'their' : 'its'
+        } due date.`,
       });
     }
 
@@ -10278,7 +10897,9 @@ router.post('/projects/:projectId/tasks/assess', async (req: Request, res: Respo
       nextActions.push({
         action: 'Resolve blocked tasks',
         priority: 'high',
-        reason: `${blockedTasks} task${blockedTasks > 1 ? 's are' : ' is'} blocked and preventing progress.`,
+        reason: `${blockedTasks} task${
+          blockedTasks > 1 ? 's are' : ' is'
+        } blocked and preventing progress.`,
       });
     }
 
@@ -11596,8 +12217,8 @@ router.post(
           resolvedType === 'change_request'
             ? 'requested_changes'
             : resolvedType === 'approval_task'
-              ? 'approval_pending'
-              : 'unresolved_review',
+            ? 'approval_pending'
+            : 'unresolved_review',
       });
 
       // ── Notification: assignment ──
@@ -11616,7 +12237,9 @@ router.post(
             resolvedType === 'approval_task'
               ? `Approval needed: "${title.trim()}"`
               : `Assigned: "${title.trim()}"`,
-          body: `${actorName} assigned you a ${resolvedType.replace('_', ' ')} on "${artifact.title}".`,
+          body: `${actorName} assigned you a ${resolvedType.replace('_', ' ')} on "${
+            artifact.title
+          }".`,
           severity: resolvedType === 'change_request' ? 'warning' : 'info',
           dueAt: dueAt || null,
         });
@@ -12389,7 +13012,9 @@ router.get('/projects/:projectId/review-pulse', async (req: Request, res: Respon
     for (const t of overdueTasks) {
       riskSignals.push({
         severity: 'high',
-        signal: `Overdue task: "${t.title}" (due ${t.dueAt ? new Date(t.dueAt).toLocaleDateString() : 'unknown'})`,
+        signal: `Overdue task: "${t.title}" (due ${
+          t.dueAt ? new Date(t.dueAt).toLocaleDateString() : 'unknown'
+        })`,
         entityId: t.taskId,
         entityType: 'review_task',
       });
@@ -12565,8 +13190,8 @@ async function createNotification(params: {
     const sourceCondition = params.threadId
       ? eq(concept2cureNotifications.threadId, params.threadId)
       : params.reviewTaskId
-        ? eq(concept2cureNotifications.reviewTaskId, params.reviewTaskId)
-        : null;
+      ? eq(concept2cureNotifications.reviewTaskId, params.reviewTaskId)
+      : null;
 
     const existing = await db
       .select({ id: concept2cureNotifications.id })
@@ -12624,8 +13249,8 @@ async function suppressNotificationsForSource(params: {
     const condition = params.threadId
       ? eq(concept2cureNotifications.threadId, params.threadId)
       : params.reviewTaskId
-        ? eq(concept2cureNotifications.reviewTaskId, params.reviewTaskId)
-        : null;
+      ? eq(concept2cureNotifications.reviewTaskId, params.reviewTaskId)
+      : null;
 
     if (!condition) return;
 
@@ -13099,7 +13724,10 @@ router.post('/projects/:projectId/submission-package', async (req: Request, res:
     );
 
     // Organize by CTD module
-    const moduleMap: Record<string, Array<{ id: number; title: string; ctdSection: string; status: string; version: number }>> = {};
+    const moduleMap: Record<
+      string,
+      Array<{ id: number; title: string; ctdSection: string; status: string; version: number }>
+    > = {};
     for (const a of eligibleArtifacts) {
       const section = a.ctdSection || 'unplaced';
       const moduleKey = section === 'unplaced' ? 'unplaced' : `module-${section.charAt(0)}`;
@@ -13116,7 +13744,8 @@ router.post('/projects/:projectId/submission-package', async (req: Request, res:
     // Compute readiness
     const totalArtifacts = artifacts.length;
     const eligibleCount = eligibleArtifacts.length;
-    const readinessPercent = totalArtifacts > 0 ? Math.round((eligibleCount / totalArtifacts) * 100) : 0;
+    const readinessPercent =
+      totalArtifacts > 0 ? Math.round((eligibleCount / totalArtifacts) * 100) : 0;
     const isReady = readinessPercent === 100 && totalArtifacts > 0;
 
     const manifest = {
@@ -13138,12 +13767,21 @@ router.post('/projects/:projectId/submission-package', async (req: Request, res:
       },
       modules: moduleMap,
       packageStructure: {
-        'module-1': { label: 'Module 1 — Administrative Information', artifacts: moduleMap['module-1'] || [] },
+        'module-1': {
+          label: 'Module 1 — Administrative Information',
+          artifacts: moduleMap['module-1'] || [],
+        },
         'module-2': { label: 'Module 2 — CTD Summaries', artifacts: moduleMap['module-2'] || [] },
         'module-3': { label: 'Module 3 — Quality', artifacts: moduleMap['module-3'] || [] },
-        'module-4': { label: 'Module 4 — Nonclinical Study Reports', artifacts: moduleMap['module-4'] || [] },
-        'module-5': { label: 'Module 5 — Clinical Study Reports', artifacts: moduleMap['module-5'] || [] },
-        'unplaced': { label: 'Unplaced Artifacts', artifacts: moduleMap['unplaced'] || [] },
+        'module-4': {
+          label: 'Module 4 — Nonclinical Study Reports',
+          artifacts: moduleMap['module-4'] || [],
+        },
+        'module-5': {
+          label: 'Module 5 — Clinical Study Reports',
+          artifacts: moduleMap['module-5'] || [],
+        },
+        unplaced: { label: 'Unplaced Artifacts', artifacts: moduleMap['unplaced'] || [] },
       },
     };
 
@@ -13232,7 +13870,9 @@ router.post('/escalation/process', async (req: Request, res: Response) => {
           newLevel > 0
             ? `Escalation L${newLevel}: "${thread.title}" is overdue`
             : `Overdue: "${thread.title}" review thread`,
-        body: `Review thread "${thread.title}" was due ${thread.dueAt!.toISOString()} and remains unresolved.`,
+        body: `Review thread "${
+          thread.title
+        }" was due ${thread.dueAt!.toISOString()} and remains unresolved.`,
         severity: newLevel >= 2 ? 'critical' : newLevel >= 1 ? 'warning' : 'info',
         status: 'unread',
         dueAt: thread.dueAt,
@@ -13299,7 +13939,9 @@ router.post('/escalation/process', async (req: Request, res: Response) => {
           newLevel > 0
             ? `Escalation L${newLevel}: "${task.title}" is overdue`
             : `Overdue: "${task.title}" review task`,
-        body: `Review task "${task.title}" was due ${task.dueAt!.toISOString()} and remains unresolved.`,
+        body: `Review task "${
+          task.title
+        }" was due ${task.dueAt!.toISOString()} and remains unresolved.`,
         severity: newLevel >= 2 ? 'critical' : newLevel >= 1 ? 'warning' : 'info',
         status: 'unread',
         dueAt: task.dueAt,
@@ -13403,464 +14045,520 @@ router.post('/escalation/process', async (req: Request, res: Response) => {
  * GET /api/concept2cure/conversations/:conversationId/health
  * Compute and return conversation health report.
  */
-router.get('/conversations/:conversationId/health', authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const conversationId = parseInt(req.params.conversationId, 10);
-    const organizationId =
-      (req as any).organizationId ||
-      parseInt(req.headers['x-organization-id'] as string, 10) ||
-      1;
+router.get(
+  '/conversations/:conversationId/health',
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const conversationId = parseInt(req.params.conversationId, 10);
+      const organizationId =
+        (req as any).organizationId ||
+        parseInt(req.headers['x-organization-id'] as string, 10) ||
+        1;
 
-    if (!conversationId || isNaN(conversationId)) {
-      return sendError(res, 400, 'Invalid conversation ID');
+      if (!conversationId || isNaN(conversationId)) {
+        return sendError(res, 400, 'Invalid conversation ID');
+      }
+
+      const report = await computeConversationHealth(conversationId, organizationId);
+      return sendSuccess(res, report);
+    } catch (error: any) {
+      logConcept2cureError('conversation health', error);
+      return sendError(res, 500, 'Failed to compute conversation health');
     }
-
-    const report = await computeConversationHealth(conversationId, organizationId);
-    return sendSuccess(res, report);
-  } catch (error: any) {
-    logConcept2cureError('conversation health', error);
-    return sendError(res, 500, 'Failed to compute conversation health');
   }
-});
+);
 
 /**
  * GET /api/concept2cure/conversations/:conversationId/working-memory
  * Get the latest working memory summary for a conversation.
  */
-router.get('/conversations/:conversationId/working-memory', authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const conversationId = parseInt(req.params.conversationId, 10);
-    const organizationId =
-      (req as any).organizationId ||
-      parseInt(req.headers['x-organization-id'] as string, 10) ||
-      1;
+router.get(
+  '/conversations/:conversationId/working-memory',
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const conversationId = parseInt(req.params.conversationId, 10);
+      const organizationId =
+        (req as any).organizationId ||
+        parseInt(req.headers['x-organization-id'] as string, 10) ||
+        1;
 
-    if (!conversationId || isNaN(conversationId)) {
-      return sendError(res, 400, 'Invalid conversation ID');
+      if (!conversationId || isNaN(conversationId)) {
+        return sendError(res, 400, 'Invalid conversation ID');
+      }
+
+      const memory = await getLatestWorkingMemory(conversationId, organizationId);
+      if (!memory) {
+        return sendSuccess(res, null, { message: 'No working memory generated yet' });
+      }
+
+      return sendSuccess(res, {
+        ...memory,
+        formatted: formatWorkingMemoryForPrompt(memory),
+      });
+    } catch (error: any) {
+      logConcept2cureError('working memory retrieval', error);
+      return sendError(res, 500, 'Failed to retrieve working memory');
     }
-
-    const memory = await getLatestWorkingMemory(conversationId, organizationId);
-    if (!memory) {
-      return sendSuccess(res, null, { message: 'No working memory generated yet' });
-    }
-
-    return sendSuccess(res, {
-      ...memory,
-      formatted: formatWorkingMemoryForPrompt(memory),
-    });
-  } catch (error: any) {
-    logConcept2cureError('working memory retrieval', error);
-    return sendError(res, 500, 'Failed to retrieve working memory');
   }
-});
+);
 
 /**
  * POST /api/concept2cure/conversations/:conversationId/summarize
  * Generate or refresh the working memory summary for a conversation.
  * Uses AI to analyze conversation messages and produce a structured summary.
  */
-router.post('/conversations/:conversationId/summarize', authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const conversationId = parseInt(req.params.conversationId, 10);
-    const organizationId =
-      (req as any).organizationId ||
-      parseInt(req.headers['x-organization-id'] as string, 10) ||
-      1;
+router.post(
+  '/conversations/:conversationId/summarize',
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const conversationId = parseInt(req.params.conversationId, 10);
+      const organizationId =
+        (req as any).organizationId ||
+        parseInt(req.headers['x-organization-id'] as string, 10) ||
+        1;
 
-    if (!conversationId || isNaN(conversationId)) {
-      return sendError(res, 400, 'Invalid conversation ID');
-    }
+      if (!conversationId || isNaN(conversationId)) {
+        return sendError(res, 400, 'Invalid conversation ID');
+      }
 
-    // Load conversation messages
-    const messagesResult = await pool.query(
-      `SELECT role, content FROM concept2cure_messages
+      // Load conversation messages
+      const messagesResult = await pool.query(
+        `SELECT role, content FROM concept2cure_messages
        WHERE conversation_id = $1 AND organization_id = $2
        ORDER BY created_at ASC`,
-      [conversationId, organizationId]
-    );
-    const messages = messagesResult.rows;
+        [conversationId, organizationId]
+      );
+      const messages = messagesResult.rows;
 
-    if (messages.length === 0) {
-      return sendError(res, 404, 'No messages found for this conversation');
-    }
+      if (messages.length === 0) {
+        return sendError(res, 404, 'No messages found for this conversation');
+      }
 
-    // Get previous summary for chaining
-    const existingMemory = await getLatestWorkingMemory(conversationId, organizationId);
-    const previousSummary = existingMemory
-      ? formatWorkingMemoryForPrompt(existingMemory)
-      : undefined;
+      // Get previous summary for chaining
+      const existingMemory = await getLatestWorkingMemory(conversationId, organizationId);
+      const previousSummary = existingMemory
+        ? formatWorkingMemoryForPrompt(existingMemory)
+        : undefined;
 
-    // Build the summarization prompt
-    const summaryPrompt = buildWorkingMemoryPrompt(messages, previousSummary);
+      // Build the summarization prompt
+      const summaryPrompt = buildWorkingMemoryPrompt(messages, previousSummary);
 
-    // Use OpenAI to generate the structured summary
-    let structured: any;
-    try {
-      const { getOpenAIClient } = await import('../services/openai-client');
-      const aiResult = await ai.chat({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: 'You are a regulatory affairs analyst. Produce concise, structured summaries.' },
-          { role: 'user', content: summaryPrompt },
-        ],
-        max_tokens: 2000,
-        temperature: 0.3,
+      // Use OpenAI to generate the structured summary
+      let structured: any;
+      try {
+        const { getOpenAIClient } = await import('../services/openai-client');
+        const aiResult = await ai.chat({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are a regulatory affairs analyst. Produce concise, structured summaries.',
+            },
+            { role: 'user', content: summaryPrompt },
+          ],
+          max_tokens: 2000,
+          temperature: 0.3,
+        });
+
+        const responseText = aiResult.content || '{}';
+        // Extract JSON from response (handle markdown code blocks)
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        structured = jsonMatch
+          ? JSON.parse(jsonMatch[0])
+          : {
+              objective: 'Unable to parse summary',
+              lockedFacts: [],
+              decisions: [],
+              openQuestions: [],
+              nextActions: [],
+              createdArtifacts: [],
+              exclusions: [],
+            };
+      } catch (aiError: any) {
+        logger.error(`AI summarization failed: ${aiError.message}`);
+        // Fallback: generate a basic summary without AI
+        structured = {
+          objective: `Conversation with ${messages.length} messages`,
+          lockedFacts: [],
+          decisions: [],
+          openQuestions: messages
+            .filter((m: any) => m.role === 'user' && m.content?.trim().endsWith('?'))
+            .slice(-5)
+            .map((m: any) => m.content.trim().slice(0, 200)),
+          nextActions: [],
+          createdArtifacts: [],
+          exclusions: [],
+        };
+      }
+
+      // Format as readable summary
+      const formattedSummary = [
+        `**Objective**: ${structured.objective}`,
+        structured.lockedFacts?.length > 0
+          ? `**Key Facts**: ${structured.lockedFacts.join('; ')}`
+          : '',
+        structured.decisions?.length > 0 ? `**Decisions**: ${structured.decisions.join('; ')}` : '',
+        structured.openQuestions?.length > 0
+          ? `**Open Questions**: ${structured.openQuestions.join('; ')}`
+          : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+
+      // Get thread ID for cross-system linking
+      const convResult = await pool.query(
+        'SELECT thread_id FROM concept2cure_conversations WHERE id = $1',
+        [conversationId]
+      );
+      const threadId = convResult.rows[0]?.thread_id || null;
+
+      // Store
+      await storeWorkingMemory({
+        conversationId,
+        threadId,
+        organizationId,
+        summary: formattedSummary,
+        structured,
+        messageCountAtGeneration: messages.length,
       });
 
-      const responseText = aiResult.content || '{}';
-      // Extract JSON from response (handle markdown code blocks)
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      structured = jsonMatch ? JSON.parse(jsonMatch[0]) : {
-        objective: 'Unable to parse summary',
-        lockedFacts: [],
-        decisions: [],
-        openQuestions: [],
-        nextActions: [],
-        createdArtifacts: [],
-        exclusions: [],
-      };
-    } catch (aiError: any) {
-      logger.error(`AI summarization failed: ${aiError.message}`);
-      // Fallback: generate a basic summary without AI
-      structured = {
-        objective: `Conversation with ${messages.length} messages`,
-        lockedFacts: [],
-        decisions: [],
-        openQuestions: messages
-          .filter((m: any) => m.role === 'user' && m.content?.trim().endsWith('?'))
-          .slice(-5)
-          .map((m: any) => m.content.trim().slice(0, 200)),
-        nextActions: [],
-        createdArtifacts: [],
-        exclusions: [],
-      };
+      return sendSuccess(res, {
+        summary: formattedSummary,
+        structured,
+        messageCount: messages.length,
+        generatedAt: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      logConcept2cureError('working memory generation', error);
+      return sendError(res, 500, 'Failed to generate working memory summary');
     }
-
-    // Format as readable summary
-    const formattedSummary = [
-      `**Objective**: ${structured.objective}`,
-      structured.lockedFacts?.length > 0
-        ? `**Key Facts**: ${structured.lockedFacts.join('; ')}`
-        : '',
-      structured.decisions?.length > 0
-        ? `**Decisions**: ${structured.decisions.join('; ')}`
-        : '',
-      structured.openQuestions?.length > 0
-        ? `**Open Questions**: ${structured.openQuestions.join('; ')}`
-        : '',
-    ].filter(Boolean).join('\n');
-
-    // Get thread ID for cross-system linking
-    const convResult = await pool.query(
-      'SELECT thread_id FROM concept2cure_conversations WHERE id = $1',
-      [conversationId]
-    );
-    const threadId = convResult.rows[0]?.thread_id || null;
-
-    // Store
-    await storeWorkingMemory({
-      conversationId,
-      threadId,
-      organizationId,
-      summary: formattedSummary,
-      structured,
-      messageCountAtGeneration: messages.length,
-    });
-
-    return sendSuccess(res, {
-      summary: formattedSummary,
-      structured,
-      messageCount: messages.length,
-      generatedAt: new Date().toISOString(),
-    });
-  } catch (error: any) {
-    logConcept2cureError('working memory generation', error);
-    return sendError(res, 500, 'Failed to generate working memory summary');
   }
-});
+);
 
 /**
  * POST /api/concept2cure/conversations/:conversationId/promote
  * Promote conversation content to a governed artifact.
  */
-router.post('/conversations/:conversationId/promote', authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const conversationId = parseInt(req.params.conversationId, 10);
-    const organizationId =
-      (req as any).organizationId ||
-      parseInt(req.headers['x-organization-id'] as string, 10) ||
-      null;
-    if (!organizationId) {
-      return sendError(res, 403, 'Organization context required');
-    }
-    const userId = (req as any).userId || (req as any).user?.id || null;
+router.post(
+  '/conversations/:conversationId/promote',
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const conversationId = parseInt(req.params.conversationId, 10);
+      const organizationId =
+        (req as any).organizationId ||
+        parseInt(req.headers['x-organization-id'] as string, 10) ||
+        null;
+      if (!organizationId) {
+        return sendError(res, 403, 'Organization context required');
+      }
+      const userId = (req as any).userId || (req as any).user?.id || null;
 
-    const promoteSchema = z.object({
-      type: z.enum(['strategy_memo', 'evidence_brief', 'module_draft', 'decision_log', 'handoff_memo']),
-      title: z.string().min(1).max(500),
-      messageStart: z.number().optional(),
-      messageEnd: z.number().optional(),
-    });
+      const promoteSchema = z.object({
+        type: z.enum([
+          'strategy_memo',
+          'evidence_brief',
+          'module_draft',
+          'decision_log',
+          'handoff_memo',
+        ]),
+        title: z.string().min(1).max(500),
+        messageStart: z.number().optional(),
+        messageEnd: z.number().optional(),
+      });
 
-    const parsed = promoteSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return sendError(res, 400, 'Invalid promotion request', parsed.error.format());
-    }
-    const { type, title, messageStart, messageEnd } = parsed.data;
+      const parsed = promoteSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return sendError(res, 400, 'Invalid promotion request', parsed.error.format());
+      }
+      const { type, title, messageStart, messageEnd } = parsed.data;
 
-    if (!conversationId || isNaN(conversationId)) {
-      return sendError(res, 400, 'Invalid conversation ID');
-    }
+      if (!conversationId || isNaN(conversationId)) {
+        return sendError(res, 400, 'Invalid conversation ID');
+      }
 
-    // Load conversation and verify it belongs to this org
-    const convResult = await pool.query(
-      'SELECT id, project_id, conversation_id FROM concept2cure_conversations WHERE id = $1 AND organization_id = $2',
-      [conversationId, organizationId]
-    );
-    if (convResult.rows.length === 0) {
-      return sendError(res, 404, 'Conversation not found');
-    }
-    const conversation = convResult.rows[0];
+      // Load conversation and verify it belongs to this org
+      const convResult = await pool.query(
+        'SELECT id, project_id, conversation_id FROM concept2cure_conversations WHERE id = $1 AND organization_id = $2',
+        [conversationId, organizationId]
+      );
+      if (convResult.rows.length === 0) {
+        return sendError(res, 404, 'Conversation not found');
+      }
+      const conversation = convResult.rows[0];
 
-    // Load messages (optionally filtered by range)
-    let messagesQuery = `SELECT role, content, created_at FROM concept2cure_messages
+      // Load messages (optionally filtered by range)
+      let messagesQuery = `SELECT role, content, created_at FROM concept2cure_messages
        WHERE conversation_id = $1 AND organization_id = $2
        ORDER BY created_at ASC`;
-    const messagesResult = await pool.query(messagesQuery, [conversationId, organizationId]);
-    let messages = messagesResult.rows;
+      const messagesResult = await pool.query(messagesQuery, [conversationId, organizationId]);
+      let messages = messagesResult.rows;
 
-    if (messageStart !== undefined || messageEnd !== undefined) {
-      const start = messageStart ?? 0;
-      const end = messageEnd ?? messages.length;
-      messages = messages.slice(start, end);
-    }
-
-    if (messages.length === 0) {
-      return sendError(res, 404, 'No messages in specified range');
-    }
-
-    // Generate document content using AI + Intelligence Engine
-    let documentContent: string;
-    try {
-      const conversationText = messages
-        .map((m: any) => `[${m.role}]: ${m.content}`)
-        .join('\n\n');
-
-      // Run intelligence pipeline on conversation content for structured signals
-      let intelligenceContext = '';
-      try {
-        const { runIntelligencePipeline, buildConstrainedPrompt } = await import(
-          '../services/intelligence-engine/index.js'
-        );
-        const analysis = runIntelligencePipeline(conversationText);
-        intelligenceContext = buildConstrainedPrompt(analysis, 'generate_memo');
-      } catch {
-        // Graceful degradation
+      if (messageStart !== undefined || messageEnd !== undefined) {
+        const start = messageStart ?? 0;
+        const end = messageEnd ?? messages.length;
+        messages = messages.slice(start, end);
       }
 
-      const systemPrompt = intelligenceContext ||
-        `You are a regulatory affairs document specialist. Extract and organize the conversation content into a formal ${type.replace(/_/g, ' ')} document. Use proper document structure with headings, and maintain regulatory precision. Output in Markdown format.`;
+      if (messages.length === 0) {
+        return sendError(res, 404, 'No messages in specified range');
+      }
 
-      const aiResult = await ai.chat({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          {
-            role: 'user',
-            content: `Create a "${title}" (${type.replace(/_/g, ' ')}) from this conversation:\n\n${conversationText}`,
-          },
-        ],
-        max_tokens: 4000,
-        temperature: 0.3,
-      });
-      documentContent = aiResult.content || '';
-
-      // Evaluation gate: check output quality
+      // Generate document content using AI + Intelligence Engine
+      let documentContent: string;
       try {
-        const { evaluateOutput } = await import('../services/intelligence-engine/index.js');
-        const evaluation = evaluateOutput(documentContent);
-        if (!evaluation.passed && intelligenceContext) {
-          // Regenerate with tighter constraints
-          const retryResult = await ai.chat({
-            model: 'gpt-4o-mini',
-            messages: [
-              {
-                role: 'system',
-                content: `${systemPrompt}\n\nIMPORTANT: Your output MUST include: a clear verdict/recommendation, prioritized findings with severity levels, specific evidence references, and actionable next steps. Rejected reasons: ${evaluation.rejectionReasons.join('; ')}`,
-              },
-              {
-                role: 'user',
-                content: `Create a "${title}" (${type.replace(/_/g, ' ')}) from this conversation:\n\n${conversationText}`,
-              },
-            ],
-            max_tokens: 4000,
-            temperature: 0.2,
-          });
-          documentContent = retryResult.content || documentContent;
+        const conversationText = messages.map((m: any) => `[${m.role}]: ${m.content}`).join('\n\n');
+
+        // Run intelligence pipeline on conversation content for structured signals
+        let intelligenceContext = '';
+        try {
+          const { runIntelligencePipeline, buildConstrainedPrompt } = await import(
+            '../services/intelligence-engine/index.js'
+          );
+          const analysis = runIntelligencePipeline(conversationText);
+          intelligenceContext = buildConstrainedPrompt(analysis, 'generate_memo');
+        } catch {
+          // Graceful degradation
+        }
+
+        const systemPrompt =
+          intelligenceContext ||
+          `You are a regulatory affairs document specialist. Extract and organize the conversation content into a formal ${type.replace(
+            /_/g,
+            ' '
+          )} document. Use proper document structure with headings, and maintain regulatory precision. Output in Markdown format.`;
+
+        const aiResult = await ai.chat({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            {
+              role: 'user',
+              content: `Create a "${title}" (${type.replace(
+                /_/g,
+                ' '
+              )}) from this conversation:\n\n${conversationText}`,
+            },
+          ],
+          max_tokens: 4000,
+          temperature: 0.3,
+        });
+        documentContent = aiResult.content || '';
+
+        // Evaluation gate: check output quality
+        try {
+          const { evaluateOutput } = await import('../services/intelligence-engine/index.js');
+          const evaluation = evaluateOutput(documentContent);
+          if (!evaluation.passed && intelligenceContext) {
+            // Regenerate with tighter constraints
+            const retryResult = await ai.chat({
+              model: 'gpt-4o-mini',
+              messages: [
+                {
+                  role: 'system',
+                  content: `${systemPrompt}\n\nIMPORTANT: Your output MUST include: a clear verdict/recommendation, prioritized findings with severity levels, specific evidence references, and actionable next steps. Rejected reasons: ${evaluation.rejectionReasons.join(
+                    '; '
+                  )}`,
+                },
+                {
+                  role: 'user',
+                  content: `Create a "${title}" (${type.replace(
+                    /_/g,
+                    ' '
+                  )}) from this conversation:\n\n${conversationText}`,
+                },
+              ],
+              max_tokens: 4000,
+              temperature: 0.2,
+            });
+            documentContent = retryResult.content || documentContent;
+          }
+        } catch {
+          // Use original if evaluation/retry fails
         }
       } catch {
-        // Use original if evaluation/retry fails
+        // Fallback: raw conversation export
+        documentContent =
+          `# ${title}\n\n_Promoted from conversation on ${new Date().toISOString()}_\n\n` +
+          messages
+            .map(
+              (m: any) =>
+                `### ${m.role === 'user' ? 'User' : 'Assistant'} (${new Date(
+                  m.created_at
+                ).toLocaleString()})\n\n${m.content}`
+            )
+            .join('\n\n---\n\n');
       }
-    } catch {
-      // Fallback: raw conversation export
-      documentContent = `# ${title}\n\n_Promoted from conversation on ${new Date().toISOString()}_\n\n` +
-        messages.map((m: any) =>
-          `### ${m.role === 'user' ? 'User' : 'Assistant'} (${new Date(m.created_at).toLocaleString()})\n\n${m.content}`
-        ).join('\n\n---\n\n');
-    }
 
-    // Create artifact
-    const artifactId = `artifact_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const contentHash = crypto.createHash('sha256').update(documentContent).digest('hex');
+      // Create artifact
+      const artifactId = `artifact_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const contentHash = crypto.createHash('sha256').update(documentContent).digest('hex');
 
-    const artifactResult = await db.insert(concept2cureArtifacts).values({
-      artifactId,
-      projectId: conversation.project_id,
-      conversationId,
-      organizationId,
-      type: 'markdown',
-      category: 'document',
-      title: DOMPurify.sanitize(title),
-      content: documentContent,
-      contentHash,
-      version: 1,
-      status: 'draft',
-      createdById: userId,
-      metadata: { promotedFrom: type, sourceMessageCount: messages.length },
-    }).returning();
-
-    // Log provenance event
-    if (artifactResult.length > 0) {
-      await db.insert(concept2cureProvenanceEvents).values({
-        eventId: `prov_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        artifactId: artifactResult[0].id,
-        organizationId,
-        eventType: 'creation',
-        eventAction: 'promoted_from_conversation',
-        actorId: userId || undefined,
-        actorName: 'User',
-        sourceDescription: `Promoted from conversation ${conversationId} as ${type}`,
-        details: {
+      const artifactResult = await db
+        .insert(concept2cureArtifacts)
+        .values({
+          artifactId,
+          projectId: conversation.project_id,
           conversationId,
-          messageRange: { start: messageStart ?? 0, end: messageEnd ?? messages.length },
-          sourceType: type,
-        },
-        backendService: 'concept2cure',
-        backendRoute: `POST /api/concept2cure/conversations/${conversationId}/promote`,
-      });
-    }
+          organizationId,
+          type: 'markdown',
+          category: 'document',
+          title: DOMPurify.sanitize(title),
+          content: documentContent,
+          contentHash,
+          version: 1,
+          status: 'draft',
+          createdById: userId,
+          metadata: { promotedFrom: type, sourceMessageCount: messages.length },
+        })
+        .returning();
 
-    return sendSuccess(res, {
-      artifact: artifactResult[0],
-      artifactId,
-      title,
-      type,
-      messageCount: messages.length,
-    });
-  } catch (error: any) {
-    logConcept2cureError('document promotion', error);
-    return sendError(res, 500, 'Failed to promote conversation to document');
+      // Log provenance event
+      if (artifactResult.length > 0) {
+        await db.insert(concept2cureProvenanceEvents).values({
+          eventId: `prov_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          artifactId: artifactResult[0].id,
+          organizationId,
+          eventType: 'creation',
+          eventAction: 'promoted_from_conversation',
+          actorId: userId || undefined,
+          actorName: 'User',
+          sourceDescription: `Promoted from conversation ${conversationId} as ${type}`,
+          details: {
+            conversationId,
+            messageRange: { start: messageStart ?? 0, end: messageEnd ?? messages.length },
+            sourceType: type,
+          },
+          backendService: 'concept2cure',
+          backendRoute: `POST /api/concept2cure/conversations/${conversationId}/promote`,
+        });
+      }
+
+      return sendSuccess(res, {
+        artifact: artifactResult[0],
+        artifactId,
+        title,
+        type,
+        messageCount: messages.length,
+      });
+    } catch (error: any) {
+      logConcept2cureError('document promotion', error);
+      return sendError(res, 500, 'Failed to promote conversation to document');
+    }
   }
-});
+);
 
 /**
  * POST /api/concept2cure/conversations/:conversationId/extract-decisions
  * Extract decisions, risks, and open questions from a conversation.
  */
-router.post('/conversations/:conversationId/extract-decisions', authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const conversationId = parseInt(req.params.conversationId, 10);
-    const organizationId =
-      (req as any).organizationId ||
-      parseInt(req.headers['x-organization-id'] as string, 10) ||
-      1;
+router.post(
+  '/conversations/:conversationId/extract-decisions',
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const conversationId = parseInt(req.params.conversationId, 10);
+      const organizationId =
+        (req as any).organizationId ||
+        parseInt(req.headers['x-organization-id'] as string, 10) ||
+        1;
 
-    if (!conversationId || isNaN(conversationId)) {
-      return sendError(res, 400, 'Invalid conversation ID');
-    }
+      if (!conversationId || isNaN(conversationId)) {
+        return sendError(res, 400, 'Invalid conversation ID');
+      }
 
-    // Load messages
-    const messagesResult = await pool.query(
-      `SELECT role, content FROM concept2cure_messages
+      // Load messages
+      const messagesResult = await pool.query(
+        `SELECT role, content FROM concept2cure_messages
        WHERE conversation_id = $1 AND organization_id = $2
        ORDER BY created_at ASC`,
-      [conversationId, organizationId]
-    );
-    const messages = messagesResult.rows;
+        [conversationId, organizationId]
+      );
+      const messages = messagesResult.rows;
 
-    if (messages.length === 0) {
-      return sendError(res, 404, 'No messages found');
-    }
+      if (messages.length === 0) {
+        return sendError(res, 404, 'No messages found');
+      }
 
-    try {
-      const conversationText = messages
-        .map((m: any) => `[${m.role}]: ${m.content}`)
-        .join('\n\n');
-
-      // Run intelligence pipeline for structured risk/decision signals
-      let intelligenceSignals: Record<string, unknown> = {};
       try {
-        const { runIntelligencePipeline } = await import('../services/intelligence-engine/index.js');
-        const analysis = runIntelligencePipeline(conversationText);
-        intelligenceSignals = {
-          defensibilityScore: analysis.defensibility.score,
-          riskLevel: analysis.defensibility.riskLevel,
-          riskClassifications: analysis.riskClassifications.classifications.map(r => ({
-            category: r.category,
-            severity: r.severity,
-            finding: r.finding,
-          })),
-          reviewerQuestions: analysis.reviewerQuestions.map(q => ({
-            question: q.question,
-            severity: q.severity,
-            category: q.category,
-          })),
-        };
-      } catch {
-        // Graceful degradation
+        const conversationText = messages.map((m: any) => `[${m.role}]: ${m.content}`).join('\n\n');
+
+        // Run intelligence pipeline for structured risk/decision signals
+        let intelligenceSignals: Record<string, unknown> = {};
+        try {
+          const { runIntelligencePipeline } = await import(
+            '../services/intelligence-engine/index.js'
+          );
+          const analysis = runIntelligencePipeline(conversationText);
+          intelligenceSignals = {
+            defensibilityScore: analysis.defensibility.score,
+            riskLevel: analysis.defensibility.riskLevel,
+            riskClassifications: analysis.riskClassifications.classifications.map(r => ({
+              category: r.category,
+              severity: r.severity,
+              finding: r.finding,
+            })),
+            reviewerQuestions: analysis.reviewerQuestions.map(q => ({
+              question: q.question,
+              severity: q.severity,
+              category: q.category,
+            })),
+          };
+        } catch {
+          // Graceful degradation
+        }
+
+        const aiResult = await ai.chat({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `Extract structured information from this regulatory conversation. You have intelligence signals available. Return ONLY valid JSON.${
+                Object.keys(intelligenceSignals).length > 0
+                  ? `\n\nIntelligence signals:\n${JSON.stringify(intelligenceSignals, null, 2)}`
+                  : ''
+              }`,
+            },
+            {
+              role: 'user',
+              content: `Extract all decisions, risks, open questions, and action items from this conversation:\n\n${conversationText}\n\nRespond with JSON: { "decisions": [...], "risks": [...], "openQuestions": [...], "actionItems": [...], "intelligenceSignals": {...} }`,
+            },
+          ],
+          max_tokens: 2000,
+          temperature: 0.2,
+        });
+
+        const responseText = aiResult.content || '{}';
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        const extracted = jsonMatch
+          ? JSON.parse(jsonMatch[0])
+          : {
+              decisions: [],
+              risks: [],
+              openQuestions: [],
+              actionItems: [],
+            };
+
+        // Merge intelligence signals into response
+        if (Object.keys(intelligenceSignals).length > 0) {
+          extracted.intelligenceSignals = intelligenceSignals;
+        }
+
+        return sendSuccess(res, extracted);
+      } catch (aiError: any) {
+        logger.error(`Decision extraction failed: ${aiError.message}`);
+        return sendError(res, 500, 'AI extraction failed');
       }
-
-      const aiResult = await ai.chat({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `Extract structured information from this regulatory conversation. You have intelligence signals available. Return ONLY valid JSON.${
-              Object.keys(intelligenceSignals).length > 0
-                ? `\n\nIntelligence signals:\n${JSON.stringify(intelligenceSignals, null, 2)}`
-                : ''
-            }`,
-          },
-          {
-            role: 'user',
-            content: `Extract all decisions, risks, open questions, and action items from this conversation:\n\n${conversationText}\n\nRespond with JSON: { "decisions": [...], "risks": [...], "openQuestions": [...], "actionItems": [...], "intelligenceSignals": {...} }`,
-          },
-        ],
-        max_tokens: 2000,
-        temperature: 0.2,
-      });
-
-      const responseText = aiResult.content || '{}';
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      const extracted = jsonMatch ? JSON.parse(jsonMatch[0]) : {
-        decisions: [], risks: [], openQuestions: [], actionItems: [],
-      };
-
-      // Merge intelligence signals into response
-      if (Object.keys(intelligenceSignals).length > 0) {
-        extracted.intelligenceSignals = intelligenceSignals;
-      }
-
-      return sendSuccess(res, extracted);
-    } catch (aiError: any) {
-      logger.error(`Decision extraction failed: ${aiError.message}`);
-      return sendError(res, 500, 'AI extraction failed');
+    } catch (error: any) {
+      logConcept2cureError('decision extraction', error);
+      return sendError(res, 500, 'Failed to extract decisions');
     }
-  } catch (error: any) {
-    logConcept2cureError('decision extraction', error);
-    return sendError(res, 500, 'Failed to extract decisions');
   }
-});
+);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // INTELLIGENCE ENGINE — Deterministic regulatory intelligence analysis
@@ -13892,7 +14590,9 @@ router.post('/intelligence/analyze', authMiddleware, async (req: Request, res: R
           })
         )
         .optional(),
-      includeConstrainedPrompt: z.enum(['explain_risk', 'suggest_remediation', 'generate_memo', 'rewrite_section']).optional(),
+      includeConstrainedPrompt: z
+        .enum(['explain_risk', 'suggest_remediation', 'generate_memo', 'rewrite_section'])
+        .optional(),
     });
 
     const parsed = analyzeSchema.safeParse(req.body);
@@ -14095,9 +14795,7 @@ router.get('/team/workload', async (req: Request, res: Response) => {
 router.post('/feedback', authMiddleware, async (req: Request, res: Response) => {
   try {
     const organizationId =
-      (req as any).organizationId ||
-      parseInt(req.headers['x-organization-id'] as string, 10) ||
-      1;
+      (req as any).organizationId || parseInt(req.headers['x-organization-id'] as string, 10) || 1;
     const userId = getUserId(req);
     const { messageId, positive, conversationId, comment } = req.body;
 
@@ -14121,7 +14819,14 @@ router.post('/feedback', authMiddleware, async (req: Request, res: Response) => 
       await pool.query(
         `INSERT INTO ai_feedback (organization_id, user_id, message_id, conversation_id, positive, comment)
          VALUES ($1, $2, $3, $4, $5, $6)`,
-        [organizationId, userId, String(messageId), conversationId || null, positive, comment || null]
+        [
+          organizationId,
+          userId,
+          String(messageId),
+          conversationId || null,
+          positive,
+          comment || null,
+        ]
       );
     } catch (dbErr: any) {
       console.warn('[Feedback] DB persist failed:', dbErr.message);
@@ -14142,7 +14847,9 @@ router.post('/feedback', authMiddleware, async (req: Request, res: Response) => 
         userId,
         feedbackType: positive ? 'accepted' : 'rejected',
       });
-    } catch { /* non-blocking */ }
+    } catch {
+      /* non-blocking */
+    }
 
     return sendSuccess(res, { recorded: true });
   } catch (error: any) {

@@ -32,7 +32,7 @@ import { cn } from '@/lib/utils';
 import { ZenSidebar } from './components/sidebar/ZenSidebar';
 import { ZenChat } from './components/chat/ZenChat';
 import { ZenCommandPalette } from './components/command/ZenCommandPalette';
-import { ZenSettings } from './components/settings/ZenSettings';
+const ZenSettings = React.lazy(() => import('./components/settings/ZenSettings').then(m => ({ default: m.ZenSettings })));
 import { ProjectSwitcher, NewProjectModal } from './components/projects/ProjectSwitcher';
 import ProjectConfigPanel from './components/workspace/ProjectConfigPanel';
 // [BATCH 3] WorkflowTimeline — renderer removed, import kept for type compatibility
@@ -4010,14 +4010,18 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         onAction={handleCommandAction}
       />
 
-      {/* Settings */}
-      <ZenSettings
-        isOpen={settingsOpen}
-        onClose={() => { setSettingsOpen(false); setSettingsSection(undefined); }}
-        activeProjectId={activeProjectId}
-        activeProjectName={activeProject?.name}
-        initialSection={settingsSection as any}
-      />
+      {/* Settings — lazy loaded */}
+      {settingsOpen && (
+        <React.Suspense fallback={null}>
+          <ZenSettings
+            isOpen={settingsOpen}
+            onClose={() => { setSettingsOpen(false); setSettingsSection(undefined); }}
+            activeProjectId={activeProjectId}
+            activeProjectName={activeProject?.name}
+            initialSection={settingsSection as any}
+          />
+        </React.Suspense>
+      )}
 
       {/* Project switcher - Connected to data layer */}
       <ProjectSwitcher

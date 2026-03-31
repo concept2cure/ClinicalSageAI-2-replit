@@ -67,10 +67,28 @@ export function serveStatic(app: Express) {
     );
   }
 
-  app.use(express.static(distPath));
+  // Hashed assets (JS/CSS/images with content hash in filename) — immutable, cache forever
+  app.use(
+    '/assets',
+    express.static(path.join(distPath, 'assets'), {
+      maxAge: '1y',
+      immutable: true,
+      etag: false,
+      lastModified: false,
+    })
+  );
 
-  // fall through to index.html if the file doesn't exist
+  // Non-hashed files (index.html, favicon, etc.) — short cache with revalidation
+  app.use(
+    express.static(distPath, {
+      maxAge: 0,
+      etag: true,
+    })
+  );
+
+  // SPA fallback — cache index.html briefly so refreshes are fast
   app.use('*', (_req, res) => {
+    res.set('Cache-Control', 'no-cache');
     res.sendFile(path.resolve(distPath, 'index.html'));
   });
 }

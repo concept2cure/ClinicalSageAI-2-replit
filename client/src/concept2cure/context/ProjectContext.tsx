@@ -5,7 +5,7 @@
  * Provides project persistence, conversation management, and artifact tracking.
  */
 
-import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useCallback, useEffect, useMemo } from 'react';
 import type {
   Project,
   Conversation,
@@ -758,7 +758,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
   // CONTEXT VALUE
   // ─────────────────────────────────────────────────────────────────────────
 
-  const value: ProjectContextValue = {
+  const value: ProjectContextValue = useMemo(() => ({
     state,
     createProject,
     updateProject,
@@ -786,7 +786,15 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
     activeArtifact,
     projectConversations,
     projectArtifacts,
-  };
+  }), [
+    state,
+    createProject, updateProject, deleteProject, setActiveProject, updateProjectKnowledge,
+    createConversation, setActiveConversation, addMessage, editMessage, forkConversation,
+    createArtifact, updateArtifact, setActiveArtifact, publishArtifact, remixArtifact,
+    toggleSidebar, toggleArtifactPanel, setArtifactPanelWidth, setTheme,
+    setUserProfile, updateUserProfile,
+    activeProject, activeConversation, activeArtifact, projectConversations, projectArtifacts,
+  ]);
 
   return <ProjectContext.Provider value={value}>{children}</ProjectContext.Provider>;
 };

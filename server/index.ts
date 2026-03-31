@@ -12,7 +12,7 @@ dns.setDefaultResultOrder('ipv4first');
 import express from 'express';
 import { createServer } from 'http';
 import { Pool } from 'pg';
-import { setupVite } from './vite';
+import { setupVite, serveStatic } from './vite';
 import { httpLogger, errorHandler } from './src/mw/observability.js';
 // Database performance optimizations - optional
 import multer from 'multer';
@@ -93,19 +93,9 @@ const debugLog = (message: string, data?: any) => {
   }
 };
 
-// Import CMC route handlers
-import cmcProjectRoutes from './api/cmc/projectRoutes';
-import cmcBlueprintRoutes from './api/cmc/blueprintRoutes';
-import cmcDashboardRoutes from './routes/cmc-dashboard';
-import cmcAggregatorRoutes from './api/cmc/index.js';
-import cmcDashboardPrisma from './routes/cmc-dashboard-prisma';
-import cmcCoreRoutes from './api/cmc/routes';
-import cmcSpecificationRoutes from './api/cmc/specificationRoutes';
-import cmcStabilityRoutes from './api/cmc/stabilityRoutes';
-import cmcBatchRecordRoutes from './api/cmc/batchRecordRoutes';
-import cmcWorkflowRoutes from './api/cmc/workflowRoutes';
-import cmcCollaborationRoutes from './api/cmc/collaborationRoutes';
-import cmcDocumentRoutes from './api/cmc/documentRoutes';
+// CMC route handlers — loaded dynamically at mount time (line ~975) for faster startup
+// import cmcProjectRoutes from './api/cmc/projectRoutes';
+// (12 CMC imports moved to dynamic loading below)
 
 // Import AI assistance routes
 import aiAssistanceRoutes, { setAIService } from './routes/ai-assistance';
@@ -251,12 +241,32 @@ if (DEBUG) {
 }
 
 // ============================================================================
+// FAST-PATH ENDPOINTS — before all middleware for minimal latency
+// Health checks, readiness probes, and Kubernetes liveliness don't need
+// security, rate limiting, compression, CORS, or body parsing.
+// ============================================================================
+app.get('/healthz', (_req, res) => res.json({ ok: true, ts: Date.now() }));
+app.get('/readyz', async (_req, res) => {
+  try {
+    await pool.query('select 1');
+    return res.json({ ready: true });
+  } catch {
+    return res.status(500).json({ ready: false });
+  }
+});
+app.get('/api/health', (_req: Request, res: Response) => {
+  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
+// ============================================================================
 // ENTERPRISE SECURITY & PERFORMANCE MIDDLEWARE (ENABLED)
 // ============================================================================
-// Apply enterprise security middleware first
+// Apply enterprise security middleware first (includes global rate limit)
 applySecurityMiddleware(app);
 
 // Redis-backed API rate limiting (with in-memory fallback)
+// NOTE: applySecurityMiddleware already mounts rateLimiters.global for all routes,
+// so the Redis limiter here adds a second, independent /api limit for burst protection.
 const redisRateLimiter = createRedisRateLimiter();
 app.use('/api', redisRateLimiter);
 
@@ -266,27 +276,25 @@ applyPerformanceMiddleware(app);
 console.log('✅ Enterprise security and performance middleware enabled');
 // ============================================================================
 
-// Middleware setup
-app.use(httpLogger); // Add structured logging
+// Structured logging — scoped to API routes (health/static short-circuit above)
+app.use('/api', httpLogger);
 // Audit logging now handled by enterprise-security middleware
 
 // Firecrawl webhooks require raw body-safe handling before global JSON parser.
 app.use('/api/firecrawl-webhooks', firecrawlWebhooksRoutes);
 
-// Body parsing with size limits
-// 50MB needed for large document uploads via JSON (base64-encoded); file uploads use multer separately
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// Body parsing — scoped to /api routes only (static files and health checks skip this)
+// 2MB default is sufficient for JSON API calls; large document uploads use multer (multipart)
+// The 50MB limit is kept for /api/concept2cure routes that send base64-encoded document content
+app.use('/api/concept2cure', express.json({ limit: '50mb' }));
+app.use('/api', express.json({ limit: '2mb' }));
+app.use('/api', express.urlencoded({ extended: true, limit: '2mb' }));
 // Cookie parsing (required for CSRF double-submit pattern)
 import cookieParser from 'cookie-parser';
 app.use(cookieParser());
 
-// CSRF protection (double-submit cookie pattern)
-import { csrfProtection } from './middleware/csrf.js';
-if (process.env.NODE_ENV === 'production' || process.env.ENABLE_CSRF === 'true') {
-  app.use('/api', csrfProtection);
-  console.log('✅ CSRF protection enabled');
-}
+// NOTE: CSRF protection already applied by applySecurityMiddleware() above.
+// The duplicate csrfProtection from './middleware/csrf.js' is intentionally removed.
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // IMMUTABILITY POLICY ENFORCEMENT — 21 CFR Part 11 Compliance
@@ -379,24 +387,7 @@ const storageClient = {
 };
 console.log('✅ Storage client initialized (VaultDMS deprecated)');
 
-// Health check endpoints
-app.get('/healthz', (_req, res) => res.json({ ok: true, ts: Date.now() }));
-app.get('/readyz', async (_req, res) => {
-  try {
-    await pool.query('select 1');
-    return res.json({ ready: true });
-  } catch {
-    return res.status(500).json({ ready: false });
-  }
-});
-
-// Health check endpoint — public, minimal info only
-app.get('/api/health', async (req: Request, res: Response) => {
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-  });
-});
+// NOTE: /healthz, /readyz, /api/health are mounted above middleware for fast-path access
 
 // Full health check endpoint — comprehensive system health with dependency checks
 app.get('/api/health/full', async (req: Request, res: Response) => {
@@ -970,25 +961,45 @@ app.use('/api/enterprise', enterpriseRoutes);
 import rbacRoutes from './api/enterprise/rbac-routes.js';
 app.use('/api/enterprise/rbac', rbacRoutes);
 
-// Mount CMC Module routes (Chemistry, Manufacturing & Controls)
+// Mount CMC Module routes (Chemistry, Manufacturing & Controls) — dynamically loaded
 try {
+  const [
+    cmcCoreRoutes, cmcAggregatorRoutes, cmcProjectRoutes, cmcBlueprintRoutes,
+    cmcSpecificationRoutes, cmcStabilityRoutes, cmcBatchRecordRoutes,
+    cmcWorkflowRoutes, cmcCollaborationRoutes, cmcDocumentRoutes,
+    cmcDashboardRoutes, cmcDashboardPrisma,
+  ] = await Promise.all([
+    import('./api/cmc/routes'),
+    import('./api/cmc/index.js'),
+    import('./api/cmc/projectRoutes'),
+    import('./api/cmc/blueprintRoutes'),
+    import('./api/cmc/specificationRoutes'),
+    import('./api/cmc/stabilityRoutes'),
+    import('./api/cmc/batchRecordRoutes'),
+    import('./api/cmc/workflowRoutes'),
+    import('./api/cmc/collaborationRoutes'),
+    import('./api/cmc/documentRoutes'),
+    import('./routes/cmc-dashboard'),
+    import('./routes/cmc-dashboard-prisma'),
+  ]);
+
   // Both routers share /api/cmc but define non-overlapping sub-routes:
   //   cmcAggregatorRoutes: /blueprint-generator, /change-impact-simulator, /manufacturing-tuner, etc.
   //   cmcProjectRoutes:    /projects, /projects/:id, /projects/:projectId/substances, etc.
-  app.use('/api/cmc', cmcCoreRoutes);
-  app.use('/api/cmc', cmcAggregatorRoutes);
-  app.use('/api/cmc', cmcProjectRoutes);
-  app.use('/api/cmc/blueprint', cmcBlueprintRoutes);
-  app.use('/api/cmc/specifications', cmcSpecificationRoutes);
-  app.use('/api/cmc/stability', cmcStabilityRoutes);
-  app.use('/api/cmc/batch-records', cmcBatchRecordRoutes);
-  app.use('/api/cmc/workflows', cmcWorkflowRoutes);
-  app.use('/api/cmc/collaboration', cmcCollaborationRoutes);
-  app.use('/api/cmc/documents', cmcDocumentRoutes);
-  app.use('/api/cmc/dashboard-legacy', cmcDashboardRoutes);
-  app.use('/api/cmc/dashboard', cmcDashboardPrisma);
+  app.use('/api/cmc', cmcCoreRoutes.default);
+  app.use('/api/cmc', cmcAggregatorRoutes.default);
+  app.use('/api/cmc', cmcProjectRoutes.default);
+  app.use('/api/cmc/blueprint', cmcBlueprintRoutes.default);
+  app.use('/api/cmc/specifications', cmcSpecificationRoutes.default);
+  app.use('/api/cmc/stability', cmcStabilityRoutes.default);
+  app.use('/api/cmc/batch-records', cmcBatchRecordRoutes.default);
+  app.use('/api/cmc/workflows', cmcWorkflowRoutes.default);
+  app.use('/api/cmc/collaboration', cmcCollaborationRoutes.default);
+  app.use('/api/cmc/documents', cmcDocumentRoutes.default);
+  app.use('/api/cmc/dashboard-legacy', cmcDashboardRoutes.default);
+  app.use('/api/cmc/dashboard', cmcDashboardPrisma.default);
   console.log(
-    '✅ CMC Module API routes mounted (aggregator + projects + blueprint + specifications + stability + batch-records + workflows + collaboration + documents + dashboard)'
+    '✅ CMC Module API routes mounted (12 sub-modules loaded in parallel)'
   );
 } catch (error) {
   console.error('❌ Failed to mount CMC Module routes:', error);
@@ -1086,112 +1097,72 @@ try {
   console.error('Failed to mount AnA Intelligence routes:', error);
 }
 
-// Mount AnA Intelligence RAG routes (formerly ForesightAI RAG)
-try {
-  const foresightRagRoutes = await import('./routes/foresight-rag-api.js');
-  const foresightRagDeprecation = (req: Request, res: Response, next: () => void) => {
-    res.setHeader('Deprecation', 'true');
-    res.setHeader('Sunset', '2026-04-01');
-    res.setHeader('Link', '<https://docs.concept2cure.ai/api/cortex>; rel="canonical"');
-    next();
-  };
-  app.use('/api/foresight/rag', foresightRagDeprecation, foresightRagRoutes.default);
-  console.log('✅ AnA Intelligence RAG API routes mounted successfully');
-} catch (error) {
-  console.error('Failed to mount AnA Intelligence RAG routes:', error);
+// Mount RAG routes (parallelized for faster startup)
+{
+  const ragResults = await Promise.allSettled([
+    import('./routes/foresight-rag-api.js'),
+    import('./routes/biotech-rag.js'),
+  ]);
+  
+  if (ragResults[0].status === 'fulfilled') {
+    const foresightRagDeprecation = (req: Request, res: Response, next: () => void) => {
+      res.setHeader('Deprecation', 'true');
+      res.setHeader('Sunset', '2026-04-01');
+      res.setHeader('Link', '<https://docs.concept2cure.ai/api/cortex>; rel="canonical"');
+      next();
+    };
+    app.use('/api/foresight/rag', foresightRagDeprecation, ragResults[0].value.default);
+    console.log('✅ AnA Intelligence RAG API routes mounted');
+  } else {
+    console.error('Failed to mount AnA Intelligence RAG routes:', ragResults[0].reason);
+  }
+  
+  if (ragResults[1].status === 'fulfilled') {
+    app.use('/api/biotech-rag', ragResults[1].value.default);
+    console.log('✅ Biotech AI Intelligence RAG API routes mounted');
+  } else {
+    console.error('❌ Failed to mount Biotech RAG routes:', ragResults[1].reason);
+  }
 }
 
-// Mount Biotech AI Intelligence RAG routes
-try {
-  const biotechRagRoutes = await import('./routes/biotech-rag.js');
-  app.use('/api/biotech-rag', biotechRagRoutes.default);
-  console.log('✅ Biotech AI Intelligence RAG API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount Biotech RAG routes:', error);
-}
+// Mount FDA/CERV2/Device regulatory routes (parallelized for faster startup)
+{
+  const regulatoryRouteResults = await Promise.allSettled([
+    import('./routes/fda510k-unified.js'),
+    import('./routes/fda510k-routes.js'),
+    import('./routes/510k-estar-routes'),
+    import('./routes/cerv2-export-routes'),
+    import('./routes/cerv2-ai-routes'),
+    import('./routes/documentOrchestrationRoutes.js'),
+    import('./routes/esgSubmissionRoutes.js'),
+    import('./routes/medical-device-routes.js'),
+  ]);
 
-// Mount FDA 510(k) Unified routes (consolidated)
-try {
-  const fda510kUnifiedModule = await import('./routes/fda510k-unified.js');
-  const fda510kUnifiedRoutes = fda510kUnifiedModule.default;
-  app.use('/api/fda510k-unified', fda510kUnifiedRoutes);
-  console.log('✅ FDA 510(k) Unified API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount FDA 510(k) Unified routes:', error);
-}
+  const routeMap = [
+    { path: '/api/fda510k-unified', label: 'FDA 510(k) Unified' },
+    { path: '/api/fda510k', label: 'FDA 510(k) Legacy' },
+    { path: '/api/510k/estar', label: 'FDA 510(k) eSTAR' },
+    { path: '/api/cerv2/export', label: 'CERV2 Export' },
+    { path: '/api/cerv2/ai', label: 'CERV2 AI' },
+    { path: null, label: 'Doc Orchestration' }, // defines own paths
+    { path: null, label: 'ESG Submission' }, // defines own paths
+    { path: '/api/medical-devices', label: 'Medical Device' },
+  ];
 
-// Mount FDA 510(k) routes (legacy - will be deprecated in v3.0.0)
-try {
-  const fda510kModule = await import('./routes/fda510k-routes.js');
-  const fda510kRoutes = fda510kModule.default;
-  app.use('/api/fda510k', fda510kRoutes);
-  console.log('✅ FDA 510(k) API routes mounted successfully (legacy)');
-} catch (error) {
-  console.error('❌ Failed to mount FDA 510(k) routes:', error);
-}
-
-// Mount FDA 510(k) eSTAR export routes
-try {
-  const estarModule = await import('./routes/510k-estar-routes');
-  const estarRoutes = estarModule.default;
-  app.use('/api/510k/estar', estarRoutes);
-  console.log('✅ FDA 510(k) eSTAR export routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount FDA 510(k) eSTAR routes:', error);
-}
-
-// Mount unified CERV2 Export routes (PDF, DOCX, ZIP for all doc types)
-try {
-  const cerv2ExportModule = await import('./routes/cerv2-export-routes');
-  const cerv2ExportRoutes = cerv2ExportModule.default;
-  app.use('/api/cerv2/export', cerv2ExportRoutes);
-  console.log('✅ CERV2 unified export routes mounted (PDF/DOCX/ZIP for 510k, PMA, CER)');
-} catch (error) {
-  console.error('❌ Failed to mount CERV2 export routes:', error);
-}
-
-// Mount CERV2 AI auto-populate stub routes (suggest, equivalence, benefit-risk, templates)
-try {
-  const cerv2AiModule = await import('./routes/cerv2-ai-routes');
-  const cerv2AiRoutes = cerv2AiModule.default;
-  app.use('/api/cerv2/ai', cerv2AiRoutes);
-  console.log('✅ CERV2 AI auto-populate routes mounted (suggest, equivalence, benefit-risk)');
-} catch (error) {
-  console.error('❌ Failed to mount CERV2 AI routes:', error);
-}
-
-// Mount Document Orchestration routes for 510(k) auto-population
-try {
-  const docOrchestrationModule = await import('./routes/documentOrchestrationRoutes.js');
-  const docOrchestrationRoutes = docOrchestrationModule.default;
-  // Routes define absolute paths internally (e.g., /api/510k/:projectId/generate-documents, ...)
-  app.use(docOrchestrationRoutes);
-  console.log('✅ Document Orchestration API routes mounted successfully (510k auto-population)');
-} catch (error) {
-  console.error('❌ Failed to mount Document Orchestration routes:', error);
-}
-
-// Mount ESG Submission routes for FDA Electronic Submission Gateway
-try {
-  const esgSubmissionModule = await import('./routes/esgSubmissionRoutes.js');
-  const esgSubmissionRoutes = esgSubmissionModule.default;
-  // Routes define absolute paths internally (e.g., /api/510k/:projectId/esg/submit, ...)
-  app.use(esgSubmissionRoutes);
-  console.log('✅ ESG Submission API routes mounted successfully (FDA gateway integration)');
-} catch (error) {
-  console.error('❌ Failed to mount ESG Submission routes:', error);
-}
-
-// Mount Medical Device Management routes
-try {
-  const medicalDeviceModule = await import('./routes/medical-device-routes.js');
-  const medicalDeviceRoutes = medicalDeviceModule.default;
-  app.use('/api/medical-devices', medicalDeviceRoutes);
-  console.log(
-    '✅ Medical Device Management API routes mounted successfully (21 CFR Part 11 compliant)'
-  );
-} catch (error) {
-  console.error('❌ Failed to mount Medical Device routes:', error);
+  regulatoryRouteResults.forEach((result, i) => {
+    const { path: mountPath, label } = routeMap[i];
+    if (result.status === 'fulfilled') {
+      const router = result.value.default;
+      if (mountPath) {
+        app.use(mountPath, router);
+      } else {
+        app.use(router);
+      }
+      console.log(`✅ ${label} routes mounted`);
+    } else {
+      console.error(`❌ Failed to mount ${label} routes:`, result.reason);
+    }
+  });
 }
 
 // Mount IVDR (In Vitro Diagnostic Regulation EU 2017/746) routes
@@ -2091,9 +2062,11 @@ console.log('🧠 Cortex Prime AI Brain fully initialized with unified gateway')
 
 // Mount Unified Document Management System routes
 try {
-  const documentManagementRouter = await import('./routes/document-management');
-  const folderManagementRouter = await import('./routes/folder-management.js');
-  const templateManagementRouter = await import('./routes/template-management.js');
+  const [documentManagementRouter, folderManagementRouter, templateManagementRouter] = await Promise.all([
+    import('./routes/document-management'),
+    import('./routes/folder-management.js'),
+    import('./routes/template-management.js'),
+  ]);
 
   app.use('/api', documentManagementRouter.default);
   app.use('/api', folderManagementRouter.default);
@@ -4045,29 +4018,33 @@ For "${query}", I suggest consulting the latest ICH guidelines and FDA guidance 
 console.log('✅ Basic API routes mounted');
 debugLog('Debug mode enabled - enhanced logging active');
 
-// Mount AnA Features routes (change-impact, gap-analysis, memory)
-try {
-  const anaFeaturesModule = await import('./routes/ana-features');
-  app.use('/api/ana', anaFeaturesModule.default);
-  console.log('✅ AnA Features API routes mounted (/api/ana)');
-} catch (error) {
-  console.error('❌ Failed to mount AnA Features routes:', error);
-}
-
-// Mount AnA RI routes (regulatory intelligence copilot)
-try {
-  const anaRiModule = await import('./routes/ana-ri');
-  app.use('/api/ana-ri', aiCircuitBreaker, anaRiModule.default);
-  console.log('✅ AnA RI routes mounted (/api/ana-ri) with circuit breaker');
-} catch (error) {
-  console.error('❌ Failed to mount AnA RI routes:', error);
+// Mount AnA routes (parallelized for faster startup)
+{
+  const [anaFeaturesResult, anaRiResult] = await Promise.allSettled([
+    import('./routes/ana-features'),
+    import('./routes/ana-ri'),
+  ]);
+  if (anaFeaturesResult.status === 'fulfilled') {
+    app.use('/api/ana', anaFeaturesResult.value.default);
+    console.log('✅ AnA Features API routes mounted (/api/ana)');
+  } else {
+    console.error('❌ Failed to mount AnA Features routes:', anaFeaturesResult.reason);
+  }
+  if (anaRiResult.status === 'fulfilled') {
+    app.use('/api/ana-ri', aiCircuitBreaker, anaRiResult.value.default);
+    console.log('✅ AnA RI routes mounted (/api/ana-ri) with circuit breaker');
+  } else {
+    console.error('❌ Failed to mount AnA RI routes:', anaRiResult.reason);
+  }
 }
 
 // Mount External Evidence Intelligence routes
 try {
-  const firecrawlRoutes = await import('./routes/firecrawl');
-  const externalEvidenceRoutes = await import('./routes/external-evidence');
-  const workspaceToolSettingsRoutes = await import('./routes/workspace-tool-settings');
+  const [firecrawlRoutes, externalEvidenceRoutes, workspaceToolSettingsRoutes] = await Promise.all([
+    import('./routes/firecrawl'),
+    import('./routes/external-evidence'),
+    import('./routes/workspace-tool-settings'),
+  ]);
   app.use('/api/firecrawl', firecrawlRoutes.default);
   app.use('/api/external-evidence', externalEvidenceRoutes.default);
   app.use('/api/workspace-tool-settings', workspaceToolSettingsRoutes.default);
@@ -7740,6 +7717,15 @@ async function startServer() {
     console.error('❌ Failed to mount Decision Lineage routes:', error);
   }
 
+  // ── Data Lineage — regulatory-grade multi-perspective lineage reporting ───
+  try {
+    const dataLineageRoutes = await import('./routes/data-lineage');
+    app.use('/api/data-lineage', dataLineageRoutes.default);
+    console.log('✅ Data Lineage routes mounted at /api/data-lineage');
+  } catch (error) {
+    console.error('❌ Failed to mount Data Lineage routes:', error);
+  }
+
   // ──────────────────────────────────────────────────────────────────────────
   // C2C MISSING ROUTES — stub endpoints for notifications, sections, predicates
   // Must be registered BEFORE the catch-all 404 handler
@@ -7924,56 +7910,28 @@ async function startServer() {
   const httpServer = createServer(app);
   setHttpServer(httpServer); // Register for graceful shutdown drain
 
-  // Setup Vite middleware for frontend serving (development mode with HMR)
+  // Frontend serving — use optimized static serving in production, Vite HMR in development
   // This must be done AFTER all API routes are mounted
+  const isProduction = process.env.NODE_ENV === 'production';
   const skipVite = ['1', 'true', 'yes'].includes(String(process.env.SKIP_VITE || '').toLowerCase());
-  if (!skipVite) {
+
+  if (isProduction || skipVite) {
     try {
-      await setupVite(app, httpServer);
-      console.log('✅ Vite middleware setup complete - frontend will be served');
-    } catch (viteError) {
-      console.error('⚠️ Vite setup failed, falling back to static serving:', viteError);
-      // Fallback: serve static files from dist if Vite fails
-      const distPath = path.resolve(__dirname, '../client/dist');
-      if (fs.existsSync(distPath)) {
-        app.use(express.static(distPath));
-        app.get('*', (_req, res) => {
-          res.sendFile(path.resolve(distPath, 'index.html'));
-        });
-        console.log('✅ Static files being served from dist folder');
-      } else {
-        // Last resort: serve a simple landing page
-        app.get('/', (_req, res) => {
-          res.send(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <title>TrialSage - Concept2Cure.RI</title>
-              <title>Concept2Cure - Concept2Cure</title>
-              <style>
-                body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: linear-gradient(135deg, #d97757 0%, #c15f3c 100%); }
-                .container { text-align: center; color: white; padding: 40px; }
-                h1 { font-size: 2.5rem; margin-bottom: 1rem; }
-                p { font-size: 1.2rem; opacity: 0.9; }
-                a { color: white; text-decoration: underline; }
-              </style>
-            </head>
-            <body>
-              <div class="container">
-                <h1>🧬 Concept2Cure Platform</h1>
-                <p>API Server is running successfully.</p>
-                <p>Check <a href="/api/health">/api/health</a> for system status.</p>
-                <p>Frontend build may be required. Run: <code>npm run build</code></p>
-              </div>
-            </body>
-            </html>
-          `);
-        });
-        console.log('⚠️ No frontend available - serving basic landing page');
-      }
+      serveStatic(app);
+      console.log('✅ Production static file serving enabled (immutable asset caching)');
+    } catch (staticError) {
+      console.error('⚠️ Static serving failed:', staticError);
+      app.get('/', (_req, res) => {
+        res.send('<h1>Concept2Cure Platform</h1><p>API running. Build client with <code>npm run build</code>.</p>');
+      });
     }
   } else {
-    console.log('⚠️ SKIP_VITE enabled - skipping Vite middleware setup');
+    try {
+      await setupVite(app, httpServer);
+      console.log('✅ Vite HMR middleware setup complete');
+    } catch (viteError) {
+      console.error('⚠️ Vite setup failed:', viteError);
+    }
   }
 
   // Start audit chain integrity monitor (background job every 5 min)
