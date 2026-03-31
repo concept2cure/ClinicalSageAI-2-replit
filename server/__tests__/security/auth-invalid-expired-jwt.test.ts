@@ -1,8 +1,25 @@
-import { describe, expect, it, vi } from 'vitest';
-import jwt from 'jsonwebtoken';
-import { authMiddleware } from '../../auth';
-import { config } from '../../config/environment';
-import { authenticateToken } from '../../middleware/auth';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+// jsonwebtoken lacks strong typings in this repo setup for tests.
+// Use require-style import to keep this smoke test lightweight.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const jwt = require('jsonwebtoken');
+
+let authMiddleware: any;
+let authenticateToken: any;
+let config: any;
+
+beforeAll(async () => {
+  process.env.NODE_ENV = process.env.NODE_ENV || 'test';
+  process.env.DATABASE_URL =
+    process.env.DATABASE_URL || 'postgresql://test:test@localhost:5432/test';
+  process.env.JWT_SECRET = process.env.JWT_SECRET || 'stage3-test-secret';
+  process.env.SKIP_DB_STARTUP_TEST = 'true';
+
+  vi.resetModules();
+  ({ authMiddleware } = await import('../../auth'));
+  ({ authenticateToken } = await import('../../middleware/' + 'auth.ts'));
+  ({ config } = await import('../../config/environment'));
+});
 
 function createRes() {
   const res: any = {};

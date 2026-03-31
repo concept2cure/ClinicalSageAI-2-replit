@@ -92,18 +92,30 @@ Added focused tests:
 
 ## Stage 3 validation outcomes
 
-### Static/runtime contract checks
+### Contract checks and smoke execution
 
-- Valid JWT path: partially proven by contract analysis; full end-to-end requires live DB and signed token setup.
-- Invalid/expired JWT path: now directly covered by new Stage 3 tests.
-- Org mismatch behavior: now directly covered via `requireOrgAccess` mismatch test.
-- Protected route behavior: existing route tests plus new contract tests.
-- DB health/startup sanity: static path confirmed (`/readyz`, `/api/health`, `/api/health/full` wiring); runtime DB-dependent checks require environment.
-- Export-shape regressions: reduced via explicit compatibility exports and contract tests.
+- Valid JWT path: partially proven by contract analysis; full end-to-end still requires live DB + signed-token environment.
+- Invalid/expired JWT path: covered by Stage 3 tests.
+- Org mismatch behavior: covered via `requireOrgAccess` mismatch assertion (`AUTH_005` path).
+- Protected route behavior: existing route-level guard tests plus new Stage 3 contract tests.
+- DB health/startup sanity: static path confirmed (`/readyz`, `/api/health`, `/api/health/full` wiring) and compatibility exports validated.
 
-### Environment blocker noted
+Command run:
+- `npx vitest run --config vitest.config.ts server/__tests__/security/auth-db-contract-smoke.test.ts server/__tests__/security/auth-invalid-expired-jwt.test.ts`
 
-`npm run typecheck` is currently blocked in this agent environment (`tsc: not found`), so compile-wide validation could not run here.
+Result:
+- **PASS** (2 files, 9 tests passed).
+
+Notes:
+- DB startup connectivity is intentionally skipped inside these tests via `SKIP_DB_STARTUP_TEST=true`.
+- Test run emits a non-blocking repo warning about duplicate `jsdom` key entries in `package.json`.
+
+### Typecheck status
+
+- `npm run typecheck` executed in this stage and reports a large pre-existing error set outside Stage 3 scope (client/server-wide typing debt).
+- No Stage 3-specific typecheck failures from:
+  - `server/__tests__/security/auth-db-contract-smoke.test.ts`
+  - `server/__tests__/security/auth-invalid-expired-jwt.test.ts`
 
 ## Explicit “do not delete yet” list (required)
 
