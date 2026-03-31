@@ -1,7 +1,7 @@
 # Stage 3 — Request Contract Table (Auth/Tenant)
 
 Stage: Stage 3 — Auth / Tenant / DB Stabilization Without Organ Damage  
-Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `bdad912b` (analysis baseline before Stage 3 implementation)
+Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `cfcf6882` (`cfcf68829ea55dd518f5a06ba7a1e92cf6af121b`)
 
 ## Contract comparison: `server/auth.ts` vs `middleware/auth.ts` vs `middleware/auth.js`
 

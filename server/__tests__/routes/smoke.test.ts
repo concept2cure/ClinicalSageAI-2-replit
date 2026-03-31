@@ -208,3 +208,118 @@ describe('Rescue Cut: Core Workflow API Integration', () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe('Stage 4: Backend beta contract smoke net', () => {
+  const repoRoot = path.resolve(__dirname, '../../..');
+
+  it('mounts beta-critical route families in server index', () => {
+    const content = fs.readFileSync(path.join(repoRoot, 'server/index.ts'), 'utf8');
+
+    // Auth + global auth gating
+    expect(content).toContain("app.use('/api/auth', authRouter)");
+    expect(content).toContain("const openPrefixes = [");
+    expect(content).toContain("app.post('/api/login'");
+
+    // Canonical product and compute
+    expect(content).toContain("app.use('/api/concept2cure', concept2cureRoutes)");
+    expect(content).toContain("app.use('/api/concept2cure/compute', computeRoutes)");
+
+    // AnA/chat
+    expect(content).toContain("app.use('/api/chat', chatRoutes)");
+    expect(content).toContain("app.use('/api/ana-ri', aiCircuitBreaker");
+
+    // Authoring
+    expect(content).toContain("app.use('/api/document-authoring', documentAuthoringRoutes)");
+    expect(content).toContain("app.use('/api/authoring', authoringRouterModule.default)");
+    expect(content).toContain("app.use('/api/authoring-actions', authoringActionsModule.default)");
+
+    // CERV2 / 510k
+    expect(content).toContain("app.use('/api/cerv2', cerv2DocumentRoutes)");
+    expect(content).toContain("app.use('/api/510k-project', projectRoutes)");
+    expect(content).toContain("app.post('/api/510k-workflow/:projectId'");
+
+    // Vault/documents
+    expect(content).toContain("app.use('/api/vault', vaultAutoRoutes.default)");
+    expect(content).toContain("app.use('/api/documents', documentsUnified.default)");
+
+    // eCTD / IND
+    expect(content).toContain("path: '/api/ectd-validate'");
+    expect(content).toContain("path: '/api/ectd-compile'");
+    expect(content).toContain("path: '/api/ectd/export'");
+    expect(content).toContain("app.use('/api/ind', indGenerationRoutes)");
+
+    // Evidence / external evidence
+    expect(content).toContain("app.use('/api/firecrawl', firecrawlRoutes.default)");
+    expect(content).toContain("app.use('/api/external-evidence', externalEvidenceRoutes.default)");
+    expect(content).toContain("path: '/api/evidence'");
+    expect(content).toContain("path: '/api/evidence-fabric'");
+  });
+
+  it('keeps concept2cure router tenant-scoped and envelope-based', () => {
+    const content = fs.readFileSync(path.join(repoRoot, 'server/routes/concept2cure.ts'), 'utf8');
+
+    expect(content).toContain('router.use(authMiddleware);');
+    expect(content).toContain('router.use(tenantContextMiddleware);');
+    expect(content).toContain('router.use(requireOrganizationContext);');
+    expect(content).toContain('const sendSuccess = <T>');
+    expect(content).toContain('const sendError = (');
+    expect(content).toContain("router.get('/projects/:id'");
+    expect(content).toContain("router.post('/projects'");
+  });
+
+  it('keeps ana-ri core endpoints and shared envelope helpers', () => {
+    const content = fs.readFileSync(path.join(repoRoot, 'server/routes/ana-ri.ts'), 'utf8');
+
+    expect(content).toContain('const sendSuccess = <T>');
+    expect(content).toContain('const sendError = (');
+    expect(content).toContain("router.post('/chat'");
+    expect(content).toContain("router.get('/deficiencies'");
+    expect(content).toContain("router.get('/actions'");
+    expect(content).toContain("router.post('/evaluate'");
+  });
+
+  it('keeps CERV2, vault, document data center, and eCTD/IND entry routes visible', () => {
+    const cerv2Content = fs.readFileSync(
+      path.join(repoRoot, 'server/routes/cerv2-document-routes.ts'),
+      'utf8'
+    );
+    const vaultContent = fs.readFileSync(path.join(repoRoot, 'server/routes/vault-auto.ts'), 'utf8');
+    const ddcContent = fs.readFileSync(
+      path.join(repoRoot, 'server/routes/document-data-center.ts'),
+      'utf8'
+    );
+    const ectdValidateContent = fs.readFileSync(
+      path.join(repoRoot, 'server/routes/ectd-validate.ts'),
+      'utf8'
+    );
+    const indContent = fs.readFileSync(path.join(repoRoot, 'server/routes/ind-generation.ts'), 'utf8');
+
+    expect(cerv2Content).toContain("router.get('/documents', authMiddleware");
+    expect(vaultContent).toContain("router.post('/link-csr'");
+    expect(vaultContent).toContain("router.post('/link-submission'");
+    expect(ddcContent).toContain("router.post('/upload'");
+    expect(ddcContent).toContain("router.get('/files'");
+    expect(ectdValidateContent).toContain("router.post('/quick'");
+    expect(indContent).toContain("router.get('/structure'");
+  });
+
+  it('returns deterministic errors for lightweight eCTD and chat entry smoke paths', async () => {
+    const ectdModule = await import('../../routes/ectd-validate');
+    const ectdRouter = ectdModule.default;
+    const chatModule = await import('../../routes/chat');
+    const chatRouter = chatModule.default;
+
+    const app = express();
+    app.use(express.json());
+    app.use('/api/ectd-validate', ectdRouter);
+    app.use('/api/chat', chatRouter);
+
+    const ectdRes = await request(app).post('/api/ectd-validate/quick').send({});
+    expect(ectdRes.status).toBe(400);
+    expect(String(ectdRes.body?.error || '')).toContain('sectionCodes');
+
+    const chatRes = await request(app).post('/api/chat').send({});
+    expect(chatRes.status).toBe(400);
+    expect(chatRes.body?.code).toBe('INVALID_MESSAGE');
+  });
+});
