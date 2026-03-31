@@ -247,7 +247,7 @@ interface AnaMessage {
     quotaConsumed?: number;
     quotaRemaining?: number;
   };
-  /** Visual cue when a user prompt is restored into the composer */
+  /** Flag to highlight prompts restored for inline editing */
   recalledToInput?: boolean;
 }
 
@@ -674,11 +674,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   defaultChatMode = 'standard',
   projectIntelligence,
 }) => {
+  // Enhancement rule (in-place): evolve this single chat surface, do not rebuild parallel UIs.
   // AI Action system — unified execution spine (Phase 1)
   const aiAction = useAIAction();
 
   const [messages, setMessages] = useState<AnaMessage[]>([]);
   const [input, setInput] = useState('');
+  const lastSubmittedPromptRef = useRef<string | null>(null);
   const queue = useAnaQueueState();
   const isThinking = !queue.state.canSubmit;
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -714,7 +716,6 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const initialMessageSentRef = useRef(false);
   // Thread persistence — reuse thread_id across messages for continuous conversation
   const threadIdRef = useRef<string | null>(null);
-  const lastSubmittedPromptRef = useRef<string | null>(null);
   const draftStorageKey = useMemo(() => {
     const projectScope = contextProfile?.projectId || 'global';
     return `ana:persistent:draft:${projectScope}:${mode}:${chatMode}`;
@@ -1314,7 +1315,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
   }, [input]);
 
-  // Restore draft on scope changes.
+  // Restore draft when project/mode changes.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const savedDraft = localStorage.getItem(draftStorageKey);
@@ -1895,6 +1896,25 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   };
 
   const selectSlashCommand = (cmd: SlashCommand) => {
+    if (cmd.command === '/help') {
+      setSlashMenuOpen(false);
+      handleSuggestedAction({
+        id: 'open-capabilities',
+        label: 'Browse all capabilities',
+        intent: 'open_capabilities',
+      });
+      return;
+    }
+
+    if (cmd.command === '/clear') {
+      setMessages([]);
+      threadIdRef.current = null;
+      setInput('');
+      setSlashMenuOpen(false);
+      inputRef.current?.focus();
+      return;
+    }
+
     setInput(cmd.command + ' ');
     setSlashMenuOpen(false);
     inputRef.current?.focus();
@@ -1930,7 +1950,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       return;
     }
 
-    // Claude-like recall: ArrowUp on empty composer restores the latest prompt.
+    // Claude-like recall: ArrowUp on empty composer restores the latest user prompt.
     if (e.key === 'ArrowUp' && !input.trim()) {
       const inputEl = inputRef.current;
       const caretAtStart =
@@ -1966,9 +1986,6 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         recalledToInput: m.id === messageId,
       }))
     );
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(draftStorageKey, content);
-    }
     setTimeout(() => {
       inputRef.current?.focus();
       const inputEl = inputRef.current;
@@ -1988,6 +2005,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         status: 'running',
         ts: Date.now(),
       });
+    }
+
+    // Shared capability entrypoint: keep users in existing flow.
+    if (action.intent === 'open_capabilities') {
+      onNavigate?.('/concept2cure?panel=capabilities');
+      return;
     }
 
     // ── Wave 1 Authoring Actions — real operational behavior ──────────
@@ -3666,22 +3689,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         {isUser ? 'You' : 'AnA'}
                       </span>
                       {isUser ? (
-                        <>
-                          <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5">
-                            {msg.content}
-                          </p>
-                          {msg.recalledToInput && (
-                            <p className="mt-1 text-xs font-medium text-stone-600">
-                              Editing prompt in composer
-                            </p>
-                          )}
-                        </>
+                        <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5">
+                          {msg.content}
+                        </p>
                       ) : (
                         <div
                           className="prose prose-sm prose-stone max-w-none mt-0.5
-                            prose-p:text-[#4D4B45] prose-p:leading-relaxed prose-p:my-1
+                            prose-p:text-[#4D4B45] prose-p:leading-relaxed prose-p:my-2
                             prose-strong:text-[#141413]
                             prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
+                            prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3.5 prose-pre:text-xs
                             prose-blockquote:border-l-stone-300 prose-blockquote:text-[#6B6962] prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
                             prose-ul:text-[#4D4B45] prose-ol:text-[#4D4B45] prose-ul:my-2 prose-ol:my-2 prose-li:my-1
                             prose-a:text-[#D97757] prose-a:underline prose-a:decoration-[#E8C7BA] prose-a:underline-offset-2 hover:prose-a:text-[#C4623F]
@@ -3976,7 +3993,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 <div
                   key={msg.id}
                   className={cn('group px-4 py-3', isUser ? 'bg-[#FAF9F5]/60' : 'bg-white')}
-                  onMouseEnter={() => setShowActions(msg.id)}
+                  onMouseEnter={() => !isUser && setShowActions(msg.id)}
                   onMouseLeave={() => setShowActions(null)}
                 >
                   <div className="flex gap-2.5 max-w-3xl mx-auto">
@@ -4003,8 +4020,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5">
                             {msg.content}
                           </p>
-                          {msg.recalledToInput && (
-                            <p className="mt-1 text-xs font-medium text-stone-600">
+                          {(msg as any).recalledToInput && (
+                            <p className="mt-1 text-[10px] font-medium text-[#D97757]">
                               Editing prompt in composer
                             </p>
                           )}
@@ -4013,10 +4030,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         <>
                           <div
                             className="prose prose-sm prose-zinc max-w-none mt-0.5
-                              prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1
+                              prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-2
                               prose-strong:text-zinc-900
                               prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
-                              prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3 prose-pre:text-xs
+                              prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3.5 prose-pre:text-xs
                               prose-blockquote:border-l-stone-300 prose-blockquote:text-zinc-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
                               prose-ul:text-zinc-700 prose-ol:text-zinc-700 prose-ul:my-2 prose-ol:my-2 prose-li:my-1
                               prose-a:text-[#D97757] prose-a:underline prose-a:decoration-[#E8C7BA] prose-a:underline-offset-2 hover:prose-a:text-[#C4623F]
@@ -4163,8 +4180,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               <Copy className="w-3 h-3" />
                             )}
                           </button>
-                          {msg.recalledToInput && (
-                            <span className="text-xs text-stone-600 font-medium ml-1">
+                          {(msg as any).recalledToInput && (
+                            <span className="text-[11px] text-stone-600 font-medium ml-1">
                               Loaded to input
                             </span>
                           )}
@@ -4181,7 +4198,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           {msg.modelProvider && (
                             <span
                               className={cn(
-                                'text-[10px] font-medium px-1.5 py-0.5 rounded mr-1',
+                                'text-[11px] font-medium px-1.5 py-0.5 rounded mr-1',
                                 msg.modelProvider === 'anthropic'
                                   ? 'text-[#CC785C] bg-[#FBF0EB]'
                                   : msg.modelProvider === 'openai'
@@ -4203,7 +4220,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           {msg.evidenceUsage?.firecrawlRequested && (
                             <span
                               className={cn(
-                                'text-[10px] font-medium px-1.5 py-0.5 rounded mr-1',
+                                'text-[11px] font-medium px-1.5 py-0.5 rounded mr-1',
                                 msg.evidenceUsage.firecrawlUsed
                                   ? 'text-[#D97757] bg-[#FBF0EB]'
                                   : 'text-zinc-500 bg-zinc-50'
@@ -4339,12 +4356,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               </button>
                             )}
                           {(msg as any).insertedToEditor && (
-                            <span className="text-[10px] text-blue-600 font-medium ml-1">
+                            <span className="text-[11px] text-blue-600 font-medium ml-1">
                               Inserted
                             </span>
                           )}
                           {msg.savedAsArtifact && (
-                            <span className="text-[10px] text-emerald-600 font-medium ml-1">
+                            <span className="text-[11px] text-emerald-600 font-medium ml-1">
                               Saved
                             </span>
                           )}
@@ -4537,7 +4554,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
                         <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
                       </div>
-                      <span className="text-xs text-[#D97757] font-medium animate-pulse">
+                      <span className="text-xs text-[#D97757] font-medium">
                         {thinkingMsg || 'Thinking...'}
                       </span>
                     </div>
@@ -4626,7 +4643,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 className={cn(
                   'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
                   chatMode === 'deep-research'
-                    ? 'bg-violet-50 text-violet-700 hover:bg-violet-100'
+                    ? 'bg-[#FBF0EB] text-[#D97757] hover:bg-[#F6E6DF]'
                     : chatMode === 'nano-banana'
                     ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
                     : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
@@ -4909,9 +4926,22 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             </div>
           )}
           <p className="mt-1.5 pl-1 text-[11px] text-[#B0AEA5]">
-            Type <span className="font-semibold text-[#6B6962]">/</span> for commands. Use{' '}
-            <span className="font-semibold text-[#6B6962]">↑</span> on empty input to recall your
-            last prompt. Shift+Enter for a new line.
+            Type <span className="font-semibold text-[#6B6962]">/</span> for commands.
+            {' '}
+            Use <span className="font-semibold text-[#6B6962]">↑</span> on an empty input to recall your last prompt.
+            {onNavigate ? (
+              <>
+                {' '}
+                <button
+                  type="button"
+                  onClick={() => onNavigate('/concept2cure?panel=capabilities')}
+                  className="font-semibold text-[#6B6962] underline decoration-[#D8D5CA] underline-offset-2 hover:text-[#4D4B45]"
+                >
+                  Browse all capabilities
+                </button>
+                .
+              </>
+            ) : null}
           </p>
         </div>
       </div>

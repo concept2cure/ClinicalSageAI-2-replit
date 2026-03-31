@@ -22,6 +22,7 @@ import { Switch, Route, useLocation, useRoute, Redirect } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ZenLogin, ZenSignup, ZenAuthLayout, ZenOnboarding } from '../auth';
 import { ZenApp } from '../ZenApp';
+import { ProjectProvider } from '../context/ProjectContext';
 import ProofCertificatePage from '../pages/ProofCertificatePage';
 import {
   AuthProvider as PortalAuthProvider,
@@ -108,6 +109,14 @@ const ProjectPMABridge: React.FC = () => {
     </Suspense>
   );
 };
+
+const ProtectedZenApp: React.FC = () => (
+  <ProtectedRoute>
+    <ProjectProvider>
+      <ZenApp />
+    </ProjectProvider>
+  </ProtectedRoute>
+);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // LOADING SCREEN
@@ -486,9 +495,7 @@ export const ZenRouter: React.FC = () => {
           <Route path="/concept2cure/project/:projectId/:rest*">
             {() => (
               <PageTransition>
-                <ProtectedRoute>
-                  <ZenApp />
-                </ProtectedRoute>
+                <ProtectedZenApp />
               </PageTransition>
             )}
           </Route>
@@ -496,9 +503,7 @@ export const ZenRouter: React.FC = () => {
           <Route path="/concept2cure/project/:projectId">
             {() => (
               <PageTransition>
-                <ProtectedRoute>
-                  <ZenApp />
-                </ProtectedRoute>
+                <ProtectedZenApp />
               </PageTransition>
             )}
           </Route>
@@ -507,9 +512,7 @@ export const ZenRouter: React.FC = () => {
           <Route path="/concept2cure">
             {() => (
               <PageTransition>
-                <ProtectedRoute>
-                  <ZenApp />
-                </ProtectedRoute>
+                <ProtectedZenApp />
               </PageTransition>
             )}
           </Route>
@@ -522,9 +525,7 @@ export const ZenRouter: React.FC = () => {
           <Route path="/concept2cure/*">
             {() => (
               <PageTransition>
-                <ProtectedRoute>
-                  <ZenApp />
-                </ProtectedRoute>
+                <ProtectedZenApp />
               </PageTransition>
             )}
           </Route>

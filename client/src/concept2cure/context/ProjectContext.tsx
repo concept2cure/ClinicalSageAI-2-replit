@@ -340,38 +340,6 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
   // PROJECT ACTIONS
   // ─────────────────────────────────────────────────────────────────────────
 
-  const createProject = useCallback(
-    async (name: string, type: SubmissionType, description?: string): Promise<Project> => {
-      const now = new Date();
-      const project: Project = {
-        id: generateId(),
-        name,
-        type,
-        description,
-        createdAt: now,
-        updatedAt: now,
-        lastActiveAt: now,
-        conversationCount: 0,
-        artifactCount: 0,
-        knowledge: {
-          documents: [],
-          context: '',
-        },
-        status: 'active',
-      };
-
-      dispatch({ type: 'ADD_PROJECT', payload: project });
-      dispatch({ type: 'SET_ACTIVE_PROJECT', payload: project.id });
-
-      // Create initial conversation
-      const conversation = await createConversation(project.id, 'Welcome');
-      dispatch({ type: 'SET_ACTIVE_CONVERSATION', payload: conversation.id });
-
-      return project;
-    },
-    [createConversation]
-  );
-
   const updateProject = useCallback((id: string, updates: Partial<Project>) => {
     dispatch({
       type: 'UPDATE_PROJECT',
@@ -463,6 +431,38 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
   const setActiveConversation = useCallback((id: string | null) => {
     dispatch({ type: 'SET_ACTIVE_CONVERSATION', payload: id });
   }, []);
+
+  const createProject = useCallback(
+    async (name: string, type: SubmissionType, description?: string): Promise<Project> => {
+      const now = new Date();
+      const project: Project = {
+        id: generateId(),
+        name,
+        type,
+        description,
+        createdAt: now,
+        updatedAt: now,
+        lastActiveAt: now,
+        conversationCount: 0,
+        artifactCount: 0,
+        knowledge: {
+          documents: [],
+          context: '',
+        },
+        status: 'active',
+      };
+
+      dispatch({ type: 'ADD_PROJECT', payload: project });
+      dispatch({ type: 'SET_ACTIVE_PROJECT', payload: project.id });
+
+      // Create initial conversation
+      const conversation = await createConversation(project.id, 'Welcome');
+      dispatch({ type: 'SET_ACTIVE_CONVERSATION', payload: conversation.id });
+
+      return project;
+    },
+    [createConversation]
+  );
 
   const addMessage = useCallback(
     (

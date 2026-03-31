@@ -45,6 +45,7 @@ import {
   PenTool,
   Loader2,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 // Configure marked for safe, clean HTML output
 marked.setOptions({ breaks: true, gfm: true });
@@ -82,7 +83,6 @@ interface Message {
   isStreaming?: boolean;
   artifacts?: CortexArtifact[];
   error?: string;
-  recalledToInput?: boolean;
 }
 
 interface Attachment {
@@ -90,6 +90,14 @@ interface Attachment {
   name: string;
   type: 'document' | 'image' | 'data';
   size: number;
+}
+
+interface SlashCommand {
+  id: string;
+  label: string;
+  hint: string;
+  prompt: string;
+  icon: React.ReactNode;
 }
 
 interface ZenChatProps {
@@ -204,22 +212,22 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
 
   return (
     <div className="mt-2 p-3 bg-stone-50 border border-stone-200 rounded-xl">
-      <div className="flex items-center gap-2 mb-1.5">
-        <FileText className="w-4 h-4 text-[#C4623F]" />
+      <div className="flex items-center gap-2 mb-2">
+        <FileText className="w-4 h-4 text-stone-700" />
         <span className="text-sm font-medium text-stone-900 truncate flex-1">
           {artifact.title}
         </span>
         <span className="text-xs text-stone-400">{wordCount.toLocaleString()} words</span>
       </div>
-      <div className="flex items-center gap-1.5 flex-wrap">
+      <div className="flex items-center gap-2 flex-wrap">
         <button
           onClick={() => onSave(artifact)}
           disabled={isSaving || isSaved}
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors duration-150',
+            'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors duration-150',
             isSaved
               ? 'bg-green-50 text-green-700 border border-green-200'
-              : 'bg-[#FBF0EB] text-stone-700 border border-[#E8C7BA] hover:bg-[#F6E6DF]'
+              : 'bg-stone-100 text-stone-800 border border-stone-200 hover:bg-stone-200'
           )}
         >
           {isSaving ? (
@@ -236,7 +244,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
         <div className="relative">
           <button
             onClick={() => setShowExportMenu(!showExportMenu)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50 transition-colors duration-150"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50 transition-colors duration-150"
           >
             <Download className="w-3.5 h-3.5" />
             Export
@@ -250,7 +258,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
                   onClick={() => { onExportDocx(artifact); setShowExportMenu(false); }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50"
                 >
-                  <FileText className="w-4 h-4 text-[#C4623F]" />
+                  <FileText className="w-4 h-4 text-stone-700" />
                   <div className="text-left">
                     <div className="font-medium text-xs">Word Document (.docx)</div>
                     <div className="text-xs text-stone-400">MS Word, Google Docs compatible</div>
@@ -273,7 +281,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
 
         <button
           onClick={() => onOpenEditor(artifact)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-stone-100 px-2.5 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-200 transition-colors duration-150"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-stone-100 px-3 py-1.5 text-xs font-medium text-stone-800 hover:bg-stone-200 transition-colors duration-150"
         >
           <PenTool className="w-3.5 h-3.5" />
           Edit Inline
@@ -404,7 +412,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 <p className="text-stone-900 leading-relaxed whitespace-pre-wrap text-sm">
                   {message.content}
                 </p>
-                {message.recalledToInput && (
+                {(message as any).recalledToInput && (
                   <p className="mt-1 text-xs font-medium text-stone-600">Editing prompt in composer</p>
                 )}
               </>
@@ -414,14 +422,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 className="prose prose-sm prose-stone max-w-none
                   prose-headings:font-semibold prose-headings:text-stone-900 prose-headings:leading-snug
                   prose-h1:text-lg prose-h2:text-base prose-h3:text-sm
-                  prose-p:text-stone-700 prose-p:leading-relaxed prose-p:my-1.5
+                  prose-p:text-stone-700 prose-p:leading-relaxed prose-p:my-2
                   prose-strong:text-stone-900 prose-strong:font-semibold
                   prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono prose-code:before:content-none prose-code:after:content-none
-                  prose-pre:bg-stone-900 prose-pre:text-stone-100 prose-pre:rounded-xl prose-pre:p-3.5 prose-pre:text-xs
-                  prose-blockquote:border-l-[#D8D5CA] prose-blockquote:text-stone-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-1.5
-                  prose-ul:text-stone-700 prose-ol:text-stone-700 prose-ul:my-1.5 prose-ol:my-1.5
+                  prose-pre:bg-stone-900 prose-pre:text-stone-100 prose-pre:rounded-xl prose-pre:p-4 prose-pre:text-xs
+                  prose-blockquote:border-l-[#D8D5CA] prose-blockquote:text-stone-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
+                  prose-ul:text-stone-700 prose-ol:text-stone-700 prose-ul:my-2 prose-ol:my-2
                   prose-li:my-1
-                  prose-table:text-[13px] prose-th:bg-stone-50 prose-th:font-semibold prose-td:border-stone-200
+                  prose-table:text-sm prose-th:bg-stone-50 prose-th:font-semibold prose-td:border-stone-200
                   prose-a:text-[#D97757] prose-a:font-medium prose-a:underline prose-a:decoration-[#E8C7BA] prose-a:underline-offset-2 hover:prose-a:text-[#C4623F]
                   [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                 dangerouslySetInnerHTML={{ __html: htmlContent }}
@@ -449,7 +457,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               message.artifacts &&
               message.artifacts.length > 0 &&
               onSaveArtifact && (
-                <div className="mt-2.5 space-y-1.5">
+                <div className="mt-3 space-y-2">
                   {message.artifacts.map(artifact => (
                     <ArtifactActions
                       key={artifact.id}
@@ -510,7 +518,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                     <Copy className="w-3.5 h-3.5" />
                   )}
                 </button>
-                {isUser && message.recalledToInput && (
+                {isUser && (message as any).recalledToInput && (
                   <span className="text-xs text-stone-600 font-medium ml-1">Loaded to input</span>
                 )}
                 {!isUser && (
@@ -584,6 +592,41 @@ const QUICK_START_PROMPTS = [
     label: 'Research a regulatory question',
     prompt: 'I have a regulatory question. Help me find the relevant FDA guidance, ICH guidelines, or precedent decisions to support my approach.',
     sub: 'Guidance · precedents · requirements',
+  },
+];
+
+const SLASH_COMMANDS: SlashCommand[] = [
+  {
+    id: 'summary',
+    label: '/summary',
+    hint: 'Summarize current project risks and status',
+    prompt:
+      'Summarize my current project status, top regulatory risks, and the most important next action.',
+    icon: <Sparkles className="h-3.5 w-3.5" />,
+  },
+  {
+    id: 'gap-check',
+    label: '/gap-check',
+    hint: 'Run a readiness gap check',
+    prompt:
+      'Run a submission readiness gap check and list missing evidence, high-risk claims, and remediation steps.',
+    icon: <AlertCircle className="h-3.5 w-3.5" />,
+  },
+  {
+    id: 'timeline',
+    label: '/timeline',
+    hint: 'Generate milestone plan',
+    prompt:
+      'Create a milestone timeline with dependencies and critical path for this submission.',
+    icon: <ChevronDown className="h-3.5 w-3.5" />,
+  },
+  {
+    id: 'draft',
+    label: '/draft',
+    hint: 'Start drafting a section now',
+    prompt:
+      'Help me draft a regulatory section. Ask me for section name, agency, and intended claim strength first.',
+    icon: <FileText className="h-3.5 w-3.5" />,
   },
 ];
 
@@ -674,8 +717,8 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
         {/* Continue previous work — only if there's context */}
         {(nextTask || lastWork) && (
-          <div className="mb-8 rounded-xl border border-stone-200 bg-stone-50/70 p-4">
-            <div className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2">
+          <div className="mb-8 rounded-xl border border-stone-200 bg-stone-50 p-4">
+            <div className="text-xs font-semibold text-stone-600 uppercase tracking-wider mb-2">
               Pick up where you left off
             </div>
             {nextTask && (
@@ -767,6 +810,9 @@ interface ChatInputProps {
   onRecallLastPrompt?: () => void;
   isGenerating?: boolean;
   placeholder?: string;
+  slashCommands: SlashCommand[];
+  onApplySlashCommand: (command: SlashCommand) => void;
+  onOpenPromptLibrary?: () => void;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({
@@ -777,9 +823,30 @@ const ChatInput: React.FC<ChatInputProps> = ({
   onRecallLastPrompt,
   isGenerating = false,
   placeholder = 'Message AnA...',
+  slashCommands,
+  onApplySlashCommand,
+  onOpenPromptLibrary,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isFocused, setIsFocused] = useState(false);
+  const [selectedSlashIndex, setSelectedSlashIndex] = useState(0);
+
+  const slashQuery = value.trimStart().startsWith('/')
+    ? value.trimStart().slice(1).toLowerCase()
+    : '';
+  const filteredSlashCommands = useMemo(() => {
+    if (!value.trimStart().startsWith('/')) return [];
+    if (!slashQuery) return slashCommands;
+    return slashCommands.filter(
+      command =>
+        command.label.toLowerCase().includes(slashQuery) ||
+        command.hint.toLowerCase().includes(slashQuery)
+    );
+  }, [value, slashCommands, slashQuery]);
+
+  useEffect(() => {
+    setSelectedSlashIndex(0);
+  }, [slashQuery]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -793,6 +860,26 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   // Handle Enter key
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (filteredSlashCommands.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedSlashIndex(prev =>
+          Math.min(prev + 1, filteredSlashCommands.length - 1)
+        );
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedSlashIndex(prev => Math.max(prev - 1, 0));
+        return;
+      }
+      if ((e.key === 'Enter' || e.key === 'Tab') && !e.shiftKey) {
+        e.preventDefault();
+        onApplySlashCommand(filteredSlashCommands[selectedSlashIndex]);
+        return;
+      }
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       if (value.trim() && !isGenerating) {
@@ -818,6 +905,28 @@ const ChatInput: React.FC<ChatInputProps> = ({
   return (
     <div className="border-t border-stone-200 bg-white px-4 py-4">
       <div className="max-w-3xl mx-auto">
+        {filteredSlashCommands.length > 0 && (
+          <div className="mb-2 rounded-xl border border-stone-200 bg-white p-1 shadow-sm">
+            {filteredSlashCommands.slice(0, 6).map((command, index) => (
+              <Button
+                key={command.id}
+                type="button"
+                variant="ghost"
+                onClick={() => onApplySlashCommand(command)}
+                className={cn(
+                  'h-auto w-full justify-start gap-2 rounded-lg px-3 py-2 text-left',
+                  index === selectedSlashIndex
+                    ? 'bg-stone-100 text-stone-900 hover:bg-stone-100'
+                    : 'text-stone-700 hover:bg-stone-50'
+                )}
+              >
+                <span className="text-stone-500">{command.icon}</span>
+                <span className="text-xs font-semibold">{command.label}</span>
+                <span className="truncate text-xs text-stone-500">{command.hint}</span>
+              </Button>
+            ))}
+          </div>
+        )}
         <div
           className={cn(
             'flex items-end gap-2 px-4 py-3 bg-white border rounded-xl transition-all duration-150',
@@ -868,10 +977,24 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
         {/* Disclaimer */}
         <p className="text-center text-xs text-stone-400 mt-2">
-          Type <span className="font-semibold text-stone-500">/</span> for commands. Press{' '}
-          <span className="font-semibold text-stone-500">↑</span> on empty input to recall your last prompt.
-          Shift+Enter for a new line. AnA can make mistakes. Verify critical regulatory decisions
-          with qualified experts.
+          Type <span className="font-semibold text-stone-500">/</span> for commands.
+          {' '}
+          Press <span className="font-semibold text-stone-500">↑</span> on empty input to recall your last prompt.
+          {onOpenPromptLibrary ? (
+            <>
+              {' '}
+              <button
+                type="button"
+                onClick={onOpenPromptLibrary}
+                className="font-semibold text-stone-600 underline decoration-stone-300 underline-offset-2 hover:text-stone-800"
+              >
+                Browse all capabilities
+              </button>
+              .
+            </>
+          ) : null}
+          {' '}
+          AnA can make mistakes. Verify critical regulatory decisions with qualified experts.
         </p>
       </div>
     </div>
@@ -949,6 +1072,9 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     }
     setLocation(href);
   };
+  const handleOpenPromptLibrary = useCallback(() => {
+    handleNavigate('/concept2cure?panel=capabilities');
+  }, [handleNavigate]);
   const userInitials = (() => {
     if (!userName) return 'U';
     const parts = userName.trim().split(/\s+/);
@@ -1050,7 +1176,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     scrollToBottom();
   }, [displayMessages, scrollToBottom]);
 
-  // Restore draft from local storage by project/thread scope.
+  // Load message draft per project/thread context.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const savedDraft = localStorage.getItem(draftStorageKey);
@@ -1059,7 +1185,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     }
   }, [draftStorageKey]);
 
-  // Persist draft as user types.
+  // Persist message draft as user types.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!input.trim()) {
@@ -1092,11 +1218,20 @@ export const ZenChat: React.FC<ZenChatProps> = ({
   };
 
   // Regenerate the last assistant response
-  const handleRegenerate = useCallback(() => {
-    // Find the last user message to re-send
-    const lastUserMsg = [...displayMessages].reverse().find(m => m.role === 'user');
-    if (lastUserMsg && !isLoading && !isStreaming) {
-      streamMessage(lastUserMsg.content);
+  const handleRegenerate = useCallback((assistantMessageId?: string) => {
+    if (isLoading || isStreaming) return;
+
+    const assistantIndex = assistantMessageId
+      ? displayMessages.findIndex(message => message.id === assistantMessageId)
+      : displayMessages.length - 1;
+    const startIndex = assistantIndex >= 0 ? assistantIndex : displayMessages.length - 1;
+
+    for (let index = startIndex; index >= 0; index -= 1) {
+      const candidate = displayMessages[index];
+      if (candidate.role === 'user') {
+        streamMessage(candidate.content);
+        return;
+      }
     }
   }, [displayMessages, isLoading, isStreaming, streamMessage]);
 
@@ -1270,12 +1405,14 @@ export const ZenChat: React.FC<ZenChatProps> = ({
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
             {(chatError as any).failedMessage && (
-              <button
+              <Button
+                type="button"
+                variant="ghost"
                 onClick={() => streamMessage((chatError as any).failedMessage)}
-                className="text-xs underline hover:text-red-900"
+                className="h-auto px-1 py-0 text-xs underline hover:text-red-900"
               >
                 Retry
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -1312,7 +1449,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
                 userInitials={userInitials}
                 onCopy={() => handleCopy(message.content)}
                 onRecallPrompt={message.role === 'user' ? () => handleRecallPrompt(message.id) : undefined}
-                onRegenerate={message.role === 'assistant' ? handleRegenerate : undefined}
+                onRegenerate={message.role === 'assistant' ? () => handleRegenerate(message.id) : undefined}
                 onFeedback={(positive: boolean) => {
                   apiRequest('POST', '/api/concept2cure/feedback', { messageId: message.id, positive }).catch(() => {});
                 }}
@@ -1346,6 +1483,9 @@ export const ZenChat: React.FC<ZenChatProps> = ({
             ? 'Ask AnA anything... try /summary, /gap-check, /timeline, or /draft'
             : 'Connecting...'
         }
+        slashCommands={SLASH_COMMANDS}
+        onApplySlashCommand={command => setInput(command.prompt)}
+        onOpenPromptLibrary={handleOpenPromptLibrary}
       />
     </div>
   );
