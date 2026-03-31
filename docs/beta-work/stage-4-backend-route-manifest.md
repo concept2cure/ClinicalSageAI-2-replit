@@ -1,7 +1,7 @@
 # Stage 4 — Backend Route Manifest and Beta Smoke Net
 
 Stage: Stage 4 — Backend Route Manifest and Beta Smoke Net  
-Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `cfcf6882` (`cfcf68829ea55dd518f5a06ba7a1e92cf6af121b`) as Stage 4 baseline
+Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `e69c7705` (`e69c7705c0bf6f6139784d872ec04e448e10441b`) (delivered Stage 4 commit)
 
 ## Scope reviewed
 
@@ -80,6 +80,10 @@ Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `cfcf6882` (
 1. **Duplicate mount ownership**: `/api/ind` and `/api/documents` are mounted multiple times.
 2. **Auth model ambiguity**: `/api/v1` API-key routes coexist with global `/api` JWT gate.
 3. **Control-plane sprawl**: large inline `app.get/post` blocks in `server/index.ts` increase hidden coupling and make behavior order-sensitive.
+
+## Stage 4 smoke-net interpretation (reality check)
+
+Stage 4 smoke coverage is intentionally a **tripwire net**: primarily mount/manifest/contract-presence assertions plus a small set of deterministic endpoint checks (for example, invalid-message and invalid-payload paths). It is not a full end-to-end integration proof across every green family.
 
 ## Stage 4 smoke net execution
 

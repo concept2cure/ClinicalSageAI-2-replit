@@ -1,7 +1,7 @@
 # Stage 4 — Beta Backend API Contract (Green/Yellow/Red)
 
 Stage: Stage 4 — Backend Route Manifest and Beta Smoke Net  
-Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `84f3e0ef` (`84f3e0ef042ac87cfc6485714a2376dd67ec94b5`)
+Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `e69c7705` (`e69c7705c0bf6f6139784d872ec04e448e10441b`)
 
 ## Contract intent
 
@@ -58,6 +58,11 @@ These are part of the beta-safe backend contract and should remain green through
 ### Smoke command
 
 - `npx vitest run --config vitest.config.ts server/__tests__/routes/smoke.test.ts`
+
+### Smoke net scope reality check
+
+The Stage 4 smoke net is primarily a **manifest/mount/contract-presence tripwire** plus a few deterministic endpoint checks (`/api/chat` invalid-message and `/api/ectd-validate/quick` invalid payload).
+It is not a full end-to-end integration proof for every green family.
 
 ## Unsupported / hidden-by-contract guidance for beta
 
