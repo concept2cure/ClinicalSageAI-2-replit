@@ -363,7 +363,8 @@ function MainApp() {
         {/* Main Content */}
         <main className={isConcept2CurePage ? 'h-screen' : 'min-h-screen bg-gray-100'}>
           <Switch>
-            {/* Concept2Cure - Claude.ai-style regulatory interface with auth */}
+            {/* ── Primary beta path (canonical shell) ─────────────────────────────── */}
+            {/* Users should start from these Concept2Cure routes. */}
             <Route path="/concept2cure/login">
               {() => (
                 <Suspense fallback={<LoadingPage />}>
@@ -392,7 +393,8 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
-            {/* Login/Signup redirects */}
+            {/* ── Compatibility aliases (non-primary) ─────────────────────────────── */}
+            {/* Legacy auth aliases are retained, but not promoted as primary entry points. */}
             <Route path="/login">
               {() => (
                 <Suspense fallback={<LoadingPage />}>
@@ -407,7 +409,7 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
-            {/* Root entry delegates to ZenRouter auth-aware landing behavior */}
+            {/* Root entry delegates to canonical auth-aware ZenRouter landing behavior */}
             <Route path="/">
               {() => (
                 <Suspense fallback={<LoadingPage />}>
@@ -415,13 +417,15 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
-            {/* Legacy portal paths are intentionally fenced to the canonical beta shell */}
+            {/* Legacy portal paths are intentionally fenced to canonical beta shell */}
             <Route path="/client-portal">
               {() => <Redirect to="/concept2cure" />}
             </Route>
             <Route path="/client-portal/:rest*">
               {() => <Redirect to="/concept2cure" />}
             </Route>
+            {/* ── Secondary/deep-link surfaces (module worlds) ─────────────────────── */}
+            {/* These remain routable, but are not first-rank beta entry points. */}
             {/* Public Sales Landing Page */}
             <Route path="/sales">
               {() => (

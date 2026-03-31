@@ -3,8 +3,16 @@
 Stage: Stage 7 — UI-Only Beta Honesty Pass  
 Branch: `cursor/critical-files-management-f38a`  
 Stage 7 implementation commit: `082ef07c` (`082ef07c`) baseline before this UI honesty cleanup  
-Stage 7 UI honesty cleanup commit: `TBD`  
-Branch / commit reviewed for archival evidence: `TBD`
+Stage 7 UI honesty cleanup commit: `185ab0fd` (`185ab0fd`)  
+Branch / commit reviewed for archival evidence: `185ab0fd`
+
+## Wave A / Batch A1 follow-on (canonical shell exposure policy)
+
+- Added explicit route-rank comments in `client/src/App.jsx`:
+  - **primary beta path**: `/`, `/concept2cure/login`, `/concept2cure/signup`, `/concept2cure`, `/concept2cure/*`
+  - **compatibility fences**: `/login`, `/signup`, `/sign-in`, `/auth`, `/client-portal/*`
+  - **secondary/deep-link module surfaces**: all other mounted module routes
+- This batch does not remove routes; it codifies route rank to prevent accidental primary-nav promotion of non-canonical surfaces.
 
 ## Mission
 
