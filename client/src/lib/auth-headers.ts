@@ -6,7 +6,6 @@
  *
  * Delegates to the canonical authToken module — no direct localStorage access.
  */
-<<<<<<< HEAD
 import { getAuthToken, getAuthHeaders as getCanonicalAuthHeaders } from '@/utils/authToken';
 
 export function getAuthHeaders(): Record<string, string> {
@@ -18,15 +17,4 @@ export function getAuthHeaders(): Record<string, string> {
  */
 export function getToken(): string {
   return getAuthToken() || '';
-=======
-import { getAuthToken } from '../utils/authToken';
-
-export function getAuthHeaders(): Record<string, string> {
-  const orgId = localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
-  const token = getAuthToken() || '';
-  return {
-    'x-organization-id': orgId,
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
->>>>>>> origin/codex/initiate-beta-hardening-program-for-concept2cure-v2
 }
