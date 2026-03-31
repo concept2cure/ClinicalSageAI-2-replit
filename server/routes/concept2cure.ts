@@ -85,6 +85,14 @@ import {
   formatWorkingMemoryForPrompt,
   needsWorkingMemoryRefresh,
 } from '../services/working-memory.js';
+import {
+  COMMUNICATION_VISIBILITY_TIERS,
+  PUBLISHOPS_SERVICE_STATES,
+  type AgencyCommunicationEventRecord,
+  type AuthorityProfileRecord,
+  type PublishOpsServiceRecord,
+  type CommunicationVisibilityTier,
+} from '../../shared/types/communication-center';
 
 const logger = createScopedLogger('concept2cure-api');
 const router = Router();
@@ -169,6 +177,75 @@ interface AuditEntry {
   ipAddress?: string;
   sessionId?: string;
   integrityHash?: string;
+}
+
+let communicationCenterSchemaCheck: 'unknown' | 'ready' | 'missing' = 'unknown';
+
+async function ensureCommunicationCenterTables(): Promise<void> {
+  if (communicationCenterSchemaCheck === 'ready') return;
+  if (communicationCenterSchemaCheck === 'missing') {
+    throw new Error(
+      'Communication Center persistence tables are missing. Run migration 20260331_communication_center_scaffold.sql'
+    );
+  }
+  const result = await pool.query(
+    `SELECT table_name
+       FROM information_schema.tables
+      WHERE table_schema = 'public'
+        AND table_name = ANY($1::text[])`,
+    [[
+      'concept2cure_authority_profiles',
+      'concept2cure_agency_communications',
+      'concept2cure_publishops_services',
+    ]]
+  );
+  const found = new Set(result.rows.map((r: any) => r.table_name));
+  const missing = [
+    'concept2cure_authority_profiles',
+    'concept2cure_agency_communications',
+    'concept2cure_publishops_services',
+  ].filter(t => !found.has(t));
+  if (missing.length > 0) {
+    communicationCenterSchemaCheck = 'missing';
+    throw new Error(
+      `Communication Center persistence tables missing: ${missing.join(', ')}. Run migration 20260331_communication_center_scaffold.sql`
+    );
+  }
+  communicationCenterSchemaCheck = 'ready';
+}
+
+function parseProjectParam(projectParam: string): number {
+  const numericId = Number.parseInt(projectParam.replace('proj_', ''), 10);
+  if (!Number.isFinite(numericId) || numericId <= 0) {
+    throw new Error('Invalid project ID');
+  }
+  return numericId;
+}
+
+function canViewVisibilityTier(
+  visibilityTier: CommunicationVisibilityTier,
+  userRole?: string
+): boolean {
+  const role = (userRole || '').toLowerCase();
+  if (!COMMUNICATION_VISIBILITY_TIERS.includes(visibilityTier)) return false;
+  if (visibilityTier === 'restricted_legal_sensitive') {
+    return ['admin', 'owner', 'compliance', 'legal'].some(r => role.includes(r));
+  }
+  if (visibilityTier === 'publishops_only') {
+    return role.includes('publishops') || role.includes('admin');
+  }
+  if (visibilityTier === 'c2c_internal') {
+    return role.includes('c2c') || role.includes('admin');
+  }
+  return true;
+}
+
+function communicationCenterErrorStatus(error: unknown): number {
+  const message = (error as any)?.message || '';
+  if (typeof message === 'string' && message.includes('persistence tables')) {
+    return 503;
+  }
+  return 400;
 }
 
 /**
@@ -10614,6 +10691,445 @@ router.get('/projects/:projectId/tasks/summary', async (req: Request, res: Respo
     return sendError(res, 500, 'Failed to compute task summary');
   }
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMMUNICATION CENTER + SUBMISSION & AGENCY PORTAL + C2C PUBLISHOPS (scaffold)
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get('/projects/:projectId/authority-profiles', async (req: Request, res: Response) => {
+  try {
+    await ensureCommunicationCenterTables();
+    const organizationId = getOrganizationId(req);
+    const projectId = parseProjectParam(req.params.projectId);
+    const result = await pool.query(
+      `SELECT profile_id, authority, center_or_division, channel_type, submission_transport,
+              accepted_formats, validation_requirements, package_constraints, acknowledgment_model,
+              message_receipt_model, metadata_requirements, is_active, created_by, created_at, updated_at
+         FROM concept2cure_authority_profiles
+        WHERE organization_id = $1 AND project_id = $2
+        ORDER BY created_at DESC`,
+      [organizationId, projectId]
+    );
+    const profiles: AuthorityProfileRecord[] = result.rows.map((row: any) => ({
+      id: row.profile_id,
+      organizationId,
+      projectId,
+      authority: row.authority,
+      centerOrDivision: row.center_or_division,
+      channelType: row.channel_type,
+      submissionTransport: row.submission_transport,
+      acceptedFormats: row.accepted_formats || [],
+      validationRequirements: row.validation_requirements || [],
+      packageConstraints: row.package_constraints || [],
+      acknowledgmentModel: row.acknowledgment_model,
+      messageReceiptModel: row.message_receipt_model,
+      metadataRequirements: row.metadata_requirements || [],
+      isActive: row.is_active,
+      createdBy: row.created_by,
+      createdAt: new Date(row.created_at).toISOString(),
+      updatedAt: new Date(row.updated_at).toISOString(),
+    }));
+    return sendSuccess(res, profiles, {
+      scope: { organizationId, projectId },
+      model: 'authority_profile',
+      behavior: 'configuration_driven',
+    });
+  } catch (error: any) {
+    return sendError(res, communicationCenterErrorStatus(error), error?.message || 'Failed to load authority profiles');
+  }
+});
+
+router.post('/projects/:projectId/authority-profiles', async (req: Request, res: Response) => {
+  const schema = z.object({
+    authority: z.string().min(2),
+    centerOrDivision: z.string().min(2),
+    channelType: z.enum(['portal', 'gateway', 'email', 'mixed']),
+    submissionTransport: z.string().min(2),
+    acceptedFormats: z.array(z.string()).default([]),
+    validationRequirements: z.array(z.string()).default([]),
+    packageConstraints: z.array(z.string()).default([]),
+    acknowledgmentModel: z.string().min(2),
+    messageReceiptModel: z.string().min(2),
+    metadataRequirements: z.array(z.string()).default([]),
+    isActive: z.boolean().default(true),
+  });
+
+  try {
+    await ensureCommunicationCenterTables();
+    const organizationId = getOrganizationId(req);
+    const projectId = parseProjectParam(req.params.projectId);
+    const input = schema.parse(req.body || {});
+    const now = new Date().toISOString();
+    const profile: AuthorityProfileRecord = {
+      id: `auth_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
+      organizationId,
+      projectId,
+      ...input,
+      createdBy: req.userEmail || `user_${getUserId(req)}`,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await pool.query(
+      `INSERT INTO concept2cure_authority_profiles (
+         profile_id, organization_id, project_id, authority, center_or_division, channel_type,
+         submission_transport, accepted_formats, validation_requirements, package_constraints,
+         acknowledgment_model, message_receipt_model, metadata_requirements, is_active, created_by, created_at, updated_at
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9::jsonb,$10::jsonb,$11,$12,$13::jsonb,$14,$15,$16::timestamptz,$17::timestamptz)`,
+      [
+        profile.id,
+        organizationId,
+        projectId,
+        profile.authority,
+        profile.centerOrDivision,
+        profile.channelType,
+        profile.submissionTransport,
+        JSON.stringify(profile.acceptedFormats),
+        JSON.stringify(profile.validationRequirements),
+        JSON.stringify(profile.packageConstraints),
+        profile.acknowledgmentModel,
+        profile.messageReceiptModel,
+        JSON.stringify(profile.metadataRequirements),
+        profile.isActive,
+        profile.createdBy,
+        profile.createdAt,
+        profile.updatedAt,
+      ]
+    );
+    await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {
+      authorityProfileId: profile.id,
+      authority: profile.authority,
+    });
+    return sendSuccess(res, profile);
+  } catch (error: any) {
+    return sendError(res, communicationCenterErrorStatus(error), error?.message || 'Failed to create authority profile');
+  }
+});
+
+router.get('/projects/:projectId/agency-communications', async (req: Request, res: Response) => {
+  try {
+    await ensureCommunicationCenterTables();
+    const organizationId = getOrganizationId(req);
+    const projectId = parseProjectParam(req.params.projectId);
+    const result = await pool.query(
+      `SELECT event_id, source_type, communication_type, source_channel, linked_submission_id,
+              linked_package_id, linked_section_codes, linked_artifact_ids, received_date, due_date,
+              urgency, response_required, extracted_issues, human_review_status, closure_status, audit_metadata
+         FROM concept2cure_agency_communications
+        WHERE organization_id = $1 AND project_id = $2
+        ORDER BY created_at DESC`,
+      [organizationId, projectId]
+    );
+    const records: AgencyCommunicationEventRecord[] = result.rows.map((row: any) => ({
+      id: row.event_id,
+      organizationId,
+      projectId,
+      sourceType: row.source_type,
+      communicationType: row.communication_type,
+      sourceChannel: row.source_channel,
+      linkedSubmissionId: row.linked_submission_id ?? undefined,
+      linkedPackageId: row.linked_package_id ?? undefined,
+      linkedSectionCodes: row.linked_section_codes || [],
+      linkedArtifactIds: row.linked_artifact_ids || [],
+      receivedDate: new Date(row.received_date).toISOString(),
+      dueDate: row.due_date ? new Date(row.due_date).toISOString() : undefined,
+      urgency: row.urgency,
+      responseRequired: row.response_required,
+      extractedIssues: row.extracted_issues || [],
+      humanReviewStatus: row.human_review_status,
+      closureStatus: row.closure_status,
+      auditMetadata: row.audit_metadata,
+    }));
+    const visible = records.filter(event =>
+      canViewVisibilityTier(event.auditMetadata.visibilityTier, req.userRole)
+    );
+    return sendSuccess(res, visible, {
+      scope: { organizationId, projectId },
+      model: 'agency_communication_event',
+      filtered: records.length - visible.length,
+    });
+  } catch (error: any) {
+    return sendError(res, communicationCenterErrorStatus(error), error?.message || 'Failed to load agency communication events');
+  }
+});
+
+router.post('/projects/:projectId/agency-communications', async (req: Request, res: Response) => {
+  const schema = z.object({
+    sourceType: z.enum([
+      'agency_portal_event',
+      'gateway_acknowledgment',
+      'validation_result',
+      'email_request_or_letter',
+      'uploaded_official_correspondence',
+      'meeting_minutes',
+      'managed_service_operator_event',
+      'manual_logged_event',
+      'internal_discussion_linked',
+    ]),
+    communicationType: z.string().min(2),
+    sourceChannel: z.string().min(2),
+    linkedSubmissionId: z.string().optional(),
+    linkedPackageId: z.string().optional(),
+    linkedSectionCodes: z.array(z.string()).default([]),
+    linkedArtifactIds: z.array(z.string()).default([]),
+    dueDate: z.string().optional(),
+    urgency: z.enum(['low', 'medium', 'high', 'critical']),
+    responseRequired: z.boolean().default(false),
+    extractedIssues: z.array(z.string()).default([]),
+    humanReviewStatus: z.enum(['pending_review', 'triaged', 'actioned']).default('pending_review'),
+    closureStatus: z.enum(['open', 'in_progress', 'closed']).default('open'),
+    visibilityTier: z.enum(COMMUNICATION_VISIBILITY_TIERS),
+  });
+
+  try {
+    await ensureCommunicationCenterTables();
+    const organizationId = getOrganizationId(req);
+    const projectId = parseProjectParam(req.params.projectId);
+    const input = schema.parse(req.body || {});
+    if (!canViewVisibilityTier(input.visibilityTier, req.userRole)) {
+      return sendError(res, 403, 'Visibility tier not permitted for current role');
+    }
+    const now = new Date().toISOString();
+    const event: AgencyCommunicationEventRecord = {
+      id: `ace_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
+      organizationId,
+      projectId,
+      sourceType: input.sourceType,
+      communicationType: input.communicationType,
+      sourceChannel: input.sourceChannel,
+      linkedSubmissionId: input.linkedSubmissionId,
+      linkedPackageId: input.linkedPackageId,
+      linkedSectionCodes: input.linkedSectionCodes,
+      linkedArtifactIds: input.linkedArtifactIds,
+      receivedDate: now,
+      dueDate: input.dueDate,
+      urgency: input.urgency,
+      responseRequired: input.responseRequired,
+      extractedIssues: input.extractedIssues,
+      humanReviewStatus: input.humanReviewStatus,
+      closureStatus: input.closureStatus,
+      auditMetadata: {
+        capturedBy: req.userEmail || `user_${getUserId(req)}`,
+        capturedAt: now,
+        visibilityTier: input.visibilityTier,
+      },
+    };
+    await pool.query(
+      `INSERT INTO concept2cure_agency_communications (
+        event_id, organization_id, project_id, source_type, communication_type, source_channel,
+        linked_submission_id, linked_package_id, linked_section_codes, linked_artifact_ids,
+        received_date, due_date, urgency, response_required, extracted_issues,
+        human_review_status, closure_status, audit_metadata, created_at
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10::jsonb,$11::timestamptz,$12::timestamptz,$13,$14,$15::jsonb,$16,$17,$18::jsonb,$19::timestamptz)`,
+      [
+        event.id,
+        organizationId,
+        projectId,
+        event.sourceType,
+        event.communicationType,
+        event.sourceChannel,
+        event.linkedSubmissionId ?? null,
+        event.linkedPackageId ?? null,
+        JSON.stringify(event.linkedSectionCodes),
+        JSON.stringify(event.linkedArtifactIds),
+        event.receivedDate,
+        event.dueDate ?? null,
+        event.urgency,
+        event.responseRequired,
+        JSON.stringify(event.extractedIssues),
+        event.humanReviewStatus,
+        event.closureStatus,
+        JSON.stringify(event.auditMetadata),
+        now,
+      ]
+    );
+    await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {
+      agencyCommunicationEventId: event.id,
+      sourceType: event.sourceType,
+      visibilityTier: event.auditMetadata.visibilityTier,
+    });
+    return sendSuccess(res, event);
+  } catch (error: any) {
+    return sendError(res, communicationCenterErrorStatus(error), error?.message || 'Failed to create agency communication event');
+  }
+});
+
+router.get('/projects/:projectId/publishops/services', async (req: Request, res: Response) => {
+  try {
+    await ensureCommunicationCenterTables();
+    const organizationId = getOrganizationId(req);
+    const projectId = parseProjectParam(req.params.projectId);
+    const result = await pool.query(
+      `SELECT service_id, status, service_request_title, entitlement_level, requested_by_role, requested_by,
+              operator_assignee, blocked_reason, created_at, updated_at
+         FROM concept2cure_publishops_services
+        WHERE organization_id = $1 AND project_id = $2
+        ORDER BY created_at DESC`,
+      [organizationId, projectId]
+    );
+    const services: PublishOpsServiceRecord[] = result.rows.map((row: any) => ({
+      id: row.service_id,
+      organizationId,
+      projectId,
+      status: row.status,
+      serviceRequestTitle: row.service_request_title,
+      entitlementLevel: row.entitlement_level,
+      requestedByRole: row.requested_by_role,
+      requestedBy: row.requested_by,
+      operatorAssignee: row.operator_assignee ?? undefined,
+      blockedReason: row.blocked_reason ?? undefined,
+      createdAt: new Date(row.created_at).toISOString(),
+      updatedAt: new Date(row.updated_at).toISOString(),
+    }));
+    return sendSuccess(res, services, {
+      states: PUBLISHOPS_SERVICE_STATES,
+      scope: { organizationId, projectId },
+    });
+  } catch (error: any) {
+    return sendError(res, communicationCenterErrorStatus(error), error?.message || 'Failed to load PublishOps services');
+  }
+});
+
+router.post('/projects/:projectId/publishops/services', async (req: Request, res: Response) => {
+  const schema = z.object({
+    serviceRequestTitle: z.string().min(3),
+    entitlementLevel: z.enum([
+      'core_self_serve',
+      'advanced_publishing_tooling',
+      'managed_publishops_service',
+    ]),
+    requestedByRole: z.enum([
+      'managed_submission_operator',
+      'managed_submission_reviewer',
+      'client_project_owner',
+      'client_reviewer',
+      'outside_consultant',
+    ]),
+    operatorAssignee: z.string().optional(),
+    blockedReason: z.string().optional(),
+    status: z.enum(PUBLISHOPS_SERVICE_STATES).default('requested'),
+  });
+
+  try {
+    await ensureCommunicationCenterTables();
+    const organizationId = getOrganizationId(req);
+    const projectId = parseProjectParam(req.params.projectId);
+    const input = schema.parse(req.body || {});
+    const now = new Date().toISOString();
+    const service: PublishOpsServiceRecord = {
+      id: `pos_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
+      organizationId,
+      projectId,
+      status: input.status,
+      serviceRequestTitle: input.serviceRequestTitle,
+      entitlementLevel: input.entitlementLevel,
+      requestedByRole: input.requestedByRole,
+      requestedBy: req.userEmail || `user_${getUserId(req)}`,
+      operatorAssignee: input.operatorAssignee,
+      blockedReason: input.blockedReason,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await pool.query(
+      `INSERT INTO concept2cure_publishops_services (
+        service_id, organization_id, project_id, status, service_request_title, entitlement_level,
+        requested_by_role, requested_by, operator_assignee, blocked_reason, created_at, updated_at
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::timestamptz,$12::timestamptz)`,
+      [
+        service.id,
+        organizationId,
+        projectId,
+        service.status,
+        service.serviceRequestTitle,
+        service.entitlementLevel,
+        service.requestedByRole,
+        service.requestedBy,
+        service.operatorAssignee ?? null,
+        service.blockedReason ?? null,
+        service.createdAt,
+        service.updatedAt,
+      ]
+    );
+    await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {
+      publishOpsServiceId: service.id,
+      status: service.status,
+      entitlementLevel: service.entitlementLevel,
+    });
+    return sendSuccess(res, service);
+  } catch (error: any) {
+    return sendError(res, communicationCenterErrorStatus(error), error?.message || 'Failed to create PublishOps service request');
+  }
+});
+
+router.patch(
+  '/projects/:projectId/publishops/services/:serviceId/status',
+  async (req: Request, res: Response) => {
+    const schema = z.object({
+      status: z.enum(PUBLISHOPS_SERVICE_STATES),
+      blockedReason: z.string().optional(),
+      operatorAssignee: z.string().optional(),
+    });
+    try {
+      await ensureCommunicationCenterTables();
+      const organizationId = getOrganizationId(req);
+      const projectId = parseProjectParam(req.params.projectId);
+      const input = schema.parse(req.body || {});
+      const priorRes = await pool.query(
+        `SELECT service_id, status, service_request_title, entitlement_level, requested_by_role, requested_by,
+                operator_assignee, blocked_reason, created_at, updated_at
+           FROM concept2cure_publishops_services
+          WHERE organization_id = $1 AND project_id = $2 AND service_id = $3
+          LIMIT 1`,
+        [organizationId, projectId, req.params.serviceId]
+      );
+      if (priorRes.rows.length === 0) {
+        return sendError(res, 404, 'PublishOps service request not found');
+      }
+      const row = priorRes.rows[0];
+      const previous: PublishOpsServiceRecord = {
+        id: row.service_id,
+        organizationId,
+        projectId,
+        status: row.status,
+        serviceRequestTitle: row.service_request_title,
+        entitlementLevel: row.entitlement_level,
+        requestedByRole: row.requested_by_role,
+        requestedBy: row.requested_by,
+        operatorAssignee: row.operator_assignee ?? undefined,
+        blockedReason: row.blocked_reason ?? undefined,
+        createdAt: new Date(row.created_at).toISOString(),
+        updatedAt: new Date(row.updated_at).toISOString(),
+      };
+      const updated: PublishOpsServiceRecord = {
+        ...previous,
+        status: input.status,
+        blockedReason: input.blockedReason ?? previous.blockedReason,
+        operatorAssignee: input.operatorAssignee ?? previous.operatorAssignee,
+        updatedAt: new Date().toISOString(),
+      };
+      await pool.query(
+        `UPDATE concept2cure_publishops_services
+            SET status = $1,
+                blocked_reason = $2,
+                operator_assignee = $3,
+                updated_at = $4::timestamptz
+          WHERE organization_id = $5 AND project_id = $6 AND service_id = $7`,
+        [
+          updated.status,
+          updated.blockedReason ?? null,
+          updated.operatorAssignee ?? null,
+          updated.updatedAt,
+          organizationId,
+          projectId,
+          updated.id,
+        ]
+      );
+      await logAuditEntry(req, 'UPDATE', 'project', `proj_${projectId}`, previous, updated);
+      return sendSuccess(res, updated);
+    } catch (error: any) {
+      return sendError(res, communicationCenterErrorStatus(error), error?.message || 'Failed to update PublishOps service status');
+    }
+  }
+);
 
 // GET /api/concept2cure/submission-milestones/:type
 // Get available milestones for a submission type
