@@ -1,7 +1,7 @@
 # Stage 4 — Beta Backend API Contract (Green/Yellow/Red)
 
 Stage: Stage 4 — Backend Route Manifest and Beta Smoke Net  
-Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `cfcf6882` (`cfcf68829ea55dd518f5a06ba7a1e92cf6af121b`)
+Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `84f3e0ef` (`84f3e0ef042ac87cfc6485714a2376dd67ec94b5`)
 
 ## Contract intent
 

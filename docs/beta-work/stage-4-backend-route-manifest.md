@@ -81,3 +81,20 @@ Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `cfcf6882` (
 2. **Auth model ambiguity**: `/api/v1` API-key routes coexist with global `/api` JWT gate.
 3. **Control-plane sprawl**: large inline `app.get/post` blocks in `server/index.ts` increase hidden coupling and make behavior order-sensitive.
 
+## Stage 4 smoke net execution
+
+- Test file updated: `server/__tests__/routes/smoke.test.ts`
+- Command run:
+  - `npx vitest run --config vitest.config.ts server/__tests__/routes/smoke.test.ts`
+- Result:
+  - **PASS** (1 file, 19 tests)
+- Coverage added in this stage:
+  - mount evidence assertions for beta-critical families (auth, concept2cure, ana/chat, authoring, cerv2/510k, vault/documents, eCTD/IND, evidence/external-evidence)
+  - route-contract assertions for `concept2cure.ts` and `ana-ri.ts` envelopes and critical endpoints
+  - lightweight runtime smoke checks for deterministic error paths:
+    - `POST /api/ectd-validate/quick` with invalid payload -> `400`
+    - `POST /api/chat` with empty payload -> `400` + `INVALID_MESSAGE`
+- Non-blocking warnings observed:
+  - duplicate `jsdom` key warning in `package.json`
+  - existing vite/esbuild warnings from unrelated large service files
+

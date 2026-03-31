@@ -11,6 +11,20 @@ import path from 'path';
 import express from 'express';
 import request from 'supertest';
 
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'stage4-smoke-test-secret';
+process.env.DATABASE_URL =
+  process.env.DATABASE_URL || 'postgresql://test:test@localhost:5432/test';
+process.env.SKIP_DB_STARTUP_TEST = 'true';
+
+vi.mock('../../middleware/auth.js', async () => {
+  const actual = await vi.importActual('../../middleware/auth.ts');
+  return {
+    ...(actual as Record<string, unknown>),
+    verifyJwt: (actual as any).authenticateToken,
+    hasPermission: (_req: any, _permission: string) => true,
+  };
+});
+
 // Mock Express app
 const mockApp = {
   routes: new Map<string, Set<string>>(),
