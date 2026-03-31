@@ -49,6 +49,7 @@ import { ReviewPulseDashboard } from './ReviewPulseDashboard';
 import { NotificationCenter } from './NotificationCenter';
 import { ComputeJobPanel } from '../compute/ComputeJobPanel';
 import { IndEvidenceAskPanel } from './IndEvidenceAskPanel';
+import RegulatoryCommunicationsHub from '../correspondence/RegulatoryCommunicationsHub';
 import {
   ChevronLeft,
   Loader2,
@@ -107,6 +108,7 @@ type OperatingLayer = 'document_studio' | 'vault' | 'reports' | 'documents';
 type WorkspaceWorkbench = 'cmc' | 'biostats' | 'device' | 'clinical';
 type ProjectNav =
   | 'submission_builder'
+  | 'communications'
   | 'cmc'
   | 'clinical_module5'
   | 'verify'
@@ -231,6 +233,7 @@ const WORKBENCHES: WorkbenchConfig[] = [
 const PROJECT_NAV_ITEMS: Array<{ id: ProjectNav; label: string }> = [
   { id: 'overview', label: 'Overview' },
   { id: 'submission_builder', label: 'Documents' },
+  { id: 'communications', label: 'Communications' },
   { id: 'verify', label: 'Verify' },
   { id: 'review', label: 'Review' },
   { id: 'publish', label: 'Publish' },
@@ -2460,6 +2463,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 </div>
               ) : mode === 'dashboard' ? (
                 <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+                  {projectNav === 'communications' && (
+                    <div className="rounded-xl border border-stone-200 overflow-hidden bg-white">
+                      <RegulatoryCommunicationsHub projectId={projectId} />
+                    </div>
+                  )}
+                  {projectNav !== 'communications' && (
+                    <>
                   <ComputeJobPanel
                     projectId={projectId}
                     onJobsLoaded={jobs => setComputeJobs(jobs)}
@@ -2783,6 +2793,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                         </div>
                       ))}
                     </div>
+                  )}
+                    </>
                   )}
                 </div>
               ) : mode === 'browse' ? (

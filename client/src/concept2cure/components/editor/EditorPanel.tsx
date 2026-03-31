@@ -634,7 +634,14 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       case 'Verify':
         return new Set(['provenance', 'inconsistency', 'proof', 'compliance-scanner', 'crossref']);
       case 'Publish':
-        return new Set(['submission-readiness', 'ga-readiness', 'health', 'audit']);
+        return new Set([
+          'submission-readiness',
+          'ga-readiness',
+          'health',
+          'audit',
+          'signatures',
+          'export',
+        ]);
       default:
         return new Set(['intelligence', 'dataroom', 'templates', 'batch-ai']);
     }

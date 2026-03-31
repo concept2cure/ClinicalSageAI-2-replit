@@ -324,11 +324,18 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                             <p className="text-sm font-medium text-stone-900 truncate leading-snug">
                               {doc.title}
                             </p>
-                            {doc.ctdSection && (
-                              <span className="text-xs text-violet-500 font-medium">
-                                CTD {doc.ctdSection}
+                            <div className="flex items-center gap-2 text-[11px]">
+                              {doc.ctdSection && (
+                                <span className="text-violet-500 font-medium">CTD {doc.ctdSection}</span>
+                              )}
+                              <span className="text-stone-400">
+                                {doc.status === 'locked'
+                                  ? 'View only'
+                                  : doc.status === 'approved'
+                                    ? 'Opens in governed edit (new draft version)'
+                                    : 'Safe to continue drafting'}
                               </span>
-                            )}
+                            </div>
                           </div>
                         </div>
                       </td>

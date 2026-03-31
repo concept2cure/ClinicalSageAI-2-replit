@@ -97,12 +97,10 @@ type TabId = 'editor' | 'issues' | 'evidence' | 'versions';
 
 export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
   section,
-  content: initialContent,
   issues: propIssues,
   evidence: propEvidence,
   versions: propVersions,
   onBack,
-  onSave,
   onSubmitForReview,
   projectId,
   projectName,
@@ -113,8 +111,6 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
   onCreateDraft,
 }) => {
   const [activeTab, setActiveTab] = useState<TabId>('editor'); // 'editor' tab now shows section overview, not a textarea
-  const [editorContent, setEditorContent] = useState(initialContent || '');
-  const [isSaving, setIsSaving] = useState(false);
   const [fetchedIssues, setFetchedIssues] = useState<SectionIssue[] | null>(null);
   const [isLoadingIssues, setIsLoadingIssues] = useState(false);
 
@@ -193,16 +189,6 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
     }
   }, [activeTab, fetchRealIssues]);
 
-  const handleSave = useCallback(async () => {
-    if (!onSave) return;
-    setIsSaving(true);
-    try {
-      await onSave(editorContent);
-    } finally {
-      setIsSaving(false);
-    }
-  }, [editorContent, onSave]);
-
   const statusConfig =
     WORKFLOW_STATUS_CONFIG[section.status] || WORKFLOW_STATUS_CONFIG['not-started'];
   const readinessScore = readiness?.score;
@@ -275,11 +261,6 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
               <Button onClick={onCreateDraft} variant="default" size="sm" className="gap-1.5">
                 <FilePlus className="h-3.5 w-3.5" />
                 Create Draft
-              </Button>
-            )}
-            {onSave && section.status !== 'locked' && section.status !== 'approved' && (
-              <Button onClick={handleSave} disabled={isSaving} variant="default" size="sm">
-                {isSaving ? <Spinner size="sm" /> : 'Save'}
               </Button>
             )}
             {onSubmitForReview && section.status === 'drafting' && !isBlocked && (

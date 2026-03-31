@@ -110,6 +110,7 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
   }, [artifact?.content]);
 
   const handleStartEdit = useCallback(() => {
+    if (artifact?.status && artifact.status !== 'draft') return;
     setEditContent(artifact?.content || '');
     setIsEditing(true);
   }, [artifact?.content]);
@@ -241,8 +242,13 @@ export const DocumentCanvasPanel: React.FC<DocumentCanvasPanelProps> = ({
             <button
               onClick={handleStartEdit}
               aria-label="Quick polish"
+              disabled={artifact.status !== 'draft'}
               className="flex items-center gap-1 px-2 py-1 text-xs text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
-              title="Quick text polish — use Full Editor for rich editing"
+              title={
+                artifact.status === 'draft'
+                  ? 'Quick text polish — use Full Editor for rich editing'
+                  : 'Quick polish only available for draft artifacts'
+              }
             >
               <Edit3 className="w-3.5 h-3.5" />
             </button>
