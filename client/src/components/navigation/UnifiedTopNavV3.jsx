@@ -38,7 +38,7 @@ export default function UnifiedTopNavV3({
                   window.history.back();
                 } catch (error) {
                   console.error('Back navigation error:', error);
-                  navigate('/client-portal');
+                  navigate('/concept2cure');
                 }
               }}
               className="px-3 py-1 text-xs font-medium bg-gray-100 rounded transition-all duration-200 ease-in-out hover:bg-indigo-500 hover:text-white focus:ring-2 focus:ring-indigo-300 active:scale-95"
@@ -51,16 +51,16 @@ export default function UnifiedTopNavV3({
                   window.history.forward();
                 } catch (error) {
                   console.error('Forward navigation error:', error);
-                  navigate('/client-portal');
+                  navigate('/concept2cure');
                 }
               }}
               className="px-3 py-1 text-xs font-medium bg-gray-100 rounded transition-all duration-200 ease-in-out hover:bg-indigo-500 hover:text-white focus:ring-2 focus:ring-indigo-300 active:scale-95"
             >
               → Forward
             </button>
-            <Link href="/client-portal">
+            <Link href="/concept2cure">
               <span className="px-3 py-1 text-xs font-medium bg-indigo-600 text-white rounded transition-all duration-200 ease-in-out hover:bg-indigo-500 hover:text-white focus:ring-2 focus:ring-indigo-300 active:scale-95 cursor-pointer">
-                🏠 Client Portal
+                🏠 Concept2Cure
               </span>
             </Link>
           </div>

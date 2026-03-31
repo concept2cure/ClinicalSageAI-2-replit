@@ -409,13 +409,20 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
-            {/* Root → Marketing Landing Page via ZenRouter (shows LandingPage for unauth, redirects to /concept2cure for auth) */}
+            {/* Root entry delegates to ZenRouter auth-aware landing behavior */}
             <Route path="/">
               {() => (
                 <Suspense fallback={<LoadingPage />}>
                   <ZenRouter />
                 </Suspense>
               )}
+            </Route>
+            {/* Legacy portal paths are intentionally fenced to the canonical beta shell */}
+            <Route path="/client-portal">
+              {() => <Redirect to="/concept2cure" />}
+            </Route>
+            <Route path="/client-portal/:rest*">
+              {() => <Redirect to="/concept2cure" />}
             </Route>
             {/* Public Sales Landing Page */}
             <Route path="/sales">
@@ -432,8 +439,6 @@ function MainApp() {
             <Route path="/billing/*">
               {() => <Redirect to="/concept2cure/billing" />}
             </Route>
-            {/* Root and legacy portal routes → redirect to Concept2Cure home */}
-            <Route path="/">{() => <Redirect to="/concept2cure" />}</Route>
             <Route path="/submission-center" component={UnifiedSubmissionCenter} />
             {/* AnA Cortex AI Assistant - Full Page */}
             <Route path="/ana">

@@ -24,10 +24,10 @@ export default function UnifiedTopNav({ activeTab, onTabChange }) {
         </button>
 
         <button
-          onClick={() => navigate('/client-portal')}
+          onClick={() => navigate('/concept2cure')}
           className="px-3 py-1 text-xs font-medium bg-indigo-600 text-white rounded hover:bg-indigo-700"
         >
-          Return to Client Portal
+          Return to Concept2Cure
         </button>
       </div>
 
