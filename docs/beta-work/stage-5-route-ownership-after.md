@@ -1,7 +1,7 @@
 # Stage 5 — Route Ownership After (Frontend Shell Truth)
 
 Stage: Stage 5 — Frontend Shell Truth Cleanup  
-Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `HEAD` (post-Stage 5 implementation snapshot)
+Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `cb2e17de` (`cb2e17de`) (post-Stage-5 pre-test implementation snapshot)
 
 ## Before vs After ownership matrix
 
@@ -40,3 +40,10 @@ Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `HEAD` (post
 - Route ownership is now explicit for `/client-portal/*` in the live root shell.
 - Top-level entry/navigation signals are aligned to Concept2Cure canonical shell in edited nav components.
 - Tests updated/added to protect redirect and project-route policy semantics.
+
+## Stage 5 targeted smoke checks (post-implementation)
+
+- `npx vitest run --config vitest.config.ts client/src/concept2cure/router/__tests__/projectModuleRoutePolicy.smoke.test.ts client/src/__tests__/shellTruthRoutes.test.ts`
+  - Result: **PASS** (2 files, 10 tests)
+- `npx jest --config client/jest.config.js client/src/concept2cure/auth/__tests__/computeRedirect.test.ts`
+  - Result: **PASS** (1 file, 9 tests)

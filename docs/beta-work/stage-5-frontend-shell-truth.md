@@ -1,7 +1,8 @@
 # Stage 5 — Frontend Shell Truth Cleanup
 
 Stage: Stage 5 — Frontend Shell Truth Cleanup  
-Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `86b32d44` (`86b32d44`) as pre-Stage-5 baseline
+Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `86b32d44` (`86b32d44`) as pre-Stage-5 baseline  
+Stage 5 implementation commit: `cb2e17de`
 
 ## Mission and boundary
 
@@ -85,6 +86,13 @@ The following browser-entry behavior is now intentional and documented:
 - `/` -> `ZenRouter` landing flow (auth-aware -> `/concept2cure/login` or `/concept2cure`)
 - `/login`, `/sign-in`, `/auth` -> `/concept2cure/login` (outer app redirect)
 - `/client-portal/*` -> `/concept2cure` (explicit compatibility fence in `App.jsx`)
+
+## Smoke checks run (Stage 5)
+
+- `npx vitest run --config vitest.config.ts client/src/concept2cure/router/__tests__/projectModuleRoutePolicy.smoke.test.ts client/src/__tests__/shellTruthRoutes.test.ts`
+  - Result: **PASS** (2 files, 10 tests)
+- `npx jest --config client/jest.config.js client/src/concept2cure/auth/__tests__/computeRedirect.test.ts`
+  - Result: **PASS** (1 file, 9 tests)
 
 ## Explicitly protected in Stage 5
 
