@@ -1,7 +1,7 @@
 # React Client Performance Audit — Concept2Cure
 
-**Date**: March 31, 2026  
-**Scope**: `client/src/` — ZenApp shell, components, hooks, contexts, query config  
+**Date**: March 31, 2026
+**Scope**: `client/src/` — ZenApp shell, components, hooks, contexts, query config
 **Root file**: `client/src/concept2cure/ZenApp.tsx` (113KB, ~3,400 lines)
 
 ---
@@ -12,43 +12,43 @@
 
 These are code-split and only load when navigated to:
 
-| Component | Import Path |
-|-----------|-------------|
-| `EmbeddedCERV2Page` | `@/pages/csr/CERV2Page` |
-| `EmbeddedPMAWorkspace` | `./components/pma/PMAWorkspace` |
-| `FullDocumentBuilder` | `./components/builder/FullDocumentBuilder` |
-| `ToolsLanding` | `./components/workspace/ToolsLanding` |
-| `EditorPanel` | `./components/editor/EditorPanel` |
-| `RICopilotHome` | `./components/intelligence/RICopilotHome` |
-| `PrecedentIntelligenceDashboard` | `./components/precedent/PrecedentIntelligenceDashboard` |
-| `CAPAManagementPanel` | `./components/regulatory/CAPAManagement` |
-| `PostMarketSurveillancePanel` | `./components/regulatory/PostMarketSurveillance` |
-| `InspectionReadinessPanel` | `./components/regulatory/InspectionReadiness` |
-| `ECTDNavigatorPanel` | `./components/regulatory/ECTDNavigator` |
-| `RegulatoryIntelligenceFullPanel` | `./components/regulatory/RegulatoryIntelligence` |
-| `VaultBrowserPanel` | `@/components/sharepoint/SharePointFileManager` |
-| `IntelligentReportGenerator` | `./components/reports/IntelligentReportGenerator` |
-| `SafetyNarrativePage` | `./pages/SafetyNarrative` |
-| `DocumentCanvasPanel` | `./components/workspace/DocumentCanvasPanel` |
-| `ProjectKnowledgePanel` | `./components/workspace/ProjectKnowledgePanel` |
-| `ProjectHomeDashboard` | `./components/workflow/ProjectHomeDashboard` |
-| `DossierMap` | `./components/workflow/DossierMap` |
-| `SectionWorkspace` | `./components/workflow/SectionWorkspace` |
-| `SubmissionReadinessView` | `./components/workflow/SubmissionReadiness` |
-| `SubmissionBuilderView` | `./components/submission/SubmissionBuilder` |
-| `ProjectTaskBoardView` | `./components/workspace/ProjectTaskBoard` |
-| `CSRWorkflowView` | `./components/workflow/CSRWorkflow` |
-| `INDChecklistView` | `./components/workflow/INDChecklist` |
-| `HAQManagerView` | `./components/workflow/HAQManager` |
-| `BiostatPlatformDashboard` | `@/components/biostat/BiostatPlatformDashboard` |
-| `AnaBiostatsPanel` | `./components/biostats/AnaBiostatsPanel` |
-| `PlatformHome` | `./components/home/PlatformHome` |
-| `AppsPage` | `./pages/AppsPage` |
-| `ArtifactsPage` | `./pages/ArtifactsPage` |
-| `VaultPage` | `./pages/VaultPage` |
-| `SetupPage` | `./pages/SetupPage` |
-| `FirstRunExperience` | `./components/enablement/FirstRunExperience` |
-| `INDRightRail` | `./components/workspace/INDRightRail` |
+| Component                         | Import Path                                             |
+| --------------------------------- | ------------------------------------------------------- |
+| `EmbeddedCERV2Page`               | `@/pages/csr/CERV2Page`                                 |
+| `EmbeddedPMAWorkspace`            | `./components/pma/PMAWorkspace`                         |
+| `FullDocumentBuilder`             | `./components/builder/FullDocumentBuilder`              |
+| `ToolsLanding`                    | `./components/workspace/ToolsLanding`                   |
+| `EditorPanel`                     | `./components/editor/EditorPanel`                       |
+| `RICopilotHome`                   | `./components/intelligence/RICopilotHome`               |
+| `PrecedentIntelligenceDashboard`  | `./components/precedent/PrecedentIntelligenceDashboard` |
+| `CAPAManagementPanel`             | `./components/regulatory/CAPAManagement`                |
+| `PostMarketSurveillancePanel`     | `./components/regulatory/PostMarketSurveillance`        |
+| `InspectionReadinessPanel`        | `./components/regulatory/InspectionReadiness`           |
+| `ECTDNavigatorPanel`              | `./components/regulatory/ECTDNavigator`                 |
+| `RegulatoryIntelligenceFullPanel` | `./components/regulatory/RegulatoryIntelligence`        |
+| `VaultBrowserPanel`               | `@/components/sharepoint/SharePointFileManager`         |
+| `IntelligentReportGenerator`      | `./components/reports/IntelligentReportGenerator`       |
+| `SafetyNarrativePage`             | `./pages/SafetyNarrative`                               |
+| `DocumentCanvasPanel`             | `./components/workspace/DocumentCanvasPanel`            |
+| `ProjectKnowledgePanel`           | `./components/workspace/ProjectKnowledgePanel`          |
+| `ProjectHomeDashboard`            | `./components/workflow/ProjectHomeDashboard`            |
+| `DossierMap`                      | `./components/workflow/DossierMap`                      |
+| `SectionWorkspace`                | `./components/workflow/SectionWorkspace`                |
+| `SubmissionReadinessView`         | `./components/workflow/SubmissionReadiness`             |
+| `SubmissionBuilderView`           | `./components/submission/SubmissionBuilder`             |
+| `ProjectTaskBoardView`            | `./components/workspace/ProjectTaskBoard`               |
+| `CSRWorkflowView`                 | `./components/workflow/CSRWorkflow`                     |
+| `INDChecklistView`                | `./components/workflow/INDChecklist`                    |
+| `HAQManagerView`                  | `./components/workflow/HAQManager`                      |
+| `BiostatPlatformDashboard`        | `@/components/biostat/BiostatPlatformDashboard`         |
+| `AnaBiostatsPanel`                | `./components/biostats/AnaBiostatsPanel`                |
+| `PlatformHome`                    | `./components/home/PlatformHome`                        |
+| `AppsPage`                        | `./pages/AppsPage`                                      |
+| `ArtifactsPage`                   | `./pages/ArtifactsPage`                                 |
+| `VaultPage`                       | `./pages/VaultPage`                                     |
+| `SetupPage`                       | `./pages/SetupPage`                                     |
+| `FirstRunExperience`              | `./components/enablement/FirstRunExperience`            |
+| `INDRightRail`                    | `./components/workspace/INDRightRail`                   |
 
 **Verdict**: ✅ All heavy routes are properly lazy-loaded via `React.lazy()`.
 
@@ -56,21 +56,21 @@ These are code-split and only load when navigated to:
 
 These are `import` statements at the top of ZenApp.tsx that execute synchronously:
 
-| Component | Size (lines) | Impact |
-|-----------|-------------|--------|
-| `ZenSidebar` | 1,132 | **HIGH** — sidebar component imported eagerly |
-| `ZenChat` | 1,244 | **HIGH** — chat component imported eagerly |
-| `ZenCommandPalette` | unknown | Medium — command palette always loaded |
-| `ZenSettings` | 1,480 | **HIGH** — settings modal always loaded |
-| `ProjectSwitcher` + `NewProjectModal` | ~800 | Medium — project selection UI |
-| `ProjectConfigPanel` | unknown | Low |
-| `ProjectFilesCompact` | unknown | Low |
-| `ProjectHeaderBar` | unknown | Low |
-| `AnaPersistentPanel` | **4,556** | **CRITICAL** — largest component, always loaded |
-| `GlobalOperatingShell` | unknown | Medium |
-| `ProjectSidebar` | unknown | Low |
-| `ErrorBoundary` | unknown | Low |
-| `50+ Lucide icons` | ~250KB (chunked) | Medium — via vendor-icons chunk |
+| Component                             | Size (lines)     | Impact                                          |
+| ------------------------------------- | ---------------- | ----------------------------------------------- |
+| `ZenSidebar`                          | 1,132            | **HIGH** — sidebar component imported eagerly   |
+| `ZenChat`                             | 1,244            | **HIGH** — chat component imported eagerly      |
+| `ZenCommandPalette`                   | unknown          | Medium — command palette always loaded          |
+| `ZenSettings`                         | 1,480            | **HIGH** — settings modal always loaded         |
+| `ProjectSwitcher` + `NewProjectModal` | ~800             | Medium — project selection UI                   |
+| `ProjectConfigPanel`                  | unknown          | Low                                             |
+| `ProjectFilesCompact`                 | unknown          | Low                                             |
+| `ProjectHeaderBar`                    | unknown          | Low                                             |
+| `AnaPersistentPanel`                  | **4,556**        | **CRITICAL** — largest component, always loaded |
+| `GlobalOperatingShell`                | unknown          | Medium                                          |
+| `ProjectSidebar`                      | unknown          | Low                                             |
+| `ErrorBoundary`                       | unknown          | Low                                             |
+| `50+ Lucide icons`                    | ~250KB (chunked) | Medium — via vendor-icons chunk                 |
 
 **Key Finding**: `AnaPersistentPanel` (4,556 lines) and `ZenSettings` (1,480 lines) are eagerly imported but `ZenSettings` is only shown when the user opens settings. `AnaPersistentPanel` is the primary chat interface so eager loading is justified, but it should use `React.memo` for its internal message list.
 
@@ -85,14 +85,14 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
-      staleTime: 1000 * 60 * 5,        // ✅ 5 minutes
-      gcTime: 1000 * 60 * 10,           // ✅ 10 minutes
-      refetchOnWindowFocus: false,       // ✅ GOOD — no tab-switch refetch
-      refetchOnReconnect: true,          // ✅ GOOD
+      staleTime: 1000 * 60 * 5, // ✅ 5 minutes
+      gcTime: 1000 * 60 * 10, // ✅ 10 minutes
+      refetchOnWindowFocus: false, // ✅ GOOD — no tab-switch refetch
+      refetchOnReconnect: true, // ✅ GOOD
       queryFn: getQueryFn(),
     },
     mutations: {
-      retry: 0,                          // ✅ No mutation retry
+      retry: 0, // ✅ No mutation retry
     },
   },
 });
@@ -120,17 +120,18 @@ grep -rn "React.memo\|memo(" client/src/concept2cure/components/ --include="*.ts
 The message rendering loop calls `renderMarkdown()` (parsing + DOMPurify sanitization) for **every assistant message on every re-render**:
 
 ```tsx
-{messages.map(msg => {
-  const htmlContent = !isUser ? renderMarkdown(msg.content) : '';
-  return (
-    <div key={msg.id} dangerouslySetInnerHTML={{ __html: htmlContent }} />
-  );
-})}
+{
+  messages.map(msg => {
+    const htmlContent = !isUser ? renderMarkdown(msg.content) : '';
+    return <div key={msg.id} dangerouslySetInnerHTML={{ __html: htmlContent }} />;
+  });
+}
 ```
 
 **Problem**: Every keystroke in the input field triggers a state change, which re-renders the entire component, which re-runs `renderMarkdown()` on all messages, which calls `marked.parse()` + `DOMPurify.sanitize()` for every message. On a 50-message thread, this is ~50 markdown parse operations per keystroke.
 
 **Fix**:
+
 1. Extract a `MessageBubble` component and wrap it in `React.memo`
 2. Memoize `renderMarkdown` output per message using `useMemo` inside the extracted component
 
@@ -154,6 +155,7 @@ Same pattern — messages re-rendered on every state change with inline arrow fu
 #### 3c. ZenSidebar (1,132 lines)
 
 The sidebar has **22+ inline `onClick={() => ...}` handlers** in its JSX:
+
 ```tsx
 onClick={() => onNavigate?.('apps')}
 onClick={() => onNavigate?.('artifacts-center')}
@@ -172,14 +174,14 @@ Each re-render creates 22+ new function objects. Since ZenSidebar is rendered in
 
 ### Severity: **HIGH** in Hot Paths, **LOW** elsewhere
 
-| File | Inline Handlers | Re-render Frequency | Severity |
-|------|----------------|---------------------|----------|
-| `AnaPersistentPanel.tsx` | ~10 inline handlers in message loop | Very High (every keystroke) | **CRITICAL** |
-| `ZenSidebar.tsx` | 22+ inline `onClick` handlers | High (every shell re-render) | **HIGH** |
-| `ProjectsSidebar.tsx` | 15+ inline handlers | Medium | **MEDIUM** |
-| `ChatPanel.tsx` | 8 inline handlers per message | High (every message) | **HIGH** |
-| `PharmaPortfolioDashboard.tsx` | 12+ inline handlers in lists | Medium | **MEDIUM** |
-| `DocumentWorkspace.tsx` | 8+ inline handlers | Medium | **MEDIUM** |
+| File                           | Inline Handlers                     | Re-render Frequency          | Severity     |
+| ------------------------------ | ----------------------------------- | ---------------------------- | ------------ |
+| `AnaPersistentPanel.tsx`       | ~10 inline handlers in message loop | Very High (every keystroke)  | **CRITICAL** |
+| `ZenSidebar.tsx`               | 22+ inline `onClick` handlers       | High (every shell re-render) | **HIGH**     |
+| `ProjectsSidebar.tsx`          | 15+ inline handlers                 | Medium                       | **MEDIUM**   |
+| `ChatPanel.tsx`                | 8 inline handlers per message       | High (every message)         | **HIGH**     |
+| `PharmaPortfolioDashboard.tsx` | 12+ inline handlers in lists        | Medium                       | **MEDIUM**   |
+| `DocumentWorkspace.tsx`        | 8+ inline handlers                  | Medium                       | **MEDIUM**   |
 
 ### Most Impactful Fixes
 
@@ -202,13 +204,13 @@ grep -rn "react-virtual\|useVirtualizer\|react-window\|FixedSizeList" client/src
 
 ### Lists That Could Grow Unbounded
 
-| Component | What's Listed | `.map()` Call | Risk |
-|-----------|--------------|---------------|------|
-| `AnaPersistentPanel.tsx:3345,3661` | Chat messages | `messages.map(msg => ...)` | **HIGH** — 100+ msgs in long sessions |
-| `ChatPanel.tsx:617` | Chat messages | `messages.map((message, index) => ...)` | **HIGH** — same issue |
-| `ProjectsSidebar.tsx:367` | Conversations per project | `conversations.map(convo => ...)` | **MEDIUM** — 50+ convos possible |
-| `ProjectsSidebar.tsx:580` | All projects | `allProjects.map(project => ...)` | **MEDIUM** — 20-50 projects |
-| `EditorPanel.tsx:4085` | Quality gate warnings | `qualityGateDialog.warnings.map(...)` | LOW — typically < 20 |
+| Component                          | What's Listed             | `.map()` Call                           | Risk                                  |
+| ---------------------------------- | ------------------------- | --------------------------------------- | ------------------------------------- |
+| `AnaPersistentPanel.tsx:3345,3661` | Chat messages             | `messages.map(msg => ...)`              | **HIGH** — 100+ msgs in long sessions |
+| `ChatPanel.tsx:617`                | Chat messages             | `messages.map((message, index) => ...)` | **HIGH** — same issue                 |
+| `ProjectsSidebar.tsx:367`          | Conversations per project | `conversations.map(convo => ...)`       | **MEDIUM** — 50+ convos possible      |
+| `ProjectsSidebar.tsx:580`          | All projects              | `allProjects.map(project => ...)`       | **MEDIUM** — 20-50 projects           |
+| `EditorPanel.tsx:4085`             | Quality gate warnings     | `qualityGateDialog.warnings.map(...)`   | LOW — typically < 20                  |
 
 ### Recommendation
 
@@ -242,13 +244,19 @@ return <ProjectContext.Provider value={value}>{children}</ProjectContext.Provide
 
 **Problem**: The `value` object is recreated on **every render** of `ProjectProvider`. Since `value` is always a new object reference, **every consumer of `useProject()` re-renders on every parent render**, even if the actual data hasn't changed.
 
-**Impact**: Every component that calls `useProject()` (sidebar, chat, editor, workspace) re-renders whenever *any* state in the ProjectContext changes. This is a cascade amplifier.
+**Impact**: Every component that calls `useProject()` (sidebar, chat, editor, workspace) re-renders whenever _any_ state in the ProjectContext changes. This is a cascade amplifier.
 
 **Fix**: Wrap `value` in `useMemo`:
+
 ```tsx
-const value = useMemo(() => ({
-  state, createProject, updateProject, /* ... */
-}), [state, createProject, updateProject, /* ... */]);
+const value = useMemo(
+  () => ({
+    state,
+    createProject,
+    updateProject /* ... */,
+  }),
+  [state, createProject, updateProject /* ... */]
+);
 ```
 
 ### ✅ ZenWorkspaceContext — Properly Memoized
@@ -269,16 +277,16 @@ Uses `useMemo` for mode and capabilities. Well-structured.
 
 ### Inventory of All Context Providers
 
-| Context | `useMemo` on value? | Impact |
-|---------|-------------------|--------|
-| `ProjectContext` | ❌ **NO** | **CRITICAL** — most-used context, cascades everywhere |
-| `ZenWorkspaceContext` | ✅ Yes | Good |
-| `DocumentModeContext` | ✅ Yes | Good |
-| `IndustryContext` | ✅ Yes (imports useMemo) | Good |
-| `EnablementContext` | Likely no (uses useState) | Low — rarely changes |
-| `TourContext` | Unknown | Low — rarely changes |
-| `RoleContext` | Unknown | Low — rarely changes |
-| `DatabaseStatusContext` | Unknown | Low — polling only |
+| Context                 | `useMemo` on value?       | Impact                                                |
+| ----------------------- | ------------------------- | ----------------------------------------------------- |
+| `ProjectContext`        | ❌ **NO**                 | **CRITICAL** — most-used context, cascades everywhere |
+| `ZenWorkspaceContext`   | ✅ Yes                    | Good                                                  |
+| `DocumentModeContext`   | ✅ Yes                    | Good                                                  |
+| `IndustryContext`       | ✅ Yes (imports useMemo)  | Good                                                  |
+| `EnablementContext`     | Likely no (uses useState) | Low — rarely changes                                  |
+| `TourContext`           | Unknown                   | Low — rarely changes                                  |
+| `RoleContext`           | Unknown                   | Low — rarely changes                                  |
+| `DatabaseStatusContext` | Unknown                   | Low — polling only                                    |
 
 ---
 
@@ -287,6 +295,7 @@ Uses `useMemo` for mode and capabilities. Well-structured.
 ### 1. `AnaPersistentPanel.tsx` (4,556 lines) — **CRITICAL**
 
 **Issues**:
+
 - `renderMarkdown()` called for every message on every re-render (no memoization of output)
 - No `React.memo` on message bubble — all messages re-render on each keystroke
 - No chat virtualization — all messages in DOM regardless of viewport
@@ -299,6 +308,7 @@ Uses `useMemo` for mode and capabilities. Well-structured.
 ### 2. `EditorPanel.tsx` (4,294 lines) — **HIGH**
 
 **Issues**:
+
 - Massive component with many state variables — any change re-renders everything
 - Loads TipTap editor within the same render tree
 - No sub-component memoization
@@ -308,6 +318,7 @@ Uses `useMemo` for mode and capabilities. Well-structured.
 ### 3. `ProjectWorkspaceShell.tsx` (3,145 lines) — **HIGH**
 
 **Issues**:
+
 - Orchestrates the entire workspace layout
 - Consumes `useProject()` (which has the unmemoized context value)
 - Re-renders on every ProjectContext change
@@ -317,6 +328,7 @@ Uses `useMemo` for mode and capabilities. Well-structured.
 ### 4. `ZenSidebar.tsx` (1,132 lines) — **MEDIUM-HIGH**
 
 **Issues**:
+
 - 22+ inline `onClick` arrow functions
 - Re-renders on every ZenApp state change
 - Project list maps without memoization
@@ -326,6 +338,7 @@ Uses `useMemo` for mode and capabilities. Well-structured.
 ### 5. `ProjectsSidebar.tsx` (760 lines) — **MEDIUM**
 
 **Issues**:
+
 - Renders all projects with `.map()` (no virtualization for 50+ projects)
 - Each project row has inline `onClick` handlers
 - Search/filter not debounced on the search input `onChange`
@@ -371,16 +384,16 @@ The `onChange={(e) => setSearchQuery(e.target.value)}` fires on every keystroke,
 
 ## Summary Table
 
-| Category | Status | Details |
-|----------|--------|---------|
-| **Route lazy-loading** | ✅ GOOD | 30+ routes lazy-loaded |
-| **TanStack Query config** | ✅ GOOD | 5-min staleTime, refetchOnWindowFocus: false |
-| **React.memo usage** | ❌ NONE | Zero components memoized in concept2cure/ |
-| **Virtualization** | ❌ NONE | No list virtualization anywhere |
-| **Context memoization** | ⚠️ PARTIAL | ProjectContext missing useMemo on value |
-| **Inline handlers** | ⚠️ PERVASIVE | 60+ inline handlers across main components |
-| **Vite chunk splitting** | ✅ GOOD | 9 vendor chunks defined |
-| **Prefetch strategy** | ✅ GOOD | Top 5 routes prefetched after 1.5s |
+| Category                  | Status       | Details                                      |
+| ------------------------- | ------------ | -------------------------------------------- |
+| **Route lazy-loading**    | ✅ GOOD      | 30+ routes lazy-loaded                       |
+| **TanStack Query config** | ✅ GOOD      | 5-min staleTime, refetchOnWindowFocus: false |
+| **React.memo usage**      | ❌ NONE      | Zero components memoized in concept2cure/    |
+| **Virtualization**        | ❌ NONE      | No list virtualization anywhere              |
+| **Context memoization**   | ⚠️ PARTIAL   | ProjectContext missing useMemo on value      |
+| **Inline handlers**       | ⚠️ PERVASIVE | 60+ inline handlers across main components   |
+| **Vite chunk splitting**  | ✅ GOOD      | 9 vendor chunks defined                      |
+| **Prefetch strategy**     | ✅ GOOD      | Top 5 routes prefetched after 1.5s           |
 
 ### Priority Actions
 

@@ -597,8 +597,9 @@ export function applySecurityMiddleware(app: any) {
   // CORS
   app.use(corsMiddleware);
 
-  // Global rate limit
-  app.use(rateLimiters.global);
+  // Global rate limit — removed: Redis rate limiter on /api (in index.ts) provides
+  // category-based limits with persistence across restarts. Keeping per-path limiters below
+  // for defense-in-depth on sensitive endpoints.
 
   // Input sanitization
   app.use(sanitizeInput);

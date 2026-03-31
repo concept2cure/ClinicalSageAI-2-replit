@@ -1,11 +1,18 @@
 /**
  * Concept2Cure - Project Context
- * 
+ *
  * Central state management for Projects following the Claude.ai pattern.
  * Provides project persistence, conversation management, and artifact tracking.
  */
 
-import React, { createContext, useContext, useReducer, useCallback, useEffect, useMemo } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useCallback,
+  useEffect,
+  useMemo,
+} from 'react';
 import type {
   Project,
   Conversation,
@@ -52,7 +59,10 @@ type ProjectAction =
   | { type: 'UPDATE_CONVERSATION'; payload: { id: string; updates: Partial<Conversation> } }
   | { type: 'SET_ACTIVE_CONVERSATION'; payload: string | null }
   | { type: 'ADD_MESSAGE'; payload: { conversationId: string; message: Message } }
-  | { type: 'EDIT_MESSAGE'; payload: { conversationId: string; messageId: string; content: string } }
+  | {
+      type: 'EDIT_MESSAGE';
+      payload: { conversationId: string; messageId: string; content: string };
+    }
   | { type: 'SET_ARTIFACTS'; payload: Artifact[] }
   | { type: 'ADD_ARTIFACT'; payload: Artifact }
   | { type: 'UPDATE_ARTIFACT'; payload: { id: string; updates: Partial<Artifact> } }
@@ -267,28 +277,33 @@ function projectReducer(state: ProjectState, action: ProjectAction): ProjectStat
 
 interface ProjectContextValue {
   state: ProjectState;
-  
+
   // Project actions
   createProject: (name: string, type: SubmissionType, description?: string) => Promise<Project>;
   updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
   setActiveProject: (id: string | null) => void;
   updateProjectKnowledge: (projectId: string, knowledge: Partial<ProjectKnowledge>) => void;
-  
+
   // Conversation actions
   createConversation: (projectId: string, title?: string) => Promise<Conversation>;
   setActiveConversation: (id: string | null) => void;
-  addMessage: (conversationId: string, message: Omit<Message, 'id' | 'conversationId' | 'timestamp'>) => Message;
+  addMessage: (
+    conversationId: string,
+    message: Omit<Message, 'id' | 'conversationId' | 'timestamp'>
+  ) => Message;
   editMessage: (conversationId: string, messageId: string, content: string) => void;
   forkConversation: (conversationId: string, fromMessageId: string) => Promise<Conversation>;
-  
+
   // Artifact actions
-  createArtifact: (artifact: Omit<Artifact, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'versions'>) => Artifact;
+  createArtifact: (
+    artifact: Omit<Artifact, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'versions'>
+  ) => Artifact;
   updateArtifact: (id: string, updates: Partial<Artifact>) => void;
   setActiveArtifact: (id: string | null) => void;
   publishArtifact: (id: string, isPublic?: boolean) => Promise<string>;
   remixArtifact: (id: string, projectId: string) => Promise<Artifact>;
-  
+
   // UI actions
   toggleSidebar: (collapsed?: boolean) => void;
   toggleArtifactPanel: (visible?: boolean) => void;
@@ -296,7 +311,7 @@ interface ProjectContextValue {
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   setUserProfile: (profile: UserProfile | null) => void;
   updateUserProfile: (profile: Partial<UserProfile>) => void;
-  
+
   // Computed values
   activeProject: Project | null;
   activeConversation: Conversation | null;
@@ -358,28 +373,34 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
   );
 
   const updateProject = useCallback((id: string, updates: Partial<Project>) => {
-    dispatch({ type: 'UPDATE_PROJECT', payload: { id, updates: { ...updates, updatedAt: new Date() } } });
+    dispatch({
+      type: 'UPDATE_PROJECT',
+      payload: { id, updates: { ...updates, updatedAt: new Date() } },
+    });
   }, []);
 
   const deleteProject = useCallback((id: string) => {
     dispatch({ type: 'DELETE_PROJECT', payload: id });
   }, []);
 
-  const setActiveProject = useCallback((id: string | null) => {
-    dispatch({ type: 'SET_ACTIVE_PROJECT', payload: id });
-    
-    // Load conversations for this project
-    if (id) {
-      const projectConvos = state.conversations.filter(c => c.projectId === id);
-      if (projectConvos.length > 0) {
-        // Set most recent conversation as active
-        const mostRecent = projectConvos.sort(
-          (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-        )[0];
-        dispatch({ type: 'SET_ACTIVE_CONVERSATION', payload: mostRecent.id });
+  const setActiveProject = useCallback(
+    (id: string | null) => {
+      dispatch({ type: 'SET_ACTIVE_PROJECT', payload: id });
+
+      // Load conversations for this project
+      if (id) {
+        const projectConvos = state.conversations.filter(c => c.projectId === id);
+        if (projectConvos.length > 0) {
+          // Set most recent conversation as active
+          const mostRecent = projectConvos.sort(
+            (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          )[0];
+          dispatch({ type: 'SET_ACTIVE_CONVERSATION', payload: mostRecent.id });
+        }
       }
-    }
-  }, [state.conversations]);
+    },
+    [state.conversations]
+  );
 
   const updateProjectKnowledge = useCallback(
     (projectId: string, knowledge: Partial<ProjectKnowledge>) => {
@@ -461,12 +482,9 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
     []
   );
 
-  const editMessage = useCallback(
-    (conversationId: string, messageId: string, content: string) => {
-      dispatch({ type: 'EDIT_MESSAGE', payload: { conversationId, messageId, content } });
-    },
-    []
-  );
+  const editMessage = useCallback((conversationId: string, messageId: string, content: string) => {
+    dispatch({ type: 'EDIT_MESSAGE', payload: { conversationId, messageId, content } });
+  }, []);
 
   const forkConversation = useCallback(
     async (conversationId: string, fromMessageId: string): Promise<Conversation> => {
@@ -758,43 +776,66 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
   // CONTEXT VALUE
   // ─────────────────────────────────────────────────────────────────────────
 
-  const value: ProjectContextValue = useMemo(() => ({
-    state,
-    createProject,
-    updateProject,
-    deleteProject,
-    setActiveProject,
-    updateProjectKnowledge,
-    createConversation,
-    setActiveConversation,
-    addMessage,
-    editMessage,
-    forkConversation,
-    createArtifact,
-    updateArtifact,
-    setActiveArtifact,
-    publishArtifact,
-    remixArtifact,
-    toggleSidebar,
-    toggleArtifactPanel,
-    setArtifactPanelWidth,
-    setTheme,
-    setUserProfile,
-    updateUserProfile,
-    activeProject,
-    activeConversation,
-    activeArtifact,
-    projectConversations,
-    projectArtifacts,
-  }), [
-    state,
-    createProject, updateProject, deleteProject, setActiveProject, updateProjectKnowledge,
-    createConversation, setActiveConversation, addMessage, editMessage, forkConversation,
-    createArtifact, updateArtifact, setActiveArtifact, publishArtifact, remixArtifact,
-    toggleSidebar, toggleArtifactPanel, setArtifactPanelWidth, setTheme,
-    setUserProfile, updateUserProfile,
-    activeProject, activeConversation, activeArtifact, projectConversations, projectArtifacts,
-  ]);
+  const value: ProjectContextValue = useMemo(
+    () => ({
+      state,
+      createProject,
+      updateProject,
+      deleteProject,
+      setActiveProject,
+      updateProjectKnowledge,
+      createConversation,
+      setActiveConversation,
+      addMessage,
+      editMessage,
+      forkConversation,
+      createArtifact,
+      updateArtifact,
+      setActiveArtifact,
+      publishArtifact,
+      remixArtifact,
+      toggleSidebar,
+      toggleArtifactPanel,
+      setArtifactPanelWidth,
+      setTheme,
+      setUserProfile,
+      updateUserProfile,
+      activeProject,
+      activeConversation,
+      activeArtifact,
+      projectConversations,
+      projectArtifacts,
+    }),
+    [
+      state,
+      createProject,
+      updateProject,
+      deleteProject,
+      setActiveProject,
+      updateProjectKnowledge,
+      createConversation,
+      setActiveConversation,
+      addMessage,
+      editMessage,
+      forkConversation,
+      createArtifact,
+      updateArtifact,
+      setActiveArtifact,
+      publishArtifact,
+      remixArtifact,
+      toggleSidebar,
+      toggleArtifactPanel,
+      setArtifactPanelWidth,
+      setTheme,
+      setUserProfile,
+      updateUserProfile,
+      activeProject,
+      activeConversation,
+      activeArtifact,
+      projectConversations,
+      projectArtifacts,
+    ]
+  );
 
   return <ProjectContext.Provider value={value}>{children}</ProjectContext.Provider>;
 };

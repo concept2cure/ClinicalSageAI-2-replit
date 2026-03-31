@@ -32,7 +32,9 @@ import { cn } from '@/lib/utils';
 import { ZenSidebar } from './components/sidebar/ZenSidebar';
 import { ZenChat } from './components/chat/ZenChat';
 import { ZenCommandPalette } from './components/command/ZenCommandPalette';
-const ZenSettings = React.lazy(() => import('./components/settings/ZenSettings').then(m => ({ default: m.ZenSettings })));
+const ZenSettings = React.lazy(() =>
+  import('./components/settings/ZenSettings').then(m => ({ default: m.ZenSettings }))
+);
 import { ProjectSwitcher, NewProjectModal } from './components/projects/ProjectSwitcher';
 import ProjectConfigPanel from './components/workspace/ProjectConfigPanel';
 // [BATCH 3] WorkflowTimeline — renderer removed, import kept for type compatibility
@@ -87,6 +89,7 @@ import {
   WifiOff,
   FileText,
   Plus,
+  ArrowLeft,
   CircleDot,
   Play,
   Pause,
@@ -124,7 +127,6 @@ import {
   Loader2,
 } from 'lucide-react';
 import { LoadingState } from '@/components/ui/statesV2';
-import { WorkspaceHeader as CanonicalWorkspaceHeader } from '@/components/ui/workspace-primitives';
 
 // Canonical loading fallback for Suspense boundaries
 const ModuleLoadingFallback = () => (
@@ -722,7 +724,9 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
                     <Icon className="w-8 h-8 text-stone-500" />
                   </div>
                   <h3 className="text-lg font-semibold text-stone-900 mb-2">{config.title}</h3>
-                  <p className="text-sm text-stone-500 max-w-sm">{config.title} module loading...</p>
+                  <p className="text-sm text-stone-500 max-w-sm">
+                    {config.title} module loading...
+                  </p>
                 </div>
               </div>
             )}
@@ -933,7 +937,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>(
     urlProjectId ?? initialProjectId ?? projects[0]?.id
   );
-  const [activeConversationId, setActiveConversationId] = useState<string | undefined>(initialConversationId);
+  const [activeConversationId, setActiveConversationId] = useState<string | undefined>(
+    initialConversationId
+  );
   const [activeThreadId, setActiveThreadId] = useState<string | undefined>();
 
   // Sherpa project detail view state
@@ -1244,37 +1250,44 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   }, [layoutMode]);
 
   // ── P2: Navigate to section — real navigation ──
-  const handleNavigateToSection = useCallback((sectionCode: string) => {
-    setActiveSectionCode(sectionCode);
-    const moduleNum = sectionCode.charAt(0);
-    const match = projectArtifacts.find((a: any) =>
-      a.ctdSection === sectionCode ||
-      a.ctdSection === `csr-${sectionCode}` ||
-      a.ctdSection === `m${moduleNum}-${sectionCode}`
-    );
-    if (match) {
-      setOpenArtifactId(match.id);
-    } else {
-      setPendingEditorContent({
-        title: `Section ${sectionCode}`,
-        content: '',
-        ctdSection: sectionCode,
-      });
-    }
-    setRiViewMode('editor');
-    setLayoutMode('regulatory-workspace');
-  }, [projectArtifacts]);
+  const handleNavigateToSection = useCallback(
+    (sectionCode: string) => {
+      setActiveSectionCode(sectionCode);
+      const moduleNum = sectionCode.charAt(0);
+      const match = projectArtifacts.find(
+        (a: any) =>
+          a.ctdSection === sectionCode ||
+          a.ctdSection === `csr-${sectionCode}` ||
+          a.ctdSection === `m${moduleNum}-${sectionCode}`
+      );
+      if (match) {
+        setOpenArtifactId(match.id);
+      } else {
+        setPendingEditorContent({
+          title: `Section ${sectionCode}`,
+          content: '',
+          ctdSection: sectionCode,
+        });
+      }
+      setRiViewMode('editor');
+      setLayoutMode('regulatory-workspace');
+    },
+    [projectArtifacts]
+  );
 
   // ── P2: Open artifact — real navigation ──
-  const handleOpenArtifact = useCallback((artifactId: string) => {
-    // On project-home (AnA-first): show artifact in canvas panel without leaving conversation
-    // On other modes: navigate to documents/editor
-    setActiveArtifactId(artifactId);
-    if (layoutMode !== 'project-home') {
-      setOpenArtifactId(artifactId);
-      setLayoutMode('documents');
-    }
-  }, [layoutMode]);
+  const handleOpenArtifact = useCallback(
+    (artifactId: string) => {
+      // On project-home (AnA-first): show artifact in canvas panel without leaving conversation
+      // On other modes: navigate to documents/editor
+      setActiveArtifactId(artifactId);
+      if (layoutMode !== 'project-home') {
+        setOpenArtifactId(artifactId);
+        setLayoutMode('documents');
+      }
+    },
+    [layoutMode]
+  );
 
   // ── P5: Governed promotion — calls real status API ──
   const handleRequestPromotion = useCallback(
@@ -1448,7 +1461,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   } | null>(null);
 
   // External message to send into AnA chat (triggered by suggested prompts, dashboard actions)
-  const [externalChatMessage, setExternalChatMessage] = useState<{ text: string; ts: number } | null>(null);
+  const [externalChatMessage, setExternalChatMessage] = useState<{
+    text: string;
+    ts: number;
+  } | null>(null);
 
   // Project-scoped artifacts for the Outputs tab (must come after activeProjectId is declared)
   const { data: projectArtifacts = [] } = useQuery({
@@ -1463,7 +1479,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       });
       if (!res.ok) return [];
       const data = await res.json();
-      return Array.isArray(data) ? data : (data?.data ?? data?.artifacts ?? []);
+      return Array.isArray(data) ? data : data?.data ?? data?.artifacts ?? [];
     },
     enabled: !!activeProjectId,
     staleTime: 30_000,
@@ -1589,38 +1605,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'projects');
     setActiveToolPanel(null);
   }, [activeProjectId]);
-
-  const openProjectWorkspace = useCallback(
-    (
-      projectId: string,
-      options?: {
-        closeProjectSwitcher?: boolean;
-        clearConversation?: boolean;
-      }
-    ) => {
-      if (!projectId) return;
-      setActiveProjectId(projectId);
-      setRiViewMode('editor');
-      setLayoutMode('regulatory-workspace');
-      navigate(`/concept2cure/project/${projectId}`);
-
-      if (options?.closeProjectSwitcher) {
-        setProjectSwitcherOpen(false);
-      }
-
-      const shouldClearConversation = options?.clearConversation ?? true;
-      if (shouldClearConversation) {
-        setActiveConversationId(undefined);
-        setActiveThreadId(undefined);
-      }
-    },
-    [navigate]
-  );
-
-  const getProjectReturnLayout = useCallback(
-    () => (activeProjectId ? 'project-home' : 'projects'),
-    [activeProjectId]
-  );
 
   // ─────────────────────────────────────────────────────────────────────────────
   // NAVIGATION HELPER — intercepts special paths before falling through to layoutMode
@@ -1979,8 +1963,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     const lastActivity = ownershipActivity
       ? `${ownershipActivity.action} · ${new Date(ownershipActivity.timestamp).toLocaleString()}`
       : taskSummary.total > 0
-        ? `${taskSummary.completed}/${taskSummary.total} tasks complete`
-        : 'No tasks yet';
+      ? `${taskSummary.completed}/${taskSummary.total} tasks complete`
+      : 'No tasks yet';
     return {
       deadlineDays,
       complianceScore,
@@ -2034,7 +2018,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       haq: 'HAQ',
       biostatistics: 'Biostatistics',
     };
-    return activeNavId ? (labelByNavId[activeNavId] ?? 'Workspace') : 'Workspace';
+    return activeNavId ? labelByNavId[activeNavId] ?? 'Workspace' : 'Workspace';
   }, [activeNavId, activeProject, activeToolPanel]);
 
   const handleHeaderAction = useCallback(
@@ -2187,6 +2171,35 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
+  // ── Workspace header — shared nav bar for non-chat modules ─────────────────
+  const WorkspaceHeader = ({
+    title,
+    subtitle,
+    icon,
+    onBack,
+    backLabel,
+  }: {
+    title: string;
+    subtitle?: string;
+    icon?: React.ReactNode;
+    onBack: () => void;
+    backLabel?: string;
+  }) => (
+    <div className="flex items-center gap-3 px-4 h-12 border-b border-stone-100 bg-white flex-shrink-0">
+      <button
+        onClick={onBack}
+        className="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-900 transition-colors"
+      >
+        <ChevronLeft className="w-4 h-4" />
+        <span>{backLabel || 'Back'}</span>
+      </button>
+      <div className="w-px h-4 bg-stone-200" />
+      {icon && <span className="text-stone-400">{icon}</span>}
+      <span className="text-sm font-medium text-stone-900">{title}</span>
+      {subtitle && <span className="text-xs text-stone-400 ml-1 hidden sm:inline">{subtitle}</span>}
+    </div>
+  );
+
   return (
     <div className="zen flex h-screen w-full overflow-hidden bg-white">
       {/* CSS Variables */}
@@ -2240,15 +2253,16 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           activeToolPanel === 'vault'
             ? 'vault'
             : activeToolPanel === 'ana-biostats'
-              ? 'biostatistics'
-              : activeNavId
+            ? 'biostatistics'
+            : activeNavId
         }
         onSelectConversation={id => {
           setActiveConversationId(id);
           setActiveThreadId(id);
         }}
         onSelectProject={id => {
-          openProjectWorkspace(id, { clearConversation: false });
+          setActiveProjectId(id);
+          setLayoutMode('project-home');
         }}
         onNewChat={handleNewChat}
         onOpenProjects={() => setProjectSwitcherOpen(true)}
@@ -2873,19 +2887,19 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             (riViewMode === 'intelligence' ? (
               <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ri-copilot">
                 {/* Intelligence mode header */}
-                <div className="flex items-center gap-2 px-3 h-9 border-b border-stone-200 bg-white flex-shrink-0">
+                <div className="flex items-center gap-2 px-3 h-9 border-b border-stone-100 bg-white flex-shrink-0">
                   <button
-                    onClick={() => setLayoutMode(getProjectReturnLayout())}
-                    className="flex items-center gap-1 text-xs text-stone-500 hover:text-stone-700 transition-colors"
+                    onClick={() => setLayoutMode('projects')}
+                    className="flex items-center gap-1 text-xs text-stone-400 hover:text-stone-700 transition-colors"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
                     <span>Home</span>
                   </button>
                   <span className="text-stone-200">·</span>
-                  <Brain className="w-3.5 h-3.5 text-stone-500" />
+                  <Brain className="w-3.5 h-3.5 text-blue-500" />
                   <span className="text-xs font-medium text-stone-800">Intelligence</span>
                   {activeProject && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-600 font-medium">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 font-medium">
                       {activeProject.name}
                     </span>
                   )}
@@ -2896,7 +2910,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         onClick={() => setRiViewMode('intelligence')}
                         className={cn(
                           'px-2 py-0.5 text-[11px] font-medium transition-colors',
-                          'bg-stone-200 text-stone-800'
+                          'bg-blue-100 text-stone-700'
                         )}
                       >
                         Intelligence
@@ -3020,10 +3034,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 onSectionClick={sectionCode => {
                   // Smart routing: if artifact exists, go straight to editor
                   const moduleNum = sectionCode.charAt(0);
-                  const match = projectArtifacts.find((a: any) =>
-                    a.ctdSection === sectionCode ||
-                    a.ctdSection === `csr-${sectionCode}` ||
-                    a.ctdSection === `m${moduleNum}-${sectionCode}`
+                  const match = projectArtifacts.find(
+                    (a: any) =>
+                      a.ctdSection === sectionCode ||
+                      a.ctdSection === `csr-${sectionCode}` ||
+                      a.ctdSection === `m${moduleNum}-${sectionCode}`
                   );
                   if (match) {
                     setOpenArtifactId(match.id);
@@ -3170,7 +3185,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
                         submissionTab === tab
                           ? 'border-stone-900 text-stone-900'
-                          : 'border-transparent text-stone-500 hover:text-stone-700',
+                          : 'border-transparent text-stone-500 hover:text-stone-700'
                       )}
                     >
                       {tab === 'readiness' ? 'Readiness' : 'Package Builder'}
@@ -3185,10 +3200,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     projectType={activeProject?.type}
                     onSectionClick={(sectionCode, sectionTitle) => {
                       const moduleNum = sectionCode.charAt(0);
-                      const match = projectArtifacts.find((a: any) =>
-                        a.ctdSection === sectionCode ||
-                        a.ctdSection === `csr-${sectionCode}` ||
-                        a.ctdSection === `m${moduleNum}-${sectionCode}`
+                      const match = projectArtifacts.find(
+                        (a: any) =>
+                          a.ctdSection === sectionCode ||
+                          a.ctdSection === `csr-${sectionCode}` ||
+                          a.ctdSection === `m${moduleNum}-${sectionCode}`
                       );
                       if (match) {
                         setOpenArtifactId(match.id);
@@ -3208,15 +3224,22 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     onExport={async () => {
                       if (!activeProjectId) return;
                       try {
-                        const res = await apiRequest('POST', `/api/concept2cure/projects/${activeProjectId}/submission-package`);
+                        const res = await apiRequest(
+                          'POST',
+                          `/api/concept2cure/projects/${activeProjectId}/submission-package`
+                        );
                         const payload = await res.json();
                         const manifest = payload?.data ?? payload;
                         if (manifest) {
-                          const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+                          const blob = new Blob([JSON.stringify(manifest, null, 2)], {
+                            type: 'application/json',
+                          });
                           const url = URL.createObjectURL(blob);
                           const a = document.createElement('a');
                           a.href = url;
-                          a.download = `${manifest.projectName || 'submission'}-package-manifest.json`;
+                          a.download = `${
+                            manifest.projectName || 'submission'
+                          }-package-manifest.json`;
                           a.click();
                           URL.revokeObjectURL(url);
                         }
@@ -3238,7 +3261,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         status: a.status || 'draft',
                         version: a.version || 1,
                       }))}
-                      onOpenArtifact={(artifactId) => {
+                      onOpenArtifact={artifactId => {
                         setOpenArtifactId(artifactId);
                         setRiViewMode('editor');
                         setLayoutMode('regulatory-workspace');
@@ -3255,9 +3278,14 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       onGeneratePackage={async () => {
                         if (!activeProjectId) return;
                         try {
-                          const res = await apiRequest('POST', `/api/concept2cure/projects/${activeProjectId}/submission-package`);
+                          const res = await apiRequest(
+                            'POST',
+                            `/api/concept2cure/projects/${activeProjectId}/submission-package`
+                          );
                           const manifest = await res.json();
-                          const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+                          const blob = new Blob([JSON.stringify(manifest, null, 2)], {
+                            type: 'application/json',
+                          });
                           const url = URL.createObjectURL(blob);
                           const a = document.createElement('a');
                           a.href = url;
@@ -3280,11 +3308,21 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           {!embeddedModule && layoutMode === 'task-board' && activeProjectId && (
             <Suspense fallback={<ModuleLoadingFallback />}>
               <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-stone-50/50">
-                <CanonicalWorkspaceHeader
-                  title="Tasks & Milestones"
-                  subtitle={activeProject?.name || 'Project'}
-                  onBack={() => setLayoutMode(getProjectReturnLayout())}
-                />
+                <div className="sticky top-0 z-10 border-b border-stone-200 bg-white/95 backdrop-blur-sm px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setLayoutMode('project-home')}
+                      className="text-stone-500 hover:text-stone-700"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                    </button>
+                    <div>
+                      <h1 className="text-lg font-semibold text-stone-900">Tasks & Milestones</h1>
+                      <p className="text-xs text-stone-500">{activeProject?.name || 'Project'}</p>
+                    </div>
+                  </div>
+                </div>
                 <div className="flex-1 min-h-0 p-6">
                   <ProjectTaskBoardView
                     projectId={activeProjectId}
@@ -3304,10 +3342,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 onSectionClick={sectionCode => {
                   // Smart routing: if artifact exists for this section, go straight to editor
                   const moduleNum = sectionCode.charAt(0);
-                  const match = projectArtifacts.find((a: any) =>
-                    a.ctdSection === sectionCode ||
-                    a.ctdSection === `csr-${sectionCode}` ||
-                    a.ctdSection === `m${moduleNum}-${sectionCode}`
+                  const match = projectArtifacts.find(
+                    (a: any) =>
+                      a.ctdSection === sectionCode ||
+                      a.ctdSection === `csr-${sectionCode}` ||
+                      a.ctdSection === `m${moduleNum}-${sectionCode}`
                   );
                   if (match) {
                     setOpenArtifactId(match.id);
@@ -3334,7 +3373,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   setRiViewMode('editor');
                   setLayoutMode('regulatory-workspace');
                 }}
-                onBack={() => setLayoutMode(getProjectReturnLayout())}
+                onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
               />
             </Suspense>
           )}
@@ -3348,10 +3387,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 onSectionClick={sectionCode => {
                   // Smart routing: if artifact exists for this section, go straight to editor
                   const moduleNum = sectionCode.charAt(0);
-                  const match = projectArtifacts.find((a: any) =>
-                    a.ctdSection === sectionCode ||
-                    a.ctdSection === `csr-${sectionCode}` ||
-                    a.ctdSection === `m${moduleNum}-${sectionCode}`
+                  const match = projectArtifacts.find(
+                    (a: any) =>
+                      a.ctdSection === sectionCode ||
+                      a.ctdSection === `csr-${sectionCode}` ||
+                      a.ctdSection === `m${moduleNum}-${sectionCode}`
                   );
                   if (match) {
                     setOpenArtifactId(match.id);
@@ -3378,7 +3418,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   setRiViewMode('editor');
                   setLayoutMode('regulatory-workspace');
                 }}
-                onBack={() => setLayoutMode(getProjectReturnLayout())}
+                onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
               />
             </Suspense>
           )}
@@ -3387,21 +3427,32 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           {!embeddedModule && (layoutMode === 'template-library' || layoutMode === 'templates') && (
             <Suspense fallback={<ModuleLoadingFallback />}>
               <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-stone-50/50">
-                <CanonicalWorkspaceHeader
-                  title="Template Library"
-                  subtitle="Regulatory document templates"
-                  onBack={() => setLayoutMode(getProjectReturnLayout())}
-                />
+                <div className="sticky top-0 z-10 border-b border-stone-200 bg-white/95 backdrop-blur-sm px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+                      className="text-stone-500 hover:text-stone-700"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                    </button>
+                    <div>
+                      <h1 className="text-lg font-semibold text-stone-900">Template Library</h1>
+                      <p className="text-xs text-stone-500">Regulatory document templates</p>
+                    </div>
+                  </div>
+                </div>
                 <TemplateLibraryView
-                  onSelectTemplate={(template) => {
+                  onSelectTemplate={template => {
                     const sectionCode = template.ctdSection;
                     if (sectionCode) {
                       setActiveSectionCode(sectionCode);
                       const moduleNum = sectionCode.charAt(0);
-                      const match = projectArtifacts.find((a: any) =>
-                        a.ctdSection === sectionCode ||
-                        a.ctdSection === `csr-${sectionCode}` ||
-                        a.ctdSection === `m${moduleNum}-${sectionCode}`
+                      const match = projectArtifacts.find(
+                        (a: any) =>
+                          a.ctdSection === sectionCode ||
+                          a.ctdSection === `csr-${sectionCode}` ||
+                          a.ctdSection === `m${moduleNum}-${sectionCode}`
                       );
                       if (match) {
                         setOpenArtifactId(match.id);
@@ -3421,7 +3472,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     setRiViewMode('editor');
                     setLayoutMode('regulatory-workspace');
                   }}
-                  onClose={() => setLayoutMode(getProjectReturnLayout())}
+                  onClose={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
                 />
               </div>
             </Suspense>
@@ -3446,14 +3497,21 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   };
 
                   // Find matching artifact by CTD section
-                  const matchingArtifact = projectArtifacts.find((a: any) =>
-                    a.ctdSection === code ||
-                    a.ctdSection === `csr-${code}` ||
-                    a.ctdSection === `m${moduleNum}-${code}`
+                  const matchingArtifact = projectArtifacts.find(
+                    (a: any) =>
+                      a.ctdSection === code ||
+                      a.ctdSection === `csr-${code}` ||
+                      a.ctdSection === `m${moduleNum}-${code}`
                   );
 
                   // Derive status from real artifact if found
-                  let status: 'not-started' | 'drafting' | 'in-review' | 'approved' | 'blocked' | 'locked' = 'not-started';
+                  let status:
+                    | 'not-started'
+                    | 'drafting'
+                    | 'in-review'
+                    | 'approved'
+                    | 'blocked'
+                    | 'locked' = 'not-started';
                   if (matchingArtifact) {
                     const s = matchingArtifact.status;
                     if (s === 'approved') status = 'approved';
@@ -3485,10 +3543,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   // If there's a matching artifact, provide a way to open it in the full editor
                   const code = activeSectionCode || '2.5';
                   const moduleNum = code.charAt(0);
-                  const matchingArtifact = projectArtifacts.find((a: any) =>
-                    a.ctdSection === code ||
-                    a.ctdSection === `csr-${code}` ||
-                    a.ctdSection === `m${moduleNum}-${code}`
+                  const matchingArtifact = projectArtifacts.find(
+                    (a: any) =>
+                      a.ctdSection === code ||
+                      a.ctdSection === `csr-${code}` ||
+                      a.ctdSection === `m${moduleNum}-${code}`
                   );
                   if (matchingArtifact) {
                     return () => {
@@ -3499,20 +3558,28 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   }
                   return undefined;
                 })()}
-                onCreateDraft={activeProjectId ? () => {
-                  const code = activeSectionCode || '2.5';
-                  const moduleNum = code.charAt(0);
-                  const MODULE_NAMES: Record<string, string> = {
-                    '1': 'Administrative', '2': 'CTD Summaries', '3': 'Quality', '4': 'Nonclinical', '5': 'Clinical',
-                  };
-                  setPendingEditorContent({
-                    title: `Section ${code} — ${MODULE_NAMES[moduleNum] || 'Document'}`,
-                    content: '',
-                    ctdSection: code,
-                  });
-                  setRiViewMode('editor');
-                  setLayoutMode('regulatory-workspace');
-                } : undefined}
+                onCreateDraft={
+                  activeProjectId
+                    ? () => {
+                        const code = activeSectionCode || '2.5';
+                        const moduleNum = code.charAt(0);
+                        const MODULE_NAMES: Record<string, string> = {
+                          '1': 'Administrative',
+                          '2': 'CTD Summaries',
+                          '3': 'Quality',
+                          '4': 'Nonclinical',
+                          '5': 'Clinical',
+                        };
+                        setPendingEditorContent({
+                          title: `Section ${code} — ${MODULE_NAMES[moduleNum] || 'Document'}`,
+                          content: '',
+                          ctdSection: code,
+                        });
+                        setRiViewMode('editor');
+                        setLayoutMode('regulatory-workspace');
+                      }
+                    : undefined
+                }
               />
             </Suspense>
           )}
@@ -3659,169 +3726,207 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         </div>
 
         {/* ── Project Cards Grid — Simplified entry ── */}
-        {layoutMode === 'projects' && !embeddedModule && projects.length > 0 && (() => {
-          const sortedProjects = projects
-            .filter(p => !p.archived)
-            .sort((a, b) => {
-              if (a.starred && !b.starred) return -1;
-              if (!a.starred && b.starred) return 1;
-              return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
-            });
-          const continueProject = sortedProjects[0];
-          const restProjects = sortedProjects.slice(1, 12);
-          const SUBMISSION_BADGE_MINI: Record<string, { label: string; color: string; bg: string }> = {
-            '510K': { label: '510(k)', color: 'text-stone-700', bg: 'bg-stone-100' },
-            IND: { label: 'IND', color: 'text-[#6B6962]', bg: 'bg-[#FBF0EB]' },
-            NDA: { label: 'NDA', color: 'text-stone-700', bg: 'bg-stone-100' },
-            BLA: { label: 'BLA', color: 'text-[#6B6962]', bg: 'bg-[#F5F4EF]' },
-            PMA: { label: 'PMA', color: 'text-[#6B6962]', bg: 'bg-[#F5F4EF]' },
-            MAA: { label: 'MAA', color: 'text-[#6B6962]', bg: 'bg-[#F5F4EF]' },
-            DE_NOVO: { label: 'De Novo', color: 'text-[#6B6962]', bg: 'bg-[#FBF0EB]' },
-            EUA: { label: 'EUA', color: 'text-[#6B6962]', bg: 'bg-[#FBF0EB]' },
-          };
-          const fallbackBadge = { label: 'Project', color: 'text-stone-600', bg: 'bg-stone-50' };
-          const relTime = (d: Date | string) => {
-            const parsed = new Date(d);
-            if (isNaN(parsed.getTime())) return 'Recently';
-            const ms = Date.now() - parsed.getTime();
-            if (ms < 0) return 'Just now';
-            const min = Math.floor(ms / 60000);
-            if (min < 1) return 'Just now';
-            if (min < 60) return `${min}m ago`;
-            const hr = Math.floor(min / 60);
-            if (hr < 24) return `${hr}h ago`;
-            const day = Math.floor(hr / 24);
-            if (day < 30) return `${day}d ago`;
-            try {
-              return parsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-            } catch {
-              return 'Recently';
-            }
-          };
+        {layoutMode === 'projects' &&
+          !embeddedModule &&
+          projects.length > 0 &&
+          (() => {
+            const sortedProjects = projects
+              .filter(p => !p.archived)
+              .sort((a, b) => {
+                if (a.starred && !b.starred) return -1;
+                if (!a.starred && b.starred) return 1;
+                return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
+              });
+            const continueProject = sortedProjects[0];
+            const restProjects = sortedProjects.slice(1, 12);
+            const SUBMISSION_BADGE_MINI: Record<
+              string,
+              { label: string; color: string; bg: string }
+            > = {
+              '510K': { label: '510(k)', color: 'text-stone-700', bg: 'bg-blue-50' },
+              IND: { label: 'IND', color: 'text-purple-700', bg: 'bg-purple-50' },
+              NDA: { label: 'NDA', color: 'text-green-700', bg: 'bg-green-50' },
+              BLA: { label: 'BLA', color: 'text-orange-700', bg: 'bg-orange-50' },
+              PMA: { label: 'PMA', color: 'text-red-700', bg: 'bg-red-50' },
+              MAA: { label: 'MAA', color: 'text-pink-700', bg: 'bg-pink-50' },
+              DE_NOVO: { label: 'De Novo', color: 'text-amber-700', bg: 'bg-amber-50' },
+              EUA: { label: 'EUA', color: 'text-cyan-700', bg: 'bg-cyan-50' },
+            };
+            const fallbackBadge = { label: 'Project', color: 'text-stone-600', bg: 'bg-stone-50' };
+            const relTime = (d: Date | string) => {
+              const parsed = new Date(d);
+              if (isNaN(parsed.getTime())) return 'Recently';
+              const ms = Date.now() - parsed.getTime();
+              if (ms < 0) return 'Just now';
+              const min = Math.floor(ms / 60000);
+              if (min < 1) return 'Just now';
+              if (min < 60) return `${min}m ago`;
+              const hr = Math.floor(min / 60);
+              if (hr < 24) return `${hr}h ago`;
+              const day = Math.floor(hr / 24);
+              if (day < 30) return `${day}d ago`;
+              try {
+                return parsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+              } catch {
+                return 'Recently';
+              }
+            };
 
-          return (
-            <div className="px-6 sm:px-8 pt-8 pb-4 max-w-3xl mx-auto w-full flex-shrink-0">
-              {/* Header — quiet foyer */}
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-lg font-semibold text-stone-800">Projects</h2>
-                <button
-                  onClick={() => setNewProjectOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-stone-600 border border-stone-200 hover:bg-stone-50 rounded-lg transition-colors"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  New project
-                </button>
-              </div>
-
-              {/* Continue recent work — hero card */}
-              {continueProject && (
-                <section className="mb-8">
-                  <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wider mb-3">
-                    Continue recent work
-                  </p>
+            return (
+              <div className="px-6 sm:px-8 pt-8 pb-4 max-w-3xl mx-auto w-full flex-shrink-0">
+                {/* Header — quiet foyer */}
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-lg font-semibold text-stone-800">Projects</h2>
                   <button
-                    onClick={() => {
-                      openProjectWorkspace(continueProject.id, { clearConversation: false });
-                    }}
-                    className={cn(
-                      'w-full text-left rounded-xl border border-stone-200 bg-white p-5',
-                      'hover:border-stone-300 hover:shadow-sm transition-all duration-150 group',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40',
-                    )}
+                    onClick={() => setNewProjectOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-stone-600 border border-stone-200 hover:bg-stone-50 rounded-lg transition-colors"
                   >
-                    <div className="flex items-start gap-4">
-                      {/* Accent dot */}
-                      <div
-                        className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0"
-                        style={{ backgroundColor: getProjectAccentColor(continueProject.color, continueProject.type) }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-[15px] font-semibold text-stone-900 truncate group-hover:text-stone-700">
-                            {continueProject.name}
-                          </h3>
-                          {(() => {
-                            const badge = SUBMISSION_BADGE_MINI[continueProject.type] || fallbackBadge;
-                            return (
-                              <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded flex-shrink-0', badge.bg, badge.color)}>
-                                {badge.label}
-                              </span>
-                            );
-                          })()}
-                          {continueProject.starred && (
-                            <Star className="w-3 h-3 text-amber-400 fill-amber-400 flex-shrink-0" />
-                          )}
-                        </div>
-                        {continueProject.description && (
-                          <p className="text-[13px] text-stone-500 line-clamp-1 mb-2 leading-relaxed">
-                            {continueProject.description}
-                          </p>
-                        )}
-                        <div className="flex items-center text-[11px] text-stone-400">
-                          <span>{relTime(continueProject.lastUpdated)}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-stone-400 group-hover:text-stone-600 transition-colors flex-shrink-0 mt-1">
-                        <span className="text-[13px] font-medium hidden sm:inline">Continue</span>
-                        <ChevronLeft className="w-4 h-4 rotate-180" />
-                      </div>
-                    </div>
+                    <Plus className="w-3.5 h-3.5" />
+                    New project
                   </button>
-                </section>
-              )}
+                </div>
 
-              {/* All projects grid */}
-              {restProjects.length > 0 && (
-                <section>
-                  <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wider mb-3">
-                    All projects
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {restProjects.map(project => {
-                      const badge = SUBMISSION_BADGE_MINI[project.type] || fallbackBadge;
-                      return (
-                        <button
-                          key={project.id}
-                          onClick={() => {
-                            openProjectWorkspace(project.id, { clearConversation: false });
+                {/* Continue recent work — hero card */}
+                {continueProject && (
+                  <section className="mb-8">
+                    <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wider mb-3">
+                      Continue recent work
+                    </p>
+                    <button
+                      onClick={() => {
+                        setActiveProjectId(continueProject.id);
+                        setLayoutMode('project-home');
+                      }}
+                      className={cn(
+                        'w-full text-left rounded-xl border border-stone-200 bg-white p-5',
+                        'hover:border-stone-300 hover:shadow-sm transition-all duration-150 group',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40'
+                      )}
+                    >
+                      <div className="flex items-start gap-4">
+                        {/* Accent dot */}
+                        <div
+                          className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0"
+                          style={{
+                            backgroundColor: getProjectAccentColor(
+                              continueProject.color,
+                              continueProject.type
+                            ),
                           }}
-                          className={cn(
-                            'group text-left rounded-xl border overflow-hidden transition-all duration-150',
-                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40',
-                            activeProjectId === project.id
-                              ? 'border-stone-300 bg-stone-50/80 ring-1 ring-stone-200'
-                              : 'border-stone-200 hover:border-stone-300 hover:shadow-sm bg-white'
-                          )}
-                        >
-                          <div className="p-4">
-                            <div className="flex items-center gap-2 mb-1">
-                              <div
-                                className="w-2 h-2 rounded-full flex-shrink-0"
-                                style={{ backgroundColor: getProjectAccentColor(project.color, project.type) }}
-                              />
-                              <h3 className="text-[14px] font-semibold text-stone-900 truncate group-hover:text-stone-700">
-                                {project.name}
-                              </h3>
-                              {project.starred && (
-                                <Star className="w-3 h-3 text-amber-400 fill-amber-400 flex-shrink-0" />
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 mt-2 text-[11px] text-stone-400">
-                              <span className={cn('font-medium px-1.5 py-0.5 rounded', badge.bg, badge.color)}>
-                                {badge.label}
-                              </span>
-                              <span className="ml-auto tabular-nums">{relTime(project.lastUpdated)}</span>
-                            </div>
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-[15px] font-semibold text-stone-900 truncate group-hover:text-stone-700">
+                              {continueProject.name}
+                            </h3>
+                            {(() => {
+                              const badge =
+                                SUBMISSION_BADGE_MINI[continueProject.type] || fallbackBadge;
+                              return (
+                                <span
+                                  className={cn(
+                                    'text-[10px] font-medium px-1.5 py-0.5 rounded flex-shrink-0',
+                                    badge.bg,
+                                    badge.color
+                                  )}
+                                >
+                                  {badge.label}
+                                </span>
+                              );
+                            })()}
+                            {continueProject.starred && (
+                              <Star className="w-3 h-3 text-amber-400 fill-amber-400 flex-shrink-0" />
+                            )}
                           </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </section>
-              )}
-            </div>
-          );
-        })()}
+                          {continueProject.description && (
+                            <p className="text-[13px] text-stone-500 line-clamp-1 mb-2 leading-relaxed">
+                              {continueProject.description}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-3 text-[11px] text-stone-400">
+                            <span>{relTime(continueProject.lastUpdated)}</span>
+                            <span className="flex items-center gap-1">
+                              <MessageSquare className="w-3 h-3" />
+                              {continueProject.conversationCount}{' '}
+                              {continueProject.conversationCount === 1 ? 'chat' : 'chats'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-stone-400 group-hover:text-stone-600 transition-colors flex-shrink-0 mt-1">
+                          <span className="text-[13px] font-medium hidden sm:inline">Continue</span>
+                          <ChevronLeft className="w-4 h-4 rotate-180" />
+                        </div>
+                      </div>
+                    </button>
+                  </section>
+                )}
+
+                {/* All projects grid */}
+                {restProjects.length > 0 && (
+                  <section>
+                    <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wider mb-3">
+                      All projects
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {restProjects.map(project => {
+                        const badge = SUBMISSION_BADGE_MINI[project.type] || fallbackBadge;
+                        return (
+                          <button
+                            key={project.id}
+                            onClick={() => {
+                              setActiveProjectId(project.id);
+                              setLayoutMode('project-home');
+                            }}
+                            className={cn(
+                              'group text-left rounded-xl border overflow-hidden transition-all duration-150',
+                              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40',
+                              activeProjectId === project.id
+                                ? 'border-stone-300 bg-stone-50/80 ring-1 ring-stone-200'
+                                : 'border-stone-200 hover:border-stone-300 hover:shadow-sm bg-white'
+                            )}
+                          >
+                            <div className="p-4">
+                              <div className="flex items-center gap-2 mb-1">
+                                <div
+                                  className="w-2 h-2 rounded-full flex-shrink-0"
+                                  style={{
+                                    backgroundColor: getProjectAccentColor(
+                                      project.color,
+                                      project.type
+                                    ),
+                                  }}
+                                />
+                                <h3 className="text-[14px] font-semibold text-stone-900 truncate group-hover:text-stone-700">
+                                  {project.name}
+                                </h3>
+                                {project.starred && (
+                                  <Star className="w-3 h-3 text-amber-400 fill-amber-400 flex-shrink-0" />
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 mt-2 text-[11px] text-stone-400">
+                                <span
+                                  className={cn(
+                                    'font-medium px-1.5 py-0.5 rounded',
+                                    badge.bg,
+                                    badge.color
+                                  )}
+                                >
+                                  {badge.label}
+                                </span>
+                                <span className="ml-auto tabular-nums">
+                                  {relTime(project.lastUpdated)}
+                                </span>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+                )}
+              </div>
+            );
+          })()}
 
         {/* ── Project Home: AnA chat + Knowledge sidebar (Claude.ai layout) ── */}
         {layoutMode === 'project-home' && (
@@ -3881,12 +3986,12 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       artifactId={activeArtifactId}
                       projectId={activeProjectId}
                       onClose={() => setActiveArtifactId(undefined)}
-                      onOpenFullEditor={(id) => {
+                      onOpenFullEditor={id => {
                         setOpenArtifactId(id);
                         setRiViewMode('editor');
                         setLayoutMode('regulatory-workspace');
                       }}
-                      onSaveToVault={(id) => {
+                      onSaveToVault={id => {
                         setActiveArtifactId(undefined);
                         setLayoutMode('vault');
                       }}
@@ -3907,10 +4012,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           layoutMode !== 'project-home' && (
             <AnaPersistentPanel
               mode={
-                layoutMode === 'projects' ||
-                layoutMode === 'deep-research'
-                  ? 'full'
-                  : 'compact'
+                layoutMode === 'projects' || layoutMode === 'deep-research' ? 'full' : 'compact'
               }
               defaultChatMode={layoutMode === 'deep-research' ? 'deep-research' : 'standard'}
               authoringContext={authoringContext}
@@ -3930,11 +4032,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   ? "What would you like to research? I'll search across ClinicalTrials.gov, PubMed, FDA, EMA, and more."
                   : platformGreeting?.text
               }
-              suggestedActions={
-                layoutMode === 'projects'
-                  ? workspaceSuggestedActions
-                  : undefined
-              }
+              suggestedActions={layoutMode === 'projects' ? workspaceSuggestedActions : undefined}
               onActionRun={handleActionRun}
               onNavigate={handleAnaPanelNavigate}
               onDraftInsert={handleDraftInsert}
@@ -3991,7 +4089,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         <React.Suspense fallback={null}>
           <ZenSettings
             isOpen={settingsOpen}
-            onClose={() => { setSettingsOpen(false); setSettingsSection(undefined); }}
+            onClose={() => {
+              setSettingsOpen(false);
+              setSettingsSection(undefined);
+            }}
             activeProjectId={activeProjectId}
             activeProjectName={activeProject?.name}
             initialSection={settingsSection as any}
@@ -4006,10 +4107,13 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         projects={projects}
         activeProjectId={activeProjectId}
         onSelectProject={id => {
-          openProjectWorkspace(id, {
-            closeProjectSwitcher: true,
-            clearConversation: true,
-          });
+          setActiveProjectId(id);
+          setProjectSwitcherOpen(false);
+          setLayoutMode('project-home');
+          navigate(`/concept2cure/project/${id}`);
+          // Clear conversation when switching projects
+          setActiveConversationId(undefined);
+          setActiveThreadId(undefined);
         }}
         onCreateProject={() => {
           setProjectSwitcherOpen(false);

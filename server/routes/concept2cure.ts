@@ -3095,6 +3095,14 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
       status: 'SUPPORTED' | 'WEAK' | 'UNSUPPORTED';
     }
     const sourceCitationResults: SourceCitation[] = [];
+    const pendingClaims: Array<{
+      si: number;
+      sentence: string;
+      claimHash: string;
+      bestScore: number | null;
+      status: string;
+      citLinks: SourceCitation['sourceRefs'];
+    }> = [];
 
     if (sources.length > 0) {
       const sentences = splitSentences(result);
@@ -3128,30 +3136,11 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
           const status: SourceCitation['status'] =
             refs.size > 0 ? 'SUPPORTED' : isClaim ? 'UNSUPPORTED' : 'SUPPORTED';
 
-          // Persist claim + citation linkages
+          // Collect claim data for batch persist below
           if (generationRunId) {
-            try {
-              const claimHash = aiEditSha256(sentence);
-              const bestScore =
-                citLinks.length > 0 ? Math.max(...citLinks.map(c => c.score)) : null;
-              const claimResult = await pool.query(
-                `INSERT INTO ai_claims
-                   (generation_run_id, claim_index, claim_text, claim_hash_sha256, confidence, status)
-                 VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-                [generationRunId, si, sentence, claimHash, bestScore, status]
-              );
-              const claimId = claimResult.rows[0].id;
-
-              for (const link of citLinks) {
-                await pool.query(
-                  `INSERT INTO ai_claim_citations (claim_id, retrieval_chunk_id, relevance_score)
-                   VALUES ($1, $2, $3)`,
-                  [claimId, link.chunkId, link.score]
-                );
-              }
-            } catch (e: any) {
-              if (e?.code !== '42P01') logger.warn('Claim persist failed', { error: e.message });
-            }
+            const claimHash = aiEditSha256(sentence);
+            const bestScore = citLinks.length > 0 ? Math.max(...citLinks.map(c => c.score)) : null;
+            pendingClaims.push({ si, sentence, claimHash, bestScore, status, citLinks });
           }
 
           sourceCitationResults.push({
@@ -3164,34 +3153,92 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
       }
     }
 
-    // ── STEP 6: AUTO-PERSIST source links for artifact ────────────────────
+    // ── STEP 5b: BATCH PERSIST claims + citation linkages ─────────────────
+    if (generationRunId && pendingClaims.length > 0) {
+      try {
+        // Batch INSERT all claims in one query
+        const claimValues: any[] = [];
+        const claimPlaceholders: string[] = [];
+        let pi = 1;
+        for (const c of pendingClaims) {
+          claimPlaceholders.push(
+            `($${pi}, $${pi + 1}, $${pi + 2}, $${pi + 3}, $${pi + 4}, $${pi + 5})`
+          );
+          claimValues.push(generationRunId, c.si, c.sentence, c.claimHash, c.bestScore, c.status);
+          pi += 6;
+        }
+        const claimResult = await pool.query(
+          `INSERT INTO ai_claims
+             (generation_run_id, claim_index, claim_text, claim_hash_sha256, confidence, status)
+           VALUES ${claimPlaceholders.join(', ')} RETURNING id`,
+          claimValues
+        );
+
+        // Batch INSERT all citation linkages in one query
+        const citValues: any[] = [];
+        const citPlaceholders: string[] = [];
+        let ci = 1;
+        for (let idx = 0; idx < pendingClaims.length; idx++) {
+          const claimId = claimResult.rows[idx]?.id;
+          if (!claimId) continue;
+          for (const link of pendingClaims[idx].citLinks) {
+            citPlaceholders.push(`($${ci}, $${ci + 1}, $${ci + 2})`);
+            citValues.push(claimId, link.chunkId, link.score);
+            ci += 3;
+          }
+        }
+        if (citPlaceholders.length > 0) {
+          await pool.query(
+            `INSERT INTO ai_claim_citations (claim_id, retrieval_chunk_id, relevance_score)
+             VALUES ${citPlaceholders.join(', ')}`,
+            citValues
+          );
+        }
+      } catch (e: any) {
+        if (e?.code !== '42P01') logger.warn('Claim persist failed', { error: e.message });
+      }
+    }
+
+    // ── STEP 6: AUTO-PERSIST source links for artifact (batch) ────────────
     if (data.artifactId && sourceCitationResults.length > 0) {
       try {
         const artifactIdNum =
           typeof data.artifactId === 'string' ? parseInt(data.artifactId, 10) : data.artifactId;
         if (!isNaN(artifactIdNum)) {
+          const srcValues: any[] = [];
+          const srcPlaceholders: string[] = [];
+          let sp = 1;
           for (const cit of sourceCitationResults) {
             if (cit.sourceRefs.length > 0) {
               const bestRef = cit.sourceRefs.reduce((a, b) => (a.score > b.score ? a : b));
-              await pool.query(
-                `INSERT INTO source_citations
-                   (document_id, organization_id, sentence_index, sentence_text,
-                    source_type, source_id, source_title, confidence, created_by)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-                 ON CONFLICT DO NOTHING`,
-                [
-                  artifactIdNum,
-                  organizationId,
-                  cit.sentenceIndex,
-                  cit.sentenceText.substring(0, 1000),
-                  'internal_data',
-                  bestRef.sourceId,
-                  bestRef.title.substring(0, 500),
-                  bestRef.score,
-                  userId,
-                ]
+              srcPlaceholders.push(
+                `($${sp}, $${sp + 1}, $${sp + 2}, $${sp + 3}, $${sp + 4}, $${sp + 5}, $${
+                  sp + 6
+                }, $${sp + 7}, $${sp + 8})`
               );
+              srcValues.push(
+                artifactIdNum,
+                organizationId,
+                cit.sentenceIndex,
+                cit.sentenceText.substring(0, 1000),
+                'internal_data',
+                bestRef.sourceId,
+                bestRef.title.substring(0, 500),
+                bestRef.score,
+                userId
+              );
+              sp += 9;
             }
+          }
+          if (srcPlaceholders.length > 0) {
+            await pool.query(
+              `INSERT INTO source_citations
+                 (document_id, organization_id, sentence_index, sentence_text,
+                  source_type, source_id, source_title, confidence, created_by)
+               VALUES ${srcPlaceholders.join(', ')}
+               ON CONFLICT DO NOTHING`,
+              srcValues
+            );
           }
         }
       } catch (e: any) {
@@ -4216,38 +4263,43 @@ router.post('/ai/validate-references', async (req: Request, res: Response) => {
       return sendError(res, 400, 'references array is required');
     }
 
-    const validatedRefs = [];
+    const refsSlice = references.slice(0, 50);
 
-    for (const ref of references.slice(0, 50)) {
+    // Batch: fetch all project artifacts once instead of N SELECTs
+    let artifactRows: Array<{ id: number; title: string; ctd_section: string | null }> = [];
+    if (projectId) {
+      try {
+        const artResult = await pool.query(
+          `SELECT id, title, ctd_section FROM concept2cure_artifacts WHERE project_id = $1`,
+          [projectId]
+        );
+        artifactRows = artResult.rows;
+      } catch {
+        // fall through — all refs will be 'unlinked'
+      }
+    }
+
+    const validatedRefs = refsSlice.map((ref: any) => {
       let status: 'valid' | 'broken' | 'unlinked' = 'unlinked';
       let targetTitle = '';
 
       if (projectId && ref.targetSection) {
-        try {
-          const result = await pool.query(
-            `SELECT id, title FROM concept2cure_artifacts
-             WHERE project_id = $1
-               AND (ctd_section ILIKE $2 OR title ILIKE $3)
-             LIMIT 1`,
-            [projectId, `%${ref.targetSection}%`, `%${ref.targetSection}%`]
-          );
-          if (result.rows.length > 0) {
-            status = 'valid';
-            targetTitle = result.rows[0].title;
-          } else {
-            status = 'broken';
-          }
-        } catch {
-          status = 'unlinked';
+        const needle = ref.targetSection.toLowerCase();
+        const match = artifactRows.find(
+          a =>
+            (a.ctd_section && a.ctd_section.toLowerCase().includes(needle)) ||
+            a.title.toLowerCase().includes(needle)
+        );
+        if (match) {
+          status = 'valid';
+          targetTitle = match.title;
+        } else {
+          status = 'broken';
         }
       }
 
-      validatedRefs.push({
-        ...ref,
-        status,
-        targetTitle,
-      });
-    }
+      return { ...ref, status, targetTitle };
+    });
 
     return sendSuccess(res, { references: validatedRefs });
   } catch (error: any) {
@@ -7699,44 +7751,39 @@ router.post(
       }
 
       const parsedDueDate = dueDate ? new Date(dueDate) : null;
-      const results = [];
 
-      for (const reviewerId of numericIds) {
-        const assignmentId = `asgn_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
-        try {
-          const [inserted] = await db
-            .insert(concept2cureReviewAssignments)
-            .values({
-              assignmentId,
-              artifactId: artifact.id,
-              organizationId,
-              reviewerId,
-              assignedById: userId,
-              reviewRound,
-              status: 'pending',
-              dueDate: parsedDueDate,
-              notes: notes ? sanitizeContent(notes) : null,
-            })
-            .returning();
-          results.push({
-            assignmentId: inserted.assignmentId,
-            reviewerId: inserted.reviewerId,
-            status: inserted.status,
-            reviewRound: inserted.reviewRound,
-          });
-        } catch (dupErr: any) {
-          if (dupErr.code === '23505') {
-            // Duplicate — reviewer already assigned for this round
-            results.push({
-              reviewerId,
-              status: 'already_assigned',
-              reviewRound,
-            });
-          } else {
-            throw dupErr;
-          }
+      // Batch insert all reviewer assignments in one query
+      const allValues = numericIds.map(reviewerId => ({
+        assignmentId: `asgn_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
+        artifactId: artifact.id,
+        organizationId,
+        reviewerId,
+        assignedById: userId,
+        reviewRound,
+        status: 'pending' as const,
+        dueDate: parsedDueDate,
+        notes: notes ? sanitizeContent(notes) : null,
+      }));
+
+      const inserted = await db
+        .insert(concept2cureReviewAssignments)
+        .values(allValues)
+        .onConflictDoNothing()
+        .returning();
+
+      const insertedSet = new Set(inserted.map(r => r.reviewerId));
+      const results = numericIds.map(reviewerId => {
+        const row = inserted.find(r => r.reviewerId === reviewerId);
+        if (row) {
+          return {
+            assignmentId: row.assignmentId,
+            reviewerId: row.reviewerId,
+            status: row.status,
+            reviewRound: row.reviewRound,
+          };
         }
-      }
+        return { reviewerId, status: 'already_assigned', reviewRound };
+      });
 
       // Log provenance for assignment
       await db.insert(concept2cureProvenanceEvents).values({
@@ -13830,32 +13877,49 @@ router.post('/escalation/process', async (req: Request, res: Response) => {
         )
       );
 
-    for (const thread of overdueThreads) {
-      if (!thread.assigneeId) continue;
+    // ── Batch-process overdue threads (N+1 → 3 queries) ──
+    const assignedThreads = overdueThreads.filter(t => t.assigneeId);
+    const threadIds = assignedThreads.map(t => t.id);
 
+    // Batch-fetch existing unread notifications for all overdue threads
+    const existingThreadNotifs =
+      threadIds.length > 0
+        ? await db
+            .select({
+              threadId: concept2cureNotifications.threadId,
+              escalationLevel: concept2cureNotifications.escalationLevel,
+              notificationType: concept2cureNotifications.notificationType,
+            })
+            .from(concept2cureNotifications)
+            .where(
+              and(
+                inArray(concept2cureNotifications.threadId, threadIds),
+                inArray(concept2cureNotifications.notificationType, ['escalation', 'overdue']),
+                eq(concept2cureNotifications.status, 'unread')
+              )
+            )
+        : [];
+
+    // Build a map of threadId → max existing escalation level
+    const threadEscMap = new Map<number, number>();
+    for (const n of existingThreadNotifs) {
+      const cur = threadEscMap.get(n.threadId!) ?? -1;
+      threadEscMap.set(n.threadId!, Math.max(cur, n.escalationLevel ?? 0));
+    }
+
+    // Compute needed notifications
+    const threadNotifsToInsert: any[] = [];
+    for (const thread of assignedThreads) {
       const overdueDuration = now.getTime() - new Date(thread.dueAt!).getTime();
       let newLevel = 0;
       if (overdueDuration > 72 * 60 * 60 * 1000) newLevel = 2;
       else if (overdueDuration > 24 * 60 * 60 * 1000) newLevel = 1;
 
-      // Check existing escalation notification
-      const [existing] = await db
-        .select()
-        .from(concept2cureNotifications)
-        .where(
-          and(
-            eq(concept2cureNotifications.threadId, thread.id),
-            eq(concept2cureNotifications.notificationType, newLevel > 0 ? 'escalation' : 'overdue'),
-            eq(concept2cureNotifications.status, 'unread')
-          )
-        )
-        .limit(1);
+      const existingLevel = threadEscMap.get(thread.id) ?? -1;
+      if (existingLevel >= newLevel) continue;
 
-      if (existing && (existing.escalationLevel || 0) >= newLevel) continue;
-
-      // Create escalation/overdue notification
       const notifId = `ntf_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
-      await db.insert(concept2cureNotifications).values({
+      threadNotifsToInsert.push({
         notificationId: notifId,
         orgId: organizationId,
         projectId: thread.projectId,
@@ -13886,6 +13950,11 @@ router.post('/escalation/process', async (req: Request, res: Response) => {
       else overdueCreated++;
     }
 
+    // Batch-insert all thread notifications
+    if (threadNotifsToInsert.length > 0) {
+      await db.insert(concept2cureNotifications).values(threadNotifsToInsert);
+    }
+
     // ── Process overdue tasks ──
     const overdueTasks = await db
       .select()
@@ -13901,30 +13970,49 @@ router.post('/escalation/process', async (req: Request, res: Response) => {
         )
       );
 
-    for (const task of overdueTasks) {
-      if (!task.assignedToId) continue;
+    // ── Batch-process overdue tasks (N+1 → 3 queries) ──
+    const assignedTasks = overdueTasks.filter(t => t.assignedToId);
+    const taskIds = assignedTasks.map(t => t.id);
 
+    // Batch-fetch existing unread notifications for all overdue tasks
+    const existingTaskNotifs =
+      taskIds.length > 0
+        ? await db
+            .select({
+              reviewTaskId: concept2cureNotifications.reviewTaskId,
+              escalationLevel: concept2cureNotifications.escalationLevel,
+              notificationType: concept2cureNotifications.notificationType,
+            })
+            .from(concept2cureNotifications)
+            .where(
+              and(
+                inArray(concept2cureNotifications.reviewTaskId, taskIds),
+                inArray(concept2cureNotifications.notificationType, ['escalation', 'overdue']),
+                eq(concept2cureNotifications.status, 'unread')
+              )
+            )
+        : [];
+
+    // Build a map of taskId → max existing escalation level
+    const taskEscMap = new Map<number, number>();
+    for (const n of existingTaskNotifs) {
+      const cur = taskEscMap.get(n.reviewTaskId!) ?? -1;
+      taskEscMap.set(n.reviewTaskId!, Math.max(cur, n.escalationLevel ?? 0));
+    }
+
+    // Compute needed notifications
+    const taskNotifsToInsert: any[] = [];
+    for (const task of assignedTasks) {
       const overdueDuration = now.getTime() - new Date(task.dueAt!).getTime();
       let newLevel = 0;
       if (overdueDuration > 72 * 60 * 60 * 1000) newLevel = 2;
       else if (overdueDuration > 24 * 60 * 60 * 1000) newLevel = 1;
 
-      const [existing] = await db
-        .select()
-        .from(concept2cureNotifications)
-        .where(
-          and(
-            eq(concept2cureNotifications.reviewTaskId, task.id),
-            eq(concept2cureNotifications.notificationType, newLevel > 0 ? 'escalation' : 'overdue'),
-            eq(concept2cureNotifications.status, 'unread')
-          )
-        )
-        .limit(1);
-
-      if (existing && (existing.escalationLevel || 0) >= newLevel) continue;
+      const existingLevel = taskEscMap.get(task.id) ?? -1;
+      if (existingLevel >= newLevel) continue;
 
       const notifId = `ntf_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
-      await db.insert(concept2cureNotifications).values({
+      taskNotifsToInsert.push({
         notificationId: notifId,
         orgId: organizationId,
         projectId: task.projectId,
@@ -13953,6 +14041,11 @@ router.post('/escalation/process', async (req: Request, res: Response) => {
 
       if (newLevel > 0) escalated++;
       else overdueCreated++;
+    }
+
+    // Batch-insert all task notifications
+    if (taskNotifsToInsert.length > 0) {
+      await db.insert(concept2cureNotifications).values(taskNotifsToInsert);
     }
 
     // ── Due-soon reminders for threads ──

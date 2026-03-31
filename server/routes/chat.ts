@@ -910,6 +910,35 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       });
     }
 
+    // ── Data Lineage: record retrieval→generation chain (non-blocking) ──
+    if (numericOrgId && generationRunId && sources.length > 0) {
+      try {
+        const { recordLineageBatch } = await import('../services/data-lineage-service');
+        const projectIdNum = parseInt(String(project_id || '0'), 10);
+        const entries = sources.filter((_s, i) => citedRefs.has(i)).map((s, _i) => ({
+          organizationId: numericOrgId,
+          projectId: projectIdNum || undefined,
+          sourceObjectType: 'retrieval_chunk' as const,
+          sourceObjectId: s.id || `src-${_i}`,
+          sourceTitle: s.title,
+          sourceContent: s.content?.substring(0, 500),
+          targetObjectType: 'generation_run' as const,
+          targetObjectId: String(generationRunId),
+          targetField: threadId,
+          linkageType: 'cited_by' as const,
+          transformationType: 'ai_generation' as const,
+          confidenceScore: (s.score ?? 0) * 100,
+          confidenceBasis: 'ai_inferred' as const,
+          aiModelUsed: model,
+          retrievalRunId: retrievalRunId ? Number(retrievalRunId) : undefined,
+          generationRunId: Number(generationRunId),
+        }));
+        if (entries.length > 0) {
+          recordLineageBatch(entries).catch(() => {});
+        }
+      } catch { /* non-blocking */ }
+    }
+
     // ── RESPONSE (backward compat + provenance chain) ──────────────────
     res.json({
       answer: assistantMessage,

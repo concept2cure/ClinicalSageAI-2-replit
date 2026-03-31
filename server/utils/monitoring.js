@@ -6,8 +6,8 @@
  * external monitoring systems like Sentry, Datadog, or similar services.
  */
 
-const config = require('../config/environment').config;
-const Sentry = require('@sentry/node');
+import { config } from '../config/environment.js';
+import * as Sentry from '@sentry/node';
 
 // Create a simple structured logger
 const createLogger = module => {
@@ -187,9 +187,4 @@ const errorTrackerMiddleware = logger => {
   };
 };
 
-module.exports = {
-  createLogger,
-  createPerformanceMonitor,
-  createRequestTracker,
-  errorTrackerMiddleware,
-};
+export { createLogger, createPerformanceMonitor, createRequestTracker, errorTrackerMiddleware };

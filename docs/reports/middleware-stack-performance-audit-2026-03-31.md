@@ -1,7 +1,7 @@
 # Express Middleware Stack Performance Audit
 
-**File**: `server/index.ts` (8053 lines)  
-**Date**: March 31, 2026  
+**File**: `server/index.ts` (8053 lines)
+**Date**: March 31, 2026
 **Scope**: All `app.use()` calls, ordering, bottlenecks, optimization opportunities
 
 ---
@@ -10,25 +10,25 @@
 
 ### Phase A: Global Middleware (runs on EVERY request)
 
-| # | Line | Middleware | Scope | Cost/req | Bottleneck? |
-|---|------|-----------|-------|----------|-------------|
-| 1 | 241 | **Debug request logger** | `*` (dev only) | ~1ms | No (dev-only) |
-| 2 | 257 | `applySecurityMiddleware(app)` → installs **11 sub-middleware** (see §2) | `*` | **10-20ms** | **YES** |
-| 3 | 261 | **Redis rate limiter** (`createRedisRateLimiter()`) | `/api/*` | **5-10ms** | **YES** |
-| 4 | 264 | `applyPerformanceMiddleware(app)` → installs **2 sub-middleware** (see §3) | `*` | 2-3ms | Medium |
-| 5 | 270 | **httpLogger** (structured logging) | `*` | 1-3ms | Low |
-| 6 | 274 | `/api/firecrawl-webhooks` **raw body route** | `/api/firecrawl-webhooks` | ~0ms (short-circuits) | No |
-| 7 | 278 | `express.json({ limit: '50mb' })` | `*` | **1-5ms** | **YES (oversized)** |
-| 8 | 279 | `express.urlencoded({ extended: true, limit: '50mb' })` | `*` | 1ms | Low |
-| 9 | 282 | `cookieParser()` | `*` | <1ms | No |
-| 10 | 287 | `csrfProtection` | `/api/*` (prod only) | 1ms | No |
-| 11 | 301 | **Immutability policy enforcement** | `*` (DELETE/bulk-delete only) | <1ms | No |
+| #   | Line | Middleware                                                                 | Scope                         | Cost/req              | Bottleneck?         |
+| --- | ---- | -------------------------------------------------------------------------- | ----------------------------- | --------------------- | ------------------- |
+| 1   | 241  | **Debug request logger**                                                   | `*` (dev only)                | ~1ms                  | No (dev-only)       |
+| 2   | 257  | `applySecurityMiddleware(app)` → installs **11 sub-middleware** (see §2)   | `*`                           | **10-20ms**           | **YES**             |
+| 3   | 261  | **Redis rate limiter** (`createRedisRateLimiter()`)                        | `/api/*`                      | **5-10ms**            | **YES**             |
+| 4   | 264  | `applyPerformanceMiddleware(app)` → installs **2 sub-middleware** (see §3) | `*`                           | 2-3ms                 | Medium              |
+| 5   | 270  | **httpLogger** (structured logging)                                        | `*`                           | 1-3ms                 | Low                 |
+| 6   | 274  | `/api/firecrawl-webhooks` **raw body route**                               | `/api/firecrawl-webhooks`     | ~0ms (short-circuits) | No                  |
+| 7   | 278  | `express.json({ limit: '50mb' })`                                          | `*`                           | **1-5ms**             | **YES (oversized)** |
+| 8   | 279  | `express.urlencoded({ extended: true, limit: '50mb' })`                    | `*`                           | 1ms                   | Low                 |
+| 9   | 282  | `cookieParser()`                                                           | `*`                           | <1ms                  | No                  |
+| 10  | 287  | `csrfProtection`                                                           | `/api/*` (prod only)          | 1ms                   | No                  |
+| 11  | 301  | **Immutability policy enforcement**                                        | `*` (DELETE/bulk-delete only) | <1ms                  | No                  |
 
 ### Phase B: Auth Gate
 
-| # | Line | Middleware | Scope |
-|---|------|-----------|-------|
-| 12 | 596 | **Global auth middleware** (JWT verify) | `/api/*` (except open paths) |
+| #   | Line | Middleware                              | Scope                        |
+| --- | ---- | --------------------------------------- | ---------------------------- |
+| 12  | 596  | **Global auth middleware** (JWT verify) | `/api/*` (except open paths) |
 
 ### Phase C: ~150+ Route Mounts (Lines 518–7483)
 
@@ -46,12 +46,12 @@ All mounted with `app.use('/api/...', router)`. Key groupings:
 
 ### Phase D: Static Files & Catchall
 
-| # | Line | Middleware | Scope |
-|---|------|-----------|-------|
-| ~163 | 2109 | `express.static('/tmp/uploads')` | `/uploads/*` |
-| ~164 | 7913 | `app.all('/api/*', ...)` — API 404 catchall | `/api/*` |
-| ~165 | 7927 | `errorHandler` — global error handler | `*` |
-| ~166 | 7943 | `serveStatic(app)` / `setupVite(app)` | `*` (catch-all for SPA) |
+| #    | Line | Middleware                                  | Scope                   |
+| ---- | ---- | ------------------------------------------- | ----------------------- |
+| ~163 | 2109 | `express.static('/tmp/uploads')`            | `/uploads/*`            |
+| ~164 | 7913 | `app.all('/api/*', ...)` — API 404 catchall | `/api/*`                |
+| ~165 | 7927 | `errorHandler` — global error handler       | `*`                     |
+| ~166 | 7943 | `serveStatic(app)` / `setupVite(app)`       | `*` (catch-all for SPA) |
 
 ---
 
@@ -59,23 +59,23 @@ All mounted with `app.use('/api/...', router)`. Key groupings:
 
 From `server/middleware/enterprise-security.ts` line 584-630:
 
-| Order | Sub-Middleware | Scope | Cost |
-|-------|--------------|-------|------|
-| 2a | `enforceHttps` | `*` | <1ms |
-| 2b | `securityHeaders` (Helmet) | `*` | <1ms |
-| 2c | `requestId` (UUID generation) | `*` | <1ms |
-| 2d | `corsMiddleware` | `*` | 1-2ms (origin list scan) |
-| 2e | `rateLimiters.global` | `*` | **3-5ms (express-rate-limit, in-memory)** |
-| 2f | `sanitizeInput` | `*` | 1-2ms |
-| 2g | `csrfProtection` (origin/referer) | `*` (state-changing) | 1ms |
-| 2h | `validateTenantContext` | `*` | 1-2ms |
-| 2i | `auditLog` | `*` | **2-5ms** |
-| 2j | `validateApiKey` | `*` | 1ms |
-| 2k | `rateLimiters.auth` | `/api/auth` | Scoped — OK |
-| 2l | `rateLimiters.ai` | `/api/ai` | Scoped — OK |
-| 2m | `rateLimiters.export` | `/api/export` | Scoped — OK |
-| 2n | `rateLimiters.upload` | `/api/upload` | Scoped — OK |
-| 2o | `rateLimiters.write` | `/api/workflow`, `/api/documents` | Scoped — OK |
+| Order | Sub-Middleware                    | Scope                             | Cost                                      |
+| ----- | --------------------------------- | --------------------------------- | ----------------------------------------- |
+| 2a    | `enforceHttps`                    | `*`                               | <1ms                                      |
+| 2b    | `securityHeaders` (Helmet)        | `*`                               | <1ms                                      |
+| 2c    | `requestId` (UUID generation)     | `*`                               | <1ms                                      |
+| 2d    | `corsMiddleware`                  | `*`                               | 1-2ms (origin list scan)                  |
+| 2e    | `rateLimiters.global`             | `*`                               | **3-5ms (express-rate-limit, in-memory)** |
+| 2f    | `sanitizeInput`                   | `*`                               | 1-2ms                                     |
+| 2g    | `csrfProtection` (origin/referer) | `*` (state-changing)              | 1ms                                       |
+| 2h    | `validateTenantContext`           | `*`                               | 1-2ms                                     |
+| 2i    | `auditLog`                        | `*`                               | **2-5ms**                                 |
+| 2j    | `validateApiKey`                  | `*`                               | 1ms                                       |
+| 2k    | `rateLimiters.auth`               | `/api/auth`                       | Scoped — OK                               |
+| 2l    | `rateLimiters.ai`                 | `/api/ai`                         | Scoped — OK                               |
+| 2m    | `rateLimiters.export`             | `/api/export`                     | Scoped — OK                               |
+| 2n    | `rateLimiters.upload`             | `/api/upload`                     | Scoped — OK                               |
+| 2o    | `rateLimiters.write`              | `/api/workflow`, `/api/documents` | Scoped — OK                               |
 
 ---
 
@@ -83,10 +83,10 @@ From `server/middleware/enterprise-security.ts` line 584-630:
 
 From `server/middleware/enterprise-performance.ts` line 574-600:
 
-| Order | Sub-Middleware | Scope | Cost |
-|-------|--------------|-------|------|
-| 4a | `compressionMiddleware` (gzip, level 6, threshold 1024B) | `*` | 2-3% CPU |
-| 4b | `monitorPerformance` (response time tracking) | `*` | <1ms |
+| Order | Sub-Middleware                                           | Scope | Cost     |
+| ----- | -------------------------------------------------------- | ----- | -------- |
+| 4a    | `compressionMiddleware` (gzip, level 6, threshold 1024B) | `*`   | 2-3% CPU |
+| 4b    | `monitorPerformance` (response time tracking)            | `*`   | <1ms     |
 
 ---
 
@@ -107,6 +107,7 @@ From `server/middleware/enterprise-performance.ts` line 574-600:
 ### CRITICAL: `express.json()` on ALL Requests (Line 278)
 
 **Problem**: JSON body parsing with a **50MB limit** runs on every request including:
+
 - GET requests (no body)
 - Static file requests that somehow pass through
 - Health checks
@@ -115,6 +116,7 @@ From `server/middleware/enterprise-performance.ts` line 574-600:
 **Impact**: Allocates buffer parsing logic even for bodyless requests; 50MB limit leaves open a potential slow-client DoS vector.
 
 **Fix**: Scope to `/api` only, reduce default limit, use route-level overrides for upload endpoints:
+
 ```typescript
 app.use('/api', express.json({ limit: '2mb' }));
 // Route-level override for document upload endpoints:
@@ -128,13 +130,16 @@ app.use('/api/documents/upload', express.json({ limit: '50mb' }));
 **Impact**: CPU wasted re-compressing cached assets; browser should cache and never re-request.
 
 **Fix**: Mount `express.static()` with proper cache headers BEFORE global middleware:
+
 ```typescript
 // Before security middleware
-app.use(express.static(distPath, { 
-  maxAge: '1y', 
-  immutable: true,
-  etag: false  // Hash in filename already
-}));
+app.use(
+  express.static(distPath, {
+    maxAge: '1y',
+    immutable: true,
+    etag: false, // Hash in filename already
+  })
+);
 ```
 
 ### HIGH: httpLogger on Every Request (Line 270)
@@ -142,6 +147,7 @@ app.use(express.static(distPath, {
 **Problem**: Structured logger runs globally, including health checks and static assets.
 
 **Fix**: Scope to `/api` or skip health/static:
+
 ```typescript
 app.use('/api', httpLogger);
 ```
@@ -153,6 +159,7 @@ app.use('/api', httpLogger);
 **Impact**: Health check latency inflated by 15-20ms. Load balancers/probes hit this frequently.
 
 **Fix**: Mount health endpoints BEFORE security middleware:
+
 ```typescript
 app.get('/healthz', (_req, res) => res.json({ ok: true, ts: Date.now() }));
 app.get('/readyz', async (_req, res) => { ... });
@@ -164,6 +171,7 @@ applySecurityMiddleware(app);
 ### MEDIUM: Duplicate CSRF Protection
 
 **Problem**: CSRF is applied twice:
+
 1. Inside `applySecurityMiddleware()` (line 257 → sub-middleware 2g)
 2. Explicitly at line 287: `app.use('/api', csrfProtection)`
 
@@ -174,6 +182,7 @@ applySecurityMiddleware(app);
 **Problem**: Audit logging runs on every request, not just mutations. For GET requests (the majority), this creates unnecessary I/O.
 
 **Fix**: Scope to state-changing methods only:
+
 ```typescript
 app.use((req, res, next) => {
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
@@ -190,6 +199,7 @@ app.use((req, res, next) => {
 **Good news**: ~90 routes use `await import()` (lazy). But these eager imports add 2-5s to startup.
 
 **Lazy candidates** (currently eager, rarely accessed):
+
 - `cmcBlueprintRoutes`, `cmcSpecificationRoutes`, `cmcStabilityRoutes`, `cmcBatchRecordRoutes`, `cmcWorkflowRoutes`, `cmcCollaborationRoutes`, `cmcDocumentRoutes` — all CMC sub-routes
 - `foresightApiRoutes`, `foresightAIAdvancedRoutes`, `foresightFeedbackRoutes`
 - `predictiveSectionsRoutes`
@@ -202,6 +212,7 @@ app.use((req, res, next) => {
 Current order vs. optimal order:
 
 ### Current (Problematic)
+
 ```
 1. Debug logger (dev)
 2. Security (11 sub-MW including global rate limit + audit on ALL)
@@ -220,6 +231,7 @@ Current order vs. optimal order:
 ```
 
 ### Recommended (Optimized)
+
 ```
 1. Health endpoints (/healthz, /readyz, /api/health) — NO middleware overhead
 2. Static file serving (express.static with Cache-Control: immutable) — short-circuit cached assets
@@ -245,24 +257,25 @@ Current order vs. optimal order:
 
 ## 6. ESTIMATED IMPACT
 
-| Optimization | Latency Reduction | Requests Affected |
-|-------------|-------------------|-------------------|
-| Remove duplicate rate limiter | -3-5ms | All `/api/*` |
-| Health checks before middleware | -15-20ms | Health probes (~10/min) |
-| Static files before middleware | -15-20ms | All asset loads |
-| Scope JSON parser to `/api` | -1-2ms | Non-API requests |
-| Scope httpLogger to `/api` | -1-3ms | Health/static requests |
-| Scope audit to mutations only | -2-5ms | All GET requests |
-| Remove duplicate CSRF | -1ms | All `/api/*` |
-| **Total (API requests)** | **-5-8ms** | |
-| **Total (static/health)** | **-20-30ms** | |
+| Optimization                    | Latency Reduction | Requests Affected       |
+| ------------------------------- | ----------------- | ----------------------- |
+| Remove duplicate rate limiter   | -3-5ms            | All `/api/*`            |
+| Health checks before middleware | -15-20ms          | Health probes (~10/min) |
+| Static files before middleware  | -15-20ms          | All asset loads         |
+| Scope JSON parser to `/api`     | -1-2ms            | Non-API requests        |
+| Scope httpLogger to `/api`      | -1-3ms            | Health/static requests  |
+| Scope audit to mutations only   | -2-5ms            | All GET requests        |
+| Remove duplicate CSRF           | -1ms              | All `/api/*`            |
+| **Total (API requests)**        | **-5-8ms**        |                         |
+| **Total (static/health)**       | **-20-30ms**      |                         |
 
 ### Startup Time
-| Optimization | Startup Reduction |
-|-------------|-------------------|
-| Lazy-load 12 CMC route imports | ~1-2s |
-| Lazy-load Foresight route imports | ~0.5-1s |
-| **Total** | **~2-3s faster cold start** |
+
+| Optimization                      | Startup Reduction           |
+| --------------------------------- | --------------------------- |
+| Lazy-load 12 CMC route imports    | ~1-2s                       |
+| Lazy-load Foresight route imports | ~0.5-1s                     |
+| **Total**                         | **~2-3s faster cold start** |
 
 ---
 
@@ -272,7 +285,7 @@ Current order vs. optimal order:
 2. **Remove `rateLimiters.global` from enterprise-security.ts** — Redis limiter covers this
 3. **Remove duplicate `csrfProtection`** at line 287 — already in enterprise-security
 4. **Scope `express.json()` to `/api`** and reduce default to 2MB
-5. **Scope `httpLogger` to `/api`** 
+5. **Scope `httpLogger` to `/api`**
 6. **Scope `auditLog` to mutation methods only** (POST/PUT/PATCH/DELETE)
 7. **Add `Cache-Control` headers to `express.static()`** in `serveStatic()` (server/vite.ts)
 8. **Convert 12 eager CMC imports to `await import()`** pattern

@@ -5,9 +5,9 @@
  * role-based access control (RBAC), and permission validation.
  */
 
-const jwt = require('jsonwebtoken');
-const config = require('../config/environment').config;
-const { createLogger } = require('../utils/monitoring');
+import jwt from 'jsonwebtoken';
+import { config } from '../config/environment.js';
+import { createLogger } from '../utils/monitoring.js';
 
 const logger = createLogger('auth');
 
@@ -227,8 +227,16 @@ const isPublicRoute = path => {
   return publicRoutes.some(route => path.startsWith(route));
 };
 
-module.exports = {
+// Aliases used across codebase
+const authenticateToken = authenticateJWT;
+const requireAuth = authenticateJWT;
+const authenticate = authenticateJWT;
+
+export {
   authenticateJWT,
+  authenticateToken,
+  requireAuth,
+  authenticate,
   requireRole,
   requirePermission,
   requireSameOrganization,

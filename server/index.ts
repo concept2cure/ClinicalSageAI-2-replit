@@ -181,8 +181,9 @@ async function gracefulShutdown(signal: string) {
 
   // 4. Drain AI action queue and close Redis
   try {
-    const { drainActionQueue, closeAllSSEConnections, closeRedis } =
-      await import('./services/ai-actions/index');
+    const { drainActionQueue, closeAllSSEConnections, closeRedis } = await import(
+      './services/ai-actions/index'
+    );
     closeAllSSEConnections();
     await drainActionQueue(10_000);
     await closeRedis();
@@ -964,10 +965,18 @@ app.use('/api/enterprise/rbac', rbacRoutes);
 // Mount CMC Module routes (Chemistry, Manufacturing & Controls) — dynamically loaded
 try {
   const [
-    cmcCoreRoutes, cmcAggregatorRoutes, cmcProjectRoutes, cmcBlueprintRoutes,
-    cmcSpecificationRoutes, cmcStabilityRoutes, cmcBatchRecordRoutes,
-    cmcWorkflowRoutes, cmcCollaborationRoutes, cmcDocumentRoutes,
-    cmcDashboardRoutes, cmcDashboardPrisma,
+    cmcCoreRoutes,
+    cmcAggregatorRoutes,
+    cmcProjectRoutes,
+    cmcBlueprintRoutes,
+    cmcSpecificationRoutes,
+    cmcStabilityRoutes,
+    cmcBatchRecordRoutes,
+    cmcWorkflowRoutes,
+    cmcCollaborationRoutes,
+    cmcDocumentRoutes,
+    cmcDashboardRoutes,
+    cmcDashboardPrisma,
   ] = await Promise.all([
     import('./api/cmc/routes'),
     import('./api/cmc/index.js'),
@@ -998,9 +1007,7 @@ try {
   app.use('/api/cmc/documents', cmcDocumentRoutes.default);
   app.use('/api/cmc/dashboard-legacy', cmcDashboardRoutes.default);
   app.use('/api/cmc/dashboard', cmcDashboardPrisma.default);
-  console.log(
-    '✅ CMC Module API routes mounted (12 sub-modules loaded in parallel)'
-  );
+  console.log('✅ CMC Module API routes mounted (12 sub-modules loaded in parallel)');
 } catch (error) {
   console.error('❌ Failed to mount CMC Module routes:', error);
 }
@@ -1025,9 +1032,7 @@ try {
   const anaCortexRoutes = await import('./routes/ana-cortex');
   app.use('/api/ana-cortex', anaCortexRoutes.default);
   app.use('/api/ana-1-0-ri-cortex', anaCortexRoutes.default);
-  console.log(
-    '✅ AnA Cortex routes mounted (/api/ana-cortex, /api/ana-1-0-ri-cortex)'
-  );
+  console.log('✅ AnA Cortex routes mounted (/api/ana-cortex, /api/ana-1-0-ri-cortex)');
 } catch (error) {
   console.error('❌ Failed to mount AnA Intelligence routes:', error);
 }
@@ -1103,7 +1108,7 @@ try {
     import('./routes/foresight-rag-api.js'),
     import('./routes/biotech-rag.js'),
   ]);
-  
+
   if (ragResults[0].status === 'fulfilled') {
     const foresightRagDeprecation = (req: Request, res: Response, next: () => void) => {
       res.setHeader('Deprecation', 'true');
@@ -1116,7 +1121,7 @@ try {
   } else {
     console.error('Failed to mount AnA Intelligence RAG routes:', ragResults[0].reason);
   }
-  
+
   if (ragResults[1].status === 'fulfilled') {
     app.use('/api/biotech-rag', ragResults[1].value.default);
     console.log('✅ Biotech AI Intelligence RAG API routes mounted');
@@ -1420,118 +1425,54 @@ try {
   console.error('❌ Failed to mount CERV2 document routes:', error);
 }
 
-// Mount PubMed Literature Search routes (PRODUCTION with real NCBI API)
-try {
-  const pubmedModule = await import('./routes/pubmed');
-  const pubmedRoutes = pubmedModule.default;
-  app.use('/api/pubmed', pubmedRoutes);
-  console.log(
-    '✅ PubMed Literature Search API routes mounted successfully (real NCBI integration)'
-  );
-} catch (error) {
-  console.error('❌ Failed to mount PubMed routes:', error);
-}
-
-// Mount Literature Review routes
-try {
-  const literatureReviewModule = await import('./routes/literature-review');
-  const literatureReviewRoutes = literatureReviewModule.default;
-  app.use('/api/literature-review', literatureReviewRoutes);
-  console.log('✅ Literature Review API routes mounted successfully (AI-powered appraisal)');
-} catch (error) {
-  console.error('❌ Failed to mount Literature Review routes:', error);
-}
-
-// Mount License Management routes
-try {
-  const licenseModule = await import('./routes/license-routes.js');
-  const licenseRoutes = licenseModule.default;
-  // Routes define absolute paths internally (e.g., /api/licenses/:id, /api/licenses/client/:clientId, ...)
-  app.use('/', licenseRoutes);
-  console.log('✅ License Management API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount License routes:', error);
-}
-
-// Mount Module Subscriptions & User Intelligence routes
-try {
-  const moduleSubModule = await import('./routes/module-subscriptions.js');
-  const moduleSubRoutes = moduleSubModule.default;
-  app.use('/api/module-subscriptions', moduleSubRoutes);
-  console.log('✅ Module Subscriptions & User Intelligence API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount Module Subscriptions routes:', error);
-}
-
-// Mount Billing routes (Stripe Checkout + Link, webhooks, customer portal)
-try {
-  const billingModule = await import('./routes/billing.js');
-  const billingRouter = billingModule.default;
-  app.use('/api/billing', billingRouter);
-  console.log('✅ Billing API routes mounted (Stripe Checkout + Link, Customer Portal, Webhooks)');
-} catch (error) {
-  console.error('❌ Failed to mount Billing routes:', error);
-}
-
-// Mount Deep Research routes (connectors, orchestrator, usage metering)
-try {
-  const deepResearchModule = await import('./routes/deep-research.js');
-  const deepResearchRouter = deepResearchModule.default;
-  app.use('/api/deep-research', deepResearchRouter);
-  console.log('✅ Deep Research API routes mounted (connectors, jobs, usage)');
-} catch (error) {
-  console.error('❌ Failed to mount Deep Research routes:', error);
-}
-
-// Mount Intelligent Report Engine routes (immutable reports, provenance, sealing)
-try {
-  const intelligentReportsModule = await import('./routes/intelligent-reports.js');
-  const intelligentReportsRouter = intelligentReportsModule.default;
-  app.use('/api/intelligent-reports', intelligentReportsRouter);
-  console.log('✅ Intelligent Report Engine routes mounted (generate, seal, verify, export)');
-} catch (error) {
-  console.error('❌ Failed to mount Intelligent Report Engine routes:', error);
-}
-
-// Mount Safety Narrative Service routes (aggregate narratives, SAE, benefit-risk)
-try {
-  const safetyNarrativeModule = await import('./routes/safety-narrative.js');
-  const safetyNarrativeRouter = safetyNarrativeModule.default;
-  app.use('/api/safety-narratives', safetyNarrativeRouter);
-  console.log('✅ Safety Narrative Service routes mounted (aggregate, SAE, benefit-risk, signals)');
-} catch (error) {
-  console.error('❌ Failed to mount Safety Narrative routes:', error);
-}
-
-// Mount Statistical Defensibility Service routes (study design assessment)
-try {
-  const statDefModule = await import('./routes/statistical-defensibility.js');
-  const statDefRouter = statDefModule.default;
-  app.use('/api/statistical-defensibility', statDefRouter);
-  console.log(
-    '✅ Statistical Defensibility routes mounted (assess, consistency, endpoint-quality, sample-size, multiplicity, reviewer-risks)'
-  );
-} catch (error) {
-  console.error('❌ Failed to mount Statistical Defensibility routes:', error);
-}
-
-// Mount Conversation Health Monitoring route
-try {
-  const convHealthModule = await import('./routes/conversation-health.js');
-  const convHealthRouter = convHealthModule.default;
-  app.use('/api/conversation-health', convHealthRouter);
-  console.log('✅ Conversation Health Monitoring route mounted');
-} catch (error) {
-  console.error('❌ Failed to mount Conversation Health routes:', error);
-}
-// Mount Billing Dashboard routes (usage tracking, budgets, alerts, invoices)
-try {
-  const billingDashModule = await import('./routes/billing-dashboard.js');
-  const billingDashRouter = billingDashModule.default;
-  app.use('/api/billing', billingDashRouter);
-  console.log('✅ Billing Dashboard routes mounted (Usage, Budgets, Alerts, Invoices)');
-} catch (error) {
-  console.error('❌ Failed to mount Billing Dashboard routes:', error);
+// ── Literature, License, Billing, Intelligence, Reports — parallelized imports ──
+{
+  const litIntConfig = [
+    { path: '/api/pubmed', mod: './routes/pubmed', name: 'PubMed' },
+    {
+      path: '/api/literature-review',
+      mod: './routes/literature-review',
+      name: 'Literature Review',
+    },
+    { path: '/', mod: './routes/license-routes.js', name: 'License Management' },
+    {
+      path: '/api/module-subscriptions',
+      mod: './routes/module-subscriptions.js',
+      name: 'Module Subscriptions',
+    },
+    { path: '/api/billing', mod: './routes/billing.js', name: 'Billing' },
+    { path: '/api/deep-research', mod: './routes/deep-research.js', name: 'Deep Research' },
+    {
+      path: '/api/intelligent-reports',
+      mod: './routes/intelligent-reports.js',
+      name: 'Intelligent Reports',
+    },
+    {
+      path: '/api/safety-narratives',
+      mod: './routes/safety-narrative.js',
+      name: 'Safety Narrative',
+    },
+    {
+      path: '/api/statistical-defensibility',
+      mod: './routes/statistical-defensibility.js',
+      name: 'Statistical Defensibility',
+    },
+    {
+      path: '/api/conversation-health',
+      mod: './routes/conversation-health.js',
+      name: 'Conversation Health',
+    },
+    { path: '/api/billing', mod: './routes/billing-dashboard.js', name: 'Billing Dashboard' },
+  ] as const;
+  const litIntResults = await Promise.allSettled(litIntConfig.map(c => import(c.mod)));
+  litIntResults.forEach((r, i) => {
+    if (r.status === 'fulfilled') {
+      app.use(litIntConfig[i].path, r.value.default);
+      console.log(`✅ ${litIntConfig[i].name} routes mounted successfully`);
+    } else {
+      console.error(`❌ Failed to mount ${litIntConfig[i].name} routes:`, r.reason);
+    }
+  });
 }
 
 // Mount stability routes
@@ -1572,64 +1513,29 @@ try {
   console.error('❌ Failed to mount Document Authoring routes:', error);
 }
 
-// Mount eCTD Co-Author routes with database persistence
-try {
-  const coauthorModule = await import('./routes/coauthor');
-  const coauthorRoutes = coauthorModule.default;
-  app.use('/api/coauthor', coauthorRoutes);
-  console.log('✅ eCTD Co-Author API routes mounted successfully (database-backed)');
-} catch (error) {
-  console.error('❌ Failed to mount eCTD Co-Author routes:', error);
-}
-
-// Mount eCTD Document Management routes with version control
-try {
-  const ectdDocumentsModule = await import('./routes/ectd-documents');
-  const ectdDocumentsRoutes = ectdDocumentsModule.default;
-  app.use('/api/ectd-documents', ectdDocumentsRoutes);
-  console.log('✅ eCTD Documents routes loaded (version control & lineage tracking)');
-} catch (error) {
-  console.error('❌ Failed to mount eCTD Documents routes:', error);
-}
-
-// Mount eCTD 4.0 Validation & Backbone routes
-try {
-  const ectdValidateModule = await import('./routes/ectd-validate');
-  const ectdValidateRoutes = ectdValidateModule.default;
-  app.use('/api/ectd-validate', ectdValidateRoutes);
-  console.log('✅ eCTD 4.0 Validation & Backbone routes loaded');
-} catch (error) {
-  console.error('❌ Failed to mount eCTD Validation routes:', error);
-}
-
-// Mount eCTD Compile routes (INDWorkspace compile button backend)
-try {
-  const ectdCompileModule = await import('./routes/ectd-compile');
-  const ectdCompileRoutes = ectdCompileModule.default;
-  app.use('/api/ectd-compile', ectdCompileRoutes);
-  console.log('✅ eCTD Compile routes mounted (compile, validate, readiness, history)');
-} catch (error) {
-  console.error('❌ Failed to mount eCTD Compile routes:', error);
-}
-
-// Mount eCTD Export routes (ICH M8 v4.0 ZIP package generation)
-try {
-  const ectdExportModule = await import('./routes/ectd-export');
-  const ectdExportRoutes = ectdExportModule.default;
-  app.use('/api/ectd/export', ectdExportRoutes);
-  console.log('✅ eCTD Export routes mounted (ICH M8 v4.0 packaging)');
-} catch (error) {
-  console.error('❌ Failed to mount eCTD Export routes:', error);
-}
-
-// Mount eCTD Submission Agent routes (direct agency submissions — FDA ESG, EMA, PMDA, HC)
-try {
-  const ectdSubmissionModule = await import('./routes/ectd-submission-agent.routes');
-  const ectdSubmissionRoutes = ectdSubmissionModule.default;
-  app.use('/api/ectd-submissions', ectdSubmissionRoutes);
-  console.log('✅ eCTD Submission Agent routes mounted (FDA ESG, EMA, PMDA, HC gateway)');
-} catch (error) {
-  console.error('❌ Failed to mount eCTD Submission Agent routes:', error);
+// ── eCTD Routes — parallelized imports ──
+{
+  const ectdConfig = [
+    { path: '/api/coauthor', mod: './routes/coauthor', name: 'eCTD Co-Author' },
+    { path: '/api/ectd-documents', mod: './routes/ectd-documents', name: 'eCTD Documents' },
+    { path: '/api/ectd-validate', mod: './routes/ectd-validate', name: 'eCTD Validation' },
+    { path: '/api/ectd-compile', mod: './routes/ectd-compile', name: 'eCTD Compile' },
+    { path: '/api/ectd/export', mod: './routes/ectd-export', name: 'eCTD Export' },
+    {
+      path: '/api/ectd-submissions',
+      mod: './routes/ectd-submission-agent.routes',
+      name: 'eCTD Submission Agent',
+    },
+  ] as const;
+  const ectdResults = await Promise.allSettled(ectdConfig.map(c => import(c.mod)));
+  ectdResults.forEach((r, i) => {
+    if (r.status === 'fulfilled') {
+      app.use(ectdConfig[i].path, r.value.default);
+      console.log(`✅ ${ectdConfig[i].name} routes mounted successfully`);
+    } else {
+      console.error(`❌ Failed to mount ${ectdConfig[i].name} routes:`, r.reason);
+    }
+  });
 }
 
 // Mount Biotech Document Artifact routes (eCTD, PV, Clinical Ops document generation)
@@ -1708,130 +1614,42 @@ try {
   console.error('❌ Failed to mount Document Data Center routes:', error);
 }
 
-// Mount Data Room API routes
-try {
-  const evidenceModule = await import('./routes/evidence.js');
-  const evidenceRoutes = evidenceModule.default;
-  app.use('/api/evidence', evidenceRoutes);
-  console.log('✅ Evidence Management API routes mounted successfully (Data Room evidence search)');
-} catch (error) {
-  console.error('❌ Failed to mount Evidence routes:', error);
-}
-
-// Mount Evidence Ask API route (Data Room / Ask — semantic Q&A over project documents)
-try {
-  const evidenceAskModule = await import('./routes/evidence-ask.js');
-  const evidenceAskRoutes = evidenceAskModule.default;
-  app.use('/api/evidence', evidenceAskRoutes);
-  console.log('✅ Evidence Ask API route mounted successfully (Data Room / Ask)');
-} catch (error) {
-  console.error('❌ Failed to mount Evidence Ask route:', error);
-}
-
-// Mount Evidence Search API routes (semantic + artifact search for Evidence Search UI)
-try {
-  const evidenceSearchModule = await import('./routes/evidence-search.js');
-  const evidenceSearchRoutes = evidenceSearchModule.default;
-  app.use('/api/evidence-search', evidenceSearchRoutes);
-  console.log('✅ Evidence Search API routes mounted successfully (semantic + artifact search)');
-} catch (error) {
-  console.error('❌ Failed to mount Evidence Search routes:', error);
-}
-
-try {
-  const contentPlanModule = await import('./routes/content-plan.js');
-  const contentPlanRoutes = contentPlanModule.default;
-  app.use('/api/content-plan', contentPlanRoutes);
-  console.log(
-    '✅ Content Plan API routes mounted successfully (section tracking & evidence linking)'
-  );
-} catch (error) {
-  console.error('❌ Failed to mount Content Plan routes:', error);
-}
-
-try {
-  const smartBlocksModule = await import('./routes/smart-blocks.js');
-  const smartBlocksRoutes = smartBlocksModule.default;
-  app.use('/api/smart-blocks', smartBlocksRoutes);
-  console.log('✅ Smart Blocks API routes mounted successfully (auto-populated content)');
-} catch (error) {
-  console.error('❌ Failed to mount Smart Blocks routes:', error);
-}
-
-// Mount Cognitive Ecosystem routes (LangGraph, FHIR, Global Dossier, Manufacturing, Federated Learning)
-try {
-  const cognitiveEcosystemModule = await import('./routes/cognitive-ecosystem.js');
-  const cognitiveEcosystemRoutes = cognitiveEcosystemModule.default;
-  app.use('/api/cognitive', cognitiveEcosystemRoutes);
-  console.log(
-    '✅ Cognitive Ecosystem API routes mounted successfully (LangGraph, FHIR, Federated Learning)'
-  );
-} catch (error) {
-  console.error('❌ Failed to mount Cognitive Ecosystem routes:', error);
-}
-
-// Mount Evidence Management routes (enhanced Data Center with FDA requirement mapping)
-try {
-  const evidenceManagementModule = await import('./routes/evidence-management.routes.js');
-  const evidenceManagementRoutes = evidenceManagementModule.default;
-  app.use('/api/evidence-management', evidenceManagementRoutes);
-  console.log(
-    '✅ Evidence Management API routes mounted successfully (FDA requirement mapping & workflow integration)'
-  );
-} catch (error) {
-  console.error('❌ Failed to mount Evidence Management routes:', error);
-}
-
-// Mount Evidence Fabric BFF proxy (Phase 5.3.B — Truth Machine)
-// Proxies browser calls to Shadow Service with admin token injected server-side
-try {
-  const evidenceFabricModule = await import('./routes/evidence-fabric.js');
-  const evidenceFabricRoutes = evidenceFabricModule.default;
-  app.use('/api/evidence-fabric', evidenceFabricRoutes);
-  console.log(
-    '✅ Evidence Fabric BFF proxy routes mounted (Shadow Service → browser, no token in JS)'
-  );
-} catch (error) {
-  console.error('❌ Failed to mount Evidence Fabric BFF proxy routes:', error);
-}
-
-// Mount DOCX Factory BFF proxy (Phase 6.3 — Document Factory)
-// Proxies browser calls to Shadow Service /docx/* with admin token injected server-side
-try {
-  const docxFactoryModule = await import('./routes/docx-factory.js');
-  const docxFactoryRoutes = docxFactoryModule.default;
-  app.use('/api/docx-factory', docxFactoryRoutes);
-  console.log(
-    '✅ DOCX Factory BFF proxy routes mounted (Shadow Service → browser, no token in JS)'
-  );
-} catch (error) {
-  console.error('❌ Failed to mount DOCX Factory BFF proxy routes:', error);
-}
-
-// Mount Knowledge Base + AI Document Generation BFF proxy (Phase 7.1)
-// POST /api/knowledge-base/upload            → /knowledge/ingest-files
-// GET  /api/knowledge-base/context/:id       → /knowledge/project-context/{id}
-// POST /api/knowledge-base/generate-docx     → /knowledge/generate-docx
-// POST /api/knowledge-base/generate-ind-package → /knowledge/generate-ind-package
-// POST /api/knowledge-base/generate-ind-section → /knowledge/generate-ind-section
-try {
-  const knowledgeBaseModule = await import('./routes/knowledge-base.js');
-  const knowledgeBaseRoutes = knowledgeBaseModule.default;
-  app.use('/api/knowledge-base', knowledgeBaseRoutes);
-  console.log('✅ Knowledge Base BFF proxy routes mounted (Phase 7.1 — AI document synthesis)');
-} catch (error) {
-  console.error('❌ Failed to mount Knowledge Base BFF proxy routes:', error);
-}
-
-// Mount Predicate Intelligence BFF proxy (Phase 6.6 — Predicate Intelligence)
-// Proxies browser calls to Shadow Service /predicate/* with admin token injected server-side
-try {
-  const predicateIntelModule = await import('./routes/predicate-intelligence.js');
-  const predicateIntelRoutes = predicateIntelModule.default;
-  app.use('/api/predicate-intelligence', predicateIntelRoutes);
-  console.log('✅ Predicate Intelligence BFF proxy routes mounted (Phase 6.6)');
-} catch (error) {
-  console.error('❌ Failed to mount Predicate Intelligence BFF proxy routes:', error);
+// ── Evidence, Content, Cognitive, BFF proxy — parallelized imports ──
+{
+  const evidenceConfig = [
+    { path: '/api/evidence', mod: './routes/evidence.js', name: 'Evidence' },
+    { path: '/api/evidence', mod: './routes/evidence-ask.js', name: 'Evidence Ask' },
+    { path: '/api/evidence-search', mod: './routes/evidence-search.js', name: 'Evidence Search' },
+    { path: '/api/content-plan', mod: './routes/content-plan.js', name: 'Content Plan' },
+    { path: '/api/smart-blocks', mod: './routes/smart-blocks.js', name: 'Smart Blocks' },
+    { path: '/api/cognitive', mod: './routes/cognitive-ecosystem.js', name: 'Cognitive Ecosystem' },
+    {
+      path: '/api/evidence-management',
+      mod: './routes/evidence-management.routes.js',
+      name: 'Evidence Management',
+    },
+    {
+      path: '/api/evidence-fabric',
+      mod: './routes/evidence-fabric.js',
+      name: 'Evidence Fabric BFF',
+    },
+    { path: '/api/docx-factory', mod: './routes/docx-factory.js', name: 'DOCX Factory BFF' },
+    { path: '/api/knowledge-base', mod: './routes/knowledge-base.js', name: 'Knowledge Base BFF' },
+    {
+      path: '/api/predicate-intelligence',
+      mod: './routes/predicate-intelligence.js',
+      name: 'Predicate Intelligence BFF',
+    },
+  ] as const;
+  const evidenceResults = await Promise.allSettled(evidenceConfig.map(c => import(c.mod)));
+  evidenceResults.forEach((r, i) => {
+    if (r.status === 'fulfilled') {
+      app.use(evidenceConfig[i].path, r.value.default);
+      console.log(`✅ ${evidenceConfig[i].name} routes mounted successfully`);
+    } else {
+      console.error(`❌ Failed to mount ${evidenceConfig[i].name} routes:`, r.reason);
+    }
+  });
 }
 
 // Shadow service health proxy
@@ -2062,11 +1880,12 @@ console.log('🧠 Cortex Prime AI Brain fully initialized with unified gateway')
 
 // Mount Unified Document Management System routes
 try {
-  const [documentManagementRouter, folderManagementRouter, templateManagementRouter] = await Promise.all([
-    import('./routes/document-management'),
-    import('./routes/folder-management.js'),
-    import('./routes/template-management.js'),
-  ]);
+  const [documentManagementRouter, folderManagementRouter, templateManagementRouter] =
+    await Promise.all([
+      import('./routes/document-management'),
+      import('./routes/folder-management.js'),
+      import('./routes/template-management.js'),
+    ]);
 
   app.use('/api', documentManagementRouter.default);
   app.use('/api', folderManagementRouter.default);
@@ -6261,8 +6080,8 @@ app.get('/api/ectd/templates', async (req: Request, res: Response) => {
           category: row.name.includes('Module_1')
             ? 'administrative'
             : row.name.includes('Module_2')
-              ? 'clinical'
-              : 'regulatory',
+            ? 'clinical'
+            : 'regulatory',
           template_data: templateData,
         };
       });
@@ -6315,8 +6134,8 @@ app.get('/api/ectd/templates/:id', async (req: Request, res: Response) => {
         category: row.name.includes('Module_1')
           ? 'administrative'
           : row.name.includes('Module_2')
-            ? 'clinical'
-            : 'regulatory',
+          ? 'clinical'
+          : 'regulatory',
         template_data: templateData,
       };
 
@@ -7262,7 +7081,9 @@ async function startServer() {
 
   // Start Memory Consolidation nightly scheduler (E8)
   try {
-    const { initMemoryConsolidationScheduler } = await import('./services/memory-consolidation-job');
+    const { initMemoryConsolidationScheduler } = await import(
+      './services/memory-consolidation-job'
+    );
     initMemoryConsolidationScheduler();
     console.log('✅ Memory consolidation scheduler initialized');
   } catch (error) {
@@ -7922,7 +7743,9 @@ async function startServer() {
     } catch (staticError) {
       console.error('⚠️ Static serving failed:', staticError);
       app.get('/', (_req, res) => {
-        res.send('<h1>Concept2Cure Platform</h1><p>API running. Build client with <code>npm run build</code>.</p>');
+        res.send(
+          '<h1>Concept2Cure Platform</h1><p>API running. Build client with <code>npm run build</code>.</p>'
+        );
       });
     }
   } else {
@@ -7934,58 +7757,76 @@ async function startServer() {
     }
   }
 
-  // Start audit chain integrity monitor (background job every 5 min)
-  try {
-    const { startChainMonitor } = await import('./services/audit/chainIntegrityMonitor.js');
-    startChainMonitor(pool, 5 * 60 * 1000);
-    console.log('✅ Audit chain integrity monitor started (5-min interval)');
-  } catch (err) {
-    console.warn('⚠️ Chain integrity monitor failed to start:', err);
-  }
+  // ── Parallel startup services ──
+  const [chainMon, patternReg, socketSrv, scheduledJobs, hocuspocus] = await Promise.allSettled([
+    import('./services/audit/chainIntegrityMonitor.js'),
+    import('./services/intelligence/pattern-registry.js'),
+    import('./socketServer.js'),
+    import('./services/automation/scheduled-jobs.js'),
+    import('./services/hocuspocus-server.js'),
+  ]);
 
-  // Load RIM pattern registry from persistence (restores learned patterns + hit counts)
-  try {
-    const { loadPatternRegistry, patternRegistry } =
-      await import('./services/intelligence/pattern-registry.js');
-    const result = await loadPatternRegistry(1); // org 1 as default; per-org load on first request
-    if (result.loaded) {
-      console.log(
-        `✅ RIM pattern registry loaded (${patternRegistry.size} patterns, ${result.learnedCount} learned)`
-      );
-    } else {
-      console.log(
-        `ℹ️ RIM pattern registry: no persisted data found, using ${patternRegistry.size} seed patterns`
-      );
+  if (chainMon.status === 'fulfilled') {
+    try {
+      chainMon.value.startChainMonitor(pool, 5 * 60 * 1000);
+      console.log('✅ Audit chain integrity monitor started (5-min interval)');
+    } catch (err) {
+      console.warn('⚠️ Chain integrity monitor failed to start:', err);
     }
-  } catch (err) {
-    console.warn('⚠️ RIM pattern registry load failed (using seed patterns only):', err);
+  } else {
+    console.warn('⚠️ Chain integrity monitor failed to load:', chainMon.reason);
   }
 
-  // Initialize Socket.io for real-time collaboration
-  try {
-    const { initializeSocketServer } = await import('./socketServer.js');
-    initializeSocketServer(httpServer);
-    console.log('[Socket.io] Real-time server initialized');
-  } catch (err: any) {
-    console.warn('[Socket.io] Failed to initialize (non-blocking):', err?.message);
+  if (patternReg.status === 'fulfilled') {
+    try {
+      const result = await patternReg.value.loadPatternRegistry(1);
+      if (result.loaded) {
+        console.log(
+          `✅ RIM pattern registry loaded (${patternReg.value.patternRegistry.size} patterns, ${result.learnedCount} learned)`
+        );
+      } else {
+        console.log(
+          `ℹ️ RIM pattern registry: no persisted data found, using ${patternReg.value.patternRegistry.size} seed patterns`
+        );
+      }
+    } catch (err) {
+      console.warn('⚠️ RIM pattern registry load failed (using seed patterns only):', err);
+    }
+  } else {
+    console.warn('⚠️ RIM pattern registry failed to load:', patternReg.reason);
   }
 
-  // Initialize Automation Engine — scheduled jobs (Bull queue + Redis)
-  try {
-    const { initScheduledJobs } = await import('./services/automation/scheduled-jobs.js');
-    await initScheduledJobs();
-    console.log('✅ Automation engine scheduled jobs initialized');
-  } catch (err: any) {
-    console.warn('⚠️ Automation engine initialization failed (non-blocking):', err?.message);
+  if (socketSrv.status === 'fulfilled') {
+    try {
+      socketSrv.value.initializeSocketServer(httpServer);
+      console.log('[Socket.io] Real-time server initialized');
+    } catch (err: any) {
+      console.warn('[Socket.io] Failed to initialize (non-blocking):', err?.message);
+    }
+  } else {
+    console.warn('[Socket.io] Failed to load:', socketSrv.reason);
   }
 
-  // Initialize Hocuspocus Y.js CRDT collaboration server
-  try {
-    const { attachHocuspocusToServer } = await import('./services/hocuspocus-server.js');
-    attachHocuspocusToServer(httpServer);
-    console.log('[Hocuspocus] CRDT collaboration server initialized');
-  } catch (err: any) {
-    console.warn('[Hocuspocus] Failed to initialize (non-blocking):', err?.message);
+  if (scheduledJobs.status === 'fulfilled') {
+    try {
+      await scheduledJobs.value.initScheduledJobs();
+      console.log('✅ Automation engine scheduled jobs initialized');
+    } catch (err: any) {
+      console.warn('⚠️ Automation engine initialization failed (non-blocking):', err?.message);
+    }
+  } else {
+    console.warn('⚠️ Automation engine failed to load:', scheduledJobs.reason);
+  }
+
+  if (hocuspocus.status === 'fulfilled') {
+    try {
+      hocuspocus.value.attachHocuspocusToServer(httpServer);
+      console.log('[Hocuspocus] CRDT collaboration server initialized');
+    } catch (err: any) {
+      console.warn('[Hocuspocus] Failed to initialize (non-blocking):', err?.message);
+    }
+  } else {
+    console.warn('[Hocuspocus] Failed to load:', hocuspocus.reason);
   }
 
   // Start the HTTP server
