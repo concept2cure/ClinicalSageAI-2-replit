@@ -43,6 +43,7 @@ import {
   concept2cureProvenanceEvents,
 } from '../../shared/schema.js';
 import crypto from 'crypto';
+import { tikaIngestionService } from '../services/ingestion/tikaIngestionService';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
@@ -1288,7 +1289,38 @@ router.post('/extract-pdf', upload.single('file'), async (req: Request, res: Res
       // Fall through to basic text extraction
     }
 
-    // Strategy 3: Return buffer info as fallback
+    // Strategy 3: Tika-backed normalized extraction path (feature-flagged)
+    try {
+      const tika = await tikaIngestionService.extractFromBuffer({
+        filename: file.originalname,
+        mimeType: file.mimetype || 'application/pdf',
+        buffer: file.buffer,
+      });
+
+      const html = (tika.extractedText || '')
+        .split(/\n{2,}/)
+        .filter((p: string) => p.trim())
+        .map((p: string) => `<p>${p.replace(/\n/g, '<br/>')}</p>`)
+        .join('\n');
+
+      if (tika.extractedText.trim().length > 0) {
+        return res.json({
+          success: true,
+          html,
+          text: tika.extractedText,
+          strategy: 'tika-normalized',
+          metadata: {
+            normalizedMimeType: tika.normalizedMimeType,
+            parserProvider: tika.parserProvider,
+            warnings: tika.warnings,
+          },
+        });
+      }
+    } catch {
+      // Continue to fallback response
+    }
+
+    // Strategy 4: Return buffer info as fallback
     res.json({
       success: true,
       html: `<p><em>[PDF uploaded: ${file.originalname} — ${(file.size / 1024).toFixed(1)} KB. Text extraction services unavailable.]</em></p>`,

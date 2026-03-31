@@ -64,3 +64,59 @@ services:
         limits:
           cpus: '1'
           memory: 1G
+
+  # Optional: Apache Tika for broad document text + metadata extraction
+  tika:
+    image: apache/tika:2.9.2.1
+    ports:
+      - '9998:9998'
+    restart: unless-stopped
+    profiles: ['ingestion-spine']
+
+  # Optional: GROBID for scholarly PDF extraction
+  grobid:
+    image: lfoppiano/grobid:0.8.0
+    ports:
+      - '8071:8070'
+    restart: unless-stopped
+    profiles: ['ingestion-spine']
+
+  # Optional: OpenSearch for hybrid lexical + semantic retrieval
+  opensearch:
+    image: opensearchproject/opensearch:2.19.0
+    environment:
+      - discovery.type=single-node
+      - plugins.security.disabled=true
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - '9200:9200'
+    restart: unless-stopped
+    profiles: ['search-spine']
+
+  # Optional: Temporal persistence DB (isolated from app DB)
+  temporal-postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=temporal
+      - POSTGRES_PASSWORD=temporal
+    ports:
+      - '5434:5432'
+    restart: unless-stopped
+    profiles: ['workflow-spine']
+
+  # Optional: Temporal workflow server for governed long-running workflows
+  temporal:
+    image: temporalio/auto-setup:1.28.1
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_SEEDS=temporal-postgres
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+    ports:
+      - '7233:7233'
+    depends_on:
+      - temporal-postgres
+    restart: unless-stopped
+    profiles: ['workflow-spine']
