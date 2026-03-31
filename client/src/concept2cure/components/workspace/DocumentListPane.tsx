@@ -188,6 +188,11 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                   : 'Create your first document to start regulatory authoring.'
                 : 'Try broadening your search or adjusting filters.'}
             </p>
+            {documents.length === 0 && (
+              <p className="text-[11px] text-stone-500 mb-3">
+                Tip: the selected section stays in context after a document opens in the governed editor.
+              </p>
+            )}
             {sectionRegRef && documents.length === 0 && (
               <p className="text-[10px] text-stone-400 mb-3 font-mono">{sectionRegRef}</p>
             )}
@@ -260,7 +265,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                   onClick={() => onSelect(latestDraft)}
                   className="shrink-0 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
                 >
-                  Continue →
+                  Open in editor →
                 </button>
               </div>
             );
