@@ -1590,6 +1590,33 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     setActiveToolPanel(null);
   }, [activeProjectId]);
 
+  const openProjectWorkspace = useCallback(
+    (
+      projectId: string,
+      options?: {
+        closeProjectSwitcher?: boolean;
+        clearConversation?: boolean;
+      }
+    ) => {
+      if (!projectId) return;
+      setActiveProjectId(projectId);
+      setRiViewMode('editor');
+      setLayoutMode('regulatory-workspace');
+      navigate(`/concept2cure/project/${projectId}`);
+
+      if (options?.closeProjectSwitcher) {
+        setProjectSwitcherOpen(false);
+      }
+
+      const shouldClearConversation = options?.clearConversation ?? true;
+      if (shouldClearConversation) {
+        setActiveConversationId(undefined);
+        setActiveThreadId(undefined);
+      }
+    },
+    [navigate]
+  );
+
   // ─────────────────────────────────────────────────────────────────────────────
   // NAVIGATION HELPER — intercepts special paths before falling through to layoutMode
   // ─────────────────────────────────────────────────────────────────────────────
@@ -2245,8 +2272,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           setActiveThreadId(id);
         }}
         onSelectProject={id => {
-          setActiveProjectId(id);
-          setLayoutMode('project-home');
+          openProjectWorkspace(id, { clearConversation: false });
         }}
         onNewChat={handleNewChat}
         onOpenProjects={() => setProjectSwitcherOpen(true)}
@@ -3739,10 +3765,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   </p>
                   <button
                     onClick={() => {
-                      setActiveProjectId(continueProject.id);
-                      setRiViewMode('editor');
-                      setLayoutMode('regulatory-workspace');
-                      navigate(`/concept2cure/project/${continueProject.id}`);
+                      openProjectWorkspace(continueProject.id, { clearConversation: false });
                     }}
                     className={cn(
                       'w-full text-left rounded-xl border border-stone-200 bg-white p-5',
@@ -3804,10 +3827,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         <button
                           key={project.id}
                           onClick={() => {
-                            setActiveProjectId(project.id);
-                            setRiViewMode('editor');
-                            setLayoutMode('regulatory-workspace');
-                            navigate(`/concept2cure/project/${project.id}`);
+                            openProjectWorkspace(project.id, { clearConversation: false });
                           }}
                           className={cn(
                             'group text-left rounded-xl border overflow-hidden transition-all duration-150',
@@ -4026,14 +4046,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         projects={projects}
         activeProjectId={activeProjectId}
         onSelectProject={id => {
-          setActiveProjectId(id);
-          setProjectSwitcherOpen(false);
-          setRiViewMode('editor');
-          setLayoutMode('regulatory-workspace');
-          navigate(`/concept2cure/project/${id}`);
-          // Clear conversation when switching projects
-          setActiveConversationId(undefined);
-          setActiveThreadId(undefined);
+          openProjectWorkspace(id, {
+            closeProjectSwitcher: true,
+            clearConversation: true,
+          });
         }}
         onCreateProject={() => {
           setProjectSwitcherOpen(false);
