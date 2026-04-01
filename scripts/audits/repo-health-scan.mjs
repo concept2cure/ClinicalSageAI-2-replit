@@ -20,6 +20,9 @@ function parseArgs(argv) {
     output: DEFAULT_OUTPUT,
     strict: false,
     baseline: null,
+    owners: null,
+    writeMarkdown: null,
+    strictNoRegression: false,
     maxBytes: DEFAULT_MAX_BYTES,
     maxLines: DEFAULT_MAX_LINES,
   };
@@ -34,6 +37,14 @@ function parseArgs(argv) {
     } else if (arg === '--baseline') {
       options.baseline = argv[i + 1];
       i += 1;
+    } else if (arg === '--owners') {
+      options.owners = argv[i + 1];
+      i += 1;
+    } else if (arg === '--write-markdown') {
+      options.writeMarkdown = argv[i + 1];
+      i += 1;
+    } else if (arg === '--strict-no-regression') {
+      options.strictNoRegression = true;
     } else if (arg === '--max-bytes') {
       options.maxBytes = Number(argv[i + 1]);
       i += 1;
@@ -138,10 +149,136 @@ function buildReport(findings, options) {
   };
 }
 
+function readOwners(filePath) {
+  if (!filePath) return null;
+  const abs = path.resolve(process.cwd(), filePath);
+  if (!fs.existsSync(abs)) {
+    throw new Error(`Owners file not found: ${filePath}`);
+  }
+  const raw = fs.readFileSync(abs, 'utf8');
+  const parsed = JSON.parse(raw);
+  if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.owners)) {
+    throw new Error(`Invalid owners file shape: ${filePath}`);
+  }
+  const hasInvalidOwner = parsed.owners.some(
+    item =>
+      !item ||
+      typeof item !== 'object' ||
+      (!item.prefix && !item.pattern) ||
+      (item.prefix && typeof item.prefix !== 'string') ||
+      (item.pattern && typeof item.pattern !== 'string'),
+  );
+  if (hasInvalidOwner) {
+    throw new Error(`Invalid owner entry in owners file: ${filePath}`);
+  }
+  return parsed.owners;
+}
+
+function resolveOwner(filePath, owners) {
+  if (!owners || owners.length === 0) {
+    return { owner: 'Unassigned', contact: 'TBD' };
+  }
+  let best = null;
+  let bestScore = -1;
+  for (const item of owners) {
+    let matched = false;
+    let score = -1;
+    if (typeof item.prefix === 'string' && item.prefix && filePath.startsWith(item.prefix)) {
+      matched = true;
+      score = Math.max(score, item.prefix.length);
+    }
+    if (typeof item.pattern === 'string' && item.pattern) {
+      try {
+        const regex = new RegExp(item.pattern);
+        if (regex.test(filePath)) {
+          matched = true;
+          score = Math.max(score, item.pattern.length);
+        }
+      } catch {
+        // Ignore invalid pattern match attempts; owners file validation handles this.
+      }
+    }
+    if (matched && score > bestScore) {
+      best = item;
+      bestScore = score;
+    }
+  }
+  return best
+    ? { owner: best.owner || 'Unassigned', contact: best.contact || 'TBD' }
+    : { owner: 'Unassigned', contact: 'TBD' };
+}
+
+function annotateOwnerCounts(findings, owners) {
+  const counts = new Map();
+  const bump = (filePath, bucket) => {
+    const owner = resolveOwner(filePath, owners);
+    const key = `${owner.owner} (${owner.contact})`;
+    if (!counts.has(key)) {
+      counts.set(key, { duplicateGroups: 0, largeByBytes: 0, largeByLines: 0 });
+    }
+    counts.get(key)[bucket] += 1;
+  };
+
+  for (const dup of findings.duplicateBasenames) {
+    for (const filePath of dup.paths) {
+      bump(filePath, 'duplicateGroups');
+    }
+  }
+  for (const item of findings.largeFilesByBytes) {
+    bump(item.file, 'largeByBytes');
+  }
+  for (const item of findings.largeFilesByLines) {
+    bump(item.file, 'largeByLines');
+  }
+
+  return Array.from(counts.entries())
+    .map(([owner, values]) => ({ owner, ...values }))
+    .sort((a, b) => {
+      const at = a.duplicateGroups + a.largeByBytes + a.largeByLines;
+      const bt = b.duplicateGroups + b.largeByBytes + b.largeByLines;
+      return bt - at || a.owner.localeCompare(b.owner);
+    });
+}
+
 function writeReport(outputPath, report) {
   const absOut = path.resolve(process.cwd(), outputPath);
   fs.mkdirSync(path.dirname(absOut), { recursive: true });
   fs.writeFileSync(absOut, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+}
+
+function writeMarkdownReport(outputPath, report) {
+  const abs = path.resolve(process.cwd(), outputPath);
+  fs.mkdirSync(path.dirname(abs), { recursive: true });
+  const lines = [];
+  lines.push('# Repo Health Scan');
+  lines.push('');
+  lines.push(`Generated: ${report.generatedAt}`);
+  lines.push(`Branch: ${report.git.branch}`);
+  lines.push(`SHA: ${report.git.sha}`);
+  lines.push('');
+  lines.push('## Summary');
+  lines.push('');
+  lines.push(`- Duplicate basenames: ${report.summary.duplicateBasenames}`);
+  lines.push(`- Files over byte threshold: ${report.summary.largeFilesByBytes}`);
+  lines.push(`- Files over line threshold: ${report.summary.largeFilesByLines}`);
+  if (report.comparison) {
+    lines.push(`- Baseline: ${report.comparison.baseline}`);
+    lines.push(`- Delta duplicate basenames: ${report.comparison.delta.duplicateBasenames}`);
+    lines.push(`- Delta files over byte threshold: ${report.comparison.delta.largeFilesByBytes}`);
+    lines.push(`- Delta files over line threshold: ${report.comparison.delta.largeFilesByLines}`);
+  }
+  if (report.ownerSummary?.length) {
+    lines.push('');
+    lines.push('## Owner Summary');
+    lines.push('');
+    for (const owner of report.ownerSummary) {
+      lines.push(
+        `- ${owner.owner}: duplicateGroups=${owner.duplicateGroups}, ` +
+          `largeByBytes=${owner.largeByBytes}, largeByLines=${owner.largeByLines}`
+      );
+    }
+  }
+  fs.writeFileSync(abs, `${lines.join('\n')}\n`, 'utf8');
 }
 
 function printSummary(outputPath, report) {
@@ -179,6 +316,17 @@ function computeDelta(current, baseline) {
   };
 }
 
+function stripVolatileFields(report) {
+  const clone = JSON.parse(JSON.stringify(report));
+  if (clone && typeof clone === 'object') {
+    delete clone.generatedAt;
+    if (clone.git && typeof clone.git === 'object') {
+      delete clone.git.sha;
+    }
+  }
+  return clone;
+}
+
 function hasRegression(delta) {
   if (!delta) return false;
   return delta.duplicateBasenames > 0 || delta.largeFilesByBytes > 0 || delta.largeFilesByLines > 0;
@@ -189,6 +337,7 @@ function main() {
   const files = getTrackedFiles();
   const findings = classifyFiles(files, options);
   const baseline = readBaseline(options.baseline);
+  const owners = readOwners(options.owners);
   const report = buildReport(findings, options);
   report.comparison = baseline
     ? {
@@ -196,8 +345,32 @@ function main() {
         delta: computeDelta(report, baseline),
       }
     : null;
+  report.ownerSummary = annotateOwnerCounts(report.findings, owners);
+  if (owners) {
+    report.owners = owners;
+  }
+
+  const outputPath = path.resolve(process.cwd(), options.output);
+  const existingForStableWrite =
+    fs.existsSync(outputPath) && options.output === DEFAULT_OUTPUT
+      ? JSON.parse(fs.readFileSync(outputPath, 'utf8'))
+      : null;
+  const stableCurrent = stripVolatileFields(report);
+  const stableExisting = existingForStableWrite ? stripVolatileFields(existingForStableWrite) : null;
+  if (existingForStableWrite && stableExisting && JSON.stringify(stableExisting) === JSON.stringify(stableCurrent)) {
+    // Preserve file content when only volatile fields changed.
+    report.generatedAt = existingForStableWrite.generatedAt ?? report.generatedAt;
+    report.git = {
+      ...(report.git ?? {}),
+      sha: existingForStableWrite?.git?.sha ?? report.git.sha,
+      branch: report.git.branch,
+    };
+  }
 
   writeReport(options.output, report);
+  if (options.writeMarkdown) {
+    writeMarkdownReport(options.writeMarkdown, report);
+  }
   printSummary(options.output, report);
   if (report.comparison) {
     console.log(`- baseline: ${report.comparison.baseline}`);
@@ -206,7 +379,7 @@ function main() {
     console.log(`- delta files over line threshold: ${report.comparison.delta.largeFilesByLines}`);
   }
 
-  if (options.strict) {
+  if (options.strict || options.strictNoRegression) {
     const failed = baseline
       ? hasRegression(report.comparison?.delta)
       : report.summary.duplicateBasenames > 0 ||

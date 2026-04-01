@@ -1,0 +1,149 @@
+{
+  "target": "server/index.ts",
+  "generatedAt": "2026-04-01T06:01:57.797Z",
+  "mounts": 292,
+  "errors": 0,
+  "warnings": 16,
+  "issues": {
+    "errors": [],
+    "warnings": [
+      {
+        "type": "multi-use-prefix",
+        "path": "/api",
+        "key": null
+      },
+      {
+        "type": "multi-use-prefix",
+        "path": "/api/concept2cure",
+        "key": null
+      },
+      {
+        "type": "shadow-risk",
+        "path": "/api/csr",
+        "key": null
+      },
+      {
+        "type": "multi-use-prefix",
+        "path": "/api/projects",
+        "key": null
+      },
+      {
+        "type": "shadow-risk",
+        "path": "/api/projects",
+        "key": null
+      },
+      {
+        "type": "shadow-risk",
+        "path": "/api/templates",
+        "key": null
+      },
+      {
+        "type": "multi-use-prefix",
+        "path": "/api/ai",
+        "key": null
+      },
+      {
+        "type": "multi-use-prefix",
+        "path": "/api/cmc",
+        "key": null
+      },
+      {
+        "type": "multi-use-prefix",
+        "path": "/api/ivdr",
+        "key": null
+      },
+      {
+        "type": "multi-use-prefix",
+        "path": "/api/programs",
+        "key": null
+      },
+      {
+        "type": "multi-use-prefix",
+        "path": "/api/documents",
+        "key": null
+      },
+      {
+        "type": "shadow-risk",
+        "path": "/api/atoms",
+        "key": null
+      },
+      {
+        "type": "multi-use-prefix",
+        "path": "/api/reports",
+        "key": null
+      },
+      {
+        "type": "shadow-risk",
+        "path": "/api/reports",
+        "key": null
+      },
+      {
+        "type": "multi-use-prefix",
+        "path": "/api/ind",
+        "key": null
+      },
+      {
+        "type": "multi-use-prefix",
+        "path": "/api/regulatory",
+        "key": null
+      }
+    ]
+  },
+  "ownership": [
+    {
+      "prefix": "/api/concept2cure",
+      "owner": "Concept2Cure Core",
+      "contact": "server/routes/concept2cure.ts"
+    },
+    {
+      "prefix": "/api/ind",
+      "owner": "IND / Authoring",
+      "contact": "server/routes/ind-*.ts"
+    },
+    {
+      "prefix": "/api/cmc",
+      "owner": "CMC Platform",
+      "contact": "server/routes/cmc*.ts"
+    },
+    {
+      "prefix": "/api/reports",
+      "owner": "Reporting",
+      "contact": "server/routes/report*.ts"
+    },
+    {
+      "prefix": "/api/ai",
+      "owner": "AI Gateway",
+      "contact": "server/services/ai-gateway/"
+    },
+    {
+      "prefix": "/api/regulatory",
+      "owner": "Regulatory Intelligence",
+      "contact": "server/routes/regulatory*.ts"
+    },
+    {
+      "prefix": "/api/projects",
+      "owner": "Workspace / Projects",
+      "contact": "server/routes/projects*.ts"
+    },
+    {
+      "prefix": "/api/documents",
+      "owner": "Document Systems",
+      "contact": "server/routes/document*.ts"
+    },
+    {
+      "prefix": "/api/templates",
+      "owner": "Template Systems",
+      "contact": "server/routes/templates*.ts"
+    },
+    {
+      "prefix": "/api/atoms",
+      "owner": "Knowledge / Atoms",
+      "contact": "server/routes/atoms*.ts"
+    },
+    {
+      "prefix": "/api/csr",
+      "owner": "CSR Builder",
+      "contact": "server/routes/csr*.ts"
+    }
+  ]
+}

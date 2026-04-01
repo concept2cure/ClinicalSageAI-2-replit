@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-04-01T05:11:08.994Z",
+  "generatedAt": "2026-04-01T06:01:43.121Z",
   "git": {
-    "sha": "24766bca2d8f784c061fd1c19c90b47b3f6e6a3a",
+    "sha": "e0f11e67c2443512f1c31be3d150b3cd55014380",
     "branch": "cursor/customer-shaped-harness-build-5841"
   },
   "thresholds": {
@@ -2225,12 +2225,70 @@
       }
     ]
   },
-  "comparison": {
-    "baseline": "docs/reports/repo-health-scan-latest.json",
-    "delta": {
-      "duplicateBasenames": 0,
-      "largeFilesByBytes": 0,
-      "largeFilesByLines": 0
+  "comparison": null,
+  "ownerSummary": [
+    {
+      "owner": "Backend Platform (server/routes + server/services owners)",
+      "duplicateGroups": 241,
+      "largeByBytes": 8,
+      "largeByLines": 30
+    },
+    {
+      "owner": "Frontend Platform (client/src maintainers)",
+      "duplicateGroups": 228,
+      "largeByBytes": 10,
+      "largeByLines": 39
+    },
+    {
+      "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
+      "duplicateGroups": 61,
+      "largeByBytes": 5,
+      "largeByLines": 8
+    },
+    {
+      "owner": "Unassigned (TBD)",
+      "duplicateGroups": 32,
+      "largeByBytes": 2,
+      "largeByLines": 6
+    },
+    {
+      "owner": "Shared Contracts (shared/schema + shared/types owners)",
+      "duplicateGroups": 20,
+      "largeByBytes": 1,
+      "largeByLines": 2
+    },
+    {
+      "owner": "Developer Experience (scripts maintainers)",
+      "duplicateGroups": 8,
+      "largeByBytes": 0,
+      "largeByLines": 0
     }
-  }
+  ],
+  "owners": [
+    {
+      "pattern": "^server/",
+      "owner": "Backend Platform",
+      "contact": "server/routes + server/services owners"
+    },
+    {
+      "pattern": "^client/src/concept2cure/",
+      "owner": "Concept2Cure Frontend",
+      "contact": "client/src/concept2cure maintainers"
+    },
+    {
+      "pattern": "^client/src/",
+      "owner": "Frontend Platform",
+      "contact": "client/src maintainers"
+    },
+    {
+      "pattern": "^shared/",
+      "owner": "Shared Contracts",
+      "contact": "shared/schema + shared/types owners"
+    },
+    {
+      "pattern": "^scripts/",
+      "owner": "Developer Experience",
+      "contact": "scripts maintainers"
+    }
+  ]
 }
