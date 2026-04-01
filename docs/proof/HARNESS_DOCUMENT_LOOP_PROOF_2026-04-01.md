@@ -74,6 +74,8 @@
   - create/update/promote flows keep provenance event insertion
 - Audit:
   - create/update/audit export continue to call `logAuditEntry`
+- Additional governed paths:
+  - HAQ session create/update and knowledge upload convergence now resolve governed context before artifact mutation.
 
 ## 8) Approval/lock/signature-aware proof
 
@@ -82,3 +84,10 @@
   - persona overlay
   - readiness gate escalation
 - Existing lock/signature systems remain in route code; this iteration did not alter signature endpoint logic.
+
+## 9) Residual enforcement gaps
+
+- Service-layer artifact writers still need convergence to the canonical governed authority:
+  - `server/services/ana-guidance-executor.ts`
+  - `server/services/contradiction-consequence-service.ts`
+- `authoring-actions` routes now run governed resolution before status mutations, but error envelopes are not yet fully normalized to the concept2cure `sendError(..., 'GOVERNED_CONTRACT_INVALID')` shape for every failure path.

@@ -30,6 +30,12 @@ Registry file: `server/config/ossStackFeatureFlags.ts`
 - `oss.policy.opa_decisions` -> `OSS_POLICY_OPA_DECISIONS`
 - `oss.obs.langfuse_enabled` -> `OSS_OBS_LANGFUSE_ENABLED`
 - `oss.workflow.temporal_enabled` -> `OSS_WORKFLOW_TEMPORAL_ENABLED`
+- `oss.ingestion.docling_primary` -> `OSS_INGESTION_DOCLING_PRIMARY`
+- `oss.ingestion.unstructured_fallback` -> `OSS_INGESTION_UNSTRUCTURED_FALLBACK`
+- `oss.retrieval.qdrant_enabled` -> `OSS_RETRIEVAL_QDRANT_ENABLED`
+- `oss.retrieval.byaldi_pilot` -> `OSS_RETRIEVAL_BYALDI_PILOT`
+- `oss.compute.e2b_pilot` -> `OSS_COMPUTE_E2B_PILOT`
+- `oss.ana.enterprise_citation_bridge` -> `OSS_ANA_ENTERPRISE_CITATION_BRIDGE`
 
 ## Harness alignment requirements
 
@@ -43,4 +49,4 @@ Registry file: `server/config/ossStackFeatureFlags.ts`
 - AI routing integrations are subordinate to route/service level governed contract enforcement.
 - Telemetry and policy are env-gated and non-fatal by design.
 - Session-B integrations are feature-gated and degrade gracefully.
-- Gaps remain where some artifact-producing routes outside primary concept2cure loops are not yet wired to `resolveGovernedContext` (tracked in entrypoint truth table).
+- Remaining resolver gaps are now primarily service-layer artifact writers (`ana-guidance-executor`, `contradiction-consequence-service`) and are tracked in the entrypoint truth table.

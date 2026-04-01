@@ -19,6 +19,7 @@ import { createScopedLogger } from '../utils/logger';
 import type { ContradictionFinding, ConsequenceType } from './contradiction-engine-service.js';
 import type { ConsequencePath, ContradictionDecisionLink } from '../../shared/types/contradiction-architecture.js';
 import type { FormalDecisionRecord, DecisionReceipt } from '../../shared/types/decision-architecture.js';
+import { resolveGovernedContext } from './concept2cure/governedDocumentContractService.js';
 
 const log = createScopedLogger('contradiction-consequence');
 
@@ -305,22 +306,113 @@ class ContradictionConsequenceService {
     try {
       const { db } = await import('../db.js');
       const { concept2cureArtifacts } = await import('../../shared/schema/index.js');
+      const { createHash } = await import('crypto');
+      const artifactId = `contradiction_memo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const contentHash = createHash('sha256').update(memoContent, 'utf8').digest('hex');
+      const createdByNumeric = Number(createdBy);
+      const mockReq = {
+        body: {
+          projectId,
+          metadata: {
+            source: 'contradiction_consequence',
+            findingId: finding.id,
+            sourceRefs: [`contradiction:${finding.id}`],
+          },
+          recommendationSource: 'ana_ri',
+          originSurface: 'api_route',
+          clientTrack: 'biotech',
+          submissionProgram: 'general_ri',
+          persona: 'regulatory',
+          regulatorScope: 'fda',
+          evidenceMode: 'mixed',
+          documentClass: 'strategy_memo',
+          readinessGate: 'internal_review',
+          approvalPathType: 'regulated_dual_review',
+          workspaceTarget: 'project',
+          regulatorIntent: 'qa_review',
+        },
+        userId: Number.isFinite(createdByNumeric) ? createdByNumeric : 0,
+        userEmail: 'system@concept2cure.local',
+        userRole: 'regulatory',
+      } as any;
+      const governedResolution = resolveGovernedContext({
+        req: mockReq,
+        projectId,
+        artifactId: null,
+        documentType: 'contradiction_memo',
+        generationMode: 'manual',
+        lifecycleStatus: 'draft',
+        originSurface: 'api_route',
+        clientTrack: 'biotech',
+        submissionProgram: 'general_ri',
+        persona: 'regulatory',
+        regulatorScope: 'fda',
+        evidenceMode: 'mixed',
+        documentClass: 'strategy_memo',
+        readinessGate: 'internal_review',
+        approvalPathType: 'regulated_dual_review',
+        recommendationSource: 'ana_ri',
+        workspaceTarget: 'project',
+        regulatorIntent: 'qa_review',
+        placementContainerId: String(projectId),
+        title: `Contradiction Memo: ${finding.title}`,
+        content: memoContent,
+        sourceRefs: [`contradiction:${finding.id}`],
+        provider: 'contradiction_consequence_service',
+        model: 'rule_based',
+        exportAllowed: false,
+        eventType: 'artifact.created',
+      });
+      if (!governedResolution.validation.valid) {
+        throw new Error(
+          `governed contradiction memo blocked: ${governedResolution.validation.errors.join('; ')}`
+        );
+      }
 
       const result = await db.insert(concept2cureArtifacts).values({
+        artifactId,
+        organizationId,
         projectId,
         title: `Contradiction Memo: ${finding.title}`,
         content: memoContent,
+        contentHash,
         status: 'draft',
-        artifactType: 'contradiction_memo',
+        type: 'contradiction_memo',
+        category: 'document',
         version: 1,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        ctdSection: null,
+        createdById: Number.isFinite(createdByNumeric) ? createdByNumeric : null,
+        metadata: {
+          contradictionFindingId: finding.id,
+          contradictionType: finding.contradictionType,
+          severity: finding.severity,
+          harness: {
+            clientTrack: governedResolution.contract.clientTrack,
+            submissionProgram: governedResolution.contract.submissionProgram,
+            persona: governedResolution.contract.persona,
+            regulatorScope: governedResolution.contract.regulatorScope,
+            documentClass: governedResolution.contract.documentClass,
+            readinessGate: governedResolution.contract.readinessGate,
+            workspaceTarget: governedResolution.contract.workspaceTarget,
+            originSurface: governedResolution.contract.originSurface,
+            recommendationSource: governedResolution.contract.recommendationSource,
+            regulatorIntent: governedResolution.contract.regulatorIntent,
+            gateChecks: governedResolution.contract.exportEligibility.gateChecks,
+            blockingReasons: governedResolution.contract.exportEligibility.blockingReasons,
+            readinessOutcome: governedResolution.contract.exportEligibility.readinessOutcome,
+          },
+        },
       } as any).returning({ id: concept2cureArtifacts.id });
 
       return String(result[0]?.id || `memo_${finding.id}_${Date.now()}`);
-    } catch {
-      // Fallback: return a reference ID without DB persistence
-      return `memo_${finding.id}_${Date.now()}`;
+    } catch (err: any) {
+      log.error('createContradictionMemo failed', {
+        findingId: finding.id,
+        projectId,
+        organizationId,
+        error: err?.message || String(err),
+      });
+      throw err;
     }
   }
 
