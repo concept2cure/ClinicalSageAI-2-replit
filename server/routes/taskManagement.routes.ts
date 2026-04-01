@@ -23,13 +23,38 @@ function getActorUserId(req: Request): number | null {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
+const jsonPrimitiveSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
+type JsonValue = z.infer<typeof jsonPrimitiveSchema> | { [key: string]: JsonValue } | JsonValue[];
+const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
+  z.union([jsonPrimitiveSchema, z.array(jsonValueSchema), z.record(z.string(), jsonValueSchema)])
+);
+const stringArraySchema = z.array(z.string());
+const taskDefinitionSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1),
+  description: z.string().optional(),
+  moduleType: z.string().optional(),
+  category: z.string().optional(),
+  taskType: z.string().optional(),
+  priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+  dayOffset: z.number().int().optional(),
+  duration: z.number().int().positive().optional(),
+  estimatedHours: z.number().positive().optional(),
+});
+const templateDependencySchema = z.object({
+  predecessor: z.string().min(1),
+  successor: z.string().min(1),
+  type: z.enum(['finish-to-start', 'start-to-start', 'finish-to-finish', 'start-to-finish']).optional(),
+  lag: z.number().int().optional(),
+});
+
 // Task creation schema
 const createTaskSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   moduleType: z.string(),
   moduleSource: z.string().optional(),
-  moduleData: z.any().optional(),
+  moduleData: jsonValueSchema.optional(),
   projectId: z.number().optional(),
   category: z.string().optional(),
   taskType: z.string().optional(),
@@ -40,8 +65,8 @@ const createTaskSchema = z.object({
   estimatedHours: z.number().optional(),
   dependencies: z.array(z.string()).optional(),
   tags: z.array(z.string()).optional(),
-  automationRules: z.any().optional(),
-  escalationPath: z.any().optional(),
+  automationRules: jsonValueSchema.optional(),
+  escalationPath: jsonValueSchema.optional(),
 });
 
 // Bulk task creation schema
@@ -71,13 +96,13 @@ const createTemplateSchema = z.object({
   category: z.string(),
   submissionType: z.string().optional(),
   milestone: z.string().optional(),
-  tasks: z.array(z.any()),
-  dependencies: z.any().optional(),
-  milestones: z.any().optional(),
+  tasks: z.array(taskDefinitionSchema),
+  dependencies: z.array(templateDependencySchema).optional(),
+  milestones: z.array(z.string()).optional(),
   defaultDuration: z.number().optional(),
   bestPractices: z.string().optional(),
-  regulatoryRequirements: z.any().optional(),
-  riskFactors: z.any().optional(),
+  regulatoryRequirements: stringArraySchema.optional(),
+  riskFactors: stringArraySchema.optional(),
 });
 
 // Automation rule schema
@@ -87,14 +112,14 @@ const createAutomationSchema = z.object({
   ruleType: z.enum(['event-based', 'schedule-based', 'condition-based']),
   triggerModule: z.string().optional(),
   triggerEvent: z.string(),
-  triggerConditions: z.any().optional(),
+  triggerConditions: jsonValueSchema.optional(),
   actionType: z.string(),
-  taskTemplate: z.any().optional(),
-  taskDefaults: z.any().optional(),
+  taskTemplate: taskDefinitionSchema.optional(),
+  taskDefaults: jsonValueSchema.optional(),
   delayMinutes: z.number().optional(),
-  recurringSchedule: z.any().optional(),
+  recurringSchedule: jsonValueSchema.optional(),
   workloadBalancing: z.boolean().default(true),
-  smartAssignment: z.any().optional(),
+  smartAssignment: jsonValueSchema.optional(),
 });
 
 // Helper function to calculate critical path

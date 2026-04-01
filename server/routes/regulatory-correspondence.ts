@@ -71,6 +71,8 @@ const KEYWORD_TAXONOMY: Array<{
   },
 ];
 
+const ISSUE_EXTRACTION_METHOD = 'keyword_heuristic_v1';
+
 function parseIssues(text: string, correspondenceId: string): CorrespondenceIssue[] {
   const normalized = text || '';
   const matches = KEYWORD_TAXONOMY.filter(rule => rule.pattern.test(normalized));
@@ -84,6 +86,7 @@ function parseIssues(text: string, correspondenceId: string): CorrespondenceIssu
         blocker: false,
         responseRequired: true,
         sourceExcerpt: normalized.slice(0, 280),
+        // Heuristic confidence is deterministic, not model-calibrated probability.
         confidence: 0.35,
         humanReviewStatus: 'pending',
         mappedCtdSections: [],
@@ -101,6 +104,7 @@ function parseIssues(text: string, correspondenceId: string): CorrespondenceIssu
     blocker: match.blocker,
     responseRequired: true,
     sourceExcerpt: normalized.slice(0, 280),
+    // Heuristic confidence is deterministic, not model-calibrated probability.
     confidence: 0.72,
     humanReviewStatus: 'pending',
     mappedCtdSections: [],
@@ -268,61 +272,50 @@ export async function persistOutboundCorrespondenceRecord(payload: {
   };
 
   const pool = getDbClientOrNull();
-  if (await tableReady(pool)) {
-    await pool!.query(
-      `INSERT INTO c2c_correspondence
-      (id, organization_id, project_id, submission_id, direction, source_channel, communication_type, subject, sender, recipients, received_at, sent_at, urgency, response_required, status, parser_metadata, attachment_refs, parsed_text, summary)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,$12,$13,$14,$15,$16::jsonb,$17::jsonb,$18,$19)`,
-      [
-        record.id,
-        payload.orgId,
-        record.projectId,
-        record.submissionId,
-        record.direction,
-        record.sourceChannel,
-        record.communicationType,
-        record.subject,
-        record.sender || null,
-        JSON.stringify(record.recipients || []),
-        record.receivedAt || null,
-        record.sentAt || null,
-        record.urgency,
-        record.responseRequired,
-        record.status,
-        JSON.stringify(record.parserMetadata || {}),
-        JSON.stringify([]),
-        record.parsedText || null,
-        record.summary || null,
-      ]
+  if (!(await tableReady(pool))) {
+    throw new Error(
+      'Regulatory Correspondence OS persistence is unavailable. Run migration 20260331_regulatory_correspondence_os.sql'
     );
-
-    await addTimelineEventDB(pool!, {
-      orgId: payload.orgId,
-      projectId: record.projectId,
-      submissionId: payload.submissionId,
-      correspondenceId: record.id,
-      eventType: 'report_delivery_logged',
-      summary: record.subject,
-      metadata: {
-        communicationType: record.communicationType,
-        sourceChannel: record.sourceChannel,
-      },
-    });
-  } else {
-    memCorrespondence.set(id, record);
-    memCorrespondenceOrg.set(id, payload.orgId);
-    memIssues.set(id, []);
-    memTimeline.push({
-      id: crypto.randomUUID(),
-      orgId: payload.orgId,
-      submissionId: record.submissionId,
-      correspondenceId: id,
-      projectId: record.projectId,
-      eventType: 'report_delivery_logged',
-      eventTime: now,
-      summary: record.subject,
-    });
   }
+  await pool!.query(
+    `INSERT INTO c2c_correspondence
+    (id, organization_id, project_id, submission_id, direction, source_channel, communication_type, subject, sender, recipients, received_at, sent_at, urgency, response_required, status, parser_metadata, attachment_refs, parsed_text, summary)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,$12,$13,$14,$15,$16::jsonb,$17::jsonb,$18,$19)`,
+    [
+      record.id,
+      payload.orgId,
+      record.projectId,
+      record.submissionId,
+      record.direction,
+      record.sourceChannel,
+      record.communicationType,
+      record.subject,
+      record.sender || null,
+      JSON.stringify(record.recipients || []),
+      record.receivedAt || null,
+      record.sentAt || null,
+      record.urgency,
+      record.responseRequired,
+      record.status,
+      JSON.stringify(record.parserMetadata || {}),
+      JSON.stringify([]),
+      record.parsedText || null,
+      record.summary || null,
+    ]
+  );
+
+  await addTimelineEventDB(pool!, {
+    orgId: payload.orgId,
+    projectId: record.projectId,
+    submissionId: payload.submissionId,
+    correspondenceId: record.id,
+    eventType: 'report_delivery_logged',
+    summary: record.subject,
+    metadata: {
+      communicationType: record.communicationType,
+      sourceChannel: record.sourceChannel,
+    },
+  });
 
   await persistCorrespondenceLearning({
     orgId: payload.orgId,
@@ -504,8 +497,10 @@ router.post('/correspondence/intake', async (req, res) => {
     sourceThreadId: req.body.sourceThreadId,
     sourceMailboxId: req.body.sourceMailboxId,
     parserMetadata: {
-      parserVersion: 'v1-keyword-scaffold',
+      parserVersion: ISSUE_EXTRACTION_METHOD,
       extractionVersion: '2026-03-31',
+      extractionMethod: 'deterministic_keyword_heuristic',
+      confidenceMethod: 'fixed_heuristic_score',
       malwareScan: 'pending',
       mimeValidated: true,
       quarantined: false,
@@ -517,6 +512,7 @@ router.post('/correspondence/intake', async (req, res) => {
   };
 
   const extracted = parseIssues(parsedText, id);
+  const extractionConfidenceMethod = 'deterministic_heuristic_score';
 
   const pool = getDbClientOrNull();
   if (!(await tableReady(pool))) return persistenceUnavailable(res);

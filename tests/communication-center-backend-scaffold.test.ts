@@ -97,4 +97,21 @@ describe('Communication Center backend scaffold', () => {
     expect(hookSrc).toContain('Live backend data could not be loaded. Showing current persisted records only.');
     expect(hookSrc).not.toContain('Using local scaffold data while backend data is unavailable.');
   });
+
+  it('fails closed for regulatory correspondence persistence and discloses heuristic extraction', () => {
+    const src = read('server/routes/regulatory-correspondence.ts');
+    expect(src).toContain('function persistenceUnavailable');
+    expect(src).toContain('Regulatory Correspondence OS persistence is unavailable');
+    expect(src).toContain('if (!(await tableReady(pool))) return persistenceUnavailable(res);');
+    expect(src).toContain("const ISSUE_EXTRACTION_METHOD = 'keyword_heuristic_v1'");
+    expect(src).toContain("confidenceMethod: 'fixed_heuristic_score'");
+    expect(src).not.toContain('v1-keyword-scaffold');
+  });
+
+  it('removes z.any payload contracts from task management schemas', () => {
+    const src = read('server/routes/taskManagement.routes.ts');
+    expect(src).toContain('const jsonValueSchema');
+    expect(src).toContain('const taskDefinitionSchema');
+    expect(src).not.toContain('z.any()');
+  });
 });
