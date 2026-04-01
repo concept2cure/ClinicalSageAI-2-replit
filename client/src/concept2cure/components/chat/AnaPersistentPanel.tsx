@@ -3760,6 +3760,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       find_predicates: '/precedent',
       check_readiness: '/readiness',
       draft_section: '/draft',
+      cms_strategy: '/cms',
+      diagnostics_strategy: '/diagnostics',
     };
     const mappedPrompt = action.intent ? intentToPrompt[action.intent] : undefined;
     handleSend(mappedPrompt || action.label);

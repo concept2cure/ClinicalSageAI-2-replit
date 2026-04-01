@@ -833,6 +833,8 @@ export async function enrichContextForChat(params: {
       help: () => Promise.all([
         enrichWithReadiness(projectId, organizationId),
         enrichWithRecommendations(projectId, organizationId),
+        enrichWithCMS(projectId),
+        enrichWithDiagnostics(projectId),
       ]).then(r => r.join('')),
     };
 
@@ -899,6 +901,12 @@ export async function enrichContextForChat(params: {
       smpc: 'Generate a Summary of Product Characteristics (SmPC) per EMA QRD template.',
       rmp: 'Generate or update the Risk Management Plan (RMP) per EMA GVP Module V.',
       uspi: 'Generate US Prescribing Information (USPI) per FDA Physician Labeling Rule.',
+      cms: slash.args
+        ? `Analyze CMS and reimbursement strategy for: ${slash.args}. Execute analyze_cms_strategy when project context is available.`
+        : 'Analyze CMS and reimbursement strategy. If project context is available, execute analyze_cms_strategy to produce coding/coverage/payment risk output before giving recommendations.',
+      diagnostics: slash.args
+        ? `Assess diagnostics and IVD validation strategy for: ${slash.args}. Execute assess_diagnostic_validation when project context is available.`
+        : 'Assess diagnostics and IVD validation strategy. If project context is available, execute assess_diagnostic_validation to produce readiness and gap output before recommendations.',
       workflow: 'Show the full submission workflow status. List all phases, steps completed vs remaining, critical blockers, and the next step the user should take. Be directive.',
       status: 'Give a quick project status briefing: readiness score, workflow progress, top 3 blockers, and the single most important next action. Keep it concise — 5-7 lines max.',
       help: 'The user is asking what you can do. Look at their project state and suggest 3-4 specific things you can do RIGHT NOW. Show, don\'t tell. Demonstrate by referencing their actual readiness score, gaps, and recommendations.',

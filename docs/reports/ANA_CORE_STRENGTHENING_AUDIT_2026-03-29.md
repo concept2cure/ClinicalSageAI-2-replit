@@ -202,6 +202,30 @@ This audit focused on the practical intelligence path that users actually hit in
 ### Residual Risk
 - Operational execution parity is still pending for these new domains (commands that perform governed creation/workflow operations). Current wave is enrichment + prompt/routing + UI parity.
 
+## 2026-04-01 Execution-Layer Enhancement Wave (Completed)
+
+### Scope
+- Added true operational command execution for CMS and diagnostics so AnA can perform governed analysis actions beyond prompt enrichment.
+- Updated command contract documentation and routing hints so AnA can invoke these commands deterministically in conversation flows.
+
+### Files Updated
+
+| File | Enhancement |
+|---|---|
+| `server/services/ana-ri/command-executor.ts` | Added `analyze_cms_strategy` and `assess_diagnostic_validation` command handlers; registered both in `CommandName`, `COMMAND_REGISTRY`, and execution router |
+| `server/services/ana-ri/context-enrichment.ts` | Updated `/cms` and `/diagnostics` rewrite directives to explicitly instruct command execution when project context exists; expanded `/help` enrichment to include CMS + diagnostics context |
+| `client/src/concept2cure/components/chat/AnaPersistentPanel.tsx` | Added suggested-action intent mapping for CMS and diagnostics (`cms_strategy`, `diagnostics_strategy`) to deterministic slash commands |
+| `.claude/skills/ana-operating-system.md` | Updated operational command inventory from 39 to 41 and documented new market-access/diagnostics command family |
+
+### Impact
+- AnA now has execution-layer command primitives for:
+  - CMS coding/coverage/payment risk analysis from project intelligence
+  - Diagnostics/IVD validation-readiness assessment (analytical, clinical, cutoff, CDx alignment)
+- This reduces domain behavior drift between “intelligence narration” and “action execution,” improving reliability for regulated workflows.
+
+### Residual Risk
+- These are analytical execution commands; downstream governed artifact-generation commands for dedicated CMS dossiers and diagnostics validation plans are still a next step.
+
 ---
 
 ## Outcome

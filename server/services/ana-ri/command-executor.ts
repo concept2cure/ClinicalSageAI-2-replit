@@ -3292,7 +3292,175 @@ export async function analyzeCrossDocument(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 27. COMMAND REGISTRY
+// 27. CMS + DIAGNOSTICS EXECUTION COMMANDS
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface MemoryEntryRow {
+  title?: string;
+  content?: string;
+  category?: string;
+  confidence?: number;
+  importance?: number;
+}
+
+async function loadProjectMemoryEntries(
+  projectId: number,
+  categories: string[],
+  limit = 20
+): Promise<MemoryEntryRow[]> {
+  if (categories.length === 0) return [];
+  const placeholders = categories.map((_, i) => `$${i + 2}`).join(', ');
+  const result = await pool.query(
+    `SELECT title, content, category, confidence, importance
+     FROM project_memory_entries
+     WHERE project_id = $1 AND category IN (${placeholders})
+     ORDER BY importance DESC, created_at DESC
+     LIMIT $${categories.length + 2}`,
+    [projectId, ...categories, limit]
+  );
+  return result.rows as MemoryEntryRow[];
+}
+
+/** Analyze CMS coding/coverage/payment strategy from project memory */
+export async function analyzeCMSStrategy(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
+  try {
+    const projectId = Number(params.projectId || ctx.activeProjectId);
+    if (!projectId || Number.isNaN(projectId)) {
+      return {
+        success: false,
+        action: 'analyze_cms_strategy',
+        message: 'projectId is required.',
+      };
+    }
+
+    const categories = [
+      'cms_strategy',
+      'reimbursement_strategy',
+      'coding_coverage',
+      'payer_evidence',
+      'health_economics',
+    ];
+    const entries = await loadProjectMemoryEntries(projectId, categories, 18);
+
+    const riskKeywords = /\b(missing|insufficient|unclear|gap|uncertain|weak)\b/i;
+    const riskSignals = entries
+      .filter((entry) => riskKeywords.test(entry.content || ''))
+      .slice(0, 5)
+      .map((entry) => ({
+        category: entry.category || 'unknown',
+        title: entry.title || 'Untitled',
+        snippet: (entry.content || '').slice(0, 220),
+      }));
+
+    const categoryCoverage = categories.map((category) => ({
+      category,
+      count: entries.filter((entry) => entry.category === category).length,
+    }));
+
+    const missingAreas = categoryCoverage.filter((item) => item.count === 0).map((item) => item.category);
+    const recommendations = [
+      ...(missingAreas.includes('coding_coverage')
+        ? ['Define coding pathway assumptions (CPT/HCPCS/DRG/APC) before payer narrative finalization.']
+        : []),
+      ...(missingAreas.includes('payer_evidence')
+        ? ['Build payer-facing evidence matrix mapping clinical endpoints to coverage criteria.']
+        : []),
+      ...(missingAreas.includes('health_economics')
+        ? ['Develop HEOR/value dossier framing with budget-impact and comparative-value claims.']
+        : []),
+    ];
+
+    return {
+      success: true,
+      action: 'analyze_cms_strategy',
+      data: {
+        projectId,
+        memoryEntryCount: entries.length,
+        categoryCoverage,
+        riskSignals,
+        recommendations: recommendations.length > 0 ? recommendations : undefined,
+      },
+      message:
+        entries.length > 0
+          ? `CMS strategy analyzed using ${entries.length} project intelligence entries. ${riskSignals.length} reimbursement risk signal(s) flagged.`
+          : 'No CMS/reimbursement intelligence entries found. Seed coding, coverage, and payer evidence context first.',
+    };
+  } catch (err: unknown) {
+    return {
+      success: false,
+      action: 'analyze_cms_strategy',
+      message: 'CMS strategy analysis failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+/** Assess diagnostics/IVD validation readiness from project intelligence */
+export async function assessDiagnosticsValidation(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
+  try {
+    const projectId = Number(params.projectId || ctx.activeProjectId);
+    if (!projectId || Number.isNaN(projectId)) {
+      return {
+        success: false,
+        action: 'assess_diagnostic_validation',
+        message: 'projectId is required.',
+      };
+    }
+
+    const categories = [
+      'diagnostic_validation',
+      'ivd_performance',
+      'analytical_validation',
+      'clinical_performance',
+      'companion_diagnostic',
+    ];
+    const entries = await loadProjectMemoryEntries(projectId, categories, 20);
+    const corpus = entries.map((entry) => `${entry.title || ''} ${entry.content || ''}`).join(' ');
+
+    const componentChecks = [
+      { key: 'analytical', label: 'Analytical validation', pattern: /\b(precision|linearity|lodd?|repeatability|reproducibility)\b/i },
+      { key: 'clinical', label: 'Clinical performance', pattern: /\b(sensitivity|specificity|ppv|npv|clinical performance)\b/i },
+      { key: 'cutoff', label: 'Cutoff / decision threshold', pattern: /\b(cutoff|threshold|decision point|method comparison)\b/i },
+      { key: 'cdx', label: 'Companion diagnostic alignment', pattern: /\b(companion diagnostic|cdx|co-development)\b/i },
+    ];
+
+    const present = componentChecks.filter((check) => check.pattern.test(corpus));
+    const missing = componentChecks.filter((check) => !check.pattern.test(corpus));
+    const readinessScore = Math.round((present.length / componentChecks.length) * 100);
+
+    return {
+      success: true,
+      action: 'assess_diagnostic_validation',
+      data: {
+        projectId,
+        readinessScore,
+        presentComponents: present.map((item) => item.label),
+        missingComponents: missing.map((item) => item.label),
+        memoryEntryCount: entries.length,
+      },
+      message:
+        entries.length > 0
+          ? `Diagnostics/IVD validation readiness assessed at ${readinessScore}%. ${missing.length} component(s) need strengthening.`
+          : 'No diagnostics/IVD intelligence entries found. Add analytical and clinical validation context to begin readiness assessment.',
+    };
+  } catch (err: unknown) {
+    return {
+      success: false,
+      action: 'assess_diagnostic_validation',
+      message: 'Diagnostics validation assessment failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 28. COMMAND REGISTRY
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type CommandName =
@@ -3364,7 +3532,10 @@ export type CommandName =
   | 'generate_report'
   // Clinical Intelligence
   | 'generate_clinical_insights'
-  | 'analyze_cross_document';
+  | 'analyze_cross_document'
+  // CMS + Diagnostics
+  | 'analyze_cms_strategy'
+  | 'assess_diagnostic_validation';
 
 export interface CommandDefinition {
   name: CommandName;
@@ -3771,6 +3942,20 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
     parameters: 'documentIds (array of 2+), documentType? (CSR/CER)',
     example: '"Compare documents 10, 12, and 15 for cross-document patterns"',
   },
+  {
+    name: 'analyze_cms_strategy',
+    description:
+      'Analyze CMS coding/coverage/payment strategy and reimbursement risk signals using project intelligence',
+    parameters: 'projectId?',
+    example: '"Assess our CMS coding and coverage strategy risks"',
+  },
+  {
+    name: 'assess_diagnostic_validation',
+    description:
+      'Assess diagnostics/IVD validation readiness across analytical validation, clinical performance, cutoff strategy, and CDx alignment',
+    parameters: 'projectId?',
+    example: '"Assess diagnostic validation readiness for this project"',
+  },
 ];
 
 /**
@@ -3917,6 +4102,9 @@ export async function executeCommands(
     // Clinical Intelligence
     generate_clinical_insights: generateClinicalInsights,
     analyze_cross_document: analyzeCrossDocument,
+    // CMS + Diagnostics
+    analyze_cms_strategy: analyzeCMSStrategy,
+    assess_diagnostic_validation: assessDiagnosticsValidation,
   };
 
   for (const cmd of commands) {
