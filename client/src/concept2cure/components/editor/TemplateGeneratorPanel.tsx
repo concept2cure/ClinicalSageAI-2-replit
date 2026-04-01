@@ -51,6 +51,7 @@ interface GenerationMetrics {
 interface TemplateGeneratorPanelProps {
   projectId?: string;
   artifactId?: string | number;
+  submissionType?: string;
   contextAttachment?: 'project' | 'adhoc';
   onGenerated: (content: string, templateName: string) => void;
   onClose: () => void;
@@ -69,6 +70,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 const TemplateGeneratorPanel: React.FC<TemplateGeneratorPanelProps> = ({
   projectId,
   artifactId,
+  submissionType,
   contextAttachment,
   onGenerated,
   onClose,
@@ -152,8 +154,32 @@ const TemplateGeneratorPanel: React.FC<TemplateGeneratorPanelProps> = ({
     .filter(v => v.required)
     .every(v => variableValues[v.name]?.trim());
 
+  const normalizedSubmissionType = String(submissionType || '').toLowerCase();
+
+  const filteredTemplates = useMemo(() => {
+    if (!normalizedSubmissionType) return templates;
+    return templates.filter(t => {
+      const id = t.id.toLowerCase();
+      const category = t.category.toLowerCase();
+      if (normalizedSubmissionType.includes('ind')) {
+        return category === 'ind' || id.includes('ind');
+      }
+      if (normalizedSubmissionType.includes('510') || normalizedSubmissionType.includes('pma')) {
+        return category === 'regulatory' || id.includes('510') || id.includes('device');
+      }
+      if (
+        normalizedSubmissionType.includes('nda') ||
+        normalizedSubmissionType.includes('bla') ||
+        normalizedSubmissionType.includes('maa')
+      ) {
+        return category === 'ctd' || category === 'csr' || category === 'regulatory';
+      }
+      return true;
+    });
+  }, [templates, normalizedSubmissionType]);
+
   // Group templates by category
-  const grouped = templates.reduce<Record<string, Template[]>>((acc, t) => {
+  const grouped = filteredTemplates.reduce<Record<string, Template[]>>((acc, t) => {
     (acc[t.category] ||= []).push(t);
     return acc;
   }, {});

@@ -34,6 +34,7 @@ interface TemplateOption {
   sections: { title: string; required?: boolean }[];
   complexity: 'simple' | 'moderate' | 'complex';
   estimatedPages?: number;
+  templateId?: string;
 }
 
 type CreationMode = 'blank' | 'template' | 'ai-generate';
@@ -160,6 +161,41 @@ const QUICK_TEMPLATES: TemplateOption[] = [
     ],
     complexity: 'simple',
     estimatedPages: 2,
+    templateId: 'tpl_ind_cover_letter',
+  },
+  {
+    id: 'pre-ind-briefing',
+    name: 'Pre-IND Briefing Package',
+    description: 'Pre-IND meeting briefing package for FDA interaction planning.',
+    category: 'IND',
+    ctdSection: '1.2',
+    sections: [
+      { title: 'Meeting Request Context', required: true },
+      { title: 'Product and Development Overview', required: true },
+      { title: 'Proposed Clinical Plan', required: true },
+      { title: 'Key Questions for FDA', required: true },
+      { title: 'Supporting Summaries', required: true },
+    ],
+    complexity: 'moderate',
+    estimatedPages: 12,
+    templateId: 'tpl_ind_pre_ind_briefing',
+  },
+  {
+    id: 'investigator-brochure',
+    name: "Investigator's Brochure (IB)",
+    description: 'IND investigator brochure with nonclinical and clinical evidence sections.',
+    category: 'IND',
+    ctdSection: '5.3',
+    sections: [
+      { title: 'Summary', required: true },
+      { title: 'Introduction', required: true },
+      { title: 'Nonclinical Studies', required: true },
+      { title: 'Effects in Humans', required: true },
+      { title: 'Guidance for Investigators', required: true },
+    ],
+    complexity: 'complex',
+    estimatedPages: 50,
+    templateId: 'tpl_ind_investigator_brochure',
   },
 ];
 
@@ -198,7 +234,11 @@ export function NewDocumentDialog({
 
     if (normalizedSubmissionType.includes('IND')) {
       const indFirst = QUICK_TEMPLATES.filter(
-        t => t.id === 'cover-letter' || t.id === 'quality-overall-summary'
+        t =>
+          t.id === 'cover-letter' ||
+          t.id === 'pre-ind-briefing' ||
+          t.id === 'investigator-brochure' ||
+          t.id === 'quality-overall-summary'
       );
       const remainder = QUICK_TEMPLATES.filter(t => !indFirst.some(primary => primary.id === t.id));
       return [...indFirst, ...remainder];

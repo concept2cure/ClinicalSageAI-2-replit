@@ -435,6 +435,7 @@ interface ProjectWorkspaceShellProps {
   initialContent?: string;
   initialTitle?: string;
   initialCtdSection?: string;
+  initialTemplateId?: string;
   onInitialContentConsumed?: () => void;
   /** Open a specific existing artifact directly (no creation) */
   openArtifactId?: string;
@@ -468,6 +469,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   initialContent,
   initialTitle,
   initialCtdSection,
+  initialTemplateId,
   onInitialContentConsumed,
   openArtifactId,
   onOpenArtifactConsumed,
@@ -492,6 +494,14 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const { sections: submissionSections, readinessPercent } = useSubmissionSections(projectId, submissionType || projectType);
   const normalizedSubmissionType = String(submissionType || projectType || '').toUpperCase();
   const isINDWorkspace = ['IND', 'NDA', 'BLA', 'MAA'].includes(normalizedSubmissionType);
+  const resolvedSubmissionProgram =
+    normalizedSubmissionType.includes('IND')
+      ? 'ind'
+      : normalizedSubmissionType.includes('510') || normalizedSubmissionType.includes('PMA')
+        ? '510k'
+        : normalizedSubmissionType.includes('MAA') || normalizedSubmissionType.includes('BLA')
+          ? 'ectd'
+          : 'general_ri';
   const nextRecommendedSection = useMemo(() => {
     const flatten = (nodes: SectionNode[]): SectionNode[] =>
       nodes.flatMap(n => [n, ...(n.children ? flatten(n.children) : [])]);
@@ -989,6 +999,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         content: '<p>Begin editing your document here...</p>',
         type: 'regulatory_document',
         category: 'document',
+        submissionProgram: resolvedSubmissionProgram,
+        originSurface: 'project_workspace_shell',
       });
       if (res.ok) {
         const payload = await res.json();
@@ -1007,7 +1019,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     } finally {
       setCreatingNew(false);
     }
-  }, [projectId, newDocTitle, loadArtifacts, pushShellToast]);
+  }, [projectId, newDocTitle, loadArtifacts, pushShellToast, resolvedSubmissionProgram]);
 
   // ── Create from template ─────────────────────────────────────────────────
   const handleCreateFromTemplate = useCallback(
@@ -1023,6 +1035,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           category: 'document',
           ctdSection,
           templateId: templateKey,
+          submissionProgram: resolvedSubmissionProgram,
+          originSurface: 'project_workspace_shell',
         });
         if (res.ok) {
           const payload = await res.json();
@@ -1041,7 +1055,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         setCreatingNew(false);
       }
     },
-    [projectId, loadArtifacts, pushShellToast]
+    [projectId, loadArtifacts, pushShellToast, resolvedSubmissionProgram]
   );
 
   // ── Create from dialog (blank or template) ─────────────────────────────
@@ -1056,6 +1070,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           type: 'regulatory_document',
           category: 'document',
           ...(ctdSection ? { ctdSection } : {}),
+          submissionProgram: resolvedSubmissionProgram,
+          originSurface: 'project_workspace_shell',
         });
         if (res.ok) {
           const payload = await res.json();
@@ -1074,7 +1090,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         setCreatingNew(false);
       }
     },
-    [projectId, loadArtifacts, pushShellToast]
+    [projectId, loadArtifacts, pushShellToast, resolvedSubmissionProgram]
   );
 
   const handleDialogCreateFromTemplate = useCallback(
@@ -1090,6 +1106,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           category: 'document',
           ...(ctdSection ? { ctdSection } : {}),
           templateId,
+          submissionProgram: resolvedSubmissionProgram,
+          originSurface: 'project_workspace_shell',
         });
         if (res.ok) {
           const payload = await res.json();
@@ -1108,7 +1126,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         setCreatingNew(false);
       }
     },
-    [projectId, loadArtifacts, pushShellToast]
+    [projectId, loadArtifacts, pushShellToast, resolvedSubmissionProgram]
   );
 
   const handleCreateSectionDraftWithRI = useCallback(async () => {
@@ -1128,6 +1146,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         type: 'regulatory_document',
         category: 'document',
         ctdSection: selectedCtdSection,
+        submissionProgram: resolvedSubmissionProgram,
+        originSurface: 'project_workspace_shell',
         metadata: {
           draftingMode: 'ri',
           projectId,
@@ -1157,6 +1177,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     projectType,
     loadArtifacts,
     pushShellToast,
+    resolvedSubmissionProgram,
   ]);
 
   // ── Placement confirmation handler ───────────────────────────────────────
@@ -2967,6 +2988,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                         initialContent={initialContent}
                         initialTitle={initialTitle}
                         initialCtdSection={initialCtdSection}
+                        initialTemplateId={initialTemplateId}
                         onInitialContentConsumed={onInitialContentConsumed}
                         openArtifactId={openArtifactId}
                         onOpenArtifactConsumed={onOpenArtifactConsumed}
