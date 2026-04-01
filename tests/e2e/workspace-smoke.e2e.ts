@@ -208,6 +208,7 @@ async function seedFallbackSession(page: Page): Promise<void> {
     pinned: true,
     starred: true,
   };
+  const seededProjects: Array<Record<string, any>> = [seededProject];
 
   await page.route('**/api/v1/auth/session', async route => {
     await route.fulfill({
@@ -225,16 +226,47 @@ async function seedFallbackSession(page: Page): Promise<void> {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: [seededProject] }),
+        body: JSON.stringify({ success: true, data: seededProjects }),
+      });
+      return;
+    }
+    if (request.method() === 'POST' && projectListPath.test(url.pathname)) {
+      const body = (request.postDataJSON() as Record<string, any> | null) ?? {};
+      const nowIso = new Date().toISOString();
+      const nextProject = {
+        id: String(body.id || `stage9-generated-project-${Date.now()}`),
+        name: String(body.name || 'Stage 9 Generated Project'),
+        submissionType: String(body.submissionType || 'IND'),
+        type: String(body.type || body.submissionType || 'IND'),
+        description: String(body.description || 'Seeded local project for Stage 9 pulse checks'),
+        sponsor: String(body.sponsor || 'Concept2Cure'),
+        product: String(body.product || 'Pulse Harness'),
+        region: String(body.region || 'FDA'),
+        conversationCount: 0,
+        conversations: [],
+        status: String(body.status || 'active'),
+        createdAt: nowIso,
+        updatedAt: nowIso,
+        metadata: { pinned: false, starred: false },
+        pinned: false,
+        starred: false,
+      };
+      seededProjects.unshift(nextProject);
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: nextProject }),
       });
       return;
     }
     const projectDetailPath = /^\/api\/concept2cure\/projects\/[^/]+$/;
     if (request.method() === 'GET' && projectDetailPath.test(url.pathname)) {
+      const requestedProjectId = url.pathname.split('/').pop();
+      const found = seededProjects.find(p => String(p.id) === String(requestedProjectId));
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: seededProject }),
+        body: JSON.stringify({ success: true, data: found ?? seededProject }),
       });
       return;
     }
