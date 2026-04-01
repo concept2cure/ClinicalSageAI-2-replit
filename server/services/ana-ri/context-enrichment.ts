@@ -60,7 +60,7 @@ interface SlashCommand {
 }
 
 function detectSlashCommand(message: string): SlashCommand | null {
-  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|decisions|help|sap|power|dose|defensibility|design|safety|cmc|csr|device|ectd|audit|amend|review|memo|brief|strategy|freeze|sign|scan|checklist|submit|workflow|status|narrative|report|iss|ise|ib|smpc|rmp|uspi|haq|ask)\b\s*(.*)/i);
+  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|decisions|help|sap|power|dose|defensibility|design|safety|cmc|csr|device|diagnostics|cms|ectd|audit|amend|review|memo|brief|strategy|freeze|sign|scan|checklist|submit|workflow|status|narrative|report|iss|ise|ib|smpc|rmp|uspi|haq|ask)\b\s*(.*)/i);
   if (!match) return null;
   return { command: match[1].toLowerCase(), args: match[2].trim() };
 }
@@ -155,6 +155,18 @@ const DEVICE_TRIGGERS = [
 const ECTD_TRIGGERS = [
   /\b(?:ectd|module [1-5]|ctd structure|dossier structure|submission structure)\b/i,
   /\b(?:granule|lifecycle|sequence|submission.*package)\b/i,
+];
+
+const CMS_TRIGGERS = [
+  /\b(?:cms|centers? for medicare|medicare|medicaid|coverage determination)\b/i,
+  /\b(?:coding strategy|hcpcs|cpt|drg|apc|icd-10|ntap|pass-through)\b/i,
+  /\b(?:reimbursement|payer|coverage|payment rate|value dossier|heor)\b/i,
+];
+
+const DIAGNOSTICS_TRIGGERS = [
+  /\b(?:diagnostic|companion diagnostic|cdx|in.?vitro diagnostic|ivd)\b/i,
+  /\b(?:analytical validation|clinical validation|sensitivity|specificity|ppv|npv)\b/i,
+  /\b(?:lodd?|linearity|precision|repeatability|reproducibility|method comparison)\b/i,
 ];
 
 function matchesTriggers(message: string, triggers: RegExp[]): boolean {
@@ -581,6 +593,36 @@ async function enrichWithECTD(projectId: string | number): Promise<string> {
     'eCTD Structure Intelligence');
 }
 
+async function enrichWithCMS(projectId: string | number): Promise<string> {
+  return enrichWithDomainMemory(
+    projectId,
+    'CMS coverage and reimbursement',
+    [
+      'cms_strategy',
+      'payer_evidence',
+      'reimbursement_strategy',
+      'coding_coverage',
+      'health_economics',
+    ],
+    'CMS & Reimbursement Intelligence',
+  );
+}
+
+async function enrichWithDiagnostics(projectId: string | number): Promise<string> {
+  return enrichWithDomainMemory(
+    projectId,
+    'diagnostics and IVD',
+    [
+      'diagnostic_validation',
+      'ivd_performance',
+      'analytical_validation',
+      'clinical_performance',
+      'companion_diagnostic',
+    ],
+    'Diagnostics & IVD Intelligence',
+  );
+}
+
 async function enrichWithBiostatContext(projectId: string | number, submissionType?: string): Promise<string> {
   // Inject biostatistics knowledge + project-specific signals
   const parts: string[] = [];
@@ -758,6 +800,8 @@ export async function enrichContextForChat(params: {
       cmc: () => enrichWithCMC(projectId),
       csr: () => enrichWithCSR(projectId),
       device: () => enrichWithDevice(projectId),
+      diagnostics: () => enrichWithDiagnostics(projectId),
+      cms: () => enrichWithCMS(projectId),
       ectd: () => enrichWithECTD(projectId),
       audit: () => Promise.all([enrichWithReadiness(projectId, organizationId), enrichWithClaims(projectId)]).then(r => r.join('')),
       amend: () => enrichWithProjectMemory(projectId, ['document_version', 'change_impact', 'amendment_tracking'], 'Amendment Context', 'Relevant version history and change impact data.', 5),
@@ -833,6 +877,8 @@ export async function enrichContextForChat(params: {
       cmc: slash.args ? `Evaluate CMC for: ${slash.args}` : 'Help with CMC/manufacturing work. Ask about: manufacturing change type, CQA impact, comparability assessment needs, or Module 3 documentation.',
       csr: slash.args ? `Analyze CSR for: ${slash.args}` : 'Help with Clinical Study Report work. Ask which section (efficacy, safety, disposition, demographics) or whether they need ICH E3 validation.',
       device: slash.args ? `Analyze device submission for: ${slash.args}` : 'Help with medical device submission. Ask about: submission type (510(k), PMA, De Novo, EU MDR), predicate device, and classification.',
+      diagnostics: slash.args ? `Analyze diagnostics/IVD strategy for: ${slash.args}` : 'Help with diagnostics and IVD strategy. Ask about intended use, analytical validation, clinical performance, cutoff strategy, and companion diagnostic requirements.',
+      cms: slash.args ? `Analyze CMS/reimbursement strategy for: ${slash.args}` : 'Help with CMS and payer strategy. Ask about coding pathway, coverage evidence, payment assumptions, and value dossier requirements.',
       ectd: 'Show the eCTD module structure and help place artifacts in the correct CTD location. Reference Module 1-5 structure.',
       audit: slash.args ? `Audit this document/section: ${slash.args}. Read as a hostile reviewer. Check completeness, consistency, defensibility, and compliance. Produce findings with severity and concrete fixes.` : 'Audit the current section or document. Check completeness, consistency, defensibility, and ICH compliance. Produce specific findings with severity ratings.',
       amend: slash.args ? `Amend/revise: ${slash.args}. Identify affected sections, rewrite only what changed, track changes with regulatory impact.` : 'Help amend the current document. Identify what changed, which sections are affected, rewrite with change tracking.',
@@ -879,6 +925,8 @@ export async function enrichContextForChat(params: {
       { test: CMC_TRIGGERS, fn: () => enrichWithCMC(projectId), name: 'cmc' },
       { test: CSR_TRIGGERS, fn: () => enrichWithCSR(projectId), name: 'csr' },
       { test: DEVICE_TRIGGERS, fn: () => enrichWithDevice(projectId), name: 'device' },
+      { test: DIAGNOSTICS_TRIGGERS, fn: () => enrichWithDiagnostics(projectId), name: 'diagnostics' },
+      { test: CMS_TRIGGERS, fn: () => enrichWithCMS(projectId), name: 'cms' },
       { test: ECTD_TRIGGERS, fn: () => enrichWithECTD(projectId), name: 'ectd' },
       { test: HAQ_TRIGGERS, fn: () => Promise.all([enrichWithCRLRTF(projectId, organizationId), enrichWithPrecedents(projectId)]).then(r => r.join('')), name: 'haq' },
     ];

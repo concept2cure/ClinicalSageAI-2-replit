@@ -464,7 +464,7 @@ const DOCUMENT_ACTION_CONFIGS: DocumentActionConfig[] = [
   },
 ];
 
-// ─── Slash Command Autocomplete — 43 AnA 1.0 RI commands ──────────────────────
+// ─── Slash Command Autocomplete — 45 AnA 1.0 RI commands ──────────────────────
 
 interface SlashCommand {
   command: string;
@@ -521,6 +521,16 @@ const SLASH_COMMANDS: SlashCommand[] = [
   {
     command: '/device',
     description: '510(k), PMA, De Novo intelligence',
+    category: 'Subspecialties',
+  },
+  {
+    command: '/diagnostics',
+    description: 'Diagnostics/IVD validation and strategy',
+    category: 'Subspecialties',
+  },
+  {
+    command: '/cms',
+    description: 'CMS coverage and reimbursement strategy',
     category: 'Subspecialties',
   },
   {

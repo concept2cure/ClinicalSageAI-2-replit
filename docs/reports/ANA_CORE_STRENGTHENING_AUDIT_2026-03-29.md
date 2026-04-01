@@ -167,6 +167,41 @@ This audit focused on the practical intelligence path that users actually hit in
 4. **Biostats + multi-agency deepening**
    - Add stronger domain-specific enrichments for PMDA/Health Canada/CMS-oriented workflows and statistical reviewer triggers.
 
+5. **Diagnostics + CMS operational command layer**
+   - Add first-class operational commands for diagnostics validation packs and CMS coverage/coding planning so AnA can execute governed actions (not just enrich responses) in these domains.
+
+---
+
+## 2026-04-01 Additional Enhancement Wave (Completed)
+
+### Scope
+- Extended AnA domain intelligence beyond baseline RA/medical writing into explicit **CMS/reimbursement** and **diagnostics/IVD** pathways.
+- Tightened workstream/intent detection so these domains route to stronger strategy/evidence behaviors.
+
+### Files Updated
+
+| File | Enhancement |
+|---|---|
+| `server/services/ana-ri/context-enrichment.ts` | Added `/cms` and `/diagnostics` slash commands, natural-language trigger packs, and dedicated enrichment blocks (`enrichWithCMS`, `enrichWithDiagnostics`) |
+| `server/services/ana-ri/orchestrator.ts` | Expanded intent/workstream scoring patterns to recognize CMS/payer and diagnostics/IVD contexts |
+| `server/services/ana-ri/persona.ts` | Added explicit expertise sections for CMS/reimbursement and diagnostics/IVD regulatory strategy |
+| `client/src/concept2cure/components/chat/AnaPersistentPanel.tsx` | Added `/cms` and `/diagnostics` to slash autocomplete (UI parity) |
+| `client/src/concept2cure/config/domain-prompts.ts` | Added new domain prompt groups for `cms` and `diagnostics`; mapped into context-domain routing |
+
+### Impact
+- AnA can now detect and enrich conversations around:
+  - reimbursement/coding/coverage strategy (CMS + payer lenses)
+  - diagnostics/CDx/IVD analytical and clinical validation pathways
+- These domains are now represented in:
+  - persona contract
+  - backend enrichment and triggers
+  - orchestrator routing
+  - chat slash command UI
+  - domain prompt registry
+
+### Residual Risk
+- Operational execution parity is still pending for these new domains (commands that perform governed creation/workflow operations). Current wave is enrichment + prompt/routing + UI parity.
+
 ---
 
 ## Outcome
