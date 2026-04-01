@@ -93,6 +93,17 @@ export const queryKeys = {
     all: ['concept2cure', 'precedents'] as const,
   },
 
+  // ── Templates ──────────────────────────────────────────────────────────────
+  templates: {
+    all: ['concept2cure', 'templates'] as const,
+    list: (params?: {
+      submissionType?: string;
+      packageId?: string;
+      projectGoal?: string;
+    }) => ['concept2cure', 'templates', params] as const,
+    detail: (templateId: string) => ['concept2cure', 'templates', templateId] as const,
+  },
+
   // ── Team / Mission Control ─────────────────────────────────────────────────
   team: {
     workload: () => ['concept2cure', 'team', 'workload'] as const,

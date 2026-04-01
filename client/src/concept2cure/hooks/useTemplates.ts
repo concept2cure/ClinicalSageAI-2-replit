@@ -15,6 +15,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { SubmissionType } from '../types';
+import { apiRequest } from '@/lib/queryClient';
+import { queryKeys } from './queryKeys';
 
 /**
  * Regulatory document template structure
@@ -53,15 +55,26 @@ interface Template {
  * const { data: templates } = useTemplates('510K');
  * ```
  */
-export function useTemplates(submissionType?: SubmissionType) {
+export function useTemplates(
+  submissionType?: SubmissionType,
+  options?: { templatePackage?: string; projectGoal?: string }
+) {
   return useQuery({
-    queryKey: ['concept2cure-templates', submissionType],
+    queryKey: queryKeys.templates.list({
+      submissionType,
+      packageId: options?.templatePackage,
+      projectGoal: options?.projectGoal,
+    }),
     queryFn: async (): Promise<Template[]> => {
-      const url = submissionType 
-        ? `/api/concept2cure/templates?submissionType=${submissionType}`
+      const params = new URLSearchParams();
+      if (submissionType) params.set('submissionType', submissionType);
+      if (options?.templatePackage) params.set('package', options.templatePackage);
+      if (options?.projectGoal) params.set('projectGoal', options.projectGoal);
+      const url = params.toString()
+        ? `/api/concept2cure/templates?${params.toString()}`
         : '/api/concept2cure/templates';
-      
-      const response = await fetch(url);
+
+      const response = await apiRequest('GET', url);
       const payload = await response.json().catch(() => ({}));
       if (!response.ok || payload?.success === false) {
         throw new Error(payload?.error?.message || payload?.error || `Failed to fetch templates: ${response.status}`);
@@ -89,11 +102,11 @@ export function useTemplates(submissionType?: SubmissionType) {
  */
 export function useTemplate(templateId: string | null) {
   return useQuery({
-    queryKey: ['concept2cure-template', templateId],
+    queryKey: queryKeys.templates.detail(templateId || 'none'),
     queryFn: async (): Promise<Template | null> => {
       if (!templateId) return null;
-      
-      const response = await fetch(`/api/concept2cure/templates/${templateId}`);
+
+      const response = await apiRequest('GET', `/api/concept2cure/templates/${templateId}`);
       const payload = await response.json().catch(() => ({}));
       if (!response.ok || payload?.success === false) {
         throw new Error(payload?.error?.message || payload?.error || `Template not found: ${response.status}`);

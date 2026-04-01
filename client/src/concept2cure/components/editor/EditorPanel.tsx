@@ -149,6 +149,7 @@ interface EditorPanelProps {
   initialContent?: string;
   initialTitle?: string;
   initialCtdSection?: string;
+  initialTemplateId?: string;
   /** Called when the pending initial content has been consumed */
   onInitialContentConsumed?: () => void;
   /** When provided, open this existing artifact directly (no creation) */
@@ -394,6 +395,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   initialContent,
   initialTitle,
   initialCtdSection,
+  initialTemplateId,
   onInitialContentConsumed,
   openArtifactId,
   onOpenArtifactConsumed,
@@ -1361,6 +1363,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           type: 'regulatory_document',
           category: 'document',
           ctdSection: initialCtdSection || undefined,
+          templateId: initialTemplateId || undefined,
         });
         if (res.ok) {
           const payload = await res.json();
@@ -1380,6 +1383,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     initialContent,
     initialTitle,
     initialCtdSection,
+    initialTemplateId,
     onInitialContentConsumed,
     loadArtifacts,
   ]);
@@ -1753,6 +1757,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           sectionTitle: activeArtifact.title,
           submissionType: submissionType || undefined,
           projectId: projectId || undefined,
+          contextAttachment: projectId ? 'project' : 'adhoc',
           artifactId: activeArtifact.id || undefined,
           ctdSection: activeArtifact.ctdSection || initialCtdSection || undefined,
         });
@@ -3881,6 +3886,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           <TemplateGeneratorPanel
             projectId={projectId}
             artifactId={activeArtifact?.id}
+            contextAttachment={projectId ? 'project' : 'adhoc'}
             onGenerated={(content, templateName) => {
               // Wrap in HTML if not already
               const htmlContent = content.startsWith('<')
