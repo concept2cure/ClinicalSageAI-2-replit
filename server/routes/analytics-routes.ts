@@ -6,9 +6,8 @@ import path from 'path';
 import { exec } from 'child_process';
 import util from 'util';
 import { db } from '../db';
-// Import csrReports from sage-plus-service instead of shared schema
-import { csrReports } from '../sage-plus-service';
-import { eq, like, count, sql } from 'drizzle-orm';
+import { csrReports } from '../../shared/schema';
+import { eq, like, count, sql, desc } from 'drizzle-orm';
 import { protocolAnalyzerService } from '../protocol-analyzer-service';
 import { protocolOptimizerService } from '../protocol-optimizer-service';
 import { analyzeText } from '../openai-service';
@@ -984,80 +983,100 @@ router.get('/dashboard', async (req, res) => {
       }
     });
 
-    // Create mock data for other dashboard components
-    const recentAdditions = Math.floor(totalReports * 0.05); // Simulate 5% of reports added recently
     const uniqueIndications = indications.length;
-    const averageEndpoints = 3.2;
-    const averageCompletionRate = 0.89;
 
-    // Generate sponsors distribution data
-    const sponsorDistribution = [
-      { name: 'Pfizer', count: 112 },
-      { name: 'Novartis', count: 98 },
-      { name: 'Roche', count: 87 },
-      { name: 'Merck', count: 76 },
-      { name: 'AstraZeneca', count: 68 },
-      { name: 'GSK', count: 63 },
-      { name: 'Johnson & Johnson', count: 57 },
-      { name: 'Bristol-Myers Squibb', count: 52 },
-      { name: 'Eli Lilly', count: 49 },
-      { name: 'AbbVie', count: 47 },
-      { name: 'Amgen', count: 41 },
-      { name: 'Bayer', count: 37 },
-      { name: 'Sanofi', count: 32 },
-      { name: 'Gilead Sciences', count: 28 },
-      { name: 'Biogen', count: 24 },
-    ];
+    // Sponsor distribution from real data
+    const sponsorRows = await db
+      .select({
+        name: csrReports.sponsor,
+        count: count(),
+      })
+      .from(csrReports)
+      .where(sql`${csrReports.sponsor} IS NOT NULL`)
+      .groupBy(csrReports.sponsor)
+      .orderBy(desc(count()))
+      .limit(10);
+    const sponsorDistribution = sponsorRows.map(r => ({
+      name: r.name!,
+      count: Number(r.count),
+    }));
 
-    // Generate monthly trends
-    const monthlyTrends = [
-      { month: 'Jan', count: 22 },
-      { month: 'Feb', count: 31 },
-      { month: 'Mar', count: 28 },
-      { month: 'Apr', count: 35 },
-      { month: 'May', count: 42 },
-      { month: 'Jun', count: 38 },
-      { month: 'Jul', count: 45 },
-      { month: 'Aug', count: 50 },
-      { month: 'Sep', count: 47 },
-      { month: 'Oct', count: 55 },
-      { month: 'Nov', count: 60 },
-      { month: 'Dec', count: 53 },
-    ];
+    // Monthly trends from created_at timestamps
+    const trendRows = await db
+      .select({
+        month: sql<string>`to_char(date_trunc('month', ${csrReports.createdAt}), 'Mon')`,
+        count: count(),
+      })
+      .from(csrReports)
+      .groupBy(sql`date_trunc('month', ${csrReports.createdAt})`)
+      .orderBy(sql`date_trunc('month', ${csrReports.createdAt})`);
+    const monthlyTrends = trendRows.map(r => ({
+      month: r.month,
+      count: Number(r.count),
+    }));
 
-    // Generate most common endpoints
-    const mostCommonEndpoints = [
-      { name: 'Overall Survival', count: 120, successRate: 0.78 },
-      { name: 'Progression-Free Survival', count: 98, successRate: 0.65 },
-      { name: 'Objective Response Rate', count: 92, successRate: 0.72 },
-      { name: 'Disease-Free Survival', count: 85, successRate: 0.68 },
-      { name: 'Change in HbA1c', count: 78, successRate: 0.81 },
-      { name: '6-Minute Walk Test', count: 72, successRate: 0.75 },
-      { name: 'RECIST Criteria', count: 68, successRate: 0.69 },
-      { name: 'Adverse Events Rate', count: 65, successRate: 0.85 },
-    ];
+    // Most common primary endpoints from real data
+    const endpointRows = await db
+      .select({
+        name: csrReports.primaryEndpoint,
+        count: count(),
+      })
+      .from(csrReports)
+      .where(sql`${csrReports.primaryEndpoint} IS NOT NULL`)
+      .groupBy(csrReports.primaryEndpoint)
+      .orderBy(desc(count()))
+      .limit(8);
+    const mostCommonEndpoints = endpointRows.map(r => ({
+      name: r.name!,
+      count: Number(r.count),
+      successRate: 0,
+    }));
 
-    // Generate completion rates by phase
-    const completionRates = [
-      { phase: '1', rate: 0.94 },
-      { phase: '2', rate: 0.88 },
-      { phase: '3', rate: 0.82 },
-      { phase: '4', rate: 0.91 },
-    ];
+    // Completion rates by phase — computed from status field
+    const statusByPhaseRows = await db
+      .select({
+        phase: csrReports.phase,
+        status: csrReports.status,
+        count: count(),
+      })
+      .from(csrReports)
+      .where(sql`${csrReports.phase} IS NOT NULL`)
+      .groupBy(csrReports.phase, csrReports.status);
 
-    // Generate predictive insights
-    const predictiveInsights = [
-      { indication: 'Type 2 Diabetes', successProbability: 0.87, projectedEnrollment: 350 },
-      { indication: 'Breast Cancer', successProbability: 0.75, projectedEnrollment: 420 },
-      { indication: 'Rheumatoid Arthritis', successProbability: 0.82, projectedEnrollment: 280 },
-      { indication: "Alzheimer's Disease", successProbability: 0.62, projectedEnrollment: 500 },
-      { indication: 'Hypertension', successProbability: 0.91, projectedEnrollment: 220 },
-      {
-        indication: 'Non-Small Cell Lung Cancer',
-        successProbability: 0.69,
-        projectedEnrollment: 380,
-      },
-    ];
+    const phaseTotals: Record<string, { total: number; completed: number }> = {};
+    for (const row of statusByPhaseRows) {
+      const p = row.phase!;
+      if (!phaseTotals[p]) phaseTotals[p] = { total: 0, completed: 0 };
+      phaseTotals[p].total += Number(row.count);
+      if (row.status === 'approved' || row.status === 'submitted') {
+        phaseTotals[p].completed += Number(row.count);
+      }
+    }
+    const completionRates = Object.entries(phaseTotals).map(([phase, data]) => ({
+      phase,
+      rate: data.total > 0 ? Math.round((data.completed / data.total) * 100) / 100 : 0,
+    }));
+
+    const averageCompletionRate =
+      completionRates.length > 0
+        ? Math.round(
+            (completionRates.reduce((s, c) => s + c.rate, 0) / completionRates.length) * 100
+          ) / 100
+        : 0;
+
+    // Recent additions: reports created in the last 30 days
+    const recentRows = await db
+      .select({ count: count() })
+      .from(csrReports)
+      .where(sql`${csrReports.createdAt} >= now() - interval '30 days'`);
+    const recentAdditions = Number(recentRows[0]?.count ?? 0);
+
+    // No fabricated predictive insights — return empty until real model exists
+    const predictiveInsights: any[] = [];
+
+    const averageEndpoints = mostCommonEndpoints.length > 0
+      ? Math.round((mostCommonEndpoints.reduce((s, e) => s + e.count, 0) / totalReports) * 10) / 10
+      : 0;
 
     res.json({
       totalReports,

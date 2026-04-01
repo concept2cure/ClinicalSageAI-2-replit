@@ -5,7 +5,7 @@
  * No React imports, no side effects, no runtime state.
  */
 
-import type { IndustryMode } from './components/workspace/ProjectWorkspaceShell';
+import type { IndustryMode } from './types/workspace';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // LAYOUT MODES

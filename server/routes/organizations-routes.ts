@@ -1,23 +1,29 @@
 import { Router } from 'express';
 import { db } from '../db';
-import { organizations, clientWorkspaces, cerProjects, projectDocuments } from '@shared/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import {
+  organizations,
+  organizationUsers,
+  clientWorkspaces,
+} from '@shared/schema';
+import { eq, count, inArray } from 'drizzle-orm';
+import { authMiddleware } from '../auth';
 
-// Create a new router for organization endpoints
 const router = Router();
+
 router.use(authMiddleware);
 
 /**
  * Validate that the requesting user belongs to the organization in :id param.
- * Returns 403 if the user's org doesn't match.
+ * Platform admins / superadmins bypass the check.
  */
 function validateOrgOwnership(req: any, res: any, next: any) {
   const paramId = parseInt(req.params.id, 10);
-  const userOrgId = req.user?.organizationId;
+  const userOrgId = req.user?.organizationId
+    ? parseInt(String(req.user.organizationId))
+    : null;
   const userRole = req.user?.role || req.userRole;
 
-  // Platform admins can access any org
-  if (userRole === 'platform_admin' || userRole === 'superadmin') {
+  if (userRole === 'platform_admin' || userRole === 'superadmin' || userRole === 'admin') {
     return next();
   }
 
@@ -33,33 +39,62 @@ function validateOrgOwnership(req: any, res: any, next: any) {
 /**
  * Get all organizations
  * API: GET /api/organizations
+ *
+ * Admins / platform_admins see every org.
+ * Regular users see only orgs they belong to via organization_users.
  */
 router.get('/', async (req, res) => {
   try {
+    const userId = req.user?.id ? parseInt(String(req.user.id)) : null;
     const userRole = req.user?.role || req.userRole;
-    const userOrgId = req.user?.organizationId;
+    const isAdmin =
+      userRole === 'platform_admin' ||
+      userRole === 'superadmin' ||
+      userRole === 'admin';
 
-    const rows =
-      userRole === 'platform_admin' || userRole === 'superadmin'
-        ? await db.select().from(organizations)
-        : userOrgId
-          ? await db.select().from(organizations).where(eq(organizations.id, Number(userOrgId)))
-          : [];
+    let orgRows;
 
-    const organizationsPayload = rows.map(org => ({
-      id: String(org.id),
-      name: org.name,
-      logo: org.logo,
-      subscriptionTier: org.tier,
-      maxUsers: org.maxUsers,
-      activeUsers: null, // active user count is provided by tenant stats endpoint
-      createdAt: org.createdAt?.toISOString() ?? null,
-    }));
+    if (isAdmin) {
+      orgRows = await db.select().from(organizations);
+    } else if (userId) {
+      const memberships = await db
+        .select({ organizationId: organizationUsers.organizationId })
+        .from(organizationUsers)
+        .where(eq(organizationUsers.userId, userId));
 
-    res.json({
-      success: true,
-      organizations: organizationsPayload,
-    });
+      const orgIds = memberships.map(m => m.organizationId);
+      if (orgIds.length === 0) {
+        return res.json({ success: true, organizations: [] });
+      }
+
+      orgRows = await db
+        .select()
+        .from(organizations)
+        .where(inArray(organizations.id, orgIds));
+    } else {
+      return res.json({ success: true, organizations: [] });
+    }
+
+    const result = await Promise.all(
+      orgRows.map(async org => {
+        const [activeCount] = await db
+          .select({ count: count() })
+          .from(organizationUsers)
+          .where(eq(organizationUsers.organizationId, org.id));
+
+        return {
+          id: String(org.id),
+          name: org.name,
+          logo: org.logo,
+          subscriptionTier: org.tier,
+          maxUsers: org.maxUsers,
+          activeUsers: activeCount?.count ?? 0,
+          createdAt: org.createdAt?.toISOString() ?? null,
+        };
+      }),
+    );
+
+    res.json({ success: true, organizations: result });
   } catch (error) {
     console.error('Error fetching organizations:', error);
     res.status(500).json({
@@ -75,33 +110,44 @@ router.get('/', async (req, res) => {
  */
 router.get('/:id', validateOrgOwnership, async (req, res) => {
   try {
-    const id = parseInt(req.params.id, 10);
-    const [organizationData] = await db
+    const orgId = parseInt(req.params.id, 10);
+    if (isNaN(orgId)) {
+      return res.status(400).json({ success: false, error: 'Invalid organization ID' });
+    }
+
+    const [org] = await db
       .select()
       .from(organizations)
-      .where(eq(organizations.id, id))
-      .limit(1);
+      .where(eq(organizations.id, orgId));
 
-    if (!organizationData) {
-      return res.status(404).json({
-        success: false,
-        error: 'Organization not found',
-      });
+    if (!org) {
+      return res.status(404).json({ success: false, error: 'Organization not found' });
     }
+
+    const [activeCount] = await db
+      .select({ count: count() })
+      .from(organizationUsers)
+      .where(eq(organizationUsers.organizationId, orgId));
 
     res.json({
       success: true,
       organization: {
-        id: String(organizationData.id),
-        name: organizationData.name,
-        logo: organizationData.logo,
-        subscriptionTier: organizationData.tier,
-        maxUsers: organizationData.maxUsers,
-        activeUsers: null,
-        createdAt: organizationData.createdAt?.toISOString() ?? null,
-        billingCycle: organizationData.billingCycle,
-        domain: organizationData.domain,
-        status: organizationData.status,
+        id: String(org.id),
+        name: org.name,
+        logo: org.logo,
+        subscriptionTier: org.tier,
+        maxUsers: org.maxUsers,
+        activeUsers: activeCount?.count ?? 0,
+        createdAt: org.createdAt?.toISOString() ?? null,
+        billingCycle: org.billingCycle,
+        domain: org.domain,
+        slug: org.slug,
+        status: org.status,
+        maxProjects: org.maxProjects,
+        maxStorage: org.maxStorage,
+        seatsPurchased: org.seatsPurchased,
+        paymentStatus: org.paymentStatus,
+        industryMode: org.industryMode,
       },
     });
   } catch (error) {
@@ -114,79 +160,39 @@ router.get('/:id', validateOrgOwnership, async (req, res) => {
 });
 
 /**
- * Get clients for an organization
+ * Get clients (workspaces) for an organization
  * API: GET /api/organizations/:id/clients
  */
 router.get('/:id/clients', validateOrgOwnership, async (req, res) => {
   try {
-    const organizationId = parseInt(req.params.id, 10);
+    const orgId = parseInt(req.params.id, 10);
+    if (isNaN(orgId)) {
+      return res.status(400).json({ success: false, error: 'Invalid organization ID' });
+    }
 
     const workspaces = await db
       .select()
       .from(clientWorkspaces)
-      .where(eq(clientWorkspaces.organizationId, organizationId));
+      .where(eq(clientWorkspaces.organizationId, orgId));
 
-    const clients = await Promise.all(
-      workspaces.map(async workspace => {
-        const [projectsAgg] = await db
-          .select({
-            count: sql<number>`count(*)`,
-            lastActivity: sql<Date | null>`max(${cerProjects.updatedAt})`,
-          })
-          .from(cerProjects)
-          .where(
-            and(
-              eq(cerProjects.organizationId, organizationId),
-              eq(cerProjects.clientWorkspaceId, workspace.id)
-            )
-          );
+    const clients = workspaces.map(ws => ({
+      id: String(ws.id),
+      name: ws.name,
+      organizationId: String(ws.organizationId),
+      logo: ws.logo,
+      status: ws.status,
+      quotaProjects: ws.quotaProjects,
+      quotaStorage: ws.quotaStorage,
+      contactName: ws.contactName,
+      contactEmail: ws.contactEmail,
+      industry: ws.industry,
+      description: ws.description,
+      slug: ws.slug,
+      createdAt: ws.createdAt?.toISOString() ?? null,
+      updatedAt: ws.updatedAt?.toISOString() ?? null,
+    }));
 
-        const [docsAgg] = await db
-          .select({
-            bytes: sql<number>`coalesce(sum(${projectDocuments.fileSize}), 0)`,
-          })
-          .from(projectDocuments)
-          .innerJoin(cerProjects, eq(projectDocuments.projectId, cerProjects.id))
-          .where(
-            and(
-              eq(projectDocuments.organizationId, organizationId),
-              eq(cerProjects.clientWorkspaceId, workspace.id)
-            )
-          );
-
-        const bytes = Number(docsAgg?.bytes ?? 0);
-        const storageUsedGB = Number((bytes / (1024 * 1024 * 1024)).toFixed(2));
-
-        return {
-          id: String(workspace.id),
-          name: workspace.name,
-          organizationId: String(workspace.organizationId),
-          logo: workspace.logo,
-          activeProjects: Number(projectsAgg?.count ?? 0),
-          quotaProjects: workspace.quotaProjects ?? 0,
-          storageUsedGB,
-          quotaStorageGB: workspace.quotaStorage ?? 0,
-          lastActivity:
-            projectsAgg?.lastActivity instanceof Date
-              ? projectsAgg.lastActivity.toISOString()
-              : workspace.updatedAt?.toISOString() ?? workspace.createdAt?.toISOString() ?? null,
-        };
-      })
-    );
-
-    res.json({
-      success: true,
-      clients: workspaces.map(ws => ({
-        id: String(ws.id),
-        name: ws.name,
-        organizationId: String(ws.organizationId),
-        logo: ws.logo || '/logos/default-client.png',
-        activeProjects: projectCountByWorkspace.get(ws.id) ?? 0,
-        quotaProjects: ws.quotaProjects || 0,
-        quotaStorageGB: ws.quotaStorageGB || 0,
-        lastActivity: ws.updatedAt,
-      })),
-    });
+    res.json({ success: true, clients });
   } catch (error) {
     console.error(`Error fetching clients for organization ${req.params.id}:`, error);
     res.status(500).json({
@@ -203,9 +209,7 @@ router.get('/:id/clients', validateOrgOwnership, async (req, res) => {
 router.get('/:id/settings', validateOrgOwnership, async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(`Fetching settings for organization ${id}`);
 
-    // Fetch organization from database
     const [organization] = await db
       .select()
       .from(organizations)
@@ -218,7 +222,6 @@ router.get('/:id/settings', validateOrgOwnership, async (req, res) => {
       });
     }
 
-    // Default settings if none exist
     const defaultSettings = {
       general: {
         organizationName: organization.name,
@@ -276,15 +279,11 @@ router.get('/:id/settings', validateOrgOwnership, async (req, res) => {
       },
     };
 
-    // Merge saved settings with defaults
     const settings = organization.settings
       ? { ...defaultSettings, ...organization.settings }
       : defaultSettings;
 
-    res.json({
-      success: true,
-      settings,
-    });
+    res.json({ success: true, settings });
   } catch (error) {
     console.error('Error fetching organization settings:', error);
     res.status(500).json({
@@ -303,9 +302,6 @@ router.patch('/:id/settings', validateOrgOwnership, async (req, res) => {
     const { id } = req.params;
     const settingsUpdate = req.body;
 
-    console.log(`Updating settings for organization ${id}:`, settingsUpdate);
-
-    // Fetch current organization
     const [organization] = await db
       .select()
       .from(organizations)
@@ -318,11 +314,9 @@ router.patch('/:id/settings', validateOrgOwnership, async (req, res) => {
       });
     }
 
-    // Merge new settings with existing settings
     const currentSettings = organization.settings || {};
     const updatedSettings = { ...currentSettings, ...settingsUpdate };
 
-    // Update organization settings in database
     await db
       .update(organizations)
       .set({

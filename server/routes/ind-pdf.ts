@@ -444,9 +444,9 @@ router.post('/:projectId/generate', async (req: Request, res: Response) => {
 
     console.log(`[IND-PDF] Generated ${pdfBuffer.length} bytes → ${filepath}`);
 
-    // Register governed export (non-blocking)
+    // Register governed export (fail-closed for regulated outputs)
     const user = (req as any).user;
-    registerExportGovernanceQuick({
+    await registerExportGovernanceQuick({
       organizationId: user?.organizationId || 1,
       projectId: Number(projectId) || 0,
       userId: user?.id || 0,
@@ -458,7 +458,7 @@ router.post('/:projectId/generate', async (req: Request, res: Response) => {
       docType: 'ind_pdf',
       backendRoute: `/api/ind-pdf/${projectId}/generate`,
       ipAddress: req.ip,
-    }).catch(() => {}); // non-blocking
+    });
 
     // Return PDF directly or download URL
     if (req.query.download === 'true') {
@@ -545,9 +545,9 @@ router.post('/:projectId/section', async (req: Request, res: Response) => {
     );
     res.setHeader('Content-Length', String(pdfBuffer.length));
 
-    // Register governed export (non-blocking)
+    // Register governed export (fail-closed for regulated outputs)
     const secUser = (req as any).user;
-    registerExportGovernanceQuick({
+    await registerExportGovernanceQuick({
       organizationId: secUser?.organizationId || 1,
       projectId: Number(projectId) || 0,
       userId: secUser?.id || 0,
@@ -560,7 +560,7 @@ router.post('/:projectId/section', async (req: Request, res: Response) => {
       backendRoute: `/api/ind-pdf/${projectId}/section`,
       ctdSection: sectionCode,
       ipAddress: req.ip,
-    }).catch(() => {}); // non-blocking
+    });
 
     res.send(pdfBuffer);
   } catch (error: any) {

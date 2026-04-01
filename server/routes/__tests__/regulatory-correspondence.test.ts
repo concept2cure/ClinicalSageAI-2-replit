@@ -76,9 +76,11 @@ describe('Regulatory Correspondence Routes (integration)', () => {
     expect(intake.body.data.id).toBeDefined();
     expect(Array.isArray(intake.body.issues)).toBe(true);
     expect(intake.body.issues.length).toBeGreaterThan(0);
+    expect(Array.isArray(intake.body.downstreamActions)).toBe(true);
+    expect(intake.body.downstreamActions[0]?.canonicalTasks?.length ?? 0).toBeGreaterThan(0);
 
-    expect(intake.body.data.parserMetadata?.parserVersion).toBe('keyword_heuristic_v1');
-    expect(intake.body.data.parserMetadata?.confidenceMethod).toBe('fixed_heuristic_score');
+    expect(intake.body.data.parserMetadata?.parserVersion).toBe('governed-parser-pipeline-v1');
+    expect(intake.body.data.parserMetadata?.confidenceMethod).toBe('rule_weighted_keyword_parser');
 
     correspondenceId = intake.body.data.id;
     issueId = intake.body.issues[0].id;
@@ -144,6 +146,8 @@ describe('Regulatory Correspondence Routes (integration)', () => {
       return;
     }
     expect(responsePackage.body.data.id).toBeDefined();
+    expect(responsePackage.body.assembly?.issueMatrix).toBeDefined();
+    expect(responsePackage.body.assembly?.evidenceChecklist).toBeDefined();
 
     const timeline = await request(app).get(
       `/api/regulatory-correspondence/timeline?submissionId=${submissionId}`

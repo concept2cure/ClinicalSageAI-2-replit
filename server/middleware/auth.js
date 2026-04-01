@@ -1,5 +1,13 @@
 /**
- * Authentication and Authorization Middleware
+ * Authentication and Authorization Middleware (.js variant)
+ *
+ * NOTE: This file and server/middleware/auth.ts export the same named functions
+ * but with different implementations. This .js version includes stricter security
+ * (organizationId required in JWT, tenant impersonation blocking, public route
+ * bypass). The .ts version is simpler but lacks those checks.
+ *
+ * Post-beta consolidation: merge the security features from this file into auth.ts
+ * and migrate all importers to the .ts version. See docs/proof/KNOWN_ISSUES_LEDGER.md M-5.
  *
  * This module provides middleware for JWT authentication,
  * role-based access control (RBAC), and permission validation.

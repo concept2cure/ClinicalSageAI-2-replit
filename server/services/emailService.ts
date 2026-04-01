@@ -305,6 +305,39 @@ export async function sendWelcomeEmail(email: string, firstName: string): Promis
 // ---------------------------------------------------------------------------
 
 /**
+ * Send a generic transactional email.
+ * Returns true on success, false on failure (never throws).
+ */
+export async function sendGenericEmail(
+  to: string,
+  subject: string,
+  text: string,
+  html?: string
+): Promise<boolean> {
+  const transporter = getTransporter();
+
+  if (!transporter) {
+    log.warn('SMTP not configured — email not sent', { to, subject });
+    return false;
+  }
+
+  try {
+    await transporter.sendMail({
+      from: `"Concept2Cure" <${FROM_ADDRESS}>`,
+      to,
+      subject,
+      text,
+      html: html || undefined,
+    });
+    log.info('Generic email sent', { to, subject });
+    return true;
+  } catch (error: any) {
+    log.error('Failed to send generic email', { to, subject, error: error.message });
+    return false;
+  }
+}
+
+/**
  * Send an invitation email when an admin adds a team member.
  */
 export async function sendInvitationEmail(

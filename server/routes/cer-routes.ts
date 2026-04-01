@@ -44,57 +44,68 @@ const saveReportSchema = z.object({
     .optional(),
 });
 
-// Helper function to get sample FAERS data for demonstration
-function getSampleFaersData(ndcCode: string) {
-  // In a production environment, this would connect to the actual FDA FAERS API
-  const sampleResults = Array.from({ length: 25 }, (_, i) => ({
-    report_id: `FAERS-${Math.floor(Math.random() * 1000000)}`,
-    report_date: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split('T')[0],
-    patient_age: Math.floor(Math.random() * 70) + 18,
-    patient_sex: Math.random() > 0.5 ? 'Male' : 'Female',
-    event_type: ['Adverse Event', 'Product Problem', 'Serious Adverse Event'][
-      Math.floor(Math.random() * 3)
-    ],
-    outcome: [
-      'Hospitalization',
-      'Life Threatening',
-      'Disability',
-      'Required Intervention',
-      'Other',
-    ][Math.floor(Math.random() * 5)],
-    reaction_terms: ['Nausea', 'Vomiting', 'Headache', 'Dizziness', 'Rash', 'Fever', 'Fatigue']
-      .sort(() => Math.random() - 0.5)
-      .slice(0, Math.floor(Math.random() * 3) + 1),
-  }));
-
-  const drugInfo = {
+/**
+ * Fetch real FAERS adverse event data from the FDA OpenFDA API.
+ * Returns an empty result set with a warning when the API is unreachable
+ * or has no data — NEVER fabricates safety data.
+ */
+async function getFaersData(ndcCode: string): Promise<{
+  results: any[];
+  drug_info: { ndc_code: string; brand_name: string; generic_name: string; manufacturer: string };
+  warning?: string;
+}> {
+  const emptyDrugInfo = {
     ndc_code: ndcCode,
-    brand_name:
-      ndcCode === '0310-0790'
-        ? 'Nexium'
-        : ndcCode === '0078-0357'
-          ? 'Diovan'
-          : 'Product ' + ndcCode,
-    generic_name:
-      ndcCode === '0310-0790'
-        ? 'esomeprazole'
-        : ndcCode === '0078-0357'
-          ? 'valsartan'
-          : 'compound ' + ndcCode,
-    manufacturer:
-      ndcCode === '0310-0790'
-        ? 'AstraZeneca'
-        : ndcCode === '0078-0357'
-          ? 'Novartis'
-          : 'Pharma Corp',
+    brand_name: '',
+    generic_name: '',
+    manufacturer: '',
   };
 
-  return {
-    results: sampleResults,
-    drug_info: drugInfo,
-  };
+  try {
+    const searchTerm = encodeURIComponent(ndcCode);
+    const url = `https://api.fda.gov/drug/event.json?search=patient.drug.openfda.product_ndc:"${searchTerm}"&limit=25`;
+    const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
+
+    if (!response.ok) {
+      console.warn(`OpenFDA API returned ${response.status} for NDC ${ndcCode}`);
+      return { results: [], drug_info: emptyDrugInfo, warning: `OpenFDA API returned status ${response.status}` };
+    }
+
+    const data = await response.json();
+    if (!data.results || data.results.length === 0) {
+      return { results: [], drug_info: emptyDrugInfo, warning: 'No FAERS data found for this NDC code' };
+    }
+
+    const results = data.results.map((event: any) => ({
+      report_id: event.safetyreportid || '',
+      report_date: event.receivedate
+        ? `${event.receivedate.substring(0, 4)}-${event.receivedate.substring(4, 6)}-${event.receivedate.substring(6, 8)}`
+        : '',
+      patient_age: event.patient?.patientonsetage ? Number(event.patient.patientonsetage) : null,
+      patient_sex:
+        event.patient?.patientsex === '1' ? 'Male' : event.patient?.patientsex === '2' ? 'Female' : 'Unknown',
+      event_type: event.serious === '1' ? 'Serious Adverse Event' : 'Adverse Event',
+      outcome: event.patient?.patientdeath ? 'Death'
+        : event.seriousnesshospitalization === '1' ? 'Hospitalization'
+        : event.seriousnesslifethreatening === '1' ? 'Life Threatening'
+        : event.seriousnessdisabling === '1' ? 'Disability'
+        : 'Other',
+      reaction_terms: (event.patient?.reaction || []).map((r: any) => r.reactionmeddrapt).filter(Boolean),
+    }));
+
+    const drugData = data.results[0]?.patient?.drug?.[0]?.openfda || {};
+    const drugInfo = {
+      ndc_code: ndcCode,
+      brand_name: drugData.brand_name?.[0] || '',
+      generic_name: drugData.generic_name?.[0] || '',
+      manufacturer: drugData.manufacturer_name?.[0] || '',
+    };
+
+    return { results, drug_info: drugInfo };
+  } catch (error: any) {
+    console.error(`Failed to fetch FAERS data for NDC ${ndcCode}:`, error.message);
+    return { results: [], drug_info: emptyDrugInfo, warning: `OpenFDA API call failed: ${error.message}` };
+  }
 }
 
 // Helper function to organize FAERS data for report generation
@@ -254,9 +265,7 @@ router.post('/faers/data', async (req, res) => {
   try {
     const { ndcCode } = faersDataRequestSchema.parse(req.body);
 
-    // Get sample FAERS data for demo purposes
-    // In production, this would call the actual FDA FAERS API
-    const faersData = getSampleFaersData(ndcCode);
+    const faersData = await getFaersData(ndcCode);
 
     if (!faersData || !faersData.results || faersData.results.length === 0) {
       return res.status(404).json({ error: 'No data found for the provided NDC code' });

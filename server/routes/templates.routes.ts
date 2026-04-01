@@ -15,8 +15,15 @@ import { createScopedLogger } from '../utils/logger';
 const router = express.Router();
 const logger = createScopedLogger('templates-routes');
 
-// Default organization ID for demo (should come from auth in production)
-const DEFAULT_ORG_ID = 1;
+function requireOrganizationId(req: express.Request, res: express.Response): number | null {
+  const rawOrgId = req.user?.organizationId;
+  const organizationId = Number(rawOrgId);
+  if (!Number.isFinite(organizationId) || organizationId <= 0) {
+    res.status(401).json({ error: 'Organization context required' });
+    return null;
+  }
+  return organizationId;
+}
 
 /**
  * GET /api/templates
@@ -28,7 +35,8 @@ router.get('/', async (req, res) => {
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
-    const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
+    const organizationId = requireOrganizationId(req, res);
+    if (organizationId == null) return;
     const { category, type, region, moduleType } = req.query;
     
     // Get IND templates
@@ -144,7 +152,8 @@ router.get('/coauthor', async (req, res) => {
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
-    const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
+    const organizationId = requireOrganizationId(req, res);
+    if (organizationId == null) return;
     
     // Get eCTD specific templates
     const ectdConditions: any[] = [];
@@ -287,7 +296,8 @@ router.post('/', async (req, res) => {
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
-    const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
+    const organizationId = requireOrganizationId(req, res);
+    if (organizationId == null) return;
     const userId = req.user?.id;
     const { name, description, category, type, content, sections, metadata } = req.body;
     
@@ -473,7 +483,8 @@ router.post('/:templateId/use', async (req, res) => {
 
     const { templateId } = req.params;
     const userId = req.user?.id;
-    const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
+    const organizationId = requireOrganizationId(req, res);
+    if (organizationId == null) return;
     
     // Update usage count for IND templates
     const indTemplates = await db

@@ -421,9 +421,9 @@ router.get(
         res.setHeader('X-Artifact-SHA256', sha256Header);
       }
 
-      // Register governed export (non-blocking)
+      // Register governed export (fail-closed for regulated exports)
       const user = (req as any).user;
-      registerExportGovernanceQuick({
+      await registerExportGovernanceQuick({
         organizationId: user?.organizationId || 1,
         projectId: Number(programId) || 0,
         userId: user?.id || 0,
@@ -435,7 +435,7 @@ router.get(
         docType: 'docx_artifact',
         backendRoute: `/api/docx-factory/artifacts/${req.params.artifactId}/download`,
         ipAddress: req.ip,
-      }).catch(() => {}); // non-blocking
+      });
 
       if (response.body) {
         const stream = Readable.fromWeb(response.body as any);
