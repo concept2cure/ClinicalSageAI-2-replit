@@ -12,7 +12,11 @@ export default defineConfig({
       : []),
     // Bundle analysis — run with ANALYZE=true to generate stats
     ...(process.env.ANALYZE === 'true'
-      ? [await import('rollup-plugin-visualizer').then(m => m.visualizer({ open: true, filename: 'dist/bundle-stats.html', gzipSize: true }))]
+      ? [
+          await import('rollup-plugin-visualizer').then(m =>
+            m.visualizer({ open: true, filename: 'dist/bundle-stats.html', gzipSize: true })
+          ),
+        ]
       : []),
   ],
   resolve: {
@@ -47,6 +51,9 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, 'dist/public'),
     emptyOutDir: true,
     reportCompressedSize: false,
+    cssCodeSplit: true,
+    // Target modern browsers — enables smaller output with modern syntax
+    target: 'es2022',
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -86,18 +93,51 @@ export default defineConfig({
           }
 
           // Tiptap editor extensions — heavy, only needed in editor views
-          if (id.includes('/@tiptap/') || id.includes('/prosemirror') || id.includes('/y-prosemirror')) {
+          if (
+            id.includes('/@tiptap/') ||
+            id.includes('/prosemirror') ||
+            id.includes('/y-prosemirror')
+          ) {
             return 'vendor-tiptap';
           }
 
           // Real-time collaboration (Yjs, Socket.io client)
-          if (id.includes('/yjs') || id.includes('/y-protocols') || id.includes('/socket.io-client')) {
+          if (
+            id.includes('/yjs') ||
+            id.includes('/y-protocols') ||
+            id.includes('/socket.io-client')
+          ) {
             return 'vendor-realtime';
           }
 
           // Lucide icons — large icon set, split from main
           if (id.includes('/lucide-react')) {
             return 'vendor-icons';
+          }
+
+          // Ant Design — very large (~800KB), only used in some views
+          if (id.includes('/antd/') || id.includes('/@ant-design/')) {
+            return 'vendor-antd';
+          }
+
+          // Lodash — chunk separately so tree-shaking works per-import
+          if (id.includes('/lodash')) {
+            return 'vendor-lodash';
+          }
+
+          // Sentry — observability, not needed for initial render
+          if (id.includes('/@sentry/')) {
+            return 'vendor-sentry';
+          }
+
+          // Date/time (date-fns, dayjs, luxon)
+          if (id.includes('/date-fns') || id.includes('/dayjs') || id.includes('/luxon')) {
+            return 'vendor-datetime';
+          }
+
+          // Zod / Yup / Joi — validation schemas
+          if (id.includes('/zod') || id.includes('/yup') || id.includes('/joi')) {
+            return 'vendor-validation';
           }
         },
       },

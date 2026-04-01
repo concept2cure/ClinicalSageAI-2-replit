@@ -19,6 +19,7 @@ import {
 } from '../../../../shared/schema';
 import { OperatingSystemIntegration } from '../../operating-system-integration';
 import { unifiedDocuments, workflowDocumentVersions } from '../../../../shared/schema/unified_workflow';
+import { resolveGovernedContext } from '../../concept2cure/governedDocumentContractService.js';
 import { fetchArtifact } from '../shared-utils';
 import { registerActionHandler } from '../action-registry';
 import type {
@@ -28,6 +29,7 @@ import type {
   AIActionExecutionContext,
   AIActionError,
   AIActionObjectRef,
+  AIActionProvenance,
   AIActionModuleType,
 } from '../../../../shared/types/ai-actions';
 import { AIActionHandlerError } from '../../../../shared/types/ai-actions';
@@ -109,6 +111,97 @@ const promoteArtifactHandler: AIActionHandler = {
     const title = (payload.title as string) || artifact.title;
     const moduleType = request.module || inferModuleFromContext(request);
     const contentHash = crypto.createHash('sha256').update(artifact.content || '').digest('hex');
+    const artifactMetadata =
+      artifact.metadata && typeof artifact.metadata === 'object'
+        ? (artifact.metadata as Record<string, unknown>)
+        : {};
+    const existingHarness =
+      artifactMetadata.harness && typeof artifactMetadata.harness === 'object'
+        ? (artifactMetadata.harness as Record<string, unknown>)
+        : {};
+    const mockReq = {
+      body: {
+        projectId: request.projectId,
+        metadata: {
+          source: 'ai_actions',
+          sourceRefs: [`artifact:${artifact.artifactId}`],
+        },
+      },
+      userId: ctx.user.userId,
+      userEmail: `${ctx.user.userName || 'ai-action'}@concept2cure.local`,
+      userRole: ctx.user.userRole || 'regulatory',
+    } as any;
+    const governedResolution = resolveGovernedContext({
+      req: mockReq,
+      projectId: request.projectId,
+      artifactId: artifact.id,
+      documentType: artifact.type || 'regulatory_document',
+      generationMode: 'amendment',
+      lifecycleStatus: 'approved',
+      originSurface: 'api_route',
+      clientTrack:
+        existingHarness.clientTrack === 'device'
+          ? 'device'
+          : existingHarness.clientTrack === 'diagnostics'
+            ? 'diagnostics'
+            : 'biotech',
+      submissionProgram:
+        existingHarness.submissionProgram === 'ind' ||
+        existingHarness.submissionProgram === 'ectd' ||
+        existingHarness.submissionProgram === '510k' ||
+        existingHarness.submissionProgram === 'pma' ||
+        existingHarness.submissionProgram === 'cer' ||
+        existingHarness.submissionProgram === 'ivdr'
+          ? (existingHarness.submissionProgram as any)
+          : 'general_ri',
+      persona:
+        existingHarness.persona === 'medical_writer' ||
+        existingHarness.persona === 'cmc' ||
+        existingHarness.persona === 'clinical' ||
+        existingHarness.persona === 'qa' ||
+        existingHarness.persona === 'executive' ||
+        existingHarness.persona === 'cro'
+          ? (existingHarness.persona as any)
+          : 'regulatory',
+      regulatorScope:
+        existingHarness.regulatorScope === 'ema' ||
+        existingHarness.regulatorScope === 'mhra' ||
+        existingHarness.regulatorScope === 'hc' ||
+        existingHarness.regulatorScope === 'pmda' ||
+        existingHarness.regulatorScope === 'multi'
+          ? (existingHarness.regulatorScope as any)
+          : 'fda',
+      evidenceMode: 'mixed',
+      documentClass: 'submission_component',
+      readinessGate: 'submission_candidate',
+      approvalPathType: 'regulated_dual_review',
+      recommendationSource: 'ana_ri',
+      workspaceTarget: 'project',
+      regulatorIntent: 'submission_authoring',
+      placementContainerId: String(request.projectId),
+      title,
+      content: artifact.content || '',
+      ctdSection:
+        artifact.ctdSection ||
+        (typeof payload.ctdSection === 'string' ? payload.ctdSection : null),
+      sourceRefs: [`artifact:${artifact.artifactId}`],
+      provider: 'ai_actions',
+      model: 'promote_artifact',
+      exportAllowed: false,
+      eventType: 'artifact.updated',
+    });
+    if (!governedResolution.validation.valid) {
+      throw new AIActionHandlerError(
+        'GOVERNED_CONTRACT_INVALID',
+        `Governed contract validation failed: ${governedResolution.validation.errors.join('; ')}`,
+        400,
+        {
+          errors: governedResolution.validation.errors,
+          warnings: governedResolution.validation.warnings,
+          resolved: governedResolution.resolved,
+        }
+      );
+    }
 
     // 4. Execute promotion in a transaction (atomic: create doc + version + update artifact)
     const { newDoc } = await db.transaction(async (tx: any) => {
@@ -152,11 +245,27 @@ const promoteArtifactHandler: AIActionHandler = {
         .set({
           status: 'approved',
           metadata: {
-            ...(artifact.metadata as Record<string, unknown> || {}),
+            ...(artifactMetadata || {}),
             promotedToDocumentId: doc.id,
             promotedAt: new Date().toISOString(),
             promotedBy: ctx.user.userId,
             promotionActionId: ctx.actionId,
+            harness: {
+              ...existingHarness,
+              clientTrack: governedResolution.contract.clientTrack,
+              submissionProgram: governedResolution.contract.submissionProgram,
+              persona: governedResolution.contract.persona,
+              regulatorScope: governedResolution.contract.regulatorScope,
+              documentClass: governedResolution.contract.documentClass,
+              readinessGate: governedResolution.contract.readinessGate,
+              workspaceTarget: governedResolution.contract.workspaceTarget,
+              originSurface: governedResolution.contract.originSurface,
+              recommendationSource: governedResolution.contract.recommendationSource,
+              regulatorIntent: governedResolution.contract.regulatorIntent,
+              gateChecks: governedResolution.contract.exportEligibility.gateChecks,
+              blockingReasons: governedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome: governedResolution.contract.exportEligibility.readinessOutcome,
+            },
           },
           updatedAt: new Date(),
         })

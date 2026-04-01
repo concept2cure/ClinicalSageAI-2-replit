@@ -35,34 +35,6 @@ declare global {
       file?: Express.Multer.File;
       files?: Express.Multer.File[] | { [fieldname: string]: Express.Multer.File[] };
 
-      // Parsed body types
-      body: any;
-
-      // Query parameters
-      query: {
-        [key: string]: string | string[] | undefined;
-        page?: string;
-        limit?: string;
-        sort?: string;
-        order?: string;
-        search?: string;
-        filter?: string;
-        status?: string;
-        type?: string;
-        from?: string;
-        to?: string;
-      };
-
-      // Route parameters
-      params: {
-        [key: string]: string;
-        id?: string;
-        projectId?: string;
-        documentId?: string;
-        submissionId?: string;
-        userId?: string;
-      };
-
       // Request context
       startTime?: number;
       requestId?: string;

@@ -5083,6 +5083,88 @@ export const projects = pgTable(
   })
 );
 
+/**
+ * Project Visibility Settings
+ *
+ * Controls who can discover/use a project within an organization.
+ * - private: only explicit members + owner/admin can use
+ * - org_public: any org user can use (edit still governed by membership/owner/admin)
+ */
+export const projectVisibilitySettings = pgTable(
+  'project_visibility_settings',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    visibility: text('visibility').notNull().default('private'), // private | org_public
+    updatedById: integer('updated_by_id').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    uniqueProjectVisibility: unique('unique_project_visibility').on(table.projectId),
+    idx_project_visibility_org: index('idx_project_visibility_org').on(table.organizationId),
+  })
+);
+
+export const insertProjectVisibilitySettingsSchema = createInsertSchemaOmit(projectVisibilitySettings, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ProjectVisibilitySettings = InferSelectModel<typeof projectVisibilitySettings>;
+export type InsertProjectVisibilitySettings = z.infer<typeof insertProjectVisibilitySettingsSchema>;
+
+/**
+ * Project Members
+ *
+ * Explicit membership for shared project collaboration.
+ * Roles:
+ * - owner: full control (normally implicit for owner/creator/admin)
+ * - edit: can modify project content/settings
+ * - use: can view/use project context but not edit
+ */
+export const projectMembers = pgTable(
+  'project_members',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    role: text('role').notNull().default('use'), // owner | edit | use
+    status: text('status').notNull().default('active'), // active | revoked
+    invitedById: integer('invited_by_id').references(() => users.id),
+    acceptedAt: timestamp('accepted_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    uniqueProjectMember: unique('unique_project_member').on(table.projectId, table.userId),
+    idx_project_members_org: index('idx_project_members_org').on(table.organizationId),
+    idx_project_members_user: index('idx_project_members_user').on(table.userId),
+  })
+);
+
+export const insertProjectMemberSchema = createInsertSchemaOmit(projectMembers, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ProjectMember = InferSelectModel<typeof projectMembers>;
+export type InsertProjectMember = z.infer<typeof insertProjectMemberSchema>;
+
 // Project Insert Schema
 export const insertProjectSchema = createInsertSchemaOmit(projects, {
   id: true,
@@ -18076,3 +18158,122 @@ export const featureToggles = pgTable(
 );
 
 export type FeatureToggle = InferSelectModel<typeof featureToggles>;
+
+// ============================================================
+// DATA LINEAGE TRACKING (Regulatory-Grade)
+// ============================================================
+
+/**
+ * Central lineage record — tracks every data flow between any two objects
+ * in the system (artifact → artifact, source → artifact, atom → section, etc.)
+ *
+ * This is the single source of truth for answering:
+ *   "Where did this data come from?" (upstream)
+ *   "Where was this data used?" (downstream)
+ *   "What justified this content?" (evidence basis)
+ *
+ * Complies with 21 CFR Part 11 §11.10(e) and ICH E6(R3) §5.5.3
+ */
+export const dataLineageRecords = pgTable('data_lineage_records', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id').references(() => organizations.id).notNull(),
+  projectId: integer('project_id').references(() => projects.id),
+
+  // SOURCE side (where data came from)
+  sourceObjectType: text('source_object_type').notNull(),
+  // e.g. 'artifact', 'atom', 'retrieval_chunk', 'memory_entry', 'external_evidence', 'document', 'user_input'
+  sourceObjectId: text('source_object_id').notNull(),
+  sourceField: text('source_field'), // specific field/section within source
+  sourceTitle: text('source_title'),
+  sourceContentHash: text('source_content_hash'), // SHA-256 at time of capture
+
+  // TARGET side (where data was used)
+  targetObjectType: text('target_object_type').notNull(),
+  // e.g. 'artifact', 'section', 'report', 'claim', 'recommendation'
+  targetObjectId: text('target_object_id').notNull(),
+  targetField: text('target_field'), // specific field/section within target
+  targetTitle: text('target_title'),
+
+  // Lineage metadata
+  linkageType: text('linkage_type').notNull(),
+  // e.g. 'derived_from', 'cited_by', 'generated_from', 'extracted_from', 'references', 'supersedes', 'validated_by'
+  transformationType: text('transformation_type'),
+  // e.g. 'direct_copy', 'ai_summarization', 'ai_generation', 'manual_edit', 'extraction', 'aggregation'
+  confidenceScore: real('confidence_score'), // 0-100
+  confidenceBasis: text('confidence_basis'), // 'rules_based', 'validation_based', 'ai_inferred'
+
+  // Provenance
+  createdById: integer('created_by_id').references(() => users.id),
+  aiModelUsed: text('ai_model_used'),
+  retrievalRunId: integer('retrieval_run_id'), // links to ai_retrieval_runs if from RAG
+  generationRunId: integer('generation_run_id'), // links to ai_generation_runs if AI-generated
+  workflowRunId: integer('workflow_run_id'), // links to workflow_runs if from orchestration
+
+  // Integrity
+  verified: boolean('verified').default(false),
+  verifiedById: integer('verified_by_id').references(() => users.id),
+  verifiedAt: timestamp('verified_at'),
+
+  metadata: json('metadata'), // extensible JSON for domain-specific data
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  orgIdx: index('dlr_org_idx').on(table.organizationId),
+  projectIdx: index('dlr_project_idx').on(table.projectId),
+  sourceIdx: index('dlr_source_idx').on(table.sourceObjectType, table.sourceObjectId),
+  targetIdx: index('dlr_target_idx').on(table.targetObjectType, table.targetObjectId),
+  linkageIdx: index('dlr_linkage_idx').on(table.linkageType),
+  createdAtIdx: index('dlr_created_at_idx').on(table.createdAt),
+}));
+
+export type DataLineageRecord = InferSelectModel<typeof dataLineageRecords>;
+
+/**
+ * Persisted evidence chains — captures the reasoning/justification basis
+ * for every AI-generated recommendation, section, or assessment.
+ *
+ * Addresses the gap identified in audit: evidence-confidence-model.ts
+ * functions were purely in-memory with no persistence.
+ */
+export const evidenceChainRecords = pgTable('evidence_chain_records', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id').references(() => organizations.id).notNull(),
+  projectId: integer('project_id').references(() => projects.id),
+
+  // What this evidence chain justifies
+  targetObjectType: text('target_object_type').notNull(),
+  // 'recommendation', 'artifact_section', 'compliance_finding', 'risk_assessment', 'readiness_score'
+  targetObjectId: text('target_object_id').notNull(),
+
+  // Evidence chain (serialized from EvidenceChain type)
+  primarySourceType: text('primary_source_type').notNull(),
+  primarySourceId: text('primary_source_id').notNull(),
+  primarySourceTitle: text('primary_source_title').notNull(),
+  primaryRelevance: real('primary_relevance'),
+  supportingSources: json('supporting_sources').$type<Array<{
+    sourceType: string;
+    sourceId: string;
+    sourceTitle: string;
+    relevance: number;
+    extractedValue?: string;
+  }>>().default([]),
+
+  // Confidence assessment
+  confidenceBasis: text('confidence_basis').notNull(), // 'rules_based', 'validation_based', 'ai_inferred'
+  confidenceScore: real('confidence_score'), // null for rules_based
+  chainStrength: text('chain_strength').notNull(), // 'strong', 'moderate', 'weak'
+
+  // Context
+  rimVersion: text('rim_version'),
+  judgmentFrameworkVersion: text('judgment_framework_version'),
+  patternRegistryVersion: text('pattern_registry_version'),
+
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  orgIdx: index('ecr_org_idx').on(table.organizationId),
+  projectIdx: index('ecr_project_idx').on(table.projectId),
+  targetIdx: index('ecr_target_idx').on(table.targetObjectType, table.targetObjectId),
+  basisIdx: index('ecr_basis_idx').on(table.confidenceBasis),
+  strengthIdx: index('ecr_strength_idx').on(table.chainStrength),
+}));
+
+export type EvidenceChainRecord = InferSelectModel<typeof evidenceChainRecords>;

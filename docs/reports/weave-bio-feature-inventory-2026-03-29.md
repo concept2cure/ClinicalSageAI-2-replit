@@ -1,6 +1,10 @@
 # Weave.bio Comprehensive Feature Inventory
 
+<<<<<<< HEAD
 > Research date: 2026-03-29, updated 2026-03-30
+=======
+> Research date: 2026-03-29
+>>>>>>> 3a52c03b (docs: include prior weave.bio feature inventory report)
 > Purpose: Competitive intelligence for Concept2Cure document system convergence sprint
 
 ---
@@ -12,7 +16,11 @@
 - **Positioning**: "AI-native platform for regulatory workflows" -- the only AI-native platform built to manage regulatory content across the entire lifecycle of a therapeutic candidate
 - **Key Partners**: Takeda (validation partner), Parexel (CRO design partner), Boehringer Ingelheim, Gilead (SAB)
 - **Recognition**: "Biotech AI Innovation of the Year" 2024
+<<<<<<< HEAD
 - **Security**: AWS infrastructure, OpenAI ZDR policy, AES-256 at rest, SSL/TLS in transit, SAML SSO, MFA, RBAC, 14-day rolling backups
+=======
+- **Security**: AWS infrastructure, zero data retention, enterprise security controls
+>>>>>>> 3a52c03b (docs: include prior weave.bio feature inventory report)
 
 ---
 
@@ -299,6 +307,7 @@
 
 ---
 
+<<<<<<< HEAD
 ## 12. Security, Privacy & Compliance (CONFIRMED -- from weave.bio/data-security-privacy/)
 
 ### Encryption & Data Protection
@@ -366,6 +375,9 @@
 ---
 
 ## 14. Platform Architecture Summary
+=======
+## 12. Platform Architecture Summary
+>>>>>>> 3a52c03b (docs: include prior weave.bio feature inventory report)
 
 ```
 The Weave Platform
@@ -421,6 +433,7 @@ The Weave Platform
 |   +-- Redline suggestions
 |   +-- Approval workflows
 |   +-- Progress tracking
+<<<<<<< HEAD
 |
 +-- Security & Infrastructure
 |   +-- AWS cloud hosting
@@ -435,6 +448,8 @@ The Weave Platform
     +-- OpenAI (LLM)
     +-- AWS Bedrock (extraction)
     +-- SAML identity providers
+=======
+>>>>>>> 3a52c03b (docs: include prior weave.bio feature inventory report)
 ```
 
 ---
@@ -494,8 +509,11 @@ The Weave Platform
 - [Weave Bio Webflow (legacy site)](https://weave-bio.webflow.io/)
 - [Weave Bio Solutions](https://weave-bio.webflow.io/solutions)
 - [HLTH: HAQ Manager with Takeda](https://hlth.com/insights/news/weave-bio-launches-haq-manager-with-takeda-to-extend-ai-automation-into-regulatory-review-2025-11-07)
+<<<<<<< HEAD
 - [Weave Bio Data Security & Privacy](https://www.weave.bio/data-security-privacy/) -- security/privacy details (2026-03-30 research)
 - [Weave RFP Checklist & Platform Overview PDF](https://23328296.fs1.hubspotusercontent-na1.net/hubfs/23328296/Website%20Files/Weave%20RFP%20Checklist%20&%20Platform%20Overview_July2025.pdf) -- detailed capability checklist (403'd, title confirmed)
 - [Weave RFP Checklist Landing Page](https://www.weave.bio/resources/weave-rfp-checklist-platform-overview/)
 - [Weave Submission Builder (alternate URL)](https://www.weave.bio/platform/submission-builder/)
 - [DIP-AI: Best Regulatory Writing Automation Tools 2025](https://www.dip-ai.com/use-cases/en/the-best-regulatory-writing-automation) -- competitive landscape
+=======
+>>>>>>> 3a52c03b (docs: include prior weave.bio feature inventory report)

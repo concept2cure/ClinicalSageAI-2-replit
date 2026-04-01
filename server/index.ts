@@ -1,5 +1,6 @@
 import { config as dotenvConfig } from 'dotenv';
-dotenvConfig({ override: true });
+dotenvConfig({ override: false });
+import { initializeOpenTelemetry } from './services/telemetry/opentelemetry';
 
 // Initialize Sentry error monitoring early, before other imports
 import './utils/sentry';
@@ -8,25 +9,33 @@ import './utils/sentry';
 // This MUST be at the very top before ANY database connections are made
 import dns from 'dns';
 dns.setDefaultResultOrder('ipv4first');
+await initializeOpenTelemetry();
 
 import express from 'express';
 import { createServer } from 'http';
 import { Pool } from 'pg';
-import { setupVite } from './vite';
+import { setupVite, serveStatic } from './vite';
 import { httpLogger, errorHandler } from './src/mw/observability.js';
 // Database performance optimizations - optional
-import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import type { Request, Response, NextFunction } from 'express';
-import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
+import { betaFlowTelemetryMiddleware } from './middleware/betaFlowTelemetry';
 
 // Phase 4.1 Proof System - 21 CFR Part 11 Compliance
 import { initializeProofDatabasePersistence } from '../services/proof/database-setup';
 
+// Route bootstrap manifests
+import { registerCoreRoutes } from './bootstrap/register-core-routes';
+import { registerIntegrationRoutes } from './bootstrap/register-integrations-routes';
+import { registerAiRoutes } from './bootstrap/register-ai-routes';
+import { registerConcept2CureRoutes } from './bootstrap/register-concept2cure-routes';
+import { registerAdminRoutes } from './bootstrap/register-admin-routes';
+import { registerSubscriptionsRoutes } from './routes/reports/subscriptions-routes';
+
 // Enterprise Security & Performance Middleware
-import { applySecurityMiddleware, auditLog } from './middleware/enterprise-security.js';
+import { applySecurityMiddleware } from './middleware/enterprise-security.js';
 import {
   applyPerformanceMiddleware,
   cleanup as cleanupPerformance,
@@ -36,18 +45,23 @@ import {
   closeRedisRateLimiter,
   createRedisRateLimiter,
 } from './middleware/redisRateLimiter';
+import {
+  assertNoStaticDataFlagsInProduction,
+  isStaticDataEnabled,
+  sendStaticDataDisabled,
+} from './middleware/staticDataGuard';
+import { createBetaRouteFence, isBetaRouteFenceEnabled } from './middleware/betaRouteFence';
 
 // Import enterprise services
 // NOTE: openaiService was renamed to aiProviderRouter - the old name was misleading
 // The service actually uses Kimi AI (moonshot.cn), not OpenAI
-import { AIProviderRouter, getAIRouter } from './services/aiProviderRouter.js';
-// aiProviderRouter will be initialized after database connection
-let aiProviderRouter: AIProviderRouter | null = null;
 // Side-effect imports: constructor initializes audit tables and RBAC cache
 import './services/auditService.js';
 import './services/roleBasedAccess.js';
 import { authMiddleware } from './auth.js';
 import { sanitizeAskAnaInput } from './routes/ask-ana-utils';
+import { getSecureOrgId } from './utils/tenantContext';
+import FeatureToggleService from './services/featureToggleService';
 
 // Import database and schema for workflow persistence
 import { drizzle } from 'drizzle-orm/node-postgres';
@@ -63,13 +77,29 @@ import { fda510kStageProgress, fda510kProjects, projects, draftingTasks } from '
     ? [] // At least one DB URL is set
     : ['DATABASE_URL']; // None set — require DATABASE_URL
 
-  if (isProduction) {
+  const jwtEnvByNodeEnv: Record<string, string> = {
+    development: 'JWT_SECRET_DEV',
+    staging: 'JWT_SECRET_STAGING',
+    production: 'JWT_SECRET_PROD',
+  };
+  const envSpecificJwt = jwtEnvByNodeEnv[process.env.NODE_ENV || 'development'];
+  const hasJwtSecret = Boolean(
+    process.env.JWT_SECRET || (envSpecificJwt && process.env[envSpecificJwt])
+  );
+  if (!hasJwtSecret) {
     required.push('JWT_SECRET');
   }
 
   const missing = required.filter(k => !process.env[k]);
   if (missing.length > 0) {
     console.error(`[FATAL] Missing required environment variables: ${missing.join(', ')}`);
+    process.exit(1);
+  }
+
+  try {
+    assertNoStaticDataFlagsInProduction(process.env.NODE_ENV, process.env);
+  } catch (error: any) {
+    console.error(`[FATAL] ${error?.message || 'Invalid static-data route configuration'}`);
     process.exit(1);
   }
 
@@ -93,54 +123,33 @@ const debugLog = (message: string, data?: any) => {
   }
 };
 
-// Import CMC route handlers
-import cmcProjectRoutes from './api/cmc/projectRoutes';
-import cmcBlueprintRoutes from './api/cmc/blueprintRoutes';
-import cmcDashboardRoutes from './routes/cmc-dashboard';
-import cmcAggregatorRoutes from './api/cmc/index.js';
-import cmcDashboardPrisma from './routes/cmc-dashboard-prisma';
-import cmcCoreRoutes from './api/cmc/routes';
-import cmcSpecificationRoutes from './api/cmc/specificationRoutes';
-import cmcStabilityRoutes from './api/cmc/stabilityRoutes';
-import cmcBatchRecordRoutes from './api/cmc/batchRecordRoutes';
-import cmcWorkflowRoutes from './api/cmc/workflowRoutes';
-import cmcCollaborationRoutes from './api/cmc/collaborationRoutes';
-import cmcDocumentRoutes from './api/cmc/documentRoutes';
-
-// Import AI assistance routes
-import aiAssistanceRoutes, { setAIService } from './routes/ai-assistance';
-// Dead import removed: aiPhase3Routes (duplicated as phase3Routes at mount site)
-
+// Route imports now consolidated in server/bootstrap/ manifests.
+// Only imports NOT yet migrated to bootstrap remain here.
 import predictiveSectionsRoutes from './routes/predictive-sections';
-
-// Import enterprise routes
-import enterpriseRoutes from './api/enterprise/routes.js';
-
-// Import ForesightAI routes
-import foresightApiRoutes from './routes/foresight-api';
-import foresightAIAdvancedRoutes from './routes/foresight-ai-advanced';
 import foresightFeedbackRoutes from './routes/foresight-feedback';
-
-// Import Phase 5: Intelligent Document System routes
-import intelligentDocsRoutes from './routes/intelligentDocs';
-import { testAssemblyRoutes } from './routes/test-assembly';
-
-// Import Phase 5: PM Settings & Configuration routes
-import pmSettingsRouter from './src/routes/pm-settings.router';
-import controlPlaneRouter from './src/routes/control-plane.router';
-import reportsManifestRoutes from './routes/reports/manifest-routes';
-import reportsGenerationRoutes from './routes/reports/generate-report';
-import { registerSubscriptionsRoutes } from './routes/reports/subscriptions-routes';
+import { csrSearchService } from './services/csr-search-service';
+import { getEndpointRecommenderService } from './services/endpoint-recommender-service';
 import firecrawlWebhooksRoutes from './routes/firecrawl-webhooks';
+
+// ── Bootstrap route manifests ──
+import { registerCoreRoutes } from './bootstrap/register-core-routes';
+import { registerConcept2CureRoutes } from './bootstrap/register-concept2cure-routes';
+import { registerAiRoutes } from './bootstrap/register-ai-routes';
+import { registerAdminRoutes } from './bootstrap/register-admin-routes';
+import { registerIntegrationRoutes } from './bootstrap/register-integrations-routes';
+import { registerGovernanceRoutes } from './bootstrap/register-governance-routes';
+import { registerPlatformRoutes } from './bootstrap/register-platform-routes';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const EXPERIMENTAL_ROUTES_ENABLED =
+  process.env.ENABLE_EXPERIMENTAL_ROUTES === 'true' && process.env.NODE_ENV !== 'production';
+const DEMO_ROUTES_ENABLED =
+  process.env.ENABLE_DEMO_ROUTES === 'true' && process.env.NODE_ENV !== 'production';
 
 // --- Start Python FastAPI Backend as a Child Process ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const pythonBackendPath = path.resolve(__dirname, '..'); // Python files are in root directory
-
 let pythonProcess: any = null;
 
 const startPythonBackend = () => {
@@ -191,8 +200,9 @@ async function gracefulShutdown(signal: string) {
 
   // 4. Drain AI action queue and close Redis
   try {
-    const { drainActionQueue, closeAllSSEConnections, closeRedis } =
-      await import('./services/ai-actions/index');
+    const { drainActionQueue, closeAllSSEConnections, closeRedis } = await import(
+      './services/ai-actions/index'
+    );
     closeAllSSEConnections();
     await drainActionQueue(10_000);
     await closeRedis();
@@ -250,13 +260,39 @@ if (DEBUG) {
   });
 }
 
+// Beta-ops telemetry collection for guided user-test API lanes only.
+app.use('/api', betaFlowTelemetryMiddleware);
+
+const betaOpsTelemetryRoutes = (await import('./routes/beta-ops-telemetry')).default;
+app.use('/api/ops', authMiddleware, betaOpsTelemetryRoutes);
+
+// ============================================================================
+// FAST-PATH ENDPOINTS — before all middleware for minimal latency
+// Health checks, readiness probes, and Kubernetes liveliness don't need
+// security, rate limiting, compression, CORS, or body parsing.
+// ============================================================================
+app.get('/healthz', (_req, res) => res.json({ ok: true, ts: Date.now() }));
+app.get('/readyz', async (_req, res) => {
+  try {
+    await pool.query('select 1');
+    return res.json({ ready: true });
+  } catch {
+    return res.status(500).json({ ready: false });
+  }
+});
+app.get('/api/health', (_req: Request, res: Response) => {
+  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
 // ============================================================================
 // ENTERPRISE SECURITY & PERFORMANCE MIDDLEWARE (ENABLED)
 // ============================================================================
-// Apply enterprise security middleware first
+// Apply enterprise security middleware first (includes global rate limit)
 applySecurityMiddleware(app);
 
 // Redis-backed API rate limiting (with in-memory fallback)
+// NOTE: applySecurityMiddleware already mounts rateLimiters.global for all routes,
+// so the Redis limiter here adds a second, independent /api limit for burst protection.
 const redisRateLimiter = createRedisRateLimiter();
 app.use('/api', redisRateLimiter);
 
@@ -266,27 +302,29 @@ applyPerformanceMiddleware(app);
 console.log('✅ Enterprise security and performance middleware enabled');
 // ============================================================================
 
-// Middleware setup
-app.use(httpLogger); // Add structured logging
+// Structured logging — scoped to API routes (health/static short-circuit above)
+app.use('/api', httpLogger);
 // Audit logging now handled by enterprise-security middleware
 
 // Firecrawl webhooks require raw body-safe handling before global JSON parser.
 app.use('/api/firecrawl-webhooks', firecrawlWebhooksRoutes);
 
-// Body parsing with size limits
-// 50MB needed for large document uploads via JSON (base64-encoded); file uploads use multer separately
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// Body parsing — scoped to /api routes only (static files and health checks skip this)
+// 2MB default is sufficient for JSON API calls; large document uploads use multer (multipart)
+// The 50MB limit is kept for /api/concept2cure routes that send base64-encoded document content
+app.use('/api/concept2cure', express.json({ limit: '50mb' }));
+app.use('/api', express.json({ limit: '2mb' }));
+app.use('/api', express.urlencoded({ extended: true, limit: '2mb' }));
+app.use('/api', createBetaRouteFence());
+if (isBetaRouteFenceEnabled()) {
+  console.log('🛡️ Guided beta route fence enabled for /api (mock/scaffold families blocked)');
+}
 // Cookie parsing (required for CSRF double-submit pattern)
 import cookieParser from 'cookie-parser';
 app.use(cookieParser());
 
-// CSRF protection (double-submit cookie pattern)
-import { csrfProtection } from './middleware/csrf.js';
-if (process.env.NODE_ENV === 'production' || process.env.ENABLE_CSRF === 'true') {
-  app.use('/api', csrfProtection);
-  console.log('✅ CSRF protection enabled');
-}
+// NOTE: CSRF protection already applied by applySecurityMiddleware() above.
+// The duplicate csrfProtection from './middleware/csrf.js' is intentionally removed.
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // IMMUTABILITY POLICY ENFORCEMENT — 21 CFR Part 11 Compliance
@@ -326,10 +364,6 @@ debugLog('Immutability policy enforcement middleware installed');
 
 debugLog('Express middleware configured');
 
-// Multer configuration
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
-
 // Use centralized database pool
 import { getPool } from './db';
 const pool = getPool();
@@ -359,12 +393,26 @@ async function verifyDatabaseConnection() {
   try {
     const result = await ensureCoreTables(process.env.DATABASE_URL);
     if (result.success) {
-      console.log(`✅ All ${result.existingTables.length} core database tables verified`);
+      console.log(
+        `✅ Database readiness verified (${result.existingSchemas.length} schemas, ${result.existingTables.length} tables)`
+      );
     } else if (result.missingCritical.length > 0) {
       console.error('❌ CRITICAL: Missing tables:', result.missingCritical.join(', '));
       console.error('   Run: npm run db:push to sync schema');
+    } else if (result.missingExtensions.length > 0) {
+      console.error(
+        '❌ CRITICAL: Missing required database extensions:',
+        result.missingExtensions.join(', ')
+      );
     } else if (result.errors.length > 0) {
       console.error('⚠️ Table verification errors:', result.errors);
+    } else if (result.missingSchemas.length > 0) {
+      console.warn(
+        '⚠️ Database schemas required initialization:',
+        result.missingSchemas.join(', ')
+      );
+    } else if (result.warnings.length > 0) {
+      console.warn('⚠️ Database readiness warnings:', result.warnings);
     }
   } catch (err: any) {
     console.error('⚠️ Core table verification failed:', err.message);
@@ -379,24 +427,7 @@ const storageClient = {
 };
 console.log('✅ Storage client initialized (VaultDMS deprecated)');
 
-// Health check endpoints
-app.get('/healthz', (_req, res) => res.json({ ok: true, ts: Date.now() }));
-app.get('/readyz', async (_req, res) => {
-  try {
-    await pool.query('select 1');
-    return res.json({ ready: true });
-  } catch {
-    return res.status(500).json({ ready: false });
-  }
-});
-
-// Health check endpoint — public, minimal info only
-app.get('/api/health', async (req: Request, res: Response) => {
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-  });
-});
+// NOTE: /healthz, /readyz, /api/health are mounted above middleware for fast-path access
 
 // Full health check endpoint — comprehensive system health with dependency checks
 app.get('/api/health/full', async (req: Request, res: Response) => {
@@ -509,166 +540,18 @@ app.get('/api/diag', (_req: Request, res: Response) => {
 </body></html>`);
 });
 
-// Mount authentication routes (SECURE)
-try {
-  const authModule = await import('./routes/auth');
-  const authRouter = authModule.default;
-  // Express Router is an object with handle method, not strictly a function
-  if (authRouter && (typeof authRouter === 'function' || (authRouter as any).handle)) {
-    app.use('/api/auth', authRouter);
-    // Also mount on /api/v1/auth for client compatibility
-    app.use('/api/v1/auth', authRouter);
-    console.log(
-      '✅ Authentication API routes mounted successfully (JWT-based with organizationId)'
-    );
-  } else {
-    console.warn('⚠️ Auth router not found or invalid - auth routes skipped');
-  }
-} catch (error) {
-  console.error('❌ Failed to mount auth routes:', error);
-}
-
-// Mount Users routes
-try {
-  const usersModule = await import('./routes/users');
-  const usersRouter = usersModule.default;
-  if (usersRouter && (typeof usersRouter === 'function' || (usersRouter as any).handle)) {
-    app.use('/api/users', usersRouter);
-    app.use('/api/user', usersRouter); // Alias for /api/users/me
-    // DO NOT mount at /api - it breaks /api/tenants and other routes
-    console.log('✅ Users API routes mounted successfully');
-  }
-} catch (error) {
-  console.error('❌ Failed to mount users routes:', error);
-}
-
-// Legacy login/logout/register endpoints — redirect to proper auth router
-// CRIT-03b FIX: Removed zero-check legacy endpoints that accepted any credentials
-app.post('/api/login', (req, res) => {
-  // Redirect to the real auth endpoint
-  res.redirect(307, '/api/auth/login');
-});
-
-app.post('/api/logout', (req, res) => {
-  res.redirect(307, '/api/auth/logout');
-});
-
-app.post('/api/register', (req, res) => {
-  res.redirect(307, '/api/auth/signup');
-});
-
-// Mount Enterprise Authentication routes (21 CFR Part 11 Compliant)
-try {
-  const authEnterpriseModule = await import('./routes/authEnterprise');
-  const authEnterpriseRouter = authEnterpriseModule.default;
-  if (
-    authEnterpriseRouter &&
-    (typeof authEnterpriseRouter === 'function' || (authEnterpriseRouter as any).handle)
-  ) {
-    app.use('/api/auth/enterprise', authEnterpriseRouter);
-    console.log('✅ Enterprise Authentication routes mounted at /api/auth/enterprise');
-    console.log(
-      '   - Multi-step auth flow: check-email → verify-password → verify-mfa → select-organization'
-    );
-    console.log('   - Rate limiting, account lockout, MFA support enabled');
-  } else {
-    console.warn('⚠️ Enterprise auth router not found - enterprise auth routes skipped');
-  }
-} catch (error) {
-  console.error('❌ Failed to mount enterprise auth routes:', error);
-}
-
-// Mount SSO helper routes (/api/auth/sso) for developer/testing
-try {
-  const ssoModule = await import('./routes/sso');
-  const ssoRouter = ssoModule.default;
-  if (ssoRouter && (typeof ssoRouter === 'function' || (ssoRouter as any).handle)) {
-    app.use('/api/auth/sso', ssoRouter);
-    console.log('✅ SSO helper routes mounted at /api/auth/sso');
-  }
-} catch (err) {
-  console.warn('⚠️ SSO helper routes not mounted - continuing without SSO helpers');
-}
-
-// ── Global Auth Middleware ──────────────────────────────────────────────
-// Protect ALL /api/* routes EXCEPT public paths (auth, health, legacy redirects).
-// Uses segment-boundary matching to prevent bypass via crafted paths like /api/auth-evil.
-app.use('/api', (req: Request, res: Response, next: NextFunction) => {
-  const openPrefixes = [
-    '/api/auth',
-    '/api/login',
-    '/api/logout',
-    '/api/register',
-    '/api/health',
-    '/api/health/full',
-    '/api/metrics',
-    '/api/cortex/health',
-    '/api/claude/health',
-    '/api/ai-gateway/health',
-    '/api/claude/models',
-  ];
-  const fullPath = req.baseUrl + req.path;
-  const isOpen = openPrefixes.some(p => {
-    if (fullPath === p) return true;
-    // Only match if prefix is followed by '/' or query string boundary
-    return fullPath.startsWith(p + '/');
-  });
-  if (isOpen) return next();
-  return authMiddleware(req, res, next);
-});
-console.log(
-  '✅ Global authMiddleware applied — all /api/* routes protected (except auth & health)'
-);
+// Register platform-level health, authentication, and auth-gate routes.
+// This single call mounts: /api/auth, /api/v1/auth, /api/users, /api/user,
+// legacy login/logout/register redirects, enterprise auth, SSO, health probes,
+// and the global /api auth gate.
+await registerPlatformRoutes({ app, pool, authMiddleware });
 
 // Basic API routes - complex routes will be added back gradually
-app.get('/api/csr', (req: Request, res: Response) => {
-  res.json({ message: 'CSR API available', timestamp: new Date() });
-});
+// NOTE: do not define a top-level /api/csr inline handler here.
+// /api/csr is owned by csr-builder router mounts in startServer().
 
-// Mount basic routes including /api/projects
-// Direct mount /api/projects here to ensure it works
-app.get('/api/projects', async (req, res) => {
-  try {
-    // SECURITY: Always derive organization from authenticated JWT context
-    const client_workspace_id =
-      req.query.client_workspace_id || req.headers['x-client-workspace-id'];
-    const organization_id =
-      (req as any).tenantContext?.organizationId ||
-      (req as any).organizationId ||
-      (req as any).user?.organizationId;
-
-    if (!organization_id) {
-      return res.status(403).json({ error: 'Organization context required' });
-    }
-
-    if (!pool) {
-      // Return empty array if database not available
-      return res.json([]);
-    }
-
-    // Query projects from database - fetch all for the organization
-    let query = 'SELECT * FROM projects WHERE organization_id = $1';
-    const params: any[] = [organization_id];
-
-    // Optionally filter by workspace if provided
-    if (client_workspace_id) {
-      params.push(client_workspace_id);
-      query += ` AND client_workspace_id = $${params.length}`;
-    }
-
-    query += ' ORDER BY created_at DESC';
-
-    console.log('Fetching projects with query:', query, 'params:', params);
-    const result = await pool.query(query, params);
-    console.log('Found projects:', result.rows?.length || 0);
-
-    res.json(result.rows || []);
-  } catch (error) {
-    console.error('Failed to fetch projects:', error);
-    res.status(500).json({ error: 'Failed to fetch projects' });
-  }
-});
-console.log('✅ /api/projects route mounted directly');
+// /api/projects is owned by mounted projects-management router.
+// Keep this namespace single-owned to avoid route shadowing/policy drift.
 
 // ────────────────────────────────────────────────────────────────────────────
 // Device-Project CRUD – server-backed persistence for CERV2 module
@@ -945,83 +828,33 @@ app.delete('/api/device-projects/:id', async (req: Request, res: Response) => {
 
 console.log('✅ /api/device-projects CRUD routes mounted');
 
-// Register template routes
-import templateRoutes from './api/templates/routes';
-app.use('/api/templates', templateRoutes);
-
-// Import and mount AI routes — protected by circuit breaker for fault isolation
-import aiRoutes from './api/ai/routes';
-import phase3Routes from './api/ai/phase3-routes.js';
+// ── Circuit breaker for AI service fault isolation ──
 import { createCircuitBreakerMiddleware } from './middleware/circuitBreaker';
 const aiCircuitBreaker = createCircuitBreakerMiddleware('ai-service', {
   failureThreshold: 10,
   resetTimeout: 30_000,
   maxTimeout: 60_000, // AI calls can be slow
 });
-app.use('/api/ai', aiCircuitBreaker, aiRoutes);
-app.use('/api/test-assembly', testAssemblyRoutes(pool));
-// Mount Phase 3 AI routes
-app.use('/api', phase3Routes);
 
-// Mount enterprise routes
-app.use('/api/enterprise', enterpriseRoutes);
+// ── Register bootstrapped domain route manifests ──
+// Core: templates, AI, CMC (12), AI assistance, intelligent docs, PM settings, control plane
+registerCoreRoutes({ app, pool, aiCircuitBreaker });
+// Integrations: foresight deprecation routes
+registerIntegrationRoutes(app);
 
-// Mount enhanced RBAC routes
-import rbacRoutes from './api/enterprise/rbac-routes.js';
-app.use('/api/enterprise/rbac', rbacRoutes);
+// ── Routes not yet migrated to bootstrap manifests ──
 
-// Mount CMC Module routes (Chemistry, Manufacturing & Controls)
-try {
-  // Both routers share /api/cmc but define non-overlapping sub-routes:
-  //   cmcAggregatorRoutes: /blueprint-generator, /change-impact-simulator, /manufacturing-tuner, etc.
-  //   cmcProjectRoutes:    /projects, /projects/:id, /projects/:projectId/substances, etc.
-  app.use('/api/cmc', cmcCoreRoutes);
-  app.use('/api/cmc', cmcAggregatorRoutes);
-  app.use('/api/cmc', cmcProjectRoutes);
-  app.use('/api/cmc/blueprint', cmcBlueprintRoutes);
-  app.use('/api/cmc/specifications', cmcSpecificationRoutes);
-  app.use('/api/cmc/stability', cmcStabilityRoutes);
-  app.use('/api/cmc/batch-records', cmcBatchRecordRoutes);
-  app.use('/api/cmc/workflows', cmcWorkflowRoutes);
-  app.use('/api/cmc/collaboration', cmcCollaborationRoutes);
-  app.use('/api/cmc/documents', cmcDocumentRoutes);
-  app.use('/api/cmc/dashboard-legacy', cmcDashboardRoutes);
-  app.use('/api/cmc/dashboard', cmcDashboardPrisma);
-  console.log(
-    '✅ CMC Module API routes mounted (aggregator + projects + blueprint + specifications + stability + batch-records + workflows + collaboration + documents + dashboard)'
-  );
-} catch (error) {
-  console.error('❌ Failed to mount CMC Module routes:', error);
-}
-
-// Mount AI Assistance routes
-try {
-  app.use('/api/ai-assistance', aiCircuitBreaker, aiAssistanceRoutes);
-  // Also mount at /api/ai so the client aiService.js endpoints (/api/ai/assist, /api/ai/verify, /api/ai/health) resolve
-  app.use('/api/ai', aiCircuitBreaker, aiAssistanceRoutes);
-  // Initialize the AI provider router and inject into AI assistance module
-  aiProviderRouter = getAIRouter(pool);
-  if (aiProviderRouter) {
-    setAIService(aiProviderRouter);
-  }
-  console.log('✅ AI Assistance API routes mounted');
-} catch (error) {
-  console.error('❌ Failed to mount AI Assistance routes:', error);
-}
-
-// Mount AnA Intelligence dedicated routes (10-K harvesting, observation terms)
+// AnA Intelligence dedicated routes (10-K harvesting, observation terms)
 try {
   const anaCortexRoutes = await import('./routes/ana-cortex');
   app.use('/api/ana-cortex', anaCortexRoutes.default);
   app.use('/api/ana-1-0-ri-cortex', anaCortexRoutes.default);
-  console.log(
-    '✅ AnA Cortex routes mounted (/api/ana-cortex, /api/ana-1-0-ri-cortex)'
-  );
+  console.log('✅ AnA Cortex routes mounted (/api/ana-cortex, /api/ana-1-0-ri-cortex)');
 } catch (error) {
   console.error('❌ Failed to mount AnA Intelligence routes:', error);
 }
 
-// Mount CSR Search routes (fast in-memory search across 779 CSR documents)
+// CSR Search routes (fast in-memory search across 779 CSR documents)
 try {
   const { csrSearchRouter } = await import('./routes/csr_search_routes');
   app.use('/api/csr-search', csrSearchRouter);
@@ -1030,7 +863,7 @@ try {
   console.error('❌ Failed to mount CSR Search routes:', error);
 }
 
-// Mount Nano Banana (Gemini image generation) routes
+// Nano Banana (Gemini image generation) routes
 try {
   const nanoBananaRoutes = await import('./routes/nanoBanana');
   app.use('/api/nano-banana', nanoBananaRoutes.default);
@@ -1039,159 +872,79 @@ try {
   console.error('❌ Failed to mount Nano Banana routes:', error);
 }
 
-// Mount Phase 5: Intelligent Document System routes
+// Predictive sections routes
+app.use('/api/predictive-sections', predictiveSectionsRoutes);
+
+// Foresight AI feedback redirect (not in bootstrap — supplementary alias)
 try {
-  app.use('/api/intelligent-docs', intelligentDocsRoutes);
-  console.log('✅ Phase 5: Intelligent Document System API routes mounted');
-} catch (error) {
-  console.error('❌ Failed to mount Intelligent Docs routes:', error);
-}
-
-// Mount Phase 5: PM Settings & Configuration routes
-try {
-  app.use('/api/control-plane', controlPlaneRouter);
-
-  app.use('/api/pm-settings', pmSettingsRouter);
-  console.log('✅ Phase 5: PM Settings & Configuration API routes mounted');
-} catch (error) {
-  console.error('❌ Failed to mount PM Settings routes:', error);
-}
-
-// Mount AnA Intelligence (formerly ForesightAI) routes
-// Legacy routes maintained for backward compatibility
-try {
-  // Shared deprecation middleware for all Foresight/legacy routes
-  const foresightDeprecation = (req: Request, res: Response, next: () => void) => {
-    res.setHeader('Deprecation', 'true');
-    res.setHeader('Sunset', '2026-04-01');
-    res.setHeader('Link', '<https://docs.concept2cure.ai/api/cortex>; rel="canonical"');
-    next();
-  };
-
-  app.use('/api/foresight', foresightDeprecation, foresightApiRoutes);
-  app.use('/api/foresight-ai', foresightDeprecation, foresightAIAdvancedRoutes);
-  app.use('/api/foresight-feedback', foresightDeprecation, foresightFeedbackRoutes);
   app.use(
     '/api/foresight-ai/feedback',
-    foresightDeprecation,
+    (req: Request, res: Response, next: () => void) => {
+      res.setHeader('Deprecation', 'true');
+      res.setHeader('Sunset', '2026-04-01');
+      res.setHeader('Link', '<https://docs.concept2cure.ai/api/cortex>; rel="canonical"');
+      next();
+    },
     (req, _res, next) => {
       req.url = `/feedback${req.url}`;
       next();
     },
     foresightFeedbackRoutes
   );
-  // New AnA Intelligence aliases
-  console.log('✅ AnA Intelligence™ Intelligence API routes mounted (+ legacy /foresight aliases)');
 } catch (error) {
-  console.error('Failed to mount AnA Intelligence routes:', error);
+  console.error('Failed to mount foresight-ai/feedback alias:', error);
 }
 
-// Mount AnA Intelligence RAG routes (formerly ForesightAI RAG)
-try {
-  const foresightRagRoutes = await import('./routes/foresight-rag-api.js');
-  const foresightRagDeprecation = (req: Request, res: Response, next: () => void) => {
-    res.setHeader('Deprecation', 'true');
-    res.setHeader('Sunset', '2026-04-01');
-    res.setHeader('Link', '<https://docs.concept2cure.ai/api/cortex>; rel="canonical"');
-    next();
-  };
-  app.use('/api/foresight/rag', foresightRagDeprecation, foresightRagRoutes.default);
-  console.log('✅ AnA Intelligence RAG API routes mounted successfully');
-} catch (error) {
-  console.error('Failed to mount AnA Intelligence RAG routes:', error);
+// RAG routes (parallelized for faster startup)
+{
+  const ragResults = await Promise.allSettled([import('./routes/biotech-rag.js')]);
+
+  if (ragResults[0].status === 'fulfilled') {
+    app.use('/api/biotech-rag', ragResults[0].value.default);
+    console.log('✅ Biotech AI Intelligence RAG API routes mounted');
+  } else {
+    console.error('❌ Failed to mount Biotech RAG routes:', ragResults[0].reason);
+  }
 }
 
-// Mount Biotech AI Intelligence RAG routes
-try {
-  const biotechRagRoutes = await import('./routes/biotech-rag.js');
-  app.use('/api/biotech-rag', biotechRagRoutes.default);
-  console.log('✅ Biotech AI Intelligence RAG API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount Biotech RAG routes:', error);
-}
+// FDA/CERV2/Device regulatory routes (parallelized for faster startup)
+{
+  const regulatoryRouteResults = await Promise.allSettled([
+    import('./routes/fda510k-unified.js'),
+    import('./routes/fda510k-routes.js'),
+    import('./routes/510k-estar-routes'),
+    import('./routes/cerv2-export-routes'),
+    import('./routes/cerv2-ai-routes'),
+    import('./routes/documentOrchestrationRoutes.js'),
+    import('./routes/esgSubmissionRoutes.js'),
+    import('./routes/medical-device-routes.js'),
+  ]);
 
-// Mount FDA 510(k) Unified routes (consolidated)
-try {
-  const fda510kUnifiedModule = await import('./routes/fda510k-unified.js');
-  const fda510kUnifiedRoutes = fda510kUnifiedModule.default;
-  app.use('/api/fda510k-unified', fda510kUnifiedRoutes);
-  console.log('✅ FDA 510(k) Unified API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount FDA 510(k) Unified routes:', error);
-}
+  const routeMap = [
+    { path: '/api/fda510k-unified', label: 'FDA 510(k) Unified' },
+    { path: '/api/fda510k', label: 'FDA 510(k) Legacy' },
+    { path: '/api/510k/estar', label: 'FDA 510(k) eSTAR' },
+    { path: '/api/cerv2/export', label: 'CERV2 Export' },
+    { path: '/api/cerv2/ai', label: 'CERV2 AI' },
+    { path: null, label: 'Doc Orchestration' },
+    { path: null, label: 'ESG Submission' },
+    { path: '/api/medical-devices', label: 'Medical Device' },
+  ];
 
-// Mount FDA 510(k) routes (legacy - will be deprecated in v3.0.0)
-try {
-  const fda510kModule = await import('./routes/fda510k-routes.js');
-  const fda510kRoutes = fda510kModule.default;
-  app.use('/api/fda510k', fda510kRoutes);
-  console.log('✅ FDA 510(k) API routes mounted successfully (legacy)');
-} catch (error) {
-  console.error('❌ Failed to mount FDA 510(k) routes:', error);
-}
-
-// Mount FDA 510(k) eSTAR export routes
-try {
-  const estarModule = await import('./routes/510k-estar-routes');
-  const estarRoutes = estarModule.default;
-  app.use('/api/510k/estar', estarRoutes);
-  console.log('✅ FDA 510(k) eSTAR export routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount FDA 510(k) eSTAR routes:', error);
-}
-
-// Mount unified CERV2 Export routes (PDF, DOCX, ZIP for all doc types)
-try {
-  const cerv2ExportModule = await import('./routes/cerv2-export-routes');
-  const cerv2ExportRoutes = cerv2ExportModule.default;
-  app.use('/api/cerv2/export', cerv2ExportRoutes);
-  console.log('✅ CERV2 unified export routes mounted (PDF/DOCX/ZIP for 510k, PMA, CER)');
-} catch (error) {
-  console.error('❌ Failed to mount CERV2 export routes:', error);
-}
-
-// Mount CERV2 AI auto-populate stub routes (suggest, equivalence, benefit-risk, templates)
-try {
-  const cerv2AiModule = await import('./routes/cerv2-ai-routes');
-  const cerv2AiRoutes = cerv2AiModule.default;
-  app.use('/api/cerv2/ai', cerv2AiRoutes);
-  console.log('✅ CERV2 AI auto-populate routes mounted (suggest, equivalence, benefit-risk)');
-} catch (error) {
-  console.error('❌ Failed to mount CERV2 AI routes:', error);
-}
-
-// Mount Document Orchestration routes for 510(k) auto-population
-try {
-  const docOrchestrationModule = await import('./routes/documentOrchestrationRoutes.js');
-  const docOrchestrationRoutes = docOrchestrationModule.default;
-  // Routes define absolute paths internally (e.g., /api/510k/:projectId/generate-documents, ...)
-  app.use(docOrchestrationRoutes);
-  console.log('✅ Document Orchestration API routes mounted successfully (510k auto-population)');
-} catch (error) {
-  console.error('❌ Failed to mount Document Orchestration routes:', error);
-}
-
-// Mount ESG Submission routes for FDA Electronic Submission Gateway
-try {
-  const esgSubmissionModule = await import('./routes/esgSubmissionRoutes.js');
-  const esgSubmissionRoutes = esgSubmissionModule.default;
-  // Routes define absolute paths internally (e.g., /api/510k/:projectId/esg/submit, ...)
-  app.use(esgSubmissionRoutes);
-  console.log('✅ ESG Submission API routes mounted successfully (FDA gateway integration)');
-} catch (error) {
-  console.error('❌ Failed to mount ESG Submission routes:', error);
-}
-
-// Mount Medical Device Management routes
-try {
-  const medicalDeviceModule = await import('./routes/medical-device-routes.js');
-  const medicalDeviceRoutes = medicalDeviceModule.default;
-  app.use('/api/medical-devices', medicalDeviceRoutes);
-  console.log(
-    '✅ Medical Device Management API routes mounted successfully (21 CFR Part 11 compliant)'
-  );
-} catch (error) {
-  console.error('❌ Failed to mount Medical Device routes:', error);
+  regulatoryRouteResults.forEach((result, i) => {
+    const { path: mountPath, label } = routeMap[i];
+    if (result.status === 'fulfilled') {
+      const router = result.value.default;
+      if (mountPath) {
+        app.use(mountPath, router);
+      } else {
+        app.use(router);
+      }
+      console.log(`✅ ${label} routes mounted`);
+    } else {
+      console.error(`❌ Failed to mount ${label} routes:`, result.reason);
+    }
+  });
 }
 
 // Mount IVDR (In Vitro Diagnostic Regulation EU 2017/746) routes
@@ -1338,18 +1091,21 @@ try {
     next();
   };
 
-  app.use('/api/ivdr', requireIVDRAccess, createIVDRRoutes(pool));
-  console.log('✅ IVDR API routes mounted (EU 2017/746 | auth → flag → entitlement → RBAC)');
+  const ivdrGateway = express.Router();
+  ivdrGateway.use(createIVDRRoutes(pool));
 
   // Mount IVDR Evidence Binder + Pack Builder routes (same middleware gate)
   try {
     const binderModule = await import('./routes/ivdr-binder-routes');
     const createBinderRoutes = binderModule.default;
-    app.use('/api/ivdr', requireIVDRAccess, createBinderRoutes(pool));
+    ivdrGateway.use(createBinderRoutes(pool));
     console.log('✅ IVDR Evidence Binder + Pack Builder routes mounted');
   } catch (binderErr) {
     console.error('❌ Failed to mount IVDR Binder routes:', binderErr);
   }
+
+  app.use('/api/ivdr', requireIVDRAccess, ivdrGateway);
+  console.log('✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)');
 
   // Start IVDR Pack Build Worker (async in-process job processor)
   try {
@@ -1449,118 +1205,55 @@ try {
   console.error('❌ Failed to mount CERV2 document routes:', error);
 }
 
-// Mount PubMed Literature Search routes (PRODUCTION with real NCBI API)
-try {
-  const pubmedModule = await import('./routes/pubmed');
-  const pubmedRoutes = pubmedModule.default;
-  app.use('/api/pubmed', pubmedRoutes);
-  console.log(
-    '✅ PubMed Literature Search API routes mounted successfully (real NCBI integration)'
-  );
-} catch (error) {
-  console.error('❌ Failed to mount PubMed routes:', error);
-}
-
-// Mount Literature Review routes
-try {
-  const literatureReviewModule = await import('./routes/literature-review');
-  const literatureReviewRoutes = literatureReviewModule.default;
-  app.use('/api/literature-review', literatureReviewRoutes);
-  console.log('✅ Literature Review API routes mounted successfully (AI-powered appraisal)');
-} catch (error) {
-  console.error('❌ Failed to mount Literature Review routes:', error);
-}
-
-// Mount License Management routes
-try {
-  const licenseModule = await import('./routes/license-routes.js');
-  const licenseRoutes = licenseModule.default;
-  // Routes define absolute paths internally (e.g., /api/licenses/:id, /api/licenses/client/:clientId, ...)
-  app.use('/', licenseRoutes);
-  console.log('✅ License Management API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount License routes:', error);
-}
-
-// Mount Module Subscriptions & User Intelligence routes
-try {
-  const moduleSubModule = await import('./routes/module-subscriptions.js');
-  const moduleSubRoutes = moduleSubModule.default;
-  app.use('/api/module-subscriptions', moduleSubRoutes);
-  console.log('✅ Module Subscriptions & User Intelligence API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount Module Subscriptions routes:', error);
-}
-
-// Mount Billing routes (Stripe Checkout + Link, webhooks, customer portal)
-try {
-  const billingModule = await import('./routes/billing.js');
-  const billingRouter = billingModule.default;
-  app.use('/api/billing', billingRouter);
-  console.log('✅ Billing API routes mounted (Stripe Checkout + Link, Customer Portal, Webhooks)');
-} catch (error) {
-  console.error('❌ Failed to mount Billing routes:', error);
-}
-
-// Mount Deep Research routes (connectors, orchestrator, usage metering)
-try {
-  const deepResearchModule = await import('./routes/deep-research.js');
-  const deepResearchRouter = deepResearchModule.default;
-  app.use('/api/deep-research', deepResearchRouter);
-  console.log('✅ Deep Research API routes mounted (connectors, jobs, usage)');
-} catch (error) {
-  console.error('❌ Failed to mount Deep Research routes:', error);
-}
-
-// Mount Intelligent Report Engine routes (immutable reports, provenance, sealing)
-try {
-  const intelligentReportsModule = await import('./routes/intelligent-reports.js');
-  const intelligentReportsRouter = intelligentReportsModule.default;
-  app.use('/api/intelligent-reports', intelligentReportsRouter);
-  console.log('✅ Intelligent Report Engine routes mounted (generate, seal, verify, export)');
-} catch (error) {
-  console.error('❌ Failed to mount Intelligent Report Engine routes:', error);
-}
-
-// Mount Safety Narrative Service routes (aggregate narratives, SAE, benefit-risk)
-try {
-  const safetyNarrativeModule = await import('./routes/safety-narrative.js');
-  const safetyNarrativeRouter = safetyNarrativeModule.default;
-  app.use('/api/safety-narratives', safetyNarrativeRouter);
-  console.log('✅ Safety Narrative Service routes mounted (aggregate, SAE, benefit-risk, signals)');
-} catch (error) {
-  console.error('❌ Failed to mount Safety Narrative routes:', error);
-}
-
-// Mount Statistical Defensibility Service routes (study design assessment)
-try {
-  const statDefModule = await import('./routes/statistical-defensibility.js');
-  const statDefRouter = statDefModule.default;
-  app.use('/api/statistical-defensibility', statDefRouter);
-  console.log(
-    '✅ Statistical Defensibility routes mounted (assess, consistency, endpoint-quality, sample-size, multiplicity, reviewer-risks)'
-  );
-} catch (error) {
-  console.error('❌ Failed to mount Statistical Defensibility routes:', error);
-}
-
-// Mount Conversation Health Monitoring route
-try {
-  const convHealthModule = await import('./routes/conversation-health.js');
-  const convHealthRouter = convHealthModule.default;
-  app.use('/api/conversation-health', convHealthRouter);
-  console.log('✅ Conversation Health Monitoring route mounted');
-} catch (error) {
-  console.error('❌ Failed to mount Conversation Health routes:', error);
-}
-// Mount Billing Dashboard routes (usage tracking, budgets, alerts, invoices)
-try {
-  const billingDashModule = await import('./routes/billing-dashboard.js');
-  const billingDashRouter = billingDashModule.default;
-  app.use('/api/billing', billingDashRouter);
-  console.log('✅ Billing Dashboard routes mounted (Usage, Budgets, Alerts, Invoices)');
-} catch (error) {
-  console.error('❌ Failed to mount Billing Dashboard routes:', error);
+// ── Literature, License, Billing, Intelligence, Reports — parallelized imports ──
+{
+  const litIntConfig = [
+    { path: '/api/pubmed', mod: './routes/pubmed', name: 'PubMed' },
+    {
+      path: '/api/literature-review',
+      mod: './routes/literature-review',
+      name: 'Literature Review',
+    },
+    { path: '/', mod: './routes/license-routes.js', name: 'License Management' },
+    {
+      path: '/api/module-subscriptions',
+      mod: './routes/module-subscriptions.js',
+      name: 'Module Subscriptions',
+    },
+    { path: '/api/billing', mod: './routes/billing.js', name: 'Billing' },
+    { path: '/api/deep-research', mod: './routes/deep-research.js', name: 'Deep Research' },
+    {
+      path: '/api/intelligent-reports',
+      mod: './routes/intelligent-reports.js',
+      name: 'Intelligent Reports',
+    },
+    {
+      path: '/api/safety-narratives',
+      mod: './routes/safety-narrative.js',
+      name: 'Safety Narrative',
+    },
+    {
+      path: '/api/statistical-defensibility',
+      mod: './routes/statistical-defensibility.js',
+      name: 'Statistical Defensibility',
+    },
+    {
+      path: '/api/conversation-health',
+      mod: './routes/conversation-health.js',
+      name: 'Conversation Health',
+    },
+    { path: '/api/billing', mod: './routes/billing-dashboard.js', name: 'Billing Dashboard' },
+    { path: '/api/report-os', mod: './routes/report-os.js', name: 'Report OS' },
+  ] as const;
+  const litIntResults = await Promise.allSettled(litIntConfig.map(c => import(c.mod)));
+  litIntResults.forEach((r, i) => {
+    if (r.status === 'fulfilled') {
+      app.use(litIntConfig[i].path, r.value.default);
+      console.log(`✅ ${litIntConfig[i].name} routes mounted successfully`);
+    } else {
+      console.error(`❌ Failed to mount ${litIntConfig[i].name} routes:`, r.reason);
+    }
+  });
 }
 
 // Mount stability routes
@@ -1572,10 +1265,6 @@ try {
 } catch (error) {
   console.error('❌ Failed to mount Stability routes:', error);
 }
-
-// Mount strategy routes
-// Disabled due to missing AI services - import strategyRouter from './src/routes/strategy.router.js';
-// app.use('/api/strategy', strategyRouter);
 
 console.log('✅ Enterprise API routes mounted successfully');
 
@@ -1601,64 +1290,29 @@ try {
   console.error('❌ Failed to mount Document Authoring routes:', error);
 }
 
-// Mount eCTD Co-Author routes with database persistence
-try {
-  const coauthorModule = await import('./routes/coauthor');
-  const coauthorRoutes = coauthorModule.default;
-  app.use('/api/coauthor', coauthorRoutes);
-  console.log('✅ eCTD Co-Author API routes mounted successfully (database-backed)');
-} catch (error) {
-  console.error('❌ Failed to mount eCTD Co-Author routes:', error);
-}
-
-// Mount eCTD Document Management routes with version control
-try {
-  const ectdDocumentsModule = await import('./routes/ectd-documents');
-  const ectdDocumentsRoutes = ectdDocumentsModule.default;
-  app.use('/api/ectd-documents', ectdDocumentsRoutes);
-  console.log('✅ eCTD Documents routes loaded (version control & lineage tracking)');
-} catch (error) {
-  console.error('❌ Failed to mount eCTD Documents routes:', error);
-}
-
-// Mount eCTD 4.0 Validation & Backbone routes
-try {
-  const ectdValidateModule = await import('./routes/ectd-validate');
-  const ectdValidateRoutes = ectdValidateModule.default;
-  app.use('/api/ectd-validate', ectdValidateRoutes);
-  console.log('✅ eCTD 4.0 Validation & Backbone routes loaded');
-} catch (error) {
-  console.error('❌ Failed to mount eCTD Validation routes:', error);
-}
-
-// Mount eCTD Compile routes (INDWorkspace compile button backend)
-try {
-  const ectdCompileModule = await import('./routes/ectd-compile');
-  const ectdCompileRoutes = ectdCompileModule.default;
-  app.use('/api/ectd-compile', ectdCompileRoutes);
-  console.log('✅ eCTD Compile routes mounted (compile, validate, readiness, history)');
-} catch (error) {
-  console.error('❌ Failed to mount eCTD Compile routes:', error);
-}
-
-// Mount eCTD Export routes (ICH M8 v4.0 ZIP package generation)
-try {
-  const ectdExportModule = await import('./routes/ectd-export');
-  const ectdExportRoutes = ectdExportModule.default;
-  app.use('/api/ectd/export', ectdExportRoutes);
-  console.log('✅ eCTD Export routes mounted (ICH M8 v4.0 packaging)');
-} catch (error) {
-  console.error('❌ Failed to mount eCTD Export routes:', error);
-}
-
-// Mount eCTD Submission Agent routes (direct agency submissions — FDA ESG, EMA, PMDA, HC)
-try {
-  const ectdSubmissionModule = await import('./routes/ectd-submission-agent.routes');
-  const ectdSubmissionRoutes = ectdSubmissionModule.default;
-  app.use('/api/ectd-submissions', ectdSubmissionRoutes);
-  console.log('✅ eCTD Submission Agent routes mounted (FDA ESG, EMA, PMDA, HC gateway)');
-} catch (error) {
-  console.error('❌ Failed to mount eCTD Submission Agent routes:', error);
+// ── eCTD Routes — parallelized imports ──
+{
+  const ectdConfig = [
+    { path: '/api/coauthor', mod: './routes/coauthor', name: 'eCTD Co-Author' },
+    { path: '/api/ectd-documents', mod: './routes/ectd-documents', name: 'eCTD Documents' },
+    { path: '/api/ectd-validate', mod: './routes/ectd-validate', name: 'eCTD Validation' },
+    { path: '/api/ectd-compile', mod: './routes/ectd-compile', name: 'eCTD Compile' },
+    { path: '/api/ectd/export', mod: './routes/ectd-export', name: 'eCTD Export' },
+    {
+      path: '/api/ectd-submissions',
+      mod: './routes/ectd-submission-agent.routes',
+      name: 'eCTD Submission Agent',
+    },
+  ] as const;
+  const ectdResults = await Promise.allSettled(ectdConfig.map(c => import(c.mod)));
+  ectdResults.forEach((r, i) => {
+    if (r.status === 'fulfilled') {
+      app.use(ectdConfig[i].path, r.value.default);
+      console.log(`✅ ${ectdConfig[i].name} routes mounted successfully`);
+    } else {
+      console.error(`❌ Failed to mount ${ectdConfig[i].name} routes:`, r.reason);
+    }
+  });
 }
 
 // Mount Biotech Document Artifact routes (eCTD, PV, Clinical Ops document generation)
@@ -1675,10 +1329,18 @@ try {
 try {
   const haqModule = await import('./routes/haq-manager');
   const haqRoutes = haqModule.default;
-  app.use('/api/haq-manager', haqRoutes);
-  console.log(
-    '✅ HAQ Response Manager routes mounted (question tracking, AI drafting, review workflow)'
-  );
+  if (isStaticDataEnabled('ENABLE_HAQ_MANAGER_STATIC_DATA')) {
+    app.use('/api/haq-manager', haqRoutes);
+    console.log(
+      '✅ HAQ Response Manager routes mounted (question tracking, AI drafting, review workflow)'
+    );
+  } else {
+    mountStaticBusinessDataGuard(
+      '/api/haq-manager',
+      'HAQ Response Manager routes',
+      'ENABLE_HAQ_MANAGER_STATIC_DATA'
+    );
+  }
 } catch (error) {
   console.error('❌ Failed to mount HAQ Manager routes:', error);
 }
@@ -1737,130 +1399,42 @@ try {
   console.error('❌ Failed to mount Document Data Center routes:', error);
 }
 
-// Mount Data Room API routes
-try {
-  const evidenceModule = await import('./routes/evidence.js');
-  const evidenceRoutes = evidenceModule.default;
-  app.use('/api/evidence', evidenceRoutes);
-  console.log('✅ Evidence Management API routes mounted successfully (Data Room evidence search)');
-} catch (error) {
-  console.error('❌ Failed to mount Evidence routes:', error);
-}
-
-// Mount Evidence Ask API route (Data Room / Ask — semantic Q&A over project documents)
-try {
-  const evidenceAskModule = await import('./routes/evidence-ask.js');
-  const evidenceAskRoutes = evidenceAskModule.default;
-  app.use('/api/evidence', evidenceAskRoutes);
-  console.log('✅ Evidence Ask API route mounted successfully (Data Room / Ask)');
-} catch (error) {
-  console.error('❌ Failed to mount Evidence Ask route:', error);
-}
-
-// Mount Evidence Search API routes (semantic + artifact search for Evidence Search UI)
-try {
-  const evidenceSearchModule = await import('./routes/evidence-search.js');
-  const evidenceSearchRoutes = evidenceSearchModule.default;
-  app.use('/api/evidence-search', evidenceSearchRoutes);
-  console.log('✅ Evidence Search API routes mounted successfully (semantic + artifact search)');
-} catch (error) {
-  console.error('❌ Failed to mount Evidence Search routes:', error);
-}
-
-try {
-  const contentPlanModule = await import('./routes/content-plan.js');
-  const contentPlanRoutes = contentPlanModule.default;
-  app.use('/api/content-plan', contentPlanRoutes);
-  console.log(
-    '✅ Content Plan API routes mounted successfully (section tracking & evidence linking)'
-  );
-} catch (error) {
-  console.error('❌ Failed to mount Content Plan routes:', error);
-}
-
-try {
-  const smartBlocksModule = await import('./routes/smart-blocks.js');
-  const smartBlocksRoutes = smartBlocksModule.default;
-  app.use('/api/smart-blocks', smartBlocksRoutes);
-  console.log('✅ Smart Blocks API routes mounted successfully (auto-populated content)');
-} catch (error) {
-  console.error('❌ Failed to mount Smart Blocks routes:', error);
-}
-
-// Mount Cognitive Ecosystem routes (LangGraph, FHIR, Global Dossier, Manufacturing, Federated Learning)
-try {
-  const cognitiveEcosystemModule = await import('./routes/cognitive-ecosystem.js');
-  const cognitiveEcosystemRoutes = cognitiveEcosystemModule.default;
-  app.use('/api/cognitive', cognitiveEcosystemRoutes);
-  console.log(
-    '✅ Cognitive Ecosystem API routes mounted successfully (LangGraph, FHIR, Federated Learning)'
-  );
-} catch (error) {
-  console.error('❌ Failed to mount Cognitive Ecosystem routes:', error);
-}
-
-// Mount Evidence Management routes (enhanced Data Center with FDA requirement mapping)
-try {
-  const evidenceManagementModule = await import('./routes/evidence-management.routes.js');
-  const evidenceManagementRoutes = evidenceManagementModule.default;
-  app.use('/api/evidence-management', evidenceManagementRoutes);
-  console.log(
-    '✅ Evidence Management API routes mounted successfully (FDA requirement mapping & workflow integration)'
-  );
-} catch (error) {
-  console.error('❌ Failed to mount Evidence Management routes:', error);
-}
-
-// Mount Evidence Fabric BFF proxy (Phase 5.3.B — Truth Machine)
-// Proxies browser calls to Shadow Service with admin token injected server-side
-try {
-  const evidenceFabricModule = await import('./routes/evidence-fabric.js');
-  const evidenceFabricRoutes = evidenceFabricModule.default;
-  app.use('/api/evidence-fabric', evidenceFabricRoutes);
-  console.log(
-    '✅ Evidence Fabric BFF proxy routes mounted (Shadow Service → browser, no token in JS)'
-  );
-} catch (error) {
-  console.error('❌ Failed to mount Evidence Fabric BFF proxy routes:', error);
-}
-
-// Mount DOCX Factory BFF proxy (Phase 6.3 — Document Factory)
-// Proxies browser calls to Shadow Service /docx/* with admin token injected server-side
-try {
-  const docxFactoryModule = await import('./routes/docx-factory.js');
-  const docxFactoryRoutes = docxFactoryModule.default;
-  app.use('/api/docx-factory', docxFactoryRoutes);
-  console.log(
-    '✅ DOCX Factory BFF proxy routes mounted (Shadow Service → browser, no token in JS)'
-  );
-} catch (error) {
-  console.error('❌ Failed to mount DOCX Factory BFF proxy routes:', error);
-}
-
-// Mount Knowledge Base + AI Document Generation BFF proxy (Phase 7.1)
-// POST /api/knowledge-base/upload            → /knowledge/ingest-files
-// GET  /api/knowledge-base/context/:id       → /knowledge/project-context/{id}
-// POST /api/knowledge-base/generate-docx     → /knowledge/generate-docx
-// POST /api/knowledge-base/generate-ind-package → /knowledge/generate-ind-package
-// POST /api/knowledge-base/generate-ind-section → /knowledge/generate-ind-section
-try {
-  const knowledgeBaseModule = await import('./routes/knowledge-base.js');
-  const knowledgeBaseRoutes = knowledgeBaseModule.default;
-  app.use('/api/knowledge-base', knowledgeBaseRoutes);
-  console.log('✅ Knowledge Base BFF proxy routes mounted (Phase 7.1 — AI document synthesis)');
-} catch (error) {
-  console.error('❌ Failed to mount Knowledge Base BFF proxy routes:', error);
-}
-
-// Mount Predicate Intelligence BFF proxy (Phase 6.6 — Predicate Intelligence)
-// Proxies browser calls to Shadow Service /predicate/* with admin token injected server-side
-try {
-  const predicateIntelModule = await import('./routes/predicate-intelligence.js');
-  const predicateIntelRoutes = predicateIntelModule.default;
-  app.use('/api/predicate-intelligence', predicateIntelRoutes);
-  console.log('✅ Predicate Intelligence BFF proxy routes mounted (Phase 6.6)');
-} catch (error) {
-  console.error('❌ Failed to mount Predicate Intelligence BFF proxy routes:', error);
+// ── Evidence, Content, Cognitive, BFF proxy — parallelized imports ──
+{
+  const evidenceConfig = [
+    { path: '/api/evidence', mod: './routes/evidence.js', name: 'Evidence' },
+    { path: '/api/evidence', mod: './routes/evidence-ask.js', name: 'Evidence Ask' },
+    { path: '/api/evidence-search', mod: './routes/evidence-search.js', name: 'Evidence Search' },
+    { path: '/api/content-plan', mod: './routes/content-plan.js', name: 'Content Plan' },
+    { path: '/api/smart-blocks', mod: './routes/smart-blocks.js', name: 'Smart Blocks' },
+    { path: '/api/cognitive', mod: './routes/cognitive-ecosystem.js', name: 'Cognitive Ecosystem' },
+    {
+      path: '/api/evidence-management',
+      mod: './routes/evidence-management.routes.js',
+      name: 'Evidence Management',
+    },
+    {
+      path: '/api/evidence-fabric',
+      mod: './routes/evidence-fabric.js',
+      name: 'Evidence Fabric BFF',
+    },
+    { path: '/api/docx-factory', mod: './routes/docx-factory.js', name: 'DOCX Factory BFF' },
+    { path: '/api/knowledge-base', mod: './routes/knowledge-base.js', name: 'Knowledge Base BFF' },
+    {
+      path: '/api/predicate-intelligence',
+      mod: './routes/predicate-intelligence.js',
+      name: 'Predicate Intelligence BFF',
+    },
+  ] as const;
+  const evidenceResults = await Promise.allSettled(evidenceConfig.map(c => import(c.mod)));
+  evidenceResults.forEach((r, i) => {
+    if (r.status === 'fulfilled') {
+      app.use(evidenceConfig[i].path, r.value.default);
+      console.log(`✅ ${evidenceConfig[i].name} routes mounted successfully`);
+    } else {
+      console.error(`❌ Failed to mount ${evidenceConfig[i].name} routes:`, r.reason);
+    }
+  });
 }
 
 // Shadow service health proxy
@@ -1886,49 +1460,63 @@ app.get('/api/shadow/health', async (_req: Request, res: Response) => {
   }
 });
 
+function mountStaticBusinessDataGuard(path: string, routeName: string, requiredFlag: string) {
+  app.use(path, (_req: Request, res: Response) => {
+    return sendStaticDataDisabled(res, routeName, requiredFlag);
+  });
+  console.warn(
+    `⚠️ ${routeName} mounted in fail-closed mode (set ${requiredFlag}=true to re-enable).`
+  );
+}
+
 // Mount SE Matrix render orchestration (Phase 6.6.C2 — Manifest + Payload + Render + Audit)
 // POST /api/programs/:programId/se-matrix/render → Shadow payload → Part 11 audit
 try {
-  const seMatrixModule = await import('./routes/se-matrix.js');
-  const seMatrixRoutes = seMatrixModule.default;
-  app.use('/api/programs', seMatrixRoutes);
-  console.log('✅ SE Matrix render orchestration routes mounted (Phase 6.6.C2)');
+  const [seMatrixModule, defensePacketModule] = await Promise.all([
+    import('./routes/se-matrix.js'),
+    import('./routes/defense-packet.js'),
+  ]);
+  const programsGateway = express.Router();
+  programsGateway.use(seMatrixModule.default);
+  programsGateway.use(defensePacketModule.default);
+  app.use('/api/programs', programsGateway);
+  console.log('✅ Programs gateway routes mounted (SE Matrix + Defense Packet)');
 } catch (error) {
-  console.error('❌ Failed to mount SE Matrix render routes:', error);
+  console.error('❌ Failed to mount programs gateway routes:', error);
 }
 
-// Mount Defense Packet routes (Phase 6.6.D — Versioned, Signed Compliance Artifacts)
-// POST /api/programs/:programId/predicate-intel/defense-packet → Create packet
-// GET  /api/programs/:programId/predicate-intel/defense-packets → List packets
-try {
-  const defensePacketModule = await import('./routes/defense-packet.js');
-  const defensePacketRoutes = defensePacketModule.default;
-  app.use('/api/programs', defensePacketRoutes);
-  console.log('✅ Defense Packet routes mounted (Phase 6.6.D)');
-} catch (error) {
-  console.error('❌ Failed to mount Defense Packet routes:', error);
-}
-
-// Mount Demo Seed routes (for creating demo projects)
-try {
-  const seedDemoModule = await import('./routes/seed-demo.js');
-  const seedDemoRoutes = seedDemoModule.default;
-  app.use('/api/demo', seedDemoRoutes);
-  console.log('✅ Demo seeding API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount Demo seed routes:', error);
+// Mount Demo Seed routes (for creating demo projects) — explicit opt-in only
+if (DEMO_ROUTES_ENABLED) {
+  try {
+    const seedDemoModule = await import('./routes/seed-demo.js');
+    const seedDemoRoutes = seedDemoModule.default;
+    app.use('/api/demo', seedDemoRoutes);
+    console.log('✅ Demo seeding API routes mounted successfully');
+  } catch (error) {
+    console.error('❌ Failed to mount Demo seed routes:', error);
+  }
+} else {
+  console.log(
+    'ℹ️ Demo seed routes disabled (set ENABLE_DEMO_ROUTES=true to enable in non-production).'
+  );
 }
 
 // Mount Collaboration Center routes for 510(k) activity tracking
-try {
-  const collaborationModule = await import('./routes/collaboration');
-  const collaborationRoutes = collaborationModule.default;
-  app.use('/api/collaboration', collaborationRoutes);
+if (EXPERIMENTAL_ROUTES_ENABLED) {
+  try {
+    const collaborationModule = await import('./routes/collaboration');
+    const collaborationRoutes = collaborationModule.default;
+    app.use('/api/collaboration', collaborationRoutes);
+    console.log(
+      '✅ Collaboration Center API routes mounted successfully (510(k) team activity tracking)'
+    );
+  } catch (error) {
+    console.error('❌ Failed to mount Collaboration Center routes:', error);
+  }
+} else {
   console.log(
-    '✅ Collaboration Center API routes mounted successfully (510(k) team activity tracking)'
+    'ℹ️ Collaboration Center legacy activity routes disabled (experimental in-memory behavior).'
   );
-} catch (error) {
-  console.error('❌ Failed to mount Collaboration Center routes:', error);
 }
 
 // Mount CERV2 Sections routes for 510(k) section management
@@ -1951,15 +1539,8 @@ try {
   console.error('❌ Failed to mount CERV2 Versions routes:', error);
 }
 
-// Mount Version Diff routes (document version comparison engine)
-try {
-  const versionDiffModule = await import('./routes/versionDiff');
-  const versionDiffRoutes = versionDiffModule.default;
-  app.use('/api/documents', versionDiffRoutes);
-  console.log('✅ Version Diff API routes mounted successfully (document version comparison)');
-} catch (error) {
-  console.error('❌ Failed to mount Version Diff routes:', error);
-}
+// Version-diff/document routers are mounted through a consolidated
+// /api/documents gateway in startServer() to prevent multi-mount drift.
 
 // Mount Biostatistics Platform routes (7 capabilities: continuum, optimizer, estimand, SAP, external controls, adaptive, knowledge graph)
 try {
@@ -2091,9 +1672,12 @@ console.log('🧠 Cortex Prime AI Brain fully initialized with unified gateway')
 
 // Mount Unified Document Management System routes
 try {
-  const documentManagementRouter = await import('./routes/document-management');
-  const folderManagementRouter = await import('./routes/folder-management.js');
-  const templateManagementRouter = await import('./routes/template-management.js');
+  const [documentManagementRouter, folderManagementRouter, templateManagementRouter] =
+    await Promise.all([
+      import('./routes/document-management'),
+      import('./routes/folder-management.js'),
+      import('./routes/template-management.js'),
+    ]);
 
   app.use('/api', documentManagementRouter.default);
   app.use('/api', folderManagementRouter.default);
@@ -2114,52 +1698,29 @@ app.get('/api/csr/search', async (req: Request, res: Response) => {
     const { query, limit = 10 } = req.query;
     debugLog('CSR search endpoint called', { query, limit });
 
-    // Mock CSR search results for now
-    const searchResults = [
-      {
-        id: 'CSR001',
-        title: `Phase II Study of Pembrolizumab in Advanced Non-Small Cell Lung Cancer`,
-        indication: 'Non-Small Cell Lung Cancer',
-        phase: 'Phase II',
-        sponsor: 'Merck & Co',
-        therapeutic_area: 'Oncology',
-        sample_size: 105,
-        duration: '24 months',
-        status: 'Completed',
-        highlights: ['Primary endpoint met', 'Favorable safety profile'],
-        relevance: 0.95,
-      },
-      {
-        id: 'CSR002',
-        title: `Phase III Study of Nivolumab plus Ipilimumab in Melanoma`,
-        indication: 'Melanoma',
-        phase: 'Phase III',
-        sponsor: 'Bristol Myers Squibb',
-        therapeutic_area: 'Oncology',
-        sample_size: 299,
-        duration: '36 months',
-        status: 'Completed',
-        highlights: ['Significant OS improvement', 'Manageable toxicity profile'],
-        relevance: 0.88,
-      },
-    ];
-
-    // Filter by query if provided
-    let results = searchResults;
-    if (query && typeof query === 'string') {
-      const queryLower = query.toLowerCase();
-      results = searchResults.filter(
-        csr =>
-          csr.title.toLowerCase().includes(queryLower) ||
-          csr.indication.toLowerCase().includes(queryLower) ||
-          csr.therapeutic_area.toLowerCase().includes(queryLower) ||
-          csr.sponsor.toLowerCase().includes(queryLower)
-      );
-    }
-
-    // Apply limit
-    const limitNum = parseInt(limit as string, 10);
-    results = results.slice(0, limitNum);
+    const queryText = typeof query === 'string' ? query.trim() : '';
+    const limitNum = Math.max(1, Math.min(100, parseInt(String(limit), 10) || 10));
+    const searchResult = await csrSearchService.searchCSRs({
+      query_text: queryText,
+      limit: limitNum,
+    });
+    const results = (searchResult.csrs || []).map((csr: any) => ({
+      id: csr.id || csr.csr_id || null,
+      title: csr.title || 'Untitled CSR',
+      indication: csr.indication || null,
+      phase: csr.phase || null,
+      sponsor: csr.sponsor || null,
+      sample_size: csr.sample_size ?? null,
+      outcome: csr.outcome || null,
+      relevance:
+        typeof csr.relevance_score === 'number'
+          ? csr.relevance_score
+          : typeof csr.similarity === 'number'
+          ? csr.similarity
+          : null,
+      summary: csr.summary || csr.context_summary || null,
+      source: 'csr_search_service',
+    }));
 
     debugLog('CSR search results', { count: results.length, query });
     res.json({
@@ -2558,157 +2119,7 @@ app.get('/api/csr-real-data/stats', async (req: Request, res: Response) => {
   }
 });
 
-// Reports canonical routers (P1 extraction in progress)
-app.use('/api/reports', reportsGenerationRoutes);
-app.use('/api/reports', reportsManifestRoutes);
-registerSubscriptionsRoutes(app);
-
-// Reports compatibility facade — real DB query with fallback
-app.get('/api/reports', async (req: Request, res: Response) => {
-  try {
-    const reportType = req.query.type as string | undefined;
-
-    if (reportType === 'section-generation-log') {
-      // Query audit_events for report generation events
-      const result = await pool.query(
-        `SELECT event_type, user_name, metadata, timestamp FROM audit_events
-         WHERE event_type LIKE 'report.%' ORDER BY timestamp DESC LIMIT 20`
-      );
-      return res.json({
-        summary: { totalCalls: result.rows.length, avgLatency: 0, errorRate: 0 },
-        rows: result.rows.map((r: any) => ({
-          timestamp: r.timestamp,
-          user: r.user_name,
-          section: r.metadata?.section || 'N/A',
-          modelVersion: 'ana-cortex-v2',
-          status: 'success',
-          latency: 0,
-        })),
-      });
-    }
-
-    // Query real reports from database
-    const result = await pool.query(
-      `SELECT id, title, report_type, status, metadata, created_at, updated_at
-       FROM reports ORDER BY created_at DESC LIMIT 50`
-    );
-
-    return res.json(
-      result.rows.map((r: any) => ({
-        id: r.id,
-        title: r.title || `Report ${r.id}`,
-        type: r.report_type,
-        status: r.status || 'draft',
-        sponsor: r.metadata?.sponsor || '',
-        indication: r.metadata?.indication || '',
-        phase: r.metadata?.phase || '',
-        createdAt: r.created_at,
-        updatedAt: r.updated_at,
-      }))
-    );
-  } catch (error) {
-    console.error('Failed to fetch reports:', error);
-    return res.status(500).json({ error: 'Failed to fetch reports' });
-  }
-});
-
-app.post('/api/reports', async (req: Request, res: Response) => {
-  try {
-    const { title, reportType, content, metadata } = req.body;
-    const result = await pool.query(
-      `INSERT INTO reports (organization_id, title, report_type, status, content, metadata, created_at, updated_at)
-       VALUES (1, $1, $2, 'draft', $3, $4, NOW(), NOW()) RETURNING id`,
-      [
-        title || 'Untitled Report',
-        reportType || 'general',
-        JSON.stringify(content || {}),
-        JSON.stringify(metadata || {}),
-      ]
-    );
-    return res.status(201).json({
-      success: true,
-      message: 'Report created successfully',
-      reportId: result.rows[0].id,
-    });
-  } catch (error) {
-    console.error('Failed to create report:', error);
-    return res.status(500).json({ error: 'Failed to create report' });
-  }
-});
-
-app.get('/api/reports/count', async (_req: Request, res: Response) => {
-  try {
-    const result = await pool.query('SELECT COUNT(*)::int AS count FROM reports');
-    return res.json({ count: result.rows[0]?.count || 0 });
-  } catch (error) {
-    return res.json({ count: 0 });
-  }
-});
-
-app.get('/api/reports/ana-bio', async (_req: Request, res: Response) => {
-  try {
-    const result = await pool.query(
-      `SELECT id, title, report_type, status, created_at FROM reports WHERE report_type = 'ana-bio' ORDER BY created_at DESC`
-    );
-    return res.json({ reports: result.rows, status: 'available' });
-  } catch (error) {
-    return res.json({ reports: [], status: 'available' });
-  }
-});
-
-app.get('/api/reports/ana-bio/recent', async (_req: Request, res: Response) => {
-  try {
-    const result = await pool.query(
-      `SELECT id, title, report_type, status, created_at FROM reports WHERE report_type = 'ana-bio' ORDER BY created_at DESC LIMIT 5`
-    );
-    return res.json({ reports: result.rows, status: 'available' });
-  } catch (error) {
-    return res.json({ reports: [], status: 'available' });
-  }
-});
-
-app.get('/api/reports/export.pdf', async (_req: Request, res: Response) => {
-  const pdfContent = `%PDF-1.1
-1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
-endobj
-2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
-endobj
-3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
-endobj
-4 0 obj
-<< /Length 66 >>
-stream
-BT
-/F1 18 Tf
-72 720 Td
-(Concept2Cure.RI Report Export) Tj
-ET
-endstream
-endobj
-5 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
-endobj
-xref
-0 6
-0000000000 65535 f
-0000000010 00000 n
-0000000060 00000 n
-0000000117 00000 n
-0000000243 00000 n
-0000000361 00000 n
-trailer
-<< /Size 6 /Root 1 0 R >>
-startxref
-431
-%%EOF`;
-
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename="concept2cure-ri-report.pdf"');
-  return res.send(Buffer.from(pdfContent, 'utf-8'));
-});
+// Reports/admin routes moved into admin bootstrap manifest
 
 // Audit — DB-backed implementation using audit_events table
 async function queryAuditEvents(queryParams: any, limitVal = 10, offsetVal = 0) {
@@ -3202,47 +2613,30 @@ app.post('/api/search/vector', async (req: Request, res: Response) => {
   try {
     const query = String(req.body?.query || '').trim();
     const k = Math.max(1, parseInt(String(req.body?.k || 5), 10));
+    if (!query) {
+      return res.status(400).json({ error: 'query is required' });
+    }
 
-    const mockResults = [
-      {
-        content:
-          'The study demonstrated statistically significant overall survival improvement versus standard of care.',
-        relevance: 0.95,
-        document_id: 1,
-        document_title: 'Clinical Study Report XYZ-123',
-        source_page: 42,
-        source_section: 'Efficacy Results',
-      },
-      {
-        content:
-          'Grade 3 or higher adverse events were observed at acceptable rates with no unexpected safety signals.',
-        relevance: 0.88,
-        document_id: 1,
-        document_title: 'Clinical Study Report XYZ-123',
-        source_page: 67,
-        source_section: 'Safety Results',
-      },
-      {
-        content:
-          'Comparative analysis shows endpoint consistency with prior phase II oncology studies.',
-        relevance: 0.82,
-        document_id: 2,
-        document_title: 'Comparative Efficacy Analysis',
-        source_page: 15,
-        source_section: 'Discussion',
-      },
-    ];
+    const searchResult = await csrSearchService.searchCSRs({
+      query_text: query,
+      limit: Math.min(50, k),
+    });
 
-    const filtered = query
-      ? mockResults.filter(
-          row =>
-            row.content.toLowerCase().includes(query.toLowerCase()) ||
-            row.document_title.toLowerCase().includes(query.toLowerCase()) ||
-            row.source_section.toLowerCase().includes(query.toLowerCase())
-        )
-      : mockResults;
+    const vectorLikeRows = (searchResult.csrs || []).slice(0, k).map((csr: any, idx: number) => ({
+      content: csr.summary || csr.context_summary || csr.outcome || csr.title || '',
+      relevance:
+        typeof csr.relevance_score === 'number'
+          ? csr.relevance_score
+          : typeof csr.similarity === 'number'
+          ? csr.similarity
+          : null,
+      document_id: csr.id || csr.csr_id || idx,
+      document_title: csr.title || 'Untitled CSR',
+      source_page: csr.source_page ?? null,
+      source_section: csr.source_section || csr.phase || null,
+    }));
 
-    return res.json((filtered.length ? filtered : mockResults).slice(0, k));
+    return res.json(vectorLikeRows);
   } catch (error) {
     console.error('Vector search failed:', error);
     return res.status(500).json({ error: 'Vector search failed' });
@@ -3254,33 +2648,31 @@ app.post('/api/endpoint/recommend', async (req: Request, res: Response) => {
   try {
     const indication = String(req.body?.indication || 'General');
     const phase = String(req.body?.phase || 'Phase 2');
+    const therapeuticArea = String(req.body?.therapeuticArea || '');
+    const service = getEndpointRecommenderService();
+    const recommendations = await service.getComprehensiveEndpointRecommendations(
+      indication,
+      phase,
+      10,
+      therapeuticArea
+    );
 
-    const recommendations = [
-      {
-        endpoint: 'Progression-Free Survival (PFS)',
-        summary: `${phase} ${indication} programs commonly use PFS as a primary efficacy endpoint.`,
-        matchCount: 124,
-        successRate: 0.62,
-        reference: 'CSR corpus cluster A',
-      },
-      {
-        endpoint: 'Overall Response Rate (ORR)',
+    return res.json(
+      recommendations.map((rec: any) => ({
+        endpoint: rec.endpoint,
         summary:
-          'ORR is frequently selected for accelerated decision support in oncology-like indications.',
-        matchCount: 98,
-        successRate: 0.57,
-        reference: 'CSR corpus cluster C',
-      },
-      {
-        endpoint: 'Duration of Response (DoR)',
-        summary: 'DoR is often paired with ORR to strengthen clinical benefit characterization.',
-        matchCount: 86,
-        successRate: 0.54,
-        reference: 'CSR corpus cluster D',
-      },
-    ];
-
-    return res.json(recommendations);
+          rec.evidence?.[0]?.reference_text ||
+          `${phase} ${indication} endpoint recommendation based on available evidence.`,
+        matchCount: rec.occurrence_count ?? 0,
+        successRate:
+          typeof rec.success_rate === 'number'
+            ? rec.success_rate > 1
+              ? rec.success_rate / 100
+              : rec.success_rate
+            : null,
+        reference: rec.evidence?.[0]?.title || null,
+      }))
+    );
   } catch (error) {
     console.error('Endpoint recommendation failed:', error);
     return res.status(500).json({ error: 'Endpoint recommendation failed' });
@@ -3288,105 +2680,35 @@ app.post('/api/endpoint/recommend', async (req: Request, res: Response) => {
 });
 
 // Retention policy compatibility facade (P0 route recovery)
-let retentionPolicies = [
-  {
-    id: 1,
-    policyName: 'Clinical Trial Master Files',
-    documentType: 'CTM',
-    retentionPeriod: 7,
-    periodUnit: 'years',
-    archiveBeforeDelete: true,
-    notifyBeforeDeletion: true,
-    notificationPeriod: 30,
-    notificationUnit: 'days',
-    active: true,
-  },
-  {
-    id: 2,
-    policyName: 'Pharmacovigilance Safety Reports',
-    documentType: 'Safety Report',
-    retentionPeriod: 10,
-    periodUnit: 'years',
-    archiveBeforeDelete: true,
-    notifyBeforeDeletion: true,
-    notificationPeriod: 45,
-    notificationUnit: 'days',
-    active: true,
-  },
-];
-
-const retentionDocumentTypes = [
-  { id: 'ctm', value: 'CTM', label: 'Clinical Trial Master File' },
-  { id: 'csr', value: 'CSR', label: 'Clinical Study Report' },
-  { id: 'safety', value: 'Safety Report', label: 'Safety Report' },
-  { id: 'protocol', value: 'Protocol', label: 'Clinical Protocol' },
-];
+const RETENTION_SERVICE_UNAVAILABLE = {
+  success: false,
+  error: 'Retention service unavailable',
+  message:
+    'Retention policy APIs are temporarily disabled until persistent storage and job execution are fully wired.',
+};
 
 app.get('/api/retention/policies', async (_req: Request, res: Response) => {
-  return res.json({ success: true, data: retentionPolicies });
+  return res.status(503).json(RETENTION_SERVICE_UNAVAILABLE);
 });
 
 app.get('/api/retention/document-types', async (_req: Request, res: Response) => {
-  return res.json({ success: true, data: retentionDocumentTypes });
+  return res.status(503).json(RETENTION_SERVICE_UNAVAILABLE);
 });
 
-app.post('/api/retention/policies', async (req: Request, res: Response) => {
-  try {
-    const newPolicy = {
-      id: Date.now(),
-      ...req.body,
-    };
-    retentionPolicies = [newPolicy, ...retentionPolicies];
-    return res.status(201).json({ success: true, data: newPolicy });
-  } catch (error) {
-    console.error('Failed to create retention policy:', error);
-    return res.status(500).json({ error: 'Failed to create retention policy' });
-  }
+app.post('/api/retention/policies', async (_req: Request, res: Response) => {
+  return res.status(503).json(RETENTION_SERVICE_UNAVAILABLE);
 });
 
-app.put('/api/retention/policies/:id', async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id, 10);
-    const existing = retentionPolicies.find(policy => policy.id === id);
-    if (!existing) {
-      return res.status(404).json({ error: 'Retention policy not found' });
-    }
-
-    retentionPolicies = retentionPolicies.map(policy =>
-      policy.id === id ? { ...policy, ...req.body, id } : policy
-    );
-
-    const updated = retentionPolicies.find(policy => policy.id === id);
-    return res.json({ success: true, data: updated });
-  } catch (error) {
-    console.error('Failed to update retention policy:', error);
-    return res.status(500).json({ error: 'Failed to update retention policy' });
-  }
+app.put('/api/retention/policies/:id', async (_req: Request, res: Response) => {
+  return res.status(503).json(RETENTION_SERVICE_UNAVAILABLE);
 });
 
-app.delete('/api/retention/policies/:id', async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id, 10);
-    const before = retentionPolicies.length;
-    retentionPolicies = retentionPolicies.filter(policy => policy.id !== id);
-
-    if (retentionPolicies.length === before) {
-      return res.status(404).json({ error: 'Retention policy not found' });
-    }
-
-    return res.json({ success: true });
-  } catch (error) {
-    console.error('Failed to delete retention policy:', error);
-    return res.status(500).json({ error: 'Failed to delete retention policy' });
-  }
+app.delete('/api/retention/policies/:id', async (_req: Request, res: Response) => {
+  return res.status(503).json(RETENTION_SERVICE_UNAVAILABLE);
 });
 
 app.post('/api/retention/run-job', async (_req: Request, res: Response) => {
-  return res.json({
-    success: true,
-    jobId: `RETENTION_JOB_${Date.now()}`,
-    status: 'started',
-  });
+  return res.status(503).json(RETENTION_SERVICE_UNAVAILABLE);
 });
 
 // AnA 1.0 RI endpoint
@@ -4045,38 +3367,16 @@ For "${query}", I suggest consulting the latest ICH guidelines and FDA guidance 
 console.log('✅ Basic API routes mounted');
 debugLog('Debug mode enabled - enhanced logging active');
 
-// Mount AnA Features routes (change-impact, gap-analysis, memory)
-try {
-  const anaFeaturesModule = await import('./routes/ana-features');
-  app.use('/api/ana', anaFeaturesModule.default);
-  console.log('✅ AnA Features API routes mounted (/api/ana)');
-} catch (error) {
-  console.error('❌ Failed to mount AnA Features routes:', error);
-}
+// ── Register AI + Concept2Cure bootstrapped route manifests ──
+// AnA features, AnA RI, firecrawl, external evidence, chat, IND, regulatory, AI claims, Claude intelligence
+await registerAiRoutes({ app, pool, aiCircuitBreaker });
+// Concept2Cure + compute routes
+registerConcept2CureRoutes(app);
+registerAdminRoutes(app);
 
-// Mount AnA RI routes (regulatory intelligence copilot)
-try {
-  const anaRiModule = await import('./routes/ana-ri');
-  app.use('/api/ana-ri', aiCircuitBreaker, anaRiModule.default);
-  console.log('✅ AnA RI routes mounted (/api/ana-ri) with circuit breaker');
-} catch (error) {
-  console.error('❌ Failed to mount AnA RI routes:', error);
-}
+// ── Routes not yet migrated to AI/C2C bootstrap manifests ──
 
-// Mount External Evidence Intelligence routes
-try {
-  const firecrawlRoutes = await import('./routes/firecrawl');
-  const externalEvidenceRoutes = await import('./routes/external-evidence');
-  const workspaceToolSettingsRoutes = await import('./routes/workspace-tool-settings');
-  app.use('/api/firecrawl', firecrawlRoutes.default);
-  app.use('/api/external-evidence', externalEvidenceRoutes.default);
-  app.use('/api/workspace-tool-settings', workspaceToolSettingsRoutes.default);
-  console.log('✅ External Evidence Intelligence routes mounted');
-} catch (error) {
-  console.error('❌ Failed to mount external evidence routes:', error);
-}
-
-// Mount Authoring Router (document workflows, reviews, tracked changes)
+// Authoring Router (document workflows, reviews, tracked changes)
 try {
   const authoringRouterModule = await import('./routes/authoring.router');
   app.use('/api/authoring', authoringRouterModule.default);
@@ -4085,7 +3385,7 @@ try {
   console.error('❌ Failed to mount Authoring Router:', error);
 }
 
-// Mount Authoring Actions routes (Wave 1 + Wave 2 AnA-first authoring actions)
+// Authoring Actions routes (Wave 1 + Wave 2 AnA-first authoring actions)
 try {
   const authoringActionsModule = await import('./routes/authoring-actions');
   app.use('/api/authoring-actions', authoringActionsModule.default);
@@ -4094,7 +3394,7 @@ try {
   console.error('❌ Failed to mount Authoring Actions routes:', error);
 }
 
-// Mount Ana Platform Control routes (agentic settings, modules, onboarding)
+// Ana Platform Control routes (agentic settings, modules, onboarding)
 try {
   const anaPlatformModule = await import('./routes/ana-platform-control');
   app.use('/api/ana/platform', anaPlatformModule.default);
@@ -4103,57 +3403,11 @@ try {
   console.error('❌ Failed to mount Ana Platform Control routes:', error);
 }
 
-// Mount AnA Intelligence Chat routes
-import chatRoutes from './routes/chat';
-app.use('/api/chat', chatRoutes);
-console.log('✅ AnA Intelligence Chat API routes mounted successfully');
-
-// Mount IND Generation routes
-import indGenerationRoutes from './routes/ind-generation';
-app.use('/api/ind', indGenerationRoutes);
-console.log('✅ IND Generation API routes mounted successfully');
-
-// Mount Global Regulatory Registry routes
-import regulatoryRegistryRoutes from './routes/regulatory-registry';
-app.use('/api/regulatory', regulatoryRegistryRoutes);
-console.log('✅ Global Regulatory Registry API routes mounted successfully');
-
-// Mount AI Claims → Binder provenance route
+// AI Actions unified execution API (Phase 1 — conversational OS spine)
 try {
-  const claimsModule = await import('./routes/ai-claims-routes');
-  const createAIClaimsRoutes = claimsModule.default;
-  app.use('/api/ai', createAIClaimsRoutes(pool));
-  console.log('✅ AI Claims → Binder routes mounted (/api/ai/claims)');
-} catch (claimsErr) {
-  console.error('❌ Failed to mount AI Claims routes:', claimsErr);
-}
-
-// Mount Claude Intelligence API routes (document drafting, streaming, vision, batch)
-try {
-  const claudeIntelligenceRoutes = await import('./routes/claude-intelligence.ts');
-  app.use('/api/claude', claudeIntelligenceRoutes.default);
-  console.log('✅ Claude Intelligence API routes mounted (draft, stream, review, vision, batch)');
-} catch (error) {
-  console.error('❌ Failed to mount Claude Intelligence routes:', error);
-}
-
-// Mount Concept2Cure routes (Claude.ai-style regulatory interface)
-import concept2cureRoutes from './routes/concept2cure';
-app.use('/api/concept2cure', concept2cureRoutes);
-console.log('✅ Concept2Cure API routes mounted successfully');
-
-// Mount Artifact Compute Plane routes (sandboxed governed output generation)
-import computeRoutes from './routes/compute';
-app.use('/api/concept2cure/compute', computeRoutes);
-console.log('✅ Concept2Cure Compute Plane routes mounted successfully');
-
-// Mount AI Actions unified execution API (Phase 1 — conversational OS spine)
-try {
-  // Initialize action registry and handlers BEFORE mounting routes
   const aiActions = await import('./services/ai-actions/index');
   console.log('✅ AI Action handlers registered');
 
-  // Initialize HA infrastructure (Redis, queue, SSE broadcaster)
   const redisOk = await aiActions.initializeRedis();
   console.log(
     redisOk
@@ -4177,9 +3431,9 @@ try {
   console.error('❌ Failed to mount AI Actions routes:', error.message);
 }
 
-// Mount Phase 3 Orchestration routes (workflow orchestration, readiness, recommendations, continuity)
+// Phase 3 Orchestration routes (workflow orchestration, readiness, recommendations, continuity)
 try {
-  await import('./services/orchestration'); // Load orchestration engine + workflow templates
+  await import('./services/orchestration');
   const orchestrationRoutes = (await import('./routes/orchestration')).default;
   app.use('/api/orchestration', orchestrationRoutes);
   console.log('✅ Phase 3 Orchestration API routes mounted at /api/orchestration');
@@ -4187,90 +3441,24 @@ try {
   console.error('❌ Failed to mount Orchestration routes:', error.message);
 }
 
-// Mount Resolution Orchestration Layer routes (Sprint 4)
-try {
-  const resolutionRoutes = (await import('./routes/resolution')).default;
-  app.use('/api/resolution', resolutionRoutes);
-  console.log('✅ Resolution Orchestration API routes mounted at /api/resolution');
-} catch (error: any) {
-  console.error('❌ Failed to mount Resolution routes:', error.message);
-}
+// ── Register governance and intelligence route bundle ──
+// Resolution, operating system, governed intelligence, client/account intelligence,
+// packager, precedent engine, cross-jurisdictional, harmonize, escalate,
+// validate-completeness, gold standard, continuous eval, submission center
+await registerGovernanceRoutes(app);
 
-// Mount Operating System Foundation routes (governance boundaries, assumptions, decisions)
-try {
-  const operatingSystemRoutes = (await import('./routes/operating-system')).default;
-  app.use('/api/operating-system', operatingSystemRoutes);
-  console.log('✅ Operating System Foundation routes mounted at /api/operating-system');
-} catch (error: any) {
-  console.error('❌ Failed to mount Operating System routes:', error.message);
-}
+// Mount Unified Regulatory Submissions routes (feature-gated)
+import regulatorySubmissionsRoutes from './routes/regulatorySubmissions';
+app.use('/api/regulatory-submissions', regulatorySubmissionsRoutes);
+console.log('✅ Regulatory Submissions API routes mounted successfully (feature-gated)');
 
-// Mount Governed Intelligence routes (contradictions, overlays, dependencies, impact)
-try {
-  const governedIntelRoutes = (await import('./routes/assumption-decision-contradiction')).default;
-  app.use('/api/governed-intelligence', governedIntelRoutes);
-  console.log('✅ Governed Intelligence routes mounted at /api/governed-intelligence');
-} catch (error: any) {
-  console.error('❌ Failed to mount Governed Intelligence routes:', error.message);
-}
-
-// Mount Client Intelligence Memory routes
-import clientIntelligenceRoutes from './routes/client-intelligence';
-app.use('/api/client-intelligence', clientIntelligenceRoutes);
-console.log('✅ Client Intelligence Memory API routes mounted successfully');
-
-// Mount Account Intelligence routes (canon, event ledger, skill bundles, terms, templates)
-import accountIntelligenceRoutes from './routes/account-intelligence';
-app.use('/api/account-intelligence', accountIntelligenceRoutes);
-console.log('✅ Account Intelligence API routes mounted successfully');
-
-// Mount Universal Packager routes
-import universalPackagerRoutes from './routes/universal-packager';
-app.use('/api/packager', universalPackagerRoutes);
-console.log('✅ Universal Packager API routes mounted successfully');
-
-// Mount Regulatory Precedent Engine
-import precedentEngineRoutes from './routes/precedent-engine';
-app.use('/api/precedent-engine', precedentEngineRoutes);
-console.log('✅ Precedent Engine routes mounted successfully');
-
-// Mount Cross-Jurisdictional Intelligence
-import crossJurisdictionalRoutes from './routes/cross-jurisdictional';
-app.use('/api/cross-jurisdictional', crossJurisdictionalRoutes);
-console.log('✅ Cross-Jurisdictional Intelligence routes mounted successfully');
-
-// Mount HARMONIZE — Cross-Module Consistency Enforcement
-import harmonizeRoutes from './routes/harmonize';
-app.use('/api/harmonize', harmonizeRoutes);
-console.log('✅ HARMONIZE routes mounted successfully');
-
-// Mount ESCALATE — Structured Escalation Framework
-import escalateRoutes from './routes/escalate';
-app.use('/api/escalate', escalateRoutes);
-console.log('✅ ESCALATE routes mounted successfully');
-
-// Mount VALIDATE-COMPLETENESS — Submission Readiness Assessment
-import validateCompletenessRoutes from './routes/validate-completeness';
-app.use('/api/validate-completeness', validateCompletenessRoutes);
-console.log('✅ VALIDATE-COMPLETENESS routes mounted successfully');
-
-// Mount AnA Gold Standard Pack — Quality Benchmark
-import anaGoldStandardRoutes from './routes/ana-gold-standard';
-app.use('/api/ana-gold-standard', anaGoldStandardRoutes);
-console.log('✅ AnA Gold Standard Pack routes mounted successfully');
-
-// Mount AnA Continuous Evaluation Loop — Real-Time Quality Monitoring
-import anaContinuousEvalRoutes from './routes/ana-continuous-eval';
-app.use('/api/ana-continuous-eval', anaContinuousEvalRoutes);
-console.log('✅ AnA Continuous Evaluation Loop routes mounted successfully');
-
-// Mount IND templates routes - temporarily disabled
-// app.use('/api/ind', indTemplatesRoutes);
-
-// Mount Submission Center routes
-import submissionCenterRoutes from './routes/submissionCenter.routes';
-app.use('/api/submission-center', submissionCenterRoutes);
-console.log('✅ Submission Center API routes mounted successfully');
+// Mount Submission Ops + Regulatory Correspondence routes
+import submissionOpsRoutes from './routes/submission-ops';
+import regulatoryCorrespondenceRoutes from './routes/regulatory-correspondence';
+app.use('/api/submission-ops', submissionOpsRoutes);
+app.use('/api/regulatory-correspondence', regulatoryCorrespondenceRoutes);
+console.log('✅ Submission Ops API routes mounted successfully');
+console.log('✅ Regulatory Correspondence API routes mounted successfully');
 
 // Mount 510k-workflow routes directly
 import { TemplateMapper } from './services/documentTemplateMapper';
@@ -4553,7 +3741,7 @@ app.get('/api/510k-workflow/:projectId/stage-data', async (req, res) => {
 
 // GET all 510k workflows
 app.get('/api/510k-workflow', async (req, res) => {
-  const organizationId = req.query.organizationId || req.headers['x-organization-id'];
+  const organizationId = getSecureOrgId(req);
   if (!organizationId) {
     return res.status(401).json({ error: 'Organization context required' });
   }
@@ -4576,7 +3764,7 @@ app.get('/api/510k-workflow', async (req, res) => {
 // GET 510k workflow data
 app.get('/api/510k-workflow/:projectId', async (req, res) => {
   const { projectId } = req.params;
-  const organizationId = (req.query.organizationId || req.headers['x-organization-id']) as string;
+  const organizationId = getSecureOrgId(req);
 
   if (!organizationId) {
     return res.status(400).json({ success: false, error: 'Organization ID required' });
@@ -4610,7 +3798,11 @@ app.get('/api/510k-workflow/:projectId', async (req, res) => {
 // Generate 510k Document
 app.post('/api/510k-workflow/:projectId/generate-document', async (req, res) => {
   const { projectId } = req.params;
-  const organizationId = req.body.organizationId || req.headers['x-organization-id'];
+  const organizationId = getSecureOrgId(req);
+
+  if (!organizationId) {
+    return res.status(401).json({ success: false, error: 'Organization context required' });
+  }
 
   try {
     const storage = await getStorage();
@@ -4739,10 +3931,9 @@ app.get('/api/510k-workflow/:projectId/compliance-report', async (req, res) => {
 console.log('✅ 510k-workflow API routes mounted successfully');
 console.log('✅ FDA compliance tracking enabled with full audit trails');
 
-// Mount 510k project routes (for project wizard)
-import projectRoutes from './routes/510k-project.routes';
-app.use('/api/510k-project', projectRoutes);
-console.log('✅ 510k-project API routes mounted successfully');
+// Mount beta-safe route manifest (510(k) + tester telemetry)
+mountBetaSafeRoutes(app);
+console.log('✅ Beta-safe routes mounted successfully');
 
 // Mount FDA forms routes
 import fdaFormsRoutes from './routes/fda-forms.routes';
@@ -5905,17 +5096,8 @@ app.get('/api/templates', async (req: Request, res: Response) => {
   }
 });
 
-// Content Atoms endpoint for CoAuthor
-app.get('/api/atoms', async (req: Request, res: Response) => {
-  try {
-    // Return empty array for now - this prevents the API error
-    // In a full implementation, this would fetch from a content_atoms table
-    res.json([]);
-  } catch (error) {
-    console.error('Error fetching content atoms:', error);
-    res.status(500).json({ error: 'Failed to fetch content atoms' });
-  }
-});
+// NOTE: /api/atoms is owned by server/routes/atoms.js.
+// Avoid inline /api/atoms handlers here to prevent route-shadowing.
 
 // Vault statistics endpoint — real DB query
 app.get('/api/vault/statistics', async (req: Request, res: Response) => {
@@ -5975,68 +5157,75 @@ app.get('/api/vault/list', async (req: Request, res: Response) => {
 });
 
 // AnA RI Regulatory Intelligence endpoint
-app.get('/api/ana/regulatory-intelligence', async (req: Request, res: Response) => {
-  try {
-    // Return regulatory intelligence data
-    res.json({
-      success: true,
-      advisorySummary: {
-        totalAdvisories: 0,
-        criticalAlerts: 0,
-        recentUpdates: 0,
-        complianceScore: 95,
-      },
-      documents: {
-        totalAnalyzed: 0,
-        successRate: 94,
-        averageProcessingTime: 2.3,
-        templatesAvailable: 13,
-      },
-      compliance: {
-        globalStatus: 'Compliant',
-        regions: [
-          { name: 'FDA', status: 'Compliant', score: 94 },
-          { name: 'EMA', status: 'Compliant', score: 87 },
-          { name: 'PMDA', status: 'Under Review', score: 92 },
-          { name: 'Health Canada', status: 'Compliant', score: 89 },
-          { name: 'TGA', status: 'Compliant', score: 91 },
-        ],
-      },
-      updates: [],
-    });
-  } catch (error) {
-    console.error('Error fetching regulatory intelligence:', error);
-    res.status(500).json({ error: 'Failed to fetch regulatory intelligence' });
+app.get(
+  '/api/ana/regulatory-intelligence',
+  authMiddleware as any,
+  async (req: Request, res: Response) => {
+    try {
+      // Return regulatory intelligence data
+      res.json({
+        success: true,
+        advisorySummary: {
+          totalAdvisories: 0,
+          criticalAlerts: 0,
+          recentUpdates: 0,
+          complianceScore: 95,
+        },
+        documents: {
+          totalAnalyzed: 0,
+          successRate: 94,
+          averageProcessingTime: 2.3,
+          templatesAvailable: 13,
+        },
+        compliance: {
+          globalStatus: 'Compliant',
+          regions: [
+            { name: 'FDA', status: 'Compliant', score: 94 },
+            { name: 'EMA', status: 'Compliant', score: 87 },
+            { name: 'PMDA', status: 'Under Review', score: 92 },
+            { name: 'Health Canada', status: 'Compliant', score: 89 },
+            { name: 'TGA', status: 'Compliant', score: 91 },
+          ],
+        },
+        updates: [],
+      });
+    } catch (error) {
+      console.error('Error fetching regulatory intelligence:', error);
+      res.status(500).json({ error: 'Failed to fetch regulatory intelligence' });
+    }
   }
-});
+);
 
 // AnA RI Regulatory Analysis endpoint
-app.post('/api/ana/regulatory-analysis', async (req: Request, res: Response) => {
-  console.log('🔥 AnA RI Regulatory Analysis endpoint hit!');
-  try {
-    // Add cache-busting headers
-    res.set({
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      Pragma: 'no-cache',
-      Expires: '0',
-    });
+app.post(
+  '/api/ana/regulatory-analysis',
+  authMiddleware as any,
+  async (req: Request, res: Response) => {
+    console.log('🔥 AnA RI Regulatory Analysis endpoint hit!');
+    try {
+      // Add cache-busting headers
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0',
+      });
 
-    const { query, context } = req.body;
-    console.log('📋 Request data:', { query, context });
+      const { query, context } = req.body;
+      console.log('📋 Request data:', { query, context });
 
-    const { getGateway } = await import('./services/ai-gateway');
-    const gateway = getGateway();
-    const response = await gateway.route({
-      taskType: 'regulatory_review',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are AnA RI. Return strict JSON only. No markdown. Provide concrete compliance analysis.',
-        },
-        {
-          role: 'user',
-          content: `Generate a regulatory analysis for the payload below.
+      const { getGateway } = await import('./services/ai-gateway');
+      const gateway = getGateway();
+      const response = await gateway.route({
+        taskType: 'regulatory_review',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are AnA RI. Return strict JSON only. No markdown. Provide concrete compliance analysis.',
+          },
+          {
+            role: 'user',
+            content: `Generate a regulatory analysis for the payload below.
 
 Query: ${query || ''}
 Context: ${JSON.stringify(context || {}, null, 2)}
@@ -6057,67 +5246,59 @@ Return JSON shape:
     "data_sources": string[]
   }
 }`,
-        },
-      ],
-      maxTokens: 3000,
-      temperature: 0.2,
-      strategy: 'quality_optimized',
-      callerModule: 'ana/regulatory-analysis',
-    });
-
-    try {
-      res.json(JSON.parse(response.content));
-    } catch {
-      res.json({
-        comprehensive_analysis: {
-          regulatory_readiness_score: 70,
-          overall_risk_assessment: 'Medium',
-          timeline_analysis: { projected_delay_days: 0 },
-          cost_analysis: { total_financial_impact: 0 },
-          regulatory_gaps: [],
-          ich_e6r3_assessment: { compliance_score: 75, risk_factors: [], recommendations: [] },
-        },
-        ana_1_0_ri_intelligence_summary: {
-          confidence_score: 60,
-          analysis_timestamp: new Date().toISOString(),
-          data_sources: ['AI Gateway', 'Parser fallback'],
-        },
-        raw_response: response.content,
+          },
+        ],
+        maxTokens: 3000,
+        temperature: 0.2,
+        strategy: 'quality_optimized',
+        callerModule: 'ana/regulatory-analysis',
       });
+
+      try {
+        res.json(JSON.parse(response.content));
+      } catch {
+        return res.status(502).json({
+          error: 'AI analysis returned invalid JSON payload',
+          code: 'AI_INVALID_RESPONSE_FORMAT',
+        });
+      }
+    } catch (error) {
+      console.error('Error in regulatory analysis:', error);
+      res.status(500).json({ error: 'Failed to perform regulatory analysis' });
     }
-  } catch (error) {
-    console.error('Error in regulatory analysis:', error);
-    res.status(500).json({ error: 'Failed to perform regulatory analysis' });
   }
-});
+);
 
 // AnA RI ICH E6(R3) Guidance endpoint
-app.post('/api/ana/ich-e6r3-guidance', async (req: Request, res: Response) => {
-  console.log('🔥 AnA RI ICH E6(R3) Guidance endpoint hit!');
-  try {
-    // Add cache-busting headers
-    res.set({
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      Pragma: 'no-cache',
-      Expires: '0',
-    });
+app.post(
+  '/api/ana/ich-e6r3-guidance',
+  authMiddleware as any,
+  async (req: Request, res: Response) => {
+    console.log('🔥 AnA RI ICH E6(R3) Guidance endpoint hit!');
+    try {
+      // Add cache-busting headers
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0',
+      });
 
-    const { query } = req.body;
-    const started = Date.now();
+      const { query } = req.body;
+      const started = Date.now();
 
-    const { getGateway } = await import('./services/ai-gateway');
-    const gateway = getGateway();
-    const response = await gateway.route({
-      taskType: 'regulatory_review',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are AnA RI specialized in ICH E6(R3). Return strict JSON only and focus on actionable, evidence-aware guidance.',
-        },
-        {
-          role: 'user',
-          content: `Question: ${query || ''}
+      const { getGateway } = await import('./services/ai-gateway');
+      const gateway = getGateway();
+      const response = await gateway.route({
+        taskType: 'regulatory_review',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are AnA RI specialized in ICH E6(R3). Return strict JSON only and focus on actionable, evidence-aware guidance.',
+          },
+          {
+            role: 'user',
+            content: `Question: ${query || ''}
 
 Return JSON:
 {
@@ -6135,38 +5316,28 @@ Return JSON:
     "guidance_version": string
   }
 }`,
-        },
-      ],
-      maxTokens: 2200,
-      temperature: 0.2,
-      strategy: 'quality_optimized',
-      callerModule: 'ana/ich-e6r3-guidance',
-    });
-
-    try {
-      res.json(JSON.parse(response.content));
-    } catch {
-      res.json({
-        guidance_response: {
-          answer: response.content,
-          regulatory_framework: 'ICH_E6_R3',
-          confidence_score: 70,
-          supporting_sections: [],
-          implementation_guidance: [],
-          references: [],
-        },
-        query_metadata: {
-          query_timestamp: new Date().toISOString(),
-          processing_time_ms: Date.now() - started,
-          guidance_version: 'E6(R3)',
-        },
+          },
+        ],
+        maxTokens: 2200,
+        temperature: 0.2,
+        strategy: 'quality_optimized',
+        callerModule: 'ana/ich-e6r3-guidance',
       });
+
+      try {
+        res.json(JSON.parse(response.content));
+      } catch {
+        return res.status(502).json({
+          error: 'AI guidance returned invalid JSON payload',
+          code: 'AI_INVALID_RESPONSE_FORMAT',
+        });
+      }
+    } catch (error) {
+      console.error('Error in ICH E6(R3) guidance:', error);
+      res.status(500).json({ error: 'Failed to provide ICH E6(R3) guidance' });
     }
-  } catch (error) {
-    console.error('Error in ICH E6(R3) guidance:', error);
-    res.status(500).json({ error: 'Failed to provide ICH E6(R3) guidance' });
   }
-});
+);
 
 // Advisor check readiness endpoint
 app.get('/api/advisor/check-readiness', async (req: Request, res: Response) => {
@@ -6255,7 +5426,10 @@ app.get('/api/advisor/check-readiness', async (req: Request, res: Response) => {
 // eCTD Templates endpoint
 app.get('/api/ectd/templates', async (req: Request, res: Response) => {
   try {
-    const organizationId = req.headers['x-organization-id'] || 'default';
+    const organizationId = getSecureOrgId(req);
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
 
     try {
       const result = await pool.query(
@@ -6284,8 +5458,8 @@ app.get('/api/ectd/templates', async (req: Request, res: Response) => {
           category: row.name.includes('Module_1')
             ? 'administrative'
             : row.name.includes('Module_2')
-              ? 'clinical'
-              : 'regulatory',
+            ? 'clinical'
+            : 'regulatory',
           template_data: templateData,
         };
       });
@@ -6305,7 +5479,10 @@ app.get('/api/ectd/templates', async (req: Request, res: Response) => {
 app.get('/api/ectd/templates/:id', async (req: Request, res: Response) => {
   try {
     const templateId = req.params.id;
-    const organizationId = req.headers['x-organization-id'] || 'default';
+    const organizationId = getSecureOrgId(req);
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
 
     try {
       const result = await pool.query(
@@ -6338,8 +5515,8 @@ app.get('/api/ectd/templates/:id', async (req: Request, res: Response) => {
         category: row.name.includes('Module_1')
           ? 'administrative'
           : row.name.includes('Module_2')
-            ? 'clinical'
-            : 'regulatory',
+          ? 'clinical'
+          : 'regulatory',
         template_data: templateData,
       };
 
@@ -7122,15 +6299,30 @@ async function startServer() {
     console.error('⚠️ Auth schema bootstrap warning:', error.message);
   }
 
+  // Initialize feature toggles for gated central-system routes.
+  try {
+    await FeatureToggleService.initializeFeatureToggle(
+      'UNIFIED_REGULATORY_SUBMISSIONS',
+      'Enable unified regulatory submissions bridge routes',
+      false
+    );
+    console.log('✅ Feature toggle bootstrap complete: UNIFIED_REGULATORY_SUBMISSIONS');
+  } catch (error: any) {
+    console.error('⚠️ Feature toggle bootstrap warning:', error.message);
+  }
+
   // Seed AnA Capability Registry (fire-and-forget — don't block startup)
-  import('../services/ana-capability-registry.js')
-    .then(({ seedCapabilityRegistry }) => seedCapabilityRegistry())
-    .then(({ seeded, total }) => {
-      console.log(`✅ AnA Capability Registry seeded (${seeded} new, ${total} total)`);
-    })
-    .catch((err: any) => {
-      console.warn('⚠️ AnA Capability Registry seeding failed (non-blocking):', err?.message);
-    });
+  // Delay slightly to ensure DB pool is ready
+  setTimeout(() => {
+    import('./services/ana-capability-registry.js')
+      .then(({ seedCapabilityRegistry }) => seedCapabilityRegistry())
+      .then(({ seeded, total }) => {
+        console.log(`✅ AnA Capability Registry seeded (${seeded} new, ${total} total)`);
+      })
+      .catch((err: any) => {
+        console.warn('⚠️ AnA Capability Registry seeding failed (non-blocking):', err?.message);
+      });
+  }, 3000);
 
   // Start Python backend first
   debugLog('Initializing Python backend...');
@@ -7189,21 +6381,7 @@ async function startServer() {
     console.error('Failed to mount leaves routes:', error);
   }
 
-  // Sections routes deprecated - consolidated into predictive-sections.ts
-  // try {
-  //   app.use('/api/sections', sectionsRouter);
-  //   console.log('✅ Sections real-time sync routes mounted successfully');
-  // } catch (error) {
-  //   console.error('Failed to mount sections routes:', error);
-  // }
-
-  // Mount predictive sections routes
-  try {
-    app.use('/api/predictive-sections', predictiveSectionsRoutes);
-    console.log('✅ Predictive sections routes mounted successfully');
-  } catch (error) {
-    console.error('Failed to mount predictive sections routes:', error);
-  }
+  // Predictive sections already mounted at module bootstrap to avoid duplicate prefix mounts.
 
   // Mount Validation routes
   try {
@@ -7285,7 +6463,9 @@ async function startServer() {
 
   // Start Memory Consolidation nightly scheduler (E8)
   try {
-    const { initMemoryConsolidationScheduler } = await import('./services/memory-consolidation-job');
+    const { initMemoryConsolidationScheduler } = await import(
+      './services/memory-consolidation-job'
+    );
     initMemoryConsolidationScheduler();
     console.log('✅ Memory consolidation scheduler initialized');
   } catch (error) {
@@ -7293,13 +6473,12 @@ async function startServer() {
   }
 
   // Mount project-module integration routes (Pillar 4: Full module integration)
+  // NOTE: Do not mount this router at /api/projects — projects-management owns /api/projects and
+  // defines GET /:projectId, which would steal paths like /find and /org-stats from this router.
   try {
     const moduleRoutes = await import('./routes/project-modules');
-    app.use('/api/projects', moduleRoutes.default || moduleRoutes); // nested: /api/projects/:id/modules
-    app.use('/api/project-modules', moduleRoutes.default || moduleRoutes); // top-level: /api/project-modules/find, /org-stats
-    console.log(
-      '✅ Project Module Integration routes mounted at /api/projects/:id/modules & /api/project-modules'
-    );
+    app.use('/api/project-modules', moduleRoutes.default || moduleRoutes);
+    console.log('✅ Project Module Integration routes mounted at /api/project-modules');
   } catch (error) {
     console.error('Failed to mount project-modules routes:', error);
   }
@@ -7333,19 +6512,26 @@ async function startServer() {
   }
 
   try {
-    const documentsUnified = await import('./routes/documents-unified');
-    app.use('/api/documents', documentsUnified.default);
-    console.log('✅ Documents-unified routes mounted at /api/documents');
-  } catch (error) {
-    console.error('Failed to mount documents-unified routes:', error);
-  }
+    const [versionDiffModule, documentsUnified, sourceLinksRoutes, documentIntelligenceRoutes] =
+      await Promise.all([
+        import('./routes/versionDiff'),
+        import('./routes/documents-unified'),
+        import('./routes/sourceLinks'),
+        import('./routes/document-intelligence-routes'),
+      ]);
 
-  try {
-    const sourceLinksRoutes = await import('./routes/sourceLinks');
-    app.use('/api/documents', sourceLinksRoutes.default);
-    console.log('✅ Source Links routes mounted at /api/documents/:id/sources');
+    const documentsGateway = express.Router();
+    documentsGateway.use(versionDiffModule.default);
+    documentsGateway.use(documentsUnified.default);
+    documentsGateway.use(sourceLinksRoutes.default);
+    documentsGateway.use(documentIntelligenceRoutes.default);
+
+    app.use('/api/documents', documentsGateway);
+    console.log(
+      '✅ Documents gateway mounted at /api/documents (versionDiff + unified + sourceLinks + intelligence)'
+    );
   } catch (error) {
-    console.error('Failed to mount source links routes:', error);
+    console.error('Failed to mount consolidated documents gateway routes:', error);
   }
 
   try {
@@ -7356,13 +6542,7 @@ async function startServer() {
     console.error('Failed to mount RTM export routes:', error);
   }
 
-  try {
-    const documentIntelligenceRoutes = await import('./routes/document-intelligence-routes');
-    app.use('/api/documents', documentIntelligenceRoutes.default);
-    console.log('✅ Document Intelligence routes mounted at /api/documents');
-  } catch (error) {
-    console.error('Failed to mount document intelligence routes:', error);
-  }
+  // document-intelligence now mounted via consolidated documents gateway.
 
   try {
     const intelligenceRoutes = await import('./routes/intelligence');
@@ -7677,8 +6857,16 @@ async function startServer() {
   // ──────────────────────────────────────────────────────────────────────────
   try {
     const missionControlRoutes = await import('./routes/mission-control');
-    app.use('/api/mission-control', missionControlRoutes.default);
-    console.log('✅ Mission Control routes mounted at /api/mission-control');
+    if (isStaticDataEnabled('ENABLE_MISSION_CONTROL_STATIC_DATA')) {
+      app.use('/api/mission-control', missionControlRoutes.default);
+      console.log('✅ Mission Control routes mounted at /api/mission-control');
+    } else {
+      mountStaticBusinessDataGuard(
+        '/api/mission-control',
+        'Mission Control routes',
+        'ENABLE_MISSION_CONTROL_STATIC_DATA'
+      );
+    }
 
     const snowglobeRoutes = await import('./routes/snowglobe');
     app.use('/api/snowglobe', snowglobeRoutes.default);
@@ -7740,18 +6928,31 @@ async function startServer() {
     console.error('❌ Failed to mount Decision Lineage routes:', error);
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // C2C MISSING ROUTES — stub endpoints for notifications, sections, predicates
-  // Must be registered BEFORE the catch-all 404 handler
-  // ──────────────────────────────────────────────────────────────────────────
+  // ── Data Lineage — regulatory-grade multi-perspective lineage reporting ───
   try {
-    const c2cMissingRoutes = await import('./routes/c2c-missing-routes');
-    app.use('/api', c2cMissingRoutes.default);
-    console.log(
-      '✅ C2C missing routes registered (notifications, sections, predicates, vault/docs)'
-    );
+    const dataLineageRoutes = await import('./routes/data-lineage');
+    app.use('/api/data-lineage', dataLineageRoutes.default);
+    console.log('✅ Data Lineage routes mounted at /api/data-lineage');
   } catch (error) {
-    console.error('❌ Failed to mount c2c-missing-routes:', error);
+    console.error('❌ Failed to mount Data Lineage routes:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // C2C MISSING ROUTES — legacy stub endpoints (disabled by default)
+  // Must be explicitly opted in for non-production diagnostics only.
+  // ──────────────────────────────────────────────────────────────────────────
+  if (EXPERIMENTAL_ROUTES_ENABLED) {
+    try {
+      const c2cMissingRoutes = await import('./routes/c2c-missing-routes');
+      app.use('/api', c2cMissingRoutes.default);
+      console.log(
+        '✅ C2C missing routes registered (notifications, sections, predicates, vault/docs)'
+      );
+    } catch (error) {
+      console.error('❌ Failed to mount c2c-missing-routes:', error);
+    }
+  } else {
+    console.log('ℹ️ C2C legacy stub routes disabled.');
   }
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -7924,110 +7125,102 @@ async function startServer() {
   const httpServer = createServer(app);
   setHttpServer(httpServer); // Register for graceful shutdown drain
 
-  // Setup Vite middleware for frontend serving (development mode with HMR)
+  // Frontend serving — use optimized static serving in production, Vite HMR in development
   // This must be done AFTER all API routes are mounted
+  const isProduction = process.env.NODE_ENV === 'production';
   const skipVite = ['1', 'true', 'yes'].includes(String(process.env.SKIP_VITE || '').toLowerCase());
-  if (!skipVite) {
+
+  if (isProduction || skipVite) {
     try {
-      await setupVite(app, httpServer);
-      console.log('✅ Vite middleware setup complete - frontend will be served');
-    } catch (viteError) {
-      console.error('⚠️ Vite setup failed, falling back to static serving:', viteError);
-      // Fallback: serve static files from dist if Vite fails
-      const distPath = path.resolve(__dirname, '../client/dist');
-      if (fs.existsSync(distPath)) {
-        app.use(express.static(distPath));
-        app.get('*', (_req, res) => {
-          res.sendFile(path.resolve(distPath, 'index.html'));
-        });
-        console.log('✅ Static files being served from dist folder');
-      } else {
-        // Last resort: serve a simple landing page
-        app.get('/', (_req, res) => {
-          res.send(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <title>TrialSage - Concept2Cure.RI</title>
-              <title>Concept2Cure - Concept2Cure</title>
-              <style>
-                body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: linear-gradient(135deg, #d97757 0%, #c15f3c 100%); }
-                .container { text-align: center; color: white; padding: 40px; }
-                h1 { font-size: 2.5rem; margin-bottom: 1rem; }
-                p { font-size: 1.2rem; opacity: 0.9; }
-                a { color: white; text-decoration: underline; }
-              </style>
-            </head>
-            <body>
-              <div class="container">
-                <h1>🧬 Concept2Cure Platform</h1>
-                <p>API Server is running successfully.</p>
-                <p>Check <a href="/api/health">/api/health</a> for system status.</p>
-                <p>Frontend build may be required. Run: <code>npm run build</code></p>
-              </div>
-            </body>
-            </html>
-          `);
-        });
-        console.log('⚠️ No frontend available - serving basic landing page');
-      }
+      serveStatic(app);
+      console.log('✅ Production static file serving enabled (immutable asset caching)');
+    } catch (staticError) {
+      console.error('⚠️ Static serving failed:', staticError);
+      app.get('/', (_req, res) => {
+        res.send(
+          '<h1>Concept2Cure Platform</h1><p>API running. Build client with <code>npm run build</code>.</p>'
+        );
+      });
     }
   } else {
-    console.log('⚠️ SKIP_VITE enabled - skipping Vite middleware setup');
-  }
-
-  // Start audit chain integrity monitor (background job every 5 min)
-  try {
-    const { startChainMonitor } = await import('./services/audit/chainIntegrityMonitor.js');
-    startChainMonitor(pool, 5 * 60 * 1000);
-    console.log('✅ Audit chain integrity monitor started (5-min interval)');
-  } catch (err) {
-    console.warn('⚠️ Chain integrity monitor failed to start:', err);
-  }
-
-  // Load RIM pattern registry from persistence (restores learned patterns + hit counts)
-  try {
-    const { loadPatternRegistry, patternRegistry } =
-      await import('./services/intelligence/pattern-registry.js');
-    const result = await loadPatternRegistry(1); // org 1 as default; per-org load on first request
-    if (result.loaded) {
-      console.log(
-        `✅ RIM pattern registry loaded (${patternRegistry.size} patterns, ${result.learnedCount} learned)`
-      );
-    } else {
-      console.log(
-        `ℹ️ RIM pattern registry: no persisted data found, using ${patternRegistry.size} seed patterns`
-      );
+    try {
+      await setupVite(app, httpServer);
+      console.log('✅ Vite HMR middleware setup complete');
+    } catch (viteError) {
+      console.error('⚠️ Vite setup failed:', viteError);
     }
-  } catch (err) {
-    console.warn('⚠️ RIM pattern registry load failed (using seed patterns only):', err);
   }
 
-  // Initialize Socket.io for real-time collaboration
-  try {
-    const { initializeSocketServer } = await import('./socketServer.js');
-    initializeSocketServer(httpServer);
-    console.log('[Socket.io] Real-time server initialized');
-  } catch (err: any) {
-    console.warn('[Socket.io] Failed to initialize (non-blocking):', err?.message);
+  // ── Parallel startup services ──
+  const [chainMon, patternReg, socketSrv, scheduledJobs, hocuspocus] = await Promise.allSettled([
+    import('./services/audit/chainIntegrityMonitor.js'),
+    import('./services/intelligence/pattern-registry.js'),
+    import('./socketServer.js'),
+    import('./services/automation/scheduled-jobs.js'),
+    import('./services/hocuspocus-server.js'),
+  ]);
+
+  if (chainMon.status === 'fulfilled') {
+    try {
+      chainMon.value.startChainMonitor(pool, 5 * 60 * 1000);
+      console.log('✅ Audit chain integrity monitor started (5-min interval)');
+    } catch (err) {
+      console.warn('⚠️ Chain integrity monitor failed to start:', err);
+    }
+  } else {
+    console.warn('⚠️ Chain integrity monitor failed to load:', chainMon.reason);
   }
 
-  // Initialize Automation Engine — scheduled jobs (Bull queue + Redis)
-  try {
-    const { initScheduledJobs } = await import('./services/automation/scheduled-jobs.js');
-    await initScheduledJobs();
-    console.log('✅ Automation engine scheduled jobs initialized');
-  } catch (err: any) {
-    console.warn('⚠️ Automation engine initialization failed (non-blocking):', err?.message);
+  if (patternReg.status === 'fulfilled') {
+    try {
+      const result = await patternReg.value.loadPatternRegistry(1);
+      if (result.loaded) {
+        console.log(
+          `✅ RIM pattern registry loaded (${patternReg.value.patternRegistry.size} patterns, ${result.learnedCount} learned)`
+        );
+      } else {
+        console.log(
+          `ℹ️ RIM pattern registry: no persisted data found, using ${patternReg.value.patternRegistry.size} seed patterns`
+        );
+      }
+    } catch (err) {
+      console.warn('⚠️ RIM pattern registry load failed (using seed patterns only):', err);
+    }
+  } else {
+    console.warn('⚠️ RIM pattern registry failed to load:', patternReg.reason);
   }
 
-  // Initialize Hocuspocus Y.js CRDT collaboration server
-  try {
-    const { attachHocuspocusToServer } = await import('./services/hocuspocus-server.js');
-    attachHocuspocusToServer(httpServer);
-    console.log('[Hocuspocus] CRDT collaboration server initialized');
-  } catch (err: any) {
-    console.warn('[Hocuspocus] Failed to initialize (non-blocking):', err?.message);
+  if (socketSrv.status === 'fulfilled') {
+    try {
+      socketSrv.value.initializeSocketServer(httpServer);
+      console.log('[Socket.io] Real-time server initialized');
+    } catch (err: any) {
+      console.warn('[Socket.io] Failed to initialize (non-blocking):', err?.message);
+    }
+  } else {
+    console.warn('[Socket.io] Failed to load:', socketSrv.reason);
+  }
+
+  if (scheduledJobs.status === 'fulfilled') {
+    try {
+      await scheduledJobs.value.initScheduledJobs();
+      console.log('✅ Automation engine scheduled jobs initialized');
+    } catch (err: any) {
+      console.warn('⚠️ Automation engine initialization failed (non-blocking):', err?.message);
+    }
+  } else {
+    console.warn('⚠️ Automation engine failed to load:', scheduledJobs.reason);
+  }
+
+  if (hocuspocus.status === 'fulfilled') {
+    try {
+      hocuspocus.value.attachHocuspocusToServer(httpServer);
+      console.log('[Hocuspocus] CRDT collaboration server initialized');
+    } catch (err: any) {
+      console.warn('[Hocuspocus] Failed to initialize (non-blocking):', err?.message);
+    }
+  } else {
+    console.warn('[Hocuspocus] Failed to load:', hocuspocus.reason);
   }
 
   // Start the HTTP server
@@ -8037,6 +7230,24 @@ async function startServer() {
     console.log(`🔐 Login: http://localhost:${PORT}/auth`);
   });
 }
+
+// ── Route Bootstrap Manifests (available for future migration) ──────────────
+// The server/bootstrap/ directory contains declarative route manifests that can
+// progressively replace the inline try/catch import blocks above.
+//
+// Manifests:
+//   register-core-routes.ts         — templates, AI, CMC, enterprise, control-plane
+//   register-ai-routes.ts           — AnA, chat, IND, regulatory, claims, claude-intel
+//   register-concept2cure-routes.ts — concept2cure + compute
+//   register-admin-routes.ts        — reserved placeholder
+//
+// To migrate a group:
+//   import { registerCoreRoutes } from './bootstrap/register-core-routes';
+//   await registerCoreRoutes({ app, pool, aiCircuitBreaker });
+//
+// See server/bootstrap/types.ts for the RouteBootstrapContext interface.
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Start the server
 startServer().catch(err => {
   console.error('Failed to start server:', err);

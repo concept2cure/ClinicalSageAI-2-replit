@@ -43,6 +43,7 @@ import { resolvePolicy, resolveAllPolicies } from '../submission-ops/policy-engi
 import { computePackageReadiness } from '../submission-ops/readiness-engine';
 import { runAutomationSweep } from '../submission-ops/automation-runner';
 import { getProjectSignals, analyzeCrossArtifactIntelligence } from '../services/intelligence/index.js';
+import { readCanonicalDueSoonAndWorkload } from '../services/regulatory-correspondence/operating-layer';
 
 const router = Router();
 
@@ -192,6 +193,7 @@ router.get('/packages/:packageId/sections', async (req: Request, res: Response) 
 router.post('/artifact-section-map', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
+    const actorUserId = getUserId(req);
     const {
       artifactId,
       sectionDbId,
@@ -206,6 +208,52 @@ router.post('/artifact-section-map', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'artifactId and sectionDbId required' });
     }
 
+    const [artifact] = await db
+      .select({
+        id: concept2cureArtifacts.id,
+        projectId: concept2cureArtifacts.projectId,
+      })
+      .from(concept2cureArtifacts)
+      .where(and(eq(concept2cureArtifacts.id, artifactId), eq(concept2cureArtifacts.orgId, orgId)));
+    if (!artifact) {
+      return res.status(404).json({ error: 'Artifact not found for organization' });
+    }
+
+    const [section] = await db
+      .select({
+        id: c2cPackageSections.id,
+        packageDbId: c2cPackageSections.packageDbId,
+      })
+      .from(c2cPackageSections)
+      .innerJoin(
+        c2cSubmissionPackages,
+        and(
+          eq(c2cSubmissionPackages.id, c2cPackageSections.packageDbId),
+          eq(c2cSubmissionPackages.orgId, orgId)
+        )
+      )
+      .where(eq(c2cPackageSections.id, sectionDbId));
+    if (!section) {
+      return res.status(404).json({ error: 'Section not found for organization' });
+    }
+
+    const [pkg] = await db
+      .select({
+        id: c2cSubmissionPackages.id,
+        projectId: c2cSubmissionPackages.projectId,
+      })
+      .from(c2cSubmissionPackages)
+      .where(and(eq(c2cSubmissionPackages.id, section.packageDbId), eq(c2cSubmissionPackages.orgId, orgId)));
+    if (!pkg) {
+      return res.status(404).json({ error: 'Package not found for section' });
+    }
+
+    if (artifact.projectId !== pkg.projectId) {
+      return res
+        .status(400)
+        .json({ error: 'Artifact and target section package must belong to the same project' });
+    }
+
     const [mapping] = await db
       .insert(c2cArtifactSectionMap)
       .values({
@@ -213,7 +261,7 @@ router.post('/artifact-section-map', async (req: Request, res: Response) => {
         artifactId,
         sectionDbId,
         documentFamily,
-        ownerUserId,
+        ownerUserId: ownerUserId || actorUserId || null,
         ownerRole,
         ownerFunction,
         ownershipType,
@@ -353,6 +401,15 @@ router.post('/packages/:packageId/milestones', async (req: Request, res: Respons
     // Link sections
     if (Array.isArray(sectionIds)) {
       for (const sId of sectionIds) {
+        const [section] = await db
+          .select({ id: c2cPackageSections.id })
+          .from(c2cPackageSections)
+          .where(and(eq(c2cPackageSections.id, sId), eq(c2cPackageSections.packageDbId, pkg.id)));
+        if (!section) {
+          return res
+            .status(400)
+            .json({ error: `sectionId ${sId} does not belong to package ${req.params.packageId}` });
+        }
         await db.insert(c2cMilestoneSections).values({
           milestoneDbId: milestone.id,
           sectionDbId: sId,
@@ -725,94 +782,8 @@ router.get('/workload', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const projectId = req.query.projectId ? Number(req.query.projectId) : undefined;
-    const now = new Date();
-
-    // Count open tasks by assignee
-    const taskLoad = await db
-      .select({
-        assignedToId: concept2cureReviewTasks.assignedToId,
-        assignedToName: concept2cureReviewTasks.assignedToName,
-        totalTasks: count(),
-      })
-      .from(concept2cureReviewTasks)
-      .where(
-        and(
-          eq(concept2cureReviewTasks.orgId, orgId),
-          inArray(concept2cureReviewTasks.status, ['open', 'in_progress']),
-          ...(projectId ? [eq(concept2cureReviewTasks.projectId, projectId)] : [])
-        )
-      )
-      .groupBy(concept2cureReviewTasks.assignedToId, concept2cureReviewTasks.assignedToName);
-
-    // Count overdue tasks by assignee
-    const overdueLoad = await db
-      .select({
-        assignedToId: concept2cureReviewTasks.assignedToId,
-        overdueCount: count(),
-      })
-      .from(concept2cureReviewTasks)
-      .where(
-        and(
-          eq(concept2cureReviewTasks.orgId, orgId),
-          inArray(concept2cureReviewTasks.status, ['open', 'in_progress']),
-          sql`${concept2cureReviewTasks.dueAt} < ${now}`,
-          ...(projectId ? [eq(concept2cureReviewTasks.projectId, projectId)] : [])
-        )
-      )
-      .groupBy(concept2cureReviewTasks.assignedToId);
-
-    // Count pending reviews by reviewer
-    const reviewLoad = await db
-      .select({
-        reviewerId: concept2cureReviewAssignments.reviewerId,
-        pendingReviews: count(),
-      })
-      .from(concept2cureReviewAssignments)
-      .where(
-        and(
-          eq(concept2cureReviewAssignments.organizationId, orgId),
-          eq(concept2cureReviewAssignments.status, 'pending')
-        )
-      )
-      .groupBy(concept2cureReviewAssignments.reviewerId);
-
-    // Merge into workload by person
-    const workloadMap = new Map<number, any>();
-    for (const t of taskLoad) {
-      if (!t.assignedToId) continue;
-      workloadMap.set(t.assignedToId, {
-        userId: t.assignedToId,
-        name: t.assignedToName,
-        openTasks: t.totalTasks,
-        overdueTasks: 0,
-        pendingReviews: 0,
-      });
-    }
-    for (const o of overdueLoad) {
-      if (!o.assignedToId) continue;
-      const entry = workloadMap.get(o.assignedToId) || {
-        userId: o.assignedToId,
-        name: '',
-        openTasks: 0,
-        overdueTasks: 0,
-        pendingReviews: 0,
-      };
-      entry.overdueTasks = o.overdueCount;
-      workloadMap.set(o.assignedToId, entry);
-    }
-    for (const r of reviewLoad) {
-      const entry = workloadMap.get(r.reviewerId) || {
-        userId: r.reviewerId,
-        name: '',
-        openTasks: 0,
-        overdueTasks: 0,
-        pendingReviews: 0,
-      };
-      entry.pendingReviews = r.pendingReviews;
-      workloadMap.set(r.reviewerId, entry);
-    }
-
-    res.json({ data: Array.from(workloadMap.values()) });
+    const canonical = await readCanonicalDueSoonAndWorkload({ orgId, projectId });
+    res.json({ data: canonical.workload, source: 'c2c_project_work_items' });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
@@ -967,68 +938,13 @@ router.get('/due-soon', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const projectId = req.query.projectId ? Number(req.query.projectId) : undefined;
-    const now = new Date();
-
-    const next24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const next48h = new Date(now.getTime() + 48 * 60 * 60 * 1000);
-    const next7d = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-
-    // Threads due soon
-    const threadConditions = [
-      eq(concept2cureReviewThreads.orgId, orgId),
-      eq(concept2cureReviewThreads.status, 'open'),
-      sql`${concept2cureReviewThreads.dueAt} <= ${next7d}`,
-    ];
-    if (projectId) threadConditions.push(eq(concept2cureReviewThreads.projectId, projectId));
-
-    const dueThreads = await db
-      .select()
-      .from(concept2cureReviewThreads)
-      .where(and(...threadConditions))
-      .orderBy(asc(concept2cureReviewThreads.dueAt));
-
-    // Tasks due soon
-    const taskConditions = [
-      eq(concept2cureReviewTasks.orgId, orgId),
-      inArray(concept2cureReviewTasks.status, ['open', 'in_progress']),
-      sql`${concept2cureReviewTasks.dueAt} <= ${next7d}`,
-    ];
-    if (projectId) taskConditions.push(eq(concept2cureReviewTasks.projectId, projectId));
-
-    const dueTasks = await db
-      .select()
-      .from(concept2cureReviewTasks)
-      .where(and(...taskConditions))
-      .orderBy(asc(concept2cureReviewTasks.dueAt));
-
-    // Pending reviews due soon
-    const reviewConditions = [
-      eq(concept2cureReviewAssignments.organizationId, orgId),
-      eq(concept2cureReviewAssignments.status, 'pending'),
-      sql`${concept2cureReviewAssignments.dueDate} <= ${next7d}`,
-    ];
-
-    const dueReviews = await db
-      .select()
-      .from(concept2cureReviewAssignments)
-      .where(and(...reviewConditions))
-      .orderBy(asc(concept2cureReviewAssignments.dueDate));
-
-    // Categorize into buckets
-    const categorize = (dueAt: Date | null) => {
-      if (!dueAt) return '7d';
-      if (dueAt < now) return 'overdue';
-      if (dueAt <= next24h) return '24h';
-      if (dueAt <= next48h) return '48h';
-      return '7d';
-    };
+    const canonical = await readCanonicalDueSoonAndWorkload({ orgId, projectId });
 
     res.json({
       data: {
-        threads: dueThreads.map((t: any) => ({ ...t, bucket: categorize(t.dueAt) })),
-        tasks: dueTasks.map((t: any) => ({ ...t, bucket: categorize(t.dueAt) })),
-        reviews: dueReviews.map(r => ({ ...r, bucket: categorize(r.dueDate) })),
+        canonicalTasks: canonical.dueSoon,
       },
+      source: 'c2c_project_work_items',
     });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
@@ -1185,12 +1101,22 @@ router.get('/command-center', async (req: Request, res: Response) => {
         )
       );
 
+    const [unresolvedCorrespondence] = await db.execute(sql`
+      SELECT COUNT(*)::int AS count
+      FROM c2c_correspondence_issues i
+      JOIN c2c_correspondence c ON c.id = i.correspondence_id
+      WHERE c.organization_id = ${orgId}
+        AND c.project_id = ${projectId}
+        AND i.resolution_status IN ('open','in_progress')
+    `);
+
     res.json({
       data: {
         projectId,
         packages: packageSummaries,
         totalOpenBlockers: projectBlockerCount?.count ?? 0,
         totalOverdue: overdueCount?.count ?? 0,
+        unresolvedCorrespondenceIssues: Number((unresolvedCorrespondence as any)?.count ?? 0),
       },
     });
   } catch (e: any) {
@@ -1272,6 +1198,25 @@ router.post('/packages/:packageId/publish', async (req: Request, res: Response) 
         readinessScore: readiness.overallReadinessPercent,
         threshold: readinessThreshold,
         details: readiness,
+      });
+    }
+
+    // Gate 4: unresolved critical/high correspondence issues block publish
+    const unresolvedCorrespondenceGate = await db.execute(sql`
+      SELECT COUNT(*)::int AS count
+      FROM c2c_correspondence_issues i
+      JOIN c2c_correspondence c ON c.id = i.correspondence_id
+      WHERE c.organization_id = ${orgId}
+        AND c.project_id = ${pkg.projectId}
+        AND i.resolution_status IN ('open','in_progress')
+        AND i.severity IN ('critical','high')
+    `);
+    const unresolvedCount = Number((unresolvedCorrespondenceGate.rows[0] as any)?.count ?? 0);
+    if (unresolvedCount > 0) {
+      return res.status(409).json({
+        error: `Cannot publish: ${unresolvedCount} unresolved critical/high correspondence issue(s) remain open`,
+        gate: 'correspondence_risk',
+        unresolvedCount,
       });
     }
 

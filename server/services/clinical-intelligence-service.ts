@@ -706,7 +706,7 @@ class ClinicalIntelligenceService {
       }
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       log.error(`Error generating document embeddings: ${error.message}`);
       return false;
     }
@@ -815,11 +815,11 @@ class ClinicalIntelligenceService {
         });
 
         return variables;
-      } catch (error) {
+      } catch (error: any) {
         log.error(`Error parsing variables response: ${error.message}`);
         return [];
       }
-    } catch (error) {
+    } catch (error: any) {
       log.error(`Error extracting semantic variables: ${error.message}`);
       return [];
     }
@@ -881,11 +881,11 @@ class ClinicalIntelligenceService {
         this.semanticConnectionCache.set(documentId, connections);
 
         return connections;
-      } catch (error) {
+      } catch (error: any) {
         log.error(`Error parsing connections response: ${error.message}`);
         return [];
       }
-    } catch (error) {
+    } catch (error: any) {
       log.error(`Error analyzing semantic connections: ${error.message}`);
       return [];
     }
@@ -987,7 +987,7 @@ class ClinicalIntelligenceService {
           [documentId]
         );
       }
-    } catch (error) {
+    } catch (error: any) {
       log.error(`Error in queue processing: ${error}`);
     } finally {
       this.isProcessing = false;
@@ -1076,7 +1076,7 @@ class ClinicalIntelligenceService {
         data_standards: dataStandards,
         regulatory_alignment: regulatoryAlignment,
       };
-    } catch (error) {
+    } catch (error: any) {
       log.error(`Error performing semantic analysis: ${error.message}`);
       return {
         variables: [],
@@ -1159,7 +1159,7 @@ class ClinicalIntelligenceService {
 
       // Parse the response
       return JSON.parse(response);
-    } catch (error) {
+    } catch (error: any) {
       log.error(`Error identifying variable clusters: ${error.message}`);
       return [];
     }
@@ -1217,7 +1217,7 @@ class ClinicalIntelligenceService {
 
       // Parse the response
       return JSON.parse(response);
-    } catch (error) {
+    } catch (error: any) {
       log.error(`Error analyzing causal pathways: ${error.message}`);
       return [];
     }
@@ -1341,7 +1341,7 @@ class ClinicalIntelligenceService {
         cross_document_connections: analysisResult.cross_document_connections || [],
         key_insights: analysisResult.key_insights || [],
       };
-    } catch (error) {
+    } catch (error: any) {
       log.error(`Error in cross-document analysis: ${error.message}`);
       return {
         common_variables: [],
@@ -1386,7 +1386,7 @@ class ClinicalIntelligenceService {
         .limit(10);
 
       // Combine document IDs
-      const csrIds = relevantCSRs.map(csr => csr.report_id);
+      const csrIds = relevantCSRs.map((csr: any) => csr.report_id);
       const cerIds = relevantCERs.map(cer => cer.cer_id);
 
       const documentIds = [...csrIds, ...cerIds];
@@ -1457,7 +1457,7 @@ class ClinicalIntelligenceService {
         endpoint_recommendations: insightsResult.endpoint_recommendations || [],
         design_considerations: insightsResult.design_considerations || [],
       };
-    } catch (error) {
+    } catch (error: any) {
       log.error(`Error generating clinical trial insights: ${error.message}`);
       return {
         key_variables: [],

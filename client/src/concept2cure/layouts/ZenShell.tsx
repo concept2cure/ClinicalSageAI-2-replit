@@ -26,7 +26,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { zenClasses } from '../design/zen';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Menu,
   X,
@@ -41,7 +49,6 @@ import {
   MoreHorizontal,
   PanelRight,
   Brain,
-  ChevronsUpDown,
   Activity,
   Clock3,
   Workflow,
@@ -97,67 +104,78 @@ const ZenHeader: React.FC<ZenHeaderProps> = ({
   <header className="h-12 flex items-center justify-between px-3 border-b border-stone-200 bg-white/80 backdrop-blur-sm">
     {/* Left section */}
     <div className="flex items-center gap-2">
-      <button
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
         onClick={onMenuClick}
-        className={cn(zenClasses.buttonIcon, 'md:hidden')}
+        className="h-8 w-8 md:hidden"
         aria-label="Toggle menu"
       >
         {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-      </button>
+      </Button>
 
       {/* Project indicator */}
       {projectName && (
-        <label className="relative flex items-center gap-2 px-2">
+        <div className="relative flex items-center gap-2 px-2">
           <div className="w-2 h-2 rounded-full bg-stone-600" />
-          <select
-            value={activeProjectId}
-            onChange={e => onProjectChange(e.target.value)}
-            className="appearance-none bg-transparent pr-5 text-sm font-medium text-stone-700 truncate max-w-[220px] outline-none"
-            aria-label="Project switcher"
-          >
-            {projects.map(project => (
-              <option key={project.id} value={project.id}>
-                {project.name}
-              </option>
-            ))}
-          </select>
-          <ChevronsUpDown className="w-3.5 h-3.5 text-stone-400 pointer-events-none absolute right-2" />
-        </label>
+          <Select value={activeProjectId} onValueChange={onProjectChange}>
+            <SelectTrigger
+              className="h-8 w-[220px] border-0 bg-transparent px-0 pr-6 text-sm font-medium text-stone-700 shadow-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0"
+              aria-label="Project switcher"
+            >
+              <SelectValue placeholder={projectName} />
+            </SelectTrigger>
+            <SelectContent>
+              {projects.map(project => (
+                <SelectItem key={project.id} value={project.id}>
+                  {project.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       )}
     </div>
 
     {/* Center - brand (only on mobile when no project) */}
     {!projectName && (
       <div className="flex items-center gap-2 md:hidden">
-        <Sparkles className="w-5 h-5 text-violet-500" />
+        <Sparkles className="w-5 h-5 text-stone-700" />
         <span className="font-semibold text-stone-900">Concept2Cure</span>
       </div>
     )}
 
     {/* Right section */}
     <div className="flex items-center gap-1">
-      <button onClick={onSearchClick} className={zenClasses.buttonIcon} aria-label="Search">
+      <Button type="button" variant="ghost" size="icon" onClick={onSearchClick} className="h-8 w-8" aria-label="Search">
         <Search className="w-4 h-4" />
-      </button>
-      <button
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
         onClick={onToggleRightDrawer}
-        className={cn(zenClasses.buttonIcon, rightDrawerOpen && 'bg-blue-50 text-stone-700')}
+        className={cn('h-8 w-8', rightDrawerOpen && 'bg-stone-100 text-stone-800')}
         aria-label="Toggle right drawer"
       >
         <PanelRight className="w-4 h-4" />
-      </button>
-      <button
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
         onClick={onSettingsClick}
-        className={cn(zenClasses.buttonIcon, 'hidden sm:flex')}
+        className="hidden h-8 w-8 sm:flex"
         aria-label="Settings"
       >
         <Settings className="w-4 h-4" />
-      </button>
-      <button onClick={onProfileClick} className={zenClasses.buttonIcon} aria-label="Profile">
+      </Button>
+      <Button type="button" variant="ghost" size="icon" onClick={onProfileClick} className="h-8 w-8" aria-label="Profile">
         <div className="w-6 h-6 rounded-full bg-stone-800 flex items-center justify-center">
           <span className="text-xs font-medium text-white">U</span>
         </div>
-      </button>
+      </Button>
     </div>
   </header>
 );
@@ -180,7 +198,7 @@ const ContextHeader: React.FC<ContextHeaderProps> = ({ projectName, projectType 
       <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">
         <Activity className="w-3 h-3" /> Live Sync
       </span>
-      <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-stone-700">
+      <span className="inline-flex items-center gap-1 rounded-full bg-stone-100 px-2 py-1 text-stone-700">
         <Clock3 className="w-3 h-3" /> Updated now
       </span>
     </div>
@@ -193,15 +211,17 @@ interface CommandBarProps {
 
 const CommandBar: React.FC<CommandBarProps> = ({ onOpenCommandPalette }) => (
   <div className="border-b border-stone-200 bg-stone-50 px-4 py-2">
-    <button
+    <Button
+      type="button"
+      variant="ghost"
       onClick={onOpenCommandPalette}
-      className="group flex w-full items-center gap-3 rounded-lg border border-stone-200 bg-white px-3 py-2 text-left transition hover:border-stone-300"
+      className="group flex h-auto w-full items-center gap-3 rounded-lg border border-stone-200 bg-white px-3 py-2 text-left transition hover:border-stone-300 hover:bg-white"
       aria-label="Open command bar"
     >
       <Search className="w-4 h-4 text-stone-400" />
       <span className="flex-1 text-sm text-stone-500">Command Bar: Search actions, projects, and workflows…</span>
       <kbd className="rounded border bg-stone-50 px-1.5 py-0.5 text-xs text-stone-500">⌘K</kbd>
-    </button>
+    </Button>
   </div>
 );
 
@@ -221,7 +241,7 @@ const RightDrawer: React.FC<RightDrawerProps> = ({ isOpen }) => {
       <div className="p-4 space-y-3">
         <div className="rounded-lg border border-stone-200 p-3">
           <p className="text-xs text-stone-500 mb-1">Active workflow</p>
-          <p className="text-sm font-medium text-stone-900 inline-flex items-center gap-2"><Workflow className="w-4 h-4 text-blue-600" /> Draft to Submission</p>
+          <p className="text-sm font-medium text-stone-900 inline-flex items-center gap-2"><Workflow className="w-4 h-4 text-stone-700" /> Draft to Submission</p>
         </div>
         <div className="rounded-lg border border-stone-200 p-3">
           <p className="text-xs text-stone-500 mb-1">AnA focus</p>
@@ -290,14 +310,16 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
         )}
         <div className="space-y-0.5">
           {items.map(project => (
-            <button
+            <Button
+              type="button"
+              variant="ghost"
               key={project.id}
               onClick={() => onSelectProject(project.id)}
               className={cn(
                 'w-full flex items-center gap-3 rounded-lg transition-colors duration-150',
                 isCollapsed ? 'justify-center p-2' : 'px-3 py-2',
                 activeProjectId === project.id
-                  ? 'bg-blue-50 text-stone-700'
+                  ? 'bg-stone-100 text-stone-800 hover:bg-stone-100'
                   : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
               )}
               title={isCollapsed ? project.name : undefined}
@@ -306,7 +328,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
                 className={cn(
                   'flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold',
                   activeProjectId === project.id
-                    ? 'bg-blue-100 text-stone-700'
+                    ? 'bg-stone-200 text-stone-800'
                     : 'bg-stone-100 text-stone-600'
                 )}
               >
@@ -320,7 +342,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
                   </div>
                 </div>
               )}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -338,26 +360,31 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
       >
         {!isCollapsed && (
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-violet-500" />
+            <Sparkles className="w-5 h-5 text-stone-700" />
             <span className="font-semibold text-stone-900">Concept2Cure</span>
           </div>
         )}
-        <button
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
           onClick={onToggleCollapse}
-          className={cn(zenClasses.buttonIcon, 'hidden md:flex')}
+          className="hidden h-8 w-8 md:flex"
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           aria-expanded={!isCollapsed}
         >
           {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        </button>
+        </Button>
       </div>
 
       {/* New chat button */}
       <div className={cn('p-2', isCollapsed && 'flex justify-center')}>
-        <button
+        <Button
+          type="button"
           onClick={onNewChat}
+          variant="default"
           className={cn(
-            'flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-150',
+            'flex items-center justify-center gap-2 font-medium transition-all duration-150',
             isCollapsed
               ? 'w-10 h-10 bg-stone-800 text-white hover:bg-stone-900'
               : 'w-full px-4 py-2.5 bg-stone-800 text-white hover:bg-stone-900'
@@ -365,7 +392,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
         >
           <Plus className="w-4 h-4" />
           {!isCollapsed && <span>New chat</span>}
-        </button>
+        </Button>
       </div>
 
       {/* Projects list */}
@@ -375,7 +402,9 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
         {renderProjectGroup('Older', olderProjects)}
 
         {/* New project button */}
-        <button
+        <Button
+          type="button"
+          variant="ghost"
           onClick={onNewProject}
           className={cn(
             'w-full flex items-center gap-3 rounded-lg text-stone-500 hover:bg-stone-100 hover:text-stone-700 transition-colors duration-150',
@@ -386,14 +415,16 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
             <Plus className="w-4 h-4" />
           </div>
           {!isCollapsed && <span className="text-sm font-medium">New project</span>}
-        </button>
+        </Button>
       </div>
 
       {/* Sidebar footer */}
       <div
         className={cn('border-t border-stone-200 p-2', isCollapsed && 'flex flex-col items-center')}
       >
-        <button
+        <Button
+          type="button"
+          variant="ghost"
           className={cn(
             'w-full flex items-center gap-3 rounded-lg text-stone-600 hover:bg-stone-100 hover:text-stone-900 transition-colors duration-150',
             isCollapsed ? 'justify-center p-2' : 'px-3 py-2'
@@ -401,7 +432,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
         >
           <Settings className="w-5 h-5" />
           {!isCollapsed && <span className="text-sm">Settings</span>}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -585,12 +616,12 @@ const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({ isOpen, onClose }
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-stone-200">
           <Search className="w-5 h-5 text-stone-400" />
-          <input
+          <Input
             type="text"
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Search commands..."
-            className="flex-1 text-base bg-transparent border-none outline-none text-stone-900 placeholder:text-stone-400"
+            className="h-auto flex-1 border-0 bg-transparent px-0 py-0 text-base text-stone-900 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
             autoFocus
           />
           <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-1 text-xs text-stone-400 bg-stone-100 rounded">
@@ -604,7 +635,9 @@ const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({ isOpen, onClose }
             <div className="px-4 py-8 text-center text-stone-500">No commands found</div>
           ) : (
             filteredCommands.map((cmd, index) => (
-              <button
+              <Button
+                type="button"
+                variant="ghost"
                 key={cmd.id}
                 onClick={() => {
                   cmd.action();
@@ -613,14 +646,14 @@ const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({ isOpen, onClose }
                 className={cn(
                   'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none',
                   index === selectedIndex
-                    ? 'bg-blue-50 text-stone-700'
+                    ? 'bg-stone-100 text-stone-800 hover:bg-stone-100'
                     : 'text-stone-700 hover:bg-stone-50'
                 )}
               >
                 <span className="flex-shrink-0 text-stone-500">{cmd.icon}</span>
                 <span className="flex-1 text-sm font-medium">{cmd.title}</span>
                 {cmd.shortcut && <kbd className="text-xs text-stone-400">{cmd.shortcut}</kbd>}
-              </button>
+              </Button>
             ))
           )}
         </div>
@@ -732,14 +765,15 @@ export const ZenShell: React.FC<ZenShellProps> = ({ children }) => {
       </div>
 
       {/* Persistent AnA Access */}
-      <button
+      <Button
+        type="button"
         onClick={() => setCommandPaletteOpen(true)}
         className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full bg-stone-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-stone-800"
         aria-label="Persistent AnA access"
       >
         <Brain className="h-4 w-4" />
         <span>AnA</span>
-      </button>
+      </Button>
 
       {/* Command palette */}
       <ZenCommandPalette isOpen={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />

@@ -432,6 +432,7 @@ export function SubmissionBuilder({
       a => a.title.toLowerCase().includes(q) || a.ctdSection?.toLowerCase().includes(q),
     );
   }, [unassignedArtifacts, searchQuery]);
+  const packageGenerationBlocked = stats.requiredMissing > 0;
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -465,10 +466,21 @@ export function SubmissionBuilder({
           </button>
           <button
             onClick={onGeneratePackage}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-stone-800 rounded-md hover:bg-stone-900 transition-colors duration-150"
+            disabled={packageGenerationBlocked}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors duration-150',
+              packageGenerationBlocked
+                ? 'text-stone-400 bg-stone-100 cursor-not-allowed'
+                : 'text-white bg-stone-800 hover:bg-stone-900'
+            )}
+            title={
+              packageGenerationBlocked
+                ? 'Resolve missing required sections before generating package manifest'
+                : 'Generate package manifest (JSON)'
+            }
           >
             <Download className="h-3.5 w-3.5" />
-            Generate Package
+            Generate Manifest
           </button>
           {onClose && (
             <button onClick={onClose} aria-label="Close submission builder" title="Close" className="p-1.5 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none">
@@ -509,6 +521,9 @@ export function SubmissionBuilder({
           <span className="text-slate-400">
             {stats.total} required sections
           </span>
+        </div>
+        <div className="mt-2 text-[11px] text-slate-500">
+          Current beta output is a package manifest for review and downstream handoff — not direct agency submission.
         </div>
       </div>
 

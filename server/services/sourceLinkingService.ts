@@ -46,14 +46,25 @@ const CLAIM_PATTERNS = [
 /**
  * Classifies the type of source a claim sentence likely references.
  */
-function classifySourceType(sentence: string): 'trial_data' | 'literature' | 'regulatory_guidance' | 'internal_data' {
-  if (/\bNCT\d{8}\b/i.test(sentence) || /\b(phase\s+[I1-4]|clinical trial|study arm|randomized)\b/i.test(sentence)) {
+function classifySourceType(
+  sentence: string
+): 'trial_data' | 'literature' | 'regulatory_guidance' | 'internal_data' {
+  if (
+    /\bNCT\d{8}\b/i.test(sentence) ||
+    /\b(phase\s+[I1-4]|clinical trial|study arm|randomized)\b/i.test(sentence)
+  ) {
     return 'trial_data';
   }
-  if (/\b(FDA|EMA|ICH|ISO|21\s*CFR|MDR|IVDR|GCP|GMP|GLP|regulation|guideline|guidance)\b/i.test(sentence)) {
+  if (
+    /\b(FDA|EMA|ICH|ISO|21\s*CFR|MDR|IVDR|GCP|GMP|GLP|regulation|guideline|guidance)\b/i.test(
+      sentence
+    )
+  ) {
     return 'regulatory_guidance';
   }
-  if (/\b(et\s+al|journal|published|meta-analysis|systematic review|peer-reviewed)\b/i.test(sentence)) {
+  if (
+    /\b(et\s+al|journal|published|meta-analysis|systematic review|peer-reviewed)\b/i.test(sentence)
+  ) {
     return 'literature';
   }
   return 'internal_data';
@@ -93,7 +104,7 @@ function hashCode(str: string): string {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash |= 0;
   }
   return Math.abs(hash).toString(36);
@@ -120,7 +131,10 @@ function splitIntoSentences(text: string): string[] {
  * Strips HTML tags from content.
  */
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  return html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /**
@@ -133,11 +147,13 @@ function extractPlainText(content: string): string {
   try {
     const parsed = JSON.parse(content);
     if (Array.isArray(parsed)) {
-      return parsed.map((section: any) => {
-        const title = section.title || section.heading || '';
-        const body = section.content || section.text || section.body || '';
-        return `${title} ${stripHtml(body)}`;
-      }).join(' ');
+      return parsed
+        .map((section: any) => {
+          const title = section.title || section.heading || '';
+          const body = section.content || section.text || section.body || '';
+          return `${title} ${stripHtml(body)}`;
+        })
+        .join(' ');
     }
     if (typeof parsed === 'object') {
       const parts: string[] = [];
@@ -169,11 +185,16 @@ function generateSourceTitle(sentence: string, sourceType: string, sourceId: str
   if (/^ICH/i.test(sourceId)) return `ICH Guideline ${sourceId}`;
 
   switch (sourceType) {
-    case 'trial_data': return 'Clinical Trial Data Reference';
-    case 'literature': return 'Published Literature Reference';
-    case 'regulatory_guidance': return 'Regulatory Guidance Reference';
-    case 'internal_data': return 'Internal Data Reference';
-    default: return 'Source Reference';
+    case 'trial_data':
+      return 'Clinical Trial Data Reference';
+    case 'literature':
+      return 'Published Literature Reference';
+    case 'regulatory_guidance':
+      return 'Regulatory Guidance Reference';
+    case 'internal_data':
+      return 'Internal Data Reference';
+    default:
+      return 'Source Reference';
   }
 }
 
@@ -253,7 +274,11 @@ export async function linkSources(
     }
   }
 
-  logger.info('Source analysis complete', { documentId, claimsFound: results.length, totalSentences: sentences.length });
+  logger.info('Source analysis complete', {
+    documentId,
+    claimsFound: results.length,
+    totalSentences: sentences.length,
+  });
   return results;
 }
 
@@ -278,33 +303,21 @@ export async function getSourcesForDocument(
 /**
  * Add a single source link (manual or from analysis).
  */
-export async function addSourceLink(
-  link: InsertSourceCitation
-): Promise<SourceCitation> {
-  const [inserted] = await db
-    .insert(sourceCitations)
-    .values(link)
-    .returning();
+export async function addSourceLink(link: InsertSourceCitation): Promise<SourceCitation> {
+  const typedLink = link as typeof sourceCitations.$inferInsert;
+  const [inserted] = await db.insert(sourceCitations).values(typedLink).returning();
 
-  logger.info('Source link added', { id: inserted.id, documentId: link.documentId });
+  logger.info('Source link added', { id: inserted.id, documentId: typedLink.documentId });
   return inserted;
 }
 
 /**
  * Remove a source link (tenant-isolated).
  */
-export async function removeSourceLink(
-  linkId: number,
-  organizationId: number
-): Promise<void> {
+export async function removeSourceLink(linkId: number, organizationId: number): Promise<void> {
   const result = await db
     .delete(sourceCitations)
-    .where(
-      and(
-        eq(sourceCitations.id, linkId),
-        eq(sourceCitations.organizationId, organizationId)
-      )
-    )
+    .where(and(eq(sourceCitations.id, linkId), eq(sourceCitations.organizationId, organizationId)))
     .returning();
 
   if (result.length === 0) {

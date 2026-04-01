@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAuthToken, clearAuthToken } from './authToken';
 
 /**
  * Pre-configured axios instance for API requests
@@ -15,9 +16,9 @@ const api = axios.create({
   },
 });
 
-// Add token from localStorage to requests if available
+// Add token from session storage to requests if available
 api.interceptors.request.use(config => {
-  const token = localStorage.getItem('token');
+  const token = getAuthToken();
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -34,7 +35,7 @@ api.interceptors.response.use(
       // Handle authentication errors
       if (error.response.status === 401) {
         // If token is invalid or expired, clear it
-        localStorage.removeItem('token');
+        clearAuthToken();
 
         // Only redirect to login if not already on the login page
         if (window.location.pathname !== '/auth') {

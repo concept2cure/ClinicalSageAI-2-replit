@@ -1278,7 +1278,7 @@ registerTool({
           id: `prec-cmp-${Date.now()}`,
           title: `Comparison vs ${comparison.precedent.clearanceNumber || comparison.precedent.id}`,
           status: 'generated',
-          data: comparison,
+          data: comparison as unknown as Record<string, unknown>,
         },
         summary: `Compared against ${comparison.precedent.clearanceNumber}: ${Math.round(comparison.overallScore * 100)}% match, risk=${comparison.riskLevel}`,
         message: {
@@ -1347,7 +1347,7 @@ registerTool({
           id: `prec-risk-${Date.now()}`,
           title: 'Regulatory Risk Analysis',
           status: 'generated',
-          data: analysis,
+          data: analysis as unknown as Record<string, unknown>,
         },
         summary: `Risk: ${analysis.overallRisk} (score ${Math.round(analysis.riskScore * 100)}%), ${analysis.factors.length} factors, ${analysis.safetySignals.length} safety signals`,
         message: {
@@ -1412,7 +1412,7 @@ registerTool({
           id: `prec-strat-${Date.now()}`,
           title: 'Submission Strategy Recommendation',
           status: 'generated',
-          data: strategy,
+          data: strategy as unknown as Record<string, unknown>,
         },
         summary: `Recommended: "${strategy.recommendedStrategy}" (${Math.round(strategy.confidence * 100)}% confidence), ${strategy.supportingPrecedents.length} supporting precedents`,
         message: {

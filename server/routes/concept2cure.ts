@@ -36,15 +36,19 @@ import * as metricsModule from '../metrics.js';
 import { authMiddleware } from '../auth';
 import { requireOrganizationContext, tenantContextMiddleware } from '../middleware/tenantContext';
 import { createRedisRateLimiter } from '../middleware/redisRateLimiter';
+import { cacheResponse } from '../middleware/enterprise-performance';
 import DOMPurifyImport from 'isomorphic-dompurify';
 const DOMPurify = (DOMPurifyImport as any).default || DOMPurifyImport;
 import multer from 'multer';
 import path from 'path';
+import { type GovernedDocumentActionContract } from '../../shared/types/document-contract';
 import {
   regulatoryAuditLogs,
   projects,
   users,
   organizationUsers,
+  projectMembers,
+  projectVisibilitySettings,
   concept2cureConversations,
   concept2cureMessages,
   concept2cureArtifacts,
@@ -69,8 +73,13 @@ import {
 import * as crypto from 'crypto';
 import { guardEmptyContent, guardDemoContent } from '../middleware/documentLoopGuards';
 import { computeConversationHealth } from '../services/conversation-health.js';
-import { interceptComplianceScan, interceptArtifactChange, interceptFeedback } from '../services/intelligence/rim-interceptors.js';
+import {
+  interceptComplianceScan,
+  interceptArtifactChange,
+  interceptFeedback,
+} from '../services/intelligence/rim-interceptors.js';
 import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
+import { resolveGovernedContext } from '../services/concept2cure/governedDocumentContractService';
 import {
   buildWorkingMemoryPrompt,
   storeWorkingMemory,
@@ -78,6 +87,22 @@ import {
   formatWorkingMemoryForPrompt,
   needsWorkingMemoryRefresh,
 } from '../services/working-memory.js';
+import {
+  COMMUNICATION_VISIBILITY_TIERS,
+  PUBLISHOPS_SERVICE_STATES,
+  type AgencyCommunicationEventRecord,
+  type AuthorityProfileRecord,
+  type PublishOpsServiceRecord,
+  type CommunicationVisibilityTier,
+} from '../../shared/types/communication-center';
+import {
+  applyProjectSharingState,
+  canEditProject,
+  canManageProject,
+  canUseProject,
+  getProjectSharingState,
+  type ProjectActorRole,
+} from '../services/project-sharing-access';
 
 const logger = createScopedLogger('concept2cure-api');
 const router = Router();
@@ -171,7 +196,7 @@ async function ensureCommunicationCenterTables(): Promise<void> {
   if (communicationCenterSchemaCheck === 'ready') return;
   if (communicationCenterSchemaCheck === 'missing') {
     throw new Error(
-      'Communication Center persistence tables are missing. Run migrations 20260331_communication_center_scaffold.sql and 20260401_submission_center_items.sql'
+      'Communication Center persistence tables are missing. Run migration 20260331_communication_center_scaffold.sql'
     );
   }
   const result = await pool.query(
@@ -179,27 +204,55 @@ async function ensureCommunicationCenterTables(): Promise<void> {
        FROM information_schema.tables
       WHERE table_schema = 'public'
         AND table_name = ANY($1::text[])`,
-    [[
-      'concept2cure_authority_profiles',
-      'concept2cure_agency_communications',
-      'concept2cure_publishops_services',
-      'concept2cure_submission_center_items',
-    ]]
+    [
+      [
+        'concept2cure_authority_profiles',
+        'concept2cure_agency_communications',
+        'concept2cure_publishops_services',
+      ],
+    ]
   );
   const found = new Set(result.rows.map((r: any) => r.table_name));
   const missing = [
     'concept2cure_authority_profiles',
     'concept2cure_agency_communications',
     'concept2cure_publishops_services',
-    'concept2cure_submission_center_items',
   ].filter(t => !found.has(t));
   if (missing.length > 0) {
     communicationCenterSchemaCheck = 'missing';
     throw new Error(
-      `Communication Center persistence tables missing: ${missing.join(', ')}. Run migrations 20260331_communication_center_scaffold.sql and 20260401_submission_center_items.sql`
+      `Communication Center persistence tables missing: ${missing.join(
+        ', '
+      )}. Run migration 20260331_communication_center_scaffold.sql`
     );
   }
   communicationCenterSchemaCheck = 'ready';
+}
+
+function parseProjectParam(projectParam: string): number {
+  const numericId = Number.parseInt(projectParam.replace('proj_', ''), 10);
+  if (!Number.isFinite(numericId) || numericId <= 0) {
+    throw new Error('Invalid project ID');
+  }
+  return numericId;
+}
+
+function canViewVisibilityTier(
+  visibilityTier: CommunicationVisibilityTier,
+  userRole?: string
+): boolean {
+  const role = (userRole || '').toLowerCase();
+  if (!COMMUNICATION_VISIBILITY_TIERS.includes(visibilityTier)) return false;
+  if (visibilityTier === 'restricted_legal_sensitive') {
+    return ['admin', 'owner', 'compliance', 'legal'].some(r => role.includes(r));
+  }
+  if (visibilityTier === 'publishops_only') {
+    return role.includes('publishops') || role.includes('admin');
+  }
+  if (visibilityTier === 'c2c_internal') {
+    return role.includes('c2c') || role.includes('admin');
+  }
+  return true;
 }
 
 function communicationCenterErrorStatus(error: unknown): number {
@@ -535,8 +588,8 @@ function normalizeKnowledge(settings: Record<string, unknown>): ProjectKnowledge
     typeof settings.customInstructions === 'string'
       ? settings.customInstructions
       : typeof knowledge.customInstructions === 'string'
-        ? knowledge.customInstructions
-        : '';
+      ? knowledge.customInstructions
+      : '';
   const context = typeof knowledge.context === 'string' ? knowledge.context : '';
 
   return {
@@ -567,7 +620,17 @@ function estimateTokensFromBytes(bytes: number): number {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Legacy enum kept for backward compat — still accepted in createProjectSchema */
-const LEGACY_SUBMISSION_TYPES = ['510K', 'FDA_510K', 'IND', 'NDA', 'BLA', 'MAA', 'PMA', 'DE_NOVO', 'EUA'] as const;
+const LEGACY_SUBMISSION_TYPES = [
+  '510K',
+  'FDA_510K',
+  'IND',
+  'NDA',
+  'BLA',
+  'MAA',
+  'PMA',
+  'DE_NOVO',
+  'EUA',
+] as const;
 
 /**
  * SubmissionTypeEnum — accepts either a known legacy type or any non-empty string.
@@ -579,28 +642,31 @@ const SubmissionTypeEnum = z
   .max(50)
   .transform(val => (val === 'FDA_510K' ? '510K' : val));
 
-
 // Submission-type-specific default instruction templates
 const submissionTypeInstructionTemplates: Record<string, (product: string) => string> = {
-  '510K': (product) =>
+  '510K': product =>
     `You are an FDA 510(k) regulatory expert for ${product}. Focus on substantial equivalence analysis, predicate device comparison, performance data requirements, and 510(k) submission readiness. Reference all project documents, predicate device information, and intelligence when responding.`,
-  IND: (product) =>
+  IND: product =>
     `You are an FDA IND (Investigational New Drug) regulatory expert for ${product}. Focus on preclinical data requirements, clinical trial protocol design, CMC (Chemistry, Manufacturing, and Controls) documentation, and IND submission strategy. Reference all project documents and intelligence when responding.`,
-  NDA: (product) =>
+  NDA: product =>
     `You are an FDA NDA (New Drug Application) regulatory expert for ${product}. Focus on clinical efficacy and safety data, labeling strategy, risk-benefit analysis, CMC compliance, and NDA submission readiness. Reference all project documents and intelligence when responding.`,
-  BLA: (product) =>
+  BLA: product =>
     `You are an FDA BLA (Biologics License Application) regulatory expert for ${product}. Focus on biological product characterization, manufacturing process validation, clinical immunogenicity data, and BLA submission strategy. Reference all project documents and intelligence when responding.`,
-  MAA: (product) =>
+  MAA: product =>
     `You are an EMA MAA (Marketing Authorisation Application) regulatory expert for ${product}. Focus on EU regulatory requirements, CTD Module structure, scientific advice alignment, and MAA submission readiness across EU member states. Reference all project documents and intelligence when responding.`,
-  PMA: (product) =>
+  PMA: product =>
     `You are an FDA PMA (Premarket Approval) regulatory expert for ${product}. Focus on clinical evidence requirements, device safety and effectiveness, manufacturing quality systems, and PMA submission strategy. Reference all project documents and intelligence when responding.`,
-  DE_NOVO: (product) =>
+  DE_NOVO: product =>
     `You are an FDA De Novo classification regulatory expert for ${product}. Focus on risk-benefit analysis for novel devices, classification rationale, special controls development, and De Novo submission readiness. Reference all project documents and intelligence when responding.`,
-  EUA: (product) =>
+  EUA: product =>
     `You are an FDA EUA (Emergency Use Authorization) regulatory expert for ${product}. Focus on known and potential benefits vs. risks, available alternatives analysis, emergency use criteria, and EUA submission strategy. Reference all project documents and intelligence when responding.`,
 };
 
-function generateDefaultCustomInstructions(submissionType: string, product?: string | null, projectName?: string): string {
+function generateDefaultCustomInstructions(
+  submissionType: string,
+  product?: string | null,
+  projectName?: string
+): string {
   const productLabel = product || projectName || 'this product';
   const templateFn = submissionTypeInstructionTemplates[submissionType];
   if (templateFn) {
@@ -620,7 +686,10 @@ const createProjectSchema = z.object({
   region: z.string().max(100).optional(),
   pinned: z.boolean().optional(),
   targetAgency: z.string().max(50).optional(),
-  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Invalid hex color').optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, 'Invalid hex color')
+    .optional(),
   /** New: canonical registry ID (e.g., 'US_IND', 'EU_MAA') — takes precedence over submissionType for bootstrap */
   registryId: z.string().max(50).optional(),
   /** New: registry-driven metadata fields */
@@ -634,6 +703,15 @@ const createProjectSchema = z.object({
 });
 
 const updateProjectSchema = createProjectSchema.partial();
+
+const projectVisibilitySchema = z.object({
+  visibility: z.enum(['private', 'org_public']),
+});
+
+const upsertProjectMemberSchema = z.object({
+  userId: z.number().int().positive(),
+  role: z.enum(['use', 'edit']),
+});
 
 const updateKnowledgeSchema = z
   .object({
@@ -660,6 +738,15 @@ const ownershipPreferencesSchema = z
       .optional(),
   })
   .partial();
+
+const projectCollaboratorSchema = z.object({
+  userId: z.number().int().positive(),
+  permission: z.enum(['can_use', 'can_edit']),
+});
+
+const updateProjectCollaboratorsSchema = z.object({
+  collaborators: z.array(projectCollaboratorSchema).max(100),
+});
 
 const errorLogSchema = z.object({
   id: z.string().min(1),
@@ -725,8 +812,80 @@ const createArtifactSchema = z.object({
   category: z.enum(['document', 'interactive', 'visualization', 'source', 'evidence']),
   title: z.string().min(1, 'Title required').max(200),
   content: z.string().min(1, 'Content must not be empty').max(1000000, 'Content too large'), // 1MB max, no empty
+  templateId: z.string().min(1).max(200).optional(),
   ctdSection: z.string().max(50).optional(),
   metadata: z.record(z.any()).optional(),
+  clientTrack: z.enum(['biotech', 'device', 'diagnostics']).optional(),
+  submissionProgram: z.enum(['ind', 'ectd', '510k', 'pma', 'cer', 'ivdr', 'general_ri']).optional(),
+  persona: z
+    .enum(['regulatory', 'medical_writer', 'cmc', 'clinical', 'qa', 'executive', 'cro'])
+    .optional(),
+  regulatorScope: z.enum(['fda', 'ema', 'mhra', 'hc', 'pmda', 'multi']).optional(),
+  evidenceMode: z
+    .enum(['csr', 'literature', 'predicate', 'cmc_source', 'test_data', 'mixed'])
+    .optional(),
+  documentClass: z
+    .enum([
+      'strategy_memo',
+      'evidence_memo',
+      'section_draft',
+      'module3_output',
+      'submission_component',
+      'audit_report',
+      'comparator_summary',
+      'risk_benefit',
+      'protocol_rationale',
+      'regional_differences',
+      'safety_evidence_brief',
+      'endpoint_justification',
+    ])
+    .optional(),
+  readinessGate: z
+    .enum(['exploratory', 'internal_review', 'submission_candidate', 'inspection_ready'])
+    .optional(),
+  approvalPathType: z
+    .enum(['single_reviewer', 'regulated_dual_review', 'qa_lock', 'signoff_required'])
+    .optional(),
+  recommendationSource: z
+    .enum([
+      'ana_ri',
+      'cmc_builder',
+      'cerv2_510k',
+      'cerv2_pma',
+      'cerv2_cer',
+      'ectd_compiler',
+      'ind_autodraft',
+      'report_engine',
+    ])
+    .optional(),
+  originSurface: z
+    .enum([
+      'ri_copilot',
+      'ectd_coauthor',
+      'ind_workspace',
+      'cmc_workspace',
+      'cerv2_device',
+      'editor_panel',
+      'api_route',
+      'import_pipeline',
+      'system',
+      'project_workspace_shell',
+      'ai_orchestrator',
+    ])
+    .optional(),
+  workspaceTarget: z.enum(['project', 'dossier', 'vault']).optional(),
+  dossierContainerId: z.string().optional(),
+  artifactContainerId: z.string().optional(),
+  regulatorIntent: z
+    .enum([
+      'submission_authoring',
+      'evidence_analysis',
+      'strategy',
+      'comparison',
+      'qa_review',
+      'inspection_support',
+    ])
+    .optional(),
 });
 
 const createSignatureSchema = z.object({
@@ -814,6 +973,7 @@ interface ProjectOwnership {
   documentInventory: UploadedDocument[];
   vaultLinkedFilesEvidence: UploadedDocument[];
   projectInstructions: string;
+  ownershipTeam?: Array<{ userId: number; permission: 'can_use' | 'can_edit' }>;
   connectedAppsContext: string;
   reusableSnippetsKnowledge: string[];
   reports: string[];
@@ -843,6 +1003,9 @@ function buildProjectOwnership(
     projectInstructions:
       (typeof settings.customInstructions === 'string' ? settings.customInstructions : '') ||
       (typeof ownership.projectInstructions === 'string' ? ownership.projectInstructions : ''),
+    ownershipTeam: Array.isArray(ownership.ownershipTeam)
+      ? (ownership.ownershipTeam as Array<{ userId: number; permission: 'can_use' | 'can_edit' }>)
+      : [],
     connectedAppsContext: (() => {
       const apps = normalizeConnectedApps(settings);
       return apps
@@ -920,7 +1083,314 @@ function getClientWorkspaceId(req: Request): number {
         : parseInt(String(ctx.clientWorkspaceId), 10);
     if (!isNaN(id)) return id;
   }
+  // Dev fallback: return default workspace 1 so routes work without full tenant setup
+  if (process.env.NODE_ENV !== 'production') {
+    return 1;
+  }
   throw new Error('Client workspace context required');
+}
+
+function getActorRole(req: Request): ProjectActorRole {
+  const normalized = (req.userRole || 'member').toLowerCase() as ProjectActorRole;
+  return normalized || 'member';
+}
+
+function isMissingTableError(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: string }).code === '42P01'
+  );
+}
+
+function getProjectScope(projectParam: string): { numericId: number } | null {
+  const projectId = projectParam.replace('proj_', '');
+  const numericId = parseInt(projectId, 10);
+  if (isNaN(numericId)) {
+    return null;
+  }
+  return { numericId };
+}
+
+async function loadProjectAccessRow(params: {
+  organizationId: number;
+  clientWorkspaceId: number;
+  projectId: number;
+  userId: number;
+  actorRole: ProjectActorRole;
+}): Promise<{
+  project: {
+    id: number;
+    name: string;
+    description: string | null;
+    metadata: unknown;
+    status: string;
+    organizationId: number;
+    createdById: number | null;
+    ownerId: number | null;
+    settings: unknown;
+    createdAt: Date;
+    updatedAt: Date;
+  } | null;
+  legacyFallbackApplied: boolean;
+}> {
+  const [project] = await db
+    .select({
+      id: projects.id,
+      name: projects.name,
+      description: projects.description,
+      metadata: projects.metadata,
+      status: projects.status,
+      organizationId: projects.organizationId,
+      createdById: projects.createdById,
+      ownerId: projects.ownerId,
+      settings: projects.settings,
+      createdAt: projects.createdAt,
+      updatedAt: projects.updatedAt,
+    })
+    .from(projects)
+    .where(
+      and(
+        eq(projects.id, params.projectId),
+        eq(projects.organizationId, params.organizationId),
+        eq(projects.clientWorkspaceId, params.clientWorkspaceId)
+      )
+    )
+    .limit(1);
+
+  if (!project) {
+    return { project: null, legacyFallbackApplied: false };
+  }
+
+  const sharing = await loadProjectSharingState(project.id, params.organizationId, project);
+  const settingsWithSharing = applyProjectSharingState(
+    normalizeProjectSettings(project.settings),
+    sharing
+  );
+  const hasAccess = canUseProject({
+    actor: { userId: params.userId, orgRole: params.actorRole },
+    project: {
+      createdById: project.createdById ?? null,
+      ownerId: project.ownerId ?? null,
+      settings: settingsWithSharing,
+    },
+  });
+
+  if (!hasAccess) {
+    return { project: null, legacyFallbackApplied: sharing.legacyFallbackApplied };
+  }
+
+  return { project, legacyFallbackApplied: sharing.legacyFallbackApplied };
+}
+
+async function loadProjectSharingState(
+  projectId: number,
+  organizationId: number,
+  project?: { ownerId: number | null; createdById: number | null; settings: unknown }
+) {
+  const fallback = getProjectSharingState({
+    settings: normalizeProjectSettings(project?.settings),
+    ownerId: project?.ownerId ?? null,
+    createdById: project?.createdById ?? null,
+  });
+
+  try {
+    const [[visibility], members] = await Promise.all([
+      db
+        .select({ visibility: projectVisibilitySettings.visibility })
+        .from(projectVisibilitySettings)
+        .where(
+          and(
+            eq(projectVisibilitySettings.projectId, projectId),
+            eq(projectVisibilitySettings.organizationId, organizationId)
+          )
+        )
+        .limit(1),
+      db
+        .select({
+          userId: projectMembers.userId,
+          role: projectMembers.role,
+          status: projectMembers.status,
+          invitedById: projectMembers.invitedById,
+          acceptedAt: projectMembers.acceptedAt,
+        })
+        .from(projectMembers)
+        .where(
+          and(
+            eq(projectMembers.projectId, projectId),
+            eq(projectMembers.organizationId, organizationId),
+            eq(projectMembers.status, 'active')
+          )
+        ),
+    ]);
+
+    return getProjectSharingState({
+      settings: {
+        projectSharing: {
+          visibility: visibility?.visibility ?? fallback.visibility,
+          members: members.map(m => ({
+            userId: m.userId,
+            role: m.role,
+            status: m.status,
+            addedById: m.invitedById ?? null,
+            addedAt: m.acceptedAt?.toISOString() ?? new Date().toISOString(),
+          })),
+        },
+      },
+      ownerId: project?.ownerId ?? null,
+      createdById: project?.createdById ?? null,
+    });
+  } catch (error) {
+    if (isMissingTableError(error)) {
+      return fallback;
+    }
+    throw error;
+  }
+}
+
+async function loadProjectSharingStateMap(
+  organizationId: number,
+  projectRows: Array<{
+    id: number;
+    ownerId: number | null;
+    createdById: number | null;
+    settings: unknown;
+  }>
+): Promise<Map<number, ReturnType<typeof getProjectSharingState>>> {
+  const sharingByProjectId = new Map<number, ReturnType<typeof getProjectSharingState>>();
+  if (projectRows.length === 0) {
+    return sharingByProjectId;
+  }
+
+  const fallbackByProjectId = new Map<number, ReturnType<typeof getProjectSharingState>>();
+  for (const row of projectRows) {
+    fallbackByProjectId.set(
+      row.id,
+      getProjectSharingState({
+        settings: normalizeProjectSettings(row.settings),
+        ownerId: row.ownerId ?? null,
+        createdById: row.createdById ?? null,
+      })
+    );
+  }
+
+  try {
+    const projectIds = projectRows.map(p => p.id);
+    const [visibilityRows, memberRows] = await Promise.all([
+      db
+        .select({
+          projectId: projectVisibilitySettings.projectId,
+          visibility: projectVisibilitySettings.visibility,
+        })
+        .from(projectVisibilitySettings)
+        .where(
+          and(
+            eq(projectVisibilitySettings.organizationId, organizationId),
+            inArray(projectVisibilitySettings.projectId, projectIds)
+          )
+        ),
+      db
+        .select({
+          projectId: projectMembers.projectId,
+          userId: projectMembers.userId,
+          role: projectMembers.role,
+          status: projectMembers.status,
+          invitedById: projectMembers.invitedById,
+          acceptedAt: projectMembers.acceptedAt,
+        })
+        .from(projectMembers)
+        .where(
+          and(
+            eq(projectMembers.organizationId, organizationId),
+            inArray(projectMembers.projectId, projectIds),
+            eq(projectMembers.status, 'active')
+          )
+        ),
+    ]);
+
+    const visibilityByProjectId = new Map<number, 'private' | 'org_public'>();
+    for (const row of visibilityRows) {
+      visibilityByProjectId.set(row.projectId, row.visibility as 'private' | 'org_public');
+    }
+
+    const membersByProjectId = new Map<
+      number,
+      Array<{
+        userId: number;
+        role: string;
+        status: string;
+        invitedById: number | null;
+        acceptedAt: Date | null;
+      }>
+    >();
+    for (const row of memberRows) {
+      const list = membersByProjectId.get(row.projectId) || [];
+      list.push({
+        userId: row.userId,
+        role: row.role,
+        status: row.status,
+        invitedById: row.invitedById ?? null,
+        acceptedAt: row.acceptedAt ?? null,
+      });
+      membersByProjectId.set(row.projectId, list);
+    }
+
+    for (const row of projectRows) {
+      const fallback = fallbackByProjectId.get(row.id)!;
+      const members = membersByProjectId.get(row.id);
+      sharingByProjectId.set(
+        row.id,
+        getProjectSharingState({
+          settings: {
+            projectSharing: {
+              visibility: visibilityByProjectId.get(row.id) ?? fallback.visibility,
+              members:
+                members?.map(m => ({
+                  userId: m.userId,
+                  role: m.role,
+                  status: m.status,
+                  addedById: m.invitedById ?? null,
+                  addedAt: m.acceptedAt?.toISOString() ?? new Date().toISOString(),
+                })) ?? fallback.members,
+            },
+          },
+          ownerId: row.ownerId ?? null,
+          createdById: row.createdById ?? null,
+        })
+      );
+    }
+  } catch (error) {
+    if (!isMissingTableError(error)) {
+      throw error;
+    }
+    for (const row of projectRows) {
+      sharingByProjectId.set(row.id, fallbackByProjectId.get(row.id)!);
+    }
+  }
+
+  return sharingByProjectId;
+}
+
+function buildProjectSharingResponse(
+  projectId: number,
+  sharing: ReturnType<typeof getProjectSharingState>,
+  legacyFallbackApplied?: boolean
+) {
+  return {
+    projectId: `proj_${projectId}`,
+    visibility: sharing.visibility,
+    legacyFallbackApplied: legacyFallbackApplied ?? sharing.legacyFallbackApplied,
+    members: sharing.members
+      .filter(m => m.status !== 'revoked')
+      .map(m => ({
+        userId: m.userId,
+        role: m.role,
+        status: m.status ?? 'active',
+        addedById: m.addedById ?? null,
+        addedAt: m.addedAt ?? null,
+      })),
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -996,7 +1466,10 @@ async function getOwnershipDerivationData(
   activitiesByProject: Map<number, AuditEntry[]>;
 }> {
   const approvalsByProject = new Map<number, Array<Record<string, unknown>>>();
-  const reviewTasksByProject = new Map<number, Array<{ status: string | null; taskType: string | null }>>();
+  const reviewTasksByProject = new Map<
+    number,
+    Array<{ status: string | null; taskType: string | null }>
+  >();
   const reportsByProject = new Map<number, OwnershipReportRef[]>();
   const activitiesByProject = new Map<number, AuditEntry[]>();
 
@@ -1014,7 +1487,10 @@ async function getOwnershipDerivationData(
       signatureHash: concept2cureSignatures.signatureHash,
     })
     .from(concept2cureSignatures)
-    .innerJoin(concept2cureArtifacts, eq(concept2cureSignatures.artifactId, concept2cureArtifacts.id))
+    .innerJoin(
+      concept2cureArtifacts,
+      eq(concept2cureSignatures.artifactId, concept2cureArtifacts.id)
+    )
     .where(
       and(
         inArray(concept2cureArtifacts.projectId, projectIds),
@@ -1093,7 +1569,10 @@ async function getOwnershipDerivationData(
       createdAt: concept2cureSubmissionSnapshots.createdAt,
     })
     .from(concept2cureSubmissionSnapshots)
-    .innerJoin(concept2cureArtifacts, eq(concept2cureSubmissionSnapshots.artifactId, concept2cureArtifacts.id))
+    .innerJoin(
+      concept2cureArtifacts,
+      eq(concept2cureSubmissionSnapshots.artifactId, concept2cureArtifacts.id)
+    )
     .where(
       and(
         inArray(concept2cureArtifacts.projectId, projectIds),
@@ -1126,7 +1605,10 @@ async function getOwnershipDerivationData(
     })
     .from(projectActivities)
     .where(
-      and(inArray(projectActivities.projectId, projectIds), eq(projectActivities.organizationId, organizationId))
+      and(
+        inArray(projectActivities.projectId, projectIds),
+        eq(projectActivities.organizationId, organizationId)
+      )
     )
     .orderBy(desc(projectActivities.createdAt))
     .limit(500);
@@ -1207,7 +1689,12 @@ async function getArtifactsFromDb(projectId: number, organizationId: number): Pr
 
   const artifactIds = dbArtifacts.map(art => art.id);
   const dbVersions = await db
-    .select()
+    .select({
+      artifactId: concept2cureArtifactVersions.artifactId,
+      version: concept2cureArtifactVersions.version,
+      content: concept2cureArtifactVersions.content,
+      createdAt: concept2cureArtifactVersions.createdAt,
+    })
     .from(concept2cureArtifactVersions)
     .where(inArray(concept2cureArtifactVersions.artifactId, artifactIds))
     .orderBy(concept2cureArtifactVersions.version);
@@ -1262,111 +1749,158 @@ async function getArtifactsFromDb(projectId: number, organizationId: number): Pr
  * @param req.tenantContext.organizationId - Required organization context
  * @returns {Project[]} Array of projects sorted by updatedAt descending
  */
-router.get('/projects', async (req: Request, res: Response) => {
-  try {
-    const organizationId = getOrganizationId(req);
+router.get(
+  '/projects',
+  cacheResponse({ ttl: 30_000, keyGenerator: req => `projects:${(req as any).organizationId}` }),
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const userId = getUserId(req);
+      const actorRole = getActorRole(req);
+      const clientWorkspaceId = getClientWorkspaceId(req);
 
-    // Use raw SQL to avoid Drizzle ORM schema mismatch (parent_project_id doesn't exist in DB)
-    const result = await pool.query(
-      `SELECT id, name, description, status, type, metadata, settings, created_at, updated_at
+      // Use raw SQL to avoid Drizzle ORM schema mismatch (parent_project_id doesn't exist in DB)
+      const result = await pool.query(
+        `SELECT id, name, description, status, type, metadata, settings, created_at, updated_at, created_by_id, owner_id
        FROM projects
        WHERE organization_id = $1
+         AND client_workspace_id = $2
          AND actual_end_date IS NULL
        ORDER BY updated_at DESC
        LIMIT 100`,
-      [organizationId]
-    );
+        [organizationId, clientWorkspaceId]
+      );
 
-    // Batch-load all conversations for all projects (2 queries total instead of 2*N)
-    const projectIds = result.rows.map((p: any) => p.id);
-    const allConversationsByProject = new Map<number, Conversation[]>();
-    const derivationData = await getOwnershipDerivationData(projectIds, organizationId);
-
-    if (projectIds.length > 0) {
-      const allDbConvs = await db
-        .select()
-        .from(concept2cureConversations)
-        .where(
-          and(
-            inArray(concept2cureConversations.projectId, projectIds),
-            eq(concept2cureConversations.organizationId, organizationId),
-            eq(concept2cureConversations.status, 'active')
-          )
-        )
-        .orderBy(desc(concept2cureConversations.updatedAt));
-
-      if (allDbConvs.length > 0) {
-        const convIds = allDbConvs.map(c => c.id);
-        const allDbMsgs = await db
+      // Batch-load all conversations for all projects (2 queries total instead of 2*N)
+      const projectIds = result.rows.map((p: any) => p.id);
+      const allConversationsByProject = new Map<number, Conversation[]>();
+      if (projectIds.length > 0) {
+        const allDbConvs = await db
           .select()
-          .from(concept2cureMessages)
-          .where(inArray(concept2cureMessages.conversationId, convIds))
-          .orderBy(concept2cureMessages.createdAt);
+          .from(concept2cureConversations)
+          .where(
+            and(
+              inArray(concept2cureConversations.projectId, projectIds),
+              eq(concept2cureConversations.organizationId, organizationId),
+              eq(concept2cureConversations.status, 'active')
+            )
+          )
+          .orderBy(desc(concept2cureConversations.updatedAt));
 
-        const msgsByConv = new Map<number, Message[]>();
-        for (const m of allDbMsgs) {
-          const list = msgsByConv.get(m.conversationId) || [];
-          list.push({
-            id: m.messageId,
-            role: m.role as 'user' | 'assistant',
-            content: m.content,
-            timestamp: m.createdAt,
-            attachments: m.attachments as Message['attachments'],
-            artifactId: m.artifactId || undefined,
-            edited: m.edited || false,
-          });
-          msgsByConv.set(m.conversationId, list);
-        }
+        if (allDbConvs.length > 0) {
+          const convIds = allDbConvs.map(c => c.id);
+          const allDbMsgs = await db
+            .select()
+            .from(concept2cureMessages)
+            .where(inArray(concept2cureMessages.conversationId, convIds))
+            .orderBy(concept2cureMessages.createdAt);
 
-        for (const conv of allDbConvs) {
-          const list = allConversationsByProject.get(conv.projectId) || [];
-          list.push({
-            id: conv.conversationId,
-            projectId: `proj_${conv.projectId}`,
-            title: conv.title,
-            messages: msgsByConv.get(conv.id) || [],
-            parentConversationId: conv.parentConversationId?.toString(),
-            forkMessageIndex: conv.forkMessageIndex || undefined,
-            threadId: conv.threadId || undefined,
-            createdAt: conv.createdAt,
-            updatedAt: conv.updatedAt,
-          });
-          allConversationsByProject.set(conv.projectId, list);
+          const msgsByConv = new Map<number, Message[]>();
+          for (const m of allDbMsgs) {
+            const list = msgsByConv.get(m.conversationId) || [];
+            list.push({
+              id: m.messageId,
+              role: m.role as 'user' | 'assistant',
+              content: m.content,
+              timestamp: m.createdAt,
+              attachments: m.attachments as Message['attachments'],
+              artifactId: m.artifactId || undefined,
+              edited: m.edited || false,
+            });
+            msgsByConv.set(m.conversationId, list);
+          }
+
+          for (const conv of allDbConvs) {
+            const list = allConversationsByProject.get(conv.projectId) || [];
+            list.push({
+              id: conv.conversationId,
+              projectId: `proj_${conv.projectId}`,
+              title: conv.title,
+              messages: msgsByConv.get(conv.id) || [],
+              parentConversationId: conv.parentConversationId?.toString(),
+              forkMessageIndex: conv.forkMessageIndex || undefined,
+              threadId: conv.threadId || undefined,
+              createdAt: conv.createdAt,
+              updatedAt: conv.updatedAt,
+            });
+            allConversationsByProject.set(conv.projectId, list);
+          }
         }
       }
-    }
 
-    const response = result.rows.map((p: any) => {
-      const conversations = allConversationsByProject.get(p.id) || [];
-      return {
-        id: `proj_${p.id}`,
-        name: p.name,
-        submissionType: p.metadata?.submissionType || p.type || 'IND',
-        description: p.description,
-        status: p.status || 'active',
-        sponsor: p.metadata?.sponsor,
-        product: p.metadata?.product,
-        region: p.metadata?.region,
-        pinned: (p.metadata as any)?.pinned ?? false,
-        targetAgency: (p.metadata as any)?.targetAgency ?? null,
-        color: (p.metadata as any)?.color ?? null,
+      const sharingByProjectId = await loadProjectSharingStateMap(
         organizationId,
-        conversations,
-        ownership: buildProjectOwnership(conversations, normalizeProjectSettings(p.settings)),
-        createdAt: p.created_at,
-        updatedAt: p.updated_at,
-      };
-    });
+        result.rows.map((p: any) => ({
+          id: p.id,
+          ownerId: p.owner_id ?? null,
+          createdById: p.created_by_id ?? null,
+          settings: p.settings,
+        }))
+      );
 
-    return sendSuccess(res, response);
-  } catch (error: any) {
-    logger.error('Failed to fetch projects', {
-      error: error.message,
-      organizationId: req.tenantContext?.organizationId,
-    });
-    return sendError(res, 500, 'Failed to fetch projects');
+      const response = result.rows
+        .filter((p: any) => {
+          const sharing =
+            sharingByProjectId.get(p.id) ??
+            getProjectSharingState({
+              settings: normalizeProjectSettings(p.settings),
+              ownerId: p.owner_id ?? null,
+              createdById: p.created_by_id ?? null,
+            });
+          const settingsWithSharing = applyProjectSharingState(
+            normalizeProjectSettings(p.settings),
+            sharing
+          );
+          return canUseProject({
+            actor: { userId, orgRole: actorRole },
+            project: {
+              createdById: p.created_by_id ?? null,
+              ownerId: p.owner_id ?? null,
+              settings: settingsWithSharing,
+            },
+          });
+        })
+        .map((p: any) => {
+          const conversations = allConversationsByProject.get(p.id) || [];
+          return {
+            id: `proj_${p.id}`,
+            name: p.name,
+            submissionType: p.metadata?.submissionType || p.type || 'IND',
+            description: p.description,
+            status: p.status || 'active',
+            sponsor: p.metadata?.sponsor,
+            product: p.metadata?.product,
+            region: p.metadata?.region,
+            pinned: (p.metadata as any)?.pinned ?? false,
+            targetAgency: (p.metadata as any)?.targetAgency ?? null,
+            color: (p.metadata as any)?.color ?? null,
+            organizationId,
+            conversations,
+            ownership: buildProjectOwnership(conversations, normalizeProjectSettings(p.settings)),
+            createdAt: p.created_at,
+            updatedAt: p.updated_at,
+            sharing: buildProjectSharingResponse(
+              p.id,
+              sharingByProjectId.get(p.id) ??
+                getProjectSharingState({
+                  settings: normalizeProjectSettings(p.settings),
+                  ownerId: p.owner_id ?? null,
+                  createdById: p.created_by_id ?? null,
+                })
+            ),
+          };
+        });
+
+      return sendSuccess(res, response);
+    } catch (error: any) {
+      logger.error('Failed to fetch projects', {
+        error: error.message,
+        organizationId: req.tenantContext?.organizationId,
+      });
+      return sendError(res, 500, 'Failed to fetch projects');
+    }
   }
-});
+);
 
 /**
  * GET /api/concept2cure/projects/:id
@@ -1378,19 +1912,21 @@ router.get('/projects', async (req: Request, res: Response) => {
 router.get('/projects/:id', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const projectId = req.params.id.replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
-
-    if (isNaN(numericId)) {
+    const userId = getUserId(req);
+    const actorRole = getActorRole(req);
+    const clientWorkspaceId = getClientWorkspaceId(req);
+    const scope = getProjectScope(req.params.id);
+    if (!scope) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
-
-    // Query with tenant isolation
-    const [project] = await db
-      .select()
-      .from(projects)
-      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
-      .limit(1);
+    const projectAccess = await loadProjectAccessRow({
+      organizationId,
+      clientWorkspaceId,
+      projectId: scope.numericId,
+      userId,
+      actorRole,
+    });
+    const project = projectAccess.project;
 
     if (!project) {
       return sendError(res, 404, 'Project not found');
@@ -1398,6 +1934,11 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
 
     const settings = normalizeProjectSettings(project.settings);
     const conversations = await getConversationsFromDb(project.id, organizationId);
+    const sharing = await loadProjectSharingState(scope.numericId, organizationId, {
+      ownerId: project.ownerId ?? null,
+      createdById: project.createdById ?? null,
+      settings: project.settings,
+    });
 
     // Transform to API response with DB conversations
     const response = {
@@ -1416,6 +1957,11 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
       organizationId: project.organizationId,
       conversations,
       ownership: buildProjectOwnership(conversations, settings),
+      sharing: buildProjectSharingResponse(
+        project.id,
+        sharing,
+        projectAccess.legacyFallbackApplied
+      ),
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
     };
@@ -1430,7 +1976,9 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
 /**
  * Returns submission-type-aware suggested actions for display after project creation.
  */
-function getSuggestedActionsForType(submissionType: string): Array<{ id: string; label: string; command: string }> {
+function getSuggestedActionsForType(
+  submissionType: string
+): Array<{ id: string; label: string; command: string }> {
   const base = [
     { id: 'dossier-map', label: 'Start Dossier Map', command: '/dossier' },
     { id: 'add-docs', label: 'Add Documents', command: '/upload' },
@@ -1446,7 +1994,10 @@ function getSuggestedActionsForType(submissionType: string): Array<{ id: string;
 
   // Drug submissions
   if (['IND', 'NDA', 'BLA', 'ANDA'].includes(upperType)) {
-    return [...base, { id: 'clinical-review', label: 'Review Clinical Data', command: '/clinical' }];
+    return [
+      ...base,
+      { id: 'clinical-review', label: 'Review Clinical Data', command: '/clinical' },
+    ];
   }
 
   // EU submissions
@@ -1477,7 +2028,7 @@ router.post('/projects', async (req: Request, res: Response) => {
       data.customInstructions = generateDefaultCustomInstructions(
         data.submissionType,
         data.product,
-        data.name,
+        data.name
       );
     }
 
@@ -1537,6 +2088,38 @@ router.post('/projects', async (req: Request, res: Response) => {
       })
       .returning();
 
+    await db
+      .insert(projectVisibilitySettings)
+      .values({
+        organizationId,
+        projectId: newProject.id,
+        visibility: 'private',
+        updatedById: userId,
+      })
+      .onConflictDoNothing();
+
+    await db
+      .insert(projectMembers)
+      .values({
+        organizationId,
+        projectId: newProject.id,
+        userId,
+        role: 'owner',
+        status: 'active',
+        invitedById: userId,
+        acceptedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [projectMembers.projectId, projectMembers.userId],
+        set: {
+          role: 'owner',
+          status: 'active',
+          invitedById: userId,
+          acceptedAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+
     const projectId = `proj_${newProject.id}`;
 
     // Log audit entry for 21 CFR Part 11 compliance
@@ -1550,6 +2133,20 @@ router.post('/projects', async (req: Request, res: Response) => {
     const initialThreadId = `thread_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
 
     // Transform response
+    const sharing = {
+      visibility: 'private' as const,
+      members: [
+        {
+          userId,
+          role: 'owner' as const,
+          status: 'active' as const,
+          addedById: userId,
+          addedAt: new Date().toISOString(),
+        },
+      ],
+      legacyFallbackApplied: false,
+    };
+
     const response = {
       id: projectId,
       name: newProject.name,
@@ -1565,6 +2162,7 @@ router.post('/projects', async (req: Request, res: Response) => {
       dossierStandard: data.dossierStandard ?? null,
       conversations: [],
       ownership: buildProjectOwnership([], normalizeProjectSettings(newProject.settings)),
+      sharing,
       status: newProject.status,
       organizationId: newProject.organizationId,
       pinned: (newProject.metadata as any)?.pinned ?? false,
@@ -1586,7 +2184,9 @@ router.post('/projects', async (req: Request, res: Response) => {
       // Create intelligence profile
       (async () => {
         try {
-          const { getOrCreateProfile } = await import('../services/intelligence/project-intelligence-service.js');
+          const { getOrCreateProfile } = await import(
+            '../services/intelligence/project-intelligence-service.js'
+          );
           await getOrCreateProfile(newProject.id, organizationId);
           logger.info('Auto-created intelligence profile', { projectId });
         } catch (err) {
@@ -1596,7 +2196,9 @@ router.post('/projects', async (req: Request, res: Response) => {
       // Initialize sections based on registry (or fallback to IND for backward compat)
       (async () => {
         try {
-          const { bootstrapFromRegistry } = await import('../services/regulatory/projectBootstrapFromRegistry.js');
+          const { bootstrapFromRegistry } = await import(
+            '../services/regulatory/projectBootstrapFromRegistry.js'
+          );
           const bootstrapResult = await bootstrapFromRegistry({
             registryId: data.registryId,
             submissionType: data.submissionType,
@@ -1643,7 +2245,9 @@ router.post('/projects', async (req: Request, res: Response) => {
             }
           } else {
             // Fallback: use legacy IND sections if registry bootstrap returned nothing
-            const { getAllINDSections } = await import('../../services/regulatory/ind-ectd-sections.js');
+            const { getAllINDSections } = await import(
+              '../../services/regulatory/ind-ectd-sections.js'
+            );
             const allSections = getAllINDSections();
             const client = await pool.connect();
             try {
@@ -1679,7 +2283,10 @@ router.post('/projects', async (req: Request, res: Response) => {
                 inserted++;
               }
               await client.query('COMMIT');
-              logger.info('Auto-initialized CTD sections (legacy fallback)', { projectId, sectionsInserted: inserted });
+              logger.info('Auto-initialized CTD sections (legacy fallback)', {
+                projectId,
+                sectionsInserted: inserted,
+              });
             } catch (err) {
               await client.query('ROLLBACK');
               throw err;
@@ -1701,7 +2308,13 @@ router.post('/projects', async (req: Request, res: Response) => {
           await pool.query(
             `INSERT INTO ai_threads (id, organization_id, project_id, title, created_by, created_at, updated_at)
              VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
-            [initialThreadId, organizationId, newProject.id, `${productName} — Getting Started`, userId]
+            [
+              initialThreadId,
+              organizationId,
+              newProject.id,
+              `${productName} — Getting Started`,
+              userId,
+            ]
           );
 
           await pool.query(
@@ -1714,7 +2327,9 @@ router.post('/projects', async (req: Request, res: Response) => {
           if (err?.code !== '42P01') {
             logger.error('[projects] Failed to auto-create initial AnA thread:', err);
           } else {
-            logger.warn('[projects] ai_threads/ai_messages table missing — skipping onboarding thread');
+            logger.warn(
+              '[projects] ai_threads/ai_messages table missing — skipping onboarding thread'
+            );
           }
         }
       })(),
@@ -1795,7 +2410,9 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
           region: data.region ? sanitizeContent(data.region) : null,
         }),
         ...(data.pinned !== undefined && { pinned: data.pinned }),
-        ...(data.targetAgency !== undefined && { targetAgency: data.targetAgency ? sanitizeContent(data.targetAgency) : null }),
+        ...(data.targetAgency !== undefined && {
+          targetAgency: data.targetAgency ? sanitizeContent(data.targetAgency) : null,
+        }),
         ...(data.color !== undefined && { color: data.color }),
       };
     }
@@ -1889,12 +2506,12 @@ router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Re
         payload.reusableSnippetsKnowledge !== undefined
           ? payload.reusableSnippetsKnowledge.map(sanitizeContent)
           : Array.isArray(existingPreferences.reusableSnippetsKnowledge)
-            ? (existingPreferences.reusableSnippetsKnowledge as string[])
-            : [],
+          ? (existingPreferences.reusableSnippetsKnowledge as string[])
+          : [],
       currentWorkbenchContext:
         payload.currentWorkbenchContext !== undefined
           ? payload.currentWorkbenchContext
-          : ((existingPreferences.currentWorkbenchContext as WorkbenchMode) || 'project-home'),
+          : (existingPreferences.currentWorkbenchContext as WorkbenchMode) || 'project-home',
     };
 
     const mergedSettings = {
@@ -1929,14 +2546,7 @@ router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Re
       status: updated.status,
       organizationId: updated.organizationId,
       conversations,
-      ownership: buildProjectOwnership({
-        conversations,
-        settings: normalizeProjectSettings(updated.settings),
-        approvals: derivationData.approvalsByProject.get(numericId) || [],
-        reviewTasks: derivationData.reviewTasksByProject.get(numericId) || [],
-        reports: derivationData.reportsByProject.get(numericId) || [],
-        activityHistory: derivationData.activitiesByProject.get(numericId) || [],
-      }),
+      ownership: buildProjectOwnership(conversations, normalizeProjectSettings(updated.settings)),
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,
     });
@@ -1946,6 +2556,526 @@ router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Re
     }
     logger.error('Failed to update ownership preferences', { error: error.message });
     return sendError(res, 500, 'Failed to update ownership preferences');
+  }
+});
+
+/**
+ * GET /api/concept2cure/projects/:projectId/collaborators
+ * Returns current project collaborator permission assignments.
+ * @deprecated Use GET /projects/:id/sharing for comprehensive sharing state
+ */
+router.get('/projects/:projectId/collaborators', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const projectId = req.params.projectId.replace('proj_', '');
+    const numericId = parseInt(projectId, 10);
+
+    if (isNaN(numericId)) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .limit(1);
+    if (!project) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    const settings = normalizeProjectSettings(project.settings);
+    const ownership =
+      settings.ownership && typeof settings.ownership === 'object'
+        ? (settings.ownership as Record<string, unknown>)
+        : {};
+
+    const team = Array.isArray(ownership.ownershipTeam)
+      ? (ownership.ownershipTeam as Array<{ userId: number; permission: 'can_use' | 'can_edit' }>)
+      : [];
+    const normalizedTeam = team.filter(
+      member =>
+        Number.isInteger(member?.userId) &&
+        member.userId > 0 &&
+        (member.permission === 'can_use' || member.permission === 'can_edit')
+    );
+
+    const memberIds = normalizedTeam.map(member => member.userId);
+    const memberDirectory =
+      memberIds.length > 0
+        ? await db
+            .select({
+              userId: users.id,
+              name: users.name,
+              email: users.email,
+            })
+            .from(users)
+            .where(inArray(users.id, memberIds))
+        : [];
+    const directoryById = new Map(memberDirectory.map(member => [member.userId, member]));
+
+    const collaborators = normalizedTeam.map(member => ({
+      userId: member.userId,
+      permission: member.permission,
+      name: directoryById.get(member.userId)?.name || null,
+      email: directoryById.get(member.userId)?.email || null,
+    }));
+
+    return sendSuccess(res, {
+      projectId: `proj_${numericId}`,
+      collaborators,
+    });
+  } catch (error: any) {
+    logger.error('Failed to fetch project collaborators', {
+      error: error.message,
+      projectId: req.params.projectId,
+    });
+    return sendError(res, 500, 'Failed to fetch project collaborators');
+  }
+});
+
+/**
+ * GET /api/concept2cure/projects/:id/sharing
+ * Retrieve sharing visibility and member assignments for a project.
+ */
+router.get('/projects/:id/sharing', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const userId = getUserId(req);
+    const actorRole = getActorRole(req);
+    const scope = getProjectScope(req.params.id);
+    if (!scope) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+
+    const projectAccess = await loadProjectAccessRow({
+      organizationId,
+      clientWorkspaceId: getClientWorkspaceId(req),
+      projectId: scope.numericId,
+      userId,
+      actorRole,
+    });
+
+    if (!projectAccess.project) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    const sharing = await loadProjectSharingState(projectAccess.project.id, organizationId);
+    if (
+      !canUseProject({
+        actor: { userId, orgRole: actorRole },
+        project: {
+          createdById: projectAccess.project.createdById ?? null,
+          ownerId: projectAccess.project.ownerId ?? null,
+          settings: applyProjectSharingState(
+            normalizeProjectSettings(projectAccess.project.settings),
+            sharing
+          ),
+        },
+      })
+    ) {
+      return sendError(res, 403, 'Forbidden');
+    }
+
+    return sendSuccess(
+      res,
+      buildProjectSharingResponse(
+        projectAccess.project.id,
+        sharing,
+        projectAccess.legacyFallbackApplied
+      )
+    );
+  } catch (error: any) {
+    logger.error('Failed to fetch project sharing', {
+      error: error.message,
+      projectId: req.params.id,
+    });
+    return sendError(res, 500, 'Failed to fetch project sharing');
+  }
+});
+
+/**
+ * PUT /api/concept2cure/projects/:projectId/collaborators
+ * Replaces project collaborator permission assignments.
+ * @deprecated Use PATCH /projects/:id/sharing/visibility + PUT /projects/:id/sharing/members/:userId
+ */
+router.put('/projects/:projectId/collaborators', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const projectId = req.params.projectId.replace('proj_', '');
+    const numericId = parseInt(projectId, 10);
+
+    if (isNaN(numericId)) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+
+    const payload = updateProjectCollaboratorsSchema.parse(req.body);
+
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .limit(1);
+    if (!project) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    const uniqueByUser = new Map<number, { userId: number; permission: 'can_use' | 'can_edit' }>();
+    for (const collaborator of payload.collaborators) {
+      uniqueByUser.set(collaborator.userId, collaborator);
+    }
+    const collaborators = Array.from(uniqueByUser.values());
+
+    if (collaborators.length > 0) {
+      const orgMembers = await db
+        .select({ userId: organizationUsers.userId })
+        .from(organizationUsers)
+        .where(
+          and(
+            eq(organizationUsers.organizationId, organizationId),
+            inArray(
+              organizationUsers.userId,
+              collaborators.map(entry => entry.userId)
+            )
+          )
+        );
+      const allowedIds = new Set(orgMembers.map(member => member.userId));
+      const invalidIds = collaborators
+        .map(entry => entry.userId)
+        .filter(userId => !allowedIds.has(userId));
+      if (invalidIds.length > 0) {
+        return sendError(
+          res,
+          400,
+          `Collaborator user IDs not in organization: ${invalidIds.join(', ')}`
+        );
+      }
+    }
+
+    const settings = normalizeProjectSettings(project.settings);
+    const ownership =
+      settings.ownership && typeof settings.ownership === 'object'
+        ? (settings.ownership as Record<string, unknown>)
+        : {};
+
+    const mergedSettings = {
+      ...settings,
+      ownership: {
+        ...ownership,
+        ownershipTeam: collaborators,
+      },
+    };
+
+    const [updated] = await db
+      .update(projects)
+      .set({ settings: mergedSettings, updatedAt: new Date() })
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .returning();
+
+    await logAuditEntry(req, 'UPDATE', 'project', `proj_${numericId}`, project, {
+      collaborators,
+      action: 'update_collaborators',
+    });
+
+    return sendSuccess(res, {
+      projectId: `proj_${numericId}`,
+      collaborators,
+      updatedAt: updated.updatedAt,
+    });
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+    }
+    logger.error('Failed to update project collaborators', {
+      error: error.message,
+      projectId: req.params.projectId,
+    });
+    return sendError(res, 500, 'Failed to update project collaborators');
+  }
+});
+
+/**
+ * PATCH /api/concept2cure/projects/:id/sharing/visibility
+ * Update project visibility policy (private | org_public).
+ */
+router.patch('/projects/:id/sharing/visibility', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const userId = getUserId(req);
+    const actorRole = getActorRole(req);
+    const scope = getProjectScope(req.params.id);
+    if (!scope) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+    const { visibility } = projectVisibilitySchema.parse(req.body);
+
+    const projectAccess = await loadProjectAccessRow({
+      organizationId,
+      clientWorkspaceId: getClientWorkspaceId(req),
+      projectId: scope.numericId,
+      userId,
+      actorRole,
+    });
+
+    if (!projectAccess.project) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    if (
+      !canManageProject({
+        actor: { userId, orgRole: actorRole },
+        project: {
+          createdById: projectAccess.project.createdById ?? null,
+          ownerId: projectAccess.project.ownerId ?? null,
+          settings: normalizeProjectSettings(projectAccess.project.settings),
+        },
+      })
+    ) {
+      return sendError(res, 403, 'Forbidden');
+    }
+
+    const [existingVisibility] = await db
+      .select({
+        id: projectVisibilitySettings.id,
+      })
+      .from(projectVisibilitySettings)
+      .where(
+        and(
+          eq(projectVisibilitySettings.organizationId, organizationId),
+          eq(projectVisibilitySettings.projectId, scope.numericId)
+        )
+      )
+      .limit(1);
+
+    if (existingVisibility) {
+      await db
+        .update(projectVisibilitySettings)
+        .set({
+          visibility,
+          updatedById: userId,
+          updatedAt: new Date(),
+        })
+        .where(eq(projectVisibilitySettings.id, existingVisibility.id));
+    } else {
+      await db.insert(projectVisibilitySettings).values({
+        organizationId,
+        projectId: scope.numericId,
+        visibility,
+        updatedById: userId,
+      });
+    }
+
+    const sharing = await loadProjectSharingState(scope.numericId, organizationId);
+    return sendSuccess(
+      res,
+      buildProjectSharingResponse(scope.numericId, sharing, projectAccess.legacyFallbackApplied)
+    );
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+    }
+    logger.error('Failed to update project sharing visibility', {
+      error: error.message,
+      projectId: req.params.id,
+    });
+    return sendError(res, 500, 'Failed to update project sharing visibility');
+  }
+});
+
+/**
+ * PUT /api/concept2cure/projects/:id/sharing/members/:userId
+ * Add/update explicit project member with use/edit role.
+ */
+router.put('/projects/:id/sharing/members/:userId', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const actorUserId = getUserId(req);
+    const actorRole = getActorRole(req);
+    const scope = getProjectScope(req.params.id);
+    if (!scope) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+
+    const pathUserId = Number.parseInt(req.params.userId, 10);
+    if (!Number.isFinite(pathUserId) || pathUserId <= 0) {
+      return sendError(res, 400, 'Invalid member userId', undefined, 'INVALID_ID');
+    }
+
+    const payload = upsertProjectMemberSchema.parse({
+      userId: pathUserId,
+      role: req.body?.role,
+    });
+
+    const projectAccess = await loadProjectAccessRow({
+      organizationId,
+      clientWorkspaceId: getClientWorkspaceId(req),
+      projectId: scope.numericId,
+      userId: actorUserId,
+      actorRole,
+    });
+
+    if (!projectAccess.project) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    if (
+      !canManageProject({
+        actor: { userId: actorUserId, orgRole: actorRole },
+        project: {
+          createdById: projectAccess.project.createdById ?? null,
+          ownerId: projectAccess.project.ownerId ?? null,
+          settings: normalizeProjectSettings(projectAccess.project.settings),
+        },
+      })
+    ) {
+      return sendError(res, 403, 'Forbidden');
+    }
+
+    const [targetUser] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.id, payload.userId))
+      .limit(1);
+    if (!targetUser) {
+      return sendError(res, 404, 'Target user not found');
+    }
+
+    const [orgMembership] = await db
+      .select({ id: organizationUsers.id })
+      .from(organizationUsers)
+      .where(
+        and(
+          eq(organizationUsers.organizationId, organizationId),
+          eq(organizationUsers.userId, payload.userId)
+        )
+      )
+      .limit(1);
+    if (!orgMembership) {
+      return sendError(
+        res,
+        400,
+        'Target user is not a member of this organization',
+        undefined,
+        'ORG_MEMBERSHIP_REQUIRED'
+      );
+    }
+
+    const [existingMember] = await db
+      .select({ id: projectMembers.id })
+      .from(projectMembers)
+      .where(
+        and(
+          eq(projectMembers.organizationId, organizationId),
+          eq(projectMembers.projectId, scope.numericId),
+          eq(projectMembers.userId, payload.userId)
+        )
+      )
+      .limit(1);
+
+    if (existingMember) {
+      await db
+        .update(projectMembers)
+        .set({
+          role: payload.role,
+          status: 'active',
+          invitedById: actorUserId,
+          acceptedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(projectMembers.id, existingMember.id));
+    } else {
+      await db.insert(projectMembers).values({
+        organizationId,
+        projectId: scope.numericId,
+        userId: payload.userId,
+        role: payload.role,
+        status: 'active',
+        invitedById: actorUserId,
+        acceptedAt: new Date(),
+      });
+    }
+
+    const sharing = await loadProjectSharingState(scope.numericId, organizationId);
+    return sendSuccess(
+      res,
+      buildProjectSharingResponse(scope.numericId, sharing, projectAccess.legacyFallbackApplied)
+    );
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+    }
+    logger.error('Failed to upsert project member', {
+      error: error.message,
+      projectId: req.params.id,
+    });
+    return sendError(res, 500, 'Failed to upsert project member');
+  }
+});
+
+/**
+ * DELETE /api/concept2cure/projects/:id/sharing/members/:userId
+ * Remove explicit member access from project.
+ */
+router.delete('/projects/:id/sharing/members/:userId', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const actorUserId = getUserId(req);
+    const actorRole = getActorRole(req);
+    const scope = getProjectScope(req.params.id);
+    if (!scope) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+    const targetUserId = Number.parseInt(req.params.userId, 10);
+
+    if (!Number.isFinite(targetUserId) || targetUserId <= 0) {
+      return sendError(res, 400, 'Invalid member userId', undefined, 'INVALID_ID');
+    }
+
+    const projectAccess = await loadProjectAccessRow({
+      organizationId,
+      clientWorkspaceId: getClientWorkspaceId(req),
+      projectId: scope.numericId,
+      userId: actorUserId,
+      actorRole,
+    });
+
+    if (!projectAccess.project) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    if (
+      !canManageProject({
+        actor: { userId: actorUserId, orgRole: actorRole },
+        project: {
+          createdById: projectAccess.project.createdById ?? null,
+          ownerId: projectAccess.project.ownerId ?? null,
+          settings: normalizeProjectSettings(projectAccess.project.settings),
+        },
+      })
+    ) {
+      return sendError(res, 403, 'Forbidden');
+    }
+
+    await db
+      .delete(projectMembers)
+      .where(
+        and(
+          eq(projectMembers.organizationId, organizationId),
+          eq(projectMembers.projectId, scope.numericId),
+          eq(projectMembers.userId, targetUserId)
+        )
+      );
+
+    const sharing = await loadProjectSharingState(scope.numericId, organizationId);
+    return sendSuccess(
+      res,
+      buildProjectSharingResponse(scope.numericId, sharing, projectAccess.legacyFallbackApplied)
+    );
+  } catch (error: any) {
+    logger.error('Failed to remove project member', {
+      error: error.message,
+      projectId: req.params.id,
+    });
+    return sendError(res, 500, 'Failed to remove project member');
   }
 });
 
@@ -1960,19 +3090,22 @@ router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Re
 router.delete('/projects/:id', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const projectId = req.params.id.replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
-
-    if (isNaN(numericId)) {
+    const userId = getUserId(req);
+    const actorRole = getActorRole(req);
+    const scope = getProjectScope(req.params.id);
+    if (!scope) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
-    // First verify ownership and capture state for audit
-    const [existing] = await db
-      .select()
-      .from(projects)
-      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
-      .limit(1);
+    // First verify access and capture state for audit
+    const projectAccess = await loadProjectAccessRow({
+      organizationId,
+      clientWorkspaceId: getClientWorkspaceId(req),
+      projectId: scope.numericId,
+      userId,
+      actorRole,
+    });
+    const existing = projectAccess.project;
 
     if (!existing) {
       return sendError(res, 404, 'Project not found');
@@ -1986,7 +3119,7 @@ router.delete('/projects/:id', async (req: Request, res: Response) => {
         status: 'archived',
         updatedAt: new Date(),
       })
-      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)));
+      .where(and(eq(projects.id, scope.numericId), eq(projects.organizationId, organizationId)));
 
     // Soft delete related conversations in DB (set status to archived)
     await db
@@ -1994,7 +3127,7 @@ router.delete('/projects/:id', async (req: Request, res: Response) => {
       .set({ status: 'archived', updatedAt: new Date() })
       .where(
         and(
-          eq(concept2cureConversations.projectId, numericId),
+          eq(concept2cureConversations.projectId, scope.numericId),
           eq(concept2cureConversations.organizationId, organizationId)
         )
       );
@@ -2021,18 +3154,21 @@ router.delete('/projects/:id', async (req: Request, res: Response) => {
 router.get('/projects/:projectId/knowledge', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const projectId = req.params.projectId.replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
-
-    if (isNaN(numericId)) {
+    const userId = getUserId(req);
+    const actorRole = getActorRole(req);
+    const scope = getProjectScope(req.params.projectId);
+    if (!scope) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
-    const [project] = await db
-      .select()
-      .from(projects)
-      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
-      .limit(1);
+    const projectAccess = await loadProjectAccessRow({
+      organizationId,
+      clientWorkspaceId: getClientWorkspaceId(req),
+      projectId: scope.numericId,
+      userId,
+      actorRole,
+    });
+    const project = projectAccess.project;
 
     if (!project) {
       return sendError(res, 404, 'Project not found');
@@ -2051,80 +3187,88 @@ router.get('/projects/:projectId/knowledge', async (req: Request, res: Response)
  * GET /api/concept2cure/projects/:projectId/activity
  * Returns a merged activity feed: explicit project_activities + recent artifact updates.
  */
-router.get('/projects/:projectId/activity', async (req: Request, res: Response) => {
-  try {
-    const organizationId = getOrganizationId(req);
-    const numericProjectId = parseInt(req.params.projectId.replace('proj_', ''), 10);
+router.get(
+  '/projects/:projectId/activity',
+  cacheResponse({
+    ttl: 30_000,
+    keyGenerator: req => `activity:${(req as any).organizationId}:${req.params.projectId}`,
+  }),
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const numericProjectId = parseInt(req.params.projectId.replace('proj_', ''), 10);
 
-    if (isNaN(numericProjectId)) {
-      return sendError(res, 400, 'Invalid project ID');
-    }
+      if (isNaN(numericProjectId)) {
+        return sendError(res, 400, 'Invalid project ID');
+      }
 
-    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-    if (!hasAccess) {
-      return sendError(res, 404, 'Project not found');
-    }
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) {
+        return sendError(res, 404, 'Project not found');
+      }
 
-    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+      const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
 
-    // Fetch from projectActivities table
-    const activities = await pool.query(
-      `SELECT pa.id, pa.activity_type, pa.entity_type, pa.entity_id, pa.description, pa.details, pa.created_at,
+      // Fetch from projectActivities table
+      const activities = await pool.query(
+        `SELECT pa.id, pa.activity_type, pa.entity_type, pa.entity_id, pa.description, pa.details, pa.created_at,
               u.full_name as user_name, u.email as user_email
        FROM project_activities pa
        LEFT JOIN users u ON u.id = pa.user_id
        WHERE pa.project_id = $1 AND pa.organization_id = $2
        ORDER BY pa.created_at DESC
        LIMIT $3`,
-      [numericProjectId, organizationId, limit]
-    );
+        [numericProjectId, organizationId, limit]
+      );
 
-    // Also get recently modified artifacts as activity items
-    const recentArtifacts = await pool.query(
-      `SELECT id, artifact_id, title, status, category, type, updated_at, created_at, version
+      // Also get recently modified artifacts as activity items
+      const recentArtifacts = await pool.query(
+        `SELECT id, artifact_id, title, status, category, type, updated_at, created_at, version
        FROM concept2cure_artifacts
        WHERE project_id = $1 AND organization_id = $2
        ORDER BY updated_at DESC
        LIMIT 10`,
-      [numericProjectId, organizationId]
-    );
+        [numericProjectId, organizationId]
+      );
 
-    // Merge and sort by timestamp
-    const feed = [
-      ...activities.rows.map((a: any) => ({
-        id: `act-${a.id}`,
-        type: 'activity' as const,
-        activityType: a.activity_type,
-        entityType: a.entity_type,
-        entityId: a.entity_id,
-        description: a.description,
-        details: a.details,
-        userName: a.user_name || a.user_email || 'System',
-        timestamp: a.created_at,
-      })),
-      ...recentArtifacts.rows.map((a: any) => ({
-        id: `doc-${a.id}`,
-        type: 'document_update' as const,
-        activityType: a.version > 1 ? 'update' : 'create',
-        entityType: 'document',
-        entityId: a.artifact_id || a.id,
-        description: a.version > 1
-          ? `Updated "${a.title || 'Untitled'}" to v${a.version}`
-          : `Created "${a.title || 'Untitled'}"`,
-        details: { status: a.status, category: a.category, type: a.type },
-        userName: null,
-        timestamp: a.updated_at || a.created_at,
-      })),
-    ]
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, limit);
+      // Merge and sort by timestamp
+      const feed = [
+        ...activities.rows.map((a: any) => ({
+          id: `act-${a.id}`,
+          type: 'activity' as const,
+          activityType: a.activity_type,
+          entityType: a.entity_type,
+          entityId: a.entity_id,
+          description: a.description,
+          details: a.details,
+          userName: a.user_name || a.user_email || 'System',
+          timestamp: a.created_at,
+        })),
+        ...recentArtifacts.rows.map((a: any) => ({
+          id: `doc-${a.id}`,
+          type: 'document_update' as const,
+          activityType: a.version > 1 ? 'update' : 'create',
+          entityType: 'document',
+          entityId: a.artifact_id || a.id,
+          description:
+            a.version > 1
+              ? `Updated "${a.title || 'Untitled'}" to v${a.version}`
+              : `Created "${a.title || 'Untitled'}"`,
+          details: { status: a.status, category: a.category, type: a.type },
+          userName: null,
+          timestamp: a.updated_at || a.created_at,
+        })),
+      ]
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, limit);
 
-    return sendSuccess(res, feed);
-  } catch (error: any) {
-    logger.error('Failed to fetch project activity', { error: error.message });
-    return sendError(res, 500, 'Failed to fetch project activity');
+      return sendSuccess(res, feed);
+    } catch (error: any) {
+      logger.error('Failed to fetch project activity', { error: error.message });
+      return sendError(res, 500, 'Failed to fetch project activity');
+    }
   }
-});
+);
 
 /**
  * PATCH /api/concept2cure/projects/:projectId/knowledge
@@ -2133,20 +3277,23 @@ router.get('/projects/:projectId/activity', async (req: Request, res: Response) 
 router.patch('/projects/:projectId/knowledge', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const projectId = req.params.projectId.replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
-
-    if (isNaN(numericId)) {
+    const userId = getUserId(req);
+    const actorRole = getActorRole(req);
+    const scope = getProjectScope(req.params.projectId);
+    if (!scope) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
     const data = updateKnowledgeSchema.parse(req.body);
 
-    const [project] = await db
-      .select()
-      .from(projects)
-      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
-      .limit(1);
+    const projectAccess = await loadProjectAccessRow({
+      organizationId,
+      clientWorkspaceId: getClientWorkspaceId(req),
+      projectId: scope.numericId,
+      userId,
+      actorRole,
+    });
+    const project = projectAccess.project;
 
     if (!project) {
       return sendError(res, 404, 'Project not found');
@@ -2180,7 +3327,7 @@ router.patch('/projects/:projectId/knowledge', async (req: Request, res: Respons
     const [updated] = await db
       .update(projects)
       .set({ settings: updatedSettings, updatedAt: new Date() })
-      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .where(and(eq(projects.id, scope.numericId), eq(projects.organizationId, organizationId)))
       .returning();
 
     await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, project, updated);
@@ -2200,9 +3347,17 @@ router.patch('/projects/:projectId/knowledge', async (req: Request, res: Respons
 
 /** Known app IDs — server-side allowlist prevents arbitrary injection */
 const KNOWN_APP_IDS = new Set([
-  'deep-research', 'precedent-intelligence', '510k-workspace', 'pma-workspace',
-  'cer-generator', 'safety-narrative', 'biostatistics', 'csr-builder',
-  'cmc-platform', 'compliance-monitor', 'evidence-engine',
+  'deep-research',
+  'precedent-intelligence',
+  '510k-workspace',
+  'pma-workspace',
+  'cer-generator',
+  'safety-narrative',
+  'biostatistics',
+  'csr-builder',
+  'cmc-platform',
+  'compliance-monitor',
+  'evidence-engine',
 ]);
 
 const MAX_CONNECTED_APPS = 20;
@@ -2221,10 +3376,14 @@ function buildAppMemoryContext(apps: ConnectedAppRecord[]): string {
 }
 
 /** Merge appContext into the project settings.knowledge object */
-function syncKnowledgeAppContext(settings: Record<string, unknown>, appContext: string): Record<string, unknown> {
-  const knowledge = settings.knowledge && typeof settings.knowledge === 'object'
-    ? { ...(settings.knowledge as Record<string, unknown>) }
-    : {};
+function syncKnowledgeAppContext(
+  settings: Record<string, unknown>,
+  appContext: string
+): Record<string, unknown> {
+  const knowledge =
+    settings.knowledge && typeof settings.knowledge === 'object'
+      ? { ...(settings.knowledge as Record<string, unknown>) }
+      : {};
   knowledge.appContext = appContext;
   return { ...settings, knowledge };
 }
@@ -2309,7 +3468,11 @@ router.post('/projects/:projectId/apps', async (req: Request, res: Response) => 
 
     // Enforce max connected apps
     if (apps.length >= MAX_CONNECTED_APPS) {
-      return sendError(res, 400, `Maximum of ${MAX_CONNECTED_APPS} connected apps reached. Disconnect one first.`);
+      return sendError(
+        res,
+        400,
+        `Maximum of ${MAX_CONNECTED_APPS} connected apps reached. Disconnect one first.`
+      );
     }
 
     // Sanitize memoryRole if provided
@@ -2337,7 +3500,11 @@ router.post('/projects/:projectId/apps', async (req: Request, res: Response) => 
 
     await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, project, updatedProject);
 
-    logger.info('App connected to project', { projectId: numericId, appId, totalConnected: updatedApps.length });
+    logger.info('App connected to project', {
+      projectId: numericId,
+      appId,
+      totalConnected: updatedApps.length,
+    });
 
     return sendSuccess(res, {
       app: newApp,
@@ -2405,7 +3572,11 @@ router.delete('/projects/:projectId/apps/:appId', async (req: Request, res: Resp
 
     await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, project, updatedProject);
 
-    logger.info('App disconnected from project', { projectId: numericId, appId, totalConnected: updatedApps.length });
+    logger.info('App disconnected from project', {
+      projectId: numericId,
+      appId,
+      totalConnected: updatedApps.length,
+    });
 
     return sendSuccess(res, {
       disconnected: appId,
@@ -2478,6 +3649,141 @@ router.post(
         status: 'processed',
       };
 
+      // ── CONVERGENCE: create governed source artifact before mutating project knowledge ──
+      const userId = getUserId(req);
+      const artifactId = `artifact_upload_${Date.now()}_${crypto.randomBytes(5).toString('hex')}`;
+      const contentForArtifact =
+        extractedText && extractedText.length > 10
+          ? extractedText
+          : `[Uploaded file: ${safeOriginalName}] (${file.mimetype}, ${file.size} bytes)`;
+      const contentHash = calculateContentHash(contentForArtifact);
+      const uploadGovernedResolution = resolveGovernedContext({
+        req,
+        projectId: numericId,
+        artifactId: null,
+        documentType: 'source_document',
+        generationMode: 'imported',
+        lifecycleStatus: 'draft',
+        originSurface: 'import_pipeline',
+        clientTrack:
+          req.body?.clientTrack === 'device'
+            ? 'device'
+            : req.body?.clientTrack === 'diagnostics'
+            ? 'diagnostics'
+            : 'biotech',
+        submissionProgram: 'general_ri',
+        persona: 'regulatory',
+        regulatorScope: 'fda',
+        evidenceMode: 'mixed',
+        documentClass: 'evidence_memo',
+        readinessGate: 'exploratory',
+        approvalPathType: 'single_reviewer',
+        recommendationSource: 'report_engine',
+        workspaceTarget: 'project',
+        regulatorIntent: 'evidence_analysis',
+        placementContainerId: String(numericId),
+        title: safeOriginalName,
+        content: contentForArtifact,
+        sourceRefs: [`upload:${documentId}`],
+        provider: 'upload_pipeline',
+        model: 'import_handler',
+        exportAllowed: false,
+        eventType: 'artifact.created',
+      });
+      if (!uploadGovernedResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: uploadGovernedResolution.validation.errors,
+            warnings: uploadGovernedResolution.validation.warnings,
+            resolved: uploadGovernedResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+
+      const [newArtifact] = await db
+        .insert(concept2cureArtifacts)
+        .values({
+          organizationId,
+          projectId: numericId,
+          artifactId,
+          type: 'source_document',
+          category: 'source',
+          title: safeOriginalName,
+          content: contentForArtifact,
+          contentHash,
+          version: 1,
+          metadata: {
+            originalName: safeOriginalName,
+            mimeType: file.mimetype,
+            fileSize: file.size,
+            extension,
+            tokenCount,
+            uploadSource: 'knowledge_upload',
+            knowledgeDocumentId: documentId,
+            harness: {
+              clientTrack: uploadGovernedResolution.contract.clientTrack,
+              submissionProgram: uploadGovernedResolution.contract.submissionProgram,
+              persona: uploadGovernedResolution.contract.persona,
+              regulatorScope: uploadGovernedResolution.contract.regulatorScope,
+              documentClass: uploadGovernedResolution.contract.documentClass,
+              readinessGate: uploadGovernedResolution.contract.readinessGate,
+              workspaceTarget: uploadGovernedResolution.contract.workspaceTarget,
+              originSurface: uploadGovernedResolution.contract.originSurface,
+              recommendationSource: uploadGovernedResolution.contract.recommendationSource,
+              regulatorIntent: uploadGovernedResolution.contract.regulatorIntent,
+              gateChecks: uploadGovernedResolution.contract.exportEligibility.gateChecks,
+              blockingReasons: uploadGovernedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome:
+                uploadGovernedResolution.contract.exportEligibility.readinessOutcome,
+            },
+          },
+          createdById: userId,
+        })
+        .returning();
+
+      // Version entry
+      await db.insert(concept2cureArtifactVersions).values({
+        organizationId,
+        artifactId: newArtifact.id,
+        version: 1,
+        content: contentForArtifact,
+        contentHash,
+        createdById: userId,
+      });
+
+      const artifactRecord: { id: number; artifactId: string } = { id: newArtifact.id, artifactId };
+
+      // ── AUTO-EMBED: Insert into lumen_data_atoms + generate embedding ──
+      try {
+        const atomResult = await pool.query(
+          `INSERT INTO lumen_data_atoms
+             (organization_id, source_type, source_id, atom_type, title, content, tags, confidence, status)
+           VALUES ($1, 'data_room_upload', $2, 'source_document', $3, $4, $5, 0.9, 'active')
+           ON CONFLICT DO NOTHING
+           RETURNING id`,
+          [
+            organizationId,
+            artifactId,
+            safeOriginalName,
+            contentForArtifact.substring(0, 16000),
+            `{source,upload,${extension}}`,
+          ]
+        );
+        if (atomResult.rows.length > 0) {
+          const atomId = atomResult.rows[0].id;
+          const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
+          const embeddingService = getEmbeddingService(pool);
+          await embeddingService.embedAtom(atomId);
+          logger.info('Source document auto-embedded for retrieval', { artifactId, atomId });
+        }
+      } catch (embedErr: any) {
+        logger.warn('Auto-embedding failed (non-fatal)', { error: embedErr.message });
+      }
+
       const settings = normalizeProjectSettings(project.settings);
       const knowledge = normalizeKnowledge(settings);
       const updatedKnowledge: ProjectKnowledge = {
@@ -2500,83 +3806,6 @@ router.post(
         .returning();
 
       await logAuditEntry(req, 'UPDATE', 'project', projectIdRaw, project, updated);
-
-      // ── CONVERGENCE: Also create a concept2cureArtifact for unified Data Room ──
-      let artifactRecord: { id: number; artifactId: string } | null = null;
-      try {
-        const userId = getUserId(req);
-        const artifactId = `artifact_upload_${Date.now()}_${crypto.randomBytes(5).toString('hex')}`;
-        const contentForArtifact = extractedText && extractedText.length > 10
-          ? extractedText
-          : `[Uploaded file: ${safeOriginalName}] (${file.mimetype}, ${file.size} bytes)`;
-        const contentHash = calculateContentHash(contentForArtifact);
-
-        const [newArtifact] = await db
-          .insert(concept2cureArtifacts)
-          .values({
-            organizationId,
-            projectId: numericId,
-            artifactId,
-            type: 'source_document',
-            category: 'source',
-            title: safeOriginalName,
-            content: contentForArtifact,
-            contentHash,
-            version: 1,
-            metadata: {
-              originalName: safeOriginalName,
-              mimeType: file.mimetype,
-              fileSize: file.size,
-              extension,
-              tokenCount,
-              uploadSource: 'knowledge_upload',
-              knowledgeDocumentId: documentId,
-            },
-            createdById: userId,
-          })
-          .returning();
-
-        // Version entry
-        await db.insert(concept2cureArtifactVersions).values({
-          organizationId,
-          artifactId: newArtifact.id,
-          version: 1,
-          content: contentForArtifact,
-          contentHash,
-          createdById: userId,
-        });
-
-        artifactRecord = { id: newArtifact.id, artifactId };
-
-        // ── AUTO-EMBED: Insert into lumen_data_atoms + generate embedding ──
-        try {
-          const atomResult = await pool.query(
-            `INSERT INTO lumen_data_atoms
-               (organization_id, source_type, source_id, atom_type, title, content, tags, confidence, status)
-             VALUES ($1, 'data_room_upload', $2, 'source_document', $3, $4, $5, 0.9, 'active')
-             ON CONFLICT DO NOTHING
-             RETURNING id`,
-            [
-              organizationId,
-              artifactId,
-              safeOriginalName,
-              contentForArtifact.substring(0, 16000),
-              `{source,upload,${extension}}`,
-            ]
-          );
-          if (atomResult.rows.length > 0) {
-            const atomId = atomResult.rows[0].id;
-            const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
-            const embeddingService = getEmbeddingService(pool);
-            await embeddingService.embedAtom(atomId);
-            logger.info('Source document auto-embedded for retrieval', { artifactId, atomId });
-          }
-        } catch (embedErr: any) {
-          logger.warn('Auto-embedding failed (non-fatal)', { error: embedErr.message });
-        }
-      } catch (artifactErr: any) {
-        logger.warn('Artifact convergence failed (non-fatal)', { error: artifactErr.message });
-      }
 
       res.status(201);
       return sendSuccess(res, {
@@ -2708,16 +3937,34 @@ router.patch('/documents/:documentId/activation', async (req: Request, res: Resp
 // AI EDITING ROUTES
 // ─────────────────────────────────────────────────────────────────────────────
 
-const aiEditSchema = z.object({
-  action: z.enum(['rewrite', 'expand', 'summarize', 'regulatory-tone', 'add-references']),
-  text: z.string().min(1).max(50000),
-  sectionTitle: z.string().optional(),
-  submissionType: z.string().optional(),
-  context: z.string().optional(),
-  projectId: z.union([z.string(), z.number()]).optional(),
-  artifactId: z.union([z.string(), z.number()]).optional(),
-  ctdSection: z.string().optional(),
-});
+const aiEditSchema = z
+  .object({
+    action: z.enum(['rewrite', 'expand', 'summarize', 'regulatory-tone', 'add-references']),
+    text: z.string().min(1).max(50000),
+    sectionTitle: z.string().optional(),
+    submissionType: z.string().optional(),
+    context: z.string().optional(),
+    projectId: z.union([z.string(), z.number()]).optional(),
+    artifactId: z.union([z.string(), z.number()]).optional(),
+    contextAttachment: z.enum(['project', 'adhoc']).optional(),
+    ctdSection: z.string().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (!value.projectId && value.contextAttachment !== 'adhoc') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['contextAttachment'],
+        message: 'contextAttachment must be "adhoc" when projectId is not provided',
+      });
+    }
+    if (value.contextAttachment === 'project' && !value.projectId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['projectId'],
+        message: 'projectId is required when contextAttachment is "project"',
+      });
+    }
+  });
 
 // ── Source traceability helpers for ai/edit-section ──────────────────────────
 
@@ -2768,7 +4015,13 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
   try {
     const userId = getUserId(req);
     const organizationId = getOrganizationId(req);
-    const data = aiEditSchema.parse(req.body);
+    const rawData = aiEditSchema.parse(req.body);
+    const data = {
+      ...rawData,
+      contextAttachment:
+        rawData.contextAttachment ||
+        (rawData.projectId ? ('project' as const) : ('adhoc' as const)),
+    };
 
     const { getGateway } = await import('../services/ai-gateway/gateway.js');
     const gw = getGateway();
@@ -2797,7 +4050,9 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
           data.sectionTitle || '',
           data.ctdSection ? `CTD section ${data.ctdSection}` : '',
           data.text.substring(0, 200),
-        ].filter(Boolean).join(' ');
+        ]
+          .filter(Boolean)
+          .join(' ');
 
         const searchResults = await embeddingService.searchHybrid(
           searchQuery,
@@ -2853,7 +4108,15 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
                     excerpt_hash_sha256, excerpt_preview, score)
                  VALUES ($1, $2, 'atom', $3, $4, $5, $6, $7)
                  RETURNING id`,
-                [retrievalRunId, i + 1, s.id, s.title, excerptHash, s.content.substring(0, 500), s.score]
+                [
+                  retrievalRunId,
+                  i + 1,
+                  s.id,
+                  s.title,
+                  excerptHash,
+                  s.content.substring(0, 500),
+                  s.score,
+                ]
               );
               chunkRows.push({
                 id: crResult.rows[0].id,
@@ -2883,11 +4146,17 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
     let rimBlock = '';
     if (data.projectId) {
       try {
-        const { computeReadinessScore, generateRecommendations } = await import('../services/intelligence/index.js');
+        const { computeReadinessScore, generateRecommendations } = await import(
+          '../services/intelligence/index.js'
+        );
         const projId = Number(data.projectId);
         const [readiness, recs] = await Promise.all([
           computeReadinessScore({ organizationId, projectId: projId }).catch(() => null),
-          generateRecommendations({ organizationId, projectId: projId, triggeredBy: 'ai_edit' }).catch(() => null),
+          generateRecommendations({
+            organizationId,
+            projectId: projId,
+            triggeredBy: 'ai_edit',
+          }).catch(() => null),
         ]);
 
         const rimParts: string[] = [];
@@ -2896,8 +4165,12 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
           const dims = readiness.dimensions;
           rimParts.push(
             `Submission readiness: ${Math.round(readiness.overallScore)}% overall ` +
-            `(completeness ${Math.round(dims.completeness)}%, quality ${Math.round(dims.quality)}%, ` +
-            `consistency ${Math.round(dims.consistency)}%, compliance ${Math.round(dims.compliance)}%).`
+              `(completeness ${Math.round(dims.completeness)}%, quality ${Math.round(
+                dims.quality
+              )}%, ` +
+              `consistency ${Math.round(dims.consistency)}%, compliance ${Math.round(
+                dims.compliance
+              )}%).`
           );
           if (readiness.gaps && readiness.gaps.length > 0) {
             const topGaps = readiness.gaps
@@ -2905,7 +4178,9 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
               .slice(0, 3);
             if (topGaps.length > 0) {
               rimParts.push(
-                'Key gaps: ' + topGaps.map((g: any) => `${g.description} (${g.severity})`).join('; ') + '.'
+                'Key gaps: ' +
+                  topGaps.map((g: any) => `${g.description} (${g.severity})`).join('; ') +
+                  '.'
               );
             }
           }
@@ -2913,12 +4188,16 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
 
         if (recs?.recommendations) {
           const activeRecs = recs.recommendations
-            .filter((r: any) => r.status === 'active' && (r.severity === 'critical' || r.severity === 'high'))
+            .filter(
+              (r: any) =>
+                r.status === 'active' && (r.severity === 'critical' || r.severity === 'high')
+            )
             .slice(0, 3);
           if (activeRecs.length > 0) {
             rimParts.push(
               'Active recommendations: ' +
-              activeRecs.map((r: any) => r.suggestedAction).join('; ') + '.'
+                activeRecs.map((r: any) => r.suggestedAction).join('; ') +
+                '.'
             );
           }
         }
@@ -3016,6 +4295,14 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
       status: 'SUPPORTED' | 'WEAK' | 'UNSUPPORTED';
     }
     const sourceCitationResults: SourceCitation[] = [];
+    const pendingClaims: Array<{
+      si: number;
+      sentence: string;
+      claimHash: string;
+      bestScore: number | null;
+      status: string;
+      citLinks: SourceCitation['sourceRefs'];
+    }> = [];
 
     if (sources.length > 0) {
       const sentences = splitSentences(result);
@@ -3047,31 +4334,13 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
           }
 
           const status: SourceCitation['status'] =
-            refs.size > 0 ? 'SUPPORTED' : (isClaim ? 'UNSUPPORTED' : 'SUPPORTED');
+            refs.size > 0 ? 'SUPPORTED' : isClaim ? 'UNSUPPORTED' : 'SUPPORTED';
 
-          // Persist claim + citation linkages
+          // Collect claim data for batch persist below
           if (generationRunId) {
-            try {
-              const claimHash = aiEditSha256(sentence);
-              const bestScore = citLinks.length > 0 ? Math.max(...citLinks.map(c => c.score)) : null;
-              const claimResult = await pool.query(
-                `INSERT INTO ai_claims
-                   (generation_run_id, claim_index, claim_text, claim_hash_sha256, confidence, status)
-                 VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-                [generationRunId, si, sentence, claimHash, bestScore, status]
-              );
-              const claimId = claimResult.rows[0].id;
-
-              for (const link of citLinks) {
-                await pool.query(
-                  `INSERT INTO ai_claim_citations (claim_id, retrieval_chunk_id, relevance_score)
-                   VALUES ($1, $2, $3)`,
-                  [claimId, link.chunkId, link.score]
-                );
-              }
-            } catch (e: any) {
-              if (e?.code !== '42P01') logger.warn('Claim persist failed', { error: e.message });
-            }
+            const claimHash = aiEditSha256(sentence);
+            const bestScore = citLinks.length > 0 ? Math.max(...citLinks.map(c => c.score)) : null;
+            pendingClaims.push({ si, sentence, claimHash, bestScore, status, citLinks });
           }
 
           sourceCitationResults.push({
@@ -3084,34 +4353,92 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
       }
     }
 
-    // ── STEP 6: AUTO-PERSIST source links for artifact ────────────────────
+    // ── STEP 5b: BATCH PERSIST claims + citation linkages ─────────────────
+    if (generationRunId && pendingClaims.length > 0) {
+      try {
+        // Batch INSERT all claims in one query
+        const claimValues: any[] = [];
+        const claimPlaceholders: string[] = [];
+        let pi = 1;
+        for (const c of pendingClaims) {
+          claimPlaceholders.push(
+            `($${pi}, $${pi + 1}, $${pi + 2}, $${pi + 3}, $${pi + 4}, $${pi + 5})`
+          );
+          claimValues.push(generationRunId, c.si, c.sentence, c.claimHash, c.bestScore, c.status);
+          pi += 6;
+        }
+        const claimResult = await pool.query(
+          `INSERT INTO ai_claims
+             (generation_run_id, claim_index, claim_text, claim_hash_sha256, confidence, status)
+           VALUES ${claimPlaceholders.join(', ')} RETURNING id`,
+          claimValues
+        );
+
+        // Batch INSERT all citation linkages in one query
+        const citValues: any[] = [];
+        const citPlaceholders: string[] = [];
+        let ci = 1;
+        for (let idx = 0; idx < pendingClaims.length; idx++) {
+          const claimId = claimResult.rows[idx]?.id;
+          if (!claimId) continue;
+          for (const link of pendingClaims[idx].citLinks) {
+            citPlaceholders.push(`($${ci}, $${ci + 1}, $${ci + 2})`);
+            citValues.push(claimId, link.chunkId, link.score);
+            ci += 3;
+          }
+        }
+        if (citPlaceholders.length > 0) {
+          await pool.query(
+            `INSERT INTO ai_claim_citations (claim_id, retrieval_chunk_id, relevance_score)
+             VALUES ${citPlaceholders.join(', ')}`,
+            citValues
+          );
+        }
+      } catch (e: any) {
+        if (e?.code !== '42P01') logger.warn('Claim persist failed', { error: e.message });
+      }
+    }
+
+    // ── STEP 6: AUTO-PERSIST source links for artifact (batch) ────────────
     if (data.artifactId && sourceCitationResults.length > 0) {
       try {
-        const artifactIdNum = typeof data.artifactId === 'string'
-          ? parseInt(data.artifactId, 10) : data.artifactId;
+        const artifactIdNum =
+          typeof data.artifactId === 'string' ? parseInt(data.artifactId, 10) : data.artifactId;
         if (!isNaN(artifactIdNum)) {
+          const srcValues: any[] = [];
+          const srcPlaceholders: string[] = [];
+          let sp = 1;
           for (const cit of sourceCitationResults) {
             if (cit.sourceRefs.length > 0) {
-              const bestRef = cit.sourceRefs.reduce((a, b) => a.score > b.score ? a : b);
-              await pool.query(
-                `INSERT INTO source_citations
-                   (document_id, organization_id, sentence_index, sentence_text,
-                    source_type, source_id, source_title, confidence, created_by)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-                 ON CONFLICT DO NOTHING`,
-                [
-                  artifactIdNum,
-                  organizationId,
-                  cit.sentenceIndex,
-                  cit.sentenceText.substring(0, 1000),
-                  'internal_data',
-                  bestRef.sourceId,
-                  bestRef.title.substring(0, 500),
-                  bestRef.score,
-                  userId,
-                ]
+              const bestRef = cit.sourceRefs.reduce((a, b) => (a.score > b.score ? a : b));
+              srcPlaceholders.push(
+                `($${sp}, $${sp + 1}, $${sp + 2}, $${sp + 3}, $${sp + 4}, $${sp + 5}, $${
+                  sp + 6
+                }, $${sp + 7}, $${sp + 8})`
               );
+              srcValues.push(
+                artifactIdNum,
+                organizationId,
+                cit.sentenceIndex,
+                cit.sentenceText.substring(0, 1000),
+                'internal_data',
+                bestRef.sourceId,
+                bestRef.title.substring(0, 500),
+                bestRef.score,
+                userId
+              );
+              sp += 9;
             }
+          }
+          if (srcPlaceholders.length > 0) {
+            await pool.query(
+              `INSERT INTO source_citations
+                 (document_id, organization_id, sentence_index, sentence_text,
+                  source_type, source_id, source_title, confidence, created_by)
+               VALUES ${srcPlaceholders.join(', ')}
+               ON CONFLICT DO NOTHING`,
+              srcValues
+            );
           }
         }
       } catch (e: any) {
@@ -3204,14 +4531,53 @@ const PROMPT_TEMPLATES: PromptTemplate[] = [
     id: 'ctd-clinical-overview',
     name: 'Clinical Overview (2.5)',
     category: 'ctd',
-    description: 'Generate a comprehensive CTD Module 2.5 Clinical Overview with proper regulatory structure.',
+    description:
+      'Generate a comprehensive CTD Module 2.5 Clinical Overview with proper regulatory structure.',
     variables: [
-      { name: 'PRODUCT_NAME', label: 'Product Name', placeholder: 'e.g., Pembrolizumab', required: true, type: 'text' },
-      { name: 'INDICATION', label: 'Indication', placeholder: 'e.g., Non-small cell lung cancer', required: true, type: 'text' },
-      { name: 'MECHANISM', label: 'Mechanism of Action', placeholder: 'e.g., PD-1 checkpoint inhibitor', required: false, type: 'text' },
-      { name: 'PHASE', label: 'Development Phase', placeholder: 'e.g., Phase III', required: true, type: 'select', options: ['Phase I', 'Phase II', 'Phase III', 'Phase IV'] },
-      { name: 'KEY_STUDIES', label: 'Pivotal Studies', placeholder: 'e.g., KEYNOTE-024, KEYNOTE-189', required: false, type: 'textarea' },
-      { name: 'REGION', label: 'Target Agency', placeholder: 'FDA', required: true, type: 'select', options: ['FDA', 'EMA', 'PMDA', 'Health Canada'] },
+      {
+        name: 'PRODUCT_NAME',
+        label: 'Product Name',
+        placeholder: 'e.g., Pembrolizumab',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'INDICATION',
+        label: 'Indication',
+        placeholder: 'e.g., Non-small cell lung cancer',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'MECHANISM',
+        label: 'Mechanism of Action',
+        placeholder: 'e.g., PD-1 checkpoint inhibitor',
+        required: false,
+        type: 'text',
+      },
+      {
+        name: 'PHASE',
+        label: 'Development Phase',
+        placeholder: 'e.g., Phase III',
+        required: true,
+        type: 'select',
+        options: ['Phase I', 'Phase II', 'Phase III', 'Phase IV'],
+      },
+      {
+        name: 'KEY_STUDIES',
+        label: 'Pivotal Studies',
+        placeholder: 'e.g., KEYNOTE-024, KEYNOTE-189',
+        required: false,
+        type: 'textarea',
+      },
+      {
+        name: 'REGION',
+        label: 'Target Agency',
+        placeholder: 'FDA',
+        required: true,
+        type: 'select',
+        options: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+      },
     ],
     systemPrompt: `You are a senior regulatory medical writer drafting CTD Module 2.5 (Clinical Overview) for {{PRODUCT_NAME}} for the treatment of {{INDICATION}}.
 Target agency: {{REGION}}.
@@ -3228,7 +4594,8 @@ Follow ICH M4E(R2) guidelines. Structure the overview as:
 6. Benefits and Risks Conclusions
 
 Use formal regulatory language, third-person passive voice, and cite pivotal study data where provided.`,
-    outputGuidance: 'Output publication-ready regulatory prose with proper CTD subheadings. 800-1500 words.',
+    outputGuidance:
+      'Output publication-ready regulatory prose with proper CTD subheadings. 800-1500 words.',
     estimatedWords: 1200,
   },
   {
@@ -3237,11 +4604,51 @@ Use formal regulatory language, third-person passive voice, and cite pivotal stu
     category: 'ctd',
     description: 'Generate CTD Module 2.3 Quality Overall Summary for drug substance and product.',
     variables: [
-      { name: 'PRODUCT_NAME', label: 'Product Name', placeholder: 'e.g., Amlodipine Besylate', required: true, type: 'text' },
-      { name: 'DOSAGE_FORM', label: 'Dosage Form', placeholder: 'e.g., Tablets, 5mg and 10mg', required: true, type: 'text' },
-      { name: 'ROUTE', label: 'Route of Administration', placeholder: 'e.g., Oral', required: true, type: 'select', options: ['Oral', 'Intravenous', 'Subcutaneous', 'Intramuscular', 'Topical', 'Inhalation', 'Ophthalmic'] },
-      { name: 'MANUFACTURER', label: 'Manufacturer', placeholder: 'e.g., PharmaCo Manufacturing LLC', required: false, type: 'text' },
-      { name: 'REGION', label: 'Target Agency', placeholder: 'FDA', required: true, type: 'select', options: ['FDA', 'EMA', 'PMDA', 'Health Canada'] },
+      {
+        name: 'PRODUCT_NAME',
+        label: 'Product Name',
+        placeholder: 'e.g., Amlodipine Besylate',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'DOSAGE_FORM',
+        label: 'Dosage Form',
+        placeholder: 'e.g., Tablets, 5mg and 10mg',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'ROUTE',
+        label: 'Route of Administration',
+        placeholder: 'e.g., Oral',
+        required: true,
+        type: 'select',
+        options: [
+          'Oral',
+          'Intravenous',
+          'Subcutaneous',
+          'Intramuscular',
+          'Topical',
+          'Inhalation',
+          'Ophthalmic',
+        ],
+      },
+      {
+        name: 'MANUFACTURER',
+        label: 'Manufacturer',
+        placeholder: 'e.g., PharmaCo Manufacturing LLC',
+        required: false,
+        type: 'text',
+      },
+      {
+        name: 'REGION',
+        label: 'Target Agency',
+        placeholder: 'FDA',
+        required: true,
+        type: 'select',
+        options: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+      },
     ],
     systemPrompt: `You are drafting CTD Module 2.3 (Quality Overall Summary) for {{PRODUCT_NAME}} ({{DOSAGE_FORM}}, {{ROUTE}}).
 Manufacturer: {{MANUFACTURER}}.
@@ -3262,14 +4669,62 @@ Reference ICH Q1A-Q1F for stability, Q3A/Q3B for impurities, Q6A/Q6B for specifi
     category: 'csr',
     description: 'Generate a Clinical Study Report synopsis per ICH E3 guidelines.',
     variables: [
-      { name: 'STUDY_TITLE', label: 'Study Title', placeholder: 'A Phase III, Randomized, Double-Blind...', required: true, type: 'textarea' },
-      { name: 'PROTOCOL', label: 'Protocol Number', placeholder: 'e.g., ABC-123-001', required: true, type: 'text' },
-      { name: 'PRODUCT_NAME', label: 'Investigational Product', placeholder: 'e.g., Drug X 100mg', required: true, type: 'text' },
-      { name: 'INDICATION', label: 'Indication', placeholder: 'e.g., Major depressive disorder', required: true, type: 'text' },
-      { name: 'DESIGN', label: 'Study Design', placeholder: 'e.g., Randomized, double-blind, placebo-controlled', required: true, type: 'text' },
-      { name: 'SAMPLE_SIZE', label: 'Sample Size', placeholder: 'e.g., N=450', required: false, type: 'text' },
-      { name: 'PRIMARY_ENDPOINT', label: 'Primary Endpoint', placeholder: 'e.g., Change from baseline in MADRS', required: true, type: 'text' },
-      { name: 'DURATION', label: 'Treatment Duration', placeholder: 'e.g., 8 weeks', required: false, type: 'text' },
+      {
+        name: 'STUDY_TITLE',
+        label: 'Study Title',
+        placeholder: 'A Phase III, Randomized, Double-Blind...',
+        required: true,
+        type: 'textarea',
+      },
+      {
+        name: 'PROTOCOL',
+        label: 'Protocol Number',
+        placeholder: 'e.g., ABC-123-001',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'PRODUCT_NAME',
+        label: 'Investigational Product',
+        placeholder: 'e.g., Drug X 100mg',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'INDICATION',
+        label: 'Indication',
+        placeholder: 'e.g., Major depressive disorder',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'DESIGN',
+        label: 'Study Design',
+        placeholder: 'e.g., Randomized, double-blind, placebo-controlled',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'SAMPLE_SIZE',
+        label: 'Sample Size',
+        placeholder: 'e.g., N=450',
+        required: false,
+        type: 'text',
+      },
+      {
+        name: 'PRIMARY_ENDPOINT',
+        label: 'Primary Endpoint',
+        placeholder: 'e.g., Change from baseline in MADRS',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'DURATION',
+        label: 'Treatment Duration',
+        placeholder: 'e.g., 8 weeks',
+        required: false,
+        type: 'text',
+      },
     ],
     systemPrompt: `You are writing a CSR Synopsis per ICH E3 for:
 Study: {{STUDY_TITLE}}
@@ -3292,7 +4747,8 @@ Structure per ICH E3:
 - Efficacy Results (primary and key secondary)
 - Safety Results (AEs, SAEs, deaths, discontinuations)
 - Conclusions`,
-    outputGuidance: 'Structured synopsis with all ICH E3 required elements. Use [brackets] for missing data. 500-800 words.',
+    outputGuidance:
+      'Structured synopsis with all ICH E3 required elements. Use [brackets] for missing data. 500-800 words.',
     estimatedWords: 700,
   },
   {
@@ -3301,13 +4757,55 @@ Structure per ICH E3:
     category: 'safety',
     description: 'Generate an individual patient safety narrative for serious adverse events.',
     variables: [
-      { name: 'PRODUCT_NAME', label: 'Product Name', placeholder: 'e.g., Drug X', required: true, type: 'text' },
-      { name: 'PROTOCOL', label: 'Protocol Number', placeholder: 'e.g., ABC-123-001', required: true, type: 'text' },
-      { name: 'SUBJECT_ID', label: 'Subject ID', placeholder: 'e.g., 001-0042', required: true, type: 'text' },
-      { name: 'EVENT', label: 'Adverse Event', placeholder: 'e.g., Hepatotoxicity, Grade 3', required: true, type: 'text' },
-      { name: 'DEMOGRAPHICS', label: 'Demographics', placeholder: 'e.g., 58-year-old male, 82kg', required: false, type: 'text' },
-      { name: 'MEDICAL_HISTORY', label: 'Relevant Medical History', placeholder: 'e.g., Hypertension, Type 2 diabetes', required: false, type: 'textarea' },
-      { name: 'OUTCOME', label: 'Outcome', placeholder: 'e.g., Resolved with dose reduction', required: false, type: 'text' },
+      {
+        name: 'PRODUCT_NAME',
+        label: 'Product Name',
+        placeholder: 'e.g., Drug X',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'PROTOCOL',
+        label: 'Protocol Number',
+        placeholder: 'e.g., ABC-123-001',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'SUBJECT_ID',
+        label: 'Subject ID',
+        placeholder: 'e.g., 001-0042',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'EVENT',
+        label: 'Adverse Event',
+        placeholder: 'e.g., Hepatotoxicity, Grade 3',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'DEMOGRAPHICS',
+        label: 'Demographics',
+        placeholder: 'e.g., 58-year-old male, 82kg',
+        required: false,
+        type: 'text',
+      },
+      {
+        name: 'MEDICAL_HISTORY',
+        label: 'Relevant Medical History',
+        placeholder: 'e.g., Hypertension, Type 2 diabetes',
+        required: false,
+        type: 'textarea',
+      },
+      {
+        name: 'OUTCOME',
+        label: 'Outcome',
+        placeholder: 'e.g., Resolved with dose reduction',
+        required: false,
+        type: 'text',
+      },
     ],
     systemPrompt: `You are writing an individual patient safety narrative for a regulatory submission.
 Product: {{PRODUCT_NAME}}
@@ -3338,12 +4836,49 @@ Use [brackets] for any missing data elements.`,
     category: 'ind',
     description: 'Generate an IND cover letter for FDA submission.',
     variables: [
-      { name: 'PRODUCT_NAME', label: 'Product Name', placeholder: 'e.g., ABC-1234', required: true, type: 'text' },
-      { name: 'INDICATION', label: 'Indication', placeholder: 'e.g., Advanced melanoma', required: true, type: 'text' },
-      { name: 'SPONSOR', label: 'Sponsor Name', placeholder: 'e.g., BioPharma Inc.', required: true, type: 'text' },
-      { name: 'IND_NUMBER', label: 'IND Number', placeholder: 'e.g., IND 123456 (or New)', required: false, type: 'text' },
-      { name: 'SUBMISSION_TYPE', label: 'Submission Type', placeholder: 'Initial IND', required: true, type: 'select', options: ['Initial IND', 'IND Amendment', 'IND Annual Report', 'IND Safety Report'] },
-      { name: 'DIVISION', label: 'FDA Review Division', placeholder: 'e.g., Division of Oncology Products 1', required: false, type: 'text' },
+      {
+        name: 'PRODUCT_NAME',
+        label: 'Product Name',
+        placeholder: 'e.g., ABC-1234',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'INDICATION',
+        label: 'Indication',
+        placeholder: 'e.g., Advanced melanoma',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'SPONSOR',
+        label: 'Sponsor Name',
+        placeholder: 'e.g., BioPharma Inc.',
+        required: true,
+        type: 'text',
+      },
+      {
+        name: 'IND_NUMBER',
+        label: 'IND Number',
+        placeholder: 'e.g., IND 123456 (or New)',
+        required: false,
+        type: 'text',
+      },
+      {
+        name: 'SUBMISSION_TYPE',
+        label: 'Submission Type',
+        placeholder: 'Initial IND',
+        required: true,
+        type: 'select',
+        options: ['Initial IND', 'IND Amendment', 'IND Annual Report', 'IND Safety Report'],
+      },
+      {
+        name: 'DIVISION',
+        label: 'FDA Review Division',
+        placeholder: 'e.g., Division of Oncology Products 1',
+        required: false,
+        type: 'text',
+      },
     ],
     systemPrompt: `You are drafting an IND cover letter for FDA.
 Product: {{PRODUCT_NAME}}
@@ -3389,11 +4924,29 @@ router.get('/ai/templates', (_req: Request, res: Response) => {
  * POST /api/concept2cure/ai/templates/:templateId/generate
  * Generate content from a template with variable values filled in.
  */
-const templateGenerateSchema = z.object({
-  variables: z.record(z.string(), z.string()),
-  projectId: z.union([z.string(), z.number()]).optional(),
-  artifactId: z.union([z.string(), z.number()]).optional(),
-});
+const templateGenerateSchema = z
+  .object({
+    variables: z.record(z.string(), z.string()),
+    projectId: z.union([z.string(), z.number()]).optional(),
+    artifactId: z.union([z.string(), z.number()]).optional(),
+    contextAttachment: z.enum(['project', 'adhoc']).optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (!value.projectId && value.contextAttachment !== 'adhoc') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['contextAttachment'],
+        message: 'contextAttachment must be "adhoc" when projectId is not provided',
+      });
+    }
+    if (value.contextAttachment === 'project' && !value.projectId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['projectId'],
+        message: 'projectId is required when contextAttachment is "project"',
+      });
+    }
+  });
 
 router.post('/ai/templates/:templateId/generate', async (req: Request, res: Response) => {
   const startMs = Date.now();
@@ -3401,7 +4954,13 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
     const { templateId } = req.params;
     const userId = getUserId(req);
     const organizationId = getOrganizationId(req);
-    const data = templateGenerateSchema.parse(req.body);
+    const rawData = templateGenerateSchema.parse(req.body);
+    const data = {
+      ...rawData,
+      contextAttachment:
+        rawData.contextAttachment ||
+        (rawData.projectId ? ('project' as const) : ('adhoc' as const)),
+    };
 
     const template = PROMPT_TEMPLATES.find(t => t.id === templateId);
     if (!template) {
@@ -3435,16 +4994,22 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
           (req as any).tenantContext?.organizationUuid ||
           (req.headers['x-org-uuid'] as string | undefined);
 
-        const searchQuery = Object.values(data.variables).filter(Boolean).join(' ').substring(0, 300);
+        const searchQuery = Object.values(data.variables)
+          .filter(Boolean)
+          .join(' ')
+          .substring(0, 300);
         const searchResults = await embeddingService.searchHybrid(searchQuery, 5, 0.65, orgUuid);
         if (searchResults.length > 0) {
           sourcesRetrieved = searchResults.length;
           evidenceBlock =
             '\n\n--- RETRIEVED EVIDENCE FROM DATA ROOM (cite as [SRC-n]) ---\n' +
-            searchResults.map((r: any, i: number) => {
-              const content = r.content.length > 500 ? r.content.substring(0, 500) + '…' : r.content;
-              return `[SRC-${i + 1}] "${r.title}"\n${content}`;
-            }).join('\n\n') +
+            searchResults
+              .map((r: any, i: number) => {
+                const content =
+                  r.content.length > 500 ? r.content.substring(0, 500) + '…' : r.content;
+                return `[SRC-${i + 1}] "${r.title}"\n${content}`;
+              })
+              .join('\n\n') +
             '\n--- END EVIDENCE ---\n\n' +
             'Cite evidence inline using [SRC-n] where supported. Do NOT fabricate citations.';
         }
@@ -3457,11 +5022,17 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
     let rimBlock = '';
     if (data.projectId) {
       try {
-        const { computeReadinessScore, generateRecommendations } = await import('../services/intelligence/index.js');
+        const { computeReadinessScore, generateRecommendations } = await import(
+          '../services/intelligence/index.js'
+        );
         const projId = Number(data.projectId);
         const [readiness, recs] = await Promise.all([
           computeReadinessScore({ organizationId, projectId: projId }).catch(() => null),
-          generateRecommendations({ organizationId, projectId: projId, triggeredBy: 'template_gen' }).catch(() => null),
+          generateRecommendations({
+            organizationId,
+            projectId: projId,
+            triggeredBy: 'template_gen',
+          }).catch(() => null),
         ]);
 
         const rimParts: string[] = [];
@@ -3469,24 +5040,39 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
           const dims = readiness.dimensions;
           rimParts.push(
             `Submission readiness: ${Math.round(readiness.overallScore)}% ` +
-            `(completeness ${Math.round(dims.completeness)}%, quality ${Math.round(dims.quality)}%, ` +
-            `consistency ${Math.round(dims.consistency)}%, compliance ${Math.round(dims.compliance)}%).`
+              `(completeness ${Math.round(dims.completeness)}%, quality ${Math.round(
+                dims.quality
+              )}%, ` +
+              `consistency ${Math.round(dims.consistency)}%, compliance ${Math.round(
+                dims.compliance
+              )}%).`
           );
           if (readiness.gaps?.length > 0) {
             const topGaps = readiness.gaps
               .filter((g: any) => g.severity === 'critical' || g.severity === 'high')
               .slice(0, 3);
             if (topGaps.length > 0) {
-              rimParts.push('Key gaps: ' + topGaps.map((g: any) => `${g.description} (${g.severity})`).join('; ') + '.');
+              rimParts.push(
+                'Key gaps: ' +
+                  topGaps.map((g: any) => `${g.description} (${g.severity})`).join('; ') +
+                  '.'
+              );
             }
           }
         }
         if (recs?.recommendations) {
           const activeRecs = recs.recommendations
-            .filter((r: any) => r.status === 'active' && (r.severity === 'critical' || r.severity === 'high'))
+            .filter(
+              (r: any) =>
+                r.status === 'active' && (r.severity === 'critical' || r.severity === 'high')
+            )
             .slice(0, 3);
           if (activeRecs.length > 0) {
-            rimParts.push('Active recommendations: ' + activeRecs.map((r: any) => r.suggestedAction).join('; ') + '.');
+            rimParts.push(
+              'Active recommendations: ' +
+                activeRecs.map((r: any) => r.suggestedAction).join('; ') +
+                '.'
+            );
           }
         }
         if (rimParts.length > 0) {
@@ -3511,7 +5097,10 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
     const gwResponse = await gw.route({
       taskType: 'document_drafting',
       messages: [
-        { role: 'system', content: prompt + evidenceBlock + rimBlock + '\n\n' + template.outputGuidance },
+        {
+          role: 'system',
+          content: prompt + evidenceBlock + rimBlock + '\n\n' + template.outputGuidance,
+        },
         { role: 'user', content: 'Generate the document content now.' },
       ],
       temperature: 0.35,
@@ -3552,7 +5141,7 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
         wordCount,
         latencyMs,
         sourcesRetrieved,
-        wordsPerMinute: latencyMs > 0 ? Math.round((wordCount / (latencyMs / 60000))) : 0,
+        wordsPerMinute: latencyMs > 0 ? Math.round(wordCount / (latencyMs / 60000)) : 0,
       },
     });
   } catch (error: any) {
@@ -3596,7 +5185,9 @@ router.post('/ai/autocomplete', async (req: Request, res: Response) => {
       context?.documentType ? `Document type: ${context.documentType}.` : '',
       'Return ONLY the completion text — no explanation, no quotes, no preamble.',
       'If you cannot predict a useful continuation, return an empty string.',
-    ].filter(Boolean).join(' ');
+    ]
+      .filter(Boolean)
+      .join(' ');
 
     const gwResponse = await gw.route({
       taskType: 'document_drafting',
@@ -3648,7 +5239,9 @@ router.post('/ai/compliance-scan', async (req: Request, res: Response) => {
       'Return a JSON array of issues: [{"type": "error|warning|info", "rule": "21 CFR 314.50(d)", "message": "...", "suggestion": "..."}]',
       'Focus on: missing required content, regulatory language violations, formatting issues, and cross-reference gaps.',
       'Return ONLY valid JSON array, no other text.',
-    ].filter(Boolean).join(' ');
+    ]
+      .filter(Boolean)
+      .join(' ');
 
     // Use only first 3000 chars to keep latency low
     const truncated = content.replace(/<[^>]+>/g, ' ').slice(0, 3000);
@@ -3815,23 +5408,33 @@ router.post('/ai/batch-edit', async (req: Request, res: Response) => {
     }
 
     const actionPrompts: Record<string, string> = {
-      'rewrite': 'Rewrite this section for clarity, precision, and professional regulatory language. Maintain all factual content.',
-      'expand': 'Expand this section with more detail, evidence references, and supporting data. Keep regulatory tone.',
-      'summarize': 'Create a concise executive summary of this section. Keep key data points and conclusions.',
-      'regulatory-tone': 'Rewrite in formal FDA/EMA regulatory submission language. Use "shall" for requirements, "should" for recommendations.',
-      'add-references': 'Add reference placeholders [Ref X] where claims need supporting evidence. Note what type of reference is needed.',
+      rewrite:
+        'Rewrite this section for clarity, precision, and professional regulatory language. Maintain all factual content.',
+      expand:
+        'Expand this section with more detail, evidence references, and supporting data. Keep regulatory tone.',
+      summarize:
+        'Create a concise executive summary of this section. Keep key data points and conclusions.',
+      'regulatory-tone':
+        'Rewrite in formal FDA/EMA regulatory submission language. Use "shall" for requirements, "should" for recommendations.',
+      'add-references':
+        'Add reference placeholders [Ref X] where claims need supporting evidence. Note what type of reference is needed.',
     };
 
     const systemPrompt = [
       actionPrompts[action] || `Apply the "${action}" transformation to this text.`,
       submissionType ? `Submission type: ${submissionType}.` : '',
       'Return ONLY the transformed text — no preamble, no explanation.',
-    ].filter(Boolean).join(' ');
+    ]
+      .filter(Boolean)
+      .join(' ');
 
     const results = [];
     for (const section of sections.slice(0, 20)) {
       try {
-        const text = (section.content || '').replace(/<[^>]+>/g, ' ').trim().slice(0, 3000);
+        const text = (section.content || '')
+          .replace(/<[^>]+>/g, ' ')
+          .trim()
+          .slice(0, 3000);
         if (text.length < 10) {
           results.push({ sectionTitle: section.title, result: section.content, error: null });
           continue;
@@ -3884,38 +5487,43 @@ router.post('/ai/validate-references', async (req: Request, res: Response) => {
       return sendError(res, 400, 'references array is required');
     }
 
-    const validatedRefs = [];
+    const refsSlice = references.slice(0, 50);
 
-    for (const ref of references.slice(0, 50)) {
+    // Batch: fetch all project artifacts once instead of N SELECTs
+    let artifactRows: Array<{ id: number; title: string; ctd_section: string | null }> = [];
+    if (projectId) {
+      try {
+        const artResult = await pool.query(
+          `SELECT id, title, ctd_section FROM concept2cure_artifacts WHERE project_id = $1`,
+          [projectId]
+        );
+        artifactRows = artResult.rows;
+      } catch {
+        // fall through — all refs will be 'unlinked'
+      }
+    }
+
+    const validatedRefs = refsSlice.map((ref: any) => {
       let status: 'valid' | 'broken' | 'unlinked' = 'unlinked';
       let targetTitle = '';
 
       if (projectId && ref.targetSection) {
-        try {
-          const result = await pool.query(
-            `SELECT id, title FROM concept2cure_artifacts
-             WHERE project_id = $1
-               AND (ctd_section ILIKE $2 OR title ILIKE $3)
-             LIMIT 1`,
-            [projectId, `%${ref.targetSection}%`, `%${ref.targetSection}%`]
-          );
-          if (result.rows.length > 0) {
-            status = 'valid';
-            targetTitle = result.rows[0].title;
-          } else {
-            status = 'broken';
-          }
-        } catch {
-          status = 'unlinked';
+        const needle = ref.targetSection.toLowerCase();
+        const match = artifactRows.find(
+          a =>
+            (a.ctd_section && a.ctd_section.toLowerCase().includes(needle)) ||
+            a.title.toLowerCase().includes(needle)
+        );
+        if (match) {
+          status = 'valid';
+          targetTitle = match.title;
+        } else {
+          status = 'broken';
         }
       }
 
-      validatedRefs.push({
-        ...ref,
-        status,
-        targetTitle,
-      });
-    }
+      return { ...ref, status, targetTitle };
+    });
 
     return sendSuccess(res, { references: validatedRefs });
   } catch (error: any) {
@@ -3961,10 +5569,16 @@ router.post('/ai/check-inconsistency', async (req: Request, res: Response) => {
     const otherSections = allArtifacts.slice(0, 10).map((a: any) => ({
       id: a.id,
       title: a.title,
-      excerpt: (a.content || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 500),
+      excerpt: (a.content || '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 500),
     }));
 
-    const prompt = `You are a regulatory document consistency checker. A user changed content in the section "${changedSectionTitle || 'Unknown'}".
+    const prompt = `You are a regulatory document consistency checker. A user changed content in the section "${
+      changedSectionTitle || 'Unknown'
+    }".
 
 Changed content:
 "${changedText.slice(0, 1500)}"
@@ -4019,7 +5633,11 @@ If no sections are affected, return an empty array []. Only return the JSON arra
       sections = [];
     }
 
-    logger.info('Inconsistency check completed', { userId, projectId, affectedCount: sections.length });
+    logger.info('Inconsistency check completed', {
+      userId,
+      projectId,
+      affectedCount: sections.length,
+    });
     return sendSuccess(res, { sections });
   } catch (error: any) {
     logger.error('Inconsistency check failed', { error: error.message });
@@ -4168,17 +5786,25 @@ router.post('/errors', async (req: Request, res: Response) => {
  */
 async function verifyProjectAccess(req: Request, projectId: string): Promise<boolean> {
   const organizationId = getOrganizationId(req);
-  const numericId = parseInt(projectId.replace('proj_', ''), 10);
-
-  if (isNaN(numericId)) return false;
-
-  const [project] = await db
-    .select({ id: projects.id })
-    .from(projects)
-    .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
-    .limit(1);
-
-  return !!project;
+  const userId = getUserId(req);
+  const actorRole = getActorRole(req);
+  const clientWorkspaceId = getClientWorkspaceId(req);
+  try {
+    const scope = getProjectScope(projectId);
+    if (!scope) {
+      return false;
+    }
+    const projectAccess = await loadProjectAccessRow({
+      organizationId,
+      clientWorkspaceId,
+      projectId: scope.numericId,
+      userId,
+      actorRole,
+    });
+    return !!projectAccess.project;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -4393,6 +6019,145 @@ router.post(
   }
 );
 
+/**
+ * PATCH /api/concept2cure/projects/:projectId/conversations/:conversationId
+ * Update mutable conversation metadata (currently title).
+ */
+router.patch(
+  '/projects/:projectId/conversations/:conversationId',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const numericProjectId = parseInt(req.params.projectId.replace('proj_', ''), 10);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess || Number.isNaN(numericProjectId)) {
+        return sendError(res, 404, 'Project not found');
+      }
+
+      const payload = z
+        .object({
+          title: z.string().min(1).max(200),
+        })
+        .parse(req.body);
+
+      const [dbConversation] = await db
+        .select()
+        .from(concept2cureConversations)
+        .where(
+          and(
+            eq(concept2cureConversations.conversationId, req.params.conversationId),
+            eq(concept2cureConversations.projectId, numericProjectId),
+            eq(concept2cureConversations.organizationId, organizationId),
+            eq(concept2cureConversations.status, 'active')
+          )
+        )
+        .limit(1);
+
+      if (!dbConversation) {
+        return sendError(res, 404, 'Conversation not found');
+      }
+
+      const [updated] = await db
+        .update(concept2cureConversations)
+        .set({
+          title: sanitizeContent(payload.title.trim()),
+          updatedAt: new Date(),
+        })
+        .where(eq(concept2cureConversations.id, dbConversation.id))
+        .returning();
+
+      await logAuditEntry(
+        req,
+        'UPDATE',
+        'conversation',
+        req.params.conversationId,
+        dbConversation,
+        {
+          title: updated.title,
+        }
+      );
+
+      return sendSuccess(res, {
+        id: updated.conversationId,
+        projectId: req.params.projectId,
+        title: updated.title,
+        updatedAt: updated.updatedAt,
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+      }
+      logConcept2cureError('update conversation', error, {
+        projectId: req.params.projectId,
+        conversationId: req.params.conversationId,
+      });
+      return sendError(res, 500, 'Failed to update conversation');
+    }
+  }
+);
+
+/**
+ * DELETE /api/concept2cure/projects/:projectId/conversations/:conversationId
+ * Soft-delete a conversation (status -> archived).
+ */
+router.delete(
+  '/projects/:projectId/conversations/:conversationId',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const numericProjectId = parseInt(req.params.projectId.replace('proj_', ''), 10);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess || Number.isNaN(numericProjectId)) {
+        return sendError(res, 404, 'Project not found');
+      }
+
+      const [dbConversation] = await db
+        .select()
+        .from(concept2cureConversations)
+        .where(
+          and(
+            eq(concept2cureConversations.conversationId, req.params.conversationId),
+            eq(concept2cureConversations.projectId, numericProjectId),
+            eq(concept2cureConversations.organizationId, organizationId),
+            eq(concept2cureConversations.status, 'active')
+          )
+        )
+        .limit(1);
+
+      if (!dbConversation) {
+        return sendError(res, 404, 'Conversation not found');
+      }
+
+      await db
+        .update(concept2cureConversations)
+        .set({
+          status: 'archived',
+          updatedAt: new Date(),
+        })
+        .where(eq(concept2cureConversations.id, dbConversation.id));
+
+      await logAuditEntry(
+        req,
+        'DELETE',
+        'conversation',
+        req.params.conversationId,
+        dbConversation,
+        null
+      );
+      return sendSuccess(res, {
+        conversationId: req.params.conversationId,
+        archived: true,
+      });
+    } catch (error: any) {
+      logConcept2cureError('delete conversation', error, {
+        projectId: req.params.projectId,
+        conversationId: req.params.conversationId,
+      });
+      return sendError(res, 500, 'Failed to delete conversation');
+    }
+  }
+);
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ARTIFACT ROUTES (DATABASE-BACKED WITH VERSION CONTROL)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4402,50 +6167,54 @@ router.post(
  * Returns all artifacts across all projects for the organization (gallery view).
  * Includes project name for display in the cross-project artifacts gallery.
  */
-router.get('/artifacts', async (req: Request, res: Response) => {
-  try {
-    const organizationId = getOrganizationId(req);
+router.get(
+  '/artifacts',
+  cacheResponse({ ttl: 60_000, keyGenerator: req => `artifacts:${(req as any).organizationId}` }),
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
 
-    const allArtifacts = await db
-      .select({
-        artifactId: concept2cureArtifacts.artifactId,
-        projectId: concept2cureArtifacts.projectId,
-        type: concept2cureArtifacts.type,
-        category: concept2cureArtifacts.category,
-        title: concept2cureArtifacts.title,
-        status: concept2cureArtifacts.status,
-        ctdSection: concept2cureArtifacts.ctdSection,
-        version: concept2cureArtifacts.version,
-        createdAt: concept2cureArtifacts.createdAt,
-        updatedAt: concept2cureArtifacts.updatedAt,
-        projectName: projects.name,
-      })
-      .from(concept2cureArtifacts)
-      .leftJoin(projects, eq(concept2cureArtifacts.projectId, projects.id))
-      .where(eq(concept2cureArtifacts.organizationId, organizationId))
-      .orderBy(desc(concept2cureArtifacts.updatedAt))
-      .limit(200);
+      const allArtifacts = await db
+        .select({
+          artifactId: concept2cureArtifacts.artifactId,
+          projectId: concept2cureArtifacts.projectId,
+          type: concept2cureArtifacts.type,
+          category: concept2cureArtifacts.category,
+          title: concept2cureArtifacts.title,
+          status: concept2cureArtifacts.status,
+          ctdSection: concept2cureArtifacts.ctdSection,
+          version: concept2cureArtifacts.version,
+          createdAt: concept2cureArtifacts.createdAt,
+          updatedAt: concept2cureArtifacts.updatedAt,
+          projectName: projects.name,
+        })
+        .from(concept2cureArtifacts)
+        .leftJoin(projects, eq(concept2cureArtifacts.projectId, projects.id))
+        .where(eq(concept2cureArtifacts.organizationId, organizationId))
+        .orderBy(desc(concept2cureArtifacts.updatedAt))
+        .limit(200);
 
-    const result = allArtifacts.map(a => ({
-      id: a.artifactId,
-      projectId: `proj_${a.projectId}`,
-      title: a.title,
-      type: a.type,
-      category: a.category,
-      status: a.status || 'draft',
-      ctdSection: a.ctdSection,
-      version: a.version,
-      projectName: a.projectName || 'Unknown Project',
-      createdAt: a.createdAt,
-      updatedAt: a.updatedAt,
-    }));
+      const result = allArtifacts.map(a => ({
+        id: a.artifactId,
+        projectId: `proj_${a.projectId}`,
+        title: a.title,
+        type: a.type,
+        category: a.category,
+        status: a.status || 'draft',
+        ctdSection: a.ctdSection,
+        version: a.version,
+        projectName: a.projectName || 'Unknown Project',
+        createdAt: a.createdAt,
+        updatedAt: a.updatedAt,
+      }));
 
-    return sendSuccess(res, result);
-  } catch (error: any) {
-    logger.error('Failed to fetch all artifacts', { error: error.message });
-    return sendError(res, 500, 'Failed to fetch artifacts');
+      return sendSuccess(res, result);
+    } catch (error: any) {
+      logger.error('Failed to fetch all artifacts', { error: error.message });
+      return sendError(res, 500, 'Failed to fetch artifacts');
+    }
   }
-});
+);
 
 /**
  * GET /api/concept2cure/projects/all/artifacts-summary
@@ -4465,7 +6234,9 @@ router.get('/projects/all/artifacts-summary', async (req: Request, res: Response
     const total = allArtifacts.length;
     const draft = allArtifacts.filter(a => a.status === 'draft').length;
     const review = allArtifacts.filter(a => a.status === 'review').length;
-    const approved = allArtifacts.filter(a => a.status === 'approved' || a.status === 'locked').length;
+    const approved = allArtifacts.filter(
+      a => a.status === 'approved' || a.status === 'locked'
+    ).length;
 
     return sendSuccess(res, { total, draft, review, approved });
   } catch (error: any) {
@@ -4500,201 +6271,310 @@ router.get('/projects/:projectId/artifacts', async (req: Request, res: Response)
  * POST /api/concept2cure/projects/:projectId/artifacts
  * Create a new artifact (database-backed with version control).
  */
-router.post('/projects/:projectId/artifacts', guardEmptyContent, guardDemoContent, async (req: Request, res: Response) => {
-  try {
-    const organizationId = getOrganizationId(req);
-    const userId = getUserId(req);
-    const numericProjectId = parseInt(req.params.projectId.replace('proj_', ''), 10);
+router.post(
+  '/projects/:projectId/artifacts',
+  guardEmptyContent,
+  guardDemoContent,
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const userId = getUserId(req);
+      const numericProjectId = parseInt(req.params.projectId.replace('proj_', ''), 10);
 
-    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-    if (!hasAccess || isNaN(numericProjectId)) {
-      return sendError(res, 404, 'Project not found');
-    }
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess || isNaN(numericProjectId)) {
+        return sendError(res, 404, 'Project not found');
+      }
 
-    const data = createArtifactSchema.parse(req.body);
+      const data = createArtifactSchema.parse(req.body);
 
-    // Sanitize content
-    const sanitizedContent = sanitizeContent(data.content);
-    const sanitizedTitle = sanitizeContent(data.title);
-    const contentHash = calculateContentHash(sanitizedContent);
-    const artifactId = `artifact_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
-
-    // Find conversation DB ID if provided
-    let conversationDbId: number | null = null;
-    if (data.conversationId) {
-      const [conv] = await db
-        .select({ id: concept2cureConversations.id })
-        .from(concept2cureConversations)
-        .where(
-          and(
-            eq(concept2cureConversations.conversationId, data.conversationId),
-            eq(concept2cureConversations.organizationId, organizationId)
-          )
-        )
-        .limit(1);
-      if (conv) conversationDbId = conv.id;
-    }
-
-    // Insert artifact into database
-    const ctdSection =
-      data.ctdSection ||
-      ((data.metadata as Record<string, unknown>)?.ctdSection as string | undefined);
-    const [newDbArtifact] = await db
-      .insert(concept2cureArtifacts)
-      .values({
-        organizationId,
+      // Sanitize content
+      const sanitizedContent = sanitizeContent(data.content);
+      const sanitizedTitle = sanitizeContent(data.title);
+      const governedResolution = resolveGovernedContext({
+        req,
         projectId: numericProjectId,
-        conversationId: conversationDbId,
-        artifactId,
+        artifactId: null,
+        documentType: data.type,
+        generationMode: data.metadata?.generationMethod === 'ai' ? 'ai_generated' : 'manual',
+        lifecycleStatus: 'draft',
+        originSurface: data.originSurface,
+        clientTrack: data.clientTrack,
+        submissionProgram: data.submissionProgram,
+        persona: data.persona,
+        regulatorScope: data.regulatorScope,
+        evidenceMode: data.evidenceMode,
+        documentClass: data.documentClass,
+        readinessGate: data.readinessGate,
+        approvalPathType: data.approvalPathType,
+        recommendationSource: data.recommendationSource,
+        workspaceTarget: data.workspaceTarget,
+        dossierContainerId: data.dossierContainerId,
+        artifactContainerId: data.artifactContainerId,
+        regulatorIntent: data.regulatorIntent,
+        placementContainerId:
+          (data.metadata?.containerId as string | undefined) ||
+          data.dossierContainerId ||
+          data.artifactContainerId,
+        provider: (data.metadata?.provider as string | undefined) || undefined,
+        model: (data.metadata?.model as string | undefined) || undefined,
+        title: sanitizedTitle,
+        content: sanitizedContent,
+        ctdSection: data.ctdSection || null,
+        sourceRefs: Array.isArray(data.metadata?.sourceRefs)
+          ? (data.metadata?.sourceRefs as string[])
+          : undefined,
+        exportAllowed: false,
+        eventType: 'artifact.created',
+      });
+      if (!governedResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: governedResolution.validation.errors,
+            warnings: governedResolution.validation.warnings,
+            resolved: governedResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+      const contentHash = calculateContentHash(sanitizedContent);
+      const artifactId = `artifact_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+
+      // Find conversation DB ID if provided
+      let conversationDbId: number | null = null;
+      if (data.conversationId) {
+        const [conv] = await db
+          .select({ id: concept2cureConversations.id })
+          .from(concept2cureConversations)
+          .where(
+            and(
+              eq(concept2cureConversations.conversationId, data.conversationId),
+              eq(concept2cureConversations.organizationId, organizationId)
+            )
+          )
+          .limit(1);
+        if (conv) conversationDbId = conv.id;
+      }
+
+      // Insert artifact into database
+      const ctdSection =
+        data.ctdSection ||
+        ((data.metadata as Record<string, unknown>)?.ctdSection as string | undefined);
+      const [newDbArtifact] = await db
+        .insert(concept2cureArtifacts)
+        .values({
+          organizationId,
+          projectId: numericProjectId,
+          conversationId: conversationDbId,
+          artifactId,
+          type: data.type,
+          category: data.category,
+          title: sanitizedTitle,
+          content: sanitizedContent,
+          contentHash,
+          version: 1,
+          templateId: data.templateId || null,
+          metadata: {
+            ...(data.metadata || {}),
+            harness: {
+              clientTrack: governedResolution.contract.clientTrack,
+              submissionProgram: governedResolution.contract.submissionProgram,
+              persona: governedResolution.contract.persona,
+              regulatorScope: governedResolution.contract.regulatorScope,
+              documentClass: governedResolution.contract.documentClass,
+              readinessGate: governedResolution.contract.readinessGate,
+              workspaceTarget: governedResolution.contract.workspaceTarget,
+              originSurface: governedResolution.contract.originSurface,
+              recommendationSource: governedResolution.contract.recommendationSource,
+              regulatorIntent: governedResolution.contract.regulatorIntent,
+              gateChecks: governedResolution.contract.exportEligibility.gateChecks,
+              blockingReasons: governedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome: governedResolution.contract.exportEligibility.readinessOutcome,
+            },
+          },
+          ctdSection: data.ctdSection || null,
+          createdById: userId,
+          ...(ctdSection ? { ctdSection } : {}),
+        })
+        .returning();
+
+      // Insert first version
+      await db.insert(concept2cureArtifactVersions).values({
+        organizationId,
+        artifactId: newDbArtifact.id,
+        version: 1,
+        content: sanitizedContent,
+        contentHash,
+        createdById: userId,
+      });
+
+      const newArtifact: Artifact = {
+        id: artifactId,
+        projectId: req.params.projectId,
+        conversationId: data.conversationId,
         type: data.type,
         category: data.category,
         title: sanitizedTitle,
         content: sanitizedContent,
-        contentHash,
-        version: 1,
-        metadata: data.metadata || {},
         ctdSection: data.ctdSection || null,
-        createdById: userId,
-        ...(ctdSection ? { ctdSection } : {}),
-      })
-      .returning();
+        version: 1,
+        versions: [{ version: 1, content: sanitizedContent, createdAt: newDbArtifact.createdAt }],
+        metadata: data.metadata,
+        createdAt: newDbArtifact.createdAt,
+        updatedAt: newDbArtifact.updatedAt,
+      };
 
-    // Insert first version
-    await db.insert(concept2cureArtifactVersions).values({
-      organizationId,
-      artifactId: newDbArtifact.id,
-      version: 1,
-      content: sanitizedContent,
-      contentHash,
-      createdById: userId,
-    });
-
-    const newArtifact: Artifact = {
-      id: artifactId,
-      projectId: req.params.projectId,
-      conversationId: data.conversationId,
-      type: data.type,
-      category: data.category,
-      title: sanitizedTitle,
-      content: sanitizedContent,
-      ctdSection: data.ctdSection || null,
-      version: 1,
-      versions: [{ version: 1, content: sanitizedContent, createdAt: newDbArtifact.createdAt }],
-      metadata: data.metadata,
-      createdAt: newDbArtifact.createdAt,
-      updatedAt: newDbArtifact.updatedAt,
-    };
-
-    // Log audit entry with content hash
-    await logAuditEntry(req, 'CREATE', 'artifact', artifactId, null, {
-      projectId: req.params.projectId,
-      type: newArtifact.type,
-      title: newArtifact.title,
-      contentLength: sanitizedContent.length,
-      contentHash,
-    });
-
-    // Emit provenance: document creation event
-    await emitProvenanceEvent({
-      artifactDbId: newDbArtifact.id,
-      organizationId,
-      eventType: 'generation',
-      eventAction: data.metadata?.generationMethod === 'ai' ? 'ai_generate' : 'human_create',
-      actorId: userId,
-      actorName: (req as any).userName || req.userEmail,
-      actorEmail: req.userEmail,
-      details: {
-        title: sanitizedTitle,
-        type: data.type,
-        category: data.category,
+      // Log audit entry with content hash
+      await logAuditEntry(req, 'CREATE', 'artifact', artifactId, null, {
+        projectId: req.params.projectId,
+        type: newArtifact.type,
+        title: newArtifact.title,
+        templateId: data.templateId || null,
         contentLength: sanitizedContent.length,
         contentHash,
-        ctdSection: ctdSection || null,
-        conversationId: data.conversationId || null,
-      },
-      sourceDescription: data.conversationId
-        ? `Created from conversation ${data.conversationId}`
-        : 'Manual document creation',
-      backendRoute: 'POST /api/concept2cure/projects/:projectId/artifacts',
-      backendService: 'concept2cure',
-      ipAddress: getClientIp(req),
-    });
+      });
 
-    // RIM: capture artifact creation signal (non-blocking)
-    interceptArtifactChange({
-      organizationId,
-      projectId: parseInt(req.params.projectId, 10),
-      userId,
-      artifactId,
-      artifactVersionId: newDbArtifact.id?.toString(),
-      sectionCode: ctdSection || undefined,
-      changeType: 'create',
-      title: sanitizedTitle,
-      contentLength: sanitizedContent.length,
-      source: data.metadata?.generationMethod === 'ai' ? 'lumen_cortex' : 'manual',
-      content: sanitizedContent,
-    });
+      // Emit provenance: document creation event
+      await emitProvenanceEvent({
+        artifactDbId: newDbArtifact.id,
+        organizationId,
+        eventType: 'generation',
+        eventAction: data.metadata?.generationMethod === 'ai' ? 'ai_generate' : 'human_create',
+        actorId: userId,
+        actorName: (req as any).userName || req.userEmail,
+        actorEmail: req.userEmail,
+        details: {
+          title: sanitizedTitle,
+          type: data.type,
+          category: data.category,
+          templateId: data.templateId || null,
+          contentLength: sanitizedContent.length,
+          contentHash,
+          ctdSection: ctdSection || null,
+          conversationId: data.conversationId || null,
+        },
+        sourceDescription: data.conversationId
+          ? `Created from conversation ${data.conversationId}`
+          : 'Manual document creation',
+        backendRoute: 'POST /api/concept2cure/projects/:projectId/artifacts',
+        backendService: 'concept2cure',
+        ipAddress: getClientIp(req),
+      });
 
-    // Emit generation trace: artifact_created
-    const traceId = (data.metadata as Record<string, unknown>)?.traceId as string || createTraceId();
-    emitTraceEvent({
-      traceId,
-      timestamp: new Date().toISOString(),
-      event: 'artifact_created',
-      sourceSystem: (data.metadata as Record<string, unknown>)?.sourceSystem as any || 'document_builder',
-      projectId: numericProjectId,
-      artifactId,
-      userId,
-      metadata: {
-        documentType: data.type,
-        ctdSection: ctdSection || null,
+      // RIM: capture artifact creation signal (non-blocking)
+      interceptArtifactChange({
+        organizationId,
+        projectId: parseInt(req.params.projectId, 10),
+        userId,
+        artifactId,
+        artifactVersionId: newDbArtifact.id?.toString(),
+        sectionCode: ctdSection || undefined,
+        changeType: 'create',
+        title: sanitizedTitle,
         contentLength: sanitizedContent.length,
-        generationMethod: (data.metadata as Record<string, unknown>)?.generationMethod || 'unknown',
-      },
-    });
+        source: data.metadata?.generationMethod === 'ai' ? 'lumen_cortex' : 'manual',
+        content: sanitizedContent,
+      });
 
-    // ── AUTO-EMBED: Insert into lumen_data_atoms + generate embedding ────
-    // All artifacts become searchable evidence for AI source traceability
-    try {
-      const plainText = sanitizedContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-      if (plainText.length > 40) {
-        const atomResult = await pool.query(
-          `INSERT INTO lumen_data_atoms
+      // Data Lineage: record source→artifact lineage (non-blocking)
+      try {
+        const { recordLineage } = await import('../services/data-lineage-service');
+        if (data.conversationId) {
+          recordLineage({
+            organizationId,
+            projectId: numericProjectId,
+            sourceObjectType: 'conversation',
+            sourceObjectId: data.conversationId,
+            sourceTitle: `Conversation ${data.conversationId}`,
+            targetObjectType: 'artifact',
+            targetObjectId: artifactId,
+            targetTitle: sanitizedTitle,
+            targetField: ctdSection || undefined,
+            linkageType:
+              data.metadata?.generationMethod === 'ai' ? 'generated_from' : 'derived_from',
+            transformationType:
+              data.metadata?.generationMethod === 'ai' ? 'ai_generation' : 'manual_edit',
+            createdById: userId,
+            metadata: { contentHash, version: 1 },
+          }).catch(() => {});
+        }
+      } catch {
+        /* non-blocking */
+      }
+
+      // Emit generation trace: artifact_created
+      const traceId =
+        ((data.metadata as Record<string, unknown>)?.traceId as string) || createTraceId();
+      emitTraceEvent({
+        traceId,
+        timestamp: new Date().toISOString(),
+        event: 'artifact_created',
+        sourceSystem:
+          ((data.metadata as Record<string, unknown>)?.sourceSystem as any) || 'document_builder',
+        projectId: numericProjectId,
+        artifactId,
+        userId,
+        metadata: {
+          documentType: data.type,
+          ctdSection: ctdSection || null,
+          contentLength: sanitizedContent.length,
+          generationMethod:
+            (data.metadata as Record<string, unknown>)?.generationMethod || 'unknown',
+        },
+      });
+
+      // ── AUTO-EMBED: Insert into lumen_data_atoms + generate embedding ────
+      // All artifacts become searchable evidence for AI source traceability
+      try {
+        const plainText = sanitizedContent
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        if (plainText.length > 40) {
+          const atomResult = await pool.query(
+            `INSERT INTO lumen_data_atoms
              (organization_id, source_type, source_id, atom_type, title, content, tags, confidence, status)
            VALUES ($1, 'artifact', $2, $3, $4, $5, $6, 0.85, 'active')
            ON CONFLICT DO NOTHING
            RETURNING id`,
-          [
-            organizationId,
-            artifactId,
-            data.category === 'source' ? 'source_document' : 'authored_document',
-            sanitizedTitle,
-            plainText.substring(0, 16000),
-            `{${data.category},${data.type}${ctdSection ? `,${ctdSection}` : ''}}`,
-          ]
-        );
-        if (atomResult.rows.length > 0) {
-          const atomId = atomResult.rows[0].id;
-          const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
-          const embeddingService = getEmbeddingService(pool);
-          await embeddingService.embedAtom(atomId);
+            [
+              organizationId,
+              artifactId,
+              data.category === 'source' ? 'source_document' : 'authored_document',
+              sanitizedTitle,
+              plainText.substring(0, 16000),
+              `{${data.category},${data.type}${ctdSection ? `,${ctdSection}` : ''}}`,
+            ]
+          );
+          if (atomResult.rows.length > 0) {
+            const atomId = atomResult.rows[0].id;
+            const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
+            const embeddingService = getEmbeddingService(pool);
+            await embeddingService.embedAtom(atomId);
+          }
         }
+      } catch (embedErr: any) {
+        // Non-fatal �� artifact created successfully, embedding can be retried
+        logger.warn('Auto-embedding failed for new artifact', {
+          artifactId,
+          error: embedErr.message,
+        });
       }
-    } catch (embedErr: any) {
-      // Non-fatal �� artifact created successfully, embedding can be retried
-      logger.warn('Auto-embedding failed for new artifact', { artifactId, error: embedErr.message });
-    }
 
-    logger.info('Created artifact', { projectId: req.params.projectId, artifactId });
-    return sendSuccess(res.status(201), newArtifact);
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+      logger.info('Created artifact', { projectId: req.params.projectId, artifactId });
+      return sendSuccess(res.status(201), newArtifact);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+      }
+      logConcept2cureError('create artifact', error, { projectId: req.params.projectId });
+      return sendError(res, 500, 'Failed to create artifact');
     }
-    logConcept2cureError('create artifact', error, { projectId: req.params.projectId });
-    return sendError(res, 500, 'Failed to create artifact');
   }
-});
+);
 
 /**
  * PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId
@@ -4796,6 +6676,44 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
     // Update ctdSection if provided
     const newCtdSection = ctdSection !== undefined ? ctdSection : dbArtifact.ctdSection;
 
+    const updateGovernedResolution = resolveGovernedContext({
+      req,
+      projectId: dbArtifact.projectId,
+      artifactId: dbArtifact.id,
+      documentType: dbArtifact.type,
+      generationMode: 'amendment',
+      lifecycleStatus:
+        (dbArtifact.status as GovernedDocumentActionContract['lifecycleStatus']) || 'draft',
+      title: newTitle || dbArtifact.title,
+      content: newContent || dbArtifact.content || '',
+      ctdSection: newCtdSection,
+      sourceRefs: [`artifact:${dbArtifact.artifactId}`],
+      exportAllowed: ['approved', 'locked', 'published'].includes(String(dbArtifact.status || '')),
+      eventType: 'artifact.updated',
+    });
+    if (!updateGovernedResolution.validation.valid) {
+      return sendError(
+        res,
+        400,
+        'Governed document contract validation failed',
+        {
+          errors: updateGovernedResolution.validation.errors,
+          warnings: updateGovernedResolution.validation.warnings,
+          resolved: updateGovernedResolution.resolved,
+        },
+        'GOVERNED_CONTRACT_INVALID'
+      );
+    }
+
+    const existingMetadata =
+      dbArtifact.metadata && typeof dbArtifact.metadata === 'object'
+        ? (dbArtifact.metadata as Record<string, unknown>)
+        : {};
+    const existingHarness =
+      existingMetadata.harness && typeof existingMetadata.harness === 'object'
+        ? (existingMetadata.harness as Record<string, unknown>)
+        : {};
+
     // Update artifact record
     const [updatedArtifact] = await db
       .update(concept2cureArtifacts)
@@ -4805,6 +6723,25 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
         contentHash: newContentHash,
         version: newVersion,
         ctdSection: newCtdSection,
+        metadata: {
+          ...existingMetadata,
+          harness: {
+            ...existingHarness,
+            clientTrack: updateGovernedResolution.contract.clientTrack,
+            submissionProgram: updateGovernedResolution.contract.submissionProgram,
+            persona: updateGovernedResolution.contract.persona,
+            regulatorScope: updateGovernedResolution.contract.regulatorScope,
+            documentClass: updateGovernedResolution.contract.documentClass,
+            readinessGate: updateGovernedResolution.contract.readinessGate,
+            workspaceTarget: updateGovernedResolution.contract.workspaceTarget,
+            originSurface: updateGovernedResolution.contract.originSurface,
+            recommendationSource: updateGovernedResolution.contract.recommendationSource,
+            regulatorIntent: updateGovernedResolution.contract.regulatorIntent,
+            gateChecks: updateGovernedResolution.contract.exportEligibility.gateChecks,
+            blockingReasons: updateGovernedResolution.contract.exportEligibility.blockingReasons,
+            readinessOutcome: updateGovernedResolution.contract.exportEligibility.readinessOutcome,
+          },
+        },
         updatedAt: new Date(),
       })
       .where(eq(concept2cureArtifacts.id, dbArtifact.id))
@@ -4889,7 +6826,10 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
     // ── RE-EMBED on content change for Data Room searchability ────────
     if (newVersion > dbArtifact.version && sanitizedContent) {
       try {
-        const plainText = sanitizedContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        const plainText = sanitizedContent
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
         if (plainText.length > 40) {
           const atomResult = await pool.query(
             `UPDATE lumen_data_atoms
@@ -5007,12 +6947,73 @@ router.put(
 
       const previousSection = dbArtifact.ctdSection || null;
 
+      const placementGovernedResolution = resolveGovernedContext({
+        req,
+        projectId: dbArtifact.projectId,
+        artifactId: dbArtifact.id,
+        documentType: dbArtifact.type,
+        generationMode: 'amendment',
+        lifecycleStatus:
+          (dbArtifact.status as GovernedDocumentActionContract['lifecycleStatus']) || 'draft',
+        title: dbArtifact.title,
+        content: dbArtifact.content || '',
+        ctdSection: toSection,
+        sourceRefs: [`artifact:${dbArtifact.artifactId}`],
+        exportAllowed: ['approved', 'locked', 'published'].includes(
+          String(dbArtifact.status || '')
+        ),
+        eventType: 'artifact.updated',
+      });
+      if (!placementGovernedResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: placementGovernedResolution.validation.errors,
+            warnings: placementGovernedResolution.validation.warnings,
+            resolved: placementGovernedResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+
+      const existingMetadata =
+        dbArtifact.metadata && typeof dbArtifact.metadata === 'object'
+          ? (dbArtifact.metadata as Record<string, unknown>)
+          : {};
+      const existingHarness =
+        existingMetadata.harness && typeof existingMetadata.harness === 'object'
+          ? (existingMetadata.harness as Record<string, unknown>)
+          : {};
+
       // Update ctdSection on the artifact
       const [updated] = await db
         .update(concept2cureArtifacts)
         .set({
           ctdSection: toSection,
           updatedAt: new Date(),
+          metadata: {
+            ...existingMetadata,
+            harness: {
+              ...existingHarness,
+              clientTrack: placementGovernedResolution.contract.clientTrack,
+              submissionProgram: placementGovernedResolution.contract.submissionProgram,
+              persona: placementGovernedResolution.contract.persona,
+              regulatorScope: placementGovernedResolution.contract.regulatorScope,
+              documentClass: placementGovernedResolution.contract.documentClass,
+              readinessGate: placementGovernedResolution.contract.readinessGate,
+              workspaceTarget: placementGovernedResolution.contract.workspaceTarget,
+              originSurface: placementGovernedResolution.contract.originSurface,
+              recommendationSource: placementGovernedResolution.contract.recommendationSource,
+              regulatorIntent: placementGovernedResolution.contract.regulatorIntent,
+              gateChecks: placementGovernedResolution.contract.exportEligibility.gateChecks,
+              blockingReasons:
+                placementGovernedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome:
+                placementGovernedResolution.contract.exportEligibility.readinessOutcome,
+            },
+          },
         })
         .where(eq(concept2cureArtifacts.id, dbArtifact.id))
         .returning();
@@ -5043,7 +7044,9 @@ router.put(
           reason: reason.trim(),
           title: dbArtifact.title,
         },
-        sourceDescription: `${operation}: ${previousSection || '(unassigned)'} → ${toSection} — ${reason.trim()}`,
+        sourceDescription: `${operation}: ${
+          previousSection || '(unassigned)'
+        } → ${toSection} — ${reason.trim()}`,
         backendRoute: 'PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement',
         backendService: 'concept2cure',
         ipAddress: getClientIp(req),
@@ -5077,144 +7080,151 @@ router.put(
  * completion percentage, template coverage, and evidence linkage.
  * Computed from real artifact + provenance data only. No synthetic rollups.
  */
-router.get('/projects/:projectId/dossier-metrics', async (req: Request, res: Response) => {
-  try {
-    const organizationId = getOrganizationId(req);
-    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-    if (!hasAccess) {
-      return sendError(res, 404, 'Project not found');
-    }
+router.get(
+  '/projects/:projectId/dossier-metrics',
+  cacheResponse({
+    ttl: 90_000,
+    keyGenerator: req => `dossier-metrics:${(req as any).organizationId}:${req.params.projectId}`,
+  }),
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) {
+        return sendError(res, 404, 'Project not found');
+      }
 
-    // Get project DB id
-    const projectDbIdStr = req.params.projectId;
-    const projectDbId = parseInt(projectDbIdStr, 10);
-    if (isNaN(projectDbId)) {
-      return sendError(res, 400, 'Invalid project ID');
-    }
+      // Get project DB id
+      const projectDbIdStr = req.params.projectId;
+      const projectDbId = parseInt(projectDbIdStr, 10);
+      if (isNaN(projectDbId)) {
+        return sendError(res, 400, 'Invalid project ID');
+      }
 
-    // Fetch all artifacts for project
-    const allArtifacts = await db
-      .select({
-        id: concept2cureArtifacts.id,
-        artifactId: concept2cureArtifacts.artifactId,
-        ctdSection: concept2cureArtifacts.ctdSection,
-        status: concept2cureArtifacts.status,
-        templateId: concept2cureArtifacts.templateId,
-        type: concept2cureArtifacts.type,
-      })
-      .from(concept2cureArtifacts)
-      .where(
-        and(
-          eq(concept2cureArtifacts.projectId, projectDbId),
-          eq(concept2cureArtifacts.organizationId, organizationId)
-        )
-      );
-
-    // Fetch provenance events related to evidence (source_input events)
-    const artifactIds = allArtifacts.map(a => a.id);
-    let evidenceEvents: { artifactId: number; eventType: string; eventAction: string }[] = [];
-    if (artifactIds.length > 0) {
-      evidenceEvents = await db
+      // Fetch all artifacts for project
+      const allArtifacts = await db
         .select({
-          artifactId: concept2cureProvenanceEvents.artifactId,
-          eventType: concept2cureProvenanceEvents.eventType,
-          eventAction: concept2cureProvenanceEvents.eventAction,
+          id: concept2cureArtifacts.id,
+          artifactId: concept2cureArtifacts.artifactId,
+          ctdSection: concept2cureArtifacts.ctdSection,
+          status: concept2cureArtifacts.status,
+          templateId: concept2cureArtifacts.templateId,
+          type: concept2cureArtifacts.type,
         })
-        .from(concept2cureProvenanceEvents)
+        .from(concept2cureArtifacts)
         .where(
           and(
-            inArray(concept2cureProvenanceEvents.artifactId, artifactIds),
-            eq(concept2cureProvenanceEvents.organizationId, organizationId)
+            eq(concept2cureArtifacts.projectId, projectDbId),
+            eq(concept2cureArtifacts.organizationId, organizationId)
           )
         );
+
+      // Fetch provenance events related to evidence (source_input events)
+      const artifactIds = allArtifacts.map(a => a.id);
+      let evidenceEvents: { artifactId: number; eventType: string; eventAction: string }[] = [];
+      if (artifactIds.length > 0) {
+        evidenceEvents = await db
+          .select({
+            artifactId: concept2cureProvenanceEvents.artifactId,
+            eventType: concept2cureProvenanceEvents.eventType,
+            eventAction: concept2cureProvenanceEvents.eventAction,
+          })
+          .from(concept2cureProvenanceEvents)
+          .where(
+            and(
+              inArray(concept2cureProvenanceEvents.artifactId, artifactIds),
+              eq(concept2cureProvenanceEvents.organizationId, organizationId)
+            )
+          );
+      }
+
+      // Build per-artifact evidence map
+      const artifactEvidenceMap = new Map<number, { sourceInputs: number; generations: number }>();
+      for (const ev of evidenceEvents) {
+        const entry = artifactEvidenceMap.get(ev.artifactId) || { sourceInputs: 0, generations: 0 };
+        if (ev.eventType === 'source_input') entry.sourceInputs++;
+        if (ev.eventType === 'generation') entry.generations++;
+        artifactEvidenceMap.set(ev.artifactId, entry);
+      }
+
+      // Aggregate per CTD section
+      const sectionMetrics: Record<
+        string,
+        {
+          artifactCount: number;
+          draftCount: number;
+          reviewCount: number;
+          approvedCount: number;
+          lockedCount: number;
+          templateCoverageAvailable: boolean;
+          evidenceCount: number;
+          precedentCount: number;
+        }
+      > = {};
+
+      for (const art of allArtifacts) {
+        const section = art.ctdSection || '_unplaced';
+        if (!sectionMetrics[section]) {
+          sectionMetrics[section] = {
+            artifactCount: 0,
+            draftCount: 0,
+            reviewCount: 0,
+            approvedCount: 0,
+            lockedCount: 0,
+            templateCoverageAvailable: false,
+            evidenceCount: 0,
+            precedentCount: 0,
+          };
+        }
+        const m = sectionMetrics[section];
+        m.artifactCount++;
+        const s = (art.status || 'draft').toLowerCase();
+        if (s === 'approved') m.approvedCount++;
+        else if (s === 'locked' || s === 'published') m.lockedCount++;
+        else if (s === 'review' || s === 'under_review') m.reviewCount++;
+        else m.draftCount++;
+        if (art.templateId) m.templateCoverageAvailable = true;
+        const evidence = artifactEvidenceMap.get(art.id);
+        if (evidence) {
+          m.evidenceCount += evidence.sourceInputs;
+          m.precedentCount += evidence.generations;
+        }
+      }
+
+      // Compute completion per section
+      const result: Record<
+        string,
+        {
+          artifactCount: number;
+          draftCount: number;
+          reviewCount: number;
+          approvedCount: number;
+          lockedCount: number;
+          completionPercent: number;
+          templateCoverageAvailable: boolean;
+          evidenceCount: number;
+          precedentCount: number;
+        }
+      > = {};
+
+      for (const [section, m] of Object.entries(sectionMetrics)) {
+        let completionPercent = 0;
+        if (m.artifactCount > 0) {
+          // Weighted: locked=100, approved=85, review=60, draft=30
+          const weighted =
+            m.lockedCount * 100 + m.approvedCount * 85 + m.reviewCount * 60 + m.draftCount * 30;
+          completionPercent = Math.round(weighted / m.artifactCount);
+        }
+        result[section] = { ...m, completionPercent };
+      }
+
+      return sendSuccess(res, result);
+    } catch (error: any) {
+      logConcept2cureError('dossier-metrics', error, { projectId: req.params.projectId });
+      return sendError(res, 500, 'Failed to compute dossier metrics');
     }
-
-    // Build per-artifact evidence map
-    const artifactEvidenceMap = new Map<number, { sourceInputs: number; generations: number }>();
-    for (const ev of evidenceEvents) {
-      const entry = artifactEvidenceMap.get(ev.artifactId) || { sourceInputs: 0, generations: 0 };
-      if (ev.eventType === 'source_input') entry.sourceInputs++;
-      if (ev.eventType === 'generation') entry.generations++;
-      artifactEvidenceMap.set(ev.artifactId, entry);
-    }
-
-    // Aggregate per CTD section
-    const sectionMetrics: Record<
-      string,
-      {
-        artifactCount: number;
-        draftCount: number;
-        reviewCount: number;
-        approvedCount: number;
-        lockedCount: number;
-        templateCoverageAvailable: boolean;
-        evidenceCount: number;
-        precedentCount: number;
-      }
-    > = {};
-
-    for (const art of allArtifacts) {
-      const section = art.ctdSection || '_unplaced';
-      if (!sectionMetrics[section]) {
-        sectionMetrics[section] = {
-          artifactCount: 0,
-          draftCount: 0,
-          reviewCount: 0,
-          approvedCount: 0,
-          lockedCount: 0,
-          templateCoverageAvailable: false,
-          evidenceCount: 0,
-          precedentCount: 0,
-        };
-      }
-      const m = sectionMetrics[section];
-      m.artifactCount++;
-      const s = (art.status || 'draft').toLowerCase();
-      if (s === 'approved') m.approvedCount++;
-      else if (s === 'locked' || s === 'published') m.lockedCount++;
-      else if (s === 'review' || s === 'under_review') m.reviewCount++;
-      else m.draftCount++;
-      if (art.templateId) m.templateCoverageAvailable = true;
-      const evidence = artifactEvidenceMap.get(art.id);
-      if (evidence) {
-        m.evidenceCount += evidence.sourceInputs;
-        m.precedentCount += evidence.generations;
-      }
-    }
-
-    // Compute completion per section
-    const result: Record<
-      string,
-      {
-        artifactCount: number;
-        draftCount: number;
-        reviewCount: number;
-        approvedCount: number;
-        lockedCount: number;
-        completionPercent: number;
-        templateCoverageAvailable: boolean;
-        evidenceCount: number;
-        precedentCount: number;
-      }
-    > = {};
-
-    for (const [section, m] of Object.entries(sectionMetrics)) {
-      let completionPercent = 0;
-      if (m.artifactCount > 0) {
-        // Weighted: locked=100, approved=85, review=60, draft=30
-        const weighted =
-          m.lockedCount * 100 + m.approvedCount * 85 + m.reviewCount * 60 + m.draftCount * 30;
-        completionPercent = Math.round(weighted / m.artifactCount);
-      }
-      result[section] = { ...m, completionPercent };
-    }
-
-    return sendSuccess(res, result);
-  } catch (error: any) {
-    logConcept2cureError('dossier-metrics', error, { projectId: req.params.projectId });
-    return sendError(res, 500, 'Failed to compute dossier metrics');
   }
-});
+);
 
 /**
  * POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures
@@ -6093,6 +8103,77 @@ router.post(
       const reportContent = JSON.stringify(reportData, null, 2);
       const contentHash = crypto.createHash('sha256').update(reportContent).digest('hex');
       const now = new Date();
+      const sourceArtifactMetadata =
+        artifact.metadata && typeof artifact.metadata === 'object'
+          ? (artifact.metadata as Record<string, unknown>)
+          : {};
+      const sourceHarness =
+        sourceArtifactMetadata.harness && typeof sourceArtifactMetadata.harness === 'object'
+          ? (sourceArtifactMetadata.harness as Record<string, unknown>)
+          : {};
+      const auditGovernedResolution = resolveGovernedContext({
+        req,
+        projectId: artifact.projectId,
+        artifactId: null,
+        documentType: 'audit_report',
+        generationMode: 'ai_assisted',
+        lifecycleStatus: 'locked',
+        originSurface: 'api_route',
+        clientTrack:
+          sourceHarness.clientTrack === 'device'
+            ? 'device'
+            : sourceHarness.clientTrack === 'diagnostics'
+            ? 'diagnostics'
+            : 'biotech',
+        submissionProgram:
+          sourceHarness.submissionProgram === 'ind' ||
+          sourceHarness.submissionProgram === 'ectd' ||
+          sourceHarness.submissionProgram === '510k' ||
+          sourceHarness.submissionProgram === 'pma' ||
+          sourceHarness.submissionProgram === 'cer' ||
+          sourceHarness.submissionProgram === 'ivdr'
+            ? (sourceHarness.submissionProgram as GovernedDocumentActionContract['submissionProgram'])
+            : 'general_ri',
+        persona: sourceHarness.persona === 'qa' ? 'qa' : 'regulatory',
+        regulatorScope:
+          sourceHarness.regulatorScope === 'ema' ||
+          sourceHarness.regulatorScope === 'mhra' ||
+          sourceHarness.regulatorScope === 'hc' ||
+          sourceHarness.regulatorScope === 'pmda' ||
+          sourceHarness.regulatorScope === 'multi'
+            ? (sourceHarness.regulatorScope as GovernedDocumentActionContract['regulatorScope'])
+            : 'fda',
+        evidenceMode: 'mixed',
+        documentClass: 'audit_report',
+        readinessGate: 'inspection_ready',
+        approvalPathType: 'qa_lock',
+        recommendationSource: 'report_engine',
+        workspaceTarget: 'vault',
+        artifactContainerId: exportArtifactId,
+        placementContainerId: exportArtifactId,
+        regulatorIntent: 'inspection_support',
+        title: `Audit Report — ${artifact.title} — ${now.toISOString().split('T')[0]}`,
+        content: reportContent,
+        ctdSection: artifact.ctdSection,
+        sourceRefs: [`artifact:${artifact.artifactId}`],
+        provider: 'concept2cure',
+        model: 'audit-export-v1',
+        exportAllowed: true,
+        eventType: 'artifact.created',
+      });
+      if (!auditGovernedResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: auditGovernedResolution.validation.errors,
+            warnings: auditGovernedResolution.validation.warnings,
+            resolved: auditGovernedResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
 
       const [exportedArtifact] = await db
         .insert(concept2cureArtifacts)
@@ -6111,6 +8192,24 @@ router.post(
           ctdSection: artifact.ctdSection,
           lockedAt: now,
           lockedById: userId,
+          metadata: {
+            sourceArtifactId: artifact.artifactId,
+            harness: {
+              clientTrack: auditGovernedResolution.contract.clientTrack,
+              submissionProgram: auditGovernedResolution.contract.submissionProgram,
+              persona: auditGovernedResolution.contract.persona,
+              regulatorScope: auditGovernedResolution.contract.regulatorScope,
+              documentClass: auditGovernedResolution.contract.documentClass,
+              readinessGate: auditGovernedResolution.contract.readinessGate,
+              workspaceTarget: auditGovernedResolution.contract.workspaceTarget,
+              originSurface: auditGovernedResolution.contract.originSurface,
+              recommendationSource: auditGovernedResolution.contract.recommendationSource,
+              regulatorIntent: auditGovernedResolution.contract.regulatorIntent,
+              gateChecks: auditGovernedResolution.contract.exportEligibility.gateChecks,
+              blockingReasons: auditGovernedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome: auditGovernedResolution.contract.exportEligibility.readinessOutcome,
+            },
+          },
         })
         .returning();
 
@@ -6337,19 +8436,42 @@ router.put(
       // Hard block promotion if unresolved contradictions with blocks_promotion authority
       if (status === 'approved' || status === 'locked') {
         try {
-          const { contradictionEngineService } = await import('../services/contradiction-engine-service');
-          const { blocked, blockingFindings, warningFindings } = await contradictionEngineService.checkPromotionBlocked(
-            organizationId, Number(req.params.projectId), artifact.id
+          const { contradictionEngineService } = await import(
+            '../services/contradiction-engine-service'
           );
+          const { blocked, blockingFindings, warningFindings } =
+            await contradictionEngineService.checkPromotionBlocked(
+              organizationId,
+              Number(req.params.projectId),
+              artifact.id
+            );
           if (blocked) {
-            return sendError(res, 409, `Promotion blocked by ${blockingFindings.length} unresolved contradiction finding(s). Resolve contradictions before promoting.`, {
-              blockingFindings: blockingFindings.map(f => ({ id: f.id, title: f.title, severity: f.severity, contradictionType: f.contradictionType, authorityState: f.authorityState })),
-              warningFindings: warningFindings.map(f => ({ id: f.id, title: f.title, severity: f.severity })),
-            });
+            return sendError(
+              res,
+              409,
+              `Promotion blocked by ${blockingFindings.length} unresolved contradiction finding(s). Resolve contradictions before promoting.`,
+              {
+                blockingFindings: blockingFindings.map(f => ({
+                  id: f.id,
+                  title: f.title,
+                  severity: f.severity,
+                  contradictionType: f.contradictionType,
+                  authorityState: f.authorityState,
+                })),
+                warningFindings: warningFindings.map(f => ({
+                  id: f.id,
+                  title: f.title,
+                  severity: f.severity,
+                })),
+              }
+            );
           }
         } catch (contradictionError) {
           // Log but don't block on contradiction check failure (table may not exist yet)
-          console.warn('Contradiction check skipped:', contradictionError instanceof Error ? contradictionError.message : contradictionError);
+          console.warn(
+            'Contradiction check skipped:',
+            contradictionError instanceof Error ? contradictionError.message : contradictionError
+          );
         }
       }
 
@@ -6405,7 +8527,11 @@ router.put(
               return sendError(
                 res,
                 400,
-                `Cannot approve: ${nonApprovals.length} reviewer(s) did not approve (decisions: ${nonApprovals.map(d => d.decision).join(', ')})`
+                `Cannot approve: ${
+                  nonApprovals.length
+                } reviewer(s) did not approve (decisions: ${nonApprovals
+                  .map(d => d.decision)
+                  .join(', ')})`
               );
             }
           }
@@ -6429,6 +8555,67 @@ router.put(
         updateData.lockedAt = null;
         updateData.lockedById = null;
       }
+      const statusGovernedResolution = resolveGovernedContext({
+        req,
+        projectId: artifact.projectId,
+        artifactId: artifact.id,
+        documentType: artifact.type,
+        generationMode: 'amendment',
+        lifecycleStatus: (status === 'review'
+          ? 'in_review'
+          : status === 'locked'
+          ? 'locked'
+          : status === 'approved'
+          ? 'approved'
+          : 'draft') as GovernedDocumentActionContract['lifecycleStatus'],
+        title: artifact.title,
+        content: artifact.content || '',
+        ctdSection: artifact.ctdSection,
+        sourceRefs: [`artifact:${artifact.artifactId}`],
+        readinessGate: status === 'locked' ? 'submission_candidate' : undefined,
+        exportAllowed: ['approved', 'locked'].includes(status),
+        eventType: 'artifact.updated',
+      });
+      if (!statusGovernedResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: statusGovernedResolution.validation.errors,
+            warnings: statusGovernedResolution.validation.warnings,
+            resolved: statusGovernedResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+      const existingMetadata =
+        artifact.metadata && typeof artifact.metadata === 'object'
+          ? (artifact.metadata as Record<string, unknown>)
+          : {};
+      const existingHarness =
+        existingMetadata.harness && typeof existingMetadata.harness === 'object'
+          ? (existingMetadata.harness as Record<string, unknown>)
+          : {};
+      updateData.metadata = {
+        ...existingMetadata,
+        harness: {
+          ...existingHarness,
+          clientTrack: statusGovernedResolution.contract.clientTrack,
+          submissionProgram: statusGovernedResolution.contract.submissionProgram,
+          persona: statusGovernedResolution.contract.persona,
+          regulatorScope: statusGovernedResolution.contract.regulatorScope,
+          documentClass: statusGovernedResolution.contract.documentClass,
+          readinessGate: statusGovernedResolution.contract.readinessGate,
+          workspaceTarget: statusGovernedResolution.contract.workspaceTarget,
+          originSurface: statusGovernedResolution.contract.originSurface,
+          recommendationSource: statusGovernedResolution.contract.recommendationSource,
+          regulatorIntent: statusGovernedResolution.contract.regulatorIntent,
+          gateChecks: statusGovernedResolution.contract.exportEligibility.gateChecks,
+          blockingReasons: statusGovernedResolution.contract.exportEligibility.blockingReasons,
+          readinessOutcome: statusGovernedResolution.contract.exportEligibility.readinessOutcome,
+        },
+      };
 
       const [updated] = await db
         .update(concept2cureArtifacts)
@@ -6699,9 +8886,69 @@ router.put(
       }
 
       const previousSection = artifact.ctdSection;
+      const ctdSectionGovernedResolution = resolveGovernedContext({
+        req,
+        projectId: artifact.projectId,
+        artifactId: artifact.id,
+        documentType: artifact.type,
+        generationMode: 'amendment',
+        lifecycleStatus:
+          (artifact.status as GovernedDocumentActionContract['lifecycleStatus']) || 'draft',
+        title: artifact.title,
+        content: artifact.content || '',
+        ctdSection,
+        sourceRefs: [`artifact:${artifact.artifactId}`],
+        exportAllowed: ['approved', 'locked', 'published'].includes(String(artifact.status || '')),
+        eventType: 'artifact.updated',
+      });
+      if (!ctdSectionGovernedResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: ctdSectionGovernedResolution.validation.errors,
+            warnings: ctdSectionGovernedResolution.validation.warnings,
+            resolved: ctdSectionGovernedResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+      const existingMetadata =
+        artifact.metadata && typeof artifact.metadata === 'object'
+          ? (artifact.metadata as Record<string, unknown>)
+          : {};
+      const existingHarness =
+        existingMetadata.harness && typeof existingMetadata.harness === 'object'
+          ? (existingMetadata.harness as Record<string, unknown>)
+          : {};
       const [updated] = await db
         .update(concept2cureArtifacts)
-        .set({ ctdSection, updatedAt: new Date() })
+        .set({
+          ctdSection,
+          updatedAt: new Date(),
+          metadata: {
+            ...existingMetadata,
+            harness: {
+              ...existingHarness,
+              clientTrack: ctdSectionGovernedResolution.contract.clientTrack,
+              submissionProgram: ctdSectionGovernedResolution.contract.submissionProgram,
+              persona: ctdSectionGovernedResolution.contract.persona,
+              regulatorScope: ctdSectionGovernedResolution.contract.regulatorScope,
+              documentClass: ctdSectionGovernedResolution.contract.documentClass,
+              readinessGate: ctdSectionGovernedResolution.contract.readinessGate,
+              workspaceTarget: ctdSectionGovernedResolution.contract.workspaceTarget,
+              originSurface: ctdSectionGovernedResolution.contract.originSurface,
+              recommendationSource: ctdSectionGovernedResolution.contract.recommendationSource,
+              regulatorIntent: ctdSectionGovernedResolution.contract.regulatorIntent,
+              gateChecks: ctdSectionGovernedResolution.contract.exportEligibility.gateChecks,
+              blockingReasons:
+                ctdSectionGovernedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome:
+                ctdSectionGovernedResolution.contract.exportEligibility.readinessOutcome,
+            },
+          },
+        })
         .where(eq(concept2cureArtifacts.id, artifact.id))
         .returning();
 
@@ -6894,6 +9141,43 @@ router.post(
         createdById: userId,
       });
 
+      const rollbackGovernedResolution = resolveGovernedContext({
+        req,
+        projectId: artifact.projectId,
+        artifactId: artifact.id,
+        documentType: artifact.type,
+        generationMode: 'amendment',
+        lifecycleStatus:
+          (artifact.status as GovernedDocumentActionContract['lifecycleStatus']) || 'draft',
+        title: artifact.title,
+        content: targetVer.content || '',
+        ctdSection: artifact.ctdSection,
+        sourceRefs: [`artifact:${artifact.artifactId}`],
+        exportAllowed: ['approved', 'locked', 'published'].includes(String(artifact.status || '')),
+        eventType: 'artifact.updated',
+      });
+      if (!rollbackGovernedResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: rollbackGovernedResolution.validation.errors,
+            warnings: rollbackGovernedResolution.validation.warnings,
+            resolved: rollbackGovernedResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+      const existingMetadata =
+        artifact.metadata && typeof artifact.metadata === 'object'
+          ? (artifact.metadata as Record<string, unknown>)
+          : {};
+      const existingHarness =
+        existingMetadata.harness && typeof existingMetadata.harness === 'object'
+          ? (existingMetadata.harness as Record<string, unknown>)
+          : {};
+
       // Update the artifact to the rolled-back content
       const [updated] = await db
         .update(concept2cureArtifacts)
@@ -6901,6 +9185,27 @@ router.post(
           content: targetVer.content,
           contentHash: newContentHash,
           version: newVersion,
+          metadata: {
+            ...existingMetadata,
+            harness: {
+              ...existingHarness,
+              clientTrack: rollbackGovernedResolution.contract.clientTrack,
+              submissionProgram: rollbackGovernedResolution.contract.submissionProgram,
+              persona: rollbackGovernedResolution.contract.persona,
+              regulatorScope: rollbackGovernedResolution.contract.regulatorScope,
+              documentClass: rollbackGovernedResolution.contract.documentClass,
+              readinessGate: rollbackGovernedResolution.contract.readinessGate,
+              workspaceTarget: rollbackGovernedResolution.contract.workspaceTarget,
+              originSurface: rollbackGovernedResolution.contract.originSurface,
+              recommendationSource: rollbackGovernedResolution.contract.recommendationSource,
+              regulatorIntent: rollbackGovernedResolution.contract.regulatorIntent,
+              gateChecks: rollbackGovernedResolution.contract.exportEligibility.gateChecks,
+              blockingReasons:
+                rollbackGovernedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome:
+                rollbackGovernedResolution.contract.exportEligibility.readinessOutcome,
+            },
+          },
           updatedAt: new Date(),
         })
         .where(eq(concept2cureArtifacts.id, artifact.id))
@@ -7272,44 +9577,39 @@ router.post(
       }
 
       const parsedDueDate = dueDate ? new Date(dueDate) : null;
-      const results = [];
 
-      for (const reviewerId of numericIds) {
-        const assignmentId = `asgn_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
-        try {
-          const [inserted] = await db
-            .insert(concept2cureReviewAssignments)
-            .values({
-              assignmentId,
-              artifactId: artifact.id,
-              organizationId,
-              reviewerId,
-              assignedById: userId,
-              reviewRound,
-              status: 'pending',
-              dueDate: parsedDueDate,
-              notes: notes ? sanitizeContent(notes) : null,
-            })
-            .returning();
-          results.push({
-            assignmentId: inserted.assignmentId,
-            reviewerId: inserted.reviewerId,
-            status: inserted.status,
-            reviewRound: inserted.reviewRound,
-          });
-        } catch (dupErr: any) {
-          if (dupErr.code === '23505') {
-            // Duplicate — reviewer already assigned for this round
-            results.push({
-              reviewerId,
-              status: 'already_assigned',
-              reviewRound,
-            });
-          } else {
-            throw dupErr;
-          }
+      // Batch insert all reviewer assignments in one query
+      const allValues = numericIds.map(reviewerId => ({
+        assignmentId: `asgn_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
+        artifactId: artifact.id,
+        organizationId,
+        reviewerId,
+        assignedById: userId,
+        reviewRound,
+        status: 'pending' as const,
+        dueDate: parsedDueDate,
+        notes: notes ? sanitizeContent(notes) : null,
+      }));
+
+      const inserted = await db
+        .insert(concept2cureReviewAssignments)
+        .values(allValues)
+        .onConflictDoNothing()
+        .returning();
+
+      const insertedSet = new Set(inserted.map(r => r.reviewerId));
+      const results = numericIds.map(reviewerId => {
+        const row = inserted.find(r => r.reviewerId === reviewerId);
+        if (row) {
+          return {
+            assignmentId: row.assignmentId,
+            reviewerId: row.reviewerId,
+            status: row.status,
+            reviewRound: row.reviewRound,
+          };
         }
-      }
+        return { reviewerId, status: 'already_assigned', reviewRound };
+      });
 
       // Log provenance for assignment
       await db.insert(concept2cureProvenanceEvents).values({
@@ -7553,37 +9853,32 @@ router.delete(
  * List organization team members who can be assigned as reviewers.
  * Returns users in the same organization as the project.
  */
-router.get(
-  '/projects/:projectId/team',
-  async (req: Request, res: Response) => {
-    try {
-      const organizationId = getOrganizationId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+router.get('/projects/:projectId/team', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-      // Get all users in this organization
-      const members = await db
-        .select({
-          id: users.id,
-          name: users.name,
-          email: users.email,
-          role: organizationUsers.role,
-          title: users.title,
-          department: users.department,
-          avatar: users.avatar,
-          status: users.status,
-        })
-        .from(organizationUsers)
-        .innerJoin(users, eq(organizationUsers.userId, users.id))
-        .where(
-          and(
-            eq(organizationUsers.organizationId, organizationId),
-            eq(users.status, 'active')
-          )
-        )
-        .orderBy(users.name);
+    // Get all users in this organization
+    const members = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: organizationUsers.role,
+        title: users.title,
+        department: users.department,
+        avatar: users.avatar,
+        status: users.status,
+      })
+      .from(organizationUsers)
+      .innerJoin(users, eq(organizationUsers.userId, users.id))
+      .where(and(eq(organizationUsers.organizationId, organizationId), eq(users.status, 'active')))
+      .orderBy(users.name);
 
-      return sendSuccess(res, members.map(m => ({
+    return sendSuccess(
+      res,
+      members.map(m => ({
         id: String(m.id),
         userId: m.id,
         name: m.name,
@@ -7592,13 +9887,13 @@ router.get(
         title: m.title,
         department: m.department,
         avatar: m.avatar,
-      })));
-    } catch (error: any) {
-      logConcept2cureError('get team members', error, { projectId: req.params.projectId });
-      return sendError(res, 500, 'Failed to fetch team members');
-    }
+      }))
+    );
+  } catch (error: any) {
+    logConcept2cureError('get team members', error, { projectId: req.params.projectId });
+    return sendError(res, 500, 'Failed to fetch team members');
   }
-);
+});
 
 /**
  * POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind
@@ -7660,7 +9955,9 @@ router.post(
         reviewerId: assignment.reviewerId,
       });
     } catch (error: any) {
-      logConcept2cureError('send review reminder', error, { assignmentId: req.params.assignmentId });
+      logConcept2cureError('send review reminder', error, {
+        assignmentId: req.params.assignmentId,
+      });
       return sendError(res, 500, 'Failed to send reminder');
     }
   }
@@ -7996,112 +10293,243 @@ router.get(
  * Persist a HAQ (Health Authority Question) session to the database.
  * Stores as a JSON artifact so it survives beyond sessionStorage.
  */
-router.put(
-  '/projects/:projectId/haq-session',
-  async (req: Request, res: Response) => {
-    try {
-      const organizationId = getOrganizationId(req);
-      const userId = getUserId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+router.put('/projects/:projectId/haq-session', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const userId = getUserId(req);
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-      const { questions } = req.body;
-      if (!Array.isArray(questions)) {
-        return sendError(res, 400, 'questions must be an array');
-      }
-
-      // Check for existing HAQ session artifact
-      const [existing] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.projectId, Number(req.params.projectId)),
-            eq(concept2cureArtifacts.organizationId, organizationId),
-            eq(concept2cureArtifacts.type, 'haq_session')
-          )
-        )
-        .limit(1);
-
-      if (existing) {
-        // Update existing session
-        await db
-          .update(concept2cureArtifacts)
-          .set({
-            content: JSON.stringify({ questions }),
-            updatedAt: new Date(),
-            metadata: sql`jsonb_set(COALESCE(metadata, '{}'), '{questionCount}', ${JSON.stringify(questions.length)}::jsonb)`,
-          })
-          .where(eq(concept2cureArtifacts.id, existing.id));
-
-        return sendSuccess(res, { artifactId: existing.artifactId, updated: true, questionCount: questions.length });
-      } else {
-        // Create new HAQ session artifact
-        const artifactId = `haq_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
-        await db.insert(concept2cureArtifacts).values({
-          artifactId,
-          projectId: Number(req.params.projectId),
-          organizationId,
-          createdById: userId,
-          title: 'HAQ Session',
-          type: 'haq_session',
-          category: 'data',
-          content: JSON.stringify({ questions }),
-          status: 'draft',
-          version: 1,
-          metadata: { questionCount: questions.length, sourceSystem: 'haq_manager' },
-        });
-
-        return sendSuccess(res, { artifactId, created: true, questionCount: questions.length });
-      }
-    } catch (error: any) {
-      logConcept2cureError('save HAQ session', error, { projectId: req.params.projectId });
-      return sendError(res, 500, 'Failed to save HAQ session');
+    const { questions } = req.body;
+    if (!Array.isArray(questions)) {
+      return sendError(res, 400, 'questions must be an array');
     }
+
+    // Check for existing HAQ session artifact
+    const [existing] = await db
+      .select()
+      .from(concept2cureArtifacts)
+      .where(
+        and(
+          eq(concept2cureArtifacts.projectId, Number(req.params.projectId)),
+          eq(concept2cureArtifacts.organizationId, organizationId),
+          eq(concept2cureArtifacts.type, 'haq_session')
+        )
+      )
+      .limit(1);
+
+    if (existing) {
+      const haqUpdateResolution = resolveGovernedContext({
+        req,
+        projectId: Number(req.params.projectId),
+        artifactId: existing.id,
+        documentType: 'haq_session',
+        generationMode: 'amendment',
+        lifecycleStatus:
+          (existing.status as GovernedDocumentActionContract['lifecycleStatus']) || 'draft',
+        originSurface: 'project_workspace_shell',
+        clientTrack: 'biotech',
+        submissionProgram: 'general_ri',
+        persona: 'regulatory',
+        regulatorScope: 'fda',
+        evidenceMode: 'mixed',
+        documentClass: 'strategy_memo',
+        readinessGate: 'exploratory',
+        approvalPathType: 'single_reviewer',
+        recommendationSource: 'report_engine',
+        workspaceTarget: 'project',
+        regulatorIntent: 'strategy',
+        placementContainerId: String(req.params.projectId),
+        title: 'HAQ Session',
+        content: JSON.stringify({ questions }),
+        sourceRefs: [`haq_session:${existing.artifactId}`],
+        provider: 'concept2cure',
+        model: 'haq-session-manager',
+        exportAllowed: false,
+        eventType: 'artifact.updated',
+      });
+      if (!haqUpdateResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: haqUpdateResolution.validation.errors,
+            warnings: haqUpdateResolution.validation.warnings,
+            resolved: haqUpdateResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+
+      // Update existing session
+      const existingMetadata =
+        existing.metadata && typeof existing.metadata === 'object'
+          ? (existing.metadata as Record<string, unknown>)
+          : {};
+      const existingHarness =
+        existingMetadata.harness && typeof existingMetadata.harness === 'object'
+          ? (existingMetadata.harness as Record<string, unknown>)
+          : {};
+      await db
+        .update(concept2cureArtifacts)
+        .set({
+          content: JSON.stringify({ questions }),
+          updatedAt: new Date(),
+          metadata: {
+            ...existingMetadata,
+            questionCount: questions.length,
+            harness: {
+              ...existingHarness,
+              clientTrack: haqUpdateResolution.contract.clientTrack,
+              submissionProgram: haqUpdateResolution.contract.submissionProgram,
+              persona: haqUpdateResolution.contract.persona,
+              regulatorScope: haqUpdateResolution.contract.regulatorScope,
+              documentClass: haqUpdateResolution.contract.documentClass,
+              readinessGate: haqUpdateResolution.contract.readinessGate,
+              workspaceTarget: haqUpdateResolution.contract.workspaceTarget,
+              originSurface: haqUpdateResolution.contract.originSurface,
+              recommendationSource: haqUpdateResolution.contract.recommendationSource,
+              regulatorIntent: haqUpdateResolution.contract.regulatorIntent,
+              gateChecks: haqUpdateResolution.contract.exportEligibility.gateChecks,
+              blockingReasons: haqUpdateResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome: haqUpdateResolution.contract.exportEligibility.readinessOutcome,
+            },
+          },
+        })
+        .where(eq(concept2cureArtifacts.id, existing.id));
+
+      return sendSuccess(res, {
+        artifactId: existing.artifactId,
+        updated: true,
+        questionCount: questions.length,
+      });
+    } else {
+      // Create new HAQ session artifact
+      const artifactId = `haq_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+      const haqCreateResolution = resolveGovernedContext({
+        req,
+        projectId: Number(req.params.projectId),
+        artifactId: null,
+        documentType: 'haq_session',
+        generationMode: 'manual',
+        lifecycleStatus: 'draft',
+        originSurface: 'project_workspace_shell',
+        clientTrack: 'biotech',
+        submissionProgram: 'general_ri',
+        persona: 'regulatory',
+        regulatorScope: 'fda',
+        evidenceMode: 'mixed',
+        documentClass: 'strategy_memo',
+        readinessGate: 'exploratory',
+        approvalPathType: 'single_reviewer',
+        recommendationSource: 'report_engine',
+        workspaceTarget: 'project',
+        regulatorIntent: 'strategy',
+        placementContainerId: String(req.params.projectId),
+        title: 'HAQ Session',
+        content: JSON.stringify({ questions }),
+        sourceRefs: [`haq_session:${artifactId}`],
+        provider: 'concept2cure',
+        model: 'haq-session-manager',
+        exportAllowed: false,
+        eventType: 'artifact.created',
+      });
+      if (!haqCreateResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: haqCreateResolution.validation.errors,
+            warnings: haqCreateResolution.validation.warnings,
+            resolved: haqCreateResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+
+      await db.insert(concept2cureArtifacts).values({
+        artifactId,
+        projectId: Number(req.params.projectId),
+        organizationId,
+        createdById: userId,
+        title: 'HAQ Session',
+        type: 'haq_session',
+        category: 'data',
+        content: JSON.stringify({ questions }),
+        status: 'draft',
+        version: 1,
+        metadata: {
+          questionCount: questions.length,
+          sourceSystem: 'haq_manager',
+          harness: {
+            clientTrack: haqCreateResolution.contract.clientTrack,
+            submissionProgram: haqCreateResolution.contract.submissionProgram,
+            persona: haqCreateResolution.contract.persona,
+            regulatorScope: haqCreateResolution.contract.regulatorScope,
+            documentClass: haqCreateResolution.contract.documentClass,
+            readinessGate: haqCreateResolution.contract.readinessGate,
+            workspaceTarget: haqCreateResolution.contract.workspaceTarget,
+            originSurface: haqCreateResolution.contract.originSurface,
+            recommendationSource: haqCreateResolution.contract.recommendationSource,
+            regulatorIntent: haqCreateResolution.contract.regulatorIntent,
+            gateChecks: haqCreateResolution.contract.exportEligibility.gateChecks,
+            blockingReasons: haqCreateResolution.contract.exportEligibility.blockingReasons,
+            readinessOutcome: haqCreateResolution.contract.exportEligibility.readinessOutcome,
+          },
+        },
+      });
+
+      return sendSuccess(res, { artifactId, created: true, questionCount: questions.length });
+    }
+  } catch (error: any) {
+    logConcept2cureError('save HAQ session', error, { projectId: req.params.projectId });
+    return sendError(res, 500, 'Failed to save HAQ session');
   }
-);
+});
 
 /**
  * GET /api/concept2cure/projects/:projectId/haq-session
  * Load the most recent HAQ session for a project.
  */
-router.get(
-  '/projects/:projectId/haq-session',
-  async (req: Request, res: Response) => {
-    try {
-      const organizationId = getOrganizationId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+router.get('/projects/:projectId/haq-session', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+    if (!hasAccess) return sendError(res, 404, 'Project not found');
 
-      const [session] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.projectId, Number(req.params.projectId)),
-            eq(concept2cureArtifacts.organizationId, organizationId),
-            eq(concept2cureArtifacts.type, 'haq_session')
-          )
+    const [session] = await db
+      .select()
+      .from(concept2cureArtifacts)
+      .where(
+        and(
+          eq(concept2cureArtifacts.projectId, Number(req.params.projectId)),
+          eq(concept2cureArtifacts.organizationId, organizationId),
+          eq(concept2cureArtifacts.type, 'haq_session')
         )
-        .orderBy(desc(concept2cureArtifacts.updatedAt))
-        .limit(1);
+      )
+      .orderBy(desc(concept2cureArtifacts.updatedAt))
+      .limit(1);
 
-      if (!session) {
-        return sendSuccess(res, { questions: [] });
-      }
-
-      try {
-        const parsed = JSON.parse(session.content || '{}');
-        return sendSuccess(res, { questions: parsed.questions || [], artifactId: session.artifactId });
-      } catch {
-        return sendSuccess(res, { questions: [] });
-      }
-    } catch (error: any) {
-      logConcept2cureError('load HAQ session', error, { projectId: req.params.projectId });
-      return sendError(res, 500, 'Failed to load HAQ session');
+    if (!session) {
+      return sendSuccess(res, { questions: [] });
     }
+
+    try {
+      const parsed = JSON.parse(session.content || '{}');
+      return sendSuccess(res, {
+        questions: parsed.questions || [],
+        artifactId: session.artifactId,
+      });
+    } catch {
+      return sendSuccess(res, { questions: [] });
+    }
+  } catch (error: any) {
+    logConcept2cureError('load HAQ session', error, { projectId: req.params.projectId });
+    return sendError(res, 500, 'Failed to load HAQ session');
   }
-);
+});
 
 /**
  * GET /api/concept2cure/reviews/pending
@@ -8232,32 +10660,39 @@ const TEMPLATES = [
     submissionTypes: ['FDA_510K'],
     category: 'document',
     ctdSection: '1.1',
-    content: `[DATE]
+    content: `Date: <Insert submission date>
 
 Food and Drug Administration
 Center for Devices and Radiological Health
-Document Mail Center - WO66-G609
+Document Control Center
 10903 New Hampshire Avenue
 Silver Spring, MD 20993-0002
 
 Re: 510(k) Premarket Notification
-Device Name: [DEVICE NAME]
-Classification: [PRODUCT CODE]
+Device Name: <Insert device name>
+Product Code: <Insert product code>
+Regulation Number: <Insert regulation number>
 
-Dear Sir or Madam:
+Dear Review Team,
 
-[COMPANY NAME] is submitting this 510(k) premarket notification for our [DEVICE NAME]. We believe this device is substantially equivalent to [PREDICATE DEVICE] (K[NUMBER]).
+<Insert sponsor name> submits this Traditional 510(k) for <Insert device name>. This submission supports a determination of substantial equivalence to <Insert predicate device name> (K<Insert predicate number>).
 
-Intended Use: [INTENDED USE]
+Submission highlights:
+- Intended use and indications for use statement
+- Device description and technological characteristics
+- Substantial equivalence comparison to predicate device
+- Performance testing package (bench, biocompatibility, software, sterilization, and/or clinical evidence as applicable)
 
-This submission contains all required information per 21 CFR 807.87.
+This package is organized according to 21 CFR 807.87 and current FDA 510(k) expectations.
+
+Primary contact for this submission:
+<Insert contact name, title, email, and phone>
 
 Sincerely,
 
-[SIGNATURE]
-[NAME], [TITLE]
-[COMPANY]
-[CONTACT]`,
+<Insert authorized signatory name>
+<Insert signatory title>
+<Insert sponsor legal entity name>`,
   },
   {
     id: 'tpl_510k_summary',
@@ -8269,35 +10704,129 @@ Sincerely,
     content: `# 510(k) Summary
 
 ## 1. Submitter Information
-- **Company**: [COMPANY NAME]
-- **Address**: [ADDRESS]
-- **Contact**: [CONTACT NAME], [TITLE]
-- **Phone**: [PHONE]
-- **Email**: [EMAIL]
+- **Company**: <Insert sponsor legal name>
+- **Address**: <Insert sponsor address>
+- **Contact**: <Insert contact name and title>
+- **Phone**: <Insert phone number>
+- **Email**: <Insert contact email>
 
 ## 2. Device Information
-- **Device Name**: [DEVICE NAME]
-- **Common Name**: [COMMON NAME]
-- **Classification Name**: [CLASSIFICATION]
-- **Product Code**: [CODE]
-- **Regulation Number**: [REG NUMBER]
+- **Device Name**: <Insert device trade name>
+- **Common Name**: <Insert common name>
+- **Classification Name**: <Insert classification name>
+- **Product Code**: <Insert product code>
+- **Regulation Number**: <Insert CFR regulation number>
 
 ## 3. Predicate Device
-- **Device Name**: [PREDICATE NAME]
-- **510(k) Number**: K[NUMBER]
-- **Manufacturer**: [MANUFACTURER]
+- **Device Name**: <Insert primary predicate name>
+- **510(k) Number**: K<Insert predicate number>
+- **Manufacturer**: <Insert predicate manufacturer>
 
 ## 4. Intended Use
-[INTENDED USE STATEMENT]
+State the intended use exactly as presented in labeling and the indications for use form, including target population and setting of use.
 
 ## 5. Device Description
-[DEVICE DESCRIPTION]
+Describe the device design, components, materials, principle of operation, user interface, and key accessories. Include software architecture summary when software is part of the device.
 
-## 6. Substantial Equivalence
-[SE DISCUSSION]
+## 6. Substantial Equivalence Discussion
+Compare intended use, technology, and performance versus the predicate device. Clearly explain any technological differences and why they do not raise new questions of safety or effectiveness.
 
 ## 7. Performance Data Summary
-[PERFORMANCE SUMMARY]`,
+Summarize nonclinical and clinical evidence, including bench testing, biocompatibility, electrical safety/EMC, software validation, sterility, shelf life, and human factors/usability as applicable.`,
+  },
+  {
+    id: 'tpl_ind_cover_letter',
+    name: 'IND Cover Letter',
+    description: 'FDA-aligned IND cover letter for initial and amendment submissions',
+    submissionTypes: ['IND'],
+    category: 'document',
+    ctdSection: '1.2',
+    content: `# IND Cover Letter
+Date: <Insert submission date>
+
+Food and Drug Administration
+Center for Drug Evaluation and Research
+<Insert division or office name>
+
+Re: Investigational New Drug Application - <Insert product name>
+IND Number: <Insert IND number or "new IND">
+Submission Type: <Initial IND | Amendment | Annual Report | Safety Report>
+
+Dear Review Team,
+
+On behalf of <Insert sponsor name>, we submit this <Insert submission type> for <Insert product name>.
+This package includes:
+
+- Administrative and regulatory submission materials for this filing
+- Relevant nonclinical, clinical, and safety updates for the current reporting period
+- Chemistry, manufacturing, and controls updates applicable to this submission
+
+Please contact <Insert contact name and title> at <Insert email and phone> with any questions.
+
+Sincerely,
+
+<Insert signatory name>
+<Insert signatory title>
+<Insert sponsor name>`,
+  },
+  {
+    id: 'tpl_ind_investigator_brochure',
+    name: "Investigator's Brochure (IB)",
+    description: 'IND investigator brochure structure aligned to ICH expectations',
+    submissionTypes: ['IND'],
+    category: 'document',
+    ctdSection: '5.3',
+    content: `# Investigator's Brochure
+
+## 1. Summary
+Provide a concise clinical and nonclinical summary of the investigational product, mechanism of action, and development status.
+
+## 2. Introduction
+Describe product background, indication context, and development rationale.
+
+## 3. Physical, Chemical, and Pharmaceutical Properties
+Summarize relevant drug substance and drug product characteristics, including formulation and handling information for investigators.
+
+## 4. Nonclinical Studies
+Summarize pharmacology, pharmacokinetics, and toxicology findings that inform clinical risk management.
+
+## 5. Effects in Humans
+Summarize clinical pharmacology, known efficacy signals, observed safety profile, and important risk considerations.
+
+## 6. Guidance for Investigators
+Provide dosing rationale, monitoring expectations, contraindications, and investigator actions for adverse events.
+
+## 7. References
+List key source reports, publications, and supporting references used in this brochure.`,
+  },
+  {
+    id: 'tpl_ind_pre_ind_briefing',
+    name: 'Pre-IND Briefing Package',
+    description: 'Structured FDA pre-IND meeting briefing package template',
+    submissionTypes: ['IND'],
+    category: 'document',
+    ctdSection: '1.2',
+    content: `# Pre-IND Briefing Package
+
+## 1. Meeting Request Context
+Summarize sponsor, product, indication, and current development stage.
+
+## 2. Product and Development Overview
+Provide a concise integrated overview of CMC, nonclinical, and clinical development work completed to date.
+
+## 3. Proposed Clinical Plan
+Describe the proposed first-in-human or next-phase plan, including study design rationale and key safety controls.
+
+## 4. Key Questions for FDA
+1. Include a focused question on CMC strategy and release readiness.
+2. Include a focused question on nonclinical package adequacy.
+3. Include a focused question on clinical design, dose justification, and safety monitoring.
+
+## 5. Supporting Summaries
+Provide supporting summaries and references for each question area.
+
+## 6. Appendices
+Attach key tables, prior correspondence, and reference documents needed for efficient FDA review.`,
   },
   {
     id: 'tpl_ind_protocol',
@@ -8308,55 +10837,55 @@ Sincerely,
     ctdSection: '5.3.5',
     content: `# Clinical Protocol
 
-## Protocol Number: [PROTOCOL NUMBER]
-## Version: [VERSION]
-## Date: [DATE]
+## Protocol Number
+<Insert protocol number>
 
----
+## Version
+<Insert protocol version and date>
 
 ## 1. Protocol Synopsis
 | Element | Description |
 |---------|-------------|
-| Title | [STUDY TITLE] |
-| Phase | [PHASE] |
-| Sponsor | [SPONSOR] |
-| Indication | [INDICATION] |
-| Primary Objective | [PRIMARY OBJECTIVE] |
+| Title | <Insert full study title> |
+| Phase | <Insert study phase> |
+| Sponsor | <Insert sponsor legal name> |
+| Indication | <Insert target indication> |
+| Primary Objective | <Insert primary objective statement> |
 
 ## 2. Background and Rationale
-[BACKGROUND]
+Provide the scientific and clinical rationale for this study, including unmet need, mechanism of action, and supporting nonclinical/clinical evidence.
 
 ## 3. Study Objectives
 ### 3.1 Primary Objective
-[PRIMARY]
+State one clear, measurable primary objective linked to the primary endpoint and estimand.
 
 ### 3.2 Secondary Objectives
-[SECONDARY]
+List key secondary and exploratory objectives with aligned endpoints and analysis hierarchy.
 
 ## 4. Study Design
-[DESIGN DESCRIPTION]
+Describe study design, treatment arms, randomization/blinding approach, visit schedule, dose strategy, and stopping or escalation rules.
 
 ## 5. Study Population
 ### 5.1 Inclusion Criteria
-[INCLUSION]
+Define clinically justified eligibility criteria that align to the target treatment population.
 
 ### 5.2 Exclusion Criteria
-[EXCLUSION]
+Define exclusion criteria focused on patient safety, interpretability, and protocol feasibility.
 
 ## 6. Investigational Product
-[IP DETAILS]
+Describe product formulation, route, dose, administration, accountability, storage, and handling requirements.
 
 ## 7. Efficacy Assessments
-[EFFICACY]
+Define endpoint instruments, assessment timing, and adjudication methods where applicable.
 
 ## 8. Safety Assessments
-[SAFETY]
+Define adverse event capture, laboratory/vitals/ECG schedules, DLT rules, and safety monitoring governance.
 
 ## 9. Statistical Analysis
-[STATISTICS]
+Describe analysis populations, primary model, multiplicity control, missing data strategy, interim analysis, and sensitivity analyses.
 
 ## 10. Ethics
-[ETHICS STATEMENT]`,
+Describe informed consent, IRB/IEC oversight, data privacy protections, and protocol compliance with ICH E6 and applicable regulations.`,
   },
   {
     id: 'tpl_cer_summary',
@@ -8370,55 +10899,55 @@ Sincerely,
 ## Document Information
 | Field | Value |
 |-------|-------|
-| Device | [DEVICE NAME] |
-| Manufacturer | [MANUFACTURER] |
-| Version | [VERSION] |
-| Date | [DATE] |
-| Author | [AUTHOR] |
+| Device | <Insert device name> |
+| Manufacturer | <Insert legal manufacturer name> |
+| Version | <Insert CER version> |
+| Date | <Insert effective date> |
+| Author | <Insert author and credentials> |
 
 ---
 
 ## 1. Executive Summary
-[EXECUTIVE SUMMARY]
+Provide a concise conclusion on whether current clinical evidence demonstrates safety, clinical performance, and acceptable benefit-risk for the intended purpose.
 
 ## 2. Scope of the Clinical Evaluation
 ### 2.1 Device Description
-[DEVICE DESCRIPTION]
+Describe device design, key materials, operating principles, variants, and accessories relevant to clinical performance and risk.
 
 ### 2.2 Intended Purpose
-[INTENDED PURPOSE]
+State intended medical purpose, indications, contraindications, and claims as reflected in current labeling.
 
 ### 2.3 Target Population
-[TARGET POPULATION]
+Define patient population, use environment, and user profile, including special populations where relevant.
 
 ## 3. Clinical Background
 ### 3.1 Current Knowledge
-[CURRENT KNOWLEDGE]
+Summarize clinical context, disease burden, and current treatment standards for the intended indication.
 
 ### 3.2 State of the Art
-[STATE OF ART]
+Describe accepted state-of-the-art therapies/devices and position this device relative to alternatives.
 
 ## 4. Clinical Data Sources
 ### 4.1 Literature Search
-[SEARCH METHODOLOGY]
+Summarize search protocol, databases, inclusion/exclusion criteria, appraisal methods, and evidence flow.
 
 ### 4.2 Clinical Investigations
-[CLINICAL INVESTIGATIONS]
+Summarize pivotal/supportive clinical studies, endpoints, populations, and key outcomes.
 
 ### 4.3 Post-Market Data
-[PMS DATA]
+Summarize complaint trends, vigilance events, CAPA signals, registry/real-world data, and PMCF findings.
 
 ## 5. Data Analysis
-[DATA ANALYSIS]
+Provide integrated analysis across all evidence sources, including consistency of outcomes and limitations of the data set.
 
 ## 6. Benefit-Risk Analysis
-[BENEFIT RISK]
+Describe demonstrated clinical benefits, residual risks, risk controls, and justification for overall benefit-risk acceptability.
 
 ## 7. Conclusions
-[CONCLUSIONS]
+State final clinical evaluation conclusions, claim supportability, and any conditions for ongoing surveillance.
 
 ## 8. Post-Market Clinical Follow-up
-[PMCF PLAN]`,
+Define PMCF objectives, study activities, timelines, and decision criteria for CER updates.`,
   },
   {
     id: 'tpl_risk_analysis',
@@ -8442,11 +10971,35 @@ Sincerely,
  */
 router.get('/templates', (req: Request, res: Response) => {
   try {
-    const { submissionType } = req.query;
+    const { submissionType, package: templatePackage, projectGoal } = req.query;
 
     let templates = TEMPLATES;
     if (submissionType) {
       templates = templates.filter(t => t.submissionTypes.includes(submissionType as string));
+    }
+    const pkg = typeof templatePackage === 'string' ? templatePackage.toLowerCase() : '';
+    const goal = typeof projectGoal === 'string' ? projectGoal.toLowerCase() : '';
+    if (pkg === 'ind' || pkg === 'ind-core' || pkg === 'ind_readiness') {
+      templates = templates.filter(
+        t =>
+          t.submissionTypes.includes('IND') ||
+          [
+            'tpl_ind_cover_letter',
+            'tpl_ind_investigator_brochure',
+            'tpl_ind_pre_ind_briefing',
+          ].includes(t.id)
+      );
+    } else if (goal === 'first_ind' || goal === 'ind_initial') {
+      templates = templates.filter(t =>
+        [
+          'tpl_ind_cover_letter',
+          'tpl_ind_investigator_brochure',
+          'tpl_ind_pre_ind_briefing',
+          'tpl_ind_protocol',
+        ].includes(t.id)
+      );
+    } else if (goal === 'cmc') {
+      templates = templates.filter(t => ['tpl_ind_protocol', 'tpl_risk_analysis'].includes(t.id));
     }
 
     return sendSuccess(res, templates);
@@ -8485,7 +11038,9 @@ router.get('/templates/:id', (req: Request, res: Response) => {
  */
 router.get('/regulatory-catalog/regions', (_req: Request, res: Response) => {
   try {
-    const { getRegionsWithCounts } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
+    const {
+      getRegionsWithCounts,
+    } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
     return sendSuccess(res, getRegionsWithCounts());
   } catch (error: any) {
     logger.error('Failed to fetch regulatory regions', { error: error.message });
@@ -8499,7 +11054,9 @@ router.get('/regulatory-catalog/regions', (_req: Request, res: Response) => {
  */
 router.get('/regulatory-catalog/agencies', (_req: Request, res: Response) => {
   try {
-    const { getAgenciesWithCounts } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
+    const {
+      getAgenciesWithCounts,
+    } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
     return sendSuccess(res, getAgenciesWithCounts());
   } catch (error: any) {
     logger.error('Failed to fetch regulatory agencies', { error: error.message });
@@ -8514,14 +11071,19 @@ router.get('/regulatory-catalog/agencies', (_req: Request, res: Response) => {
  */
 router.get('/regulatory-catalog/application-types', (req: Request, res: Response) => {
   try {
-    const { getApplicationTypes } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
+    const {
+      getApplicationTypes,
+    } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
     const filters: Record<string, string> = {};
     if (req.query.region) filters.region = String(req.query.region);
     if (req.query.agency) filters.agency = String(req.query.agency);
     if (req.query.family) filters.family = String(req.query.family);
     if (req.query.productClass) filters.productClass = String(req.query.productClass);
     if (req.query.query) filters.query = String(req.query.query);
-    return sendSuccess(res, getApplicationTypes(Object.keys(filters).length > 0 ? filters : undefined));
+    return sendSuccess(
+      res,
+      getApplicationTypes(Object.keys(filters).length > 0 ? filters : undefined)
+    );
   } catch (error: any) {
     logger.error('Failed to fetch application types', { error: error.message });
     return sendError(res, 500, 'Failed to fetch application types');
@@ -8573,7 +11135,9 @@ router.post('/regulatory-catalog/resolve', (req: Request, res: Response) => {
  */
 router.post('/regulatory-catalog/bootstrap-preview', (req: Request, res: Response) => {
   try {
-    const { getBootstrapPreview } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
+    const {
+      getBootstrapPreview,
+    } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
     const { registryId } = req.body;
     if (!registryId) {
       return sendError(res, 400, 'registryId is required');
@@ -8635,7 +11199,10 @@ function shouldEnforceExportReviewGate(): boolean {
   return process.env.NODE_ENV === 'production';
 }
 
-function applyExportGovernanceHeaders(res: Response, governance: z.infer<typeof exportGovernanceSchema>): void {
+function applyExportGovernanceHeaders(
+  res: Response,
+  governance: z.infer<typeof exportGovernanceSchema>
+): void {
   res.setHeader('X-Concept2Cure-AI-Generated', String(governance.aiGenerated));
   res.setHeader('X-Concept2Cure-Human-Review-Approved', String(governance.humanReviewApproved));
   res.setHeader('X-Concept2Cure-Review-Required', 'true');
@@ -8647,10 +11214,19 @@ function applyExportGovernanceHeaders(res: Response, governance: z.infer<typeof 
   }
 }
 
-function validateExportGovernance(req: Request, res: Response): z.infer<typeof exportGovernanceSchema> | null {
+function validateExportGovernance(
+  req: Request,
+  res: Response
+): z.infer<typeof exportGovernanceSchema> | null {
   const parsed = exportGovernanceSchema.safeParse(req.body?.governance ?? {});
   if (!parsed.success) {
-    sendError(res, 400, 'Invalid export governance payload', parsed.error.flatten(), 'VALIDATION_ERROR');
+    sendError(
+      res,
+      400,
+      'Invalid export governance payload',
+      parsed.error.flatten(),
+      'VALIDATION_ERROR'
+    );
     return null;
   }
 
@@ -8663,7 +11239,11 @@ function validateExportGovernance(req: Request, res: Response): z.infer<typeof e
       'Human review approval is required before export in this environment',
       {
         required: 'governance.humanReviewApproved=true',
-        reviewerFields: ['governance.reviewerName', 'governance.reviewerRole', 'governance.reviewTimestamp'],
+        reviewerFields: [
+          'governance.reviewerName',
+          'governance.reviewerRole',
+          'governance.reviewTimestamp',
+        ],
       },
       'HUMAN_REVIEW_REQUIRED'
     );
@@ -8695,7 +11275,10 @@ router.post('/artifacts/export-docx', async (req: Request, res: Response) => {
     const buffer = await generateDocxBuffer(title, exportBody);
 
     const safeFilename = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    );
     res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.docx"`);
     res.setHeader('Content-Length', buffer.length);
     return res.send(buffer);
@@ -8756,7 +11339,11 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
     y -= titleFontSize + 20;
 
     // Date line
-    const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const dateStr = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
     page.drawText(dateStr, {
       x: margin,
       y: y,
@@ -8811,12 +11398,24 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
       if (line.startsWith('# ')) {
         y -= 10;
         const text = line.slice(2);
-        page.drawText(text, { x: margin, y, size: titleFontSize, font: timesBold, color: rgb(0.1, 0.1, 0.1) });
+        page.drawText(text, {
+          x: margin,
+          y,
+          size: titleFontSize,
+          font: timesBold,
+          color: rgb(0.1, 0.1, 0.1),
+        });
         y -= titleFontSize + 8;
       } else if (line.startsWith('## ')) {
         y -= 8;
         const text = line.slice(3);
-        page.drawText(text, { x: margin, y, size: headingFontSize, font: timesBold, color: rgb(0.15, 0.15, 0.15) });
+        page.drawText(text, {
+          x: margin,
+          y,
+          size: headingFontSize,
+          font: timesBold,
+          color: rgb(0.15, 0.15, 0.15),
+        });
         y -= headingFontSize + 6;
       } else if (line.startsWith('### ')) {
         y -= 6;
@@ -8832,7 +11431,13 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
           const testLine = currentLine ? currentLine + ' ' + word : word;
           const width = timesRoman.widthOfTextAtSize(testLine, fontSize);
           if (width > maxWidth - 20) {
-            page.drawText(currentLine, { x: margin + 10, y, size: fontSize, font: timesRoman, color: rgb(0.2, 0.2, 0.2) });
+            page.drawText(currentLine, {
+              x: margin + 10,
+              y,
+              size: fontSize,
+              font: timesRoman,
+              color: rgb(0.2, 0.2, 0.2),
+            });
             y -= fontSize + 4;
             currentLine = word;
           } else {
@@ -8840,7 +11445,13 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
           }
         }
         if (currentLine) {
-          page.drawText(currentLine, { x: margin + 10, y, size: fontSize, font: timesRoman, color: rgb(0.2, 0.2, 0.2) });
+          page.drawText(currentLine, {
+            x: margin + 10,
+            y,
+            size: fontSize,
+            font: timesRoman,
+            color: rgb(0.2, 0.2, 0.2),
+          });
           y -= fontSize + 4;
         }
       } else if (line.trim() === '') {
@@ -8856,11 +11467,23 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
           if (width > maxWidth) {
             if (y < margin + 40) {
               const pageNum = pdfDoc.getPageCount();
-              page.drawText(`Page ${pageNum}`, { x: pageWidth / 2 - 20, y: margin / 2, size: 9, font: timesRoman, color: rgb(0.5, 0.5, 0.5) });
+              page.drawText(`Page ${pageNum}`, {
+                x: pageWidth / 2 - 20,
+                y: margin / 2,
+                size: 9,
+                font: timesRoman,
+                color: rgb(0.5, 0.5, 0.5),
+              });
               page = pdfDoc.addPage([pageWidth, pageHeight]);
               y = pageHeight - margin;
             }
-            page.drawText(currentLine, { x: margin, y, size: fontSize, font: timesRoman, color: rgb(0.2, 0.2, 0.2) });
+            page.drawText(currentLine, {
+              x: margin,
+              y,
+              size: fontSize,
+              font: timesRoman,
+              color: rgb(0.2, 0.2, 0.2),
+            });
             y -= fontSize + 4;
             currentLine = word;
           } else {
@@ -8868,7 +11491,13 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
           }
         }
         if (currentLine) {
-          page.drawText(currentLine, { x: margin, y, size: fontSize, font: timesRoman, color: rgb(0.2, 0.2, 0.2) });
+          page.drawText(currentLine, {
+            x: margin,
+            y,
+            size: fontSize,
+            font: timesRoman,
+            color: rgb(0.2, 0.2, 0.2),
+          });
           y -= fontSize + 4;
         }
       }
@@ -8876,7 +11505,13 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
 
     // Add page number to last page
     const pageNum = pdfDoc.getPageCount();
-    page.drawText(`Page ${pageNum}`, { x: pageWidth / 2 - 20, y: margin / 2, size: 9, font: timesRoman, color: rgb(0.5, 0.5, 0.5) });
+    page.drawText(`Page ${pageNum}`, {
+      x: pageWidth / 2 - 20,
+      y: margin / 2,
+      size: 9,
+      font: timesRoman,
+      color: rgb(0.5, 0.5, 0.5),
+    });
 
     const pdfBytes = await pdfDoc.save();
     const safeTitle = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
@@ -8914,7 +11549,9 @@ router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
     // If Nano Banana is enabled and configured, generate the full presentation with cover
     if (nanoBanana) {
       try {
-        const { isConfigured, generatePresentation } = await import('../services/nanoBananaService');
+        const { isConfigured, generatePresentation } = await import(
+          '../services/nanoBananaService'
+        );
         if (isConfigured()) {
           const result = await generatePresentation({
             topic: title,
@@ -8923,7 +11560,10 @@ router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
             generateImages: true,
           });
           const safeFilename = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
-          res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+          res.setHeader(
+            'Content-Type',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+          );
           res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.pptx"`);
           res.setHeader('Content-Length', result.pptxBuffer.length);
           return res.send(result.pptxBuffer);
@@ -8938,7 +11578,10 @@ router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
     const buffer = await generatePptxBuffer(title, exportBody);
 
     const safeFilename = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    );
     res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.pptx"`);
     res.setHeader('Content-Length', buffer.length);
     return res.send(buffer);
@@ -9080,8 +11723,8 @@ router.get('/documents/download/:filename', async (req: Request, res: Response) 
       isDocx
         ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         : isJson
-          ? 'application/json'
-          : 'application/octet-stream'
+        ? 'application/json'
+        : 'application/octet-stream'
     );
     res.setHeader('Content-Disposition', `attachment; filename="${safe}"`);
 
@@ -9667,7 +12310,10 @@ router.get('/projects/:projectId/change-impact', async (req: Request, res: Respo
 // Regulatory-aware task management connected to submission workflows
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const SUBMISSION_MILESTONES: Record<string, Array<{ name: string; category: string; order: number }>> = {
+const SUBMISSION_MILESTONES: Record<
+  string,
+  Array<{ name: string; category: string; order: number }>
+> = {
   IND: [
     { name: 'Pre-IND Meeting Request', category: 'regulatory', order: 1 },
     { name: 'Pre-IND Briefing Document', category: 'document-prep', order: 2 },
@@ -9810,21 +12456,24 @@ router.post('/projects/:projectId/tasks', async (req: Request, res: Response) =>
     const [project] = await db.select().from(projects).where(eq(projects.id, projectId));
     if (!project) return sendError(res, 404, 'Project not found');
 
-    const [task] = await db.insert(projectTasks).values({
-      organizationId: project.organizationId,
-      projectId,
-      name: data.name,
-      description: data.description || null,
-      status: data.status,
-      priority: data.priority,
-      moduleType: data.moduleType || null,
-      dueDate: data.dueDate ? new Date(data.dueDate) : null,
-      assigneeId: data.assigneeId || null,
-      parentTaskId: data.parentTaskId || null,
-      estimatedHours: data.estimatedHours || null,
-      dependsOn: data.dependsOn || null,
-      metadata: data.metadata || null,
-    }).returning();
+    const [task] = await db
+      .insert(projectTasks)
+      .values({
+        organizationId: project.organizationId,
+        projectId,
+        name: data.name,
+        description: data.description || null,
+        status: data.status,
+        priority: data.priority,
+        moduleType: data.moduleType || null,
+        dueDate: data.dueDate ? new Date(data.dueDate) : null,
+        assigneeId: data.assigneeId || null,
+        parentTaskId: data.parentTaskId || null,
+        estimatedHours: data.estimatedHours || null,
+        dependsOn: data.dependsOn || null,
+        metadata: data.metadata || null,
+      })
+      .returning();
 
     return sendSuccess(res, task);
   } catch (error: any) {
@@ -9844,7 +12493,8 @@ router.put('/projects/:projectId/tasks/:taskId', async (req: Request, res: Respo
     if (updates.dueDate) updates.dueDate = new Date(updates.dueDate);
     updates.updatedAt = new Date();
 
-    const [updated] = await db.update(projectTasks)
+    const [updated] = await db
+      .update(projectTasks)
       .set(updates)
       .where(eq(projectTasks.id, taskId))
       .returning();
@@ -9882,13 +12532,21 @@ router.post('/projects/:projectId/tasks/bulk', async (req: Request, res: Respons
     const { submissionType, targetDate } = req.body;
     const milestones = SUBMISSION_MILESTONES[submissionType?.toUpperCase()];
     if (!milestones) {
-      return sendError(res, 400, `Unknown submission type: ${submissionType}. Supported: ${Object.keys(SUBMISSION_MILESTONES).join(', ')}`);
+      return sendError(
+        res,
+        400,
+        `Unknown submission type: ${submissionType}. Supported: ${Object.keys(
+          SUBMISSION_MILESTONES
+        ).join(', ')}`
+      );
     }
 
     const [project] = await db.select().from(projects).where(eq(projects.id, projectId));
     if (!project) return sendError(res, 404, 'Project not found');
 
-    const target = targetDate ? new Date(targetDate) : new Date(Date.now() + 180 * 24 * 60 * 60 * 1000); // 6 months default
+    const target = targetDate
+      ? new Date(targetDate)
+      : new Date(Date.now() + 180 * 24 * 60 * 60 * 1000); // 6 months default
     const totalMilestones = milestones.length;
 
     // Distribute milestones evenly between now and target date
@@ -9903,10 +12561,18 @@ router.post('/projects/:projectId/tasks/bulk', async (req: Request, res: Respons
         name: m.name,
         description: `${submissionType.toUpperCase()} milestone: ${m.name}`,
         status: 'todo' as const,
-        priority: m.category === 'submission' || m.category === 'milestone' ? ('high' as const) : ('medium' as const),
+        priority:
+          m.category === 'submission' || m.category === 'milestone'
+            ? ('high' as const)
+            : ('medium' as const),
         moduleType: m.category,
         dueDate,
-        metadata: { submissionType, milestoneOrder: m.order, category: m.category, autoGenerated: true },
+        metadata: {
+          submissionType,
+          milestoneOrder: m.order,
+          category: m.category,
+          autoGenerated: true,
+        },
       };
     });
 
@@ -9930,7 +12596,11 @@ router.get('/projects/:projectId/tasks/summary', async (req: Request, res: Respo
     const projectId = parseInt(req.params.projectId, 10);
     if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
 
-    const tasks = await db.select().from(projectTasks).where(eq(projectTasks.projectId, projectId)).limit(1000);
+    const tasks = await db
+      .select()
+      .from(projectTasks)
+      .where(eq(projectTasks.projectId, projectId))
+      .limit(1000);
 
     const now = new Date();
     const byStatus: Record<string, number> = {};
@@ -9952,7 +12622,10 @@ router.get('/projects/:projectId/tasks/summary', async (req: Request, res: Respo
     const completionRate = total > 0 ? (completed / total) * 100 : 100;
     const overdueRate = total > 0 ? (overdue / total) * 100 : 0;
     const blockedCount = byStatus['blocked'] || 0;
-    const healthScore = Math.max(0, Math.round(completionRate - overdueRate * 1.5 - blockedCount * 5));
+    const healthScore = Math.max(
+      0,
+      Math.round(completionRate - overdueRate * 1.5 - blockedCount * 5)
+    );
 
     return sendSuccess(res, {
       total,
@@ -9970,18 +12643,471 @@ router.get('/projects/:projectId/tasks/summary', async (req: Request, res: Respo
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// COMMUNICATION CENTER + SUBMISSION & AGENCY PORTAL + C2C PUBLISHOPS
+// COMMUNICATION CENTER + SUBMISSION & AGENCY PORTAL + C2C PUBLISHOPS (scaffold)
 // ─────────────────────────────────────────────────────────────────────────────
 
-registerCommunicationCenterRoutes(router, {
-  ensureCommunicationCenterTables,
-  communicationCenterErrorStatus,
-  getOrganizationId,
-  getUserId,
-  logAuditEntry,
-  sendSuccess,
-  sendError,
+router.get('/projects/:projectId/authority-profiles', async (req: Request, res: Response) => {
+  try {
+    await ensureCommunicationCenterTables();
+    const organizationId = getOrganizationId(req);
+    const projectId = parseProjectParam(req.params.projectId);
+    const result = await pool.query(
+      `SELECT profile_id, authority, center_or_division, channel_type, submission_transport,
+              accepted_formats, validation_requirements, package_constraints, acknowledgment_model,
+              message_receipt_model, metadata_requirements, is_active, created_by, created_at, updated_at
+         FROM concept2cure_authority_profiles
+        WHERE organization_id = $1 AND project_id = $2
+        ORDER BY created_at DESC`,
+      [organizationId, projectId]
+    );
+    const profiles: AuthorityProfileRecord[] = result.rows.map((row: any) => ({
+      id: row.profile_id,
+      organizationId,
+      projectId,
+      authority: row.authority,
+      centerOrDivision: row.center_or_division,
+      channelType: row.channel_type,
+      submissionTransport: row.submission_transport,
+      acceptedFormats: row.accepted_formats || [],
+      validationRequirements: row.validation_requirements || [],
+      packageConstraints: row.package_constraints || [],
+      acknowledgmentModel: row.acknowledgment_model,
+      messageReceiptModel: row.message_receipt_model,
+      metadataRequirements: row.metadata_requirements || [],
+      isActive: row.is_active,
+      createdBy: row.created_by,
+      createdAt: new Date(row.created_at).toISOString(),
+      updatedAt: new Date(row.updated_at).toISOString(),
+    }));
+    return sendSuccess(res, profiles, {
+      scope: { organizationId, projectId },
+      model: 'authority_profile',
+      behavior: 'configuration_driven',
+    });
+  } catch (error: any) {
+    return sendError(
+      res,
+      communicationCenterErrorStatus(error),
+      error?.message || 'Failed to load authority profiles'
+    );
+  }
 });
+
+router.post('/projects/:projectId/authority-profiles', async (req: Request, res: Response) => {
+  const schema = z.object({
+    authority: z.string().min(2),
+    centerOrDivision: z.string().min(2),
+    channelType: z.enum(['portal', 'gateway', 'email', 'mixed']),
+    submissionTransport: z.string().min(2),
+    acceptedFormats: z.array(z.string()).default([]),
+    validationRequirements: z.array(z.string()).default([]),
+    packageConstraints: z.array(z.string()).default([]),
+    acknowledgmentModel: z.string().min(2),
+    messageReceiptModel: z.string().min(2),
+    metadataRequirements: z.array(z.string()).default([]),
+    isActive: z.boolean().default(true),
+  });
+
+  try {
+    await ensureCommunicationCenterTables();
+    const organizationId = getOrganizationId(req);
+    const projectId = parseProjectParam(req.params.projectId);
+    const input = schema.parse(req.body || {});
+    const now = new Date().toISOString();
+    const profile: AuthorityProfileRecord = {
+      id: `auth_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
+      organizationId,
+      projectId,
+      ...input,
+      createdBy: req.userEmail || `user_${getUserId(req)}`,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await pool.query(
+      `INSERT INTO concept2cure_authority_profiles (
+         profile_id, organization_id, project_id, authority, center_or_division, channel_type,
+         submission_transport, accepted_formats, validation_requirements, package_constraints,
+         acknowledgment_model, message_receipt_model, metadata_requirements, is_active, created_by, created_at, updated_at
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9::jsonb,$10::jsonb,$11,$12,$13::jsonb,$14,$15,$16::timestamptz,$17::timestamptz)`,
+      [
+        profile.id,
+        organizationId,
+        projectId,
+        profile.authority,
+        profile.centerOrDivision,
+        profile.channelType,
+        profile.submissionTransport,
+        JSON.stringify(profile.acceptedFormats),
+        JSON.stringify(profile.validationRequirements),
+        JSON.stringify(profile.packageConstraints),
+        profile.acknowledgmentModel,
+        profile.messageReceiptModel,
+        JSON.stringify(profile.metadataRequirements),
+        profile.isActive,
+        profile.createdBy,
+        profile.createdAt,
+        profile.updatedAt,
+      ]
+    );
+    await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {
+      authorityProfileId: profile.id,
+      authority: profile.authority,
+    });
+    return sendSuccess(res, profile);
+  } catch (error: any) {
+    return sendError(
+      res,
+      communicationCenterErrorStatus(error),
+      error?.message || 'Failed to create authority profile'
+    );
+  }
+});
+
+router.get('/projects/:projectId/agency-communications', async (req: Request, res: Response) => {
+  try {
+    await ensureCommunicationCenterTables();
+    const organizationId = getOrganizationId(req);
+    const projectId = parseProjectParam(req.params.projectId);
+    const result = await pool.query(
+      `SELECT event_id, source_type, communication_type, source_channel, linked_submission_id,
+              linked_package_id, linked_section_codes, linked_artifact_ids, received_date, due_date,
+              urgency, response_required, extracted_issues, human_review_status, closure_status, audit_metadata
+         FROM concept2cure_agency_communications
+        WHERE organization_id = $1 AND project_id = $2
+        ORDER BY created_at DESC`,
+      [organizationId, projectId]
+    );
+    const records: AgencyCommunicationEventRecord[] = result.rows.map((row: any) => ({
+      id: row.event_id,
+      organizationId,
+      projectId,
+      sourceType: row.source_type,
+      communicationType: row.communication_type,
+      sourceChannel: row.source_channel,
+      linkedSubmissionId: row.linked_submission_id ?? undefined,
+      linkedPackageId: row.linked_package_id ?? undefined,
+      linkedSectionCodes: row.linked_section_codes || [],
+      linkedArtifactIds: row.linked_artifact_ids || [],
+      receivedDate: new Date(row.received_date).toISOString(),
+      dueDate: row.due_date ? new Date(row.due_date).toISOString() : undefined,
+      urgency: row.urgency,
+      responseRequired: row.response_required,
+      extractedIssues: row.extracted_issues || [],
+      humanReviewStatus: row.human_review_status,
+      closureStatus: row.closure_status,
+      auditMetadata: row.audit_metadata,
+    }));
+    const visible = records.filter(event =>
+      canViewVisibilityTier(event.auditMetadata.visibilityTier, req.userRole)
+    );
+    return sendSuccess(res, visible, {
+      scope: { organizationId, projectId },
+      model: 'agency_communication_event',
+      filtered: records.length - visible.length,
+    });
+  } catch (error: any) {
+    return sendError(
+      res,
+      communicationCenterErrorStatus(error),
+      error?.message || 'Failed to load agency communication events'
+    );
+  }
+});
+
+router.post('/projects/:projectId/agency-communications', async (req: Request, res: Response) => {
+  const schema = z.object({
+    sourceType: z.enum([
+      'agency_portal_event',
+      'gateway_acknowledgment',
+      'validation_result',
+      'email_request_or_letter',
+      'uploaded_official_correspondence',
+      'meeting_minutes',
+      'managed_service_operator_event',
+      'manual_logged_event',
+      'internal_discussion_linked',
+    ]),
+    communicationType: z.string().min(2),
+    sourceChannel: z.string().min(2),
+    linkedSubmissionId: z.string().optional(),
+    linkedPackageId: z.string().optional(),
+    linkedSectionCodes: z.array(z.string()).default([]),
+    linkedArtifactIds: z.array(z.string()).default([]),
+    dueDate: z.string().optional(),
+    urgency: z.enum(['low', 'medium', 'high', 'critical']),
+    responseRequired: z.boolean().default(false),
+    extractedIssues: z.array(z.string()).default([]),
+    humanReviewStatus: z.enum(['pending_review', 'triaged', 'actioned']).default('pending_review'),
+    closureStatus: z.enum(['open', 'in_progress', 'closed']).default('open'),
+    visibilityTier: z.enum(COMMUNICATION_VISIBILITY_TIERS),
+  });
+
+  try {
+    await ensureCommunicationCenterTables();
+    const organizationId = getOrganizationId(req);
+    const projectId = parseProjectParam(req.params.projectId);
+    const input = schema.parse(req.body || {});
+    if (!canViewVisibilityTier(input.visibilityTier, req.userRole)) {
+      return sendError(res, 403, 'Visibility tier not permitted for current role');
+    }
+    const now = new Date().toISOString();
+    const event: AgencyCommunicationEventRecord = {
+      id: `ace_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
+      organizationId,
+      projectId,
+      sourceType: input.sourceType,
+      communicationType: input.communicationType,
+      sourceChannel: input.sourceChannel,
+      linkedSubmissionId: input.linkedSubmissionId,
+      linkedPackageId: input.linkedPackageId,
+      linkedSectionCodes: input.linkedSectionCodes,
+      linkedArtifactIds: input.linkedArtifactIds,
+      receivedDate: now,
+      dueDate: input.dueDate,
+      urgency: input.urgency,
+      responseRequired: input.responseRequired,
+      extractedIssues: input.extractedIssues,
+      humanReviewStatus: input.humanReviewStatus,
+      closureStatus: input.closureStatus,
+      auditMetadata: {
+        capturedBy: req.userEmail || `user_${getUserId(req)}`,
+        capturedAt: now,
+        visibilityTier: input.visibilityTier,
+      },
+    };
+    await pool.query(
+      `INSERT INTO concept2cure_agency_communications (
+        event_id, organization_id, project_id, source_type, communication_type, source_channel,
+        linked_submission_id, linked_package_id, linked_section_codes, linked_artifact_ids,
+        received_date, due_date, urgency, response_required, extracted_issues,
+        human_review_status, closure_status, audit_metadata, created_at
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10::jsonb,$11::timestamptz,$12::timestamptz,$13,$14,$15::jsonb,$16,$17,$18::jsonb,$19::timestamptz)`,
+      [
+        event.id,
+        organizationId,
+        projectId,
+        event.sourceType,
+        event.communicationType,
+        event.sourceChannel,
+        event.linkedSubmissionId ?? null,
+        event.linkedPackageId ?? null,
+        JSON.stringify(event.linkedSectionCodes),
+        JSON.stringify(event.linkedArtifactIds),
+        event.receivedDate,
+        event.dueDate ?? null,
+        event.urgency,
+        event.responseRequired,
+        JSON.stringify(event.extractedIssues),
+        event.humanReviewStatus,
+        event.closureStatus,
+        JSON.stringify(event.auditMetadata),
+        now,
+      ]
+    );
+    await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {
+      agencyCommunicationEventId: event.id,
+      sourceType: event.sourceType,
+      visibilityTier: event.auditMetadata.visibilityTier,
+    });
+    return sendSuccess(res, event);
+  } catch (error: any) {
+    return sendError(
+      res,
+      communicationCenterErrorStatus(error),
+      error?.message || 'Failed to create agency communication event'
+    );
+  }
+});
+
+router.get('/projects/:projectId/publishops/services', async (req: Request, res: Response) => {
+  try {
+    await ensureCommunicationCenterTables();
+    const organizationId = getOrganizationId(req);
+    const projectId = parseProjectParam(req.params.projectId);
+    const result = await pool.query(
+      `SELECT service_id, status, service_request_title, entitlement_level, requested_by_role, requested_by,
+              operator_assignee, blocked_reason, created_at, updated_at
+         FROM concept2cure_publishops_services
+        WHERE organization_id = $1 AND project_id = $2
+        ORDER BY created_at DESC`,
+      [organizationId, projectId]
+    );
+    const services: PublishOpsServiceRecord[] = result.rows.map((row: any) => ({
+      id: row.service_id,
+      organizationId,
+      projectId,
+      status: row.status,
+      serviceRequestTitle: row.service_request_title,
+      entitlementLevel: row.entitlement_level,
+      requestedByRole: row.requested_by_role,
+      requestedBy: row.requested_by,
+      operatorAssignee: row.operator_assignee ?? undefined,
+      blockedReason: row.blocked_reason ?? undefined,
+      createdAt: new Date(row.created_at).toISOString(),
+      updatedAt: new Date(row.updated_at).toISOString(),
+    }));
+    return sendSuccess(res, services, {
+      states: PUBLISHOPS_SERVICE_STATES,
+      scope: { organizationId, projectId },
+    });
+  } catch (error: any) {
+    return sendError(
+      res,
+      communicationCenterErrorStatus(error),
+      error?.message || 'Failed to load PublishOps services'
+    );
+  }
+});
+
+router.post('/projects/:projectId/publishops/services', async (req: Request, res: Response) => {
+  const schema = z.object({
+    serviceRequestTitle: z.string().min(3),
+    entitlementLevel: z.enum([
+      'core_self_serve',
+      'advanced_publishing_tooling',
+      'managed_publishops_service',
+    ]),
+    requestedByRole: z.enum([
+      'managed_submission_operator',
+      'managed_submission_reviewer',
+      'client_project_owner',
+      'client_reviewer',
+      'outside_consultant',
+    ]),
+    operatorAssignee: z.string().optional(),
+    blockedReason: z.string().optional(),
+    status: z.enum(PUBLISHOPS_SERVICE_STATES).default('requested'),
+  });
+
+  try {
+    await ensureCommunicationCenterTables();
+    const organizationId = getOrganizationId(req);
+    const projectId = parseProjectParam(req.params.projectId);
+    const input = schema.parse(req.body || {});
+    const now = new Date().toISOString();
+    const service: PublishOpsServiceRecord = {
+      id: `pos_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
+      organizationId,
+      projectId,
+      status: input.status,
+      serviceRequestTitle: input.serviceRequestTitle,
+      entitlementLevel: input.entitlementLevel,
+      requestedByRole: input.requestedByRole,
+      requestedBy: req.userEmail || `user_${getUserId(req)}`,
+      operatorAssignee: input.operatorAssignee,
+      blockedReason: input.blockedReason,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await pool.query(
+      `INSERT INTO concept2cure_publishops_services (
+        service_id, organization_id, project_id, status, service_request_title, entitlement_level,
+        requested_by_role, requested_by, operator_assignee, blocked_reason, created_at, updated_at
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::timestamptz,$12::timestamptz)`,
+      [
+        service.id,
+        organizationId,
+        projectId,
+        service.status,
+        service.serviceRequestTitle,
+        service.entitlementLevel,
+        service.requestedByRole,
+        service.requestedBy,
+        service.operatorAssignee ?? null,
+        service.blockedReason ?? null,
+        service.createdAt,
+        service.updatedAt,
+      ]
+    );
+    await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {
+      publishOpsServiceId: service.id,
+      status: service.status,
+      entitlementLevel: service.entitlementLevel,
+    });
+    return sendSuccess(res, service);
+  } catch (error: any) {
+    return sendError(
+      res,
+      communicationCenterErrorStatus(error),
+      error?.message || 'Failed to create PublishOps service request'
+    );
+  }
+});
+
+router.patch(
+  '/projects/:projectId/publishops/services/:serviceId/status',
+  async (req: Request, res: Response) => {
+    const schema = z.object({
+      status: z.enum(PUBLISHOPS_SERVICE_STATES),
+      blockedReason: z.string().optional(),
+      operatorAssignee: z.string().optional(),
+    });
+    try {
+      await ensureCommunicationCenterTables();
+      const organizationId = getOrganizationId(req);
+      const projectId = parseProjectParam(req.params.projectId);
+      const input = schema.parse(req.body || {});
+      const priorRes = await pool.query(
+        `SELECT service_id, status, service_request_title, entitlement_level, requested_by_role, requested_by,
+                operator_assignee, blocked_reason, created_at, updated_at
+           FROM concept2cure_publishops_services
+          WHERE organization_id = $1 AND project_id = $2 AND service_id = $3
+          LIMIT 1`,
+        [organizationId, projectId, req.params.serviceId]
+      );
+      if (priorRes.rows.length === 0) {
+        return sendError(res, 404, 'PublishOps service request not found');
+      }
+      const row = priorRes.rows[0];
+      const previous: PublishOpsServiceRecord = {
+        id: row.service_id,
+        organizationId,
+        projectId,
+        status: row.status,
+        serviceRequestTitle: row.service_request_title,
+        entitlementLevel: row.entitlement_level,
+        requestedByRole: row.requested_by_role,
+        requestedBy: row.requested_by,
+        operatorAssignee: row.operator_assignee ?? undefined,
+        blockedReason: row.blocked_reason ?? undefined,
+        createdAt: new Date(row.created_at).toISOString(),
+        updatedAt: new Date(row.updated_at).toISOString(),
+      };
+      const updated: PublishOpsServiceRecord = {
+        ...previous,
+        status: input.status,
+        blockedReason: input.blockedReason ?? previous.blockedReason,
+        operatorAssignee: input.operatorAssignee ?? previous.operatorAssignee,
+        updatedAt: new Date().toISOString(),
+      };
+      await pool.query(
+        `UPDATE concept2cure_publishops_services
+            SET status = $1,
+                blocked_reason = $2,
+                operator_assignee = $3,
+                updated_at = $4::timestamptz
+          WHERE organization_id = $5 AND project_id = $6 AND service_id = $7`,
+        [
+          updated.status,
+          updated.blockedReason ?? null,
+          updated.operatorAssignee ?? null,
+          updated.updatedAt,
+          organizationId,
+          projectId,
+          updated.id,
+        ]
+      );
+      await logAuditEntry(req, 'UPDATE', 'project', `proj_${projectId}`, previous, updated);
+      return sendSuccess(res, updated);
+    } catch (error: any) {
+      return sendError(
+        res,
+        communicationCenterErrorStatus(error),
+        error?.message || 'Failed to update PublishOps service status'
+      );
+    }
+  }
+);
 
 // GET /api/concept2cure/submission-milestones/:type
 // Get available milestones for a submission type
@@ -9989,7 +13115,11 @@ router.get('/submission-milestones/:type', (req: Request, res: Response) => {
   const type = req.params.type.toUpperCase();
   const milestones = SUBMISSION_MILESTONES[type];
   if (!milestones) {
-    return sendError(res, 404, `No milestones for type: ${type}. Supported: ${Object.keys(SUBMISSION_MILESTONES).join(', ')}`);
+    return sendError(
+      res,
+      404,
+      `No milestones for type: ${type}. Supported: ${Object.keys(SUBMISSION_MILESTONES).join(', ')}`
+    );
   }
   return sendSuccess(res, milestones);
 });
@@ -10010,31 +13140,35 @@ router.get('/submission-milestones', (_req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const cmcDataSchema = z.object({
-  drugSubstance: z.object({
-    substanceName: z.string().optional(),
-    inn: z.string().optional(),
-    cas: z.string().optional(),
-    molecularFormula: z.string().optional(),
-    molecularWeight: z.string().optional(),
-    manufacturingRoute: z.string().optional(),
-    structureDescription: z.string().optional(),
-    polymorph: z.string().optional(),
-    solubility: z.string().optional(),
-    meltingPoint: z.string().optional(),
-    hygroscopicity: z.string().optional(),
-  }).optional(),
-  drugProduct: z.object({
-    productName: z.string().optional(),
-    dosageForm: z.string().optional(),
-    routeOfAdmin: z.string().optional(),
-    strength: z.string().optional(),
-    containerClosure: z.string().optional(),
-    composition: z.string().optional(),
-    excipients: z.string().optional(),
-    overages: z.string().optional(),
-    shelfLife: z.string().optional(),
-    storageConditions: z.string().optional(),
-  }).optional(),
+  drugSubstance: z
+    .object({
+      substanceName: z.string().optional(),
+      inn: z.string().optional(),
+      cas: z.string().optional(),
+      molecularFormula: z.string().optional(),
+      molecularWeight: z.string().optional(),
+      manufacturingRoute: z.string().optional(),
+      structureDescription: z.string().optional(),
+      polymorph: z.string().optional(),
+      solubility: z.string().optional(),
+      meltingPoint: z.string().optional(),
+      hygroscopicity: z.string().optional(),
+    })
+    .optional(),
+  drugProduct: z
+    .object({
+      productName: z.string().optional(),
+      dosageForm: z.string().optional(),
+      routeOfAdmin: z.string().optional(),
+      strength: z.string().optional(),
+      containerClosure: z.string().optional(),
+      composition: z.string().optional(),
+      excipients: z.string().optional(),
+      overages: z.string().optional(),
+      shelfLife: z.string().optional(),
+      storageConditions: z.string().optional(),
+    })
+    .optional(),
   specifications: z.array(z.any()).optional(),
   stabilityStudies: z.array(z.any()).optional(),
   impurities: z.array(z.any()).optional(),
@@ -10082,7 +13216,8 @@ router.put('/projects/:projectId/cmc', async (req: Request, res: Response) => {
       cmcDrugSubstance: parsed.data.drugSubstance || existingMetadata.cmcDrugSubstance,
       cmcDrugProduct: parsed.data.drugProduct || existingMetadata.cmcDrugProduct,
       cmcSpecifications: parsed.data.specifications || existingMetadata.cmcSpecifications || [],
-      cmcStabilityStudies: parsed.data.stabilityStudies || existingMetadata.cmcStabilityStudies || [],
+      cmcStabilityStudies:
+        parsed.data.stabilityStudies || existingMetadata.cmcStabilityStudies || [],
       cmcImpurities: parsed.data.impurities || existingMetadata.cmcImpurities || [],
       cmcLastUpdated: new Date().toISOString(),
     };
@@ -10110,7 +13245,9 @@ router.get('/projects/:projectId/context', async (req: Request, res: Response) =
     if (!project) return sendError(res, 'Project not found', 404);
 
     // Fetch tasks (limit to recent 50 — only 10 are returned to client)
-    const tasks = await db.select().from(projectTasks)
+    const tasks = await db
+      .select()
+      .from(projectTasks)
       .where(eq(projectTasks.projectId, projectId))
       .orderBy(desc(projectTasks.createdAt))
       .limit(50);
@@ -10282,7 +13419,9 @@ router.post('/projects/:projectId/tasks/assess', async (req: Request, res: Respo
     const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
     if (!project) return sendError(res, 'Project not found', 404);
 
-    const tasks = await db.select().from(projectTasks)
+    const tasks = await db
+      .select()
+      .from(projectTasks)
       .where(eq(projectTasks.projectId, projectId))
       .orderBy(desc(projectTasks.createdAt));
 
@@ -10301,19 +13440,30 @@ router.post('/projects/:projectId/tasks/assess', async (req: Request, res: Respo
       const completionRate = (completedTasks / totalTasks) * 100;
       const overdueRate = (overdueTasks / totalTasks) * 100;
       const blockedRate = (blockedTasks / totalTasks) * 100;
-      healthScore = Math.max(0, Math.min(100, Math.round(
-        completionRate * 0.4 + (100 - overdueRate * 3) * 0.3 + (100 - blockedRate * 5) * 0.3
-      )));
+      healthScore = Math.max(
+        0,
+        Math.min(
+          100,
+          Math.round(
+            completionRate * 0.4 + (100 - overdueRate * 3) * 0.3 + (100 - blockedRate * 5) * 0.3
+          )
+        )
+      );
     }
 
     // Generate risk assessment
     const risks: string[] = [];
-    if (overdueTasks > 0) risks.push(`${overdueTasks} task${overdueTasks > 1 ? 's' : ''} overdue — review deadlines`);
-    if (blockedTasks > 0) risks.push(`${blockedTasks} task${blockedTasks > 1 ? 's' : ''} blocked — resolve dependencies`);
+    if (overdueTasks > 0)
+      risks.push(`${overdueTasks} task${overdueTasks > 1 ? 's' : ''} overdue — review deadlines`);
+    if (blockedTasks > 0)
+      risks.push(
+        `${blockedTasks} task${blockedTasks > 1 ? 's' : ''} blocked — resolve dependencies`
+      );
     if (totalTasks > 0 && inProgressTasks === 0 && completedTasks < totalTasks) {
       risks.push('No tasks in progress — workflow may be stalled');
     }
-    if (totalTasks === 0) risks.push('No tasks defined — generate milestones for this submission type');
+    if (totalTasks === 0)
+      risks.push('No tasks defined — generate milestones for this submission type');
 
     // Generate next recommended actions
     const nextActions: Array<{ action: string; priority: string; reason: string }> = [];
@@ -10330,7 +13480,9 @@ router.post('/projects/:projectId/tasks/assess', async (req: Request, res: Respo
       nextActions.push({
         action: 'Review overdue tasks',
         priority: 'urgent',
-        reason: `${overdueTasks} task${overdueTasks > 1 ? 's have' : ' has'} passed ${overdueTasks > 1 ? 'their' : 'its'} due date.`,
+        reason: `${overdueTasks} task${overdueTasks > 1 ? 's have' : ' has'} passed ${
+          overdueTasks > 1 ? 'their' : 'its'
+        } due date.`,
       });
     }
 
@@ -10338,7 +13490,9 @@ router.post('/projects/:projectId/tasks/assess', async (req: Request, res: Respo
       nextActions.push({
         action: 'Resolve blocked tasks',
         priority: 'high',
-        reason: `${blockedTasks} task${blockedTasks > 1 ? 's are' : ' is'} blocked and preventing progress.`,
+        reason: `${blockedTasks} task${
+          blockedTasks > 1 ? 's are' : ' is'
+        } blocked and preventing progress.`,
       });
     }
 
@@ -11656,8 +14810,8 @@ router.post(
           resolvedType === 'change_request'
             ? 'requested_changes'
             : resolvedType === 'approval_task'
-              ? 'approval_pending'
-              : 'unresolved_review',
+            ? 'approval_pending'
+            : 'unresolved_review',
       });
 
       // ── Notification: assignment ──
@@ -11676,7 +14830,9 @@ router.post(
             resolvedType === 'approval_task'
               ? `Approval needed: "${title.trim()}"`
               : `Assigned: "${title.trim()}"`,
-          body: `${actorName} assigned you a ${resolvedType.replace('_', ' ')} on "${artifact.title}".`,
+          body: `${actorName} assigned you a ${resolvedType.replace('_', ' ')} on "${
+            artifact.title
+          }".`,
           severity: resolvedType === 'change_request' ? 'warning' : 'info',
           dueAt: dueAt || null,
         });
@@ -12449,7 +15605,9 @@ router.get('/projects/:projectId/review-pulse', async (req: Request, res: Respon
     for (const t of overdueTasks) {
       riskSignals.push({
         severity: 'high',
-        signal: `Overdue task: "${t.title}" (due ${t.dueAt ? new Date(t.dueAt).toLocaleDateString() : 'unknown'})`,
+        signal: `Overdue task: "${t.title}" (due ${
+          t.dueAt ? new Date(t.dueAt).toLocaleDateString() : 'unknown'
+        })`,
         entityId: t.taskId,
         entityType: 'review_task',
       });
@@ -12625,8 +15783,8 @@ async function createNotification(params: {
     const sourceCondition = params.threadId
       ? eq(concept2cureNotifications.threadId, params.threadId)
       : params.reviewTaskId
-        ? eq(concept2cureNotifications.reviewTaskId, params.reviewTaskId)
-        : null;
+      ? eq(concept2cureNotifications.reviewTaskId, params.reviewTaskId)
+      : null;
 
     const existing = await db
       .select({ id: concept2cureNotifications.id })
@@ -12684,8 +15842,8 @@ async function suppressNotificationsForSource(params: {
     const condition = params.threadId
       ? eq(concept2cureNotifications.threadId, params.threadId)
       : params.reviewTaskId
-        ? eq(concept2cureNotifications.reviewTaskId, params.reviewTaskId)
-        : null;
+      ? eq(concept2cureNotifications.reviewTaskId, params.reviewTaskId)
+      : null;
 
     if (!condition) return;
 
@@ -13159,7 +16317,10 @@ router.post('/projects/:projectId/submission-package', async (req: Request, res:
     );
 
     // Organize by CTD module
-    const moduleMap: Record<string, Array<{ id: number; title: string; ctdSection: string; status: string; version: number }>> = {};
+    const moduleMap: Record<
+      string,
+      Array<{ id: number; title: string; ctdSection: string; status: string; version: number }>
+    > = {};
     for (const a of eligibleArtifacts) {
       const section = a.ctdSection || 'unplaced';
       const moduleKey = section === 'unplaced' ? 'unplaced' : `module-${section.charAt(0)}`;
@@ -13176,7 +16337,8 @@ router.post('/projects/:projectId/submission-package', async (req: Request, res:
     // Compute readiness
     const totalArtifacts = artifacts.length;
     const eligibleCount = eligibleArtifacts.length;
-    const readinessPercent = totalArtifacts > 0 ? Math.round((eligibleCount / totalArtifacts) * 100) : 0;
+    const readinessPercent =
+      totalArtifacts > 0 ? Math.round((eligibleCount / totalArtifacts) * 100) : 0;
     const isReady = readinessPercent === 100 && totalArtifacts > 0;
 
     const manifest = {
@@ -13198,12 +16360,21 @@ router.post('/projects/:projectId/submission-package', async (req: Request, res:
       },
       modules: moduleMap,
       packageStructure: {
-        'module-1': { label: 'Module 1 — Administrative Information', artifacts: moduleMap['module-1'] || [] },
+        'module-1': {
+          label: 'Module 1 — Administrative Information',
+          artifacts: moduleMap['module-1'] || [],
+        },
         'module-2': { label: 'Module 2 — CTD Summaries', artifacts: moduleMap['module-2'] || [] },
         'module-3': { label: 'Module 3 — Quality', artifacts: moduleMap['module-3'] || [] },
-        'module-4': { label: 'Module 4 — Nonclinical Study Reports', artifacts: moduleMap['module-4'] || [] },
-        'module-5': { label: 'Module 5 — Clinical Study Reports', artifacts: moduleMap['module-5'] || [] },
-        'unplaced': { label: 'Unplaced Artifacts', artifacts: moduleMap['unplaced'] || [] },
+        'module-4': {
+          label: 'Module 4 — Nonclinical Study Reports',
+          artifacts: moduleMap['module-4'] || [],
+        },
+        'module-5': {
+          label: 'Module 5 — Clinical Study Reports',
+          artifacts: moduleMap['module-5'] || [],
+        },
+        unplaced: { label: 'Unplaced Artifacts', artifacts: moduleMap['unplaced'] || [] },
       },
     };
 
@@ -13252,32 +16423,49 @@ router.post('/escalation/process', async (req: Request, res: Response) => {
         )
       );
 
-    for (const thread of overdueThreads) {
-      if (!thread.assigneeId) continue;
+    // ── Batch-process overdue threads (N+1 → 3 queries) ──
+    const assignedThreads = overdueThreads.filter(t => t.assigneeId);
+    const threadIds = assignedThreads.map(t => t.id);
 
+    // Batch-fetch existing unread notifications for all overdue threads
+    const existingThreadNotifs =
+      threadIds.length > 0
+        ? await db
+            .select({
+              threadId: concept2cureNotifications.threadId,
+              escalationLevel: concept2cureNotifications.escalationLevel,
+              notificationType: concept2cureNotifications.notificationType,
+            })
+            .from(concept2cureNotifications)
+            .where(
+              and(
+                inArray(concept2cureNotifications.threadId, threadIds),
+                inArray(concept2cureNotifications.notificationType, ['escalation', 'overdue']),
+                eq(concept2cureNotifications.status, 'unread')
+              )
+            )
+        : [];
+
+    // Build a map of threadId → max existing escalation level
+    const threadEscMap = new Map<number, number>();
+    for (const n of existingThreadNotifs) {
+      const cur = threadEscMap.get(n.threadId!) ?? -1;
+      threadEscMap.set(n.threadId!, Math.max(cur, n.escalationLevel ?? 0));
+    }
+
+    // Compute needed notifications
+    const threadNotifsToInsert: any[] = [];
+    for (const thread of assignedThreads) {
       const overdueDuration = now.getTime() - new Date(thread.dueAt!).getTime();
       let newLevel = 0;
       if (overdueDuration > 72 * 60 * 60 * 1000) newLevel = 2;
       else if (overdueDuration > 24 * 60 * 60 * 1000) newLevel = 1;
 
-      // Check existing escalation notification
-      const [existing] = await db
-        .select()
-        .from(concept2cureNotifications)
-        .where(
-          and(
-            eq(concept2cureNotifications.threadId, thread.id),
-            eq(concept2cureNotifications.notificationType, newLevel > 0 ? 'escalation' : 'overdue'),
-            eq(concept2cureNotifications.status, 'unread')
-          )
-        )
-        .limit(1);
+      const existingLevel = threadEscMap.get(thread.id) ?? -1;
+      if (existingLevel >= newLevel) continue;
 
-      if (existing && (existing.escalationLevel || 0) >= newLevel) continue;
-
-      // Create escalation/overdue notification
       const notifId = `ntf_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
-      await db.insert(concept2cureNotifications).values({
+      threadNotifsToInsert.push({
         notificationId: notifId,
         orgId: organizationId,
         projectId: thread.projectId,
@@ -13292,7 +16480,9 @@ router.post('/escalation/process', async (req: Request, res: Response) => {
           newLevel > 0
             ? `Escalation L${newLevel}: "${thread.title}" is overdue`
             : `Overdue: "${thread.title}" review thread`,
-        body: `Review thread "${thread.title}" was due ${thread.dueAt!.toISOString()} and remains unresolved.`,
+        body: `Review thread "${
+          thread.title
+        }" was due ${thread.dueAt!.toISOString()} and remains unresolved.`,
         severity: newLevel >= 2 ? 'critical' : newLevel >= 1 ? 'warning' : 'info',
         status: 'unread',
         dueAt: thread.dueAt,
@@ -13304,6 +16494,11 @@ router.post('/escalation/process', async (req: Request, res: Response) => {
 
       if (newLevel > 0) escalated++;
       else overdueCreated++;
+    }
+
+    // Batch-insert all thread notifications
+    if (threadNotifsToInsert.length > 0) {
+      await db.insert(concept2cureNotifications).values(threadNotifsToInsert);
     }
 
     // ── Process overdue tasks ──
@@ -13321,30 +16516,49 @@ router.post('/escalation/process', async (req: Request, res: Response) => {
         )
       );
 
-    for (const task of overdueTasks) {
-      if (!task.assignedToId) continue;
+    // ── Batch-process overdue tasks (N+1 → 3 queries) ──
+    const assignedTasks = overdueTasks.filter(t => t.assignedToId);
+    const taskIds = assignedTasks.map(t => t.id);
 
+    // Batch-fetch existing unread notifications for all overdue tasks
+    const existingTaskNotifs =
+      taskIds.length > 0
+        ? await db
+            .select({
+              reviewTaskId: concept2cureNotifications.reviewTaskId,
+              escalationLevel: concept2cureNotifications.escalationLevel,
+              notificationType: concept2cureNotifications.notificationType,
+            })
+            .from(concept2cureNotifications)
+            .where(
+              and(
+                inArray(concept2cureNotifications.reviewTaskId, taskIds),
+                inArray(concept2cureNotifications.notificationType, ['escalation', 'overdue']),
+                eq(concept2cureNotifications.status, 'unread')
+              )
+            )
+        : [];
+
+    // Build a map of taskId → max existing escalation level
+    const taskEscMap = new Map<number, number>();
+    for (const n of existingTaskNotifs) {
+      const cur = taskEscMap.get(n.reviewTaskId!) ?? -1;
+      taskEscMap.set(n.reviewTaskId!, Math.max(cur, n.escalationLevel ?? 0));
+    }
+
+    // Compute needed notifications
+    const taskNotifsToInsert: any[] = [];
+    for (const task of assignedTasks) {
       const overdueDuration = now.getTime() - new Date(task.dueAt!).getTime();
       let newLevel = 0;
       if (overdueDuration > 72 * 60 * 60 * 1000) newLevel = 2;
       else if (overdueDuration > 24 * 60 * 60 * 1000) newLevel = 1;
 
-      const [existing] = await db
-        .select()
-        .from(concept2cureNotifications)
-        .where(
-          and(
-            eq(concept2cureNotifications.reviewTaskId, task.id),
-            eq(concept2cureNotifications.notificationType, newLevel > 0 ? 'escalation' : 'overdue'),
-            eq(concept2cureNotifications.status, 'unread')
-          )
-        )
-        .limit(1);
-
-      if (existing && (existing.escalationLevel || 0) >= newLevel) continue;
+      const existingLevel = taskEscMap.get(task.id) ?? -1;
+      if (existingLevel >= newLevel) continue;
 
       const notifId = `ntf_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
-      await db.insert(concept2cureNotifications).values({
+      taskNotifsToInsert.push({
         notificationId: notifId,
         orgId: organizationId,
         projectId: task.projectId,
@@ -13359,7 +16573,9 @@ router.post('/escalation/process', async (req: Request, res: Response) => {
           newLevel > 0
             ? `Escalation L${newLevel}: "${task.title}" is overdue`
             : `Overdue: "${task.title}" review task`,
-        body: `Review task "${task.title}" was due ${task.dueAt!.toISOString()} and remains unresolved.`,
+        body: `Review task "${
+          task.title
+        }" was due ${task.dueAt!.toISOString()} and remains unresolved.`,
         severity: newLevel >= 2 ? 'critical' : newLevel >= 1 ? 'warning' : 'info',
         status: 'unread',
         dueAt: task.dueAt,
@@ -13371,6 +16587,11 @@ router.post('/escalation/process', async (req: Request, res: Response) => {
 
       if (newLevel > 0) escalated++;
       else overdueCreated++;
+    }
+
+    // Batch-insert all task notifications
+    if (taskNotifsToInsert.length > 0) {
+      await db.insert(concept2cureNotifications).values(taskNotifsToInsert);
     }
 
     // ── Due-soon reminders for threads ──
@@ -13463,464 +16684,580 @@ router.post('/escalation/process', async (req: Request, res: Response) => {
  * GET /api/concept2cure/conversations/:conversationId/health
  * Compute and return conversation health report.
  */
-router.get('/conversations/:conversationId/health', authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const conversationId = parseInt(req.params.conversationId, 10);
-    const organizationId =
-      (req as any).organizationId ||
-      parseInt(req.headers['x-organization-id'] as string, 10) ||
-      1;
+router.get(
+  '/conversations/:conversationId/health',
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const conversationId = parseInt(req.params.conversationId, 10);
+      const organizationId =
+        Number((req as any).tenantContext?.organizationId) ||
+        Number((req as any).tenantId) ||
+        Number((req as any).user?.organizationId);
+      if (!organizationId) {
+        return sendError(res, 403, 'Organization context required');
+      }
 
-    if (!conversationId || isNaN(conversationId)) {
-      return sendError(res, 400, 'Invalid conversation ID');
+      if (!conversationId || isNaN(conversationId)) {
+        return sendError(res, 400, 'Invalid conversation ID');
+      }
+
+      const report = await computeConversationHealth(conversationId, organizationId);
+      return sendSuccess(res, report);
+    } catch (error: any) {
+      logConcept2cureError('conversation health', error);
+      return sendError(res, 500, 'Failed to compute conversation health');
     }
-
-    const report = await computeConversationHealth(conversationId, organizationId);
-    return sendSuccess(res, report);
-  } catch (error: any) {
-    logConcept2cureError('conversation health', error);
-    return sendError(res, 500, 'Failed to compute conversation health');
   }
-});
+);
 
 /**
  * GET /api/concept2cure/conversations/:conversationId/working-memory
  * Get the latest working memory summary for a conversation.
  */
-router.get('/conversations/:conversationId/working-memory', authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const conversationId = parseInt(req.params.conversationId, 10);
-    const organizationId =
-      (req as any).organizationId ||
-      parseInt(req.headers['x-organization-id'] as string, 10) ||
-      1;
+router.get(
+  '/conversations/:conversationId/working-memory',
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const conversationId = parseInt(req.params.conversationId, 10);
+      const organizationId =
+        Number((req as any).tenantContext?.organizationId) ||
+        Number((req as any).tenantId) ||
+        Number((req as any).user?.organizationId);
+      if (!organizationId) {
+        return sendError(res, 403, 'Organization context required');
+      }
 
-    if (!conversationId || isNaN(conversationId)) {
-      return sendError(res, 400, 'Invalid conversation ID');
+      if (!conversationId || isNaN(conversationId)) {
+        return sendError(res, 400, 'Invalid conversation ID');
+      }
+
+      const memory = await getLatestWorkingMemory(conversationId, organizationId);
+      if (!memory) {
+        return sendSuccess(res, null, { message: 'No working memory generated yet' });
+      }
+
+      return sendSuccess(res, {
+        ...memory,
+        formatted: formatWorkingMemoryForPrompt(memory),
+      });
+    } catch (error: any) {
+      logConcept2cureError('working memory retrieval', error);
+      return sendError(res, 500, 'Failed to retrieve working memory');
     }
-
-    const memory = await getLatestWorkingMemory(conversationId, organizationId);
-    if (!memory) {
-      return sendSuccess(res, null, { message: 'No working memory generated yet' });
-    }
-
-    return sendSuccess(res, {
-      ...memory,
-      formatted: formatWorkingMemoryForPrompt(memory),
-    });
-  } catch (error: any) {
-    logConcept2cureError('working memory retrieval', error);
-    return sendError(res, 500, 'Failed to retrieve working memory');
   }
-});
+);
 
 /**
  * POST /api/concept2cure/conversations/:conversationId/summarize
  * Generate or refresh the working memory summary for a conversation.
  * Uses AI to analyze conversation messages and produce a structured summary.
  */
-router.post('/conversations/:conversationId/summarize', authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const conversationId = parseInt(req.params.conversationId, 10);
-    const organizationId =
-      (req as any).organizationId ||
-      parseInt(req.headers['x-organization-id'] as string, 10) ||
-      1;
+router.post(
+  '/conversations/:conversationId/summarize',
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const conversationId = parseInt(req.params.conversationId, 10);
+      const organizationId =
+        Number((req as any).tenantContext?.organizationId) ||
+        Number((req as any).tenantId) ||
+        Number((req as any).user?.organizationId);
+      if (!organizationId) {
+        return sendError(res, 403, 'Organization context required');
+      }
 
-    if (!conversationId || isNaN(conversationId)) {
-      return sendError(res, 400, 'Invalid conversation ID');
-    }
+      if (!conversationId || isNaN(conversationId)) {
+        return sendError(res, 400, 'Invalid conversation ID');
+      }
 
-    // Load conversation messages
-    const messagesResult = await pool.query(
-      `SELECT role, content FROM concept2cure_messages
+      // Load conversation messages
+      const messagesResult = await pool.query(
+        `SELECT role, content FROM concept2cure_messages
        WHERE conversation_id = $1 AND organization_id = $2
        ORDER BY created_at ASC`,
-      [conversationId, organizationId]
-    );
-    const messages = messagesResult.rows;
+        [conversationId, organizationId]
+      );
+      const messages = messagesResult.rows;
 
-    if (messages.length === 0) {
-      return sendError(res, 404, 'No messages found for this conversation');
-    }
+      if (messages.length === 0) {
+        return sendError(res, 404, 'No messages found for this conversation');
+      }
 
-    // Get previous summary for chaining
-    const existingMemory = await getLatestWorkingMemory(conversationId, organizationId);
-    const previousSummary = existingMemory
-      ? formatWorkingMemoryForPrompt(existingMemory)
-      : undefined;
+      // Get previous summary for chaining
+      const existingMemory = await getLatestWorkingMemory(conversationId, organizationId);
+      const previousSummary = existingMemory
+        ? formatWorkingMemoryForPrompt(existingMemory)
+        : undefined;
 
-    // Build the summarization prompt
-    const summaryPrompt = buildWorkingMemoryPrompt(messages, previousSummary);
+      // Build the summarization prompt
+      const summaryPrompt = buildWorkingMemoryPrompt(messages, previousSummary);
 
-    // Use OpenAI to generate the structured summary
-    let structured: any;
-    try {
-      const { getOpenAIClient } = await import('../services/openai-client');
-      const aiResult = await ai.chat({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: 'You are a regulatory affairs analyst. Produce concise, structured summaries.' },
-          { role: 'user', content: summaryPrompt },
-        ],
-        max_tokens: 2000,
-        temperature: 0.3,
+      // Use OpenAI to generate the structured summary
+      let structured: any;
+      try {
+        const { getOpenAIClient } = await import('../services/openai-client');
+        const aiResult = await ai.chat({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are a regulatory affairs analyst. Produce concise, structured summaries.',
+            },
+            { role: 'user', content: summaryPrompt },
+          ],
+          max_tokens: 2000,
+          temperature: 0.3,
+        });
+
+        const responseText = aiResult.content || '{}';
+        // Extract JSON from response (handle markdown code blocks)
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        structured = jsonMatch
+          ? JSON.parse(jsonMatch[0])
+          : {
+              objective: 'Unable to parse summary',
+              lockedFacts: [],
+              decisions: [],
+              openQuestions: [],
+              nextActions: [],
+              createdArtifacts: [],
+              exclusions: [],
+            };
+      } catch (aiError: any) {
+        logger.error(`AI summarization failed: ${aiError.message}`);
+        // Fallback: generate a basic summary without AI
+        structured = {
+          objective: `Conversation with ${messages.length} messages`,
+          lockedFacts: [],
+          decisions: [],
+          openQuestions: messages
+            .filter((m: any) => m.role === 'user' && m.content?.trim().endsWith('?'))
+            .slice(-5)
+            .map((m: any) => m.content.trim().slice(0, 200)),
+          nextActions: [],
+          createdArtifacts: [],
+          exclusions: [],
+        };
+      }
+
+      // Format as readable summary
+      const formattedSummary = [
+        `**Objective**: ${structured.objective}`,
+        structured.lockedFacts?.length > 0
+          ? `**Key Facts**: ${structured.lockedFacts.join('; ')}`
+          : '',
+        structured.decisions?.length > 0 ? `**Decisions**: ${structured.decisions.join('; ')}` : '',
+        structured.openQuestions?.length > 0
+          ? `**Open Questions**: ${structured.openQuestions.join('; ')}`
+          : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+
+      // Get thread ID for cross-system linking
+      const convResult = await pool.query(
+        'SELECT thread_id FROM concept2cure_conversations WHERE id = $1',
+        [conversationId]
+      );
+      const threadId = convResult.rows[0]?.thread_id || null;
+
+      // Store
+      await storeWorkingMemory({
+        conversationId,
+        threadId,
+        organizationId,
+        summary: formattedSummary,
+        structured,
+        messageCountAtGeneration: messages.length,
       });
 
-      const responseText = aiResult.content || '{}';
-      // Extract JSON from response (handle markdown code blocks)
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      structured = jsonMatch ? JSON.parse(jsonMatch[0]) : {
-        objective: 'Unable to parse summary',
-        lockedFacts: [],
-        decisions: [],
-        openQuestions: [],
-        nextActions: [],
-        createdArtifacts: [],
-        exclusions: [],
-      };
-    } catch (aiError: any) {
-      logger.error(`AI summarization failed: ${aiError.message}`);
-      // Fallback: generate a basic summary without AI
-      structured = {
-        objective: `Conversation with ${messages.length} messages`,
-        lockedFacts: [],
-        decisions: [],
-        openQuestions: messages
-          .filter((m: any) => m.role === 'user' && m.content?.trim().endsWith('?'))
-          .slice(-5)
-          .map((m: any) => m.content.trim().slice(0, 200)),
-        nextActions: [],
-        createdArtifacts: [],
-        exclusions: [],
-      };
+      return sendSuccess(res, {
+        summary: formattedSummary,
+        structured,
+        messageCount: messages.length,
+        generatedAt: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      logConcept2cureError('working memory generation', error);
+      return sendError(res, 500, 'Failed to generate working memory summary');
     }
-
-    // Format as readable summary
-    const formattedSummary = [
-      `**Objective**: ${structured.objective}`,
-      structured.lockedFacts?.length > 0
-        ? `**Key Facts**: ${structured.lockedFacts.join('; ')}`
-        : '',
-      structured.decisions?.length > 0
-        ? `**Decisions**: ${structured.decisions.join('; ')}`
-        : '',
-      structured.openQuestions?.length > 0
-        ? `**Open Questions**: ${structured.openQuestions.join('; ')}`
-        : '',
-    ].filter(Boolean).join('\n');
-
-    // Get thread ID for cross-system linking
-    const convResult = await pool.query(
-      'SELECT thread_id FROM concept2cure_conversations WHERE id = $1',
-      [conversationId]
-    );
-    const threadId = convResult.rows[0]?.thread_id || null;
-
-    // Store
-    await storeWorkingMemory({
-      conversationId,
-      threadId,
-      organizationId,
-      summary: formattedSummary,
-      structured,
-      messageCountAtGeneration: messages.length,
-    });
-
-    return sendSuccess(res, {
-      summary: formattedSummary,
-      structured,
-      messageCount: messages.length,
-      generatedAt: new Date().toISOString(),
-    });
-  } catch (error: any) {
-    logConcept2cureError('working memory generation', error);
-    return sendError(res, 500, 'Failed to generate working memory summary');
   }
-});
+);
 
 /**
  * POST /api/concept2cure/conversations/:conversationId/promote
  * Promote conversation content to a governed artifact.
  */
-router.post('/conversations/:conversationId/promote', authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const conversationId = parseInt(req.params.conversationId, 10);
-    const organizationId =
-      (req as any).organizationId ||
-      parseInt(req.headers['x-organization-id'] as string, 10) ||
-      null;
-    if (!organizationId) {
-      return sendError(res, 403, 'Organization context required');
-    }
-    const userId = (req as any).userId || (req as any).user?.id || null;
+router.post(
+  '/conversations/:conversationId/promote',
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const conversationId = parseInt(req.params.conversationId, 10);
+      const organizationId =
+        Number((req as any).tenantContext?.organizationId) ||
+        Number((req as any).tenantId) ||
+        Number((req as any).user?.organizationId) ||
+        null;
+      if (!organizationId) {
+        return sendError(res, 403, 'Organization context required');
+      }
+      const userId = (req as any).userId || (req as any).user?.id || null;
 
-    const promoteSchema = z.object({
-      type: z.enum(['strategy_memo', 'evidence_brief', 'module_draft', 'decision_log', 'handoff_memo']),
-      title: z.string().min(1).max(500),
-      messageStart: z.number().optional(),
-      messageEnd: z.number().optional(),
-    });
+      const promoteSchema = z.object({
+        type: z.enum([
+          'strategy_memo',
+          'evidence_brief',
+          'module_draft',
+          'decision_log',
+          'handoff_memo',
+        ]),
+        title: z.string().min(1).max(500),
+        messageStart: z.number().optional(),
+        messageEnd: z.number().optional(),
+      });
 
-    const parsed = promoteSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return sendError(res, 400, 'Invalid promotion request', parsed.error.format());
-    }
-    const { type, title, messageStart, messageEnd } = parsed.data;
+      const parsed = promoteSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return sendError(res, 400, 'Invalid promotion request', parsed.error.format());
+      }
+      const { type, title, messageStart, messageEnd } = parsed.data;
 
-    if (!conversationId || isNaN(conversationId)) {
-      return sendError(res, 400, 'Invalid conversation ID');
-    }
+      if (!conversationId || isNaN(conversationId)) {
+        return sendError(res, 400, 'Invalid conversation ID');
+      }
 
-    // Load conversation and verify it belongs to this org
-    const convResult = await pool.query(
-      'SELECT id, project_id, conversation_id FROM concept2cure_conversations WHERE id = $1 AND organization_id = $2',
-      [conversationId, organizationId]
-    );
-    if (convResult.rows.length === 0) {
-      return sendError(res, 404, 'Conversation not found');
-    }
-    const conversation = convResult.rows[0];
+      // Load conversation and verify it belongs to this org
+      const convResult = await pool.query(
+        'SELECT id, project_id, conversation_id FROM concept2cure_conversations WHERE id = $1 AND organization_id = $2',
+        [conversationId, organizationId]
+      );
+      if (convResult.rows.length === 0) {
+        return sendError(res, 404, 'Conversation not found');
+      }
+      const conversation = convResult.rows[0];
 
-    // Load messages (optionally filtered by range)
-    let messagesQuery = `SELECT role, content, created_at FROM concept2cure_messages
+      // Load messages (optionally filtered by range)
+      let messagesQuery = `SELECT role, content, created_at FROM concept2cure_messages
        WHERE conversation_id = $1 AND organization_id = $2
        ORDER BY created_at ASC`;
-    const messagesResult = await pool.query(messagesQuery, [conversationId, organizationId]);
-    let messages = messagesResult.rows;
+      const messagesResult = await pool.query(messagesQuery, [conversationId, organizationId]);
+      let messages = messagesResult.rows;
 
-    if (messageStart !== undefined || messageEnd !== undefined) {
-      const start = messageStart ?? 0;
-      const end = messageEnd ?? messages.length;
-      messages = messages.slice(start, end);
-    }
-
-    if (messages.length === 0) {
-      return sendError(res, 404, 'No messages in specified range');
-    }
-
-    // Generate document content using AI + Intelligence Engine
-    let documentContent: string;
-    try {
-      const conversationText = messages
-        .map((m: any) => `[${m.role}]: ${m.content}`)
-        .join('\n\n');
-
-      // Run intelligence pipeline on conversation content for structured signals
-      let intelligenceContext = '';
-      try {
-        const { runIntelligencePipeline, buildConstrainedPrompt } = await import(
-          '../services/intelligence-engine/index.js'
-        );
-        const analysis = runIntelligencePipeline(conversationText);
-        intelligenceContext = buildConstrainedPrompt(analysis, 'generate_memo');
-      } catch {
-        // Graceful degradation
+      if (messageStart !== undefined || messageEnd !== undefined) {
+        const start = messageStart ?? 0;
+        const end = messageEnd ?? messages.length;
+        messages = messages.slice(start, end);
       }
 
-      const systemPrompt = intelligenceContext ||
-        `You are a regulatory affairs document specialist. Extract and organize the conversation content into a formal ${type.replace(/_/g, ' ')} document. Use proper document structure with headings, and maintain regulatory precision. Output in Markdown format.`;
+      if (messages.length === 0) {
+        return sendError(res, 404, 'No messages in specified range');
+      }
 
-      const aiResult = await ai.chat({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          {
-            role: 'user',
-            content: `Create a "${title}" (${type.replace(/_/g, ' ')}) from this conversation:\n\n${conversationText}`,
-          },
-        ],
-        max_tokens: 4000,
-        temperature: 0.3,
-      });
-      documentContent = aiResult.content || '';
-
-      // Evaluation gate: check output quality
+      // Generate document content using AI + Intelligence Engine
+      let documentContent: string;
       try {
-        const { evaluateOutput } = await import('../services/intelligence-engine/index.js');
-        const evaluation = evaluateOutput(documentContent);
-        if (!evaluation.passed && intelligenceContext) {
-          // Regenerate with tighter constraints
-          const retryResult = await ai.chat({
-            model: 'gpt-4o-mini',
-            messages: [
-              {
-                role: 'system',
-                content: `${systemPrompt}\n\nIMPORTANT: Your output MUST include: a clear verdict/recommendation, prioritized findings with severity levels, specific evidence references, and actionable next steps. Rejected reasons: ${evaluation.rejectionReasons.join('; ')}`,
-              },
-              {
-                role: 'user',
-                content: `Create a "${title}" (${type.replace(/_/g, ' ')}) from this conversation:\n\n${conversationText}`,
-              },
-            ],
-            max_tokens: 4000,
-            temperature: 0.2,
-          });
-          documentContent = retryResult.content || documentContent;
+        const conversationText = messages.map((m: any) => `[${m.role}]: ${m.content}`).join('\n\n');
+
+        // Run intelligence pipeline on conversation content for structured signals
+        let intelligenceContext = '';
+        try {
+          const { runIntelligencePipeline, buildConstrainedPrompt } = await import(
+            '../services/intelligence-engine/index.js'
+          );
+          const analysis = runIntelligencePipeline(conversationText);
+          intelligenceContext = buildConstrainedPrompt(analysis, 'generate_memo');
+        } catch {
+          // Graceful degradation
+        }
+
+        const systemPrompt =
+          intelligenceContext ||
+          `You are a regulatory affairs document specialist. Extract and organize the conversation content into a formal ${type.replace(
+            /_/g,
+            ' '
+          )} document. Use proper document structure with headings, and maintain regulatory precision. Output in Markdown format.`;
+
+        const aiResult = await ai.chat({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            {
+              role: 'user',
+              content: `Create a "${title}" (${type.replace(
+                /_/g,
+                ' '
+              )}) from this conversation:\n\n${conversationText}`,
+            },
+          ],
+          max_tokens: 4000,
+          temperature: 0.3,
+        });
+        documentContent = aiResult.content || '';
+
+        // Evaluation gate: check output quality
+        try {
+          const { evaluateOutput } = await import('../services/intelligence-engine/index.js');
+          const evaluation = evaluateOutput(documentContent);
+          if (!evaluation.passed && intelligenceContext) {
+            // Regenerate with tighter constraints
+            const retryResult = await ai.chat({
+              model: 'gpt-4o-mini',
+              messages: [
+                {
+                  role: 'system',
+                  content: `${systemPrompt}\n\nIMPORTANT: Your output MUST include: a clear verdict/recommendation, prioritized findings with severity levels, specific evidence references, and actionable next steps. Rejected reasons: ${evaluation.rejectionReasons.join(
+                    '; '
+                  )}`,
+                },
+                {
+                  role: 'user',
+                  content: `Create a "${title}" (${type.replace(
+                    /_/g,
+                    ' '
+                  )}) from this conversation:\n\n${conversationText}`,
+                },
+              ],
+              max_tokens: 4000,
+              temperature: 0.2,
+            });
+            documentContent = retryResult.content || documentContent;
+          }
+        } catch {
+          // Use original if evaluation/retry fails
         }
       } catch {
-        // Use original if evaluation/retry fails
+        // Fallback: raw conversation export
+        documentContent =
+          `# ${title}\n\n_Promoted from conversation on ${new Date().toISOString()}_\n\n` +
+          messages
+            .map(
+              (m: any) =>
+                `### ${m.role === 'user' ? 'User' : 'Assistant'} (${new Date(
+                  m.created_at
+                ).toLocaleString()})\n\n${m.content}`
+            )
+            .join('\n\n---\n\n');
       }
-    } catch {
-      // Fallback: raw conversation export
-      documentContent = `# ${title}\n\n_Promoted from conversation on ${new Date().toISOString()}_\n\n` +
-        messages.map((m: any) =>
-          `### ${m.role === 'user' ? 'User' : 'Assistant'} (${new Date(m.created_at).toLocaleString()})\n\n${m.content}`
-        ).join('\n\n---\n\n');
-    }
 
-    // Create artifact
-    const artifactId = `artifact_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const contentHash = crypto.createHash('sha256').update(documentContent).digest('hex');
+      // Create artifact
+      const artifactId = `artifact_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const contentHash = crypto.createHash('sha256').update(documentContent).digest('hex');
 
-    const artifactResult = await db.insert(concept2cureArtifacts).values({
-      artifactId,
-      projectId: conversation.project_id,
-      conversationId,
-      organizationId,
-      type: 'markdown',
-      category: 'document',
-      title: DOMPurify.sanitize(title),
-      content: documentContent,
-      contentHash,
-      version: 1,
-      status: 'draft',
-      createdById: userId,
-      metadata: { promotedFrom: type, sourceMessageCount: messages.length },
-    }).returning();
-
-    // Log provenance event
-    if (artifactResult.length > 0) {
-      await db.insert(concept2cureProvenanceEvents).values({
-        eventId: `prov_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        artifactId: artifactResult[0].id,
-        organizationId,
-        eventType: 'creation',
-        eventAction: 'promoted_from_conversation',
-        actorId: userId || undefined,
-        actorName: 'User',
-        sourceDescription: `Promoted from conversation ${conversationId} as ${type}`,
-        details: {
-          conversationId,
-          messageRange: { start: messageStart ?? 0, end: messageEnd ?? messages.length },
-          sourceType: type,
-        },
-        backendService: 'concept2cure',
-        backendRoute: `POST /api/concept2cure/conversations/${conversationId}/promote`,
+      const promotedMetadata = {
+        promotedFrom: type,
+        sourceMessageCount: messages.length,
+      };
+      const governedPromotion = resolveGovernedContext({
+        req,
+        projectId: conversation.project_id,
+        artifactId: null,
+        documentType: type,
+        generationMode: 'ai_generated',
+        lifecycleStatus: 'draft',
+        originSurface: 'ri_copilot',
+        title: DOMPurify.sanitize(title),
+        content: documentContent,
+        sourceRefs: [`conversation:${conversationId}`],
+        provider: 'openai',
+        model: 'gpt-4o-mini',
+        eventType: 'artifact.created',
       });
-    }
+      if (!governedPromotion.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: governedPromotion.validation.errors,
+            warnings: governedPromotion.validation.warnings,
+            resolved: governedPromotion.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
 
-    return sendSuccess(res, {
-      artifact: artifactResult[0],
-      artifactId,
-      title,
-      type,
-      messageCount: messages.length,
-    });
-  } catch (error: any) {
-    logConcept2cureError('document promotion', error);
-    return sendError(res, 500, 'Failed to promote conversation to document');
+      const artifactResult = await db
+        .insert(concept2cureArtifacts)
+        .values({
+          artifactId,
+          projectId: conversation.project_id,
+          conversationId,
+          organizationId,
+          type: 'markdown',
+          category: 'document',
+          title: DOMPurify.sanitize(title),
+          content: documentContent,
+          contentHash,
+          version: 1,
+          status: 'draft',
+          createdById: userId,
+          metadata: {
+            ...promotedMetadata,
+            harness: {
+              clientTrack: governedPromotion.contract.clientTrack,
+              submissionProgram: governedPromotion.contract.submissionProgram,
+              persona: governedPromotion.contract.persona,
+              regulatorScope: governedPromotion.contract.regulatorScope,
+              documentClass: governedPromotion.contract.documentClass,
+              readinessGate: governedPromotion.contract.readinessGate,
+              workspaceTarget: governedPromotion.contract.workspaceTarget,
+              originSurface: governedPromotion.contract.originSurface,
+              recommendationSource: governedPromotion.contract.recommendationSource,
+              regulatorIntent: governedPromotion.contract.regulatorIntent,
+              gateChecks: governedPromotion.contract.exportEligibility.gateChecks,
+              blockingReasons: governedPromotion.contract.exportEligibility.blockingReasons,
+              readinessOutcome: governedPromotion.contract.exportEligibility.readinessOutcome,
+            },
+          },
+        })
+        .returning();
+
+      // Log provenance event
+      if (artifactResult.length > 0) {
+        await db.insert(concept2cureProvenanceEvents).values({
+          eventId: `prov_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          artifactId: artifactResult[0].id,
+          organizationId,
+          eventType: 'creation',
+          eventAction: 'promoted_from_conversation',
+          actorId: userId || undefined,
+          actorName: 'User',
+          sourceDescription: `Promoted from conversation ${conversationId} as ${type}`,
+          details: {
+            conversationId,
+            messageRange: { start: messageStart ?? 0, end: messageEnd ?? messages.length },
+            sourceType: type,
+          },
+          backendService: 'concept2cure',
+          backendRoute: `POST /api/concept2cure/conversations/${conversationId}/promote`,
+        });
+      }
+
+      return sendSuccess(res, {
+        artifact: artifactResult[0],
+        artifactId,
+        title,
+        type,
+        messageCount: messages.length,
+      });
+    } catch (error: any) {
+      logConcept2cureError('document promotion', error);
+      return sendError(res, 500, 'Failed to promote conversation to document');
+    }
   }
-});
+);
 
 /**
  * POST /api/concept2cure/conversations/:conversationId/extract-decisions
  * Extract decisions, risks, and open questions from a conversation.
  */
-router.post('/conversations/:conversationId/extract-decisions', authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const conversationId = parseInt(req.params.conversationId, 10);
-    const organizationId =
-      (req as any).organizationId ||
-      parseInt(req.headers['x-organization-id'] as string, 10) ||
-      1;
+router.post(
+  '/conversations/:conversationId/extract-decisions',
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const conversationId = parseInt(req.params.conversationId, 10);
+      const organizationId =
+        (req as any).organizationId ||
+        parseInt(req.headers['x-organization-id'] as string, 10) ||
+        1;
 
-    if (!conversationId || isNaN(conversationId)) {
-      return sendError(res, 400, 'Invalid conversation ID');
-    }
+      if (!conversationId || isNaN(conversationId)) {
+        return sendError(res, 400, 'Invalid conversation ID');
+      }
 
-    // Load messages
-    const messagesResult = await pool.query(
-      `SELECT role, content FROM concept2cure_messages
+      // Load messages
+      const messagesResult = await pool.query(
+        `SELECT role, content FROM concept2cure_messages
        WHERE conversation_id = $1 AND organization_id = $2
        ORDER BY created_at ASC`,
-      [conversationId, organizationId]
-    );
-    const messages = messagesResult.rows;
+        [conversationId, organizationId]
+      );
+      const messages = messagesResult.rows;
 
-    if (messages.length === 0) {
-      return sendError(res, 404, 'No messages found');
-    }
+      if (messages.length === 0) {
+        return sendError(res, 404, 'No messages found');
+      }
 
-    try {
-      const conversationText = messages
-        .map((m: any) => `[${m.role}]: ${m.content}`)
-        .join('\n\n');
-
-      // Run intelligence pipeline for structured risk/decision signals
-      let intelligenceSignals: Record<string, unknown> = {};
       try {
-        const { runIntelligencePipeline } = await import('../services/intelligence-engine/index.js');
-        const analysis = runIntelligencePipeline(conversationText);
-        intelligenceSignals = {
-          defensibilityScore: analysis.defensibility.score,
-          riskLevel: analysis.defensibility.riskLevel,
-          riskClassifications: analysis.riskClassifications.classifications.map(r => ({
-            category: r.category,
-            severity: r.severity,
-            finding: r.finding,
-          })),
-          reviewerQuestions: analysis.reviewerQuestions.map(q => ({
-            question: q.question,
-            severity: q.severity,
-            category: q.category,
-          })),
-        };
-      } catch {
-        // Graceful degradation
+        const conversationText = messages.map((m: any) => `[${m.role}]: ${m.content}`).join('\n\n');
+
+        // Run intelligence pipeline for structured risk/decision signals
+        let intelligenceSignals: Record<string, unknown> = {};
+        try {
+          const { runIntelligencePipeline } = await import(
+            '../services/intelligence-engine/index.js'
+          );
+          const analysis = runIntelligencePipeline(conversationText);
+          intelligenceSignals = {
+            defensibilityScore: analysis.defensibility.score,
+            riskLevel: analysis.defensibility.riskLevel,
+            riskClassifications: analysis.riskClassifications.classifications.map(r => ({
+              category: r.category,
+              severity: r.severity,
+              finding: r.finding,
+            })),
+            reviewerQuestions: analysis.reviewerQuestions.map(q => ({
+              question: q.question,
+              severity: q.severity,
+              category: q.category,
+            })),
+          };
+        } catch {
+          // Graceful degradation
+        }
+
+        const aiResult = await ai.chat({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `Extract structured information from this regulatory conversation. You have intelligence signals available. Return ONLY valid JSON.${
+                Object.keys(intelligenceSignals).length > 0
+                  ? `\n\nIntelligence signals:\n${JSON.stringify(intelligenceSignals, null, 2)}`
+                  : ''
+              }`,
+            },
+            {
+              role: 'user',
+              content: `Extract all decisions, risks, open questions, and action items from this conversation:\n\n${conversationText}\n\nRespond with JSON: { "decisions": [...], "risks": [...], "openQuestions": [...], "actionItems": [...], "intelligenceSignals": {...} }`,
+            },
+          ],
+          max_tokens: 2000,
+          temperature: 0.2,
+        });
+
+        const responseText = aiResult.content || '{}';
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        const extracted = jsonMatch
+          ? JSON.parse(jsonMatch[0])
+          : {
+              decisions: [],
+              risks: [],
+              openQuestions: [],
+              actionItems: [],
+            };
+
+        // Merge intelligence signals into response
+        if (Object.keys(intelligenceSignals).length > 0) {
+          extracted.intelligenceSignals = intelligenceSignals;
+        }
+
+        return sendSuccess(res, extracted);
+      } catch (aiError: any) {
+        logger.error(`Decision extraction failed: ${aiError.message}`);
+        return sendError(res, 500, 'AI extraction failed');
       }
-
-      const aiResult = await ai.chat({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `Extract structured information from this regulatory conversation. You have intelligence signals available. Return ONLY valid JSON.${
-              Object.keys(intelligenceSignals).length > 0
-                ? `\n\nIntelligence signals:\n${JSON.stringify(intelligenceSignals, null, 2)}`
-                : ''
-            }`,
-          },
-          {
-            role: 'user',
-            content: `Extract all decisions, risks, open questions, and action items from this conversation:\n\n${conversationText}\n\nRespond with JSON: { "decisions": [...], "risks": [...], "openQuestions": [...], "actionItems": [...], "intelligenceSignals": {...} }`,
-          },
-        ],
-        max_tokens: 2000,
-        temperature: 0.2,
-      });
-
-      const responseText = aiResult.content || '{}';
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      const extracted = jsonMatch ? JSON.parse(jsonMatch[0]) : {
-        decisions: [], risks: [], openQuestions: [], actionItems: [],
-      };
-
-      // Merge intelligence signals into response
-      if (Object.keys(intelligenceSignals).length > 0) {
-        extracted.intelligenceSignals = intelligenceSignals;
-      }
-
-      return sendSuccess(res, extracted);
-    } catch (aiError: any) {
-      logger.error(`Decision extraction failed: ${aiError.message}`);
-      return sendError(res, 500, 'AI extraction failed');
+    } catch (error: any) {
+      logConcept2cureError('decision extraction', error);
+      return sendError(res, 500, 'Failed to extract decisions');
     }
-  } catch (error: any) {
-    logConcept2cureError('decision extraction', error);
-    return sendError(res, 500, 'Failed to extract decisions');
   }
-});
+);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // INTELLIGENCE ENGINE — Deterministic regulatory intelligence analysis
@@ -13952,7 +17289,9 @@ router.post('/intelligence/analyze', authMiddleware, async (req: Request, res: R
           })
         )
         .optional(),
-      includeConstrainedPrompt: z.enum(['explain_risk', 'suggest_remediation', 'generate_memo', 'rewrite_section']).optional(),
+      includeConstrainedPrompt: z
+        .enum(['explain_risk', 'suggest_remediation', 'generate_memo', 'rewrite_section'])
+        .optional(),
     });
 
     const parsed = analyzeSchema.safeParse(req.body);
@@ -14155,9 +17494,12 @@ router.get('/team/workload', async (req: Request, res: Response) => {
 router.post('/feedback', authMiddleware, async (req: Request, res: Response) => {
   try {
     const organizationId =
-      (req as any).organizationId ||
-      parseInt(req.headers['x-organization-id'] as string, 10) ||
-      1;
+      Number((req as any).tenantContext?.organizationId) ||
+      Number((req as any).tenantId) ||
+      Number((req as any).user?.organizationId);
+    if (!organizationId) {
+      return sendError(res, 403, 'Organization context required');
+    }
     const userId = getUserId(req);
     const { messageId, positive, conversationId, comment } = req.body;
 
@@ -14181,7 +17523,14 @@ router.post('/feedback', authMiddleware, async (req: Request, res: Response) => 
       await pool.query(
         `INSERT INTO ai_feedback (organization_id, user_id, message_id, conversation_id, positive, comment)
          VALUES ($1, $2, $3, $4, $5, $6)`,
-        [organizationId, userId, String(messageId), conversationId || null, positive, comment || null]
+        [
+          organizationId,
+          userId,
+          String(messageId),
+          conversationId || null,
+          positive,
+          comment || null,
+        ]
       );
     } catch (dbErr: any) {
       console.warn('[Feedback] DB persist failed:', dbErr.message);
@@ -14202,7 +17551,9 @@ router.post('/feedback', authMiddleware, async (req: Request, res: Response) => 
         userId,
         feedbackType: positive ? 'accepted' : 'rejected',
       });
-    } catch { /* non-blocking */ }
+    } catch {
+      /* non-blocking */
+    }
 
     return sendSuccess(res, { recorded: true });
   } catch (error: any) {

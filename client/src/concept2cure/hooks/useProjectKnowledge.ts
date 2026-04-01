@@ -52,6 +52,19 @@ interface DocumentProcessingResult {
   tokenCount: number;
 }
 
+function normalizeKnowledge(input: unknown): ProjectKnowledge {
+  const source = (input && typeof input === 'object' ? input : {}) as Partial<ProjectKnowledge>;
+  return {
+    documents: Array.isArray(source.documents) ? source.documents : [],
+    context: typeof source.context === 'string' ? source.context : '',
+    customInstructions:
+      typeof source.customInstructions === 'string' ? source.customInstructions : '',
+    deviceInfo: source.deviceInfo,
+    predicateInfo: source.predicateInfo,
+    companyInfo: source.companyInfo,
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -136,9 +149,10 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
 
   // Calculate context metrics (only count active documents toward context usage)
   const contextTokens =
-    knowledge?.documents
-      .filter(doc => doc.isActive !== false)
-      .reduce((sum, doc) => sum + (doc.tokenCount || 0), 0) || 0;
+    (Array.isArray(knowledge?.documents)
+      ? knowledge.documents.filter(doc => doc.isActive !== false)
+      : []
+    ).reduce((sum, doc) => sum + (doc.tokenCount || 0), 0) || 0;
   const maxContextTokens = MAX_CONTEXT_TOKENS;
   const contextUsagePercent = Math.round((contextTokens / maxContextTokens) * 100);
 
@@ -167,26 +181,18 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
           );
         }
         const data = payload?.data ?? payload;
-        setKnowledge(data);
+        setKnowledge(normalizeKnowledge(data));
       } catch (err) {
         // Fallback to localStorage
         const stored = localStorage.getItem(`concept2cure_knowledge_${projectId}`);
         if (stored) {
           try {
-            setKnowledge(JSON.parse(stored));
+            setKnowledge(normalizeKnowledge(JSON.parse(stored)));
           } catch {
-            setKnowledge({
-              documents: [],
-              customInstructions: '',
-              context: '',
-            });
+            setKnowledge(normalizeKnowledge(null));
           }
         } else {
-          setKnowledge({
-            documents: [],
-            customInstructions: '',
-            context: '',
-          });
+          setKnowledge(normalizeKnowledge(null));
         }
       } finally {
         setIsLoading(false);

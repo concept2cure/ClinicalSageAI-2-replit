@@ -15,32 +15,53 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Project, Conversation, SubmissionType, WorkbenchMode } from '../types';
+import { Project, Conversation, SubmissionType } from '../types';
 import { queryKeys } from './queryKeys';
+import { apiRequest } from '@/lib/queryClient';
 
 /** Storage key for localStorage fallback */
 const STORAGE_KEY = 'concept2cure_projects';
 
 /** Feature flag to enable API-first approach with fallback */
 const USE_API = true;
+const ENABLE_LOCAL_PROJECT_FALLBACK =
+  (import.meta as any).env?.VITE_ENABLE_LOCAL_PROJECT_FALLBACK === 'true';
+type WorkbenchMode =
+  | 'project-home'
+  | 'regulatory-workspace'
+  | 'documents'
+  | 'review'
+  | 'submissions'
+  | 'section-workspace'
+  | 'report-engine';
 
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
+export type ProjectCollaboratorPermission = 'can_use' | 'can_edit';
 
-  return token ? { Authorization: `Bearer ${token}` } : {};
+export interface ProjectCollaborator {
+  userId: number;
+  permission: ProjectCollaboratorPermission;
+  name?: string | null;
+  email?: string | null;
+}
+
+export interface ProjectTeamMember {
+  userId: number;
+  name?: string | null;
+  email?: string | null;
+  role?: string | null;
 }
 
 function withRequiredOwnership(project: Project): Project {
   return {
     ...project,
+    targetAgency: project.targetAgency ?? undefined,
     ownership: {
       chatHistory: project.ownership?.chatHistory ?? project.conversations ?? [],
       documentInventory: project.ownership?.documentInventory ?? project.knowledge?.documents ?? [],
       vaultLinkedFilesEvidence: project.ownership?.vaultLinkedFilesEvidence ?? [],
       projectInstructions:
         project.ownership?.projectInstructions ?? project.customInstructions ?? '',
+      ownershipTeam: project.ownership?.ownershipTeam ?? [],
       reusableSnippetsKnowledge: project.ownership?.reusableSnippetsKnowledge ?? [],
       reports: project.ownership?.reports ?? [],
       reviewState: project.ownership?.reviewState ?? 'draft',
@@ -127,9 +148,7 @@ function normalizeProjectResponse(project: Project): Project {
  * @private
  */
 async function fetchProjectsFromAPI(): Promise<Project[]> {
-  const response = await fetch('/api/concept2cure/projects', {
-    headers: getAuthHeaders(),
-  });
+  const response = await apiRequest('GET', '/api/concept2cure/projects');
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || payload?.success === false) {
     throw new Error(
@@ -151,14 +170,7 @@ async function fetchProjectsFromAPI(): Promise<Project[]> {
 async function createProjectAPI(
   project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<Project> {
-  const response = await fetch('/api/concept2cure/projects', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeaders(),
-    },
-    body: JSON.stringify(project),
-  });
+  const response = await apiRequest('POST', '/api/concept2cure/projects', project);
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || payload?.success === false) {
     throw new Error(
@@ -176,14 +188,7 @@ async function createProjectAPI(
  * @private
  */
 async function updateProjectAPI(project: Project): Promise<Project> {
-  const response = await fetch(`/api/concept2cure/projects/${project.id}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeaders(),
-    },
-    body: JSON.stringify(project),
-  });
+  const response = await apiRequest('PUT', `/api/concept2cure/projects/${project.id}`, project);
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || payload?.success === false) {
     throw new Error(
@@ -200,16 +205,96 @@ async function updateProjectAPI(project: Project): Promise<Project> {
  * @private
  */
 async function deleteProjectAPI(projectId: string): Promise<void> {
-  const response = await fetch(`/api/concept2cure/projects/${projectId}`, {
-    method: 'DELETE',
-    headers: getAuthHeaders(),
-  });
+  const response = await apiRequest('DELETE', `/api/concept2cure/projects/${projectId}`);
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || payload?.success === false) {
     throw new Error(
       payload?.error?.message || payload?.error || `Failed to delete project: ${response.status}`
     );
   }
+}
+
+/**
+ * Updates project ownership preferences via API.
+ * @param projectId - ID of the project to patch
+ * @param preferences - Ownership preference updates
+ * @returns Promise resolving to updated project
+ * @throws {Error} If API request fails
+ * @private
+ */
+async function patchOwnershipPreferencesAPI(
+  projectId: string,
+  preferences: {
+    projectInstructions?: string;
+    reusableSnippetsKnowledge?: string[];
+    currentWorkbenchContext?: WorkbenchMode;
+  }
+): Promise<Project> {
+  const response = await apiRequest(
+    'PATCH',
+    `/api/concept2cure/projects/${projectId}/ownership-preferences`,
+    preferences
+  );
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload?.success === false) {
+    throw new Error(
+      payload?.error?.message ||
+        payload?.error ||
+        `Failed to update ownership preferences: ${response.status}`
+    );
+  }
+  return normalizeProjectResponse(withRequiredOwnership(payload?.data ?? payload));
+}
+
+async function fetchProjectCollaboratorsAPI(projectId: string): Promise<ProjectCollaborator[]> {
+  const response = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/collaborators`);
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload?.success === false) {
+    throw new Error(
+      payload?.error?.message ||
+        payload?.error ||
+        `Failed to fetch project collaborators: ${response.status}`
+    );
+  }
+  return ((payload?.data ?? payload)?.collaborators ?? []) as ProjectCollaborator[];
+}
+
+async function updateProjectCollaboratorsAPI(
+  projectId: string,
+  collaborators: ProjectCollaborator[]
+): Promise<ProjectCollaborator[]> {
+  const response = await apiRequest('PUT', `/api/concept2cure/projects/${projectId}/collaborators`, {
+    collaborators: collaborators.map(c => ({
+      userId: c.userId,
+      permission: c.permission,
+    })),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload?.success === false) {
+    throw new Error(
+      payload?.error?.message ||
+        payload?.error ||
+        `Failed to update project collaborators: ${response.status}`
+    );
+  }
+  return ((payload?.data ?? payload)?.collaborators ?? []) as ProjectCollaborator[];
+}
+
+async function fetchProjectTeamMembersAPI(projectId: string): Promise<ProjectTeamMember[]> {
+  const response = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/team`);
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload?.success === false) {
+    throw new Error(
+      payload?.error?.message || payload?.error || `Failed to fetch team members: ${response.status}`
+    );
+  }
+  const members = (payload?.data ?? payload ?? []) as any[];
+  return members.map(member => ({
+    userId: Number(member.userId ?? member.id),
+    name: member.name ?? member.displayName ?? null,
+    email: member.email ?? null,
+    role: member.role ?? member.projectRole ?? null,
+  }));
 }
 
 /**
@@ -253,8 +338,11 @@ export function useProjects() {
           saveStoredProjects(projects);
           return projects;
         } catch (e) {
-          console.warn('API fetch failed, using localStorage fallback:', e);
-          return getStoredProjects();
+          if (ENABLE_LOCAL_PROJECT_FALLBACK) {
+            console.warn('API fetch failed, using localStorage fallback:', e);
+            return getStoredProjects();
+          }
+          throw e;
         }
       }
       return getStoredProjects();
@@ -283,15 +371,17 @@ export function useProjects() {
           const result = await createProjectAPI(data);
           return result;
         } catch (e) {
+          if (!ENABLE_LOCAL_PROJECT_FALLBACK) throw e;
           console.warn('API create failed, using localStorage fallback:', e);
         }
       }
 
       // Fallback to localStorage
+      const normalizedSubmissionType = String(data.submissionType).toUpperCase() as SubmissionType;
       const newProject: Project = withRequiredOwnership({
         id: `proj_${Date.now()}`,
         name: data.name,
-        submissionType: data.submissionType,
+        submissionType: normalizedSubmissionType,
         description: data.description,
         conversations: [],
         createdAt: new Date(),
@@ -316,6 +406,7 @@ export function useProjects() {
         try {
           return await updateProjectAPI(updatedProject);
         } catch (e) {
+          if (!ENABLE_LOCAL_PROJECT_FALLBACK) throw e;
           console.warn('API update failed, using localStorage fallback:', e);
         }
       }
@@ -342,6 +433,7 @@ export function useProjects() {
           await deleteProjectAPI(projectId);
           return;
         } catch (e) {
+          if (!ENABLE_LOCAL_PROJECT_FALLBACK) throw e;
           console.warn('API delete failed, using localStorage fallback:', e);
         }
       }
@@ -372,6 +464,7 @@ export function useProjects() {
         try {
           return await patchOwnershipPreferencesAPI(projectId, preferences);
         } catch (e) {
+          if (!ENABLE_LOCAL_PROJECT_FALLBACK) throw e;
           console.warn('API ownership preference update failed, using localStorage fallback:', e);
         }
       }
@@ -385,20 +478,16 @@ export function useProjects() {
         customInstructions: preferences.projectInstructions ?? project.customInstructions,
         ownership: {
           ...project.ownership,
-          preferences: {
-            projectInstructions:
-              preferences.projectInstructions ??
-              project.ownership?.preferences.projectInstructions ??
-              '',
-            reusableSnippetsKnowledge:
-              preferences.reusableSnippetsKnowledge ??
-              project.ownership?.preferences.reusableSnippetsKnowledge ??
-              [],
-            currentWorkbenchContext:
-              preferences.currentWorkbenchContext ??
-              project.ownership?.preferences.currentWorkbenchContext ??
-              'project-home',
-          },
+          projectInstructions:
+            preferences.projectInstructions ?? project.ownership?.projectInstructions ?? '',
+          reusableSnippetsKnowledge:
+            preferences.reusableSnippetsKnowledge ??
+            project.ownership?.reusableSnippetsKnowledge ??
+            [],
+          currentWorkbenchContext:
+            preferences.currentWorkbenchContext ??
+            project.ownership?.currentWorkbenchContext ??
+            'project-home',
         },
       });
       projects[index] = merged;
@@ -416,14 +505,11 @@ export function useProjects() {
       // Try API first
       if (USE_API) {
         try {
-          const response = await fetch(`/api/concept2cure/projects/${projectId}/conversations`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...getAuthHeaders(),
-            },
-            body: JSON.stringify({ title }),
-          });
+          const response = await apiRequest(
+            'POST',
+            `/api/concept2cure/projects/${projectId}/conversations`,
+            { title }
+          );
           if (response.ok) {
             const payload = await response.json().catch(() => ({}));
             if (payload?.success === false) {
@@ -434,6 +520,7 @@ export function useProjects() {
             return payload?.data ?? payload;
           }
         } catch (e) {
+          if (!ENABLE_LOCAL_PROJECT_FALLBACK) throw e;
           console.warn('API conversation create failed, using localStorage fallback:', e);
         }
       }
@@ -451,6 +538,7 @@ export function useProjects() {
         projectId,
         title: title || `Conversation ${project.conversations.length + 1}`,
         messages: [],
+        artifacts: [],
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -529,9 +617,7 @@ export function useProject(projectId: string | null) {
       // Try API first
       if (USE_API) {
         try {
-          const response = await fetch(`/api/concept2cure/projects/${projectId}`, {
-            headers: getAuthHeaders(),
-          });
+          const response = await apiRequest('GET', `/api/concept2cure/projects/${projectId}`);
           if (response.ok) {
             const payload = await response.json().catch(() => ({}));
             if (payload?.success === false) {
@@ -542,6 +628,7 @@ export function useProject(projectId: string | null) {
             return withRequiredOwnership(payload?.data ?? payload);
           }
         } catch (e) {
+          if (!ENABLE_LOCAL_PROJECT_FALLBACK) throw e;
           console.warn('API project fetch failed, using localStorage fallback:', e);
         }
       }
@@ -551,5 +638,53 @@ export function useProject(projectId: string | null) {
       return project ? withRequiredOwnership(project) : null;
     },
     enabled: !!projectId,
+  });
+}
+
+export function useProjectCollaborators(projectId: string | null) {
+  const queryClient = useQueryClient();
+
+  const collaboratorsQuery = useQuery({
+    queryKey: [...queryKeys.projects.collaborators(projectId || 'none')],
+    queryFn: async () => {
+      if (!projectId) return [];
+      return fetchProjectCollaboratorsAPI(projectId);
+    },
+    enabled: !!projectId,
+    staleTime: 1000 * 30,
+  });
+
+  const updateCollaborators = useMutation({
+    mutationFn: async (collaborators: ProjectCollaborator[]) => {
+      if (!projectId) throw new Error('Project ID is required');
+      return updateProjectCollaboratorsAPI(projectId, collaborators);
+    },
+    onSuccess: () => {
+      if (!projectId) return;
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.projects.collaborators(projectId)] });
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.projects.all] });
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.projects.detail(projectId)] });
+    },
+  });
+
+  return {
+    collaborators: collaboratorsQuery.data || [],
+    isLoading: collaboratorsQuery.isLoading,
+    error: collaboratorsQuery.error,
+    refetch: collaboratorsQuery.refetch,
+    updateCollaborators: updateCollaborators.mutateAsync,
+    isUpdating: updateCollaborators.isPending,
+  };
+}
+
+export function useProjectTeamMembers(projectId: string | null) {
+  return useQuery({
+    queryKey: [...queryKeys.projects.teamMembers(projectId || 'none')],
+    queryFn: async () => {
+      if (!projectId) return [];
+      return fetchProjectTeamMembersAPI(projectId);
+    },
+    enabled: !!projectId,
+    staleTime: 1000 * 60,
   });
 }

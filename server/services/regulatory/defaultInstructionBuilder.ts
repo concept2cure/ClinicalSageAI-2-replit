@@ -9,7 +9,10 @@
  */
 
 import type { RegulatoryApplicationType } from '../../../shared/regulatory/document-taxonomy.js';
+import { getApplicationType } from '../../../shared/regulatory/global-document-registry.js';
 import { getRegionProfile } from '../../../shared/regulatory/region-profiles.js';
+import { resolveRegistryId } from './registry/legacySubmissionTypeMapper.js';
+import { getApplicationType } from '../../../shared/regulatory/global-document-registry.js';
 
 // ─── Specialized Templates ────────────────────────────────────────────────────
 
@@ -152,10 +155,6 @@ export function buildInstructionsFromLegacyType(
   projectName?: string
 ): string {
   const productLabel = product || projectName || 'this product';
-
-  // Try resolving via registry first
-  const { resolveRegistryId } = require('./registry/legacySubmissionTypeMapper.js');
-  const { getApplicationType } = require('../../../shared/regulatory/global-document-registry.js');
 
   const registryId = resolveRegistryId(submissionType);
   if (registryId) {

@@ -678,7 +678,7 @@ export function SEMatrixV2Panel({
                 {/* Drift reason codes */}
                 {replayResult.drift_reason_codes && replayResult.drift_reason_codes.length > 0 && (
                   <div className="flex flex-wrap gap-1.5" data-testid="drift-reason-codes">
-                    {replayResult.drift_reason_codes.map(code => (
+                    {replayResult.drift_reason_codes.map((code: any) => (
                       <Badge
                         key={code}
                         variant="outline"
@@ -739,7 +739,7 @@ export function SEMatrixV2Panel({
                 {/* Raw drift details */}
                 {replayResult.drift_details.length > 0 && (
                   <div className="text-xs text-red-800 space-y-1" data-testid="drift-details">
-                    {replayResult.drift_details.map((d, i) => (
+                    {replayResult.drift_details.map((d: any, i: any) => (
                       <p key={i} className="font-mono text-[11px]">
                         • {d}
                       </p>

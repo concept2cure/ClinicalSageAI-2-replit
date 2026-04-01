@@ -724,7 +724,7 @@ function UserRow({
         {/* Roles */}
         <td className="px-4 py-3">
           <div className="flex flex-wrap gap-1">
-            {user.membership.roles.slice(0, 2).map(role => (
+            {user.membership.roles.slice(0, 2).map((role: any) => (
               <span
                 key={role}
                 className="px-2 py-0.5 text-xs rounded-full"
@@ -1114,7 +1114,7 @@ function RoleManagementModal({ user, onClose }: RoleManagementModalProps) {
 
   const handleSave = () => {
     const added = selectedRoles.filter(r => !user.membership.roles.includes(r));
-    const removed = user.membership.roles.filter(r => !selectedRoles.includes(r));
+    const removed = user.membership.roles.filter((r: any) => !selectedRoles.includes(r));
 
     if (added.length > 0 || removed.length > 0) {
       setPendingChange({ added, removed });

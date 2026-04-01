@@ -12,6 +12,10 @@ export const queryKeys = {
   projects: {
     all: ['concept2cure', 'projects'] as const,
     detail: (id: number | string) => ['concept2cure', 'projects', id] as const,
+    collaborators: (projectId: number | string) =>
+      ['concept2cure', 'projects', projectId, 'collaborators'] as const,
+    teamMembers: (projectId: number | string) =>
+      ['concept2cure', 'projects', projectId, 'team-members'] as const,
     artifacts: (projectId: number | string) =>
       ['concept2cure', 'projects', projectId, 'artifacts'] as const,
     artifactsSummary: () =>
@@ -93,6 +97,17 @@ export const queryKeys = {
     all: ['concept2cure', 'precedents'] as const,
   },
 
+  // ── Templates ──────────────────────────────────────────────────────────────
+  templates: {
+    all: ['concept2cure', 'templates'] as const,
+    list: (params?: {
+      submissionType?: string;
+      packageId?: string;
+      projectGoal?: string;
+    }) => ['concept2cure', 'templates', params] as const,
+    detail: (templateId: string) => ['concept2cure', 'templates', templateId] as const,
+  },
+
   // ── Team / Mission Control ─────────────────────────────────────────────────
   team: {
     workload: () => ['concept2cure', 'team', 'workload'] as const,
@@ -142,6 +157,17 @@ export const queryKeys = {
   reports: {
     catalog: () => ['concept2cure', 'reports', 'catalog'] as const,
     list: () => ['concept2cure', 'reports', 'list'] as const,
+    workspace: (params?: {
+      organizationId?: number | string;
+      scopeType?: string;
+      scopeId?: string;
+    }) => ['concept2cure', 'reports', 'workspace', params] as const,
+    bundles: () => ['concept2cure', 'reports', 'bundles'] as const,
+    runs: (params?: {
+      organizationId?: number | string;
+      scopeType?: string;
+      scopeId?: string;
+    }) => ['concept2cure', 'reports', 'runs', params] as const,
   },
 
   // ── CMC ───────────────────────────────────────────────────────────────────

@@ -19,6 +19,22 @@ import DOMPurify from 'dompurify';
 import { useAIAction } from '../../hooks/useAIAction';
 import { useAnaQueueState } from '../../hooks/useAnaQueueState';
 import type { AIActionType, AIActionSourceSurface } from '../../hooks/useAIAction';
+
+// ── Conversation Queue ──────────────────────────────────────────────────────
+type QueueWorkStatus = 'queued' | 'working' | 'waiting_action' | 'completed' | 'blocked' | 'failed';
+
+interface ConversationQueueItem {
+  id: string;
+  prompt: string;
+  contextSnapshot: { projectId?: number | null; sectionCode?: string | null };
+  status: QueueWorkStatus;
+  enqueuedAt: number;
+  startedAt?: number;
+  completedAt?: number;
+  result?: string;
+  error?: string;
+}
+
 import {
   Sparkles,
   ArrowUp,
@@ -48,53 +64,71 @@ import {
 
 marked.setOptions({ breaks: true, gfm: true });
 
+// ─── Markdown render cache — avoids re-parsing on every React re-render ─────
+const _mdCache = new Map<string, string>();
+const MD_CACHE_MAX = 200;
+
+const SANITIZE_CONFIG = {
+  ALLOWED_TAGS: [
+    'p',
+    'br',
+    'strong',
+    'em',
+    'b',
+    'i',
+    'u',
+    'a',
+    'ul',
+    'ol',
+    'li',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'blockquote',
+    'pre',
+    'code',
+    'table',
+    'thead',
+    'tbody',
+    'tr',
+    'th',
+    'td',
+    'span',
+    'div',
+    'hr',
+    'sup',
+    'sub',
+  ],
+  ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'id'],
+} as const;
+
 const renderMarkdown = (content: string): string => {
+  const cached = _mdCache.get(content);
+  if (cached !== undefined) return cached;
+
+  let result: string;
   try {
     const rawHtml = marked.parse(content) as string;
-    return DOMPurify.sanitize(rawHtml, {
-      ALLOWED_TAGS: [
-        'p',
-        'br',
-        'strong',
-        'em',
-        'b',
-        'i',
-        'u',
-        'a',
-        'ul',
-        'ol',
-        'li',
-        'h1',
-        'h2',
-        'h3',
-        'h4',
-        'h5',
-        'h6',
-        'blockquote',
-        'pre',
-        'code',
-        'table',
-        'thead',
-        'tbody',
-        'tr',
-        'th',
-        'td',
-        'span',
-        'div',
-        'hr',
-        'sup',
-        'sub',
-      ],
-      ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'id'],
-    });
+    result = DOMPurify.sanitize(rawHtml, SANITIZE_CONFIG);
   } catch {
-    return content
+    result = content
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#x27;');
   }
+
+  // Evict oldest entry when cache is full
+  if (_mdCache.size >= MD_CACHE_MAX) {
+    const firstKey = _mdCache.keys().next().value;
+    if (firstKey !== undefined) _mdCache.delete(firstKey);
+  }
+  _mdCache.set(content, result);
+  return result;
 };
 
 // ─── Verdict & Confidence Signal Detection ──────────────────────────────────
@@ -229,9 +263,44 @@ interface AnaMessage {
     quotaConsumed?: number;
     quotaRemaining?: number;
   };
-  /** Visual cue when a user prompt is restored into the composer */
+  /** Flag to highlight prompts restored for inline editing */
   recalledToInput?: boolean;
 }
+
+interface DecisionStatusRailState {
+  loading: boolean;
+  error: string | null;
+  summary: string;
+  pendingApprovals: number;
+  pendingConfirmations: number;
+  unresolvedContradictions: boolean;
+  provisional: boolean;
+  needsReapproval: boolean;
+  needsEscalation: boolean;
+  blockedCount: number;
+  count: number;
+  details: Array<{
+    id: string;
+    status: string;
+    kind: string;
+    summary: string;
+  }>;
+}
+
+const EMPTY_DECISION_STATUS: DecisionStatusRailState = {
+  loading: false,
+  error: null,
+  summary: 'No pending decisions',
+  pendingApprovals: 0,
+  pendingConfirmations: 0,
+  unresolvedContradictions: false,
+  provisional: false,
+  needsReapproval: false,
+  needsEscalation: false,
+  blockedCount: 0,
+  count: 0,
+  details: [],
+};
 
 interface SuggestedAction {
   id: string;
@@ -430,7 +499,7 @@ const DOCUMENT_ACTION_CONFIGS: DocumentActionConfig[] = [
   },
 ];
 
-// ─── Slash Command Autocomplete — 43 AnA 1.0 RI commands ──────────────────────
+// ─── Slash Command Autocomplete — 45 AnA 1.0 RI commands ──────────────────────
 
 interface SlashCommand {
   command: string;
@@ -487,6 +556,16 @@ const SLASH_COMMANDS: SlashCommand[] = [
   {
     command: '/device',
     description: '510(k), PMA, De Novo intelligence',
+    category: 'Subspecialties',
+  },
+  {
+    command: '/diagnostics',
+    description: 'Diagnostics/IVD validation and strategy',
+    category: 'Subspecialties',
+  },
+  {
+    command: '/cms',
+    description: 'CMS coverage and reimbursement strategy',
     category: 'Subspecialties',
   },
   {
@@ -562,8 +641,12 @@ interface AnaPersistentPanelProps {
     screenName?: string;
     activeProject?: string;
     projectId?: string;
+    organizationId?: string | number;
+    customInstructions?: string;
     /** Page-specific context for deeper awareness (active tab, filters, etc.) */
     moduleContext?: Record<string, unknown>;
+    /** Optional thread to hydrate on mount/switch for deterministic resume */
+    threadId?: string;
   };
   /** Canonical authoring context — section/artifact/workflow awareness for AnA */
   authoringContext?: AuthoringContextPack | null;
@@ -595,6 +678,8 @@ interface AnaPersistentPanelProps {
   onOpenCompareInspector?: () => void;
   /** Refresh authoring intelligence (readiness/contradictions) after actions */
   onRefreshIntelligence?: () => void;
+  /** Notify parent when active thread context changes */
+  onThreadChange?: (threadId?: string) => void;
   /**
    * "full" = fills all available space, shows greeting + suggested actions (Claude.ai style)
    * "compact" = just the input bar at bottom, conversation expands as overlay
@@ -652,16 +737,24 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   onRequestPromotion,
   onOpenCompareInspector,
   onRefreshIntelligence,
+  onThreadChange,
   mode = 'full',
   defaultChatMode = 'standard',
   projectIntelligence,
 }) => {
+  // Enhancement rule (in-place): evolve this single chat surface, do not rebuild parallel UIs.
   // AI Action system — unified execution spine (Phase 1)
   const aiAction = useAIAction();
 
   const [messages, setMessages] = useState<AnaMessage[]>([]);
+  const [conversationQueue, setConversationQueue] = React.useState<ConversationQueueItem[]>([]);
+  const [activeQueueItemId, setActiveQueueItemId] = React.useState<string | null>(null);
+  const ANA_QUEUE_STORAGE_KEY = 'ana_conversation_queue';
   const [input, setInput] = useState('');
+  const lastSubmittedPromptRef = useRef<string | null>(null);
   const queue = useAnaQueueState();
+  const isLoading = queue.state.status === 'queued' || queue.state.status === 'post_processing';
+  const isStreaming = queue.state.status === 'streaming';
   const isThinking = !queue.state.canSubmit;
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
@@ -671,6 +764,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const [showModeDropdown, setShowModeDropdown] = useState(false);
   const modeDropdownRef = useRef<HTMLDivElement>(null);
   const [showActions, setShowActions] = useState<string | null>(null);
+  const [decisionRailExpanded, setDecisionRailExpanded] = useState(false);
+  const [decisionStatus, setDecisionStatus] = useState<DecisionStatusRailState>(EMPTY_DECISION_STATUS);
   // AnA RI state
   const [intentLens, setIntentLens] = useState<IntentLens>('auto');
   const [lastOrchestration, setLastOrchestration] = useState<AnaRIOrchestration | null>(null);
@@ -696,7 +791,6 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const initialMessageSentRef = useRef(false);
   // Thread persistence — reuse thread_id across messages for continuous conversation
   const threadIdRef = useRef<string | null>(null);
-  const lastSubmittedPromptRef = useRef<string | null>(null);
   const draftStorageKey = useMemo(() => {
     const projectScope = contextProfile?.projectId || 'global';
     return `ana:persistent:draft:${projectScope}:${mode}:${chatMode}`;
@@ -704,6 +798,88 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
   const screenName = contextProfile?.screenName || 'default';
   const screenLabel = SCREEN_LABELS[screenName] || '';
+  const decisionRailProjectId = useMemo(() => {
+    const id = contextProfile?.projectId;
+    return id ? String(id).replace(/^proj_/, '') : null;
+  }, [contextProfile?.projectId]);
+
+  const loadDecisionRail = useCallback(async () => {
+    if (!decisionRailProjectId) {
+      setDecisionStatus(EMPTY_DECISION_STATUS);
+      return;
+    }
+
+    setDecisionStatus(prev => ({ ...prev, loading: true, error: null }));
+    try {
+      const params = new URLSearchParams({ project_id: decisionRailProjectId, limit: '8' });
+      if (authoringContext?.sectionCode) params.set('section_code', authoringContext.sectionCode);
+      if (authoringContext?.moduleCode) params.set('module_code', authoringContext.moduleCode);
+      const res = await apiRequest('GET', `/api/ana-ri/decisions?${params.toString()}`);
+      const payload = await res.json();
+      const data = payload?.data;
+      if (!payload?.success || !data) {
+        throw new Error(payload?.error?.message || 'Failed to load decision status');
+      }
+
+      const status = data.decisionAwareStatus || {};
+      const decisions = Array.isArray(data.decisions) ? data.decisions : [];
+      setDecisionStatus({
+        loading: false,
+        error: null,
+        summary: status.summary || 'No pending decisions',
+        pendingApprovals: Number(status.pendingApprovals || 0),
+        pendingConfirmations: Number(status.pendingConfirmations || 0),
+        unresolvedContradictions: Boolean(status.hasUnresolvedContradictions),
+        provisional: Boolean(status.hasProvisionalDecisions),
+        needsReapproval: Boolean(status.needsReapproval),
+        needsEscalation: Boolean(status.needsEscalation),
+        blockedCount: Array.isArray(status.blockedDecisions) ? status.blockedDecisions.length : 0,
+        count: Number(data.count || decisions.length || 0),
+        details: decisions.slice(0, 6).map((row: any) => {
+          const decision = row?.decision || {};
+          return {
+            id: String(decision.id || ''),
+            status: String(decision.status || 'unknown'),
+            kind: String(decision.kind || 'decision'),
+            summary: String(decision.summary || 'No summary provided'),
+          };
+        }),
+      });
+    } catch (error: any) {
+      setDecisionStatus(prev => ({
+        ...prev,
+        loading: false,
+        error: error?.message || 'Unable to load decision status',
+      }));
+    }
+  }, [authoringContext?.moduleCode, authoringContext?.sectionCode, decisionRailProjectId]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const savedQueue = window.localStorage.getItem(ANA_QUEUE_STORAGE_KEY);
+    if (!savedQueue) return;
+
+    try {
+      const parsedQueue = JSON.parse(savedQueue) as ConversationQueueItem[];
+      if (Array.isArray(parsedQueue)) {
+        setConversationQueue(parsedQueue.filter(item => item.status === 'queued'));
+      }
+    } catch {
+      window.localStorage.removeItem(ANA_QUEUE_STORAGE_KEY);
+    }
+  }, [ANA_QUEUE_STORAGE_KEY]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    if (conversationQueue.length === 0) {
+      window.localStorage.removeItem(ANA_QUEUE_STORAGE_KEY);
+      return;
+    }
+
+    window.localStorage.setItem(ANA_QUEUE_STORAGE_KEY, JSON.stringify(conversationQueue));
+  }, [ANA_QUEUE_STORAGE_KEY, conversationQueue]);
 
   useEffect(() => {
     const tenantId = contextProfile?.organizationId || getOrgId();
@@ -732,6 +908,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         console.warn('[AnA] Firecrawl quota check failed — non-blocking');
       });
   }, [contextProfile?.organizationId]);
+
+  useEffect(() => {
+    void loadDecisionRail();
+  }, [loadDecisionRail]);
 
   // ── Slash command autocomplete filtering ──────────────────────────────────
   const filteredSlashCommands = useMemo(() => {
@@ -770,7 +950,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     if (hasSectionContext(authoringContext)) {
       actions.push({
         id: 'draft-section',
-        label: `Draft ${authoringContext.sectionCode}: ${authoringContext.sectionTitle || 'this section'}`,
+        label: `Draft ${authoringContext.sectionCode}: ${
+          authoringContext.sectionTitle || 'this section'
+        }`,
         intent: 'draft_section_from_context',
         description: 'Generate a compliant first draft for this section',
       });
@@ -1048,7 +1230,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       for (const rf of highRisks.slice(0, 2)) {
         actions.push({
           id: `intel-risk-${rf.description.slice(0, 20).replace(/\s+/g, '-')}`,
-          label: `Assess risk: ${rf.description.length > 50 ? rf.description.slice(0, 47) + '...' : rf.description}`,
+          label: `Assess risk: ${
+            rf.description.length > 50 ? rf.description.slice(0, 47) + '...' : rf.description
+          }`,
           intent: 'risk-assessment',
           description: `${rf.likelihood} likelihood, ${rf.impact} impact`,
         });
@@ -1226,6 +1410,49 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     return () => clearInterval(interval);
   }, [isThinking]);
 
+  // Deterministic resume: when parent selects a specific thread, hydrate that thread here.
+  useEffect(() => {
+    const selectedThreadId = contextProfile?.threadId;
+    if (!selectedThreadId) return;
+    // Avoid redundant reload when already on the same thread.
+    if (threadIdRef.current === selectedThreadId) return;
+
+    let cancelled = false;
+    const hydrateSelectedThread = async () => {
+      try {
+        const response = await fetch(
+          `/api/chat/threads/${encodeURIComponent(selectedThreadId)}/messages?limit=100`,
+          {
+            credentials: 'include',
+            headers: getAuthHeaders(),
+          }
+        );
+        if (!response.ok) return;
+        const payload = await response.json().catch(() => null);
+        const rows = Array.isArray(payload?.messages) ? payload.messages : [];
+        if (cancelled) return;
+
+        const hydrated: AnaMessage[] = rows.map((row: any, idx: number) => ({
+          id: `h-${selectedThreadId}-${idx}`,
+          role: row.role === 'assistant' ? 'assistant' : 'user',
+          content: typeof row.content === 'string' ? row.content : '',
+          timestamp: row.created_at ? new Date(row.created_at) : new Date(),
+        }));
+
+        setMessages(hydrated);
+        threadIdRef.current = selectedThreadId;
+        onThreadChange?.(selectedThreadId);
+      } catch {
+        // Non-blocking: if hydration fails, existing chat still works.
+      }
+    };
+
+    void hydrateSelectedThread();
+    return () => {
+      cancelled = true;
+    };
+  }, [contextProfile?.threadId, onThreadChange]);
+
   const defaultGreeting = useMemo(() => {
     if (greeting) return greeting;
     const hour = new Date().getHours();
@@ -1260,7 +1487,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           const alertParts: string[] = [];
           if (criticalRecs.length > 0)
             alertParts.push(
-              `${criticalRecs.length} priority recommendation${criticalRecs.length !== 1 ? 's' : ''}`
+              `${criticalRecs.length} priority recommendation${
+                criticalRecs.length !== 1 ? 's' : ''
+              }`
             );
           if (highRisks.length > 0)
             alertParts.push(
@@ -1290,7 +1519,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
   }, [input]);
 
-  // Restore draft on scope changes.
+  // Restore draft when project/mode changes.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const savedDraft = localStorage.getItem(draftStorageKey);
@@ -1321,7 +1550,25 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
   const handleSend = useCallback(
     async (messageText?: string) => {
-      const text = messageText || input.trim();
+      const text = (messageText || input).trim();
+
+      // If already working, enqueue instead of dropping
+      if ((isStreaming || isLoading) && text) {
+        const queueItem: ConversationQueueItem = {
+          id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          prompt: text,
+          contextSnapshot: {
+            projectId: contextProfile?.projectId ? Number(contextProfile.projectId) || null : null,
+            sectionCode: authoringContext?.sectionCode ?? null,
+          },
+          status: 'queued',
+          enqueuedAt: Date.now(),
+        };
+        setConversationQueue(prev => [...prev, queueItem]);
+        setInput('');
+        return;
+      }
+
       if (!text || isThinking) return;
       lastSubmittedPromptRef.current = text;
 
@@ -1727,6 +1974,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           // Capture thread_id for conversation continuity
           if (data.thread_id) {
             threadIdRef.current = data.thread_id;
+            onThreadChange?.(data.thread_id);
           }
 
           const assistantContent =
@@ -1816,7 +2064,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             fallbackData?.response ||
             fallbackData?.answer ||
             'I received your message but had no response content.';
-          if (fallbackData?.thread_id) threadIdRef.current = fallbackData.thread_id;
+          if (fallbackData?.thread_id) {
+            threadIdRef.current = fallbackData.thread_id;
+            onThreadChange?.(fallbackData.thread_id);
+          }
           setMessages(prev => [
             ...prev,
             {
@@ -1833,7 +2084,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             {
               id: `a-${Date.now()}`,
               role: 'assistant',
-              content: `Sorry, I encountered an error: ${err?.message || 'Unknown error'}. Please try again.`,
+              content: `Sorry, I encountered an error: ${
+                err?.message || 'Unknown error'
+              }. Please try again.`,
               timestamp: new Date(),
               isError: true,
             },
@@ -1846,7 +2099,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       }
     },
     [
+      authoringContext,
+      conversationQueue,
       input,
+      isLoading,
+      isStreaming,
       isThinking,
       messages,
       contextProfile,
@@ -1858,6 +2115,34 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     ]
   );
 
+  useEffect(() => {
+    if (!activeQueueItemId || isThinking) return;
+
+    setConversationQueue(prev => prev.filter(item => item.id !== activeQueueItemId));
+    setActiveQueueItemId(null);
+  }, [activeQueueItemId, isThinking]);
+
+  useEffect(() => {
+    if (isThinking || activeQueueItemId) return;
+
+    const nextQueueItem = conversationQueue.find(item => item.status === 'queued');
+    if (!nextQueueItem) return;
+
+    setActiveQueueItemId(nextQueueItem.id);
+    setConversationQueue(prev =>
+      prev.map(item =>
+        item.id === nextQueueItem.id
+          ? {
+              ...item,
+              status: 'working',
+              startedAt: Date.now(),
+            }
+          : item
+      )
+    );
+    void handleSend(nextQueueItem.prompt);
+  }, [activeQueueItemId, conversationQueue, handleSend, isThinking]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
     setInput(val);
@@ -1868,7 +2153,144 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
   };
 
+  const handleDecisionsSlash = useCallback(() => {
+    (async () => {
+      const projectId = contextProfile?.projectId;
+      if (!projectId) {
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `a-${Date.now()}`,
+            role: 'assistant',
+            timestamp: new Date(),
+            content:
+              'I need an active project to load a decision trail. Open a project and try `/decisions` again.',
+          },
+        ]);
+        return;
+      }
+
+      const normalizedProjectId = String(projectId).replace(/^proj_/, '');
+      const params = new URLSearchParams({ project_id: normalizedProjectId, limit: '20' });
+      if (authoringContext?.sectionCode) params.set('section_code', authoringContext.sectionCode);
+      if (authoringContext?.moduleCode) params.set('module_code', authoringContext.moduleCode);
+
+      try {
+        const res = await apiRequest('GET', `/api/ana-ri/decisions?${params.toString()}`);
+        const payload = await res.json();
+        const data = payload?.data;
+        if (!payload?.success || !data) {
+          throw new Error(payload?.error?.message || 'Unable to load decision trail.');
+        }
+
+        const decisions: Array<any> = Array.isArray(data.decisions) ? data.decisions : [];
+        const status = data.decisionAwareStatus || {};
+        const top = decisions.slice(0, 5);
+        const lines = [
+          '**Decision Audit Trail**',
+          '',
+          `${status.summary || 'No decision-aware status summary available.'}`,
+          '',
+          `**Recent decisions:** ${data.count || 0}`,
+        ];
+
+        if (top.length > 0) {
+          for (const row of top) {
+            const decision = row?.decision || {};
+            const kind = decision.kind || 'decision';
+            const summary = decision.summary || 'No summary provided.';
+            const state = String(decision.status || 'unknown').toUpperCase();
+            lines.push(`- **[${state}]** ${kind}: ${summary}`);
+          }
+        } else {
+          lines.push('- No formal decisions recorded yet for this scope.');
+        }
+
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `a-${Date.now()}`,
+            role: 'assistant',
+            timestamp: new Date(),
+            content: lines.join('\n'),
+          },
+        ]);
+      } catch (err: any) {
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `a-${Date.now()}`,
+            role: 'assistant',
+            timestamp: new Date(),
+            content: `Could not load decision trail: ${err?.message || 'Unknown error'}`,
+            isError: true,
+          },
+        ]);
+      }
+    })();
+  }, [authoringContext?.moduleCode, authoringContext?.sectionCode, contextProfile?.projectId]);
+
+  const handleExportSlash = useCallback(() => {
+    const transcript = messages
+      .map(msg => `## ${msg.role === 'user' ? 'User' : 'AnA'}\n\n${msg.content}`)
+      .join('\n\n---\n\n');
+
+    const markdown = `# AnA Conversation Export\n\nGenerated: ${new Date().toISOString()}\n\n${transcript}\n`;
+    const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ana-conversation-${new Date().toISOString().slice(0, 10)}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    setMessages(prev => [
+      ...prev,
+      {
+        id: `a-${Date.now()}`,
+        role: 'assistant',
+        timestamp: new Date(),
+        content: 'Conversation exported as markdown.',
+      },
+    ]);
+  }, [messages]);
+
   const selectSlashCommand = (cmd: SlashCommand) => {
+    if (cmd.command === '/help') {
+      setSlashMenuOpen(false);
+      handleSuggestedAction({
+        id: 'open-capabilities',
+        label: 'Browse all capabilities',
+        intent: 'open_capabilities',
+      });
+      return;
+    }
+
+    if (cmd.command === '/clear') {
+      threadIdRef.current = null;
+      setMessages([]);
+      setInput('');
+      setSlashMenuOpen(false);
+      inputRef.current?.focus();
+      return;
+    }
+
+    if (cmd.command === '/decisions') {
+      setSlashMenuOpen(false);
+      setInput('');
+      handleDecisionsSlash();
+      inputRef.current?.focus();
+      return;
+    }
+
+    if (cmd.command === '/export') {
+      setSlashMenuOpen(false);
+      setInput('');
+      handleExportSlash();
+      inputRef.current?.focus();
+      return;
+    }
+
     setInput(cmd.command + ' ');
     setSlashMenuOpen(false);
     inputRef.current?.focus();
@@ -1904,13 +2326,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       return;
     }
 
-    // Claude-like recall: ArrowUp on empty composer restores the latest prompt.
+    // Claude-like recall: ArrowUp on empty composer restores the latest user prompt.
     if (e.key === 'ArrowUp' && !input.trim()) {
       const inputEl = inputRef.current;
       const caretAtStart =
-        !!inputEl &&
-        (inputEl.selectionStart ?? 0) === 0 &&
-        (inputEl.selectionEnd ?? 0) === 0;
+        !!inputEl && (inputEl.selectionStart ?? 0) === 0 && (inputEl.selectionEnd ?? 0) === 0;
       if (!inputEl || caretAtStart) {
         if (lastSubmittedPromptRef.current) {
           e.preventDefault();
@@ -1940,9 +2360,6 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         recalledToInput: m.id === messageId,
       }))
     );
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(draftStorageKey, content);
-    }
     setTimeout(() => {
       inputRef.current?.focus();
       const inputEl = inputRef.current;
@@ -1962,6 +2379,24 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         status: 'running',
         ts: Date.now(),
       });
+    }
+
+    // Guided sequence handoff: AnA can drive the same Project → IND/eCTD → Authoring → Verify → Submission flow.
+    if (
+      action.intent === 'guided_project' ||
+      action.intent === 'guided_ind_ectd' ||
+      action.intent === 'guided_authoring' ||
+      action.intent === 'guided_verify' ||
+      action.intent === 'guided_submission'
+    ) {
+      onNavigate?.(action.intent);
+      return;
+    }
+
+    // Shared capability entrypoint: keep users in existing flow.
+    if (action.intent === 'open_capabilities') {
+      onNavigate?.('apps');
+      return;
     }
 
     // ── Wave 1 Authoring Actions — real operational behavior ──────────
@@ -1990,7 +2425,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               {
                 id: `a-${Date.now()}`,
                 role: 'assistant',
-                content: `Opening **${data.title || 'your last section'}** (§${data.ctdSection}). Status: ${data.status || 'draft'}.`,
+                content: `Opening **${data.title || 'your last section'}** (§${
+                  data.ctdSection
+                }). Status: ${data.status || 'draft'}.`,
                 timestamp: new Date(),
               },
             ]);
@@ -2002,7 +2439,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               {
                 id: `a-${Date.now()}`,
                 role: 'assistant',
-                content: `Opening **${data.title || 'your last document'}**. Status: ${data.status || 'draft'}.`,
+                content: `Opening **${data.title || 'your last document'}**. Status: ${
+                  data.status || 'draft'
+                }.`,
                 timestamp: new Date(),
               },
             ]);
@@ -2019,7 +2458,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     // P1: Draft section from context — send chat, then intercept response for editor insertion
     if (action.intent === 'draft_section_from_context') {
       const draftMessage = authoringContext?.sectionCode
-        ? `Draft CTD section ${authoringContext.sectionCode}${authoringContext.sectionTitle ? `: ${authoringContext.sectionTitle}` : ''}. Generate a compliant first draft following ICH M4 guidelines and regulatory requirements for ${authoringContext.submissionType || 'this submission'}. Return the draft content in a code block so it can be inserted into the editor.`
+        ? `Draft CTD section ${authoringContext.sectionCode}${
+            authoringContext.sectionTitle ? `: ${authoringContext.sectionTitle}` : ''
+          }. Generate a compliant first draft following ICH M4 guidelines and regulatory requirements for ${
+            authoringContext.submissionType || 'this submission'
+          }. Return the draft content in a code block so it can be inserted into the editor.`
         : 'Draft the current section from context.';
       handleSend(draftMessage);
       return;
@@ -2049,7 +2492,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               {
                 id: `a-${Date.now()}`,
                 role: 'assistant',
-                content: `**No blockers detected.** ${authoringContext?.sectionCode ? `Section §${authoringContext.sectionCode}` : 'This document'} appears ready for promotion to review.\n\nYou can proceed with "Promote to review" when ready.`,
+                content: `**No blockers detected.** ${
+                  authoringContext?.sectionCode
+                    ? `Section §${authoringContext.sectionCode}`
+                    : 'This document'
+                } appears ready for promotion to review.\n\nYou can proceed with "Promote to review" when ready.`,
                 timestamp: new Date(),
               },
             ]);
@@ -2065,7 +2512,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               {
                 id: `a-${Date.now()}`,
                 role: 'assistant',
-                content: `**Promotion ${data.blocked ? 'BLOCKED' : 'has warnings'}** — ${data.blockerCount} issue(s) found:\n\n${blockerLines}\n\n${data.blocked ? 'Resolve critical blockers before promotion.' : 'These are advisory — promotion is not hard-blocked.'}`,
+                content: `**Promotion ${data.blocked ? 'BLOCKED' : 'has warnings'}** — ${
+                  data.blockerCount
+                } issue(s) found:\n\n${blockerLines}\n\n${
+                  data.blocked
+                    ? 'Resolve critical blockers before promotion.'
+                    : 'These are advisory — promotion is not hard-blocked.'
+                }`,
                 timestamp: new Date(),
               },
             ]);
@@ -2116,14 +2569,32 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               changeMagnitude > 0.3 ? 'high' : changeMagnitude > 0.1 ? 'moderate' : 'low';
             const pivotHint =
               conflictRisk !== 'low'
-                ? `\n\n**Conflict risk:** ${conflictRisk} — significant changes from approved baseline.${authoringContext?.linkedSectionCodes?.length ? ' Use **Check cross-section consistency** or **Prepare correction draft** to address.' : ' Consider preparing a correction draft to align.'}`
+                ? `\n\n**Conflict risk:** ${conflictRisk} — significant changes from approved baseline.${
+                    authoringContext?.linkedSectionCodes?.length
+                      ? ' Use **Check cross-section consistency** or **Prepare correction draft** to address.'
+                      : ' Consider preparing a correction draft to align.'
+                  }`
                 : '\n\n**Conflict risk:** low — changes are minor relative to approved baseline.';
             setMessages(prev => [
               ...prev,
               {
                 id: `a-${Date.now()}`,
                 role: 'assistant',
-                content: `**Version Comparison**\n\n| | Current (v${cur.version}) | Approved (v${appr.version}) |\n|---|---|---|\n| Status | ${cur.status} | ${appr.status} |\n| Words | ${data.diffSummary.currentWords} | ${data.diffSummary.approvedWords} |\n| Updated | ${new Date(cur.updatedAt).toLocaleDateString()} | ${new Date(appr.updatedAt).toLocaleDateString()} |\n\n**Net change:** ${wordDelta > 0 ? '+' : ''}${wordDelta} words.${pivotHint}${onOpenCompareInspector ? '' : '\n\nTo view a detailed inline diff, open the document inspector and select the Compare tab.'}`,
+                content: `**Version Comparison**\n\n| | Current (v${cur.version}) | Approved (v${
+                  appr.version
+                }) |\n|---|---|---|\n| Status | ${cur.status} | ${appr.status} |\n| Words | ${
+                  data.diffSummary.currentWords
+                } | ${data.diffSummary.approvedWords} |\n| Updated | ${new Date(
+                  cur.updatedAt
+                ).toLocaleDateString()} | ${new Date(
+                  appr.updatedAt
+                ).toLocaleDateString()} |\n\n**Net change:** ${
+                  wordDelta > 0 ? '+' : ''
+                }${wordDelta} words.${pivotHint}${
+                  onOpenCompareInspector
+                    ? ''
+                    : '\n\nTo view a detailed inline diff, open the document inspector and select the Compare tab.'
+                }`,
                 timestamp: new Date(),
               },
             ]);
@@ -2172,11 +2643,39 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             const statusIcon = (s: string) =>
               s === 'pass' ? '✅' : s === 'warn' ? '⚠️' : s === 'fail' ? '❌' : '—';
             const checkLines = [
-              `| Body expectations | ${statusIcon(data.checks.bodyExpectations?.status)} ${data.checks.bodyExpectations?.status || 'unknown'} | ${data.checks.bodyExpectations?.missing?.length ? `${data.checks.bodyExpectations.missing.length} missing` : '—'} |`,
-              `| Contradictions | ${statusIcon(data.checks.contradictions?.status)} ${data.checks.contradictions?.status || 'unknown'} | ${data.checks.contradictions?.items?.length ? `${data.checks.contradictions.items.length} found` : '—'} |`,
-              `| Cross-section consistency | ${statusIcon(data.checks.crossSectionConsistency?.status)} ${data.checks.crossSectionConsistency?.status || 'unknown'} | ${data.checks.crossSectionConsistency?.items?.length ? `${data.checks.crossSectionConsistency.items.length} issues` : '—'} |`,
-              `| Approved baseline | ${statusIcon(data.checks.approvedBaselineCompare?.status)} ${data.checks.approvedBaselineCompare?.status || 'unknown'} | ${data.checks.approvedBaselineCompare?.conflictRisk || '—'} |`,
-              `| Readiness | ${statusIcon(data.checks.readiness?.status)} ${data.checks.readiness?.status || 'unknown'} | ${data.checks.readiness?.blockers?.length ? `${data.checks.readiness.blockers.length} blockers` : data.checks.readiness?.score != null ? `Score: ${data.checks.readiness.score}` : '—'} |`,
+              `| Body expectations | ${statusIcon(data.checks.bodyExpectations?.status)} ${
+                data.checks.bodyExpectations?.status || 'unknown'
+              } | ${
+                data.checks.bodyExpectations?.missing?.length
+                  ? `${data.checks.bodyExpectations.missing.length} missing`
+                  : '—'
+              } |`,
+              `| Contradictions | ${statusIcon(data.checks.contradictions?.status)} ${
+                data.checks.contradictions?.status || 'unknown'
+              } | ${
+                data.checks.contradictions?.items?.length
+                  ? `${data.checks.contradictions.items.length} found`
+                  : '—'
+              } |`,
+              `| Cross-section consistency | ${statusIcon(
+                data.checks.crossSectionConsistency?.status
+              )} ${data.checks.crossSectionConsistency?.status || 'unknown'} | ${
+                data.checks.crossSectionConsistency?.items?.length
+                  ? `${data.checks.crossSectionConsistency.items.length} issues`
+                  : '—'
+              } |`,
+              `| Approved baseline | ${statusIcon(data.checks.approvedBaselineCompare?.status)} ${
+                data.checks.approvedBaselineCompare?.status || 'unknown'
+              } | ${data.checks.approvedBaselineCompare?.conflictRisk || '—'} |`,
+              `| Readiness | ${statusIcon(data.checks.readiness?.status)} ${
+                data.checks.readiness?.status || 'unknown'
+              } | ${
+                data.checks.readiness?.blockers?.length
+                  ? `${data.checks.readiness.blockers.length} blockers`
+                  : data.checks.readiness?.score != null
+                  ? `Score: ${data.checks.readiness.score}`
+                  : '—'
+              } |`,
             ].join('\n');
 
             const overallIcon =
@@ -2188,7 +2687,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
             // Decision architecture context
             const decisionLine = data.decisionId
-              ? `\n\n**Decision:** \`${data.decisionId.slice(0, 16)}…\` — Status: **${data.decisionStatus || 'recorded'}** — Authority: **${data.authority?.level || 'unknown'}**`
+              ? `\n\n**Decision:** \`${data.decisionId.slice(0, 16)}…\` — Status: **${
+                  data.decisionStatus || 'recorded'
+                }** — Authority: **${data.authority?.level || 'unknown'}**`
               : '';
             const authorityNote = data.authority?.requiresHumanConfirmation
               ? '\n> This result needs your confirmation before any action is taken.'
@@ -2200,7 +2701,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 id: `a-${Date.now()}`,
                 role: 'assistant',
                 timestamp: new Date(),
-                content: `**Section Preflight — §${sectionCode}** ${overallIcon}\n\n**Overall:** ${data.overall.toUpperCase()} — ${data.summary}\n\n| Check | Status | Detail |\n|---|---|---|\n${checkLines}${actionLines}${decisionLine}${authorityNote}`,
+                content: `**Section Preflight — §${sectionCode}** ${overallIcon}\n\n**Overall:** ${data.overall.toUpperCase()} — ${
+                  data.summary
+                }\n\n| Check | Status | Detail |\n|---|---|---|\n${checkLines}${actionLines}${decisionLine}${authorityNote}`,
               },
             ]);
             onRefreshIntelligence?.();
@@ -2211,7 +2714,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 id: `a-${Date.now()}`,
                 role: 'assistant',
                 timestamp: new Date(),
-                content: `**Preflight:** ${data.message || data.error || 'Unable to run preflight.'}`,
+                content: `**Preflight:** ${
+                  data.message || data.error || 'Unable to run preflight.'
+                }`,
               },
             ]);
           }
@@ -2258,7 +2763,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 data.sectionResults
                   .map(
                     (s: any) =>
-                      `| §${s.sectionCode} | ${s.overall === 'ready' ? '✅' : s.overall === 'blocked' ? '❌' : '⚠️'} ${s.overall} |`
+                      `| §${s.sectionCode} | ${
+                        s.overall === 'ready' ? '✅' : s.overall === 'blocked' ? '❌' : '⚠️'
+                      } ${s.overall} |`
                   )
                   .join('\n')
               : '';
@@ -2275,10 +2782,14 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               : '';
             // Decision-aware status enrichment
             const dasLine = data.decisionAwareStatus
-              ? `\n\n**Decision status:** ${data.decisionAwareStatus.summary || 'No pending decisions'}`
+              ? `\n\n**Decision status:** ${
+                  data.decisionAwareStatus.summary || 'No pending decisions'
+                }`
               : '';
             const decisionLine = data.decisionId
-              ? `\n**Decision:** \`${data.decisionId.slice(0, 16)}…\` — **${data.decisionStatus || 'recorded'}**`
+              ? `\n**Decision:** \`${data.decisionId.slice(0, 16)}…\` — **${
+                  data.decisionStatus || 'recorded'
+                }**`
               : '';
 
             setMessages(prev => [
@@ -2287,7 +2798,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 id: `a-${Date.now()}`,
                 role: 'assistant',
                 timestamp: new Date(),
-                content: `**Module Preflight — ${moduleCode.toUpperCase()}** ${overallIcon}\n\n**Overall:** ${data.overall.toUpperCase()} — ${data.summary}\n\n**Sections:** ${data.counts.ready}/${data.counts.total} ready, ${data.counts.blocked} blocked, ${data.counts.provisional} provisional${sectionTable}${blockerLines}${actionLines}${dasLine}${decisionLine}`,
+                content: `**Module Preflight — ${moduleCode.toUpperCase()}** ${overallIcon}\n\n**Overall:** ${data.overall.toUpperCase()} — ${
+                  data.summary
+                }\n\n**Sections:** ${data.counts.ready}/${data.counts.total} ready, ${
+                  data.counts.blocked
+                } blocked, ${
+                  data.counts.provisional
+                } provisional${sectionTable}${blockerLines}${actionLines}${dasLine}${decisionLine}`,
               },
             ]);
             onRefreshIntelligence?.();
@@ -2340,7 +2857,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 data.moduleResults
                   .map(
                     (m: any) =>
-                      `| ${m.moduleCode.toUpperCase()} | ${m.overall === 'ready' ? '✅' : m.overall === 'blocked' ? '❌' : '⚠️'} ${m.overall} | ${m.counts?.ready || 0}/${m.counts?.total || 0} ready |`
+                      `| ${m.moduleCode.toUpperCase()} | ${
+                        m.overall === 'ready' ? '✅' : m.overall === 'blocked' ? '❌' : '⚠️'
+                      } ${m.overall} | ${m.counts?.ready || 0}/${m.counts?.total || 0} ready |`
                   )
                   .join('\n')
               : '';
@@ -2350,7 +2869,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   .slice(0, 5)
                   .map(
                     (b: any) =>
-                      `- **[${b.severity}]** ${b.moduleCode || ''} ${b.sectionCode ? `§${b.sectionCode}` : ''}: ${b.message}`
+                      `- **[${b.severity}]** ${b.moduleCode || ''} ${
+                        b.sectionCode ? `§${b.sectionCode}` : ''
+                      }: ${b.message}`
                   )
                   .join('\n')
               : '';
@@ -2360,10 +2881,14 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               : '';
             // Decision-aware enrichment
             const dasLine = data.decisionAwareStatus
-              ? `\n\n**Decision status:** ${data.decisionAwareStatus.summary || 'No pending decisions'}`
+              ? `\n\n**Decision status:** ${
+                  data.decisionAwareStatus.summary || 'No pending decisions'
+                }`
               : '';
             const decisionLine = data.decisionId
-              ? `\n**Decision:** \`${data.decisionId.slice(0, 16)}…\` — **${data.decisionStatus || 'recorded'}**`
+              ? `\n**Decision:** \`${data.decisionId.slice(0, 16)}…\` — **${
+                  data.decisionStatus || 'recorded'
+                }**`
               : '';
 
             setMessages(prev => [
@@ -2372,7 +2897,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 id: `a-${Date.now()}`,
                 role: 'assistant',
                 timestamp: new Date(),
-                content: `**Dossier Preflight** ${overallIcon}\n\n**Overall:** ${data.overall.toUpperCase()} — ${data.summary}\n\n**Modules:** ${data.counts.readyModules}/${data.counts.totalModules} ready, ${data.counts.blockedModules} blocked${moduleTable}${blockerLines}${actionLines}${dasLine}${decisionLine}`,
+                content: `**Dossier Preflight** ${overallIcon}\n\n**Overall:** ${data.overall.toUpperCase()} — ${
+                  data.summary
+                }\n\n**Modules:** ${data.counts.readyModules}/${data.counts.totalModules} ready, ${
+                  data.counts.blockedModules
+                } blocked${moduleTable}${blockerLines}${actionLines}${dasLine}${decisionLine}`,
               },
             ]);
             onRefreshIntelligence?.();
@@ -2451,7 +2980,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   id: `a-${Date.now()}`,
                   role: 'assistant',
                   timestamp: new Date(),
-                  content: `🚫 **Promotion blocked by preflight.**\n\n${pfData.summary}\n\nFailed checks:\n${failChecks.map(c => `- ${c}`).join('\n')}${actionLines}`,
+                  content: `🚫 **Promotion blocked by preflight.**\n\n${
+                    pfData.summary
+                  }\n\nFailed checks:\n${failChecks.map(c => `- ${c}`).join('\n')}${actionLines}`,
                 },
               ]);
               onRefreshIntelligence?.();
@@ -2482,10 +3013,14 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           if (onRequestPromotion) {
             const result = await onRequestPromotion(artifactId);
             const pendingNote = result.pendingApprovals?.length
-              ? `\n\n**Pending approvals:** ${result.pendingApprovals.map((a: any) => `${a.requiredRole} (${a.reason})`).join(', ')}`
+              ? `\n\n**Pending approvals:** ${result.pendingApprovals
+                  .map((a: any) => `${a.requiredRole} (${a.reason})`)
+                  .join(', ')}`
               : '';
             const decisionNote = result.decisionId
-              ? `\n**Decision:** \`${result.decisionId.slice(0, 16)}…\` — Authority: **${result.authority?.level || 'confirmed'}**`
+              ? `\n**Decision:** \`${result.decisionId.slice(0, 16)}…\` — Authority: **${
+                  result.authority?.level || 'confirmed'
+                }**`
               : '';
             setMessages(prev => [
               ...prev,
@@ -2495,7 +3030,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 timestamp: new Date(),
                 content: result.promoted
                   ? `✅ **Promoted to review.** ${result.message} The document is now in the governance review pipeline.${pendingNote}${decisionNote}`
-                  : `**Promotion not completed.** ${result.message}${result.decisionId ? `\n**Decision:** \`${result.decisionId.slice(0, 16)}…\` — blocked` : ''}`,
+                  : `**Promotion not completed.** ${result.message}${
+                      result.decisionId
+                        ? `\n**Decision:** \`${result.decisionId.slice(0, 16)}…\` — blocked`
+                        : ''
+                    }`,
               },
             ]);
           } else {
@@ -2523,7 +3062,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   id: `a-${Date.now()}`,
                   role: 'assistant',
                   timestamp: new Date(),
-                  content: `**Promotion failed.** ${err.error || err.message || `HTTP ${res.status}`}`,
+                  content: `**Promotion failed.** ${
+                    err.error || err.message || `HTTP ${res.status}`
+                  }`,
                 },
               ]);
             }
@@ -2540,7 +3081,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               id: `a-${Date.now()}`,
               role: 'assistant',
               timestamp: new Date(),
-              content: `**Promotion failed.** ${err instanceof Error ? err.message : 'Unknown error'}`,
+              content: `**Promotion failed.** ${
+                err instanceof Error ? err.message : 'Unknown error'
+              }`,
             },
           ]);
         }
@@ -2597,7 +3140,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 id: `a-${Date.now()}`,
                 role: 'assistant',
                 timestamp: new Date(),
-                content: `**Approval ${data.reason === 'unauthorized' ? 'unauthorized' : 'blocked'}.** ${data.message}${blockerLines}`,
+                content: `**Approval ${
+                  data.reason === 'unauthorized' ? 'unauthorized' : 'blocked'
+                }.** ${data.message}${blockerLines}`,
               },
             ]);
           }
@@ -2653,7 +3198,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 id: `a-${Date.now()}`,
                 role: 'assistant',
                 timestamp: new Date(),
-                content: `**Lock ${data.reason === 'unauthorized' ? 'unauthorized' : 'blocked'}.** ${data.message}${blockerLines}`,
+                content: `**Lock ${
+                  data.reason === 'unauthorized' ? 'unauthorized' : 'blocked'
+                }.** ${data.message}${blockerLines}`,
               },
             ]);
           }
@@ -2712,7 +3259,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 id: `a-${Date.now()}`,
                 role: 'assistant',
                 timestamp: new Date(),
-                content: `**Submission-ready ${data.reason === 'unauthorized' ? 'unauthorized — requires RA or submission lead' : 'blocked'}.** ${data.message}${blockerLines}`,
+                content: `**Submission-ready ${
+                  data.reason === 'unauthorized'
+                    ? 'unauthorized — requires RA or submission lead'
+                    : 'blocked'
+                }.** ${data.message}${blockerLines}`,
               },
             ]);
           }
@@ -2747,7 +3298,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             const targetLines = data.targets
               .map(
                 (t: any, i: number) =>
-                  `${i + 1}. **${t.objectTitle}** (§${t.sectionCode || '—'})\n   Rationale: ${t.revisionRationale}\n   Confidence: ${t.confidence} | Review required: ${t.requiresReview ? 'Yes' : 'No'}`
+                  `${i + 1}. **${t.objectTitle}** (§${t.sectionCode || '—'})\n   Rationale: ${
+                    t.revisionRationale
+                  }\n   Confidence: ${t.confidence} | Review required: ${
+                    t.requiresReview ? 'Yes' : 'No'
+                  }`
               )
               .join('\n\n');
             setMessages(prev => [
@@ -2809,7 +3364,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 ?.slice(0, 5)
                 .map(
                   (i: any) =>
-                    `- **[${i.severity}]** ${i.description} (§${i.sectionA} ↔ §${i.sectionB})${i.recommendation ? `\n  Fix: ${i.recommendation}` : ''}`
+                    `- **[${i.severity}]** ${i.description} (§${i.sectionA} ↔ §${i.sectionB})${
+                      i.recommendation ? `\n  Fix: ${i.recommendation}` : ''
+                    }`
                 )
                 .join('\n') || 'None';
             setMessages(prev => [
@@ -2818,7 +3375,17 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 id: `a-${Date.now()}`,
                 role: 'assistant',
                 timestamp: new Date(),
-                content: `**Harmonization Check** — Score: ${data.consistencyScore}/100\n\nSections compared: ${data.sectionsCompared?.join(', ')}\nDimensions checked: ${data.checkedDimensions?.join(', ')}\n\n**Issues (${data.totalIssues}):**\n${issueLines}${data.totalIssues > 0 ? '\n\n💡 Use **Prepare correction draft** to address critical issues.' : ''}`,
+                content: `**Harmonization Check** — Score: ${
+                  data.consistencyScore
+                }/100\n\nSections compared: ${data.sectionsCompared?.join(
+                  ', '
+                )}\nDimensions checked: ${data.checkedDimensions?.join(', ')}\n\n**Issues (${
+                  data.totalIssues
+                }):**\n${issueLines}${
+                  data.totalIssues > 0
+                    ? '\n\n💡 Use **Prepare correction draft** to address critical issues.'
+                    : ''
+                }`,
               },
             ]);
             onRefreshIntelligence?.();
@@ -2857,7 +3424,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             const lines = data.resolutions
               .map(
                 (r: any, i: number) =>
-                  `### Resolution ${i + 1}\n**${r.summary}**\n- Trigger: ${r.triggerExplanation}\n- Path: ${r.recommendedPath}\n- Confidence: ${r.confidence}\n- Affected: ${r.affectedObjectsSummary}\n- Review: ${JSON.stringify(r.reviewRequirements)}\n- Next: ${r.nextSteps?.join(', ') || 'None'}`
+                  `### Resolution ${i + 1}\n**${r.summary}**\n- Trigger: ${
+                    r.triggerExplanation
+                  }\n- Path: ${r.recommendedPath}\n- Confidence: ${r.confidence}\n- Affected: ${
+                    r.affectedObjectsSummary
+                  }\n- Review: ${JSON.stringify(r.reviewRequirements)}\n- Next: ${
+                    r.nextSteps?.join(', ') || 'None'
+                  }`
               )
               .join('\n\n');
             setMessages(prev => [
@@ -2911,14 +3484,18 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 ?.slice(0, 5)
                 .map(
                   (b: any) =>
-                    `- **[${b.severity}]** ${b.message}${b.suggestedResolution ? ` → ${b.suggestedResolution}` : ''}`
+                    `- **[${b.severity}]** ${b.message}${
+                      b.suggestedResolution ? ` → ${b.suggestedResolution}` : ''
+                    }`
                 )
                 .join('\n') || 'None';
             const moduleTable =
               data.moduleBreakdown
                 ?.map(
                   (m: any) =>
-                    `| ${m.module} | ${m.label} | ${m.score ?? '—'} | ${m.status} | ${m.documentCount} |`
+                    `| ${m.module} | ${m.label} | ${m.score ?? '—'} | ${m.status} | ${
+                      m.documentCount
+                    } |`
                 )
                 .join('\n') || '';
             setMessages(prev => [
@@ -2927,7 +3504,17 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 id: `a-${Date.now()}`,
                 role: 'assistant',
                 timestamp: new Date(),
-                content: `**Module Readiness** — Overall: ${data.overallScore ?? '—'}/100 (${data.overallStatus})\n\n${mod ? `**${mod.label}** (${mod.code}): Score ${mod.score ?? '—'}/100, Status: ${mod.status}\nDocs: ${mod.documentCount}/${mod.expectedDocumentCount}, Validated: ${mod.validatedCount}, Blockers: ${mod.blockerCount}` : `Module ${moduleCode} not found in breakdown.`}\n\n**Blockers:**\n${blockerLines}\n\n| Module | Label | Score | Status | Docs |\n|---|---|---|---|---|\n${moduleTable}`,
+                content: `**Module Readiness** — Overall: ${data.overallScore ?? '—'}/100 (${
+                  data.overallStatus
+                })\n\n${
+                  mod
+                    ? `**${mod.label}** (${mod.code}): Score ${mod.score ?? '—'}/100, Status: ${
+                        mod.status
+                      }\nDocs: ${mod.documentCount}/${mod.expectedDocumentCount}, Validated: ${
+                        mod.validatedCount
+                      }, Blockers: ${mod.blockerCount}`
+                    : `Module ${moduleCode} not found in breakdown.`
+                }\n\n**Blockers:**\n${blockerLines}\n\n| Module | Label | Score | Status | Docs |\n|---|---|---|---|---|\n${moduleTable}`,
               },
             ]);
           } else {
@@ -2968,11 +3555,17 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               .slice(0, 10)
               .map(
                 (e: any, i: number) =>
-                  `${i + 1}. **${e.title}** — Type: ${e.type}, Status: ${e.status}${e.fdaRequirement ? `, FDA: ${e.fdaRequirement}` : ''}`
+                  `${i + 1}. **${e.title}** — Type: ${e.type}, Status: ${e.status}${
+                    e.fdaRequirement ? `, FDA: ${e.fdaRequirement}` : ''
+                  }`
               )
               .join('\n');
             const gapInfo = data.gapAnalysis
-              ? `\n\n**Evidence completeness:** ${data.gapAnalysis.completeness ?? '—'}%${data.gapAnalysis.criticalGaps?.length ? `\nCritical gaps: ${data.gapAnalysis.criticalGaps.join(', ')}` : ''}`
+              ? `\n\n**Evidence completeness:** ${data.gapAnalysis.completeness ?? '—'}%${
+                  data.gapAnalysis.criticalGaps?.length
+                    ? `\nCritical gaps: ${data.gapAnalysis.criticalGaps.join(', ')}`
+                    : ''
+                }`
               : '';
             setMessages(prev => [
               ...prev,
@@ -2990,7 +3583,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 id: `a-${Date.now()}`,
                 role: 'assistant',
                 timestamp: new Date(),
-                content: `**Evidence for §${sectionCode}:** ${data.message}${data.gapAnalysis?.gaps?.length ? `\n\nGaps identified: ${data.gapAnalysis.gaps.join(', ')}` : ''}`,
+                content: `**Evidence for §${sectionCode}:** ${data.message}${
+                  data.gapAnalysis?.gaps?.length
+                    ? `\n\nGaps identified: ${data.gapAnalysis.gaps.join(', ')}`
+                    : ''
+                }`,
               },
             ]);
           }
@@ -3017,7 +3614,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         try {
           const res = await apiRequest(
             'GET',
-            `/api/authoring-actions/section-expectations/${encodeURIComponent(body)}/${encodeURIComponent(subType)}/${encodeURIComponent(sectionCode)}`
+            `/api/authoring-actions/section-expectations/${encodeURIComponent(
+              body
+            )}/${encodeURIComponent(subType)}/${encodeURIComponent(sectionCode)}`
           );
           const data = await res.json();
           if (data.status === 'data') {
@@ -3085,7 +3684,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 ?.slice(0, 5)
                 .map(
                   (i: any) =>
-                    `- **[${i.severity}]** ${i.description} (§${i.sectionA} ↔ §${i.sectionB})${i.recommendation ? `\n  → ${i.recommendation}` : ''}`
+                    `- **[${i.severity}]** ${i.description} (§${i.sectionA} ↔ §${i.sectionB})${
+                      i.recommendation ? `\n  → ${i.recommendation}` : ''
+                    }`
                 )
                 .join('\n') || '- None found';
             const contraLines =
@@ -3099,7 +3700,19 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 id: `a-${Date.now()}`,
                 role: 'assistant',
                 timestamp: new Date(),
-                content: `**Cross-Section Consistency for §${sectionCode}**\n\nLinked: ${data.linkedSections?.join(', ') || 'none'}\nConsistency: ${data.harmonizeResult?.consistencyScore ?? '—'}/100\n\n**Harmonization issues (${data.harmonizeResult?.totalIssues ?? 0}):**\n${harmIssues}\n\n**Contradictions (${data.contradictionCount ?? 0}):**\n${contraLines}${data.harmonizeResult?.totalIssues > 0 ? '\n\n💡 Use **Prepare correction draft** or **Harmonize** to address these.' : ''}`,
+                content: `**Cross-Section Consistency for §${sectionCode}**\n\nLinked: ${
+                  data.linkedSections?.join(', ') || 'none'
+                }\nConsistency: ${
+                  data.harmonizeResult?.consistencyScore ?? '—'
+                }/100\n\n**Harmonization issues (${
+                  data.harmonizeResult?.totalIssues ?? 0
+                }):**\n${harmIssues}\n\n**Contradictions (${
+                  data.contradictionCount ?? 0
+                }):**\n${contraLines}${
+                  data.harmonizeResult?.totalIssues > 0
+                    ? '\n\n💡 Use **Prepare correction draft** or **Harmonize** to address these.'
+                    : ''
+                }`,
               },
             ]);
             onRefreshIntelligence?.();
@@ -3145,7 +3758,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 ?.slice(0, 10)
                 .map(
                   (g: any) =>
-                    `- **[${g.status.toUpperCase()}]** ${g.requirement}${g.bodyNote ? ` — ${g.bodyNote}` : ''}`
+                    `- **[${g.status.toUpperCase()}]** ${g.requirement}${
+                      g.bodyNote ? ` — ${g.bodyNote}` : ''
+                    }`
                 )
                 .join('\n') || '- None detected';
             setMessages(prev => [
@@ -3154,7 +3769,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 id: `a-${Date.now()}`,
                 role: 'assistant',
                 timestamp: new Date(),
-                content: `**${body} Gap Analysis for §${sectionCode}** (${subType})\n\n**Completeness:** ${data.overallCompleteness ?? '—'}%\n\n**Gaps:**\n${gapLines}${data.overallCompleteness != null && data.overallCompleteness < 50 ? '\n\n⚠️ Section is significantly incomplete for this regulatory body.' : ''}`,
+                content: `**${body} Gap Analysis for §${sectionCode}** (${subType})\n\n**Completeness:** ${
+                  data.overallCompleteness ?? '—'
+                }%\n\n**Gaps:**\n${gapLines}${
+                  data.overallCompleteness != null && data.overallCompleteness < 50
+                    ? '\n\n⚠️ Section is significantly incomplete for this regulatory body.'
+                    : ''
+                }`,
               },
             ]);
           } else {
@@ -3208,7 +3829,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 timestamp: new Date(),
                 content:
                   data.message ||
-                  `**Contradiction Resolution Explanation**\n\n${JSON.stringify(data.data, null, 2)}`,
+                  `**Contradiction Resolution Explanation**\n\n${JSON.stringify(
+                    data.data,
+                    null,
+                    2
+                  )}`,
               },
             ]);
           } else {
@@ -3218,7 +3843,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 id: `a-${Date.now()}`,
                 role: 'assistant',
                 timestamp: new Date(),
-                content: `**Contradiction explanation:** ${data.message || 'No explanation available'}`,
+                content: `**Contradiction explanation:** ${
+                  data.message || 'No explanation available'
+                }`,
               },
             ]);
           }
@@ -3311,8 +3938,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             const lines = [
               '**Project Resolution Status**',
               '',
-              `**Plans:** ${plans?.total || 0} total — ${plans?.unresolved || 0} unresolved, ${plans?.inProgress || 0} in-progress, ${plans?.resolved || 0} resolved`,
-              `**Bundles:** ${bundles?.total || 0} total — ${bundles?.active || 0} active, ${bundles?.pendingReview || 0} pending review`,
+              `**Plans:** ${plans?.total || 0} total — ${plans?.unresolved || 0} unresolved, ${
+                plans?.inProgress || 0
+              } in-progress, ${plans?.resolved || 0} resolved`,
+              `**Bundles:** ${bundles?.total || 0} total — ${bundles?.active || 0} active, ${
+                bundles?.pendingReview || 0
+              } pending review`,
             ];
             if ((plans?.unresolved || 0) > 0) {
               lines.push(
@@ -3400,7 +4031,20 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         });
     }
 
-    handleSend(action.label);
+    const intentToPrompt: Record<string, string> = {
+      recommendation: '/recommend',
+      'next-action': '/next',
+      'risk-assessment': '/risk',
+      'open-question': '/knowledge',
+      ctd_map: '/workflow',
+      find_predicates: '/precedent',
+      check_readiness: '/readiness',
+      draft_section: '/draft',
+      cms_strategy: '/cms',
+      diagnostics_strategy: '/diagnostics',
+    };
+    const mappedPrompt = action.intent ? intentToPrompt[action.intent] : undefined;
+    handleSend(mappedPrompt || action.label);
   };
 
   const hasMessages = messages.length > 0;
@@ -3444,22 +4088,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         {isUser ? 'You' : 'AnA'}
                       </span>
                       {isUser ? (
-                        <>
-                          <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5">
-                            {msg.content}
-                          </p>
-                          {msg.recalledToInput && (
-                            <p className="mt-1 text-xs font-medium text-stone-600">
-                              Editing prompt in composer
-                            </p>
-                          )}
-                        </>
+                        <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5">
+                          {msg.content}
+                        </p>
                       ) : (
                         <div
                           className="prose prose-sm prose-stone max-w-none mt-0.5
-                            prose-p:text-[#4D4B45] prose-p:leading-relaxed prose-p:my-1
+                            prose-p:text-[#4D4B45] prose-p:leading-relaxed prose-p:my-2
                             prose-strong:text-[#141413]
                             prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
+                            prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3.5 prose-pre:text-xs
                             prose-blockquote:border-l-stone-300 prose-blockquote:text-[#6B6962] prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
                             prose-ul:text-[#4D4B45] prose-ol:text-[#4D4B45] prose-ul:my-2 prose-ol:my-2 prose-li:my-1
                             prose-a:text-[#D97757] prose-a:underline prose-a:decoration-[#E8C7BA] prose-a:underline-offset-2 hover:prose-a:text-[#C4623F]
@@ -3554,6 +4192,23 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   </span>
                 )}
               </div>
+              {/* Queue Status Banner */}
+              {conversationQueue.length > 0 && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-stone-50 border-t border-stone-100 text-[11px] text-stone-500">
+                  {activeQueueItemId && <span className="text-amber-600">● Working</span>}
+                  {conversationQueue.filter(i => i.status === 'queued').length > 0 && (
+                    <span>
+                      Queued: {conversationQueue.filter(i => i.status === 'queued').length}
+                    </span>
+                  )}
+                  <button
+                    onClick={() => setConversationQueue([])}
+                    className="ml-auto text-stone-400 hover:text-stone-600"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
               <textarea
                 ref={inputRef}
                 value={input}
@@ -3573,6 +4228,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   onClick={() => {
                     setMessages([]);
                     threadIdRef.current = null;
+                    // Keep selection state in sync with cleared local thread context.
+                    onThreadChange?.(undefined);
                   }}
                   className="flex-shrink-0 p-1.5 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg transition-colors"
                   title="New thread"
@@ -3629,16 +4286,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     contextProfile.productType.includes('510')
                       ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
                       : contextProfile.productType.includes('PMA')
-                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
-                        : contextProfile.productType.includes('NDA')
-                          ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
-                          : contextProfile.productType.includes('BLA')
-                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
-                            : contextProfile.productType.includes('IND')
-                              ? 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300'
-                              : contextProfile.productType.includes('ANDA')
-                                ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300'
-                                : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
+                      ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
+                      : contextProfile.productType.includes('NDA')
+                      ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+                      : contextProfile.productType.includes('BLA')
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                      : contextProfile.productType.includes('IND')
+                      ? 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300'
+                      : contextProfile.productType.includes('ANDA')
+                      ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300'
+                      : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
                   )}
                 >
                   {contextProfile.productType}
@@ -3649,6 +4306,94 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           <span className="text-[11px] text-zinc-400 dark:text-zinc-500 whitespace-nowrap ml-3">
             Quick project switch ←
           </span>
+        </div>
+      )}
+      {contextProfile?.activeProject && (
+        <div className="shrink-0 border-b border-zinc-200 bg-white px-4 py-2">
+          <button
+            type="button"
+            onClick={() => setDecisionRailExpanded(prev => !prev)}
+            className="w-full text-left rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 hover:bg-zinc-100 transition-colors"
+            aria-expanded={decisionRailExpanded}
+            aria-label="Toggle decision status details"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+                  Decision status
+                </p>
+                <p className="text-xs text-zinc-700 truncate">
+                  {decisionStatus.loading ? 'Loading decision status...' : decisionStatus.summary}
+                </p>
+              </div>
+              <ChevronDown
+                className={cn(
+                  'w-3.5 h-3.5 text-zinc-500 transition-transform',
+                  decisionRailExpanded && 'rotate-180'
+                )}
+              />
+            </div>
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px] text-zinc-600">
+              {decisionStatus.pendingConfirmations > 0 && (
+                <span className="rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-amber-700">
+                  {decisionStatus.pendingConfirmations} confirmation
+                </span>
+              )}
+              {decisionStatus.pendingApprovals > 0 && (
+                <span className="rounded-full border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-blue-700">
+                  {decisionStatus.pendingApprovals} approval
+                </span>
+              )}
+              {decisionStatus.unresolvedContradictions && (
+                <span className="rounded-full border border-red-200 bg-red-50 px-1.5 py-0.5 text-red-700">
+                  unresolved contradictions
+                </span>
+              )}
+              {decisionStatus.provisional && (
+                <span className="rounded-full border border-orange-200 bg-orange-50 px-1.5 py-0.5 text-orange-700">
+                  provisional decisions
+                </span>
+              )}
+              {!decisionStatus.loading &&
+                decisionStatus.pendingConfirmations === 0 &&
+                decisionStatus.pendingApprovals === 0 &&
+                !decisionStatus.unresolvedContradictions &&
+                !decisionStatus.provisional && (
+                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-emerald-700">
+                    clear
+                  </span>
+                )}
+              <span className="text-zinc-400">·</span>
+              <span>{decisionStatus.count} tracked</span>
+            </div>
+          </button>
+          {decisionRailExpanded && (
+            <div className="mt-2 rounded-lg border border-zinc-200 bg-white px-3 py-2">
+              {decisionStatus.error ? (
+                <p className="text-xs text-red-600">{decisionStatus.error}</p>
+              ) : decisionStatus.details.length > 0 ? (
+                <ul className="space-y-1.5">
+                  {decisionStatus.details.map(row => (
+                    <li key={row.id || `${row.status}-${row.kind}-${row.summary.slice(0, 20)}`}>
+                      <p className="text-[11px] text-zinc-800">
+                        <span className="font-medium">[{row.status.toUpperCase()}]</span> {row.kind}
+                      </p>
+                      <p className="text-[11px] text-zinc-600">{row.summary}</p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xs text-zinc-600">No recent decisions for this scope.</p>
+              )}
+              <button
+                type="button"
+                onClick={() => void loadDecisionRail()}
+                className="mt-2 text-[11px] text-zinc-500 hover:text-zinc-700"
+              >
+                Refresh
+              </button>
+            </div>
+          )}
         </div>
       )}
       {/* ── Conversation area — fills available space ── */}
@@ -3754,7 +4499,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 <div
                   key={msg.id}
                   className={cn('group px-4 py-3', isUser ? 'bg-[#FAF9F5]/60' : 'bg-white')}
-                  onMouseEnter={() => setShowActions(msg.id)}
+                  onMouseEnter={() => !isUser && setShowActions(msg.id)}
                   onMouseLeave={() => setShowActions(null)}
                 >
                   <div className="flex gap-2.5 max-w-3xl mx-auto">
@@ -3781,8 +4526,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5">
                             {msg.content}
                           </p>
-                          {msg.recalledToInput && (
-                            <p className="mt-1 text-xs font-medium text-stone-600">
+                          {(msg as any).recalledToInput && (
+                            <p className="mt-1 text-[10px] font-medium text-[#D97757]">
                               Editing prompt in composer
                             </p>
                           )}
@@ -3791,10 +4536,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         <>
                           <div
                             className="prose prose-sm prose-zinc max-w-none mt-0.5
-                              prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1
+                              prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-2
                               prose-strong:text-zinc-900
                               prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
-                              prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3 prose-pre:text-xs
+                              prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-3.5 prose-pre:text-xs
                               prose-blockquote:border-l-stone-300 prose-blockquote:text-zinc-600 prose-blockquote:not-italic prose-blockquote:pl-3 prose-blockquote:my-2
                               prose-ul:text-zinc-700 prose-ol:text-zinc-700 prose-ul:my-2 prose-ol:my-2 prose-li:my-1
                               prose-a:text-[#D97757] prose-a:underline prose-a:decoration-[#E8C7BA] prose-a:underline-offset-2 hover:prose-a:text-[#C4623F]
@@ -3848,7 +4593,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           {/* AnA 1.0 RI — Executed Guidance Actions */}
                           {msg.executedActions && msg.executedActions.length > 0 && (
                             <div className="mt-2 space-y-1.5">
-                              {msg.executedActions.map((action, i) => (
+                              {msg.executedActions.map((action: any, i: any) => (
                                 <div
                                   key={i}
                                   className={cn(
@@ -3856,8 +4601,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                     action.executed && !action.error
                                       ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                                       : action.error
-                                        ? 'bg-red-50 border-red-200 text-red-800'
-                                        : 'bg-zinc-50 border-zinc-200 text-zinc-600'
+                                      ? 'bg-red-50 border-red-200 text-red-800'
+                                      : 'bg-zinc-50 border-zinc-200 text-zinc-600'
                                   )}
                                 >
                                   {action.executed && !action.error ? (
@@ -3873,8 +4618,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                     {action.executed
                                       ? `Created ${action.actionType.replace(/_/g, ' ')}`
                                       : action.error
-                                        ? `Failed: ${action.error}`
-                                        : `Prepared ${action.actionType.replace(/_/g, ' ')} (${action.confidence})`}
+                                      ? `Failed: ${action.error}`
+                                      : `Prepared ${action.actionType.replace(/_/g, ' ')} (${
+                                          action.confidence
+                                        })`}
                                   </span>
                                   {action.artifactId && (
                                     <span className="text-emerald-600 font-mono text-[10px]">
@@ -3939,8 +4686,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               <Copy className="w-3 h-3" />
                             )}
                           </button>
-                          {msg.recalledToInput && (
-                            <span className="text-xs text-stone-600 font-medium ml-1">
+                          {(msg as any).recalledToInput && (
+                            <span className="text-[11px] text-stone-600 font-medium ml-1">
                               Loaded to input
                             </span>
                           )}
@@ -3957,29 +4704,29 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           {msg.modelProvider && (
                             <span
                               className={cn(
-                                'text-[10px] font-medium px-1.5 py-0.5 rounded mr-1',
+                                'text-[11px] font-medium px-1.5 py-0.5 rounded mr-1',
                                 msg.modelProvider === 'anthropic'
                                   ? 'text-[#CC785C] bg-[#FBF0EB]'
                                   : msg.modelProvider === 'openai'
-                                    ? 'text-[#10A37F] bg-emerald-50'
-                                    : msg.modelProvider === 'moonshot'
-                                      ? 'text-[#6366F1] bg-indigo-50'
-                                      : 'text-zinc-500 bg-zinc-50'
+                                  ? 'text-[#10A37F] bg-emerald-50'
+                                  : msg.modelProvider === 'moonshot'
+                                  ? 'text-[#6366F1] bg-indigo-50'
+                                  : 'text-zinc-500 bg-zinc-50'
                               )}
                             >
                               {msg.modelProvider === 'anthropic'
                                 ? 'Claude'
                                 : msg.modelProvider === 'openai'
-                                  ? 'GPT-4o'
-                                  : msg.modelProvider === 'moonshot'
-                                    ? 'Kimi'
-                                    : msg.modelProvider}
+                                ? 'GPT-4o'
+                                : msg.modelProvider === 'moonshot'
+                                ? 'Kimi'
+                                : msg.modelProvider}
                             </span>
                           )}
                           {msg.evidenceUsage?.firecrawlRequested && (
                             <span
                               className={cn(
-                                'text-[10px] font-medium px-1.5 py-0.5 rounded mr-1',
+                                'text-[11px] font-medium px-1.5 py-0.5 rounded mr-1',
                                 msg.evidenceUsage.firecrawlUsed
                                   ? 'text-[#D97757] bg-[#FBF0EB]'
                                   : 'text-zinc-500 bg-zinc-50'
@@ -4041,7 +4788,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                       'POST',
                                       `/api/concept2cure/projects/${numProjId}/artifacts`,
                                       {
-                                        title: `AnA Response — ${new Date().toISOString().split('T')[0]}`,
+                                        title: `AnA Response — ${
+                                          new Date().toISOString().split('T')[0]
+                                        }`,
                                         content: msg.content,
                                         type: 'document_section',
                                         category: 'document',
@@ -4113,12 +4862,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               </button>
                             )}
                           {(msg as any).insertedToEditor && (
-                            <span className="text-[10px] text-blue-600 font-medium ml-1">
+                            <span className="text-[11px] text-blue-600 font-medium ml-1">
                               Inserted
                             </span>
                           )}
                           {msg.savedAsArtifact && (
-                            <span className="text-[10px] text-emerald-600 font-medium ml-1">
+                            <span className="text-[11px] text-emerald-600 font-medium ml-1">
                               Saved
                             </span>
                           )}
@@ -4179,7 +4928,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                           const data = await res.json();
                                           let statusLine = '';
                                           if (data.artifactId) {
-                                            statusLine = `\n\n---\n**${action.label} created** | Artifact #${data.artifactId} | Quality: ${data.qualityGrade || 'draft'} | ${data.isNew ? 'New' : 'Updated'}`;
+                                            statusLine = `\n\n---\n**${
+                                              action.label
+                                            } created** | Artifact #${data.artifactId} | Quality: ${
+                                              data.qualityGrade || 'draft'
+                                            } | ${data.isNew ? 'New' : 'Updated'}`;
                                           } else if (data.persisted === false) {
                                             statusLine =
                                               '\n\n---\n**Warning:** Content generated but could not be saved to project. Please copy this content.';
@@ -4307,7 +5060,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
                         <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
                       </div>
-                      <span className="text-xs text-[#D97757] font-medium animate-pulse">
+                      <span className="text-xs text-[#D97757] font-medium">
                         {thinkingMsg || 'Thinking...'}
                       </span>
                     </div>
@@ -4330,6 +5083,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 onClick={() => {
                   setMessages([]);
                   threadIdRef.current = null;
+                  // Keep selection state in sync with cleared local thread context.
+                  onThreadChange?.(undefined);
                 }}
                 className="flex items-center gap-1.5 px-3 py-1 text-xs text-[#B0AEA5] hover:text-[#6B6962] hover:bg-[#F5F4EF] rounded-full transition-colors"
               >
@@ -4396,10 +5151,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 className={cn(
                   'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
                   chatMode === 'deep-research'
-                    ? 'bg-violet-50 text-violet-700 hover:bg-violet-100'
+                    ? 'bg-[#FBF0EB] text-[#D97757] hover:bg-[#F6E6DF]'
                     : chatMode === 'nano-banana'
-                      ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
-                      : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
+                    ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+                    : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
                 )}
               >
                 {chatMode === 'deep-research' ? (
@@ -4413,8 +5168,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   {chatMode === 'deep-research'
                     ? 'Deep Research'
                     : chatMode === 'nano-banana'
-                      ? 'Nano Banana'
-                      : 'AnA'}
+                    ? 'Nano Banana'
+                    : 'AnA'}
                 </span>
                 <ChevronDown className="w-3 h-3 opacity-50" />
               </button>
@@ -4528,10 +5283,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         {firecrawlDisabledReason === 'quota_exhausted'
                           ? 'On but quota exhausted'
                           : firecrawlDisabledReason === 'admin_disabled'
-                            ? 'On but admin-disabled for workspace'
-                            : firecrawlQuotaRemaining !== null
-                              ? `Optional open-web evidence (${firecrawlQuotaRemaining} free remaining)`
-                              : 'Optional governed open-web evidence'}
+                          ? 'On but admin-disabled for workspace'
+                          : firecrawlQuotaRemaining !== null
+                          ? `Optional open-web evidence (${firecrawlQuotaRemaining} free remaining)`
+                          : 'Optional governed open-web evidence'}
                       </div>
                     </div>
                     {useFirecrawl && <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5" />}
@@ -4548,7 +5303,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 className={cn(
                   'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
                   selectedProvider !== 'auto'
-                    ? `bg-[#F5F4EF] ${AI_PROVIDERS.find(p => p.id === selectedProvider)?.activeColor || 'text-[#D97757]'} hover:bg-[#EDEAE0]`
+                    ? `bg-[#F5F4EF] ${
+                        AI_PROVIDERS.find(p => p.id === selectedProvider)?.activeColor ||
+                        'text-[#D97757]'
+                      } hover:bg-[#EDEAE0]`
                     : 'text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]'
                 )}
                 title="Select AI model"
@@ -4601,6 +5359,21 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             </div>
 
             {/* Input */}
+            {/* Queue Status Banner */}
+            {conversationQueue.length > 0 && (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-stone-50 border-t border-stone-100 text-[11px] text-stone-500">
+                {activeQueueItemId && <span className="text-amber-600">● Working</span>}
+                {conversationQueue.filter(i => i.status === 'queued').length > 0 && (
+                  <span>Queued: {conversationQueue.filter(i => i.status === 'queued').length}</span>
+                )}
+                <button
+                  onClick={() => setConversationQueue([])}
+                  className="ml-auto text-stone-400 hover:text-stone-600"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
             <textarea
               ref={inputRef}
               value={input}
@@ -4615,10 +5388,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 chatMode === 'deep-research'
                   ? 'Ask a deep research question...'
                   : chatMode === 'nano-banana'
-                    ? 'Describe an image, infographic, or presentation...'
-                    : intentLens !== 'auto'
-                      ? `Message AnA (${intentLens} lens)...`
-                      : 'Message AnA — type / for commands...'
+                  ? 'Describe an image, infographic, or presentation...'
+                  : intentLens !== 'auto'
+                  ? `Message AnA (${intentLens} lens)...`
+                  : 'Message AnA — type / for commands...'
               }
               rows={1}
               className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"
@@ -4677,8 +5450,21 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           )}
           <p className="mt-1.5 pl-1 text-[11px] text-[#B0AEA5]">
             Type <span className="font-semibold text-[#6B6962]">/</span> for commands. Use{' '}
-            <span className="font-semibold text-[#6B6962]">↑</span> on empty input to recall your
-            last prompt. Shift+Enter for a new line.
+            <span className="font-semibold text-[#6B6962]">↑</span> on an empty input to recall your
+            last prompt.
+            {onNavigate ? (
+              <>
+                {' '}
+                <button
+                  type="button"
+                  onClick={() => onNavigate('apps')}
+                  className="font-semibold text-[#6B6962] underline decoration-[#D8D5CA] underline-offset-2 hover:text-[#4D4B45]"
+                >
+                  Browse all capabilities
+                </button>
+                .
+              </>
+            ) : null}
           </p>
         </div>
       </div>

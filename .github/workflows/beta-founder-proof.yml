@@ -1,0 +1,49 @@
+name: Beta Founder Proof
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 9 * * 1-5'
+
+jobs:
+  founder-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run beta seed + founder proof
+        run: npm run beta:proof
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/concept2cure-ri?sslmode=disable
+          SKIP_DB_STARTUP_TEST: 'true'
+          NODE_ENV: development
+          PORT: '5000'
+          SESSION_SECRET: dev-session-secret
+          JWT_SECRET: dev-jwt-secret-32-char-minimum-value
+          REFRESH_TOKEN_SECRET: dev-refresh-token-secret-32-char-min
+          CONCEPT2CURE_SIGNER_MODE: dev
+
+      - name: Upload founder proof artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: beta-founder-proof-artifacts
+          path: |
+            test-results/beta-founder-path/**
+            test-results/beta-seed/**
+            test-results/beta-telemetry/**
+            test-results/e2e/**
+          retention-days: 14

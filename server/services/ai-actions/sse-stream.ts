@@ -12,6 +12,12 @@ import type { AIActionResponse } from '../../../shared/types/ai-actions';
 import { createScopedLogger } from '../../utils/logger';
 
 const logger = createScopedLogger('sse-stream');
+const allowedSseOrigins = new Set(
+  (process.env.ALLOWED_ORIGINS || '')
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean)
+);
 
 // ---------------------------------------------------------------------------
 // Active SSE connections
@@ -39,6 +45,12 @@ const SSE_IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes max per connection
 export function handleSSEStream(req: Request, res: Response): void {
   const jobId = req.query.jobId as string;
   const userId = (req as any).user?.id || (req as any).userId;
+  const origin = req.headers.origin;
+
+  if (origin && allowedSseOrigins.size > 0 && !allowedSseOrigins.has(origin)) {
+    res.status(403).json({ error: 'SSE origin not allowed' });
+    return;
+  }
 
   if (!jobId) {
     res.status(400).json({ error: 'jobId query parameter required' });

@@ -112,7 +112,7 @@ export async function extractStructuredData(csrText: string, reportId: number): 
     };
 
     return structuredData;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error extracting structured data:', error);
     throw new Error(`Failed to extract structured data: ${error.message}`);
   }
@@ -167,7 +167,7 @@ async function extractEndpoints(csrText: string, context: string): Promise<any[]
       console.warn('Could not parse endpoint JSON response:', e);
       return [];
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error extracting endpoints:', error);
     return [];
   }
@@ -222,7 +222,7 @@ async function extractTreatmentArms(csrText: string, context: string): Promise<a
       console.warn('Could not parse treatment arms JSON response:', e);
       return [];
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error extracting treatment arms:', error);
     return [];
   }
@@ -272,7 +272,7 @@ async function extractEligibilityCriteria(
       console.warn('Could not parse eligibility criteria JSON response:', e);
       return { inclusionCriteria: [], exclusionCriteria: [] };
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error extracting eligibility criteria:', error);
     return { inclusionCriteria: [], exclusionCriteria: [] };
   }
@@ -330,7 +330,7 @@ async function extractStudyDesign(
         description: '',
       };
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error extracting study design:', error);
     return {
       studyDesign: '',
@@ -392,7 +392,7 @@ async function extractSafetyData(csrText: string, context: string): Promise<any>
         deaths: { count: 0, details: '' },
       };
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error extracting safety data:', error);
     return {
       commonAEs: [],
@@ -469,7 +469,7 @@ export async function processBatchForTraining(reportIds: number[]): Promise<any>
         console.warn(`File not found for report ID ${reportId}`);
         results.failed++;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error processing report ID ${reportId}:`, error);
       results.failed++;
     }
@@ -641,7 +641,7 @@ export async function trainModels(datasetPath: string): Promise<any> {
       domains: Object.keys(domainExamples).length,
       trainingResults,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error training models:', error);
     throw new Error(`Failed to train models: ${error.message}`);
   }
@@ -787,7 +787,7 @@ export async function makePrediction(text: string, domain: string): Promise<any>
         }
         return JSON.parse(fallbackResponse);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error using custom model for ${domain}:`, error);
 
       // Fall back to default model
@@ -804,7 +804,7 @@ export async function makePrediction(text: string, domain: string): Promise<any>
         return { error: 'Could not parse prediction result' };
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error making prediction:', error);
     throw new Error(`Failed to make prediction: ${error.message}`);
   }

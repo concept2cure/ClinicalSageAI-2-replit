@@ -1,0 +1,54 @@
+{
+  "owners": [
+    {
+      "prefix": "/api",
+      "owner": "Platform API Gateway",
+      "contact": "server/index.ts"
+    },
+    {
+      "prefix": "/api/auth",
+      "owner": "Identity Access",
+      "contact": "server/routes/auth.ts"
+    },
+    {
+      "prefix": "/api/projects",
+      "owner": "Workspace Core",
+      "contact": "server/routes/projects-management.ts"
+    },
+    {
+      "prefix": "/api/documents",
+      "owner": "Authoring Governance",
+      "contact": "server/routes/documents-unified.ts"
+    },
+    {
+      "prefix": "/api/reports",
+      "owner": "Reporting Intelligence",
+      "contact": "server/routes/reports*.ts"
+    },
+    {
+      "prefix": "/api/ind",
+      "owner": "Submission Workflows",
+      "contact": "server/routes/ind*.ts"
+    },
+    {
+      "prefix": "/api/regulatory",
+      "owner": "Regulatory Intelligence",
+      "contact": "server/routes/regulatory*.ts"
+    },
+    {
+      "prefix": "/api/ai",
+      "owner": "AI Platform",
+      "contact": "server/services/ai-gateway/"
+    },
+    {
+      "prefix": "/api/cmc",
+      "owner": "CMC Platform",
+      "contact": "server/routes/cmc*.ts"
+    },
+    {
+      "prefix": "/api/concept2cure",
+      "owner": "Platform Kernel",
+      "contact": "server/routes/concept2cure.ts"
+    }
+  ]
+}

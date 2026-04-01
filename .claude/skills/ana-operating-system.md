@@ -132,7 +132,7 @@ After every streaming response completes:
 | `/help` | readiness + recommendations | Show capabilities with project data |
 | `/export` | (client-side) | Download conversation as markdown |
 
-## Operational Commands (39)
+## Operational Commands (41)
 
 ### Projects & Artifacts
 `create_project` `list_projects` `update_project` `create_artifact` `update_artifact` `update_artifact_status` `list_artifacts` `place_in_dossier` `search_artifacts` `list_artifact_versions` `export_artifact` `compare_versions` `review_version_impact` `revert_to_version`
@@ -145,6 +145,9 @@ After every streaming response completes:
 
 ### Biostatistics
 `generate_sap` `compute_sample_size` `compute_dose_escalation` `assess_defensibility` `design_trial`
+
+### Market Access & Diagnostics
+`analyze_cms_strategy` `assess_diagnostic_validation`
 
 ### Document Lifecycle
 `draft_section` `scan_deficiencies` `freeze_document` `sign_document` `export_document` `generate_checklist` `submit_document`
@@ -200,7 +203,7 @@ Each trigger auto-enriches the system prompt when matched:
 |------|---------|------|
 | `server/services/ana-ri/persona.ts` | System prompt + role overlays | Core identity |
 | `server/services/ana-ri/context-enrichment.ts` | All triggers + enrichment functions | Intelligence injection |
-| `server/services/ana-ri/command-executor.ts` | 39 operational commands + parser | Execution layer |
+| `server/services/ana-ri/command-executor.ts` | 41 operational commands + parser | Execution layer |
 | `server/services/ana-ri/workflow-orchestration.ts` | 8 submission workflows | Workflow guidance |
 | `server/services/ana-ri/orchestrator.ts` | Intent detection, prompt assembly | Orchestration |
 | `server/services/ana-ri/artifact-generator.ts` | 8 document type templates | Document generation |

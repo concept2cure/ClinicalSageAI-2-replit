@@ -151,3 +151,82 @@ declare module '@/components/ui/chart' {
 
   export const ChartTooltipContent: ComponentType<any>;
 }
+
+// ============================================================================
+// JS Service Modules (server)
+// These are plain .js files imported by TypeScript barrel/routes.
+// ============================================================================
+
+declare module '*/documentService.js' {
+  const documentService: {
+    getDocumentById(id: string): Promise<any>;
+    convertToText(doc: any): string;
+  };
+  export default documentService;
+}
+
+declare module '*/fdaService.js' {
+  export function fetchFaersData(params: Record<string, unknown>): Promise<any>;
+  export function analyzeFaersDataForCER(data: any): any;
+}
+
+declare module '*/kimiAIService.js' {
+  const kimiAIService: Record<string, (...args: any[]) => any>;
+  export default kimiAIService;
+}
+
+declare module '*/pdfGenerator.js' {
+  const pdfGenerator: Record<string, (...args: any[]) => any>;
+  export default pdfGenerator;
+}
+
+declare module '*/enhancedPdfBuilder.js' {
+  const enhancedPdfBuilder: Record<string, (...args: any[]) => any>;
+  export default enhancedPdfBuilder;
+}
+
+declare module '*/fda510kDocumentGenerator.js' {
+  const fda510kDocumentGenerator: Record<string, (...args: any[]) => any>;
+  export default fda510kDocumentGenerator;
+}
+
+declare module '*/cmcBlueprintService.js' {
+  const cmcBlueprintService: Record<string, (...args: any[]) => any>;
+  export default cmcBlueprintService;
+}
+
+declare module '*/harvestEngine.js' {
+  export function executeHarvest(
+    submissionId: string,
+    options?: Record<string, unknown>
+  ): Promise<any>;
+  export function getHarvestHistory(
+    submissionId: string,
+    options?: Record<string, unknown>
+  ): Promise<any>;
+  const harvestEngine: {
+    executeHarvest: typeof executeHarvest;
+    getHarvestHistory: typeof getHarvestHistory;
+  };
+  export default harvestEngine;
+}
+
+declare module '*/dataHarvester.js' {
+  export function processDocument(documentId: string, submissionId: string): Promise<any>;
+  export function getHarvestingJobStatus(jobId: string): Promise<any>;
+  export function queueDocumentsForHarvesting(
+    documentIds: string[],
+    submissionId: string
+  ): Promise<any>;
+  export function getHarvestingStats(submissionId: string): Promise<any>;
+  export function searchHarvestableDocuments(filters: any): Promise<any>;
+  const dataHarvester: Record<string, (...args: any[]) => any>;
+  export default dataHarvester;
+}
+
+declare module '*/enhancedFaersService.js' {
+  export class EnhancedFAERSClient {
+    constructor();
+  }
+  export function fetchFaersAnalysis(...args: any[]): Promise<any>;
+}

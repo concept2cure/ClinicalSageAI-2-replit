@@ -541,10 +541,10 @@ async function loadDocumentContext(
         [projectId, organizationId]
       ),
       // Load project settings to get knowledge documents with isActive state
-      pool.query(
-        `SELECT settings FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-        [projectId, organizationId]
-      ),
+      pool.query(`SELECT settings FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1`, [
+        projectId,
+        organizationId,
+      ]),
     ]);
 
     const counts = countResult.rows[0] || { total: 0, completed: 0, in_progress: 0 };
@@ -556,13 +556,18 @@ async function loadDocumentContext(
         ? (projectSettings as Record<string, unknown>).knowledge
         : null;
     const knowledgeDocs: Array<{ id?: string; isActive?: boolean }> =
-      knowledgeObj && typeof knowledgeObj === 'object' && Array.isArray((knowledgeObj as any).documents)
+      knowledgeObj &&
+      typeof knowledgeObj === 'object' &&
+      Array.isArray((knowledgeObj as any).documents)
         ? (knowledgeObj as any).documents
         : [];
     const totalKnowledgeDocs = knowledgeDocs.length;
     const activeKnowledgeDocs = knowledgeDocs.filter(doc => doc.isActive !== false);
     const deactivatedDocIds = new Set(
-      knowledgeDocs.filter(doc => doc.isActive === false).map(doc => doc.id).filter(Boolean)
+      knowledgeDocs
+        .filter(doc => doc.isActive === false)
+        .map(doc => doc.id)
+        .filter(Boolean)
     );
 
     // Filter recent artifacts — exclude any linked to a deactivated knowledge document
@@ -813,6 +818,7 @@ export async function assembleSystemPrompt(
 
   const parts: string[] = [BASE_SYSTEM_PROMPT];
   const intel = context.userIntelligence;
+  const organizationId = intel?.organization?.id;
 
   // ── Deep User Identity ───────────────────────────────────────────────────
   if (intel?.identity) {
@@ -822,19 +828,37 @@ export async function assembleSystemPrompt(
     parts.push(`
 ## User Identity — You Know This Person
 - **Name**: ${u.greetingName} (${u.name})
-- **Email**: ${u.email}${u.title ? `\n- **Title**: ${u.title}` : ''}${u.department ? `\n- **Department**: ${u.department}` : ''}
+- **Email**: ${u.email}${u.title ? `\n- **Title**: ${u.title}` : ''}${
+      u.department ? `\n- **Department**: ${u.department}` : ''
+    }
 - **Role**: ${u.role}
 - **Expertise Level**: ${expertise}
-- **Communication Preference**: ${style}${u.focusAreas.length ? `\n- **Focus Areas**: ${u.focusAreas.join(', ')}` : ''}
+- **Communication Preference**: ${style}${
+      u.focusAreas.length ? `\n- **Focus Areas**: ${u.focusAreas.join(', ')}` : ''
+    }
 
 ### How to Address This User:
 - Greet them as "${u.greetingName}" on first message
-- ${expertise === 'expert' ? 'Skip basic explanations — they know regulatory science deeply. Focus on nuanced analysis and strategic implications.' : expertise === 'novice' ? 'Provide clear explanations of regulatory concepts. Define technical terms on first use. Use examples.' : 'Balance depth with clarity. They understand regulatory basics but may need context for specialized topics.'}
-- ${style === 'concise' ? 'Keep responses focused and brief. Use bullet points heavily. Skip unnecessary preambles.' : style === 'academic' ? 'Be thorough and cite sources. Use formal regulatory language. Include guideline references in-line.' : 'Use a professional yet approachable tone. Structured responses with clear headings.'}`);
+- ${
+      expertise === 'expert'
+        ? 'Skip basic explanations — they know regulatory science deeply. Focus on nuanced analysis and strategic implications.'
+        : expertise === 'novice'
+        ? 'Provide clear explanations of regulatory concepts. Define technical terms on first use. Use examples.'
+        : 'Balance depth with clarity. They understand regulatory basics but may need context for specialized topics.'
+    }
+- ${
+      style === 'concise'
+        ? 'Keep responses focused and brief. Use bullet points heavily. Skip unnecessary preambles.'
+        : style === 'academic'
+        ? 'Be thorough and cite sources. Use formal regulatory language. Include guideline references in-line.'
+        : 'Use a professional yet approachable tone. Structured responses with clear headings.'
+    }`);
   } else if (context.userName || context.userRole) {
     parts.push(`
 ## User Context
-- **User**: ${context.userName || 'Unknown'}${context.userRole ? ` (${context.userRole})` : ''}${context.organizationName ? `\n- **Organization**: ${context.organizationName}` : ''}`);
+- **User**: ${context.userName || 'Unknown'}${context.userRole ? ` (${context.userRole})` : ''}${
+      context.organizationName ? `\n- **Organization**: ${context.organizationName}` : ''
+    }`);
   }
 
   // ── Organization & License Context ────────────────────────────────────────
@@ -845,10 +869,22 @@ export async function assembleSystemPrompt(
 - **Organization**: ${org.name}
 - **Industry**: ${org.industryMode}
 - **Tier**: ${org.tier}
-- **Enabled Modules**: ${org.enabledModules.length > 0 ? org.enabledModules.join(', ') : 'None configured'}
+- **Enabled Modules**: ${
+      org.enabledModules.length > 0 ? org.enabledModules.join(', ') : 'None configured'
+    }
 
 ### Industry-Specific Awareness:
-${org.industryMode === 'medtech' ? '- This is a medical device / diagnostics company. Emphasize 510(k), PMA, De Novo pathways, ISO standards, and design controls.' : org.industryMode === 'biotech' || org.industryMode === 'pharma' ? '- This is a pharma/biotech company. Emphasize IND/NDA/BLA pathways, ICH guidelines, and CTD structure.' : org.industryMode === 'cro' ? '- This is a CRO (Contract Research Organization). Focus on multi-sponsor workflows, SOW compliance, and study management.' : org.industryMode === 'academic' ? '- This is an academic/research institution. Emphasize investigator-initiated IND requirements, IRB processes, and grant compliance.' : '- Provide balanced guidance across all regulatory pathways.'}`);
+${
+  org.industryMode === 'medtech'
+    ? '- This is a medical device / diagnostics company. Emphasize 510(k), PMA, De Novo pathways, ISO standards, and design controls.'
+    : org.industryMode === 'biotech' || org.industryMode === 'pharma'
+    ? '- This is a pharma/biotech company. Emphasize IND/NDA/BLA pathways, ICH guidelines, and CTD structure.'
+    : org.industryMode === 'cro'
+    ? '- This is a CRO (Contract Research Organization). Focus on multi-sponsor workflows, SOW compliance, and study management.'
+    : org.industryMode === 'academic'
+    ? '- This is an academic/research institution. Emphasize investigator-initiated IND requirements, IRB processes, and grant compliance.'
+    : '- Provide balanced guidance across all regulatory pathways.'
+}`);
   }
 
   // ── Cross-Project Awareness ───────────────────────────────────────────────
@@ -857,13 +893,17 @@ ${org.industryMode === 'medtech' ? '- This is a medical device / diagnostics com
       .slice(0, 6)
       .map(
         p =>
-          `  - **${p.name}** (${p.submissionType}, ${p.status}, ${p.progress}% complete)${p.phase ? ` — ${p.phase}` : ''}${p.therapeuticArea ? ` [${p.therapeuticArea}]` : ''}`
+          `  - **${p.name}** (${p.submissionType}, ${p.status}, ${p.progress}% complete)${
+            p.phase ? ` — ${p.phase}` : ''
+          }${p.therapeuticArea ? ` [${p.therapeuticArea}]` : ''}`
       )
       .join('\n');
 
     parts.push(`
 ## All User Projects (${intel.projects.length} total)
-${projectList}${intel.projects.length > 6 ? `\n  - ... and ${intel.projects.length - 6} more` : ''}`);
+${projectList}${
+      intel.projects.length > 6 ? `\n  - ... and ${intel.projects.length - 6} more` : ''
+    }`);
   }
 
   // ── Active Project Context ────────────────────────────────────────────────
@@ -872,9 +912,13 @@ ${projectList}${intel.projects.length > 6 ? `\n  - ... and ${intel.projects.leng
     parts.push(`
 ## Active Project Context (Currently Working On)
 - **Project**: ${p.name} (ID: ${p.id})
-- **Submission Type**: ${p.submissionType}${p.therapeuticArea ? `\n- **Therapeutic Area**: ${p.therapeuticArea}` : ''}${p.phase ? `\n- **Phase**: ${p.phase}` : ''}
+- **Submission Type**: ${p.submissionType}${
+      p.therapeuticArea ? `\n- **Therapeutic Area**: ${p.therapeuticArea}` : ''
+    }${p.phase ? `\n- **Phase**: ${p.phase}` : ''}
 - **Status**: ${p.status} | **Progress**: ${p.progress}%
-- **Priority**: ${p.priority} | **Risk Level**: ${p.riskLevel}${p.description ? `\n- **Description**: ${p.description}` : ''}${p.tags?.length ? `\n- **Tags**: ${p.tags.join(', ')}` : ''}`);
+- **Priority**: ${p.priority} | **Risk Level**: ${p.riskLevel}${
+      p.description ? `\n- **Description**: ${p.description}` : ''
+    }${p.tags?.length ? `\n- **Tags**: ${p.tags.join(', ')}` : ''}`);
   }
 
   // ── Work Continuity — What They Were Doing ────────────────────────────────
@@ -882,7 +926,9 @@ ${projectList}${intel.projects.length > 6 ? `\n  - ... and ${intel.projects.leng
     const s = intel.currentSession;
     parts.push(`
 ## Current Work Session
-- **Currently working on**: ${s.contextTitle || s.contextType || 'General work'}${s.contextReference ? ` (${s.contextReference})` : ''}${s.projectName ? `\n- **In project**: ${s.projectName}` : ''}
+- **Currently working on**: ${s.contextTitle || s.contextType || 'General work'}${
+      s.contextReference ? ` (${s.contextReference})` : ''
+    }${s.projectName ? `\n- **In project**: ${s.projectName}` : ''}
 - **Session started**: ${s.startedAt ? new Date(s.startedAt).toLocaleString() : 'Unknown'}
 - **Messages in session**: ${s.messagesSent} | **Artifacts created**: ${s.artifactsCreated}`);
   }
@@ -892,7 +938,9 @@ ${projectList}${intel.projects.length > 6 ? `\n  - ... and ${intel.projects.leng
       .slice(0, 3)
       .map(
         s =>
-          `  - ${s.contextTitle || s.contextType || 'General'} in ${s.projectName || 'unknown project'} (${s.durationMinutes ? `${s.durationMinutes} min` : 'brief session'})`
+          `  - ${s.contextTitle || s.contextType || 'General'} in ${
+            s.projectName || 'unknown project'
+          } (${s.durationMinutes ? `${s.durationMinutes} min` : 'brief session'})`
       )
       .join('\n');
     parts.push(`
@@ -908,7 +956,9 @@ Use this to provide continuity — reference what they last worked on and sugges
       .slice(0, 5)
       .map(
         (t, i) =>
-          `  ${i + 1}. **${t.taskTitle}**${t.projectName ? ` (${t.projectName})` : ''}${t.dueDate ? ` — due ${new Date(t.dueDate).toLocaleDateString()}` : ''}${t.aiReasoning ? `\n     _Reason: ${t.aiReasoning}_` : ''}`
+          `  ${i + 1}. **${t.taskTitle}**${t.projectName ? ` (${t.projectName})` : ''}${
+            t.dueDate ? ` — due ${new Date(t.dueDate).toLocaleDateString()}` : ''
+          }${t.aiReasoning ? `\n     _Reason: ${t.aiReasoning}_` : ''}`
       )
       .join('\n');
     parts.push(`
@@ -970,14 +1020,26 @@ Use conversation history to avoid re-asking for information the user has already
   }
 
   // ── Document Context ─────────────────────────────────────────────────────
-  if (context.documents && (context.documents.totalDocuments > 0 || context.documents.totalKnowledgeDocuments > 0)) {
+  if (
+    context.documents &&
+    (context.documents.totalDocuments > 0 || context.documents.totalKnowledgeDocuments > 0)
+  ) {
     const d = context.documents;
-    const knowledgeInfo = d.totalKnowledgeDocuments > 0
-      ? `\n- **Knowledge Base**: ${d.activeKnowledgeDocuments}/${d.totalKnowledgeDocuments} documents active in context${d.totalKnowledgeDocuments - d.activeKnowledgeDocuments > 0 ? ` (${d.totalKnowledgeDocuments - d.activeKnowledgeDocuments} deactivated)` : ''}`
-      : '';
+    const knowledgeInfo =
+      d.totalKnowledgeDocuments > 0
+        ? `\n- **Knowledge Base**: ${d.activeKnowledgeDocuments}/${
+            d.totalKnowledgeDocuments
+          } documents active in context${
+            d.totalKnowledgeDocuments - d.activeKnowledgeDocuments > 0
+              ? ` (${d.totalKnowledgeDocuments - d.activeKnowledgeDocuments} deactivated)`
+              : ''
+          }`
+        : '';
     parts.push(`
 ## Document Status
-- **Total**: ${d.totalDocuments} documents | **Completed**: ${d.completedDocuments} | **In Progress**: ${d.inProgressDocuments}${knowledgeInfo}${
+- **Total**: ${d.totalDocuments} documents | **Completed**: ${
+      d.completedDocuments
+    } | **In Progress**: ${d.inProgressDocuments}${knowledgeInfo}${
       d.recentDocuments.length > 0
         ? `\n- **Recent work**: ${d.recentDocuments
             .map(r => `${r.title} (${r.status}${r.sectionCode ? `, ${r.sectionCode}` : ''})`)
@@ -991,7 +1053,9 @@ Use conversation history to avoid re-asking for information the user has already
     const w = context.workflow;
     parts.push(`
 ## Workflow Status
-- **Active workflows**: ${w.activeWorkflows} | **Steps**: ${w.completedSteps}/${w.totalSteps}${w.currentPhase ? `\n- **Current Phase**: ${w.currentPhase}` : ''}${w.blockers.length > 0 ? `\n- **Blockers**: ${w.blockers.join('; ')}` : ''}`);
+- **Active workflows**: ${w.activeWorkflows} | **Steps**: ${w.completedSteps}/${w.totalSteps}${
+      w.currentPhase ? `\n- **Current Phase**: ${w.currentPhase}` : ''
+    }${w.blockers.length > 0 ? `\n- **Blockers**: ${w.blockers.join('; ')}` : ''}`);
   }
 
   // ── Module-Specific Intelligence ──────────────────────────────────────────
@@ -1021,7 +1085,9 @@ When the user asks to draft any of these document types, you can generate a comp
         if (moduleIntel.workflowStages.length > 0) {
           parts.push(`
 ### Standard Workflow Stages
-${moduleIntel.workflowStages.map((s, i) => `${i + 1}. **${s.name}** (${s.estimatedDays}d) — ${s.description}`).join('\n')}`);
+${moduleIntel.workflowStages
+  .map((s, i) => `${i + 1}. **${s.name}** (${s.estimatedDays}d) — ${s.description}`)
+  .join('\n')}`);
         }
       }
     }
@@ -1057,7 +1123,9 @@ ${moduleIntel.workflowStages.map((s, i) => `${i + 1}. **${s.name}** (${s.estimat
       parts.push(`
 ## Submission Readiness Intelligence
 - **Overall Readiness**: ${readiness.overallScore}% (${readiness.status.replace(/_/g, ' ')})
-- **Completeness**: ${readiness.scores.completeness}% | **Quality**: ${readiness.scores.quality}% | **Compliance**: ${readiness.scores.compliance}%
+- **Completeness**: ${readiness.scores.completeness}% | **Quality**: ${
+        readiness.scores.quality
+      }% | **Compliance**: ${readiness.scores.compliance}%
 - **Routing**: ${readiness.scores.routing}% | **Consistency**: ${readiness.scores.consistency}%
 - **Blockers**: ${readiness.blockers.length}${
         readiness.blockers.length > 0
@@ -1109,7 +1177,9 @@ You are currently assisting with a 510(k) premarket notification.
   } else if (subType === 'NDA' || subType === 'BLA') {
     parts.push(`
 ## ${subType} Specific Guidance
-You are assisting with a ${subType === 'NDA' ? 'New Drug Application' : 'Biologics License Application'}.
+You are assisting with a ${
+      subType === 'NDA' ? 'New Drug Application' : 'Biologics License Application'
+    }.
 - Full CTD Modules 1-5 are required with complete clinical datasets
 - Ensure ISS/ISE (Integrated Summary of Safety/Efficacy) are comprehensive
 - REMS assessment may be required if safety signals warrant it
@@ -1887,11 +1957,12 @@ export async function getIntelligencePrefix(
       // Non-blocking: if it fails, chat still works without wisdom context
       parsedProjectId
         ? import('./ana-wisdom-engine')
-            .then(({ buildWisdomContext }) =>
-              buildWisdomContext(parsedProjectId!, organizationId!)
-            )
-            .catch((err) => {
-              console.warn('[IntelligencePrefix] Wisdom context failed (non-blocking):', err?.message);
+            .then(({ buildWisdomContext }) => buildWisdomContext(parsedProjectId!, organizationId!))
+            .catch(err => {
+              console.warn(
+                '[IntelligencePrefix] Wisdom context failed (non-blocking):',
+                err?.message
+              );
               return null;
             })
         : Promise.resolve(null),

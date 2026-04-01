@@ -356,3 +356,136 @@ What SHOULD happen:
 
 ### Recommendation
 Wire `NewProjectModal` to call the `useProjects` hook (or directly call `POST /api/concept2cure/projects` via `apiRequest()`), and wire `ProjectsSidebar` to read from `GET /api/concept2cure/projects` via React Query. The server routes are already production-ready. This is a frontend wiring problem, not a backend gap.
+
+---
+
+## 8. 2026-03-31 Full Claude Projects Parity Re-Audit (Mounted Product Path)
+
+This section supersedes earlier assumptions that focused on `Concept2CureLayout` surfaces.  
+The active product path for this audit is `client/src/concept2cure/ZenApp.tsx` with:
+
+- `ZenSidebar`
+- `ProjectSwitcher` + `NewProjectModal` (projects module)
+- `ProjectKnowledgePanel` + `useProjectKnowledge`
+- `AnaPersistentPanel`
+- Server routes under `concept2cure.ts`, `chat.ts`, `client-intelligence.ts`, and supporting services
+
+### Executive Verdict
+
+**Overall parity verdict: PARTIAL (fails on core Claude Projects guarantees).**
+
+The product has strong project CRUD and shell UX, but it does not yet meet Claude Projects-level truth on:
+
+1. **Reliable conversation resume semantics**
+2. **Single canonical project instructions path**
+3. **Single canonical project file-to-memory retrieval path**
+4. **Project-scoped retrieval isolation**
+5. **Project-level SKILLS.md-style capability**
+
+---
+
+### Severity-Ranked Findings
+
+## Critical
+
+1. **"Resume chat" affordance is misleading in current chat architecture.**  
+   - UI sets `activeConversationId` and advertises resume (`client/src/concept2cure/ZenApp.tsx:3813-3833`, `3903-3918`, `4030-4045`), but `AnaPersistentPanel` does not accept a conversation/thread seed prop and maintains thread continuity via local `threadIdRef` only (`client/src/concept2cure/components/chat/AnaPersistentPanel.tsx:592-651`, `739`, `1687`, `1820`, `2009`).  
+   - **Impact:** users can click "Resume latest chat" without guaranteed hydration of that project conversation.
+
+2. **Project instructions are split across multiple stores and can fail to reach the chat prompt path.**  
+   - Project config UI claims instructions are injected into every conversation (`client/src/concept2cure/components/workspace/ProjectConfigPanel.tsx:323-335`).  
+   - But save handler does not persist `customInstructions` in `handleEditProject` (`client/src/concept2cure/ZenApp.tsx:1913-1934`).  
+   - Main sidebar instructions save into `projects.settings.knowledge/customInstructions` (`server/routes/concept2cure.ts:2240-2294`), while intelligence prefix reads from `projectIntelligenceProfiles` (`server/services/client-intelligence-memory.ts:1202-1256`, called by `server/services/lumen-context-builder.ts:1872-1885`).  
+   - `AnaPersistentPanel` does not send `customInstructions` in payload (no usage; see payload build at `client/src/concept2cure/components/chat/AnaPersistentPanel.tsx:1637-1715`).  
+   - **Impact:** user-visible instructions may not be consistently active in model context.
+
+3. **Project file memory path is not Claude-style "always-on project knowledge".**  
+   - Main upload path (`/api/concept2cure/documents/upload`) writes to `projects.settings.knowledge.documents`, artifacts, and org-level atoms (`server/routes/concept2cure.ts:2553-2724`).  
+   - For non-text files, extraction is placeholder text (`server/routes/concept2cure.ts:2598-2600`).  
+   - Chat retrieval uses org-filtered hybrid atom search, not project-filtered retrieval (`server/routes/chat.ts:295-306`, `server/services/enhancedEmbeddingService.ts:423-463`).  
+   - Separate project memory ingestion path exists (`/api/client-intelligence/project/:projectId/documents/upload`) but is not the primary UI path (`server/routes/client-intelligence.ts:455-491`, `server/services/client-intelligence-memory.ts:926-975`).  
+   - Semantic project memory requires `embedding IS NOT NULL` (`server/services/client-intelligence-memory.ts:1551-1561`), but ingestion does not set embeddings.  
+   - **Impact:** uploaded project files are not reliably guaranteed as project-scoped "always available" context.
+
+## High
+
+4. **Project identity normalization is inconsistent (`proj_*` vs numeric vs text).**  
+   - Intelligence prefix parses project id with `parseInt(String(projectId), 10)` (`server/services/lumen-context-builder.ts:1878`), which fails for prefixed IDs.  
+   - Chat builder uses `projectId ? Number(projectId) : null` for profile prefetch (`server/services/ana-ri/chat-context-builder.ts:143-146`).  
+   - Trace tables use text `project_id` (`db/migrations/20260224_ai_trace_chain.sql`).  
+   - **Impact:** intermittent loss of project-scoped intelligence/memory retrieval.
+
+5. **`/api/projects` has route ownership and security quality issues.**  
+   - Inline `GET /api/projects` exists in `server/index.ts` before mounted `projects-management` router (`server/index.ts:634-675`, `7057`).  
+   - `POST /api/projects` schema trusts client-provided `organizationId` (`server/routes/projects-management.ts:16-29`, `135-151`, `204`).  
+   - **Impact:** ambiguous behavior and tenant-risk surface on non-concept2cure path.
+
+6. **Thread-list fallback can lose project scoping.**  
+   - If `ai_threads` path fails/empty, fallback query uses `chat_threads` without project filtering (`server/routes/chat.ts:1126-1131`).  
+   - **Impact:** project conversation list integrity can degrade.
+
+## Medium
+
+7. **`useProjectKnowledge.addTextContent` posts JSON to a multipart upload endpoint.**  
+   - Calls `POST /api/concept2cure/documents/upload` with JSON (`client/src/concept2cure/hooks/useProjectKnowledge.ts:457-463`) while server expects `knowledgeUpload.single('file')` (`server/routes/concept2cure.ts:2556-2559`).  
+   - **Impact:** API failure masked by local optimistic add; persistence mismatch.
+
+8. **Local fallback can mask persistence failures.**  
+   - Knowledge load/upload/instruction update has local fallback behavior (`client/src/concept2cure/hooks/useProjectKnowledge.ts:171-190`, `264-307`, `410-415`).  
+   - **Impact:** UI may appear successful while server state is stale.
+
+9. **Project settings tabs expose placeholder functionality.**  
+   - Team/Compliance tabs are placeholders (`client/src/concept2cure/components/workspace/ProjectConfigPanel.tsx:365-395`).  
+   - **Impact:** beta honesty risk.
+
+## Low
+
+10. **No explicit project-level `SKILLS.md` primitive exists in mounted product flow.**  
+   - Current system supports freeform custom instructions and profile fields, but no dedicated project-level SKILLS.md upload/parse/governance contract in active project UX/API path.  
+   - **Impact:** capability gap versus requested Claude-like project skill profile semantics.
+
+---
+
+### Confirmed Working Capabilities (Evidence-Based)
+
+1. **Project CRUD and project shell wiring are mounted in `ZenApp` path.**  
+   - Create/archive/delete/select/pin wiring (`client/src/concept2cure/ZenApp.tsx:1821-1911`, `2248-2278`, `4260-4288`).
+
+2. **Projects foyer UX is live (search, continue card, grouped sections).**  
+   - (`client/src/concept2cure/ZenApp.tsx:3760-4084`).
+
+3. **Project chat context does carry project id/type/screen metadata.**  
+   - Payload includes `project_id` and context object (`client/src/concept2cure/components/chat/AnaPersistentPanel.tsx:1682-1715`).
+
+4. **Project knowledge panel supports file upload/removal/activation and instruction editing.**  
+   - (`client/src/concept2cure/components/workspace/ProjectKnowledgePanel.tsx`, `client/src/concept2cure/hooks/useProjectKnowledge.ts`).
+
+5. **Server routes for knowledge document upload/remove/activation are present and tenant-scoped by org.**  
+   - (`server/routes/concept2cure.ts:2553-2837`).
+
+6. **Project intelligence profile + memory APIs are implemented.**  
+   - (`server/routes/client-intelligence.ts:424-567`).
+
+---
+
+### Claude Projects Parity Gap Summary (Requested Scope)
+
+| Capability | Current Status | Parity |
+|---|---|---|
+| Project-scoped conversations | Exists, but resume wiring is inconsistent | **Not yet** |
+| Project instructions always applied | Split storage/assembly paths | **Not yet** |
+| Project files always in project context | Mixed stores; no strict project-scoped retrieval guarantee | **Not yet** |
+| Project-level SKILLS.md equivalent | Freeform instructions only; no explicit skills artifact contract | **Not yet** |
+| Honest UI affordances | Improved, but some labels over-promise behavior | **Partial** |
+
+---
+
+### Remediation Sequence (Recommended Order)
+
+1. **Unify project identity** (`proj_*` to canonical numeric internal id at API boundary).  
+2. **Unify instruction source of truth** (single canonical store and guaranteed inclusion in chat assembly).  
+3. **Make resume deterministic** (`activeConversationId/threadId` must hydrate message history).  
+4. **Unify file ingestion paths** so project knowledge upload also writes searchable project memory with embeddings.  
+5. **Enforce project-scoped retrieval** in hybrid search when `project_id` exists.  
+6. **Add explicit project SKILLS artifact** (e.g., `project_skills.md`) with parser + deterministic prompt injection.  
+7. **Harden beta honesty** by removing/labeling placeholder tabs and any implication-only UI states.

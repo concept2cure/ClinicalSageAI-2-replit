@@ -6,11 +6,12 @@
  *
  * IMPORTANT: dotenv must be loaded BEFORE any env var reads.
  * ESM hoists imports above runtime code, so `server/index.ts`'s
- * `dotenvConfig({ override: true })` runs AFTER this module initializes.
+ * `dotenvConfig()` may run AFTER this module initializes.
  * We load dotenv here to guarantee .env values are available.
+ * NOTE: override: false so shell-exported DATABASE_URL takes precedence.
  */
 import { config as dotenvConfig } from 'dotenv';
-dotenvConfig({ override: true });
+dotenvConfig({ override: false });
 
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
@@ -42,10 +43,11 @@ try {
       connectionString: databaseUrl,
       ssl: getSslConfig(databaseUrl),
       max: isProduction ? 40 : 20, // Scale pool for production concurrency
-      idleTimeoutMillis: 15000, // Release idle connections faster (was 30s)
+      idleTimeoutMillis: 30000, // Release idle connections after 30s (balanced for bursty traffic)
       connectionTimeoutMillis: 5000,
       statement_timeout: 30000, // Kill queries running longer than 30s
       idle_in_transaction_session_timeout: 60000, // Kill idle-in-transaction after 60s
+      allowExitOnIdle: !isProduction, // Dev: let process exit; Prod: keep pool alive
     });
 
     // Test connection with retry mechanism
@@ -277,28 +279,38 @@ export async function ensureAuthTables(): Promise<void> {
     const demoName = 'JM Smith';
 
     // Get the Concept2Cure org id
-    const c2cOrg = await client.query(`SELECT id FROM organizations WHERE slug = 'concept2cure' LIMIT 1`);
+    const c2cOrg = await client.query(
+      `SELECT id FROM organizations WHERE slug = 'concept2cure' LIMIT 1`
+    );
     const c2cOrgId = c2cOrg.rows[0]?.id;
 
     if (c2cOrgId) {
       // Upsert demo user
-      await client.query(`
+      await client.query(
+        `
         INSERT INTO users (email, name, password_hash, title, department, status, default_organization_id, password_changed_at)
         VALUES ($1, $2, $3, 'Chief Science Officer', 'Executive Leadership', 'active', $4, NOW())
         ON CONFLICT (email) DO UPDATE SET
           password_hash = CASE WHEN users.password_hash IS NULL OR users.password_hash = '' THEN $3 ELSE users.password_hash END,
           default_organization_id = COALESCE(users.default_organization_id, $4),
           status = 'active'
-      `, [demoEmail, demoName, demoHash, c2cOrgId]);
+      `,
+        [demoEmail, demoName, demoHash, c2cOrgId]
+      );
 
       // Ensure admin membership
-      const demoUser = await client.query(`SELECT id FROM users WHERE email = $1 LIMIT 1`, [demoEmail]);
+      const demoUser = await client.query(`SELECT id FROM users WHERE email = $1 LIMIT 1`, [
+        demoEmail,
+      ]);
       if (demoUser.rows[0]) {
-        await client.query(`
+        await client.query(
+          `
           INSERT INTO organization_users (organization_id, user_id, role)
           VALUES ($1, $2, 'admin')
           ON CONFLICT (organization_id, user_id) DO UPDATE SET role = 'admin'
-        `, [c2cOrgId, demoUser.rows[0].id]);
+        `,
+          [c2cOrgId, demoUser.rows[0].id]
+        );
       }
       logger.info(`ensureAuthTables: GA demo user verified (${demoEmail})`);
     }
@@ -355,8 +367,9 @@ export async function query(text: string, params: any[] = []): Promise<any> {
     const duration = Date.now() - start;
 
     // Log slow queries (configurable, default 250ms prod / 100ms dev)
-    const slowThreshold = parseInt(process.env.SLOW_QUERY_THRESHOLD_MS || '', 10)
-      || (process.env.NODE_ENV === 'production' ? 250 : 100);
+    const slowThreshold =
+      parseInt(process.env.SLOW_QUERY_THRESHOLD_MS || '', 10) ||
+      (process.env.NODE_ENV === 'production' ? 250 : 100);
     if (duration > slowThreshold) {
       logger.warn('Slow query detected', {
         duration,

@@ -27,6 +27,7 @@ import {
 import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { createHash } from 'crypto';
+import { resolveGovernedContext } from './concept2cure/governedDocumentContractService.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -249,6 +250,67 @@ async function executeArtifactCreation(payload: AnaActionPayload): Promise<AnaAc
 
   const externalId = `ana_${payload.type}_${uuidv4().slice(0, 8)}`;
   const contentHash = createHash('sha256').update(payload.content, 'utf8').digest('hex');
+  const mockReq = {
+    body: {
+      projectId: payload.projectId,
+      metadata: {
+        source: payload.metadata.source,
+        runId: payload.metadata.runId,
+        sourceRefs: payload.metadata.conversationId
+          ? [`conversation:${payload.metadata.conversationId}`]
+          : [`ana_guidance:${payload.metadata.runId}`],
+      },
+      recommendationSource: 'ana_ri',
+      originSurface: 'ri_copilot',
+      clientTrack: 'biotech',
+      submissionProgram: 'general_ri',
+      persona: 'regulatory',
+      regulatorScope: 'fda',
+      evidenceMode: 'mixed',
+      documentClass: 'strategy_memo',
+      readinessGate: 'exploratory',
+      approvalPathType: 'single_reviewer',
+      workspaceTarget: 'project',
+      regulatorIntent: 'strategy',
+    },
+    userId: payload.userId,
+    userEmail: `${payload.userName || 'ana'}@ana.local`,
+    userRole: 'regulatory',
+  } as any;
+  const governedResolution = resolveGovernedContext({
+    req: mockReq,
+    projectId: payload.projectId,
+    artifactId: null,
+    documentType: 'regulatory_document',
+    generationMode: 'ai_generated',
+    lifecycleStatus: 'draft',
+    originSurface: 'ri_copilot',
+    clientTrack: 'biotech',
+    submissionProgram: 'general_ri',
+    persona: 'regulatory',
+    regulatorScope: 'fda',
+    evidenceMode: 'mixed',
+    documentClass: 'strategy_memo',
+    readinessGate: 'exploratory',
+    approvalPathType: 'single_reviewer',
+    recommendationSource: 'ana_ri',
+    workspaceTarget: 'project',
+    regulatorIntent: 'strategy',
+    placementContainerId: String(payload.projectId),
+    title: payload.title,
+    content: payload.content,
+    ctdSection: payload.sectionCode || null,
+    sourceRefs: payload.metadata.conversationId
+      ? [`conversation:${payload.metadata.conversationId}`]
+      : [`ana_guidance:${payload.metadata.runId}`],
+    provider: 'ana_guidance_executor',
+    model: 'ana_ri',
+    exportAllowed: false,
+    eventType: 'artifact.generated.ai',
+  });
+  if (!governedResolution.validation.valid) {
+    return failResult(payload, `governed contract invalid: ${governedResolution.validation.errors.join('; ')}`);
+  }
 
   try {
     // Transaction wrapping — artifact + version + provenance must all succeed or all roll back.
@@ -278,6 +340,21 @@ async function executeArtifactCreation(payload: AnaActionPayload): Promise<AnaAc
           guidanceSummary: payload.metadata.guidanceSummary,
           threadId: payload.metadata.threadId,
           conversationId: payload.metadata.conversationId,
+          harness: {
+            clientTrack: governedResolution.contract.clientTrack,
+            submissionProgram: governedResolution.contract.submissionProgram,
+            persona: governedResolution.contract.persona,
+            regulatorScope: governedResolution.contract.regulatorScope,
+            documentClass: governedResolution.contract.documentClass,
+            readinessGate: governedResolution.contract.readinessGate,
+            workspaceTarget: governedResolution.contract.workspaceTarget,
+            originSurface: governedResolution.contract.originSurface,
+            recommendationSource: governedResolution.contract.recommendationSource,
+            regulatorIntent: governedResolution.contract.regulatorIntent,
+            gateChecks: governedResolution.contract.exportEligibility.gateChecks,
+            blockingReasons: governedResolution.contract.exportEligibility.blockingReasons,
+            readinessOutcome: governedResolution.contract.exportEligibility.readinessOutcome,
+          },
         },
       }).returning();
 

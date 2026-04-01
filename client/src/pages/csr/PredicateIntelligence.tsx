@@ -1265,7 +1265,7 @@ function DefenseMeterTab({
                       </p>
                       {q.suggested_evidence_types.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
-                          {q.suggested_evidence_types.map(t => (
+                          {q.suggested_evidence_types.map((t: any) => (
                             <Badge key={t} variant="secondary" className="text-xs">
                               {t}
                             </Badge>
@@ -1405,7 +1405,7 @@ function ToxicDetailDialog({
                   Why this predicate is flagged
                 </p>
                 <ul className="list-disc list-inside space-y-0.5 text-sm">
-                  {data.toxic_because.map((reason, i) => (
+                  {data.toxic_because.map((reason: any, i: any) => (
                     <li key={i}>{reason}</li>
                   ))}
                 </ul>
@@ -1428,7 +1428,7 @@ function ToxicDetailDialog({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.signals.map((sig, i) => (
+                    {data.signals.map((sig: any, i: any) => (
                       <TableRow key={i}>
                         <TableCell>
                           <Badge variant="outline" className="text-xs capitalize">
@@ -1870,7 +1870,7 @@ function StrategyTab({
                 <p className="text-3xl font-bold text-green-600">
                   {
                     suggestMut.data.suggestions.filter(
-                      s =>
+                      (s: any) =>
                         s.strategy_recommendation === 'BALANCED' ||
                         s.strategy_recommendation === 'CONSERVATIVE'
                     ).length
@@ -1883,7 +1883,7 @@ function StrategyTab({
               <CardContent className="pt-6 text-center">
                 <p className="text-3xl font-bold text-red-600">
                   {
-                    suggestMut.data.suggestions.filter(s => s.strategy_recommendation === 'AVOID')
+                    suggestMut.data.suggestions.filter((s: any) => s.strategy_recommendation === 'AVOID')
                       .length
                   }
                 </p>

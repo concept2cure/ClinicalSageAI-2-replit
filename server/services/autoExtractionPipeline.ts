@@ -22,6 +22,7 @@
 import { pool } from '../db.js';
 import crypto from 'crypto';
 import { ai } from '../lib/unified-ai-client';
+import { resolveGovernedContext } from './concept2cure/governedDocumentContractService.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -141,7 +142,7 @@ export interface ExtractedEntity {
 }
 
 export interface StoredArtifact {
-  artifactId: string;
+  artifactId: string | null;
   type: string;
   title: string;
 }
@@ -559,104 +560,283 @@ async function storeExtractedArtifacts(
   sections: DetectedSection[]
 ): Promise<StoredArtifact[]> {
   const artifacts: StoredArtifact[] = [];
+  // Fail-closed: if any governed write fails, the extraction job should fail.
+  // We do not return partial artifacts for regulated execution paths.
+  // Store main document artifact
+  const mainId = crypto.randomUUID();
+  const mainContent = textContent.slice(0, 100000);
+  const mainResolution = resolveGovernedContext({
+    req: {
+      body: {
+        projectId: job.projectId,
+        metadata: {
+          sourceRefs: [`upload:${job.fileId}`],
+          traceId: job.id,
+        },
+      },
+      userId: job.userId,
+      userEmail: `user-${job.userId}@system.local`,
+      userRole: 'regulatory',
+    } as any,
+    projectId: job.projectId,
+    artifactId: null,
+    documentType: metadata.documentType.toLowerCase(),
+    generationMode: 'imported',
+    lifecycleStatus: 'draft',
+    originSurface: 'import_pipeline',
+    clientTrack: 'biotech',
+    submissionProgram: 'general_ri',
+    persona: 'regulatory',
+    regulatorScope: 'fda',
+    evidenceMode: 'mixed',
+    documentClass: 'evidence_memo',
+    readinessGate: 'internal_review',
+    approvalPathType: 'single_reviewer',
+    recommendationSource: 'report_engine',
+    workspaceTarget: 'project',
+    regulatorIntent: 'evidence_analysis',
+    placementContainerId: String(job.projectId),
+    title: job.fileName,
+    content: mainContent,
+    sourceRefs: [`upload:${job.fileId}`],
+    provider: 'auto_extraction_pipeline',
+    model: 'metadata_classifier',
+    exportAllowed: false,
+    eventType: 'artifact.created',
+  });
+  if (!mainResolution.validation.valid) {
+    throw new Error(
+      `governed extraction main artifact invalid: ${mainResolution.validation.errors.join('; ')}`
+    );
+  }
 
-  try {
-    // Store main document artifact
-    const mainId = crypto.randomUUID();
+  await pool.query(
+    `INSERT INTO concept2cure_artifacts (
+      artifact_id, project_id, organization_id, type, category,
+      title, content, content_hash, status, metadata, created_by_id, version, created_at, updated_at
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10, 1, NOW(), NOW())`,
+    [
+      mainId,
+      job.projectId,
+      job.organizationId,
+      metadata.documentType.toLowerCase(),
+      'extracted',
+      job.fileName,
+      mainContent,
+      crypto.createHash('sha256').update(textContent).digest('hex'),
+      JSON.stringify({
+        ...metadata,
+        sourceFileId: job.fileId,
+        extractionJobId: job.id,
+        extractedAt: new Date().toISOString(),
+        fileType: job.fileType,
+        fileSize: job.fileSize,
+        harness: {
+          clientTrack: mainResolution.contract.clientTrack,
+          submissionProgram: mainResolution.contract.submissionProgram,
+          persona: mainResolution.contract.persona,
+          regulatorScope: mainResolution.contract.regulatorScope,
+          documentClass: mainResolution.contract.documentClass,
+          readinessGate: mainResolution.contract.readinessGate,
+          workspaceTarget: mainResolution.contract.workspaceTarget,
+          originSurface: mainResolution.contract.originSurface,
+          recommendationSource: mainResolution.contract.recommendationSource,
+          regulatorIntent: mainResolution.contract.regulatorIntent,
+          gateChecks: mainResolution.contract.exportEligibility.gateChecks,
+          blockingReasons: mainResolution.contract.exportEligibility.blockingReasons,
+          readinessOutcome: mainResolution.contract.exportEligibility.readinessOutcome,
+        },
+      }),
+      job.userId,
+    ]
+  );
+  artifacts.push({ artifactId: null, type: metadata.documentType, title: job.fileName });
+
+  // Store extracted tables as separate artifacts
+  for (const table of tables.slice(0, 20)) {
+    const tableId = crypto.randomUUID();
+    const tableContent = JSON.stringify({ headers: table.headers, rows: table.rows });
+    const tableResolution = resolveGovernedContext({
+      req: {
+        body: {
+          projectId: job.projectId,
+          metadata: {
+            sourceRefs: [`artifact:${mainId}`, `upload:${job.fileId}`],
+            traceId: `${job.id}:table:${table.id}`,
+          },
+        },
+        userId: job.userId,
+        userEmail: `user-${job.userId}@system.local`,
+        userRole: 'regulatory',
+      } as any,
+      projectId: job.projectId,
+      artifactId: null,
+      documentType: 'table',
+      generationMode: 'imported',
+      lifecycleStatus: 'draft',
+      originSurface: 'import_pipeline',
+      clientTrack: 'biotech',
+      submissionProgram: 'general_ri',
+      persona: 'regulatory',
+      regulatorScope: 'fda',
+      evidenceMode: 'mixed',
+      documentClass: 'evidence_memo',
+      readinessGate: 'internal_review',
+      approvalPathType: 'single_reviewer',
+      recommendationSource: 'report_engine',
+      workspaceTarget: 'project',
+      regulatorIntent: 'evidence_analysis',
+      placementContainerId: String(job.projectId),
+      title: table.title,
+      content: tableContent,
+      sourceRefs: [`artifact:${mainId}`, `upload:${job.fileId}`],
+      provider: 'auto_extraction_pipeline',
+      model: 'table_extractor',
+      exportAllowed: false,
+      eventType: 'artifact.created',
+    });
+    if (!tableResolution.validation.valid) {
+      throw new Error(
+        `governed extraction table artifact invalid: ${tableResolution.validation.errors.join('; ')}`
+      );
+    }
+
     await pool.query(
       `INSERT INTO concept2cure_artifacts (
         artifact_id, project_id, organization_id, type, category,
-        title, content, content_hash, status, metadata, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
-      ON CONFLICT (artifact_id) DO UPDATE SET
-        content = EXCLUDED.content,
-        content_hash = EXCLUDED.content_hash,
-        metadata = EXCLUDED.metadata,
-        updated_at = NOW()`,
+        title, content, content_hash, status, metadata, created_by_id, version, created_at, updated_at
+      ) VALUES ($1, $2, $3, 'table', 'extracted', $4, $5, $6, 'draft', $7, $8, 1, NOW(), NOW())`,
       [
-        mainId,
+        tableId,
         job.projectId,
         job.organizationId,
-        metadata.documentType.toLowerCase(),
-        'extracted',
-        job.fileName,
-        textContent.slice(0, 100000),
-        crypto.createHash('sha256').update(textContent).digest('hex'),
-        'draft',
+        table.title,
+        tableContent,
+        table.sourceHash,
         JSON.stringify({
-          ...metadata,
-          sourceFileId: job.fileId,
+          sourceDocumentId: mainId,
+          sourceFileName: job.fileName,
+          confidence: table.confidence,
           extractionJobId: job.id,
-          extractedAt: new Date().toISOString(),
-          fileType: job.fileType,
-          fileSize: job.fileSize,
+          harness: {
+            clientTrack: tableResolution.contract.clientTrack,
+            submissionProgram: tableResolution.contract.submissionProgram,
+            persona: tableResolution.contract.persona,
+            regulatorScope: tableResolution.contract.regulatorScope,
+            documentClass: tableResolution.contract.documentClass,
+            readinessGate: tableResolution.contract.readinessGate,
+            workspaceTarget: tableResolution.contract.workspaceTarget,
+            originSurface: tableResolution.contract.originSurface,
+            recommendationSource: tableResolution.contract.recommendationSource,
+            regulatorIntent: tableResolution.contract.regulatorIntent,
+            gateChecks: tableResolution.contract.exportEligibility.gateChecks,
+            blockingReasons: tableResolution.contract.exportEligibility.blockingReasons,
+            readinessOutcome: tableResolution.contract.exportEligibility.readinessOutcome,
+          },
         }),
+        job.userId,
       ]
     );
-    artifacts.push({ artifactId: mainId, type: metadata.documentType, title: job.fileName });
+    artifacts.push({ artifactId: null, type: 'table', title: table.title });
+  }
 
-    // Store extracted tables as separate artifacts
-    for (const table of tables.slice(0, 20)) {
-      const tableId = crypto.randomUUID();
+  // Store detected sections
+  for (const section of sections.slice(0, 30)) {
+    if (section.content && section.content.length > 50) {
+      const sectionId = crypto.randomUUID();
+      const sectionTitle = `${section.code} — ${section.title}`;
+      const sectionResolution = resolveGovernedContext({
+        req: {
+          body: {
+            projectId: job.projectId,
+            metadata: {
+              sourceRefs: [`artifact:${mainId}`, `upload:${job.fileId}`],
+              traceId: `${job.id}:section:${section.code}`,
+            },
+          },
+          userId: job.userId,
+          userEmail: `user-${job.userId}@system.local`,
+          userRole: 'regulatory',
+        } as any,
+        projectId: job.projectId,
+        artifactId: null,
+        documentType: 'section',
+        generationMode: 'imported',
+        lifecycleStatus: 'draft',
+        originSurface: 'import_pipeline',
+        clientTrack: 'biotech',
+        submissionProgram: 'general_ri',
+        persona: 'regulatory',
+        regulatorScope: 'fda',
+        evidenceMode: 'mixed',
+        documentClass: 'section_draft',
+        readinessGate: 'internal_review',
+        approvalPathType: 'regulated_dual_review',
+        recommendationSource: 'report_engine',
+        workspaceTarget: 'project',
+        regulatorIntent: 'submission_authoring',
+        placementContainerId: String(job.projectId),
+        title: sectionTitle,
+        content: section.content,
+        ctdSection: section.code,
+        sourceRefs: [`artifact:${mainId}`, `upload:${job.fileId}`],
+        provider: 'auto_extraction_pipeline',
+        model: 'section_classifier',
+        exportAllowed: false,
+        eventType: 'artifact.created',
+      });
+      if (!sectionResolution.validation.valid) {
+        throw new Error(
+          `governed extraction section artifact invalid: ${sectionResolution.validation.errors.join(
+            '; '
+          )}`
+        );
+      }
+
       await pool.query(
         `INSERT INTO concept2cure_artifacts (
           artifact_id, project_id, organization_id, type, category,
-          title, content, content_hash, status, metadata, created_at, updated_at
-        ) VALUES ($1, $2, $3, 'table', 'extracted', $4, $5, $6, 'draft', $7, NOW(), NOW())
-        ON CONFLICT (artifact_id) DO NOTHING`,
+          title, content, content_hash, status, metadata, created_by_id, ctd_section, version, created_at, updated_at
+        ) VALUES ($1, $2, $3, 'section', 'extracted', $4, $5, $6, 'draft', $7, $8, $9, 1, NOW(), NOW())`,
         [
-          tableId,
+          sectionId,
           job.projectId,
           job.organizationId,
-          table.title,
-          JSON.stringify({ headers: table.headers, rows: table.rows }),
-          table.sourceHash,
+          sectionTitle,
+          section.content,
+          crypto.createHash('sha256').update(section.content).digest('hex'),
           JSON.stringify({
+            sectionCode: section.code,
             sourceDocumentId: mainId,
             sourceFileName: job.fileName,
-            confidence: table.confidence,
+            ctdSection: section.code,
             extractionJobId: job.id,
+            harness: {
+              clientTrack: sectionResolution.contract.clientTrack,
+              submissionProgram: sectionResolution.contract.submissionProgram,
+              persona: sectionResolution.contract.persona,
+              regulatorScope: sectionResolution.contract.regulatorScope,
+              documentClass: sectionResolution.contract.documentClass,
+              readinessGate: sectionResolution.contract.readinessGate,
+              workspaceTarget: sectionResolution.contract.workspaceTarget,
+              originSurface: sectionResolution.contract.originSurface,
+              recommendationSource: sectionResolution.contract.recommendationSource,
+              regulatorIntent: sectionResolution.contract.regulatorIntent,
+              gateChecks: sectionResolution.contract.exportEligibility.gateChecks,
+              blockingReasons: sectionResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome: sectionResolution.contract.exportEligibility.readinessOutcome,
+            },
           }),
+          job.userId,
+          section.code,
         ]
       );
-      artifacts.push({ artifactId: tableId, type: 'table', title: table.title });
+      artifacts.push({
+        artifactId: null,
+        type: 'section',
+        title: sectionTitle,
+      });
     }
-
-    // Store detected sections
-    for (const section of sections.slice(0, 30)) {
-      if (section.content && section.content.length > 50) {
-        const sectionId = crypto.randomUUID();
-        await pool.query(
-          `INSERT INTO concept2cure_artifacts (
-            artifact_id, project_id, organization_id, type, category,
-            title, content, content_hash, status, metadata, created_at, updated_at
-          ) VALUES ($1, $2, $3, 'section', 'extracted', $4, $5, $6, 'draft', $7, NOW(), NOW())
-          ON CONFLICT (artifact_id) DO NOTHING`,
-          [
-            sectionId,
-            job.projectId,
-            job.organizationId,
-            `${section.code} — ${section.title}`,
-            section.content,
-            crypto.createHash('sha256').update(section.content).digest('hex'),
-            JSON.stringify({
-              sectionCode: section.code,
-              sourceDocumentId: mainId,
-              sourceFileName: job.fileName,
-              ctdSection: section.code,
-              extractionJobId: job.id,
-            }),
-          ]
-        );
-        artifacts.push({
-          artifactId: sectionId,
-          type: 'section',
-          title: `${section.code} — ${section.title}`,
-        });
-      }
-    }
-  } catch (error) {
-    console.warn('[AutoExtraction] Artifact storage partial failure:', error);
   }
 
   return artifacts;

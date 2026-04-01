@@ -81,6 +81,20 @@ export const moduleKeys = {
   detail: (id: number) => [...moduleKeys.all, 'detail', id] as const,
 };
 
+export function buildProjectModuleLinkPath(
+  projectId: number,
+  moduleType: ModuleType,
+  moduleInstanceId: number
+): string {
+  return `/api/project-modules/${projectId}/modules/${moduleType}/${moduleInstanceId}`;
+}
+
+export function unwrapProjectModulesResponse(response: {
+  modules: ProjectModule[];
+}): ProjectModule[] {
+  return response.modules;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES — Pillar 1: Project Hierarchy
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -265,13 +279,21 @@ export interface SentinelConfig {
 
 export type ModuleType =
   | 'cer'
-  | 'ind'
+  | 'csr'
   | 'ectd'
-  | 'cmc'
-  | '510k'
-  | 'regulatory_intel'
   | 'vault'
-  | 'clinical_trials';
+  | 'protocol'
+  | 'literature'
+  | 'regulatory_intelligence'
+  | 'analytics'
+  | 'faers'
+  | 'risk'
+  | 'ind'
+  | '510k'
+  | 'cmc'
+  | 'pma';
+
+export type ModuleLinkStatus = 'active' | 'inactive' | 'completed';
 
 export interface ProjectModule {
   id: number;
@@ -280,7 +302,7 @@ export interface ProjectModule {
   clientWorkspaceId: number;
   moduleType: ModuleType;
   moduleInstanceId: number;
-  status: 'active' | 'paused' | 'archived';
+  status: ModuleLinkStatus;
   settings: Record<string, unknown> | null;
   metadata: Record<string, unknown> | null;
   createdAt: string;
@@ -662,7 +684,10 @@ export function useProjectModules(
 ) {
   return useQuery({
     queryKey: moduleKeys.byProject(projectId!),
-    queryFn: () => apiFetch<ProjectModule[]>(`/api/projects/${projectId}/modules`),
+    queryFn: async () => {
+      const response = await apiFetch<{ modules: ProjectModule[] }>(`/api/project-modules/${projectId}/modules`);
+      return unwrapProjectModulesResponse(response);
+    },
     enabled: projectId !== undefined,
     staleTime: 30_000,
     ...options,
@@ -678,15 +703,17 @@ export function useLinkModule() {
       moduleType,
       moduleInstanceId,
       settings,
+      metadata,
     }: {
       projectId: number;
       moduleType: ModuleType;
       moduleInstanceId: number;
       settings?: Record<string, unknown>;
+      metadata?: Record<string, unknown>;
     }) =>
-      apiFetch<ProjectModule>(`/api/projects/${projectId}/modules`, {
+      apiFetch<ProjectModule>(`/api/project-modules/${projectId}/modules`, {
         method: 'POST',
-        body: JSON.stringify({ moduleType, moduleInstanceId, settings }),
+        body: JSON.stringify({ moduleType, moduleInstanceId, settings, metadata }),
       }),
     onSuccess: (_result, variables) => {
       qc.invalidateQueries({ queryKey: moduleKeys.byProject(variables.projectId) });
@@ -700,14 +727,20 @@ export function useUpdateModuleLink() {
   return useMutation({
     mutationFn: ({
       projectId,
-      moduleId,
+      moduleType,
+      moduleInstanceId,
       data,
     }: {
       projectId: number;
-      moduleId: number;
-      data: { status?: string; settings?: Record<string, unknown> };
+      moduleType: ModuleType;
+      moduleInstanceId: number;
+      data: {
+        status?: ModuleLinkStatus;
+        settings?: Record<string, unknown>;
+        metadata?: Record<string, unknown>;
+      };
     }) =>
-      apiFetch<ProjectModule>(`/api/projects/${projectId}/modules/${moduleId}`, {
+      apiFetch<ProjectModule>(buildProjectModuleLinkPath(projectId, moduleType, moduleInstanceId), {
         method: 'PATCH',
         body: JSON.stringify(data),
       }),
@@ -721,8 +754,16 @@ export function useUpdateModuleLink() {
 export function useUnlinkModule() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ projectId, moduleId }: { projectId: number; moduleId: number }) =>
-      apiFetch<{ success: boolean }>(`/api/projects/${projectId}/modules/${moduleId}`, {
+    mutationFn: ({
+      projectId,
+      moduleType,
+      moduleInstanceId,
+    }: {
+      projectId: number;
+      moduleType: ModuleType;
+      moduleInstanceId: number;
+    }) =>
+      apiFetch<{ success: boolean }>(buildProjectModuleLinkPath(projectId, moduleType, moduleInstanceId), {
         method: 'DELETE',
       }),
     onSuccess: (_result, variables) => {

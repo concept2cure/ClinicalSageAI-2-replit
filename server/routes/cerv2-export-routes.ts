@@ -5,10 +5,10 @@
  * POST /api/cerv2/export/docx  – single combined DOCX for any doc type
  * POST /api/cerv2/export/zip   – full submission pack (per-section PDFs + attachments)
  * POST /api/cerv2/export/ai-to-editor – convert AI section map → TipTap editor JSON
- * GET  /api/cerv2/export/mock/:docType        – mock PDF export (dev only)
- * GET  /api/cerv2/export/mock/:docType/docx   – mock DOCX export (dev only)
- * GET  /api/cerv2/export/mock/:docType/zip    – mock ZIP export (dev only)
- * GET  /api/cerv2/export/mock/:docType/json   – mock editor JSON (dev only)
+ * GET  /api/cerv2/export/sample/:docType        – sample PDF export (dev only, opt-in)
+ * GET  /api/cerv2/export/sample/:docType/docx   – sample DOCX export (dev only, opt-in)
+ * GET  /api/cerv2/export/sample/:docType/zip    – sample ZIP export (dev only, opt-in)
+ * GET  /api/cerv2/export/sample/:docType/json   – sample editor JSON (dev only, opt-in)
  * GET  /api/cerv2/export/health               – health check
  */
 
@@ -46,6 +46,17 @@ const exportRateLimiter = rateLimit({
 });
 
 router.use(['/pdf', '/docx', '/zip'], exportRateLimiter);
+
+function isSampleExportEnabled(): boolean {
+  return process.env.NODE_ENV !== 'production' && process.env.ENABLE_CERV2_SAMPLE_EXPORTS === 'true';
+}
+
+function denySampleExportRoute(res: Response): Response {
+  return res.status(404).json({
+    error: 'Sample export routes are disabled',
+    code: 'CERV2_SAMPLE_EXPORT_DISABLED',
+  });
+}
 
 // ── Auth guard ─────────────────────────────────────────────────────────────────
 const allowedRoles = new Set(['admin', 'owner', 'editor', 'super_admin']);
@@ -439,13 +450,10 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
   }
 });
 
-// ── GET /mock/:docType ─────────────────────────────────────────────────────────
-// Export simulation using mock data – useful for dev/demo without a live DB
-// Gated: no auth required but blocked in production
-router.get('/mock/:docType', async (req: Request, res: Response) => {
-  if (process.env.NODE_ENV === 'production') {
-    return res.status(404).json({ error: 'Mock routes are disabled in production' });
-  }
+// ── GET /sample/:docType ───────────────────────────────────────────────────────
+// Export simulation using sample data for local development verification.
+router.get('/sample/:docType', async (req: Request, res: Response) => {
+  if (!isSampleExportEnabled()) return denySampleExportRoute(res);
   try {
     const docType = req.params.docType;
     if (!validDocTypes.includes(docType as any)) {
@@ -457,21 +465,19 @@ router.get('/mock/:docType', async (req: Request, res: Response) => {
     const mockContent = mockVault.getMockEditorJson(docType);
     const pdfBuffer = await renderCombinedPdf(docType, mockContent);
 
-    const filename = sanitizeFilename(`${docType}_mock_export`) + '.pdf';
+    const filename = sanitizeFilename(`${docType}_sample_export`) + '.pdf';
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(pdfBuffer);
   } catch (err: any) {
-    console.error('[CERV2 Export] Mock export error:', err);
-    res.status(500).json({ error: 'Mock export failed', message: err.message });
+    console.error('[CERV2 Export] Sample export error:', err);
+    res.status(500).json({ error: 'Sample export failed', message: err.message });
   }
 });
 
-// ── GET /mock/:docType/zip ─────────────────────────────────────────────────────
-router.get('/mock/:docType/zip', async (req: Request, res: Response) => {
-  if (process.env.NODE_ENV === 'production') {
-    return res.status(404).json({ error: 'Mock routes are disabled in production' });
-  }
+// ── GET /sample/:docType/zip ───────────────────────────────────────────────────
+router.get('/sample/:docType/zip', async (req: Request, res: Response) => {
+  if (!isSampleExportEnabled()) return denySampleExportRoute(res);
   try {
     const docType = req.params.docType;
     if (!validDocTypes.includes(docType as any)) {
@@ -481,14 +487,14 @@ router.get('/mock/:docType/zip', async (req: Request, res: Response) => {
     }
 
     const mockContent = mockVault.getMockEditorJson(docType);
-    const title = sanitizeFilename(`${docType}_mock`);
+    const title = sanitizeFilename(`${docType}_sample`);
 
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${title}_export.zip"`);
 
     const archive = archiver('zip', { zlib: { level: 9 } });
     archive.on('error', err => {
-      console.error('[CERV2 Export] Mock ZIP error:', err);
+      console.error('[CERV2 Export] Sample ZIP error:', err);
       if (!res.headersSent) res.status(500).end();
     });
     archive.pipe(res);
@@ -512,7 +518,7 @@ router.get('/mock/:docType/zip', async (req: Request, res: Response) => {
             title: mockDoc.title,
             version: mockDoc.version,
             exportedAt: new Date().toISOString(),
-            generator: 'Concept2Cure CERV2 Mock Export',
+            generator: 'Concept2Cure CERV2 Sample Export',
           },
           null,
           2
@@ -523,19 +529,17 @@ router.get('/mock/:docType/zip', async (req: Request, res: Response) => {
 
     await archive.finalize();
   } catch (err: any) {
-    console.error('[CERV2 Export] Mock ZIP error:', err);
+    console.error('[CERV2 Export] Sample ZIP error:', err);
     if (!res.headersSent) {
-      res.status(500).json({ error: 'Mock ZIP failed', message: err.message });
+      res.status(500).json({ error: 'Sample ZIP failed', message: err.message });
     }
   }
 });
 
-// ── GET /mock/:docType/docx ────────────────────────────────────────────────────
-// Phase 7.4: Mock DOCX export using mock vault data
-router.get('/mock/:docType/docx', async (req: Request, res: Response) => {
-  if (process.env.NODE_ENV === 'production') {
-    return res.status(404).json({ error: 'Mock routes are disabled in production' });
-  }
+// ── GET /sample/:docType/docx ──────────────────────────────────────────────────
+// Phase 7.4: sample DOCX export using sample vault data
+router.get('/sample/:docType/docx', async (req: Request, res: Response) => {
+  if (!isSampleExportEnabled()) return denySampleExportRoute(res);
   try {
     const docType = req.params.docType;
     if (!validDocTypes.includes(docType as any)) {
@@ -547,7 +551,7 @@ router.get('/mock/:docType/docx', async (req: Request, res: Response) => {
     const mockContent = mockVault.getMockEditorJson(docType);
     const docxBuffer = await renderCombinedDocx(docType, mockContent);
 
-    const filename = sanitizeFilename(`${docType}_mock_export`) + '.docx';
+    const filename = sanitizeFilename(`${docType}_sample_export`) + '.docx';
     res.setHeader(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
@@ -555,17 +559,15 @@ router.get('/mock/:docType/docx', async (req: Request, res: Response) => {
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(docxBuffer);
   } catch (err: any) {
-    console.error('[CERV2 Export] Mock DOCX error:', err);
-    res.status(500).json({ error: 'Mock DOCX export failed', message: err.message });
+    console.error('[CERV2 Export] Sample DOCX error:', err);
+    res.status(500).json({ error: 'Sample DOCX export failed', message: err.message });
   }
 });
 
-// ── GET /mock/:docType/json ────────────────────────────────────────────────────
-// Phase 7.4: Return raw mock editor JSON for client-side inspection or re-export
-router.get('/mock/:docType/json', async (req: Request, res: Response) => {
-  if (process.env.NODE_ENV === 'production') {
-    return res.status(404).json({ error: 'Mock routes are disabled in production' });
-  }
+// ── GET /sample/:docType/json ──────────────────────────────────────────────────
+// Phase 7.4: Return raw sample editor JSON for client-side inspection or re-export.
+router.get('/sample/:docType/json', async (req: Request, res: Response) => {
+  if (!isSampleExportEnabled()) return denySampleExportRoute(res);
   try {
     const docType = req.params.docType;
     if (!validDocTypes.includes(docType as any)) {
@@ -589,8 +591,8 @@ router.get('/mock/:docType/json', async (req: Request, res: Response) => {
         : null,
     });
   } catch (err: any) {
-    console.error('[CERV2 Export] Mock JSON error:', err);
-    res.status(500).json({ error: 'Mock JSON retrieval failed', message: err.message });
+    console.error('[CERV2 Export] Sample JSON error:', err);
+    res.status(500).json({ error: 'Sample JSON retrieval failed', message: err.message });
   }
 });
 
@@ -819,10 +821,10 @@ router.get('/health', (_req: Request, res: Response) => {
       'POST /zip',
       'POST /ectd',
       'POST /ai-to-editor',
-      'GET  /mock/:docType',
-      'GET  /mock/:docType/docx',
-      'GET  /mock/:docType/zip',
-      'GET  /mock/:docType/json',
+      'GET  /sample/:docType',
+      'GET  /sample/:docType/docx',
+      'GET  /sample/:docType/zip',
+      'GET  /sample/:docType/json',
       'GET  /health',
     ],
     supportedDocTypes: [...validDocTypes],

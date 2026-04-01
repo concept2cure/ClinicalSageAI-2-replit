@@ -13,41 +13,59 @@ const register = new client.Registry();
 // Add default metrics (memory, CPU, etc.)
 client.collectDefaultMetrics({ register });
 
+const getOrCreateMetric = (name, factory) => {
+  const existing = client.register.getSingleMetric(name);
+  if (existing) return existing;
+  return factory();
+};
+
 // Custom CER job metrics
-const cerJobsTotal = new client.Counter({
-  name: 'trialsage_cer_jobs_total',
-  help: 'Total number of CER jobs processed',
-  labelNames: ['status'],
-});
+const cerJobsTotal = getOrCreateMetric('trialsage_cer_jobs_total', () =>
+  new client.Counter({
+    name: 'trialsage_cer_jobs_total',
+    help: 'Total number of CER jobs processed',
+    labelNames: ['status'],
+  })
+);
 
-const cerJobDuration = new client.Histogram({
-  name: 'trialsage_cer_job_duration_seconds',
-  help: 'Duration of CER job processing in seconds',
-  buckets: [30, 60, 120, 300, 600, 1200, 1800],
-});
+const cerJobDuration = getOrCreateMetric('trialsage_cer_job_duration_seconds', () =>
+  new client.Histogram({
+    name: 'trialsage_cer_job_duration_seconds',
+    help: 'Duration of CER job processing in seconds',
+    buckets: [30, 60, 120, 300, 600, 1200, 1800],
+  })
+);
 
-const cerJobsActive = new client.Gauge({
-  name: 'trialsage_cer_jobs_active',
-  help: 'Number of CER jobs currently being processed',
-});
+const cerJobsActive = getOrCreateMetric('trialsage_cer_jobs_active', () =>
+  new client.Gauge({
+    name: 'trialsage_cer_jobs_active',
+    help: 'Number of CER jobs currently being processed',
+  })
+);
 
-const cerJobsQueued = new client.Gauge({
-  name: 'trialsage_cer_jobs_queued',
-  help: 'Number of CER jobs currently in queue',
-});
+const cerJobsQueued = getOrCreateMetric('trialsage_cer_jobs_queued', () =>
+  new client.Gauge({
+    name: 'trialsage_cer_jobs_queued',
+    help: 'Number of CER jobs currently in queue',
+  })
+);
 
-const cerJobErrors = new client.Counter({
-  name: 'trialsage_cer_job_errors',
-  help: 'Number of errors encountered during CER job processing',
-  labelNames: ['error_type'],
-});
+const cerJobErrors = getOrCreateMetric('trialsage_cer_job_errors', () =>
+  new client.Counter({
+    name: 'trialsage_cer_job_errors',
+    help: 'Number of errors encountered during CER job processing',
+    labelNames: ['error_type'],
+  })
+);
 
 // Concept2Cure error metrics
-const concept2cureErrors = new client.Counter({
-  name: 'concept2cure_errors_total',
-  help: 'Number of errors encountered during Concept2Cure operations',
-  labelNames: ['operation', 'error_type'],
-});
+const concept2cureErrors = getOrCreateMetric('concept2cure_errors_total', () =>
+  new client.Counter({
+    name: 'concept2cure_errors_total',
+    help: 'Number of errors encountered during Concept2Cure operations',
+    labelNames: ['operation', 'error_type'],
+  })
+);
 
 // Register the metrics
 register.registerMetric(cerJobsTotal);

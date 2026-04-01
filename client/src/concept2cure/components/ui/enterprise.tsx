@@ -1041,11 +1041,13 @@ export function toLifecycleStage(status: string): ArtifactLifecycleStage {
     qc: 'in_review',
     // Approval variants
     approved: 'approved',
-    locked: 'approved',
     effective: 'approved',
     ready: 'approved',
     final: 'approved',
-    ready_for_submission: 'approved',
+    // Locked/submission-ready variants should map to published-stage timeline semantics.
+    locked: 'published',
+    ready_for_submission: 'published',
+    submission_ready: 'published',
     // Published variants
     published: 'published',
     publishing_prep: 'published',

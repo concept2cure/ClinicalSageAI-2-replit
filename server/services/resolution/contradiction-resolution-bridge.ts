@@ -34,6 +34,7 @@ import type {
   AffectedObject,
   BundleExecutionReceipt,
 } from '../../../shared/types/resolution';
+import type { TriggerType } from '../reactive-dependency-service';
 import type {
   ContradictionFinding,
   AuthorityState,
@@ -109,7 +110,12 @@ export interface Wave3ActionResult {
 function mapContradictionToGovernedAction(
   finding: ContradictionFinding,
   overlayRules?: OverlayRule[]
-): { action: GovernedActionType; effectiveAuthority: AuthorityState; overlayApplied: boolean; overlayRuleCode?: string } {
+): {
+  action: GovernedActionType;
+  effectiveAuthority: AuthorityState;
+  overlayApplied: boolean;
+  overlayRuleCode?: string;
+} {
   let effectiveAuthority = finding.authorityState;
   let overlayApplied = false;
   let overlayRuleCode: string | undefined;
@@ -159,12 +165,18 @@ function mapContradictionToGovernedAction(
 /** Weight authority states for comparison (higher = more restrictive) */
 function authorityWeight(state: AuthorityState): number {
   switch (state) {
-    case 'advisory_only': return 0;
-    case 'requires_review': return 1;
-    case 'requires_approval': return 2;
-    case 'blocks_promotion': return 3;
-    case 'requires_escalation': return 4;
-    default: return 0;
+    case 'advisory_only':
+      return 0;
+    case 'requires_review':
+      return 1;
+    case 'requires_approval':
+      return 2;
+    case 'blocks_promotion':
+      return 3;
+    case 'requires_escalation':
+      return 4;
+    default:
+      return 0;
   }
 }
 
@@ -246,7 +258,8 @@ function buildTriggerDescription(finding: ContradictionFinding): string {
 export async function resolveContradiction(
   request: ContradictionResolutionRequest
 ): Promise<ContradictionResolutionResult> {
-  const { organizationId, userId, projectId, findingId, finding, overlayRules, actorRole } = request;
+  const { organizationId, userId, projectId, findingId, finding, overlayRules, actorRole } =
+    request;
 
   log.info('Bridging contradiction to resolution', {
     findingId,
@@ -281,13 +294,15 @@ export async function resolveContradiction(
     rationale: authCheck.authorized
       ? `Authority check passed (${action}). Proceeding with resolution orchestration.`
       : `Authority check failed: ${authCheck.reason}. Resolution blocked.`,
-    sourceSignals: [{
-      kind: 'contradiction',
-      sourceId: findingId,
-      sourceLabel: finding.title,
-      severity: finding.severity,
-      detail: finding.description,
-    }],
+    sourceSignals: [
+      {
+        kind: 'contradiction',
+        sourceId: findingId,
+        sourceLabel: finding.title,
+        severity: finding.severity as 'info' | 'critical' | 'major' | 'minor',
+        detail: finding.description,
+      },
+    ],
     createdByType: 'ana',
     createdById: String(userId),
     linkedContradictionIds: [findingId],
@@ -296,7 +311,9 @@ export async function resolveContradiction(
   // If authority check fails → return blocked result with decision
   if (!authCheck.authorized) {
     log.warn('Authority check failed for contradiction resolution', {
-      findingId, action, reason: authCheck.reason,
+      findingId,
+      action,
+      reason: authCheck.reason,
     });
 
     return {
@@ -324,7 +341,8 @@ export async function resolveContradiction(
     orchestration = await orchestrateResolution(organizationId, userId, trigger);
   } catch (error: unknown) {
     log.error('Resolution orchestration failed', {
-      findingId, error: error instanceof Error ? error.message : String(error),
+      findingId,
+      error: error instanceof Error ? error.message : String(error),
     });
 
     // Return with failed orchestration — decision still recorded
@@ -360,7 +378,15 @@ export async function resolveContradiction(
         executionMethod: `resolution-bundle:${orchestration.receipt.bundleId}`,
       },
       affectedObjects: orchestration.receipt.executedSteps.map(step => ({
-        objectType: step.targetType,
+        objectType: step.targetType as
+          | 'section'
+          | 'artifact'
+          | 'module'
+          | 'dossier'
+          | 'assumption'
+          | 'artifact-version'
+          | 'review-thread'
+          | 'contradiction-link',
         objectId: step.targetId,
         changeType: step.stepType as 'created' | 'updated' | 'deleted' | 'status_changed',
         priorState: step.priorState,
@@ -380,7 +406,9 @@ export async function resolveContradiction(
 
     // ── STEP 7: Trigger preflight refresh ──
     preflightRefreshTriggered = await triggerPreflightRefresh(
-      organizationId, projectId, orchestration.receipt
+      organizationId,
+      projectId,
+      orchestration.receipt
     );
   }
 
@@ -428,7 +456,7 @@ async function triggerPreflightRefresh(
         await reactiveDependencyService.propagateChange({
           organizationId,
           projectId,
-          triggerType: 'artifact_updated',
+          triggerType: 'contradiction_resolved' as TriggerType,
           triggerObjectType: step.targetType,
           triggerObjectId: step.targetId,
           triggerObjectLabel: step.targetTitle ?? `${step.targetType}:${step.targetId}`,
@@ -474,8 +502,10 @@ export async function planContradictionResolution(
   finding: ContradictionFinding,
   overlayRules?: OverlayRule[]
 ): Promise<Wave3ActionResult> {
-  const { action, effectiveAuthority, overlayApplied } =
-    mapContradictionToGovernedAction(finding, overlayRules);
+  const { action, effectiveAuthority, overlayApplied } = mapContradictionToGovernedAction(
+    finding,
+    overlayRules
+  );
 
   const authority = getAuthorityForAction(action);
   const confidence = mapConfidence(finding);
@@ -589,7 +619,11 @@ export async function explainContradictionResolution(
 
   explanation.push(`**Contradiction**: ${finding.title}`);
   explanation.push(`**Type**: ${finding.contradictionType} | **Severity**: ${finding.severity}`);
-  explanation.push(`**Between**: ${finding.objectAType}:${finding.objectALabel ?? finding.objectAId} ↔ ${finding.objectBType}:${finding.objectBLabel ?? finding.objectBId}`);
+  explanation.push(
+    `**Between**: ${finding.objectAType}:${finding.objectALabel ?? finding.objectAId} ↔ ${
+      finding.objectBType
+    }:${finding.objectBLabel ?? finding.objectBId}`
+  );
 
   if (finding.regulatorBody) {
     explanation.push(`**Regulator**: ${finding.regulatorBody}`);
@@ -644,9 +678,13 @@ export async function getProjectResolutionStatus(
     const plans = await getProjectResolutionPlans(organizationId, projectId);
     const bundles = await getProjectBundles(organizationId, projectId);
 
-    const unresolvedPlans = plans.filter(p => p.state === 'unresolved' || p.state === 'proposed_resolution');
+    const unresolvedPlans = plans.filter(
+      p => p.state === 'unresolved' || p.state === 'proposed_resolution'
+    );
     const inProgressPlans = plans.filter(p => p.state === 'in_resolution');
-    const resolvedPlans = plans.filter(p => p.state === 'resolved_pending_review' || p.state === 'resolved_approved');
+    const resolvedPlans = plans.filter(
+      p => p.state === 'resolved_pending_review' || p.state === 'resolved_approved'
+    );
 
     const activeBundles = bundles.filter(b => b.state === 'in_progress' || b.state === 'proposed');
     const pendingReviewBundles = bundles.filter(b => b.state === 'pending_review');
@@ -673,7 +711,9 @@ export async function getProjectResolutionStatus(
     return {
       success: false,
       actionId: 'project_resolution_status',
-      message: `Failed to get resolution status: ${error instanceof Error ? error.message : String(error)}`,
+      message: `Failed to get resolution status: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
     };
   }
 }
@@ -686,9 +726,7 @@ export async function getProjectResolutionStatus(
  * Map contradiction type to recommended resolution path.
  * Pure rule-based — no LLM.
  */
-function mapContradictionTypeToPath(
-  contradictionType: string
-): string {
+function mapContradictionTypeToPath(contradictionType: string): string {
   switch (contradictionType) {
     case 'assumption_drift':
     case 'superseded_information':

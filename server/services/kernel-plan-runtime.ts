@@ -5,6 +5,26 @@ import type { GoalPlan, PlanStepStatus } from './kernel-goal-planner';
 
 const logger = createScopedLogger('kernel-plan-runtime');
 
+async function recordPlanRunEvent(input: {
+  planRunId: string;
+  eventType: string;
+  stepId?: string;
+  payload?: Record<string, unknown>;
+}) {
+  await pool.query(
+    `INSERT INTO ai_goal_plan_step_events
+       (id, plan_run_id, step_id, event_type, payload)
+     VALUES ($1,$2,$3,$4,$5)`,
+    [
+      `gpe_${randomUUID()}`,
+      input.planRunId,
+      input.stepId ?? null,
+      input.eventType,
+      JSON.stringify(input.payload ?? {}),
+    ]
+  );
+}
+
 const ALLOWED_TRANSITIONS: Record<PlanStepStatus, PlanStepStatus[]> = {
   pending: ['in_progress', 'blocked', 'replanned'],
   in_progress: ['completed', 'blocked', 'replanned'],
@@ -13,10 +33,7 @@ const ALLOWED_TRANSITIONS: Record<PlanStepStatus, PlanStepStatus[]> = {
   replanned: ['in_progress', 'completed', 'blocked'],
 };
 
-export function canTransitionStepStatus(
-  from: PlanStepStatus,
-  to: PlanStepStatus
-): boolean {
+export function canTransitionStepStatus(from: PlanStepStatus, to: PlanStepStatus): boolean {
   return ALLOWED_TRANSITIONS[from]?.includes(to) ?? false;
 }
 

@@ -37,6 +37,24 @@ export interface DossierSection {
   children?: DossierSection[];
 }
 
+interface ProjectSectionsResponse {
+  sections?: Array<{
+    section_code?: string;
+    code?: string;
+    title: string;
+    status: string;
+  }>;
+}
+
+function normalizeProjectSections(payload: ProjectSectionsResponse | Array<{ code: string; title: string; status: string }>) {
+  const rawSections = Array.isArray(payload) ? payload : payload?.sections || [];
+  return rawSections.map(sec => ({
+    code: sec.code || sec.section_code || '',
+    title: sec.title,
+    status: sec.status,
+  })).filter(sec => !!sec.code);
+}
+
 // Default CTD structure used as fallback when no sections are initialized
 const DEFAULT_CTD_STRUCTURE: DossierSection[] = [
   {
@@ -160,7 +178,11 @@ export const DossierMap: React.FC<DossierMapProps> = ({
   // Fetch project sections from existing API
   const { data: sections, isLoading: sectionsLoading, error } = useQuery<Array<{ code: string; title: string; status: string }>>({
     queryKey: queryKeys.ind.projectSections(projectId || 'none'),
-    queryFn: () => apiRequest('GET', `/api/project-sections?projectId=${projectId}`).then(r => r.json()),
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/project-sections?project_id=${projectId}`);
+      const payload = await response.json();
+      return normalizeProjectSections(payload);
+    },
     enabled: !!projectId,
     staleTime: 60_000,
   });

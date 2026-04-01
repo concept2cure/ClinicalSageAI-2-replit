@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { authMiddleware } from '../auth';
 import {
   createProposal,
   acceptProposal,
@@ -26,6 +27,8 @@ import {
 } from '../services/documentIntelligence/featureFlags';
 
 const router = Router();
+
+router.use(authMiddleware);
 
 const qualityLintService = new DocumentQualityLintService();
 const citationNormalizationService = new CitationNormalizationService();
@@ -162,7 +165,6 @@ router.post('/conversations/:conversationId/proposals/:proposalId/reject', async
   res.json({ success: true, proposal });
 });
 
-
 router.post('/conversations/:conversationId/quality/lint', async (req, res) => {
   const ctx = resolveContext(req);
   if (!requireContext(res, ctx, 'quality lint')) return;
@@ -244,11 +246,13 @@ router.get('/artifacts/:artifactId/versions', async (req, res) => {
     res.status(400).json({ success: false, error: 'artifact versions requires projectId context' });
     return;
   }
+  const conversationId =
+    typeof req.query?.conversationId === 'string' ? req.query.conversationId : '';
   res.json({
     success: true,
     versions: await listArtifactVersions({
       artifactId: req.params.artifactId,
-      conversationId: String(req.query?.conversationId ?? ''),
+      conversationId,
       projectId: ctx.projectId,
       userId: ctx.userId,
     }),

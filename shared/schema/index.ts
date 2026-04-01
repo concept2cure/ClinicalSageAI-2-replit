@@ -151,3 +151,33 @@ export * from './project-charter';
 
 // AnA Intelligence System (CLAUDE.md Memory Compression Model)
 export * from './ana-intelligence';
+
+export * from './report-os';
+
+// Programs & Evidence
+export {
+  regulatoryPrograms,
+  evidenceObjects,
+  evidenceLinks,
+  programMilestones,
+  programActivityLog,
+  regulatoryProgramsRelations,
+  evidenceObjectsRelations,
+  evidenceLinksRelations,
+  programMilestonesRelations,
+  programActivityLogRelations,
+  insertRegulatoryProgramSchema,
+  insertEvidenceObjectSchema,
+  insertEvidenceLinkSchema,
+  insertProgramMilestoneSchema,
+} from './programs';
+export type {
+  RegulatoryProgram,
+  InsertRegulatoryProgram,
+  EvidenceObject,
+  InsertEvidenceObject,
+  EvidenceLink,
+  InsertEvidenceLink,
+  ProgramMilestone,
+  InsertProgramMilestone,
+} from './programs';

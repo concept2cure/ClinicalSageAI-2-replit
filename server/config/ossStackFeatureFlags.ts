@@ -26,6 +26,25 @@ export const OSS_STACK_FEATURE_FLAGS: readonly OssStackFeatureFlagDefinition[] =
     defaultEnabled: false,
     envVar: 'OSS_INGESTION_UNSTRUCTURED_FALLBACK',
   },
+
+  {
+    key: 'oss.ingestion.tika_enabled',
+    description: 'Enable Apache Tika normalization for broad document ingestion.',
+    defaultEnabled: false,
+    envVar: 'OSS_INGESTION_TIKA_ENABLED',
+  },
+  {
+    key: 'oss.ingestion.grobid_enabled',
+    description: 'Enable GROBID parsing path for scholarly scientific PDFs.',
+    defaultEnabled: false,
+    envVar: 'OSS_INGESTION_GROBID_ENABLED',
+  },
+  {
+    key: 'oss.retrieval.opensearch_enabled',
+    description: 'Enable OpenSearch hybrid retrieval adapter.',
+    defaultEnabled: false,
+    envVar: 'OSS_RETRIEVAL_OPENSEARCH_ENABLED',
+  },
   {
     key: 'oss.retrieval.qdrant_enabled',
     description: 'Enable Qdrant-backed retrieval adapter.',
@@ -61,6 +80,12 @@ export const OSS_STACK_FEATURE_FLAGS: readonly OssStackFeatureFlagDefinition[] =
     description: 'Enable E2B sandbox compute pilot path.',
     defaultEnabled: false,
     envVar: 'OSS_COMPUTE_E2B_PILOT',
+  },
+  {
+    key: 'oss.ana.enterprise_citation_bridge',
+    description: 'Enable AnA citation validation bridge to Python enterprise enforcement.',
+    defaultEnabled: false,
+    envVar: 'OSS_ANA_ENTERPRISE_CITATION_BRIDGE',
   },
 ] as const;
 

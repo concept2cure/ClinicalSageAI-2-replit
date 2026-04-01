@@ -27,19 +27,7 @@ type CenterTab =
 
 export function CommunicationCenter({ projectId, projectName, submissionType = 'NDA', artifacts }: Props) {
   const [activeTab, setActiveTab] = useState<CenterTab>('overview');
-  const {
-    authorityProfiles,
-    authorityTemplates,
-    agencyEvents,
-    openAgencyEvents,
-    publishOpsServices,
-    loading,
-    createManualAgencyEvent,
-    createPublishOpsRequest,
-    submissionCenterItems,
-    createSubmissionCenterItem,
-    transitionSubmissionCenterItem,
-  } =
+  const { authorityProfiles, agencyEvents, openAgencyEvents, publishOpsServices, loading, dataUnavailable } =
     useCommunicationCenterData(projectId);
 
   const openEvents = useMemo(
@@ -57,6 +45,8 @@ export function CommunicationCenter({ projectId, projectName, submissionType = '
     return Array.from(tiers);
   }, [agencyEvents]);
 
+  const visibilityTierLabel = visibilityTiers.length > 0 ? visibilityTiers.join(', ') : 'none';
+
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-stone-200 bg-white p-4">
@@ -67,16 +57,14 @@ export function CommunicationCenter({ projectId, projectName, submissionType = '
               Operational control room for tasks, collaboration, correspondence, final-mile submission, and C2C PublishOps.
             </p>
             {loading && <p className="text-[11px] text-stone-400">Refreshing scoped operational data…</p>}
+            {dataUnavailable && !loading && (
+              <p className="text-[11px] text-amber-700">Live communication-center feeds are currently unavailable.</p>
+            )}
           </div>
           <div className="flex items-center gap-2 text-xs">
             <Badge variant="outline" className="border-blue-200 text-blue-700">{openEvents} unresolved agency events</Badge>
             <Badge variant="outline" className="border-amber-200 text-amber-700">{responseDueSoon} response items due</Badge>
             <Badge variant="outline" className="border-emerald-200 text-emerald-700">Authority-aware lane active</Badge>
-            {authorityTemplates.length > 0 && (
-              <Badge variant="outline" className="border-violet-200 text-violet-700">
-                {authorityTemplates.length} authority templates
-              </Badge>
-            )}
           </div>
         </div>
 
@@ -111,7 +99,7 @@ export function CommunicationCenter({ projectId, projectName, submissionType = '
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <OverviewCard icon={<Workflow className="h-4 w-4 text-blue-600" />} title="Operational Graph" body="Tasks, threads, and correspondence map into one project timeline with linked artifacts and submissions." />
           <OverviewCard icon={<BellRing className="h-4 w-4 text-amber-600" />} title="Notification Routing" body="Assignments, approvals, validation failures, acknowledgments, and PublishOps changes route to source objects." />
-          <OverviewCard icon={<ShieldCheck className="h-4 w-4 text-emerald-600" />} title="Visibility and Audit" body={`Visibility tiers in use: ${visibilityTiers.join(', ')}. Collaboration and agency events are auditable.`} />
+          <OverviewCard icon={<ShieldCheck className="h-4 w-4 text-emerald-600" />} title="Visibility and Audit" body={`Visibility tiers in use: ${visibilityTierLabel}. Collaboration and agency events are auditable.`} />
         </div>
       )}
 
@@ -152,15 +140,7 @@ export function CommunicationCenter({ projectId, projectName, submissionType = '
 
       {activeTab === 'correspondence' && (
         <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-stone-900">Agency Communication Events</h3>
-            <button
-              onClick={() => createManualAgencyEvent()}
-              className="ml-auto rounded-md border border-stone-200 bg-white px-2 py-1 text-xs text-stone-600 hover:bg-stone-50"
-            >
-              Log manual event
-            </button>
-          </div>
+          <h3 className="text-sm font-semibold text-stone-900">Agency Communication Events</h3>
           {agencyEvents.map(event => (
             <CorrespondenceRow key={event.id} event={event} />
           ))}
@@ -194,50 +174,6 @@ export function CommunicationCenter({ projectId, projectName, submissionType = '
               artifacts={artifacts}
             />
           </div>
-          <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold text-stone-900">Submission Center lifecycle</h3>
-              <button
-                onClick={() => createSubmissionCenterItem()}
-                className="ml-auto rounded-md border border-stone-200 bg-white px-2 py-1 text-xs text-stone-600 hover:bg-stone-50"
-              >
-                Create work item
-              </button>
-            </div>
-            <p className="text-xs text-stone-600">Prepare, publish and submit eCTD work-items with managed lifecycle transitions.</p>
-            <div className="space-y-2">
-              {(submissionCenterItems.length ? submissionCenterItems : []).map(item => (
-                <div key={item.id} className="rounded-md border border-stone-200 p-2.5">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[10px]">{item.status}</Badge>
-                    <span className="text-xs font-medium text-stone-900">{item.title}</span>
-                    <span className="ml-auto text-[11px] text-stone-500">{item.authority} · {item.submissionType}</span>
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    <button
-                      onClick={() => transitionSubmissionCenterItem(item, 'preparing')}
-                      className="rounded border border-stone-200 px-2 py-1 text-[11px] text-stone-700"
-                    >Prepare</button>
-                    <button
-                      onClick={() => transitionSubmissionCenterItem(item, 'ready_for_publish')}
-                      className="rounded border border-stone-200 px-2 py-1 text-[11px] text-stone-700"
-                    >Ready</button>
-                    <button
-                      onClick={() => transitionSubmissionCenterItem(item, 'published')}
-                      className="rounded border border-stone-200 px-2 py-1 text-[11px] text-stone-700"
-                    >Publish</button>
-                    <button
-                      onClick={() => transitionSubmissionCenterItem(item, 'submitted_to_gateway')}
-                      className="rounded border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] text-blue-700"
-                    >Submit eCTD</button>
-                  </div>
-                </div>
-              ))}
-              {submissionCenterItems.length === 0 && (
-                <p className="text-xs text-stone-500">No submission work items yet.</p>
-              )}
-            </div>
-          </div>
         </div>
       )}
 
@@ -247,12 +183,6 @@ export function CommunicationCenter({ projectId, projectName, submissionType = '
             <Send className="h-4 w-4 text-indigo-600" />
             <h3 className="text-sm font-semibold text-stone-900">C2C PublishOps</h3>
             <Badge className="bg-indigo-50 text-indigo-700 border-indigo-200" variant="outline">Managed service lane</Badge>
-            <button
-              onClick={() => createPublishOpsRequest()}
-              className="ml-auto rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1 text-xs text-indigo-700 hover:bg-indigo-100"
-            >
-              Request managed support
-            </button>
           </div>
           <p className="text-xs text-stone-600">
             Entitlement-aware service queue for technical publishing, compile, validation remediation, dispatch, acknowledgment monitoring, and response support.

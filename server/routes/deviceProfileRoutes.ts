@@ -1,18 +1,30 @@
 import { Router } from 'express';
 import * as deviceProfileService from '../services/deviceProfileService';
+import { getSecureOrgId } from '../utils/tenantContext';
 
 const router = Router();
+
+const requireOrganizationId = (req: any, res: any): string | null => {
+  const organizationId = getSecureOrgId(req);
+  if (!organizationId) {
+    res.status(401).json({ error: 'Organization context required' });
+    return null;
+  }
+  return organizationId;
+};
 
 // Create a new device profile
 router.post('/', (req, res) => {
   try {
+    const organizationId = requireOrganizationId(req, res);
+    if (!organizationId) return;
     const profile = deviceProfileService.createProfile(
       req.body,
-      req.body.organizationId,
+      organizationId,
       req.body.clientWorkspaceId
     );
     res.status(201).json(profile);
-  } catch (error) {
+  } catch (error: any) {
     res.status(400).json({ error: `Failed to create device profile: ${error.message}` });
   }
 });
@@ -20,10 +32,11 @@ router.post('/', (req, res) => {
 // List all device profiles (optionally filtered by organization)
 router.get('/', (req, res) => {
   try {
-    const organizationId = req.query.organizationId || undefined;
+    const organizationId = requireOrganizationId(req, res);
+    if (!organizationId) return;
     const profiles = deviceProfileService.listProfiles(organizationId as string);
     res.json(profiles);
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({ error: `Failed to list device profiles: ${error.message}` });
   }
 });
@@ -32,7 +45,8 @@ router.get('/', (req, res) => {
 router.get('/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const organizationId = req.query.organizationId || undefined;
+    const organizationId = requireOrganizationId(req, res);
+    if (!organizationId) return;
     const profile = deviceProfileService.getProfile(id, organizationId as string);
 
     if (!profile) {
@@ -40,7 +54,7 @@ router.get('/:id', (req, res) => {
     }
 
     res.json(profile);
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({ error: `Failed to get device profile: ${error.message}` });
   }
 });
@@ -49,10 +63,11 @@ router.get('/:id', (req, res) => {
 router.put('/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const organizationId = req.body.organizationId || req.query.organizationId || undefined;
+    const organizationId = requireOrganizationId(req, res);
+    if (!organizationId) return;
     const profile = deviceProfileService.updateProfile(id, req.body, organizationId as string);
     res.json(profile);
-  } catch (error) {
+  } catch (error: any) {
     if (error.message.includes('not found')) {
       return res.status(404).json({ error: error.message });
     }
@@ -64,7 +79,8 @@ router.put('/:id', (req, res) => {
 router.delete('/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const organizationId = req.query.organizationId || undefined;
+    const organizationId = requireOrganizationId(req, res);
+    if (!organizationId) return;
     const success = deviceProfileService.deleteProfile(id, organizationId as string);
 
     if (!success) {
@@ -72,7 +88,7 @@ router.delete('/:id', (req, res) => {
     }
 
     res.status(204).send();
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({ error: `Failed to delete device profile: ${error.message}` });
   }
 });

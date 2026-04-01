@@ -1,4 +1,5 @@
 import { createHash } from 'crypto';
+import { defaultAnaPolicyBundle, type AnaPolicyBundle } from './policy-bundle';
 
 export type KernelDomain = 'governance' | 'security' | 'observability';
 export type KernelDecision = 'allow' | 'review' | 'deny';
@@ -31,23 +32,12 @@ export interface KernelEvaluation {
   flags: string[];
   policyBundleId?: string;
   policyBundleVersion?: string;
-  mode?: 'enforce' | 'audit' | 'alert';
+  mode?: 'enforce' | 'audit' | 'alert' | 'shadow';
   controls: {
     requiresHumanReview: boolean;
     requiresAuditEscalation: boolean;
   };
 }
-
-const IMMUTABLE_ROUTE_PATTERNS = [/^\/api\/audit\/events/, /^\/api\/audit\/bulk-delete/];
-const PROTECTED_ATTRIBUTE_TERMS = [
-  'race',
-  'religion',
-  'ethnicity',
-  'pregnancy',
-  'disability',
-  'age',
-  'gender',
-];
 
 function clamp(value: number, min = 0, max = 100) {
   return Math.max(min, Math.min(max, value));
@@ -62,6 +52,8 @@ function digestRequestSurface(input: KernelEvaluationInput): string {
 }
 
 export class AnaMicrokernel {
+  constructor(private readonly policy: AnaPolicyBundle = defaultAnaPolicyBundle) {}
+
   evaluate(input: KernelEvaluationInput): KernelEvaluation {
     let score = 100;
     const trace: KernelTraceStep[] = [];
@@ -70,10 +62,12 @@ export class AnaMicrokernel {
     const requestFingerprint = digestRequestSurface(input);
     const bodySnippet = (input.bodySnippet || '').toLowerCase();
     const isDestructive = input.method === 'DELETE' || input.path.includes('bulk-delete');
-    const isImmutable = IMMUTABLE_ROUTE_PATTERNS.some(pattern => pattern.test(input.path));
+    const isImmutable = this.policy.immutableRoutePatterns.some(pattern =>
+      pattern.test(input.path)
+    );
 
     if (isDestructive && isImmutable) {
-      score -= 70;
+      score -= this.policy.scoreWeights.immutabilityViolation;
       flags.push('immutability_violation');
       trace.push({
         domain: 'governance',
@@ -93,9 +87,9 @@ export class AnaMicrokernel {
       });
     }
 
-    const hits = PROTECTED_ATTRIBUTE_TERMS.filter(term => bodySnippet.includes(term));
-    if (hits.length >= 2) {
-      score -= 35;
+    const hits = this.policy.protectedAttributeTerms.filter(term => bodySnippet.includes(term));
+    if (hits.length >= this.policy.biasTermThreshold) {
+      score -= this.policy.scoreWeights.biasRisk;
       flags.push('bias_risk_detected');
       trace.push({
         domain: 'governance',
@@ -117,8 +111,15 @@ export class AnaMicrokernel {
     }
 
     const missingActor = !input.actorId || input.actorId === 'anonymous';
-    if (missingActor && input.path.startsWith('/api')) {
-      score -= 20;
+    const identityExempt = this.policy.identityExemptRoutePatterns.some(pattern =>
+      pattern.test(input.path)
+    );
+    const highRiskRoute = this.policy.highRiskRegulatoryRoutePatterns.some(pattern =>
+      pattern.test(input.path)
+    );
+
+    if (missingActor && input.path.startsWith('/api') && !identityExempt) {
+      score -= this.policy.scoreWeights.missingActorIdentity;
       flags.push('missing_actor_identity');
       trace.push({
         domain: 'security',
@@ -128,6 +129,10 @@ export class AnaMicrokernel {
         timestamp: new Date().toISOString(),
         evidence: { actorId: input.actorId ?? null },
       });
+      if (highRiskRoute) {
+        score -= this.policy.scoreWeights.highRiskMissingActor;
+        flags.push('high_risk_missing_actor_identity');
+      }
     } else {
       trace.push({
         domain: 'security',
@@ -135,6 +140,22 @@ export class AnaMicrokernel {
         decision: 'allow',
         rationale: 'Actor identity present or endpoint exempt from identity enforcement.',
         timestamp: new Date().toISOString(),
+      });
+    }
+
+    const scientificIntegrityHit = this.policy.scientificIntegrityTerms.find(term =>
+      bodySnippet.includes(term)
+    );
+    if (scientificIntegrityHit && highRiskRoute) {
+      score -= this.policy.scoreWeights.scientificIntegrityRisk;
+      flags.push('scientific_integrity_risk');
+      trace.push({
+        domain: 'governance',
+        ruleId: 'gov-scientific-integrity-v1',
+        decision: 'deny',
+        rationale: 'Scientific integrity violation detected for regulatory content.',
+        timestamp: new Date().toISOString(),
+        evidence: { matchedTerm: scientificIntegrityHit },
       });
     }
 
@@ -148,17 +169,29 @@ export class AnaMicrokernel {
     });
 
     score = clamp(score);
-    const finalDecision: KernelDecision = score < 40 ? 'deny' : score < 75 ? 'review' : 'allow';
+    const enforcedDecision: KernelDecision =
+      score < this.policy.denyThreshold
+        ? 'deny'
+        : score < this.policy.reviewThreshold
+        ? 'review'
+        : 'allow';
+    const finalDecision: KernelDecision =
+      this.policy.mode === 'shadow' && enforcedDecision === 'deny' ? 'allow' : enforcedDecision;
 
     return {
       requestId: requestFingerprint,
       finalDecision,
+      enforcedDecision,
       score,
       trace,
       flags,
+      policyBundleId: this.policy.id,
+      policyBundleVersion: this.policy.version,
+      mode: this.policy.mode,
       controls: {
-        requiresHumanReview: finalDecision === 'review',
-        requiresAuditEscalation: finalDecision !== 'allow' || flags.includes('bias_risk_detected'),
+        requiresHumanReview: enforcedDecision === 'review',
+        requiresAuditEscalation:
+          enforcedDecision !== 'allow' || flags.includes('bias_risk_detected'),
       },
     };
   }
@@ -166,6 +199,8 @@ export class AnaMicrokernel {
 
 export const anaMicrokernel = new AnaMicrokernel();
 
-export function createAnaMicrokernel(): AnaMicrokernel {
-  return new AnaMicrokernel();
+export function createAnaMicrokernel(
+  policy: AnaPolicyBundle = defaultAnaPolicyBundle
+): AnaMicrokernel {
+  return new AnaMicrokernel(policy);
 }

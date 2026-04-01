@@ -334,13 +334,21 @@ export interface UnifiedDocumentEditorProps {
   currentUser?: { name: string; color: string };
   /** Pre-configured collaboration extensions (Collaboration + CollaborationCursor) */
   collabExtensions?: any[];
+  /** Current authenticated user id (for lock ownership checks) */
+  currentUserId?: string;
+  /** Line numbers currently locked by other collaborators */
+  lockedLineNumbers?: number[];
+  /** Optional line-owner map used in lock rejection messaging */
+  lockedLineOwnerByLine?: Record<number, string>;
+  /** Called when user attempts to edit a locked line */
+  onBlockedLineEdit?: (lineNumber: number, lockedBy?: string) => void;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Custom TipTap Extension for Traceability
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { Mark, mergeAttributes } from '@tiptap/core';
+import { Mark } from '@tiptap/core';
 import Heading from '@tiptap/extension-heading';
 
 const TraceabilityMark = Mark.create({
@@ -393,6 +401,29 @@ function slugify(text: string): string {
       .replace(/^-|-$/g, '')
       .slice(0, 60) || 'heading'
   );
+}
+
+function getLineNumberAtPos(doc: any, pos: number): number {
+  const clamped = Math.max(0, Math.min(pos, doc?.content?.size ?? 0));
+  const textBefore = doc.textBetween(0, clamped, '\n', '\n');
+  return textBefore.length === 0 ? 1 : textBefore.split('\n').length;
+}
+
+function getSelectionLineRange(state: any): { fromLine: number; toLine: number } {
+  const fromLine = getLineNumberAtPos(state.doc, state.selection.from);
+  const toLine = getLineNumberAtPos(state.doc, state.selection.to);
+  return { fromLine: Math.min(fromLine, toLine), toLine: Math.max(fromLine, toLine) };
+}
+
+function isMutationKey(event: KeyboardEvent): boolean {
+  if (event.key === 'Backspace' || event.key === 'Delete' || event.key === 'Enter' || event.key === 'Tab') {
+    return true;
+  }
+  if (event.metaKey || event.ctrlKey) {
+    const k = event.key.toLowerCase();
+    return k === 'x' || k === 'v' || k === 'z' || k === 'y';
+  }
+  return event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey;
 }
 
 const HeadingWithId = Heading.extend({
@@ -1628,6 +1659,10 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   yjsProvider,
   currentUser,
   collabExtensions,
+  currentUserId,
+  lockedLineNumbers = [],
+  lockedLineOwnerByLine = {},
+  onBlockedLineEdit,
 }) => {
   const modeCtx = useDocumentModeOptional();
   const resolvedMode: DocumentMode =
@@ -1670,6 +1705,40 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
     hasSelection: boolean;
     selectedText: string;
   } | null>(null);
+  const lockedLineSetRef = useRef<Set<number>>(new Set());
+  const lockedLineOwnerRef = useRef<Map<number, string>>(new Map());
+
+  useEffect(() => {
+    const nextSet = new Set<number>();
+    const nextOwners = new Map<number, string>();
+    for (const line of lockedLineNumbers) {
+      if (Number.isFinite(line) && line > 0) {
+        nextSet.add(line);
+        if (lockedLineOwnerByLine[line]) {
+          nextOwners.set(line, lockedLineOwnerByLine[line]);
+        }
+      }
+    }
+    lockedLineSetRef.current = nextSet;
+    lockedLineOwnerRef.current = nextOwners;
+  }, [lockedLineNumbers, lockedLineOwnerByLine]);
+
+  const notifyBlockedLineEdit = useCallback(
+    (editorState: any): boolean => {
+      if (!caps.editable) return false;
+      if (!currentUserId) return false;
+      if (lockedLineSetRef.current.size === 0) return false;
+      const { fromLine, toLine } = getSelectionLineRange(editorState);
+      for (let line = fromLine; line <= toLine; line++) {
+        if (lockedLineSetRef.current.has(line)) {
+          onBlockedLineEdit?.(line, lockedLineOwnerRef.current.get(line));
+          return true;
+        }
+      }
+      return false;
+    },
+    [caps.editable, currentUserId, onBlockedLineEdit]
+  );
 
   // Slash command extension (memoized to avoid re-creation)
   const slashCommandExt = useMemo(() => createSlashCommandExtension(onAIAction), [onAIAction]);
@@ -1753,7 +1822,20 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
     content: initialContent,
     editable: caps.editable,
     editorProps: {
+      handleTextInput: (view) => {
+        return notifyBlockedLineEdit(view.state);
+      },
+      handleKeyDown: (view, event) => {
+        if (!isMutationKey(event)) return false;
+        if (!notifyBlockedLineEdit(view.state)) return false;
+        event.preventDefault();
+        return true;
+      },
       handlePaste: (view, event) => {
+        if (notifyBlockedLineEdit(view.state)) {
+          event.preventDefault();
+          return true;
+        }
         // Clean up Microsoft Word HTML on paste for seamless formatting
         const html = event.clipboardData?.getData('text/html');
         if (html && (html.includes('urn:schemas-microsoft-com') || html.includes('mso-') || html.includes('MsoNormal'))) {

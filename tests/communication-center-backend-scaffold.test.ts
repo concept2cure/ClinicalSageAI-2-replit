@@ -1,81 +1,126 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import express from 'express';
+import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const ROOT = process.cwd();
+const { mockQuery, mockGetSecureOrgId, mockGetOrCreateProfile, mockDbInsertValues } = vi.hoisted(() => ({
+  mockQuery: vi.fn(),
+  mockGetSecureOrgId: vi.fn(() => '2'),
+  mockGetOrCreateProfile: vi.fn(async () => 123),
+  mockDbInsertValues: vi.fn(async () => undefined),
+}));
 
-function read(file: string) {
-  return fs.readFileSync(path.join(ROOT, file), 'utf8');
+vi.mock('../server/auth', () => ({
+  authMiddleware: (req: any, _res: any, next: any) => {
+    req.userId = 11;
+    req.user = { id: 11 };
+    next();
+  },
+}));
+
+vi.mock('../server/utils/tenantContext', () => ({
+  getSecureOrgId: (...args: any[]) => mockGetSecureOrgId(...args),
+}));
+
+vi.mock('../server/services/intelligence/project-intelligence-service', () => ({
+  getOrCreateProfile: (...args: any[]) => mockGetOrCreateProfile(...args),
+}));
+
+vi.mock('../server/db', () => ({
+  getPool: () => ({ query: (...args: any[]) => mockQuery(...args) }),
+  db: {
+    insert: () => ({ values: (...args: any[]) => mockDbInsertValues(...args) }),
+  },
+}));
+
+vi.mock('@shared/schema', () => ({
+  projectMemoryEntries: {},
+}));
+
+import regulatoryCorrespondenceRoutes from '../server/routes/regulatory-correspondence';
+
+function appWithAuth() {
+  const app = express();
+  app.use(express.json());
+  app.use('/api/regulatory-correspondence', regulatoryCorrespondenceRoutes);
+  return app;
 }
 
-describe('Communication Center backend scaffold', () => {
-  it('defines shared communication-center contracts', () => {
-    const src = read('shared/types/communication-center.ts');
-    expect(src).toContain('COMMUNICATION_VISIBILITY_TIERS');
-    expect(src).toContain('PUBLISHOPS_SERVICE_STATES');
-    expect(src).toContain('AuthorityProfileRecord');
-    expect(src).toContain('AgencyCommunicationEventRecord');
-    expect(src).toContain('PublishOpsServiceRecord');
-    expect(src).toContain('SubmissionCenterItemRecord');
-    expect(src).toContain('SUBMISSION_CENTER_ITEM_STATES');
+describe('Communication center runtime integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.ENABLE_REG_CORRESPONDENCE_HEURISTIC_MODE = 'true';
+    delete process.env.REG_CORRESPONDENCE_ISSUE_PARSER_MODE;
+
+    mockQuery.mockImplementation(async (sqlText: string, params?: any[]) => {
+      if (sqlText.includes('to_regclass')) return { rows: [{ tbl: 'c2c_submissions' }] };
+      if (sqlText.includes('FROM c2c_submissions') && sqlText.includes('WHERE id = $1')) {
+        return { rows: [{ id: params?.[0], project_id: 17 }] };
+      }
+      return { rows: [] };
+    });
   });
 
-  it('adds authority profile and agency communication routes', () => {
-    const src = read('server/routes/concept2cure-communication-center.ts');
-    expect(src).toContain("router.get('/projects/:projectId/authority-profiles'");
-    expect(src).toContain("router.get('/projects/:projectId/authority-profiles/templates'");
-    expect(src).toContain("router.post('/projects/:projectId/authority-profiles'");
-    expect(src).toContain("router.get('/projects/:projectId/agency-communications'");
-    expect(src).toContain("router.post('/projects/:projectId/agency-communications'");
-    expect(src).toContain('canViewVisibilityTier');
-    expect(src).toContain('validateAuthorityProfileInput');
-    expect(src).toContain('deriveCommunicationDueDate');
+
+  it('returns parser governance health for runtime readiness checks', async () => {
+    const res = await request(appWithAuth()).get('/api/regulatory-correspondence/parser/health');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.parserVersion).toBe('governed-parser-pipeline-v1');
+    expect(res.body.data.parserGovernance.mode).toBe('heuristic_v2');
+    expect(res.body.data.parserGovernance.available).toBe(true);
   });
 
-  it('adds PublishOps service route scaffold with status transitions', () => {
-    const src = read('server/routes/concept2cure-communication-center.ts');
-    expect(src).toContain("router.get('/projects/:projectId/publishops/services'");
-    expect(src).toContain("router.post('/projects/:projectId/publishops/services'");
-    expect(src).toContain("/projects/:projectId/publishops/services/:serviceId/status");
-    expect(src).toContain('status: z.enum(PUBLISHOPS_SERVICE_STATES)');
-    expect(src).toContain('createCommunicationCenterTask');
-    expect(src).toContain('createCommunicationCenterNotification');
-    expect(src).toContain('publishops_completed');
-    expect(src).toContain("router.get('/projects/:projectId/submission-center/items'");
-    expect(src).toContain("router.post('/projects/:projectId/submission-center/items'");
-    expect(src).toContain('/projects/:projectId/submission-center/items/:itemId/status');
-    expect(src).toContain('validateSubmissionTransition');
+
+  it('rejects intake payloads when parsedText and summary are effectively empty', async () => {
+    const res = await request(appWithAuth())
+      .post('/api/regulatory-correspondence/correspondence/intake')
+      .send({
+        projectId: 17,
+        submissionId: 'sub_1',
+        communicationType: 'deficiency_letter',
+        subject: 'Agency deficiency request',
+        parsedText: '   ',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Validation error');
   });
 
-  it('persists communication center scaffold with migration-backed tables', () => {
-    const routeSrc = read('server/routes/concept2cure-communication-center.ts');
-    const parentRouteSrc = read('server/routes/concept2cure.ts');
-    const migrationSrc = read('db/migrations/20260331_communication_center_scaffold.sql');
-    expect(parentRouteSrc).toContain('registerCommunicationCenterRoutes(');
-    expect(routeSrc).toContain('ensureCommunicationCenterTables');
-    expect(routeSrc).toContain('concept2cure_authority_profiles');
-    expect(routeSrc).toContain('concept2cure_agency_communications');
-    expect(routeSrc).toContain('concept2cure_publishops_services');
-    expect(routeSrc).toContain('concept2cure_submission_center_items');
-    expect(migrationSrc).toContain('CREATE TABLE IF NOT EXISTS concept2cure_authority_profiles');
-    expect(migrationSrc).toContain('CREATE TABLE IF NOT EXISTS concept2cure_agency_communications');
-    expect(migrationSrc).toContain('CREATE TABLE IF NOT EXISTS concept2cure_publishops_services');
-    const submissionMigrationSrc = read('db/migrations/20260401_submission_center_items.sql');
-    expect(submissionMigrationSrc).toContain('CREATE TABLE IF NOT EXISTS concept2cure_submission_center_items');
-    expect(routeSrc).not.toContain('CREATE TABLE IF NOT EXISTS concept2cure_authority_profiles');
+  it('uses governed heuristic-mode extraction contract for exact intake route', async () => {
+    const res = await request(appWithAuth())
+      .post('/api/regulatory-correspondence/correspondence/intake')
+      .send({
+        projectId: 17,
+        submissionId: 'sub_1',
+        communicationType: 'deficiency_letter',
+        subject: 'Agency deficiency request',
+        parsedText: 'Deficiency and missing information for CMC stability package.',
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.parserMetadata.parserMode).toBe('heuristic');
+    expect(res.body.data.parserMetadata.responseContract).toBe('governed_heuristic_mode_v1');
+    expect(res.body.data.parserMetadata.confidenceMethod).toBe('rule_weighted_keyword_parser');
+    expect(res.body.issues[0].humanReviewStatus).toBe('pending');
   });
 
-  it('wires Communication Center client to scoped backend endpoints', () => {
-    const hookSrc = read('client/src/concept2cure/hooks/useCommunicationCenterData.ts');
-    expect(hookSrc).toContain('/api/concept2cure/projects/${projectId}/authority-profiles');
-    expect(hookSrc).toContain('/api/concept2cure/projects/${projectId}/authority-profiles/templates');
-    expect(hookSrc).toContain('/api/concept2cure/projects/${projectId}/agency-communications');
-    expect(hookSrc).toContain('/api/concept2cure/projects/${projectId}/publishops/services');
-    expect(hookSrc).toContain('/api/concept2cure/projects/${projectId}/submission-center/items');
-    expect(hookSrc).toContain('createManualAgencyEvent');
-    expect(hookSrc).toContain('createPublishOpsRequest');
-    expect(hookSrc).toContain('createSubmissionCenterItem');
-    expect(hookSrc).toContain('transitionSubmissionCenterItem');
-    expect(hookSrc).toContain("sourceType: 'manual_logged_event'");
-    expect(hookSrc).toContain("entitlementLevel: 'managed_publishops_service'");
+  it('fails closed on the exact intake route when heuristic mode is disabled', async () => {
+    process.env.ENABLE_REG_CORRESPONDENCE_HEURISTIC_MODE = 'false';
+    process.env.REG_CORRESPONDENCE_ISSUE_PARSER_MODE = 'disabled';
+
+    const res = await request(appWithAuth())
+      .post('/api/regulatory-correspondence/correspondence/intake')
+      .send({
+        projectId: 17,
+        submissionId: 'sub_1',
+        communicationType: 'deficiency_letter',
+        subject: 'Agency deficiency request',
+        parsedText: 'Missing information regarding stability.',
+      });
+
+    expect(res.status).toBe(503);
+    expect(res.body.error).toContain('Issue parser unavailable');
+    expect(res.body.message).toContain('ENABLE_REG_CORRESPONDENCE_HEURISTIC_MODE=true');
+    expect(res.body.parserGovernance.mode).toBe('disabled');
   });
 });

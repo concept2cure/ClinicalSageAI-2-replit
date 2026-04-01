@@ -14,8 +14,8 @@ import type { Pool, PoolClient } from 'pg';
 import jwt from 'jsonwebtoken';
 import { db } from '../db';
 import { getPool } from '../db';
-import { eq } from 'drizzle-orm';
-import { organizations } from '../../shared/schema';
+import { and, eq } from 'drizzle-orm';
+import { organizations, organizationUsers } from '../../shared/schema';
 
 // Define the tenant context interface to be attached to the request
 export interface TenantContext {
@@ -161,6 +161,13 @@ export function requireOrganizationContext(req: Request, res: Response, next: Ne
  */
 export async function requireTenantContext(req: Request, res: Response, next: NextFunction) {
   try {
+    if (!process.env.JWT_SECRET) {
+      return res.status(503).json({
+        error: 'Authentication unavailable',
+        message: 'JWT verifier is not configured',
+      });
+    }
+
     const authHeader = req.headers.authorization;
     const token = authHeader?.replace('Bearer ', '').trim();
 
@@ -171,14 +178,10 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
       });
     }
 
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || process.env.SESSION_SECRET || ''
-    ) as {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET) as {
       userId: string;
       organizationId: string;
       organizationUuid?: string;
-      role?: string;
     };
 
     const organizationId = decoded.organizationId?.toString();
@@ -189,6 +192,15 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
       });
     }
 
+    const userId = parseInt(decoded.userId, 10);
+    const orgIdInt = parseInt(organizationId, 10);
+    if (!Number.isFinite(userId) || !Number.isFinite(orgIdInt)) {
+      return res.status(401).json({
+        error: 'Authentication required',
+        message: 'Invalid token claims',
+      });
+    }
+
     const tenant = await db
       .select({
         id: organizations.id,
@@ -196,7 +208,7 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
         status: organizations.status,
       })
       .from(organizations)
-      .where(eq(organizations.id, parseInt(organizationId, 10)))
+      .where(eq(organizations.id, orgIdInt))
       .limit(1);
 
     if (!tenant.length || tenant[0].status === 'suspended') {
@@ -205,6 +217,21 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
         message: 'Tenant not active',
       });
     }
+
+    const membership = await db
+      .select({ role: organizationUsers.role })
+      .from(organizationUsers)
+      .where(and(eq(organizationUsers.userId, userId), eq(organizationUsers.organizationId, orgIdInt)))
+      .limit(1);
+
+    if (!membership.length) {
+      return res.status(403).json({
+        error: 'Authentication required',
+        message: 'User is not a member of this organization',
+      });
+    }
+
+    const resolvedRole = membership[0].role;
 
     const organizationUuid =
       req.tenantContext?.organizationUuid || decoded.organizationUuid || null;
@@ -217,10 +244,11 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
     };
 
     req.user = {
-      id: parseInt(decoded.userId, 10),
-      tenantId: parseInt(organizationId, 10),
+      id: userId,
+      tenantId: orgIdInt,
       industryMode: tenant[0].industryMode,
-      role: decoded.role || null,
+      role: resolvedRole,
+      organizationId: organizationId,
     };
     req.userId = req.user.id;
     req.tenantId = req.user.tenantId;
@@ -230,7 +258,7 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
     try {
       await client.query("SELECT set_config('app.current_tenant_id', $1, false)", [organizationId]);
       await client.query("SELECT set_config('app.current_user_role', $1, false)", [
-        decoded.role || 'user',
+        resolvedRole,
       ]);
       await client.query("SELECT set_config('app.current_org_id', $1, false)", [
         organizationUuid || '',

@@ -12,9 +12,10 @@
  * Account/profile at bottom.
  */
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   Plus,
   MessageSquare,
@@ -90,8 +91,15 @@ interface Project {
 
 /** Submission type → hex color fallback for the sidebar project dot */
 const SIDEBAR_TYPE_COLORS: Record<string, string> = {
-  '510K': '#3b82f6', IND: '#8b5cf6', NDA: '#22c55e', BLA: '#f97316',
-  PMA: '#ef4444', MAA: '#ec4899', DE_NOVO: '#f59e0b', EUA: '#06b6d4', IVDR: '#10b981',
+  '510K': '#3b82f6',
+  IND: '#8b5cf6',
+  NDA: '#22c55e',
+  BLA: '#f97316',
+  PMA: '#ef4444',
+  MAA: '#ec4899',
+  DE_NOVO: '#f59e0b',
+  EUA: '#06b6d4',
+  IVDR: '#10b981',
 };
 
 export interface ZenSidebarProps {
@@ -124,7 +132,10 @@ export interface ZenSidebarProps {
 // ─── Submission type badge config ────────────────────────────────────────────
 
 // 3-color palette: stone (default), blue (device/diagnostics), violet (pharma/biotech)
-const SUBMISSION_BADGE: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; color: string; bg: string }> = {
+const SUBMISSION_BADGE: Record<
+  string,
+  { label: string; icon: React.ComponentType<{ className?: string }>; color: string; bg: string }
+> = {
   '510K': { label: '510(k)', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
   IND: { label: 'IND', icon: Beaker, color: 'text-violet-600', bg: 'bg-violet-50' },
   NDA: { label: 'NDA', icon: Pill, color: 'text-violet-600', bg: 'bg-violet-50' },
@@ -136,19 +147,30 @@ const SUBMISSION_BADGE: Record<string, { label: string; icon: React.ComponentTyp
   IVDR: { label: 'IVDR', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
 };
 
-const FALLBACK_BADGE = { label: 'PRJ', icon: FolderOpen, color: 'text-stone-500', bg: 'bg-stone-100' };
+const FALLBACK_BADGE = {
+  label: 'PRJ',
+  icon: FolderOpen,
+  color: 'text-stone-500',
+  bg: 'bg-stone-100',
+};
 
 // ─── Status dot colors ──────────────────────────────────────────────────────
 
 function statusDotColor(status?: string): string {
   switch (status) {
-    case 'active': return 'bg-emerald-400';
-    case 'in_review': return 'bg-amber-400';
-    case 'submitted': return 'bg-blue-400';
-    case 'approved': return 'bg-emerald-500';
-    case 'archived': return 'bg-stone-300';
+    case 'active':
+      return 'bg-emerald-400';
+    case 'in_review':
+      return 'bg-amber-400';
+    case 'submitted':
+      return 'bg-blue-400';
+    case 'approved':
+      return 'bg-emerald-500';
+    case 'archived':
+      return 'bg-stone-300';
     case 'draft':
-    default: return 'bg-stone-300';
+    default:
+      return 'bg-stone-300';
   }
 }
 
@@ -177,10 +199,13 @@ const WorkspaceGroup: React.FC<{
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="mt-1">
-      <button
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
-        className="w-full flex items-center gap-1 px-3 py-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest hover:text-stone-500 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none rounded transition-colors"
+        className="h-auto w-full justify-start gap-1 px-3 py-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest hover:text-stone-500 rounded transition-colors"
       >
         <ChevronDown
           className={cn(
@@ -189,7 +214,7 @@ const WorkspaceGroup: React.FC<{
           )}
         />
         <span>{label}</span>
-      </button>
+      </Button>
       {open && <div className="pb-2 space-y-0.5">{children}</div>}
     </div>
   );
@@ -205,55 +230,68 @@ const NavItem: React.FC<{
   badge?: string;
   subtitle?: string;
   onClick: () => void;
-}> = ({ icon, label, active, accentColor, badge, subtitle, onClick }) => {
-  const accentMap = {
-    blue: { bg: 'bg-blue-100', text: 'text-blue-600', iconColor: 'text-blue-500' },
-    violet: { bg: 'bg-violet-100', text: 'text-violet-600', iconColor: 'text-violet-500' },
-    emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', iconColor: 'text-emerald-500' },
-  };
-  const accent = accentColor && accentMap[accentColor];
+}> = React.memo(
+  ({ icon, label, active, accentColor, badge, subtitle, onClick }) => {
+    const accentMap = {
+      blue: { bg: 'bg-blue-100', text: 'text-blue-600', iconColor: 'text-blue-500' },
+      violet: { bg: 'bg-violet-100', text: 'text-violet-600', iconColor: 'text-violet-500' },
+      emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', iconColor: 'text-emerald-500' },
+    };
+    const accent = accentColor && accentMap[accentColor];
 
-  return (
-    <button
-      onClick={onClick}
-      aria-current={active ? 'page' : undefined}
-      className={cn(
-        'w-full flex items-center gap-2 mx-1 pl-5 pr-3 py-[5px] text-xs transition-all duration-150 rounded-md focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none',
-        active
-          ? accent
-            ? `${accent.bg} ${accent.text} font-medium`
-            : 'bg-stone-200/80 text-stone-900 font-medium'
-          : accent
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={onClick}
+        aria-current={active ? 'page' : undefined}
+        className={cn(
+          'h-auto w-full justify-start gap-2 mx-1 pl-5 pr-3 py-[5px] text-xs transition-all duration-150 rounded-md',
+          active
+            ? accent
+              ? `${accent.bg} ${accent.text} font-medium`
+              : 'bg-stone-200/80 text-stone-900 font-medium'
+            : accent
             ? cn(
                 'text-stone-600',
                 accent.bg === 'bg-blue-100' && 'hover:bg-blue-100 hover:text-blue-600',
                 accent.bg === 'bg-emerald-50' && 'hover:bg-emerald-50 hover:text-emerald-700'
               )
             : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
-      )}
-    >
-      <span
-        className={cn(
-          'flex-shrink-0',
-          active ? (accent ? accent.iconColor : 'text-stone-700') : 'text-stone-400'
         )}
       >
-        {icon}
-      </span>
-      <div className="flex-1 min-w-0 text-left">
-        <span className="block truncate">{label}</span>
-        {subtitle && (
-          <span className="block text-[10px] text-stone-400 truncate leading-tight">{subtitle}</span>
-        )}
-      </div>
-      {badge && (
-        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium leading-none flex-shrink-0">
-          {badge}
+        <span
+          className={cn(
+            'flex-shrink-0',
+            active ? (accent ? accent.iconColor : 'text-stone-700') : 'text-stone-400'
+          )}
+        >
+          {icon}
         </span>
-      )}
-    </button>
-  );
-};
+        <div className="flex-1 min-w-0 text-left">
+          <span className="block truncate">{label}</span>
+          {subtitle && (
+            <span className="block text-[10px] text-stone-400 truncate leading-tight">
+              {subtitle}
+            </span>
+          )}
+        </div>
+        {badge && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium leading-none flex-shrink-0">
+            {badge}
+          </span>
+        )}
+      </Button>
+    );
+  },
+  (prev, next) =>
+    prev.label === next.label &&
+    prev.active === next.active &&
+    prev.accentColor === next.accentColor &&
+    prev.badge === next.badge &&
+    prev.subtitle === next.subtitle
+);
 
 // ─── Single conversation row ──────────────────────────────────────────────────
 
@@ -285,7 +323,9 @@ const ConvoRow: React.FC<{
       )}
     >
       <MessageSquare className="w-3.5 h-3.5 flex-shrink-0 opacity-40" />
-      <span className="flex-1 text-[13px] truncate leading-5">{convo.title || 'New conversation'}</span>
+      <span className="flex-1 text-[13px] truncate leading-5">
+        {convo.title || 'New conversation'}
+      </span>
       <span className="text-[10px] text-stone-400 flex-shrink-0 tabular-nums">
         {relativeTime(convo.timestamp)}
       </span>
@@ -293,13 +333,16 @@ const ConvoRow: React.FC<{
       {/* Three-dot menu — visible on hover */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
             onClick={e => e.stopPropagation()}
             aria-label={`Actions for conversation: ${convo.title}`}
-            className="flex-shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-stone-400 hover:text-stone-600 hover:bg-stone-200 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+            className="h-6 w-6 flex-shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-stone-400 hover:text-stone-600 hover:bg-stone-200"
           >
             <MoreHorizontal className="w-3.5 h-3.5" />
-          </button>
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
           {onRename && (
@@ -396,19 +439,20 @@ const ProjectRow: React.FC<{
       <div
         className={cn(
           'group relative flex items-center gap-2 mx-1 px-2.5 py-2 rounded-lg cursor-pointer select-none transition-all duration-150',
-          isActive
-            ? 'bg-stone-200/80 text-stone-900'
-            : 'text-stone-700 hover:bg-stone-100'
+          isActive ? 'bg-stone-200/80 text-stone-900' : 'text-stone-700 hover:bg-stone-100'
         )}
       >
         {/* Expand chevron — toggles expand independently */}
-        <button
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
           onClick={e => {
             e.stopPropagation();
             onToggleExpand();
           }}
           aria-label={isExpanded ? 'Collapse project' : 'Expand project'}
-          className="flex-shrink-0 p-0.5 rounded hover:bg-stone-200/50 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors"
+          className="h-5 w-5 flex-shrink-0 p-0.5 rounded hover:bg-stone-200/50 transition-colors"
         >
           <ChevronDown
             className={cn(
@@ -417,13 +461,15 @@ const ProjectRow: React.FC<{
               !isExpanded && '-rotate-90'
             )}
           />
-        </button>
+        </Button>
 
         {/* Colored project dot (Claude.ai style) */}
         <span
           onClick={onSelect}
           className="w-2 h-2 rounded-full flex-shrink-0"
-          style={{ backgroundColor: project.color || SIDEBAR_TYPE_COLORS[project.type] || '#6366f1' }}
+          style={{
+            backgroundColor: project.color || SIDEBAR_TYPE_COLORS[project.type] || '#6366f1',
+          }}
         />
 
         {/* Project name — clicking selects the project */}
@@ -453,25 +499,26 @@ const ProjectRow: React.FC<{
         )}
 
         {/* Starred indicator */}
-        {isPinned && (
-          <Star className="w-3 h-3 flex-shrink-0 fill-current text-amber-400" />
-        )}
+        {isPinned && <Star className="w-3 h-3 flex-shrink-0 fill-current text-amber-400" />}
 
         {/* Three-dot menu — visible on hover */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
               onClick={e => e.stopPropagation()}
               aria-label={`Actions for ${project.name}`}
               className={cn(
-                'flex-shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none',
+                'h-6 w-6 flex-shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity',
                 isActive
                   ? 'text-stone-500 hover:text-stone-700 hover:bg-stone-300/50'
                   : 'text-stone-400 hover:text-stone-600 hover:bg-stone-200'
               )}
             >
               <MoreHorizontal className="w-3.5 h-3.5" />
-            </button>
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-44">
             <DropdownMenuItem
@@ -531,16 +578,19 @@ const ProjectRow: React.FC<{
       {isExpanded && (
         <div className="ml-3 pl-3 border-l border-stone-200 mt-0.5 space-y-0.5 pb-1">
           {/* New conversation within project */}
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
             onClick={e => {
               e.stopPropagation();
               onNewChat();
             }}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-stone-500 hover:text-stone-700 hover:bg-stone-50 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+            className="h-auto w-full justify-start gap-2 px-2.5 py-1.5 text-xs text-stone-500 hover:text-stone-700 hover:bg-stone-50 rounded-md transition-colors"
           >
             <Plus className="w-3 h-3" />
             New chat
-          </button>
+          </Button>
 
           {conversations.length === 0 && (
             <p className="px-2.5 py-2 text-[11px] text-stone-400">No conversations yet</p>
@@ -554,7 +604,11 @@ const ProjectRow: React.FC<{
               onSelect={() => onSelectConversation(c.id)}
               onDelete={() => onDeleteConversation(c.id)}
               onRename={onRenameConversation ? () => onRenameConversation(c.id) : undefined}
-              onMoveToProject={onMoveConversation ? (targetProjectId: string) => onMoveConversation(c.id, targetProjectId) : undefined}
+              onMoveToProject={
+                onMoveConversation
+                  ? (targetProjectId: string) => onMoveConversation(c.id, targetProjectId)
+                  : undefined
+              }
               availableProjects={allProjects?.filter(p => p.id !== project.id)}
             />
           ))}
@@ -573,17 +627,30 @@ const IconBtn: React.FC<{
   accentText?: string;
   onClick: () => void;
   children: React.ReactNode;
-}> = ({ label, active, accentBg = 'bg-blue-100', accentText = 'text-blue-500', onClick, children }) => (
-  <button
-    onClick={onClick}
-    aria-label={label}
-    className={cn(
-      'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors',
-      active ? `${accentBg} ${accentText}` : 'text-stone-500 hover:bg-stone-200'
-    )}
-  >
-    {children}
-  </button>
+}> = React.memo(
+  ({
+    label,
+    active,
+    accentBg = 'bg-blue-100',
+    accentText = 'text-blue-500',
+    onClick,
+    children,
+  }) => (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      onClick={onClick}
+      aria-label={label}
+      className={cn(
+        'w-9 h-9 rounded-xl transition-colors',
+        active ? `${accentBg} ${accentText}` : 'text-stone-500 hover:bg-stone-200'
+      )}
+    >
+      {children}
+    </Button>
+  ),
+  (prev, next) => prev.label === next.label && prev.active === next.active
 );
 
 // ─── New dropdown (Create: Chat / Project / Artifact) ──────────────────────────
@@ -620,42 +687,71 @@ const NewDropdown: React.FC<{
 
   return (
     <div className="relative mx-1" ref={containerRef}>
-      <button
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
         onClick={() => setOpen(o => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-stone-200 text-stone-700 text-[13px] font-medium hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors"
+        className="h-auto w-full justify-start gap-2 px-3 py-2 rounded-lg border-stone-200 text-stone-700 text-[13px] font-medium hover:bg-stone-100"
       >
         <Plus className="w-4 h-4 flex-shrink-0" />
         New
-        <ChevronDown className={cn('w-3 h-3 ml-auto text-stone-400 transition-transform', open && 'rotate-180')} />
-      </button>
+        <ChevronDown
+          className={cn(
+            'w-3 h-3 ml-auto text-stone-400 transition-transform',
+            open && 'rotate-180'
+          )}
+        />
+      </Button>
       {open && (
-        <div role="menu" className="absolute left-0 right-0 mt-1 bg-white border border-stone-200 rounded-lg shadow-sm z-50 py-1">
-          <button
+        <div
+          role="menu"
+          className="absolute left-0 right-0 mt-1 bg-white border border-stone-200 rounded-lg shadow-sm z-50 py-1"
+        >
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
             role="menuitem"
-            onClick={() => { onNewChat(); setOpen(false); }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50 transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+            onClick={() => {
+              onNewChat();
+              setOpen(false);
+            }}
+            className="h-auto w-full justify-start gap-2 px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50"
           >
             <MessageSquare className="w-3.5 h-3.5 text-stone-400" />
             New Chat
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
             role="menuitem"
-            onClick={() => { onNewProject(); setOpen(false); }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50 transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+            onClick={() => {
+              onNewProject();
+              setOpen(false);
+            }}
+            className="h-auto w-full justify-start gap-2 px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50"
           >
             <FolderOpen className="w-3.5 h-3.5 text-stone-400" />
             New Project
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
             role="menuitem"
-            onClick={() => { onNewArtifact(); setOpen(false); }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50 transition-colors focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none"
+            onClick={() => {
+              onNewArtifact();
+              setOpen(false);
+            }}
+            className="h-auto w-full justify-start gap-2 px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50"
           >
             <FileStack className="w-3.5 h-3.5 text-stone-400" />
             New Document
-          </button>
+          </Button>
         </div>
       )}
     </div>
@@ -744,26 +840,52 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      filtered = filtered.filter(p =>
-        p.name.toLowerCase().includes(q) ||
-        (p.description || '').toLowerCase().includes(q) ||
-        (p.type || '').toLowerCase().includes(q)
+      filtered = filtered.filter(
+        p =>
+          p.name.toLowerCase().includes(q) ||
+          (p.description || '').toLowerCase().includes(q) ||
+          (p.type || '').toLowerCase().includes(q)
       );
     }
 
     const pinned = filtered.filter(p => p.starred || p.pinned);
-    const recent = filtered.filter(p => !p.starred && !p.pinned).sort((a, b) => {
-      if (a.id === activeProjectId) return -1;
-      if (b.id === activeProjectId) return 1;
-      return a.name.localeCompare(b.name);
-    });
+    const recent = filtered
+      .filter(p => !p.starred && !p.pinned)
+      .sort((a, b) => {
+        if (a.id === activeProjectId) return -1;
+        if (b.id === activeProjectId) return 1;
+        return a.name.localeCompare(b.name);
+      });
 
     return { pinnedProjects: pinned, recentProjects: recent };
   }, [projects, activeProjectId, searchQuery]);
 
   // ── Collapsed icon-only strip ──────────────────────────────────────────────
+  // Stable navigation handlers — prevents new closure per render
+  const nav = useMemo(() => {
+    const h = (id: string) => () => onNavigate?.(id);
+    return {
+      projects: h('projects'),
+      apps: h('apps'),
+      'artifacts-center': h('artifacts-center'),
+      setup: h('setup'),
+      'project-home': h('project-home'),
+      'submission-builder': h('submission-builder'),
+      overview: h('overview'),
+      'task-board': h('task-board'),
+      tools: h('tools'),
+      submit: h('submit'),
+      documents: h('documents'),
+      'ri-copilot': h('ri-copilot'),
+      review: h('review'),
+      vault: h('vault'),
+    };
+  }, [onNavigate]);
+
   if (isCollapsed) {
-    const activeBadge = activeProject ? (SUBMISSION_BADGE[activeProject.type] ?? FALLBACK_BADGE) : null;
+    const activeBadge = activeProject
+      ? SUBMISSION_BADGE[activeProject.type] ?? FALLBACK_BADGE
+      : null;
 
     return (
       <aside
@@ -774,7 +896,13 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         {/* Logo */}
         <div className="relative w-8 h-8 rounded-xl overflow-hidden shadow-sm flex-shrink-0 mb-1">
           <img src={logoSrc} alt="C2C" className="w-full h-full object-cover object-center" />
-          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at center, transparent 40%, var(--color-bg, #faf9f5) 100%)' }} />
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                'radial-gradient(circle at center, transparent 40%, var(--color-bg, #faf9f5) 100%)',
+            }}
+          />
         </div>
 
         {/* ── Global nav (6 items) ── */}
@@ -787,13 +915,21 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <IconBtn label="Projects" active={activeNavId === 'projects'} onClick={onOpenProjects}>
           <FolderOpen className="w-4 h-4" />
         </IconBtn>
-        <IconBtn label="AI Assistants" active={activeNavId === 'apps'} onClick={() => onNavigate?.('apps')}>
+        <IconBtn
+          label="Workspace Home"
+          active={activeNavId === 'project-home'}
+          onClick={nav['project-home']}
+        >
           <Sparkles className="w-4 h-4" />
         </IconBtn>
-        <IconBtn label="Documents" active={activeNavId === 'artifacts-center'} onClick={() => onNavigate?.('artifacts-center')}>
+        <IconBtn
+          label="Documents"
+          active={activeNavId === 'submission-builder'}
+          onClick={nav['submission-builder']}
+        >
           <FileStack className="w-4 h-4" />
         </IconBtn>
-        <IconBtn label="Setup" active={activeNavId === 'setup'} onClick={() => onNavigate?.('setup')}>
+        <IconBtn label="Intelligence" active={activeNavId === 'ri-copilot'} onClick={nav['ri-copilot']}>
           <Settings className="w-4 h-4" />
         </IconBtn>
 
@@ -801,23 +937,30 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <div className="w-8 border-t border-stone-200 my-1" />
         <IconBtn
           label="Editor"
-          active={['submission-builder', 'ri-copilot', 'verify', 'review', 'publish'].includes(activeNavId || '')}
-          onClick={() => onNavigate?.('submission-builder')}
+          active={['submission-builder', 'ri-copilot', 'verify', 'review', 'publish'].includes(
+            activeNavId || ''
+          )}
+          onClick={nav['submission-builder']}
         >
           <PenLine className="w-4 h-4" />
         </IconBtn>
 
         {/* Bottom: expand + account */}
         <div className="mt-auto flex flex-col items-center gap-1">
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
             onClick={onToggleCollapse}
             aria-label="Expand sidebar"
-            className="w-9 h-9 rounded-xl text-stone-400 flex items-center justify-center hover:bg-stone-200 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors"
+            className="w-9 h-9 rounded-xl text-stone-400 hover:bg-stone-200 transition-colors"
           >
             <ChevronRight className="w-4 h-4" />
-          </button>
+          </Button>
           <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center">
-            <span className="text-[10px] font-bold text-blue-600 leading-none">{avatarInitial}</span>
+            <span className="text-[10px] font-bold text-blue-600 leading-none">
+              {avatarInitial}
+            </span>
           </div>
         </div>
       </aside>
@@ -825,7 +968,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   }
 
   // ── Full expanded sidebar ──────────────────────────────────────────────────
-  const activeBadge = activeProject ? (SUBMISSION_BADGE[activeProject.type] ?? FALLBACK_BADGE) : null;
+  const activeBadge = activeProject ? SUBMISSION_BADGE[activeProject.type] ?? FALLBACK_BADGE : null;
 
   return (
     <>
@@ -840,18 +983,31 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <div className="flex items-center justify-between px-3 h-11 flex-shrink-0">
           <div className="flex items-center gap-2">
             <div className="relative w-7 h-7 rounded-lg overflow-hidden flex-shrink-0 shadow-sm">
-              <img src={logoSrc} alt="Concept2Cure" className="w-full h-full object-cover object-center" />
-              <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at center, transparent 40%, var(--color-bg, #faf9f5) 100%)' }} />
+              <img
+                src={logoSrc}
+                alt="Concept2Cure"
+                className="w-full h-full object-cover object-center"
+              />
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background:
+                    'radial-gradient(circle at center, transparent 40%, var(--color-bg, #faf9f5) 100%)',
+                }}
+              />
             </div>
             <span className="font-semibold text-stone-800 text-[13px]">Concept2Cure</span>
           </div>
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
             onClick={onToggleCollapse}
             aria-label="Collapse sidebar"
-            className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-200 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors"
+            className="h-8 w-8 p-1.5 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-200 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
 
         {/* ── Global Navigation (6 items) ──────────────────────────────── */}
@@ -878,22 +1034,22 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           />
           <NavItem
             icon={<Sparkles className="w-3.5 h-3.5" />}
-            label="AI Assistants"
-            active={activeNavId === 'apps'}
+            label="Workspace Home"
+            active={activeNavId === 'project-home'}
             accentColor="violet"
-            onClick={() => onNavigate?.('apps')}
+            onClick={nav['project-home']}
           />
           <NavItem
             icon={<FileStack className="w-3.5 h-3.5" />}
             label="Documents"
-            active={activeNavId === 'artifacts-center'}
-            onClick={() => onNavigate?.('artifacts-center')}
+            active={activeNavId === 'submission-builder'}
+            onClick={nav['submission-builder']}
           />
           <NavItem
             icon={<Settings className="w-3.5 h-3.5" />}
-            label="Setup"
-            active={activeNavId === 'setup'}
-            onClick={() => onNavigate?.('setup')}
+            label="Intelligence"
+            active={activeNavId === 'ri-copilot'}
+            onClick={nav['ri-copilot']}
           />
         </div>
 
@@ -905,7 +1061,13 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               {/* Project identity */}
               <div className="flex items-center gap-2 px-2 mb-1.5">
                 {activeBadge && (
-                  <span className={cn('text-[9px] font-bold px-1.5 py-0.5 rounded leading-none', activeBadge.bg, activeBadge.color)}>
+                  <span
+                    className={cn(
+                      'text-[9px] font-bold px-1.5 py-0.5 rounded leading-none',
+                      activeBadge.bg,
+                      activeBadge.color
+                    )}
+                  >
                     {activeBadge.label}
                   </span>
                 )}
@@ -920,27 +1082,27 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
                   icon={<Home className="w-3.5 h-3.5" />}
                   label="Overview"
                   active={activeNavId === 'overview'}
-                  onClick={() => onNavigate?.('overview')}
+                  onClick={nav.overview}
                 />
                 <NavItem
                   icon={<ListChecks className="w-3.5 h-3.5" />}
                   label="Tasks"
                   active={activeNavId === 'task-board'}
-                  onClick={() => onNavigate?.('task-board')}
+                  onClick={nav['task-board']}
                 />
                 <NavItem
                   icon={<Wrench className="w-3.5 h-3.5" />}
                   label="Tools"
                   active={activeNavId === 'work'}
                   accentColor="blue"
-                  onClick={() => onNavigate?.('tools')}
+                  onClick={nav.tools}
                 />
                 <NavItem
                   icon={<Send className="w-3.5 h-3.5" />}
                   label="Submit"
                   active={activeNavId === 'submit'}
                   accentColor="blue"
-                  onClick={() => onNavigate?.('submit')}
+                  onClick={nav.submit}
                 />
               </div>
             </div>
@@ -997,7 +1159,10 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           )}
 
           {/* Recent projects */}
-          <WorkspaceGroup label={pinnedProjects.length > 0 ? 'Recent' : 'Projects'} defaultOpen={true}>
+          <WorkspaceGroup
+            label={pinnedProjects.length > 0 ? 'Recent' : 'Projects'}
+            defaultOpen={true}
+          >
             {recentProjects.length === 0 && pinnedProjects.length === 0 && (
               <EmptyState
                 icon={FolderOpen}
@@ -1050,7 +1215,11 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
                     onSelect={() => onSelectConversation(c.id)}
                     onDelete={() => onDeleteConversation(c.id)}
                     onRename={onRenameConversation ? () => onRenameConversation(c.id) : undefined}
-                    onMoveToProject={onMoveConversation ? (targetProjectId: string) => onMoveConversation(c.id, targetProjectId) : undefined}
+                    onMoveToProject={
+                      onMoveConversation
+                        ? (targetProjectId: string) => onMoveConversation(c.id, targetProjectId)
+                        : undefined
+                    }
                     availableProjects={projects}
                   />
                 ))}
@@ -1065,49 +1234,52 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               icon={<Wrench className="w-3.5 h-3.5" />}
               label="Tools"
               active={activeNavId === 'documents' || activeNavId === 'tools'}
-              onClick={() => onNavigate?.('documents')}
+              onClick={nav.documents}
             />
             <NavItem
               icon={<PenLine className="w-3.5 h-3.5" />}
               label="Editor"
               active={activeNavId === 'submission-builder'}
-              onClick={() => onNavigate?.('submission-builder')}
+              onClick={nav['submission-builder']}
             />
             <NavItem
               icon={<Brain className="w-3.5 h-3.5" />}
               label="Intelligence"
               active={activeNavId === 'ri-copilot'}
               accentColor="blue"
-              onClick={() => onNavigate?.('ri-copilot')}
+              onClick={nav['ri-copilot']}
             />
             <NavItem
               icon={<ShieldCheck className="w-3.5 h-3.5" />}
               label="Review & Verify"
               active={activeNavId === 'review' || activeNavId === 'verify'}
               accentColor="emerald"
-              onClick={() => onNavigate?.('review')}
+              onClick={nav.review}
             />
             <NavItem
               icon={<Archive className="w-3.5 h-3.5" />}
               label="References"
               active={activeNavId === 'vault'}
-              onClick={() => onNavigate?.('vault')}
+              onClick={nav.vault}
             />
             <NavItem
               icon={<Send className="w-3.5 h-3.5" />}
               label="Submit & Export"
               active={activeNavId === 'submit'}
               accentColor="blue"
-              onClick={() => onNavigate?.('submit')}
+              onClick={nav.submit}
             />
           </WorkspaceGroup>
         </div>
 
         {/* User / account footer */}
         <div className="flex-shrink-0 border-t border-stone-100 p-2">
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
             onClick={onOpenSettings}
-            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-stone-500 hover:bg-stone-100 hover:text-stone-800 text-xs focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:outline-none transition-colors"
+            className="h-auto w-full justify-start gap-2 px-2 py-1.5 rounded-lg text-stone-500 hover:bg-stone-100 hover:text-stone-800 text-xs transition-colors"
           >
             <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
               <span className="text-[10px] font-bold text-blue-600 leading-none">
@@ -1122,7 +1294,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
                 <p className="text-[10px] text-stone-400 truncate leading-tight">{userEmail}</p>
               )}
             </div>
-          </button>
+          </Button>
         </div>
       </aside>
     </>

@@ -327,19 +327,19 @@ router.post('/analyze-compliance', async (req: Request, res: Response) => {
       const template = regulatoryKnowledgeBase[templateKey];
 
       // Check for missing required elements
-      missingElements = template.requiredElements.filter(element => {
+      missingElements = template.requiredElements.filter((element: any) => {
         const keywords = element.toLowerCase().split(' ');
-        return !keywords.some(keyword => content.toLowerCase().includes(keyword));
+        return !keywords.some((keyword: any) => content.toLowerCase().includes(keyword));
       });
 
       // Check for regulatory flags
       regulatoryFlags = template.criticalFlags
-        .filter(flag => {
-          return flag.trigger.some(trigger =>
+        .filter((flag: any) => {
+          return flag.trigger.some((trigger: any) =>
             content.toLowerCase().includes(trigger.toLowerCase())
           );
         })
-        .map(flag => ({
+        .map((flag: any) => ({
           severity: flag.severity,
           message: flag.message,
           reference: flag.reference,
@@ -347,10 +347,10 @@ router.post('/analyze-compliance', async (req: Request, res: Response) => {
 
       // Generate boilerplate recommendations
       boilerplateRecommendations = template.criticalFlags
-        .filter(flag =>
-          flag.trigger.some(trigger => content.toLowerCase().includes(trigger.toLowerCase()))
+        .filter((flag: any) =>
+          flag.trigger.some((trigger: any) => content.toLowerCase().includes(trigger.toLowerCase()))
         )
-        .map(flag => ({
+        .map((flag: any) => ({
           section: flag.trigger[0],
           text: flag.boilerplate,
           confidence: flag.severity === 'high' ? 0.9 : 0.7,
@@ -368,7 +368,7 @@ router.post('/analyze-compliance', async (req: Request, res: Response) => {
     };
 
     res.json(analysis);
-  } catch (error) {
+  } catch (error: any) {
     console.error('AI compliance analysis error:', error);
     res.status(500).json({
       error: 'Failed to analyze document compliance',
@@ -410,14 +410,14 @@ This section provides a comprehensive overview of ${template.title.toLowerCase()
 ## Regulatory Framework
 
 This document has been prepared in compliance with:
-${template.ichReferences.map(ref => `• ${ref}`).join('\n')}
-${template.fdaGuidance.map(guide => `• FDA Guidance: ${guide}`).join('\n')}
-${template.emaGuidance.map(guide => `• EMA Guidance: ${guide}`).join('\n')}
+${template.ichReferences.map((ref: any) => `• ${ref}`).join('\n')}
+${template.fdaGuidance.map((guide: any) => `• FDA Guidance: ${guide}`).join('\n')}
+${template.emaGuidance.map((guide: any) => `• EMA Guidance: ${guide}`).join('\n')}
 
 ## Required Elements
 
 The following elements are addressed in this section:
-${template.requiredElements.map(element => `• ${element}`).join('\n')}
+${template.requiredElements.map((element: any) => `• ${element}`).join('\n')}
 
 ## Summary
 
@@ -457,7 +457,7 @@ This documentation has been prepared in accordance with ICH guidelines and regul
       generatedAt: new Date().toISOString(),
       confidence: templateKey ? 0.9 : 0.6,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Boilerplate generation error:', error);
     res.status(500).json({
       error: 'Failed to generate boilerplate content',
@@ -485,7 +485,7 @@ router.get('/regulatory-guidance/:section', async (req: Request, res: Response) 
       guidance,
       lastUpdated: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Regulatory guidance lookup error:', error);
     res.status(500).json({
       error: 'Failed to retrieve regulatory guidance',
@@ -540,7 +540,7 @@ Keep responses practical and regulatory-focused.
       followUpSuggestions,
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Contextual AI guidance error:', error);
     res.status(500).json({
       error: 'Failed to generate AI guidance',

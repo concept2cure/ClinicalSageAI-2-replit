@@ -117,7 +117,7 @@ reportsManifestRoutes.get('/index(\\.json)?', async (_req: Request, res: Respons
 
     // Transform the response to match what the client expects
     const transformedIndex = {
-      personas: rawReportIndex.available_subscriptions.map(sub => ({
+      personas: rawReportIndex.available_subscriptions.map((sub: any) => ({
         id: sub.persona,
         name: sub.title,
         color: getPersonaColor(sub.persona),

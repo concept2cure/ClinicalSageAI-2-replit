@@ -784,11 +784,11 @@ router.get('/requirements', async (req: Request, res: Response) => {
         complianceRules.deviceClassRules[deviceClass].additionalSections || [];
 
       // Convert section IDs to full requirement objects
-      classRequirements = additionalSections.map(id => ({
+      classRequirements = additionalSections.map((id: any) => ({
         id,
         name: id
           .split('_')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .map((word: any) => word.charAt(0).toUpperCase() + word.slice(1))
           .join(' '),
         required: true,
       }));
@@ -796,7 +796,7 @@ router.get('/requirements', async (req: Request, res: Response) => {
 
     // Combine and format all requirements
     const requirements = [
-      ...allRequirements.map(section => ({
+      ...allRequirements.map((section: any) => ({
         id: section.id,
         name: section.name,
         description: section.description,

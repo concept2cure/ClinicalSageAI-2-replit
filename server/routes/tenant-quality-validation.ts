@@ -99,10 +99,10 @@ router.post('/validate-section', authMiddleware, requireOrganizationContext, asy
           const requiredTerms = factor.validationRule
             .toLowerCase()
             .split(',')
-            .map(term => term.trim());
+            .map((term: any) => term.trim());
 
           // Check if all required terms are present
-          const missingTerms = requiredTerms.filter(term => !contentLower.includes(term));
+          const missingTerms = requiredTerms.filter((term: any) => !contentLower.includes(term));
 
           if (missingTerms.length > 0) {
             validationPassed = false;
@@ -145,9 +145,9 @@ router.post('/validate-section', authMiddleware, requireOrganizationContext, asy
           const requiredTerms = customRule.rule
             .toLowerCase()
             .split(',')
-            .map(term => term.trim());
+            .map((term: any) => term.trim());
 
-          const missingTerms = requiredTerms.filter(term => !contentLower.includes(term));
+          const missingTerms = requiredTerms.filter((term: any) => !contentLower.includes(term));
 
           if (missingTerms.length > 0) {
             validationPassed = false;
@@ -356,11 +356,11 @@ router.get('/stats/:qmpId', authMiddleware, requireOrganizationContext, async (r
     // Calculate statistics
     const stats = {
       totalRules: gatingRules.length,
-      hardGates: gatingRules.filter(rule => rule.requiredLevel === 'hard').length,
-      softGates: gatingRules.filter(rule => rule.requiredLevel === 'soft').length,
-      infoGates: gatingRules.filter(rule => rule.requiredLevel === 'info').length,
-      activeRules: gatingRules.filter(rule => rule.active === true).length,
-      inactiveRules: gatingRules.filter(rule => rule.active === false).length,
+      hardGates: gatingRules.filter((rule: any) => rule.requiredLevel === 'hard').length,
+      softGates: gatingRules.filter((rule: any) => rule.requiredLevel === 'soft').length,
+      infoGates: gatingRules.filter((rule: any) => rule.requiredLevel === 'info').length,
+      activeRules: gatingRules.filter((rule: any) => rule.active === true).length,
+      inactiveRules: gatingRules.filter((rule: any) => rule.active === false).length,
       // This would normally include stats on validation results and waivers
       // We'll just return the basic stats for now
     };

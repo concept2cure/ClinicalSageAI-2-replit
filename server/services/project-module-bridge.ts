@@ -9,27 +9,32 @@
  */
 
 import { db } from '../db';
-import { projectModules, projects, organizations, clientWorkspaces } from '@shared/schema';
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { projectModules, projects } from '@shared/schema';
+import { and, eq, sql } from 'drizzle-orm';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type ModuleType =
-  | 'cer'
-  | 'csr'
-  | 'ectd'
-  | 'vault'
-  | 'protocol'
-  | 'literature'
-  | 'regulatory_intelligence'
-  | 'analytics'
-  | 'faers'
-  | 'risk'
-  | 'ind'
-  | '510k'
-  | 'cmc';
+export const SUPPORTED_PROJECT_MODULE_TYPES = [
+  'cer',
+  'csr',
+  'ectd',
+  'vault',
+  'protocol',
+  'literature',
+  'regulatory_intelligence',
+  'analytics',
+  'faers',
+  'risk',
+  'ind',
+  '510k',
+  'cmc',
+  'pma',
+] as const;
+
+export type ModuleType = (typeof SUPPORTED_PROJECT_MODULE_TYPES)[number];
+export type ModuleLinkStatus = 'active' | 'inactive' | 'completed';
 
 export interface LinkModuleRequest {
   projectId: number;
@@ -51,9 +56,11 @@ export interface ModuleSummary {
 export interface ProjectModuleView {
   id: number;
   projectId: number;
-  moduleType: string;
+  organizationId: number;
+  clientWorkspaceId: number;
+  moduleType: ModuleType;
   moduleInstanceId: number;
-  status: string;
+  status: ModuleLinkStatus;
   settings: unknown;
   metadata: unknown;
   createdAt: Date;
@@ -134,7 +141,8 @@ export class ProjectModuleBridge {
    */
   async unlinkModule(
     projectId: number,
-    moduleType: string,
+    organizationId: number,
+    moduleType: ModuleType,
     moduleInstanceId: number
   ): Promise<boolean> {
     const result = await db
@@ -142,6 +150,7 @@ export class ProjectModuleBridge {
       .where(
         and(
           eq(projectModules.projectId, projectId),
+          eq(projectModules.organizationId, organizationId),
           eq(projectModules.moduleType, moduleType),
           eq(projectModules.moduleInstanceId, moduleInstanceId)
         )
@@ -201,7 +210,7 @@ export class ProjectModuleBridge {
    * Find all projects that have a specific module instance linked.
    */
   async findProjectsForModule(
-    moduleType: string,
+    moduleType: ModuleType,
     moduleInstanceId: number,
     organizationId: number
   ): Promise<Array<{ projectId: number; projectName: string; status: string }>> {
@@ -296,9 +305,10 @@ export class ProjectModuleBridge {
    */
   async updateModuleStatus(
     projectId: number,
-    moduleType: string,
+    organizationId: number,
+    moduleType: ModuleType,
     moduleInstanceId: number,
-    status: 'active' | 'inactive' | 'completed'
+    status: ModuleLinkStatus
   ): Promise<ProjectModuleView | null> {
     const [updated] = await db
       .update(projectModules)
@@ -306,6 +316,53 @@ export class ProjectModuleBridge {
       .where(
         and(
           eq(projectModules.projectId, projectId),
+          eq(projectModules.organizationId, organizationId),
+          eq(projectModules.moduleType, moduleType),
+          eq(projectModules.moduleInstanceId, moduleInstanceId)
+        )
+      )
+      .returning();
+
+    return (updated as ProjectModuleView) || null;
+  }
+
+  /**
+   * Update a linked module using its composite identifier.
+   */
+  async updateModuleLink(
+    projectId: number,
+    organizationId: number,
+    moduleType: ModuleType,
+    moduleInstanceId: number,
+    updates: {
+      status?: ModuleLinkStatus;
+      settings?: Record<string, unknown>;
+      metadata?: Record<string, unknown>;
+    }
+  ): Promise<ProjectModuleView | null> {
+    const updatePayload: Partial<typeof projectModules.$inferInsert> = {
+      updatedAt: new Date(),
+    };
+
+    if (updates.status !== undefined) {
+      updatePayload.status = updates.status;
+    }
+
+    if (updates.settings !== undefined) {
+      updatePayload.settings = updates.settings;
+    }
+
+    if (updates.metadata !== undefined) {
+      updatePayload.metadata = updates.metadata;
+    }
+
+    const [updated] = await db
+      .update(projectModules)
+      .set(updatePayload)
+      .where(
+        and(
+          eq(projectModules.projectId, projectId),
+          eq(projectModules.organizationId, organizationId),
           eq(projectModules.moduleType, moduleType),
           eq(projectModules.moduleInstanceId, moduleInstanceId)
         )

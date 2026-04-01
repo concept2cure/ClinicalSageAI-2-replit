@@ -1,7 +1,15 @@
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-export default defineConfig({
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export default {
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'client/src'),
+    },
+  },
   test: {
     globals: true,
     environment: 'node',
@@ -47,4 +55,4 @@ export default defineConfig({
     reporters: ['verbose'],
     watch: false,
   },
-});
+};

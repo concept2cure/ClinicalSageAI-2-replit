@@ -376,3 +376,131 @@ Design rules codified: p-5 card padding, gap-4 sections, gap-2 items, text-zinc-
 ---
 
 *Report generated from 5 parallel deep-dive audits covering shell architecture, navigation, design tokens, component library, routing, and layout wrappers.*
+
+---
+
+## 10. Swarm Audit Update (2026-04-01)
+
+### Audit mode
+
+- Parallel swarm review across 7 tracks:
+  1) Chat-first and Claude parity surfaces
+  2) Authoring lifecycle routes and editor flows
+  3) Package and submission workflow cohesion
+  4) Build/runtime reliability blockers
+  5) Design-system and UI-state standards compliance
+  6) API envelope/contract consistency
+  7) Test coverage gaps for biotech-critical paths
+
+### Critical findings (must-fix before trustworthy biotech client demo)
+
+1. **Client build is blocked by missing exports in auth utility**
+   - `client/src/utils/authToken.ts` only exports token helpers, while high-traffic files import `getAuthHeaders` and `getOrgId`.
+   - Breakage observed in:
+     - `client/src/concept2cure/components/chat/AnaPersistentPanel.tsx`
+     - `client/src/concept2cure/components/editor/EditorPanel.tsx`
+     - `client/src/concept2cure/hooks/useCortex.ts`
+     - `client/src/lib/queryClient.ts`
+   - Impact: major chat/editor/workflow paths fail to compile.
+
+2. **Route mount failure in literature review**
+   - `server/routes/literature-review.ts` imports `opensearchAdapter` from `server/services/search/opensearchAdapter.ts`, but that file only re-exports from `opensearchClient` and does not expose that named export.
+   - Impact: literature review endpoints do not mount, causing hard UX gaps for scientific evidence workflows.
+
+3. **Authoring router startup dependency can fail closed unexpectedly**
+   - `server/routes/authoring.router.ts` throws hard if JWT verifier import fails.
+   - In the current run, route mount failure was observed (`CRITICAL: JWT verifier unavailable`).
+   - Impact: core authoring API unavailable while shell still appears partially alive.
+
+4. **Submission/readiness API contract mismatch**
+   - Clients call `/api/project-sections?projectId=...`, while server requires `project_id`.
+   - Server returns `{ sections, total, projectId }`, while UI treats response as `Section[]`.
+   - Affected surfaces include `SubmissionReadiness.tsx` and `DossierMap.tsx`.
+   - Impact: silent readiness/dossier corruption and false completeness signals.
+
+5. **Phantom or mismatched endpoint calls in workflow UI**
+   - `SectionWorkspace.tsx` calls `/api/concept2cure/projects/:id/contradictions`, but no corresponding route was identified in `server/routes/concept2cure.ts`.
+   - Impact: contradiction findings can silently fail to appear, creating audit and submission risk.
+
+### High-priority findings
+
+1. **Dead-end module surfaces in shell**
+   - `ZenApp.tsx` tool panels advertise modules that have no mapped component in `PANEL_COMPONENTS`, resulting in placeholder states (`"{title} module loading..."`).
+   - Impact: user-visible dead ends in protocol/SOP and gated workflows.
+
+2. **Session “new project” flow is not wired**
+   - `ZenAppWithSession.tsx` keeps TODO-only behavior for `handleNewProject`.
+   - Impact: first-run and return-user journey breaks expected project creation flow.
+
+3. **Inconsistent auth/token and organization header plumbing**
+   - Mixture of `apiRequest`, raw `fetch`, legacy `trialsage_access_token`, and missing org headers.
+   - Impact: intermittent 401/403 and tenant-context drift across chat/editor/workflow pages.
+
+4. **Authoring actions include tenant/project binding weaknesses**
+   - Several handlers in `server/routes/authoring-actions.ts` rely on project/artifact IDs without strict tenant-bound assertions.
+   - Impact: elevated data isolation and compliance risk in regulated workflows.
+
+5. **Lifecycle stage mapping obscures lock/publish state**
+   - `locked` status is mapped into approved semantics in UI timeline code paths.
+   - Impact: users can misread true submission readiness state.
+
+### Medium findings
+
+- Widespread governed UI contract drift in high-traffic paths:
+  - raw `<button>` in chat/editor/workflow shells instead of governed `Button`
+  - raw `fetch` in async workflows instead of `apiRequest`
+  - ad-hoc query keys instead of `queryKeys` registry
+  - custom loading/error handling outside `DataStateWrapper` and `statesV2`
+- Impact: inconsistent UX behavior, harder regressions, weaker Claude-style parity and accessibility consistency.
+
+### Reliability findings
+
+- Startup script reports successful DB creation but runtime repeatedly logs database missing (`concept2cure-ri`), signaling bootstrap/runtime mismatch.
+- Route mounting strategy in `server/index.ts` can leave platform partially degraded while still serving.
+- `package.json` quality issues (duplicate `jsdom` key) indicate avoidable config drift risk.
+
+### Test coverage gaps (highest risk)
+
+1. No meaningful coverage identified for `server/routes/project-sections.ts`.
+2. Limited handler-level integration tests for `server/routes/authoring-actions.ts` lifecycle/preflight endpoints.
+3. Workflow React surfaces (`SectionWorkspace`, `DossierMap`, `SubmissionReadiness`, `ProjectHomeDashboard`) are under-tested for contract regressions.
+4. Critical `concept2cure.ts` aggregation/packaging handlers lack direct contract tests.
+
+### Parallel execution lanes (multi-project swarm plan)
+
+#### Lane A — Build and Runtime Stabilization (P0)
+- Fix authToken export/import contract.
+- Resolve literature route import/export mismatch.
+- Enforce deterministic authoring router JWT dependency wiring.
+- Verify `npm run build` and startup health without degraded mounts.
+
+#### Lane B — Authoring and Governance Hardening (P0/P1)
+- Add strict tenant + project binding checks in `authoring-actions`.
+- Align lifecycle transitions and UI status mapping (`draft -> review -> approved -> locked`).
+- Fail closed on governance check errors where required.
+
+#### Lane C — Submission and Packaging Contract Repair (P0/P1)
+- Normalize `project-sections` request/response contracts.
+- Repair package manifest generation/unwrapping inconsistencies.
+- Validate section/readiness calculations against real server payloads.
+
+#### Lane D — Chat-First Claude Parity and UX Consistency (P1)
+- Remove dead-end module placeholders or wire actual panels.
+- Unify shell chat threading with sidebar conversation state.
+- Bring high-traffic chat/editor surfaces into governed component and state patterns.
+
+#### Lane E — Test Net Expansion (P1/P2)
+- Add integration tests for `project-sections` and `authoring-actions`.
+- Add contract tests for critical `concept2cure` endpoints used by workflow UI.
+- Add component/integration tests for workflow pages with MSW-backed API fixtures.
+
+### Recommended ship gate (before broad UX sign-off)
+
+- `npm run build` passes cleanly.
+- Core routes mount successfully with no critical mount failures.
+- End-to-end smoke journey passes:
+  - create/open project -> author section -> promote/review/lock -> package/export readiness.
+- New tests in Lane E pass for:
+  - project sections contract
+  - authoring action lifecycle
+  - submission readiness payload integrity

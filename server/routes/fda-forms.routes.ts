@@ -38,7 +38,7 @@ router.get('/registry', async (req: Request, res: Response) => {
       version: '2.0.0',
       lastUpdated: new Date().toISOString()
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[FDA Forms] Error fetching registry:', error);
     res.status(500).json({ error: 'Failed to fetch forms registry' });
   }
@@ -108,7 +108,7 @@ router.get('/project/:projectId/forms', async (req: Request, res: Response) => {
         updatedAt: f.updatedAt
       }))
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching FDA forms:', error);
     res.status(500).json({ error: 'Failed to fetch FDA forms' });
   }
@@ -211,7 +211,7 @@ router.post('/project/:projectId/generate/:formType', async (req: Request, res: 
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error generating ${formType}:`, error);
     res.status(500).json({ error: `Failed to generate ${formType}` });
   }
@@ -240,7 +240,7 @@ router.post('/project/:projectId/generate-all', async (req: Request, res: Respon
       mainDocument: result.mainDocument
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating all forms:', error);
     res.status(500).json({ error: 'Failed to generate FDA forms' });
   }
@@ -323,7 +323,7 @@ router.post('/project/:projectId/generate-smart/:formId', async (req: Request, r
       res.status(400).json({ error: 'Failed to generate form' });
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error generating smart form ${formId}:`, error);
     res.status(500).json({ error: 'Failed to generate smart form' });
   }
@@ -416,7 +416,7 @@ router.post('/project/:projectId/auto-generate', async (req: Request, res: Respo
             completeness: generatedForm.completeness
           });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Error auto-generating ${formId}:`, error);
         results.push({
           formType: formId,
@@ -432,7 +432,7 @@ router.post('/project/:projectId/auto-generate', async (req: Request, res: Respo
       results
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in auto-generation:', error);
     res.status(500).json({ error: 'Failed to auto-generate forms' });
   }
@@ -464,7 +464,7 @@ router.get('/project/:projectId/form/:formType', async (req: Request, res: Respo
       form: form[0]
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching form:', error);
     res.status(500).json({ error: 'Failed to fetch form' });
   }
@@ -521,7 +521,7 @@ router.post('/project/:projectId/generate-stage/:stage', async (req: Request, re
       totalFailed: results.filter(r => r.status === 'error').length,
       timestamp: new Date().toISOString()
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[FDA Forms] Error generating stage forms:', error);
     res.status(500).json({ error: 'Failed to generate stage forms' });
   }
@@ -600,7 +600,7 @@ async function fetchProjectData(projectId: number) {
       formData: formData,
       metadata: fda510kProject.metadata || {}
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching project data:', error);
     return null;
   }

@@ -154,6 +154,12 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+  BETA_510K_PRIMARY_NAV_TABS,
+  isBeta510kTab,
+  resolveBetaInitialTab,
+} from './cerv2BetaFlowConfig';
+import { useBetaWorkspaceTelemetry } from './hooks/useBetaWorkspaceTelemetry';
+import {
   Card,
   CardContent,
   CardHeader,
@@ -548,10 +554,24 @@ export default function CERV2Page({
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingFaers, setIsFetchingFaers] = useState(false);
   const [isFetchingLiterature, setIsFetchingLiterature] = useState(false);
+  const beta510kEnabled = (import.meta.env.VITE_510K_BETA_MODE ?? 'true') !== 'false';
+  const beta510kMode = beta510kEnabled && documentType === '510k';
   // Start users at Device Intake Form - the clear starting point for 510(k)
-  const [activeTab, setActiveTab] = useState(initialActiveTab || 'device-intake');
+  const [activeTab, setActiveTab] = useState(
+    beta510kEnabled ? resolveBetaInitialTab(initialActiveTab) : initialActiveTab || 'device-intake'
+  );
 
   const docTypeLabel = DOC_TYPES[selectedDocType]?.label || 'CERV2 Document';
+
+  // Beta mode lock: keep workspace on guided 510(k) track only
+  useEffect(() => {
+    if (!beta510kEnabled) return;
+    if (documentType !== '510k') {
+      setDocumentType('510k');
+      setSelectedDocType('cerv2_510k');
+      setActiveTab(resolveBetaInitialTab(activeTab));
+    }
+  }, [beta510kEnabled, documentType, activeTab]);
 
   // Helper function to load saved state from localStorage
   const loadSavedState = (key, defaultValue) => {
@@ -642,6 +662,7 @@ export default function CERV2Page({
     } catch (error) {
       console.error('Failed to create project on server:', error);
       // Fallback: create locally so the UI isn't broken
+      trackFallbackActivation('local_project_creation');
       const fallbackProject = {
         id: `local-${crypto.randomUUID()}`,
         deviceName: projectData.deviceName || 'Untitled Device',
@@ -687,7 +708,7 @@ export default function CERV2Page({
 
     // Fetch FDA 510(k) stage data from database
     try {
-      const response = await fetch(`/api/fda-510k/projects/${projectId}/stage`);
+      const response = await fetch(`/api/510k-project/${projectId}/stage`);
       if (response.ok) {
         const stageData = await response.json();
         console.log('Loaded FDA 510(k) stage data:', stageData);
@@ -849,6 +870,35 @@ export default function CERV2Page({
   const [predicatesFound, setPredicatesFound] = useState(() =>
     loadSavedState('predicatesFound', false)
   );
+
+  const {
+    sendRouteEntry,
+    trackStepCompletion,
+    trackValidationFailure,
+    trackExportAttempt,
+    trackFallbackActivation,
+    reportIssue,
+  } = useBetaWorkspaceTelemetry({
+    activeTab,
+    currentProjectId,
+  });
+
+  useEffect(() => {
+    if (!beta510kMode) return;
+    if (!isBeta510kTab(activeTab)) {
+      setActiveTab('device-intake');
+      toast({
+        title: 'Beta Navigation Guard',
+        description: 'This workspace currently exposes only the guided 510(k) beta flow.',
+      });
+    }
+  }, [activeTab, beta510kMode, toast]);
+
+
+  useEffect(() => {
+    if (!beta510kMode) return;
+    sendRouteEntry(!deviceProfile?.deviceName);
+  }, [beta510kMode, deviceProfile?.deviceName, sendRouteEntry]);
   // eSTAR and RTA status state for Stage 5
   const [estarStatus, setEstarStatus] = useState('not_started');
   const [rtaStatus, setRtaStatus] = useState('not_started');
@@ -1313,6 +1363,7 @@ export default function CERV2Page({
 
     // Basic validation
     if (!data || data.length === 0) {
+      trackValidationFailure('predicate_required', 'predicates');
       toast({
         title: 'Missing Predicate Devices',
         description: 'Please select at least one predicate device before proceeding.',
@@ -1392,6 +1443,7 @@ export default function CERV2Page({
       console.log('[CERV2 Workflow] Directly transitioning to Equivalence step');
       setActiveTab('equivalence');
       setWorkflowStep(3);
+      trackStepCompletion('predicate_selection');
     } catch (error) {
       console.error('[CERV2 Workflow] Error during predicate selection completion:', error);
       toast({
@@ -1419,6 +1471,7 @@ export default function CERV2Page({
     // Explicitly move to the next step in the workflow
     setWorkflowStep(4);
     setActiveTab('compliance');
+    trackStepCompletion('equivalence_analysis');
 
     console.log('Equivalence step completed successfully, transitioning to compliance step');
 
@@ -1514,6 +1567,7 @@ export default function CERV2Page({
   };
 
   const handleSubmissionReady = () => {
+    trackExportAttempt('submission_package');
     setSubmissionReady(true);
     toast({
       title: 'Submission Package Ready',
@@ -6431,7 +6485,9 @@ export default function CERV2Page({
                     )}
                   </div>
                   <div className="flex flex-wrap gap-1" role="tablist">
-                    {group.tabs.map((tab, tabIndex) => {
+                    {group.tabs
+                      .filter(tab => !beta510kMode || BETA_510K_PRIMARY_NAV_TABS.has(tab.id))
+                      .map((tab, tabIndex) => {
                       const isTabEnabled = isStageAccessible && tab.status !== 'blocked';
 
                       // Status chip colors
@@ -7691,6 +7747,12 @@ export default function CERV2Page({
 
   // Handle the change of document type
   const handleSetDocumentType = type => {
+    if (beta510kEnabled) {
+      setDocumentType('510k');
+      setActiveTab('predicates');
+      return;
+    }
+
     setDocumentType(type);
     if (type === 'cer') {
       setActiveTab('builder');
@@ -7943,6 +8005,24 @@ export default function CERV2Page({
                     >
                       <MessageSquare className="mr-1.5 h-4 w-4" />
                       AI Assistant
+                    </Button>
+                  )}
+
+                  {beta510kMode && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const summary = window.prompt('Describe the issue encountered in the beta 510(k) flow');
+                        if (!summary) return;
+                        reportIssue(summary);
+                        toast({
+                          title: 'Issue captured',
+                          description: 'Thanks — your beta issue report has been recorded.',
+                        });
+                      }}
+                    >
+                      Report issue
                     </Button>
                   )}
 
