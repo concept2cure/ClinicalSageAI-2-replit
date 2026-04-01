@@ -9,6 +9,9 @@
  */
 
 import { Router, Request, Response } from 'express';
+import {
+  resolveGovernedContext,
+} from '../services/concept2cure/governedDocumentContractService.js';
 
 const router = Router();
 
@@ -341,12 +344,64 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
         if (artifact.status === 'locked' || artifact.status === 'approved') {
           throw new Error(`Cannot promote: artifact is ${artifact.status}`);
         }
+        const metadata =
+          artifact.metadata && typeof artifact.metadata === 'object'
+            ? (artifact.metadata as Record<string, unknown>)
+            : {};
+        const existingHarness =
+          metadata.harness && typeof metadata.harness === 'object'
+            ? (metadata.harness as Record<string, unknown>)
+            : {};
+        const governed = resolveGovernedContext({
+          req,
+          projectId: Number(projectId),
+          artifactId: Number(artifactId),
+          documentType:
+            (typeof existingHarness.documentType === 'string' && existingHarness.documentType) ||
+            artifact.type ||
+            'regulatory_document',
+          generationMode: 'manual',
+          lifecycleStatus: 'in_review',
+          originSurface: 'api_route',
+          readinessGate: 'internal_review',
+          workspaceTarget: 'project',
+          title: artifact.title || 'Artifact',
+          content: artifact.content || '',
+          ctdSection: artifact.ctdSection || null,
+          sourceRefs: [`artifact:${artifact.artifactId || artifact.id}`],
+          eventType: 'artifact.reviewed',
+        });
+        if (!governed.validation.valid) {
+          throw new Error(`governed contract invalid: ${governed.validation.errors.join('; ')}`);
+        }
         // Update status
         const { concept2cureArtifacts } = await import('../../shared/schema/index.js');
         const { eq } = await import('drizzle-orm');
         await db
           .update(concept2cureArtifacts)
-          .set({ status: 'review', updatedAt: new Date() })
+          .set({
+            status: 'review',
+            updatedAt: new Date(),
+            metadata: {
+              ...metadata,
+              harness: {
+                ...existingHarness,
+                clientTrack: governed.contract.clientTrack,
+                submissionProgram: governed.contract.submissionProgram,
+                persona: governed.contract.persona,
+                regulatorScope: governed.contract.regulatorScope,
+                documentClass: governed.contract.documentClass,
+                readinessGate: governed.contract.readinessGate,
+                workspaceTarget: governed.contract.workspaceTarget,
+                originSurface: governed.contract.originSurface,
+                recommendationSource: governed.contract.recommendationSource,
+                regulatorIntent: governed.contract.regulatorIntent,
+                gateChecks: governed.contract.exportEligibility.gateChecks,
+                blockingReasons: governed.contract.exportEligibility.blockingReasons,
+                readinessOutcome: governed.contract.exportEligibility.readinessOutcome,
+              },
+            },
+          })
           .where(eq(concept2cureArtifacts.id, Number(artifactId)));
       });
 
@@ -518,8 +573,63 @@ router.post('/approve-artifact', async (req: Request, res: Response) => {
       if (!artifact) throw new Error('Artifact not found');
       if (artifact.status !== 'review') throw new Error(`Cannot approve: artifact is ${artifact.status}, must be in review`);
 
-      await db.update(concept2cureArtifacts)
-        .set({ status: 'approved', approvedVersionId: artifact.version, updatedAt: new Date() })
+      const metadata =
+        artifact.metadata && typeof artifact.metadata === 'object'
+          ? (artifact.metadata as Record<string, unknown>)
+          : {};
+      const existingHarness =
+        metadata.harness && typeof metadata.harness === 'object'
+          ? (metadata.harness as Record<string, unknown>)
+          : {};
+      const governed = resolveGovernedContext({
+        req,
+        projectId: Number(projectId),
+        artifactId: Number(artifactId),
+        documentType:
+          (typeof existingHarness.documentType === 'string' && existingHarness.documentType) ||
+          artifact.type ||
+          'regulatory_document',
+        generationMode: 'manual',
+        lifecycleStatus: 'approved',
+        originSurface: 'api_route',
+        readinessGate: 'submission_candidate',
+        workspaceTarget: 'project',
+        title: artifact.title || 'Artifact',
+        content: artifact.content || '',
+        ctdSection: artifact.ctdSection || null,
+        sourceRefs: [`artifact:${artifact.artifactId || artifact.id}`],
+        eventType: 'artifact.updated',
+      });
+      if (!governed.validation.valid) {
+        throw new Error(`governed contract invalid: ${governed.validation.errors.join('; ')}`);
+      }
+
+      await db
+        .update(concept2cureArtifacts)
+        .set({
+          status: 'approved',
+          approvedVersionId: artifact.version,
+          updatedAt: new Date(),
+          metadata: {
+            ...metadata,
+            harness: {
+              ...existingHarness,
+              clientTrack: governed.contract.clientTrack,
+              submissionProgram: governed.contract.submissionProgram,
+              persona: governed.contract.persona,
+              regulatorScope: governed.contract.regulatorScope,
+              documentClass: governed.contract.documentClass,
+              readinessGate: governed.contract.readinessGate,
+              workspaceTarget: governed.contract.workspaceTarget,
+              originSurface: governed.contract.originSurface,
+              recommendationSource: governed.contract.recommendationSource,
+              regulatorIntent: governed.contract.regulatorIntent,
+              gateChecks: governed.contract.exportEligibility.gateChecks,
+              blockingReasons: governed.contract.exportEligibility.blockingReasons,
+              readinessOutcome: governed.contract.exportEligibility.readinessOutcome,
+            },
+          },
+        })
         .where(eq(concept2cureArtifacts.id, Number(artifactId)));
 
       // Record decision + receipt
@@ -623,11 +733,66 @@ router.post('/lock-artifact', async (req: Request, res: Response) => {
       if (!artifact) throw new Error('Artifact not found');
       if (artifact.status !== 'approved') throw new Error(`Cannot lock: artifact is ${artifact.status}, must be approved`);
 
-      await db.update(concept2cureArtifacts).set({
-        status: 'locked', publishedVersionId: artifact.version,
-        lockedAt: new Date(), lockedById: userId ? Number(userId) : undefined,
-        updatedAt: new Date(),
-      }).where(eq(concept2cureArtifacts.id, Number(artifactId)));
+      const metadata =
+        artifact.metadata && typeof artifact.metadata === 'object'
+          ? (artifact.metadata as Record<string, unknown>)
+          : {};
+      const existingHarness =
+        metadata.harness && typeof metadata.harness === 'object'
+          ? (metadata.harness as Record<string, unknown>)
+          : {};
+      const governed = resolveGovernedContext({
+        req,
+        projectId: Number(projectId),
+        artifactId: Number(artifactId),
+        documentType:
+          (typeof existingHarness.documentType === 'string' && existingHarness.documentType) ||
+          artifact.type ||
+          'regulatory_document',
+        generationMode: 'manual',
+        lifecycleStatus: 'locked',
+        originSurface: 'api_route',
+        readinessGate: 'submission_candidate',
+        workspaceTarget: 'project',
+        title: artifact.title || 'Artifact',
+        content: artifact.content || '',
+        ctdSection: artifact.ctdSection || null,
+        sourceRefs: [`artifact:${artifact.artifactId || artifact.id}`],
+        eventType: 'artifact.updated',
+      });
+      if (!governed.validation.valid) {
+        throw new Error(`governed contract invalid: ${governed.validation.errors.join('; ')}`);
+      }
+
+      await db
+        .update(concept2cureArtifacts)
+        .set({
+          status: 'locked',
+          publishedVersionId: artifact.version,
+          lockedAt: new Date(),
+          lockedById: userId ? Number(userId) : undefined,
+          updatedAt: new Date(),
+          metadata: {
+            ...metadata,
+            harness: {
+              ...existingHarness,
+              clientTrack: governed.contract.clientTrack,
+              submissionProgram: governed.contract.submissionProgram,
+              persona: governed.contract.persona,
+              regulatorScope: governed.contract.regulatorScope,
+              documentClass: governed.contract.documentClass,
+              readinessGate: governed.contract.readinessGate,
+              workspaceTarget: governed.contract.workspaceTarget,
+              originSurface: governed.contract.originSurface,
+              recommendationSource: governed.contract.recommendationSource,
+              regulatorIntent: governed.contract.regulatorIntent,
+              gateChecks: governed.contract.exportEligibility.gateChecks,
+              blockingReasons: governed.contract.exportEligibility.blockingReasons,
+              readinessOutcome: governed.contract.exportEligibility.readinessOutcome,
+            },
+          },
+        })
+        .where(eq(concept2cureArtifacts.id, Number(artifactId)));
 
       // Record decision + receipt
       let lockDecision: any = null;
@@ -753,9 +918,70 @@ router.post('/mark-submission-ready', async (req: Request, res: Response) => {
       const { concept2cureArtifacts } = await import('../../shared/schema/index.js');
       const { eq } = await import('drizzle-orm');
       const { db } = await import('../db.js');
-      await db.update(concept2cureArtifacts).set({
-        publishedAt: new Date(), updatedAt: new Date(),
-      }).where(eq(concept2cureArtifacts.id, Number(artifactId)));
+      const [artifact] = await db
+        .select()
+        .from(concept2cureArtifacts)
+        .where(eq(concept2cureArtifacts.id, Number(artifactId)))
+        .limit(1);
+      if (!artifact) {
+        throw new Error('Artifact not found');
+      }
+      const metadata =
+        artifact.metadata && typeof artifact.metadata === 'object'
+          ? (artifact.metadata as Record<string, unknown>)
+          : {};
+      const existingHarness =
+        metadata.harness && typeof metadata.harness === 'object'
+          ? (metadata.harness as Record<string, unknown>)
+          : {};
+      const governed = resolveGovernedContext({
+        req,
+        projectId: Number(projectId),
+        artifactId: Number(artifactId),
+        documentType:
+          (typeof existingHarness.documentType === 'string' && existingHarness.documentType) ||
+          artifact.type ||
+          'regulatory_document',
+        generationMode: 'manual',
+        lifecycleStatus: 'locked',
+        originSurface: 'api_route',
+        readinessGate: 'submission_candidate',
+        workspaceTarget: 'project',
+        title: artifact.title || 'Artifact',
+        content: artifact.content || '',
+        ctdSection: artifact.ctdSection || null,
+        sourceRefs: [`artifact:${artifact.artifactId || artifact.id}`],
+        eventType: 'artifact.updated',
+      });
+      if (!governed.validation.valid) {
+        throw new Error(`governed contract invalid: ${governed.validation.errors.join('; ')}`);
+      }
+      await db
+        .update(concept2cureArtifacts)
+        .set({
+          publishedAt: new Date(),
+          updatedAt: new Date(),
+          metadata: {
+            ...metadata,
+            harness: {
+              ...existingHarness,
+              clientTrack: governed.contract.clientTrack,
+              submissionProgram: governed.contract.submissionProgram,
+              persona: governed.contract.persona,
+              regulatorScope: governed.contract.regulatorScope,
+              documentClass: governed.contract.documentClass,
+              readinessGate: governed.contract.readinessGate,
+              workspaceTarget: governed.contract.workspaceTarget,
+              originSurface: governed.contract.originSurface,
+              recommendationSource: governed.contract.recommendationSource,
+              regulatorIntent: governed.contract.regulatorIntent,
+              gateChecks: governed.contract.exportEligibility.gateChecks,
+              blockingReasons: governed.contract.exportEligibility.blockingReasons,
+              readinessOutcome: governed.contract.exportEligibility.readinessOutcome,
+            },
+          },
+        })
+        .where(eq(concept2cureArtifacts.id, Number(artifactId)));
     } catch { /* non-blocking */ }
 
     return res.json({
