@@ -15,7 +15,6 @@ import {
   Agency,
   ApplicationFamily,
   ProductClass,
-  DossierStandard,
   LegacySubmissionType,
   LEGACY_TO_REGISTRY_ID,
 } from './document-taxonomy';
