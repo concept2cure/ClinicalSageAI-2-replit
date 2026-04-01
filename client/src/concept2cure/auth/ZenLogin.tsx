@@ -34,6 +34,7 @@ interface PasswordFieldProps {
   autoComplete?: string;
   autoFocus?: boolean;
   disabled?: boolean;
+  onSubmit?: () => void;
 }
 
 const PasswordField: React.FC<PasswordFieldProps> = ({
@@ -45,6 +46,7 @@ const PasswordField: React.FC<PasswordFieldProps> = ({
   autoComplete,
   autoFocus,
   disabled,
+  onSubmit,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -67,11 +69,17 @@ const PasswordField: React.FC<PasswordFieldProps> = ({
         type={showPassword ? 'text' : 'password'}
         value={value}
         onChange={event => onChange(event.target.value)}
+        onKeyDown={event => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            onSubmit?.();
+          }
+        }}
         placeholder={placeholder}
         autoComplete={autoComplete}
         autoFocus={autoFocus}
         disabled={disabled}
-        className="h-11 rounded-xl border-stone-200 bg-white text-[14px] shadow-none focus-visible:ring-stone-400"
+        className="h-10 rounded-xl border-stone-200 bg-white text-[14px] shadow-none focus-visible:ring-stone-400"
       />
     </div>
   );
@@ -126,7 +134,7 @@ const MfaCodeInput: React.FC<{
           inputMode="numeric"
           maxLength={1}
           autoComplete="one-time-code"
-          className="h-12 w-11 rounded-xl border-stone-200 bg-white px-0 text-center text-base shadow-none focus-visible:ring-stone-400"
+          className="h-10 w-10 rounded-xl border-stone-200 bg-white px-0 text-center text-[15px] shadow-none focus-visible:ring-stone-400"
         />
       ))}
     </div>
@@ -385,7 +393,13 @@ export const ZenLogin: React.FC = () => {
               )}
 
               {view === 'sign-in' && (
-                <div className="space-y-5">
+                <form
+                  className="space-y-5"
+                  onSubmit={event => {
+                    event.preventDefault();
+                    handleLogin();
+                  }}
+                >
                   <div className="space-y-2">
                     <Label htmlFor="login-email" className="text-[13px] text-stone-700">
                       Email
@@ -407,6 +421,7 @@ export const ZenLogin: React.FC = () => {
                     label="Password"
                     value={password}
                     onChange={setPassword}
+                    onSubmit={handleLogin}
                     placeholder="Enter your password"
                     autoComplete="current-password"
                     disabled={isLoading}
@@ -418,20 +433,21 @@ export const ZenLogin: React.FC = () => {
                       Keep me signed in
                     </label>
 
-                    <button
+                    <Button
                       type="button"
-                      className="text-[13px] text-stone-500 transition-colors hover:text-stone-800"
+                      variant="ghost"
+                      className="h-8 px-0 text-[13px] font-normal text-stone-500 hover:bg-transparent hover:text-stone-800"
                       onClick={() => setView('forgot-password')}
                     >
                       Forgot password?
-                    </button>
+                    </Button>
                   </div>
 
-                  <Button className="h-10 w-full rounded-xl text-[13px] font-medium" onClick={handleLogin} disabled={isLoading}>
+                  <Button type="submit" className="h-10 w-full rounded-xl text-[13px] font-medium" disabled={isLoading}>
                     {isLoading ? <Spinner size="sm" className="mr-2" /> : null}
                     Sign in
                   </Button>
-                </div>
+                </form>
               )}
 
               {view === 'mfa' && (
@@ -481,9 +497,10 @@ export const ZenLogin: React.FC = () => {
                   </Button>
 
                   <div className="flex items-center justify-between text-[13px] text-stone-500">
-                    <button
+                    <Button
                       type="button"
-                      className="inline-flex items-center gap-1 transition-colors hover:text-stone-800"
+                      variant="ghost"
+                      className="h-8 px-0 text-[13px] font-normal text-stone-500 hover:bg-transparent hover:text-stone-800"
                       onClick={() => {
                         setView('sign-in');
                         setPassword('');
@@ -492,31 +509,33 @@ export const ZenLogin: React.FC = () => {
                     >
                       <ArrowLeft className="h-3.5 w-3.5" />
                       Back
-                    </button>
+                    </Button>
 
                     {mfaMethod === 'email' ? (
                       resendCountdown > 0 ? (
                         <span>Resend in {resendCountdown}s</span>
                       ) : (
-                        <button
+                        <Button
                           type="button"
-                          className="transition-colors hover:text-stone-800"
+                          variant="ghost"
+                          className="h-8 px-0 text-[13px] font-normal text-stone-500 hover:bg-transparent hover:text-stone-800"
                           onClick={handleResendCode}
                         >
                           Resend code
-                        </button>
+                        </Button>
                       )
                     ) : supportsRecoveryCodes && mfaMethod !== 'backup_code' ? (
-                      <button
+                      <Button
                         type="button"
-                        className="transition-colors hover:text-stone-800"
+                        variant="ghost"
+                        className="h-8 px-0 text-[13px] font-normal text-stone-500 hover:bg-transparent hover:text-stone-800"
                         onClick={() => {
                           setMfaMethod('backup_code');
                           setMfaCode('');
                         }}
                       >
                         Use a recovery code
-                      </button>
+                      </Button>
                     ) : null}
                   </div>
                 </div>
@@ -555,7 +574,7 @@ export const ZenLogin: React.FC = () => {
 
               {view === 'reset-sent' && (
                 <div className="space-y-5 text-center">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
                     <CheckCircle2 className="h-6 w-6" />
                   </div>
                   <p className="text-[14px] leading-6 text-stone-600">
@@ -601,7 +620,7 @@ export const ZenLogin: React.FC = () => {
 
               {view === 'success' && (
                 <div className="space-y-5 text-center">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
                     <CheckCircle2 className="h-6 w-6" />
                   </div>
                   <p className="text-[14px] leading-6 text-stone-600">{successMessage}</p>
