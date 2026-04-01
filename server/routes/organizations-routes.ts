@@ -5,6 +5,7 @@ import { eq, and, sql } from 'drizzle-orm';
 
 // Create a new router for organization endpoints
 const router = Router();
+router.use(authMiddleware);
 
 /**
  * Validate that the requesting user belongs to the organization in :id param.
@@ -175,7 +176,16 @@ router.get('/:id/clients', validateOrgOwnership, async (req, res) => {
 
     res.json({
       success: true,
-      clients,
+      clients: workspaces.map(ws => ({
+        id: String(ws.id),
+        name: ws.name,
+        organizationId: String(ws.organizationId),
+        logo: ws.logo || '/logos/default-client.png',
+        activeProjects: projectCountByWorkspace.get(ws.id) ?? 0,
+        quotaProjects: ws.quotaProjects || 0,
+        quotaStorageGB: ws.quotaStorageGB || 0,
+        lastActivity: ws.updatedAt,
+      })),
     });
   } catch (error) {
     console.error(`Error fetching clients for organization ${req.params.id}:`, error);
