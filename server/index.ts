@@ -115,31 +115,13 @@ const debugLog = (message: string, data?: any) => {
 
 // Route imports now consolidated in server/bootstrap/ manifests.
 // Only imports NOT yet migrated to bootstrap remain here.
-import aiAssistanceRoutes, { setAIService } from './routes/ai-assistance';
 import predictiveSectionsRoutes from './routes/predictive-sections';
-import foresightApiRoutes from './routes/foresight-api';
-import foresightAIAdvancedRoutes from './routes/foresight-ai-advanced';
 import foresightFeedbackRoutes from './routes/foresight-feedback';
-import { registerCoreRoutes } from './bootstrap/register-core-routes';
-import { registerIntegrationRoutes } from './bootstrap/register-integrations-routes';
-import { registerAiRoutes } from './bootstrap/register-ai-routes';
-import { registerConcept2CureRoutes } from './bootstrap/register-concept2cure-routes';
-import { registerAdminRoutes } from './bootstrap/register-admin-routes';
 import { csrSearchService } from './services/csr-search-service';
 import { getEndpointRecommenderService } from './services/endpoint-recommender-service';
-
-// Phase 5: Intelligent Document System routes
-import intelligentDocsRoutes from './routes/intelligentDocs';
-import { testAssemblyRoutes } from './routes/test-assembly';
-
-// Phase 5: PM Settings & Configuration routes
-import pmSettingsRouter from './src/routes/pm-settings.router';
-import controlPlaneRouter from './src/routes/control-plane.router';
-import reportsManifestRoutes from './routes/reports/manifest-routes';
-import reportsGenerationRoutes from './routes/reports/generate-report';
-import { registerSubscriptionsRoutes } from './routes/reports/subscriptions-routes';
 import firecrawlWebhooksRoutes from './routes/firecrawl-webhooks';
 
+// ── Bootstrap route manifests ──
 import { registerCoreRoutes } from './bootstrap/register-core-routes';
 import { registerConcept2CureRoutes } from './bootstrap/register-concept2cure-routes';
 import { registerAiRoutes } from './bootstrap/register-ai-routes';
@@ -528,51 +510,10 @@ app.get('/api/diag', (_req: Request, res: Response) => {
 </body></html>`);
 });
 
-// Mount authentication routes (SECURE)
-try {
-  const authModule = await import('./routes/auth');
-  const authRouter = authModule.default;
-  // Express Router is an object with handle method, not strictly a function
-  if (authRouter && (typeof authRouter === 'function' || (authRouter as any).handle)) {
-    app.use('/api/auth', authRouter);
-    // Also mount on /api/v1/auth for client compatibility
-    app.use('/api/v1/auth', authRouter);
-    console.log(
-      '✅ Authentication API routes mounted successfully (JWT-based with organizationId)'
-    );
-  } else {
-    console.warn('⚠️ Auth router not found or invalid - auth routes skipped');
-  }
-} catch (error) {
-  console.error('❌ Failed to mount auth routes:', error);
-}
-
-// Mount Users routes
-try {
-  const usersModule = await import('./routes/users');
-  const usersRouter = usersModule.default;
-  if (usersRouter && (typeof usersRouter === 'function' || (usersRouter as any).handle)) {
-    app.use('/api/users', usersRouter);
-    app.use('/api/user', usersRouter); // Alias for /api/users/me
-    // DO NOT mount at /api - it breaks /api/tenants and other routes
-    console.log('✅ Users API routes mounted successfully');
-  }
-} catch (error) {
-  console.error('❌ Failed to mount users routes:', error);
-}
-
-// Legacy login/logout/register endpoints — redirect to proper auth router
-// CRIT-03b FIX: Removed zero-check legacy endpoints that accepted any credentials
-app.post('/api/login', (req, res) => {
-  // Redirect to the real auth endpoint
-  res.redirect(307, '/api/auth/login');
-});
-
-app.post('/api/logout', (req, res) => {
-  res.redirect(307, '/api/auth/logout');
-});
-
-// Register platform-level health and authentication routes
+// Register platform-level health, authentication, and auth-gate routes.
+// This single call mounts: /api/auth, /api/v1/auth, /api/users, /api/user,
+// legacy login/logout/register redirects, enterprise auth, SSO, health probes,
+// and the global /api auth gate.
 await registerPlatformRoutes({ app, pool, authMiddleware });
 
 // Basic API routes - complex routes will be added back gradually
@@ -3470,87 +3411,11 @@ try {
   console.error('❌ Failed to mount Orchestration routes:', error.message);
 }
 
-// Mount Resolution Orchestration Layer routes (Sprint 4)
-try {
-  const resolutionRoutes = (await import('./routes/resolution')).default;
-  app.use('/api/resolution', resolutionRoutes);
-  console.log('✅ Resolution Orchestration API routes mounted at /api/resolution');
-} catch (error: any) {
-  console.error('❌ Failed to mount Resolution routes:', error.message);
-}
-
-// Mount Operating System Foundation routes (governance boundaries, assumptions, decisions)
-try {
-  const operatingSystemRoutes = (await import('./routes/operating-system')).default;
-  app.use('/api/operating-system', operatingSystemRoutes);
-  console.log('✅ Operating System Foundation routes mounted at /api/operating-system');
-} catch (error: any) {
-  console.error('❌ Failed to mount Operating System routes:', error.message);
-}
-
-// Mount Governed Intelligence routes (contradictions, overlays, dependencies, impact)
-try {
-  const governedIntelRoutes = (await import('./routes/assumption-decision-contradiction')).default;
-  app.use('/api/governed-intelligence', governedIntelRoutes);
-  console.log('✅ Governed Intelligence routes mounted at /api/governed-intelligence');
-} catch (error: any) {
-  console.error('❌ Failed to mount Governed Intelligence routes:', error.message);
-}
-
-// Mount Client Intelligence Memory routes
-import clientIntelligenceRoutes from './routes/client-intelligence';
-app.use('/api/client-intelligence', clientIntelligenceRoutes);
-console.log('✅ Client Intelligence Memory API routes mounted successfully');
-
-// Mount Account Intelligence routes (canon, event ledger, skill bundles, terms, templates)
-import accountIntelligenceRoutes from './routes/account-intelligence';
-app.use('/api/account-intelligence', accountIntelligenceRoutes);
-console.log('✅ Account Intelligence API routes mounted successfully');
-
-// Mount Universal Packager routes
-import universalPackagerRoutes from './routes/universal-packager';
-app.use('/api/packager', universalPackagerRoutes);
-console.log('✅ Universal Packager API routes mounted successfully');
-
-// Mount Regulatory Precedent Engine
-import precedentEngineRoutes from './routes/precedent-engine';
-app.use('/api/precedent-engine', precedentEngineRoutes);
-console.log('✅ Precedent Engine routes mounted successfully');
-
-// Mount Cross-Jurisdictional Intelligence
-import crossJurisdictionalRoutes from './routes/cross-jurisdictional';
-app.use('/api/cross-jurisdictional', crossJurisdictionalRoutes);
-console.log('✅ Cross-Jurisdictional Intelligence routes mounted successfully');
-
-// Mount HARMONIZE — Cross-Module Consistency Enforcement
-import harmonizeRoutes from './routes/harmonize';
-app.use('/api/harmonize', harmonizeRoutes);
-console.log('✅ HARMONIZE routes mounted successfully');
-
-// Mount ESCALATE — Structured Escalation Framework
-import escalateRoutes from './routes/escalate';
-app.use('/api/escalate', escalateRoutes);
-console.log('✅ ESCALATE routes mounted successfully');
-
-// Mount VALIDATE-COMPLETENESS — Submission Readiness Assessment
-import validateCompletenessRoutes from './routes/validate-completeness';
-app.use('/api/validate-completeness', validateCompletenessRoutes);
-console.log('✅ VALIDATE-COMPLETENESS routes mounted successfully');
-
-// Mount AnA Gold Standard Pack — Quality Benchmark
-import anaGoldStandardRoutes from './routes/ana-gold-standard';
-app.use('/api/ana-gold-standard', anaGoldStandardRoutes);
-console.log('✅ AnA Gold Standard Pack routes mounted successfully');
-
-// Mount AnA Continuous Evaluation Loop — Real-Time Quality Monitoring
-import anaContinuousEvalRoutes from './routes/ana-continuous-eval';
-app.use('/api/ana-continuous-eval', anaContinuousEvalRoutes);
-console.log('✅ AnA Continuous Evaluation Loop routes mounted successfully');
-
-// Mount Submission Center routes
-import submissionCenterRoutes from './routes/submissionCenter.routes';
-app.use('/api/submission-center', submissionCenterRoutes);
-console.log('✅ Submission Center API routes mounted successfully');
+// ── Register governance and intelligence route bundle ──
+// Resolution, operating system, governed intelligence, client/account intelligence,
+// packager, precedent engine, cross-jurisdictional, harmonize, escalate,
+// validate-completeness, gold standard, continuous eval, submission center
+await registerGovernanceRoutes(app);
 
 // Mount Unified Regulatory Submissions routes (feature-gated)
 import regulatorySubmissionsRoutes from './routes/regulatorySubmissions';

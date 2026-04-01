@@ -147,9 +147,22 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     console.warn('⚠️ SSO helper routes not mounted - continuing without SSO helpers');
   }
 
+  // Global /api auth gate — routes not in the allowlist require session auth.
+  // Routes that use their own auth (API keys, webhook signatures, etc.) MUST be listed here.
   app.use('/api', (req: Request, res: Response, next: NextFunction) => {
     const openPrefixes = [
-      '/api/auth','/api/login','/api/logout','/api/register','/api/health','/api/health/full','/api/metrics','/api/cortex/health','/api/claude/health','/api/ai-gateway/health','/api/claude/models',
+      // Auth & session management
+      '/api/auth', '/api/login', '/api/logout', '/api/register',
+      // Health & observability
+      '/api/health', '/api/health/full', '/api/metrics',
+      '/api/cortex/health', '/api/claude/health', '/api/ai-gateway/health',
+      '/api/claude/models',
+      // Public API — uses API-key auth internally, not session auth
+      '/api/v1',
+      // Billing webhooks — Stripe signature verification, no session auth
+      '/api/billing/webhooks',
+      // Firecrawl webhooks — signature verification (also mounted before body parser)
+      '/api/firecrawl-webhooks',
     ];
     const fullPath = req.baseUrl + req.path;
     const isOpen = openPrefixes.some(p => fullPath === p || fullPath.startsWith(p + '/'));
