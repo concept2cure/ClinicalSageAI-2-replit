@@ -662,7 +662,7 @@ export function useProjectModules(
 ) {
   return useQuery({
     queryKey: moduleKeys.byProject(projectId!),
-    queryFn: () => apiFetch<ProjectModule[]>(`/api/projects/${projectId}/modules`),
+    queryFn: () => apiFetch<ProjectModule[]>(`/api/project-modules/${projectId}/modules`),
     enabled: projectId !== undefined,
     staleTime: 30_000,
     ...options,
@@ -684,7 +684,7 @@ export function useLinkModule() {
       moduleInstanceId: number;
       settings?: Record<string, unknown>;
     }) =>
-      apiFetch<ProjectModule>(`/api/projects/${projectId}/modules`, {
+      apiFetch<ProjectModule>(`/api/project-modules/${projectId}/modules`, {
         method: 'POST',
         body: JSON.stringify({ moduleType, moduleInstanceId, settings }),
       }),
@@ -707,7 +707,7 @@ export function useUpdateModuleLink() {
       moduleId: number;
       data: { status?: string; settings?: Record<string, unknown> };
     }) =>
-      apiFetch<ProjectModule>(`/api/projects/${projectId}/modules/${moduleId}`, {
+      apiFetch<ProjectModule>(`/api/project-modules/${projectId}/modules/${moduleId}`, {
         method: 'PATCH',
         body: JSON.stringify(data),
       }),
@@ -722,7 +722,7 @@ export function useUnlinkModule() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ projectId, moduleId }: { projectId: number; moduleId: number }) =>
-      apiFetch<{ success: boolean }>(`/api/projects/${projectId}/modules/${moduleId}`, {
+      apiFetch<{ success: boolean }>(`/api/project-modules/${projectId}/modules/${moduleId}`, {
         method: 'DELETE',
       }),
     onSuccess: (_result, variables) => {

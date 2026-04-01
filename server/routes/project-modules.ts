@@ -64,7 +64,7 @@ const statusSchema = z.object({
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * GET /api/projects/:projectId/modules
+ * GET /api/project-modules/:projectId/modules
  * List all modules linked to a project.
  */
 router.get('/:projectId/modules', async (req: Request, res: Response) => {
@@ -84,7 +84,7 @@ router.get('/:projectId/modules', async (req: Request, res: Response) => {
 });
 
 /**
- * GET /api/projects/:projectId/modules/summary
+ * GET /api/project-modules/:projectId/modules/summary
  * Get module summary grouped by type.
  */
 router.get('/:projectId/modules/summary', async (req: Request, res: Response) => {
@@ -104,7 +104,7 @@ router.get('/:projectId/modules/summary', async (req: Request, res: Response) =>
 });
 
 /**
- * POST /api/projects/:projectId/modules
+ * POST /api/project-modules/:projectId/modules
  * Link a module to a project.
  */
 router.post('/:projectId/modules', async (req: Request, res: Response) => {
@@ -143,7 +143,7 @@ router.post('/:projectId/modules', async (req: Request, res: Response) => {
 });
 
 /**
- * POST /api/projects/:projectId/modules/bulk
+ * POST /api/project-modules/:projectId/modules/bulk
  * Bulk-link multiple modules to a project.
  */
 router.post('/:projectId/modules/bulk', async (req: Request, res: Response) => {
@@ -183,7 +183,7 @@ router.post('/:projectId/modules/bulk', async (req: Request, res: Response) => {
 });
 
 /**
- * DELETE /api/projects/:projectId/modules/:moduleType/:moduleInstanceId
+ * DELETE /api/project-modules/:projectId/modules/:moduleType/:moduleInstanceId
  * Unlink a module from a project.
  */
 router.delete(
@@ -216,7 +216,7 @@ router.delete(
 );
 
 /**
- * PATCH /api/projects/:projectId/modules/:moduleType/:moduleInstanceId/status
+ * PATCH /api/project-modules/:projectId/modules/:moduleType/:moduleInstanceId/status
  * Update a module link status.
  */
 router.patch(
