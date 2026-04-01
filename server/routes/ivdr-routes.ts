@@ -386,12 +386,15 @@ export default function createIVDRRoutes(pool: Pool): Router {
       const safeId = id.replace(/[^a-zA-Z0-9\-_]/g, '');
       res.setHeader('Content-Disposition', `attachment; filename="ivdr-classification-${safeId}.json"`);
 
-      // Register governed export (non-blocking)
+      // Register governed export (fail-closed for governed flows)
       const user = (req as any).user;
-      registerExportGovernanceQuick({
-        organizationId: user?.organizationId || Number(orgId) || 1,
+      if (!user?.id) {
+        return res.status(401).json({ error: 'Authenticated user context required' });
+      }
+      await registerExportGovernanceQuick({
+        organizationId: Number(user?.organizationId || orgId),
         projectId: 0,
-        userId: user?.id || 0,
+        userId: Number(user.id),
         userName: user?.name || user?.email || 'unknown',
         title: `IVDR Classification Report: ${record.device_name}`,
         exportFormat: 'zip', // JSON report mapped to zip for governance
@@ -400,7 +403,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
         docType: 'ivdr_classification_report',
         backendRoute: `/api/ivdr/classify/${id}/report`,
         ipAddress: req.ip,
-      }).catch(() => {}); // non-blocking
+      });
 
       return res.json(report);
     } catch (error: any) {

@@ -7,7 +7,7 @@
  *
  * Intent → behaviour map:
  *   chat.new          → prefill the chat input with a default message
- *   vault.upload      → route to /concept2cure?panel=vault
+ *   vault.upload      → route to vault workspace
  *   project.new       → calls onNewProject callback
  *   validation.run    → prefill chat with "Run a regulatory validation on…"
  *   workflow.*        → prefill chat with workflow startup prompt
@@ -75,6 +75,16 @@ function intentToPrompt(intent: string, label: string): string {
   }
 }
 
+function isGuidedSequenceIntent(intent: string): boolean {
+  return (
+    intent === 'guided_project' ||
+    intent === 'guided_ind_ectd' ||
+    intent === 'guided_authoring' ||
+    intent === 'guided_verify' ||
+    intent === 'guided_submission'
+  );
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export const ActionCard: React.FC<ActionCardProps> = ({
@@ -96,8 +106,16 @@ export const ActionCard: React.FC<ActionCardProps> = ({
   const handlePrimary = () => {
     const action = primary?.action || intent || '';
 
+    if (action && isGuidedSequenceIntent(action)) {
+      onNavigate?.(action);
+      return;
+    }
+    if (action === 'open_capabilities') {
+      onNavigate?.('apps');
+      return;
+    }
     if (action && (action === 'vault.open_upload' || action === 'vault.upload' || action.startsWith('vault'))) {
-      onNavigate?.('/concept2cure?panel=vault');
+      onNavigate?.('vault');
       return;
     }
     if (action === 'project.new') {

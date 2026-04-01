@@ -24,7 +24,7 @@ router.post('/', (req, res) => {
       req.body.clientWorkspaceId
     );
     res.status(201).json(profile);
-  } catch (error) {
+  } catch (error: any) {
     res.status(400).json({ error: `Failed to create device profile: ${error.message}` });
   }
 });
@@ -36,7 +36,7 @@ router.get('/', (req, res) => {
     if (!organizationId) return;
     const profiles = deviceProfileService.listProfiles(organizationId as string);
     res.json(profiles);
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({ error: `Failed to list device profiles: ${error.message}` });
   }
 });
@@ -54,7 +54,7 @@ router.get('/:id', (req, res) => {
     }
 
     res.json(profile);
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({ error: `Failed to get device profile: ${error.message}` });
   }
 });
@@ -67,7 +67,7 @@ router.put('/:id', (req, res) => {
     if (!organizationId) return;
     const profile = deviceProfileService.updateProfile(id, req.body, organizationId as string);
     res.json(profile);
-  } catch (error) {
+  } catch (error: any) {
     if (error.message.includes('not found')) {
       return res.status(404).json({ error: error.message });
     }
@@ -88,7 +88,7 @@ router.delete('/:id', (req, res) => {
     }
 
     res.status(204).send();
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({ error: `Failed to delete device profile: ${error.message}` });
   }
 });

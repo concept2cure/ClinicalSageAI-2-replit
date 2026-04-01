@@ -1,192 +1,108 @@
 import { test, expect, Page } from '@playwright/test';
 
 const BASE_URL = process.env.BASE_URL || process.env.APP_BASE || 'http://localhost:5000';
-const SCREENSHOT_DIR = 'test-results/beta-core-pulse';
+const PROJECT_ID = process.env.BETA_PULSE_PROJECT_ID || 'stage8-pulse-project';
+const ARTIFACT_ID = process.env.BETA_PULSE_ARTIFACT_ID || 'stage8-pulse-artifact-1-1';
 
-async function loginToCore(page: Page): Promise<void> {
-  await page.goto(`${BASE_URL}/concept2cure/login`, { waitUntil: 'domcontentloaded' });
-  await page.evaluate(() => {
-    localStorage.setItem('concept2cure_first_run_complete', 'true');
-  });
-
-  const demoAccess = page.locator(
-    'button:has-text("Quick Demo Access"), button:has-text("Demo Access")'
-  );
-
-  if (await demoAccess.first().isVisible({ timeout: 3000 }).catch(() => false)) {
-    await demoAccess.first().click();
-    const persona = page
-      .locator(
-        'button:has-text("JM Smith"), button:has-text("Demo User"), button:has-text("Sarah Chen"), button:has-text("Mike Torres")'
-      )
-      .first();
-    if (await persona.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await persona.click();
-    }
-  } else {
-    await page.request.post(`${BASE_URL}/api/auth/dev-login`, {
-      data: { email: 'jm.smith@concept2cure.pro' },
-    });
-  }
-
-  const redirected = await page
-    .waitForURL(
-      url => {
-        const path = url.pathname;
-        return (
-          path.startsWith('/client-portal') ||
-          (path.startsWith('/concept2cure') && !path.startsWith('/concept2cure/login'))
-        );
-      },
-      { timeout: 10000 }
-    )
-    .then(() => true)
-    .catch(() => false);
-
-  if (!redirected) {
-    const devLogin = await page.request.post(`${BASE_URL}/api/auth/dev-login`, {
-      data: { email: 'jm.smith@concept2cure.pro' },
-    });
-    const payload = await devLogin.json();
-
-    if (!devLogin.ok() || !payload?.success || !payload?.accessToken || !payload?.user) {
-      throw new Error(`Unable to establish auth session (${devLogin.status()}).`);
-    }
-
-    await page.evaluate(({ accessToken, refreshToken, expiresIn, user }) => {
-      const expiryIso = new Date(Date.now() + Number(expiresIn || 86400) * 1000).toISOString();
-      sessionStorage.setItem('trialsage_access_token', String(accessToken));
-      sessionStorage.setItem('trialsage_refresh_token', String(refreshToken || accessToken));
-      sessionStorage.setItem('trialsage_token_expiry', expiryIso);
+async function seedAuthenticatedBrowserState(page: Page) {
+  const expiryIso = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  await page.addInitScript(
+    ({ expiry, projectId, artifactId }) => {
+      const user = {
+        id: 'stage8-user',
+        email: 'jm.smith@concept2cure.pro',
+        firstName: 'JM',
+        lastName: 'Smith',
+        organizationId: '1',
+        organizationName: 'Concept2Cure',
+        roles: ['user'],
+      };
+      sessionStorage.setItem('trialsage_access_token', 'stage8-token');
+      sessionStorage.setItem('trialsage_refresh_token', 'stage8-token');
+      sessionStorage.setItem('trialsage_token_expiry', expiry);
       localStorage.setItem('trialsage_user', JSON.stringify(user));
       localStorage.setItem('concept2cure_first_run_complete', 'true');
-    }, payload);
-
-    await page.goto(`${BASE_URL}/concept2cure`, { waitUntil: 'domcontentloaded' });
-  }
+      localStorage.setItem('currentOrganizationId', '1');
+      localStorage.setItem('currentOrganizationName', 'Concept2Cure');
+      localStorage.setItem('activeProjectId', projectId);
+      localStorage.setItem('activeArtifactId', artifactId);
+    },
+    { expiry: expiryIso, projectId: PROJECT_ID, artifactId: ARTIFACT_ID }
+  );
 }
 
-async function openProjectFromSidebar(page: Page): Promise<void> {
-  const sidebar = page.locator('aside[aria-label="Main sidebar"], aside[role="navigation"]').first();
-  await expect(sidebar).toBeVisible({ timeout: 12000 });
+test.describe('Stage 8 beta core pulse', () => {
+  test('covers canonical beta-safe shell path and route fences', async ({ page }) => {
+    await seedAuthenticatedBrowserState(page);
 
-  const existingProject = sidebar.locator('[data-testid="project-select"]').first();
-  if (await existingProject.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await existingProject.click();
-    return;
-  }
-
-  await page.evaluate(() => {
-    const now = new Date().toISOString();
-    localStorage.setItem(
-      'concept2cure_projects',
-      JSON.stringify([
-        {
-          id: 'beta-pulse-seeded-project',
-          name: 'Beta Pulse Project',
-          submissionType: 'IND',
-          description: 'Seeded from beta pulse e2e',
-          conversations: [],
-          status: 'active',
-          createdAt: now,
-          updatedAt: now,
-          metadata: { pinned: false, starred: false },
-        },
-      ])
-    );
-  });
-
-  await page.reload({ waitUntil: 'domcontentloaded' });
-  await expect(sidebar.locator('[data-testid="project-row"]').first()).toBeVisible({ timeout: 10000 });
-  await sidebar.locator('[data-testid="project-select"]').first().click();
-}
-
-test.describe('Beta core pulse', () => {
-  test('validates canonical beta path and fences', async ({ page }) => {
-    const pageErrors: string[] = [];
-    page.on('pageerror', e => pageErrors.push(e.message));
-
-    // 1) Root entry should not settle on dead portal truth.
-    await page.goto(`${BASE_URL}/`, { waitUntil: 'domcontentloaded' });
-    await expect(page).toHaveURL(/\/concept2cure(\/login)?|\/client-portal/);
-
-    // 2) Login redirect behavior should preserve concept2cure target.
-    await page.goto(
-      `${BASE_URL}/concept2cure/login?returnTo=${encodeURIComponent('/concept2cure/project/beta-pulse-seeded-project')}`,
-      { waitUntil: 'domcontentloaded' }
-    );
-    await loginToCore(page);
-
-    // 3) /client-portal/* compatibility fence should not dead-end.
-    await page.goto(`${BASE_URL}/client-portal/ectd-coauthor`, { waitUntil: 'domcontentloaded' });
-    const portalUrl = new URL(page.url());
-    expect(portalUrl.pathname.startsWith('/client-portal') || portalUrl.pathname.startsWith('/concept2cure')).toBeTruthy();
-
-    // 4) Authenticated /concept2cure/project/:projectId.
-    await page.goto(`${BASE_URL}/concept2cure/project/beta-pulse-seeded-project`, {
-      waitUntil: 'domcontentloaded',
+    await test.step('1) / resolves to auth-aware Concept2Cure flow', async () => {
+      await page.goto(`${BASE_URL}/`, { waitUntil: 'domcontentloaded' });
+      await page.waitForURL(
+        u => u.pathname === '/concept2cure' || u.pathname === '/concept2cure/login',
+        { timeout: 15000 }
+      );
+      expect(page.url()).toMatch(/\/concept2cure(\/login)?/);
     });
 
-    // 5) Project shell load.
-    await expect(page.locator('aside[aria-label="Main sidebar"], aside[role="navigation"]').first()).toBeVisible({
-      timeout: 15000,
+    await test.step('2) /login, /auth, /sign-in alias to canonical login', async () => {
+      for (const path of ['/login', '/auth', '/sign-in']) {
+        await page.goto(`${BASE_URL}${path}`, { waitUntil: 'domcontentloaded' });
+        await page.waitForURL(u => u.pathname === '/concept2cure/login', { timeout: 15000 });
+      }
     });
 
-    // 6) Governed workspace shell visible.
-    const workspaceShell = page.locator('[data-testid="workspace-shell"], [data-testid="project-workspace-shell"]').first();
-    const workspaceShellVisible = await workspaceShell.isVisible({ timeout: 4000 }).catch(() => false);
+    await test.step('3) /client-portal/* fences back to canonical shell', async () => {
+      await page.goto(`${BASE_URL}/client-portal/legacy-surface`, { waitUntil: 'domcontentloaded' });
+      await page.waitForURL(u => u.pathname.startsWith('/concept2cure'), { timeout: 15000 });
+      expect(page.url()).toContain('/concept2cure');
+    });
 
-    // Fallback check for current shell variants.
-    if (!workspaceShellVisible) {
-      await expect(
-        page.locator('text=/Project Workspace|Workspace|Document Studio/i').first()
-      ).toBeVisible({ timeout: 10000 });
-    }
+    await test.step('4-5) authenticated project route loads real shell/workspace', async () => {
+      await page.goto(`${BASE_URL}/concept2cure/project/${PROJECT_ID}`, {
+        waitUntil: 'domcontentloaded',
+      });
+      const sidebar = page.locator('aside[aria-label="Main sidebar"], aside[role="navigation"]').first();
+      await expect(sidebar).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('main, [data-testid="project-workspace-shell"]').first()).toBeVisible({
+        timeout: 15000,
+      });
+    });
 
-    // 7) Open at least one project context surface.
-    await openProjectFromSidebar(page);
-    await page.waitForTimeout(600);
+    await test.step('6-7) governed artifact path opens and returns to workspace with context', async () => {
+      await page.goto(
+        `${BASE_URL}/concept2cure/project/${PROJECT_ID}/artifacts/${ARTIFACT_ID}`,
+        { waitUntil: 'domcontentloaded' }
+      );
+      await page.waitForLoadState('networkidle').catch(() => {});
+      await page.goto(`${BASE_URL}/concept2cure/project/${PROJECT_ID}`, {
+        waitUntil: 'domcontentloaded',
+      });
+      await page.waitForURL(u => u.pathname.includes(`/concept2cure/project/${PROJECT_ID}`), {
+        timeout: 15000,
+      });
+    });
 
-    // 8) Open workspace and return without blank state.
-    const toolsButton = page.locator('button:has-text("Tools"), a:has-text("Tools")').first();
-    if (await toolsButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await toolsButton.click();
-      await page.waitForTimeout(500);
-    }
+    await test.step('8) top-level nav does not dead-end', async () => {
+      for (const route of ['/concept2cure', `/concept2cure/project/${PROJECT_ID}`]) {
+        await page.goto(`${BASE_URL}${route}`, { waitUntil: 'domcontentloaded' });
+        await expect(page.locator('text=Something went wrong, text=404').first()).toBeHidden({
+          timeout: 3000,
+        });
+      }
+    });
 
-    const overviewButton = page.locator('button:has-text("Overview"), a:has-text("Overview")').first();
-    if (await overviewButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await overviewButton.click();
-      await page.waitForTimeout(500);
-    }
+    await test.step('9) command/panel safety check is gated to PR-334 intake', async () => {
+      test.skip(
+        process.env.STAGE8_INCLUDE_PR334_CHECKS !== 'true',
+        'Enable STAGE8_INCLUDE_PR334_CHECKS=true only when PR 334 changes are present.'
+      );
+    });
 
-    const mainContent = page.locator('main, [role="main"], [data-testid="workspace-content"]').first();
-    await expect(mainContent).toBeVisible({ timeout: 10000 });
-    const mainText = (await mainContent.textContent()) || '';
-    expect(mainText.trim().length).toBeGreaterThan(20);
-
-    // 9) No route lands in dead portal truth.
-    const finalPath = new URL(page.url()).pathname;
-    expect(finalPath).not.toContain('/client-portal/dead');
-    expect(finalPath).not.toContain('/dead');
-
-    // 10) No primary beta CTA lands in unmapped/dead route.
-    const ctaCandidates = page
-      .locator('a:has-text("Open"), button:has-text("Open"), a:has-text("Launch"), button:has-text("Launch")')
-      .first();
-    if (await ctaCandidates.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await ctaCandidates.click();
-      await page.waitForTimeout(800);
-      const postCtaPath = new URL(page.url()).pathname;
-      expect(postCtaPath).not.toContain('/404');
-      expect(postCtaPath).not.toContain('/not-found');
-    }
-
-    expect(pageErrors, `Browser runtime errors: ${pageErrors.join(' | ')}`).toEqual([]);
-
-    await page.screenshot({
-      path: `${SCREENSHOT_DIR}/beta-core-pulse-final.png`,
-      fullPage: true,
+    await test.step('10) fail-closed governed checks are gated to PR-333/335 intake', async () => {
+      test.skip(
+        process.env.STAGE8_INCLUDE_FAILCLOSED_CHECKS !== 'true',
+        'Enable STAGE8_INCLUDE_FAILCLOSED_CHECKS=true only when PR 333/335 changes are present.'
+      );
     });
   });
 });

@@ -68,7 +68,7 @@ export const computeRedirect = (
 
   const curUser = userArg ?? (userGetter ? userGetter() : undefined);
   if (curUser?.roles?.includes('client_admin') || curUser?.roles?.includes('client_user')) {
-    return '/client-portal';
+    return '/concept2cure';
   }
   return '/concept2cure';
 };

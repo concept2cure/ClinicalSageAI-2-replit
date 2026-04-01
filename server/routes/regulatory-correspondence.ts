@@ -3,13 +3,12 @@ import crypto from 'node:crypto';
 import { getPool } from '../db';
 import type {
   Correspondence,
-  CorrespondenceIssue,
   ResponsePackage,
   Submission,
   SubmissionLifecycleState,
 } from '../../shared/types/regulatory-correspondence';
 import {
-  correspondenceIntakeSchema,
+  correspondenceIntakeGovernanceSchema,
   issueReviewSchema,
   mailboxConnectionSchema,
   responsePackageCreateSchema,
@@ -18,114 +17,20 @@ import {
 } from './regulatory-correspondence.validation';
 import { authMiddleware } from '../auth';
 import { getSecureOrgId } from '../utils/tenantContext';
+import { getOrCreateProfile } from '../services/intelligence/project-intelligence-service';
+import { db } from '../db';
+import { projectMemoryEntries } from '@shared/schema';
+import {
+  ISSUE_EXTRACTION_VERSION,
+  ISSUE_PARSER_VERSION,
+  resolveIssueParserGovernanceConfig,
+  runGovernedIssueParser,
+} from '../services/regulatory-correspondence/issue-parser';
 
 const router = Router();
 router.use(authMiddleware);
 
-const memSubmissions = new Map<string, Submission>();
-const memCorrespondence = new Map<string, Correspondence>();
-const memCorrespondenceOrg = new Map<string, number>();
-const memIssues = new Map<string, CorrespondenceIssue[]>();
-const memResponsePackages = new Map<string, ResponsePackage[]>();
-const memTimeline: Array<Record<string, unknown>> = [];
-type MailboxConnectionRecord = {
-  id: string;
-  organizationId: number;
-  provider: 'microsoft365' | 'gmail' | 'imap' | 'other';
-  mailboxIdentifier: string;
-  authState: 'connected' | 'expired' | 'error' | 'revoked';
-  tokenReference: string | null;
-  scopes: string[];
-  syncStatus: 'idle' | 'syncing' | 'error';
-  cursor: string | null;
-  lastSyncAt: string | null;
-  errorState: string | null;
-  createdAt: string;
-};
-const memMailboxConnections = new Map<string, MailboxConnectionRecord>();
 const REG_CORRESPONDENCE_ENABLED = process.env.ENABLE_REG_CORRESPONDENCE_OS !== 'false';
-
-const KEYWORD_TAXONOMY: Array<{
-  pattern: RegExp;
-  category: CorrespondenceIssue['category'];
-  severity: CorrespondenceIssue['severity'];
-  blocker: boolean;
-}> = [
-  {
-    pattern: /refuse to file|rtf|reject/i,
-    category: 'filing_acceptance_issue',
-    severity: 'critical',
-    blocker: true,
-  },
-  {
-    pattern: /deficiency|missing information|clarification/i,
-    category: 'missing_information_clarification',
-    severity: 'high',
-    blocker: true,
-  },
-  {
-    pattern: /stability|specification|quality|cmc/i,
-    category: 'cmc_quality_issue',
-    severity: 'high',
-    blocker: true,
-  },
-  {
-    pattern: /safety|adverse event|risk/i,
-    category: 'clinical_safety_issue',
-    severity: 'high',
-    blocker: true,
-  },
-  {
-    pattern: /efficacy|endpoint|benefit/i,
-    category: 'clinical_efficacy_issue',
-    severity: 'medium',
-    blocker: false,
-  },
-  {
-    pattern: /format|ectd|technical/i,
-    category: 'ectd_technical_formatting',
-    severity: 'medium',
-    blocker: false,
-  },
-];
-
-function parseIssues(text: string, correspondenceId: string): CorrespondenceIssue[] {
-  const normalized = text || '';
-  const matches = KEYWORD_TAXONOMY.filter(rule => rule.pattern.test(normalized));
-  if (!matches.length) {
-    return [
-      {
-        id: crypto.randomUUID(),
-        correspondenceId,
-        category: 'other_unclassified',
-        severity: 'low',
-        blocker: false,
-        responseRequired: true,
-        sourceExcerpt: normalized.slice(0, 280),
-        confidence: 0.35,
-        humanReviewStatus: 'pending',
-        mappedCtdSections: [],
-        mappedArtifactIds: [],
-        resolutionStatus: 'open',
-      },
-    ];
-  }
-
-  return matches.map(match => ({
-    id: crypto.randomUUID(),
-    correspondenceId,
-    category: match.category,
-    severity: match.severity,
-    blocker: match.blocker,
-    responseRequired: true,
-    sourceExcerpt: normalized.slice(0, 280),
-    confidence: 0.72,
-    humanReviewStatus: 'pending',
-    mappedCtdSections: [],
-    mappedArtifactIds: [],
-    resolutionStatus: 'open',
-  }));
-}
 
 function requireActorContext(req: Request, res: Response) {
   const orgIdRaw = getSecureOrgId(req as any);
@@ -160,6 +65,23 @@ async function tableReady(pool: ReturnType<typeof getDbClientOrNull>): Promise<b
   }
 }
 
+function requirePersistentStore(
+  tableIsReady: boolean,
+  res: Response,
+  context: string
+): tableIsReady is true {
+  if (tableIsReady) {
+    return true;
+  }
+  res.status(503).json({
+    error: 'Regulatory Correspondence store unavailable',
+    message:
+      `Cannot complete "${context}" because required c2c_* tables are unavailable. ` +
+      'In-memory fallback is disabled to avoid non-durable regulatory records.',
+  });
+  return false;
+}
+
 async function addTimelineEventDB(
   pool: NonNullable<ReturnType<typeof getDbClientOrNull>>,
   payload: {
@@ -191,9 +113,156 @@ async function addTimelineEventDB(
   );
 }
 
+async function persistCorrespondenceLearning(payload: {
+  orgId: number;
+  projectId: number;
+  title: string;
+  content: string;
+  subcategory: string;
+  confidenceScore?: number;
+  importanceLevel?: 'low' | 'medium' | 'high';
+  sourceDocumentName?: string;
+  sourceDocumentType?: string;
+}) {
+  try {
+    const projectProfileId = await getOrCreateProfile(payload.projectId, payload.orgId);
+    await db.insert(projectMemoryEntries).values({
+      projectProfileId,
+      projectId: payload.projectId,
+      organizationId: payload.orgId,
+      category: 'authority_position',
+      subcategory: payload.subcategory,
+      title: payload.title,
+      content: payload.content,
+      sourceDocumentName: payload.sourceDocumentName,
+      sourceDocumentType: payload.sourceDocumentType,
+      confidenceScore: payload.confidenceScore ?? 0.78,
+      importanceLevel: payload.importanceLevel ?? 'high',
+      isVerifiedByUser: false,
+      extractedBy: 'system',
+      status: 'active',
+    });
+  } catch (error) {
+    console.warn('[regulatory-correspondence] Failed to persist learning record', error);
+  }
+}
+
+export async function persistOutboundCorrespondenceRecord(payload: {
+  orgId: number;
+  projectId: number;
+  submissionId?: string;
+  subject: string;
+  recipients: string[];
+  sender?: string;
+  communicationType?: string;
+  parsedText?: string;
+  summary?: string;
+  urgency?: Correspondence['urgency'];
+  sourceChannel?: Correspondence['sourceChannel'];
+}) {
+  const pool = getDbClientOrNull();
+  if (!(await tableReady(pool))) {
+    throw new Error('Regulatory Correspondence store unavailable');
+  }
+
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  const record: Correspondence = {
+    id,
+    projectId: payload.projectId,
+    submissionId: payload.submissionId || `project-${payload.projectId}`,
+    direction: 'outbound',
+    sourceChannel: payload.sourceChannel || 'api_import',
+    communicationType: (payload.communicationType as any) || 'cover_letter',
+    subject: payload.subject,
+    sender: payload.sender,
+    recipients: payload.recipients,
+    sentAt: now,
+    receivedAt: now,
+    urgency: payload.urgency || 'medium',
+    responseRequired: false,
+    status: 'responded',
+    attachmentIds: [],
+    parsedText: payload.parsedText,
+    summary: payload.summary,
+    parserMetadata: {
+      parserVersion: 'report-delivery-v1',
+      extractionVersion: ISSUE_EXTRACTION_VERSION,
+      importedByUserId: 'system',
+    },
+  };
+
+  await pool!.query(
+    `INSERT INTO c2c_correspondence
+    (id, organization_id, project_id, submission_id, direction, source_channel, communication_type, subject, sender, recipients, received_at, sent_at, urgency, response_required, status, parser_metadata, attachment_refs, parsed_text, summary)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,$12,$13,$14,$15,$16::jsonb,$17::jsonb,$18,$19)`,
+    [
+      record.id,
+      payload.orgId,
+      record.projectId,
+      record.submissionId,
+      record.direction,
+      record.sourceChannel,
+      record.communicationType,
+      record.subject,
+      record.sender || null,
+      JSON.stringify(record.recipients || []),
+      record.receivedAt || null,
+      record.sentAt || null,
+      record.urgency,
+      record.responseRequired,
+      record.status,
+      JSON.stringify(record.parserMetadata || {}),
+      JSON.stringify([]),
+      record.parsedText || null,
+      record.summary || null,
+    ]
+  );
+
+  await addTimelineEventDB(pool!, {
+    orgId: payload.orgId,
+    projectId: record.projectId,
+    submissionId: payload.submissionId,
+    correspondenceId: record.id,
+    eventType: 'report_delivery_logged',
+    summary: record.subject,
+    metadata: {
+      communicationType: record.communicationType,
+      sourceChannel: record.sourceChannel,
+    },
+  });
+
+  await persistCorrespondenceLearning({
+    orgId: payload.orgId,
+    projectId: payload.projectId,
+    title: `Outbound correspondence: ${payload.subject}`,
+    content:
+      `${payload.subject}\nRecipients: ${payload.recipients.join(', ')}\n\n${payload.parsedText || payload.summary || ''}`.trim(),
+    subcategory: 'outbound_report_delivery',
+    confidenceScore: 0.82,
+    importanceLevel: 'medium',
+    sourceDocumentName: payload.subject,
+    sourceDocumentType: 'outbound_correspondence',
+  });
+
+  return record;
+}
+
 function badRequest(res: Response, error: unknown) {
   return res.status(400).json({ error: 'Validation error', details: error });
 }
+
+
+router.get('/parser/health', async (_req, res) => {
+  const parserGovernance = resolveIssueParserGovernanceConfig(process.env);
+  return res.json({
+    data: {
+      parserVersion: ISSUE_PARSER_VERSION,
+      parserGovernance,
+      responseContract: parserGovernance.available ? 'governed_heuristic_mode_v1' : null,
+    },
+  });
+});
 
 router.post('/submissions', async (req, res) => {
   if (!REG_CORRESPONDENCE_ENABLED) {
@@ -228,8 +297,11 @@ router.post('/submissions', async (req, res) => {
   };
 
   const pool = getDbClientOrNull();
-  if (await tableReady(pool)) {
-    await pool!.query(
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'create submission')) {
+    return;
+  }
+  await pool!.query(
       `INSERT INTO c2c_submissions
         (id, organization_id, project_id, submission_type, regulator, center, division, application_number, sequence_number, lifecycle_state, clock_metadata, linked_artifact_ids, linked_communication_ids)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,$13::jsonb)`,
@@ -250,25 +322,13 @@ router.post('/submissions', async (req, res) => {
       ]
     );
 
-    await addTimelineEventDB(pool!, {
+  await addTimelineEventDB(pool!, {
       orgId,
       projectId: record.projectId,
       submissionId: record.id,
       eventType: 'submission_created',
       summary: 'Submission initialized for regulatory lifecycle orchestration.',
-    });
-  } else {
-    memSubmissions.set(id, record);
-    memTimeline.push({
-      id: crypto.randomUUID(),
-      orgId,
-      submissionId: id,
-      projectId: record.projectId,
-      eventType: 'submission_created',
-      eventTime: now,
-      summary: 'Submission initialized for regulatory lifecycle orchestration.',
-    });
-  }
+  });
 
   res.status(201).json({ data: record });
 });
@@ -278,20 +338,16 @@ router.get('/submissions/:submissionId', async (req, res) => {
   if (!actor) return;
   const { orgId } = actor;
   const pool = getDbClientOrNull();
-  if (await tableReady(pool)) {
-    const { rows } = await pool!.query(
-      `SELECT * FROM c2c_submissions WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [req.params.submissionId, orgId]
-    );
-    if (!rows[0]) return res.status(404).json({ error: 'Submission not found' });
-    return res.json({ data: rows[0] });
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'get submission')) {
+    return;
   }
-
-  const record = memSubmissions.get(req.params.submissionId);
-  if (!record || record.organizationId !== orgId) {
-    return res.status(404).json({ error: 'Submission not found' });
-  }
-  return res.json({ data: record });
+  const { rows } = await pool!.query(
+    `SELECT * FROM c2c_submissions WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+    [req.params.submissionId, orgId]
+  );
+  if (!rows[0]) return res.status(404).json({ error: 'Submission not found' });
+  return res.json({ data: rows[0] });
 });
 
 router.patch('/submissions/:submissionId/state', async (req, res) => {
@@ -308,41 +364,26 @@ router.patch('/submissions/:submissionId/state', async (req, res) => {
   if (!actor) return;
   const { orgId } = actor;
   const pool = getDbClientOrNull();
-  if (await tableReady(pool)) {
-    const upd = await pool!.query(
-      `UPDATE c2c_submissions
-       SET lifecycle_state = $2, updated_at = NOW()
-       WHERE id = $1 AND organization_id = $3
-       RETURNING *`,
-      [req.params.submissionId, lifecycleState, orgId]
-    );
-    if (!upd.rows[0]) return res.status(404).json({ error: 'Submission not found' });
-    await addTimelineEventDB(pool!, {
-      orgId,
-      projectId: upd.rows[0].project_id,
-      submissionId: upd.rows[0].id,
-      eventType: 'submission_state_changed',
-      summary: `Submission transitioned to ${lifecycleState}.`,
-    });
-    return res.json({ data: upd.rows[0] });
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'update submission state')) {
+    return;
   }
-
-  const record = memSubmissions.get(req.params.submissionId);
-  if (!record || record.organizationId !== orgId) {
-    return res.status(404).json({ error: 'Submission not found' });
-  }
-  record.lifecycleState = lifecycleState;
-  record.updatedAt = new Date().toISOString();
-  memTimeline.push({
-    id: crypto.randomUUID(),
+  const upd = await pool!.query(
+    `UPDATE c2c_submissions
+     SET lifecycle_state = $2, updated_at = NOW()
+     WHERE id = $1 AND organization_id = $3
+     RETURNING *`,
+    [req.params.submissionId, lifecycleState, orgId]
+  );
+  if (!upd.rows[0]) return res.status(404).json({ error: 'Submission not found' });
+  await addTimelineEventDB(pool!, {
     orgId,
-    submissionId: record.id,
-    projectId: record.projectId,
+    projectId: upd.rows[0].project_id,
+    submissionId: upd.rows[0].id,
     eventType: 'submission_state_changed',
-    eventTime: record.updatedAt,
-    summary: `Submission transitioned to ${record.lifecycleState}.`,
+    summary: `Submission transitioned to ${lifecycleState}.`,
   });
-  return res.json({ data: record });
+  return res.json({ data: upd.rows[0] });
 });
 
 router.post('/correspondence/intake', async (req, res) => {
@@ -351,7 +392,7 @@ router.post('/correspondence/intake', async (req, res) => {
       .status(403)
       .json({ error: 'Regulatory Correspondence OS is disabled by feature flag.' });
   }
-  const parsed = correspondenceIntakeSchema.safeParse(req.body);
+  const parsed = correspondenceIntakeGovernanceSchema.safeParse(req.body);
   if (!parsed.success) return badRequest(res, parsed.error.flatten());
   req.body = parsed.data;
   const actor = requireActorContext(req, res);
@@ -359,6 +400,7 @@ router.post('/correspondence/intake', async (req, res) => {
   const { orgId, userId } = actor;
   const id = crypto.randomUUID();
   const parsedText = String(req.body.parsedText || req.body.summary || '');
+  const normalizedParsedText = parsedText.trim();
   const attachmentPayload = Array.isArray(req.body.attachments) ? req.body.attachments : [];
   const attachmentRefs = attachmentPayload.map((file: any) => {
     const checksum = crypto
@@ -392,23 +434,50 @@ router.post('/correspondence/intake', async (req, res) => {
     sourceThreadId: req.body.sourceThreadId,
     sourceMailboxId: req.body.sourceMailboxId,
     parserMetadata: {
-      parserVersion: 'v1-keyword-scaffold',
-      extractionVersion: '2026-03-31',
+      parserVersion: ISSUE_PARSER_VERSION,
+      extractionVersion: ISSUE_EXTRACTION_VERSION,
       malwareScan: 'pending',
       mimeValidated: true,
       quarantined: false,
       importedByUserId: userId,
     },
-    attachmentIds: attachmentRefs.map(a => a.id),
-    parsedText,
-    summary: req.body.summary || parsedText.slice(0, 200),
+    attachmentIds: attachmentRefs.map((a: any) => a.id),
+    parsedText: normalizedParsedText,
+    summary: req.body.summary || normalizedParsedText.slice(0, 200),
   };
 
-  const extracted = parseIssues(parsedText, id);
+  const parserGovernance = resolveIssueParserGovernanceConfig(process.env);
+  if (!parserGovernance.available) {
+    return res.status(503).json({
+      error: 'Issue parser unavailable',
+      message:
+        'Governed parser pipeline is not configured in this environment. Configure REG_CORRESPONDENCE_ISSUE_PARSER_MODE=heuristic_v2 and ENABLE_REG_CORRESPONDENCE_HEURISTIC_MODE=true.',
+      parserGovernance,
+    });
+  }
+
+  const extraction = runGovernedIssueParser(normalizedParsedText, id);
+  const extracted = extraction.issues;
+  record.parserMetadata = {
+    ...(record.parserMetadata || {}),
+    parserMode: extraction.metadata.parserMode,
+    responseContract: extraction.metadata.responseContract,
+    extractionMethod: extraction.metadata.extractionMethod,
+    confidenceMethod: extraction.metadata.confidenceMethod,
+    humanReviewRequired: extraction.metadata.humanReviewRequired,
+    extractionVersion: extraction.metadata.extractionVersion,
+    sourceTextDigest: extraction.metadata.sourceTextDigest,
+    matchedRuleCount: extraction.metadata.matchedRuleCount,
+    parserGovernanceMode: parserGovernance.mode,
+    parserGovernanceHeuristicEnabled: parserGovernance.heuristicEnabled,
+  };
 
   const pool = getDbClientOrNull();
-  if (await tableReady(pool)) {
-    const submissionCheck = await pool!.query(
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'ingest correspondence')) {
+    return;
+  }
+  const submissionCheck = await pool!.query(
       `SELECT id, project_id
        FROM c2c_submissions
        WHERE id = $1 AND organization_id = $2
@@ -482,26 +551,6 @@ router.post('/correspondence/intake', async (req, res) => {
       eventType: 'correspondence_ingested',
       summary: record.subject,
     });
-  } else {
-    const submission = memSubmissions.get(record.submissionId);
-    if (!submission || submission.organizationId !== orgId || submission.projectId !== record.projectId) {
-      return res.status(404).json({ error: 'Submission not found' });
-    }
-    memCorrespondence.set(id, record);
-    memCorrespondenceOrg.set(id, orgId);
-    memIssues.set(id, extracted);
-    memTimeline.push({
-      id: crypto.randomUUID(),
-      orgId,
-      submissionId: record.submissionId,
-      correspondenceId: id,
-      projectId: record.projectId,
-      eventType: 'correspondence_ingested',
-      eventTime: new Date().toISOString(),
-      summary: record.subject,
-    });
-  }
-
   return res.status(201).json({ data: record, issues: extracted });
 });
 
@@ -513,32 +562,26 @@ router.get('/correspondence', async (req, res) => {
   const submissionId = req.query.submissionId ? String(req.query.submissionId) : null;
 
   const pool = getDbClientOrNull();
-  if (await tableReady(pool)) {
-    const params: any[] = [orgId];
-    const clauses: string[] = [`organization_id = $1`];
-    if (projectId) {
-      params.push(projectId);
-      clauses.push(`project_id = $${params.length}`);
-    }
-    if (submissionId) {
-      params.push(submissionId);
-      clauses.push(`submission_id = $${params.length}`);
-    }
-    const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
-    const { rows } = await pool!.query(
-      `SELECT * FROM c2c_correspondence ${where} ORDER BY received_at DESC NULLS LAST, created_at DESC`,
-      params
-    );
-    return res.json({ data: rows });
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'list correspondence')) {
+    return;
   }
-
-  const data = Array.from(memCorrespondence.values()).filter(
-    row =>
-      memCorrespondenceOrg.get(row.id) === orgId &&
-      (projectId ? row.projectId === projectId : true) &&
-      (submissionId ? row.submissionId === submissionId : true)
+  const params: any[] = [orgId];
+  const clauses: string[] = [`organization_id = $1`];
+  if (projectId) {
+    params.push(projectId);
+    clauses.push(`project_id = $${params.length}`);
+  }
+  if (submissionId) {
+    params.push(submissionId);
+    clauses.push(`submission_id = $${params.length}`);
+  }
+  const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
+  const { rows } = await pool!.query(
+    `SELECT * FROM c2c_correspondence ${where} ORDER BY received_at DESC NULLS LAST, created_at DESC`,
+    params
   );
-  return res.json({ data });
+  return res.json({ data: rows });
 });
 
 router.get('/correspondence/:correspondenceId', async (req, res) => {
@@ -546,32 +589,24 @@ router.get('/correspondence/:correspondenceId', async (req, res) => {
   if (!actor) return;
   const { orgId } = actor;
   const pool = getDbClientOrNull();
-  if (await tableReady(pool)) {
-    const { rows } = await pool!.query(
-      `SELECT * FROM c2c_correspondence WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [req.params.correspondenceId, orgId]
-    );
-    if (!rows[0]) return res.status(404).json({ error: 'Correspondence not found' });
-    const issueRows = await pool!.query(
-      `SELECT * FROM c2c_correspondence_issues WHERE correspondence_id = $1 ORDER BY created_at ASC`,
-      [req.params.correspondenceId]
-    );
-    const packageRows = await pool!.query(
-      `SELECT * FROM c2c_response_packages WHERE source_correspondence_id = $1 ORDER BY created_at DESC`,
-      [req.params.correspondenceId]
-    );
-    return res.json({ data: rows[0], issues: issueRows.rows, responsePackages: packageRows.rows });
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'get correspondence detail')) {
+    return;
   }
-
-  const row = memCorrespondence.get(req.params.correspondenceId);
-  if (!row || memCorrespondenceOrg.get(row.id) !== orgId) {
-    return res.status(404).json({ error: 'Correspondence not found' });
-  }
-  return res.json({
-    data: row,
-    issues: memIssues.get(row.id) || [],
-    responsePackages: memResponsePackages.get(row.id) || [],
-  });
+  const { rows } = await pool!.query(
+    `SELECT * FROM c2c_correspondence WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+    [req.params.correspondenceId, orgId]
+  );
+  if (!rows[0]) return res.status(404).json({ error: 'Correspondence not found' });
+  const issueRows = await pool!.query(
+    `SELECT * FROM c2c_correspondence_issues WHERE correspondence_id = $1 ORDER BY created_at ASC`,
+    [req.params.correspondenceId]
+  );
+  const packageRows = await pool!.query(
+    `SELECT * FROM c2c_response_packages WHERE source_correspondence_id = $1 ORDER BY created_at DESC`,
+    [req.params.correspondenceId]
+  );
+  return res.json({ data: rows[0], issues: issueRows.rows, responsePackages: packageRows.rows });
 });
 
 router.patch('/issues/:issueId/review', async (req, res) => {
@@ -587,9 +622,12 @@ router.patch('/issues/:issueId/review', async (req, res) => {
   if (!actor) return;
   const { orgId } = actor;
   const pool = getDbClientOrNull();
-  if (await tableReady(pool)) {
-    const upd = await pool!.query(
-      `UPDATE c2c_correspondence_issues AS i
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'review correspondence issue')) {
+    return;
+  }
+  const upd = await pool!.query(
+    `UPDATE c2c_correspondence_issues AS i
        SET human_review_status = COALESCE($2, human_review_status),
            mapped_ctd_sections = COALESCE($3::jsonb, mapped_ctd_sections),
            mapped_artifact_ids = COALESCE($4::jsonb, mapped_artifact_ids),
@@ -600,32 +638,17 @@ router.patch('/issues/:issueId/review', async (req, res) => {
          AND c.id = i.correspondence_id
          AND c.organization_id = $6
        RETURNING i.*`,
-      [
-        req.params.issueId,
-        req.body.humanReviewStatus || null,
-        req.body.mappedCtdSections ? JSON.stringify(req.body.mappedCtdSections) : null,
-        req.body.mappedArtifactIds ? JSON.stringify(req.body.mappedArtifactIds) : null,
-        req.body.resolutionStatus || null,
-        orgId,
-      ]
-    );
-    if (!upd.rows[0]) return res.status(404).json({ error: 'Issue not found' });
-    return res.json({ data: upd.rows[0] });
-  }
-
-  for (const [correspondenceId, issueList] of memIssues.entries()) {
-    if (memCorrespondenceOrg.get(correspondenceId) !== orgId) continue;
-    const issue = issueList.find(item => item.id === req.params.issueId);
-    if (!issue) continue;
-    issue.humanReviewStatus = req.body.humanReviewStatus || issue.humanReviewStatus;
-    issue.owner = req.body.owner || issue.owner;
-    issue.mappedCtdSections = req.body.mappedCtdSections || issue.mappedCtdSections;
-    issue.mappedArtifactIds = req.body.mappedArtifactIds || issue.mappedArtifactIds;
-    issue.resolutionStatus = req.body.resolutionStatus || issue.resolutionStatus;
-    return res.json({ data: issue });
-  }
-
-  return res.status(404).json({ error: 'Issue not found' });
+    [
+      req.params.issueId,
+      req.body.humanReviewStatus || null,
+      req.body.mappedCtdSections ? JSON.stringify(req.body.mappedCtdSections) : null,
+      req.body.mappedArtifactIds ? JSON.stringify(req.body.mappedArtifactIds) : null,
+      req.body.resolutionStatus || null,
+      orgId,
+    ]
+  );
+  if (!upd.rows[0]) return res.status(404).json({ error: 'Issue not found' });
+  return res.json({ data: upd.rows[0] });
 });
 
 router.post('/response-packages', async (req, res) => {
@@ -654,24 +677,27 @@ router.post('/response-packages', async (req, res) => {
   let projectId = Number(req.body.projectId || 0);
 
   const pool = getDbClientOrNull();
-  if (await tableReady(pool)) {
-    const sourceCorrespondence = await pool!.query(
-      `SELECT id, project_id, submission_id
-       FROM c2c_correspondence
-       WHERE id = $1 AND organization_id = $2
-       LIMIT 1`,
-      [pack.sourceCorrespondenceId, orgId]
-    );
-    const sourceRow = sourceCorrespondence.rows[0];
-    if (!sourceRow) {
-      return res.status(404).json({ error: 'Source correspondence not found' });
-    }
-    projectId = projectId > 0 ? projectId : Number(sourceRow.project_id);
-    if (!Number.isFinite(projectId) || projectId <= 0) {
-      return res.status(400).json({ error: 'projectId is required' });
-    }
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'create response package')) {
+    return;
+  }
+  const sourceCorrespondence = await pool!.query(
+    `SELECT id, project_id, submission_id
+     FROM c2c_correspondence
+     WHERE id = $1 AND organization_id = $2
+     LIMIT 1`,
+    [pack.sourceCorrespondenceId, orgId]
+  );
+  const sourceRow = sourceCorrespondence.rows[0];
+  if (!sourceRow) {
+    return res.status(404).json({ error: 'Source correspondence not found' });
+  }
+  projectId = projectId > 0 ? projectId : Number(sourceRow.project_id);
+  if (!Number.isFinite(projectId) || projectId <= 0) {
+    return res.status(400).json({ error: 'projectId is required' });
+  }
 
-    await pool!.query(
+  await pool!.query(
       `INSERT INTO c2c_response_packages
        (id, organization_id, project_id, source_correspondence_id, title, status, issue_matrix_artifact_id, cover_letter_artifact_id, revised_artifact_ids, assembled_sequence_linkage)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10)`,
@@ -687,9 +713,9 @@ router.post('/response-packages', async (req, res) => {
         JSON.stringify(pack.revisedArtifactIds || []),
         pack.assembledSequenceId || null,
       ]
-    );
+  );
 
-    await addTimelineEventDB(pool!, {
+  await addTimelineEventDB(pool!, {
       orgId,
       projectId,
       submissionId: sourceRow.submission_id,
@@ -697,24 +723,7 @@ router.post('/response-packages', async (req, res) => {
       responsePackageId: pack.id,
       eventType: 'response_package_created',
       summary: pack.title,
-    });
-  } else {
-    if (memCorrespondenceOrg.get(pack.sourceCorrespondenceId) !== orgId) {
-      return res.status(404).json({ error: 'Source correspondence not found' });
-    }
-    const existing = memResponsePackages.get(pack.sourceCorrespondenceId) || [];
-    existing.push(pack);
-    memResponsePackages.set(pack.sourceCorrespondenceId, existing);
-    memTimeline.push({
-      id: crypto.randomUUID(),
-      orgId,
-      projectId,
-      correspondenceId: pack.sourceCorrespondenceId,
-      eventType: 'response_package_created',
-      eventTime: new Date().toISOString(),
-      summary: pack.title,
-    });
-  }
+  });
 
   return res.status(201).json({ data: pack });
 });
@@ -725,26 +734,22 @@ router.get('/timeline', async (req, res) => {
   const { orgId } = actor;
   const submissionId = req.query.submissionId ? String(req.query.submissionId) : null;
   const pool = getDbClientOrNull();
-  if (await tableReady(pool)) {
-    const params: any[] = [orgId];
-    const clauses = [`organization_id = $1`];
-    if (submissionId) {
-      params.push(submissionId);
-      clauses.push(`submission_id = $${params.length}`);
-    }
-    const where = `WHERE ${clauses.join(' AND ')}`;
-    const { rows } = await pool!.query(
-      `SELECT * FROM c2c_communication_timeline_events ${where} ORDER BY event_time DESC`,
-      params
-    );
-    return res.json({ data: rows });
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'list correspondence timeline')) {
+    return;
   }
-
-  return res.json({
-    data: memTimeline.filter(
-      event => event.orgId === orgId && (submissionId ? event.submissionId === submissionId : true)
-    ),
-  });
+  const params: any[] = [orgId];
+  const clauses = [`organization_id = $1`];
+  if (submissionId) {
+    params.push(submissionId);
+    clauses.push(`submission_id = $${params.length}`);
+  }
+  const where = `WHERE ${clauses.join(' AND ')}`;
+  const { rows } = await pool!.query(
+    `SELECT * FROM c2c_communication_timeline_events ${where} ORDER BY event_time DESC`,
+    params
+  );
+  return res.json({ data: rows });
 });
 
 router.get('/mailbox-connections', async (req, res) => {
@@ -757,18 +762,15 @@ router.get('/mailbox-connections', async (req, res) => {
   if (!actor) return;
   const { orgId } = actor;
   const pool = getDbClientOrNull();
-  if (await tableReady(pool)) {
-    const { rows } = await pool!.query(
-      `SELECT * FROM c2c_mailbox_connections WHERE organization_id = $1 ORDER BY created_at DESC`,
-      [orgId]
-    );
-    return res.json({ data: rows });
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'list mailbox connections')) {
+    return;
   }
-
-  const data = Array.from(memMailboxConnections.values()).filter(
-    row => row.organizationId === orgId
+  const { rows } = await pool!.query(
+    `SELECT * FROM c2c_mailbox_connections WHERE organization_id = $1 ORDER BY created_at DESC`,
+    [orgId]
   );
-  return res.json({ data });
+  return res.json({ data: rows });
 });
 
 router.post('/mailbox-connections', async (req, res) => {
@@ -800,28 +802,28 @@ router.post('/mailbox-connections', async (req, res) => {
   };
 
   const pool = getDbClientOrNull();
-  if (await tableReady(pool)) {
-    await pool!.query(
-      `INSERT INTO c2c_mailbox_connections
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'create mailbox connection')) {
+    return;
+  }
+  await pool!.query(
+    `INSERT INTO c2c_mailbox_connections
       (id, organization_id, provider, mailbox_identifier, auth_state, token_reference, scopes, sync_status, cursor, last_sync_at, error_state)
       VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10,$11)`,
-      [
-        payload.id,
-        payload.organizationId,
-        payload.provider,
-        payload.mailboxIdentifier,
-        payload.authState,
-        payload.tokenReference,
-        JSON.stringify(payload.scopes),
-        payload.syncStatus,
-        payload.cursor,
-        payload.lastSyncAt,
-        payload.errorState,
-      ]
-    );
-  } else {
-    memMailboxConnections.set(payload.id, payload);
-  }
+    [
+      payload.id,
+      payload.organizationId,
+      payload.provider,
+      payload.mailboxIdentifier,
+      payload.authState,
+      payload.tokenReference,
+      JSON.stringify(payload.scopes),
+      payload.syncStatus,
+      payload.cursor,
+      payload.lastSyncAt,
+      payload.errorState,
+    ]
+  );
 
   return res.status(201).json({ data: payload });
 });
@@ -837,40 +839,23 @@ router.get('/analytics/deficiency-patterns', async (req, res) => {
   const { orgId } = actor;
   const projectId = req.query.projectId ? Number(req.query.projectId) : null;
   const pool = getDbClientOrNull();
-  if (await tableReady(pool)) {
-    const params: any[] = [orgId];
-    const projectClause = projectId ? ` AND c.project_id = $2` : '';
-    if (projectId) params.push(projectId);
-    const { rows } = await pool!.query(
-      `SELECT i.category, COUNT(*)::int AS count
+  const isReady = await tableReady(pool);
+  if (!requirePersistentStore(isReady, res, 'compute deficiency patterns')) {
+    return;
+  }
+  const params: any[] = [orgId];
+  const projectClause = projectId ? ` AND c.project_id = $2` : '';
+  if (projectId) params.push(projectId);
+  const { rows } = await pool!.query(
+    `SELECT i.category, COUNT(*)::int AS count
        FROM c2c_correspondence_issues i
        JOIN c2c_correspondence c ON c.id = i.correspondence_id
        WHERE c.organization_id = $1 ${projectClause}
        GROUP BY i.category
        ORDER BY COUNT(*) DESC`,
-      params
-    );
-    return res.json({ data: rows });
-  }
-
-  const allIssues = Array.from(memIssues.entries())
-    .filter(([correspondenceId]) => memCorrespondenceOrg.get(correspondenceId) === orgId)
-    .flatMap(([, issues]) => issues)
-    .filter(issue => {
-      if (!projectId) return true;
-      const correspondence = memCorrespondence.get(issue.correspondenceId);
-      return correspondence?.projectId === projectId;
-    });
-  const stats = allIssues.reduce((acc, issue) => {
-    const key = issue.category;
-    acc[key] = (acc[key] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-  return res.json({
-    data: Object.entries(stats)
-      .map(([category, count]) => ({ category, count }))
-      .sort((a, b) => b.count - a.count),
-  });
+    params
+  );
+  return res.json({ data: rows });
 });
 
 export default router;

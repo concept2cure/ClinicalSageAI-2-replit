@@ -43,6 +43,18 @@ export const correspondenceIntakeSchema = z.object({
     .optional(),
 });
 
+
+export const correspondenceIntakeGovernanceSchema = correspondenceIntakeSchema.superRefine((value, ctx) => {
+  const sourceText = (value.parsedText || value.summary || '').trim();
+  if (sourceText.length < 8) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'parsedText or summary must contain at least 8 non-whitespace characters',
+      path: ['parsedText'],
+    });
+  }
+});
+
 export const issueReviewSchema = z.object({
   humanReviewStatus: z.enum(['pending', 'confirmed', 'edited', 'rejected']).optional(),
   mappedCtdSections: z.array(z.string().max(24)).optional(),

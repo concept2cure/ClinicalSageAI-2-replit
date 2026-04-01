@@ -271,7 +271,7 @@ export default function RegulatoryCommunicationsHub({ projectId }: Props) {
             <ul className="mt-1 space-y-1 text-[10px] text-stone-500">
               <li className="flex gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> parser version + extraction version tracked</li>
               <li className="flex gap-1"><AlertTriangle className="w-3 h-3 text-amber-500" /> human confirmation required for issue closure</li>
-              <li className="flex gap-1"><Shield className="w-3 h-3 text-blue-500" /> attachment checksum and malware status scaffolded</li>
+              <li className="flex gap-1"><Shield className="w-3 h-3 text-blue-500" /> attachment checksum tracked; malware verdict workflow pending</li>
             </ul>
           </div>
           <div className="rounded-md bg-white border border-stone-200 p-2">

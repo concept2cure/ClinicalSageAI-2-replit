@@ -641,8 +641,12 @@ interface AnaPersistentPanelProps {
     screenName?: string;
     activeProject?: string;
     projectId?: string;
+    organizationId?: string | number;
+    customInstructions?: string;
     /** Page-specific context for deeper awareness (active tab, filters, etc.) */
     moduleContext?: Record<string, unknown>;
+    /** Optional thread to hydrate on mount/switch for deterministic resume */
+    threadId?: string;
   };
   /** Canonical authoring context — section/artifact/workflow awareness for AnA */
   authoringContext?: AuthoringContextPack | null;
@@ -674,6 +678,8 @@ interface AnaPersistentPanelProps {
   onOpenCompareInspector?: () => void;
   /** Refresh authoring intelligence (readiness/contradictions) after actions */
   onRefreshIntelligence?: () => void;
+  /** Notify parent when active thread context changes */
+  onThreadChange?: (threadId?: string) => void;
   /**
    * "full" = fills all available space, shows greeting + suggested actions (Claude.ai style)
    * "compact" = just the input bar at bottom, conversation expands as overlay
@@ -731,6 +737,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   onRequestPromotion,
   onOpenCompareInspector,
   onRefreshIntelligence,
+  onThreadChange,
   mode = 'full',
   defaultChatMode = 'standard',
   projectIntelligence,
@@ -1403,6 +1410,49 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     return () => clearInterval(interval);
   }, [isThinking]);
 
+  // Deterministic resume: when parent selects a specific thread, hydrate that thread here.
+  useEffect(() => {
+    const selectedThreadId = contextProfile?.threadId;
+    if (!selectedThreadId) return;
+    // Avoid redundant reload when already on the same thread.
+    if (threadIdRef.current === selectedThreadId) return;
+
+    let cancelled = false;
+    const hydrateSelectedThread = async () => {
+      try {
+        const response = await fetch(
+          `/api/chat/threads/${encodeURIComponent(selectedThreadId)}/messages?limit=100`,
+          {
+            credentials: 'include',
+            headers: getAuthHeaders(),
+          }
+        );
+        if (!response.ok) return;
+        const payload = await response.json().catch(() => null);
+        const rows = Array.isArray(payload?.messages) ? payload.messages : [];
+        if (cancelled) return;
+
+        const hydrated: AnaMessage[] = rows.map((row: any, idx: number) => ({
+          id: `h-${selectedThreadId}-${idx}`,
+          role: row.role === 'assistant' ? 'assistant' : 'user',
+          content: typeof row.content === 'string' ? row.content : '',
+          timestamp: row.created_at ? new Date(row.created_at) : new Date(),
+        }));
+
+        setMessages(hydrated);
+        threadIdRef.current = selectedThreadId;
+        onThreadChange?.(selectedThreadId);
+      } catch {
+        // Non-blocking: if hydration fails, existing chat still works.
+      }
+    };
+
+    void hydrateSelectedThread();
+    return () => {
+      cancelled = true;
+    };
+  }, [contextProfile?.threadId, onThreadChange]);
+
   const defaultGreeting = useMemo(() => {
     if (greeting) return greeting;
     const hour = new Date().getHours();
@@ -1924,6 +1974,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           // Capture thread_id for conversation continuity
           if (data.thread_id) {
             threadIdRef.current = data.thread_id;
+            onThreadChange?.(data.thread_id);
           }
 
           const assistantContent =
@@ -2013,7 +2064,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             fallbackData?.response ||
             fallbackData?.answer ||
             'I received your message but had no response content.';
-          if (fallbackData?.thread_id) threadIdRef.current = fallbackData.thread_id;
+          if (fallbackData?.thread_id) {
+            threadIdRef.current = fallbackData.thread_id;
+            onThreadChange?.(fallbackData.thread_id);
+          }
           setMessages(prev => [
             ...prev,
             {
@@ -2213,8 +2267,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
 
     if (cmd.command === '/clear') {
-      setMessages([]);
       threadIdRef.current = null;
+      setMessages([]);
       setInput('');
       setSlashMenuOpen(false);
       inputRef.current?.focus();
@@ -2341,7 +2395,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
     // Shared capability entrypoint: keep users in existing flow.
     if (action.intent === 'open_capabilities') {
-      onNavigate?.('/concept2cure?panel=capabilities');
+      onNavigate?.('apps');
       return;
     }
 
@@ -4174,6 +4228,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   onClick={() => {
                     setMessages([]);
                     threadIdRef.current = null;
+                    // Keep selection state in sync with cleared local thread context.
+                    onThreadChange?.(undefined);
                   }}
                   className="flex-shrink-0 p-1.5 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg transition-colors"
                   title="New thread"
@@ -4537,7 +4593,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           {/* AnA 1.0 RI — Executed Guidance Actions */}
                           {msg.executedActions && msg.executedActions.length > 0 && (
                             <div className="mt-2 space-y-1.5">
-                              {msg.executedActions.map((action, i) => (
+                              {msg.executedActions.map((action: any, i: any) => (
                                 <div
                                   key={i}
                                   className={cn(
@@ -5027,6 +5083,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 onClick={() => {
                   setMessages([]);
                   threadIdRef.current = null;
+                  // Keep selection state in sync with cleared local thread context.
+                  onThreadChange?.(undefined);
                 }}
                 className="flex items-center gap-1.5 px-3 py-1 text-xs text-[#B0AEA5] hover:text-[#6B6962] hover:bg-[#F5F4EF] rounded-full transition-colors"
               >
@@ -5399,7 +5457,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 {' '}
                 <button
                   type="button"
-                  onClick={() => onNavigate('/concept2cure?panel=capabilities')}
+                  onClick={() => onNavigate('apps')}
                   className="font-semibold text-[#6B6962] underline decoration-[#D8D5CA] underline-offset-2 hover:text-[#4D4B45]"
                 >
                   Browse all capabilities

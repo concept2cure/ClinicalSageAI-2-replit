@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { getOrgId } from '@/utils/authToken';
@@ -12,6 +12,9 @@ export interface ReportRun {
   runUuid: string;
   reportTypeId: string;
   reportTypeLabel: string;
+  regionCode?: string;
+  registryId?: string;
+  agency?: string;
   scopeType: string;
   scopeId: string;
   status: ReportRunStatus;
@@ -48,6 +51,18 @@ export interface ReportDelivery {
   runId?: number;
   bundleId?: string;
   correspondenceId?: string;
+}
+
+export interface ReportRunDependency {
+  id: number;
+  runId: number;
+  organizationId: number;
+  provider: string;
+  status: string;
+  blocker?: string | null;
+  observedAt: string;
+  payload?: unknown;
+  createdAt: string;
 }
 
 interface ListRunsParams {
@@ -143,6 +158,8 @@ export function useReports() {
     staleTime: 30_000,
   });
 
+  const [runDependencies, setRunDependencies] = useState<ReportRunDependency[]>([]);
+
   const bundlesQuery = useQuery({
     queryKey: ['concept2cure', 'reports', 'bundles', organizationId] as const,
     queryFn: async (): Promise<ReportBundle[]> => {
@@ -234,13 +251,23 @@ export function useReports() {
   const bundlePdfExportUrl = (bundleId: string) =>
     `/api/report-os/bundles/${bundleId}/export.pdf?organizationId=${organizationId}`;
 
+  const listRunDependencies = async (runId: number): Promise<ReportRunDependency[]> => {
+    const res = await apiRequest('GET', `/api/report-os/runs/${runId}/dependencies?organizationId=${organizationId}`);
+    const json = await res.json();
+    const rows = (json.data || []) as ReportRunDependency[];
+    setRunDependencies(rows);
+    return rows;
+  };
+
   return {
     organizationId,
     taxonomy: taxonomyQuery.data || [],
     runs: (runsQuery.data || []) as ReportRun[],
     bundles: bundlesQuery.data || [],
     deliveries: deliveriesQuery.data || [],
+    runDependencies,
     listRuns,
+    listRunDependencies,
     runPdfExportUrl,
     bundlePdfExportUrl,
     generateReport: generateMutation.mutateAsync,

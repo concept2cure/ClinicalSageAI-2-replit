@@ -354,6 +354,7 @@ export function useCortexThreads(projectId?: string) {
   return useQuery({
     queryKey: cortexQueryKeys.threads(projectId),
     queryFn: () => cortexService.getThreads({ projectId }),
+    enabled: !!projectId,
     staleTime: 30000,
   });
 }

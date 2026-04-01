@@ -99,3 +99,14 @@ export const buildLoginRedirectPath = (currentPath: string): string => {
   return `/concept2cure/login?returnTo=${returnTo}`;
 };
 
+export const buildProjectModulePath = (
+  projectId: string | number,
+  moduleType: string
+): string | null => {
+  const normalizedModule = String(moduleType).toLowerCase() as ProjectModuleKey;
+  if (!SUPPORTED_PROJECT_MODULES.includes(normalizedModule)) {
+    return null;
+  }
+
+  return `${PROJECT_ROUTE_PREFIX}${encodeURIComponent(String(projectId))}/${normalizedModule}`;
+};

@@ -14,10 +14,12 @@ import type { ClientMemoryEntry, ProjectMemoryEntry } from 'shared/schema';
 function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
   return Promise.race([
     promise,
-    new Promise<T>((resolve) => setTimeout(() => {
-      console.warn(`[memory-context] Semantic search timed out after ${ms}ms, using fallback`);
-      resolve(fallback);
-    }, ms))
+    new Promise<T>(resolve =>
+      setTimeout(() => {
+        console.warn(`[memory-context] Semantic search timed out after ${ms}ms, using fallback`);
+        resolve(fallback);
+      }, ms)
+    ),
   ]);
 }
 
@@ -181,11 +183,17 @@ function atomSortScore(atom: RetrievedMemoryAtom): number {
   return similarity * 0.75 + confidence * 0.2 + verifiedBoost;
 }
 
-function dedupeAtoms(atoms: RetrievedMemoryAtom[]): { deduped: RetrievedMemoryAtom[]; dropped: number } {
+function dedupeAtoms(atoms: RetrievedMemoryAtom[]): {
+  deduped: RetrievedMemoryAtom[];
+  dropped: number;
+} {
   const deduped = new Map<string, RetrievedMemoryAtom>();
 
   for (const atom of atoms) {
-    const key = `${atom.layer}:${atom.title.trim().toLowerCase()}:${atom.content.slice(0, 120).trim().toLowerCase()}`;
+    const key = `${atom.layer}:${atom.title.trim().toLowerCase()}:${atom.content
+      .slice(0, 120)
+      .trim()
+      .toLowerCase()}`;
     const existing = deduped.get(key);
     if (!existing || atomSortScore(atom) > atomSortScore(existing)) {
       deduped.set(key, atom);
@@ -222,14 +230,16 @@ export async function buildMemoryContextForChat(
   if (input.organizationId && input.query?.trim()) {
     try {
       const clientResult = await withTimeout(
-        searchMemoryEntriesSemantic(
-          null,
-          input.organizationId,
-          input.query,
-          { limit, minSimilarity }
-        ).catch(() => ({ entries: [], totalCount: 0, query: input.query })),
+        searchMemoryEntriesSemantic(null, input.organizationId, input.query, {
+          limit,
+          minSimilarity,
+        }).catch(() => ({ entries: [], totalCount: 0, query: input.query })),
         10000,
-        { entries: [] as SemanticMemoryHit[], totalCount: 0, query: input.query }
+        {
+          entries: [] as Array<SemanticMemoryHit<ClientMemoryEntry>>,
+          totalCount: 0,
+          query: input.query,
+        }
       );
 
       atoms.push(...clientResult.entries.map(mapClientEntryToAtom));
@@ -244,7 +254,11 @@ export async function buildMemoryContextForChat(
             { limit, minSimilarity }
           ).catch(() => ({ entries: [], totalCount: 0, query: input.query })),
           10000,
-          { entries: [] as SemanticMemoryHit[], totalCount: 0, query: input.query }
+          {
+            entries: [] as Array<SemanticMemoryHit<ProjectMemoryEntry>>,
+            totalCount: 0,
+            query: input.query,
+          }
         );
 
         atoms.push(...projectResult.entries.map(mapProjectEntryToAtom));
@@ -270,7 +284,10 @@ export async function buildMemoryContextForChat(
     sections.push(`## Working Memory\n${wm.content}`);
   }
 
-  const renderSemanticLayer = (layer: Extract<MemoryLayer, 'project_memory' | 'client_memory'>, heading: string) => {
+  const renderSemanticLayer = (
+    layer: Extract<MemoryLayer, 'project_memory' | 'client_memory'>,
+    heading: string
+  ) => {
     const layerAtoms = sorted.filter(a => a.layer === layer).slice(0, limit);
     if (layerAtoms.length === 0) return;
 
@@ -279,13 +296,17 @@ export async function buildMemoryContextForChat(
         layerAtoms
           .map(a => {
             const categoryTag = a.category || layer;
-            const confidenceText = a.metadata?.confidence != null
-              ? ` | confidence: ${Math.round((a.metadata.confidence as number) * 100)}%`
-              : '';
+            const confidenceText =
+              a.metadata?.confidence != null
+                ? ` | confidence: ${Math.round((a.metadata.confidence as number) * 100)}%`
+                : '';
             const sourceText = a.metadata?.source?.documentName
               ? ` | doc: ${a.metadata.source.documentName}`
               : '';
-            return `- [${categoryTag} | "${a.title}"${confidenceText}${sourceText}] ${trimContent(a.content, 400)}`;
+            return `- [${categoryTag} | "${a.title}"${confidenceText}${sourceText}] ${trimContent(
+              a.content,
+              400
+            )}`;
           })
           .join('\n')
     );
@@ -295,7 +316,9 @@ export async function buildMemoryContextForChat(
   renderSemanticLayer('client_memory', 'Client Memory (semantic matches)');
 
   const assembled = sections.length
-    ? `\n\n--- PERSISTENT MEMORY CONTEXT ---\n${sections.join('\n\n')}\n--- END PERSISTENT MEMORY CONTEXT ---\n`
+    ? `\n\n--- PERSISTENT MEMORY CONTEXT ---\n${sections.join(
+        '\n\n'
+      )}\n--- END PERSISTENT MEMORY CONTEXT ---\n`
     : '';
 
   const memoryBlock = trimContent(assembled, maxChars);

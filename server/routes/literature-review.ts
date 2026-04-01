@@ -4,7 +4,7 @@
  */
 import { Router } from 'express';
 import multer from 'multer';
-import { tikaIngestionService } from '../services/ingestion/tikaIngestionService';
+import { extractWithTika } from '../services/ingestion/tikaClient';
 import { grobidLiteratureService } from '../services/literature/grobidLiteratureService';
 import { opensearchAdapter } from '../services/search/opensearchAdapter';
 import { authMiddleware } from '../auth';
@@ -43,16 +43,19 @@ router.post('/ingest', upload.single('file'), async (req, res) => {
       return res.status(400).json({ success: false, error: 'file required' });
     }
 
-    const extraction = await tikaIngestionService.extractFromBuffer({
+    const tikaResult = await extractWithTika({
       filename: req.file.originalname,
       mimeType: req.file.mimetype,
       buffer: req.file.buffer,
     });
 
+    const extractedText = tikaResult?.text ?? '';
+    const normalizedMimeType = tikaResult?.contentType ?? req.file.mimetype;
+
     const scholarly = await grobidLiteratureService.extractStructuredLiterature({
       filename: req.file.originalname,
-      mimeType: extraction.normalizedMimeType,
-      text: extraction.extractedText,
+      mimeType: normalizedMimeType,
+      text: extractedText,
     });
 
     const organizationId = Number((req as any).tenantContext?.organizationId || req.body?.organizationId || 0);
@@ -69,9 +72,9 @@ router.post('/ingest', upload.single('file'), async (req, res) => {
         source: 'upload',
         lifecycleState: 'draft',
         tags: ['literature', 'scientific'],
-        text: extraction.extractedText.slice(0, 120000),
+        text: extractedText.slice(0, 120000),
         metadata: {
-          parserProvider: extraction.parserProvider,
+          parserProvider: tikaResult?.parser ?? 'fallback',
           grobidProvider: scholarly.provider,
           referencesCount: scholarly.references.length,
         },
@@ -80,7 +83,7 @@ router.post('/ingest', upload.single('file'), async (req, res) => {
 
     return res.json({
       success: true,
-      extraction,
+      extraction: { extractedText, normalizedMimeType, parser: tikaResult?.parser ?? 'fallback' },
       scholarly,
     });
   } catch (error: any) {

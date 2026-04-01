@@ -367,3 +367,111 @@ export async function sendInvitationEmail(
 
   log.info('Invitation email sent', { to: email });
 }
+
+// ---------------------------------------------------------------------------
+// Report Delivery Email
+// ---------------------------------------------------------------------------
+
+function buildReportDeliveryEmailHtml(payload: {
+  reportTitle: string;
+  subject: string;
+  message?: string;
+  deliveryMode: 'platform_email' | 'save_pdf';
+  recipientLabel: string;
+}): string {
+  const actionLabel =
+    payload.deliveryMode === 'platform_email'
+      ? 'This report was sent through Concept2Cure delivery'
+      : 'This report was prepared for offline PDF delivery';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Poppins',Roboto,Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f7;padding:40px 0;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        <tr>
+          <td style="background-color:#292524;padding:32px 40px;text-align:center;">
+            <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:600;font-family:'Poppins',Arial,sans-serif;">Concept2Cure Report Delivery</h1>
+            <p style="margin:4px 0 0;color:#b0aea5;font-size:13px;font-family:'Poppins',Arial,sans-serif;">Governed reporting and agency-ready correspondence</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:40px;">
+            <h2 style="margin:0 0 16px;color:#292524;font-size:20px;font-weight:600;">${payload.subject}</h2>
+            <p style="margin:0 0 12px;color:#4a4a68;font-size:15px;line-height:1.6;">
+              <strong>Report:</strong> ${payload.reportTitle}
+            </p>
+            <p style="margin:0 0 12px;color:#4a4a68;font-size:15px;line-height:1.6;">
+              <strong>Recipients:</strong> ${payload.recipientLabel}
+            </p>
+            <p style="margin:0 0 24px;color:#4a4a68;font-size:15px;line-height:1.6;">
+              ${actionLabel}
+            </p>
+            ${
+              payload.message
+                ? `<div style="margin:0 0 24px;padding:16px 18px;background:#faf9f5;border:1px solid #e8e6dc;border-radius:8px;color:#4a4a68;font-size:14px;line-height:1.7;white-space:pre-wrap;">${payload.message}</div>`
+                : ''
+            }
+            <hr style="border:none;border-top:1px solid #e8e6dc;margin:24px 0;" />
+            <p style="margin:0;color:#8a8880;font-size:12px;line-height:1.5;">
+              This delivery event is auditable and may be used to improve correspondence intelligence, deficiency pattern detection, and future response guidance.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color:#faf9f5;padding:24px 40px;text-align:center;">
+            <p style="margin:0;color:#8a8880;font-size:11px;">
+              &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; FDA 21 CFR Part 11 Compliant
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+export async function sendReportDeliveryEmail(payload: {
+  recipients: string[];
+  subject: string;
+  reportTitle: string;
+  message?: string;
+  deliveryMode: 'platform_email' | 'save_pdf';
+}): Promise<{ delivered: boolean; transport: 'smtp' | 'log'; recipientCount: number }> {
+  const transporter = getTransporter();
+  const recipientCount = payload.recipients.length;
+
+  if (!transporter) {
+    log.warn('SMTP not configured — report delivery email not sent', {
+      to: payload.recipients,
+      subject: payload.subject,
+      reportTitle: payload.reportTitle,
+    });
+    return { delivered: false, transport: 'log', recipientCount };
+  }
+
+  await transporter.sendMail({
+    from: `"Concept2Cure" <${FROM_ADDRESS}>`,
+    to: payload.recipients.join(', '),
+    subject: payload.subject,
+    text: `${payload.subject}\n\nReport: ${payload.reportTitle}\n\n${payload.message || ''}`.trim(),
+    html: buildReportDeliveryEmailHtml({
+      reportTitle: payload.reportTitle,
+      subject: payload.subject,
+      message: payload.message,
+      deliveryMode: payload.deliveryMode,
+      recipientLabel: payload.recipients.join(', '),
+    }),
+  });
+
+  log.info('Report delivery email sent', {
+    to: payload.recipients,
+    subject: payload.subject,
+    reportTitle: payload.reportTitle,
+  });
+
+  return { delivered: true, transport: 'smtp', recipientCount };
+}

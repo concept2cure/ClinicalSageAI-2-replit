@@ -615,29 +615,32 @@ export async function preloadRIMContext(
     }
 
     // 2. Accumulated RIM signals (in-memory, synchronous)
-    try {
-      const signals = getProjectSignals(projectId);
-      if (signals && signals.length > 0) {
-        const signalLines = signals
-          .slice(0, 6)
-          .map(
-            (s: {
-              riskLevel?: string;
-              type?: string;
-              content?: string;
-              message?: string;
-              score?: number;
-            }) =>
-              `- [${s.riskLevel || s.type || 'signal'}] ${(s.content || s.message || '').slice(0, 200)}${s.score != null ? ` (score: ${s.score})` : ''}`,
-          )
+    if (organizationId) {
+      try {
+      const summary = getProjectSignals(organizationId, Number(projectId));
+      if (summary && summary.totalSignals > 0) {
+        const riskLines = Object.entries(summary.byRiskLevel)
+          .filter(([, count]) => Number(count) > 0)
+          .map(([risk, count]) => `- ${risk}: ${count}`)
           .join('\n');
-        parts.push(`**${signals.length} intelligence signals**\n${signalLines}`);
+        const patternLine =
+          summary.topPatternIds.length > 0
+            ? `Top patterns: ${summary.topPatternIds.slice(0, 5).join(', ')}`
+            : 'Top patterns: none captured yet';
+        parts.push(
+          `**${summary.totalSignals} intelligence signals**\n` +
+          `Trend: ${summary.overallTrend} (${summary.trendConfidence}, n=${summary.trendSampleSize})\n` +
+          `Average score: ${summary.averageScore}\n` +
+          `${patternLine}\n` +
+          `Risk distribution:\n${riskLines || '- none'}`,
+        );
       }
-    } catch (e: unknown) {
-      console.warn(
-        '[rim-preload] Signal retrieval failed:',
-        e instanceof Error ? e.message : String(e),
-      );
+      } catch (e: unknown) {
+        console.warn(
+          '[rim-preload] Signal retrieval failed:',
+          e instanceof Error ? e.message : String(e),
+        );
+      }
     }
 
     if (parts.length === 0) return '';

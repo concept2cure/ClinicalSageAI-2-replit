@@ -47,7 +47,6 @@ import {
   LogOut,
   User,
 } from 'lucide-react';
-import { getAuthHeaders, getOrgId } from '@/utils/authToken';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LAZY-LOADED COMPONENTS
@@ -75,11 +74,6 @@ const TrainingManagement = lazy(() => import('./admin/TrainingManagement'));
 
 // Monitoring Components
 const ActivityMonitor = lazy(() => import('./monitoring/ActivityMonitor'));
-
-// Auth Components
-const LoginPage = lazy(() => import('./auth/LoginPage'));
-const MFASetup = lazy(() => import('./auth/MfaSetup'));
-const PasswordReset = lazy(() => import('./auth/PasswordReset'));
 
 // Onboarding Components
 const OnboardingWizard = lazy(() => import('./onboarding/OnboardingWizard'));
@@ -722,7 +716,7 @@ export const AuthRoutes: React.FC = () => {
         },
         body: JSON.stringify({
           onboardingProfile,
-          onboardingStatus: 'company_onboarding_completed',
+          onboardingStatus: 'company_onboarding_pending',
         }),
       });
 
@@ -737,24 +731,9 @@ export const AuthRoutes: React.FC = () => {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
-        <Route
-          path="login"
-          element={
-            <LoginPage
-              onLoginSuccess={() => {
-                window.location.href = '/admin';
-              }}
-              onForgotPassword={() => {
-                window.location.href = '/auth/password-reset';
-              }}
-              onContactSupport={() => {
-                window.location.href = 'mailto:support@concept2cure.pro';
-              }}
-            />
-          }
-        />
-        <Route path="mfa-setup" element={<MFASetup />} />
-        <Route path="password-reset" element={<PasswordReset />} />
+        <Route path="login" element={<Navigate to="/concept2cure/login" replace />} />
+        <Route path="mfa-setup" element={<Navigate to="/concept2cure/login" replace />} />
+        <Route path="password-reset" element={<Navigate to="/concept2cure/password-reset" replace />} />
         <Route
           path="onboarding"
           element={<OnboardingWizard onComplete={handleOnboardingComplete} />}

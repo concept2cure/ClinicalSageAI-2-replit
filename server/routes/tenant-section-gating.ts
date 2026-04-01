@@ -67,7 +67,7 @@ router.get('/api/tenant-section-gating/:qmpId', async (req, res) => {
       status: 'success',
       data: result.rows,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching section gating:', error);
     res.status(500).json({
       status: 'error',
@@ -152,7 +152,7 @@ router.post('/api/tenant-section-gating/:qmpId/update', async (req, res) => {
       status: 'success',
       data: result.rows[0],
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating section gating:', error);
     res.status(500).json({
       status: 'error',
@@ -188,7 +188,7 @@ router.get('/api/tenant-ctq-factors/:section', async (req, res) => {
       status: 'success',
       data: result.rows,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching CTQ factors:', error);
     res.status(500).json({
       status: 'error',
@@ -271,7 +271,7 @@ router.post('/api/tenant-ctq-factors', async (req, res) => {
       status: 'success',
       data: result.rows[0],
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating CTQ factor:', error);
     res.status(500).json({
       status: 'error',
@@ -314,7 +314,7 @@ router.delete('/api/tenant-ctq-factors/:id', async (req, res) => {
       message: 'CTQ factor deleted successfully',
       data: result.rows[0],
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting CTQ factor:', error);
     res.status(500).json({
       status: 'error',

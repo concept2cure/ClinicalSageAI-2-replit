@@ -18,6 +18,9 @@ import { z } from 'zod';
 import { REPORT_TYPE_SEED } from '../services/report-os/taxonomy';
 import { resolveScope } from '../services/report-os/scope-model';
 import { computeInitialRun } from '../services/report-os/orchestrator';
+import { evaluateReadiness } from '../services/regulatory/readinessEvaluator.js';
+import { buildPackageManifest } from '../services/regulatory/submissionPackageBuilder.js';
+import { resolveRegistryId } from '../services/regulatory/registry/legacySubmissionTypeMapper.js';
 import { authMiddleware } from '../auth';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
@@ -52,6 +55,8 @@ const createRunSchema = z.object({
   scopeType: z.enum(reportScopeEnum),
   scopeId: z.string().min(1),
   reportTypeId: z.string().min(1),
+  registryId: z.string().max(80).optional(),
+  submissionType: z.string().max(80).optional(),
   requestedBy: z.number().int().positive().optional(),
 });
 
@@ -976,6 +981,8 @@ router.post('/runs', async (req: Request, res: Response) => {
       scopeType,
       scopeId,
       reportTypeId,
+      registryId,
+      submissionType,
       requestedBy,
     } = parsed.data;
 
@@ -1016,6 +1023,8 @@ router.post('/runs', async (req: Request, res: Response) => {
 
     const computed = await computeInitialRun(orgId, scopeType, scopeId, {
       programProjectIds,
+      explicitRegistryId: registryId,
+      explicitSubmissionType: submissionType,
     });
 
     const [run] = await db
@@ -1031,6 +1040,7 @@ router.post('/runs', async (req: Request, res: Response) => {
         dependencySummary: {
           providers: computed.providers,
           scopeLineage: scope.lineage,
+          summary: computed.summary,
         },
         blockers: computed.blockers,
         confidence: computed.confidence,
@@ -1190,12 +1200,42 @@ router.get('/runs', async (req: Request, res: Response) => {
       .limit(limit);
 
     const typeMap = await getReportTypeLabelMap(rows.map(row => row.reportTypeId));
-    let enriched = rows.map(row => ({ ...row, reportTypeLabel: typeMap.get(row.reportTypeId) || row.reportTypeId }));
+    let enriched = rows.map(row => {
+      const summary = (row.dependencySummary as any)?.summary as
+        | {
+            regulatory?: {
+              regionCode?: string;
+              registryId?: string;
+              agency?: string;
+            };
+          }
+        | undefined;
+      const regionCode = summary?.regulatory?.regionCode;
+      const registryId = summary?.regulatory?.registryId;
+      const agency = summary?.regulatory?.agency;
+      return {
+        ...row,
+        reportTypeLabel: typeMap.get(row.reportTypeId) || row.reportTypeId,
+        regionCode,
+        registryId,
+        agency,
+      };
+    });
 
     if (search && search.trim()) {
       const q = search.trim().toLowerCase();
       enriched = enriched.filter(row =>
-        [row.runUuid, row.scopeType, row.scopeId, row.status, row.reportTypeId, row.reportTypeLabel]
+        [
+          row.runUuid,
+          row.scopeType,
+          row.scopeId,
+          row.status,
+          row.reportTypeId,
+          row.reportTypeLabel,
+          row.regionCode,
+          row.registryId,
+          row.agency,
+        ]
           .filter(Boolean)
           .some(value => String(value).toLowerCase().includes(q))
       );

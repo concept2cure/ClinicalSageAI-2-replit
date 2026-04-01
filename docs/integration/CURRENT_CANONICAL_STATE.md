@@ -1,79 +1,65 @@
-# Stage 8 — Current Canonical State (Single Source of Truth)
+# CURRENT CANONICAL STATE — PR-aware lock (2026-04-01)
 
-This document is the Stage 8 canonical runtime map for the current live repository snapshot.
+## Scope and constraints
 
-## 1) Canonical browser entry
-- Primary browser entry at `/` redirects to `/concept2cure`.
-- Main app shell is routed through `client/src/App.jsx` and then `client/src/concept2cure/router/ZenRouter.tsx` for Concept2Cure paths.
+This lock reflects current live code in this checkout plus open-PR risk posture.
+Remote PR branch refs are not locally available, so PR sections are intent-aware and conservative.
 
-## 2) Canonical login/auth entry
-- Canonical login route: `/concept2cure/login`.
-- `computeRedirect` in `client/src/concept2cure/auth/redirectUtils.ts` is the redirect truth gate:
-  - accepts only safe internal paths (`/`-prefixed, non-protocol-relative)
-  - rejects external and suspicious whitespace redirects
-  - defaults to `/concept2cure`
-  - permits redirect targets only under `/concept2cure` and `/client-portal`
-  - rejects traversal/backslash/control-character payloads
-  - preserves query/hash for canonical in-app deep links
-  - allows `/client-portal` default only for explicit `client_user` / `client_admin` roles.
+## Canonical browser entry
 
-## 3) Canonical project shell
-- Canonical authenticated shell route family:
-  - `/concept2cure`
-  - `/concept2cure/project/:projectId`
-- Shell orchestration center: `client/src/concept2cure/ZenApp.tsx`.
-- Router authority for protected app pathing: `client/src/concept2cure/router/ZenRouter.tsx`.
+- Browser entry remains `client/src/main.tsx` rendering `<App />`.
+- Root app shell route authority remains `client/src/App.jsx` with Concept2Cure aliases/fences.
 
-## 4) Canonical governed workspace
-- Canonical governed workspace surface: `ProjectWorkspaceShell`.
-- File: `client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx`.
-- Must preserve integrated create/open/edit/placement/provenance/review/audit/editor-handoff behavior without orchestration fracture.
+## Canonical auth entry
 
-## 5) Canonical AnA/chat surface
-- Canonical persistent chat surface: `client/src/concept2cure/components/chat/AnaPersistentPanel.tsx`.
-- Chat API runtime anchors: `server/routes/chat.ts` and related orchestrator services.
+- Canonical login path: `/concept2cure/login`.
+- Alias paths expected to redirect: `/login`, `/auth`, `/sign-in`.
+- Protected project shell route path remains under `/concept2cure/*` with auth-aware flow.
 
-## 6) Compatibility fences
-- `/client-portal/*` remains a compatibility surface and must not become dead-route truth.
-- Legacy API mount in `server/routes/index.ts` is explicitly deprecated and guarded behind `ENABLE_LEGACY_API_INDEX=true`.
-- Auth middleware compatibility bridge remains present across:
-  - `server/middleware/auth.ts`
-  - `server/middleware/auth.js`
-  - `server/middleware/authAdapter.ts`
-- `server/auth.ts` bearer parsing is canonicalized via strict Bearer token extraction + finite numeric tenant parsing.
+## Canonical shell
 
-## 7) Tolerated dormant surfaces
-- Dormant/legacy route surfaces in `App.jsx` can remain for compatibility, but are not primary beta promotion path.
-- Deprecated route shim behaviors may remain if fail-safe and tested.
+- Primary shell entry: `/concept2cure`.
+- Canonical project shell: `/concept2cure/project/:projectId`.
+- Legacy `/client-portal/*` is compatibility-fenced back to Concept2Cure shell.
 
-## 8) Demoted surfaces
-- Legacy named worlds/modules commented as removed in router/shell comments are demoted and not the canonical beta lane.
-- Legacy API aggregator (`server/routes/index.ts`) is demoted to compatibility-only status.
+## Canonical workspace
 
-## 9) Beta-safe primary path
-1. `/`
-2. `/concept2cure/login`
-3. `/concept2cure`
-4. `/concept2cure/project/:projectId`
-5. governed workspace visible and interactive
+- Workspace orchestration remains under ZenApp + `ProjectWorkspaceShell` flow.
+- Workspace must preserve create/open/edit + context return continuity.
 
-## 10) Secondary deep-link surfaces
-- Supported project module deep-links under `/concept2cure/project/:projectId/:module/...` are governed by:
-  - `client/src/concept2cure/router/projectModuleRoutePolicy.ts`
-  - `client/src/concept2cure/router/ZenRouter.tsx`
-- Current supported module keys: `510k`, `pma`, `cer`, `ind`, `ectd`, `cmc`.
+## Canonical AnA surface
 
-## 11) Not-for-promotion surfaces
-The following are explicitly not founder-demo primary path surfaces:
-- dead-end or deprecated legacy portal routes
-- deprecated route museums in `App.jsx` not covered by shell truth tests
-- unproven deep links lacking pulse/browser proof
+- Primary AnA surface remains the Concept2Cure persistent chat panel.
+- Backend chat safety expects tenant-aware and thread/org-bound behavior.
 
-## 12) Canonical safety constraints (Stage 8)
-Protected organs for this stage:
-- `client/src/App.jsx`
-- `client/src/concept2cure/ZenApp.tsx`
-- `client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx`
-- `server/index.ts`
+## Canonical beta demo path
 
-No deep rewrites are permitted in Stage 8 integration-lock scope.
+1. `/` resolves into Concept2Cure auth-aware flow.
+2. login aliases resolve to `/concept2cure/login`.
+3. authenticated user enters `/concept2cure` then project route.
+4. governed artifact/document route can be opened and return to project workspace.
+
+## Compatibility fences
+
+- `/client-portal` and `/client-portal/:rest*` must not become alternate product shells.
+- Billing and auxiliary aliases must route back into Concept2Cure-owned surfaces.
+
+## Tolerated dormant/legacy surfaces
+
+- Legacy pages/routes not mounted on canonical shell may remain present in code if fenced and unreachable from beta-safe navigation.
+
+## Not-for-promotion surfaces
+
+- Any demo/mock/stub route that is not fail-closed in production.
+- Any command/panel route not mounted in canonical shell.
+
+## Outstanding PR impact on canonical behavior
+
+### PRs that likely change canonical behavior (high review)
+- PR 334 (conversation scope + command/panel safety) — yes, likely canonical behavior impact.
+- PR 333 (governed fail-close + exports) — yes, governed behavior impact.
+- PR 335 (mock/fallback fail-close + tenant strictness) — yes, runtime behavior impact.
+
+### PR that must not alter canonical behavior in one shot
+- PR 332 — full merge is explicitly disallowed; only tiny proven slices may be rescued.
+

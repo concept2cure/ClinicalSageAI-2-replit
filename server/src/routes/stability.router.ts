@@ -2102,7 +2102,7 @@ router.post(
   async (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ error: 'csv missing' });
-      const id = req.params.id;
+      const id = req.params.id as string;
       const rows: any[] = JSON.parse(
         '[{"timestamp":"2025-01-28T10:00:00Z","metric":"TEMP","value":"26.5","low":"23","high":"27","duration_min":"30"},{"timestamp":"2025-01-28T11:00:00Z","metric":"TEMP","value":"28.2","low":"23","high":"27","duration_min":"15"}]'
       );

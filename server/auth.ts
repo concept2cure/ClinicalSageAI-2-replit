@@ -109,7 +109,10 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
               )
               .limit(1)
           : [];
-      const resolvedRole = membership[0]?.role || 'viewer';
+      if (membership.length === 0) {
+        return res.status(401).json({ error: 'Invalid tenant membership' });
+      }
+      const resolvedRole = membership[0].role;
 
       req.userId = userId;
       req.userRole = resolvedRole;

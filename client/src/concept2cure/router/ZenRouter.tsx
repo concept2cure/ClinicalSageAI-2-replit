@@ -20,7 +20,7 @@
 import React, { useEffect, lazy, Suspense } from 'react';
 import { Switch, Route, useLocation, useRoute, Redirect } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ZenLogin, ZenSignup, ZenAuthLayout, ZenOnboarding } from '../auth';
+import { ZenLogin, ZenSignup, ZenAuthLayout } from '../auth';
 import { ZenApp } from '../ZenApp';
 import { ProjectProvider } from '../context/ProjectContext';
 import ProofCertificatePage from '../pages/ProofCertificatePage';
@@ -69,9 +69,6 @@ const AcceptableUsePolicy = lazy(() => import('../pages/legal/AcceptableUsePolic
 // Lazy-load Billing Dashboard and Sales Landing Page
 const BillingDashboard = lazy(() => import('@/pages/billing/BillingDashboard'));
 const SalesLandingPage = lazy(() => import('@/pages/SalesLandingPage'));
-
-// Lazy-load PasswordReset for the reset-password-via-email flow
-const PasswordResetPage = lazy(() => import('@/portal-v2/components/auth/PasswordReset'));
 
 /**
  * Bridge that extracts :projectId from URL and renders CERV2Page with it.
@@ -323,6 +320,9 @@ export const ZenRouter: React.FC = () => {
               </PageTransition>
             )}
           </Route>
+          {/* Billing return paths from Stripe Checkout */}
+          <Route path="/billing/success">{() => <Redirect to="/concept2cure/billing?checkout=success" />}</Route>
+          <Route path="/billing/canceled">{() => <Redirect to="/concept2cure/billing?checkout=canceled" />}</Route>
           {/* Alias: /billing redirects to /concept2cure/billing */}
           <Route path="/billing">{() => <Redirect to="/concept2cure/billing" />}</Route>
 
@@ -330,26 +330,16 @@ export const ZenRouter: React.FC = () => {
           <Route path="/concept2cure/password-reset">
             {() => (
               <PageTransition>
-                <Suspense
-                  fallback={
-                    <ZenLoadingScreen />
-                  }
-                >
-                  <PasswordResetPage />
-                </Suspense>
+                <AuthRoute>
+                  <ZenLogin />
+                </AuthRoute>
               </PageTransition>
             )}
           </Route>
 
-          {/* Onboarding - protected, for first-time users */}
+          {/* Legacy onboarding route redirects to main app entry */}
           <Route path="/concept2cure/onboarding">
-            {() => (
-              <PageTransition>
-                <ProtectedRoute>
-                  <ZenOnboarding />
-                </ProtectedRoute>
-              </PageTransition>
-            )}
+            {() => <Redirect to="/concept2cure" />}
           </Route>
 
           {/* Proof Certificate Explorer */}

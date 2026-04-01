@@ -17,13 +17,44 @@ import { getSecureOrgId } from '../utils/tenantContext';
 const router = Router();
 const storage = { db };
 
+function getActorUserId(req: Request): number | null {
+  const raw = (req as any).userId ?? (req as any).user?.id;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+const jsonPrimitiveSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
+type JsonValue = z.infer<typeof jsonPrimitiveSchema> | { [key: string]: JsonValue } | JsonValue[];
+const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
+  z.union([jsonPrimitiveSchema, z.array(jsonValueSchema), z.record(z.string(), jsonValueSchema)])
+);
+const stringArraySchema = z.array(z.string());
+const taskDefinitionSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1),
+  description: z.string().optional(),
+  moduleType: z.string().optional(),
+  category: z.string().optional(),
+  taskType: z.string().optional(),
+  priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+  dayOffset: z.number().int().optional(),
+  duration: z.number().int().positive().optional(),
+  estimatedHours: z.number().positive().optional(),
+});
+const templateDependencySchema = z.object({
+  predecessor: z.string().min(1),
+  successor: z.string().min(1),
+  type: z.enum(['finish-to-start', 'start-to-start', 'finish-to-finish', 'start-to-finish']).optional(),
+  lag: z.number().int().optional(),
+});
+
 // Task creation schema
 const createTaskSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   moduleType: z.string(),
   moduleSource: z.string().optional(),
-  moduleData: z.any().optional(),
+  moduleData: jsonValueSchema.optional(),
   projectId: z.number().optional(),
   category: z.string().optional(),
   taskType: z.string().optional(),
@@ -34,8 +65,8 @@ const createTaskSchema = z.object({
   estimatedHours: z.number().optional(),
   dependencies: z.array(z.string()).optional(),
   tags: z.array(z.string()).optional(),
-  automationRules: z.any().optional(),
-  escalationPath: z.any().optional(),
+  automationRules: jsonValueSchema.optional(),
+  escalationPath: jsonValueSchema.optional(),
 });
 
 // Bulk task creation schema
@@ -65,13 +96,13 @@ const createTemplateSchema = z.object({
   category: z.string(),
   submissionType: z.string().optional(),
   milestone: z.string().optional(),
-  tasks: z.array(z.any()),
-  dependencies: z.any().optional(),
-  milestones: z.any().optional(),
+  tasks: z.array(taskDefinitionSchema),
+  dependencies: z.array(templateDependencySchema).optional(),
+  milestones: z.array(z.string()).optional(),
   defaultDuration: z.number().optional(),
   bestPractices: z.string().optional(),
-  regulatoryRequirements: z.any().optional(),
-  riskFactors: z.any().optional(),
+  regulatoryRequirements: stringArraySchema.optional(),
+  riskFactors: stringArraySchema.optional(),
 });
 
 // Automation rule schema
@@ -81,14 +112,14 @@ const createAutomationSchema = z.object({
   ruleType: z.enum(['event-based', 'schedule-based', 'condition-based']),
   triggerModule: z.string().optional(),
   triggerEvent: z.string(),
-  triggerConditions: z.any().optional(),
+  triggerConditions: jsonValueSchema.optional(),
   actionType: z.string(),
-  taskTemplate: z.any().optional(),
-  taskDefaults: z.any().optional(),
+  taskTemplate: taskDefinitionSchema.optional(),
+  taskDefaults: jsonValueSchema.optional(),
   delayMinutes: z.number().optional(),
-  recurringSchedule: z.any().optional(),
+  recurringSchedule: jsonValueSchema.optional(),
   workloadBalancing: z.boolean().default(true),
-  smartAssignment: z.any().optional(),
+  smartAssignment: jsonValueSchema.optional(),
 });
 
 // Helper function to calculate critical path
@@ -105,17 +136,17 @@ async function calculateCriticalPath(projectId: number, organizationId: number) 
     const dependencies = await storage.db
       .selectFrom('taskDependencies')
       .selectAll()
-      .where(eb =>
+      .where((eb: any) =>
         eb.or([
           eb(
             'predecessorTaskId',
             'in',
-            tasks.map(t => t.taskId)
+            tasks.map((t: any) => t.taskId)
           ),
           eb(
             'successorTaskId',
             'in',
-            tasks.map(t => t.taskId)
+            tasks.map((t: any) => t.taskId)
           ),
         ])
       )
@@ -123,7 +154,7 @@ async function calculateCriticalPath(projectId: number, organizationId: number) 
 
     // Build adjacency list
     const graph: Record<string, { task: any; successors: string[]; duration: number }> = {};
-    tasks.forEach(task => {
+    tasks.forEach((task: any) => {
       const duration = task.estimatedHours || 8; // Default 8 hours
       graph[task.taskId] = {
         task,
@@ -132,7 +163,7 @@ async function calculateCriticalPath(projectId: number, organizationId: number) 
       };
     });
 
-    dependencies.forEach(dep => {
+    dependencies.forEach((dep: any) => {
       if (graph[dep.predecessorTaskId]) {
         graph[dep.predecessorTaskId].successors.push(dep.successorTaskId);
       }
@@ -168,10 +199,10 @@ async function calculateCriticalPath(projectId: number, organizationId: number) 
 
     // Find all root nodes (no predecessors)
     const rootNodes = tasks.filter(
-      task => !dependencies.some(dep => dep.successorTaskId === task.taskId)
+      (task: any) => !dependencies.some((dep: any) => dep.successorTaskId === task.taskId)
     );
 
-    rootNodes.forEach(root => {
+    rootNodes.forEach((root: any) => {
       visited.clear();
       dfs(root.taskId, [], 0);
     });
@@ -193,7 +224,7 @@ async function getOptimalAssignee(organizationId: number, taskData: any) {
     // Get all users and their current workload
     const workloadQuery = await storage.db
       .selectFrom('users')
-      .leftJoin('unifiedTasks', join =>
+      .leftJoin('unifiedTasks', (join: any) =>
         join
           .onRef('users.id', '=', 'unifiedTasks.assigneeId')
           .on('unifiedTasks.status', 'in', ['pending', 'in-progress'])
@@ -212,7 +243,7 @@ async function getOptimalAssignee(organizationId: number, taskData: any) {
       .execute();
 
     // Sort by workload (ascending)
-    const sortedByWorkload = workloadQuery.sort((a, b) => {
+    const sortedByWorkload = workloadQuery.sort((a: any, b: any) => {
       const aHours = Number(a.totalHours || 0);
       const bHours = Number(b.totalHours || 0);
       return aHours - bHours;
@@ -230,6 +261,7 @@ async function getOptimalAssignee(organizationId: number, taskData: any) {
 router.post('/tasks', async (req: Request, res: Response) => {
   try {
     const validatedData = createTaskSchema.parse(req.body);
+    const actorUserId = getActorUserId(req);
     const organizationIdRaw = getSecureOrgId(req);
     const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
@@ -262,7 +294,7 @@ router.post('/tasks', async (req: Request, res: Response) => {
         completionPercentage: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
-        createdById: req.userId ? Number(req.userId) : null,
+        createdById: actorUserId,
       })
       .returningAll()
       .executeTakeFirst();
@@ -284,6 +316,7 @@ router.post('/tasks', async (req: Request, res: Response) => {
 router.post('/tasks/bulk-create', async (req: Request, res: Response) => {
   try {
     const validatedData = bulkCreateTasksSchema.parse(req.body);
+    const actorUserId = getActorUserId(req);
     const organizationIdRaw = getSecureOrgId(req);
     const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
@@ -326,7 +359,7 @@ router.post('/tasks/bulk-create', async (req: Request, res: Response) => {
           completionPercentage: 0,
           createdAt: new Date(),
           updatedAt: new Date(),
-          createdById: req.userId ? Number(req.userId) : null,
+          createdById: actorUserId,
         })
         .returningAll()
         .executeTakeFirst();
@@ -380,6 +413,7 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
   try {
     const templateId = req.params.templateId;
     const { projectId, startDate, adjustDates } = req.body;
+    const actorUserId = getActorUserId(req);
     const organizationIdRaw = getSecureOrgId(req);
     const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
@@ -449,7 +483,7 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
           templateId: template.id,
           createdAt: new Date(),
           updatedAt: new Date(),
-          createdById: req.body.userId,
+          createdById: actorUserId,
         })
         .returningAll()
         .executeTakeFirst();
@@ -636,6 +670,7 @@ router.get('/tasks/critical-path/:projectId', async (req: Request, res: Response
 router.post('/tasks/auto-assign', async (req: Request, res: Response) => {
   try {
     const { taskIds } = req.body;
+    const actorUserId = getActorUserId(req);
     const organizationIdRaw = getSecureOrgId(req);
     const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
@@ -664,7 +699,7 @@ router.post('/tasks/auto-assign', async (req: Request, res: Response) => {
           .set({
             assigneeId: optimalAssignee.id,
             assigneeName: optimalAssignee.name,
-            assignedBy: req.body.userId,
+            assignedBy: actorUserId,
             assignedAt: new Date(),
             updatedAt: new Date(),
           })
@@ -806,6 +841,7 @@ router.get('/tasks/analytics', async (req: Request, res: Response) => {
 router.post('/templates', async (req: Request, res: Response) => {
   try {
     const validatedData = createTemplateSchema.parse(req.body);
+    const actorUserId = getActorUserId(req);
     const organizationIdRaw = getSecureOrgId(req);
     const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
@@ -822,7 +858,7 @@ router.post('/templates', async (req: Request, res: Response) => {
         isActive: true,
         version: 1,
         usageCount: 0,
-        createdById: req.body.userId,
+        createdById: actorUserId,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
@@ -846,6 +882,7 @@ router.post('/templates', async (req: Request, res: Response) => {
 router.post('/automation', async (req: Request, res: Response) => {
   try {
     const validatedData = createAutomationSchema.parse(req.body);
+    const actorUserId = getActorUserId(req);
     const organizationIdRaw = getSecureOrgId(req);
     const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
@@ -864,7 +901,7 @@ router.post('/automation', async (req: Request, res: Response) => {
         executionCount: 0,
         successCount: 0,
         failureCount: 0,
-        createdById: req.body.userId,
+        createdById: actorUserId,
         createdAt: new Date(),
         updatedAt: new Date(),
       })

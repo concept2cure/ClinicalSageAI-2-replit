@@ -4844,7 +4844,7 @@ router.post('/ai/validate-compliance', async (req: Request, res: Response) => {
       };
 
       const required = requiredSections[section_code] || [];
-      required.forEach(element => {
+      required.forEach((element: any) => {
         if (!content.toLowerCase().includes(element)) {
           validationResults.missing_elements.push({
             element,

@@ -465,46 +465,12 @@ router.put('/propagation-events/:id/resolve', requireOrganization, asyncHandler(
 router.post('/compliance/calculate', requireOrganization, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = CalculateComplianceSchema.parse(req.body);
-
-    // Get active rules for this submission type
-    const rules = await db.execute(sql`
-      SELECT id, organization_id, rule_id, name, description, category, severity,
-             applicable_submissions, validation_config, regulatory_reference,
-             is_active, created_at, updated_at
-      FROM intelligent_docs.compliance_rules
-      WHERE is_active = TRUE
-        AND (organization_id IS NULL OR organization_id = ${req.organizationId})
-        AND ${data.submissionType} = ANY(applicable_submissions)
-    `);
-
-    const totalRules = rules.rowCount || 0;
-    const violations: Array<{ ruleId: string; severity: string; message: string }> = [];
-
-    // For now, we'll do a simplified check
-    // In production, this would run each rule's validation_config against the document
-    const passedRules = Math.max(0, totalRules - 2); // Placeholder
-    const overallScore = totalRules > 0 ? Math.round((passedRules / totalRules) * 100) : 100;
-
-    // Store the score
-    await db.execute(sql`
-      INSERT INTO intelligent_docs.compliance_scores (
-        organization_id, document_id, submission_type, overall_score,
-        passed_rules, total_rules, violations, calculated_by
-      ) VALUES (
-        ${req.organizationId}, ${data.documentId}, ${data.submissionType},
-        ${overallScore}, ${passedRules}, ${totalRules},
-        ${JSON.stringify(violations)}, ${req.userId}
-      )
-    `);
-
-    res.json({
+    return res.status(501).json({
+      error: 'Not implemented',
+      message:
+        'Compliance score calculation is not production-ready. Placeholder scoring has been disabled to prevent misleading results.',
       documentId: data.documentId,
       submissionType: data.submissionType,
-      overallScore,
-      passedRules,
-      totalRules,
-      violations,
-      calculatedAt: new Date().toISOString(),
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

@@ -736,7 +736,7 @@ function AuditLogDetails({ log }: { log: AuditLogEntry }) {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {log.fieldChanges.map((change, idx) => (
+                {log.fieldChanges.map((change: any, idx: any) => (
                   <tr key={idx}>
                     <td className="px-3 py-2 font-medium">{change.field}</td>
                     <td className="px-3 py-2 text-red-600">{String(change.oldValue || '—')}</td>

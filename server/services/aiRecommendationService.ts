@@ -217,7 +217,7 @@ export class AiRecommendationService {
       module.tags &&
       Array.isArray(module.tags)
     ) {
-      const interestMatches = user.interests.filter(interest =>
+      const interestMatches = user.interests.filter((interest: any) =>
         module.tags.includes(interest)
       ).length;
       score += interestMatches * 5;

@@ -106,29 +106,26 @@ const debugLog = (message: string, data?: any) => {
   }
 };
 
-// CMC route handlers — loaded dynamically at mount time (line ~975) for faster startup
-// import cmcProjectRoutes from './api/cmc/projectRoutes';
-// (12 CMC imports moved to dynamic loading below)
-
-// Import AI assistance routes
+// Route imports now consolidated in server/bootstrap/ manifests.
+// Only imports NOT yet migrated to bootstrap remain here.
 import aiAssistanceRoutes, { setAIService } from './routes/ai-assistance';
-// Dead import removed: aiPhase3Routes (duplicated as phase3Routes at mount site)
-
 import predictiveSectionsRoutes from './routes/predictive-sections';
-
-// Import enterprise routes
-import enterpriseRoutes from './api/enterprise/routes.js';
-
-// Import ForesightAI routes
 import foresightApiRoutes from './routes/foresight-api';
 import foresightAIAdvancedRoutes from './routes/foresight-ai-advanced';
 import foresightFeedbackRoutes from './routes/foresight-feedback';
+import { registerCoreRoutes } from './bootstrap/register-core-routes';
+import { registerIntegrationRoutes } from './bootstrap/register-integrations-routes';
+import { registerAiRoutes } from './bootstrap/register-ai-routes';
+import { registerConcept2CureRoutes } from './bootstrap/register-concept2cure-routes';
+import { registerAdminRoutes } from './bootstrap/register-admin-routes';
+import { csrSearchService } from './services/csr-search-service';
+import { getEndpointRecommenderService } from './services/endpoint-recommender-service';
 
-// Import Phase 5: Intelligent Document System routes
+// Phase 5: Intelligent Document System routes
 import intelligentDocsRoutes from './routes/intelligentDocs';
 import { testAssemblyRoutes } from './routes/test-assembly';
 
-// Import Phase 5: PM Settings & Configuration routes
+// Phase 5: PM Settings & Configuration routes
 import pmSettingsRouter from './src/routes/pm-settings.router';
 import controlPlaneRouter from './src/routes/control-plane.router';
 import reportsManifestRoutes from './routes/reports/manifest-routes';
@@ -381,12 +378,20 @@ async function verifyDatabaseConnection() {
   try {
     const result = await ensureCoreTables(process.env.DATABASE_URL);
     if (result.success) {
-      console.log(`✅ All ${result.existingTables.length} core database tables verified`);
+      console.log(
+        `✅ Database readiness verified (${result.existingSchemas.length} schemas, ${result.existingTables.length} tables)`
+      );
     } else if (result.missingCritical.length > 0) {
       console.error('❌ CRITICAL: Missing tables:', result.missingCritical.join(', '));
       console.error('   Run: npm run db:push to sync schema');
+    } else if (result.missingExtensions.length > 0) {
+      console.error('❌ CRITICAL: Missing required database extensions:', result.missingExtensions.join(', '));
     } else if (result.errors.length > 0) {
       console.error('⚠️ Table verification errors:', result.errors);
+    } else if (result.missingSchemas.length > 0) {
+      console.warn('⚠️ Database schemas required initialization:', result.missingSchemas.join(', '));
+    } else if (result.warnings.length > 0) {
+      console.warn('⚠️ Database readiness warnings:', result.warnings);
     }
   } catch (err: any) {
     console.error('⚠️ Core table verification failed:', err.message);
@@ -630,50 +635,8 @@ app.get('/api/csr', (req: Request, res: Response) => {
   res.json({ message: 'CSR API available', timestamp: new Date() });
 });
 
-// Mount basic routes including /api/projects
-// Direct mount /api/projects here to ensure it works
-app.get('/api/projects', async (req, res) => {
-  try {
-    // SECURITY: Always derive organization from authenticated JWT context
-    const client_workspace_id =
-      req.query.client_workspace_id || req.headers['x-client-workspace-id'];
-    const organization_id =
-      (req as any).tenantContext?.organizationId ||
-      (req as any).organizationId ||
-      (req as any).user?.organizationId;
-
-    if (!organization_id) {
-      return res.status(403).json({ error: 'Organization context required' });
-    }
-
-    if (!pool) {
-      // Return empty array if database not available
-      return res.json([]);
-    }
-
-    // Query projects from database - fetch all for the organization
-    let query = 'SELECT * FROM projects WHERE organization_id = $1';
-    const params: any[] = [organization_id];
-
-    // Optionally filter by workspace if provided
-    if (client_workspace_id) {
-      params.push(client_workspace_id);
-      query += ` AND client_workspace_id = $${params.length}`;
-    }
-
-    query += ' ORDER BY created_at DESC';
-
-    console.log('Fetching projects with query:', query, 'params:', params);
-    const result = await pool.query(query, params);
-    console.log('Found projects:', result.rows?.length || 0);
-
-    res.json(result.rows || []);
-  } catch (error) {
-    console.error('Failed to fetch projects:', error);
-    res.status(500).json({ error: 'Failed to fetch projects' });
-  }
-});
-console.log('✅ /api/projects route mounted directly');
+// /api/projects is owned by mounted projects-management router.
+// Keep this namespace single-owned to avoid route shadowing/policy drift.
 
 // ────────────────────────────────────────────────────────────────────────────
 // Device-Project CRUD – server-backed persistence for CERV2 module
@@ -950,97 +913,23 @@ app.delete('/api/device-projects/:id', async (req: Request, res: Response) => {
 
 console.log('✅ /api/device-projects CRUD routes mounted');
 
-// Register template routes
-import templateRoutes from './api/templates/routes';
-app.use('/api/templates', templateRoutes);
-
-// Import and mount AI routes — protected by circuit breaker for fault isolation
-import aiRoutes from './api/ai/routes';
-import phase3Routes from './api/ai/phase3-routes.js';
+// ── Circuit breaker for AI service fault isolation ──
 import { createCircuitBreakerMiddleware } from './middleware/circuitBreaker';
 const aiCircuitBreaker = createCircuitBreakerMiddleware('ai-service', {
   failureThreshold: 10,
   resetTimeout: 30_000,
   maxTimeout: 60_000, // AI calls can be slow
 });
-app.use('/api/ai', aiCircuitBreaker, aiRoutes);
-app.use('/api/test-assembly', testAssemblyRoutes(pool));
-// Mount Phase 3 AI routes
-app.use('/api', phase3Routes);
 
-// Mount enterprise routes
-app.use('/api/enterprise', enterpriseRoutes);
+// ── Register bootstrapped domain route manifests ──
+// Core: templates, AI, CMC (12), AI assistance, intelligent docs, PM settings, control plane
+registerCoreRoutes({ app, pool, aiCircuitBreaker });
+// Integrations: foresight deprecation routes
+registerIntegrationRoutes(app);
 
-// Mount enhanced RBAC routes
-import rbacRoutes from './api/enterprise/rbac-routes.js';
-app.use('/api/enterprise/rbac', rbacRoutes);
+// ── Routes not yet migrated to bootstrap manifests ──
 
-// Mount CMC Module routes (Chemistry, Manufacturing & Controls) — dynamically loaded
-try {
-  const [
-    cmcCoreRoutes,
-    cmcAggregatorRoutes,
-    cmcProjectRoutes,
-    cmcBlueprintRoutes,
-    cmcSpecificationRoutes,
-    cmcStabilityRoutes,
-    cmcBatchRecordRoutes,
-    cmcWorkflowRoutes,
-    cmcCollaborationRoutes,
-    cmcDocumentRoutes,
-    cmcDashboardRoutes,
-    cmcDashboardPrisma,
-  ] = await Promise.all([
-    import('./api/cmc/routes'),
-    import('./api/cmc/index.js'),
-    import('./api/cmc/projectRoutes'),
-    import('./api/cmc/blueprintRoutes'),
-    import('./api/cmc/specificationRoutes'),
-    import('./api/cmc/stabilityRoutes'),
-    import('./api/cmc/batchRecordRoutes'),
-    import('./api/cmc/workflowRoutes'),
-    import('./api/cmc/collaborationRoutes'),
-    import('./api/cmc/documentRoutes'),
-    import('./routes/cmc-dashboard'),
-    import('./routes/cmc-dashboard-prisma'),
-  ]);
-
-  // Both routers share /api/cmc but define non-overlapping sub-routes:
-  //   cmcAggregatorRoutes: /blueprint-generator, /change-impact-simulator, /manufacturing-tuner, etc.
-  //   cmcProjectRoutes:    /projects, /projects/:id, /projects/:projectId/substances, etc.
-  app.use('/api/cmc', cmcCoreRoutes.default);
-  app.use('/api/cmc', cmcAggregatorRoutes.default);
-  app.use('/api/cmc', cmcProjectRoutes.default);
-  app.use('/api/cmc/blueprint', cmcBlueprintRoutes.default);
-  app.use('/api/cmc/specifications', cmcSpecificationRoutes.default);
-  app.use('/api/cmc/stability', cmcStabilityRoutes.default);
-  app.use('/api/cmc/batch-records', cmcBatchRecordRoutes.default);
-  app.use('/api/cmc/workflows', cmcWorkflowRoutes.default);
-  app.use('/api/cmc/collaboration', cmcCollaborationRoutes.default);
-  app.use('/api/cmc/documents', cmcDocumentRoutes.default);
-  app.use('/api/cmc/dashboard-legacy', cmcDashboardRoutes.default);
-  app.use('/api/cmc/dashboard', cmcDashboardPrisma.default);
-  console.log('✅ CMC Module API routes mounted (12 sub-modules loaded in parallel)');
-} catch (error) {
-  console.error('❌ Failed to mount CMC Module routes:', error);
-}
-
-// Mount AI Assistance routes
-try {
-  app.use('/api/ai-assistance', aiCircuitBreaker, aiAssistanceRoutes);
-  // Also mount at /api/ai so the client aiService.js endpoints (/api/ai/assist, /api/ai/verify, /api/ai/health) resolve
-  app.use('/api/ai', aiCircuitBreaker, aiAssistanceRoutes);
-  // Initialize the AI provider router and inject into AI assistance module
-  aiProviderRouter = getAIRouter(pool);
-  if (aiProviderRouter) {
-    setAIService(aiProviderRouter);
-  }
-  console.log('✅ AI Assistance API routes mounted');
-} catch (error) {
-  console.error('❌ Failed to mount AI Assistance routes:', error);
-}
-
-// Mount AnA Intelligence dedicated routes (10-K harvesting, observation terms)
+// AnA Intelligence dedicated routes (10-K harvesting, observation terms)
 try {
   const anaCortexRoutes = await import('./routes/ana-cortex');
   app.use('/api/ana-cortex', anaCortexRoutes.default);
@@ -1050,7 +939,7 @@ try {
   console.error('❌ Failed to mount AnA Intelligence routes:', error);
 }
 
-// Mount CSR Search routes (fast in-memory search across 779 CSR documents)
+// CSR Search routes (fast in-memory search across 779 CSR documents)
 try {
   const { csrSearchRouter } = await import('./routes/csr_search_routes');
   app.use('/api/csr-search', csrSearchRouter);
@@ -1059,7 +948,7 @@ try {
   console.error('❌ Failed to mount CSR Search routes:', error);
 }
 
-// Mount Nano Banana (Gemini image generation) routes
+// Nano Banana (Gemini image generation) routes
 try {
   const nanoBananaRoutes = await import('./routes/nanoBanana');
   app.use('/api/nano-banana', nanoBananaRoutes.default);
@@ -1068,82 +957,42 @@ try {
   console.error('❌ Failed to mount Nano Banana routes:', error);
 }
 
-// Mount Phase 5: Intelligent Document System routes
+// Predictive sections routes
+app.use('/api/predictive-sections', predictiveSectionsRoutes);
+
+// Foresight AI feedback redirect (not in bootstrap — supplementary alias)
 try {
-  app.use('/api/intelligent-docs', intelligentDocsRoutes);
-  console.log('✅ Phase 5: Intelligent Document System API routes mounted');
-} catch (error) {
-  console.error('❌ Failed to mount Intelligent Docs routes:', error);
-}
-
-// Mount Phase 5: PM Settings & Configuration routes
-try {
-  app.use('/api/control-plane', controlPlaneRouter);
-
-  app.use('/api/pm-settings', pmSettingsRouter);
-  console.log('✅ Phase 5: PM Settings & Configuration API routes mounted');
-} catch (error) {
-  console.error('❌ Failed to mount PM Settings routes:', error);
-}
-
-// Mount AnA Intelligence (formerly ForesightAI) routes
-// Legacy routes maintained for backward compatibility
-try {
-  // Shared deprecation middleware for all Foresight/legacy routes
-  const foresightDeprecation = (req: Request, res: Response, next: () => void) => {
-    res.setHeader('Deprecation', 'true');
-    res.setHeader('Sunset', '2026-04-01');
-    res.setHeader('Link', '<https://docs.concept2cure.ai/api/cortex>; rel="canonical"');
-    next();
-  };
-
-  app.use('/api/foresight', foresightDeprecation, foresightApiRoutes);
-  app.use('/api/foresight-ai', foresightDeprecation, foresightAIAdvancedRoutes);
-  app.use('/api/foresight-feedback', foresightDeprecation, foresightFeedbackRoutes);
   app.use(
     '/api/foresight-ai/feedback',
-    foresightDeprecation,
+    (req: Request, res: Response, next: () => void) => {
+      res.setHeader('Deprecation', 'true');
+      res.setHeader('Sunset', '2026-04-01');
+      res.setHeader('Link', '<https://docs.concept2cure.ai/api/cortex>; rel="canonical"');
+      next();
+    },
     (req, _res, next) => {
       req.url = `/feedback${req.url}`;
       next();
     },
     foresightFeedbackRoutes
   );
-  // New AnA Intelligence aliases
-  console.log('✅ AnA Intelligence™ Intelligence API routes mounted (+ legacy /foresight aliases)');
 } catch (error) {
-  console.error('Failed to mount AnA Intelligence routes:', error);
+  console.error('Failed to mount foresight-ai/feedback alias:', error);
 }
 
-// Mount RAG routes (parallelized for faster startup)
+// RAG routes (parallelized for faster startup)
 {
-  const ragResults = await Promise.allSettled([
-    import('./routes/foresight-rag-api.js'),
-    import('./routes/biotech-rag.js'),
-  ]);
+  const ragResults = await Promise.allSettled([import('./routes/biotech-rag.js')]);
 
   if (ragResults[0].status === 'fulfilled') {
-    const foresightRagDeprecation = (req: Request, res: Response, next: () => void) => {
-      res.setHeader('Deprecation', 'true');
-      res.setHeader('Sunset', '2026-04-01');
-      res.setHeader('Link', '<https://docs.concept2cure.ai/api/cortex>; rel="canonical"');
-      next();
-    };
-    app.use('/api/foresight/rag', foresightRagDeprecation, ragResults[0].value.default);
-    console.log('✅ AnA Intelligence RAG API routes mounted');
-  } else {
-    console.error('Failed to mount AnA Intelligence RAG routes:', ragResults[0].reason);
-  }
-
-  if (ragResults[1].status === 'fulfilled') {
-    app.use('/api/biotech-rag', ragResults[1].value.default);
+    app.use('/api/biotech-rag', ragResults[0].value.default);
     console.log('✅ Biotech AI Intelligence RAG API routes mounted');
   } else {
-    console.error('❌ Failed to mount Biotech RAG routes:', ragResults[1].reason);
+    console.error('❌ Failed to mount Biotech RAG routes:', ragResults[0].reason);
   }
 }
 
-// Mount FDA/CERV2/Device regulatory routes (parallelized for faster startup)
+// FDA/CERV2/Device regulatory routes (parallelized for faster startup)
 {
   const regulatoryRouteResults = await Promise.allSettled([
     import('./routes/fda510k-unified.js'),
@@ -1162,8 +1011,8 @@ try {
     { path: '/api/510k/estar', label: 'FDA 510(k) eSTAR' },
     { path: '/api/cerv2/export', label: 'CERV2 Export' },
     { path: '/api/cerv2/ai', label: 'CERV2 AI' },
-    { path: null, label: 'Doc Orchestration' }, // defines own paths
-    { path: null, label: 'ESG Submission' }, // defines own paths
+    { path: null, label: 'Doc Orchestration' },
+    { path: null, label: 'ESG Submission' },
     { path: '/api/medical-devices', label: 'Medical Device' },
   ];
 
@@ -1498,10 +1347,6 @@ try {
 } catch (error) {
   console.error('❌ Failed to mount Stability routes:', error);
 }
-
-// Mount strategy routes
-// Disabled due to missing AI services - import strategyRouter from './src/routes/strategy.router.js';
-// app.use('/api/strategy', strategyRouter);
 
 console.log('✅ Enterprise API routes mounted successfully');
 
@@ -1920,52 +1765,29 @@ app.get('/api/csr/search', async (req: Request, res: Response) => {
     const { query, limit = 10 } = req.query;
     debugLog('CSR search endpoint called', { query, limit });
 
-    // Mock CSR search results for now
-    const searchResults = [
-      {
-        id: 'CSR001',
-        title: `Phase II Study of Pembrolizumab in Advanced Non-Small Cell Lung Cancer`,
-        indication: 'Non-Small Cell Lung Cancer',
-        phase: 'Phase II',
-        sponsor: 'Merck & Co',
-        therapeutic_area: 'Oncology',
-        sample_size: 105,
-        duration: '24 months',
-        status: 'Completed',
-        highlights: ['Primary endpoint met', 'Favorable safety profile'],
-        relevance: 0.95,
-      },
-      {
-        id: 'CSR002',
-        title: `Phase III Study of Nivolumab plus Ipilimumab in Melanoma`,
-        indication: 'Melanoma',
-        phase: 'Phase III',
-        sponsor: 'Bristol Myers Squibb',
-        therapeutic_area: 'Oncology',
-        sample_size: 299,
-        duration: '36 months',
-        status: 'Completed',
-        highlights: ['Significant OS improvement', 'Manageable toxicity profile'],
-        relevance: 0.88,
-      },
-    ];
-
-    // Filter by query if provided
-    let results = searchResults;
-    if (query && typeof query === 'string') {
-      const queryLower = query.toLowerCase();
-      results = searchResults.filter(
-        csr =>
-          csr.title.toLowerCase().includes(queryLower) ||
-          csr.indication.toLowerCase().includes(queryLower) ||
-          csr.therapeutic_area.toLowerCase().includes(queryLower) ||
-          csr.sponsor.toLowerCase().includes(queryLower)
-      );
-    }
-
-    // Apply limit
-    const limitNum = parseInt(limit as string, 10);
-    results = results.slice(0, limitNum);
+    const queryText = typeof query === 'string' ? query.trim() : '';
+    const limitNum = Math.max(1, Math.min(100, parseInt(String(limit), 10) || 10));
+    const searchResult = await csrSearchService.searchCSRs({
+      query_text: queryText,
+      limit: limitNum,
+    });
+    const results = (searchResult.csrs || []).map((csr: any) => ({
+      id: csr.id || csr.csr_id || null,
+      title: csr.title || 'Untitled CSR',
+      indication: csr.indication || null,
+      phase: csr.phase || null,
+      sponsor: csr.sponsor || null,
+      sample_size: csr.sample_size ?? null,
+      outcome: csr.outcome || null,
+      relevance:
+        typeof csr.relevance_score === 'number'
+          ? csr.relevance_score
+          : typeof csr.similarity === 'number'
+            ? csr.similarity
+            : null,
+      summary: csr.summary || csr.context_summary || null,
+      source: 'csr_search_service',
+    }));
 
     debugLog('CSR search results', { count: results.length, query });
     res.json({
@@ -3008,47 +2830,30 @@ app.post('/api/search/vector', async (req: Request, res: Response) => {
   try {
     const query = String(req.body?.query || '').trim();
     const k = Math.max(1, parseInt(String(req.body?.k || 5), 10));
+    if (!query) {
+      return res.status(400).json({ error: 'query is required' });
+    }
 
-    const mockResults = [
-      {
-        content:
-          'The study demonstrated statistically significant overall survival improvement versus standard of care.',
-        relevance: 0.95,
-        document_id: 1,
-        document_title: 'Clinical Study Report XYZ-123',
-        source_page: 42,
-        source_section: 'Efficacy Results',
-      },
-      {
-        content:
-          'Grade 3 or higher adverse events were observed at acceptable rates with no unexpected safety signals.',
-        relevance: 0.88,
-        document_id: 1,
-        document_title: 'Clinical Study Report XYZ-123',
-        source_page: 67,
-        source_section: 'Safety Results',
-      },
-      {
-        content:
-          'Comparative analysis shows endpoint consistency with prior phase II oncology studies.',
-        relevance: 0.82,
-        document_id: 2,
-        document_title: 'Comparative Efficacy Analysis',
-        source_page: 15,
-        source_section: 'Discussion',
-      },
-    ];
+    const searchResult = await csrSearchService.searchCSRs({
+      query_text: query,
+      limit: Math.min(50, k),
+    });
 
-    const filtered = query
-      ? mockResults.filter(
-          row =>
-            row.content.toLowerCase().includes(query.toLowerCase()) ||
-            row.document_title.toLowerCase().includes(query.toLowerCase()) ||
-            row.source_section.toLowerCase().includes(query.toLowerCase())
-        )
-      : mockResults;
+    const vectorLikeRows = (searchResult.csrs || []).slice(0, k).map((csr: any, idx: number) => ({
+      content: csr.summary || csr.context_summary || csr.outcome || csr.title || '',
+      relevance:
+        typeof csr.relevance_score === 'number'
+          ? csr.relevance_score
+          : typeof csr.similarity === 'number'
+            ? csr.similarity
+            : null,
+      document_id: csr.id || csr.csr_id || idx,
+      document_title: csr.title || 'Untitled CSR',
+      source_page: csr.source_page ?? null,
+      source_section: csr.source_section || csr.phase || null,
+    }));
 
-    return res.json((filtered.length ? filtered : mockResults).slice(0, k));
+    return res.json(vectorLikeRows);
   } catch (error) {
     console.error('Vector search failed:', error);
     return res.status(500).json({ error: 'Vector search failed' });
@@ -3060,33 +2865,31 @@ app.post('/api/endpoint/recommend', async (req: Request, res: Response) => {
   try {
     const indication = String(req.body?.indication || 'General');
     const phase = String(req.body?.phase || 'Phase 2');
+    const therapeuticArea = String(req.body?.therapeuticArea || '');
+    const service = getEndpointRecommenderService();
+    const recommendations = await service.getComprehensiveEndpointRecommendations(
+      indication,
+      phase,
+      10,
+      therapeuticArea
+    );
 
-    const recommendations = [
-      {
-        endpoint: 'Progression-Free Survival (PFS)',
-        summary: `${phase} ${indication} programs commonly use PFS as a primary efficacy endpoint.`,
-        matchCount: 124,
-        successRate: 0.62,
-        reference: 'CSR corpus cluster A',
-      },
-      {
-        endpoint: 'Overall Response Rate (ORR)',
+    return res.json(
+      recommendations.map((rec: any) => ({
+        endpoint: rec.endpoint,
         summary:
-          'ORR is frequently selected for accelerated decision support in oncology-like indications.',
-        matchCount: 98,
-        successRate: 0.57,
-        reference: 'CSR corpus cluster C',
-      },
-      {
-        endpoint: 'Duration of Response (DoR)',
-        summary: 'DoR is often paired with ORR to strengthen clinical benefit characterization.',
-        matchCount: 86,
-        successRate: 0.54,
-        reference: 'CSR corpus cluster D',
-      },
-    ];
-
-    return res.json(recommendations);
+          rec.evidence?.[0]?.reference_text ||
+          `${phase} ${indication} endpoint recommendation based on available evidence.`,
+        matchCount: rec.occurrence_count ?? 0,
+        successRate:
+          typeof rec.success_rate === 'number'
+            ? rec.success_rate > 1
+              ? rec.success_rate / 100
+              : rec.success_rate
+            : null,
+        reference: rec.evidence?.[0]?.title || null,
+      }))
+    );
   } catch (error) {
     console.error('Endpoint recommendation failed:', error);
     return res.status(500).json({ error: 'Endpoint recommendation failed' });
@@ -3094,105 +2897,35 @@ app.post('/api/endpoint/recommend', async (req: Request, res: Response) => {
 });
 
 // Retention policy compatibility facade (P0 route recovery)
-let retentionPolicies = [
-  {
-    id: 1,
-    policyName: 'Clinical Trial Master Files',
-    documentType: 'CTM',
-    retentionPeriod: 7,
-    periodUnit: 'years',
-    archiveBeforeDelete: true,
-    notifyBeforeDeletion: true,
-    notificationPeriod: 30,
-    notificationUnit: 'days',
-    active: true,
-  },
-  {
-    id: 2,
-    policyName: 'Pharmacovigilance Safety Reports',
-    documentType: 'Safety Report',
-    retentionPeriod: 10,
-    periodUnit: 'years',
-    archiveBeforeDelete: true,
-    notifyBeforeDeletion: true,
-    notificationPeriod: 45,
-    notificationUnit: 'days',
-    active: true,
-  },
-];
-
-const retentionDocumentTypes = [
-  { id: 'ctm', value: 'CTM', label: 'Clinical Trial Master File' },
-  { id: 'csr', value: 'CSR', label: 'Clinical Study Report' },
-  { id: 'safety', value: 'Safety Report', label: 'Safety Report' },
-  { id: 'protocol', value: 'Protocol', label: 'Clinical Protocol' },
-];
+const RETENTION_SERVICE_UNAVAILABLE = {
+  success: false,
+  error: 'Retention service unavailable',
+  message:
+    'Retention policy APIs are temporarily disabled until persistent storage and job execution are fully wired.',
+};
 
 app.get('/api/retention/policies', async (_req: Request, res: Response) => {
-  return res.json({ success: true, data: retentionPolicies });
+  return res.status(503).json(RETENTION_SERVICE_UNAVAILABLE);
 });
 
 app.get('/api/retention/document-types', async (_req: Request, res: Response) => {
-  return res.json({ success: true, data: retentionDocumentTypes });
+  return res.status(503).json(RETENTION_SERVICE_UNAVAILABLE);
 });
 
-app.post('/api/retention/policies', async (req: Request, res: Response) => {
-  try {
-    const newPolicy = {
-      id: Date.now(),
-      ...req.body,
-    };
-    retentionPolicies = [newPolicy, ...retentionPolicies];
-    return res.status(201).json({ success: true, data: newPolicy });
-  } catch (error) {
-    console.error('Failed to create retention policy:', error);
-    return res.status(500).json({ error: 'Failed to create retention policy' });
-  }
+app.post('/api/retention/policies', async (_req: Request, res: Response) => {
+  return res.status(503).json(RETENTION_SERVICE_UNAVAILABLE);
 });
 
-app.put('/api/retention/policies/:id', async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id, 10);
-    const existing = retentionPolicies.find(policy => policy.id === id);
-    if (!existing) {
-      return res.status(404).json({ error: 'Retention policy not found' });
-    }
-
-    retentionPolicies = retentionPolicies.map(policy =>
-      policy.id === id ? { ...policy, ...req.body, id } : policy
-    );
-
-    const updated = retentionPolicies.find(policy => policy.id === id);
-    return res.json({ success: true, data: updated });
-  } catch (error) {
-    console.error('Failed to update retention policy:', error);
-    return res.status(500).json({ error: 'Failed to update retention policy' });
-  }
+app.put('/api/retention/policies/:id', async (_req: Request, res: Response) => {
+  return res.status(503).json(RETENTION_SERVICE_UNAVAILABLE);
 });
 
-app.delete('/api/retention/policies/:id', async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id, 10);
-    const before = retentionPolicies.length;
-    retentionPolicies = retentionPolicies.filter(policy => policy.id !== id);
-
-    if (retentionPolicies.length === before) {
-      return res.status(404).json({ error: 'Retention policy not found' });
-    }
-
-    return res.json({ success: true });
-  } catch (error) {
-    console.error('Failed to delete retention policy:', error);
-    return res.status(500).json({ error: 'Failed to delete retention policy' });
-  }
+app.delete('/api/retention/policies/:id', async (_req: Request, res: Response) => {
+  return res.status(503).json(RETENTION_SERVICE_UNAVAILABLE);
 });
 
 app.post('/api/retention/run-job', async (_req: Request, res: Response) => {
-  return res.json({
-    success: true,
-    jobId: `RETENTION_JOB_${Date.now()}`,
-    status: 'started',
-  });
+  return res.status(503).json(RETENTION_SERVICE_UNAVAILABLE);
 });
 
 // AnA 1.0 RI endpoint
@@ -3851,42 +3584,16 @@ For "${query}", I suggest consulting the latest ICH guidelines and FDA guidance 
 console.log('✅ Basic API routes mounted');
 debugLog('Debug mode enabled - enhanced logging active');
 
-// Mount AnA routes (parallelized for faster startup)
-{
-  const [anaFeaturesResult, anaRiResult] = await Promise.allSettled([
-    import('./routes/ana-features'),
-    import('./routes/ana-ri'),
-  ]);
-  if (anaFeaturesResult.status === 'fulfilled') {
-    app.use('/api/ana', anaFeaturesResult.value.default);
-    console.log('✅ AnA Features API routes mounted (/api/ana)');
-  } else {
-    console.error('❌ Failed to mount AnA Features routes:', anaFeaturesResult.reason);
-  }
-  if (anaRiResult.status === 'fulfilled') {
-    app.use('/api/ana-ri', aiCircuitBreaker, anaRiResult.value.default);
-    console.log('✅ AnA RI routes mounted (/api/ana-ri) with circuit breaker');
-  } else {
-    console.error('❌ Failed to mount AnA RI routes:', anaRiResult.reason);
-  }
-}
+// ── Register AI + Concept2Cure bootstrapped route manifests ──
+// AnA features, AnA RI, firecrawl, external evidence, chat, IND, regulatory, AI claims, Claude intelligence
+await registerAiRoutes({ app, pool, aiCircuitBreaker });
+// Concept2Cure + compute routes
+registerConcept2CureRoutes(app);
+registerAdminRoutes(app);
 
-// Mount External Evidence Intelligence routes
-try {
-  const [firecrawlRoutes, externalEvidenceRoutes, workspaceToolSettingsRoutes] = await Promise.all([
-    import('./routes/firecrawl'),
-    import('./routes/external-evidence'),
-    import('./routes/workspace-tool-settings'),
-  ]);
-  app.use('/api/firecrawl', firecrawlRoutes.default);
-  app.use('/api/external-evidence', externalEvidenceRoutes.default);
-  app.use('/api/workspace-tool-settings', workspaceToolSettingsRoutes.default);
-  console.log('✅ External Evidence Intelligence routes mounted');
-} catch (error) {
-  console.error('❌ Failed to mount external evidence routes:', error);
-}
+// ── Routes not yet migrated to AI/C2C bootstrap manifests ──
 
-// Mount Authoring Router (document workflows, reviews, tracked changes)
+// Authoring Router (document workflows, reviews, tracked changes)
 try {
   const authoringRouterModule = await import('./routes/authoring.router');
   app.use('/api/authoring', authoringRouterModule.default);
@@ -3895,7 +3602,7 @@ try {
   console.error('❌ Failed to mount Authoring Router:', error);
 }
 
-// Mount Authoring Actions routes (Wave 1 + Wave 2 AnA-first authoring actions)
+// Authoring Actions routes (Wave 1 + Wave 2 AnA-first authoring actions)
 try {
   const authoringActionsModule = await import('./routes/authoring-actions');
   app.use('/api/authoring-actions', authoringActionsModule.default);
@@ -3904,7 +3611,7 @@ try {
   console.error('❌ Failed to mount Authoring Actions routes:', error);
 }
 
-// Mount Ana Platform Control routes (agentic settings, modules, onboarding)
+// Ana Platform Control routes (agentic settings, modules, onboarding)
 try {
   const anaPlatformModule = await import('./routes/ana-platform-control');
   app.use('/api/ana/platform', anaPlatformModule.default);
@@ -3913,57 +3620,11 @@ try {
   console.error('❌ Failed to mount Ana Platform Control routes:', error);
 }
 
-// Mount AnA Intelligence Chat routes
-import chatRoutes from './routes/chat';
-app.use('/api/chat', chatRoutes);
-console.log('✅ AnA Intelligence Chat API routes mounted successfully');
-
-// Mount IND Generation routes
-import indGenerationRoutes from './routes/ind-generation';
-app.use('/api/ind', indGenerationRoutes);
-console.log('✅ IND Generation API routes mounted successfully');
-
-// Mount Global Regulatory Registry routes
-import regulatoryRegistryRoutes from './routes/regulatory-registry';
-app.use('/api/regulatory', regulatoryRegistryRoutes);
-console.log('✅ Global Regulatory Registry API routes mounted successfully');
-
-// Mount AI Claims → Binder provenance route
+// AI Actions unified execution API (Phase 1 — conversational OS spine)
 try {
-  const claimsModule = await import('./routes/ai-claims-routes');
-  const createAIClaimsRoutes = claimsModule.default;
-  app.use('/api/ai', createAIClaimsRoutes(pool));
-  console.log('✅ AI Claims → Binder routes mounted (/api/ai/claims)');
-} catch (claimsErr) {
-  console.error('❌ Failed to mount AI Claims routes:', claimsErr);
-}
-
-// Mount Claude Intelligence API routes (document drafting, streaming, vision, batch)
-try {
-  const claudeIntelligenceRoutes = await import('./routes/claude-intelligence.ts');
-  app.use('/api/claude', claudeIntelligenceRoutes.default);
-  console.log('✅ Claude Intelligence API routes mounted (draft, stream, review, vision, batch)');
-} catch (error) {
-  console.error('❌ Failed to mount Claude Intelligence routes:', error);
-}
-
-// Mount Concept2Cure routes (Claude.ai-style regulatory interface)
-import concept2cureRoutes from './routes/concept2cure';
-app.use('/api/concept2cure', concept2cureRoutes);
-console.log('✅ Concept2Cure API routes mounted successfully');
-
-// Mount Artifact Compute Plane routes (sandboxed governed output generation)
-import computeRoutes from './routes/compute';
-app.use('/api/concept2cure/compute', computeRoutes);
-console.log('✅ Concept2Cure Compute Plane routes mounted successfully');
-
-// Mount AI Actions unified execution API (Phase 1 — conversational OS spine)
-try {
-  // Initialize action registry and handlers BEFORE mounting routes
   const aiActions = await import('./services/ai-actions/index');
   console.log('✅ AI Action handlers registered');
 
-  // Initialize HA infrastructure (Redis, queue, SSE broadcaster)
   const redisOk = await aiActions.initializeRedis();
   console.log(
     redisOk
@@ -3987,9 +3648,9 @@ try {
   console.error('❌ Failed to mount AI Actions routes:', error.message);
 }
 
-// Mount Phase 3 Orchestration routes (workflow orchestration, readiness, recommendations, continuity)
+// Phase 3 Orchestration routes (workflow orchestration, readiness, recommendations, continuity)
 try {
-  await import('./services/orchestration'); // Load orchestration engine + workflow templates
+  await import('./services/orchestration');
   const orchestrationRoutes = (await import('./routes/orchestration')).default;
   app.use('/api/orchestration', orchestrationRoutes);
   console.log('✅ Phase 3 Orchestration API routes mounted at /api/orchestration');
@@ -4073,9 +3734,6 @@ console.log('✅ AnA Gold Standard Pack routes mounted successfully');
 import anaContinuousEvalRoutes from './routes/ana-continuous-eval';
 app.use('/api/ana-continuous-eval', anaContinuousEvalRoutes);
 console.log('✅ AnA Continuous Evaluation Loop routes mounted successfully');
-
-// Mount IND templates routes - temporarily disabled
-// app.use('/api/ind', indTemplatesRoutes);
 
 // Mount Submission Center routes
 import submissionCenterRoutes from './routes/submissionCenter.routes';
@@ -7034,14 +6692,6 @@ async function startServer() {
     console.error('Failed to mount leaves routes:', error);
   }
 
-  // Sections routes deprecated - consolidated into predictive-sections.ts
-  // try {
-  //   app.use('/api/sections', sectionsRouter);
-  //   console.log('✅ Sections real-time sync routes mounted successfully');
-  // } catch (error) {
-  //   console.error('Failed to mount sections routes:', error);
-  // }
-
   // Mount predictive sections routes
   try {
     app.use('/api/predictive-sections', predictiveSectionsRoutes);
@@ -7894,7 +7544,6 @@ async function startServer() {
 //   register-core-routes.ts         — templates, AI, CMC, enterprise, control-plane
 //   register-ai-routes.ts           — AnA, chat, IND, regulatory, claims, claude-intel
 //   register-concept2cure-routes.ts — concept2cure + compute
-//   register-integrations-routes.ts — foresight (deprecated, sunset 2026-04-01)
 //   register-admin-routes.ts        — reserved placeholder
 //
 // To migrate a group:

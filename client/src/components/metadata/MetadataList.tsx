@@ -165,7 +165,7 @@ function DefaultColumnFilter({ column: { filterValue, setFilter, Header } }) {
 function SelectColumnFilter({ column: { filterValue, setFilter, preFilteredRows, id } }) {
   const options = useMemo(() => {
     const optionsSet = new Set();
-    preFilteredRows.forEach(row => {
+    preFilteredRows.forEach((row: any) => {
       optionsSet.add(row.values[id]);
     });
     return [...optionsSet.values()];
@@ -292,8 +292,8 @@ export default function MetadataList({
 
   const filterTypes = useMemo(
     () => ({
-      text: (rows, id, filterValue) => {
-        return rows.filter(row => {
+      text: (rows: any, id: any, filterValue: any) => {
+        return rows.filter((row: any) => {
           const rowValue = row.values[id];
           return rowValue !== undefined
             ? String(rowValue).toLowerCase().includes(String(filterValue).toLowerCase())
@@ -438,9 +438,9 @@ export default function MetadataList({
         <div className="overflow-auto rounded-md border flex-grow">
           <table {...getTableProps()} className="w-full">
             <thead className="bg-muted/50">
-              {headerGroups.map(headerGroup => (
+              {headerGroups.map((headerGroup: any) => (
                 <tr {...headerGroup.getHeaderGroupProps()}>
-                  {headerGroup.headers.map(column => (
+                  {headerGroup.headers.map((column: any) => (
                     <th
                       {...column.getHeaderProps(column.getSortByToggleProps())}
                       className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -468,7 +468,7 @@ export default function MetadataList({
               ))}
             </thead>
             <tbody {...getTableBodyProps()} className="bg-white divide-y divide-gray-200">
-              {page.map(row => {
+              {page.map((row: any) => {
                 prepareRow(row);
                 return (
                   <tr
@@ -476,7 +476,7 @@ export default function MetadataList({
                     className={`hover:bg-gray-50 ${selectedMetadata === row.original.id ? 'bg-blue-50' : ''}`}
                     onClick={() => handleViewMetadata(row.original.id)}
                   >
-                    {row.cells.map(cell => (
+                    {row.cells.map((cell: any) => (
                       <td {...cell.getCellProps()} className="px-4 py-3 text-sm">
                         {cell.render('Cell')}
                       </td>
