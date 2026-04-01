@@ -1798,12 +1798,18 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   );
 
   const handleToggleConversationStar = useCallback(() => {
-    // Placeholder for metadata parity with Cortex thread model.
-  }, []);
+    toast({
+      title: 'Not available yet',
+      description: 'Conversation star metadata is not enabled in this thread model yet.',
+    });
+  }, [toast]);
 
   const handleToggleConversationPin = useCallback(() => {
-    // Placeholder for metadata parity with Cortex thread model.
-  }, []);
+    toast({
+      title: 'Not available yet',
+      description: 'Conversation pin metadata is not enabled in this thread model yet.',
+    });
+  }, [toast]);
 
   const handleRenameConversation = useCallback(
     async (id: string) => {
@@ -1850,8 +1856,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
   const handleCommandAction = useCallback(
     (actionId: string) => {
-      console.log('Command action:', actionId);
-
       // Handle tool panel opens
       if (actionId.startsWith('tool-')) {
         const panel = actionId.replace('tool-', '') as ToolPanel;
@@ -2395,8 +2399,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         onOpenSearch={() => setCommandPaletteOpen(true)}
         onOpenSettings={() => setSettingsOpen(true)}
         onDeleteConversation={handleDeleteConversation}
+        onRenameConversation={handleRenameConversation}
         onToggleStar={handleToggleConversationStar}
-        onTogglePin={handleToggleProjectPin}
+        onTogglePin={handleToggleConversationPin}
         onArchiveProject={handleArchiveProject}
         onDeleteProject={handleDeleteProject}
         onMoveConversation={handleMoveConversation}
@@ -3218,7 +3223,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   setRiViewMode('editor');
                 }}
                 onNavigateSubmit={() => requireActiveProject('submissions')}
-                onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+                onBack={() => requireActiveProject('project-home')}
               />
             </Suspense>
           )}
@@ -3316,7 +3321,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 <Suspense fallback={<ModuleLoadingFallback />}>
                   <ReviewReadiness
                     projectId={activeProjectId}
-                    onClose={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+                    onClose={() => requireActiveProject('project-home')}
                   />
                 </Suspense>
               </ErrorBoundary>
@@ -3374,7 +3379,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         setRiViewMode('editor');
                       }
                     }}
-                    onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+                    onBack={() => requireActiveProject('project-home')}
                     onExport={async () => {
                       if (!activeProjectId) return;
                       try {
@@ -3523,7 +3528,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   });
                   setRiViewMode('editor');
                 }}
-                onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+                onBack={() => requireActiveProject('project-home')}
               />
             </Suspense>
           )}
@@ -3565,7 +3570,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   });
                   setRiViewMode('editor');
                 }}
-                onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+                onBack={() => requireActiveProject('project-home')}
               />
             </Suspense>
           )}
@@ -3578,7 +3583,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
-                      onClick={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+                      onClick={() => requireActiveProject('project-home')}
                       className="text-stone-500 hover:text-stone-700"
                     >
                       <ArrowLeft className="h-4 w-4" />
@@ -3618,7 +3623,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     }
                     setRiViewMode('editor');
                   }}
-                  onClose={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+                  onClose={() => requireActiveProject('project-home')}
                 />
               </div>
             </Suspense>
