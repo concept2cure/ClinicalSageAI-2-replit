@@ -77,7 +77,9 @@ import {
   interceptFeedback,
 } from '../services/intelligence/rim-interceptors.js';
 import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
-import { validateGovernedArtifactMutation } from '../services/concept2cure/governedDocumentContractService';
+import {
+  resolveGovernedContext,
+} from '../services/concept2cure/governedDocumentContractService';
 import {
   buildWorkingMemoryPrompt,
   storeWorkingMemory,
@@ -781,6 +783,75 @@ const createArtifactSchema = z.object({
   content: z.string().min(1, 'Content must not be empty').max(1000000, 'Content too large'), // 1MB max, no empty
   ctdSection: z.string().max(50).optional(),
   metadata: z.record(z.any()).optional(),
+  clientTrack: z.enum(['biotech', 'device', 'diagnostics']).optional(),
+  submissionProgram: z.enum(['ind', 'ectd', '510k', 'pma', 'cer', 'ivdr', 'general_ri']).optional(),
+  persona: z
+    .enum(['regulatory', 'medical_writer', 'cmc', 'clinical', 'qa', 'executive', 'cro'])
+    .optional(),
+  regulatorScope: z.enum(['fda', 'ema', 'mhra', 'hc', 'pmda', 'multi']).optional(),
+  evidenceMode: z.enum(['csr', 'literature', 'predicate', 'cmc_source', 'test_data', 'mixed']).optional(),
+  documentClass: z
+    .enum([
+      'strategy_memo',
+      'evidence_memo',
+      'section_draft',
+      'module3_output',
+      'submission_component',
+      'audit_report',
+      'comparator_summary',
+      'risk_benefit',
+      'protocol_rationale',
+      'regional_differences',
+      'safety_evidence_brief',
+      'endpoint_justification',
+    ])
+    .optional(),
+  readinessGate: z
+    .enum(['exploratory', 'internal_review', 'submission_candidate', 'inspection_ready'])
+    .optional(),
+  approvalPathType: z
+    .enum(['single_reviewer', 'regulated_dual_review', 'qa_lock', 'signoff_required'])
+    .optional(),
+  recommendationSource: z
+    .enum([
+      'ana_ri',
+      'cmc_builder',
+      'cerv2_510k',
+      'cerv2_pma',
+      'cerv2_cer',
+      'ectd_compiler',
+      'ind_autodraft',
+      'report_engine',
+    ])
+    .optional(),
+  originSurface: z
+    .enum([
+      'ri_copilot',
+      'ectd_coauthor',
+      'ind_workspace',
+      'cmc_workspace',
+      'cerv2_device',
+      'editor_panel',
+      'api_route',
+      'import_pipeline',
+      'system',
+      'project_workspace_shell',
+      'ai_orchestrator',
+    ])
+    .optional(),
+  workspaceTarget: z.enum(['project', 'dossier', 'vault']).optional(),
+  dossierContainerId: z.string().optional(),
+  artifactContainerId: z.string().optional(),
+  regulatorIntent: z
+    .enum([
+      'submission_authoring',
+      'evidence_analysis',
+      'strategy',
+      'comparison',
+      'qa_review',
+      'inspection_support',
+    ])
+    .optional(),
 });
 
 const createSignatureSchema = z.object({
@@ -4999,13 +5070,33 @@ router.post(
       // Sanitize content
       const sanitizedContent = sanitizeContent(data.content);
       const sanitizedTitle = sanitizeContent(data.title);
-      const contractValidation = validateGovernedArtifactMutation({
+      const governedResolution = resolveGovernedContext({
         req,
         projectId: numericProjectId,
         artifactId: null,
         documentType: data.type,
         generationMode: data.metadata?.generationMethod === 'ai' ? 'ai_generated' : 'manual',
         lifecycleStatus: 'draft',
+        originSurface: data.originSurface,
+        clientTrack: data.clientTrack,
+        submissionProgram: data.submissionProgram,
+        persona: data.persona,
+        regulatorScope: data.regulatorScope,
+        evidenceMode: data.evidenceMode,
+        documentClass: data.documentClass,
+        readinessGate: data.readinessGate,
+        approvalPathType: data.approvalPathType,
+        recommendationSource: data.recommendationSource,
+        workspaceTarget: data.workspaceTarget,
+        dossierContainerId: data.dossierContainerId,
+        artifactContainerId: data.artifactContainerId,
+        regulatorIntent: data.regulatorIntent,
+        placementContainerId:
+          (data.metadata?.containerId as string | undefined) ||
+          data.dossierContainerId ||
+          data.artifactContainerId,
+        provider: (data.metadata?.provider as string | undefined) || undefined,
+        model: (data.metadata?.model as string | undefined) || undefined,
         title: sanitizedTitle,
         content: sanitizedContent,
         ctdSection: data.ctdSection || null,
@@ -5015,12 +5106,16 @@ router.post(
         exportAllowed: false,
         eventType: 'artifact.created',
       });
-      if (!contractValidation.valid) {
+      if (!governedResolution.validation.valid) {
         return sendError(
           res,
           400,
           'Governed document contract validation failed',
-          contractValidation.errors,
+          {
+            errors: governedResolution.validation.errors,
+            warnings: governedResolution.validation.warnings,
+            resolved: governedResolution.resolved,
+          },
           'GOVERNED_CONTRACT_INVALID'
         );
       }
@@ -5340,7 +5435,7 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
     // Update ctdSection if provided
     const newCtdSection = ctdSection !== undefined ? ctdSection : dbArtifact.ctdSection;
 
-    const updateContractValidation = validateGovernedArtifactMutation({
+    const updateGovernedResolution = resolveGovernedContext({
       req,
       projectId: dbArtifact.projectId,
       artifactId: dbArtifact.id,
@@ -5355,12 +5450,16 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
       exportAllowed: ['approved', 'locked', 'published'].includes(String(dbArtifact.status || '')),
       eventType: 'artifact.updated',
     });
-    if (!updateContractValidation.valid) {
+    if (!updateGovernedResolution.validation.valid) {
       return sendError(
         res,
         400,
         'Governed document contract validation failed',
-        updateContractValidation.errors,
+        {
+          errors: updateGovernedResolution.validation.errors,
+          warnings: updateGovernedResolution.validation.warnings,
+          resolved: updateGovernedResolution.resolved,
+        },
         'GOVERNED_CONTRACT_INVALID'
       );
     }
@@ -15059,6 +15158,39 @@ router.post(
       const artifactId = `artifact_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const contentHash = crypto.createHash('sha256').update(documentContent).digest('hex');
 
+      const promotedMetadata = {
+        promotedFrom: type,
+        sourceMessageCount: messages.length,
+      };
+      const governedPromotion = resolveGovernedContext({
+        req,
+        projectId: conversation.project_id,
+        artifactId: null,
+        documentType: type,
+        generationMode: 'ai_generated',
+        lifecycleStatus: 'draft',
+        originSurface: 'ri_copilot',
+        title: DOMPurify.sanitize(title),
+        content: documentContent,
+        sourceRefs: [`conversation:${conversationId}`],
+        provider: 'openai',
+        model: 'gpt-4o-mini',
+        eventType: 'artifact.created',
+      });
+      if (!governedPromotion.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: governedPromotion.validation.errors,
+            warnings: governedPromotion.validation.warnings,
+            resolved: governedPromotion.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+
       const artifactResult = await db
         .insert(concept2cureArtifacts)
         .values({
@@ -15074,7 +15206,24 @@ router.post(
           version: 1,
           status: 'draft',
           createdById: userId,
-          metadata: { promotedFrom: type, sourceMessageCount: messages.length },
+          metadata: {
+            ...promotedMetadata,
+            harness: {
+              clientTrack: governedPromotion.contract.clientTrack,
+              submissionProgram: governedPromotion.contract.submissionProgram,
+              persona: governedPromotion.contract.persona,
+              regulatorScope: governedPromotion.contract.regulatorScope,
+              documentClass: governedPromotion.contract.documentClass,
+              readinessGate: governedPromotion.contract.readinessGate,
+              workspaceTarget: governedPromotion.contract.workspaceTarget,
+              originSurface: governedPromotion.contract.originSurface,
+              recommendationSource: governedPromotion.contract.recommendationSource,
+              regulatorIntent: governedPromotion.contract.regulatorIntent,
+              gateChecks: governedPromotion.contract.exportEligibility.gateChecks,
+              blockingReasons: governedPromotion.contract.exportEligibility.blockingReasons,
+              readinessOutcome: governedPromotion.contract.exportEligibility.readinessOutcome,
+            },
+          },
         })
         .returning();
 
