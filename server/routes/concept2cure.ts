@@ -9837,32 +9837,39 @@ const TEMPLATES = [
     submissionTypes: ['FDA_510K'],
     category: 'document',
     ctdSection: '1.1',
-    content: `[DATE]
+    content: `Date: <Insert submission date>
 
 Food and Drug Administration
 Center for Devices and Radiological Health
-Document Mail Center - WO66-G609
+Document Control Center
 10903 New Hampshire Avenue
 Silver Spring, MD 20993-0002
 
 Re: 510(k) Premarket Notification
-Device Name: [DEVICE NAME]
-Classification: [PRODUCT CODE]
+Device Name: <Insert device name>
+Product Code: <Insert product code>
+Regulation Number: <Insert regulation number>
 
-Dear Sir or Madam:
+Dear Review Team,
 
-[COMPANY NAME] is submitting this 510(k) premarket notification for our [DEVICE NAME]. We believe this device is substantially equivalent to [PREDICATE DEVICE] (K[NUMBER]).
+<Insert sponsor name> submits this Traditional 510(k) for <Insert device name>. This submission supports a determination of substantial equivalence to <Insert predicate device name> (K<Insert predicate number>).
 
-Intended Use: [INTENDED USE]
+Submission highlights:
+- Intended use and indications for use statement
+- Device description and technological characteristics
+- Substantial equivalence comparison to predicate device
+- Performance testing package (bench, biocompatibility, software, sterilization, and/or clinical evidence as applicable)
 
-This submission contains all required information per 21 CFR 807.87.
+This package is organized according to 21 CFR 807.87 and current FDA 510(k) expectations.
+
+Primary contact for this submission:
+<Insert contact name, title, email, and phone>
 
 Sincerely,
 
-[SIGNATURE]
-[NAME], [TITLE]
-[COMPANY]
-[CONTACT]`,
+<Insert authorized signatory name>
+<Insert signatory title>
+<Insert sponsor legal entity name>`,
   },
   {
     id: 'tpl_510k_summary',
@@ -9874,35 +9881,35 @@ Sincerely,
     content: `# 510(k) Summary
 
 ## 1. Submitter Information
-- **Company**: [COMPANY NAME]
-- **Address**: [ADDRESS]
-- **Contact**: [CONTACT NAME], [TITLE]
-- **Phone**: [PHONE]
-- **Email**: [EMAIL]
+- **Company**: <Insert sponsor legal name>
+- **Address**: <Insert sponsor address>
+- **Contact**: <Insert contact name and title>
+- **Phone**: <Insert phone number>
+- **Email**: <Insert contact email>
 
 ## 2. Device Information
-- **Device Name**: [DEVICE NAME]
-- **Common Name**: [COMMON NAME]
-- **Classification Name**: [CLASSIFICATION]
-- **Product Code**: [CODE]
-- **Regulation Number**: [REG NUMBER]
+- **Device Name**: <Insert device trade name>
+- **Common Name**: <Insert common name>
+- **Classification Name**: <Insert classification name>
+- **Product Code**: <Insert product code>
+- **Regulation Number**: <Insert CFR regulation number>
 
 ## 3. Predicate Device
-- **Device Name**: [PREDICATE NAME]
-- **510(k) Number**: K[NUMBER]
-- **Manufacturer**: [MANUFACTURER]
+- **Device Name**: <Insert primary predicate name>
+- **510(k) Number**: K<Insert predicate number>
+- **Manufacturer**: <Insert predicate manufacturer>
 
 ## 4. Intended Use
-[INTENDED USE STATEMENT]
+State the intended use exactly as presented in labeling and the indications for use form, including target population and setting of use.
 
 ## 5. Device Description
-[DEVICE DESCRIPTION]
+Describe the device design, components, materials, principle of operation, user interface, and key accessories. Include software architecture summary when software is part of the device.
 
-## 6. Substantial Equivalence
-[SE DISCUSSION]
+## 6. Substantial Equivalence Discussion
+Compare intended use, technology, and performance versus the predicate device. Clearly explain any technological differences and why they do not raise new questions of safety or effectiveness.
 
 ## 7. Performance Data Summary
-[PERFORMANCE SUMMARY]`,
+Summarize nonclinical and clinical evidence, including bench testing, biocompatibility, electrical safety/EMC, software validation, sterility, shelf life, and human factors/usability as applicable.`,
   },
   {
     id: 'tpl_ind_cover_letter',
@@ -9912,34 +9919,32 @@ Sincerely,
     category: 'document',
     ctdSection: '1.2',
     content: `# IND Cover Letter
-
-[DATE]
+Date: <Insert submission date>
 
 Food and Drug Administration
 Center for Drug Evaluation and Research
-[Division]
+<Insert division or office name>
 
-Re: Investigational New Drug Application — [PRODUCT NAME]
-IND Number: [IND NUMBER]
-Submission Type: [INITIAL / AMENDMENT / ANNUAL REPORT]
+Re: Investigational New Drug Application - <Insert product name>
+IND Number: <Insert IND number or "new IND">
+Submission Type: <Initial IND | Amendment | Annual Report | Safety Report>
 
-Dear [Review Team],
+Dear Review Team,
 
-On behalf of [SPONSOR], we submit this [SUBMISSION TYPE] for [PRODUCT NAME].
+On behalf of <Insert sponsor name>, we submit this <Insert submission type> for <Insert product name>.
 This package includes:
 
-- [List major included components]
-- [Safety and clinical updates, if applicable]
-- [CMC updates, if applicable]
+- Administrative and regulatory submission materials for this filing
+- Relevant nonclinical, clinical, and safety updates for the current reporting period
+- Chemistry, manufacturing, and controls updates applicable to this submission
 
-Please contact [CONTACT NAME, TITLE] at [EMAIL / PHONE] with any questions.
+Please contact <Insert contact name and title> at <Insert email and phone> with any questions.
 
 Sincerely,
 
-[SIGNATURE]
-[NAME]
-[TITLE]
-[SPONSOR]`,
+<Insert signatory name>
+<Insert signatory title>
+<Insert sponsor name>`,
   },
   {
     id: 'tpl_ind_investigator_brochure',
@@ -9951,25 +9956,25 @@ Sincerely,
     content: `# Investigator's Brochure
 
 ## 1. Summary
-[High-level summary of product, mechanism, and current evidence]
+Provide a concise clinical and nonclinical summary of the investigational product, mechanism of action, and development status.
 
 ## 2. Introduction
-[Background and development context]
+Describe product background, indication context, and development rationale.
 
 ## 3. Physical, Chemical, and Pharmaceutical Properties
-[Drug substance and product properties]
+Summarize relevant drug substance and drug product characteristics, including formulation and handling information for investigators.
 
 ## 4. Nonclinical Studies
-[Pharmacology, PK, and toxicology summary]
+Summarize pharmacology, pharmacokinetics, and toxicology findings that inform clinical risk management.
 
 ## 5. Effects in Humans
-[Clinical pharmacology, efficacy/safety findings, known risks]
+Summarize clinical pharmacology, known efficacy signals, observed safety profile, and important risk considerations.
 
 ## 6. Guidance for Investigators
-[Dose rationale, monitoring, risk management considerations]
+Provide dosing rationale, monitoring expectations, contraindications, and investigator actions for adverse events.
 
 ## 7. References
-[Key cited studies and reports]`,
+List key source reports, publications, and supporting references used in this brochure.`,
   },
   {
     id: 'tpl_ind_pre_ind_briefing',
@@ -9981,24 +9986,24 @@ Sincerely,
     content: `# Pre-IND Briefing Package
 
 ## 1. Meeting Request Context
-[Program background, indication, and development stage]
+Summarize sponsor, product, indication, and current development stage.
 
 ## 2. Product and Development Overview
-[CMC, nonclinical, and clinical overview]
+Provide a concise integrated overview of CMC, nonclinical, and clinical development work completed to date.
 
 ## 3. Proposed Clinical Plan
-[First-in-human or phase transition plan]
+Describe the proposed first-in-human or next-phase plan, including study design rationale and key safety controls.
 
 ## 4. Key Questions for FDA
-1. [Question]
-2. [Question]
-3. [Question]
+1. Include a focused question on CMC strategy and release readiness.
+2. Include a focused question on nonclinical package adequacy.
+3. Include a focused question on clinical design, dose justification, and safety monitoring.
 
 ## 5. Supporting Summaries
-[Relevant nonclinical, CMC, and clinical summary content]
+Provide supporting summaries and references for each question area.
 
 ## 6. Appendices
-[Data tables, references, and supporting documents]`,
+Attach key tables, prior correspondence, and reference documents needed for efficient FDA review.`,
   },
   {
     id: 'tpl_ind_protocol',
@@ -10009,55 +10014,55 @@ Sincerely,
     ctdSection: '5.3.5',
     content: `# Clinical Protocol
 
-## Protocol Number: [PROTOCOL NUMBER]
-## Version: [VERSION]
-## Date: [DATE]
+## Protocol Number
+<Insert protocol number>
 
----
+## Version
+<Insert protocol version and date>
 
 ## 1. Protocol Synopsis
 | Element | Description |
 |---------|-------------|
-| Title | [STUDY TITLE] |
-| Phase | [PHASE] |
-| Sponsor | [SPONSOR] |
-| Indication | [INDICATION] |
-| Primary Objective | [PRIMARY OBJECTIVE] |
+| Title | <Insert full study title> |
+| Phase | <Insert study phase> |
+| Sponsor | <Insert sponsor legal name> |
+| Indication | <Insert target indication> |
+| Primary Objective | <Insert primary objective statement> |
 
 ## 2. Background and Rationale
-[BACKGROUND]
+Provide the scientific and clinical rationale for this study, including unmet need, mechanism of action, and supporting nonclinical/clinical evidence.
 
 ## 3. Study Objectives
 ### 3.1 Primary Objective
-[PRIMARY]
+State one clear, measurable primary objective linked to the primary endpoint and estimand.
 
 ### 3.2 Secondary Objectives
-[SECONDARY]
+List key secondary and exploratory objectives with aligned endpoints and analysis hierarchy.
 
 ## 4. Study Design
-[DESIGN DESCRIPTION]
+Describe study design, treatment arms, randomization/blinding approach, visit schedule, dose strategy, and stopping or escalation rules.
 
 ## 5. Study Population
 ### 5.1 Inclusion Criteria
-[INCLUSION]
+Define clinically justified eligibility criteria that align to the target treatment population.
 
 ### 5.2 Exclusion Criteria
-[EXCLUSION]
+Define exclusion criteria focused on patient safety, interpretability, and protocol feasibility.
 
 ## 6. Investigational Product
-[IP DETAILS]
+Describe product formulation, route, dose, administration, accountability, storage, and handling requirements.
 
 ## 7. Efficacy Assessments
-[EFFICACY]
+Define endpoint instruments, assessment timing, and adjudication methods where applicable.
 
 ## 8. Safety Assessments
-[SAFETY]
+Define adverse event capture, laboratory/vitals/ECG schedules, DLT rules, and safety monitoring governance.
 
 ## 9. Statistical Analysis
-[STATISTICS]
+Describe analysis populations, primary model, multiplicity control, missing data strategy, interim analysis, and sensitivity analyses.
 
 ## 10. Ethics
-[ETHICS STATEMENT]`,
+Describe informed consent, IRB/IEC oversight, data privacy protections, and protocol compliance with ICH E6 and applicable regulations.`,
   },
   {
     id: 'tpl_cer_summary',
@@ -10071,55 +10076,55 @@ Sincerely,
 ## Document Information
 | Field | Value |
 |-------|-------|
-| Device | [DEVICE NAME] |
-| Manufacturer | [MANUFACTURER] |
-| Version | [VERSION] |
-| Date | [DATE] |
-| Author | [AUTHOR] |
+| Device | <Insert device name> |
+| Manufacturer | <Insert legal manufacturer name> |
+| Version | <Insert CER version> |
+| Date | <Insert effective date> |
+| Author | <Insert author and credentials> |
 
 ---
 
 ## 1. Executive Summary
-[EXECUTIVE SUMMARY]
+Provide a concise conclusion on whether current clinical evidence demonstrates safety, clinical performance, and acceptable benefit-risk for the intended purpose.
 
 ## 2. Scope of the Clinical Evaluation
 ### 2.1 Device Description
-[DEVICE DESCRIPTION]
+Describe device design, key materials, operating principles, variants, and accessories relevant to clinical performance and risk.
 
 ### 2.2 Intended Purpose
-[INTENDED PURPOSE]
+State intended medical purpose, indications, contraindications, and claims as reflected in current labeling.
 
 ### 2.3 Target Population
-[TARGET POPULATION]
+Define patient population, use environment, and user profile, including special populations where relevant.
 
 ## 3. Clinical Background
 ### 3.1 Current Knowledge
-[CURRENT KNOWLEDGE]
+Summarize clinical context, disease burden, and current treatment standards for the intended indication.
 
 ### 3.2 State of the Art
-[STATE OF ART]
+Describe accepted state-of-the-art therapies/devices and position this device relative to alternatives.
 
 ## 4. Clinical Data Sources
 ### 4.1 Literature Search
-[SEARCH METHODOLOGY]
+Summarize search protocol, databases, inclusion/exclusion criteria, appraisal methods, and evidence flow.
 
 ### 4.2 Clinical Investigations
-[CLINICAL INVESTIGATIONS]
+Summarize pivotal/supportive clinical studies, endpoints, populations, and key outcomes.
 
 ### 4.3 Post-Market Data
-[PMS DATA]
+Summarize complaint trends, vigilance events, CAPA signals, registry/real-world data, and PMCF findings.
 
 ## 5. Data Analysis
-[DATA ANALYSIS]
+Provide integrated analysis across all evidence sources, including consistency of outcomes and limitations of the data set.
 
 ## 6. Benefit-Risk Analysis
-[BENEFIT RISK]
+Describe demonstrated clinical benefits, residual risks, risk controls, and justification for overall benefit-risk acceptability.
 
 ## 7. Conclusions
-[CONCLUSIONS]
+State final clinical evaluation conclusions, claim supportability, and any conditions for ongoing surveillance.
 
 ## 8. Post-Market Clinical Follow-up
-[PMCF PLAN]`,
+Define PMCF objectives, study activities, timelines, and decision criteria for CER updates.`,
   },
   {
     id: 'tpl_risk_analysis',

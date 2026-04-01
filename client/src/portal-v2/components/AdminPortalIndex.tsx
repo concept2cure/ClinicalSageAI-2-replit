@@ -12,7 +12,7 @@
  * @note Requires react-router-dom to be installed: npm install react-router-dom @types/react-router-dom
  */
 
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useCallback } from 'react';
 import { Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -74,11 +74,6 @@ const TrainingManagement = lazy(() => import('./admin/TrainingManagement'));
 
 // Monitoring Components
 const ActivityMonitor = lazy(() => import('./monitoring/ActivityMonitor'));
-
-// Auth Components
-const LoginPage = lazy(() => import('./auth/LoginPage'));
-const MFASetup = lazy(() => import('./auth/MfaSetup'));
-const PasswordReset = lazy(() => import('./auth/PasswordReset'));
 
 // Onboarding Components
 const OnboardingWizard = lazy(() => import('./onboarding/OnboardingWizard'));
@@ -736,24 +731,9 @@ export const AuthRoutes: React.FC = () => {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
-        <Route
-          path="login"
-          element={
-            <LoginPage
-              onLoginSuccess={() => {
-                window.location.href = '/admin';
-              }}
-              onForgotPassword={() => {
-                window.location.href = '/auth/password-reset';
-              }}
-              onContactSupport={() => {
-                window.location.href = 'mailto:support@concept2cure.pro';
-              }}
-            />
-          }
-        />
-        <Route path="mfa-setup" element={<MFASetup />} />
-        <Route path="password-reset" element={<PasswordReset />} />
+        <Route path="login" element={<Navigate to="/concept2cure/login" replace />} />
+        <Route path="mfa-setup" element={<Navigate to="/concept2cure/login" replace />} />
+        <Route path="password-reset" element={<Navigate to="/concept2cure/password-reset" replace />} />
         <Route
           path="onboarding"
           element={<OnboardingWizard onComplete={handleOnboardingComplete} />}
