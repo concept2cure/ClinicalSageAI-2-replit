@@ -1,0 +1,29 @@
+{
+  "owners": [
+    {
+      "pattern": "^server/",
+      "owner": "Backend Platform",
+      "contact": "server/routes + server/services owners"
+    },
+    {
+      "pattern": "^client/src/concept2cure/",
+      "owner": "Concept2Cure Frontend",
+      "contact": "client/src/concept2cure maintainers"
+    },
+    {
+      "pattern": "^client/src/",
+      "owner": "Frontend Platform",
+      "contact": "client/src maintainers"
+    },
+    {
+      "pattern": "^shared/",
+      "owner": "Shared Contracts",
+      "contact": "shared/schema + shared/types owners"
+    },
+    {
+      "pattern": "^scripts/",
+      "owner": "Developer Experience",
+      "contact": "scripts maintainers"
+    }
+  ]
+}

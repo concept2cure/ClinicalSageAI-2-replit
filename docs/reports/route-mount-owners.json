@@ -1,0 +1,14 @@
+{
+  "defaultOwner": "platform-architecture",
+  "prefixOwners": {
+    "/api/auth": "identity-access",
+    "/api/projects": "workspace-core",
+    "/api/documents": "authoring-governance",
+    "/api/reports": "reporting-intelligence",
+    "/api/ind": "submission-workflows",
+    "/api/regulatory": "regulatory-intelligence",
+    "/api/ai": "ai-platform",
+    "/api/cmc": "cmc-platform",
+    "/api/concept2cure": "platform-kernel"
+  }
+}

@@ -38,7 +38,6 @@
     "client/src/lib/authClient.ts",
     "client/src/contexts/AuthContext.tsx",
     "client/src/contexts/AuthContext.jsx",
-    "client/src/hooks/use-auth.jsx",
     "client/src/pages/AuthPage.jsx",
     "client/src/pages/TrialSageSignOn.jsx",
     "client/src/pages/SignupPage.tsx",

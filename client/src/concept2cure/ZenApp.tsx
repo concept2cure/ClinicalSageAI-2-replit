@@ -4214,6 +4214,9 @@ export default ZenApp;
 
 const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
   // Global destinations
+  apps: 'apps',
+  'artifacts-center': 'artifacts-center',
+  setup: 'setup',
   projects: 'projects',
   home: 'projects',
   documents: 'regulatory-workspace',
@@ -4232,6 +4235,10 @@ const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
   'task-board': 'task-board',
   'csr-workflow': 'csr-workflow',
   'ind-checklist': 'ind-checklist',
+  overview: 'project-home',
+  work: 'documents',
+  'review-tab': 'review',
+  submit: 'submissions',
   templates: 'template-library',
   'template-library': 'template-library',
   tools: 'documents',
