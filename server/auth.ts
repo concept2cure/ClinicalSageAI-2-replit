@@ -14,6 +14,25 @@ import { config } from './config/environment';
 
 const logger = createScopedLogger('auth');
 
+
+const parseFiniteInt = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) return Math.trunc(value);
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
+const extractBearerToken = (authorizationHeader?: string): string | null => {
+  if (!authorizationHeader) return null;
+  const [scheme, token] = authorizationHeader.trim().split(/\s+/, 2);
+  if (!scheme || scheme.toLowerCase() !== 'bearer') return null;
+  if (!token || token.trim() === '') return null;
+  return token.trim();
+};
+
+
 // Augment Express Request type to include user information
 declare global {
   namespace Express {
@@ -56,8 +75,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
   req.db = db;
 
   const authHeader = req.headers.authorization;
-  const token =
-    authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7).trim() : null;
+  const token = extractBearerToken(authHeader);
 
   if (!token) {
     return res.status(401).json({ error: 'Bearer token required' });
@@ -75,17 +93,18 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         return res.status(401).json({ error: 'Invalid token payload' });
       }
 
-      const userId = parseInt(decoded.userId, 10) || decoded.userId;
-      const organizationId = parseInt(decoded.organizationId, 10);
+      const parsedUserId = parseFiniteInt(decoded.userId);
+      const parsedOrganizationId = parseFiniteInt(decoded.organizationId);
+      const userId = parsedUserId ?? decoded.userId;
       const membership =
-        Number.isFinite(Number(userId)) && Number.isFinite(organizationId)
+        parsedUserId !== null && parsedOrganizationId !== null
           ? await db
               .select({ role: organizationUsers.role })
               .from(organizationUsers)
               .where(
                 and(
-                  eq(organizationUsers.userId, Number(userId)),
-                  eq(organizationUsers.organizationId, organizationId)
+                  eq(organizationUsers.userId, parsedUserId),
+                  eq(organizationUsers.organizationId, parsedOrganizationId)
                 )
               )
               .limit(1)
@@ -95,7 +114,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
       req.userId = userId;
       req.userRole = resolvedRole;
       req.userEmail = decoded.email;
-      req.tenantId = decoded.organizationId ? parseInt(decoded.organizationId) : 0;
+      req.tenantId = parsedOrganizationId ?? 0;
       req.user = {
         id: req.userId,
         userId: req.userId,
@@ -104,7 +123,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         organizationId: decoded.organizationId,
       };
       req.tenantContext = {
-        organizationId: parseInt(decoded.organizationId, 10),
+        organizationId: parsedOrganizationId ?? null,
         userId: req.userId,
         role: resolvedRole,
       };
