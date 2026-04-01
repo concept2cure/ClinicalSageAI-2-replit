@@ -981,6 +981,8 @@ router.post('/runs', async (req: Request, res: Response) => {
       scopeType,
       scopeId,
       reportTypeId,
+      registryId,
+      submissionType,
       requestedBy,
     } = parsed.data;
 
@@ -1021,6 +1023,8 @@ router.post('/runs', async (req: Request, res: Response) => {
 
     const computed = await computeInitialRun(orgId, scopeType, scopeId, {
       programProjectIds,
+      explicitRegistryId: registryId,
+      explicitSubmissionType: submissionType,
     });
 
     const [run] = await db
@@ -1036,6 +1040,7 @@ router.post('/runs', async (req: Request, res: Response) => {
         dependencySummary: {
           providers: computed.providers,
           scopeLineage: scope.lineage,
+          summary: computed.summary,
         },
         blockers: computed.blockers,
         confidence: computed.confidence,
@@ -1195,12 +1200,42 @@ router.get('/runs', async (req: Request, res: Response) => {
       .limit(limit);
 
     const typeMap = await getReportTypeLabelMap(rows.map(row => row.reportTypeId));
-    let enriched = rows.map(row => ({ ...row, reportTypeLabel: typeMap.get(row.reportTypeId) || row.reportTypeId }));
+    let enriched = rows.map(row => {
+      const summary = (row.dependencySummary as any)?.summary as
+        | {
+            regulatory?: {
+              regionCode?: string;
+              registryId?: string;
+              agency?: string;
+            };
+          }
+        | undefined;
+      const regionCode = summary?.regulatory?.regionCode;
+      const registryId = summary?.regulatory?.registryId;
+      const agency = summary?.regulatory?.agency;
+      return {
+        ...row,
+        reportTypeLabel: typeMap.get(row.reportTypeId) || row.reportTypeId,
+        regionCode,
+        registryId,
+        agency,
+      };
+    });
 
     if (search && search.trim()) {
       const q = search.trim().toLowerCase();
       enriched = enriched.filter(row =>
-        [row.runUuid, row.scopeType, row.scopeId, row.status, row.reportTypeId, row.reportTypeLabel]
+        [
+          row.runUuid,
+          row.scopeType,
+          row.scopeId,
+          row.status,
+          row.reportTypeId,
+          row.reportTypeLabel,
+          row.regionCode,
+          row.registryId,
+          row.agency,
+        ]
           .filter(Boolean)
           .some(value => String(value).toLowerCase().includes(q))
       );

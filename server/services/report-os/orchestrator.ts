@@ -32,7 +32,11 @@ export async function computeInitialRun(
   organizationId: number,
   scopeType: ReportScope,
   scopeId: string,
-  options?: { programProjectIds?: number[] }
+  options?: {
+    programProjectIds?: number[];
+    explicitRegistryId?: string;
+    explicitSubmissionType?: string;
+  }
 ): Promise<RunComputationResult> {
   const providers: ProviderResult[] = [];
   const blockers: string[] = [];
@@ -104,9 +108,22 @@ export async function computeInitialRun(
   });
   if (readinessBlocker) blockers.push(readinessBlocker);
 
-  // Provider 3: compliance/audit provider is contract-only in slice 1
-  providers.push({ provider: 'compliance_audit', observedAt: new Date().toISOString(), status: 'partial', blocker: 'Compliance aggregation pending provider adapter wiring' });
-  blockers.push('Compliance provider in partial mode (slice-1)');
+  // Provider 3: compliance/audit derived from governed lifecycle evidence.
+  const complianceStatus: ProviderResult['status'] =
+    approvedOrLockedCount > 0 ? 'ready' : reviewCount > 0 ? 'partial' : 'missing';
+  const complianceBlocker =
+    complianceStatus === 'ready'
+      ? undefined
+      : complianceStatus === 'partial'
+        ? 'Artifacts are in review but not approved/locked for regulated audit posture'
+        : 'No governed artifacts available for compliance evidence';
+  providers.push({
+    provider: 'compliance_audit',
+    observedAt: new Date().toISOString(),
+    status: complianceStatus,
+    blocker: complianceBlocker,
+  });
+  if (complianceBlocker) blockers.push(complianceBlocker);
 
   // Provider 4/5: regional registry readiness + package completeness (project scopes)
   if (scopeType === 'project') {
