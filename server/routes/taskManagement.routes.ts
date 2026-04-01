@@ -92,12 +92,13 @@ const createAutomationSchema = z.object({
 });
 
 // Helper function to calculate critical path
-async function calculateCriticalPath(projectId: number) {
+async function calculateCriticalPath(projectId: number, organizationId: number) {
   try {
     // Get all tasks and dependencies for the project
     const tasks = await storage.db
       .selectFrom('unifiedTasks')
       .selectAll()
+      .where('organizationId', '=', organizationId)
       .where('projectId', '=', projectId)
       .execute();
 
@@ -379,8 +380,9 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
   try {
     const templateId = req.params.templateId;
     const { projectId, startDate, adjustDates } = req.body;
-    const organizationId = req.body.organizationId;
-    if (!organizationId) {
+    const organizationIdRaw = getSecureOrgId(req);
+    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
 
@@ -389,6 +391,7 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
       .selectFrom('taskTemplates')
       .selectAll()
       .where('templateId', '=', templateId)
+      .where('organizationId', '=', organizationId)
       .executeTakeFirst();
 
     if (!template) {
@@ -487,6 +490,7 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
         updatedAt: new Date(),
       })
       .where('templateId', '=', templateId)
+      .where('organizationId', '=', organizationId)
       .execute();
 
     res.json({
@@ -508,9 +512,11 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
 router.get('/tasks/by-module/:moduleId', async (req: Request, res: Response) => {
   try {
     const moduleId = req.params.moduleId;
-    const organizationId = req.query.organizationId
-      ? parseInt(req.query.organizationId as string)
-      : 1;
+    const organizationIdRaw = getSecureOrgId(req);
+    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
     const status = req.query.status as string;
     const priority = req.query.priority as string;
 
@@ -547,6 +553,33 @@ router.get('/tasks/by-module/:moduleId', async (req: Request, res: Response) => 
 router.post('/tasks/dependencies', async (req: Request, res: Response) => {
   try {
     const validatedData = createDependencySchema.parse(req.body);
+    const organizationIdRaw = getSecureOrgId(req);
+    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
+
+    const [predecessorTask, successorTask] = await Promise.all([
+      storage.db
+        .selectFrom('unifiedTasks')
+        .select(['taskId'])
+        .where('taskId', '=', validatedData.predecessorTaskId)
+        .where('organizationId', '=', organizationId)
+        .executeTakeFirst(),
+      storage.db
+        .selectFrom('unifiedTasks')
+        .select(['taskId'])
+        .where('taskId', '=', validatedData.successorTaskId)
+        .where('organizationId', '=', organizationId)
+        .executeTakeFirst(),
+    ]);
+    if (!predecessorTask || !successorTask) {
+      return res.status(404).json({
+        success: false,
+        error: 'One or both tasks not found for organization',
+      });
+    }
+
     const dependencyId = `DEP-${Date.now()}-${uuidv4().substr(0, 8)}`;
 
     const newDependency = await storage.db
@@ -578,8 +611,13 @@ router.post('/tasks/dependencies', async (req: Request, res: Response) => {
 router.get('/tasks/critical-path/:projectId', async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.projectId);
+    const organizationIdRaw = getSecureOrgId(req);
+    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
 
-    const criticalPath = await calculateCriticalPath(projectId);
+    const criticalPath = await calculateCriticalPath(projectId, organizationId);
 
     res.json({
       success: true,
@@ -597,7 +635,12 @@ router.get('/tasks/critical-path/:projectId', async (req: Request, res: Response
 // Auto-assign tasks based on workload
 router.post('/tasks/auto-assign', async (req: Request, res: Response) => {
   try {
-    const { taskIds, organizationId = 1 } = req.body;
+    const { taskIds } = req.body;
+    const organizationIdRaw = getSecureOrgId(req);
+    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
     const assignmentResults = [];
 
     for (const taskId of taskIds) {
@@ -606,6 +649,7 @@ router.post('/tasks/auto-assign', async (req: Request, res: Response) => {
         .selectFrom('unifiedTasks')
         .selectAll()
         .where('taskId', '=', taskId)
+        .where('organizationId', '=', organizationId)
         .executeTakeFirst();
 
       if (!task) continue;
@@ -625,6 +669,7 @@ router.post('/tasks/auto-assign', async (req: Request, res: Response) => {
             updatedAt: new Date(),
           })
           .where('taskId', '=', taskId)
+          .where('organizationId', '=', organizationId)
           .execute();
 
         assignmentResults.push({
@@ -652,9 +697,11 @@ router.post('/tasks/auto-assign', async (req: Request, res: Response) => {
 // Get task analytics
 router.get('/tasks/analytics', async (req: Request, res: Response) => {
   try {
-    const organizationId = req.query.organizationId
-      ? parseInt(req.query.organizationId as string)
-      : 1;
+    const organizationIdRaw = getSecureOrgId(req);
+    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
     const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : null;
 
     // Base query
@@ -759,8 +806,9 @@ router.get('/tasks/analytics', async (req: Request, res: Response) => {
 router.post('/templates', async (req: Request, res: Response) => {
   try {
     const validatedData = createTemplateSchema.parse(req.body);
-    const organizationId = req.body.organizationId;
-    if (!organizationId) {
+    const organizationIdRaw = getSecureOrgId(req);
+    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     const templateId = `TMPL-${Date.now()}-${uuidv4().substr(0, 8)}`;
@@ -798,8 +846,9 @@ router.post('/templates', async (req: Request, res: Response) => {
 router.post('/automation', async (req: Request, res: Response) => {
   try {
     const validatedData = createAutomationSchema.parse(req.body);
-    const organizationId = req.body.organizationId;
-    if (!organizationId) {
+    const organizationIdRaw = getSecureOrgId(req);
+    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     const automationId = `AUTO-${Date.now()}-${uuidv4().substr(0, 8)}`;

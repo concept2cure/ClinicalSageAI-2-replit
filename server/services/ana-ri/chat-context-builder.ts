@@ -15,11 +15,11 @@ import type { GatewayMessage } from '../ai-gateway/types.js';
 import { pool } from '../../db.js';
 import {
   orchestrate,
-  prefetchProjectIntelligence,
   type OrchestratorInput,
   type IntentLens,
   type UserRole,
 } from './index.js';
+import { prefetchProjectIntelligence, preloadRIMContext } from './orchestrator.js';
 import type { SubmissionType } from './deficiency-taxonomy.js';
 import { inferRole } from './role-adapter.js';
 import { buildMemoryContextForChat } from '../memory-context-assembler.js';
@@ -27,6 +27,7 @@ import { getIntelligencePrefix, buildSectionSpecificPrompt } from '../lumen-cont
 import { enrichContextForChat } from './context-enrichment.js';
 import { getThreadMessages } from '../chat-thread-helpers.js';
 import { getFeedbackSummary } from '../intelligence/learning-loop-service.js';
+import { decisionLifecycleService } from '../decision-lifecycle-service.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -46,9 +47,18 @@ export interface ChatContext {
   threadId: string | undefined;
 }
 
+export interface PrefetchedRouteIntelligenceContext {
+  projectIdNumber: number | null;
+  feedbackContext: OrchestratorInput['_feedbackContext'];
+  projectProfile: OrchestratorInput['_projectIntelligenceProfile'];
+  rimContext: string;
+  decisionContext: Array<{ decision: unknown; receipt?: unknown }>;
+  orchestratorAuthoringContext?: OrchestratorInput['authoringContext'];
+}
+
 // ─── Authoring context builder ───────────────────────────────────────────────
 
-function buildAuthoringContextBlock(authoring_context: any): string {
+export function buildAuthoringContextBlock(authoring_context: any): string {
   if (!authoring_context || typeof authoring_context !== 'object') return '';
 
   const ac = authoring_context;
@@ -81,6 +91,117 @@ function buildAuthoringContextBlock(authoring_context: any): string {
   return parts.join('\n');
 }
 
+export function resolveProjectIdFromBody(body: any): string | number | undefined {
+  return body?.project_id || body?.context?.projectId || body?.project_context?.projectId;
+}
+
+export async function prefetchRouteIntelligenceContext(params: {
+  projectId?: string | number | null;
+  organizationId?: number | null;
+  authoringContext?: Record<string, unknown>;
+}): Promise<PrefetchedRouteIntelligenceContext> {
+  const { projectId, organizationId, authoringContext } = params;
+  const projectIdNumber = projectId != null ? Number(projectId) : null;
+
+  let feedbackContext: OrchestratorInput['_feedbackContext'] = null;
+  let projectProfile: OrchestratorInput['_projectIntelligenceProfile'] = null;
+  let rimContext = '';
+  let decisionContext: Array<{ decision: unknown; receipt?: unknown }> = [];
+
+  if (
+    projectIdNumber &&
+    Number.isFinite(projectIdNumber) &&
+    organizationId &&
+    Number.isFinite(organizationId)
+  ) {
+    const [feedbackResult, profileResult, rimResult] = await Promise.allSettled([
+      getFeedbackSummary(projectIdNumber, organizationId),
+      prefetchProjectIntelligence(projectIdNumber, organizationId),
+      authoringContext?.sectionCode || authoringContext?.artifactId
+        ? preloadRIMContext(String(projectIdNumber), organizationId)
+        : Promise.resolve(''),
+    ]);
+
+    if (feedbackResult.status === 'fulfilled' && feedbackResult.value.totalFeedback > 0) {
+      feedbackContext = {
+        totalFeedback: feedbackResult.value.totalFeedback,
+        acceptanceRate: feedbackResult.value.acceptanceRate,
+        topDismissedTypes: feedbackResult.value.topDismissedTypes,
+      };
+    }
+
+    if (profileResult.status === 'fulfilled') {
+      projectProfile = profileResult.value;
+    }
+
+    if (rimResult.status === 'fulfilled') {
+      rimContext = rimResult.value;
+    }
+
+    try {
+      decisionContext = decisionLifecycleService.getDecisionContext(String(projectIdNumber), {
+        sectionCode:
+          typeof authoringContext?.sectionCode === 'string'
+            ? authoringContext.sectionCode
+            : undefined,
+        moduleCode:
+          typeof authoringContext?.moduleCode === 'string' ? authoringContext.moduleCode : undefined,
+        limit: 10,
+      });
+    } catch {
+      // Non-blocking — decision context is optional enrichment.
+    }
+  }
+
+  let orchestratorAuthoringContext: OrchestratorInput['authoringContext'] | undefined;
+  if (authoringContext || projectId || organizationId) {
+    orchestratorAuthoringContext = {
+      ...(authoringContext || {}),
+      ...(projectId ? { projectId: String(projectId) } : {}),
+      ...(organizationId ? { organizationId } : {}),
+    };
+    if (decisionContext.length > 0) {
+      orchestratorAuthoringContext._decisionContext = decisionContext;
+    }
+    if (rimContext) {
+      orchestratorAuthoringContext._rimContext = rimContext;
+    }
+  }
+
+  return {
+    projectIdNumber,
+    feedbackContext,
+    projectProfile,
+    rimContext,
+    decisionContext,
+    orchestratorAuthoringContext,
+  };
+}
+
+export function buildOrchestratorAuthoringContext(params: {
+  authoringContext?: Record<string, unknown>;
+  projectId?: string | number | null;
+  organizationId?: number | null;
+  decisionContext?: Array<{ decision: unknown; receipt?: unknown }>;
+  rimContext?: string;
+}): OrchestratorInput['authoringContext'] | undefined {
+  const { authoringContext, projectId, organizationId, decisionContext, rimContext } = params;
+  if (!authoringContext && !projectId && !organizationId) return undefined;
+
+  const assembled: OrchestratorInput['authoringContext'] = {
+    ...(authoringContext || {}),
+    ...(projectId ? { projectId: String(projectId) } : {}),
+    ...(organizationId ? { organizationId } : {}),
+  };
+  if (decisionContext && decisionContext.length > 0) {
+    assembled._decisionContext = decisionContext;
+  }
+  if (rimContext) {
+    assembled._rimContext = rimContext;
+  }
+  return assembled;
+}
+
 // ─── Main builder ────────────────────────────────────────────────────────────
 
 /**
@@ -110,7 +231,11 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
   const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
   const userId = (req as any).userId || (req as any).user?.id || 'anonymous';
   const numericOrgId = orgId ? Number(orgId) : null;
-  const projectId = req.body.project_id || req.body.context?.projectId;
+  const projectId = resolveProjectIdFromBody(req.body);
+  const normalizedAuthoringContext =
+    authoring_context && typeof authoring_context === 'object'
+      ? ({ ...authoring_context } as Record<string, unknown>)
+      : undefined;
 
   // Infer role
   const effectiveRole: UserRole = validatedRole || inferRole({
@@ -122,28 +247,11 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
   // Build authoring context
   const authoringContextBlock = buildAuthoringContextBlock(authoring_context);
 
-  // Pre-fetch user feedback patterns from learning loop (non-blocking)
-  let feedbackContext: OrchestratorInput['_feedbackContext'] = null;
-  if (projectId && numericOrgId) {
-    try {
-      const summary = await getFeedbackSummary(Number(projectId), numericOrgId);
-      if (summary.totalFeedback > 0 && summary.topDismissedTypes.length > 0) {
-        feedbackContext = {
-          totalFeedback: summary.totalFeedback,
-          acceptanceRate: summary.acceptanceRate,
-          topDismissedTypes: summary.topDismissedTypes,
-        };
-      }
-    } catch (e: unknown) {
-      // Non-blocking — feedback context is optional enrichment
-    }
-  }
-
-  // Pre-fetch project intelligence profile for conversation continuity (non-blocking)
-  const intelligenceProfile = await prefetchProjectIntelligence(
-    projectId ? Number(projectId) : null,
-    numericOrgId,
-  );
+  const prefetchedContext = await prefetchRouteIntelligenceContext({
+    projectId,
+    organizationId: numericOrgId,
+    authoringContext: normalizedAuthoringContext,
+  });
 
   // Orchestrate
   const orchestratorInput: OrchestratorInput = {
@@ -154,8 +262,9 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     documentContext: document_context,
     submissionType: submission_type as SubmissionType | undefined,
     conversationHistory: conversation_history,
-    _feedbackContext: feedbackContext,
-    _projectIntelligenceProfile: intelligenceProfile,
+    authoringContext: prefetchedContext.orchestratorAuthoringContext,
+    _feedbackContext: prefetchedContext.feedbackContext,
+    _projectIntelligenceProfile: prefetchedContext.projectProfile,
   };
   const orchestration = orchestrate(orchestratorInput);
 

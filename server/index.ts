@@ -51,6 +51,7 @@ import './services/roleBasedAccess.js';
 import { authMiddleware } from './auth.js';
 import { sanitizeAskAnaInput } from './routes/ask-ana-utils';
 import { getSecureOrgId } from './utils/tenantContext';
+import FeatureToggleService from './services/featureToggleService';
 
 // Import database and schema for workflow persistence
 import { drizzle } from 'drizzle-orm/node-postgres';
@@ -4081,6 +4082,19 @@ import submissionCenterRoutes from './routes/submissionCenter.routes';
 app.use('/api/submission-center', submissionCenterRoutes);
 console.log('✅ Submission Center API routes mounted successfully');
 
+// Mount Unified Regulatory Submissions routes (feature-gated)
+import regulatorySubmissionsRoutes from './routes/regulatorySubmissions';
+app.use('/api/regulatory-submissions', regulatorySubmissionsRoutes);
+console.log('✅ Regulatory Submissions API routes mounted successfully (feature-gated)');
+
+// Mount Submission Ops + Regulatory Correspondence routes
+import submissionOpsRoutes from './routes/submission-ops';
+import regulatoryCorrespondenceRoutes from './routes/regulatory-correspondence';
+app.use('/api/submission-ops', submissionOpsRoutes);
+app.use('/api/regulatory-correspondence', regulatoryCorrespondenceRoutes);
+console.log('✅ Submission Ops API routes mounted successfully');
+console.log('✅ Regulatory Correspondence API routes mounted successfully');
+
 // Mount 510k-workflow routes directly
 import { TemplateMapper } from './services/documentTemplateMapper';
 import { MemStorage } from './storage';
@@ -6939,6 +6953,18 @@ async function startServer() {
     console.log('✅ Auth schema bootstrap complete');
   } catch (error: any) {
     console.error('⚠️ Auth schema bootstrap warning:', error.message);
+  }
+
+  // Initialize feature toggles for gated central-system routes.
+  try {
+    await FeatureToggleService.initializeFeatureToggle(
+      'UNIFIED_REGULATORY_SUBMISSIONS',
+      'Enable unified regulatory submissions bridge routes',
+      false
+    );
+    console.log('✅ Feature toggle bootstrap complete: UNIFIED_REGULATORY_SUBMISSIONS');
+  } catch (error: any) {
+    console.error('⚠️ Feature toggle bootstrap warning:', error.message);
   }
 
   // Seed AnA Capability Registry (fire-and-forget — don't block startup)
