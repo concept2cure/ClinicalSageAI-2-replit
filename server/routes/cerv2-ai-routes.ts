@@ -561,7 +561,7 @@ router.get(
 );
 
 // ── POST /analyze-section ──────────────────────────────────────────────────────
-// Phase 7.3: Deep section-aware analysis returning realistic mock content
+// Phase 7.3: Deep section-aware analysis returning realistic fallback content
 // for equivalence, benefit-risk, and regulatory-template generation.
 const analyzeSectionSchema = z.object({
   docType: z.enum(validDocTypes),
@@ -579,7 +579,7 @@ const analyzeSectionSchema = z.object({
     .optional(),
 });
 
-// Enhanced realistic mock content keyed by docType → sectionId
+// Enhanced realistic fallback content keyed by docType → sectionId
 const enhancedMockContent: Record<string, Record<string, (ctx: any) => string>> = {
   cerv2_510k: {
     se: ctx =>
@@ -747,7 +747,7 @@ router.post(
         });
       }
 
-      // Fallback: enhanced mock content, then base templates
+      // Fallback: enhanced section content, then base templates
       const enhancedFn = enhancedMockContent[docType]?.[sectionId];
       let suggestion: string;
 

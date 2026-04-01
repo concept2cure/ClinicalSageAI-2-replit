@@ -44,6 +44,7 @@
     "ci:audit-route-mounts:strict": "node scripts/ci/audit-route-mounts.mjs --strict-no-regression --baseline docs/reports/route-mount-audit-baseline.json --owners docs/reports/route-mount-owners.json --write-json docs/reports/route-mount-audit-latest.json",
     "ci:audit-route-mounts:full-strict": "node scripts/ci/audit-route-mounts.mjs --max-warnings 0 --owners docs/reports/route-mount-owners.json --write-json docs/reports/route-mount-audit-latest.json",
     "ci:no-mock-in-prod-routes": "node scripts/ci/check-no-mock-in-prod-routes.mjs",
+    "ci:no-mock-beta-path": "node scripts/ci/check-no-mock-in-prod-routes.mjs --strict-beta-path",
     "db:push": "drizzle-kit push",
     "db:seed": "node scripts/seed-ga-demo.mjs",
     "db:seed:admin": "node scripts/seed-admin.mjs",

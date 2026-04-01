@@ -41,6 +41,7 @@ import {
   isStaticDataEnabled,
   sendStaticDataDisabled,
 } from './middleware/staticDataGuard';
+import { createBetaRouteFence, isBetaRouteFenceEnabled } from './middleware/betaRouteFence';
 
 // Import enterprise services
 // NOTE: openaiService was renamed to aiProviderRouter - the old name was misleading
@@ -295,6 +296,10 @@ app.use('/api/firecrawl-webhooks', firecrawlWebhooksRoutes);
 app.use('/api/concept2cure', express.json({ limit: '50mb' }));
 app.use('/api', express.json({ limit: '2mb' }));
 app.use('/api', express.urlencoded({ extended: true, limit: '2mb' }));
+app.use('/api', createBetaRouteFence());
+if (isBetaRouteFenceEnabled()) {
+  console.log('🛡️ Guided beta route fence enabled for /api (mock/scaffold families blocked)');
+}
 // Cookie parsing (required for CSRF double-submit pattern)
 import cookieParser from 'cookie-parser';
 app.use(cookieParser());
