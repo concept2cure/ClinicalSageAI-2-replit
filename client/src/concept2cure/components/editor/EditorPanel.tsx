@@ -3974,6 +3974,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           <TemplateGeneratorPanel
             projectId={projectId}
             artifactId={activeArtifact?.id}
+            submissionType={submissionType}
             contextAttachment={projectId ? 'project' : 'adhoc'}
             onGenerated={(content, templateName) => {
               // Wrap in HTML if not already
