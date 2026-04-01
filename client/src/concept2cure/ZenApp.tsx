@@ -575,6 +575,29 @@ const INDUSTRY_MODES: IndustryMode[] = [
   'medical_writing',
 ];
 
+const PROJECT_SCOPED_LAYOUTS: ReadonlySet<LayoutMode> = new Set([
+  'project-home',
+  'documents',
+  'review',
+  'submissions',
+  'dossier-map',
+  'section-workspace',
+  'csr-workflow',
+  'ind-checklist',
+  'template-library',
+  'regulatory-workspace',
+  'editor',
+  'precedent-intelligence',
+  'biostatistics',
+  'review-readiness',
+  'report-engine',
+  'safety-narrative',
+  'vault-workspace',
+  'task-board',
+]);
+
+const isProjectScopedLayout = (layout: LayoutMode): boolean => PROJECT_SCOPED_LAYOUTS.has(layout);
+
 const normalizeIndustryMode = (value?: string): IndustryMode => {
   if (!value) {
     return 'biotech';
@@ -1248,13 +1271,14 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
   useEffect(() => {
     if (layoutMode !== 'biostatistics') return;
-    setLayoutMode('regulatory-workspace');
+    requireActiveProject('regulatory-workspace');
     setActiveToolPanel('ana-biostats');
-  }, [layoutMode]);
+  }, [layoutMode, requireActiveProject]);
 
   // ── P2: Navigate to section — real navigation ──
   const handleNavigateToSection = useCallback(
     (sectionCode: string) => {
+      if (!activeProjectId && !requireActiveProject('regulatory-workspace')) return;
       setActiveSectionCode(sectionCode);
       const moduleNum = sectionCode.charAt(0);
       const match = projectArtifacts.find(
@@ -1275,12 +1299,13 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       setRiViewMode('editor');
       setLayoutMode('regulatory-workspace');
     },
-    [projectArtifacts]
+    [activeProjectId, projectArtifacts, requireActiveProject]
   );
 
   // ── P2: Open artifact — real navigation ──
   const handleOpenArtifact = useCallback(
     (artifactId: string) => {
+      if (!activeProjectId && !requireActiveProject('documents')) return;
       // On project-home (AnA-first): show artifact in canvas panel without leaving conversation
       // On other modes: navigate to documents/editor
       setActiveArtifactId(artifactId);
@@ -1289,7 +1314,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         setLayoutMode('documents');
       }
     },
-    [layoutMode]
+    [activeProjectId, layoutMode, requireActiveProject]
   );
 
   // ── P5: Governed promotion — calls real status API ──
@@ -1535,6 +1560,15 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projects, workspaceSummary]);
 
+  // Keep unscoped mode safe: project-scoped layouts require an active project.
+  useEffect(() => {
+    if (!activeProjectId && PROJECT_SCOPED_LAYOUTS.has(layoutMode)) {
+      setLayoutMode('projects');
+      setActiveThreadId(undefined);
+      setActiveConversationId(undefined);
+    }
+  }, [activeProjectId, layoutMode]);
+
   // Open a tool panel from the ?panel= URL query param on first load
   useEffect(() => {
     try {
@@ -1611,17 +1645,43 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     setActiveToolPanel(null);
   }, [activeProjectId]);
 
+  const requireActiveProject = useCallback(
+    (targetLayout: LayoutMode, reason: string = 'Open or create a project first.'): boolean => {
+      if (activeProjectId) {
+        setLayoutMode(targetLayout);
+        return true;
+      }
+      setLayoutMode('projects');
+      setProjectSwitcherOpen(true);
+      toast({
+        title: 'No project selected',
+        description: reason,
+        variant: 'destructive',
+      });
+      return false;
+    },
+    [activeProjectId, toast]
+  );
+
   // ─────────────────────────────────────────────────────────────────────────────
   // NAVIGATION HELPER — intercepts special paths before falling through to layoutMode
   // ─────────────────────────────────────────────────────────────────────────────
-  const handleAnaPanelNavigate = useCallback((path: string) => {
-    if (path === 'ana-intelligence') {
-      setSettingsSection('ana-intelligence');
-      setSettingsOpen(true);
-      return;
-    }
-    setLayoutMode(path as LayoutMode);
-  }, []);
+  const handleAnaPanelNavigate = useCallback(
+    (path: string) => {
+      if (path === 'ana-intelligence') {
+        setSettingsSection('ana-intelligence');
+        setSettingsOpen(true);
+        return;
+      }
+      const nextLayout = path as LayoutMode;
+      if (isProjectScopedLayout(nextLayout)) {
+        requireActiveProject(nextLayout);
+        return;
+      }
+      setLayoutMode(nextLayout);
+    },
+    [requireActiveProject]
+  );
 
   // ─────────────────────────────────────────────────────────────────────────────
   // KEYBOARD SHORTCUTS — use refs to avoid re-attaching listeners on every state change
@@ -2111,35 +2171,35 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           break;
         case 'cmc':
           setRiViewMode('editor');
-          setLayoutMode('section-workspace');
+          requireActiveProject('section-workspace');
           break;
         case 'clinical-module5':
           setRiViewMode('editor');
-          setLayoutMode('section-workspace');
+          requireActiveProject('section-workspace');
           break;
         case 'verify':
           setActiveToolPanel(null);
-          setLayoutMode('review-readiness');
+          requireActiveProject('review-readiness');
           break;
         case 'vault':
           setActiveToolPanel(null);
-          setLayoutMode('vault');
+          requireActiveProject('vault');
           break;
         case 'review':
           setActiveToolPanel(null);
-          setLayoutMode('review');
+          requireActiveProject('review');
           break;
         case 'haq':
           setActiveToolPanel(null);
-          setLayoutMode('report-engine');
+          requireActiveProject('report-engine');
           break;
         case 'publish':
           setActiveToolPanel(null);
-          setLayoutMode('submissions');
+          requireActiveProject('submissions');
           break;
       }
     },
-    [activeProjectId]
+    [activeProjectId, requireActiveProject]
   );
 
   const timelineSteps = useMemo(
@@ -2328,7 +2388,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         }}
         onSelectProject={id => {
           setActiveProjectId(id);
-          setLayoutMode('project-home');
+          requireActiveProject('project-home');
         }}
         onNewChat={handleNewChat}
         onOpenProjects={() => setProjectSwitcherOpen(true)}
@@ -2342,6 +2402,13 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         onMoveConversation={handleMoveConversation}
         industryMode={industryMode}
         onNavigate={id => {
+          const globalDestinationIds = new Set([
+            'projects',
+            'home',
+            'apps',
+            'artifacts-center',
+            'setup',
+          ]);
           switch (id) {
             // ── Global destinations + project tabs (mapped via SIDEBAR_NAV_TO_LAYOUT) ──
             case 'projects':
@@ -2371,15 +2438,19 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             case 'ind-checklist':
             case 'templates':
             case 'template-library':
-              setLayoutMode(SIDEBAR_NAV_TO_LAYOUT[id] ?? 'projects');
+              if (globalDestinationIds.has(id)) {
+                setLayoutMode(SIDEBAR_NAV_TO_LAYOUT[id] ?? 'projects');
+              } else {
+                requireActiveProject(SIDEBAR_NAV_TO_LAYOUT[id] ?? 'projects');
+              }
               if (id === 'ri-copilot') setRiViewMode('intelligence');
               if (id === 'submission-builder') setRiViewMode('editor');
               break;
             case 'tools':
-              setLayoutMode(SIDEBAR_NAV_TO_LAYOUT['tools'] ?? 'documents');
+              requireActiveProject(SIDEBAR_NAV_TO_LAYOUT['tools'] ?? 'documents');
               break;
             case 'agents':
-              setLayoutMode('regulatory-workspace');
+              requireActiveProject('regulatory-workspace');
               break;
             case 'evidence-search':
               setCommandPaletteOpen(true);
@@ -2390,7 +2461,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             // ── Product routes (external modules) ──
             case 'ai-copilot':
               setRiViewMode('intelligence');
-              setLayoutMode('regulatory-workspace');
+              requireActiveProject('regulatory-workspace');
               break;
             case '510k-workspace':
               if (activeProjectId) {
@@ -2418,30 +2489,30 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             // ── Core submission workflow ──
             case 'regulatory-workspace':
             case 'section-workspace':
-              setLayoutMode(id);
+              requireActiveProject(id);
               break;
             case 'document-vault':
-              setLayoutMode('vault');
+              requireActiveProject('vault');
               break;
             // ── Surviving specialist tools ──
             case 'precedent-intelligence':
-              setLayoutMode('precedent-intelligence');
+              requireActiveProject('precedent-intelligence');
               break;
             case 'review-readiness':
-              setLayoutMode('review-readiness');
+              requireActiveProject('review-readiness');
               break;
             case 'biostatistics':
-              setLayoutMode('regulatory-workspace');
+              requireActiveProject('regulatory-workspace');
               setActiveToolPanel('ana-biostats');
               break;
             case 'report-engine':
-              setLayoutMode('report-engine');
+              requireActiveProject('report-engine');
               break;
             case 'safety-narrative':
-              setLayoutMode('safety-narrative');
+              requireActiveProject('safety-narrative');
               break;
             case 'deep-research':
-              setLayoutMode('deep-research');
+              requireActiveProject('deep-research');
               break;
             // [BATCH 3] All demoted/deleted modes — set the layout mode and let
             // the DEMOTED_REDIRECTS useEffect handle the redirect.
@@ -2490,7 +2561,12 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 'tasks',
               ];
               if (knownModes.includes(id)) {
-                setLayoutMode(id as LayoutMode);
+                const candidate = id as LayoutMode;
+                if (PROJECT_SCOPED_LAYOUTS.has(candidate)) {
+                  requireActiveProject(candidate);
+                } else {
+                  setLayoutMode(candidate);
+                }
               }
               break;
             }
@@ -2741,17 +2817,18 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     onNavigate={id => {
                       switch (id) {
                         case 'deep-research':
-                          setLayoutMode('deep-research');
+                          requireActiveProject('deep-research');
                           break;
                         case 'precedent-intelligence':
-                          setLayoutMode('precedent-intelligence');
+                          requireActiveProject('precedent-intelligence');
                           break;
                         case 'safety-narrative':
-                          setLayoutMode('safety-narrative');
+                          requireActiveProject('safety-narrative');
                           break;
                         case 'biostatistics':
-                          setLayoutMode('regulatory-workspace');
-                          setActiveToolPanel('ana-biostats');
+                          if (requireActiveProject('regulatory-workspace')) {
+                            setActiveToolPanel('ana-biostats');
+                          }
                           break;
                         case '510k-workspace':
                           if (activeProjectId)
@@ -2794,9 +2871,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   <ArtifactsPage
                     onOpenArtifact={(projectId, artifactId) => {
                       setActiveProjectId(projectId);
+                      setLayoutMode('regulatory-workspace');
                       setOpenArtifactId(artifactId);
                       setRiViewMode('editor');
-                      setLayoutMode('regulatory-workspace');
                     }}
                   />
                 </Suspense>
@@ -2835,11 +2912,13 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     projectId={activeProjectId}
                     projectName={activeProject?.name}
                     onOpenDocument={docId => {
+                      if (!requireActiveProject('regulatory-workspace')) return;
                       setOpenArtifactId(docId);
                       setRiViewMode('editor');
                       setLayoutMode('regulatory-workspace');
                     }}
                     onDraftFromSource={(sourceTitle, sourceId) => {
+                      if (!requireActiveProject('regulatory-workspace')) return;
                       setPendingEditorContent({
                         title: `Draft from: ${sourceTitle}`,
                         content: '',
@@ -2936,7 +3015,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 }
               >
                 <PrecedentIntelligenceDashboard
-                  onNavigateToEditor={() => setLayoutMode('regulatory-workspace')}
+                  onNavigateToEditor={() => requireActiveProject('regulatory-workspace')}
                 />
               </Suspense>
             </div>
@@ -2944,7 +3023,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
           {/* Redirect deprecated routes to unified workspace */}
           {['workspace', 'medtech-dashboard', 'dossier'].includes(layoutMode) && (
-            <RedirectToWorkspace onRedirect={() => setLayoutMode('regulatory-workspace')} />
+            <RedirectToWorkspace onRedirect={() => requireActiveProject('regulatory-workspace')} />
           )}
 
           {/* ── Project Workspace (3-pane: tree | content | inspector) ───── */}
@@ -3045,11 +3124,16 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 }}
                 onNavigate={mode => {
                   if (mode === 'haq') {
-                    setLayoutMode('documents');
+                    requireActiveProject('documents');
                     setToolsSubView('haq');
                     return;
                   }
-                  setLayoutMode(mode as LayoutMode);
+                  const nextMode = mode as LayoutMode;
+                  if (isProjectScopedLayout(nextMode)) {
+                    requireActiveProject(nextMode);
+                    return;
+                  }
+                  setLayoutMode(nextMode);
                 }}
               />
             ))}
@@ -3071,7 +3155,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 onNavigate={mode => {
                   const mapped = SIDEBAR_NAV_TO_LAYOUT[mode];
                   if (mapped) {
-                    setLayoutMode(mapped);
+                    if (isProjectScopedLayout(mapped)) {
+                      requireActiveProject(mapped);
+                    } else {
+                      setLayoutMode(mapped);
+                    }
                   } else {
                     console.warn(`[ProjectHomeDashboard] Unknown nav mode: ${mode}`);
                   }
@@ -3082,9 +3170,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   setExternalChatMessage({ text: prompt, ts: Date.now() });
                 }}
                 onOpenArtifact={artifactId => {
+                  if (!requireActiveProject('regulatory-workspace')) return;
                   setOpenArtifactId(artifactId);
                   setRiViewMode('editor');
-                  setLayoutMode('regulatory-workspace');
                 }}
               />
             </div>
@@ -3098,6 +3186,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 projectName={activeProject?.name}
                 projectType={activeProject?.type}
                 onSectionClick={sectionCode => {
+                  if (!requireActiveProject('regulatory-workspace')) return;
                   // Smart routing: if artifact exists, go straight to editor
                   const moduleNum = sectionCode.charAt(0);
                   const match = projectArtifacts.find(
@@ -3109,7 +3198,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   if (match) {
                     setOpenArtifactId(match.id);
                     setRiViewMode('editor');
-                    setLayoutMode('regulatory-workspace');
                   } else {
                     // Create draft directly and open in editor
                     setPendingEditorContent({
@@ -3118,19 +3206,18 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       ctdSection: sectionCode,
                     });
                     setRiViewMode('editor');
-                    setLayoutMode('regulatory-workspace');
                   }
                 }}
                 onCreateForSection={(sectionCode, sectionTitle) => {
+                  if (!requireActiveProject('regulatory-workspace')) return;
                   setPendingEditorContent({
                     title: sectionTitle,
                     content: '',
                     ctdSection: sectionCode,
                   });
                   setRiViewMode('editor');
-                  setLayoutMode('regulatory-workspace');
                 }}
-                onNavigateSubmit={() => setLayoutMode('submissions')}
+                onNavigateSubmit={() => requireActiveProject('submissions')}
                 onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
               />
             </Suspense>
@@ -3144,9 +3231,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   {toolsSubView === 'builder' ? (
                     <FullDocumentBuilder
                       onOpenInEditor={(content, title, ctdSection) => {
+                        if (!requireActiveProject('regulatory-workspace')) return;
                         setPendingEditorContent({ content, title, ctdSection });
                         setRiViewMode('editor');
-                        setLayoutMode('regulatory-workspace');
                         setToolsSubView('landing');
                       }}
                     />
@@ -3155,9 +3242,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       projectId={activeProjectId}
                       projectName={activeProject?.name}
                       onOpenInEditor={(content, title) => {
+                        if (!requireActiveProject('regulatory-workspace')) return;
                         setPendingEditorContent({ content, title });
                         setRiViewMode('editor');
-                        setLayoutMode('regulatory-workspace');
                         setToolsSubView('landing');
                       }}
                     />
@@ -3170,22 +3257,22 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         updatedAt: d.uploadedAt,
                       }))}
                       onResumeArtifact={artifactId => {
+                        if (!requireActiveProject('regulatory-workspace')) return;
                         setOpenArtifactId(artifactId);
                         setRiViewMode('editor');
-                        setLayoutMode('regulatory-workspace');
                       }}
                       onAction={toolId => {
                         switch (toolId) {
                           case 'recent':
                             // Open workspace in document studio mode — shows recent documents list
+                            if (!requireActiveProject('regulatory-workspace')) return;
                             setRiViewMode('editor');
-                            setLayoutMode('regulatory-workspace');
                             break;
                           case 'create':
                             // Create a new blank document — lands in EditorPanel with new artifact
+                            if (!requireActiveProject('regulatory-workspace')) return;
                             setPendingEditorContent({ content: '', title: 'Untitled Document' });
                             setRiViewMode('editor');
-                            setLayoutMode('regulatory-workspace');
                             break;
                           case 'builder':
                             // Open Document Builder wizard (multi-step CSR/CTD generation)
@@ -3193,20 +3280,20 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                             break;
                           case 'templates':
                             // Open workspace — user selects templates from left rail
+                            if (!requireActiveProject('regulatory-workspace')) return;
                             setRiViewMode('editor');
-                            setLayoutMode('regulatory-workspace');
                             break;
                           case 'dossier':
-                            setLayoutMode('dossier-map');
+                            requireActiveProject('dossier-map');
                             break;
                           case 'vault':
-                            setLayoutMode('vault');
+                            requireActiveProject('vault');
                             break;
                           case 'review':
-                            setLayoutMode('review');
+                            requireActiveProject('review');
                             break;
                           case 'submit':
-                            setLayoutMode('submissions');
+                            requireActiveProject('submissions');
                             break;
                           case 'haq':
                             setToolsSubView('haq');
@@ -3278,7 +3365,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       if (match) {
                         setOpenArtifactId(match.id);
                         setRiViewMode('editor');
-                        setLayoutMode('regulatory-workspace');
                       } else {
                         setPendingEditorContent({
                           title: sectionTitle || `Section ${sectionCode}`,
@@ -3286,7 +3372,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                           ctdSection: sectionCode,
                         });
                         setRiViewMode('editor');
-                        setLayoutMode('regulatory-workspace');
                       }
                     }}
                     onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
@@ -3333,7 +3418,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       onOpenArtifact={artifactId => {
                         setOpenArtifactId(artifactId);
                         setRiViewMode('editor');
-                        setLayoutMode('regulatory-workspace');
                       }}
                       onCreateArtifact={(sectionId, sectionLabel) => {
                         setPendingEditorContent({
@@ -3342,7 +3426,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                           ctdSection: sectionId,
                         });
                         setRiViewMode('editor');
-                        setLayoutMode('regulatory-workspace');
                       }}
                       onGeneratePackage={async () => {
                         if (!activeProjectId) return;
@@ -3382,7 +3465,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
-                      onClick={() => setLayoutMode('project-home')}
+                      onClick={() => requireActiveProject('project-home')}
                       className="text-stone-500 hover:text-stone-700"
                     >
                       <ArrowLeft className="h-4 w-4" />
@@ -3421,7 +3504,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   if (match) {
                     setOpenArtifactId(match.id);
                     setRiViewMode('editor');
-                    setLayoutMode('regulatory-workspace');
                   } else {
                     // Create draft directly and open in editor
                     setPendingEditorContent({
@@ -3430,7 +3512,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       ctdSection: sectionCode,
                     });
                     setRiViewMode('editor');
-                    setLayoutMode('regulatory-workspace');
                   }
                 }}
                 onAIDraft={async (sectionCode, sectionTitle) => {
@@ -3441,7 +3522,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     ctdSection: sectionCode,
                   });
                   setRiViewMode('editor');
-                  setLayoutMode('regulatory-workspace');
                 }}
                 onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
               />
@@ -3466,7 +3546,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   if (match) {
                     setOpenArtifactId(match.id);
                     setRiViewMode('editor');
-                    setLayoutMode('regulatory-workspace');
                   } else {
                     // Create draft directly and open in editor
                     setPendingEditorContent({
@@ -3475,7 +3554,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       ctdSection: sectionCode,
                     });
                     setRiViewMode('editor');
-                    setLayoutMode('regulatory-workspace');
                   }
                 }}
                 onAIDraft={async (sectionCode, sectionTitle) => {
@@ -3486,7 +3564,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     ctdSection: sectionCode,
                   });
                   setRiViewMode('editor');
-                  setLayoutMode('regulatory-workspace');
                 }}
                 onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
               />
@@ -3540,7 +3617,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       });
                     }
                     setRiViewMode('editor');
-                    setLayoutMode('regulatory-workspace');
                   }}
                   onClose={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
                 />
@@ -3623,7 +3699,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     return () => {
                       setOpenArtifactId(matchingArtifact.id);
                       setRiViewMode('editor');
-                      setLayoutMode('regulatory-workspace');
                     };
                   }
                   return undefined;
@@ -3646,7 +3721,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                           ctdSection: code,
                         });
                         setRiViewMode('editor');
-                        setLayoutMode('regulatory-workspace');
                       }
                     : undefined
                 }
@@ -3865,7 +3939,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     <button
                       onClick={() => {
                         setActiveProjectId(continueProject.id);
-                        setLayoutMode('project-home');
+                        requireActiveProject('project-home');
                       }}
                       className={cn(
                         'w-full text-left rounded-xl border border-stone-200 bg-white p-5',
@@ -3945,7 +4019,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                             key={project.id}
                             onClick={() => {
                               setActiveProjectId(project.id);
-                              setLayoutMode('project-home');
+                              requireActiveProject('project-home');
                             }}
                             className={cn(
                               'group text-left rounded-xl border overflow-hidden transition-all duration-150',
@@ -4058,7 +4132,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       onOpenFullEditor={id => {
                         setOpenArtifactId(id);
                         setRiViewMode('editor');
-                        setLayoutMode('regulatory-workspace');
                       }}
                       onSaveToVault={id => {
                         setActiveArtifactId(undefined);
@@ -4177,7 +4250,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         onSelectProject={id => {
           setActiveProjectId(id);
           setProjectSwitcherOpen(false);
-          setLayoutMode('project-home');
+          requireActiveProject('project-home');
           navigate(`/concept2cure/project/${id}`);
           // Clear conversation when switching projects
           setActiveConversationId(undefined);
