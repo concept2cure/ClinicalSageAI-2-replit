@@ -4081,6 +4081,14 @@ import submissionCenterRoutes from './routes/submissionCenter.routes';
 app.use('/api/submission-center', submissionCenterRoutes);
 console.log('✅ Submission Center API routes mounted successfully');
 
+// Mount Submission Ops + Regulatory Correspondence routes
+import submissionOpsRoutes from './routes/submission-ops';
+import regulatoryCorrespondenceRoutes from './routes/regulatory-correspondence';
+app.use('/api/submission-ops', submissionOpsRoutes);
+app.use('/api/regulatory-correspondence', regulatoryCorrespondenceRoutes);
+console.log('✅ Submission Ops API routes mounted successfully');
+console.log('✅ Regulatory Correspondence API routes mounted successfully');
+
 // Mount 510k-workflow routes directly
 import { TemplateMapper } from './services/documentTemplateMapper';
 import { MemStorage } from './storage';

@@ -53,4 +53,12 @@ describe('Communication Center backend scaffold', () => {
     expect(hookSrc).toContain('/api/concept2cure/projects/${projectId}/agency-communications');
     expect(hookSrc).toContain('/api/concept2cure/projects/${projectId}/publishops/services');
   });
+
+  it('mounts correspondence and submission-ops routes in server runtime', () => {
+    const serverSrc = read('server/index.ts');
+    expect(serverSrc).toContain("import regulatoryCorrespondenceRoutes from './routes/regulatory-correspondence'");
+    expect(serverSrc).toContain("app.use('/api/regulatory-correspondence', regulatoryCorrespondenceRoutes)");
+    expect(serverSrc).toContain("import submissionOpsRoutes from './routes/submission-ops'");
+    expect(serverSrc).toContain("app.use('/api/submission-ops', submissionOpsRoutes)");
+  });
 });
