@@ -5,21 +5,28 @@ import UnifiedDocumentUpload from '../../components/unified/UnifiedDocumentUploa
 import DocumentDataCenter from '../../components/DocumentDataCenter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   FileText,
   Upload,
   Search,
-  Filter,
   Download,
-  Eye,
   HardDrive,
   FolderOpen,
+  CalendarClock,
+  LayoutGrid,
+  ListFilter,
 } from 'lucide-react';
 
 export default function VaultPage() {
   const [activeTab, setActiveTab] = useState('vault');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [documents, setDocuments] = useState([]);
+  const [query, setQuery] = useState('');
+  const [selectedModule, setSelectedModule] = useState('all');
+  const [selectedType, setSelectedType] = useState('all');
   const [documentStats, setDocumentStats] = useState({
     total: 0,
     byModule: {},
@@ -33,20 +40,22 @@ export default function VaultPage() {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/vault/list');
+        const res = await fetch('/api/vault/list', { credentials: 'include' });
         const data = await res.json();
 
         if (data.success) {
+          const fetchedDocuments = Array.isArray(data.documents) ? data.documents : [];
+          setDocuments(fetchedDocuments);
           // Calculate statistics
           const stats = {
-            total: data.metadata.totalCount || 0,
+            total: data.metadata?.totalCount || fetchedDocuments.length || 0,
             byModule: {},
             byType: {},
             byProject: {},
           };
 
           // Count documents by module
-          data.documents.forEach(doc => {
+          fetchedDocuments.forEach(doc => {
             // By module
             const module = doc.moduleLinked || 'Unknown';
             stats.byModule[module] = (stats.byModule[module] || 0) + 1;
@@ -76,6 +85,19 @@ export default function VaultPage() {
   const handleUploadComplete = () => {
     setRefreshTrigger(prev => prev + 1);
   };
+
+  const moduleOptions = ['all', ...Object.keys(documentStats.byModule)];
+  const typeOptions = ['all', ...Object.keys(documentStats.byType)];
+
+  const filteredDocuments = documents.filter(doc => {
+    const module = doc.moduleLinked || 'Unknown';
+    const type = doc.documentType || 'Unspecified';
+    const text = `${doc.title || doc.name || ''} ${doc.fileName || ''} ${doc.uploadedBy || ''}`.toLowerCase();
+    const matchesText = !query || text.includes(query.toLowerCase());
+    const matchesModule = selectedModule === 'all' || module === selectedModule;
+    const matchesType = selectedType === 'all' || type === selectedType;
+    return matchesText && matchesModule && matchesType;
+  });
 
   return (
     <div className="container mx-auto py-8 space-y-8">
@@ -219,15 +241,38 @@ export default function VaultPage() {
                     <FileText className="h-5 w-5" />
                     Document Library
                   </CardTitle>
-                  <div className="flex gap-2 mt-4">
-                    <Button variant="outline" size="sm">
-                      <Search className="h-4 w-4 mr-2" />
-                      Search
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Filter className="h-4 w-4 mr-2" />
-                      Filter
-                    </Button>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-4">
+                    <div className="relative">
+                      <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <Input
+                        className="pl-9"
+                        placeholder="Search by title, file name, or uploader"
+                        value={query}
+                        onChange={e => setQuery(e.target.value)}
+                      />
+                    </div>
+                    <select
+                      value={selectedModule}
+                      onChange={e => setSelectedModule(e.target.value)}
+                      className="rounded-md border px-3 py-2 text-sm bg-white"
+                    >
+                      {moduleOptions.map(option => (
+                        <option key={option} value={option}>
+                          {option === 'all' ? 'All Modules' : option}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={selectedType}
+                      onChange={e => setSelectedType(e.target.value)}
+                      className="rounded-md border px-3 py-2 text-sm bg-white"
+                    >
+                      {typeOptions.map(option => (
+                        <option key={option} value={option}>
+                          {option === 'all' ? 'All Types' : option}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -238,29 +283,69 @@ export default function VaultPage() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      <div className="bg-gray-50 rounded-lg p-6 text-center">
-                        <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                        <p className="text-gray-600 mb-4">
-                          {documentStats.total > 0
-                            ? `${documentStats.total} documents in vault`
-                            : 'No documents uploaded yet'}
-                        </p>
-                        <Button onClick={() => setRefreshTrigger(prev => prev + 1)}>
-                          <Eye className="h-4 w-4 mr-2" />
-                          View All Documents
-                        </Button>
+                      <div className="flex flex-wrap items-center justify-between gap-2 bg-gray-50 rounded-lg p-4">
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <LayoutGrid className="h-4 w-4" />
+                          <span>{filteredDocuments.length} documents shown</span>
+                          <Badge variant="outline" className="ml-1">
+                            {documentStats.total} total
+                          </Badge>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" onClick={() => setRefreshTrigger(prev => prev + 1)}>
+                            <Download className="h-4 w-4 mr-2" />
+                            Refresh
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setQuery('');
+                              setSelectedModule('all');
+                              setSelectedType('all');
+                            }}
+                          >
+                            <ListFilter className="h-4 w-4 mr-2" />
+                            Reset Filters
+                          </Button>
+                        </div>
                       </div>
 
-                      {documentStats.total > 0 && (
-                        <div className="grid grid-cols-2 gap-4 mt-4">
-                          {Object.entries(documentStats.byModule)
-                            .slice(0, 4)
-                            .map(([module, count]) => (
-                              <div key={module} className="bg-white p-4 rounded border">
-                                <p className="text-sm text-gray-500">{module}</p>
-                                <p className="text-2xl font-bold">{count}</p>
+                      {filteredDocuments.length === 0 ? (
+                        <div className="bg-gray-50 rounded-lg p-6 text-center">
+                          <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                          <p className="text-gray-600">No matching documents found.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {filteredDocuments.slice(0, 12).map(doc => (
+                            <div
+                              key={doc.id || doc.fileName}
+                              className="border rounded-lg p-4 hover:shadow-sm transition-shadow"
+                            >
+                              <div className="flex justify-between items-start gap-4">
+                                <div>
+                                  <h3 className="font-semibold text-sm">{doc.title || doc.name || doc.fileName}</h3>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    {doc.fileName || 'Unknown filename'}
+                                  </p>
+                                  <div className="flex flex-wrap gap-2 mt-2">
+                                    <Badge variant="secondary">{doc.moduleLinked || 'Unknown'}</Badge>
+                                    <Badge variant="outline">{doc.documentType || 'Unspecified'}</Badge>
+                                  </div>
+                                </div>
+                                <div className="text-right text-xs text-gray-500">
+                                  <div className="flex items-center gap-1 justify-end">
+                                    <CalendarClock className="h-3.5 w-3.5" />
+                                    {doc.uploadDate
+                                      ? new Date(doc.uploadDate).toLocaleDateString()
+                                      : 'Date unavailable'}
+                                  </div>
+                                  <p className="mt-2">{doc.uploadedBy || 'System Upload'}</p>
+                                </div>
                               </div>
-                            ))}
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
