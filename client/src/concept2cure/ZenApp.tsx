@@ -1288,6 +1288,30 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // ─────────────────────────────────────────────────────────────────────────────
   // NAVIGATION HELPER — intercepts special paths before falling through to layoutMode
   // ─────────────────────────────────────────────────────────────────────────────
+  const SAFE_ANA_NAV_TARGETS = new Set<string>([
+    'projects',
+    'project-home',
+    'apps',
+    'documents',
+    'review',
+    'submissions',
+    'dossier-map',
+    'section-workspace',
+    'csr-workflow',
+    'ind-checklist',
+    'template-library',
+    'regulatory-workspace',
+    'editor',
+    'deep-research',
+    'precedent-intelligence',
+    'biostatistics',
+    'review-readiness',
+    'report-engine',
+    'safety-narrative',
+    'vault',
+    'vault-workspace',
+  ]);
+
   const handleAnaPanelNavigate = useCallback((path: string) => {
     const normalizedPath = String(path || '').trim();
     if (!normalizedPath) return;
@@ -1321,6 +1345,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       normalizedPath === 'guided_verify' ||
       normalizedPath === 'guided_submission'
     ) {
+      if (!activeProjectId) {
+        setLayoutMode('projects');
+        return;
+      }
       const stageMap: Record<string, 'project' | 'ind_ectd' | 'authoring' | 'verify' | 'submission'> =
         {
           guided_project: 'project',
@@ -1343,12 +1371,12 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       setLayoutMode(mapped);
       return;
     }
-    const knownLayoutValues = Object.values(SIDEBAR_NAV_TO_LAYOUT);
-    if (knownLayoutValues.includes(normalizedPath as LayoutMode)) {
+    if (SAFE_ANA_NAV_TARGETS.has(normalizedPath)) {
       setLayoutMode(normalizedPath as LayoutMode);
       return;
     }
-    console.warn(`[AnaPersistentPanel] Unknown navigation target: ${normalizedPath}`);
+    console.warn(`[AnaPersistentPanel] Unknown navigation target, falling back safely: ${normalizedPath}`);
+    setLayoutMode(activeProjectId ? 'project-home' : 'projects');
   }, [activeProjectId]);
 
   // ─────────────────────────────────────────────────────────────────────────────
