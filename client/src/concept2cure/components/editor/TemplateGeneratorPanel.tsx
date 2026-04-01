@@ -6,7 +6,7 @@
  * Results are returned as generated text ready to insert into the editor.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   FileText,
   Sparkles,
@@ -148,7 +148,7 @@ const TemplateGeneratorPanel: React.FC<TemplateGeneratorPanelProps> = ({
     } finally {
       setGenerating(false);
     }
-  }, [selectedTemplate, variableValues, projectId, artifactId]);
+  }, [selectedTemplate, variableValues, projectId, artifactId, contextAttachment]);
 
   const isFormValid = selectedTemplate?.variables
     .filter(v => v.required)
