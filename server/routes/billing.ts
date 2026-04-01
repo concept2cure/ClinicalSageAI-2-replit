@@ -44,7 +44,7 @@ router.post('/checkout', authenticateToken, async (req: Request, res: Response) 
       return res.status(401).json({ error: 'Organization context required' });
     }
 
-    const { tier, billingCycle, seats } = req.body;
+    const { tier, billingCycle, seats, successUrl, cancelUrl } = req.body;
 
     if (!tier || !billingCycle) {
       return res.status(400).json({
@@ -62,14 +62,22 @@ router.post('/checkout', authenticateToken, async (req: Request, res: Response) 
     }
 
     const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const checkoutSuccessUrl =
+      typeof successUrl === 'string' && successUrl.trim().length > 0
+        ? successUrl
+        : `${baseUrl}/concept2cure/billing?checkout=success&session_id={CHECKOUT_SESSION_ID}`;
+    const checkoutCancelUrl =
+      typeof cancelUrl === 'string' && cancelUrl.trim().length > 0
+        ? cancelUrl
+        : `${baseUrl}/concept2cure/billing?checkout=canceled`;
 
     const result = await createCheckoutSession({
       organizationId: Number(orgId),
       tier,
       billingCycle,
       seats: seats ? Number(seats) : undefined,
-      successUrl: `${baseUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${baseUrl}/billing/canceled`,
+      successUrl: checkoutSuccessUrl,
+      cancelUrl: checkoutCancelUrl,
     });
 
     res.json({
@@ -174,8 +182,10 @@ router.post('/dtc-checkout', authenticateToken, async (req: Request, res: Respon
       organizationId: Number(orgId),
       tier: tier || 'standard',
       billingCycle: billingCycle || 'monthly',
-      successUrl: req.body.successUrl || `${baseUrl}/ai?welcome=true`,
-      cancelUrl: req.body.cancelUrl || `${baseUrl}/signup`,
+      successUrl:
+        req.body.successUrl ||
+        `${baseUrl}/concept2cure/billing?checkout=success&welcome=true`,
+      cancelUrl: req.body.cancelUrl || `${baseUrl}/concept2cure/signup`,
       currency,
     });
 

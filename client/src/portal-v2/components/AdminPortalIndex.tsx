@@ -12,7 +12,7 @@
  * @note Requires react-router-dom to be installed: npm install react-router-dom @types/react-router-dom
  */
 
-import React, { Suspense, lazy, useCallback } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -47,7 +47,6 @@ import {
   LogOut,
   User,
 } from 'lucide-react';
-import { getAuthHeaders, getOrgId } from '@/utils/authToken';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LAZY-LOADED COMPONENTS
@@ -722,7 +721,7 @@ export const AuthRoutes: React.FC = () => {
         },
         body: JSON.stringify({
           onboardingProfile,
-          onboardingStatus: 'company_onboarding_completed',
+          onboardingStatus: 'company_onboarding_pending',
         }),
       });
 
