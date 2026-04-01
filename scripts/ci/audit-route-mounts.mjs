@@ -13,6 +13,9 @@ const ALLOWLIST = {
     '/api/atoms',
     '/api/reports',
   ]),
+  // Canonical shared gateway prefix intentionally mounted by many modules.
+  // Keep this explicit and narrow; other multi-use prefixes should still warn.
+  multiUsePrefixes: new Set(['/api']),
   duplicateMethodKeys: new Set([]),
 };
 
@@ -170,7 +173,7 @@ function analyze(entries) {
     const uses = grouped.filter(entry => entry.kind === 'use');
     const methods = grouped.filter(entry => entry.kind !== 'use');
 
-    if (uses.length > 1) {
+    if (uses.length > 1 && !ALLOWLIST.multiUsePrefixes.has(mountPath)) {
       warnings.push({
         type: 'multi-use-prefix',
         path: mountPath,

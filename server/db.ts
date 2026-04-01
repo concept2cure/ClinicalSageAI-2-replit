@@ -6,11 +6,12 @@
  *
  * IMPORTANT: dotenv must be loaded BEFORE any env var reads.
  * ESM hoists imports above runtime code, so `server/index.ts`'s
- * `dotenvConfig({ override: true })` runs AFTER this module initializes.
+ * `dotenvConfig()` may run AFTER this module initializes.
  * We load dotenv here to guarantee .env values are available.
+ * NOTE: override: false so shell-exported DATABASE_URL takes precedence.
  */
 import { config as dotenvConfig } from 'dotenv';
-dotenvConfig({ override: true });
+dotenvConfig({ override: false });
 
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';

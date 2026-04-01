@@ -4,16 +4,16 @@
  * Unified API for evidence management - literature, test reports, clinical data.
  * Supports linking evidence to claims, sections, and requirements.
  *
- * @version 1.0.0
+ * @version 2.0.0
  * @module server/routes/evidence
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
-import crypto from 'crypto';
-import { and, asc, desc, eq, ilike, inArray, sql } from 'drizzle-orm';
 import { db } from '../db';
-import { evidenceSources, evidenceClaims, evidenceClaimLinks } from '@shared/schema';
+import { eq, and, desc, asc, sql, count, or, ilike } from 'drizzle-orm';
+import { evidenceObjects, evidenceLinks } from '../../shared/schema/programs';
+import { getSecureOrgId } from '../utils/tenantContext';
 
 const router = Router();
 
@@ -56,7 +56,7 @@ const createEvidenceSchema = z.object({
   sourceType: sourceTypeEnum,
   sourceReference: z.string().optional(),
   sourceCitation: z.string().optional(),
-  programId: z.coerce.number().int().positive(),
+  programId: z.string().uuid().optional(),
   documentId: z.number().optional(),
   documentVersion: z.string().optional(),
   pageRange: z.string().optional(),
@@ -65,19 +65,16 @@ const createEvidenceSchema = z.object({
   relevanceScore: z.number().min(0).max(1).optional(),
   validFrom: z.string().datetime().optional(),
   validUntil: z.string().datetime().optional(),
-  // Literature-specific
   authors: z.array(z.string()).optional(),
   publicationDate: z.string().datetime().optional(),
   journal: z.string().optional(),
   doi: z.string().optional(),
   pmid: z.string().optional(),
   abstract: z.string().optional(),
-  // Test report-specific
   testType: z.string().optional(),
   testLab: z.string().optional(),
   testDate: z.string().datetime().optional(),
   testResults: z.record(z.unknown()).optional(),
-  // Metadata
   tags: z.array(z.string()).optional(),
   metadata: z.record(z.unknown()).optional(),
 });
@@ -85,7 +82,7 @@ const createEvidenceSchema = z.object({
 const updateEvidenceSchema = createEvidenceSchema.partial();
 
 const createLinkSchema = z.object({
-  evidenceId: z.coerce.number().int().positive(),
+  evidenceId: z.string().uuid(),
   targetType: z.enum(['claim', 'section', 'requirement', 'standard', 'question']),
   targetId: z.string(),
   targetPath: z.string().optional(),
@@ -97,7 +94,7 @@ const createLinkSchema = z.object({
 const queryParamsSchema = z.object({
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(20),
-  programId: z.coerce.number().int().positive().optional(),
+  programId: z.string().uuid().optional(),
   evidenceType: evidenceTypeEnum.optional(),
   evidenceCategory: evidenceCategoryEnum.optional(),
   status: statusEnum.optional(),
@@ -149,6 +146,15 @@ const validateQuery =
     }
   };
 
+// Column map for sortBy -> actual drizzle column
+const sortColumnMap: Record<string, any> = {
+  createdAt: evidenceObjects.createdAt,
+  updatedAt: evidenceObjects.updatedAt,
+  title: evidenceObjects.title,
+  qualityScore: evidenceObjects.qualityScore,
+  relevanceScore: evidenceObjects.relevanceScore,
+};
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ROUTES: Evidence CRUD
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -164,60 +170,54 @@ router.get('/', validateQuery(queryParamsSchema), async (req: Request, res: Resp
       limit,
       programId,
       evidenceType,
+      evidenceCategory,
+      status,
       search,
       sortBy,
       sortOrder,
     } = req.query as z.infer<typeof queryParamsSchema>;
-    const tenantId = (req as any).tenantContext?.tenantId;
-    if (!tenantId) {
-      return res.status(401).json({ error: 'Tenant context required' });
+
+    const orgId = getSecureOrgId(req);
+    if (!orgId) {
+      return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Tenant context required' } });
+    }
+    const orgIdNum = parseInt(orgId, 10);
+
+    const conditions = [eq(evidenceObjects.organizationId, orgIdNum)];
+    if (programId) conditions.push(eq(evidenceObjects.programId, programId));
+    if (evidenceType) conditions.push(eq(evidenceObjects.evidenceType, evidenceType));
+    if (evidenceCategory) conditions.push(eq(evidenceObjects.evidenceCategory, evidenceCategory));
+    if (status) conditions.push(eq(evidenceObjects.status, status));
+    if (search) {
+      conditions.push(
+        or(
+          ilike(evidenceObjects.title, `%${search}%`),
+          ilike(evidenceObjects.description, `%${search}%`)
+        )!
+      );
     }
 
-    const whereClauses = [eq(evidenceSources.organizationId, Number(tenantId))];
-    if (programId) whereClauses.push(eq(evidenceSources.programId, programId));
-    if (evidenceType) whereClauses.push(eq(evidenceSources.sourceType, evidenceType));
-    if (search) whereClauses.push(ilike(evidenceSources.title, `%${search}%`));
-
-    const sortColumn =
-      sortBy === 'title'
-        ? evidenceSources.title
-        : sortBy === 'updatedAt'
-          ? evidenceSources.updatedAt
-          : evidenceSources.createdAt;
-    const orderByExpr = sortOrder === 'asc' ? asc(sortColumn) : desc(sortColumn);
-
+    const whereClause = and(...conditions);
     const offset = (page - 1) * limit;
-    const rows = await db
-      .select()
-      .from(evidenceSources)
-      .where(and(...whereClauses))
-      .orderBy(orderByExpr)
-      .limit(limit)
-      .offset(offset);
 
-    const [{ count: total }] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(evidenceSources)
-      .where(and(...whereClauses));
+    const sortCol = sortColumnMap[sortBy] || evidenceObjects.createdAt;
+    const orderFn = sortOrder === 'asc' ? asc : desc;
 
-    const evidence = rows.map(row => {
-      const metadata = (row.metadata ?? {}) as Record<string, any>;
-      return {
-        id: String(row.id),
-        title: row.title,
-        code: metadata.code ?? null,
-        evidenceType: row.sourceType,
-        evidenceCategory: metadata.evidenceCategory ?? null,
-        evidenceLevel: metadata.evidenceLevel ?? null,
-        sourceType: row.sourceType,
-        qualityScore: metadata.qualityScore ?? null,
-        relevanceScore: metadata.relevanceScore ?? null,
-        status: metadata.status ?? 'pending',
-        programId: row.programId,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-      };
-    });
+    const [evidence, totalResult] = await Promise.all([
+      db
+        .select()
+        .from(evidenceObjects)
+        .where(whereClause)
+        .orderBy(orderFn(sortCol))
+        .limit(limit)
+        .offset(offset),
+      db
+        .select({ total: count() })
+        .from(evidenceObjects)
+        .where(whereClause),
+    ]);
+
+    const total = totalResult[0]?.total ?? 0;
 
     res.json({
       success: true,
@@ -225,11 +225,12 @@ router.get('/', validateQuery(queryParamsSchema), async (req: Request, res: Resp
       meta: {
         page,
         limit,
-        total: Number(total),
-        totalPages: Math.max(1, Math.ceil(Number(total) / limit)),
+        total,
+        totalPages: Math.ceil(total / limit),
       },
     });
   } catch (error) {
+    console.error('[evidence] GET / error:', error);
     res.status(500).json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch evidence' },
@@ -238,43 +239,209 @@ router.get('/', validateQuery(queryParamsSchema), async (req: Request, res: Resp
 });
 
 /**
+ * GET /api/evidence/search
+ * Search evidence with faceted filters
+ */
+router.get('/search', async (req: Request, res: Response) => {
+  try {
+    const { q, type, category, level, status, programId, verified } = req.query;
+
+    const orgId = getSecureOrgId(req);
+    if (!orgId) {
+      return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Tenant context required' } });
+    }
+    const orgIdNum = parseInt(orgId, 10);
+
+    const conditions = [eq(evidenceObjects.organizationId, orgIdNum)];
+
+    if (q && typeof q === 'string') {
+      conditions.push(
+        or(
+          ilike(evidenceObjects.title, `%${q}%`),
+          ilike(evidenceObjects.description, `%${q}%`)
+        )!
+      );
+    }
+    if (type && typeof type === 'string') conditions.push(eq(evidenceObjects.evidenceType, type));
+    if (category && typeof category === 'string') conditions.push(eq(evidenceObjects.evidenceCategory, category));
+    if (level && typeof level === 'string') conditions.push(eq(evidenceObjects.evidenceLevel, level));
+    if (status && typeof status === 'string') conditions.push(eq(evidenceObjects.status, status));
+    if (programId && typeof programId === 'string') conditions.push(eq(evidenceObjects.programId, programId));
+    if (verified === 'true') conditions.push(eq(evidenceObjects.isVerified, true));
+    if (verified === 'false') conditions.push(eq(evidenceObjects.isVerified, false));
+
+    const whereClause = and(...conditions);
+    const baseWhere = eq(evidenceObjects.organizationId, orgIdNum);
+
+    const [items, totalResult, typeFacets, categoryFacets, levelFacets, statusFacets] =
+      await Promise.all([
+        db.select().from(evidenceObjects).where(whereClause).orderBy(desc(evidenceObjects.createdAt)).limit(50),
+        db.select({ total: count() }).from(evidenceObjects).where(whereClause),
+        db
+          .select({ value: evidenceObjects.evidenceType, count: count() })
+          .from(evidenceObjects)
+          .where(baseWhere)
+          .groupBy(evidenceObjects.evidenceType),
+        db
+          .select({ value: evidenceObjects.evidenceCategory, count: count() })
+          .from(evidenceObjects)
+          .where(baseWhere)
+          .groupBy(evidenceObjects.evidenceCategory),
+        db
+          .select({ value: evidenceObjects.evidenceLevel, count: count() })
+          .from(evidenceObjects)
+          .where(and(baseWhere, sql`${evidenceObjects.evidenceLevel} IS NOT NULL`))
+          .groupBy(evidenceObjects.evidenceLevel),
+        db
+          .select({ value: evidenceObjects.status, count: count() })
+          .from(evidenceObjects)
+          .where(baseWhere)
+          .groupBy(evidenceObjects.status),
+      ]);
+
+    res.json({
+      success: true,
+      data: {
+        items,
+        facets: {
+          type: typeFacets,
+          category: categoryFacets,
+          level: levelFacets,
+          status: statusFacets,
+        },
+        total: totalResult[0]?.total ?? 0,
+      },
+    });
+  } catch (error) {
+    console.error('[evidence] GET /search error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'INTERNAL_ERROR', message: 'Search failed' },
+    });
+  }
+});
+
+/**
+ * GET /api/evidence/stats
+ * Get evidence statistics
+ */
+router.get('/stats', async (req: Request, res: Response) => {
+  try {
+    const { programId } = req.query;
+    const orgId = getSecureOrgId(req);
+    if (!orgId) {
+      return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Tenant context required' } });
+    }
+    const orgIdNum = parseInt(orgId, 10);
+
+    const conditions = [eq(evidenceObjects.organizationId, orgIdNum)];
+    if (programId && typeof programId === 'string') {
+      conditions.push(eq(evidenceObjects.programId, programId));
+    }
+    const whereClause = and(...conditions);
+
+    const [
+      totalResult,
+      verifiedResult,
+      statusCounts,
+      typeCounts,
+      categoryCounts,
+      levelCounts,
+      avgScores,
+      linkedCountResult,
+    ] = await Promise.all([
+      db.select({ total: count() }).from(evidenceObjects).where(whereClause),
+      db.select({ total: count() }).from(evidenceObjects).where(and(...conditions, eq(evidenceObjects.isVerified, true))),
+      db.select({ value: evidenceObjects.status, count: count() }).from(evidenceObjects).where(whereClause).groupBy(evidenceObjects.status),
+      db.select({ value: evidenceObjects.evidenceType, count: count() }).from(evidenceObjects).where(whereClause).groupBy(evidenceObjects.evidenceType),
+      db.select({ value: evidenceObjects.evidenceCategory, count: count() }).from(evidenceObjects).where(whereClause).groupBy(evidenceObjects.evidenceCategory),
+      db.select({ value: evidenceObjects.evidenceLevel, count: count() }).from(evidenceObjects)
+        .where(and(...conditions, sql`${evidenceObjects.evidenceLevel} IS NOT NULL`))
+        .groupBy(evidenceObjects.evidenceLevel),
+      db.select({
+        avgQuality: sql<string>`COALESCE(AVG(${evidenceObjects.qualityScore}::numeric), 0)`,
+        avgRelevance: sql<string>`COALESCE(AVG(${evidenceObjects.relevanceScore}::numeric), 0)`,
+      }).from(evidenceObjects).where(whereClause),
+      db.select({ total: sql<number>`COUNT(DISTINCT ${evidenceLinks.evidenceId})` })
+        .from(evidenceLinks)
+        .where(eq(evidenceLinks.organizationId, orgIdNum)),
+    ]);
+
+    const total = totalResult[0]?.total ?? 0;
+    const verified = verifiedResult[0]?.total ?? 0;
+    const linkedEvidence = linkedCountResult[0]?.total ?? 0;
+
+    const statusMap: Record<string, number> = {};
+    for (const row of statusCounts) statusMap[row.value] = row.count;
+
+    const byType: Record<string, number> = {};
+    for (const row of typeCounts) byType[row.value] = row.count;
+
+    const byCategory: Record<string, number> = {};
+    for (const row of categoryCounts) byCategory[row.value] = row.count;
+
+    const byLevel: Record<string, number> = {};
+    for (const row of levelCounts) if (row.value) byLevel[row.value] = row.count;
+
+    res.json({
+      success: true,
+      data: {
+        total,
+        verified,
+        pending: statusMap['pending'] ?? 0,
+        rejected: statusMap['rejected'] ?? 0,
+        byType,
+        byCategory,
+        byLevel,
+        averageQualityScore: parseFloat(avgScores[0]?.avgQuality ?? '0'),
+        averageRelevanceScore: parseFloat(avgScores[0]?.avgRelevance ?? '0'),
+        linkedEvidence,
+        unlinkedEvidence: Math.max(0, total - linkedEvidence),
+      },
+    });
+  } catch (error) {
+    console.error('[evidence] GET /stats error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch stats' },
+    });
+  }
+});
+
+/**
  * GET /api/evidence/:id
  * Get a single evidence object by ID
  */
-router.get('/:id(\\d+)', async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as any).tenantContext?.tenantId;
-    if (!tenantId) return res.status(401).json({ error: 'Tenant context required' });
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(400).json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Invalid evidence id' } });
+    const id = String(req.params.id);
+    const orgId = getSecureOrgId(req);
+    if (!orgId) {
+      return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Tenant context required' } });
+    }
+    const orgIdNum = parseInt(orgId, 10);
 
-    const [row] = await db
+    const [evidence] = await db
       .select()
-      .from(evidenceSources)
-      .where(and(eq(evidenceSources.id, id), eq(evidenceSources.organizationId, Number(tenantId))))
+      .from(evidenceObjects)
+      .where(and(eq(evidenceObjects.id, id), eq(evidenceObjects.organizationId, orgIdNum)))
       .limit(1);
-    if (!row) return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Evidence not found' } });
 
-    const metadata = (row.metadata ?? {}) as Record<string, any>;
-    const evidence = {
-      id: String(row.id),
-      title: row.title,
-      description: metadata.description ?? null,
-      code: metadata.code ?? null,
-      evidenceType: row.sourceType,
-      evidenceCategory: metadata.evidenceCategory ?? null,
-      evidenceLevel: metadata.evidenceLevel ?? null,
-      sourceType: row.sourceType,
-      sourceReference: row.fileUrl ?? metadata.sourceReference ?? null,
-      sourceCitation: metadata.sourceCitation ?? null,
-      programId: row.programId,
-      metadata,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    };
+    if (!evidence) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: `Evidence object ${id} not found` },
+      });
+    }
 
-    res.json({ success: true, data: evidence });
+    const links = await db
+      .select()
+      .from(evidenceLinks)
+      .where(and(eq(evidenceLinks.evidenceId, id), eq(evidenceLinks.organizationId, orgIdNum)));
+
+    res.json({ success: true, data: { ...evidence, links } });
   } catch (error) {
+    console.error('[evidence] GET /:id error:', error);
     res.status(500).json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch evidence' },
@@ -289,13 +456,13 @@ router.get('/:id(\\d+)', async (req: Request, res: Response) => {
 router.post('/', validateBody(createEvidenceSchema), async (req: Request, res: Response) => {
   try {
     const data = req.body;
-    const tenantId = (req as any).tenantContext?.tenantId;
-    if (!tenantId) {
-      return res.status(401).json({ error: 'Tenant context required' });
+    const orgId = getSecureOrgId(req);
+    if (!orgId) {
+      return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Tenant context required' } });
     }
-    const userId = Number((req as any).user?.id) || null;
+    const orgIdNum = parseInt(orgId, 10);
+    const userId = (req as any).user?.id ? String((req as any).user.id) : 'system';
 
-    // Generate code if not provided
     const typePrefix =
       data.evidenceType === 'literature'
         ? 'LIT'
@@ -308,59 +475,50 @@ router.post('/', validateBody(createEvidenceSchema), async (req: Request, res: R
       data.code ||
       `${typePrefix}-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
 
-    const contentHash = crypto
-      .createHash('sha256')
-      .update(
-        JSON.stringify({
-          title: data.title,
-          sourceReference: data.sourceReference,
-          sourceCitation: data.sourceCitation,
-          excerpt: data.excerpt,
-        })
-      )
-      .digest('hex');
-
-    const [created] = await db
-      .insert(evidenceSources)
+    const [evidence] = await db
+      .insert(evidenceObjects)
       .values({
+        organizationId: orgIdNum,
+        programId: data.programId || null,
         title: data.title,
-        sourceType: data.evidenceType,
-        organizationId: Number(tenantId),
-        programId: data.programId,
-        fileUrl: data.sourceReference,
-        contentText: data.excerpt ?? data.abstract ?? data.description ?? null,
-        contentHash,
-        metadata: {
-          code,
-          evidenceCategory: data.evidenceCategory,
-          evidenceLevel: data.evidenceLevel ?? null,
-          sourceCitation: data.sourceCitation ?? null,
-          qualityScore: data.qualityScore ?? null,
-          relevanceScore: data.relevanceScore ?? null,
-          description: data.description ?? null,
-          authors: data.authors ?? [],
-          tags: data.tags ?? [],
-          status: 'pending',
-        },
-        ingestedBy: userId,
-      })
+        code,
+        description: data.description || null,
+        evidenceType: data.evidenceType,
+        evidenceCategory: data.evidenceCategory,
+        evidenceLevel: data.evidenceLevel || null,
+        sourceType: data.sourceType,
+        sourceReference: data.sourceReference || null,
+        sourceCitation: data.sourceCitation || null,
+        documentId: data.documentId || null,
+        documentVersion: data.documentVersion || null,
+        pageRange: data.pageRange || null,
+        excerpt: data.excerpt || null,
+        qualityScore: data.qualityScore != null ? String(data.qualityScore) : null,
+        relevanceScore: data.relevanceScore != null ? String(data.relevanceScore) : null,
+        validFrom: data.validFrom ? new Date(data.validFrom) : null,
+        validUntil: data.validUntil ? new Date(data.validUntil) : null,
+        isVerified: false,
+        authors: data.authors || null,
+        publicationDate: data.publicationDate ? new Date(data.publicationDate) : null,
+        journal: data.journal || null,
+        doi: data.doi || null,
+        pmid: data.pmid || null,
+        abstract: data.abstract || null,
+        testType: data.testType || null,
+        testLab: data.testLab || null,
+        testDate: data.testDate ? new Date(data.testDate) : null,
+        testResults: data.testResults || null,
+        status: 'pending',
+        metadata: data.metadata || null,
+        tags: data.tags || [],
+        createdBy: userId,
+        updatedBy: userId,
+      } as any)
       .returning();
-
-    const evidence = {
-      id: String(created.id),
-      title: created.title,
-      code,
-      evidenceType: created.sourceType,
-      evidenceCategory: data.evidenceCategory,
-      sourceType: created.sourceType,
-      status: 'pending',
-      programId: created.programId,
-      createdAt: created.createdAt,
-      updatedAt: created.updatedAt,
-    };
 
     res.status(201).json({ success: true, data: evidence });
   } catch (error) {
+    console.error('[evidence] POST / error:', error);
     res.status(500).json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Failed to create evidence' },
@@ -372,49 +530,72 @@ router.post('/', validateBody(createEvidenceSchema), async (req: Request, res: R
  * PATCH /api/evidence/:id
  * Update an evidence object
  */
-router.patch('/:id(\\d+)', validateBody(updateEvidenceSchema), async (req: Request, res: Response) => {
+router.patch('/:id', validateBody(updateEvidenceSchema), async (req: Request, res: Response) => {
   try {
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(400).json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Invalid evidence id' } });
+    const id = String(req.params.id);
     const updates = req.body;
-    const tenantId = (req as any).tenantContext?.tenantId;
-    if (!tenantId) return res.status(401).json({ error: 'Tenant context required' });
+    const orgId = getSecureOrgId(req);
+    if (!orgId) {
+      return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Tenant context required' } });
+    }
+    const orgIdNum = parseInt(orgId, 10);
+    const userId = (req as any).user?.id ? String((req as any).user.id) : 'system';
 
-    const [existing] = await db
-      .select()
-      .from(evidenceSources)
-      .where(and(eq(evidenceSources.id, id), eq(evidenceSources.organizationId, Number(tenantId))))
+    const existing = await db
+      .select({ id: evidenceObjects.id })
+      .from(evidenceObjects)
+      .where(and(eq(evidenceObjects.id, id), eq(evidenceObjects.organizationId, orgIdNum)))
       .limit(1);
-    if (!existing) return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Evidence not found' } });
 
-    const nextMetadata = {
-      ...((existing.metadata as Record<string, unknown>) ?? {}),
-      ...(updates.code ? { code: updates.code } : {}),
-      ...(updates.description ? { description: updates.description } : {}),
-      ...(updates.evidenceCategory ? { evidenceCategory: updates.evidenceCategory } : {}),
-      ...(updates.evidenceLevel ? { evidenceLevel: updates.evidenceLevel } : {}),
-      ...(updates.qualityScore !== undefined ? { qualityScore: updates.qualityScore } : {}),
-      ...(updates.relevanceScore !== undefined ? { relevanceScore: updates.relevanceScore } : {}),
-      ...(updates.tags ? { tags: updates.tags } : {}),
-      ...(updates.metadata ? { extra: updates.metadata } : {}),
-    };
+    if (existing.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: `Evidence object ${id} not found` },
+      });
+    }
+
+    const updateValues: Record<string, any> = { updatedBy: userId, updatedAt: new Date() };
+
+    if (updates.title !== undefined) updateValues.title = updates.title;
+    if (updates.code !== undefined) updateValues.code = updates.code;
+    if (updates.description !== undefined) updateValues.description = updates.description;
+    if (updates.evidenceType !== undefined) updateValues.evidenceType = updates.evidenceType;
+    if (updates.evidenceCategory !== undefined) updateValues.evidenceCategory = updates.evidenceCategory;
+    if (updates.evidenceLevel !== undefined) updateValues.evidenceLevel = updates.evidenceLevel;
+    if (updates.sourceType !== undefined) updateValues.sourceType = updates.sourceType;
+    if (updates.sourceReference !== undefined) updateValues.sourceReference = updates.sourceReference;
+    if (updates.sourceCitation !== undefined) updateValues.sourceCitation = updates.sourceCitation;
+    if (updates.programId !== undefined) updateValues.programId = updates.programId;
+    if (updates.documentId !== undefined) updateValues.documentId = updates.documentId;
+    if (updates.documentVersion !== undefined) updateValues.documentVersion = updates.documentVersion;
+    if (updates.pageRange !== undefined) updateValues.pageRange = updates.pageRange;
+    if (updates.excerpt !== undefined) updateValues.excerpt = updates.excerpt;
+    if (updates.qualityScore !== undefined) updateValues.qualityScore = updates.qualityScore != null ? String(updates.qualityScore) : null;
+    if (updates.relevanceScore !== undefined) updateValues.relevanceScore = updates.relevanceScore != null ? String(updates.relevanceScore) : null;
+    if (updates.validFrom !== undefined) updateValues.validFrom = updates.validFrom ? new Date(updates.validFrom) : null;
+    if (updates.validUntil !== undefined) updateValues.validUntil = updates.validUntil ? new Date(updates.validUntil) : null;
+    if (updates.authors !== undefined) updateValues.authors = updates.authors;
+    if (updates.publicationDate !== undefined) updateValues.publicationDate = updates.publicationDate ? new Date(updates.publicationDate) : null;
+    if (updates.journal !== undefined) updateValues.journal = updates.journal;
+    if (updates.doi !== undefined) updateValues.doi = updates.doi;
+    if (updates.pmid !== undefined) updateValues.pmid = updates.pmid;
+    if (updates.abstract !== undefined) updateValues.abstract = updates.abstract;
+    if (updates.testType !== undefined) updateValues.testType = updates.testType;
+    if (updates.testLab !== undefined) updateValues.testLab = updates.testLab;
+    if (updates.testDate !== undefined) updateValues.testDate = updates.testDate ? new Date(updates.testDate) : null;
+    if (updates.testResults !== undefined) updateValues.testResults = updates.testResults;
+    if (updates.tags !== undefined) updateValues.tags = updates.tags;
+    if (updates.metadata !== undefined) updateValues.metadata = updates.metadata;
 
     const [evidence] = await db
-      .update(evidenceSources)
-      .set({
-        ...(updates.title ? { title: updates.title } : {}),
-        ...(updates.evidenceType ? { sourceType: updates.evidenceType } : {}),
-        ...(updates.sourceReference ? { fileUrl: updates.sourceReference } : {}),
-        ...(updates.excerpt ? { contentText: updates.excerpt } : {}),
-        ...(updates.programId ? { programId: updates.programId } : {}),
-        metadata: nextMetadata,
-        updatedAt: new Date(),
-      })
-      .where(and(eq(evidenceSources.id, id), eq(evidenceSources.organizationId, Number(tenantId))))
+      .update(evidenceObjects)
+      .set(updateValues)
+      .where(and(eq(evidenceObjects.id, id), eq(evidenceObjects.organizationId, orgIdNum)))
       .returning();
 
     res.json({ success: true, data: evidence });
   } catch (error) {
+    console.error('[evidence] PATCH /:id error:', error);
     res.status(500).json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Failed to update evidence' },
@@ -426,18 +607,39 @@ router.patch('/:id(\\d+)', validateBody(updateEvidenceSchema), async (req: Reque
  * DELETE /api/evidence/:id
  * Delete an evidence object
  */
-router.delete('/:id(\\d+)', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request, res: Response) => {
   try {
-    const id = Number(req.params.id);
-    const tenantId = (req as any).tenantContext?.tenantId;
-    if (!tenantId) return res.status(401).json({ error: 'Tenant context required' });
-    if (!Number.isFinite(id)) return res.status(400).json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Invalid evidence id' } });
+    const id = String(req.params.id);
+    const orgId = getSecureOrgId(req);
+    if (!orgId) {
+      return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Tenant context required' } });
+    }
+    const orgIdNum = parseInt(orgId, 10);
+
+    const existing = await db
+      .select({ id: evidenceObjects.id })
+      .from(evidenceObjects)
+      .where(and(eq(evidenceObjects.id, id), eq(evidenceObjects.organizationId, orgIdNum)))
+      .limit(1);
+
+    if (existing.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: `Evidence object ${id} not found` },
+      });
+    }
 
     await db
-      .delete(evidenceSources)
-      .where(and(eq(evidenceSources.id, id), eq(evidenceSources.organizationId, Number(tenantId))));
+      .delete(evidenceLinks)
+      .where(and(eq(evidenceLinks.evidenceId, id), eq(evidenceLinks.organizationId, orgIdNum)));
+
+    await db
+      .delete(evidenceObjects)
+      .where(and(eq(evidenceObjects.id, id), eq(evidenceObjects.organizationId, orgIdNum)));
+
     res.json({ success: true, message: 'Evidence deleted successfully' });
   } catch (error) {
+    console.error('[evidence] DELETE /:id error:', error);
     res.status(500).json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Failed to delete evidence' },
@@ -453,61 +655,51 @@ router.delete('/:id(\\d+)', async (req: Request, res: Response) => {
  * POST /api/evidence/:id/verify
  * Verify an evidence object
  */
-router.post('/:id(\\d+)/verify', async (req: Request, res: Response) => {
+router.post('/:id/verify', async (req: Request, res: Response) => {
   try {
-    const id = Number(req.params.id);
+    const id = String(req.params.id);
     const { approved, comments } = req.body;
-    const tenantId = (req as any).tenantContext?.tenantId;
-    if (!tenantId) return res.status(401).json({ error: 'Tenant context required' });
-    if (!Number.isFinite(id))
-      return res
-        .status(400)
-        .json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Invalid evidence id' } });
+    const orgId = getSecureOrgId(req);
+    if (!orgId) {
+      return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Tenant context required' } });
+    }
+    const orgIdNum = parseInt(orgId, 10);
+    const userName = (req as any).user?.name || (req as any).user?.email || 'System';
 
-    const userName = (req as any).user?.name || 'System';
-    const userId = Number((req as any).user?.id) || null;
-    const [existing] = await db
-      .select()
-      .from(evidenceSources)
-      .where(and(eq(evidenceSources.id, id), eq(evidenceSources.organizationId, Number(tenantId))))
+    const existing = await db
+      .select({ id: evidenceObjects.id })
+      .from(evidenceObjects)
+      .where(and(eq(evidenceObjects.id, id), eq(evidenceObjects.organizationId, orgIdNum)))
       .limit(1);
-    if (!existing) {
-      return res
-        .status(404)
-        .json({ success: false, error: { code: 'NOT_FOUND', message: 'Evidence not found' } });
+
+    if (existing.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: `Evidence object ${id} not found` },
+      });
     }
 
-    const verifiedAt = new Date().toISOString();
-    const nextMetadata = {
-      ...((existing.metadata as Record<string, unknown>) ?? {}),
-      status: approved ? 'approved' : 'rejected',
-      isVerified: Boolean(approved),
+    const now = new Date();
+    const updateVals: Record<string, any> = {
+      isVerified: !!approved,
       verifiedBy: userName,
-      verifiedById: userId,
-      verifiedAt,
-      verificationComments: comments ?? null,
+      verifiedAt: now,
+      status: approved ? 'approved' : 'rejected',
+      updatedAt: now,
     };
-    const [saved] = await db
-      .update(evidenceSources)
-      .set({
-        metadata: nextMetadata,
-        updatedAt: new Date(),
-      })
-      .where(and(eq(evidenceSources.id, id), eq(evidenceSources.organizationId, Number(tenantId))))
-      .returning();
+    if (comments) {
+      updateVals.metadata = sql`jsonb_set(COALESCE(${evidenceObjects.metadata}::jsonb, '{}'::jsonb), '{verificationComments}', ${JSON.stringify(comments)}::jsonb)`;
+    }
 
-    const evidence = {
-      id: String(id),
-      isVerified: approved,
-      verifiedBy: userName,
-      verifiedAt,
-      status: approved ? 'approved' : 'rejected',
-      verificationComments: comments,
-      updatedAt: saved.updatedAt,
-    };
+    const [evidence] = await db
+      .update(evidenceObjects)
+      .set(updateVals)
+      .where(and(eq(evidenceObjects.id, id), eq(evidenceObjects.organizationId, orgIdNum)))
+      .returning();
 
     res.json({ success: true, data: evidence });
   } catch (error) {
+    console.error('[evidence] POST /:id/verify error:', error);
     res.status(500).json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Failed to verify evidence' },
@@ -523,56 +715,23 @@ router.post('/:id(\\d+)/verify', async (req: Request, res: Response) => {
  * GET /api/evidence/:id/links
  * Get all links for an evidence object
  */
-router.get('/:id(\\d+)/links', async (req: Request, res: Response) => {
+router.get('/:id/links', async (req: Request, res: Response) => {
   try {
-    const sourceId = Number(req.params.id);
-    const tenantId = (req as any).tenantContext?.tenantId;
-    if (!tenantId) return res.status(401).json({ error: 'Tenant context required' });
-    if (!Number.isFinite(sourceId))
-      return res
-        .status(400)
-        .json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Invalid evidence id' } });
-
-    const claims = await db
-      .select({ id: evidenceClaims.id })
-      .from(evidenceClaims)
-      .where(
-        and(
-          eq(evidenceClaims.sourceId, sourceId),
-          eq(evidenceClaims.organizationId, Number(tenantId)),
-          eq(evidenceClaims.isCurrent, true)
-        )
-      );
-
-    if (claims.length === 0) {
-      return res.json({ success: true, data: [] });
+    const id = String(req.params.id);
+    const orgId = getSecureOrgId(req);
+    if (!orgId) {
+      return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Tenant context required' } });
     }
-    const claimIds = claims.map(c => c.id);
-    const linksRows = await db
-      .select()
-      .from(evidenceClaimLinks)
-      .where(
-        and(
-          inArray(evidenceClaimLinks.claimId, claimIds),
-          eq(evidenceClaimLinks.organizationId, Number(tenantId)),
-          sql`${evidenceClaimLinks.deletedAt} IS NULL`
-        )
-      )
-      .orderBy(desc(evidenceClaimLinks.createdAt));
+    const orgIdNum = parseInt(orgId, 10);
 
-    const links = linksRows.map(link => ({
-      id: String(link.id),
-      evidenceId: String(sourceId),
-      targetType: link.sectionId ? 'section' : 'claim',
-      targetId: String(link.documentId),
-      targetPath: link.sectionId ?? null,
-      linkType: link.linkType,
-      strength: Number(link.strength),
-      createdAt: link.createdAt,
-    }));
+    const links = await db
+      .select()
+      .from(evidenceLinks)
+      .where(and(eq(evidenceLinks.evidenceId, id), eq(evidenceLinks.organizationId, orgIdNum)));
 
     res.json({ success: true, data: links });
   } catch (error) {
+    console.error('[evidence] GET /:id/links error:', error);
     res.status(500).json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch links' },
@@ -587,95 +746,45 @@ router.get('/:id(\\d+)/links', async (req: Request, res: Response) => {
 router.post('/links', validateBody(createLinkSchema), async (req: Request, res: Response) => {
   try {
     const data = req.body;
-    const tenantId = (req as any).tenantContext?.tenantId;
-    if (!tenantId) {
-      return res.status(401).json({ error: 'Tenant context required' });
+    const orgId = getSecureOrgId(req);
+    if (!orgId) {
+      return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Tenant context required' } });
     }
-    const userId = Number((req as any).user?.id) || null;
-    const evidenceId = Number(data.evidenceId);
-    const targetDocumentId = Number(data.targetId);
-    if (!Number.isFinite(targetDocumentId)) {
-      return res.status(400).json({
+    const orgIdNum = parseInt(orgId, 10);
+    const userId = (req as any).user?.id ? String((req as any).user.id) : 'system';
+
+    const [evidenceExists] = await db
+      .select({ id: evidenceObjects.id })
+      .from(evidenceObjects)
+      .where(and(eq(evidenceObjects.id, data.evidenceId), eq(evidenceObjects.organizationId, orgIdNum)))
+      .limit(1);
+
+    if (!evidenceExists) {
+      return res.status(404).json({
         success: false,
-        error: { code: 'VALIDATION_ERROR', message: 'targetId must be a numeric document id' },
+        error: { code: 'NOT_FOUND', message: `Evidence object ${data.evidenceId} not found` },
       });
     }
 
-    const [source] = await db
-      .select()
-      .from(evidenceSources)
-      .where(
-        and(
-          eq(evidenceSources.id, evidenceId),
-          eq(evidenceSources.organizationId, Number(tenantId))
-        )
-      )
-      .limit(1);
-    if (!source) {
-      return res
-        .status(404)
-        .json({ success: false, error: { code: 'NOT_FOUND', message: 'Evidence not found' } });
-    }
-
-    let claimId: number;
-    const [existingClaim] = await db
-      .select()
-      .from(evidenceClaims)
-      .where(
-        and(
-          eq(evidenceClaims.sourceId, evidenceId),
-          eq(evidenceClaims.organizationId, Number(tenantId)),
-          eq(evidenceClaims.isCurrent, true)
-        )
-      )
-      .limit(1);
-
-    if (existingClaim) {
-      claimId = existingClaim.id;
-    } else {
-      const [createdClaim] = await db
-        .insert(evidenceClaims)
-        .values({
-          sourceId: evidenceId,
-          programId: source.programId,
-          organizationId: Number(tenantId),
-          claimText: source.contentText || source.title,
-          claimType: 'manual_link',
-          extractionMethod: 'manual',
-          extractedBy: userId,
-        })
-        .returning();
-      claimId = createdClaim.id;
-    }
-
-    const [savedLink] = await db
-      .insert(evidenceClaimLinks)
+    const [link] = await db
+      .insert(evidenceLinks)
       .values({
-        claimId,
-        documentId: targetDocumentId,
-        sectionId: data.targetPath || null,
-        programId: source.programId,
-        organizationId: Number(tenantId),
+        organizationId: orgIdNum,
+        evidenceId: data.evidenceId,
+        targetType: data.targetType,
+        targetId: data.targetId,
+        targetPath: data.targetPath || null,
         linkType: data.linkType,
-        strength: data.strength === 'strong' ? '1.00' : data.strength === 'moderate' ? '0.66' : '0.33',
+        strength: data.strength,
+        rationale: data.rationale || null,
+        isVerified: false,
         createdBy: userId,
-      })
+      } as any)
       .returning();
-
-    const link = {
-      id: String(savedLink.id),
-      evidenceId: String(evidenceId),
-      targetType: data.targetType,
-      targetId: String(savedLink.documentId),
-      targetPath: savedLink.sectionId,
-      linkType: savedLink.linkType,
-      strength: Number(savedLink.strength),
-      createdBy: userId,
-      createdAt: savedLink.createdAt,
-    };
 
     res.status(201).json({ success: true, data: link });
   } catch (error) {
+    console.error('[evidence] POST /links error:', error);
     res.status(500).json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Failed to create link' },
@@ -689,130 +798,36 @@ router.post('/links', validateBody(createLinkSchema), async (req: Request, res: 
  */
 router.delete('/links/:linkId', async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as any).tenantContext?.tenantId;
-    if (!tenantId) return res.status(401).json({ error: 'Tenant context required' });
-    const linkId = Number(req.params.linkId);
-    if (!Number.isFinite(linkId)) {
-      return res.status(400).json({
+    const linkId = String(req.params.linkId);
+    const orgId = getSecureOrgId(req);
+    if (!orgId) {
+      return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Tenant context required' } });
+    }
+    const orgIdNum = parseInt(orgId, 10);
+
+    const existing = await db
+      .select({ id: evidenceLinks.id })
+      .from(evidenceLinks)
+      .where(and(eq(evidenceLinks.id, linkId), eq(evidenceLinks.organizationId, orgIdNum)))
+      .limit(1);
+
+    if (existing.length === 0) {
+      return res.status(404).json({
         success: false,
-        error: { code: 'VALIDATION_ERROR', message: 'Invalid link id' },
+        error: { code: 'NOT_FOUND', message: `Evidence link ${linkId} not found` },
       });
     }
-    const userId = Number((req as any).user?.id) || null;
+
     await db
-      .update(evidenceClaimLinks)
-      .set({ deletedAt: new Date(), deletedBy: userId })
-      .where(
-        and(
-          eq(evidenceClaimLinks.id, linkId),
-          eq(evidenceClaimLinks.organizationId, Number(tenantId))
-        )
-      );
+      .delete(evidenceLinks)
+      .where(and(eq(evidenceLinks.id, linkId), eq(evidenceLinks.organizationId, orgIdNum)));
 
     res.json({ success: true, message: 'Link deleted successfully' });
   } catch (error) {
+    console.error('[evidence] DELETE /links/:linkId error:', error);
     res.status(500).json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Failed to delete link' },
-    });
-  }
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// ROUTES: Evidence Search & Stats
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * GET /api/evidence/search
- * Search evidence with faceted filters
- */
-router.get('/search', async (req: Request, res: Response) => {
-  try {
-    const tenantId = (req as any).tenantContext?.tenantId;
-    if (!tenantId) return res.status(401).json({ error: 'Tenant context required' });
-    const q = String(req.query.q || '').trim();
-    const whereClauses = [eq(evidenceSources.organizationId, Number(tenantId))];
-    if (q) whereClauses.push(ilike(evidenceSources.title, `%${q}%`));
-
-    const items = await db
-      .select()
-      .from(evidenceSources)
-      .where(and(...whereClauses))
-      .orderBy(desc(evidenceSources.createdAt))
-      .limit(50);
-
-    const facetRows = await db
-      .select({
-        value: evidenceSources.sourceType,
-        count: sql<number>`count(*)`,
-      })
-      .from(evidenceSources)
-      .where(and(...whereClauses))
-      .groupBy(evidenceSources.sourceType);
-
-    const results = {
-      items,
-      facets: {
-        type: facetRows.map(r => ({ value: r.value, count: Number(r.count) })),
-      },
-      total: items.length,
-    };
-
-    res.json({ success: true, data: results });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'INTERNAL_ERROR', message: 'Search failed' },
-    });
-  }
-});
-
-/**
- * GET /api/evidence/stats
- * Get evidence statistics
- */
-router.get('/stats', async (req: Request, res: Response) => {
-  try {
-    const programId = req.query.programId ? Number(req.query.programId) : undefined;
-    const tenantId = (req as any).tenantContext?.tenantId;
-    if (!tenantId) {
-      return res.status(401).json({ error: 'Tenant context required' });
-    }
-
-    const whereClauses = [eq(evidenceSources.organizationId, Number(tenantId))];
-    if (programId && Number.isFinite(programId)) {
-      whereClauses.push(eq(evidenceSources.programId, programId));
-    }
-
-    const [totals] = await db
-      .select({
-        total: sql<number>`count(*)`,
-        totalPages: sql<number>`coalesce(sum(${evidenceSources.pageCount}), 0)`,
-      })
-      .from(evidenceSources)
-      .where(and(...whereClauses));
-
-    const byTypeRows = await db
-      .select({
-        value: evidenceSources.sourceType,
-        count: sql<number>`count(*)`,
-      })
-      .from(evidenceSources)
-      .where(and(...whereClauses))
-      .groupBy(evidenceSources.sourceType);
-
-    const byType = Object.fromEntries(byTypeRows.map(r => [r.value, Number(r.count)]));
-    const stats = {
-      total: Number(totals?.total ?? 0),
-      totalPages: Number(totals?.totalPages ?? 0),
-      byType,
-    };
-
-    res.json({ success: true, data: stats });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch stats' },
     });
   }
 });

@@ -1,5 +1,5 @@
 import { config as dotenvConfig } from 'dotenv';
-dotenvConfig({ override: true });
+dotenvConfig({ override: false });
 import { initializeOpenTelemetry } from './services/telemetry/opentelemetry';
 
 // Initialize Sentry error monitoring early, before other imports
@@ -21,9 +21,18 @@ import path from 'path';
 import fs from 'fs';
 import type { Request, Response, NextFunction } from 'express';
 import { fileURLToPath } from 'url';
+import { betaFlowTelemetryMiddleware } from './middleware/betaFlowTelemetry';
 
 // Phase 4.1 Proof System - 21 CFR Part 11 Compliance
 import { initializeProofDatabasePersistence } from '../services/proof/database-setup';
+
+// Route bootstrap manifests
+import { registerCoreRoutes } from './bootstrap/register-core-routes';
+import { registerIntegrationRoutes } from './bootstrap/register-integrations-routes';
+import { registerAiRoutes } from './bootstrap/register-ai-routes';
+import { registerConcept2CureRoutes } from './bootstrap/register-concept2cure-routes';
+import { registerAdminRoutes } from './bootstrap/register-admin-routes';
+import { registerSubscriptionsRoutes } from './routes/reports/subscriptions-routes';
 
 // Enterprise Security & Performance Middleware
 import { applySecurityMiddleware } from './middleware/enterprise-security.js';
@@ -133,6 +142,10 @@ import { registerPlatformRoutes } from './bootstrap/register-platform-routes';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const EXPERIMENTAL_ROUTES_ENABLED =
+  process.env.ENABLE_EXPERIMENTAL_ROUTES === 'true' && process.env.NODE_ENV !== 'production';
+const DEMO_ROUTES_ENABLED =
+  process.env.ENABLE_DEMO_ROUTES === 'true' && process.env.NODE_ENV !== 'production';
 
 // --- Start Python FastAPI Backend as a Child Process ---
 const __filename = fileURLToPath(import.meta.url);
@@ -246,6 +259,12 @@ if (DEBUG) {
     next();
   });
 }
+
+// Beta-ops telemetry collection for guided user-test API lanes only.
+app.use('/api', betaFlowTelemetryMiddleware);
+
+const betaOpsTelemetryRoutes = (await import('./routes/beta-ops-telemetry')).default;
+app.use('/api/ops', authMiddleware, betaOpsTelemetryRoutes);
 
 // ============================================================================
 // FAST-PATH ENDPOINTS — before all middleware for minimal latency
@@ -381,11 +400,17 @@ async function verifyDatabaseConnection() {
       console.error('❌ CRITICAL: Missing tables:', result.missingCritical.join(', '));
       console.error('   Run: npm run db:push to sync schema');
     } else if (result.missingExtensions.length > 0) {
-      console.error('❌ CRITICAL: Missing required database extensions:', result.missingExtensions.join(', '));
+      console.error(
+        '❌ CRITICAL: Missing required database extensions:',
+        result.missingExtensions.join(', ')
+      );
     } else if (result.errors.length > 0) {
       console.error('⚠️ Table verification errors:', result.errors);
     } else if (result.missingSchemas.length > 0) {
-      console.warn('⚠️ Database schemas required initialization:', result.missingSchemas.join(', '));
+      console.warn(
+        '⚠️ Database schemas required initialization:',
+        result.missingSchemas.join(', ')
+      );
     } else if (result.warnings.length > 0) {
       console.warn('⚠️ Database readiness warnings:', result.warnings);
     }
@@ -522,9 +547,8 @@ app.get('/api/diag', (_req: Request, res: Response) => {
 await registerPlatformRoutes({ app, pool, authMiddleware });
 
 // Basic API routes - complex routes will be added back gradually
-app.get('/api/csr', (req: Request, res: Response) => {
-  res.json({ message: 'CSR API available', timestamp: new Date() });
-});
+// NOTE: do not define a top-level /api/csr inline handler here.
+// /api/csr is owned by csr-builder router mounts in startServer().
 
 // /api/projects is owned by mounted projects-management router.
 // Keep this namespace single-owned to avoid route shadowing/policy drift.
@@ -1067,18 +1091,21 @@ try {
     next();
   };
 
-  app.use('/api/ivdr', requireIVDRAccess, createIVDRRoutes(pool));
-  console.log('✅ IVDR API routes mounted (EU 2017/746 | auth → flag → entitlement → RBAC)');
+  const ivdrGateway = express.Router();
+  ivdrGateway.use(createIVDRRoutes(pool));
 
   // Mount IVDR Evidence Binder + Pack Builder routes (same middleware gate)
   try {
     const binderModule = await import('./routes/ivdr-binder-routes');
     const createBinderRoutes = binderModule.default;
-    app.use('/api/ivdr', requireIVDRAccess, createBinderRoutes(pool));
+    ivdrGateway.use(createBinderRoutes(pool));
     console.log('✅ IVDR Evidence Binder + Pack Builder routes mounted');
   } catch (binderErr) {
     console.error('❌ Failed to mount IVDR Binder routes:', binderErr);
   }
+
+  app.use('/api/ivdr', requireIVDRAccess, ivdrGateway);
+  console.log('✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)');
 
   // Start IVDR Pack Build Worker (async in-process job processor)
   try {
@@ -1445,46 +1472,51 @@ function mountStaticBusinessDataGuard(path: string, routeName: string, requiredF
 // Mount SE Matrix render orchestration (Phase 6.6.C2 — Manifest + Payload + Render + Audit)
 // POST /api/programs/:programId/se-matrix/render → Shadow payload → Part 11 audit
 try {
-  const seMatrixModule = await import('./routes/se-matrix.js');
-  const seMatrixRoutes = seMatrixModule.default;
-  app.use('/api/programs', seMatrixRoutes);
-  console.log('✅ SE Matrix render orchestration routes mounted (Phase 6.6.C2)');
+  const [seMatrixModule, defensePacketModule] = await Promise.all([
+    import('./routes/se-matrix.js'),
+    import('./routes/defense-packet.js'),
+  ]);
+  const programsGateway = express.Router();
+  programsGateway.use(seMatrixModule.default);
+  programsGateway.use(defensePacketModule.default);
+  app.use('/api/programs', programsGateway);
+  console.log('✅ Programs gateway routes mounted (SE Matrix + Defense Packet)');
 } catch (error) {
-  console.error('❌ Failed to mount SE Matrix render routes:', error);
+  console.error('❌ Failed to mount programs gateway routes:', error);
 }
 
-// Mount Defense Packet routes (Phase 6.6.D — Versioned, Signed Compliance Artifacts)
-// POST /api/programs/:programId/predicate-intel/defense-packet → Create packet
-// GET  /api/programs/:programId/predicate-intel/defense-packets → List packets
-try {
-  const defensePacketModule = await import('./routes/defense-packet.js');
-  const defensePacketRoutes = defensePacketModule.default;
-  app.use('/api/programs', defensePacketRoutes);
-  console.log('✅ Defense Packet routes mounted (Phase 6.6.D)');
-} catch (error) {
-  console.error('❌ Failed to mount Defense Packet routes:', error);
-}
-
-// Mount Demo Seed routes (for creating demo projects)
-try {
-  const seedDemoModule = await import('./routes/seed-demo.js');
-  const seedDemoRoutes = seedDemoModule.default;
-  app.use('/api/demo', seedDemoRoutes);
-  console.log('✅ Demo seeding API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount Demo seed routes:', error);
+// Mount Demo Seed routes (for creating demo projects) — explicit opt-in only
+if (DEMO_ROUTES_ENABLED) {
+  try {
+    const seedDemoModule = await import('./routes/seed-demo.js');
+    const seedDemoRoutes = seedDemoModule.default;
+    app.use('/api/demo', seedDemoRoutes);
+    console.log('✅ Demo seeding API routes mounted successfully');
+  } catch (error) {
+    console.error('❌ Failed to mount Demo seed routes:', error);
+  }
+} else {
+  console.log(
+    'ℹ️ Demo seed routes disabled (set ENABLE_DEMO_ROUTES=true to enable in non-production).'
+  );
 }
 
 // Mount Collaboration Center routes for 510(k) activity tracking
-try {
-  const collaborationModule = await import('./routes/collaboration');
-  const collaborationRoutes = collaborationModule.default;
-  app.use('/api/collaboration', collaborationRoutes);
+if (EXPERIMENTAL_ROUTES_ENABLED) {
+  try {
+    const collaborationModule = await import('./routes/collaboration');
+    const collaborationRoutes = collaborationModule.default;
+    app.use('/api/collaboration', collaborationRoutes);
+    console.log(
+      '✅ Collaboration Center API routes mounted successfully (510(k) team activity tracking)'
+    );
+  } catch (error) {
+    console.error('❌ Failed to mount Collaboration Center routes:', error);
+  }
+} else {
   console.log(
-    '✅ Collaboration Center API routes mounted successfully (510(k) team activity tracking)'
+    'ℹ️ Collaboration Center legacy activity routes disabled (experimental in-memory behavior).'
   );
-} catch (error) {
-  console.error('❌ Failed to mount Collaboration Center routes:', error);
 }
 
 // Mount CERV2 Sections routes for 510(k) section management
@@ -1507,15 +1539,8 @@ try {
   console.error('❌ Failed to mount CERV2 Versions routes:', error);
 }
 
-// Mount Version Diff routes (document version comparison engine)
-try {
-  const versionDiffModule = await import('./routes/versionDiff');
-  const versionDiffRoutes = versionDiffModule.default;
-  app.use('/api/documents', versionDiffRoutes);
-  console.log('✅ Version Diff API routes mounted successfully (document version comparison)');
-} catch (error) {
-  console.error('❌ Failed to mount Version Diff routes:', error);
-}
+// Version-diff/document routers are mounted through a consolidated
+// /api/documents gateway in startServer() to prevent multi-mount drift.
 
 // Mount Biostatistics Platform routes (7 capabilities: continuum, optimizer, estimand, SAP, external controls, adaptive, knowledge graph)
 try {
@@ -1691,8 +1716,8 @@ app.get('/api/csr/search', async (req: Request, res: Response) => {
         typeof csr.relevance_score === 'number'
           ? csr.relevance_score
           : typeof csr.similarity === 'number'
-            ? csr.similarity
-            : null,
+          ? csr.similarity
+          : null,
       summary: csr.summary || csr.context_summary || null,
       source: 'csr_search_service',
     }));
@@ -2603,8 +2628,8 @@ app.post('/api/search/vector', async (req: Request, res: Response) => {
         typeof csr.relevance_score === 'number'
           ? csr.relevance_score
           : typeof csr.similarity === 'number'
-            ? csr.similarity
-            : null,
+          ? csr.similarity
+          : null,
       document_id: csr.id || csr.csr_id || idx,
       document_title: csr.title || 'Untitled CSR',
       source_page: csr.source_page ?? null,
@@ -3906,10 +3931,9 @@ app.get('/api/510k-workflow/:projectId/compliance-report', async (req, res) => {
 console.log('✅ 510k-workflow API routes mounted successfully');
 console.log('✅ FDA compliance tracking enabled with full audit trails');
 
-// Mount 510k project routes (for project wizard)
-import projectRoutes from './routes/510k-project.routes';
-app.use('/api/510k-project', projectRoutes);
-console.log('✅ 510k-project API routes mounted successfully');
+// Mount beta-safe route manifest (510(k) + tester telemetry)
+mountBetaSafeRoutes(app);
+console.log('✅ Beta-safe routes mounted successfully');
 
 // Mount FDA forms routes
 import fdaFormsRoutes from './routes/fda-forms.routes';
@@ -5072,17 +5096,8 @@ app.get('/api/templates', async (req: Request, res: Response) => {
   }
 });
 
-// Content Atoms endpoint for CoAuthor
-app.get('/api/atoms', async (req: Request, res: Response) => {
-  try {
-    // Return empty array for now - this prevents the API error
-    // In a full implementation, this would fetch from a content_atoms table
-    res.json([]);
-  } catch (error) {
-    console.error('Error fetching content atoms:', error);
-    res.status(500).json({ error: 'Failed to fetch content atoms' });
-  }
-});
+// NOTE: /api/atoms is owned by server/routes/atoms.js.
+// Avoid inline /api/atoms handlers here to prevent route-shadowing.
 
 // Vault statistics endpoint — real DB query
 app.get('/api/vault/statistics', async (req: Request, res: Response) => {
@@ -5142,68 +5157,75 @@ app.get('/api/vault/list', async (req: Request, res: Response) => {
 });
 
 // AnA RI Regulatory Intelligence endpoint
-app.get('/api/ana/regulatory-intelligence', async (req: Request, res: Response) => {
-  try {
-    // Return regulatory intelligence data
-    res.json({
-      success: true,
-      advisorySummary: {
-        totalAdvisories: 0,
-        criticalAlerts: 0,
-        recentUpdates: 0,
-        complianceScore: 95,
-      },
-      documents: {
-        totalAnalyzed: 0,
-        successRate: 94,
-        averageProcessingTime: 2.3,
-        templatesAvailable: 13,
-      },
-      compliance: {
-        globalStatus: 'Compliant',
-        regions: [
-          { name: 'FDA', status: 'Compliant', score: 94 },
-          { name: 'EMA', status: 'Compliant', score: 87 },
-          { name: 'PMDA', status: 'Under Review', score: 92 },
-          { name: 'Health Canada', status: 'Compliant', score: 89 },
-          { name: 'TGA', status: 'Compliant', score: 91 },
-        ],
-      },
-      updates: [],
-    });
-  } catch (error) {
-    console.error('Error fetching regulatory intelligence:', error);
-    res.status(500).json({ error: 'Failed to fetch regulatory intelligence' });
+app.get(
+  '/api/ana/regulatory-intelligence',
+  authMiddleware as any,
+  async (req: Request, res: Response) => {
+    try {
+      // Return regulatory intelligence data
+      res.json({
+        success: true,
+        advisorySummary: {
+          totalAdvisories: 0,
+          criticalAlerts: 0,
+          recentUpdates: 0,
+          complianceScore: 95,
+        },
+        documents: {
+          totalAnalyzed: 0,
+          successRate: 94,
+          averageProcessingTime: 2.3,
+          templatesAvailable: 13,
+        },
+        compliance: {
+          globalStatus: 'Compliant',
+          regions: [
+            { name: 'FDA', status: 'Compliant', score: 94 },
+            { name: 'EMA', status: 'Compliant', score: 87 },
+            { name: 'PMDA', status: 'Under Review', score: 92 },
+            { name: 'Health Canada', status: 'Compliant', score: 89 },
+            { name: 'TGA', status: 'Compliant', score: 91 },
+          ],
+        },
+        updates: [],
+      });
+    } catch (error) {
+      console.error('Error fetching regulatory intelligence:', error);
+      res.status(500).json({ error: 'Failed to fetch regulatory intelligence' });
+    }
   }
-});
+);
 
 // AnA RI Regulatory Analysis endpoint
-app.post('/api/ana/regulatory-analysis', async (req: Request, res: Response) => {
-  console.log('🔥 AnA RI Regulatory Analysis endpoint hit!');
-  try {
-    // Add cache-busting headers
-    res.set({
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      Pragma: 'no-cache',
-      Expires: '0',
-    });
+app.post(
+  '/api/ana/regulatory-analysis',
+  authMiddleware as any,
+  async (req: Request, res: Response) => {
+    console.log('🔥 AnA RI Regulatory Analysis endpoint hit!');
+    try {
+      // Add cache-busting headers
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0',
+      });
 
-    const { query, context } = req.body;
-    console.log('📋 Request data:', { query, context });
+      const { query, context } = req.body;
+      console.log('📋 Request data:', { query, context });
 
-    const { getGateway } = await import('./services/ai-gateway');
-    const gateway = getGateway();
-    const response = await gateway.route({
-      taskType: 'regulatory_review',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are AnA RI. Return strict JSON only. No markdown. Provide concrete compliance analysis.',
-        },
-        {
-          role: 'user',
-          content: `Generate a regulatory analysis for the payload below.
+      const { getGateway } = await import('./services/ai-gateway');
+      const gateway = getGateway();
+      const response = await gateway.route({
+        taskType: 'regulatory_review',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are AnA RI. Return strict JSON only. No markdown. Provide concrete compliance analysis.',
+          },
+          {
+            role: 'user',
+            content: `Generate a regulatory analysis for the payload below.
 
 Query: ${query || ''}
 Context: ${JSON.stringify(context || {}, null, 2)}
@@ -5224,67 +5246,59 @@ Return JSON shape:
     "data_sources": string[]
   }
 }`,
-        },
-      ],
-      maxTokens: 3000,
-      temperature: 0.2,
-      strategy: 'quality_optimized',
-      callerModule: 'ana/regulatory-analysis',
-    });
-
-    try {
-      res.json(JSON.parse(response.content));
-    } catch {
-      res.json({
-        comprehensive_analysis: {
-          regulatory_readiness_score: 70,
-          overall_risk_assessment: 'Medium',
-          timeline_analysis: { projected_delay_days: 0 },
-          cost_analysis: { total_financial_impact: 0 },
-          regulatory_gaps: [],
-          ich_e6r3_assessment: { compliance_score: 75, risk_factors: [], recommendations: [] },
-        },
-        ana_1_0_ri_intelligence_summary: {
-          confidence_score: 60,
-          analysis_timestamp: new Date().toISOString(),
-          data_sources: ['AI Gateway', 'Parser fallback'],
-        },
-        raw_response: response.content,
+          },
+        ],
+        maxTokens: 3000,
+        temperature: 0.2,
+        strategy: 'quality_optimized',
+        callerModule: 'ana/regulatory-analysis',
       });
+
+      try {
+        res.json(JSON.parse(response.content));
+      } catch {
+        return res.status(502).json({
+          error: 'AI analysis returned invalid JSON payload',
+          code: 'AI_INVALID_RESPONSE_FORMAT',
+        });
+      }
+    } catch (error) {
+      console.error('Error in regulatory analysis:', error);
+      res.status(500).json({ error: 'Failed to perform regulatory analysis' });
     }
-  } catch (error) {
-    console.error('Error in regulatory analysis:', error);
-    res.status(500).json({ error: 'Failed to perform regulatory analysis' });
   }
-});
+);
 
 // AnA RI ICH E6(R3) Guidance endpoint
-app.post('/api/ana/ich-e6r3-guidance', async (req: Request, res: Response) => {
-  console.log('🔥 AnA RI ICH E6(R3) Guidance endpoint hit!');
-  try {
-    // Add cache-busting headers
-    res.set({
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      Pragma: 'no-cache',
-      Expires: '0',
-    });
+app.post(
+  '/api/ana/ich-e6r3-guidance',
+  authMiddleware as any,
+  async (req: Request, res: Response) => {
+    console.log('🔥 AnA RI ICH E6(R3) Guidance endpoint hit!');
+    try {
+      // Add cache-busting headers
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0',
+      });
 
-    const { query } = req.body;
-    const started = Date.now();
+      const { query } = req.body;
+      const started = Date.now();
 
-    const { getGateway } = await import('./services/ai-gateway');
-    const gateway = getGateway();
-    const response = await gateway.route({
-      taskType: 'regulatory_review',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are AnA RI specialized in ICH E6(R3). Return strict JSON only and focus on actionable, evidence-aware guidance.',
-        },
-        {
-          role: 'user',
-          content: `Question: ${query || ''}
+      const { getGateway } = await import('./services/ai-gateway');
+      const gateway = getGateway();
+      const response = await gateway.route({
+        taskType: 'regulatory_review',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are AnA RI specialized in ICH E6(R3). Return strict JSON only and focus on actionable, evidence-aware guidance.',
+          },
+          {
+            role: 'user',
+            content: `Question: ${query || ''}
 
 Return JSON:
 {
@@ -5302,38 +5316,28 @@ Return JSON:
     "guidance_version": string
   }
 }`,
-        },
-      ],
-      maxTokens: 2200,
-      temperature: 0.2,
-      strategy: 'quality_optimized',
-      callerModule: 'ana/ich-e6r3-guidance',
-    });
-
-    try {
-      res.json(JSON.parse(response.content));
-    } catch {
-      res.json({
-        guidance_response: {
-          answer: response.content,
-          regulatory_framework: 'ICH_E6_R3',
-          confidence_score: 70,
-          supporting_sections: [],
-          implementation_guidance: [],
-          references: [],
-        },
-        query_metadata: {
-          query_timestamp: new Date().toISOString(),
-          processing_time_ms: Date.now() - started,
-          guidance_version: 'E6(R3)',
-        },
+          },
+        ],
+        maxTokens: 2200,
+        temperature: 0.2,
+        strategy: 'quality_optimized',
+        callerModule: 'ana/ich-e6r3-guidance',
       });
+
+      try {
+        res.json(JSON.parse(response.content));
+      } catch {
+        return res.status(502).json({
+          error: 'AI guidance returned invalid JSON payload',
+          code: 'AI_INVALID_RESPONSE_FORMAT',
+        });
+      }
+    } catch (error) {
+      console.error('Error in ICH E6(R3) guidance:', error);
+      res.status(500).json({ error: 'Failed to provide ICH E6(R3) guidance' });
     }
-  } catch (error) {
-    console.error('Error in ICH E6(R3) guidance:', error);
-    res.status(500).json({ error: 'Failed to provide ICH E6(R3) guidance' });
   }
-});
+);
 
 // Advisor check readiness endpoint
 app.get('/api/advisor/check-readiness', async (req: Request, res: Response) => {
@@ -6308,14 +6312,17 @@ async function startServer() {
   }
 
   // Seed AnA Capability Registry (fire-and-forget — don't block startup)
-  import('../services/ana-capability-registry.js')
-    .then(({ seedCapabilityRegistry }) => seedCapabilityRegistry())
-    .then(({ seeded, total }) => {
-      console.log(`✅ AnA Capability Registry seeded (${seeded} new, ${total} total)`);
-    })
-    .catch((err: any) => {
-      console.warn('⚠️ AnA Capability Registry seeding failed (non-blocking):', err?.message);
-    });
+  // Delay slightly to ensure DB pool is ready
+  setTimeout(() => {
+    import('./services/ana-capability-registry.js')
+      .then(({ seedCapabilityRegistry }) => seedCapabilityRegistry())
+      .then(({ seeded, total }) => {
+        console.log(`✅ AnA Capability Registry seeded (${seeded} new, ${total} total)`);
+      })
+      .catch((err: any) => {
+        console.warn('⚠️ AnA Capability Registry seeding failed (non-blocking):', err?.message);
+      });
+  }, 3000);
 
   // Start Python backend first
   debugLog('Initializing Python backend...');
@@ -6374,13 +6381,7 @@ async function startServer() {
     console.error('Failed to mount leaves routes:', error);
   }
 
-  // Mount predictive sections routes
-  try {
-    app.use('/api/predictive-sections', predictiveSectionsRoutes);
-    console.log('✅ Predictive sections routes mounted successfully');
-  } catch (error) {
-    console.error('Failed to mount predictive sections routes:', error);
-  }
+  // Predictive sections already mounted at module bootstrap to avoid duplicate prefix mounts.
 
   // Mount Validation routes
   try {
@@ -6472,13 +6473,12 @@ async function startServer() {
   }
 
   // Mount project-module integration routes (Pillar 4: Full module integration)
+  // NOTE: Do not mount this router at /api/projects — projects-management owns /api/projects and
+  // defines GET /:projectId, which would steal paths like /find and /org-stats from this router.
   try {
     const moduleRoutes = await import('./routes/project-modules');
-    app.use('/api/projects', moduleRoutes.default || moduleRoutes); // nested: /api/projects/:id/modules
-    app.use('/api/project-modules', moduleRoutes.default || moduleRoutes); // top-level: /api/project-modules/find, /org-stats
-    console.log(
-      '✅ Project Module Integration routes mounted at /api/projects/:id/modules & /api/project-modules'
-    );
+    app.use('/api/project-modules', moduleRoutes.default || moduleRoutes);
+    console.log('✅ Project Module Integration routes mounted at /api/project-modules');
   } catch (error) {
     console.error('Failed to mount project-modules routes:', error);
   }
@@ -6512,19 +6512,26 @@ async function startServer() {
   }
 
   try {
-    const documentsUnified = await import('./routes/documents-unified');
-    app.use('/api/documents', documentsUnified.default);
-    console.log('✅ Documents-unified routes mounted at /api/documents');
-  } catch (error) {
-    console.error('Failed to mount documents-unified routes:', error);
-  }
+    const [versionDiffModule, documentsUnified, sourceLinksRoutes, documentIntelligenceRoutes] =
+      await Promise.all([
+        import('./routes/versionDiff'),
+        import('./routes/documents-unified'),
+        import('./routes/sourceLinks'),
+        import('./routes/document-intelligence-routes'),
+      ]);
 
-  try {
-    const sourceLinksRoutes = await import('./routes/sourceLinks');
-    app.use('/api/documents', sourceLinksRoutes.default);
-    console.log('✅ Source Links routes mounted at /api/documents/:id/sources');
+    const documentsGateway = express.Router();
+    documentsGateway.use(versionDiffModule.default);
+    documentsGateway.use(documentsUnified.default);
+    documentsGateway.use(sourceLinksRoutes.default);
+    documentsGateway.use(documentIntelligenceRoutes.default);
+
+    app.use('/api/documents', documentsGateway);
+    console.log(
+      '✅ Documents gateway mounted at /api/documents (versionDiff + unified + sourceLinks + intelligence)'
+    );
   } catch (error) {
-    console.error('Failed to mount source links routes:', error);
+    console.error('Failed to mount consolidated documents gateway routes:', error);
   }
 
   try {
@@ -6535,13 +6542,7 @@ async function startServer() {
     console.error('Failed to mount RTM export routes:', error);
   }
 
-  try {
-    const documentIntelligenceRoutes = await import('./routes/document-intelligence-routes');
-    app.use('/api/documents', documentIntelligenceRoutes.default);
-    console.log('✅ Document Intelligence routes mounted at /api/documents');
-  } catch (error) {
-    console.error('Failed to mount document intelligence routes:', error);
-  }
+  // document-intelligence now mounted via consolidated documents gateway.
 
   try {
     const intelligenceRoutes = await import('./routes/intelligence');
@@ -6937,17 +6938,21 @@ async function startServer() {
   }
 
   // ──────────────────────────────────────────────────────────────────────────
-  // C2C MISSING ROUTES — stub endpoints for notifications, sections, predicates
-  // Must be registered BEFORE the catch-all 404 handler
+  // C2C MISSING ROUTES — legacy stub endpoints (disabled by default)
+  // Must be explicitly opted in for non-production diagnostics only.
   // ──────────────────────────────────────────────────────────────────────────
-  try {
-    const c2cMissingRoutes = await import('./routes/c2c-missing-routes');
-    app.use('/api', c2cMissingRoutes.default);
-    console.log(
-      '✅ C2C missing routes registered (notifications, sections, predicates, vault/docs)'
-    );
-  } catch (error) {
-    console.error('❌ Failed to mount c2c-missing-routes:', error);
+  if (EXPERIMENTAL_ROUTES_ENABLED) {
+    try {
+      const c2cMissingRoutes = await import('./routes/c2c-missing-routes');
+      app.use('/api', c2cMissingRoutes.default);
+      console.log(
+        '✅ C2C missing routes registered (notifications, sections, predicates, vault/docs)'
+      );
+    } catch (error) {
+      console.error('❌ Failed to mount c2c-missing-routes:', error);
+    }
+  } else {
+    console.log('ℹ️ C2C legacy stub routes disabled.');
   }
 
   // ──────────────────────────────────────────────────────────────────────────

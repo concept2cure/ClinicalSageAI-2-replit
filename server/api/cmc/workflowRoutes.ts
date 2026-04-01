@@ -5,11 +5,22 @@
 
 import express from 'express';
 import { z } from 'zod';
-import { db } from '../../db';
+import { db, getPool } from '../../db';
 import { projectWorkflows, workflowTasks } from '../../../shared/cmc-schema';
 import { eq, desc, and } from 'drizzle-orm';
 
 const router = express.Router();
+
+function getOrganizationId(req: express.Request): number {
+  const orgId = parseInt(
+    String((req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-organization-id'] || 0),
+    10
+  );
+  if (!orgId || Number.isNaN(orgId)) {
+    throw new Error('Organization context required');
+  }
+  return orgId;
+}
 
 // Types for workflow data
 interface WorkflowTask {
@@ -359,8 +370,6 @@ const AI_COPILOT_COMMANDS: Record<string, AICommandConfig> = {
   },
 };
 
-// Command results kept in-memory (transient AI output cache)
-let commandResults = new Map();
 let commandCounter = 1;
 
 /**
@@ -759,7 +768,25 @@ router.post('/ai-command', async (req, res) => {
       },
     };
 
-    commandResults.set(resultId, result);
+    const orgId = getOrganizationId(req);
+    const pool = getPool();
+    await pool.query(
+      `INSERT INTO cmc_ai_command_results (
+        id, organization_id, project_id, command, drug_name, category, status, estimated_time, result, metadata
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+      [
+        result.id,
+        orgId,
+        (req.body.projectId as string) || null,
+        result.command,
+        result.drugName,
+        result.category,
+        result.status,
+        result.estimatedTime,
+        result.result,
+        JSON.stringify(result.metadata || {}),
+      ]
+    );
 
     res.json({
       success: true,
@@ -813,9 +840,17 @@ router.get('/ai-commands', async (req, res) => {
  */
 router.get('/ai-commands/results', async (req, res) => {
   try {
-    const results = Array.from(commandResults.values()).sort(
-      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    const orgId = getOrganizationId(req);
+    const pool = getPool();
+    const { rows } = await pool.query(
+      `SELECT id, command, drug_name as "drugName", category, status, estimated_time as "estimatedTime",
+              result, metadata, created_at as "timestamp"
+       FROM cmc_ai_command_results
+       WHERE organization_id = $1
+       ORDER BY created_at DESC`,
+      [orgId]
     );
+    const results = rows;
 
     res.json({
       success: true,
@@ -837,8 +872,14 @@ router.get('/ai-commands/results', async (req, res) => {
 router.get('/download/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const result = commandResults.get(id);
-
+    const pool = getPool();
+    const { rows } = await pool.query(
+      `SELECT command, drug_name as "drugName", result
+       FROM cmc_ai_command_results
+       WHERE id = $1`,
+      [id]
+    );
+    const result = rows[0];
     if (!result) {
       return res.status(404).json({
         success: false,
@@ -869,18 +910,20 @@ router.get('/download/:id', async (req, res) => {
  */
 router.get('/analytics/performance', async (req, res) => {
   try {
-    const allWorkflows = Array.from(workflows.values());
-    const allCommands = Array.from(commandResults.values());
+    const allWorkflows = await db.select().from(projectWorkflows);
+    const pool = getPool();
+    const commandRes = await pool.query(`SELECT category FROM cmc_ai_command_results`);
+    const allCommands = commandRes.rows;
 
     const analytics = {
       workflows: {
         total: allWorkflows.length,
         active: allWorkflows.filter(w => w.status === 'active').length,
-        completed: allWorkflows.filter(w => w.currentProgress === 100).length,
+        completed: allWorkflows.filter(w => (w.progress || 0) === 100).length,
         averageProgress:
           allWorkflows.length > 0
             ? Math.round(
-                allWorkflows.reduce((sum, w) => sum + w.currentProgress, 0) / allWorkflows.length
+                allWorkflows.reduce((sum, w) => sum + (w.progress || 0), 0) / allWorkflows.length
               )
             : 0,
         averageCompletionTime: '3.2 weeks', // Calculate from actual data

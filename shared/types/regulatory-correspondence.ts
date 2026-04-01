@@ -124,6 +124,17 @@ export interface CorrespondenceIssue {
   mappedArtifactIds: string[];
   owner?: string;
   resolutionStatus: 'open' | 'in_progress' | 'resolved' | 'waived';
+  structuredExtraction?: {
+    regulatorAskType: string;
+    impactedSubmissionComponent: string;
+    sectionCandidates: string[];
+    recommendedOwnerFunction: string;
+    recommendedResponsePackageType: string;
+    evidenceNeeds: string[];
+    confidenceTrace: Array<{ signal: string; score: number; deterministic: boolean }>;
+    humanReviewRequired: boolean;
+    responseDeadlineSignal?: string;
+  };
 }
 
 export interface ResponsePackage {

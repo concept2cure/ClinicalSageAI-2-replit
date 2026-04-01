@@ -33,8 +33,8 @@
     "start": "NODE_ENV=production node dist/index.js",
     "check": "NODE_OPTIONS=\"--max-old-space-size=6144\" tsc",
     "typecheck": "NODE_OPTIONS=\"--max-old-space-size=6144\" tsc --noEmit",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern scripts --ignore-pattern client/src --ignore-pattern tests/integration/api/vault.test.js --ignore-pattern server/events/eventBus.js --ignore-pattern server/routes/fda510k-routes.ts --ignore-pattern server/routes/vault-dms.js --ignore-pattern server/services/pdfGenerator.js",
-    "lint:fix": "eslint . --fix --ignore-pattern dist --ignore-pattern scripts --ignore-pattern client/src --ignore-pattern tests/integration/api/vault.test.js --ignore-pattern server/events/eventBus.js --ignore-pattern server/routes/fda510k-routes.ts --ignore-pattern server/routes/vault-dms.js --ignore-pattern server/services/pdfGenerator.js",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern scripts --ignore-pattern client/src --ignore-pattern tests/integration/api/vault.test.js --ignore-pattern server/events/eventBus.js --ignore-pattern server/routes/fda510k-routes.ts --ignore-pattern server/services/pdfGenerator.js",
+    "lint:fix": "eslint . --fix --ignore-pattern dist --ignore-pattern scripts --ignore-pattern client/src --ignore-pattern tests/integration/api/vault.test.js --ignore-pattern server/events/eventBus.js --ignore-pattern server/routes/fda510k-routes.ts --ignore-pattern server/services/pdfGenerator.js",
     "test": "jest --config scripts/jest.config.js && NODE_OPTIONS=\"--max-old-space-size=4096\" vitest run --config vitest.config.ts",
     "ci:ban-new-pool": "bash scripts/ci/ban-new-pool.sh",
     "ci:governed-export-routes": "node scripts/ci/check-governed-export-routes.mjs",
@@ -44,7 +44,8 @@
     "ci:audit-route-mounts:strict": "node scripts/ci/audit-route-mounts.mjs --strict-no-regression --baseline docs/reports/route-mount-audit-baseline.json --owners docs/reports/route-mount-owners.json --write-json docs/reports/route-mount-audit-latest.json",
     "ci:audit-route-mounts:full-strict": "node scripts/ci/audit-route-mounts.mjs --max-warnings 0 --owners docs/reports/route-mount-owners.json --write-json docs/reports/route-mount-audit-latest.json",
     "ci:no-mock-in-prod-routes": "node scripts/ci/check-no-mock-in-prod-routes.mjs",
-    "ci:no-mock-beta-path": "node scripts/ci/check-no-mock-in-prod-routes.mjs --strict-beta-path",
+    "ci:route-ownership-matrix": "node scripts/ci/check-route-ownership-matrix.mjs",
+    "ci:route-ownership-matrix:check": "node scripts/ci/check-route-ownership-matrix.mjs --check",
     "db:push": "drizzle-kit push",
     "db:seed": "node scripts/seed-ga-demo.mjs",
     "db:seed:admin": "node scripts/seed-admin.mjs",
@@ -85,7 +86,11 @@
     "audit:repo-health": "node scripts/audits/repo-health-scan.mjs",
     "audit:repo-health:strict": "node scripts/audits/repo-health-scan.mjs --strict --owners docs/reports/repo-health-owners.json --write-markdown docs/reports/repo-health-scan-latest.md",
     "audit:repo-health:no-regression": "node scripts/audits/repo-health-scan.mjs --strict-no-regression --baseline docs/reports/repo-health-scan-latest.json --owners docs/reports/repo-health-owners.json --write-markdown docs/reports/repo-health-scan-latest.md",
-    "audit:repo-health:full-strict": "node scripts/audits/repo-health-scan.mjs --strict --owners docs/reports/repo-health-owners.json --write-markdown docs/reports/repo-health-scan-latest.md"
+    "audit:repo-health:full-strict": "node scripts/audits/repo-health-scan.mjs --strict --owners docs/reports/repo-health-owners.json --write-markdown docs/reports/repo-health-scan-latest.md",
+    "beta:seed:510k": "node scripts/seed-beta-510k-workspace.mjs",
+    "beta:typecheck": "NODE_OPTIONS=\"--max-old-space-size=4096\" tsc --noEmit -p tsconfig.beta-slice.json",
+    "beta:founder-proof": "npx playwright test tests/e2e/510k-founder-path.e2e.spec.ts",
+    "beta:proof": "node scripts/run-beta-founder-proof.mjs"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
@@ -230,7 +235,6 @@
     "js-yaml": "^4.1.0",
     "jsdom": "27.4.0",
     "jose": "6.2.2",
-    "jsdom": "27.4.0",
     "jsonwebtoken": "9.0.2",
     "jspdf": "2.5.2",
     "jspdf-autotable": "3.8.4",
