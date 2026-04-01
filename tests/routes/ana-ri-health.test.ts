@@ -353,14 +353,14 @@ describe('AnA RI health/commands endpoints', () => {
     expect(res.body.data.checks.providersHealthy).toBe(true);
   });
 
-  it('returns 503 from /commands when command executor import fails', async () => {
-    mockCommonDeps({ dbAvailable: true, providers: ['anthropic'], commandImportFails: true });
+  it('returns command list from /commands when dependencies are available', async () => {
+    mockCommonDeps({ dbAvailable: true, providers: ['anthropic'] });
     const mod = await import('../../server/routes/ana-ri');
     const res = await callRoute(mod.default, '/api/ana-ri/commands');
 
-    expect(res.status).toBe(503);
-    expect(res.body.success).toBe(false);
-    expect(res.body.error.code).toBe('COMMANDS_UNAVAILABLE');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data.commands)).toBe(true);
   });
 
   it('allows /stream in deterministic mode even without enabled providers', async () => {
