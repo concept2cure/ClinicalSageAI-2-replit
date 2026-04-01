@@ -3285,7 +3285,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                             'POST',
                             `/api/concept2cure/projects/${activeProjectId}/submission-package`
                           );
-                          const manifest = await res.json();
+                          const payload = await res.json();
+                          const manifest = payload?.data ?? payload;
                           const blob = new Blob([JSON.stringify(manifest, null, 2)], {
                             type: 'application/json',
                           });
