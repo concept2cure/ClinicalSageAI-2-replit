@@ -451,7 +451,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       {
         userId: userData.id.toString(),
         email: userData.email,
-        organizationId: organizationId.toString(),
+        organizationId: String(organizationId),
         type: 'refresh',
       },
       process.env.REFRESH_TOKEN_SECRET || config.jwt.secret,
@@ -545,7 +545,7 @@ router.post('/dev-login', loginLimiter, async (req: Request, res: Response) => {
       {
         userId: userData.id.toString(),
         email: userData.email,
-        organizationId: organizationId.toString(),
+        organizationId: String(organizationId),
         organizationUuid: organization?.uuid || null,
         role: jwtRole,
       },
@@ -660,7 +660,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY;
     if (stripeSecretKey) {
       const Stripe = (await import('stripe')).default;
-      const stripe = new Stripe(stripeSecretKey, { apiVersion: '2023-10-16' });
+      const stripe = new Stripe(stripeSecretKey);
       const customer = await stripe.customers.create({
         email,
         name: companyName,

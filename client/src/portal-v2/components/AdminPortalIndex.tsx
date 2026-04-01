@@ -13,7 +13,6 @@
  */
 
 import React, { Suspense, lazy, useCallback } from 'react';
-// @ts-expect-error - react-router-dom needs to be installed
 import { Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -738,7 +737,22 @@ export const AuthRoutes: React.FC = () => {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
-        <Route path="login" element={<LoginPage />} />
+        <Route
+          path="login"
+          element={
+            <LoginPage
+              onLoginSuccess={() => {
+                window.location.href = '/admin';
+              }}
+              onForgotPassword={() => {
+                window.location.href = '/auth/password-reset';
+              }}
+              onContactSupport={() => {
+                window.location.href = 'mailto:support@concept2cure.pro';
+              }}
+            />
+          }
+        />
         <Route path="mfa-setup" element={<MFASetup />} />
         <Route path="password-reset" element={<PasswordReset />} />
         <Route

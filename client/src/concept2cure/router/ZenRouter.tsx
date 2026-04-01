@@ -36,7 +36,10 @@ import {
 } from './projectModuleRoutePolicy';
 
 // Lazy-load CERV2Page only when a project 510k route is hit (standalone mode)
-const CERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
+const CERV2Page = lazy(async () => {
+  const module = await import('@/pages/csr/CERV2Page');
+  return { default: module.default as React.ComponentType<{ projectId: string | null }> };
+});
 // Lazy-load PMA Workspace for standalone mode
 const PMAWorkspacePage = lazy(() => import('../components/pma/PMAWorkspace'));
 

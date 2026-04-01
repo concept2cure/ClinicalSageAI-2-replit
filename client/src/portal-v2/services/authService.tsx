@@ -506,7 +506,10 @@ export class AuthService {
     );
 
     if (!result.success) {
-      return result;
+      return {
+        success: false,
+        error: result.error,
+      };
     }
 
     if (result.data?.mfaRequired) {
@@ -565,7 +568,10 @@ export class AuthService {
     );
 
     if (!result.success) {
-      return result;
+      return {
+        success: false,
+        error: result.error,
+      };
     }
 
     SecureStorage.removeItem('trialsage_mfa_challenge');

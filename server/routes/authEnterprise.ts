@@ -278,7 +278,7 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
         firstName: user.name?.split(' ')[0] || 'User',
         lastName: user.name?.split(' ').slice(1).join(' ') || '',
         displayName: user.name || user.email,
-        role: user.role || user.tier || 'user',
+        role: 'user',
         organizationId: user.defaultOrganizationId.toString(),
         organizationName: 'Concept2Cure',
       },
@@ -569,7 +569,8 @@ router.get(
   authMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const result = await verifySignatureIntegrity(parseInt(req.params.id));
+      const signatureId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const result = await verifySignatureIntegrity(parseInt(signatureId, 10));
       res.json(result);
     } catch (error) {
       console.error('[Enterprise Auth] signature verification error:', error);
@@ -651,8 +652,9 @@ router.post('/select-organization', async (req: Request, res: Response) => {
     const orgName = org?.name || 'Organization';
 
     // Issue new JWT scoped to the selected organization with actual role
+    const jwtEmail = Array.isArray(email) ? email[0] : email;
     const token = jwt.sign(
-      { userId, email, organizationId: String(organizationId), role: selectOrgRole },
+      { userId, email: jwtEmail, organizationId: String(organizationId), role: selectOrgRole },
       config.jwt.secret,
       { expiresIn: '24h' }
     );

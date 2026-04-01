@@ -20,6 +20,7 @@
  * - NIST 800-63B password guidelines
  */
 
+/// <reference types="vite/client" />
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
