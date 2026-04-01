@@ -179,6 +179,19 @@ const AI_ACTIONS: { id: AIAction; label: string; description: string }[] = [
   { id: 'add-references', label: 'Add References', description: 'Insert reference placeholders' },
 ];
 
+const LINE_LOCK_SECTION_PREFIX = 'line:';
+const AUTO_SAVE_DEBOUNCE_MS = 1200;
+const LINE_LOCK_POLL_MS = 2000;
+const LINE_LOCK_HEARTBEAT_MS = 8000;
+
+function getLineNumberFromSelection(editor: any): number | null {
+  const state = editor?.state;
+  if (!state?.doc || !state?.selection) return null;
+  const clamped = Math.max(0, Math.min(state.selection.from ?? 0, state.doc.content.size ?? 0));
+  const textBefore = state.doc.textBetween(0, clamped, '\n', '\n');
+  return textBefore.length === 0 ? 1 : textBefore.split('\n').length;
+}
+
 // ── Precedent Search Inspector ───────────────────────────────────────────────
 
 const PRECEDENT_SEVERITY: Record<string, string> = {
@@ -782,10 +795,17 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [integrityVerified, setIntegrityVerified] = useState<boolean | null>(null);
   const [trustLoadFailed, setTrustLoadFailed] = useState(false);
 
-  // ── Auto-save (debounced 5s after last edit) ──────────────────────────
+  // ── Auto-save (near real-time, debounced) ──────────────────────────────
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const lastSavedContentRef = useRef<string>('');
+  const activeLineLockRef = useRef<{ documentId: string; sectionId: string; lineNumber: number } | null>(
+    null
+  );
+  const lockHeartbeatTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lockPollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const blockedLineToastRef = useRef<{ line: number; timestamp: number } | null>(null);
+  const [lineLockOwnersByLine, setLineLockOwnersByLine] = useState<Record<number, string>>({});
   const modeCtx = useDocumentModeOptional();
   const modeCaps = modeCtx?.capabilities;
   const currentDocumentMode: DocumentMode | undefined = modeCtx?.mode;
@@ -1407,6 +1427,116 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     }
   }, [activeArtifact?.content, activeArtifact?.title, onContentChange]);
 
+  const parseLockedLines = useCallback(
+    (locks: Array<{ sectionId?: string; lockedBy: string }>) => {
+      const owners: Record<number, string> = {};
+      for (const lock of locks) {
+        const sectionId = lock.sectionId || '';
+        if (!sectionId.startsWith(LINE_LOCK_SECTION_PREFIX)) continue;
+        const line = Number(sectionId.slice(LINE_LOCK_SECTION_PREFIX.length));
+        if (!Number.isFinite(line) || line <= 0) continue;
+        if (lock.lockedBy === currentUser.id) continue;
+        const collaborator = collaboration.collaborators.find(c => c.id === lock.lockedBy);
+        owners[line] = collaborator?.name || 'another collaborator';
+      }
+      return owners;
+    },
+    [currentUser.id, collaboration.collaborators]
+  );
+
+  const releaseActiveLineLock = useCallback(async () => {
+    const lock = activeLineLockRef.current;
+    if (!lock) return;
+    try {
+      await apiRequest('DELETE', `/api/realtime-collab/locks/${encodeURIComponent(lock.documentId)}`, {
+        userId: currentUser.id,
+        sectionId: lock.sectionId,
+      });
+    } catch {
+      // Non-blocking cleanup
+    } finally {
+      activeLineLockRef.current = null;
+    }
+  }, [currentUser.id]);
+
+  const acquireLineLock = useCallback(
+    async (lineNumber: number) => {
+      if (!activeArtifact?.id) return;
+      const sectionId = `${LINE_LOCK_SECTION_PREFIX}${lineNumber}`;
+      const lockBody = {
+        documentId: String(activeArtifact.id),
+        sectionId,
+        userId: currentUser.id,
+        lockType: 'exclusive',
+        durationMs: 30 * 1000,
+        reason: 'active line editing',
+      };
+      const res = await apiRequest('POST', '/api/realtime-collab/locks', lockBody).catch(() => null);
+      if (!res?.ok) return;
+      activeLineLockRef.current = {
+        documentId: String(activeArtifact.id),
+        sectionId,
+        lineNumber,
+      };
+    },
+    [activeArtifact?.id, currentUser.id]
+  );
+
+  const refreshLineLocks = useCallback(async () => {
+    if (!activeArtifact?.id) {
+      setLineLockOwnersByLine({});
+      return;
+    }
+    try {
+      const res = await apiRequest('GET', `/api/realtime-collab/locks/${encodeURIComponent(activeArtifact.id)}`);
+      if (!res.ok) return;
+      const payload = await res.json();
+      const locks = Array.isArray(payload?.data) ? payload.data : [];
+      setLineLockOwnersByLine(parseLockedLines(locks));
+    } catch {
+      // Keep last known lock state
+    }
+  }, [activeArtifact?.id, parseLockedLines]);
+
+  const handleSelectionLineChange = useCallback(
+    async (lineNumber: number) => {
+      if (!activeArtifact?.id) return;
+      if (!Number.isFinite(lineNumber) || lineNumber <= 0) return;
+      const current = activeLineLockRef.current;
+      if (
+        current &&
+        current.documentId === String(activeArtifact.id) &&
+        current.lineNumber === lineNumber
+      ) {
+        return;
+      }
+      if (current) {
+        await releaseActiveLineLock();
+      }
+      await acquireLineLock(lineNumber);
+      void refreshLineLocks();
+    },
+    [activeArtifact?.id, releaseActiveLineLock, acquireLineLock, refreshLineLocks]
+  );
+
+  const handleBlockedLineEdit = useCallback(
+    (lineNumber: number, lockedBy?: string) => {
+      const now = Date.now();
+      const last = blockedLineToastRef.current;
+      if (last && last.line === lineNumber && now - last.timestamp < 2500) return;
+      blockedLineToastRef.current = { line: lineNumber, timestamp: now };
+      setLockRejection(
+        `Line ${lineNumber} is currently being edited by ${lockedBy || 'another collaborator'}.`
+      );
+      setTimeout(() => setLockRejection(null), 4000);
+      pushToast(
+        `Line ${lineNumber} is locked by ${lockedBy || 'another collaborator'} — choose another line.`,
+        'error'
+      );
+    },
+    [pushToast]
+  );
+
   // ── Save to artifacts API ────────────────────────────────────────────────
   const handleSave = useCallback(
     async (content: string, _metadata: Record<string, unknown>) => {
@@ -1455,7 +1585,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         setSaving(false);
       }
     },
-    [projectId, activeArtifact, loadArtifacts]
+    [projectId, activeArtifact, modeCaps, pushToast, loadArtifacts]
   );
 
   // ── Global keyboard shortcuts ───────────────────────────────────────────
@@ -1490,9 +1620,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       clearTimeout(autoSaveTimerRef.current);
       autoSaveTimerRef.current = null;
     }
+    void releaseActiveLineLock();
   }, [activeArtifact?.id]);
 
-  // ── Auto-save: debounced save 5s after last edit ──────────────────────
+  // ── Auto-save: debounced save near real-time after last edit ──────────
   const triggerAutoSave = useCallback(
     (html: string) => {
       if (!activeArtifact) return;
@@ -1506,10 +1637,59 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       autoSaveTimerRef.current = setTimeout(() => {
         handleSave(html, {});
         autoSaveTimerRef.current = null;
-      }, 5000);
+      }, AUTO_SAVE_DEBOUNCE_MS);
     },
-    [activeArtifact, handleSave]
+    [activeArtifact, modeCaps, handleSave]
   );
+
+  // Refresh lock map while editing a document
+  useEffect(() => {
+    if (!activeArtifact?.id) {
+      setLineLockOwnersByLine({});
+      return;
+    }
+    void refreshLineLocks();
+    if (lockPollTimerRef.current) clearInterval(lockPollTimerRef.current);
+    lockPollTimerRef.current = setInterval(() => {
+      void refreshLineLocks();
+    }, LINE_LOCK_POLL_MS);
+    return () => {
+      if (lockPollTimerRef.current) {
+        clearInterval(lockPollTimerRef.current);
+        lockPollTimerRef.current = null;
+      }
+    };
+  }, [activeArtifact?.id, refreshLineLocks]);
+
+  // Keep active line lock alive with short heartbeats
+  useEffect(() => {
+    if (lockHeartbeatTimerRef.current) clearInterval(lockHeartbeatTimerRef.current);
+    lockHeartbeatTimerRef.current = setInterval(() => {
+      const activeLock = activeLineLockRef.current;
+      if (!activeLock) return;
+      void apiRequest('POST', '/api/realtime-collab/locks', {
+        documentId: activeLock.documentId,
+        sectionId: activeLock.sectionId,
+        userId: currentUser.id,
+        lockType: 'exclusive',
+        durationMs: 30 * 1000,
+        reason: 'line lock heartbeat',
+      }).catch(() => {});
+    }, LINE_LOCK_HEARTBEAT_MS);
+    return () => {
+      if (lockHeartbeatTimerRef.current) {
+        clearInterval(lockHeartbeatTimerRef.current);
+        lockHeartbeatTimerRef.current = null;
+      }
+    };
+  }, [currentUser.id]);
+
+  // Release line lock when switching documents or unmounting
+  useEffect(() => {
+    return () => {
+      void releaseActiveLineLock();
+    };
+  }, [activeArtifact?.id, releaseActiveLineLock]);
 
   // Cleanup auto-save timer on unmount
   useEffect(() => {
@@ -3500,6 +3680,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               if (!editor || !collaboration.emitCursorMove) return;
               const { from } = editor.state.selection;
               const coords = editor.view.coordsAtPos(from);
+              const lineNumber = getLineNumberFromSelection(editor);
+              if (lineNumber) {
+                void handleSelectionLineChange(lineNumber);
+              }
               if (coords) {
                 const editorRect = editor.view.dom.getBoundingClientRect();
                 collaboration.emitCursorMove({
@@ -3519,6 +3703,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             ydoc={yjsCollab.ydoc}
             yjsProvider={yjsCollab.provider}
             currentUser={{ name: currentUser?.name || 'Anonymous', color: '#3B82F6' }}
+            currentUserId={currentUser.id}
+            lockedLineNumbers={Object.keys(lineLockOwnersByLine).map(n => Number(n))}
+            lockedLineOwnerByLine={lineLockOwnersByLine}
+            onBlockedLineEdit={handleBlockedLineEdit}
           />
         </div>
 
