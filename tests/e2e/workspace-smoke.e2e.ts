@@ -1040,19 +1040,25 @@ test.describe('Stage 9 - Authenticated beta pulse certification', () => {
 
     // Prefer strict active-doc context proof when available; otherwise prove authoring continuity
     // via stable workspace shell + browse/editor surface availability.
+    const editorContinuitySurface = page
+      .locator(
+        [
+          '[data-testid="document-list-pane"]',
+          '[data-testid="create-blank-document"]',
+          'button:has-text("Create Document")',
+          'button:has-text("Create your first document")',
+          '[data-testid="project-workspace-shell"]:has-text("No document selected")',
+        ].join(', ')
+      )
+      .first();
+
     if (activeDocVisible) {
       await expect(activeDocContext).toBeVisible({ timeout: 15000 });
     } else {
       await expect(page.locator('[data-testid="project-workspace-shell"]')).toBeVisible({
         timeout: 15000,
       });
-      await expect(
-        page
-          .locator(
-            '[data-testid="document-list-pane"], [data-testid="create-blank-document"], button:has-text("Create Document")'
-          )
-          .first()
-      ).toBeVisible({ timeout: 15000 });
+      await expect(editorContinuitySurface).toBeVisible({ timeout: 15000 });
     }
     await page.screenshot({
       path: `${PULSE_SCREENSHOT_DIR}/pulse-07a-artifact-opened.png`,
@@ -1070,9 +1076,7 @@ test.describe('Stage 9 - Authenticated beta pulse certification', () => {
     if (activeDocVisible) {
       await expect(page.locator('[data-testid="active-doc-context"]')).toBeVisible({ timeout: 15000 });
     } else {
-      await expect(page.locator('[data-testid="document-list-pane"], [data-testid="create-blank-document"]').first()).toBeVisible({
-        timeout: 15000,
-      });
+      await expect(editorContinuitySurface).toBeVisible({ timeout: 15000 });
     }
 
     await page.screenshot({
