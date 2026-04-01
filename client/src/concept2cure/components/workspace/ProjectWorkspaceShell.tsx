@@ -453,6 +453,8 @@ interface ProjectWorkspaceShellProps {
   ) => void;
   /** Navigate to a different layout mode (e.g., submission-builder, template-library) */
   onNavigate?: (mode: string) => void;
+  /** Push a guided prompt into AnA */
+  onSuggestedPrompt?: (prompt: string) => void;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -475,6 +477,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   onOpenArtifactConsumed,
   onActiveDocumentChange,
   onNavigate,
+  onSuggestedPrompt,
 }) => {
   // ── Local state ──────────────────────────────────────────────────────────
   const [artifacts, setArtifacts] = useState<TreeArtifact[]>([]);
@@ -483,6 +486,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const [selectedDocId, setSelectedDocId] = useState<string | undefined>();
   const [mode, setMode] = useState<'dashboard' | 'browse' | 'edit'>('dashboard');
   const [showContextBars, setShowContextBars] = useState(false);
+  const [guidedControlMode, setGuidedControlMode] = useState<'ana' | 'client'>('ana');
   const [projectNav, setProjectNav] = useState<ProjectNav>('submission_builder');
   const [documentTab, setDocumentTab] = useState<DocumentTab>('content');
   const [leftRailMode, setLeftRailMode] = useState<LeftRailMode>('files');
@@ -1602,6 +1606,163 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     if (mode === 'browse') return selectedDocId ? 2 : 1;
     return 1;
   }, [mode, selectedDocId]);
+  const approvedOrLockedCount = useMemo(
+    () =>
+      artifacts.filter(a => {
+        const status = String(a.status || '').toLowerCase();
+        return status === 'approved' || status === 'locked';
+      }).length,
+    [artifacts]
+  );
+  const submissionReady =
+    approvedOrLockedCount > 0 &&
+    readinessPercent >= 80 &&
+    approvedOrLockedCount >= Math.max(1, Math.ceil(artifacts.length * 0.4));
+
+  type GuidedSequenceStage = 'project' | 'ind_ectd' | 'authoring' | 'verify' | 'submission';
+
+  const guidedSequence = useMemo<
+    Array<{ id: GuidedSequenceStage; label: string; hint: string }>
+  >(
+    () => [
+      { id: 'project', label: 'Project', hint: 'Goal + plan context' },
+      {
+        id: 'ind_ectd',
+        label: isINDWorkspace ? 'IND/eCTD' : 'Dossier',
+        hint: 'Section map + package structure',
+      },
+      { id: 'authoring', label: 'Authoring', hint: 'Draft and refine governed docs' },
+      { id: 'verify', label: 'Verify', hint: 'Readiness and quality checks' },
+      { id: 'submission', label: 'Submission', hint: 'Assemble and publish package' },
+    ],
+    [isINDWorkspace]
+  );
+
+  const currentGuidedStage = useMemo<GuidedSequenceStage>(() => {
+    if (submissionReady || projectNav === 'publish') return 'submission';
+    if (
+      projectNav === 'verify' ||
+      projectNav === 'review' ||
+      phase4Panel === 'verification' ||
+      phase4Panel === 'pulse' ||
+      reviewInFlight > 0
+    ) {
+      return 'verify';
+    }
+    if (mode === 'edit' || selectedDocId) return 'authoring';
+    if (mode === 'dashboard' && !selectedCtdSection && !selectedDocId) return 'project';
+    if (
+      leftRailMode === 'dossier' ||
+      !!selectedCtdSection ||
+      isINDWorkspace ||
+      projectNav === 'submission_builder'
+    ) {
+      return 'ind_ectd';
+    }
+    return 'project';
+  }, [
+    isINDWorkspace,
+    leftRailMode,
+    mode,
+    phase4Panel,
+    projectNav,
+    reviewInFlight,
+    selectedCtdSection,
+    selectedDocId,
+    submissionReady,
+  ]);
+
+  const navigateGuidedStage = useCallback(
+    (stage: GuidedSequenceStage) => {
+      if (stage === 'project') {
+        setProjectNav('submission_builder');
+        setMode('dashboard');
+        setPhase4Panel('none');
+        return;
+      }
+      if (stage === 'ind_ectd') {
+        setProjectNav('submission_builder');
+        setActiveLayer('document_studio');
+        setLeftRailMode('dossier');
+        setMode('browse');
+        if (nextRecommendedSection?.code) setSelectedCtdSection(nextRecommendedSection.code);
+        return;
+      }
+      if (stage === 'authoring') {
+        setProjectNav('submission_builder');
+        setActiveLayer('document_studio');
+        setLeftRailMode('dossier');
+        if (selectedDocId) {
+          if (tryOpenForEdit(activeArtifactRef.current?.status)) {
+            setMode('edit');
+          } else {
+            setMode('browse');
+          }
+          return;
+        }
+        if (nextRecommendedSection?.code) setSelectedCtdSection(nextRecommendedSection.code);
+        setMode('browse');
+        return;
+      }
+      if (stage === 'verify') {
+        setProjectNav('verify');
+        setActiveLayer('reports');
+        setMode('browse');
+        setPhase4Panel('verification');
+        return;
+      }
+      setProjectNav('publish');
+      if (onNavigate) {
+        onNavigate('submissions');
+      } else {
+        setMode('dashboard');
+      }
+    },
+    [nextRecommendedSection?.code, onNavigate, selectedDocId, tryOpenForEdit]
+  );
+
+  const buildGuidedStagePrompt = useCallback(
+    (stage: GuidedSequenceStage) => {
+      const projectLabel = projectName || 'this project';
+      const nextSectionText = nextRecommendedSection?.code
+        ? `Next recommended section is ${nextRecommendedSection.code} ${nextRecommendedSection.title}.`
+        : 'Select the highest-priority missing section.';
+      if (stage === 'project') {
+        return `Guide ${projectLabel} through project setup and confirm the submission strategy, regulatory pathway, and governed document sequence.`;
+      }
+      if (stage === 'ind_ectd') {
+        return `Guide ${projectLabel} through IND/eCTD dossier planning. ${nextSectionText} Create the next concrete drafting plan.`;
+      }
+      if (stage === 'authoring') {
+        return `For ${projectLabel}, take the lead on authoring the next governed draft and provide executable steps I can run now. ${nextSectionText}`;
+      }
+      if (stage === 'verify') {
+        return `Run a verification pass for ${projectLabel}: readiness, blockers, contradictions, and promotion status. Provide the next required fixes in order.`;
+      }
+      return `Prepare ${projectLabel} for submission packaging and publishing. Confirm what is ready, what is missing, and execute the final assembly sequence.`;
+    },
+    [nextRecommendedSection?.code, nextRecommendedSection?.title, projectName]
+  );
+
+  const handleGuidedStageAction = useCallback(
+    (stage: GuidedSequenceStage) => {
+      if (guidedControlMode === 'ana') {
+        onSuggestedPrompt?.(buildGuidedStagePrompt(stage));
+        onNavigate?.('project-home');
+        return;
+      }
+      navigateGuidedStage(stage);
+    },
+    [buildGuidedStagePrompt, guidedControlMode, navigateGuidedStage, onNavigate, onSuggestedPrompt]
+  );
+
+  const handleGuidedContinue = useCallback(() => {
+    const currentIndex = guidedSequence.findIndex(step => step.id === currentGuidedStage);
+    if (currentIndex < 0 || currentIndex === guidedSequence.length - 1) return;
+    const nextStage = guidedSequence[Math.min(currentIndex + 1, guidedSequence.length - 1)]?.id;
+    if (!nextStage) return;
+    handleGuidedStageAction(nextStage);
+  }, [currentGuidedStage, guidedSequence, handleGuidedStageAction]);
 
   // Outline available only when doc is open
   const outlineAvailable = mode === 'edit' && !!selectedDocId;
@@ -1726,6 +1887,69 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 ? 'Browse then open a document'
                 : 'Start from project home'}
           </span>
+        </div>
+
+        <div className="flex items-center gap-1.5 px-4 h-9 border-b border-blue-100 bg-blue-50/40 shrink-0 overflow-x-auto">
+          <span className="text-[10px] uppercase tracking-wide text-blue-600 font-semibold whitespace-nowrap">
+            Guided sequence
+          </span>
+          {guidedSequence.map((step, idx) => {
+            const currentIndex = guidedSequence.findIndex(s => s.id === currentGuidedStage);
+            const isCurrent = step.id === currentGuidedStage;
+            const isDone = idx < currentIndex;
+            return (
+              <React.Fragment key={step.id}>
+                <button
+                  onClick={() => handleGuidedStageAction(step.id)}
+                  className={cn(
+                    'text-[11px] px-2 py-0.5 rounded-md border whitespace-nowrap transition-colors',
+                    isCurrent
+                      ? 'border-blue-300 bg-white text-blue-700 font-semibold'
+                      : isDone
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                        : 'border-blue-100 bg-white text-stone-600 hover:bg-blue-100'
+                  )}
+                  title={step.hint}
+                >
+                  {step.label}
+                </button>
+                {idx < guidedSequence.length - 1 && (
+                  <ChevronRight className="w-3 h-3 text-blue-300 shrink-0" />
+                )}
+              </React.Fragment>
+            );
+          })}
+          <div className="ml-auto flex items-center gap-1.5">
+            <span className="text-[10px] text-stone-500 uppercase tracking-wide">Control</span>
+            <button
+              onClick={() => setGuidedControlMode('ana')}
+              className={cn(
+                'text-[10px] px-2 py-0.5 rounded border',
+                guidedControlMode === 'ana'
+                  ? 'border-violet-300 bg-violet-50 text-violet-700'
+                  : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'
+              )}
+            >
+              AnA-led
+            </button>
+            <button
+              onClick={() => setGuidedControlMode('client')}
+              className={cn(
+                'text-[10px] px-2 py-0.5 rounded border',
+                guidedControlMode === 'client'
+                  ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                  : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'
+              )}
+            >
+              Client-led
+            </button>
+            <button
+              onClick={handleGuidedContinue}
+              className="text-[11px] px-2 py-0.5 rounded border border-blue-200 bg-white text-blue-700 hover:bg-blue-100"
+            >
+              Continue
+            </button>
+          </div>
         </div>
 
         {/* ── Collapsible context bars (AnA Shell, Context Band, CTD Flow) ──── */}

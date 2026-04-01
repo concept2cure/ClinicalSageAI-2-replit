@@ -2987,6 +2987,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   }
                   setLayoutMode(mode as LayoutMode);
                 }}
+                onSuggestedPrompt={prompt => {
+                  setExternalChatMessage({ text: prompt, ts: Date.now() });
+                }}
               />
             ))}
 
