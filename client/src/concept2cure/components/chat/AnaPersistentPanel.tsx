@@ -267,6 +267,41 @@ interface AnaMessage {
   recalledToInput?: boolean;
 }
 
+interface DecisionStatusRailState {
+  loading: boolean;
+  error: string | null;
+  summary: string;
+  pendingApprovals: number;
+  pendingConfirmations: number;
+  unresolvedContradictions: boolean;
+  provisional: boolean;
+  needsReapproval: boolean;
+  needsEscalation: boolean;
+  blockedCount: number;
+  count: number;
+  details: Array<{
+    id: string;
+    status: string;
+    kind: string;
+    summary: string;
+  }>;
+}
+
+const EMPTY_DECISION_STATUS: DecisionStatusRailState = {
+  loading: false,
+  error: null,
+  summary: 'No pending decisions',
+  pendingApprovals: 0,
+  pendingConfirmations: 0,
+  unresolvedContradictions: false,
+  provisional: false,
+  needsReapproval: false,
+  needsEscalation: false,
+  blockedCount: 0,
+  count: 0,
+  details: [],
+};
+
 interface SuggestedAction {
   id: string;
   label: string;
@@ -464,7 +499,7 @@ const DOCUMENT_ACTION_CONFIGS: DocumentActionConfig[] = [
   },
 ];
 
-// ─── Slash Command Autocomplete — 43 AnA 1.0 RI commands ──────────────────────
+// ─── Slash Command Autocomplete — 45 AnA 1.0 RI commands ──────────────────────
 
 interface SlashCommand {
   command: string;
@@ -521,6 +556,16 @@ const SLASH_COMMANDS: SlashCommand[] = [
   {
     command: '/device',
     description: '510(k), PMA, De Novo intelligence',
+    category: 'Subspecialties',
+  },
+  {
+    command: '/diagnostics',
+    description: 'Diagnostics/IVD validation and strategy',
+    category: 'Subspecialties',
+  },
+  {
+    command: '/cms',
+    description: 'CMS coverage and reimbursement strategy',
     category: 'Subspecialties',
   },
   {
@@ -712,6 +757,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const [showModeDropdown, setShowModeDropdown] = useState(false);
   const modeDropdownRef = useRef<HTMLDivElement>(null);
   const [showActions, setShowActions] = useState<string | null>(null);
+  const [decisionRailExpanded, setDecisionRailExpanded] = useState(false);
+  const [decisionStatus, setDecisionStatus] = useState<DecisionStatusRailState>(EMPTY_DECISION_STATUS);
   // AnA RI state
   const [intentLens, setIntentLens] = useState<IntentLens>('auto');
   const [lastOrchestration, setLastOrchestration] = useState<AnaRIOrchestration | null>(null);
@@ -744,6 +791,61 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
   const screenName = contextProfile?.screenName || 'default';
   const screenLabel = SCREEN_LABELS[screenName] || '';
+  const decisionRailProjectId = useMemo(() => {
+    const id = contextProfile?.projectId;
+    return id ? String(id).replace(/^proj_/, '') : null;
+  }, [contextProfile?.projectId]);
+
+  const loadDecisionRail = useCallback(async () => {
+    if (!decisionRailProjectId) {
+      setDecisionStatus(EMPTY_DECISION_STATUS);
+      return;
+    }
+
+    setDecisionStatus(prev => ({ ...prev, loading: true, error: null }));
+    try {
+      const params = new URLSearchParams({ project_id: decisionRailProjectId, limit: '8' });
+      if (authoringContext?.sectionCode) params.set('section_code', authoringContext.sectionCode);
+      if (authoringContext?.moduleCode) params.set('module_code', authoringContext.moduleCode);
+      const res = await apiRequest('GET', `/api/ana-ri/decisions?${params.toString()}`);
+      const payload = await res.json();
+      const data = payload?.data;
+      if (!payload?.success || !data) {
+        throw new Error(payload?.error?.message || 'Failed to load decision status');
+      }
+
+      const status = data.decisionAwareStatus || {};
+      const decisions = Array.isArray(data.decisions) ? data.decisions : [];
+      setDecisionStatus({
+        loading: false,
+        error: null,
+        summary: status.summary || 'No pending decisions',
+        pendingApprovals: Number(status.pendingApprovals || 0),
+        pendingConfirmations: Number(status.pendingConfirmations || 0),
+        unresolvedContradictions: Boolean(status.hasUnresolvedContradictions),
+        provisional: Boolean(status.hasProvisionalDecisions),
+        needsReapproval: Boolean(status.needsReapproval),
+        needsEscalation: Boolean(status.needsEscalation),
+        blockedCount: Array.isArray(status.blockedDecisions) ? status.blockedDecisions.length : 0,
+        count: Number(data.count || decisions.length || 0),
+        details: decisions.slice(0, 6).map((row: any) => {
+          const decision = row?.decision || {};
+          return {
+            id: String(decision.id || ''),
+            status: String(decision.status || 'unknown'),
+            kind: String(decision.kind || 'decision'),
+            summary: String(decision.summary || 'No summary provided'),
+          };
+        }),
+      });
+    } catch (error: any) {
+      setDecisionStatus(prev => ({
+        ...prev,
+        loading: false,
+        error: error?.message || 'Unable to load decision status',
+      }));
+    }
+  }, [authoringContext?.moduleCode, authoringContext?.sectionCode, decisionRailProjectId]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -799,6 +901,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         console.warn('[AnA] Firecrawl quota check failed — non-blocking');
       });
   }, [contextProfile?.organizationId]);
+
+  useEffect(() => {
+    void loadDecisionRail();
+  }, [loadDecisionRail]);
 
   // ── Slash command autocomplete filtering ──────────────────────────────────
   const filteredSlashCommands = useMemo(() => {
@@ -1993,6 +2099,108 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
   };
 
+  const handleDecisionsSlash = useCallback(() => {
+    (async () => {
+      const projectId = contextProfile?.projectId;
+      if (!projectId) {
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `a-${Date.now()}`,
+            role: 'assistant',
+            timestamp: new Date(),
+            content:
+              'I need an active project to load a decision trail. Open a project and try `/decisions` again.',
+          },
+        ]);
+        return;
+      }
+
+      const normalizedProjectId = String(projectId).replace(/^proj_/, '');
+      const params = new URLSearchParams({ project_id: normalizedProjectId, limit: '20' });
+      if (authoringContext?.sectionCode) params.set('section_code', authoringContext.sectionCode);
+      if (authoringContext?.moduleCode) params.set('module_code', authoringContext.moduleCode);
+
+      try {
+        const res = await apiRequest('GET', `/api/ana-ri/decisions?${params.toString()}`);
+        const payload = await res.json();
+        const data = payload?.data;
+        if (!payload?.success || !data) {
+          throw new Error(payload?.error?.message || 'Unable to load decision trail.');
+        }
+
+        const decisions: Array<any> = Array.isArray(data.decisions) ? data.decisions : [];
+        const status = data.decisionAwareStatus || {};
+        const top = decisions.slice(0, 5);
+        const lines = [
+          '**Decision Audit Trail**',
+          '',
+          `${status.summary || 'No decision-aware status summary available.'}`,
+          '',
+          `**Recent decisions:** ${data.count || 0}`,
+        ];
+
+        if (top.length > 0) {
+          for (const row of top) {
+            const decision = row?.decision || {};
+            const kind = decision.kind || 'decision';
+            const summary = decision.summary || 'No summary provided.';
+            const state = String(decision.status || 'unknown').toUpperCase();
+            lines.push(`- **[${state}]** ${kind}: ${summary}`);
+          }
+        } else {
+          lines.push('- No formal decisions recorded yet for this scope.');
+        }
+
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `a-${Date.now()}`,
+            role: 'assistant',
+            timestamp: new Date(),
+            content: lines.join('\n'),
+          },
+        ]);
+      } catch (err: any) {
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `a-${Date.now()}`,
+            role: 'assistant',
+            timestamp: new Date(),
+            content: `Could not load decision trail: ${err?.message || 'Unknown error'}`,
+            isError: true,
+          },
+        ]);
+      }
+    })();
+  }, [authoringContext?.moduleCode, authoringContext?.sectionCode, contextProfile?.projectId]);
+
+  const handleExportSlash = useCallback(() => {
+    const transcript = messages
+      .map(msg => `## ${msg.role === 'user' ? 'User' : 'AnA'}\n\n${msg.content}`)
+      .join('\n\n---\n\n');
+
+    const markdown = `# AnA Conversation Export\n\nGenerated: ${new Date().toISOString()}\n\n${transcript}\n`;
+    const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ana-conversation-${new Date().toISOString().slice(0, 10)}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    setMessages(prev => [
+      ...prev,
+      {
+        id: `a-${Date.now()}`,
+        role: 'assistant',
+        timestamp: new Date(),
+        content: 'Conversation exported as markdown.',
+      },
+    ]);
+  }, [messages]);
+
   const selectSlashCommand = (cmd: SlashCommand) => {
     if (cmd.command === '/help') {
       setSlashMenuOpen(false);
@@ -2009,6 +2217,22 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       threadIdRef.current = null;
       setInput('');
       setSlashMenuOpen(false);
+      inputRef.current?.focus();
+      return;
+    }
+
+    if (cmd.command === '/decisions') {
+      setSlashMenuOpen(false);
+      setInput('');
+      handleDecisionsSlash();
+      inputRef.current?.focus();
+      return;
+    }
+
+    if (cmd.command === '/export') {
+      setSlashMenuOpen(false);
+      setInput('');
+      handleExportSlash();
       inputRef.current?.focus();
       return;
     }
@@ -3741,7 +3965,20 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         });
     }
 
-    handleSend(action.label);
+    const intentToPrompt: Record<string, string> = {
+      recommendation: '/recommend',
+      'next-action': '/next',
+      'risk-assessment': '/risk',
+      'open-question': '/knowledge',
+      ctd_map: '/workflow',
+      find_predicates: '/precedent',
+      check_readiness: '/readiness',
+      draft_section: '/draft',
+      cms_strategy: '/cms',
+      diagnostics_strategy: '/diagnostics',
+    };
+    const mappedPrompt = action.intent ? intentToPrompt[action.intent] : undefined;
+    handleSend(mappedPrompt || action.label);
   };
 
   const hasMessages = messages.length > 0;
@@ -4001,6 +4238,94 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           <span className="text-[11px] text-zinc-400 dark:text-zinc-500 whitespace-nowrap ml-3">
             Quick project switch ←
           </span>
+        </div>
+      )}
+      {contextProfile?.activeProject && (
+        <div className="shrink-0 border-b border-zinc-200 bg-white px-4 py-2">
+          <button
+            type="button"
+            onClick={() => setDecisionRailExpanded(prev => !prev)}
+            className="w-full text-left rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 hover:bg-zinc-100 transition-colors"
+            aria-expanded={decisionRailExpanded}
+            aria-label="Toggle decision status details"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+                  Decision status
+                </p>
+                <p className="text-xs text-zinc-700 truncate">
+                  {decisionStatus.loading ? 'Loading decision status...' : decisionStatus.summary}
+                </p>
+              </div>
+              <ChevronDown
+                className={cn(
+                  'w-3.5 h-3.5 text-zinc-500 transition-transform',
+                  decisionRailExpanded && 'rotate-180'
+                )}
+              />
+            </div>
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px] text-zinc-600">
+              {decisionStatus.pendingConfirmations > 0 && (
+                <span className="rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-amber-700">
+                  {decisionStatus.pendingConfirmations} confirmation
+                </span>
+              )}
+              {decisionStatus.pendingApprovals > 0 && (
+                <span className="rounded-full border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-blue-700">
+                  {decisionStatus.pendingApprovals} approval
+                </span>
+              )}
+              {decisionStatus.unresolvedContradictions && (
+                <span className="rounded-full border border-red-200 bg-red-50 px-1.5 py-0.5 text-red-700">
+                  unresolved contradictions
+                </span>
+              )}
+              {decisionStatus.provisional && (
+                <span className="rounded-full border border-orange-200 bg-orange-50 px-1.5 py-0.5 text-orange-700">
+                  provisional decisions
+                </span>
+              )}
+              {!decisionStatus.loading &&
+                decisionStatus.pendingConfirmations === 0 &&
+                decisionStatus.pendingApprovals === 0 &&
+                !decisionStatus.unresolvedContradictions &&
+                !decisionStatus.provisional && (
+                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-emerald-700">
+                    clear
+                  </span>
+                )}
+              <span className="text-zinc-400">·</span>
+              <span>{decisionStatus.count} tracked</span>
+            </div>
+          </button>
+          {decisionRailExpanded && (
+            <div className="mt-2 rounded-lg border border-zinc-200 bg-white px-3 py-2">
+              {decisionStatus.error ? (
+                <p className="text-xs text-red-600">{decisionStatus.error}</p>
+              ) : decisionStatus.details.length > 0 ? (
+                <ul className="space-y-1.5">
+                  {decisionStatus.details.map(row => (
+                    <li key={row.id || `${row.status}-${row.kind}-${row.summary.slice(0, 20)}`}>
+                      <p className="text-[11px] text-zinc-800">
+                        <span className="font-medium">[{row.status.toUpperCase()}]</span> {row.kind}
+                      </p>
+                      <p className="text-[11px] text-zinc-600">{row.summary}</p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xs text-zinc-600">No recent decisions for this scope.</p>
+              )}
+              <button
+                type="button"
+                onClick={() => void loadDecisionRail()}
+                className="mt-2 text-[11px] text-zinc-500 hover:text-zinc-700"
+              >
+                Refresh
+              </button>
+            </div>
+          )}
         </div>
       )}
       {/* ── Conversation area — fills available space ── */}

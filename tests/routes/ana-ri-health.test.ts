@@ -27,9 +27,15 @@ function mockCommonDeps(options: {
       pool: mockPool,
       getPool: options.dbAvailable
         ? () => mockPool
-        : () => {
-            throw new Error('Database connection not available');
-          },
+        : () => ({
+            query: vi.fn(async () => {
+              throw new Error('Database connection not available');
+            }),
+            connect: vi.fn(async () => {
+              throw new Error('Database connection not available');
+            }),
+            on: vi.fn(),
+          }),
     };
   });
 
@@ -83,6 +89,7 @@ function mockCommonDeps(options: {
   vi.doMock('../../server/services/ana-ri/document-actions.js', () => ({
     getAllActions: vi.fn(() => []),
     getActionsForLens: vi.fn(() => []),
+    buildDocumentActionContext: vi.fn(() => ''),
   }));
 
   vi.doMock('../../server/services/ana-ri/evaluation.js', () => ({
@@ -192,20 +199,39 @@ function mockCommonDeps(options: {
   vi.doMock('../../server/services/ana-ri/context-enrichment.js', () => ({
     enrichContextForChat: vi.fn(async () => ({ block: '', sources: [] })),
   }));
+  vi.doMock('../../server/services/ana-ri/chat-context-builder.js', () => ({
+    buildAuthoringContextBlock: vi.fn(() => ''),
+    resolveProjectIdFromBody: vi.fn((body: any) => body?.project_id || body?.context?.projectId),
+    prefetchRouteIntelligenceContext: vi.fn(async () => ({
+      projectIdNumber: null,
+      feedbackContext: null,
+      projectProfile: null,
+      rimContext: '',
+      decisionContext: [],
+      orchestratorAuthoringContext: undefined,
+    })),
+    buildOrchestratorAuthoringContext: vi.fn(() => undefined),
+  }));
   vi.doMock('../../server/services/ana-guidance-executor.js', () => ({
     processResponseActions: vi.fn(async () => ({ actions: [] })),
   }));
 
-  if (options.commandImportFails) {
-    vi.doMock('../../server/services/ana-ri/command-executor.js', () => {
-      throw new Error('command executor unavailable');
-    });
-  } else {
-    vi.doMock('../../server/services/ana-ri/command-executor.js', () => ({
+  vi.doMock('../../server/services/ana-ri/command-executor.js', () => {
+    if (options.commandImportFails) {
+      return {
+        buildCommandContextForPrompt: vi.fn(() => 'commands unavailable'),
+        get COMMAND_REGISTRY() {
+          throw new Error('command executor unavailable');
+        },
+        processCommandsInResponse: vi.fn(async () => ({ executedCommands: [] })),
+      };
+    }
+    return {
       COMMAND_REGISTRY: [{ name: 'create_project' }],
+      buildCommandContextForPrompt: vi.fn(() => 'mock command context'),
       processCommandsInResponse: vi.fn(async () => ({ executedCommands: [] })),
-    }));
-  }
+    };
+  });
 }
 
 async function callRoute(

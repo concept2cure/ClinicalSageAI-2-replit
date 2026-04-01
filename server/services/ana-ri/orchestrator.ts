@@ -117,6 +117,7 @@ const INTENT_PATTERNS: Record<IntentLens, RegExp[]> = {
     /\b(accelerat(?:ed|ion)|breakthrough|fast track|priority review|orphan)\b/i,
     /\b(regulatory pathway|submission (?:plan|strategy|timeline))\b/i,
     /\b(fda vs|ema vs|region|global)\b/i,
+    /\b(cms|medicare|medicaid|payer|coverage|reimbursement|coding strategy)\b/i,
   ],
   compare: [
     /\b(compare|comparison|versus|vs\.?|differ(?:ence|ent)|side.by.side)\b/i,
@@ -812,6 +813,13 @@ function detectWorkstreamType(text: string, lens: IntentLens): WorkstreamType {
   if (/pathway|strategy|pre-ind|pre-sub|meeting|submission plan|sequence/i.test(lower)) {
     return 'submission_strategy';
   }
+  if (
+    /cms|medicare|medicaid|payer|reimbursement|coverage determination|coding strategy|hcpcs|cpt|drg|apc/i.test(
+      lower
+    )
+  ) {
+    return 'submission_strategy';
+  }
 
   const scores: Array<{ stream: WorkstreamType; score: number }> = [
     {
@@ -819,6 +827,7 @@ function detectWorkstreamType(text: string, lens: IntentLens): WorkstreamType {
       score: scorePatterns(lower, [
         /pathway|strategy|timeline|meeting|pre-ind|pre-sub|submission plan|sequence|agency/i,
         /fda|ema|pmda|global|regional/i,
+        /cms|medicare|medicaid|payer|reimbursement|coverage|coding strategy|hcpcs|cpt|drg|apc/i,
       ]),
     },
     {
@@ -840,6 +849,7 @@ function detectWorkstreamType(text: string, lens: IntentLens): WorkstreamType {
       score: scorePatterns(lower, [
         /evidence|support|justify|validation|dataset|study|citation|source/i,
         /endpoint|safety|exposure|comparability|stability|specification/i,
+        /diagnostic|ivd|companion diagnostic|analytical validation|clinical performance|sensitivity|specificity/i,
       ]),
     },
     {
