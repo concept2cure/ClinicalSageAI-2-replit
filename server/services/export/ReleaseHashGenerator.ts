@@ -144,7 +144,7 @@ export class ReleaseHashGenerator {
       logger.info(`Release package generated: ${releaseId} (verification: ${verificationCode})`);
       return releasePackage;
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error generating release package:', error);
       throw new Error(`Failed to generate release package: ${error.message}`);
     }
@@ -171,7 +171,7 @@ export class ReleaseHashGenerator {
         size: stats.size,
         lastModified: stats.mtime,
       };
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Failed to hash file ${filePath}: ${error.message}`);
     }
   }
@@ -274,7 +274,7 @@ export class ReleaseHashGenerator {
             });
             errors.push(`Hash mismatch for ${manifestFile.fileName}`);
           }
-        } catch (error) {
+        } catch (error: any) {
           fileResults.push({
             file: manifestFile.fileName,
             valid: false,
@@ -297,7 +297,7 @@ export class ReleaseHashGenerator {
         fileResults,
       };
 
-    } catch (error) {
+    } catch (error: any) {
       errors.push(`Verification error: ${error.message}`);
       return { valid: false, errors, fileResults };
     }
@@ -311,7 +311,7 @@ export class ReleaseHashGenerator {
       const content = JSON.stringify(releasePackage, null, 2);
       await fs.writeFile(outputPath, content, 'utf-8');
       logger.info(`Manifest saved to ${outputPath}`);
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Failed to save manifest: ${error.message}`);
     }
   }
@@ -323,7 +323,7 @@ export class ReleaseHashGenerator {
     try {
       const content = await fs.readFile(manifestPath, 'utf-8');
       return JSON.parse(content);
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Failed to load manifest: ${error.message}`);
     }
   }
@@ -374,7 +374,7 @@ export class ReleaseHashGenerator {
         totalSize,
       };
 
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Failed to generate eCTD package hash: ${error.message}`);
     }
   }

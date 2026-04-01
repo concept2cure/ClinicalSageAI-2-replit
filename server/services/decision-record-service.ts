@@ -102,6 +102,34 @@ export interface CreateDecisionInput {
 // ─── Service ─────────────────────────────────────────────────────────────────
 
 export class DecisionRecordService {
+  private static instance: DecisionRecordService;
+
+  static getInstance(): DecisionRecordService {
+    if (!DecisionRecordService.instance) {
+      DecisionRecordService.instance = new DecisionRecordService();
+    }
+    return DecisionRecordService.instance;
+  }
+
+  async createDecision(input: Record<string, unknown>): Promise<DecisionRecord> {
+    return this.create({
+      organizationId: Number(input.organizationId),
+      projectId: Number(input.projectId),
+      decisionCode: String(input.recommendationType || `DEC-${Date.now()}`),
+      title: String(input.contextDescription || input.recommendationSummary || 'Decision'),
+      domainTrack: String(input.domainTrack || 'regulatory'),
+      recommendationType: (input.recommendationType as RecommendationType) || 'regulatory_strategy',
+      recommendationSummary: String(input.recommendationSummary || ''),
+      recommendationRationale: (input.recommendationDetail as string) || undefined,
+      confidenceLevel: (input.confidence as string) || 'moderate',
+      evidenceBasis: 'expert_judgment',
+      relatedAssumptionIds: (input.relatedAssumptionIds as string[]) || [],
+      decidedBy: String(input.createdById || 'system'),
+      notes: (input.notes as string) || undefined,
+      decisionContext: (input as Record<string, unknown>) || {},
+    });
+  }
+
   async create(input: CreateDecisionInput): Promise<DecisionRecord> {
     log.info('Creating decision record', { code: input.decisionCode, project: input.projectId });
 

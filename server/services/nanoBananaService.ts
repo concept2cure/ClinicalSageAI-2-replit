@@ -114,7 +114,6 @@ export async function generateImage(
       temperature: 1,
       topP: 0.95,
       topK: 40,
-      // @ts-expect-error — Gemini image gen uses responseModalities
       responseModalities: ['image', 'text'],
     },
   });
@@ -150,7 +149,7 @@ export async function generateImage(
     const response = result.response;
 
     // Extract image parts from response
-    for (const candidate of response.candidates || []) {
+    for (const candidate of (response.candidates || []) as any[]) {
       for (const part of candidate.content?.parts || []) {
         if (part.inlineData) {
           images.push({

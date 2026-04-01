@@ -459,7 +459,7 @@ ${details?.safety?.discontinuationRates ? `Discontinuation Rates: ${details.safe
                               </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-slate-200">
-                              {details.treatmentArms.map((arm, index) => (
+                              {details.treatmentArms.map((arm: any, index: any) => (
                                 <tr key={index}>
                                   <td className="px-3 py-2 whitespace-nowrap text-sm text-slate-800">{arm.arm}</td>
                                   <td className="px-3 py-2 whitespace-nowrap text-sm text-slate-600">{arm.intervention}</td>
@@ -504,7 +504,7 @@ ${details?.safety?.discontinuationRates ? `Discontinuation Rates: ${details.safe
                         <div className="space-y-4">
                           <h4 className="font-medium text-slate-800">Secondary Endpoints</h4>
                           <ul className="space-y-2">
-                            {details.endpoints.secondary.map((endpoint, index) => (
+                            {details.endpoints.secondary.map((endpoint: any, index: any) => (
                               <li key={index} className="flex">
                                 <span className="text-primary">•</span>
                                 <span className="ml-2 text-sm text-slate-700">{endpoint}</span>

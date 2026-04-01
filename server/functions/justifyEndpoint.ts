@@ -140,7 +140,7 @@ export async function justifyEndpointChoice(
     const recItems = recListContent.match(/\d+\.\s+(.*?)(?=\d+\.|$)/g);
 
     if (recItems) {
-      recItems.forEach(item => {
+      recItems.forEach((item: any) => {
         const cleaned = item.replace(/^\d+\.\s+/, '').trim();
         if (cleaned) recommendationsList.push(cleaned);
       });

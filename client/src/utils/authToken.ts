@@ -62,6 +62,39 @@ export const getAuthToken = (): string | null => {
   return memoryToken;
 };
 
+export const getOrgId = (): string => {
+  const fromCurrent = localStorage.getItem('currentOrganizationId');
+  if (fromCurrent && fromCurrent.trim()) return fromCurrent.trim();
+
+  const fromLegacy = localStorage.getItem('currentOrganization');
+  if (fromLegacy && fromLegacy.trim()) return fromLegacy.trim();
+
+  try {
+    const rawUser = localStorage.getItem('trialsage_user');
+    if (rawUser) {
+      const parsed = JSON.parse(rawUser) as { organizationId?: string | number };
+      const orgId = parsed?.organizationId;
+      if (orgId !== undefined && orgId !== null && String(orgId).trim()) {
+        return String(orgId).trim();
+      }
+    }
+  } catch {
+    // ignore malformed user payload and fall through to default
+  }
+
+  return '1';
+};
+
+export const getAuthHeaders = (): Record<string, string> => {
+  const token = getAuthToken();
+  const orgId = getOrgId();
+
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    'x-organization-id': orgId,
+  };
+};
+
 export const setAuthToken = (token: string): void => {
   memoryToken = token;
 
@@ -94,27 +127,6 @@ export const clearAuthToken = (): void => {
   for (const key of LEGACY_TOKEN_KEYS) {
     removeLocalStorage(key);
   }
-};
-
-export const getOrgId = (): string => {
-  const direct = readLocalStorage(ORG_ID_KEY);
-  if (direct && direct.trim().length > 0) return direct;
-
-  for (const key of LEGACY_ORG_ID_KEYS) {
-    const legacy = readLocalStorage(key);
-    if (legacy && legacy.trim().length > 0) return legacy;
-  }
-
-  return '1';
-};
-
-export const getAuthHeaders = (): Record<string, string> => {
-  const token = getAuthToken();
-  const organizationId = getOrgId();
-  return {
-    'x-organization-id': organizationId,
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
 };
 
 export const setOrgId = (organizationId: string): void => {

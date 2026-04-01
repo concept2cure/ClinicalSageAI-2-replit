@@ -64,7 +64,7 @@ router.get('/projects', asyncHandler(async (req: Request, res: Response) => {
 
     const result = await query(queryText, params);
 
-    const projects = result.rows.map(p => ({
+    const projects = result.rows.map((p: any) => ({
       ...p,
       taskMetrics: {
         total: parseInt(p.total_tasks) || 0,
@@ -281,7 +281,7 @@ router.get('/pipeline', asyncHandler(async (req: Request, res: Response) => {
 
     const stages = ['planning', 'authoring', 'review', 'approval', 'submission', 'response'];
     const pipeline = stages.map(stage => {
-      const stageData = result.rows.find(r => r.stage === stage);
+      const stageData = result.rows.find((r: any) => r.stage === stage);
       return {
         stage,
         count: stageData ? parseInt(stageData.count) : 0,

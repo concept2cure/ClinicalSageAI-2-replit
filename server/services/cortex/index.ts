@@ -8,7 +8,6 @@
  * - cortexPrimeService.ts
  * - anaCortexClient.ts
  * - ana-cortex-service.ts
- * - lumen-insights-service.ts
  * - cognitiveAdvisoryService.ts
  *
  * @version 2.0.0

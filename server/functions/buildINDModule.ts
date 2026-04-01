@@ -213,8 +213,8 @@ export async function buildINDModuleDraft(input: INDModuleInput): Promise<INDMod
     const suggestionsList = suggestionsText
       .split(/\d+\.\s+/)
       .slice(1)
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
+      .map((s: any) => s.trim())
+      .filter((s: any) => s.length > 0);
 
     // Construct the complete IND module object
     const indModule: INDModuleOutput = {

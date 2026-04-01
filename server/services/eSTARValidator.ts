@@ -92,7 +92,7 @@ export class eSTARValidator {
       };
 
       return result;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error during eSTAR validation:', error);
       issues.push({
         severity: 'error',
@@ -324,7 +324,7 @@ export class eSTARValidator {
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error validating against FDA schema:', error);
       issues.push({
         severity: 'error',

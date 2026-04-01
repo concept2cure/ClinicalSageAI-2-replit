@@ -101,7 +101,7 @@ router.post('/jobs/batch-review', async (req, res) => {
 
     res.json({
       message: `Successfully ${decision} ${result.length} jobs`,
-      jobsUpdated: result.map(r => r.id),
+      jobsUpdated: result.map((r: any) => r.id),
     });
   } catch (err) {
     console.error('Failed to process batch review:', err);

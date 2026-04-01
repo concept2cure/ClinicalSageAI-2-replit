@@ -23,6 +23,28 @@ test('report-os route includes reporting bundle and delivery endpoints', () => {
   assert.ok(routeSource.includes("router.post('/correspondence/capture'"));
 });
 
+test('report-os taxonomy seed includes regional agency report packs', () => {
+  const requiredRegionalTypeIds = [
+    'usa_fda.pma_submission_readiness',
+    'usa_fda.estar_510k_equivalence_matrix',
+    'ema.maa_readiness_assessment',
+    'china_nmpa.registration_dossier_readiness',
+  ];
+  for (const typeId of requiredRegionalTypeIds) {
+    assert.ok(routeSource.includes("router.post('/taxonomy/seed'"));
+    const taxonomySource = readFileSync('server/services/report-os/taxonomy.ts', 'utf8');
+    assert.ok(taxonomySource.includes(typeId), `expected taxonomy seed to include ${typeId}`);
+  }
+});
+
+test('report-os persists bundle and delivery state records', () => {
+  assert.ok(routeSource.includes('persistBundleRecord'));
+  assert.ok(routeSource.includes('persistDeliveryRecord'));
+  assert.ok(routeSource.includes('loadBundlesForOrg'));
+  assert.ok(routeSource.includes('loadDeliveriesForOrg'));
+  assert.ok(routeSource.includes("sourceDocumentType: REPORT_OS_RECORD_SOURCE"));
+});
+
 test('report-os schema includes normalized dependency table', () => {
   assert.ok(schemaSource.includes('export const reportRunDependencies = pgTable('));
   assert.ok(schemaSource.includes("'report_run_dependencies'"));

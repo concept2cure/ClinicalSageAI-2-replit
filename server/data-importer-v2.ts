@@ -107,7 +107,7 @@ export function convertV2StudyToCsrDetails(
 
     // Get treatment arms
     const treatmentArms =
-      arms?.arms?.map(arm => ({
+      arms?.arms?.map((arm: any) => ({
         name: arm.name || 'Unknown Arm',
         description: arm.description || '',
         type: arm.type || 'Experimental',
@@ -189,7 +189,7 @@ export function processApiV2Data(data: any): {
   }
 
   // Convert each study to our format
-  const processedStudies = data.studies.map(study => {
+  const processedStudies = data.studies.map((study: any) => {
     const report = convertV2StudyToCsrReport(study);
     // Temporary reportId to be replaced during database insertion
     const tempReportId = -1;

@@ -69,7 +69,9 @@ router.post('/calendar', async (req, res) => {
   });
 });
 
-router.get('/search', async (req, res) => {
+// GET /search is served by regulatory-registry (mounted first at /api/regulatory).
+// This path is the intelligence summary search from RegulatoryIntelligenceService.
+router.get('/intelligence-search', async (req, res) => {
   const { q, phase } = req.query;
   await regulatoryService.initialize();
   const results = await regulatoryService.getRegulatoryIntelligence(

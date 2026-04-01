@@ -28,7 +28,7 @@ router.post('/data', async (req: Request, res: Response) => {
     const faersData = await faersBridge.fetchFaersData(ndcCode);
 
     res.json(faersData);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching FAERS data:', error);
     let errorMessage = 'Error retrieving FAERS data';
 
@@ -52,7 +52,7 @@ router.post('/generate-narrative', requireOpenAIKey(), async (req: Request, res:
     const narrative = await faersBridge.generateCerNarrative(faersData, productName);
 
     res.json({ narrative });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating CER narrative:', error);
     let errorMessage = 'Error generating CER narrative';
 
@@ -110,7 +110,7 @@ router.post('/save-report', async (req: Request, res: Response) => {
       console.error('Database error saving CER report:', dbError);
       res.status(500).json({ error: 'Database error saving CER report' });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error saving CER report:', error);
     res.status(500).json({ error: 'Error saving CER report' });
   }
@@ -142,7 +142,7 @@ router.get('/reports', async (req: Request, res: Response) => {
         limit,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error retrieving CER reports:', error);
     res.status(500).json({ error: 'Error retrieving CER reports' });
   }
@@ -163,7 +163,7 @@ router.get('/reports/:id', async (req: Request, res: Response) => {
     }
 
     res.json(report);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error retrieving CER report:', error);
     res.status(500).json({ error: 'Error retrieving CER report' });
   }

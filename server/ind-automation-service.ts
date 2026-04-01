@@ -101,7 +101,7 @@ export class INDAutomationService {
           logger.info('IND Automation service is already running');
           return true;
         }
-      } catch (error) {
+      } catch (error: any) {
         // Service is not running, we'll start it
         logger.info('IND Automation service is not running, starting it now');
       }
@@ -147,7 +147,7 @@ export class INDAutomationService {
             logger.info('IND Automation service started successfully');
             return true;
           }
-        } catch (error) {
+        } catch (error: any) {
           retries--;
           if (retries === 0) {
             logger.error('Failed to start IND Automation service after multiple retries');
@@ -157,7 +157,7 @@ export class INDAutomationService {
       }
 
       return false;
-    } catch (error) {
+    } catch (error: any) {
       logger.error(`Error starting IND Automation service: ${error.message}`);
       return false;
     }
@@ -181,7 +181,7 @@ export class INDAutomationService {
     try {
       const response = await axios.get(`${this.serviceUrl}/health`);
       return response.status === 200 && this.isHealthyPayload(response.data);
-    } catch (error) {
+    } catch (error: any) {
       return false;
     }
   }
@@ -201,7 +201,7 @@ export class INDAutomationService {
       });
 
       return Buffer.from(response.data);
-    } catch (error) {
+    } catch (error: any) {
       logger.error(`Error generating Module ${moduleNumber} document: ${error.message}`);
       throw new Error(`Failed to generate Module ${moduleNumber} document: ${error.message}`);
     }
@@ -216,7 +216,7 @@ export class INDAutomationService {
 
       const response = await axios.get(`${this.serviceUrl}/api/ind/pyramid/catalog`);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       logger.error(`Error fetching IND pyramid catalog: ${error.message}`);
       throw new Error(`Failed to fetch IND pyramid catalog: ${error.message}`);
     }
@@ -241,7 +241,7 @@ export class INDAutomationService {
       );
 
       return Buffer.from(response.data);
-    } catch (error) {
+    } catch (error: any) {
       logger.error(
         `Error generating Module ${moduleNumber} template ${templateId}: ${error.message}`
       );
@@ -264,7 +264,7 @@ export class INDAutomationService {
 
       const response = await axios.get(`${this.serviceUrl}/projects`);
       return response.data.projects;
-    } catch (error) {
+    } catch (error: any) {
       logger.error(`Error listing projects: ${error.message}`);
       throw new Error(`Failed to list projects: ${error.message}`);
     }
@@ -285,7 +285,7 @@ export class INDAutomationService {
 
       // Return the URL to the document (the front-end will handle the actual download)
       return `${this.serviceUrl}/${projectId}/module3`;
-    } catch (error) {
+    } catch (error: any) {
       logger.error(`Error generating Module 3 document: ${error.message}`);
       throw new Error(`Failed to generate Module 3 document: ${error.message}`);
     }
@@ -309,7 +309,7 @@ export class INDAutomationService {
       });
 
       return Buffer.from(response.data);
-    } catch (error) {
+    } catch (error: any) {
       logger.error(`Error generating Module 3 document from data: ${error.message}`);
       throw new Error(`Failed to generate Module 3 document: ${error.message}`);
     }
@@ -333,7 +333,7 @@ export class INDAutomationService {
       });
 
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       logger.error(`Error in batch generation: ${error.message}`);
       throw new Error(`Failed to generate batch documents: ${error.message}`);
     }
@@ -352,7 +352,7 @@ export class INDAutomationService {
 
       const response = await axios.get(`${this.serviceUrl}/`);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       logger.error(`Error getting service info: ${error.message}`);
       throw new Error(`Failed to get service info: ${error.message}`);
     }
@@ -376,7 +376,7 @@ export class INDAutomationService {
       });
 
       return Buffer.from(response.data);
-    } catch (error) {
+    } catch (error: any) {
       logger.error(`Error generating Form 1571: ${error.message}`);
       throw new Error(`Failed to generate Form 1571: ${error.message}`);
     }
@@ -400,7 +400,7 @@ export class INDAutomationService {
       });
 
       return Buffer.from(response.data);
-    } catch (error) {
+    } catch (error: any) {
       logger.error(`Error generating Form 1572: ${error.message}`);
       throw new Error(`Failed to generate Form 1572: ${error.message}`);
     }
@@ -424,7 +424,7 @@ export class INDAutomationService {
       });
 
       return Buffer.from(response.data);
-    } catch (error) {
+    } catch (error: any) {
       logger.error(`Error generating Form 3674: ${error.message}`);
       throw new Error(`Failed to generate Form 3674: ${error.message}`);
     }
@@ -448,7 +448,7 @@ export class INDAutomationService {
       });
 
       return Buffer.from(response.data);
-    } catch (error) {
+    } catch (error: any) {
       logger.error(`Error generating cover letter: ${error.message}`);
       throw new Error(`Failed to generate cover letter: ${error.message}`);
     }

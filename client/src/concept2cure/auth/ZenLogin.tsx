@@ -32,7 +32,6 @@ import {
 
 import { computeRedirect } from './redirectUtils';
 
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -54,7 +53,6 @@ interface AuthError {
 // ═══════════════════════════════════════════════════════════════════════════════
 // ICONS
 // ═══════════════════════════════════════════════════════════════════════════════
-
 
 const MicrosoftIcon = () => (
   <svg viewBox="0 0 21 21" className="w-5 h-5">
@@ -555,42 +553,41 @@ export const ZenLogin: React.FC = () => {
     [setLocation]
   );
 
-  const handleSsoLogin = useCallback(
-    async (provider: 'microsoft' | 'google') => {
-      setIsLoading(true);
-      console.log(`SSO login with ${provider}`);
+  const handleSsoLogin = useCallback(async (provider: 'microsoft' | 'google') => {
+    setIsLoading(true);
+    console.log(`SSO login with ${provider}`);
 
-      // In dev, call the dev SSO helper callback endpoint directly to simulate provider
-      if (import.meta.env.DEV) {
-        try {
-          const resp = await fetch(`/api/auth/sso/${provider}/callback?code=dev-sso-code`);
-          if (resp.ok) {
-            const json = await resp.json();
-            if (json?.accessToken) {
-              // Persist token and use returned user for redirect decision
-              authService.setToken(json.accessToken);
-              const user = json.user;
-              setStep('success');
-              setTimeout(() => {
-                setLocation(computeRedirect(undefined, user, () => user));
-              }, 500);
-              return;
-            }
+    // In dev, call the dev SSO helper callback endpoint directly to simulate provider
+    if (import.meta.env.DEV) {
+      try {
+        const resp = await fetch(`/api/auth/sso/${provider}/callback?code=dev-sso-code`);
+        if (resp.ok) {
+          const json = await resp.json();
+          if (json?.accessToken) {
+            // Persist token and use returned user for redirect decision
+            authService.setToken(json.accessToken);
+            const user = json.user;
+            setStep('success');
+            setTimeout(() => {
+              setLocation(computeRedirect(undefined, user, () => user));
+            }, 500);
+            return;
           }
-          throw new Error('SSO callback failed');
-        } catch (err) {
-          console.error('SSO dev helper error:', err);
-          setError({ message: 'SSO failed. Please try again.' } as any);
-        } finally {
-          setIsLoading(false);
         }
+        throw new Error('SSO callback failed');
+      } catch (err) {
+        console.error('SSO dev helper error:', err);
+        setError({ message: 'SSO failed. Please try again.' } as any);
+      } finally {
+        setIsLoading(false);
       }
+      return;
+    }
 
-      // Production/staging must use the real SSO initiation route.
-      window.location.assign(`/api/auth/sso/${provider}/initiate`);
-    },
-    [setLocation]
-  );
+    // Production flow: hand off to backend provider initiate endpoint.
+    window.location.assign(`/api/auth/sso/${provider}/initiate`);
+    setIsLoading(false);
+  }, []);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -994,7 +991,9 @@ export const ZenLogin: React.FC = () => {
         <>
           {availableMfaMethods.length > 0 && (
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-stone-700">Verification method</label>
+              <label className="block text-sm font-medium text-stone-700">
+                Verification method
+              </label>
               <div className="flex flex-wrap gap-2">
                 {availableMfaMethods.map(method => (
                   <button
@@ -1318,9 +1317,7 @@ export const ZenLogin: React.FC = () => {
       <div className="w-full max-w-sm px-6">
         {/* AnA 1.0 RI branding */}
         <div className="mb-10 text-center">
-          <h1 className="text-lg font-medium tracking-tight text-stone-900">
-            AnA 1.0 RI
-          </h1>
+          <h1 className="text-lg font-medium tracking-tight text-stone-900">AnA 1.0 RI</h1>
         </div>
 
         {/* Title */}

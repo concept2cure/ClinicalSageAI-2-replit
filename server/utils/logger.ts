@@ -2,13 +2,22 @@
  * Simple logger utility for the application
  */
 
-type LogContext = Record<string, any>;
+type LogContext = Record<string, unknown>;
+
+/** Normalize arbitrary context values into a LogContext object */
+function normalizeContext(ctx: unknown): LogContext {
+  if (!ctx) return {};
+  if (ctx instanceof Error) return { error: ctx.message, stack: ctx.stack };
+  if (typeof ctx === 'string') return { detail: ctx };
+  if (typeof ctx === 'object' && !Array.isArray(ctx)) return ctx as LogContext;
+  return { value: ctx };
+}
 
 interface Logger {
-  info(message: string, context?: LogContext): void;
-  error(message: string, context?: LogContext): void;
-  warn(message: string, context?: LogContext): void;
-  debug(message: string, context?: LogContext): void;
+  info(message: string, context?: unknown): void;
+  error(message: string, context?: unknown): void;
+  warn(message: string, context?: unknown): void;
+  debug(message: string, context?: unknown): void;
 }
 
 const SENSITIVE_KEYS = [
@@ -25,7 +34,7 @@ const SENSITIVE_KEYS = [
   'dob',
 ];
 
-const redactValue = (value: any) => {
+const redactValue = (value: unknown) => {
   if (value === null || value === undefined) return value;
   if (typeof value === 'string') return '[REDACTED]';
   if (typeof value === 'object') return '[REDACTED]';
@@ -35,33 +44,35 @@ const redactValue = (value: any) => {
 const redactContext = (context: LogContext, depth = 0): LogContext => {
   if (!context || typeof context !== 'object') return context;
   if (depth > 6) return context;
+  if (Array.isArray(context)) return context as unknown as LogContext;
 
-  const output: LogContext = Array.isArray(context) ? [] : {};
+  const output: LogContext = {};
   for (const [key, value] of Object.entries(context)) {
     const lowerKey = key.toLowerCase();
     const shouldRedact = SENSITIVE_KEYS.some(sensitive => lowerKey.includes(sensitive));
 
     if (shouldRedact) {
-      (output as any)[key] = redactValue(value);
+      output[key] = redactValue(value);
     } else if (value && typeof value === 'object') {
-      (output as any)[key] = redactContext(value as LogContext, depth + 1);
+      output[key] = redactContext(value as LogContext, depth + 1);
     } else {
-      (output as any)[key] = value;
+      output[key] = value;
     }
   }
-  return output as LogContext;
+  return output;
 };
 
 // Create a simple logger that outputs to console
 const baseLogger: Logger = {
-  info: (message: string, context: LogContext = {}) => {
+  info: (message: string, context?: unknown) => {
+    const ctx = normalizeContext(context);
     console.log(
       JSON.stringify(
         {
           timestamp: new Date().toISOString(),
           level: 'info',
           message,
-          context: redactContext(context),
+          context: redactContext(ctx),
         },
         null,
         2
@@ -69,14 +80,15 @@ const baseLogger: Logger = {
     );
   },
 
-  error: (message: string, context: LogContext = {}) => {
+  error: (message: string, context?: unknown) => {
+    const ctx = normalizeContext(context);
     console.error(
       JSON.stringify(
         {
           timestamp: new Date().toISOString(),
           level: 'error',
           message,
-          context: redactContext(context),
+          context: redactContext(ctx),
         },
         null,
         2
@@ -84,14 +96,15 @@ const baseLogger: Logger = {
     );
   },
 
-  warn: (message: string, context: LogContext = {}) => {
+  warn: (message: string, context?: unknown) => {
+    const ctx = normalizeContext(context);
     console.warn(
       JSON.stringify(
         {
           timestamp: new Date().toISOString(),
           level: 'warn',
           message,
-          context: redactContext(context),
+          context: redactContext(ctx),
         },
         null,
         2
@@ -99,15 +112,16 @@ const baseLogger: Logger = {
     );
   },
 
-  debug: (message: string, context: LogContext = {}) => {
+  debug: (message: string, context?: unknown) => {
     if (process.env.DEBUG) {
+      const ctx = normalizeContext(context);
       console.debug(
         JSON.stringify(
           {
             timestamp: new Date().toISOString(),
             level: 'debug',
             message,
-            context: redactContext(context),
+            context: redactContext(ctx),
           },
           null,
           2
@@ -125,14 +139,10 @@ const baseLogger: Logger = {
  */
 export function createScopedLogger(scope: string): Logger {
   return {
-    info: (message: string, context?: Record<string, unknown>) =>
-      logger.info(`[${scope}] ${message}`, context || {}),
-    error: (message: string, context?: Record<string, unknown>) =>
-      logger.error(`[${scope}] ${message}`, context || {}),
-    warn: (message: string, context?: Record<string, unknown>) =>
-      logger.warn(`[${scope}] ${message}`, context || {}),
-    debug: (message: string, context?: Record<string, unknown>) =>
-      logger.debug(`[${scope}] ${message}`, context || {}),
+    info: (message: string, context?: unknown) => logger.info(`[${scope}] ${message}`, context),
+    error: (message: string, context?: unknown) => logger.error(`[${scope}] ${message}`, context),
+    warn: (message: string, context?: unknown) => logger.warn(`[${scope}] ${message}`, context),
+    debug: (message: string, context?: unknown) => logger.debug(`[${scope}] ${message}`, context),
   };
 }
 
@@ -158,11 +168,15 @@ const pinoLogger = pino({
 });
 
 // Adapter to match the existing Logger interface used in the repo
-const logger = {
-  info: (message: string, context: any = {}) => pinoLogger.info({ context }, message),
-  error: (message: string, context: any = {}) => pinoLogger.error({ context }, message),
-  warn: (message: string, context: any = {}) => pinoLogger.warn({ context }, message),
-  debug: (message: string, context: any = {}) => pinoLogger.debug({ context }, message),
+const logger: Logger = {
+  info: (message: string, context?: unknown) =>
+    pinoLogger.info({ context: normalizeContext(context) }, message),
+  error: (message: string, context?: unknown) =>
+    pinoLogger.error({ context: normalizeContext(context) }, message),
+  warn: (message: string, context?: unknown) =>
+    pinoLogger.warn({ context: normalizeContext(context) }, message),
+  debug: (message: string, context?: unknown) =>
+    pinoLogger.debug({ context: normalizeContext(context) }, message),
 };
 
 // Named export so files can use: import { logger } from '../utils/logger.js'

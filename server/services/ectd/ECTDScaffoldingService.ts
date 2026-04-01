@@ -123,7 +123,7 @@ export class ECTDScaffoldingService {
       this.cacheExpiry.set(cacheKey, Date.now() + this.CACHE_TTL);
 
       return modules;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error fetching module structure:', error);
       throw new Error(`Failed to fetch module structure: ${error.message}`);
     }
@@ -186,7 +186,7 @@ export class ECTDScaffoldingService {
       this.cacheExpiry.set(cacheKey, Date.now() + this.CACHE_TTL);
 
       return tree;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error building module tree:', error);
       throw new Error(`Failed to build module tree: ${error.message}`);
     }
@@ -243,7 +243,7 @@ export class ECTDScaffoldingService {
       logger.info(`Seeded ${folders_created} folders in ${execution_ms}ms for project ${projectId}`);
       return scaffoldResult;
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error seeding project hierarchy:', error);
       throw new Error(`Failed to seed project hierarchy: ${error.message}`);
     }
@@ -274,7 +274,7 @@ export class ECTDScaffoldingService {
       );
 
       return result.rows as ECTDFolder[];
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error fetching project folders:', error);
       throw new Error(`Failed to fetch project folders: ${error.message}`);
     }
@@ -313,7 +313,7 @@ export class ECTDScaffoldingService {
       }
 
       logger.debug(`Updated folder ${folderId} status to ${status}`);
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error updating folder status:', error);
       throw new Error(`Failed to update folder status: ${error.message}`);
     }
@@ -342,7 +342,7 @@ export class ECTDScaffoldingService {
 
       logger.info(`Batch updated ${updated} folder statuses`);
       return { updated };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error batch updating folder statuses:', error);
       throw new Error(`Failed to batch update folder statuses: ${error.message}`);
     }
@@ -355,7 +355,7 @@ export class ECTDScaffoldingService {
     try {
       const modules = await this.getModuleStructure(agency);
       return modules.find(m => m.module_code === moduleCode) || null;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error getting module by code:', error);
       throw new Error(`Failed to get module by code: ${error.message}`);
     }
@@ -368,7 +368,7 @@ export class ECTDScaffoldingService {
     try {
       const module = await this.getModuleByCode(moduleCode, agency);
       return module !== null;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error validating module code:', error);
       return false;
     }
@@ -381,7 +381,7 @@ export class ECTDScaffoldingService {
     try {
       const modules = await this.getModuleStructure(agency);
       return modules.filter(m => m.is_required);
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error getting required modules:', error);
       throw new Error(`Failed to get required modules: ${error.message}`);
     }
@@ -442,7 +442,7 @@ export class ECTDScaffoldingService {
     try {
       const folders = await this.getProjectFolders(projectId);
       return this.buildFolderTree(folders);
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error getting project folder tree:', error);
       throw new Error(`Failed to get project folder tree: ${error.message}`);
     }

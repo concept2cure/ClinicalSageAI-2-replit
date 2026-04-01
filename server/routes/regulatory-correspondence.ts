@@ -18,6 +18,9 @@ import {
 } from './regulatory-correspondence.validation';
 import { authMiddleware } from '../auth';
 import { getSecureOrgId } from '../utils/tenantContext';
+import { getOrCreateProfile } from '../services/intelligence/project-intelligence-service';
+import { db } from '../db';
+import { projectMemoryEntries } from '@shared/schema';
 
 const router = Router();
 router.use(authMiddleware);
@@ -189,6 +192,153 @@ async function addTimelineEventDB(
       JSON.stringify(payload.metadata || {}),
     ]
   );
+}
+
+async function persistCorrespondenceLearning(payload: {
+  orgId: number;
+  projectId: number;
+  title: string;
+  content: string;
+  subcategory: string;
+  confidenceScore?: number;
+  importanceLevel?: 'low' | 'medium' | 'high';
+  sourceDocumentName?: string;
+  sourceDocumentType?: string;
+}) {
+  try {
+    const projectProfileId = await getOrCreateProfile(payload.projectId, payload.orgId);
+    await db.insert(projectMemoryEntries).values({
+      projectProfileId,
+      projectId: payload.projectId,
+      organizationId: payload.orgId,
+      category: 'authority_position',
+      subcategory: payload.subcategory,
+      title: payload.title,
+      content: payload.content,
+      sourceDocumentName: payload.sourceDocumentName,
+      sourceDocumentType: payload.sourceDocumentType,
+      confidenceScore: payload.confidenceScore ?? 0.78,
+      importanceLevel: payload.importanceLevel ?? 'high',
+      isVerifiedByUser: false,
+      extractedBy: 'system',
+      status: 'active',
+    });
+  } catch (error) {
+    console.warn('[regulatory-correspondence] Failed to persist learning record', error);
+  }
+}
+
+export async function persistOutboundCorrespondenceRecord(payload: {
+  orgId: number;
+  projectId: number;
+  submissionId?: string;
+  subject: string;
+  recipients: string[];
+  sender?: string;
+  communicationType?: string;
+  parsedText?: string;
+  summary?: string;
+  urgency?: Correspondence['urgency'];
+  sourceChannel?: Correspondence['sourceChannel'];
+}) {
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  const record: Correspondence = {
+    id,
+    projectId: payload.projectId,
+    submissionId: payload.submissionId || `project-${payload.projectId}`,
+    direction: 'outbound',
+    sourceChannel: payload.sourceChannel || 'api_import',
+    communicationType: (payload.communicationType as any) || 'cover_letter',
+    subject: payload.subject,
+    sender: payload.sender,
+    recipients: payload.recipients,
+    sentAt: now,
+    receivedAt: now,
+    urgency: payload.urgency || 'medium',
+    responseRequired: false,
+    status: 'responded',
+    attachmentIds: [],
+    parsedText: payload.parsedText,
+    summary: payload.summary,
+    parserMetadata: {
+      parserVersion: 'report-delivery-v1',
+      extractionVersion: '2026-04-01',
+      importedByUserId: 'system',
+    },
+  };
+
+  const pool = getDbClientOrNull();
+  if (await tableReady(pool)) {
+    await pool!.query(
+      `INSERT INTO c2c_correspondence
+      (id, organization_id, project_id, submission_id, direction, source_channel, communication_type, subject, sender, recipients, received_at, sent_at, urgency, response_required, status, parser_metadata, attachment_refs, parsed_text, summary)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,$12,$13,$14,$15,$16::jsonb,$17::jsonb,$18,$19)`,
+      [
+        record.id,
+        payload.orgId,
+        record.projectId,
+        record.submissionId,
+        record.direction,
+        record.sourceChannel,
+        record.communicationType,
+        record.subject,
+        record.sender || null,
+        JSON.stringify(record.recipients || []),
+        record.receivedAt || null,
+        record.sentAt || null,
+        record.urgency,
+        record.responseRequired,
+        record.status,
+        JSON.stringify(record.parserMetadata || {}),
+        JSON.stringify([]),
+        record.parsedText || null,
+        record.summary || null,
+      ]
+    );
+
+    await addTimelineEventDB(pool!, {
+      orgId: payload.orgId,
+      projectId: record.projectId,
+      submissionId: payload.submissionId,
+      correspondenceId: record.id,
+      eventType: 'report_delivery_logged',
+      summary: record.subject,
+      metadata: {
+        communicationType: record.communicationType,
+        sourceChannel: record.sourceChannel,
+      },
+    });
+  } else {
+    memCorrespondence.set(id, record);
+    memCorrespondenceOrg.set(id, payload.orgId);
+    memIssues.set(id, []);
+    memTimeline.push({
+      id: crypto.randomUUID(),
+      orgId: payload.orgId,
+      submissionId: record.submissionId,
+      correspondenceId: id,
+      projectId: record.projectId,
+      eventType: 'report_delivery_logged',
+      eventTime: now,
+      summary: record.subject,
+    });
+  }
+
+  await persistCorrespondenceLearning({
+    orgId: payload.orgId,
+    projectId: payload.projectId,
+    title: `Outbound correspondence: ${payload.subject}`,
+    content:
+      `${payload.subject}\nRecipients: ${payload.recipients.join(', ')}\n\n${payload.parsedText || payload.summary || ''}`.trim(),
+    subcategory: 'outbound_report_delivery',
+    confidenceScore: 0.82,
+    importanceLevel: 'medium',
+    sourceDocumentName: payload.subject,
+    sourceDocumentType: 'outbound_correspondence',
+  });
+
+  return record;
 }
 
 function badRequest(res: Response, error: unknown) {
@@ -399,7 +549,7 @@ router.post('/correspondence/intake', async (req, res) => {
       quarantined: false,
       importedByUserId: userId,
     },
-    attachmentIds: attachmentRefs.map(a => a.id),
+    attachmentIds: attachmentRefs.map((a: any) => a.id),
     parsedText,
     summary: req.body.summary || parsedText.slice(0, 200),
   };

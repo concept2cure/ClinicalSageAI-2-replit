@@ -11,7 +11,7 @@ const NavigationBanner = ({ currentModule, currentSection }) => {
   const moduleMap = {
     coauthor: 'eCTD Co-Author',
     vault: 'Document Vault',
-    'client-portal': 'Client Portal',
+    'client-portal': 'Concept2Cure Workspace',
     'ind-wizard': 'IND Wizard',
     editor: 'Document Editor',
   };
@@ -74,16 +74,16 @@ const NavigationBanner = ({ currentModule, currentSection }) => {
             size="sm"
             onClick={() => {
               try {
-                setLocation('/client-portal');
+                setLocation('/concept2cure');
               } catch (error) {
                 console.error('Navigation error:', error);
-                window.location.href = '/client-portal';
+                window.location.href = '/concept2cure';
               }
             }}
             className="h-8 px-2"
           >
             <Users className="h-3 w-3 mr-1" />
-            Portal
+            Workspace
           </Button>
           <Button
             variant="ghost"

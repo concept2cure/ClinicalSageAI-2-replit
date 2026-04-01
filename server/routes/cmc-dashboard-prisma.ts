@@ -39,8 +39,8 @@ r.get('/summary', async (_req, res) => {
       _count: true,
       where: { productId: PROD },
     });
-    const total = mvAgg.reduce((a, b) => a + b._count, 0);
-    const approved = mvAgg.find(x => x.status === 'APPROVED')?._count ?? 0;
+    const total = mvAgg.reduce((a: any, b: any) => a + b._count, 0);
+    const approved = mvAgg.find((x: any) => x.status === 'APPROVED')?._count ?? 0;
     const methodsValidatedPct = total ? Math.round((approved / total) * 100) : 0;
 
     const submissionReadiness = readinessScore({
