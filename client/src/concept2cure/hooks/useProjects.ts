@@ -212,6 +212,36 @@ async function deleteProjectAPI(projectId: string): Promise<void> {
   }
 }
 
+async function patchOwnershipPreferencesAPI(
+  projectId: string,
+  preferences: {
+    projectInstructions?: string;
+    reusableSnippetsKnowledge?: string[];
+    currentWorkbenchContext?: WorkbenchMode;
+  }
+): Promise<Project> {
+  const response = await fetch(
+    `/api/concept2cure/projects/${projectId}/ownership-preferences`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify(preferences),
+    }
+  );
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload?.success === false) {
+    throw new Error(
+      payload?.error?.message ||
+        payload?.error ||
+        `Failed to update ownership preferences: ${response.status}`
+    );
+  }
+  return normalizeProjectResponse(withRequiredOwnership(payload?.data ?? payload));
+}
+
 /**
  * React Query hook for managing Concept2Cure projects
  *

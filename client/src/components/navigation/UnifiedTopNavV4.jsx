@@ -16,8 +16,8 @@ export default function UnifiedTopNavV4({ tabs = [] }) {
         <button onClick={goForward} aria-label="Forward" className="flex items-center">
           <ChevronRight className="h-4 w-4 mr-1" /> Forward
         </button>
-        <Link href="/client-portal" className="utnv4-home flex items-center">
-          <Home className="h-4 w-4 mr-1" /> Client Portal
+        <Link href="/concept2cure" className="utnv4-home flex items-center">
+          <Home className="h-4 w-4 mr-1" /> Concept2Cure Home
         </Link>
         <Link href="/switch-module" className="utnv4-switch flex items-center">
           <Search className="h-4 w-4 mr-1" /> Switch Module
