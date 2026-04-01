@@ -55,9 +55,39 @@ export TEST_DATABASE_URL="postgresql://..."
 npm run smoke:e2e-assembly
 ```
 
+### E2E smoke preflight
+
+Before running the smoke script:
+
+1. Ensure one of these env vars is set:
+   - `TEST_DATABASE_URL` (preferred for CI/smoke), or
+   - `DATABASE_URL` (fallback)
+2. Ensure the app can bind `http://localhost:5000` (or stop conflicting processes).
+3. Ensure a valid smoke login exists:
+   - `SMOKE_EMAIL` / `SMOKE_PASSWORD`, or
+   - fallback defaults used by the script.
+4. Verify DB readiness:
+
+```
+export DATABASE_URL="postgresql://..."
+npm run db:check-assembly
+```
+
 To test AI-powered polishing, set `OPENAI_API_KEY` in the environment before running the smoke test. If `OPENAI_API_KEY` is not set, the `polish` endpoint appends a note to the document instead of calling the AI provider.
 
 In CI, the `Test Assembly CI` workflow will run the E2E smoke test if `TEST_DATABASE_URL` is set as a repository secret.
+
+### E2E smoke exit codes
+
+| Exit code | Meaning |
+|---:|---|
+| 0 | Smoke succeeded end-to-end |
+| 2 | Missing `TEST_DATABASE_URL`/`DATABASE_URL` |
+| 3 | Server did not become healthy in time |
+| 4 | `/start` did not return a document ID |
+| 5 | `/polish` result did not include expected content |
+| 6 | DB verification for `assembly_docs` failed |
+| 7 | Authentication/login failed before flow execution |
 
 ## Verify migration applied
 

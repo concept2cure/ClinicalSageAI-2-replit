@@ -17,9 +17,13 @@ import crypto from 'crypto';
 // Mock drizzle-orm
 // ---------------------------------------------------------------------------
 
-vi.mock('drizzle-orm', () => ({
-  eq: vi.fn((_col: any, val: any) => ({ type: 'eq', val })),
-}));
+vi.mock('drizzle-orm', async importOriginal => {
+  const actual = await importOriginal<typeof import('drizzle-orm')>();
+  return {
+    ...actual,
+    eq: vi.fn((_col: any, val: any) => ({ type: 'eq', val })),
+  };
+});
 
 // ---------------------------------------------------------------------------
 // Mock DB chain
@@ -57,7 +61,10 @@ const mockUsers = {
   mfaVerifiedAt: 'users.mfaVerifiedAt',
 };
 
-vi.mock('../../../shared/schema', () => ({
+vi.mock('../../shared/schema', () => ({
+  users: mockUsers,
+}));
+vi.mock('../../shared/schema/index.ts', () => ({
   users: mockUsers,
 }));
 
@@ -87,13 +94,18 @@ let mfaModule: typeof import('../../server/services/mfaService');
 
 beforeEach(async () => {
   process.env.MFA_ENCRYPTION_KEY = TEST_ENCRYPTION_KEY;
+  process.env.JWT_SECRET = 'test-jwt-secret-at-least-32-chars-long!';
   vi.clearAllMocks();
+  // Clear any leftover queued DB responses between tests.
+  mockSelectLimit.mockReset();
+  mockSelectLimit.mockResolvedValue([]);
   // Re-import to pick up fresh mocks
   mfaModule = await import('../../server/services/mfaService');
 });
 
 afterEach(() => {
   delete process.env.MFA_ENCRYPTION_KEY;
+  delete process.env.JWT_SECRET;
 });
 
 // ---------------------------------------------------------------------------
@@ -116,7 +128,7 @@ describe('MFA Service', () => {
 
       expect(result.otpauthUrl).toContain('otpauth://totp/');
       expect(result.otpauthUrl).toContain('secret=');
-      expect(result.otpauthUrl).toContain('issuer=TrialSage');
+      expect(result.otpauthUrl).toContain('issuer=Concept2Cure');
       expect(result.otpauthUrl).toContain('user%40example.com');
     });
 
@@ -212,12 +224,6 @@ describe('MFA Service', () => {
       const base32Secret = base32Encode(secretBuffer);
       const encryptedSecret = encryptForTest(base32Secret);
 
-      mockSelectLimit.mockResolvedValueOnce([{
-        mfaSecret: encryptedSecret,
-        mfaEnabled: true,
-        mfaBackupCodes: [hashedCode, 'other-hash'],
-      }]);
-
       // The backup code is passed as the "token" parameter
       // Note: backup codes are checked only if TOTP fails and mfaEnabled is true
       // The token format (ABCD-EF01) won't pass the 6-digit regex check,
@@ -226,6 +232,7 @@ describe('MFA Service', () => {
       const result = await mfaModule.verifyToken(1, backupCode);
       // Backup code format doesn't pass the initial digit check
       expect(result).toBe(false);
+      expect(mockSelect).not.toHaveBeenCalled();
     });
   });
 

@@ -14,6 +14,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 // ── Orchestrator Tests ───────────────────────────────────────────────────────
 
@@ -878,6 +880,104 @@ describe('AnA RI Command System', () => {
       expect(prompt).toContain('command_name');
       expect(prompt).toContain('params');
     });
+  });
+});
+
+import { enrichContextForChat } from '../ana-ri/context-enrichment.js';
+import { SUPPORTED_SLASH_COMMANDS, detectSlashCommand } from '../ana-ri/context-enrichment.js';
+
+describe('AnA RI Context Enrichment', () => {
+  it('handles narrative slash commands without unhandled markers', async () => {
+    const result = await enrichContextForChat({
+      message: '/narrative',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'ind',
+    });
+
+    expect(result.enrichmentMeta?.triggerType).toBe('slash_command');
+    expect(result.enrichmentMeta?.detectedCommand).toBe('narrative');
+    expect(result.enrichmentMeta?.sourcesAttempted).toBeGreaterThanOrEqual(1);
+    expect(result.enrichmentMeta?.sourcesFailed).not.toContain('slash_unhandled:narrative');
+  });
+
+  it('supports deterministic preflight slash enrichment', async () => {
+    const result = await enrichContextForChat({
+      message: '/preflight',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'ind',
+    });
+
+    expect(result.enrichmentMeta?.triggerType).toBe('slash_command');
+    expect(result.enrichmentMeta?.detectedCommand).toBe('preflight');
+    expect(result.enrichmentMeta?.sourcesAttempted).toBeGreaterThanOrEqual(1);
+    expect(result.enrichmentMeta?.sourcesFailed).not.toContain('slash_unhandled:preflight');
+  });
+
+  it('supports deterministic draft slash enrichment', async () => {
+    const result = await enrichContextForChat({
+      message: '/draft clinical overview',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'ind',
+    });
+
+    expect(result.enrichmentMeta?.triggerType).toBe('slash_command');
+    expect(result.enrichmentMeta?.detectedCommand).toBe('draft');
+    expect(result.enrichmentMeta?.sourcesSucceeded).toContain('draft');
+    expect(result.enrichmentMeta?.sourcesFailed).not.toContain('slash_unhandled:draft');
+    expect(result.rewrittenMessage).toContain('clinical overview');
+  });
+
+  it('detects every supported slash command token', () => {
+    for (const command of SUPPORTED_SLASH_COMMANDS) {
+      const parsed = detectSlashCommand(`/${command} example payload`);
+      expect(parsed).not.toBeNull();
+      expect(parsed?.command).toBe(command);
+      expect(parsed?.args).toBe('example payload');
+    }
+  });
+
+  it('ensures every frontend slash command is supported by backend detector', () => {
+    const panelPath = resolve(
+      process.cwd(),
+      'client/src/concept2cure/components/chat/AnaPersistentPanel.tsx',
+    );
+    const panelSource = readFileSync(panelPath, 'utf8');
+
+    const slashBlockMatch = panelSource.match(
+      /const SLASH_COMMANDS:\s*SlashCommand\[\]\s*=\s*\[([\s\S]*?)\];/,
+    );
+    expect(slashBlockMatch?.[1]).toBeTruthy();
+
+    const frontendCommands = new Set<string>();
+    const commandRegex = /command:\s*'\/([^']+)'/g;
+    for (const match of (slashBlockMatch?.[1] || '').matchAll(commandRegex)) {
+      frontendCommands.add(match[1]);
+    }
+
+    const backendCommands = new Set<string>(SUPPORTED_SLASH_COMMANDS);
+
+    expect(frontendCommands.size).toBeGreaterThan(0);
+    for (const frontendCommand of frontendCommands) {
+      expect(backendCommands.has(frontendCommand)).toBe(true);
+    }
+  });
+
+  it('ensures every backend slash command has a handler (no slash_unhandled)', async () => {
+    for (const command of SUPPORTED_SLASH_COMMANDS) {
+      const result = await enrichContextForChat({
+        message: `/${command} parity-check`,
+        projectId: 123,
+        organizationId: 456,
+        submissionType: 'ind',
+      });
+
+      expect(result.enrichmentMeta?.triggerType).toBe('slash_command');
+      expect(result.enrichmentMeta?.detectedCommand).toBe(command);
+      expect(result.enrichmentMeta?.sourcesFailed).not.toContain(`slash_unhandled:${command}`);
+    }
   });
 });
 

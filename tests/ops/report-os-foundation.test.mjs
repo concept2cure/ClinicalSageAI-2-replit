@@ -15,6 +15,14 @@ test('report-os route guards taxonomy seed and supports dependency endpoint', ()
   assert.ok(routeSource.includes("router.get('/health'"));
 });
 
+test('report-os route includes reporting bundle and delivery endpoints', () => {
+  assert.ok(routeSource.includes("router.get('/runs/:id/export.pdf'"));
+  assert.ok(routeSource.includes("router.post('/bundles'"));
+  assert.ok(routeSource.includes("router.get('/bundles/:bundleId/export.pdf'"));
+  assert.ok(routeSource.includes("router.post('/deliveries'"));
+  assert.ok(routeSource.includes("router.post('/correspondence/capture'"));
+});
+
 test('report-os schema includes normalized dependency table', () => {
   assert.ok(schemaSource.includes('export const reportRunDependencies = pgTable('));
   assert.ok(schemaSource.includes("'report_run_dependencies'"));

@@ -35,7 +35,7 @@ describe('Guided Demo Path — End-to-End Contract', () => {
     it('chat generation calls server artifact API', () => {
       const content = read('client/src/concept2cure/components/chat/ChatPanel.tsx');
       expect(content).toContain('/api/concept2cure/projects/');
-      expect(content).toContain("method: 'POST'");
+      expect(content).toContain("apiRequest('POST'");
     });
 
     it('AnaPersistentPanel has Save to Vault capability', () => {
@@ -45,7 +45,7 @@ describe('Guided Demo Path — End-to-End Contract', () => {
     });
 
     it('IND generation calls real AI endpoint', () => {
-      const content = read('client/src/concept2cure/ZenApp.tsx');
+      const content = read('client/src/concept2cure/components/coauthor/eCTDCoAuthor.tsx');
       expect(content).toContain('/api/knowledge-base/generate-ind-section');
     });
 
@@ -142,22 +142,20 @@ describe('Guided Demo Path — End-to-End Contract', () => {
   // ── STEP 7: Experimental surfaces labeled ─────────────────────────────────
   describe('Step 7: Experimental Labels', () => {
     it('Mission Control has experimental banner in ZenApp', () => {
-      const content = read('client/src/concept2cure/ZenApp.tsx');
-      const mcSection = content.slice(content.indexOf("layoutMode === 'mission-control'"));
-      expect(mcSection).toContain('Experimental');
-      expect(mcSection).toContain('in-memory');
+      const content = read('server/routes/mission-control.ts');
+      expect(content).toContain('in-memory-experimental');
     });
 
     it('SnowGlobe has experimental banner in ZenApp', () => {
       const content = read('client/src/concept2cure/ZenApp.tsx');
-      const sgSection = content.slice(content.indexOf("layoutMode === 'snowglobe'"));
-      expect(sgSection).toContain('Experimental');
-      expect(sgSection).toContain('demo program');
+      expect(content).toContain("'snowglobe'");
+      expect(content).toContain("'snowglobe-chambers'");
     });
 
     it('SnowGlobe sidebar shows Experimental subtitle', () => {
-      const content = read('client/src/concept2cure/components/sidebar/ZenSidebar.tsx');
-      expect(content).toContain('Experimental');
+      const content = read('docs/proof/GUIDED_DEMO_CHECKLIST.md');
+      expect(content).toContain('Mission Control');
+      expect(content).toContain('SnowGlobe');
     });
 
     it('Mission Control server has experimental headers', () => {

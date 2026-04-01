@@ -5,6 +5,8 @@ on:
     branches: ['**']
   pull_request:
     branches: ['**']
+  schedule:
+    - cron: '0 6 * * *'
 
 jobs:
   lint:
@@ -26,6 +28,21 @@ jobs:
 
       - name: Guardrails — ban direct new Pool()
         run: scripts/ci/ban-new-pool.sh
+
+      - name: Guardrails — route mount authority audit (no regressions)
+        run: npm run ci:audit-route-mounts:no-regression
+
+      - name: Audit — repo health scan (no regressions)
+        run: npm run audit:repo-health:no-regression
+
+      - name: Upload governance audit artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-audits-lint
+          path: |
+            docs/reports/repo-health-scan-latest.json
+            docs/reports/route-mount-audit-latest.json
+          retention-days: 14
 
       - name: Run ESLint
         run: npm run lint
@@ -247,3 +264,28 @@ jobs:
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
             -Dsonar.typescript.tsconfigPath=tsconfig.json
             -Dsonar.qualitygate.wait=true
+
+  nightly-governance:
+    name: Nightly Governance Strict
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm install
+      - name: Route mount audit (strict debt gate)
+        run: npm run ci:audit-route-mounts:full-strict
+      - name: Repo health audit (strict debt gate)
+        run: npm run audit:repo-health:full-strict
+      - name: Upload nightly governance artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-audits-nightly
+          path: |
+            docs/reports/repo-health-scan-latest.json
+            docs/reports/route-mount-audit-latest.json
+          retention-days: 30

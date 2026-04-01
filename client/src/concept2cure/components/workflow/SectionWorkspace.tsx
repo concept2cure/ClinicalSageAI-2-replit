@@ -154,14 +154,21 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
     setIsLoadingIssues(true);
     try {
       const res = await apiRequest(
-        'GET',
-        `/api/concept2cure/projects/${projectId}/contradictions?sectionCode=${section.code}`
+        'POST',
+        '/api/governed-intelligence/contradictions/search',
+        {
+          projectId,
+          sectionCode: section.code,
+          page: 1,
+          pageSize: 50,
+        }
       );
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data.findings)) {
+        const findings = data?.data?.items ?? data?.items ?? data?.findings ?? [];
+        if (Array.isArray(findings)) {
           setFetchedIssues(
-            data.findings.map((f: any) => ({
+            findings.map((f: any) => ({
               id: f.id || `f-${Math.random().toString(36).slice(2)}`,
               type: f.type || f.contradictionType || 'finding',
               severity:

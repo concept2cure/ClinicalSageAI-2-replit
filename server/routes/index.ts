@@ -1,7 +1,15 @@
 /**
- * API Routes Index
+ * @deprecated Legacy API aggregator.
  *
- * This file centralizes all API route registrations.
+ * Canonical route registration happens in `server/index.ts`.
+ * This module is retained only as a compatibility shim for
+ * older tooling/scripts and should not be used for new work.
+ *
+ * Stage 2 beta cleanup fence (proof-required status).
+ * This alternate aggregator is not proven mounted by `server/index.ts`
+ * in the current live bootstrap path.
+ * It is NOT a removal candidate until unused proof is explicit.
+ * Do not add new behavior here unless mount ownership is explicitly decided.
  */
 import { Router } from 'express';
 import tenantsRoutes from './tenants';
@@ -89,8 +97,15 @@ router.use('/support', supportAdminRoutes);
 
 // Mount API routes
 export function mountApiRoutes(app: any) {
+  if (process.env.ENABLE_LEGACY_API_INDEX !== 'true') {
+    console.warn(
+      '[deprecated] mountApiRoutes() is disabled by default; use server/index.ts canonical mounts'
+    );
+    return;
+  }
+
   app.use('/api', router);
-  console.log('API routes mounted');
+  console.warn('[deprecated] Legacy API routes mounted via mountApiRoutes()');
 }
 
 export default router;

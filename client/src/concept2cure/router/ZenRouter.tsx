@@ -36,7 +36,10 @@ import {
 } from './projectModuleRoutePolicy';
 
 // Lazy-load CERV2Page only when a project 510k route is hit (standalone mode)
-const CERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
+const CERV2Page = lazy(async () => {
+  const module = await import('@/pages/csr/CERV2Page');
+  return { default: module.default as React.ComponentType<{ projectId: string | null }> };
+});
 // Lazy-load PMA Workspace for standalone mode
 const PMAWorkspacePage = lazy(() => import('../components/pma/PMAWorkspace'));
 
@@ -171,18 +174,18 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated, isLoading } = usePortalAuth();
+  const { isAuthenticated, isLoading, isBootstrapping } = usePortalAuth();
   const [location, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isBootstrapping && !isAuthenticated) {
       // Redirect to login with return URL
       const returnTo = encodeURIComponent(location);
       setLocation(`/concept2cure/login?returnTo=${returnTo}`);
     }
-  }, [isAuthenticated, isLoading, location, setLocation]);
+  }, [isAuthenticated, isBootstrapping, location, setLocation]);
 
-  if (isLoading) {
+  if (isBootstrapping || isLoading) {
     return <ZenLoadingScreen message="Checking authentication..." />;
   }
 
@@ -202,17 +205,17 @@ interface AuthRouteProps {
 }
 
 const AuthRoute: React.FC<AuthRouteProps> = ({ children }) => {
-  const { isAuthenticated, isLoading } = usePortalAuth();
+  const { isAuthenticated, isBootstrapping } = usePortalAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
+    if (!isBootstrapping && isAuthenticated) {
       // Already logged in, redirect to main app
       setLocation('/concept2cure');
     }
-  }, [isAuthenticated, isLoading, setLocation]);
+  }, [isAuthenticated, isBootstrapping, setLocation]);
 
-  if (isLoading) {
+  if (isBootstrapping) {
     return <ZenLoadingScreen message="Loading..." />;
   }
 

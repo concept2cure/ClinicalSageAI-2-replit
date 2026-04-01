@@ -1,8 +1,9 @@
 /**
- * Fixed routes registration file
+ * @deprecated Legacy route registrar (not mounted by server/index.ts).
  *
- * This file registers all API routes with the Express application.
- * It provides a central location to add new routes to the application.
+ * This file is intentionally retained as historical reference only and should
+ * NOT be used for active route registration. Canonical runtime route wiring
+ * lives in server/index.ts.
  */
 
 import express, { Express, Request, Response } from 'express';

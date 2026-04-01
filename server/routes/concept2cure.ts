@@ -77,7 +77,9 @@ import {
   interceptFeedback,
 } from '../services/intelligence/rim-interceptors.js';
 import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
-import { validateGovernedArtifactMutation } from '../services/concept2cure/governedDocumentContractService';
+import {
+  resolveGovernedContext,
+} from '../services/concept2cure/governedDocumentContractService';
 import {
   buildWorkingMemoryPrompt,
   storeWorkingMemory,
@@ -779,8 +781,78 @@ const createArtifactSchema = z.object({
   category: z.enum(['document', 'interactive', 'visualization', 'source', 'evidence']),
   title: z.string().min(1, 'Title required').max(200),
   content: z.string().min(1, 'Content must not be empty').max(1000000, 'Content too large'), // 1MB max, no empty
+  templateId: z.string().min(1).max(200).optional(),
   ctdSection: z.string().max(50).optional(),
   metadata: z.record(z.any()).optional(),
+  clientTrack: z.enum(['biotech', 'device', 'diagnostics']).optional(),
+  submissionProgram: z.enum(['ind', 'ectd', '510k', 'pma', 'cer', 'ivdr', 'general_ri']).optional(),
+  persona: z
+    .enum(['regulatory', 'medical_writer', 'cmc', 'clinical', 'qa', 'executive', 'cro'])
+    .optional(),
+  regulatorScope: z.enum(['fda', 'ema', 'mhra', 'hc', 'pmda', 'multi']).optional(),
+  evidenceMode: z.enum(['csr', 'literature', 'predicate', 'cmc_source', 'test_data', 'mixed']).optional(),
+  documentClass: z
+    .enum([
+      'strategy_memo',
+      'evidence_memo',
+      'section_draft',
+      'module3_output',
+      'submission_component',
+      'audit_report',
+      'comparator_summary',
+      'risk_benefit',
+      'protocol_rationale',
+      'regional_differences',
+      'safety_evidence_brief',
+      'endpoint_justification',
+    ])
+    .optional(),
+  readinessGate: z
+    .enum(['exploratory', 'internal_review', 'submission_candidate', 'inspection_ready'])
+    .optional(),
+  approvalPathType: z
+    .enum(['single_reviewer', 'regulated_dual_review', 'qa_lock', 'signoff_required'])
+    .optional(),
+  recommendationSource: z
+    .enum([
+      'ana_ri',
+      'cmc_builder',
+      'cerv2_510k',
+      'cerv2_pma',
+      'cerv2_cer',
+      'ectd_compiler',
+      'ind_autodraft',
+      'report_engine',
+    ])
+    .optional(),
+  originSurface: z
+    .enum([
+      'ri_copilot',
+      'ectd_coauthor',
+      'ind_workspace',
+      'cmc_workspace',
+      'cerv2_device',
+      'editor_panel',
+      'api_route',
+      'import_pipeline',
+      'system',
+      'project_workspace_shell',
+      'ai_orchestrator',
+    ])
+    .optional(),
+  workspaceTarget: z.enum(['project', 'dossier', 'vault']).optional(),
+  dossierContainerId: z.string().optional(),
+  artifactContainerId: z.string().optional(),
+  regulatorIntent: z
+    .enum([
+      'submission_authoring',
+      'evidence_analysis',
+      'strategy',
+      'comparison',
+      'qa_review',
+      'inspection_support',
+    ])
+    .optional(),
 });
 
 const createSignatureSchema = z.object({
@@ -2609,6 +2681,140 @@ router.post(
         status: 'processed',
       };
 
+      // ── CONVERGENCE: create governed source artifact before mutating project knowledge ──
+      const userId = getUserId(req);
+      const artifactId = `artifact_upload_${Date.now()}_${crypto.randomBytes(5).toString('hex')}`;
+      const contentForArtifact =
+        extractedText && extractedText.length > 10
+          ? extractedText
+          : `[Uploaded file: ${safeOriginalName}] (${file.mimetype}, ${file.size} bytes)`;
+      const contentHash = calculateContentHash(contentForArtifact);
+      const uploadGovernedResolution = resolveGovernedContext({
+        req,
+        projectId: numericId,
+        artifactId: null,
+        documentType: 'source_document',
+        generationMode: 'imported',
+        lifecycleStatus: 'draft',
+        originSurface: 'import_pipeline',
+        clientTrack:
+          req.body?.clientTrack === 'device'
+            ? 'device'
+            : req.body?.clientTrack === 'diagnostics'
+              ? 'diagnostics'
+              : 'biotech',
+        submissionProgram: 'general_ri',
+        persona: 'regulatory',
+        regulatorScope: 'fda',
+        evidenceMode: 'mixed',
+        documentClass: 'evidence_memo',
+        readinessGate: 'exploratory',
+        approvalPathType: 'single_reviewer',
+        recommendationSource: 'report_engine',
+        workspaceTarget: 'project',
+        regulatorIntent: 'evidence_analysis',
+        placementContainerId: String(numericId),
+        title: safeOriginalName,
+        content: contentForArtifact,
+        sourceRefs: [`upload:${documentId}`],
+        provider: 'upload_pipeline',
+        model: 'import_handler',
+        exportAllowed: false,
+        eventType: 'artifact.created',
+      });
+      if (!uploadGovernedResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: uploadGovernedResolution.validation.errors,
+            warnings: uploadGovernedResolution.validation.warnings,
+            resolved: uploadGovernedResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+
+      const [newArtifact] = await db
+        .insert(concept2cureArtifacts)
+        .values({
+          organizationId,
+          projectId: numericId,
+          artifactId,
+          type: 'source_document',
+          category: 'source',
+          title: safeOriginalName,
+          content: contentForArtifact,
+          contentHash,
+          version: 1,
+          metadata: {
+            originalName: safeOriginalName,
+            mimeType: file.mimetype,
+            fileSize: file.size,
+            extension,
+            tokenCount,
+            uploadSource: 'knowledge_upload',
+            knowledgeDocumentId: documentId,
+            harness: {
+              clientTrack: uploadGovernedResolution.contract.clientTrack,
+              submissionProgram: uploadGovernedResolution.contract.submissionProgram,
+              persona: uploadGovernedResolution.contract.persona,
+              regulatorScope: uploadGovernedResolution.contract.regulatorScope,
+              documentClass: uploadGovernedResolution.contract.documentClass,
+              readinessGate: uploadGovernedResolution.contract.readinessGate,
+              workspaceTarget: uploadGovernedResolution.contract.workspaceTarget,
+              originSurface: uploadGovernedResolution.contract.originSurface,
+              recommendationSource: uploadGovernedResolution.contract.recommendationSource,
+              regulatorIntent: uploadGovernedResolution.contract.regulatorIntent,
+              gateChecks: uploadGovernedResolution.contract.exportEligibility.gateChecks,
+              blockingReasons: uploadGovernedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome: uploadGovernedResolution.contract.exportEligibility.readinessOutcome,
+            },
+          },
+          createdById: userId,
+        })
+        .returning();
+
+      // Version entry
+      await db.insert(concept2cureArtifactVersions).values({
+        organizationId,
+        artifactId: newArtifact.id,
+        version: 1,
+        content: contentForArtifact,
+        contentHash,
+        createdById: userId,
+      });
+
+      const artifactRecord: { id: number; artifactId: string } = { id: newArtifact.id, artifactId };
+
+      // ── AUTO-EMBED: Insert into lumen_data_atoms + generate embedding ──
+      try {
+        const atomResult = await pool.query(
+          `INSERT INTO lumen_data_atoms
+             (organization_id, source_type, source_id, atom_type, title, content, tags, confidence, status)
+           VALUES ($1, 'data_room_upload', $2, 'source_document', $3, $4, $5, 0.9, 'active')
+           ON CONFLICT DO NOTHING
+           RETURNING id`,
+          [
+            organizationId,
+            artifactId,
+            safeOriginalName,
+            contentForArtifact.substring(0, 16000),
+            `{source,upload,${extension}}`,
+          ]
+        );
+        if (atomResult.rows.length > 0) {
+          const atomId = atomResult.rows[0].id;
+          const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
+          const embeddingService = getEmbeddingService(pool);
+          await embeddingService.embedAtom(atomId);
+          logger.info('Source document auto-embedded for retrieval', { artifactId, atomId });
+        }
+      } catch (embedErr: any) {
+        logger.warn('Auto-embedding failed (non-fatal)', { error: embedErr.message });
+      }
+
       const settings = normalizeProjectSettings(project.settings);
       const knowledge = normalizeKnowledge(settings);
       const updatedKnowledge: ProjectKnowledge = {
@@ -2631,84 +2837,6 @@ router.post(
         .returning();
 
       await logAuditEntry(req, 'UPDATE', 'project', projectIdRaw, project, updated);
-
-      // ── CONVERGENCE: Also create a concept2cureArtifact for unified Data Room ──
-      let artifactRecord: { id: number; artifactId: string } | null = null;
-      try {
-        const userId = getUserId(req);
-        const artifactId = `artifact_upload_${Date.now()}_${crypto.randomBytes(5).toString('hex')}`;
-        const contentForArtifact =
-          extractedText && extractedText.length > 10
-            ? extractedText
-            : `[Uploaded file: ${safeOriginalName}] (${file.mimetype}, ${file.size} bytes)`;
-        const contentHash = calculateContentHash(contentForArtifact);
-
-        const [newArtifact] = await db
-          .insert(concept2cureArtifacts)
-          .values({
-            organizationId,
-            projectId: numericId,
-            artifactId,
-            type: 'source_document',
-            category: 'source',
-            title: safeOriginalName,
-            content: contentForArtifact,
-            contentHash,
-            version: 1,
-            metadata: {
-              originalName: safeOriginalName,
-              mimeType: file.mimetype,
-              fileSize: file.size,
-              extension,
-              tokenCount,
-              uploadSource: 'knowledge_upload',
-              knowledgeDocumentId: documentId,
-            },
-            createdById: userId,
-          })
-          .returning();
-
-        // Version entry
-        await db.insert(concept2cureArtifactVersions).values({
-          organizationId,
-          artifactId: newArtifact.id,
-          version: 1,
-          content: contentForArtifact,
-          contentHash,
-          createdById: userId,
-        });
-
-        artifactRecord = { id: newArtifact.id, artifactId };
-
-        // ── AUTO-EMBED: Insert into lumen_data_atoms + generate embedding ──
-        try {
-          const atomResult = await pool.query(
-            `INSERT INTO lumen_data_atoms
-               (organization_id, source_type, source_id, atom_type, title, content, tags, confidence, status)
-             VALUES ($1, 'data_room_upload', $2, 'source_document', $3, $4, $5, 0.9, 'active')
-             ON CONFLICT DO NOTHING
-             RETURNING id`,
-            [
-              organizationId,
-              artifactId,
-              safeOriginalName,
-              contentForArtifact.substring(0, 16000),
-              `{source,upload,${extension}}`,
-            ]
-          );
-          if (atomResult.rows.length > 0) {
-            const atomId = atomResult.rows[0].id;
-            const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
-            const embeddingService = getEmbeddingService(pool);
-            await embeddingService.embedAtom(atomId);
-            logger.info('Source document auto-embedded for retrieval', { artifactId, atomId });
-          }
-        } catch (embedErr: any) {
-          logger.warn('Auto-embedding failed (non-fatal)', { error: embedErr.message });
-        }
-      } catch (artifactErr: any) {
-        logger.warn('Artifact convergence failed (non-fatal)', { error: artifactErr.message });
-      }
 
       res.status(201);
       return sendSuccess(res, {
@@ -2848,7 +2976,23 @@ const aiEditSchema = z.object({
   context: z.string().optional(),
   projectId: z.union([z.string(), z.number()]).optional(),
   artifactId: z.union([z.string(), z.number()]).optional(),
+  contextAttachment: z.enum(['project', 'adhoc']).optional(),
   ctdSection: z.string().optional(),
+}).superRefine((value, ctx) => {
+  if (!value.projectId && value.contextAttachment !== 'adhoc') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['contextAttachment'],
+      message: 'contextAttachment must be "adhoc" when projectId is not provided',
+    });
+  }
+  if (value.contextAttachment === 'project' && !value.projectId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['projectId'],
+      message: 'projectId is required when contextAttachment is "project"',
+    });
+  }
 });
 
 // ── Source traceability helpers for ai/edit-section ──────────────────────────
@@ -2900,7 +3044,12 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
   try {
     const userId = getUserId(req);
     const organizationId = getOrganizationId(req);
-    const data = aiEditSchema.parse(req.body);
+    const rawData = aiEditSchema.parse(req.body);
+    const data = {
+      ...rawData,
+      contextAttachment:
+        rawData.contextAttachment || (rawData.projectId ? ('project' as const) : ('adhoc' as const)),
+    };
 
     const { getGateway } = await import('../services/ai-gateway/gateway.js');
     const gw = getGateway();
@@ -3807,6 +3956,22 @@ const templateGenerateSchema = z.object({
   variables: z.record(z.string(), z.string()),
   projectId: z.union([z.string(), z.number()]).optional(),
   artifactId: z.union([z.string(), z.number()]).optional(),
+  contextAttachment: z.enum(['project', 'adhoc']).optional(),
+}).superRefine((value, ctx) => {
+  if (!value.projectId && value.contextAttachment !== 'adhoc') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['contextAttachment'],
+      message: 'contextAttachment must be "adhoc" when projectId is not provided',
+    });
+  }
+  if (value.contextAttachment === 'project' && !value.projectId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['projectId'],
+      message: 'projectId is required when contextAttachment is "project"',
+    });
+  }
 });
 
 router.post('/ai/templates/:templateId/generate', async (req: Request, res: Response) => {
@@ -3815,7 +3980,12 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
     const { templateId } = req.params;
     const userId = getUserId(req);
     const organizationId = getOrganizationId(req);
-    const data = templateGenerateSchema.parse(req.body);
+    const rawData = templateGenerateSchema.parse(req.body);
+    const data = {
+      ...rawData,
+      contextAttachment:
+        rawData.contextAttachment || (rawData.projectId ? ('project' as const) : ('adhoc' as const)),
+    };
 
     const template = PROMPT_TEMPLATES.find(t => t.id === templateId);
     if (!template) {
@@ -4999,13 +5169,33 @@ router.post(
       // Sanitize content
       const sanitizedContent = sanitizeContent(data.content);
       const sanitizedTitle = sanitizeContent(data.title);
-      const contractValidation = validateGovernedArtifactMutation({
+      const governedResolution = resolveGovernedContext({
         req,
         projectId: numericProjectId,
         artifactId: null,
         documentType: data.type,
         generationMode: data.metadata?.generationMethod === 'ai' ? 'ai_generated' : 'manual',
         lifecycleStatus: 'draft',
+        originSurface: data.originSurface,
+        clientTrack: data.clientTrack,
+        submissionProgram: data.submissionProgram,
+        persona: data.persona,
+        regulatorScope: data.regulatorScope,
+        evidenceMode: data.evidenceMode,
+        documentClass: data.documentClass,
+        readinessGate: data.readinessGate,
+        approvalPathType: data.approvalPathType,
+        recommendationSource: data.recommendationSource,
+        workspaceTarget: data.workspaceTarget,
+        dossierContainerId: data.dossierContainerId,
+        artifactContainerId: data.artifactContainerId,
+        regulatorIntent: data.regulatorIntent,
+        placementContainerId:
+          (data.metadata?.containerId as string | undefined) ||
+          data.dossierContainerId ||
+          data.artifactContainerId,
+        provider: (data.metadata?.provider as string | undefined) || undefined,
+        model: (data.metadata?.model as string | undefined) || undefined,
         title: sanitizedTitle,
         content: sanitizedContent,
         ctdSection: data.ctdSection || null,
@@ -5015,12 +5205,16 @@ router.post(
         exportAllowed: false,
         eventType: 'artifact.created',
       });
-      if (!contractValidation.valid) {
+      if (!governedResolution.validation.valid) {
         return sendError(
           res,
           400,
           'Governed document contract validation failed',
-          contractValidation.errors,
+          {
+            errors: governedResolution.validation.errors,
+            warnings: governedResolution.validation.warnings,
+            resolved: governedResolution.resolved,
+          },
           'GOVERNED_CONTRACT_INVALID'
         );
       }
@@ -5060,7 +5254,25 @@ router.post(
           content: sanitizedContent,
           contentHash,
           version: 1,
-          metadata: data.metadata || {},
+          templateId: data.templateId || null,
+          metadata: {
+            ...(data.metadata || {}),
+            harness: {
+              clientTrack: governedResolution.contract.clientTrack,
+              submissionProgram: governedResolution.contract.submissionProgram,
+              persona: governedResolution.contract.persona,
+              regulatorScope: governedResolution.contract.regulatorScope,
+              documentClass: governedResolution.contract.documentClass,
+              readinessGate: governedResolution.contract.readinessGate,
+              workspaceTarget: governedResolution.contract.workspaceTarget,
+              originSurface: governedResolution.contract.originSurface,
+              recommendationSource: governedResolution.contract.recommendationSource,
+              regulatorIntent: governedResolution.contract.regulatorIntent,
+              gateChecks: governedResolution.contract.exportEligibility.gateChecks,
+              blockingReasons: governedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome: governedResolution.contract.exportEligibility.readinessOutcome,
+            },
+          },
           ctdSection: data.ctdSection || null,
           createdById: userId,
           ...(ctdSection ? { ctdSection } : {}),
@@ -5098,6 +5310,7 @@ router.post(
         projectId: req.params.projectId,
         type: newArtifact.type,
         title: newArtifact.title,
+        templateId: data.templateId || null,
         contentLength: sanitizedContent.length,
         contentHash,
       });
@@ -5115,6 +5328,7 @@ router.post(
           title: sanitizedTitle,
           type: data.type,
           category: data.category,
+          templateId: data.templateId || null,
           contentLength: sanitizedContent.length,
           contentHash,
           ctdSection: ctdSection || null,
@@ -5340,7 +5554,7 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
     // Update ctdSection if provided
     const newCtdSection = ctdSection !== undefined ? ctdSection : dbArtifact.ctdSection;
 
-    const updateContractValidation = validateGovernedArtifactMutation({
+    const updateGovernedResolution = resolveGovernedContext({
       req,
       projectId: dbArtifact.projectId,
       artifactId: dbArtifact.id,
@@ -5351,19 +5565,32 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
       title: newTitle || dbArtifact.title,
       content: newContent || dbArtifact.content || '',
       ctdSection: newCtdSection,
-      sourceRefs: undefined,
+      sourceRefs: [`artifact:${dbArtifact.artifactId}`],
       exportAllowed: ['approved', 'locked', 'published'].includes(String(dbArtifact.status || '')),
       eventType: 'artifact.updated',
     });
-    if (!updateContractValidation.valid) {
+    if (!updateGovernedResolution.validation.valid) {
       return sendError(
         res,
         400,
         'Governed document contract validation failed',
-        updateContractValidation.errors,
+        {
+          errors: updateGovernedResolution.validation.errors,
+          warnings: updateGovernedResolution.validation.warnings,
+          resolved: updateGovernedResolution.resolved,
+        },
         'GOVERNED_CONTRACT_INVALID'
       );
     }
+
+    const existingMetadata =
+      dbArtifact.metadata && typeof dbArtifact.metadata === 'object'
+        ? (dbArtifact.metadata as Record<string, unknown>)
+        : {};
+    const existingHarness =
+      existingMetadata.harness && typeof existingMetadata.harness === 'object'
+        ? (existingMetadata.harness as Record<string, unknown>)
+        : {};
 
     // Update artifact record
     const [updatedArtifact] = await db
@@ -5374,6 +5601,25 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
         contentHash: newContentHash,
         version: newVersion,
         ctdSection: newCtdSection,
+        metadata: {
+          ...existingMetadata,
+          harness: {
+            ...existingHarness,
+            clientTrack: updateGovernedResolution.contract.clientTrack,
+            submissionProgram: updateGovernedResolution.contract.submissionProgram,
+            persona: updateGovernedResolution.contract.persona,
+            regulatorScope: updateGovernedResolution.contract.regulatorScope,
+            documentClass: updateGovernedResolution.contract.documentClass,
+            readinessGate: updateGovernedResolution.contract.readinessGate,
+            workspaceTarget: updateGovernedResolution.contract.workspaceTarget,
+            originSurface: updateGovernedResolution.contract.originSurface,
+            recommendationSource: updateGovernedResolution.contract.recommendationSource,
+            regulatorIntent: updateGovernedResolution.contract.regulatorIntent,
+            gateChecks: updateGovernedResolution.contract.exportEligibility.gateChecks,
+            blockingReasons: updateGovernedResolution.contract.exportEligibility.blockingReasons,
+            readinessOutcome: updateGovernedResolution.contract.exportEligibility.readinessOutcome,
+          },
+        },
         updatedAt: new Date(),
       })
       .where(eq(concept2cureArtifacts.id, dbArtifact.id))
@@ -5579,12 +5825,69 @@ router.put(
 
       const previousSection = dbArtifact.ctdSection || null;
 
+      const placementGovernedResolution = resolveGovernedContext({
+        req,
+        projectId: dbArtifact.projectId,
+        artifactId: dbArtifact.id,
+        documentType: dbArtifact.type,
+        generationMode: 'amendment',
+        lifecycleStatus:
+          (dbArtifact.status as GovernedDocumentActionContract['lifecycleStatus']) || 'draft',
+        title: dbArtifact.title,
+        content: dbArtifact.content || '',
+        ctdSection: toSection,
+        sourceRefs: [`artifact:${dbArtifact.artifactId}`],
+        exportAllowed: ['approved', 'locked', 'published'].includes(String(dbArtifact.status || '')),
+        eventType: 'artifact.updated',
+      });
+      if (!placementGovernedResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: placementGovernedResolution.validation.errors,
+            warnings: placementGovernedResolution.validation.warnings,
+            resolved: placementGovernedResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+
+      const existingMetadata =
+        dbArtifact.metadata && typeof dbArtifact.metadata === 'object'
+          ? (dbArtifact.metadata as Record<string, unknown>)
+          : {};
+      const existingHarness =
+        existingMetadata.harness && typeof existingMetadata.harness === 'object'
+          ? (existingMetadata.harness as Record<string, unknown>)
+          : {};
+
       // Update ctdSection on the artifact
       const [updated] = await db
         .update(concept2cureArtifacts)
         .set({
           ctdSection: toSection,
           updatedAt: new Date(),
+          metadata: {
+            ...existingMetadata,
+            harness: {
+              ...existingHarness,
+              clientTrack: placementGovernedResolution.contract.clientTrack,
+              submissionProgram: placementGovernedResolution.contract.submissionProgram,
+              persona: placementGovernedResolution.contract.persona,
+              regulatorScope: placementGovernedResolution.contract.regulatorScope,
+              documentClass: placementGovernedResolution.contract.documentClass,
+              readinessGate: placementGovernedResolution.contract.readinessGate,
+              workspaceTarget: placementGovernedResolution.contract.workspaceTarget,
+              originSurface: placementGovernedResolution.contract.originSurface,
+              recommendationSource: placementGovernedResolution.contract.recommendationSource,
+              regulatorIntent: placementGovernedResolution.contract.regulatorIntent,
+              gateChecks: placementGovernedResolution.contract.exportEligibility.gateChecks,
+              blockingReasons: placementGovernedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome: placementGovernedResolution.contract.exportEligibility.readinessOutcome,
+            },
+          },
         })
         .where(eq(concept2cureArtifacts.id, dbArtifact.id))
         .returning();
@@ -6674,6 +6977,77 @@ router.post(
       const reportContent = JSON.stringify(reportData, null, 2);
       const contentHash = crypto.createHash('sha256').update(reportContent).digest('hex');
       const now = new Date();
+      const sourceArtifactMetadata =
+        artifact.metadata && typeof artifact.metadata === 'object'
+          ? (artifact.metadata as Record<string, unknown>)
+          : {};
+      const sourceHarness =
+        sourceArtifactMetadata.harness && typeof sourceArtifactMetadata.harness === 'object'
+          ? (sourceArtifactMetadata.harness as Record<string, unknown>)
+          : {};
+      const auditGovernedResolution = resolveGovernedContext({
+        req,
+        projectId: artifact.projectId,
+        artifactId: null,
+        documentType: 'audit_report',
+        generationMode: 'ai_assisted',
+        lifecycleStatus: 'locked',
+        originSurface: 'api_route',
+        clientTrack:
+          sourceHarness.clientTrack === 'device'
+            ? 'device'
+            : sourceHarness.clientTrack === 'diagnostics'
+              ? 'diagnostics'
+              : 'biotech',
+        submissionProgram:
+          sourceHarness.submissionProgram === 'ind' ||
+          sourceHarness.submissionProgram === 'ectd' ||
+          sourceHarness.submissionProgram === '510k' ||
+          sourceHarness.submissionProgram === 'pma' ||
+          sourceHarness.submissionProgram === 'cer' ||
+          sourceHarness.submissionProgram === 'ivdr'
+            ? (sourceHarness.submissionProgram as GovernedDocumentActionContract['submissionProgram'])
+            : 'general_ri',
+        persona: sourceHarness.persona === 'qa' ? 'qa' : 'regulatory',
+        regulatorScope:
+          sourceHarness.regulatorScope === 'ema' ||
+          sourceHarness.regulatorScope === 'mhra' ||
+          sourceHarness.regulatorScope === 'hc' ||
+          sourceHarness.regulatorScope === 'pmda' ||
+          sourceHarness.regulatorScope === 'multi'
+            ? (sourceHarness.regulatorScope as GovernedDocumentActionContract['regulatorScope'])
+            : 'fda',
+        evidenceMode: 'mixed',
+        documentClass: 'audit_report',
+        readinessGate: 'inspection_ready',
+        approvalPathType: 'qa_lock',
+        recommendationSource: 'report_engine',
+        workspaceTarget: 'vault',
+        artifactContainerId: exportArtifactId,
+        placementContainerId: exportArtifactId,
+        regulatorIntent: 'inspection_support',
+        title: `Audit Report — ${artifact.title} — ${now.toISOString().split('T')[0]}`,
+        content: reportContent,
+        ctdSection: artifact.ctdSection,
+        sourceRefs: [`artifact:${artifact.artifactId}`],
+        provider: 'concept2cure',
+        model: 'audit-export-v1',
+        exportAllowed: true,
+        eventType: 'artifact.created',
+      });
+      if (!auditGovernedResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: auditGovernedResolution.validation.errors,
+            warnings: auditGovernedResolution.validation.warnings,
+            resolved: auditGovernedResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
 
       const [exportedArtifact] = await db
         .insert(concept2cureArtifacts)
@@ -6692,6 +7066,24 @@ router.post(
           ctdSection: artifact.ctdSection,
           lockedAt: now,
           lockedById: userId,
+          metadata: {
+            sourceArtifactId: artifact.artifactId,
+            harness: {
+              clientTrack: auditGovernedResolution.contract.clientTrack,
+              submissionProgram: auditGovernedResolution.contract.submissionProgram,
+              persona: auditGovernedResolution.contract.persona,
+              regulatorScope: auditGovernedResolution.contract.regulatorScope,
+              documentClass: auditGovernedResolution.contract.documentClass,
+              readinessGate: auditGovernedResolution.contract.readinessGate,
+              workspaceTarget: auditGovernedResolution.contract.workspaceTarget,
+              originSurface: auditGovernedResolution.contract.originSurface,
+              recommendationSource: auditGovernedResolution.contract.recommendationSource,
+              regulatorIntent: auditGovernedResolution.contract.regulatorIntent,
+              gateChecks: auditGovernedResolution.contract.exportEligibility.gateChecks,
+              blockingReasons: auditGovernedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome: auditGovernedResolution.contract.exportEligibility.readinessOutcome,
+            },
+          },
         })
         .returning();
 
@@ -7037,6 +7429,68 @@ router.put(
         updateData.lockedAt = null;
         updateData.lockedById = null;
       }
+      const statusGovernedResolution = resolveGovernedContext({
+        req,
+        projectId: artifact.projectId,
+        artifactId: artifact.id,
+        documentType: artifact.type,
+        generationMode: 'amendment',
+        lifecycleStatus:
+          (status === 'review'
+            ? 'in_review'
+            : status === 'locked'
+              ? 'locked'
+              : status === 'approved'
+                ? 'approved'
+                : 'draft') as GovernedDocumentActionContract['lifecycleStatus'],
+        title: artifact.title,
+        content: artifact.content || '',
+        ctdSection: artifact.ctdSection,
+        sourceRefs: [`artifact:${artifact.artifactId}`],
+        readinessGate: status === 'locked' ? 'submission_candidate' : undefined,
+        exportAllowed: ['approved', 'locked'].includes(status),
+        eventType: 'artifact.updated',
+      });
+      if (!statusGovernedResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: statusGovernedResolution.validation.errors,
+            warnings: statusGovernedResolution.validation.warnings,
+            resolved: statusGovernedResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+      const existingMetadata =
+        artifact.metadata && typeof artifact.metadata === 'object'
+          ? (artifact.metadata as Record<string, unknown>)
+          : {};
+      const existingHarness =
+        existingMetadata.harness && typeof existingMetadata.harness === 'object'
+          ? (existingMetadata.harness as Record<string, unknown>)
+          : {};
+      updateData.metadata = {
+        ...existingMetadata,
+        harness: {
+          ...existingHarness,
+          clientTrack: statusGovernedResolution.contract.clientTrack,
+          submissionProgram: statusGovernedResolution.contract.submissionProgram,
+          persona: statusGovernedResolution.contract.persona,
+          regulatorScope: statusGovernedResolution.contract.regulatorScope,
+          documentClass: statusGovernedResolution.contract.documentClass,
+          readinessGate: statusGovernedResolution.contract.readinessGate,
+          workspaceTarget: statusGovernedResolution.contract.workspaceTarget,
+          originSurface: statusGovernedResolution.contract.originSurface,
+          recommendationSource: statusGovernedResolution.contract.recommendationSource,
+          regulatorIntent: statusGovernedResolution.contract.regulatorIntent,
+          gateChecks: statusGovernedResolution.contract.exportEligibility.gateChecks,
+          blockingReasons: statusGovernedResolution.contract.exportEligibility.blockingReasons,
+          readinessOutcome: statusGovernedResolution.contract.exportEligibility.readinessOutcome,
+        },
+      };
 
       const [updated] = await db
         .update(concept2cureArtifacts)
@@ -7307,9 +7761,67 @@ router.put(
       }
 
       const previousSection = artifact.ctdSection;
+      const ctdSectionGovernedResolution = resolveGovernedContext({
+        req,
+        projectId: artifact.projectId,
+        artifactId: artifact.id,
+        documentType: artifact.type,
+        generationMode: 'amendment',
+        lifecycleStatus:
+          (artifact.status as GovernedDocumentActionContract['lifecycleStatus']) || 'draft',
+        title: artifact.title,
+        content: artifact.content || '',
+        ctdSection,
+        sourceRefs: [`artifact:${artifact.artifactId}`],
+        exportAllowed: ['approved', 'locked', 'published'].includes(String(artifact.status || '')),
+        eventType: 'artifact.updated',
+      });
+      if (!ctdSectionGovernedResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: ctdSectionGovernedResolution.validation.errors,
+            warnings: ctdSectionGovernedResolution.validation.warnings,
+            resolved: ctdSectionGovernedResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+      const existingMetadata =
+        artifact.metadata && typeof artifact.metadata === 'object'
+          ? (artifact.metadata as Record<string, unknown>)
+          : {};
+      const existingHarness =
+        existingMetadata.harness && typeof existingMetadata.harness === 'object'
+          ? (existingMetadata.harness as Record<string, unknown>)
+          : {};
       const [updated] = await db
         .update(concept2cureArtifacts)
-        .set({ ctdSection, updatedAt: new Date() })
+        .set({
+          ctdSection,
+          updatedAt: new Date(),
+          metadata: {
+            ...existingMetadata,
+            harness: {
+              ...existingHarness,
+              clientTrack: ctdSectionGovernedResolution.contract.clientTrack,
+              submissionProgram: ctdSectionGovernedResolution.contract.submissionProgram,
+              persona: ctdSectionGovernedResolution.contract.persona,
+              regulatorScope: ctdSectionGovernedResolution.contract.regulatorScope,
+              documentClass: ctdSectionGovernedResolution.contract.documentClass,
+              readinessGate: ctdSectionGovernedResolution.contract.readinessGate,
+              workspaceTarget: ctdSectionGovernedResolution.contract.workspaceTarget,
+              originSurface: ctdSectionGovernedResolution.contract.originSurface,
+              recommendationSource: ctdSectionGovernedResolution.contract.recommendationSource,
+              regulatorIntent: ctdSectionGovernedResolution.contract.regulatorIntent,
+              gateChecks: ctdSectionGovernedResolution.contract.exportEligibility.gateChecks,
+              blockingReasons: ctdSectionGovernedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome: ctdSectionGovernedResolution.contract.exportEligibility.readinessOutcome,
+            },
+          },
+        })
         .where(eq(concept2cureArtifacts.id, artifact.id))
         .returning();
 
@@ -7502,6 +8014,43 @@ router.post(
         createdById: userId,
       });
 
+      const rollbackGovernedResolution = resolveGovernedContext({
+        req,
+        projectId: artifact.projectId,
+        artifactId: artifact.id,
+        documentType: artifact.type,
+        generationMode: 'amendment',
+        lifecycleStatus:
+          (artifact.status as GovernedDocumentActionContract['lifecycleStatus']) || 'draft',
+        title: artifact.title,
+        content: targetVer.content || '',
+        ctdSection: artifact.ctdSection,
+        sourceRefs: [`artifact:${artifact.artifactId}`],
+        exportAllowed: ['approved', 'locked', 'published'].includes(String(artifact.status || '')),
+        eventType: 'artifact.updated',
+      });
+      if (!rollbackGovernedResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: rollbackGovernedResolution.validation.errors,
+            warnings: rollbackGovernedResolution.validation.warnings,
+            resolved: rollbackGovernedResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+      const existingMetadata =
+        artifact.metadata && typeof artifact.metadata === 'object'
+          ? (artifact.metadata as Record<string, unknown>)
+          : {};
+      const existingHarness =
+        existingMetadata.harness && typeof existingMetadata.harness === 'object'
+          ? (existingMetadata.harness as Record<string, unknown>)
+          : {};
+
       // Update the artifact to the rolled-back content
       const [updated] = await db
         .update(concept2cureArtifacts)
@@ -7509,6 +8058,25 @@ router.post(
           content: targetVer.content,
           contentHash: newContentHash,
           version: newVersion,
+          metadata: {
+            ...existingMetadata,
+            harness: {
+              ...existingHarness,
+              clientTrack: rollbackGovernedResolution.contract.clientTrack,
+              submissionProgram: rollbackGovernedResolution.contract.submissionProgram,
+              persona: rollbackGovernedResolution.contract.persona,
+              regulatorScope: rollbackGovernedResolution.contract.regulatorScope,
+              documentClass: rollbackGovernedResolution.contract.documentClass,
+              readinessGate: rollbackGovernedResolution.contract.readinessGate,
+              workspaceTarget: rollbackGovernedResolution.contract.workspaceTarget,
+              originSurface: rollbackGovernedResolution.contract.originSurface,
+              recommendationSource: rollbackGovernedResolution.contract.recommendationSource,
+              regulatorIntent: rollbackGovernedResolution.contract.regulatorIntent,
+              gateChecks: rollbackGovernedResolution.contract.exportEligibility.gateChecks,
+              blockingReasons: rollbackGovernedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome: rollbackGovernedResolution.contract.exportEligibility.readinessOutcome,
+            },
+          },
           updatedAt: new Date(),
         })
         .where(eq(concept2cureArtifacts.id, artifact.id))
@@ -8622,15 +9190,83 @@ router.put('/projects/:projectId/haq-session', async (req: Request, res: Respons
       .limit(1);
 
     if (existing) {
+      const haqUpdateResolution = resolveGovernedContext({
+        req,
+        projectId: Number(req.params.projectId),
+        artifactId: existing.id,
+        documentType: 'haq_session',
+        generationMode: 'amendment',
+        lifecycleStatus:
+          (existing.status as GovernedDocumentActionContract['lifecycleStatus']) || 'draft',
+        originSurface: 'project_workspace_shell',
+        clientTrack: 'biotech',
+        submissionProgram: 'general_ri',
+        persona: 'regulatory',
+        regulatorScope: 'fda',
+        evidenceMode: 'mixed',
+        documentClass: 'strategy_memo',
+        readinessGate: 'exploratory',
+        approvalPathType: 'single_reviewer',
+        recommendationSource: 'report_engine',
+        workspaceTarget: 'project',
+        regulatorIntent: 'strategy',
+        placementContainerId: String(req.params.projectId),
+        title: 'HAQ Session',
+        content: JSON.stringify({ questions }),
+        sourceRefs: [`haq_session:${existing.artifactId}`],
+        provider: 'concept2cure',
+        model: 'haq-session-manager',
+        exportAllowed: false,
+        eventType: 'artifact.updated',
+      });
+      if (!haqUpdateResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: haqUpdateResolution.validation.errors,
+            warnings: haqUpdateResolution.validation.warnings,
+            resolved: haqUpdateResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+
       // Update existing session
+      const existingMetadata =
+        existing.metadata && typeof existing.metadata === 'object'
+          ? (existing.metadata as Record<string, unknown>)
+          : {};
+      const existingHarness =
+        existingMetadata.harness && typeof existingMetadata.harness === 'object'
+          ? (existingMetadata.harness as Record<string, unknown>)
+          : {};
       await db
         .update(concept2cureArtifacts)
         .set({
           content: JSON.stringify({ questions }),
           updatedAt: new Date(),
-          metadata: sql`jsonb_set(COALESCE(metadata, '{}'), '{questionCount}', ${JSON.stringify(
-            questions.length
-          )}::jsonb)`,
+          metadata: {
+            ...existingMetadata,
+            questionCount: questions.length,
+            harness: {
+              ...existingHarness,
+              clientTrack: haqUpdateResolution.contract.clientTrack,
+              submissionProgram: haqUpdateResolution.contract.submissionProgram,
+              persona: haqUpdateResolution.contract.persona,
+              regulatorScope: haqUpdateResolution.contract.regulatorScope,
+              documentClass: haqUpdateResolution.contract.documentClass,
+              readinessGate: haqUpdateResolution.contract.readinessGate,
+              workspaceTarget: haqUpdateResolution.contract.workspaceTarget,
+              originSurface: haqUpdateResolution.contract.originSurface,
+              recommendationSource: haqUpdateResolution.contract.recommendationSource,
+              regulatorIntent: haqUpdateResolution.contract.regulatorIntent,
+              gateChecks: haqUpdateResolution.contract.exportEligibility.gateChecks,
+              blockingReasons: haqUpdateResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome: haqUpdateResolution.contract.exportEligibility.readinessOutcome,
+            },
+          },
         })
         .where(eq(concept2cureArtifacts.id, existing.id));
 
@@ -8642,6 +9278,48 @@ router.put('/projects/:projectId/haq-session', async (req: Request, res: Respons
     } else {
       // Create new HAQ session artifact
       const artifactId = `haq_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+      const haqCreateResolution = resolveGovernedContext({
+        req,
+        projectId: Number(req.params.projectId),
+        artifactId: null,
+        documentType: 'haq_session',
+        generationMode: 'manual',
+        lifecycleStatus: 'draft',
+        originSurface: 'project_workspace_shell',
+        clientTrack: 'biotech',
+        submissionProgram: 'general_ri',
+        persona: 'regulatory',
+        regulatorScope: 'fda',
+        evidenceMode: 'mixed',
+        documentClass: 'strategy_memo',
+        readinessGate: 'exploratory',
+        approvalPathType: 'single_reviewer',
+        recommendationSource: 'report_engine',
+        workspaceTarget: 'project',
+        regulatorIntent: 'strategy',
+        placementContainerId: String(req.params.projectId),
+        title: 'HAQ Session',
+        content: JSON.stringify({ questions }),
+        sourceRefs: [`haq_session:${artifactId}`],
+        provider: 'concept2cure',
+        model: 'haq-session-manager',
+        exportAllowed: false,
+        eventType: 'artifact.created',
+      });
+      if (!haqCreateResolution.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: haqCreateResolution.validation.errors,
+            warnings: haqCreateResolution.validation.warnings,
+            resolved: haqCreateResolution.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+
       await db.insert(concept2cureArtifacts).values({
         artifactId,
         projectId: Number(req.params.projectId),
@@ -8653,7 +9331,25 @@ router.put('/projects/:projectId/haq-session', async (req: Request, res: Respons
         content: JSON.stringify({ questions }),
         status: 'draft',
         version: 1,
-        metadata: { questionCount: questions.length, sourceSystem: 'haq_manager' },
+        metadata: {
+          questionCount: questions.length,
+          sourceSystem: 'haq_manager',
+          harness: {
+            clientTrack: haqCreateResolution.contract.clientTrack,
+            submissionProgram: haqCreateResolution.contract.submissionProgram,
+            persona: haqCreateResolution.contract.persona,
+            regulatorScope: haqCreateResolution.contract.regulatorScope,
+            documentClass: haqCreateResolution.contract.documentClass,
+            readinessGate: haqCreateResolution.contract.readinessGate,
+            workspaceTarget: haqCreateResolution.contract.workspaceTarget,
+            originSurface: haqCreateResolution.contract.originSurface,
+            recommendationSource: haqCreateResolution.contract.recommendationSource,
+            regulatorIntent: haqCreateResolution.contract.regulatorIntent,
+            gateChecks: haqCreateResolution.contract.exportEligibility.gateChecks,
+            blockingReasons: haqCreateResolution.contract.exportEligibility.blockingReasons,
+            readinessOutcome: haqCreateResolution.contract.exportEligibility.readinessOutcome,
+          },
+        },
       });
 
       return sendSuccess(res, { artifactId, created: true, questionCount: questions.length });
@@ -8903,6 +9599,102 @@ Sincerely,
 [PERFORMANCE SUMMARY]`,
   },
   {
+    id: 'tpl_ind_cover_letter',
+    name: 'IND Cover Letter',
+    description: 'FDA-aligned IND cover letter for initial and amendment submissions',
+    submissionTypes: ['IND'],
+    category: 'document',
+    ctdSection: '1.2',
+    content: `# IND Cover Letter
+
+[DATE]
+
+Food and Drug Administration
+Center for Drug Evaluation and Research
+[Division]
+
+Re: Investigational New Drug Application — [PRODUCT NAME]
+IND Number: [IND NUMBER]
+Submission Type: [INITIAL / AMENDMENT / ANNUAL REPORT]
+
+Dear [Review Team],
+
+On behalf of [SPONSOR], we submit this [SUBMISSION TYPE] for [PRODUCT NAME].
+This package includes:
+
+- [List major included components]
+- [Safety and clinical updates, if applicable]
+- [CMC updates, if applicable]
+
+Please contact [CONTACT NAME, TITLE] at [EMAIL / PHONE] with any questions.
+
+Sincerely,
+
+[SIGNATURE]
+[NAME]
+[TITLE]
+[SPONSOR]`,
+  },
+  {
+    id: 'tpl_ind_investigator_brochure',
+    name: "Investigator's Brochure (IB)",
+    description: 'IND investigator brochure structure aligned to ICH expectations',
+    submissionTypes: ['IND'],
+    category: 'document',
+    ctdSection: '5.3',
+    content: `# Investigator's Brochure
+
+## 1. Summary
+[High-level summary of product, mechanism, and current evidence]
+
+## 2. Introduction
+[Background and development context]
+
+## 3. Physical, Chemical, and Pharmaceutical Properties
+[Drug substance and product properties]
+
+## 4. Nonclinical Studies
+[Pharmacology, PK, and toxicology summary]
+
+## 5. Effects in Humans
+[Clinical pharmacology, efficacy/safety findings, known risks]
+
+## 6. Guidance for Investigators
+[Dose rationale, monitoring, risk management considerations]
+
+## 7. References
+[Key cited studies and reports]`,
+  },
+  {
+    id: 'tpl_ind_pre_ind_briefing',
+    name: 'Pre-IND Briefing Package',
+    description: 'Structured FDA pre-IND meeting briefing package template',
+    submissionTypes: ['IND'],
+    category: 'document',
+    ctdSection: '1.2',
+    content: `# Pre-IND Briefing Package
+
+## 1. Meeting Request Context
+[Program background, indication, and development stage]
+
+## 2. Product and Development Overview
+[CMC, nonclinical, and clinical overview]
+
+## 3. Proposed Clinical Plan
+[First-in-human or phase transition plan]
+
+## 4. Key Questions for FDA
+1. [Question]
+2. [Question]
+3. [Question]
+
+## 5. Supporting Summaries
+[Relevant nonclinical, CMC, and clinical summary content]
+
+## 6. Appendices
+[Data tables, references, and supporting documents]`,
+  },
+  {
     id: 'tpl_ind_protocol',
     name: 'IND Clinical Protocol',
     description: 'Clinical trial protocol template for IND applications',
@@ -9045,11 +9837,30 @@ Sincerely,
  */
 router.get('/templates', (req: Request, res: Response) => {
   try {
-    const { submissionType } = req.query;
+    const { submissionType, package: templatePackage, projectGoal } = req.query;
 
     let templates = TEMPLATES;
     if (submissionType) {
       templates = templates.filter(t => t.submissionTypes.includes(submissionType as string));
+    }
+    const pkg = typeof templatePackage === 'string' ? templatePackage.toLowerCase() : '';
+    const goal = typeof projectGoal === 'string' ? projectGoal.toLowerCase() : '';
+    if (pkg === 'ind' || pkg === 'ind-core' || pkg === 'ind_readiness') {
+      templates = templates.filter(
+        t =>
+          t.submissionTypes.includes('IND') ||
+          ['tpl_ind_cover_letter', 'tpl_ind_investigator_brochure', 'tpl_ind_pre_ind_briefing'].includes(
+            t.id
+          )
+      );
+    } else if (goal === 'first_ind' || goal === 'ind_initial') {
+      templates = templates.filter(t =>
+        ['tpl_ind_cover_letter', 'tpl_ind_investigator_brochure', 'tpl_ind_pre_ind_briefing', 'tpl_ind_protocol'].includes(
+          t.id
+        )
+      );
+    } else if (goal === 'cmc') {
+      templates = templates.filter(t => ['tpl_ind_protocol', 'tpl_risk_analysis'].includes(t.id));
     }
 
     return sendSuccess(res, templates);
@@ -15059,6 +15870,39 @@ router.post(
       const artifactId = `artifact_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const contentHash = crypto.createHash('sha256').update(documentContent).digest('hex');
 
+      const promotedMetadata = {
+        promotedFrom: type,
+        sourceMessageCount: messages.length,
+      };
+      const governedPromotion = resolveGovernedContext({
+        req,
+        projectId: conversation.project_id,
+        artifactId: null,
+        documentType: type,
+        generationMode: 'ai_generated',
+        lifecycleStatus: 'draft',
+        originSurface: 'ri_copilot',
+        title: DOMPurify.sanitize(title),
+        content: documentContent,
+        sourceRefs: [`conversation:${conversationId}`],
+        provider: 'openai',
+        model: 'gpt-4o-mini',
+        eventType: 'artifact.created',
+      });
+      if (!governedPromotion.validation.valid) {
+        return sendError(
+          res,
+          400,
+          'Governed document contract validation failed',
+          {
+            errors: governedPromotion.validation.errors,
+            warnings: governedPromotion.validation.warnings,
+            resolved: governedPromotion.resolved,
+          },
+          'GOVERNED_CONTRACT_INVALID'
+        );
+      }
+
       const artifactResult = await db
         .insert(concept2cureArtifacts)
         .values({
@@ -15074,7 +15918,24 @@ router.post(
           version: 1,
           status: 'draft',
           createdById: userId,
-          metadata: { promotedFrom: type, sourceMessageCount: messages.length },
+          metadata: {
+            ...promotedMetadata,
+            harness: {
+              clientTrack: governedPromotion.contract.clientTrack,
+              submissionProgram: governedPromotion.contract.submissionProgram,
+              persona: governedPromotion.contract.persona,
+              regulatorScope: governedPromotion.contract.regulatorScope,
+              documentClass: governedPromotion.contract.documentClass,
+              readinessGate: governedPromotion.contract.readinessGate,
+              workspaceTarget: governedPromotion.contract.workspaceTarget,
+              originSurface: governedPromotion.contract.originSurface,
+              recommendationSource: governedPromotion.contract.recommendationSource,
+              regulatorIntent: governedPromotion.contract.regulatorIntent,
+              gateChecks: governedPromotion.contract.exportEligibility.gateChecks,
+              blockingReasons: governedPromotion.contract.exportEligibility.blockingReasons,
+              readinessOutcome: governedPromotion.contract.exportEligibility.readinessOutcome,
+            },
+          },
         })
         .returning();
 

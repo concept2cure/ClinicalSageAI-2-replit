@@ -160,6 +160,30 @@ const DEVICE: DomainPromptGroup = {
   ],
 };
 
+const DIAGNOSTICS: DomainPromptGroup = {
+  domain: 'diagnostics',
+  label: 'Diagnostics & IVD',
+  prompts: [
+    { id: 'dx-intended-use', label: 'Refine intended use and clinical claim language for my diagnostic' },
+    { id: 'dx-analytical', label: 'Build an analytical validation strategy (LoD, precision, linearity)' },
+    { id: 'dx-clinical', label: 'Design clinical performance validation for sensitivity/specificity targets' },
+    { id: 'dx-cutoff', label: 'Recommend cutoff strategy and method comparison plan' },
+    { id: 'dx-cdx', label: 'Assess companion diagnostic co-development risks' },
+  ],
+};
+
+const CMS_REIMBURSEMENT: DomainPromptGroup = {
+  domain: 'cms',
+  label: 'CMS & Reimbursement',
+  prompts: [
+    { id: 'cms-coding', label: 'Develop coding pathway strategy (CPT/HCPCS/DRG/APC)' },
+    { id: 'cms-coverage', label: 'Assess coverage evidence for Medicare and key payers' },
+    { id: 'cms-payment', label: 'Pressure-test payment assumptions and reimbursement risk' },
+    { id: 'cms-heor', label: 'Build HEOR/value dossier narrative for payer conversations' },
+    { id: 'cms-policy', label: 'Map coverage policy dependencies and evidence gaps' },
+  ],
+};
+
 const REGULATORY_STRATEGY: DomainPromptGroup = {
   domain: 'strategy',
   label: 'Regulatory Strategy',
@@ -313,6 +337,8 @@ export const ALL_DOMAIN_GROUPS: DomainPromptGroup[] = [
   SAFETY,
   CLINICAL,
   DEVICE,
+  DIAGNOSTICS,
+  CMS_REIMBURSEMENT,
   REGULATORY_STRATEGY,
   MULTI_AGENCY_STRATEGY,
   LABELING,
@@ -346,6 +372,8 @@ const CONTEXT_DOMAIN_MAP: Record<string, string[]> = {
   'clinical-module5':   ['clinical', 'safety', 'biostatistics', 'authoring'],
   'safety':             ['safety', 'clinical', 'risk', 'authoring'],
   'device':             ['device', 'strategy', 'dossier', 'authoring'],
+  'diagnostics':        ['diagnostics', 'device', 'clinical', 'biostatistics', 'risk'],
+  'cms':                ['cms', 'strategy', 'reports', 'recommendations', 'risk'],
 
   // Workflow views
   'verify':             ['recommendations', 'risk', 'doc-lifecycle', 'authoring'],

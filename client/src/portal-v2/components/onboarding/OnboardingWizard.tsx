@@ -342,6 +342,19 @@ interface OnboardingWizardProps {
   onCancel?: () => void;
 }
 
+function mapTierToBillingTier(tier: SubscriptionTier): 'standard' | 'professional' | 'enterprise' {
+  switch (tier) {
+    case 'starter':
+      return 'standard';
+    case 'enterprise':
+      return 'enterprise';
+    case 'professional':
+    case 'regulatory_plus':
+    default:
+      return 'professional';
+  }
+}
+
 export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps) {
   const [data, setData] = useState<OnboardingData>(() => ({
     organizationName: '',
@@ -451,17 +464,20 @@ export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps
       return;
     }
 
+    const billingTier = mapTierToBillingTier(data.subscriptionTier);
+
     // Then redirect to Stripe Checkout with Link for payment
-    if (data.subscriptionTier !== 'starter') {
+    if (billingTier !== 'standard') {
       setCheckoutLoading(true);
       try {
         const res = await fetch('/api/billing/checkout', {
           method: 'POST',
           headers: {
+            'Content-Type': 'application/json',
             ...getAuthHeaders(),
           },
           body: JSON.stringify({
-            tier: data.subscriptionTier,
+            tier: billingTier,
             billingCycle: data.billingCycle,
             seats: data.estimatedSeats,
           }),

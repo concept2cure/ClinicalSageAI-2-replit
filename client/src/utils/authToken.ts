@@ -1,5 +1,8 @@
 const TOKEN_KEY = 'token';
-const LEGACY_TOKEN_KEYS = ['auth_token'];
+const LEGACY_TOKEN_KEYS = ['auth_token', 'trialsage_access_token'];
+const ORG_ID_KEY = 'currentOrganizationId';
+const LEGACY_ORG_ID_KEYS = ['currentOrganization', 'organizationId'];
+
 let memoryToken: string | null = null;
 
 const canUseSessionStorage = (): boolean => {
@@ -13,6 +16,30 @@ const canUseSessionStorage = (): boolean => {
   }
 };
 
+const readLocalStorage = (key: string): string | null => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const writeLocalStorage = (key: string, value: string): void => {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Ignore storage write failures in restricted browser modes.
+  }
+};
+
+const removeLocalStorage = (key: string): void => {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Ignore storage write failures in restricted browser modes.
+  }
+};
+
 export const getAuthToken = (): string | null => {
   if (!canUseSessionStorage()) {
     return memoryToken;
@@ -22,11 +49,11 @@ export const getAuthToken = (): string | null => {
   if (token) return token;
 
   for (const key of LEGACY_TOKEN_KEYS) {
-    const legacyToken = localStorage.getItem(key) || localStorage.getItem(TOKEN_KEY);
+    const legacyToken = sessionStorage.getItem(key) || readLocalStorage(key) || readLocalStorage(TOKEN_KEY);
     if (legacyToken) {
       sessionStorage.setItem(TOKEN_KEY, legacyToken);
-      localStorage.removeItem(key);
-      localStorage.removeItem(TOKEN_KEY);
+      removeLocalStorage(key);
+      removeLocalStorage(TOKEN_KEY);
       memoryToken = legacyToken;
       return legacyToken;
     }
@@ -35,57 +62,75 @@ export const getAuthToken = (): string | null => {
   return memoryToken;
 };
 
-export const setAuthToken = (token: string): void => {
-  memoryToken = token;
-  if (canUseSessionStorage()) {
-    sessionStorage.setItem(TOKEN_KEY, token);
-  }
-  localStorage.removeItem(TOKEN_KEY);
-  for (const key of LEGACY_TOKEN_KEYS) {
-    localStorage.removeItem(key);
-  }
-};
-
-export const clearAuthToken = (): void => {
-  memoryToken = null;
-  if (canUseSessionStorage()) {
-    sessionStorage.removeItem(TOKEN_KEY);
-  }
-  localStorage.removeItem(TOKEN_KEY);
-  for (const key of LEGACY_TOKEN_KEYS) {
-    localStorage.removeItem(key);
-  }
-};
-
-const ORG_KEY = 'organizationId';
-
 export const getOrgId = (): string => {
-  try {
-    return sessionStorage.getItem(ORG_KEY) || localStorage.getItem(ORG_KEY) || '';
-  } catch {
-    return '';
-  }
-};
+  const fromCurrent = localStorage.getItem('currentOrganizationId');
+  if (fromCurrent && fromCurrent.trim()) return fromCurrent.trim();
 
-export const setOrgId = (orgId: string): void => {
+  const fromLegacy = localStorage.getItem('currentOrganization');
+  if (fromLegacy && fromLegacy.trim()) return fromLegacy.trim();
+
   try {
-    sessionStorage.setItem(ORG_KEY, orgId);
+    const rawUser = localStorage.getItem('trialsage_user');
+    if (rawUser) {
+      const parsed = JSON.parse(rawUser) as { organizationId?: string | number };
+      const orgId = parsed?.organizationId;
+      if (orgId !== undefined && orgId !== null && String(orgId).trim()) {
+        return String(orgId).trim();
+      }
+    }
   } catch {
-    // fallback: do nothing
+    // ignore malformed user payload and fall through to default
   }
+
+  return '1';
 };
 
 export const getAuthHeaders = (): Record<string, string> => {
   const token = getAuthToken();
   const orgId = getOrgId();
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    'x-organization-id': orgId,
   };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+};
+
+export const setAuthToken = (token: string): void => {
+  memoryToken = token;
+
+  if (canUseSessionStorage()) {
+    sessionStorage.setItem(TOKEN_KEY, token);
+    // Keep legacy session key in sync while old hooks migrate to canonical auth access.
+    sessionStorage.setItem('trialsage_access_token', token);
   }
-  if (orgId) {
-    headers['x-organization-id'] = orgId;
+
+  removeLocalStorage(TOKEN_KEY);
+  removeLocalStorage('trialsage_access_token');
+  for (const key of LEGACY_TOKEN_KEYS) {
+    removeLocalStorage(key);
   }
-  return headers;
+};
+
+export const clearAuthToken = (): void => {
+  memoryToken = null;
+
+  if (canUseSessionStorage()) {
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem('trialsage_access_token');
+    for (const key of LEGACY_TOKEN_KEYS) {
+      sessionStorage.removeItem(key);
+    }
+  }
+
+  removeLocalStorage(TOKEN_KEY);
+  removeLocalStorage('trialsage_access_token');
+  for (const key of LEGACY_TOKEN_KEYS) {
+    removeLocalStorage(key);
+  }
+};
+
+export const setOrgId = (organizationId: string): void => {
+  if (!organizationId) return;
+  writeLocalStorage(ORG_ID_KEY, organizationId);
+  writeLocalStorage('currentOrganization', organizationId);
 };

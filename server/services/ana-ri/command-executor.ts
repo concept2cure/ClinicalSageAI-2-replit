@@ -2237,11 +2237,13 @@ export async function generateSAP(
     if (res.rows.length === 0)
       return { success: false, action: 'generate_sap', message: 'Project not found' };
 
-    // Call the biostats workflow endpoint internally
-    const { executeWorkflow } = await import('../ana-biostats/orchestrator.js').catch(() => ({
-      executeWorkflow: null,
-    }));
-    if (!executeWorkflow) {
+    // Call the biostats orchestrator directly.
+    const { anaBiostatsOrchestrator } = await import('../ana-biostats/orchestrator.js').catch(
+      () => ({
+        anaBiostatsOrchestrator: null,
+      })
+    );
+    if (!anaBiostatsOrchestrator) {
       return {
         success: false,
         action: 'generate_sap',
@@ -2249,33 +2251,49 @@ export async function generateSAP(
       };
     }
 
-    const result = await executeWorkflow({
-      track: params.track || 'pharma',
-      studyType: params.studyType || 'superiority',
-      endpointType: params.endpointType || 'continuous',
-      alpha: params.alpha || 0.05,
-      power: params.power || 0.8,
-      effectSize: params.effectSize || 0.5,
-      attrition: params.attrition || 0.15,
-      indication: params.indication,
-      phase: params.phase,
-      primaryEndpoint: params.primaryEndpoint,
-      documentType: 'sap_section',
-      projectId: params.projectId || ctx.activeProjectId,
+    const normalizedClientTrack =
+      params.track === 'medical_device'
+        ? 'medical_device'
+        : params.track === 'diagnostics_ivd'
+        ? 'diagnostics_ivd'
+        : 'biotech_pharma';
+    const result = await anaBiostatsOrchestrator.executeWorkflow({
+      workflowType: 'track_aware_drafting',
+      input: {
+        projectId: Number(params.projectId || ctx.activeProjectId),
+        clientTrack: normalizedClientTrack,
+        regulatoryBody:
+          typeof params.regulatoryBody === 'string' ? params.regulatoryBody : undefined,
+        studyType: typeof params.studyType === 'string' ? params.studyType : 'superiority',
+        objectiveType: typeof params.objectiveType === 'string' ? params.objectiveType : 'efficacy',
+        endpointType: typeof params.endpointType === 'string' ? params.endpointType : 'continuous',
+        alpha: Number(params.alpha || 0.05),
+        powerTarget: Number(params.power || params.powerTarget || 0.8),
+        effectSize: Number(params.effectSize || 0.5),
+        attritionRate: Number(params.attrition || params.attritionRate || 0.15),
+        allocationRatio: Number(params.allocationRatio || 1),
+        indication: typeof params.indication === 'string' ? params.indication : undefined,
+        phase: typeof params.phase === 'string' ? params.phase : undefined,
+      },
+      userId: ctx.userId,
       organizationId: ctx.organizationId,
+      generateDocument: true,
+      documentType: 'sap_section_draft',
+      autoAttachToDossier: Boolean(params.autoAttachToDossier),
+      reviewRequired: params.reviewRequired !== false,
     });
 
     return {
       success: true,
       action: 'generate_sap',
       data: {
-        sampleSize: result?.computation?.sampleSize,
+        sampleSize: result?.computation?.sampleSize?.total,
         power: result?.computation?.power,
-        documentId: result?.document?.id,
+        documentId: result?.document?.id || null,
       },
-      message: `SAP generated. Sample size: ${
-        result?.computation?.sampleSize || 'calculated'
-      }. Document saved.`,
+      message: `SAP generated. Sample size total: ${
+        result?.computation?.sampleSize?.total || 'calculated'
+      }. Document prepared.`,
     };
   } catch (err: unknown) {
     return {
@@ -2293,10 +2311,16 @@ export async function computeSampleSize(
   params: Record<string, unknown>
 ): Promise<CommandResult> {
   try {
-    const { compute } = await import('../ana-biostats/computation-engine.js').catch(() => ({
-      compute: null,
-    }));
-    if (!compute) {
+    const [{ inputNormalizer }, { computationEngine }] = await Promise.all([
+      import('../ana-biostats/input-normalizer.js').catch(() => ({
+        inputNormalizer: null,
+      })),
+      import('../ana-biostats/computation-engine.js').catch(() => ({
+        computationEngine: null,
+      })),
+    ]);
+
+    if (!inputNormalizer || !computationEngine) {
       return {
         success: false,
         action: 'compute_sample_size',
@@ -2304,25 +2328,58 @@ export async function computeSampleSize(
       };
     }
 
-    const result = await compute({
-      track: 'pharma',
-      studyType: params.studyType || 'superiority',
-      endpointType: params.endpointType || 'continuous',
-      alpha: params.alpha || 0.05,
-      power: params.power || 0.8,
-      effectSize: params.effectSize || 0.5,
-      attrition: params.attrition || 0.15,
-      allocationRatio: params.allocationRatio || 1,
+    const normalizedClientTrack =
+      params.track === 'medical_device'
+        ? 'medical_device'
+        : params.track === 'diagnostics_ivd'
+        ? 'diagnostics_ivd'
+        : 'biotech_pharma';
+    const validation = inputNormalizer.normalize({
+      projectId: Number(params.projectId || ctx.activeProjectId),
+      clientTrack: normalizedClientTrack,
+      studyType: typeof params.studyType === 'string' ? params.studyType : 'superiority',
+      objectiveType: typeof params.objectiveType === 'string' ? params.objectiveType : 'efficacy',
+      endpointType: typeof params.endpointType === 'string' ? params.endpointType : 'continuous',
+      alpha: Number(params.alpha || 0.05),
+      powerTarget: Number(params.power || params.powerTarget || 0.8),
+      effectSize: Number(params.effectSize || 0.5),
+      attritionRate: Number(params.attrition || params.attritionRate || 0.15),
+      allocationRatio: Number(params.allocationRatio || 1),
+      controlRate: params.controlRate !== undefined ? Number(params.controlRate) : undefined,
+      treatmentRate: params.treatmentRate !== undefined ? Number(params.treatmentRate) : undefined,
+      nonInferiorityMargin:
+        params.nonInferiorityMargin !== undefined ? Number(params.nonInferiorityMargin) : undefined,
+      equivalenceMargin:
+        params.equivalenceMargin !== undefined ? Number(params.equivalenceMargin) : undefined,
+      prevalence: params.prevalence !== undefined ? Number(params.prevalence) : undefined,
+      sensitivity: params.sensitivity !== undefined ? Number(params.sensitivity) : undefined,
+      specificity: params.specificity !== undefined ? Number(params.specificity) : undefined,
     });
+
+    if (!validation.valid) {
+      return {
+        success: false,
+        action: 'compute_sample_size',
+        data: {
+          errors: validation.errors,
+          warnings: validation.warnings,
+        },
+        message: `Computation input is incomplete: ${validation.errors
+          .map((e: { message: string }) => e.message)
+          .join(' ')}`,
+      };
+    }
+
+    const result = computationEngine.computeEnhanced(validation.normalizedInput);
 
     return {
       success: true,
       action: 'compute_sample_size',
-      data: result,
-      message: `Sample size: ${result.sampleSize || 'N/A'} per arm (${
-        result.totalSampleSize || 'N/A'
+      data: result as unknown as Record<string, unknown>,
+      message: `Sample size: ${result.sampleSize?.perGroup || 'N/A'} per arm (${
+        result.sampleSize?.total || 'N/A'
       } total). Power: ${
-        result.achievedPower ? Math.round(result.achievedPower * 100) + '%' : 'N/A'
+        result.power !== undefined ? Math.round(result.power * 100) + '%' : 'N/A'
       }.`,
     };
   } catch (err: unknown) {
@@ -3352,7 +3409,195 @@ export async function analyzeCrossDocument(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 27. COMMAND REGISTRY
+// 27. CMS + DIAGNOSTICS EXECUTION COMMANDS
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface MemoryEntryRow {
+  title?: string;
+  content?: string;
+  category?: string;
+  confidence?: number;
+  importance?: number;
+}
+
+async function loadProjectMemoryEntries(
+  projectId: number,
+  categories: string[],
+  limit = 20
+): Promise<MemoryEntryRow[]> {
+  if (categories.length === 0) return [];
+  const placeholders = categories.map((_, i) => `$${i + 2}`).join(', ');
+  const result = await pool.query(
+    `SELECT title, content, category, confidence, importance
+     FROM project_memory_entries
+     WHERE project_id = $1 AND category IN (${placeholders})
+     ORDER BY importance DESC, created_at DESC
+     LIMIT $${categories.length + 2}`,
+    [projectId, ...categories, limit]
+  );
+  return result.rows as MemoryEntryRow[];
+}
+
+/** Analyze CMS coding/coverage/payment strategy from project memory */
+export async function analyzeCMSStrategy(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
+  try {
+    const projectId = Number(params.projectId || ctx.activeProjectId);
+    if (!projectId || Number.isNaN(projectId)) {
+      return {
+        success: false,
+        action: 'analyze_cms_strategy',
+        message: 'projectId is required.',
+      };
+    }
+
+    const categories = [
+      'cms_strategy',
+      'reimbursement_strategy',
+      'coding_coverage',
+      'payer_evidence',
+      'health_economics',
+    ];
+    const entries = await loadProjectMemoryEntries(projectId, categories, 18);
+
+    const riskKeywords = /\b(missing|insufficient|unclear|gap|uncertain|weak)\b/i;
+    const riskSignals = entries
+      .filter(entry => riskKeywords.test(entry.content || ''))
+      .slice(0, 5)
+      .map(entry => ({
+        category: entry.category || 'unknown',
+        title: entry.title || 'Untitled',
+        snippet: (entry.content || '').slice(0, 220),
+      }));
+
+    const categoryCoverage = categories.map(category => ({
+      category,
+      count: entries.filter(entry => entry.category === category).length,
+    }));
+
+    const missingAreas = categoryCoverage
+      .filter(item => item.count === 0)
+      .map(item => item.category);
+    const recommendations = [
+      ...(missingAreas.includes('coding_coverage')
+        ? [
+            'Define coding pathway assumptions (CPT/HCPCS/DRG/APC) before payer narrative finalization.',
+          ]
+        : []),
+      ...(missingAreas.includes('payer_evidence')
+        ? ['Build payer-facing evidence matrix mapping clinical endpoints to coverage criteria.']
+        : []),
+      ...(missingAreas.includes('health_economics')
+        ? ['Develop HEOR/value dossier framing with budget-impact and comparative-value claims.']
+        : []),
+    ];
+
+    return {
+      success: true,
+      action: 'analyze_cms_strategy',
+      data: {
+        projectId,
+        memoryEntryCount: entries.length,
+        categoryCoverage,
+        riskSignals,
+        recommendations: recommendations.length > 0 ? recommendations : undefined,
+      },
+      message:
+        entries.length > 0
+          ? `CMS strategy analyzed using ${entries.length} project intelligence entries. ${riskSignals.length} reimbursement risk signal(s) flagged.`
+          : 'No CMS/reimbursement intelligence entries found. Seed coding, coverage, and payer evidence context first.',
+    };
+  } catch (err: unknown) {
+    return {
+      success: false,
+      action: 'analyze_cms_strategy',
+      message: 'CMS strategy analysis failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+/** Assess diagnostics/IVD validation readiness from project intelligence */
+export async function assessDiagnosticsValidation(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Promise<CommandResult> {
+  try {
+    const projectId = Number(params.projectId || ctx.activeProjectId);
+    if (!projectId || Number.isNaN(projectId)) {
+      return {
+        success: false,
+        action: 'assess_diagnostic_validation',
+        message: 'projectId is required.',
+      };
+    }
+
+    const categories = [
+      'diagnostic_validation',
+      'ivd_performance',
+      'analytical_validation',
+      'clinical_performance',
+      'companion_diagnostic',
+    ];
+    const entries = await loadProjectMemoryEntries(projectId, categories, 20);
+    const corpus = entries.map(entry => `${entry.title || ''} ${entry.content || ''}`).join(' ');
+
+    const componentChecks = [
+      {
+        key: 'analytical',
+        label: 'Analytical validation',
+        pattern: /\b(precision|linearity|lodd?|repeatability|reproducibility)\b/i,
+      },
+      {
+        key: 'clinical',
+        label: 'Clinical performance',
+        pattern: /\b(sensitivity|specificity|ppv|npv|clinical performance)\b/i,
+      },
+      {
+        key: 'cutoff',
+        label: 'Cutoff / decision threshold',
+        pattern: /\b(cutoff|threshold|decision point|method comparison)\b/i,
+      },
+      {
+        key: 'cdx',
+        label: 'Companion diagnostic alignment',
+        pattern: /\b(companion diagnostic|cdx|co-development)\b/i,
+      },
+    ];
+
+    const present = componentChecks.filter(check => check.pattern.test(corpus));
+    const missing = componentChecks.filter(check => !check.pattern.test(corpus));
+    const readinessScore = Math.round((present.length / componentChecks.length) * 100);
+
+    return {
+      success: true,
+      action: 'assess_diagnostic_validation',
+      data: {
+        projectId,
+        readinessScore,
+        presentComponents: present.map(item => item.label),
+        missingComponents: missing.map(item => item.label),
+        memoryEntryCount: entries.length,
+      },
+      message:
+        entries.length > 0
+          ? `Diagnostics/IVD validation readiness assessed at ${readinessScore}%. ${missing.length} component(s) need strengthening.`
+          : 'No diagnostics/IVD intelligence entries found. Add analytical and clinical validation context to begin readiness assessment.',
+    };
+  } catch (err: unknown) {
+    return {
+      success: false,
+      action: 'assess_diagnostic_validation',
+      message: 'Diagnostics validation assessment failed.',
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 28. COMMAND REGISTRY
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type CommandName =
@@ -3424,7 +3669,10 @@ export type CommandName =
   | 'generate_report'
   // Clinical Intelligence
   | 'generate_clinical_insights'
-  | 'analyze_cross_document';
+  | 'analyze_cross_document'
+  // CMS + Diagnostics
+  | 'analyze_cms_strategy'
+  | 'assess_diagnostic_validation';
 
 export interface CommandDefinition {
   name: CommandName;
@@ -3831,6 +4079,20 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
     parameters: 'documentIds (array of 2+), documentType? (CSR/CER)',
     example: '"Compare documents 10, 12, and 15 for cross-document patterns"',
   },
+  {
+    name: 'analyze_cms_strategy',
+    description:
+      'Analyze CMS coding/coverage/payment strategy and reimbursement risk signals using project intelligence',
+    parameters: 'projectId?',
+    example: '"Assess our CMS coding and coverage strategy risks"',
+  },
+  {
+    name: 'assess_diagnostic_validation',
+    description:
+      'Assess diagnostics/IVD validation readiness across analytical validation, clinical performance, cutoff strategy, and CDx alignment',
+    parameters: 'projectId?',
+    example: '"Assess diagnostic validation readiness for this project"',
+  },
 ];
 
 /**
@@ -3977,6 +4239,9 @@ export async function executeCommands(
     // Clinical Intelligence
     generate_clinical_insights: generateClinicalInsights,
     analyze_cross_document: analyzeCrossDocument,
+    // CMS + Diagnostics
+    analyze_cms_strategy: analyzeCMSStrategy,
+    assess_diagnostic_validation: assessDiagnosticsValidation,
   };
 
   for (const cmd of commands) {

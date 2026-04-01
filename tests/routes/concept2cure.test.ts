@@ -193,6 +193,139 @@ describe('Concept2Cure API', () => {
     });
   });
 
+  it('should persist template lineage when creating artifact from template', async () => {
+    const req = createMockRequest({
+      params: { projectId: 'proj_1' },
+      body: {
+        type: 'document',
+        category: 'document',
+        title: 'Template Artifact',
+        content: 'Template-driven content',
+        templateId: 'tpl_ind_cover_letter',
+      },
+    }) as any;
+    req.userId = 1;
+    req.userEmail = 'tester@example.com';
+    req.userRole = 'admin';
+    req.tenantContext = { organizationId: '1', clientWorkspaceId: '1' };
+
+    const res = createMockResponse();
+
+    const layer = concept2cureRouter.stack.find(
+      (l: any) => l.route?.path === '/projects/:projectId/artifacts' && l.route?.methods?.post
+    );
+    const handler = layer.route.stack[layer.route.stack.length - 1].handle;
+
+    await handler(req, res);
+
+    expectStatus(res, 201);
+    expectJson(res, {
+      success: true,
+      data: expect.objectContaining({
+        title: 'Template Artifact',
+      }),
+    });
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          title: 'Template Artifact',
+          metadata: expect.anything(),
+        }),
+      })
+    );
+  });
+
+  it('should reject AI template generation without projectId unless adhoc context is explicit', async () => {
+    const req = createMockRequest({
+      params: { templateId: 'ind-cover-letter' },
+      body: {
+        variables: {
+          PRODUCT_NAME: 'Test Product',
+          INDICATION: 'Oncology',
+          SPONSOR: 'Test Sponsor',
+          IND_NUMBER: '000000',
+          SUBMISSION_TYPE: 'Initial IND',
+          DIVISION: 'CDER',
+        },
+      },
+    }) as any;
+    req.userId = 1;
+    req.userEmail = 'tester@example.com';
+    req.userRole = 'admin';
+    req.tenantContext = { organizationId: '1', clientWorkspaceId: '1' };
+
+    const res = createMockResponse();
+    const layer = concept2cureRouter.stack.find(
+      (l: any) =>
+        l.route?.path === '/ai/templates/:templateId/generate' && l.route?.methods?.post
+    );
+    const handler = layer.route.stack[layer.route.stack.length - 1].handle;
+
+    await handler(req, res);
+    expectStatus(res, 400);
+  });
+
+  it('should return IND package templates when filtered by package', async () => {
+    const req = createMockRequest({
+      query: { package: 'ind_readiness' },
+    }) as any;
+    req.userId = 1;
+    req.userEmail = 'tester@example.com';
+    req.userRole = 'admin';
+    req.tenantContext = { organizationId: '1', clientWorkspaceId: '1' };
+
+    const res = createMockResponse();
+    const layer = concept2cureRouter.stack.find(
+      (l: any) => l.route?.path === '/templates' && l.route?.methods?.get
+    );
+    const handler = layer.route.stack[layer.route.stack.length - 1].handle;
+
+    await handler(req, res);
+
+    expectStatus(res, 200);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: true,
+        data: expect.arrayContaining([
+          expect.objectContaining({ id: 'tpl_ind_cover_letter' }),
+          expect.objectContaining({ id: 'tpl_ind_investigator_brochure' }),
+          expect.objectContaining({ id: 'tpl_ind_pre_ind_briefing' }),
+        ]),
+      })
+    );
+  });
+
+  it('should allow AI template generation when adhoc context is explicit', async () => {
+    const req = createMockRequest({
+      params: { templateId: 'ind-cover-letter' },
+      body: {
+        contextAttachment: 'adhoc',
+        variables: {
+          PRODUCT_NAME: 'Test Product',
+          INDICATION: 'Oncology',
+          SPONSOR: 'Test Sponsor',
+          IND_NUMBER: '000000',
+          SUBMISSION_TYPE: 'Initial IND',
+          DIVISION: 'CDER',
+        },
+      },
+    }) as any;
+    req.userId = 1;
+    req.userEmail = 'tester@example.com';
+    req.userRole = 'admin';
+    req.tenantContext = { organizationId: '1', clientWorkspaceId: '1' };
+
+    const res = createMockResponse();
+    const layer = concept2cureRouter.stack.find(
+      (l: any) =>
+        l.route?.path === '/ai/templates/:templateId/generate' && l.route?.methods?.post
+    );
+    const handler = layer.route.stack[layer.route.stack.length - 1].handle;
+
+    await handler(req, res);
+    expectStatus(res, 200);
+  });
+
   it('should create a signature for an artifact version', async () => {
     const req = createMockRequest({
       params: { projectId: 'proj_1', artifactId: 'artifact_test' },

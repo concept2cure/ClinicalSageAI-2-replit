@@ -17,16 +17,18 @@ import { Pool } from 'pg';
 import { setupVite, serveStatic } from './vite';
 import { httpLogger, errorHandler } from './src/mw/observability.js';
 // Database performance optimizations - optional
+import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import type { Request, Response, NextFunction } from 'express';
+import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 
 // Phase 4.1 Proof System - 21 CFR Part 11 Compliance
 import { initializeProofDatabasePersistence } from '../services/proof/database-setup';
 
 // Enterprise Security & Performance Middleware
-import { applySecurityMiddleware } from './middleware/enterprise-security.js';
+import { applySecurityMiddleware, auditLog } from './middleware/enterprise-security.js';
 import {
   applyPerformanceMiddleware,
   cleanup as cleanupPerformance,
@@ -40,12 +42,16 @@ import {
 // Import enterprise services
 // NOTE: openaiService was renamed to aiProviderRouter - the old name was misleading
 // The service actually uses Kimi AI (moonshot.cn), not OpenAI
+import { AIProviderRouter, getAIRouter } from './services/aiProviderRouter.js';
+// aiProviderRouter will be initialized after database connection
+let aiProviderRouter: AIProviderRouter | null = null;
 // Side-effect imports: constructor initializes audit tables and RBAC cache
 import './services/auditService.js';
 import './services/roleBasedAccess.js';
 import { authMiddleware } from './auth.js';
 import { sanitizeAskAnaInput } from './routes/ask-ana-utils';
 import { getSecureOrgId } from './utils/tenantContext';
+import FeatureToggleService from './services/featureToggleService';
 
 // Import database and schema for workflow persistence
 import { drizzle } from 'drizzle-orm/node-postgres';
@@ -102,20 +108,23 @@ const debugLog = (message: string, data?: any) => {
 
 // Route imports now consolidated in server/bootstrap/ manifests.
 // Only imports NOT yet migrated to bootstrap remain here.
+import aiAssistanceRoutes, { setAIService } from './routes/ai-assistance';
 import predictiveSectionsRoutes from './routes/predictive-sections';
 import foresightApiRoutes from './routes/foresight-api';
 import foresightAIAdvancedRoutes from './routes/foresight-ai-advanced';
 import foresightFeedbackRoutes from './routes/foresight-feedback';
+
+// Phase 5: Intelligent Document System routes
+import intelligentDocsRoutes from './routes/intelligentDocs';
+import { testAssemblyRoutes } from './routes/test-assembly';
+
+// Phase 5: PM Settings & Configuration routes
+import pmSettingsRouter from './src/routes/pm-settings.router';
+import controlPlaneRouter from './src/routes/control-plane.router';
 import reportsManifestRoutes from './routes/reports/manifest-routes';
 import reportsGenerationRoutes from './routes/reports/generate-report';
 import { registerSubscriptionsRoutes } from './routes/reports/subscriptions-routes';
 import firecrawlWebhooksRoutes from './routes/firecrawl-webhooks';
-
-import { registerCoreRoutes } from './bootstrap/register-core-routes';
-import { registerConcept2CureRoutes } from './bootstrap/register-concept2cure-routes';
-import { registerAiRoutes } from './bootstrap/register-ai-routes';
-import { registerAdminRoutes } from './bootstrap/register-admin-routes';
-import { registerIntegrationRoutes } from './bootstrap/register-integrations-routes';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -123,6 +132,8 @@ const PORT = process.env.PORT || 5000;
 // --- Start Python FastAPI Backend as a Child Process ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const pythonBackendPath = path.resolve(__dirname, '..'); // Python files are in root directory
+
 let pythonProcess: any = null;
 
 const startPythonBackend = () => {
@@ -327,6 +338,10 @@ debugLog('Immutability policy enforcement middleware installed');
 
 debugLog('Express middleware configured');
 
+// Multer configuration
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
 // Use centralized database pool
 import { getPool } from './db';
 const pool = getPool();
@@ -367,6 +382,14 @@ async function verifyDatabaseConnection() {
     console.error('⚠️ Core table verification failed:', err.message);
   }
 }
+
+// Simple storage client for now - in production this would be cloud storage
+const storageClient = {
+  upload: async (file: any) => `/uploads/${Date.now()}-${file.originalname}`,
+  download: async (path: string) => path,
+  delete: async (path: string) => true,
+};
+console.log('✅ Storage client initialized (VaultDMS deprecated)');
 
 // NOTE: /healthz, /readyz, /api/health are mounted above middleware for fast-path access
 
@@ -3879,6 +3902,19 @@ import submissionCenterRoutes from './routes/submissionCenter.routes';
 app.use('/api/submission-center', submissionCenterRoutes);
 console.log('✅ Submission Center API routes mounted successfully');
 
+// Mount Unified Regulatory Submissions routes (feature-gated)
+import regulatorySubmissionsRoutes from './routes/regulatorySubmissions';
+app.use('/api/regulatory-submissions', regulatorySubmissionsRoutes);
+console.log('✅ Regulatory Submissions API routes mounted successfully (feature-gated)');
+
+// Mount Submission Ops + Regulatory Correspondence routes
+import submissionOpsRoutes from './routes/submission-ops';
+import regulatoryCorrespondenceRoutes from './routes/regulatory-correspondence';
+app.use('/api/submission-ops', submissionOpsRoutes);
+app.use('/api/regulatory-correspondence', regulatoryCorrespondenceRoutes);
+console.log('✅ Submission Ops API routes mounted successfully');
+console.log('✅ Regulatory Correspondence API routes mounted successfully');
+
 // Mount 510k-workflow routes directly
 import { TemplateMapper } from './services/documentTemplateMapper';
 import { MemStorage } from './storage';
@@ -6737,6 +6773,18 @@ async function startServer() {
     console.log('✅ Auth schema bootstrap complete');
   } catch (error: any) {
     console.error('⚠️ Auth schema bootstrap warning:', error.message);
+  }
+
+  // Initialize feature toggles for gated central-system routes.
+  try {
+    await FeatureToggleService.initializeFeatureToggle(
+      'UNIFIED_REGULATORY_SUBMISSIONS',
+      'Enable unified regulatory submissions bridge routes',
+      false
+    );
+    console.log('✅ Feature toggle bootstrap complete: UNIFIED_REGULATORY_SUBMISSIONS');
+  } catch (error: any) {
+    console.error('⚠️ Feature toggle bootstrap warning:', error.message);
   }
 
   // Seed AnA Capability Registry (fire-and-forget — don't block startup)

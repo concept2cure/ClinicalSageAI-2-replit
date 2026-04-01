@@ -102,6 +102,10 @@ import {
 import { apiRequest } from '@/lib/queryClient';
 import { applySourceTraceabilityToHtml, type AIProvenance } from './utils/applySourceTraceability';
 import { useYjsProvider } from '../../hooks/useYjsProvider';
+import {
+  getTemplateStructureForArtifact,
+  type TemplateStructureNode,
+} from '../../models/ctdHierarchy';
 
 import { LoadingState } from '@/components/ui/statesV2';
 import { Button } from '@/components/ui/button';
@@ -122,6 +126,7 @@ interface Artifact {
   content: string;
   type: string;
   category: string;
+  templateId?: string | null;
   version: number;
   versions?: { version: number; content: string; createdAt: string }[];
   status?: string;
@@ -149,6 +154,7 @@ interface EditorPanelProps {
   initialContent?: string;
   initialTitle?: string;
   initialCtdSection?: string;
+  initialTemplateId?: string;
   /** Called when the pending initial content has been consumed */
   onInitialContentConsumed?: () => void;
   /** When provided, open this existing artifact directly (no creation) */
@@ -178,6 +184,19 @@ const AI_ACTIONS: { id: AIAction; label: string; description: string }[] = [
   { id: 'regulatory-tone', label: 'Regulatory Tone', description: 'Formal FDA/EMA language' },
   { id: 'add-references', label: 'Add References', description: 'Insert reference placeholders' },
 ];
+
+const LINE_LOCK_SECTION_PREFIX = 'line:';
+const AUTO_SAVE_DEBOUNCE_MS = 1200;
+const LINE_LOCK_POLL_MS = 2000;
+const LINE_LOCK_HEARTBEAT_MS = 8000;
+
+function getLineNumberFromSelection(editor: any): number | null {
+  const state = editor?.state;
+  if (!state?.doc || !state?.selection) return null;
+  const clamped = Math.max(0, Math.min(state.selection.from ?? 0, state.doc.content.size ?? 0));
+  const textBefore = state.doc.textBetween(0, clamped, '\n', '\n');
+  return textBefore.length === 0 ? 1 : textBefore.split('\n').length;
+}
 
 // ── Precedent Search Inspector ───────────────────────────────────────────────
 
@@ -381,6 +400,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   initialContent,
   initialTitle,
   initialCtdSection,
+  initialTemplateId,
   onInitialContentConsumed,
   openArtifactId,
   onOpenArtifactConsumed,
@@ -411,6 +431,26 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [openArtifactNotFound, setOpenArtifactNotFound] = useState(false);
   const [showTemplateGenerator, setShowTemplateGenerator] = useState(false);
   const [showAutoDraft, setShowAutoDraft] = useState(false);
+  const [traceabilityLinks, setTraceabilityLinks] = useState<
+    Array<{
+      id: string;
+      sourceId: string;
+      sourceHash: string;
+      targetRange: { from: number; to: number };
+      linkedText: string;
+      createdAt: string;
+      createdBy: string;
+    }>
+  >([]);
+  const [traceabilitySources, setTraceabilitySources] = useState<
+    Array<{ id: string; title: string; type?: string; version?: string; hash?: string; confidence?: number }>
+  >([]);
+
+  // Prevent stale traceability side-panel data when switching documents.
+  useEffect(() => {
+    setTraceabilityLinks([]);
+    setTraceabilitySources([]);
+  }, [activeArtifact?.id]);
 
   // ── Claim validation (zero-hallucination layer) ──────────────────────────
   const [claimValidation, setClaimValidation] = useState<{
@@ -782,10 +822,17 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [integrityVerified, setIntegrityVerified] = useState<boolean | null>(null);
   const [trustLoadFailed, setTrustLoadFailed] = useState(false);
 
-  // ── Auto-save (debounced 5s after last edit) ──────────────────────────
+  // ── Auto-save (near real-time, debounced) ──────────────────────────────
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const lastSavedContentRef = useRef<string>('');
+  const activeLineLockRef = useRef<{ documentId: string; sectionId: string; lineNumber: number } | null>(
+    null
+  );
+  const lockHeartbeatTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lockPollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const blockedLineToastRef = useRef<{ line: number; timestamp: number } | null>(null);
+  const [lineLockOwnersByLine, setLineLockOwnersByLine] = useState<Record<number, string>>({});
   const modeCtx = useDocumentModeOptional();
   const modeCaps = modeCtx?.capabilities;
   const currentDocumentMode: DocumentMode | undefined = modeCtx?.mode;
@@ -1341,6 +1388,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           type: 'regulatory_document',
           category: 'document',
           ctdSection: initialCtdSection || undefined,
+          templateId: initialTemplateId || undefined,
         });
         if (res.ok) {
           const payload = await res.json();
@@ -1360,6 +1408,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     initialContent,
     initialTitle,
     initialCtdSection,
+    initialTemplateId,
     onInitialContentConsumed,
     loadArtifacts,
   ]);
@@ -1406,6 +1455,116 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       onContentChange(activeArtifact.content || '', activeArtifact.title || '');
     }
   }, [activeArtifact?.content, activeArtifact?.title, onContentChange]);
+
+  const parseLockedLines = useCallback(
+    (locks: Array<{ sectionId?: string; lockedBy: string }>) => {
+      const owners: Record<number, string> = {};
+      for (const lock of locks) {
+        const sectionId = lock.sectionId || '';
+        if (!sectionId.startsWith(LINE_LOCK_SECTION_PREFIX)) continue;
+        const line = Number(sectionId.slice(LINE_LOCK_SECTION_PREFIX.length));
+        if (!Number.isFinite(line) || line <= 0) continue;
+        if (lock.lockedBy === currentUser.id) continue;
+        const collaborator = collaboration.collaborators.find(c => c.id === lock.lockedBy);
+        owners[line] = collaborator?.name || 'another collaborator';
+      }
+      return owners;
+    },
+    [currentUser.id, collaboration.collaborators]
+  );
+
+  const releaseActiveLineLock = useCallback(async () => {
+    const lock = activeLineLockRef.current;
+    if (!lock) return;
+    try {
+      await apiRequest('DELETE', `/api/realtime-collab/locks/${encodeURIComponent(lock.documentId)}`, {
+        userId: currentUser.id,
+        sectionId: lock.sectionId,
+      });
+    } catch {
+      // Non-blocking cleanup
+    } finally {
+      activeLineLockRef.current = null;
+    }
+  }, [currentUser.id]);
+
+  const acquireLineLock = useCallback(
+    async (lineNumber: number) => {
+      if (!activeArtifact?.id) return;
+      const sectionId = `${LINE_LOCK_SECTION_PREFIX}${lineNumber}`;
+      const lockBody = {
+        documentId: String(activeArtifact.id),
+        sectionId,
+        userId: currentUser.id,
+        lockType: 'exclusive',
+        durationMs: 30 * 1000,
+        reason: 'active line editing',
+      };
+      const res = await apiRequest('POST', '/api/realtime-collab/locks', lockBody).catch(() => null);
+      if (!res?.ok) return;
+      activeLineLockRef.current = {
+        documentId: String(activeArtifact.id),
+        sectionId,
+        lineNumber,
+      };
+    },
+    [activeArtifact?.id, currentUser.id]
+  );
+
+  const refreshLineLocks = useCallback(async () => {
+    if (!activeArtifact?.id) {
+      setLineLockOwnersByLine({});
+      return;
+    }
+    try {
+      const res = await apiRequest('GET', `/api/realtime-collab/locks/${encodeURIComponent(activeArtifact.id)}`);
+      if (!res.ok) return;
+      const payload = await res.json();
+      const locks = Array.isArray(payload?.data) ? payload.data : [];
+      setLineLockOwnersByLine(parseLockedLines(locks));
+    } catch {
+      // Keep last known lock state
+    }
+  }, [activeArtifact?.id, parseLockedLines]);
+
+  const handleSelectionLineChange = useCallback(
+    async (lineNumber: number) => {
+      if (!activeArtifact?.id) return;
+      if (!Number.isFinite(lineNumber) || lineNumber <= 0) return;
+      const current = activeLineLockRef.current;
+      if (
+        current &&
+        current.documentId === String(activeArtifact.id) &&
+        current.lineNumber === lineNumber
+      ) {
+        return;
+      }
+      if (current) {
+        await releaseActiveLineLock();
+      }
+      await acquireLineLock(lineNumber);
+      void refreshLineLocks();
+    },
+    [activeArtifact?.id, releaseActiveLineLock, acquireLineLock, refreshLineLocks]
+  );
+
+  const handleBlockedLineEdit = useCallback(
+    (lineNumber: number, lockedBy?: string) => {
+      const now = Date.now();
+      const last = blockedLineToastRef.current;
+      if (last && last.line === lineNumber && now - last.timestamp < 2500) return;
+      blockedLineToastRef.current = { line: lineNumber, timestamp: now };
+      setLockRejection(
+        `Line ${lineNumber} is currently being edited by ${lockedBy || 'another collaborator'}.`
+      );
+      setTimeout(() => setLockRejection(null), 4000);
+      pushToast(
+        `Line ${lineNumber} is locked by ${lockedBy || 'another collaborator'} — choose another line.`,
+        'error'
+      );
+    },
+    [pushToast]
+  );
 
   // ── Save to artifacts API ────────────────────────────────────────────────
   const handleSave = useCallback(
@@ -1455,7 +1614,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         setSaving(false);
       }
     },
-    [projectId, activeArtifact, loadArtifacts]
+    [projectId, activeArtifact, modeCaps, pushToast, loadArtifacts]
   );
 
   // ── Global keyboard shortcuts ───────────────────────────────────────────
@@ -1490,9 +1649,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       clearTimeout(autoSaveTimerRef.current);
       autoSaveTimerRef.current = null;
     }
+    void releaseActiveLineLock();
   }, [activeArtifact?.id]);
 
-  // ── Auto-save: debounced save 5s after last edit ──────────────────────
+  // ── Auto-save: debounced save near real-time after last edit ──────────
   const triggerAutoSave = useCallback(
     (html: string) => {
       if (!activeArtifact) return;
@@ -1506,10 +1666,59 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       autoSaveTimerRef.current = setTimeout(() => {
         handleSave(html, {});
         autoSaveTimerRef.current = null;
-      }, 5000);
+      }, AUTO_SAVE_DEBOUNCE_MS);
     },
-    [activeArtifact, handleSave]
+    [activeArtifact, modeCaps, handleSave]
   );
+
+  // Refresh lock map while editing a document
+  useEffect(() => {
+    if (!activeArtifact?.id) {
+      setLineLockOwnersByLine({});
+      return;
+    }
+    void refreshLineLocks();
+    if (lockPollTimerRef.current) clearInterval(lockPollTimerRef.current);
+    lockPollTimerRef.current = setInterval(() => {
+      void refreshLineLocks();
+    }, LINE_LOCK_POLL_MS);
+    return () => {
+      if (lockPollTimerRef.current) {
+        clearInterval(lockPollTimerRef.current);
+        lockPollTimerRef.current = null;
+      }
+    };
+  }, [activeArtifact?.id, refreshLineLocks]);
+
+  // Keep active line lock alive with short heartbeats
+  useEffect(() => {
+    if (lockHeartbeatTimerRef.current) clearInterval(lockHeartbeatTimerRef.current);
+    lockHeartbeatTimerRef.current = setInterval(() => {
+      const activeLock = activeLineLockRef.current;
+      if (!activeLock) return;
+      void apiRequest('POST', '/api/realtime-collab/locks', {
+        documentId: activeLock.documentId,
+        sectionId: activeLock.sectionId,
+        userId: currentUser.id,
+        lockType: 'exclusive',
+        durationMs: 30 * 1000,
+        reason: 'line lock heartbeat',
+      }).catch(() => {});
+    }, LINE_LOCK_HEARTBEAT_MS);
+    return () => {
+      if (lockHeartbeatTimerRef.current) {
+        clearInterval(lockHeartbeatTimerRef.current);
+        lockHeartbeatTimerRef.current = null;
+      }
+    };
+  }, [currentUser.id]);
+
+  // Release line lock when switching documents or unmounting
+  useEffect(() => {
+    return () => {
+      void releaseActiveLineLock();
+    };
+  }, [activeArtifact?.id, releaseActiveLineLock]);
 
   // Cleanup auto-save timer on unmount
   useEffect(() => {
@@ -1573,6 +1782,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           sectionTitle: activeArtifact.title,
           submissionType: submissionType || undefined,
           projectId: projectId || undefined,
+          contextAttachment: projectId ? 'project' : 'adhoc',
           artifactId: activeArtifact.id || undefined,
           ctdSection: activeArtifact.ctdSection || initialCtdSection || undefined,
         });
@@ -1622,10 +1832,54 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     if (aiProvenance?.sources?.length) {
       finalContent = applySourceTraceabilityToHtml(htmlContent, aiProvenance);
       const srcCount = aiProvenance.sources.length;
+      const sourceByIdx = new Map<number, (typeof aiProvenance.sources)[number]>();
+      aiProvenance.sources.forEach((src, idx) => {
+        sourceByIdx.set(src.index ?? idx + 1, src);
+      });
+      const nextLinks: typeof traceabilityLinks = [];
+      const sentenceRegex = /([^.!?]+[.!?])/g;
+      let sentenceMatch: RegExpExecArray | null;
+      let sentenceCounter = 0;
+      while ((sentenceMatch = sentenceRegex.exec(aiResult || '')) !== null) {
+        const sentence = sentenceMatch[1].trim();
+        const refs = Array.from(sentence.matchAll(/\[SRC-(\d+)\]/g))
+          .map(ref => Number(ref[1]))
+          .filter(n => Number.isFinite(n));
+        if (refs.length === 0) continue;
+        const cleanSentence = sentence.replace(/\[SRC-\d+\]/g, '').trim();
+        refs.forEach(ref => {
+          const src = sourceByIdx.get(ref);
+          if (!src) return;
+          sentenceCounter += 1;
+          nextLinks.push({
+            id: `trace-${Date.now()}-${sentenceCounter}`,
+            sourceId: src.id,
+            sourceHash: src.sourceHash || src.id,
+            targetRange: { from: 0, to: 0 },
+            linkedText: cleanSentence,
+            createdAt: new Date().toISOString(),
+            createdBy: currentUser.id,
+          });
+        });
+      }
+      setTraceabilityLinks(nextLinks);
+      setTraceabilitySources(
+        aiProvenance.sources.map(src => ({
+          id: src.id,
+          title: src.name || src.title || src.id,
+          type: src.type,
+          version: src.version,
+          hash: src.sourceHash || src.id,
+          confidence: src.confidence,
+        }))
+      );
       pushToast(
         `Applied ${srcCount} source traceability link${srcCount !== 1 ? 's' : ''}`,
         'success'
       );
+    } else {
+      setTraceabilityLinks([]);
+      setTraceabilitySources([]);
     }
 
     setActiveArtifact({ ...activeArtifact, content: finalContent });
@@ -1634,7 +1888,23 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
     // Auto-run claim validation in background after AI edit is accepted
     runClaimValidation(finalContent);
-  }, [aiResult, aiProvenance, activeArtifact, runClaimValidation]);
+  }, [aiResult, aiProvenance, activeArtifact, currentUser.id, runClaimValidation]);
+
+  const templateStructure = useMemo(() => {
+    if (!activeArtifact) return undefined;
+    const structure = getTemplateStructureForArtifact({
+      templateId: activeArtifact.templateId,
+      ctdSection: activeArtifact.ctdSection,
+    });
+    if (!structure?.length) return undefined;
+    return structure.map(
+      (node: TemplateStructureNode): { key: string; label: string; required: boolean } => ({
+        key: node.key,
+        label: node.label,
+        required: node.required,
+      })
+    );
+  }, [activeArtifact]);
 
   // ── DOCX Export (real generation via knowledge-base → shadow service) ───
   const generateDocxMutation = useGenerateDocx();
@@ -3467,7 +3737,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             documentType={activeArtifact?.type}
             submissionType={submissionType}
             showCompliance={true}
-            showTraceability={false}
+            showTraceability={true}
+            traceabilityLinks={traceabilityLinks}
+            sources={traceabilitySources}
+            templateStructure={templateStructure}
             complianceIssues={complianceIssues as any}
             onComplianceIssuesFound={(issues: any[]) => {
               setComplianceIssues(issues);
@@ -3500,6 +3773,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               if (!editor || !collaboration.emitCursorMove) return;
               const { from } = editor.state.selection;
               const coords = editor.view.coordsAtPos(from);
+              const lineNumber = getLineNumberFromSelection(editor);
+              if (lineNumber) {
+                void handleSelectionLineChange(lineNumber);
+              }
               if (coords) {
                 const editorRect = editor.view.dom.getBoundingClientRect();
                 collaboration.emitCursorMove({
@@ -3519,6 +3796,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             ydoc={yjsCollab.ydoc}
             yjsProvider={yjsCollab.provider}
             currentUser={{ name: currentUser?.name || 'Anonymous', color: '#3B82F6' }}
+            currentUserId={currentUser.id}
+            lockedLineNumbers={Object.keys(lineLockOwnersByLine).map(n => Number(n))}
+            lockedLineOwnerByLine={lineLockOwnersByLine}
+            onBlockedLineEdit={handleBlockedLineEdit}
           />
         </div>
 
@@ -3693,6 +3974,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           <TemplateGeneratorPanel
             projectId={projectId}
             artifactId={activeArtifact?.id}
+            submissionType={submissionType}
+            contextAttachment={projectId ? 'project' : 'adhoc'}
             onGenerated={(content, templateName) => {
               // Wrap in HTML if not already
               const htmlContent = content.startsWith('<')
