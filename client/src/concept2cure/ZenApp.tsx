@@ -78,6 +78,9 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 // [BATCH 3] ProductAuditQuestionnaire — renderer removed
 import { isFeatureEnabled } from '@/flags/featureFlags';
 import { getProjectModuleRoutePolicy } from './router/projectModuleRoutePolicy';
+import { evaluateApprovedRoute } from './router/approvedRoutePolicy';
+import { normalizeLayoutMode } from './router/zenRouteNormalization';
+import { Embedded510kHost, EmbeddedPMAHost, EmbeddedCERHost } from './components/shell/EmbeddedModuleHosts';
 
 // Lazy-load CERV2Page for embedded module rendering inside the shell
 const EmbeddedCERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
@@ -670,6 +673,14 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     }
   }, [projects.length, showFirstRun]);
 
+  useEffect(() => {
+    try {
+      setExternalTestingMode(localStorage.getItem('concept2cure_external_testing_mode') === 'true');
+    } catch {
+      setExternalTestingMode(false);
+    }
+  }, []);
+
   // Tool panels
   const [activeToolPanel, setActiveToolPanel] = useState<ToolPanel>(null);
   const [toolPanelFullscreen, setToolPanelFullscreen] = useState(false);
@@ -713,6 +724,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   const [workspacePanelOpen, setWorkspacePanelOpen] = useState(true);
 
   const [moduleAssistantOpen, setModuleAssistantOpen] = useState(false);
+  const [externalTestingMode, setExternalTestingMode] = useState(false);
 
   // Tools sub-view: 'landing' shows the curated workbench, 'builder' shows FullDocumentBuilder, 'haq' shows HAQ Manager
   const [toolsSubView, setToolsSubView] = useState<'landing' | 'builder' | 'haq'>('landing');
@@ -746,6 +758,15 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   );
   const [activeThreadId, setActiveThreadId] = useState<string | undefined>();
 
+  const approvedRouteDecision = useMemo(
+    () =>
+      evaluateApprovedRoute(location, {
+        externalTestingMode,
+        projectId: urlProjectId ?? activeProjectId,
+      }),
+    [location, externalTestingMode, urlProjectId, activeProjectId]
+  );
+
   // Sherpa project detail view state
   const [sherpaDetailProjectId] = useState<string | null>(null);
   const [
@@ -773,38 +794,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     }>
   >([]);
 
-  const DEMOTED_REDIRECTS: Partial<Record<LayoutMode, LayoutMode>> = {
-    'mission-control': 'projects',
-    snowglobe: 'projects',
-    'snowglobe-chambers': 'projects',
-    rules: 'projects',
-    'ectd-coauthor': 'documents',
-    cmc: 'documents',
-    'document-vault': 'vault',
-    'vault-workspace': 'vault',
-    'review-readiness': 'review',
-    'clinical-trial': 'documents',
-    // templates: now a real layout mode — removed from DEMOTED_REDIRECTS
-    'document-builder': 'documents',
-    artifacts: 'artifacts-center',
-    sherpa: 'projects',
-    analytics: 'projects',
-    timeline: 'projects',
-    audit: 'projects',
-    'enablement-center': 'projects',
-    'platform-admin': 'projects',
-    'biologics-dashboard': 'projects',
-    'ctd-onboarding': 'projects',
-    'client-intelligence': 'projects',
-    'collaboration-hub': 'projects',
-    'user-inbox': 'projects',
-    'client-branding': 'projects',
-    'training-center': 'projects',
-    'client-onboarding': 'projects',
-    'knowledge-base': 'projects',
-    'project-knowledge': 'projects',
-    'ana-platform-control': 'projects',
-  };
 
   // [C-03/C-04] Validate initialProjectId exists in the projects array.
   // If the stored/URL project was deleted or is inaccessible, fall back gracefully.
@@ -818,9 +807,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // [BATCH 3] Redirect demoted layout modes to surviving destinations.
   // This catches deep links, stale bookmarks, and any navigation to removed worlds.
   useEffect(() => {
-    const redirect = DEMOTED_REDIRECTS[layoutMode];
-    if (redirect) {
-      setLayoutMode(redirect);
+    const normalized = normalizeLayoutMode(layoutMode);
+    if (normalized !== layoutMode) {
+      setLayoutMode(normalized);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [layoutMode]);
@@ -1260,6 +1249,12 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlProjectId]);
+
+  useEffect(() => {
+    if (approvedRouteDecision.disposition === 'allowed') return;
+    if (location === approvedRouteDecision.fallbackPath) return;
+    navigate(approvedRouteDecision.fallbackPath);
+  }, [approvedRouteDecision, location, navigate]);
 
   // Sync URL path when active project or layout changes
   useEffect(() => {
@@ -1908,6 +1903,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   );
 
   const userRole = userProfile?.role || 'Regulatory Lead';
+  const canViewRouteDebugPanel = /founder|admin/i.test(userRole);
   const rawIndustry = userProfile?.preferences?.industryMode;
   const industryMode = normalizeIndustryMode(
     typeof rawIndustry === 'string' ? rawIndustry : orgIndustryMode
@@ -2192,208 +2188,54 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         <div className="flex-1 flex min-w-0 min-h-0">
           {/* ── Embedded Module Host ── */}
           {embeddedModule === '510k' && urlProjectId && (
-            <>
-              {/* Module content area */}
-              <div
-                className={cn(
-                  'flex-1 flex flex-col min-h-0 overflow-hidden',
-                  moduleAssistantOpen && 'mr-0'
-                )}
-              >
-                <ErrorBoundary>
-                  <Suspense fallback={<ModuleLoadingFallback />}>
-                    <EmbeddedCERV2Page
-                      embedded={true}
-                      projectId={urlProjectId}
-                      onBackToProject={() => navigate(`/concept2cure/project/${urlProjectId}`)}
-                    />
-                  </Suspense>
-                </ErrorBoundary>
-              </div>
-
-              {/* Assistant toggle button (fixed right edge) */}
-              {!moduleAssistantOpen && (
-                <button
-                  onClick={() => setModuleAssistantOpen(true)}
-                  className="flex-shrink-0 w-10 flex flex-col items-center justify-center gap-1 bg-stone-50 hover:bg-stone-100 border-l border-stone-200 transition-colors"
-                  title="Open AI Assistant"
-                  data-testid="module-assistant-toggle"
-                >
-                  <MessageSquare className="w-4 h-4 text-stone-500" />
-                  <span
-                    className="text-[10px] text-stone-400 writing-mode-vertical"
-                    style={{ writingMode: 'vertical-rl' }}
-                  >
-                    Assistant
-                  </span>
-                </button>
-              )}
-
-              {/* Collapsible assistant drawer */}
-              {moduleAssistantOpen && (
-                <div
-                  className="flex-shrink-0 w-[380px] flex flex-col border-l border-stone-200 bg-white"
-                  data-testid="module-assistant-panel"
-                >
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-stone-100 bg-stone-50">
-                    <span className="text-sm font-medium text-stone-700">AI Assistant</span>
-                    <button
-                      onClick={() => setModuleAssistantOpen(false)}
-                      className="p-1 rounded hover:bg-stone-200 text-stone-400 hover:text-stone-600"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div className="flex-1 min-h-0 overflow-hidden">
-                    <ZenChat
-                      projectId={activeProjectId || urlProjectId}
-                      projectName={activeProject?.name}
-                      submissionType={activeProject?.type || '510K'}
-                      threadId={activeThreadId}
-                      greeting={{ text: 'How can I help with your 510(k) submission?' }}
-                      onNavigate={handleAnaPanelNavigate}
-                      onNewProject={() => setNewProjectOpen(true)}
-                      onThreadChange={handleThreadChange}
-                    />
-                  </div>
-                </div>
-              )}
-            </>
+            <Embedded510kHost
+              moduleAssistantOpen={moduleAssistantOpen}
+              setModuleAssistantOpen={setModuleAssistantOpen}
+              activeProjectId={activeProjectId}
+              projectId={urlProjectId}
+              projectName={activeProject?.name}
+              activeThreadId={activeThreadId}
+              onNavigate={handleAnaPanelNavigate}
+              onNewProject={() => setNewProjectOpen(true)}
+              onThreadChange={handleThreadChange}
+              EmbeddedCERV2Page={EmbeddedCERV2Page}
+              ModuleLoadingFallback={ModuleLoadingFallback}
+              onBackToProject={() => navigate(`/concept2cure/project/${urlProjectId}`)}
+            />
           )}
 
-          {/* ── Embedded PMA Module Host ── */}
           {embeddedModule === 'pma' && urlProjectId && (
-            <>
-              <div
-                className={cn(
-                  'flex-1 flex flex-col min-h-0 overflow-hidden',
-                  moduleAssistantOpen && 'mr-0'
-                )}
-              >
-                <ErrorBoundary>
-                  <Suspense fallback={<ModuleLoadingFallback />}>
-                    <EmbeddedPMAWorkspace
-                      embedded={true}
-                      projectId={urlProjectId}
-                      projectName={activeProject?.name}
-                      onBackToProject={() => navigate(`/concept2cure/project/${urlProjectId}`)}
-                    />
-                  </Suspense>
-                </ErrorBoundary>
-              </div>
-
-              {/* Assistant toggle for PMA */}
-              {!moduleAssistantOpen && (
-                <button
-                  onClick={() => setModuleAssistantOpen(true)}
-                  className="flex-shrink-0 w-10 flex flex-col items-center justify-center gap-1 bg-stone-50 hover:bg-stone-100 border-l border-stone-200 transition-colors"
-                  title="Open AI Assistant"
-                >
-                  <MessageSquare className="w-4 h-4 text-stone-500" />
-                  <span
-                    className="text-[10px] text-stone-400 writing-mode-vertical"
-                    style={{ writingMode: 'vertical-rl' }}
-                  >
-                    Assistant
-                  </span>
-                </button>
-              )}
-
-              {moduleAssistantOpen && (
-                <div className="flex-shrink-0 w-[380px] flex flex-col border-l border-stone-200 bg-white">
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-stone-100 bg-stone-50">
-                    <span className="text-sm font-medium text-stone-700">AI Assistant</span>
-                    <button
-                      onClick={() => setModuleAssistantOpen(false)}
-                      className="p-1 rounded hover:bg-stone-200 text-stone-400 hover:text-stone-600"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div className="flex-1 min-h-0 overflow-hidden">
-                    <ZenChat
-                      projectId={activeProjectId || urlProjectId}
-                      projectName={activeProject?.name}
-                      submissionType="PMA"
-                      threadId={activeThreadId}
-                      greeting={{ text: 'How can I help with your PMA submission?' }}
-                      onNavigate={handleAnaPanelNavigate}
-                      onNewProject={() => setNewProjectOpen(true)}
-                      onThreadChange={handleThreadChange}
-                    />
-                  </div>
-                </div>
-              )}
-            </>
+            <EmbeddedPMAHost
+              moduleAssistantOpen={moduleAssistantOpen}
+              setModuleAssistantOpen={setModuleAssistantOpen}
+              activeProjectId={activeProjectId}
+              projectId={urlProjectId}
+              projectName={activeProject?.name}
+              activeThreadId={activeThreadId}
+              onNavigate={handleAnaPanelNavigate}
+              onNewProject={() => setNewProjectOpen(true)}
+              onThreadChange={handleThreadChange}
+              EmbeddedPMAWorkspace={EmbeddedPMAWorkspace}
+              ModuleLoadingFallback={ModuleLoadingFallback}
+              onBackToProject={() => navigate(`/concept2cure/project/${urlProjectId}`)}
+            />
           )}
 
-          {/* ── Embedded CER Module Host ── */}
           {embeddedModule === 'cer' && urlProjectId && (
-            <>
-              <div
-                className={cn(
-                  'flex-1 flex flex-col min-h-0 overflow-hidden',
-                  moduleAssistantOpen && 'mr-0'
-                )}
-              >
-                <ErrorBoundary>
-                  <Suspense fallback={<ModuleLoadingFallback />}>
-                    <EmbeddedCERV2Page
-                      embedded={true}
-                      initialDocumentType="cerv2_cer"
-                      projectId={urlProjectId}
-                      onBackToProject={() => navigate(`/concept2cure/project/${urlProjectId}`)}
-                    />
-                  </Suspense>
-                </ErrorBoundary>
-              </div>
-
-              {!moduleAssistantOpen && (
-                <button
-                  onClick={() => setModuleAssistantOpen(true)}
-                  className="flex-shrink-0 w-10 flex flex-col items-center justify-center gap-1 bg-stone-50 hover:bg-stone-100 border-l border-stone-200 transition-colors"
-                  title="Open AI Assistant"
-                  data-testid="module-assistant-toggle-cer"
-                >
-                  <MessageSquare className="w-4 h-4 text-stone-500" />
-                  <span
-                    className="text-[10px] text-stone-400 writing-mode-vertical"
-                    style={{ writingMode: 'vertical-rl' }}
-                  >
-                    Assistant
-                  </span>
-                </button>
-              )}
-
-              {moduleAssistantOpen && (
-                <div
-                  className="flex-shrink-0 w-[380px] flex flex-col border-l border-stone-200 bg-white"
-                  data-testid="module-assistant-panel-cer"
-                >
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-stone-100 bg-stone-50">
-                    <span className="text-sm font-medium text-stone-700">AI Assistant</span>
-                    <button
-                      onClick={() => setModuleAssistantOpen(false)}
-                      className="p-1 rounded hover:bg-stone-200 text-stone-400 hover:text-stone-600"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div className="flex-1 min-h-0 overflow-hidden">
-                    <ZenChat
-                      projectId={activeProjectId || urlProjectId}
-                      projectName={activeProject?.name}
-                      submissionType="CER"
-                      threadId={activeThreadId}
-                      greeting={{ text: 'How can I help with your Clinical Evaluation Report?' }}
-                      onNavigate={handleAnaPanelNavigate}
-                      onNewProject={() => setNewProjectOpen(true)}
-                      onThreadChange={handleThreadChange}
-                    />
-                  </div>
-                </div>
-              )}
-            </>
+            <EmbeddedCERHost
+              moduleAssistantOpen={moduleAssistantOpen}
+              setModuleAssistantOpen={setModuleAssistantOpen}
+              activeProjectId={activeProjectId}
+              projectId={urlProjectId}
+              projectName={activeProject?.name}
+              activeThreadId={activeThreadId}
+              onNavigate={handleAnaPanelNavigate}
+              onNewProject={() => setNewProjectOpen(true)}
+              onThreadChange={handleThreadChange}
+              EmbeddedCERV2Page={EmbeddedCERV2Page}
+              ModuleLoadingFallback={ModuleLoadingFallback}
+              onBackToProject={() => navigate(`/concept2cure/project/${urlProjectId}`)}
+            />
           )}
 
           {/* [BATCH 3] Removed renderers: sherpa, analytics, timeline, audit,
@@ -4008,6 +3850,75 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       {/* [Phase A] Dr. Sage removed — AnA is the single guide identity */}
 
       {/* AnA — moved to inline bottom bar (see below) */}
+
+      {canViewRouteDebugPanel && (
+        <div className="fixed bottom-3 left-3 z-50 flex flex-col gap-2">
+          <button
+            className="rounded-md border border-stone-300 bg-white/95 px-3 py-1 text-xs font-medium text-stone-700 shadow"
+            onClick={() => {
+              const next = !externalTestingMode;
+              setExternalTestingMode(next);
+              try {
+                localStorage.setItem('concept2cure_external_testing_mode', String(next));
+              } catch {
+                // no-op
+              }
+            }}
+          >
+            External testing: {externalTestingMode ? 'ON' : 'OFF'}
+          </button>
+          {externalTestingMode && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50/95 px-3 py-2 text-xs text-amber-900 shadow">
+              <div className="font-semibold">External Testing Route Panel</div>
+              <div>Route: {approvedRouteDecision.normalizedPath}</div>
+              <div>Status: {approvedRouteDecision.disposition}</div>
+              <div>Reason: {approvedRouteDecision.reason}</div>
+              <div>Rule: {approvedRouteDecision.ruleId ?? 'n/a'}</div>
+              <div className="mt-2 flex items-center gap-2">
+                <button
+                  className="rounded border border-amber-300 bg-white px-2 py-1 text-[11px] font-medium"
+                  onClick={async () => {
+                    const report = JSON.stringify(
+                      {
+                        route: approvedRouteDecision.normalizedPath,
+                        status: approvedRouteDecision.disposition,
+                        reason: approvedRouteDecision.reason,
+                        projectId: activeProjectId,
+                        timestamp: new Date().toISOString(),
+                      },
+                      null,
+                      2
+                    );
+                    try {
+                      await navigator.clipboard.writeText(report);
+                      toast({ title: 'Issue snapshot copied', description: 'Paste into your tracker/ticket.' });
+                    } catch {
+                      toast({ title: 'Copy failed', description: 'Unable to access clipboard in this browser.', variant: 'destructive' });
+                    }
+                  }}
+                >
+                  Capture issue
+                </button>
+                <button
+                  className="rounded border border-amber-300 bg-white px-2 py-1 text-[11px] font-medium"
+                  onClick={() => {
+                    try {
+                      sessionStorage.removeItem(`runlog:${activeProjectId}`);
+                    } catch {
+                      // no-op
+                    }
+                    setLayoutMode(activeProjectId ? 'project-home' : 'projects');
+                    navigate(activeProjectId ? `/concept2cure/project/${activeProjectId}` : '/concept2cure');
+                    toast({ title: 'Workspace reset', description: 'Returned to a known-good entry route.' });
+                  }}
+                >
+                  Reset route
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Command palette */}
       <ZenCommandPalette
