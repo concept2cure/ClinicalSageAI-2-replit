@@ -17,6 +17,12 @@ import { getSecureOrgId } from '../utils/tenantContext';
 const router = Router();
 const storage = { db };
 
+function getActorUserId(req: Request): number | null {
+  const raw = (req as any).userId ?? (req as any).user?.id;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
 // Task creation schema
 const createTaskSchema = z.object({
   title: z.string().min(1),
@@ -230,6 +236,7 @@ async function getOptimalAssignee(organizationId: number, taskData: any) {
 router.post('/tasks', async (req: Request, res: Response) => {
   try {
     const validatedData = createTaskSchema.parse(req.body);
+    const actorUserId = getActorUserId(req);
     const organizationIdRaw = getSecureOrgId(req);
     const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
@@ -262,7 +269,7 @@ router.post('/tasks', async (req: Request, res: Response) => {
         completionPercentage: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
-        createdById: req.userId ? Number(req.userId) : null,
+        createdById: actorUserId,
       })
       .returningAll()
       .executeTakeFirst();
@@ -284,6 +291,7 @@ router.post('/tasks', async (req: Request, res: Response) => {
 router.post('/tasks/bulk-create', async (req: Request, res: Response) => {
   try {
     const validatedData = bulkCreateTasksSchema.parse(req.body);
+    const actorUserId = getActorUserId(req);
     const organizationIdRaw = getSecureOrgId(req);
     const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
@@ -326,7 +334,7 @@ router.post('/tasks/bulk-create', async (req: Request, res: Response) => {
           completionPercentage: 0,
           createdAt: new Date(),
           updatedAt: new Date(),
-          createdById: req.userId ? Number(req.userId) : null,
+          createdById: actorUserId,
         })
         .returningAll()
         .executeTakeFirst();
@@ -380,6 +388,7 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
   try {
     const templateId = req.params.templateId;
     const { projectId, startDate, adjustDates } = req.body;
+    const actorUserId = getActorUserId(req);
     const organizationIdRaw = getSecureOrgId(req);
     const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
@@ -449,7 +458,7 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
           templateId: template.id,
           createdAt: new Date(),
           updatedAt: new Date(),
-          createdById: req.body.userId,
+          createdById: actorUserId,
         })
         .returningAll()
         .executeTakeFirst();
@@ -636,6 +645,7 @@ router.get('/tasks/critical-path/:projectId', async (req: Request, res: Response
 router.post('/tasks/auto-assign', async (req: Request, res: Response) => {
   try {
     const { taskIds } = req.body;
+    const actorUserId = getActorUserId(req);
     const organizationIdRaw = getSecureOrgId(req);
     const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
@@ -664,7 +674,7 @@ router.post('/tasks/auto-assign', async (req: Request, res: Response) => {
           .set({
             assigneeId: optimalAssignee.id,
             assigneeName: optimalAssignee.name,
-            assignedBy: req.body.userId,
+            assignedBy: actorUserId,
             assignedAt: new Date(),
             updatedAt: new Date(),
           })
@@ -806,6 +816,7 @@ router.get('/tasks/analytics', async (req: Request, res: Response) => {
 router.post('/templates', async (req: Request, res: Response) => {
   try {
     const validatedData = createTemplateSchema.parse(req.body);
+    const actorUserId = getActorUserId(req);
     const organizationIdRaw = getSecureOrgId(req);
     const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
@@ -822,7 +833,7 @@ router.post('/templates', async (req: Request, res: Response) => {
         isActive: true,
         version: 1,
         usageCount: 0,
-        createdById: req.body.userId,
+        createdById: actorUserId,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
@@ -846,6 +857,7 @@ router.post('/templates', async (req: Request, res: Response) => {
 router.post('/automation', async (req: Request, res: Response) => {
   try {
     const validatedData = createAutomationSchema.parse(req.body);
+    const actorUserId = getActorUserId(req);
     const organizationIdRaw = getSecureOrgId(req);
     const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
@@ -864,7 +876,7 @@ router.post('/automation', async (req: Request, res: Response) => {
         executionCount: 0,
         successCount: 0,
         failureCount: 0,
-        createdById: req.body.userId,
+        createdById: actorUserId,
         createdAt: new Date(),
         updatedAt: new Date(),
       })

@@ -192,6 +192,7 @@ router.get('/packages/:packageId/sections', async (req: Request, res: Response) 
 router.post('/artifact-section-map', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
+    const actorUserId = getUserId(req);
     const {
       artifactId,
       sectionDbId,
@@ -206,6 +207,52 @@ router.post('/artifact-section-map', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'artifactId and sectionDbId required' });
     }
 
+    const [artifact] = await db
+      .select({
+        id: concept2cureArtifacts.id,
+        projectId: concept2cureArtifacts.projectId,
+      })
+      .from(concept2cureArtifacts)
+      .where(and(eq(concept2cureArtifacts.id, artifactId), eq(concept2cureArtifacts.orgId, orgId)));
+    if (!artifact) {
+      return res.status(404).json({ error: 'Artifact not found for organization' });
+    }
+
+    const [section] = await db
+      .select({
+        id: c2cPackageSections.id,
+        packageDbId: c2cPackageSections.packageDbId,
+      })
+      .from(c2cPackageSections)
+      .innerJoin(
+        c2cSubmissionPackages,
+        and(
+          eq(c2cSubmissionPackages.id, c2cPackageSections.packageDbId),
+          eq(c2cSubmissionPackages.orgId, orgId)
+        )
+      )
+      .where(eq(c2cPackageSections.id, sectionDbId));
+    if (!section) {
+      return res.status(404).json({ error: 'Section not found for organization' });
+    }
+
+    const [pkg] = await db
+      .select({
+        id: c2cSubmissionPackages.id,
+        projectId: c2cSubmissionPackages.projectId,
+      })
+      .from(c2cSubmissionPackages)
+      .where(and(eq(c2cSubmissionPackages.id, section.packageDbId), eq(c2cSubmissionPackages.orgId, orgId)));
+    if (!pkg) {
+      return res.status(404).json({ error: 'Package not found for section' });
+    }
+
+    if (artifact.projectId !== pkg.projectId) {
+      return res
+        .status(400)
+        .json({ error: 'Artifact and target section package must belong to the same project' });
+    }
+
     const [mapping] = await db
       .insert(c2cArtifactSectionMap)
       .values({
@@ -213,7 +260,7 @@ router.post('/artifact-section-map', async (req: Request, res: Response) => {
         artifactId,
         sectionDbId,
         documentFamily,
-        ownerUserId,
+        ownerUserId: ownerUserId || actorUserId || null,
         ownerRole,
         ownerFunction,
         ownershipType,
@@ -353,6 +400,15 @@ router.post('/packages/:packageId/milestones', async (req: Request, res: Respons
     // Link sections
     if (Array.isArray(sectionIds)) {
       for (const sId of sectionIds) {
+        const [section] = await db
+          .select({ id: c2cPackageSections.id })
+          .from(c2cPackageSections)
+          .where(and(eq(c2cPackageSections.id, sId), eq(c2cPackageSections.packageDbId, pkg.id)));
+        if (!section) {
+          return res
+            .status(400)
+            .json({ error: `sectionId ${sId} does not belong to package ${req.params.packageId}` });
+        }
         await db.insert(c2cMilestoneSections).values({
           milestoneDbId: milestone.id,
           sectionDbId: sId,
