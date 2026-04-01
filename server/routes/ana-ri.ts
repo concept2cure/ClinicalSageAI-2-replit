@@ -20,10 +20,6 @@ import {
   type OrchestratorInput,
   type IntentLens,
   type UserRole,
-} from '../services/ana-ri/index.js';
-import {
-  prefetchProjectIntelligence,
-  preloadRIMContext,
 } from '../services/ana-ri/orchestrator.js';
 import {
   DEFICIENCY_TAXONOMY,
@@ -83,7 +79,12 @@ import {
   processCommandsInResponse,
   type CommandContext,
 } from '../services/ana-ri/command-executor.js';
-import { buildAuthoringContextBlock } from '../services/ana-ri/chat-context-builder.js';
+import {
+  buildAuthoringContextBlock,
+  buildOrchestratorAuthoringContext,
+  prefetchRouteIntelligenceContext,
+  resolveProjectIdFromBody,
+} from '../services/ana-ri/chat-context-builder.js';
 import {
   getFirecrawlQuotaStatus,
   recordSuccessfulFirecrawlScrape,
@@ -94,7 +95,6 @@ import {
   normalizeEvidence,
 } from '../services/research-intelligence';
 import { decisionLifecycleService } from '../services/decision-lifecycle-service.js';
-import { getFeedbackSummary } from '../services/intelligence/learning-loop-service.js';
 
 const router = Router();
 
@@ -328,83 +328,28 @@ router.post('/chat', async (req: Request, res: Response) => {
       }
     }
 
-    const chatProjectId =
-      req.body.project_id || req.body.context?.projectId || req.body.project_context?.projectId;
-    const chatProjectIdNumber = chatProjectId != null ? Number(chatProjectId) : null;
+    const chatProjectId = resolveProjectIdFromBody(req.body);
     const chatAuthoringContext =
       authoring_context && typeof authoring_context === 'object'
         ? ({ ...authoring_context } as Record<string, unknown>)
         : undefined;
 
-    let chatDecisionContext: Array<{ decision: unknown; receipt?: unknown }> = [];
-    let chatFeedbackContext: OrchestratorInput['_feedbackContext'] = null;
-    let chatProjectProfile: OrchestratorInput['_projectIntelligenceProfile'] = null;
-    let chatRimContext = '';
-
-    if (
-      chatProjectIdNumber &&
-      Number.isFinite(chatProjectIdNumber) &&
-      orgId &&
-      Number.isFinite(Number(orgId))
-    ) {
-      const [feedbackResult, profileResult, rimResult] = await Promise.allSettled([
-        getFeedbackSummary(chatProjectIdNumber, Number(orgId)),
-        prefetchProjectIntelligence(chatProjectIdNumber, Number(orgId)),
-        chatAuthoringContext?.sectionCode || chatAuthoringContext?.artifactId
-          ? preloadRIMContext(String(chatProjectIdNumber), Number(orgId))
-          : Promise.resolve(''),
-      ]);
-
-      if (feedbackResult.status === 'fulfilled' && feedbackResult.value.totalFeedback > 0) {
-        chatFeedbackContext = {
-          totalFeedback: feedbackResult.value.totalFeedback,
-          acceptanceRate: feedbackResult.value.acceptanceRate,
-          topDismissedTypes: feedbackResult.value.topDismissedTypes,
-        };
-      }
-
-      if (profileResult.status === 'fulfilled') {
-        chatProjectProfile = profileResult.value;
-      }
-
-      if (rimResult.status === 'fulfilled') {
-        chatRimContext = rimResult.value;
-      }
-
-      try {
-        chatDecisionContext = decisionLifecycleService.getDecisionContext(String(chatProjectIdNumber), {
-          sectionCode:
-            typeof chatAuthoringContext?.sectionCode === 'string'
-              ? chatAuthoringContext.sectionCode
-              : undefined,
-          moduleCode:
-            typeof chatAuthoringContext?.moduleCode === 'string'
-              ? chatAuthoringContext.moduleCode
-              : undefined,
-          limit: 10,
-        });
-      } catch (e: unknown) {
-        console.warn(
-          '[AnA RI] Failed to preload decision context:',
-          e instanceof Error ? e.message : String(e),
-        );
-      }
-    }
-
-    let orchestratorAuthoringContext: OrchestratorInput['authoringContext'] | undefined;
-    if (chatAuthoringContext || chatProjectId || orgId) {
-      orchestratorAuthoringContext = {
-        ...(chatAuthoringContext || {}),
-        ...(chatProjectId ? { projectId: String(chatProjectId) } : {}),
-        ...(orgId ? { organizationId: Number(orgId) } : {}),
-      };
-      if (chatDecisionContext.length > 0) {
-        orchestratorAuthoringContext._decisionContext = chatDecisionContext;
-      }
-      if (chatRimContext) {
-        orchestratorAuthoringContext._rimContext = chatRimContext;
-      }
-    }
+    const prefetchedChatContext = await prefetchRouteIntelligenceContext({
+      projectId: chatProjectId,
+      organizationId: orgId,
+      authoringContext: chatAuthoringContext,
+    });
+    const chatDecisionContext = prefetchedChatContext.decisionContext;
+    const chatFeedbackContext = prefetchedChatContext.feedbackContext;
+    const chatProjectProfile = prefetchedChatContext.projectProfile;
+    const chatRimContext = prefetchedChatContext.rimContext;
+    const orchestratorAuthoringContext = buildOrchestratorAuthoringContext({
+      authoringContext: chatAuthoringContext,
+      projectId: chatProjectId,
+      organizationId: orgId,
+      decisionContext: chatDecisionContext,
+      rimContext: chatRimContext,
+    });
 
     // Orchestrate — build the complete system prompt
     const orchestratorInput: OrchestratorInput = {
@@ -863,85 +808,28 @@ router.post('/stream', async (req: Request, res: Response) => {
     // Shared builder parity: keep authoring-context serialization identical across chat/stream.
     const authoringContextBlock = buildAuthoringContextBlock(authoring_context);
 
-    const streamProjectId = project_id || req.body.context?.projectId || req.body.project_context?.projectId;
-    const streamProjectIdNumber = streamProjectId != null ? Number(streamProjectId) : null;
+    const streamProjectId = project_id || resolveProjectIdFromBody(req.body);
     const streamAuthoringContext =
       authoring_context && typeof authoring_context === 'object'
         ? ({ ...authoring_context } as Record<string, unknown>)
         : undefined;
 
-    let streamDecisionContext: Array<{ decision: unknown; receipt?: unknown }> = [];
-    let streamFeedbackContext: OrchestratorInput['_feedbackContext'] = null;
-    let streamProjectProfile: OrchestratorInput['_projectIntelligenceProfile'] = null;
-    let streamRimContext = '';
-
-    if (
-      streamProjectIdNumber &&
-      Number.isFinite(streamProjectIdNumber) &&
-      orgId &&
-      Number.isFinite(Number(orgId))
-    ) {
-      const [feedbackResult, profileResult, rimResult] = await Promise.allSettled([
-        getFeedbackSummary(streamProjectIdNumber, Number(orgId)),
-        prefetchProjectIntelligence(streamProjectIdNumber, Number(orgId)),
-        streamAuthoringContext?.sectionCode || streamAuthoringContext?.artifactId
-          ? preloadRIMContext(String(streamProjectIdNumber), Number(orgId))
-          : Promise.resolve(''),
-      ]);
-
-      if (feedbackResult.status === 'fulfilled' && feedbackResult.value.totalFeedback > 0) {
-        streamFeedbackContext = {
-          totalFeedback: feedbackResult.value.totalFeedback,
-          acceptanceRate: feedbackResult.value.acceptanceRate,
-          topDismissedTypes: feedbackResult.value.topDismissedTypes,
-        };
-      }
-
-      if (profileResult.status === 'fulfilled') {
-        streamProjectProfile = profileResult.value;
-      }
-
-      if (rimResult.status === 'fulfilled') {
-        streamRimContext = rimResult.value;
-      }
-
-      try {
-        streamDecisionContext = decisionLifecycleService.getDecisionContext(
-          String(streamProjectIdNumber),
-          {
-            sectionCode:
-              typeof streamAuthoringContext?.sectionCode === 'string'
-                ? streamAuthoringContext.sectionCode
-                : undefined,
-            moduleCode:
-              typeof streamAuthoringContext?.moduleCode === 'string'
-                ? streamAuthoringContext.moduleCode
-                : undefined,
-            limit: 10,
-          },
-        );
-      } catch (e: unknown) {
-        console.warn(
-          '[AnA RI Stream] Failed to preload decision context:',
-          e instanceof Error ? e.message : String(e),
-        );
-      }
-    }
-
-    let streamOrchestratorAuthoringContext: OrchestratorInput['authoringContext'] | undefined;
-    if (streamAuthoringContext || streamProjectId || orgId) {
-      streamOrchestratorAuthoringContext = {
-        ...(streamAuthoringContext || {}),
-        ...(streamProjectId ? { projectId: String(streamProjectId) } : {}),
-        ...(orgId ? { organizationId: Number(orgId) } : {}),
-      };
-      if (streamDecisionContext.length > 0) {
-        streamOrchestratorAuthoringContext._decisionContext = streamDecisionContext;
-      }
-      if (streamRimContext) {
-        streamOrchestratorAuthoringContext._rimContext = streamRimContext;
-      }
-    }
+    const prefetchedStreamContext = await prefetchRouteIntelligenceContext({
+      projectId: streamProjectId,
+      organizationId: orgId,
+      authoringContext: streamAuthoringContext,
+    });
+    const streamDecisionContext = prefetchedStreamContext.decisionContext;
+    const streamFeedbackContext = prefetchedStreamContext.feedbackContext;
+    const streamProjectProfile = prefetchedStreamContext.projectProfile;
+    const streamRimContext = prefetchedStreamContext.rimContext;
+    const streamOrchestratorAuthoringContext = buildOrchestratorAuthoringContext({
+      authoringContext: streamAuthoringContext,
+      projectId: streamProjectId,
+      organizationId: orgId,
+      decisionContext: streamDecisionContext,
+      rimContext: streamRimContext,
+    });
 
     // Orchestrate
     const orchestration = orchestrate({

@@ -89,6 +89,7 @@ function mockCommonDeps(options: {
   vi.doMock('../../server/services/ana-ri/document-actions.js', () => ({
     getAllActions: vi.fn(() => []),
     getActionsForLens: vi.fn(() => []),
+    buildDocumentActionContext: vi.fn(() => ''),
   }));
 
   vi.doMock('../../server/services/ana-ri/evaluation.js', () => ({
@@ -197,6 +198,19 @@ function mockCommonDeps(options: {
   }));
   vi.doMock('../../server/services/ana-ri/context-enrichment.js', () => ({
     enrichContextForChat: vi.fn(async () => ({ block: '', sources: [] })),
+  }));
+  vi.doMock('../../server/services/ana-ri/chat-context-builder.js', () => ({
+    buildAuthoringContextBlock: vi.fn(() => ''),
+    resolveProjectIdFromBody: vi.fn((body: any) => body?.project_id || body?.context?.projectId),
+    prefetchRouteIntelligenceContext: vi.fn(async () => ({
+      projectIdNumber: null,
+      feedbackContext: null,
+      projectProfile: null,
+      rimContext: '',
+      decisionContext: [],
+      orchestratorAuthoringContext: undefined,
+    })),
+    buildOrchestratorAuthoringContext: vi.fn(() => undefined),
   }));
   vi.doMock('../../server/services/ana-guidance-executor.js', () => ({
     processResponseActions: vi.fn(async () => ({ actions: [] })),
