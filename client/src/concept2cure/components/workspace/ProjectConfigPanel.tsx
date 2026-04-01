@@ -20,7 +20,24 @@ import {
   type ProjectCollaborator,
   type ProjectCollaboratorPermission,
 } from '@/concept2cure/hooks/useProjects';
-import { Settings, FileText, Users, ShieldCheck, Save } from 'lucide-react';
+import {
+  useProjectModules,
+  useLinkModule,
+  useUnlinkModule,
+  useUpdateModuleLink,
+  type ModuleType,
+  type ModuleLinkStatus,
+} from '@/concept2cure/hooks/useEnterprise';
+import { Settings, FileText, Users, ShieldCheck, Save, Link2, Unlink, Share2, Copy } from 'lucide-react';
+import { useLocation } from 'wouter';
+import {
+  formatModuleTypeLabel,
+  buildProjectSharePath,
+  hasExistingModuleLink,
+  parseModuleInstanceId,
+  parseNumericProjectId,
+} from './projectConfigPanel.utils';
+import { buildProjectModulePath } from '@/concept2cure/router/projectModuleRoutePolicy';
 
 interface ProjectConfigPanelProps {
   isOpen: boolean;
@@ -71,11 +88,29 @@ const STATUS_LABELS: Record<string, string> = {
   submitted: 'Submitted',
   archived: 'Archived',
 };
+const MODULE_TYPES: ModuleType[] = [
+  'cer',
+  'csr',
+  'ectd',
+  'vault',
+  'protocol',
+  'literature',
+  'regulatory_intelligence',
+  'analytics',
+  'faers',
+  'risk',
+  'ind',
+  '510k',
+  'cmc',
+  'pma',
+];
+const MODULE_STATUS_OPTIONS: ModuleLinkStatus[] = ['active', 'inactive', 'completed'];
 
 const INSTRUCTIONS_MAX = 5000;
 
 function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigPanelProps) {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState('general');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -96,6 +131,9 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
   const [newCollaboratorPermission, setNewCollaboratorPermission] =
     useState<ProjectCollaboratorPermission>('can_use');
   const [localCollaborators, setLocalCollaborators] = useState<ProjectCollaborator[] | null>(null);
+  const [newModuleType, setNewModuleType] = useState<ModuleType>('cer');
+  const [newModuleInstanceId, setNewModuleInstanceId] = useState('');
+  const [isCopyingShareLink, setIsCopyingShareLink] = useState(false);
 
   const {
     collaborators,
@@ -109,6 +147,16 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
     isLoading: isLoadingTeamMembers,
     error: teamMembersError,
   } = useProjectTeamMembers(project?.id ?? null);
+  const numericProjectId = parseNumericProjectId(project?.id);
+  const canManageModules = numericProjectId !== undefined;
+  const {
+    data: linkedModules = [],
+    isLoading: isLoadingModules,
+    error: modulesError,
+  } = useProjectModules(canManageModules ? numericProjectId : undefined);
+  const linkModuleMutation = useLinkModule();
+  const updateModuleLinkMutation = useUpdateModuleLink();
+  const unlinkModuleMutation = useUnlinkModule();
 
   const effectiveCollaborators = localCollaborators ?? collaborators;
   const assignedIds = useMemo(
@@ -219,6 +267,126 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
     }
   };
 
+  const handleLinkModule = async () => {
+    if (!canManageModules || numericProjectId === undefined) return;
+    const projectId = numericProjectId;
+    const moduleInstanceId = parseModuleInstanceId(newModuleInstanceId);
+    if (!moduleInstanceId) {
+      toast({
+        title: 'Invalid module instance ID',
+        description: 'Use a positive integer (e.g., 42).',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (hasExistingModuleLink(linkedModules, newModuleType, moduleInstanceId)) {
+      toast({
+        title: 'Module already linked',
+        description: `${newModuleType.toUpperCase()} #${moduleInstanceId} is already connected.`,
+      });
+      return;
+    }
+    try {
+      await linkModuleMutation.mutateAsync({
+        projectId,
+        moduleType: newModuleType,
+        moduleInstanceId,
+      });
+      setNewModuleInstanceId('');
+      toast({
+        title: 'Module linked',
+        description: `${newModuleType.toUpperCase()} module ${moduleInstanceId} is now connected.`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Failed to link module',
+        description: error instanceof Error ? error.message : 'Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleModuleStatusChange = async (
+    moduleType: ModuleType,
+    moduleInstanceId: number,
+    nextStatus: ModuleLinkStatus
+  ) => {
+    if (!canManageModules || numericProjectId === undefined) return;
+    const projectId = numericProjectId;
+    try {
+      await updateModuleLinkMutation.mutateAsync({
+        projectId,
+        moduleType,
+        moduleInstanceId,
+        data: { status: nextStatus },
+      });
+    } catch (error) {
+      toast({
+        title: 'Failed to update module status',
+        description: error instanceof Error ? error.message : 'Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleUnlinkModule = async (moduleType: ModuleType, moduleInstanceId: number) => {
+    if (!canManageModules || numericProjectId === undefined) return;
+    const projectId = numericProjectId;
+    try {
+      await unlinkModuleMutation.mutateAsync({
+        projectId,
+        moduleType,
+        moduleInstanceId,
+      });
+    } catch (error) {
+      toast({
+        title: 'Failed to unlink module',
+        description: error instanceof Error ? error.message : 'Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleOpenModule = (moduleType: ModuleType) => {
+    if (!project?.id) return;
+    const modulePath = buildProjectModulePath(project.id, moduleType);
+    if (!modulePath) {
+      toast({
+        title: 'Module route not available',
+        description: `${formatModuleTypeLabel(moduleType)} does not yet have a project route.`,
+      });
+      return;
+    }
+    setLocation(modulePath);
+    onClose();
+  };
+
+  const handleCopyShareLink = async () => {
+    if (!project?.id) return;
+    const path = buildProjectSharePath(project.id);
+    const absoluteUrl =
+      typeof window !== 'undefined' ? `${window.location.origin}${path}` : path;
+
+    setIsCopyingShareLink(true);
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(absoluteUrl);
+      }
+      toast({
+        title: 'Project link copied',
+        description: 'Share link copied to clipboard.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Unable to copy link',
+        description: error instanceof Error ? error.message : 'Copy the URL manually from the browser.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCopyingShareLink(false);
+    }
+  };
+
   return (
     <Sheet open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <SheetContent
@@ -261,6 +429,20 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
             >
               <Users className="h-3.5 w-3.5 mr-1.5" />
               Team
+            </TabsTrigger>
+            <TabsTrigger
+              value="sharing"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#4D4B45] data-[state=active]:bg-transparent data-[state=active]:shadow-none px-3 py-2.5 text-sm text-[#4D4B45]/60 data-[state=active]:text-[#4D4B45] font-medium"
+            >
+              <Share2 className="h-3.5 w-3.5 mr-1.5" />
+              Sharing
+            </TabsTrigger>
+            <TabsTrigger
+              value="modules"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#4D4B45] data-[state=active]:bg-transparent data-[state=active]:shadow-none px-3 py-2.5 text-sm text-[#4D4B45]/60 data-[state=active]:text-[#4D4B45] font-medium"
+            >
+              <Link2 className="h-3.5 w-3.5 mr-1.5" />
+              Modules
             </TabsTrigger>
             <TabsTrigger
               value="compliance"
@@ -581,6 +763,166 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
                   </Button>
                 </div>
               </div>
+            </TabsContent>
+
+            {/* ── Sharing Tab ── */}
+            <TabsContent value="sharing" className="px-6 py-5 m-0">
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-[#4D4B45]">Project sharing controls</h3>
+                <p className="text-xs text-[#4D4B45]/55">
+                  Sharing is organization-scoped and fail-closed by default. Grant explicit access
+                  and distribute a project URL for approved collaborators.
+                </p>
+                <div className="rounded-lg border border-[#E8E6DC] bg-white p-3">
+                  <p className="text-xs text-[#4D4B45]/70">
+                    Current collaborators: <strong>{effectiveCollaborators.length}</strong>
+                  </p>
+                  <p className="text-xs text-[#4D4B45]/50 mt-1">
+                    Required: explicit user assignment with <em>Can use</em> or <em>Can edit</em>.
+                  </p>
+                  <p className="text-xs text-[#4D4B45]/50 mt-2">
+                    Share path: <code className="text-[11px]">{project?.id ? buildProjectSharePath(project.id) : 'N/A'}</code>
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="border-[#E8E6DC] text-[#4D4B45]"
+                    onClick={handleCopyShareLink}
+                    disabled={!project?.id || isCopyingShareLink}
+                  >
+                    <Copy className="h-3.5 w-3.5 mr-1.5" />
+                    {isCopyingShareLink ? 'Copying…' : 'Copy share link'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="border-[#E8E6DC] text-[#4D4B45]"
+                    onClick={() => setActiveTab('team')}
+                  >
+                    Manage collaborators
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* ── Modules Tab ── */}
+            <TabsContent value="modules" className="px-6 py-5 m-0 space-y-4">
+              <div>
+                <h3 className="text-sm font-medium text-[#4D4B45] mb-1.5">Module linking</h3>
+                <p className="text-xs text-[#4D4B45]/55">
+                  Connect operational modules to this project to stabilize navigation paths and
+                  preserve context.
+                </p>
+              </div>
+              {!canManageModules && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                  Module links require a numeric project ID.
+                </div>
+              )}
+              <div className="rounded-lg border border-[#E8E6DC] bg-white p-3 space-y-2">
+                <div className="grid grid-cols-1 gap-2">
+                  <Select value={newModuleType} onValueChange={v => setNewModuleType(v as ModuleType)}>
+                    <SelectTrigger className="border-[#E8E6DC] bg-white text-[#4D4B45]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MODULE_TYPES.map(moduleType => (
+                        <SelectItem key={moduleType} value={moduleType}>
+                          {formatModuleTypeLabel(moduleType)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    value={newModuleInstanceId}
+                    onChange={e => setNewModuleInstanceId(e.target.value)}
+                    placeholder="Module instance ID (e.g., 42)"
+                    className="border-[#E8E6DC] bg-white text-[#4D4B45]"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleLinkModule}
+                  disabled={!canManageModules || linkModuleMutation.isPending}
+                  className="bg-[#4D4B45] text-white hover:bg-[#3A3935] disabled:opacity-40"
+                >
+                  {linkModuleMutation.isPending ? 'Linking…' : 'Link module'}
+                </Button>
+              </div>
+              <DataStateWrapper
+                isLoading={isLoadingModules}
+                error={modulesError as Error | null}
+                data={linkedModules}
+                emptyTitle="No module links"
+                emptyDescription="Link CER, eCTD, Vault, and other modules to this project."
+                testId="project-config-modules"
+              >
+                {items => (
+                  <div className="space-y-2">
+                    {items.map(item => (
+                      <div
+                        key={`${item.moduleType}-${item.moduleInstanceId}`}
+                        className="flex items-center justify-between gap-2 rounded-lg border border-[#E8E6DC] bg-white px-3 py-2"
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-[#4D4B45]">
+                            {formatModuleTypeLabel(item.moduleType)} #{item.moduleInstanceId}
+                          </p>
+                          <p className="text-xs text-[#4D4B45]/50">
+                            Linked {new Date(item.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Select
+                            value={item.status}
+                            onValueChange={value =>
+                              handleModuleStatusChange(
+                                item.moduleType,
+                                item.moduleInstanceId,
+                                value as ModuleLinkStatus
+                              )
+                            }
+                          >
+                            <SelectTrigger className="h-8 w-[120px] border-[#E8E6DC]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {MODULE_STATUS_OPTIONS.map(statusOption => (
+                                <SelectItem key={statusOption} value={statusOption}>
+                                  {statusOption}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-[#4D4B45]/60 hover:text-[#4D4B45]"
+                            onClick={() => handleOpenModule(item.moduleType)}
+                          >
+                            Open
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-[#4D4B45]/60 hover:text-red-600"
+                            onClick={() => handleUnlinkModule(item.moduleType, item.moduleInstanceId)}
+                            disabled={unlinkModuleMutation.isPending}
+                          >
+                            <Unlink className="h-3.5 w-3.5 mr-1" />
+                            Unlink
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </DataStateWrapper>
             </TabsContent>
 
             {/* ── Compliance Tab (placeholder) ── */}
