@@ -46,7 +46,8 @@ import { useProjectKnowledge } from './hooks/useProjectKnowledge';
 import { useProjectTasks } from './hooks/useProjectTasks';
 import { useAuthoringIntelligence } from './hooks/useAuthoringIntelligence';
 import { useProjects } from './hooks/useProjects';
-import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
+import { useCortexThreads, useCortexHealth, useDeleteCortexThread } from './hooks/useCortex';
+import { cortexService } from './services/cortexService';
 import { usePlatformContext } from './hooks/useLicense';
 import { useWorkspaceSummary } from './hooks/useWorkspaceSummary';
 import { useReadinessAssessment } from './hooks/useOrchestration';
@@ -1502,6 +1503,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       setSectionContradictions(authoringIntelligence.contradictions);
   }, [authoringIntelligence.readiness, authoringIntelligence.contradictions]);
 
+  const { mutateAsync: deleteThread } = useDeleteCortexThread();
+
   // Threads for current project
   const { data: threads = [] } = useCortexThreads(activeProjectId);
 
@@ -1712,25 +1715,60 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // ─────────────────────────────────────────────────────────────────────────────
 
   const handleDeleteConversation = useCallback(
-    (id: string) => {
-      // Threads are managed by Cortex - would call deleteThread mutation
-      if (activeConversationId === id) {
-        setActiveConversationId(undefined);
-        setActiveThreadId(undefined);
+    async (id: string) => {
+      try {
+        await deleteThread(id);
+        if (activeConversationId === id) {
+          setActiveConversationId(undefined);
+          setActiveThreadId(undefined);
+        }
+        toast({
+          title: 'Conversation deleted',
+          description: 'The conversation has been removed.',
+        });
+      } catch (error) {
+        toast({
+          title: 'Failed to delete conversation',
+          description: error instanceof Error ? error.message : 'Please try again.',
+          variant: 'destructive',
+        });
       }
     },
-    [activeConversationId]
+    [activeConversationId, deleteThread, toast]
   );
 
-  const handleToggleConversationStar = useCallback((id: string) => {
-    // Would update thread metadata via Cortex
-    console.log('Toggle star for conversation:', id);
+  const handleToggleConversationStar = useCallback(() => {
+    // Placeholder for metadata parity with Cortex thread model.
   }, []);
 
-  const handleToggleConversationPin = useCallback((id: string) => {
-    // Would update thread metadata via Cortex
-    console.log('Toggle pin for conversation:', id);
+  const handleToggleConversationPin = useCallback(() => {
+    // Placeholder for metadata parity with Cortex thread model.
   }, []);
+
+  const handleRenameConversation = useCallback(
+    async (id: string) => {
+      const existing = conversations.find(c => c.id === id);
+      if (!existing) return;
+      const nextTitle = window.prompt('Rename conversation', existing.title || 'New conversation');
+      if (!nextTitle) return;
+      const trimmed = nextTitle.trim();
+      if (!trimmed || trimmed === existing.title) return;
+      try {
+        await cortexService.updateThreadTitle(id, trimmed);
+        toast({
+          title: 'Conversation renamed',
+          description: 'The title was updated.',
+        });
+      } catch (error) {
+        toast({
+          title: 'Failed to rename conversation',
+          description: error instanceof Error ? error.message : 'Please try again.',
+          variant: 'destructive',
+        });
+      }
+    },
+    [conversations, toast]
+  );
 
   const handleMoveConversation = useCallback(
     async (conversationId: string, targetProjectId: string) => {
