@@ -348,7 +348,7 @@ export interface UnifiedDocumentEditorProps {
 // Custom TipTap Extension for Traceability
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { Mark, mergeAttributes } from '@tiptap/core';
+import { Mark } from '@tiptap/core';
 import Heading from '@tiptap/extension-heading';
 
 const TraceabilityMark = Mark.create({
