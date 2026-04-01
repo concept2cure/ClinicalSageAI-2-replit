@@ -10,6 +10,7 @@ import { AnAAssistantProvider } from './contexts/AnAAssistantContext';
 import { FileProvider } from './contexts/FileContext.jsx';
 import { EvidenceGraphProvider } from './contexts/EvidenceGraphContext';
 import { AnAAssistantContainer } from '@/components/ai/AnAAssistantContainer';
+import { LoadingState } from '@/components/ui/statesV2';
 import { memoryOptimizer } from './utils/memoryOptimizer';
 
 // Initialize memory optimization
@@ -223,9 +224,8 @@ const ProtectedRoute = ({ children }) => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
-        <span className="ml-2">Checking authentication...</span>
+      <div className="min-h-screen flex items-center justify-center bg-stone-50">
+        <LoadingState message="Checking authentication..." />
       </div>
     );
   }
@@ -260,7 +260,7 @@ function AppContent() {
 
 function MainApp() {
   // Default tab for the UnifiedTopNavV3 component
-  const [activeTab, setActiveTab] = useState('RiskHeatmap');
+  const activeTab = 'RiskHeatmap';
   const [isLoading, setIsLoading] = useState(true);
 
   // Initial loading state management - removed artificial delay
@@ -313,28 +313,8 @@ function MainApp() {
   // Show loading screen during initial hydration
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <svg
-          className="animate-spin h-8 w-8 text-blue-600"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          ></circle>
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-          ></path>
-        </svg>
-        <span className="ml-2 text-gray-700">Loading platform...</span>
+      <div className="min-h-screen flex items-center justify-center bg-stone-50">
+        <LoadingState message="Loading platform..." />
       </div>
     );
   }
@@ -343,7 +323,7 @@ function MainApp() {
     <div>
       {/* Only show the UnifiedTopNavV3 if we're not on the landing page, regulatory hub, or dashboard */}
       {shouldShowNav && (
-        <UnifiedTopNavV3 activeTab={activeTab} onTabChange={setActiveTab} navItems={navItems} />
+        <UnifiedTopNavV3 activeTab={activeTab} navItems={navItems} />
       )}
       <div
         className={
