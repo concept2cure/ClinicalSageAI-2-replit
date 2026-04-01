@@ -3741,7 +3741,18 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         });
     }
 
-    handleSend(action.label);
+    const intentToPrompt: Record<string, string> = {
+      recommendation: '/recommend',
+      'next-action': '/next',
+      'risk-assessment': '/risk',
+      'open-question': '/knowledge',
+      ctd_map: '/workflow',
+      find_predicates: '/precedent',
+      check_readiness: '/readiness',
+      draft_section: '/draft',
+    };
+    const mappedPrompt = action.intent ? intentToPrompt[action.intent] : undefined;
+    handleSend(mappedPrompt || action.label);
   };
 
   const hasMessages = messages.length > 0;

@@ -60,7 +60,7 @@ interface SlashCommand {
 }
 
 function detectSlashCommand(message: string): SlashCommand | null {
-  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|help|sap|power|dose|defensibility|design|safety|cmc|csr|device|ectd|audit|amend|review|memo|brief|strategy|freeze|sign|scan|checklist|submit|workflow|status|narrative|report|iss|ise|ib|smpc|rmp|uspi|haq|ask)\b\s*(.*)/i);
+  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|decisions|help|sap|power|dose|defensibility|design|safety|cmc|csr|device|ectd|audit|amend|review|memo|brief|strategy|freeze|sign|scan|checklist|submit|workflow|status|narrative|report|iss|ise|ib|smpc|rmp|uspi|haq|ask)\b\s*(.*)/i);
   if (!match) return null;
   return { command: match[1].toLowerCase(), args: match[2].trim() };
 }
@@ -520,6 +520,31 @@ async function enrichWithKnowledgeSearch(query: string, projectId: string | numb
   }
 }
 
+async function enrichWithDecisions(projectId: string | number): Promise<string> {
+  try {
+    const { decisionLifecycleService } = await import('../decision-lifecycle-service.js');
+    const decisionCtx = decisionLifecycleService.getDecisionContext(String(projectId), { limit: 12 });
+    const decisionAwareStatus = decisionLifecycleService.computeDecisionAwareStatus(String(projectId), {});
+
+    if (decisionCtx.length === 0) {
+      return '\n\n## Decision Audit Trail\nNo formal decisions recorded for this project yet.';
+    }
+
+    const lines = decisionCtx.slice(0, 10).map(({ decision, receipt }) => {
+      const authority = decision.authority?.level ? ` | authority: ${decision.authority.level}` : '';
+      const receiptState = receipt
+        ? ` | receipt: ${receipt.execution?.executed ? 'executed' : 'pending'}${(receipt.pendingApprovals?.length || 0) > 0 ? `, ${receipt.pendingApprovals.length} pending approval(s)` : ''}`
+        : '';
+      return `- **[${decision.status.toUpperCase()}]** ${decision.kind}: ${decision.summary}${authority}${receiptState}`;
+    });
+
+    return `\n\n## Decision Audit Trail\n${decisionAwareStatus.summary}\n\n${lines.join('\n')}\n\nUse this decision trail for explanation grounding and to avoid contradicting prior approvals.`;
+  } catch (e: unknown) {
+    console.warn('[enrichment] Decision trail enrichment failed:', e instanceof Error ? e.message : String(e));
+    return '';
+  }
+}
+
 async function enrichWithDomainMemory(projectId: string | number, domain: string, categories: string[], label: string): Promise<string> {
   const memBlock = await enrichWithProjectMemory(projectId, categories, label,
     `Project-specific ${domain} data. Reference directly in your response.`, 5);
@@ -723,6 +748,7 @@ export async function enrichContextForChat(params: {
       consistency: () => enrichWithCrossModule(projectId, organizationId),
       deficiencies: () => enrichWithDeficiencies(submissionType),
       knowledge: () => enrichWithKnowledgeSearch(slash.args || message, projectId),
+      decisions: () => enrichWithDecisions(projectId),
       sap: () => enrichWithBiostatContext(projectId, submissionType),
       power: () => enrichWithBiostatContext(projectId, submissionType),
       dose: () => enrichWithBiostatContext(projectId, submissionType),
@@ -797,6 +823,7 @@ export async function enrichContextForChat(params: {
       consistency: 'Analyze cross-module consistency: find stale references, status gaps, orphaned documents, and module dependency issues across the entire dossier.',
       deficiencies: `Show the known deficiency taxonomy for ${submissionType || 'this submission type'}. List critical deficiency patterns and common reviewer triggers.`,
       knowledge: slash.args ? `Search the project knowledge base for: ${slash.args}` : 'Show all knowledge atoms stored for this project.',
+      decisions: 'Show the decision audit trail for this project. List recent decisions, current status, pending approvals, and execution receipts.',
       sap: slash.args ? `Generate a Statistical Analysis Plan for: ${slash.args}` : 'Generate a Statistical Analysis Plan. Ask the user for study parameters: indication, phase, primary endpoint, sample size target, alpha/power, and missing data strategy.',
       power: slash.args ? `Calculate sample size and power for: ${slash.args}` : 'Calculate sample size and statistical power. Ask the user for: endpoint type (continuous/binary/time-to-event), effect size, alpha, target power, allocation ratio, and dropout rate.',
       dose: slash.args ? `Design a dose escalation study for: ${slash.args}` : 'Design a dose escalation protocol. Ask for: starting dose, dose levels, target DLT rate, escalation method (3+3, BOIN, CRM, or Modified Fibonacci).',

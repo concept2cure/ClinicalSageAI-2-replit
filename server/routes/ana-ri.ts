@@ -22,6 +22,10 @@ import {
   type UserRole,
 } from '../services/ana-ri/index.js';
 import {
+  prefetchProjectIntelligence,
+  preloadRIMContext,
+} from '../services/ana-ri/orchestrator.js';
+import {
   DEFICIENCY_TAXONOMY,
   getDeficienciesBySubmissionType,
   getCriticalDeficiencies,
@@ -88,6 +92,8 @@ import {
   persistEvidence,
   normalizeEvidence,
 } from '../services/research-intelligence';
+import { decisionLifecycleService } from '../services/decision-lifecycle-service.js';
+import { getFeedbackSummary } from '../services/intelligence/learning-loop-service.js';
 
 const router = Router();
 
@@ -362,6 +368,83 @@ router.post('/chat', async (req: Request, res: Response) => {
       }
     }
 
+    const chatProjectId = req.body.project_id || req.body.context?.projectId;
+    const chatProjectIdNumber = chatProjectId != null ? Number(chatProjectId) : null;
+    const chatAuthoringContext =
+      authoring_context && typeof authoring_context === 'object'
+        ? ({ ...authoring_context } as Record<string, unknown>)
+        : undefined;
+
+    let chatDecisionContext: Array<{ decision: unknown; receipt?: unknown }> = [];
+    let chatFeedbackContext: OrchestratorInput['_feedbackContext'] = null;
+    let chatProjectProfile: OrchestratorInput['_projectIntelligenceProfile'] = null;
+    let chatRimContext = '';
+
+    if (
+      chatProjectIdNumber &&
+      Number.isFinite(chatProjectIdNumber) &&
+      orgId &&
+      Number.isFinite(Number(orgId))
+    ) {
+      const [feedbackResult, profileResult, rimResult] = await Promise.allSettled([
+        getFeedbackSummary(chatProjectIdNumber, Number(orgId)),
+        prefetchProjectIntelligence(chatProjectIdNumber, Number(orgId)),
+        chatAuthoringContext?.sectionCode || chatAuthoringContext?.artifactId
+          ? preloadRIMContext(String(chatProjectIdNumber), Number(orgId))
+          : Promise.resolve(''),
+      ]);
+
+      if (feedbackResult.status === 'fulfilled' && feedbackResult.value.totalFeedback > 0) {
+        chatFeedbackContext = {
+          totalFeedback: feedbackResult.value.totalFeedback,
+          acceptanceRate: feedbackResult.value.acceptanceRate,
+          topDismissedTypes: feedbackResult.value.topDismissedTypes,
+        };
+      }
+
+      if (profileResult.status === 'fulfilled') {
+        chatProjectProfile = profileResult.value;
+      }
+
+      if (rimResult.status === 'fulfilled') {
+        chatRimContext = rimResult.value;
+      }
+
+      try {
+        chatDecisionContext = decisionLifecycleService.getDecisionContext(String(chatProjectIdNumber), {
+          sectionCode:
+            typeof chatAuthoringContext?.sectionCode === 'string'
+              ? chatAuthoringContext.sectionCode
+              : undefined,
+          moduleCode:
+            typeof chatAuthoringContext?.moduleCode === 'string'
+              ? chatAuthoringContext.moduleCode
+              : undefined,
+          limit: 10,
+        });
+      } catch (e: unknown) {
+        console.warn(
+          '[AnA RI] Failed to preload decision context:',
+          e instanceof Error ? e.message : String(e),
+        );
+      }
+    }
+
+    let orchestratorAuthoringContext: OrchestratorInput['authoringContext'] | undefined;
+    if (chatAuthoringContext || chatProjectId || orgId) {
+      orchestratorAuthoringContext = {
+        ...(chatAuthoringContext || {}),
+        ...(chatProjectId ? { projectId: String(chatProjectId) } : {}),
+        ...(orgId ? { organizationId: Number(orgId) } : {}),
+      };
+      if (chatDecisionContext.length > 0) {
+        orchestratorAuthoringContext._decisionContext = chatDecisionContext;
+      }
+      if (chatRimContext) {
+        orchestratorAuthoringContext._rimContext = chatRimContext;
+      }
+    }
+
     // Orchestrate — build the complete system prompt
     const orchestratorInput: OrchestratorInput = {
       message,
@@ -371,6 +454,9 @@ router.post('/chat', async (req: Request, res: Response) => {
       documentContext: document_context,
       submissionType: submission_type as SubmissionType | undefined,
       conversationHistory: conversation_history,
+      authoringContext: orchestratorAuthoringContext,
+      _feedbackContext: chatFeedbackContext,
+      _projectIntelligenceProfile: chatProjectProfile,
     };
 
     const orchestration = orchestrate(orchestratorInput);
@@ -402,7 +488,6 @@ router.post('/chat', async (req: Request, res: Response) => {
     }
 
     // Intelligence + memory + enrichment — run in PARALLEL for speed
-    const chatProjectId = req.body.project_id || req.body.context?.projectId;
     const [chatIntelligencePrefix, chatMemoryResult, chatEnrichment] = await Promise.all([
       getIntelligencePrefix(orgId ? Number(orgId) : undefined, chatProjectId).catch(err => {
         console.warn('[AnA RI] Intelligence prefix failed:', err?.message);
@@ -806,6 +891,86 @@ router.post('/stream', async (req: Request, res: Response) => {
       authoringContextBlock = parts.join('\n');
     }
 
+    const streamProjectId = project_id || req.body.context?.projectId;
+    const streamProjectIdNumber = streamProjectId != null ? Number(streamProjectId) : null;
+    const streamAuthoringContext =
+      authoring_context && typeof authoring_context === 'object'
+        ? ({ ...authoring_context } as Record<string, unknown>)
+        : undefined;
+
+    let streamDecisionContext: Array<{ decision: unknown; receipt?: unknown }> = [];
+    let streamFeedbackContext: OrchestratorInput['_feedbackContext'] = null;
+    let streamProjectProfile: OrchestratorInput['_projectIntelligenceProfile'] = null;
+    let streamRimContext = '';
+
+    if (
+      streamProjectIdNumber &&
+      Number.isFinite(streamProjectIdNumber) &&
+      orgId &&
+      Number.isFinite(Number(orgId))
+    ) {
+      const [feedbackResult, profileResult, rimResult] = await Promise.allSettled([
+        getFeedbackSummary(streamProjectIdNumber, Number(orgId)),
+        prefetchProjectIntelligence(streamProjectIdNumber, Number(orgId)),
+        streamAuthoringContext?.sectionCode || streamAuthoringContext?.artifactId
+          ? preloadRIMContext(String(streamProjectIdNumber), Number(orgId))
+          : Promise.resolve(''),
+      ]);
+
+      if (feedbackResult.status === 'fulfilled' && feedbackResult.value.totalFeedback > 0) {
+        streamFeedbackContext = {
+          totalFeedback: feedbackResult.value.totalFeedback,
+          acceptanceRate: feedbackResult.value.acceptanceRate,
+          topDismissedTypes: feedbackResult.value.topDismissedTypes,
+        };
+      }
+
+      if (profileResult.status === 'fulfilled') {
+        streamProjectProfile = profileResult.value;
+      }
+
+      if (rimResult.status === 'fulfilled') {
+        streamRimContext = rimResult.value;
+      }
+
+      try {
+        streamDecisionContext = decisionLifecycleService.getDecisionContext(
+          String(streamProjectIdNumber),
+          {
+            sectionCode:
+              typeof streamAuthoringContext?.sectionCode === 'string'
+                ? streamAuthoringContext.sectionCode
+                : undefined,
+            moduleCode:
+              typeof streamAuthoringContext?.moduleCode === 'string'
+                ? streamAuthoringContext.moduleCode
+                : undefined,
+            limit: 10,
+          },
+        );
+      } catch (e: unknown) {
+        console.warn(
+          '[AnA RI Stream] Failed to preload decision context:',
+          e instanceof Error ? e.message : String(e),
+        );
+      }
+    }
+
+    let streamOrchestratorAuthoringContext: OrchestratorInput['authoringContext'] | undefined;
+    if (streamAuthoringContext || streamProjectId || orgId) {
+      streamOrchestratorAuthoringContext = {
+        ...(streamAuthoringContext || {}),
+        ...(streamProjectId ? { projectId: String(streamProjectId) } : {}),
+        ...(orgId ? { organizationId: Number(orgId) } : {}),
+      };
+      if (streamDecisionContext.length > 0) {
+        streamOrchestratorAuthoringContext._decisionContext = streamDecisionContext;
+      }
+      if (streamRimContext) {
+        streamOrchestratorAuthoringContext._rimContext = streamRimContext;
+      }
+    }
+
     // Orchestrate
     const orchestration = orchestrate({
       message,
@@ -815,6 +980,9 @@ router.post('/stream', async (req: Request, res: Response) => {
       documentContext: document_context,
       submissionType: submission_type as SubmissionType | undefined,
       conversationHistory: conversation_history,
+      authoringContext: streamOrchestratorAuthoringContext,
+      _feedbackContext: streamFeedbackContext,
+      _projectIntelligenceProfile: streamProjectProfile,
     });
 
     if (authoringContextBlock) {
@@ -832,14 +1000,14 @@ router.post('/stream', async (req: Request, res: Response) => {
 
     // Intelligence + memory + enrichment — run in PARALLEL for speed
     const [intelligencePrefix, memoryResult, enrichment] = await Promise.all([
-      getIntelligencePrefix(orgId ? Number(orgId) : undefined, project_id).catch(err => {
+      getIntelligencePrefix(orgId ? Number(orgId) : undefined, streamProjectId).catch(err => {
         console.warn('[AnA RI] Intelligence prefix failed:', err?.message);
         return '';
       }),
       buildMemoryContextForChat({
         threadId: thread_id || undefined,
         organizationId: orgId ? Number(orgId) : undefined,
-        projectId: project_id || undefined,
+        projectId: streamProjectId || undefined,
         query: message,
         limitPerLayer: 4,
         maxChars: 3500,
@@ -849,7 +1017,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       }),
       enrichContextForChat({
         message,
-        projectId: project_id,
+        projectId: streamProjectId,
         organizationId: orgId ? Number(orgId) : undefined,
         submissionType: orchestration.detectedSubmissionType || undefined,
       }).catch(err => {
@@ -1016,10 +1184,10 @@ router.post('/stream', async (req: Request, res: Response) => {
     }
 
     // RIM interception — capture intelligence signals (non-blocking)
-    if (fullContent && project_id) {
+    if (fullContent && streamProjectId) {
       interceptChatResponse({
         organizationId: orgId ? Number(orgId) : 0,
-        projectId: project_id ? Number(project_id) : 0,
+        projectId: streamProjectId ? Number(streamProjectId) : 0,
         userId: typeof userId === 'number' ? userId : undefined,
         assistantMessage: fullContent,
         claimCount: 0,
@@ -1031,10 +1199,13 @@ router.post('/stream', async (req: Request, res: Response) => {
 
     // Guidance executor — auto-create artifacts if response contains action signals
     let executedActions: any[] = [];
-    if (fullContent && project_id && orgId) {
+    if (fullContent && streamProjectId && orgId) {
       try {
         const guidance = await processResponseActions(fullContent, {
-          projectId: typeof project_id === 'string' ? Number.parseInt(project_id, 10) : project_id,
+          projectId:
+            typeof streamProjectId === 'string'
+              ? Number.parseInt(streamProjectId, 10)
+              : streamProjectId,
           organizationId: Number(orgId),
           userId: typeof userId === 'number' ? userId : 0,
           userName: 'AnA',
@@ -1053,10 +1224,10 @@ router.post('/stream', async (req: Request, res: Response) => {
         const cmdCtx: CommandContext = {
           userId: typeof userId === 'number' ? userId : 0,
           organizationId: Number(orgId),
-          activeProjectId: project_id
-            ? typeof project_id === 'string'
-              ? Number.parseInt(project_id, 10)
-              : project_id
+          activeProjectId: streamProjectId
+            ? typeof streamProjectId === 'string'
+              ? Number.parseInt(streamProjectId, 10)
+              : streamProjectId
             : undefined,
         };
         const { processCommandsInResponse } =
@@ -1643,6 +1814,56 @@ router.get('/commands', async (_req: Request, res: Response) => {
       error?.message || 'Command registry unavailable',
       null,
       'COMMANDS_UNAVAILABLE'
+    );
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/ana-ri/decisions — Decision audit trail for current project
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/decisions', async (req: Request, res: Response) => {
+  try {
+    const { project_id, section_code, module_code, limit } = req.query;
+
+    if (!project_id || typeof project_id !== 'string') {
+      return sendError(
+        res,
+        400,
+        'project_id query parameter is required',
+        null,
+        'MISSING_PROJECT_ID',
+      );
+    }
+
+    const decisionLimit = Number(limit);
+    const safeLimit =
+      Number.isFinite(decisionLimit) && decisionLimit > 0
+        ? Math.min(Math.floor(decisionLimit), 50)
+        : 20;
+
+    const context = decisionLifecycleService.getContradictionDecisionContext(project_id, {
+      sectionCode: typeof section_code === 'string' ? section_code : undefined,
+      moduleCode: typeof module_code === 'string' ? module_code : undefined,
+      limit: safeLimit,
+    });
+
+    const decisionAwareStatus = decisionLifecycleService.computeDecisionAwareStatus(project_id, {
+      moduleCode: typeof module_code === 'string' ? module_code : undefined,
+    });
+
+    return sendSuccess(res, {
+      projectId: project_id,
+      count: context.length,
+      decisionAwareStatus,
+      decisions: context,
+    });
+  } catch (error: any) {
+    return sendError(
+      res,
+      500,
+      error?.message || 'Failed to load decision audit trail',
+      null,
+      'DECISIONS_FETCH_FAILED',
     );
   }
 });
