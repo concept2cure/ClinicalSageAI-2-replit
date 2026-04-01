@@ -858,7 +858,8 @@ router.post('/correction-draft', async (req: Request, res: Response) => {
     const { projectId, artifactId, sectionCode, triggerDescription } = req.body;
     if (!projectId) return res.status(400).json({ error: 'projectId is required' });
 
-    const orgId = (req as any).tenantId || 1;
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
     const targets: any[] = [];
 
     try {
@@ -1053,7 +1054,8 @@ router.post('/resolution-changelog', async (req: Request, res: Response) => {
     const { projectId, bundleId } = req.body;
     if (!projectId) return res.status(400).json({ error: 'projectId is required' });
 
-    const orgId = (req as any).tenantId || 1;
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
     const explanations: any[] = [];
 
     try {
@@ -1121,9 +1123,11 @@ router.get('/module-readiness/:projectId/:moduleCode', async (req: Request, res:
         '../services/orchestration/readiness-engine.js'
       );
       if (computeReadinessAssessment) {
+        const tenantId = requireTenantId(req, res);
+        if (tenantId == null) return;
         const assessment = await computeReadinessAssessment({
           projectId: Number(projectId),
-          organizationId: 'default',
+          organizationId: String(tenantId),
         });
 
         // Find specific module in breakdown
@@ -1587,11 +1591,12 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
             artifactId: sec.id, regulatorBody, submissionType,
             linkedSectionCodes: linked,
           },
-          tenantId: (req as any).tenantId || 1,
+          tenantId: orgId,
         };
         // Inline the section preflight logic instead of HTTP call
         // Use simplified check aggregation
-        const orgId = (req as any).tenantId || 1;
+        const orgId = requireTenantId(req, res);
+        if (orgId == null) return null;
         type CS = 'pass' | 'warn' | 'fail' | 'unknown';
         const checks: Record<string, any> = {};
 
@@ -1599,7 +1604,10 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
         try {
           const { computeReadinessAssessment } = await import('../services/orchestration/readiness-engine.js');
           if (computeReadinessAssessment) {
-            const assessment = await computeReadinessAssessment({ projectId: Number(projectId), organizationId: 'default' });
+            const assessment = await computeReadinessAssessment({
+              projectId: Number(projectId),
+              organizationId: String(orgId),
+            });
             const major = sec.ctdSection.split('.')[0];
             const blockers = (assessment?.blockers || [])
               .filter((b: any) => !b.module || b.module === `m${major}`)
@@ -1763,7 +1771,8 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
         '../services/contradiction-engine-service.js'
       );
       contradictionContext = await contradictionEngineService.buildPreflightContradictionContext(
-        (req as any).tenantId || 1, Number(projectId),
+        Number(orgId),
+        Number(projectId),
         { moduleCode, regulatorBody, submissionType }
       );
     } catch { /* non-blocking */ }
@@ -1846,7 +1855,10 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
     try {
       const { computeReadinessAssessment } = await import('../services/orchestration/readiness-engine.js');
       if (computeReadinessAssessment) {
-        const assessment = await computeReadinessAssessment({ projectId: Number(projectId), organizationId: 'default' });
+        const assessment = await computeReadinessAssessment({
+          projectId: Number(projectId),
+          organizationId: String(orgId),
+        });
         readinessBlockers = (assessment?.blockers || []).filter((b: any) => b.severity === 'critical' || b.severity === 'major')
           .slice(0, 10).map((b: any) => ({
             kind: 'readiness-blocker', severity: b.severity,
@@ -1943,7 +1955,8 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
         '../services/contradiction-engine-service.js'
       );
       contradictionContext = await contradictionEngineService.buildPreflightContradictionContext(
-        (req as any).tenantId || 1, Number(projectId),
+        Number(orgId),
+        Number(projectId),
         { regulatorBody, submissionType }
       );
     } catch { /* non-blocking */ }
@@ -1983,7 +1996,8 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'projectId and sectionCode are required' });
     }
 
-    const orgId = (req as any).tenantId || 1;
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
     type CheckStatus = 'pass' | 'warn' | 'fail' | 'unknown';
     const checks: Record<string, any> = {};
 
@@ -1998,7 +2012,8 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
             );
             if (!computeReadinessAssessment) return null;
             const assessment = await computeReadinessAssessment({
-              projectId: Number(projectId), organizationId: 'default',
+              projectId: Number(projectId),
+              organizationId: String(orgId),
             });
             const major = sectionCode.split('.')[0];
             const moduleItem = (assessment?.moduleBreakdown || []).find(
@@ -2238,9 +2253,11 @@ router.get('/section-context/:projectId/:sectionCode', async (req: Request, res:
         '../services/orchestration/readiness-engine.js'
       );
       if (computeReadinessAssessment) {
+        const tenantId = requireTenantId(req, res);
+        if (tenantId == null) return;
         const assessment = await computeReadinessAssessment({
           projectId: Number(projectId),
-          organizationId: 'default',
+          organizationId: String(tenantId),
         });
         // Extract section-level readiness from module breakdown
         const moduleBreakdown = assessment?.moduleBreakdown || [];
@@ -2516,7 +2533,8 @@ router.post('/contradiction-scan', async (req: Request, res: Response) => {
     const { projectId, regulatorBody, submissionType } = req.body;
     if (!projectId) return res.status(400).json({ error: 'projectId is required' });
 
-    const orgId = (req as any).tenantId || 1;
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
 
     // Run full scan (Pass 8 extended)
     const { contradictionEngineService } = await import(
@@ -2639,7 +2657,8 @@ router.post('/contradiction-consequence', async (req: Request, res: Response) =>
       return res.status(400).json({ error: 'findingId and consequenceType are required' });
     }
 
-    const orgId = (req as any).tenantId || 1;
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
     const userId = (req as any).userId || 'system';
     const userRole = (req as any).userRole || undefined;
 
@@ -2687,7 +2706,8 @@ router.get('/contradiction-context/:projectId', async (req: Request, res: Respon
   try {
     const { projectId } = req.params;
     const { sectionCode, moduleCode, regulatorBody, submissionType } = req.query;
-    const orgId = (req as any).tenantId || 1;
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
 
     // Build enriched contradiction context
     const { contradictionEngineService } = await import(
@@ -2748,7 +2768,8 @@ router.post('/plan-contradiction-resolution', async (req: Request, res: Response
       return res.status(400).json({ error: 'projectId, findingId, and finding are required' });
     }
 
-    const orgId = (req as any).tenantId || (req as any).organizationId || 1;
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
     const userId = (req as any).userId || 0;
 
     const { planContradictionResolution } = await import(
@@ -2782,7 +2803,8 @@ router.post('/execute-contradiction-resolution', async (req: Request, res: Respo
       return res.status(400).json({ error: 'projectId, findingId, and finding are required' });
     }
 
-    const orgId = (req as any).tenantId || (req as any).organizationId || 1;
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
     const userId = (req as any).userId || 0;
     const actorRole = (req as any).userRole || undefined;
 
@@ -2816,7 +2838,8 @@ router.post('/explain-contradiction-resolution', async (req: Request, res: Respo
       return res.status(400).json({ error: 'projectId, findingId, and finding are required' });
     }
 
-    const orgId = (req as any).tenantId || (req as any).organizationId || 1;
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
 
     const { explainContradictionResolution } = await import(
       '../services/resolution/contradiction-resolution-bridge.js'
@@ -2847,7 +2870,8 @@ router.get('/project-resolution-status/:projectId', async (req: Request, res: Re
       return res.status(400).json({ error: 'Invalid projectId' });
     }
 
-    const orgId = (req as any).tenantId || (req as any).organizationId || 1;
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
 
     const { getProjectResolutionStatus } = await import(
       '../services/resolution/contradiction-resolution-bridge.js'
@@ -2872,7 +2896,8 @@ router.get('/project-resolution-status/:projectId', async (req: Request, res: Re
  */
 router.post('/seed-overlay-rules', async (req: Request, res: Response) => {
   try {
-    const orgId = (req as any).tenantId || 1;
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
 
     const { regulatorOverlayEngine } = await import(
       '../services/regulator-overlay-engine.js'

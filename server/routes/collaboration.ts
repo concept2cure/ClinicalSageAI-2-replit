@@ -2,16 +2,13 @@
  * Collaboration Routes — Team activity and presence
  *
  * Provides activity feed and team member data for the collaboration sidebar.
- * Pulls from the mission-control in-memory store until migrated to DB.
+ * Uses persisted user/activity data from DB-backed sources.
  */
 import { Router, Request, Response } from 'express';
 import { db } from '../db';
-import { users, organizations } from '../../shared/schema';
-import { eq } from 'drizzle-orm';
+import { users } from '../../shared/schema';
 
 const router = Router();
-
-const isDev = process.env.NODE_ENV === 'development';
 
 /**
  * GET /api/collaboration/activities
@@ -92,16 +89,8 @@ router.get('/team', async (req: Request, res: Response) => {
     res.json({ members });
   } catch (error) {
     console.error('[collaboration] Team error:', error);
-    if (isDev) {
-      // Return demo data in dev mode
-      res.json({
-        members: [
-          { id: 1, name: 'Dev User', email: 'developer@trialsage.ai', title: 'Developer', department: 'Engineering', avatar: null, presence: 'online', lastSeen: new Date().toISOString() },
-        ],
-      });
-    } else {
-      res.json({ members: [] });
-    }
+    // Fail closed instead of returning demo/fabricated presence data
+    res.json({ members: [] });
   }
 });
 

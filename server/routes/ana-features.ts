@@ -16,6 +16,17 @@ import { db } from '../db';
 import { gapAnalysisResults } from '../../shared/schema';
 
 const router = Router();
+const ANA_FEATURES_MOCK_ROUTES_ENABLED =
+  process.env.ENABLE_ANA_FEATURES_MOCK_ROUTES === 'true' && process.env.NODE_ENV !== 'production';
+
+function requireMockRoutesEnabled(res: Response): boolean {
+  if (ANA_FEATURES_MOCK_ROUTES_ENABLED) return true;
+  res.status(503).json({
+    error: 'This endpoint is disabled in this environment',
+    code: 'ANA_FEATURE_DISABLED',
+  });
+  return false;
+}
 
 // Rate limiter for analysis endpoints (10 req/min)
 const analysisRateLimiter = createRateLimiter({
@@ -322,8 +333,13 @@ const intelligenceFeedItems = [
 // 1. GET /api/ana/intelligence-feed
 // ---------------------------------------------------------------------------
 
-router.get('/intelligence-feed', (req: Request, res: Response) => {
+router.get(
+  '/intelligence-feed',
+  authenticateToken,
+  requireOrganizationContext,
+  (req: Request, res: Response) => {
   try {
+    if (!requireMockRoutesEnabled(res)) return;
     const {
       therapeuticArea,
       agencies,
@@ -367,7 +383,8 @@ router.get('/intelligence-feed', (req: Request, res: Response) => {
       details: error instanceof Error ? error.message : String(error),
     });
   }
-});
+  }
+);
 
 // ---------------------------------------------------------------------------
 // 2. POST /api/ana/gap-analysis — Submission requirements by type
@@ -531,7 +548,14 @@ router.post(
     }
 
     const { submissionType: normalizedType, uploadedDocuments, projectId } = parsed.data;
-    const organizationId = (req as any).tenantContext?.organizationId || (req as any).organizationId;
+    const organizationId =
+      (req as any).tenantContext?.organizationId ?? (req as any).organizationId;
+    if (!organizationId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Organization context required',
+      });
+    }
     const userId = req.user?.id || req.user?.userId;
 
     const requirements = ectdRequirements[normalizedType];
@@ -793,8 +817,9 @@ const guidanceChanges: Record<string, GuidanceChange> = {
   },
 };
 
-router.post('/change-impact', (req: Request, res: Response) => {
+router.post('/change-impact', authenticateToken, requireOrganizationContext, (req: Request, res: Response) => {
   try {
+    if (!requireMockRoutesEnabled(res)) return;
     const { guidanceId, submissionType } = req.body as {
       guidanceId: string;
       submissionType: string;
@@ -865,8 +890,9 @@ function getOrCreateProjectMemory(projectId: string): ProjectMemoryStore {
 }
 
 // GET /api/ana/memory/:projectId — Retrieve memories
-router.get('/memory/:projectId', (req: Request, res: Response) => {
+router.get('/memory/:projectId', authenticateToken, requireOrganizationContext, (req: Request, res: Response) => {
   try {
+    if (!requireMockRoutesEnabled(res)) return;
     const { projectId } = req.params;
     const store = getOrCreateProjectMemory(projectId);
 
@@ -884,8 +910,9 @@ router.get('/memory/:projectId', (req: Request, res: Response) => {
 });
 
 // POST /api/ana/memory/:projectId — Save a new memory
-router.post('/memory/:projectId', (req: Request, res: Response) => {
+router.post('/memory/:projectId', authenticateToken, requireOrganizationContext, (req: Request, res: Response) => {
   try {
+    if (!requireMockRoutesEnabled(res)) return;
     const { projectId } = req.params;
     const { type, content } = req.body as {
       type: 'preference' | 'fact' | 'decision' | 'context';
@@ -949,8 +976,13 @@ router.post('/memory/:projectId', (req: Request, res: Response) => {
 });
 
 // DELETE /api/ana/memory/:projectId/:memoryId — Delete a memory
-router.delete('/memory/:projectId/:memoryId', (req: Request, res: Response) => {
+router.delete(
+  '/memory/:projectId/:memoryId',
+  authenticateToken,
+  requireOrganizationContext,
+  (req: Request, res: Response) => {
   try {
+    if (!requireMockRoutesEnabled(res)) return;
     const { projectId, memoryId } = req.params;
     const store = getOrCreateProjectMemory(projectId);
 
@@ -971,6 +1003,7 @@ router.delete('/memory/:projectId/:memoryId', (req: Request, res: Response) => {
       details: error instanceof Error ? error.message : String(error),
     });
   }
-});
+  }
+);
 
 export default router;
