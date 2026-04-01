@@ -53,4 +53,48 @@ describe('Communication Center backend scaffold', () => {
     expect(hookSrc).toContain('/api/concept2cure/projects/${projectId}/agency-communications');
     expect(hookSrc).toContain('/api/concept2cure/projects/${projectId}/publishops/services');
   });
+
+  it('mounts correspondence and submission-ops routes in server runtime', () => {
+    const serverSrc = read('server/index.ts');
+    expect(serverSrc).toContain("import regulatoryCorrespondenceRoutes from './routes/regulatory-correspondence'");
+    expect(serverSrc).toContain("app.use('/api/regulatory-correspondence', regulatoryCorrespondenceRoutes)");
+    expect(serverSrc).toContain("import submissionOpsRoutes from './routes/submission-ops'");
+    expect(serverSrc).toContain("app.use('/api/submission-ops', submissionOpsRoutes)");
+  });
+
+  it('mounts unified regulatory submissions route in server runtime', () => {
+    const serverSrc = read('server/index.ts');
+    expect(serverSrc).toContain("import regulatorySubmissionsRoutes from './routes/regulatorySubmissions'");
+    expect(serverSrc).toContain("app.use('/api/regulatory-submissions', regulatorySubmissionsRoutes)");
+  });
+
+  it('replaces regulatory submissions null placeholders with schema-backed implementation', () => {
+    const routeSrc = read('server/routes/regulatorySubmissions.ts');
+    expect(routeSrc).toContain('regulatorySubmissions');
+    expect(routeSrc).toContain('regulatoryTasks');
+    expect(routeSrc).toContain('stageGates');
+    expect(routeSrc).not.toContain('These schema tables are not yet defined');
+    expect(routeSrc).not.toContain('const submissionProjects: any = null;');
+  });
+
+  it('bootstraps unified regulatory submissions feature toggle on startup', () => {
+    const serverSrc = read('server/index.ts');
+    expect(serverSrc).toContain('FeatureToggleService.initializeFeatureToggle');
+    expect(serverSrc).toContain("'UNIFIED_REGULATORY_SUBMISSIONS'");
+  });
+
+  it('removes manual submission placeholder from correspondence intake UI', () => {
+    const hubSrc = read('client/src/concept2cure/components/correspondence/RegulatoryCommunicationsHub.tsx');
+    expect(hubSrc).not.toContain("submissionId: 'manual-submission'");
+    expect(hubSrc).toContain('const resolvedSubmissionId = manualSubmissionId.trim() || selected?.submissionId');
+  });
+
+  it('uses honest empty/unavailable communication-center state without local scaffold fallback', () => {
+    const hookSrc = read('client/src/concept2cure/hooks/useCommunicationCenterData.ts');
+    expect(hookSrc).toContain('const [authorityProfiles, setAuthorityProfiles] = useState<AuthorityProfileItem[]>([])');
+    expect(hookSrc).toContain('const [agencyEvents, setAgencyEvents] = useState<AgencyCommunicationEvent[]>([])');
+    expect(hookSrc).toContain('const [dataUnavailable, setDataUnavailable] = useState(false)');
+    expect(hookSrc).toContain('Live backend data could not be loaded. Showing current persisted records only.');
+    expect(hookSrc).not.toContain('Using local scaffold data while backend data is unavailable.');
+  });
 });

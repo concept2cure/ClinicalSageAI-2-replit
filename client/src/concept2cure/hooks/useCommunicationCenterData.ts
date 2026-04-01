@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import {
-  DEFAULT_AGENCY_EVENTS,
-  DEFAULT_AUTHORITY_PROFILES,
   type AgencyCommunicationEvent,
 } from '../models/agencyPortal';
 
@@ -45,60 +43,69 @@ export interface AuthorityProfileItem {
 export function useCommunicationCenterData(projectId?: string) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [authorityProfiles, setAuthorityProfiles] = useState<AuthorityProfileItem[]>(
-    DEFAULT_AUTHORITY_PROFILES.map(p => ({
-      id: p.id,
-      authority: p.authority,
-      centerOrDivision: p.centerOrDivision,
-      submissionTransport: p.submissionTransport,
-    }))
-  );
-  const [agencyEvents, setAgencyEvents] = useState<AgencyCommunicationEvent[]>(DEFAULT_AGENCY_EVENTS);
+  const [authorityProfiles, setAuthorityProfiles] = useState<AuthorityProfileItem[]>([]);
+  const [agencyEvents, setAgencyEvents] = useState<AgencyCommunicationEvent[]>([]);
   const [publishOpsServices, setPublishOpsServices] = useState<PublishOpsServiceItem[]>([]);
+  const [dataUnavailable, setDataUnavailable] = useState(false);
+  const [dataUnavailableReason, setDataUnavailableReason] = useState<string | null>(null);
 
   const fetchAll = useCallback(async () => {
     if (!projectId) return;
     setLoading(true);
+    setDataUnavailable(false);
+    setDataUnavailableReason(null);
     try {
-      const [authorityRes, eventsRes, servicesRes] = await Promise.all([
-        apiRequest('GET', `/api/concept2cure/projects/${projectId}/authority-profiles`),
-        apiRequest('GET', `/api/concept2cure/projects/${projectId}/agency-communications`),
-        apiRequest('GET', `/api/concept2cure/projects/${projectId}/publishops/services`),
+      const parseRows = async (url: string) => {
+        try {
+          const res = await apiRequest('GET', url);
+          if (res.status === 401) {
+            return { rows: [], error: 'unauthorized' as const };
+          }
+          const payload = await res.json().catch(() => ({}));
+          const rows = Array.isArray(payload?.data) ? payload.data : [];
+          return { rows, error: null as const };
+        } catch (error: any) {
+          return { rows: [], error: error?.message || 'request_failed' };
+        }
+      };
+
+      const [authorityPayload, eventsPayload, servicesPayload] = await Promise.all([
+        parseRows(`/api/concept2cure/projects/${projectId}/authority-profiles`),
+        parseRows(`/api/concept2cure/projects/${projectId}/agency-communications`),
+        parseRows(`/api/concept2cure/projects/${projectId}/publishops/services`),
       ]);
 
-      if (authorityRes.ok) {
-        const payload = await authorityRes.json();
-        const rows = payload.data || [];
-        if (Array.isArray(rows) && rows.length > 0) {
-          setAuthorityProfiles(
-            rows.map((r: any) => ({
-              id: r.id,
-              authority: r.authority,
-              centerOrDivision: r.centerOrDivision,
-              submissionTransport: r.submissionTransport,
-            }))
-          );
-        }
-      }
+      setAuthorityProfiles(
+        authorityPayload.rows.map((r: any) => ({
+          id: r.id,
+          authority: r.authority,
+          centerOrDivision: r.centerOrDivision,
+          submissionTransport: r.submissionTransport,
+        }))
+      );
+      setAgencyEvents(eventsPayload.rows as AgencyCommunicationEvent[]);
+      setPublishOpsServices(servicesPayload.rows as PublishOpsServiceItem[]);
 
-      if (eventsRes.ok) {
-        const payload = await eventsRes.json();
-        const rows = payload.data || [];
-        if (Array.isArray(rows) && rows.length > 0) {
-          setAgencyEvents(rows);
-        }
+      const firstError = authorityPayload.error || eventsPayload.error || servicesPayload.error;
+      if (firstError) {
+        setDataUnavailable(true);
+        setDataUnavailableReason(firstError);
+        toast({
+          title: 'Communication Center data unavailable',
+          description: 'Live backend data could not be loaded. Showing current persisted records only.',
+          variant: 'destructive',
+        });
       }
-
-      if (servicesRes.ok) {
-        const payload = await servicesRes.json();
-        const rows = payload.data || [];
-        if (Array.isArray(rows)) setPublishOpsServices(rows);
-      }
-    } catch {
+    } catch (error: any) {
+      setDataUnavailable(true);
+      setDataUnavailableReason(error?.message || 'request_failed');
+      setAuthorityProfiles([]);
+      setAgencyEvents([]);
+      setPublishOpsServices([]);
       toast({
         title: 'Communication Center data unavailable',
-        description: 'Using local scaffold data while backend data is unavailable.',
-        variant: 'default',
+        description: 'Live backend data could not be loaded. Showing current persisted records only.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -120,6 +127,8 @@ export function useCommunicationCenterData(projectId?: string) {
     agencyEvents,
     openAgencyEvents,
     publishOpsServices,
+    dataUnavailable,
+    dataUnavailableReason,
     refetch: fetchAll,
   };
 }
