@@ -21,6 +21,7 @@ import path from 'path';
 import fs from 'fs';
 import type { Request, Response, NextFunction } from 'express';
 import { fileURLToPath } from 'url';
+import { betaFlowTelemetryMiddleware } from './middleware/betaFlowTelemetry';
 
 // Phase 4.1 Proof System - 21 CFR Part 11 Compliance
 import { initializeProofDatabasePersistence } from '../services/proof/database-setup';
@@ -140,11 +141,6 @@ import reportsGenerationRoutes from './routes/reports/generate-report';
 import { registerSubscriptionsRoutes } from './routes/reports/subscriptions-routes';
 import firecrawlWebhooksRoutes from './routes/firecrawl-webhooks';
 
-import { registerCoreRoutes } from './bootstrap/register-core-routes';
-import { registerConcept2CureRoutes } from './bootstrap/register-concept2cure-routes';
-import { registerAiRoutes } from './bootstrap/register-ai-routes';
-import { registerAdminRoutes } from './bootstrap/register-admin-routes';
-import { registerIntegrationRoutes } from './bootstrap/register-integrations-routes';
 import { registerGovernanceRoutes } from './bootstrap/register-governance-routes';
 import { registerPlatformRoutes } from './bootstrap/register-platform-routes';
 
@@ -263,6 +259,12 @@ if (DEBUG) {
     next();
   });
 }
+
+// Beta-ops telemetry collection for guided user-test API lanes only.
+app.use('/api', betaFlowTelemetryMiddleware);
+
+const betaOpsTelemetryRoutes = (await import('./routes/beta-ops-telemetry')).default;
+app.use('/api/ops', authMiddleware, betaOpsTelemetryRoutes);
 
 // ============================================================================
 // FAST-PATH ENDPOINTS — before all middleware for minimal latency
@@ -576,9 +578,8 @@ app.post('/api/logout', (req, res) => {
 await registerPlatformRoutes({ app, pool, authMiddleware });
 
 // Basic API routes - complex routes will be added back gradually
-app.get('/api/csr', (req: Request, res: Response) => {
-  res.json({ message: 'CSR API available', timestamp: new Date() });
-});
+// NOTE: do not define a top-level /api/csr inline handler here.
+// /api/csr is owned by csr-builder router mounts in startServer().
 
 // /api/projects is owned by mounted projects-management router.
 // Keep this namespace single-owned to avoid route shadowing/policy drift.
@@ -1121,18 +1122,21 @@ try {
     next();
   };
 
-  app.use('/api/ivdr', requireIVDRAccess, createIVDRRoutes(pool));
-  console.log('✅ IVDR API routes mounted (EU 2017/746 | auth → flag → entitlement → RBAC)');
+  const ivdrGateway = express.Router();
+  ivdrGateway.use(createIVDRRoutes(pool));
 
   // Mount IVDR Evidence Binder + Pack Builder routes (same middleware gate)
   try {
     const binderModule = await import('./routes/ivdr-binder-routes');
     const createBinderRoutes = binderModule.default;
-    app.use('/api/ivdr', requireIVDRAccess, createBinderRoutes(pool));
+    ivdrGateway.use(createBinderRoutes(pool));
     console.log('✅ IVDR Evidence Binder + Pack Builder routes mounted');
   } catch (binderErr) {
     console.error('❌ Failed to mount IVDR Binder routes:', binderErr);
   }
+
+  app.use('/api/ivdr', requireIVDRAccess, ivdrGateway);
+  console.log('✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)');
 
   // Start IVDR Pack Build Worker (async in-process job processor)
   try {
@@ -1499,24 +1503,17 @@ function mountStaticBusinessDataGuard(path: string, routeName: string, requiredF
 // Mount SE Matrix render orchestration (Phase 6.6.C2 — Manifest + Payload + Render + Audit)
 // POST /api/programs/:programId/se-matrix/render → Shadow payload → Part 11 audit
 try {
-  const seMatrixModule = await import('./routes/se-matrix.js');
-  const seMatrixRoutes = seMatrixModule.default;
-  app.use('/api/programs', seMatrixRoutes);
-  console.log('✅ SE Matrix render orchestration routes mounted (Phase 6.6.C2)');
+  const [seMatrixModule, defensePacketModule] = await Promise.all([
+    import('./routes/se-matrix.js'),
+    import('./routes/defense-packet.js'),
+  ]);
+  const programsGateway = express.Router();
+  programsGateway.use(seMatrixModule.default);
+  programsGateway.use(defensePacketModule.default);
+  app.use('/api/programs', programsGateway);
+  console.log('✅ Programs gateway routes mounted (SE Matrix + Defense Packet)');
 } catch (error) {
-  console.error('❌ Failed to mount SE Matrix render routes:', error);
-}
-
-// Mount Defense Packet routes (Phase 6.6.D — Versioned, Signed Compliance Artifacts)
-// POST /api/programs/:programId/predicate-intel/defense-packet → Create packet
-// GET  /api/programs/:programId/predicate-intel/defense-packets → List packets
-try {
-  const defensePacketModule = await import('./routes/defense-packet.js');
-  const defensePacketRoutes = defensePacketModule.default;
-  app.use('/api/programs', defensePacketRoutes);
-  console.log('✅ Defense Packet routes mounted (Phase 6.6.D)');
-} catch (error) {
-  console.error('❌ Failed to mount Defense Packet routes:', error);
+  console.error('❌ Failed to mount programs gateway routes:', error);
 }
 
 // Mount Demo Seed routes (for creating demo projects)
@@ -1561,15 +1558,8 @@ try {
   console.error('❌ Failed to mount CERV2 Versions routes:', error);
 }
 
-// Mount Version Diff routes (document version comparison engine)
-try {
-  const versionDiffModule = await import('./routes/versionDiff');
-  const versionDiffRoutes = versionDiffModule.default;
-  app.use('/api/documents', versionDiffRoutes);
-  console.log('✅ Version Diff API routes mounted successfully (document version comparison)');
-} catch (error) {
-  console.error('❌ Failed to mount Version Diff routes:', error);
-}
+// Version-diff/document routers are mounted through a consolidated
+// /api/documents gateway in startServer() to prevent multi-mount drift.
 
 // Mount Biostatistics Platform routes (7 capabilities: continuum, optimizer, estimand, SAP, external controls, adaptive, knowledge graph)
 try {
@@ -5202,17 +5192,8 @@ app.get('/api/templates', async (req: Request, res: Response) => {
   }
 });
 
-// Content Atoms endpoint for CoAuthor
-app.get('/api/atoms', async (req: Request, res: Response) => {
-  try {
-    // Return empty array for now - this prevents the API error
-    // In a full implementation, this would fetch from a content_atoms table
-    res.json([]);
-  } catch (error) {
-    console.error('Error fetching content atoms:', error);
-    res.status(500).json({ error: 'Failed to fetch content atoms' });
-  }
-});
+// NOTE: /api/atoms is owned by server/routes/atoms.js.
+// Avoid inline /api/atoms handlers here to prevent route-shadowing.
 
 // Vault statistics endpoint — real DB query
 app.get('/api/vault/statistics', async (req: Request, res: Response) => {
@@ -6504,13 +6485,7 @@ async function startServer() {
     console.error('Failed to mount leaves routes:', error);
   }
 
-  // Mount predictive sections routes
-  try {
-    app.use('/api/predictive-sections', predictiveSectionsRoutes);
-    console.log('✅ Predictive sections routes mounted successfully');
-  } catch (error) {
-    console.error('Failed to mount predictive sections routes:', error);
-  }
+  // Predictive sections already mounted at module bootstrap to avoid duplicate prefix mounts.
 
   // Mount Validation routes
   try {
@@ -6604,7 +6579,9 @@ async function startServer() {
   // Mount project-module integration routes (Pillar 4: Full module integration)
   try {
     const moduleRoutes = await import('./routes/project-modules');
-    app.use('/api/projects', moduleRoutes.default || moduleRoutes); // nested: /api/projects/:id/modules
+    const projectModuleAliasRouter = express.Router();
+    projectModuleAliasRouter.use('/projects', moduleRoutes.default || moduleRoutes); // nested: /api/projects/:id/modules
+    app.use('/api', projectModuleAliasRouter);
     app.use('/api/project-modules', moduleRoutes.default || moduleRoutes); // top-level: /api/project-modules/find, /org-stats
     console.log(
       '✅ Project Module Integration routes mounted at /api/projects/:id/modules & /api/project-modules'
@@ -6642,19 +6619,26 @@ async function startServer() {
   }
 
   try {
-    const documentsUnified = await import('./routes/documents-unified');
-    app.use('/api/documents', documentsUnified.default);
-    console.log('✅ Documents-unified routes mounted at /api/documents');
-  } catch (error) {
-    console.error('Failed to mount documents-unified routes:', error);
-  }
+    const [versionDiffModule, documentsUnified, sourceLinksRoutes, documentIntelligenceRoutes] =
+      await Promise.all([
+        import('./routes/versionDiff'),
+        import('./routes/documents-unified'),
+        import('./routes/sourceLinks'),
+        import('./routes/document-intelligence-routes'),
+      ]);
 
-  try {
-    const sourceLinksRoutes = await import('./routes/sourceLinks');
-    app.use('/api/documents', sourceLinksRoutes.default);
-    console.log('✅ Source Links routes mounted at /api/documents/:id/sources');
+    const documentsGateway = express.Router();
+    documentsGateway.use(versionDiffModule.default);
+    documentsGateway.use(documentsUnified.default);
+    documentsGateway.use(sourceLinksRoutes.default);
+    documentsGateway.use(documentIntelligenceRoutes.default);
+
+    app.use('/api/documents', documentsGateway);
+    console.log(
+      '✅ Documents gateway mounted at /api/documents (versionDiff + unified + sourceLinks + intelligence)'
+    );
   } catch (error) {
-    console.error('Failed to mount source links routes:', error);
+    console.error('Failed to mount consolidated documents gateway routes:', error);
   }
 
   try {
@@ -6665,13 +6649,7 @@ async function startServer() {
     console.error('Failed to mount RTM export routes:', error);
   }
 
-  try {
-    const documentIntelligenceRoutes = await import('./routes/document-intelligence-routes');
-    app.use('/api/documents', documentIntelligenceRoutes.default);
-    console.log('✅ Document Intelligence routes mounted at /api/documents');
-  } catch (error) {
-    console.error('Failed to mount document intelligence routes:', error);
-  }
+  // document-intelligence now mounted via consolidated documents gateway.
 
   try {
     const intelligenceRoutes = await import('./routes/intelligence');

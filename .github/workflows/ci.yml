@@ -5,6 +5,8 @@ on:
     branches: ['**']
   pull_request:
     branches: ['**']
+  merge_group:
+    branches: ['**']
   schedule:
     - cron: '0 6 * * *'
 
@@ -32,6 +34,9 @@ jobs:
       - name: Guardrails — route mount authority audit (no regressions)
         run: npm run ci:audit-route-mounts:no-regression
 
+      - name: Guardrails — route ownership matrix artifact (required review evidence)
+        run: npm run ci:route-ownership-matrix:check
+
       - name: Audit — repo health scan (no regressions)
         run: npm run audit:repo-health:no-regression
 
@@ -42,6 +47,7 @@ jobs:
           path: |
             docs/reports/repo-health-scan-latest.json
             docs/reports/route-mount-audit-latest.json
+            docs/reports/route-ownership-matrix-latest.md
           retention-days: 14
 
       - name: Run ESLint
