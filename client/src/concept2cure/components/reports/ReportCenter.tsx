@@ -28,6 +28,7 @@ interface ReportCenterProps {
 
 export const ReportCenter: React.FC<ReportCenterProps> = ({ projectId }) => {
   const {
+    taxonomy,
     runs,
     bundles,
     deliveries,
@@ -98,7 +99,6 @@ export const ReportCenter: React.FC<ReportCenterProps> = ({ projectId }) => {
   const [captureBody, setCaptureBody] = useState('');
   const [captureMessage, setCaptureMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
   const filteredRuns = useMemo(() => {
     const filtered = runs.filter(run => {
       const statusPass = statusFilter === 'all' ? true : run.status === statusFilter;
@@ -222,7 +222,7 @@ export const ReportCenter: React.FC<ReportCenterProps> = ({ projectId }) => {
       <div className="rounded-xl border border-stone-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-stone-900">Reporting Module</h2>
         <p className="mt-1 text-xs text-stone-500">
-          Build and sort reports, bundle deliverables, send through platform channels, export PDF, and capture rejection letters for AnA learning.
+          Build and sort reports, bundle deliverables, send through platform channels, export PDF, capture rejection letters for AnA learning, and verify region-specific submission obligations.
         </p>
       </div>
 
@@ -259,7 +259,7 @@ export const ReportCenter: React.FC<ReportCenterProps> = ({ projectId }) => {
                   {groupedReportTypes.map(group => (
                     <React.Fragment key={group.family}>
                       <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-stone-500">
-                        {group.family.replaceAll('_', ' ')}
+                        {group.family.split('_').join(' ')}
                       </div>
                       {group.items.map(option => (
                         <SelectItem key={option.id} value={option.id}>
