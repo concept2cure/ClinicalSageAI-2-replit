@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, CheckCircle2, Download, Loader2, Plus, Search, Send } from 'lucide-react';
 import { useReports } from '../../hooks/useReports';
 import { DataStateWrapper } from '@/components/ui/statesV2';
@@ -16,10 +16,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-const REPORT_TYPE_OPTIONS = [
-  { id: 'readiness.executive_digest', label: 'Executive Readiness Digest' },
-  { id: 'provenance.evidence_trace_report', label: 'Evidence & Provenance Trace' },
-  { id: 'compliance.audit_assurance_pack', label: 'Compliance & Audit Assurance Pack' },
+const FALLBACK_REPORT_TYPE_OPTIONS = [
+  { id: 'readiness.executive_digest', label: 'Executive Readiness Digest', family: 'global' },
+  { id: 'provenance.evidence_trace_report', label: 'Evidence & Provenance Trace', family: 'global' },
+  { id: 'compliance.audit_assurance_pack', label: 'Compliance & Audit Assurance Pack', family: 'global' },
 ];
 
 interface ReportCenterProps {
@@ -49,7 +49,38 @@ export const ReportCenter: React.FC<ReportCenterProps> = ({ projectId }) => {
   const numericProjectId = Number(projectId);
   const safeProjectId = Number.isFinite(numericProjectId) && numericProjectId > 0 ? numericProjectId : undefined;
 
-  const [reportTypeId, setReportTypeId] = useState(REPORT_TYPE_OPTIONS[0].id);
+  const [reportTypeId, setReportTypeId] = useState(FALLBACK_REPORT_TYPE_OPTIONS[0].id);
+  const reportTypeOptions = (taxonomy?.length ? taxonomy : FALLBACK_REPORT_TYPE_OPTIONS) as Array<{
+    typeId?: string;
+    id?: string;
+    label: string;
+    family?: string;
+  }>;
+
+  useEffect(() => {
+    if (!reportTypeOptions.length) return;
+    const exists = reportTypeOptions.some(option => (option.typeId || option.id) === reportTypeId);
+    if (!exists) {
+      const first = reportTypeOptions[0];
+      setReportTypeId(first.typeId || first.id || FALLBACK_REPORT_TYPE_OPTIONS[0].id);
+    }
+  }, [reportTypeOptions, reportTypeId]);
+
+  const groupedReportTypes = useMemo(() => {
+    const groups = new Map<string, Array<{ id: string; label: string }>>();
+    for (const option of reportTypeOptions) {
+      const id = option.typeId || option.id;
+      if (!id) continue;
+      const family = option.family || 'global';
+      const bucket = groups.get(family) || [];
+      bucket.push({ id, label: option.label });
+      groups.set(family, bucket);
+    }
+    return [...groups.entries()].map(([family, items]) => ({
+      family,
+      items: items.sort((a, b) => a.label.localeCompare(b.label)),
+    }));
+  }, [reportTypeOptions]);
   const [scopeType, setScopeType] = useState<'project' | 'submission'>('project');
   const [scopeId, setScopeId] = useState<string>(safeProjectId ? String(safeProjectId) : '');
   const [search, setSearch] = useState('');
@@ -225,10 +256,17 @@ export const ReportCenter: React.FC<ReportCenterProps> = ({ projectId }) => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {REPORT_TYPE_OPTIONS.map(option => (
-                    <SelectItem key={option.id} value={option.id}>
-                      {option.label}
-                    </SelectItem>
+                  {groupedReportTypes.map(group => (
+                    <React.Fragment key={group.family}>
+                      <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-stone-500">
+                        {group.family.replaceAll('_', ' ')}
+                      </div>
+                      {group.items.map(option => (
+                        <SelectItem key={option.id} value={option.id}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </React.Fragment>
                   ))}
                 </SelectContent>
               </Select>
