@@ -27,6 +27,14 @@ import { fileURLToPath } from 'url';
 // Phase 4.1 Proof System - 21 CFR Part 11 Compliance
 import { initializeProofDatabasePersistence } from '../services/proof/database-setup';
 
+// Route bootstrap manifests
+import { registerCoreRoutes } from './bootstrap/register-core-routes';
+import { registerIntegrationRoutes } from './bootstrap/register-integrations-routes';
+import { registerAiRoutes } from './bootstrap/register-ai-routes';
+import { registerConcept2CureRoutes } from './bootstrap/register-concept2cure-routes';
+import { registerAdminRoutes } from './bootstrap/register-admin-routes';
+import { registerSubscriptionsRoutes } from './routes/reports/subscriptions-routes';
+
 // Enterprise Security & Performance Middleware
 import { applySecurityMiddleware, auditLog } from './middleware/enterprise-security.js';
 import {
