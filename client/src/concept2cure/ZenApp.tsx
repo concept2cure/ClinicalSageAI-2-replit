@@ -1646,8 +1646,15 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   }, [activeProjectId]);
 
   const requireActiveProject = useCallback(
-    (targetLayout: LayoutMode, reason: string = 'Open or create a project first.'): boolean => {
-      if (activeProjectId) {
+    (
+      targetLayout: LayoutMode,
+      options?: {
+        reason?: string;
+        projectId?: string;
+      }
+    ): boolean => {
+      const resolvedProjectId = options?.projectId ?? activeProjectId;
+      if (resolvedProjectId) {
         setLayoutMode(targetLayout);
         return true;
       }
@@ -1655,7 +1662,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       setProjectSwitcherOpen(true);
       toast({
         title: 'No project selected',
-        description: reason,
+        description: options?.reason ?? 'Open or create a project first.',
         variant: 'destructive',
       });
       return false;
@@ -1797,14 +1804,16 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     [activeConversationId, deleteThread, toast]
   );
 
-  const handleToggleConversationStar = useCallback(() => {
+  const handleToggleConversationStar = useCallback((id: string) => {
+    if (!id) return;
     toast({
       title: 'Not available yet',
       description: 'Conversation star metadata is not enabled in this thread model yet.',
     });
   }, [toast]);
 
-  const handleToggleConversationPin = useCallback(() => {
+  const handleToggleConversationPin = useCallback((id: string) => {
+    if (!id) return;
     toast({
       title: 'Not available yet',
       description: 'Conversation pin metadata is not enabled in this thread model yet.',
@@ -2392,7 +2401,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         }}
         onSelectProject={id => {
           setActiveProjectId(id);
-          requireActiveProject('project-home');
+          setLayoutMode('project-home');
         }}
         onNewChat={handleNewChat}
         onOpenProjects={() => setProjectSwitcherOpen(true)}
@@ -4255,7 +4264,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         onSelectProject={id => {
           setActiveProjectId(id);
           setProjectSwitcherOpen(false);
-          requireActiveProject('project-home');
+          setLayoutMode('project-home');
           navigate(`/concept2cure/project/${id}`);
           // Clear conversation when switching projects
           setActiveConversationId(undefined);
