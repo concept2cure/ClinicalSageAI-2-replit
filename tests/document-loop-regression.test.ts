@@ -257,6 +257,39 @@ describe('Lifecycle and audit enforcement', () => {
     expect(content).toContain('Content must not be empty');
   });
 
+  it('module3 saveAsArtifact path fails closed on persistence errors', () => {
+    const filePath = path.resolve('server/routes/knowledge-base.ts');
+    const content = fs.readFileSync(filePath, 'utf-8');
+
+    expect(content).toContain('Module 3 generation blocked: governed artifact persistence failed');
+    expect(content).toContain('artifact row not readable after insert');
+    expect(content).toContain('fail-closed');
+  });
+
+  it('vault connector versioning fails closed when artifact versioning fails', () => {
+    const filePath = path.resolve('server/routes/knowledge-base.ts');
+    const content = fs.readFileSync(filePath, 'utf-8');
+
+    expect(content).toContain('Governed connector versioning failed: artifact version insert missing id');
+    expect(content).not.toContain('Vault DMS version insert skipped');
+  });
+
+  it('ind-autodraft section generation fails closed when artifact persistence fails', () => {
+    const filePath = path.resolve('server/routes/knowledge-base.ts');
+    const content = fs.readFileSync(filePath, 'utf-8');
+
+    expect(content).toContain('Governed artifact persistence failed for');
+    expect(content).toContain('Artifact version insert did not return an id');
+    expect(content).not.toContain('Continue even if save fails — still return the content');
+  });
+
+  it('save-docx-as-artifact fails closed when inserted artifact cannot be re-read', () => {
+    const filePath = path.resolve('server/routes/knowledge-base.ts');
+    const content = fs.readFileSync(filePath, 'utf-8');
+
+    expect(content).toContain('Governed artifact persistence failed: inserted artifact lookup missing');
+  });
+
   it('artifact creation emits provenance event', () => {
     const filePath = path.resolve('server/routes/concept2cure.ts');
     const content = fs.readFileSync(filePath, 'utf-8');

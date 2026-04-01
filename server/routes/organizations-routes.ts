@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { db } from '../db';
-import { organizations } from '@shared/schema';
-import { eq } from 'drizzle-orm';
+import { organizations, clientWorkspaces, cerProjects, projectDocuments } from '@shared/schema';
+import { eq, and, sql } from 'drizzle-orm';
 
 // Create a new router for organization endpoints
 const router = Router();
+router.use(authMiddleware);
 
 /**
  * Validate that the requesting user belongs to the organization in :id param.
@@ -33,42 +34,31 @@ function validateOrgOwnership(req: any, res: any, next: any) {
  * Get all organizations
  * API: GET /api/organizations
  */
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    // Mock data for organizations
-    const organizations = [
-      {
-        id: '1',
-        name: 'Acme Pharmaceuticals',
-        logo: '/logos/acme.svg',
-        subscriptionTier: 'Enterprise',
-        maxUsers: 50,
-        activeUsers: 27,
-        createdAt: '2024-09-15T12:00:00Z',
-      },
-      {
-        id: '2',
-        name: 'Biotech Innovations',
-        logo: '/logos/biotech.svg',
-        subscriptionTier: 'Professional',
-        maxUsers: 25,
-        activeUsers: 18,
-        createdAt: '2024-10-05T14:30:00Z',
-      },
-      {
-        id: '3',
-        name: 'MedDevice Corp',
-        logo: '/logos/meddevice.svg',
-        subscriptionTier: 'Standard',
-        maxUsers: 10,
-        activeUsers: 8,
-        createdAt: '2024-11-20T09:15:00Z',
-      },
-    ];
+    const userRole = req.user?.role || req.userRole;
+    const userOrgId = req.user?.organizationId;
+
+    const rows =
+      userRole === 'platform_admin' || userRole === 'superadmin'
+        ? await db.select().from(organizations)
+        : userOrgId
+          ? await db.select().from(organizations).where(eq(organizations.id, Number(userOrgId)))
+          : [];
+
+    const organizationsPayload = rows.map(org => ({
+      id: String(org.id),
+      name: org.name,
+      logo: org.logo,
+      subscriptionTier: org.tier,
+      maxUsers: org.maxUsers,
+      activeUsers: null, // active user count is provided by tenant stats endpoint
+      createdAt: org.createdAt?.toISOString() ?? null,
+    }));
 
     res.json({
       success: true,
-      organizations,
+      organizations: organizationsPayload,
     });
   } catch (error) {
     console.error('Error fetching organizations:', error);
@@ -83,47 +73,36 @@ router.get('/', (req, res) => {
  * Get organization details
  * API: GET /api/organizations/:id
  */
-router.get('/:id', validateOrgOwnership, (req, res) => {
+router.get('/:id', validateOrgOwnership, async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id, 10);
+    const [organizationData] = await db
+      .select()
+      .from(organizations)
+      .where(eq(organizations.id, id))
+      .limit(1);
 
-    // Mock data for organization details
-    const organizationData = {
-      id,
-      name:
-        id === '1'
-          ? 'Acme Pharmaceuticals'
-          : id === '2'
-            ? 'Biotech Innovations'
-            : id === '3'
-              ? 'MedDevice Corp'
-              : 'Unknown Organization',
-      logo:
-        id === '1'
-          ? '/logos/acme.png'
-          : id === '2'
-            ? '/logos/biotech.png'
-            : id === '3'
-              ? '/logos/meddevice.png'
-              : '/logos/default.png',
-      subscriptionTier: id === '1' ? 'Enterprise' : id === '2' ? 'Professional' : 'Standard',
-      maxUsers: id === '1' ? 50 : id === '2' ? 25 : 10,
-      activeUsers: id === '1' ? 27 : id === '2' ? 18 : 8,
-      createdAt: '2024-09-15T12:00:00Z',
-      billingCycle: 'Monthly',
-      domain:
-        id === '1'
-          ? 'acmepharma.com'
-          : id === '2'
-            ? 'biotechinnovations.org'
-            : id === '3'
-              ? 'meddevicecorp.net'
-              : 'example.com',
-    };
+    if (!organizationData) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+      });
+    }
 
     res.json({
       success: true,
-      organization: organizationData,
+      organization: {
+        id: String(organizationData.id),
+        name: organizationData.name,
+        logo: organizationData.logo,
+        subscriptionTier: organizationData.tier,
+        maxUsers: organizationData.maxUsers,
+        activeUsers: null,
+        createdAt: organizationData.createdAt?.toISOString() ?? null,
+        billingCycle: organizationData.billingCycle,
+        domain: organizationData.domain,
+        status: organizationData.status,
+      },
     });
   } catch (error) {
     console.error(`Error fetching organization ${req.params.id}:`, error);
@@ -138,80 +117,75 @@ router.get('/:id', validateOrgOwnership, (req, res) => {
  * Get clients for an organization
  * API: GET /api/organizations/:id/clients
  */
-router.get('/:id/clients', validateOrgOwnership, (req, res) => {
+router.get('/:id/clients', validateOrgOwnership, async (req, res) => {
   try {
-    const { id } = req.params;
+    const organizationId = parseInt(req.params.id, 10);
 
-    // Mock data for clients based on organization ID
-    const clients = [];
+    const workspaces = await db
+      .select()
+      .from(clientWorkspaces)
+      .where(eq(clientWorkspaces.organizationId, organizationId));
 
-    if (id === '1') {
-      clients.push(
-        {
-          id: '101',
-          name: 'Acme Clinical Team',
-          organizationId: '1',
-          logo: '/logos/acme-clinical.png',
-          activeProjects: 8,
-          quotaProjects: 20,
-          storageUsedGB: 14.5,
-          quotaStorageGB: 100,
-          lastActivity: '2025-05-09T18:22:43Z',
-        },
-        {
-          id: '102',
-          name: 'Acme Regulatory Affairs',
-          organizationId: '1',
-          logo: '/logos/acme-regulatory.png',
-          activeProjects: 5,
-          quotaProjects: 15,
-          storageUsedGB: 32.8,
-          quotaStorageGB: 100,
-          lastActivity: '2025-05-10T09:15:30Z',
-        }
-      );
-    } else if (id === '2') {
-      clients.push({
-        id: '201',
-        name: 'Biotech Research Division',
-        organizationId: '2',
-        logo: '/logos/biotech-research.png',
-        activeProjects: 3,
-        quotaProjects: 10,
-        storageUsedGB: 8.2,
-        quotaStorageGB: 50,
-        lastActivity: '2025-05-08T14:30:00Z',
-      });
-    } else if (id === '3') {
-      clients.push(
-        {
-          id: '301',
-          name: 'MedDevice Quality',
-          organizationId: '3',
-          logo: '/logos/meddevice-quality.png',
-          activeProjects: 2,
-          quotaProjects: 5,
-          storageUsedGB: 3.7,
-          quotaStorageGB: 20,
-          lastActivity: '2025-05-07T11:45:22Z',
-        },
-        {
-          id: '302',
-          name: 'MedDevice Compliance',
-          organizationId: '3',
-          logo: '/logos/meddevice-compliance.png',
-          activeProjects: 1,
-          quotaProjects: 5,
-          storageUsedGB: 1.9,
-          quotaStorageGB: 20,
-          lastActivity: '2025-05-05T16:20:18Z',
-        }
-      );
-    }
+    const clients = await Promise.all(
+      workspaces.map(async workspace => {
+        const [projectsAgg] = await db
+          .select({
+            count: sql<number>`count(*)`,
+            lastActivity: sql<Date | null>`max(${cerProjects.updatedAt})`,
+          })
+          .from(cerProjects)
+          .where(
+            and(
+              eq(cerProjects.organizationId, organizationId),
+              eq(cerProjects.clientWorkspaceId, workspace.id)
+            )
+          );
+
+        const [docsAgg] = await db
+          .select({
+            bytes: sql<number>`coalesce(sum(${projectDocuments.fileSize}), 0)`,
+          })
+          .from(projectDocuments)
+          .innerJoin(cerProjects, eq(projectDocuments.projectId, cerProjects.id))
+          .where(
+            and(
+              eq(projectDocuments.organizationId, organizationId),
+              eq(cerProjects.clientWorkspaceId, workspace.id)
+            )
+          );
+
+        const bytes = Number(docsAgg?.bytes ?? 0);
+        const storageUsedGB = Number((bytes / (1024 * 1024 * 1024)).toFixed(2));
+
+        return {
+          id: String(workspace.id),
+          name: workspace.name,
+          organizationId: String(workspace.organizationId),
+          logo: workspace.logo,
+          activeProjects: Number(projectsAgg?.count ?? 0),
+          quotaProjects: workspace.quotaProjects ?? 0,
+          storageUsedGB,
+          quotaStorageGB: workspace.quotaStorage ?? 0,
+          lastActivity:
+            projectsAgg?.lastActivity instanceof Date
+              ? projectsAgg.lastActivity.toISOString()
+              : workspace.updatedAt?.toISOString() ?? workspace.createdAt?.toISOString() ?? null,
+        };
+      })
+    );
 
     res.json({
       success: true,
-      clients,
+      clients: workspaces.map(ws => ({
+        id: String(ws.id),
+        name: ws.name,
+        organizationId: String(ws.organizationId),
+        logo: ws.logo || '/logos/default-client.png',
+        activeProjects: projectCountByWorkspace.get(ws.id) ?? 0,
+        quotaProjects: ws.quotaProjects || 0,
+        quotaStorageGB: ws.quotaStorageGB || 0,
+        lastActivity: ws.updatedAt,
+      })),
     });
   } catch (error) {
     console.error(`Error fetching clients for organization ${req.params.id}:`, error);

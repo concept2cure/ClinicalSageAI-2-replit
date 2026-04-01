@@ -41,7 +41,8 @@ export function getKernelDecisionSummary(): KernelDecisionSummary {
 
   for (const entry of decisionLog) {
     summary.byFinalDecision[entry.kernel.finalDecision] += 1;
-    summary.byEnforcedDecision[entry.kernel.enforcedDecision] += 1;
+    const enforcedDecision = entry.kernel.enforcedDecision ?? entry.kernel.finalDecision;
+    summary.byEnforcedDecision[enforcedDecision] += 1;
   }
 
   return summary;

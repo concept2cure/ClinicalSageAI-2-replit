@@ -725,8 +725,8 @@ ${context}
               // Split by line breaks or bullet points
               mappedData.population.inclusion_criteria = details.inclusionCriteria
                 .split(/\n|\r|•|\\bullet/)
-                .map(item => item.trim())
-                .filter(item => item.length > 0);
+                .map((item: any) => item.trim())
+                .filter((item: any) => item.length > 0);
             } else if (Array.isArray(details.inclusionCriteria)) {
               mappedData.population.inclusion_criteria = details.inclusionCriteria;
             }
@@ -741,8 +741,8 @@ ${context}
               // Split by line breaks or bullet points
               mappedData.population.exclusion_criteria = details.exclusionCriteria
                 .split(/\n|\r|•|\\bullet/)
-                .map(item => item.trim())
-                .filter(item => item.length > 0);
+                .map((item: any) => item.trim())
+                .filter((item: any) => item.length > 0);
             } else if (Array.isArray(details.exclusionCriteria)) {
               mappedData.population.exclusion_criteria = details.exclusionCriteria;
             }

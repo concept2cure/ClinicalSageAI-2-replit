@@ -29,10 +29,30 @@ import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspens
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 import { ZenSidebar } from './components/sidebar/ZenSidebar';
 import { ZenChat } from './components/chat/ZenChat';
 import { ZenCommandPalette } from './components/command/ZenCommandPalette';
-import { ZenSettings } from './components/settings/ZenSettings';
+
+// Stage 10 extracted modules
+import {
+  type ToolPanel,
+  type LayoutMode,
+  type UserProfile,
+  PRIMARY_NAV_ID_BY_LAYOUT,
+  LEGACY_NAV_ID_BY_LAYOUT,
+  SIDEBAR_NAV_TO_LAYOUT as SIDEBAR_NAV_TO_LAYOUT_EXTRACTED,
+  INDUSTRY_MODES,
+  normalizeIndustryMode,
+  TOOL_PANELS,
+  getProjectColor,
+} from './zen-app-constants';
+import { useZenKeyboardShortcuts } from './hooks/useZenKeyboardShortcuts';
+import { useUserProfileFromStorage } from './hooks/useUserProfileFromStorage';
+import { useWorkspaceSuggestedActions } from './hooks/useWorkspaceSuggestedActions';
+const ZenSettings = React.lazy(() =>
+  import('./components/settings/ZenSettings').then(m => ({ default: m.ZenSettings }))
+);
 import { ProjectSwitcher, NewProjectModal } from './components/projects/ProjectSwitcher';
 import ProjectConfigPanel from './components/workspace/ProjectConfigPanel';
 // [BATCH 3] WorkflowTimeline — renderer removed, import kept for type compatibility
@@ -43,7 +63,8 @@ import { useProjectKnowledge } from './hooks/useProjectKnowledge';
 import { useProjectTasks } from './hooks/useProjectTasks';
 import { useAuthoringIntelligence } from './hooks/useAuthoringIntelligence';
 import { useProjects } from './hooks/useProjects';
-import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
+import { useCortexThreads, useCortexHealth, useDeleteCortexThread } from './hooks/useCortex';
+import { cortexService } from './services/cortexService';
 import { usePlatformContext } from './hooks/useLicense';
 import { useWorkspaceSummary } from './hooks/useWorkspaceSummary';
 import { useReadinessAssessment } from './hooks/useOrchestration';
@@ -87,6 +108,7 @@ import {
   WifiOff,
   FileText,
   Plus,
+  ArrowLeft,
   CircleDot,
   Play,
   Pause,
@@ -122,9 +144,11 @@ import {
   FileStack,
   Users,
   Loader2,
+  Search,
 } from 'lucide-react';
 import { LoadingState } from '@/components/ui/statesV2';
-import { WorkspaceHeader as CanonicalWorkspaceHeader } from '@/components/ui/workspace-primitives';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 // Canonical loading fallback for Suspense boundaries
 const ModuleLoadingFallback = () => (
@@ -233,7 +257,7 @@ const ECTDNavigatorPanel = lazy(() =>
   import('./components/regulatory/ECTDNavigator').then(m => ({ default: m.default }))
 );
 const RegulatoryIntelligenceFullPanel = lazy(() =>
-  import('./components/regulatory/RegulatoryIntelligence').then(m => ({ default: m.default }))
+  import('./components/intelligence/RegulatoryIntelligencePanel').then(m => ({ default: m.default }))
 );
 const VaultBrowserPanel = lazy(() =>
   import('@/components/sharepoint/SharePointFileManager').then(m => ({ default: m.default }))
@@ -392,253 +416,19 @@ const PANEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.Component
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-type ToolPanel =
-  | 'ectd'
-  | 'protocol'
-  | 'sop'
-  | 'capa'
-  | 'pms'
-  | 'inspection'
-  | 'intelligence'
-  | 'vault'
-  | 'doc-editor'
-  | 'ana-biostats'
-  | null;
+// ToolPanel and LayoutMode types imported from ./zen-app-constants
 
-type LayoutMode =
-  // ── Global destinations ──
-  | 'projects'
-  | 'apps'
-  | 'artifacts-center'
-  | 'setup'
-  // ── Project tabs ──
-  | 'project-home' // Overview
-  | 'documents' // Work
-  | 'vault' // Vault
-  | 'review' // Review
-  | 'submissions' // Submit
-  | 'dossier-map' // Sub-view within Work
-  | 'section-workspace' // Sub-view within Work
-  | 'csr-workflow' // CSR guided authoring (ICH E3)
-  | 'ind-checklist' // IND requirements checklist (21 CFR 312.23)
-  | 'template-library' // Template browser and creation
-  // ── Canonical workspace + editor ──
-  | 'regulatory-workspace'
-  | 'editor'
-  | 'deep-research'
-  // ── Specialist tools (launched from Apps) ──
-  | 'precedent-intelligence'
-  | 'biostatistics'
-  | 'review-readiness'
-  | 'report-engine'
-  | 'safety-narrative'
-  | 'vault-workspace'
-  // ── Compatibility redirects (redirect on mount, no renderer) ──
-  | 'workspace' // → regulatory-workspace
-  | 'assistant' // → regulatory-workspace
-  | 'ctd' // → regulatory-workspace
-  | 'medtech-dashboard' // → regulatory-workspace
-  | 'dossier' // → regulatory-workspace
-  // ── Demoted modes (redirect to projects or documents via DEMOTED_REDIRECTS) ──
-  | 'mission-control'
-  | 'snowglobe'
-  | 'snowglobe-chambers'
-  | 'rules'
-  | 'ectd-coauthor'
-  | 'cmc'
-  | 'document-vault'
-  | 'clinical-trial'
-  | 'templates'
-  | 'sherpa'
-  | 'analytics'
-  | 'timeline'
-  | 'audit'
-  | 'enablement-center'
-  | 'platform-admin'
-  | 'biologics-dashboard'
-  | 'ctd-onboarding'
-  | 'client-intelligence'
-  | 'collaboration-hub'
-  | 'user-inbox'
-  | 'client-branding'
-  | 'training-center'
-  | 'client-onboarding'
-  | 'knowledge-base'
-  | 'project-knowledge'
-  | 'artifacts'
-  | 'document-builder'
-  | 'ana-platform-control'
-  // ── Legacy batch-1 modes (kept for type safety only) ──
-  | 'ind-workspace'
-  | 'submission-workspace'
-  | 'author'
-  | 'intelligence-hub'
-  | 'command-center'
-  | 'legal-center'
-  | 'about-training'
-  | 'ana-dashboard'
-  | 'integrations'
-  // ── Unused MissionControl sub-modes (no renderer, no redirect needed) ──
-  | 'intelligence-feed'
-  | 'gap-analysis'
-  | 'change-impact'
-  | 'ana-memory'
-  | 'artifact-graph'
-  | 'review-center'
-  | 'dossier-view'
-  | 'risk-cockpit'
-  | 'route-planner'
-  | 'evidence-manager'
-  | 'decision-log'
-  | 'authority-tracker'
-  | 'provenance-trail'
-  | 'notifications'
-  | 'program-wizard'
-  | 'task-board'
-  | 'team-workspace'
-  | 'program-analytics';
+// PRIMARY_NAV_ID_BY_LAYOUT and LEGACY_NAV_ID_BY_LAYOUT imported from ./zen-app-constants
 
-const PRIMARY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
-  projects: 'ri-copilot',
-  'project-home': 'ri-copilot',
-  'dossier-map': 'clinical-module5',
-  documents: 'work',
-  review: 'review',
-  submissions: 'publish',
-  'section-workspace': 'clinical-module5',
-  'vault-workspace': 'vault',
-  'review-readiness': 'verify',
-  'report-engine': 'haq',
-  'task-board': 'task-board',
-  'csr-workflow': 'csr-workflow',
-  'ind-checklist': 'ind-checklist',
-  'template-library': 'templates',
-};
+// INDUSTRY_MODES and normalizeIndustryMode imported from ./zen-app-constants
 
-const LEGACY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
-  'regulatory-workspace': 'submission-builder',
-  workspace: 'work',
-  'ind-workspace': 'work',
-  'ectd-coauthor': 'work',
-  cmc: 'cmc',
-  'clinical-trial': 'clinical-module5',
-  author: 'work',
-  editor: 'work',
-  templates: 'work',
-  'document-builder': 'work',
-  'intelligence-hub': 'ri-copilot',
-  snowglobe: 'projects',
-  'snowglobe-chambers': 'projects',
-  'command-center': 'projects',
-  'mission-control': 'projects',
-  'submission-workspace': 'submissions',
-  'document-vault': 'vault',
-  'enablement-center': 'projects',
-  'client-intelligence': 'projects',
-  'collaboration-hub': 'review',
-  'user-inbox': 'projects',
-  'client-branding': 'projects',
-  biostatistics: 'biostatistics',
-  'training-center': 'projects',
-  'client-onboarding': 'projects',
-  'knowledge-base': 'projects',
-  'project-knowledge': 'projects',
-  'legal-center': 'review',
-  sherpa: 'documents',
-  audit: 'review',
-  timeline: 'projects',
-  analytics: 'projects',
-  artifacts: 'documents',
-  'about-training': 'projects',
-  'precedent-intelligence': 'documents',
-  'deep-research': 'documents',
-  'safety-narrative': 'documents',
-  'ana-dashboard': 'projects',
-  'ana-platform-control': 'projects',
-  'platform-admin': 'projects',
-  'biologics-dashboard': 'documents',
-  'ctd-onboarding': 'projects',
-  integrations: 'projects',
-};
-
-const INDUSTRY_MODES: IndustryMode[] = [
-  'biotech',
-  'pharma',
-  'cro',
-  'medtech',
-  'academic',
-  'regulatory',
-  'medical_writing',
-];
-
-const normalizeIndustryMode = (value?: string): IndustryMode => {
-  if (!value) {
-    return 'biotech';
-  }
-
-  const normalized = value.toLowerCase().trim() as IndustryMode;
-  return INDUSTRY_MODES.includes(normalized) ? normalized : 'biotech';
-};
-
-interface UserProfile {
-  role?: string;
-  objectives?: string[];
-  criteria?: string[];
-  preferences?: Record<string, string | number | boolean>;
-  updatedAt?: string;
-}
+// UserProfile type imported from ./zen-app-constants
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL PANEL CONFIG
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// [BATCH 4] TOOL_PANELS — these contextual drawer panels are not user-visible
-// as a static catalog. They are only triggered programmatically (e.g. by AnA
-// or deep links). Retained for future AnA-driven contextual panel support.
-// No standalone "module picker" surfaces these to users.
-const TOOL_PANELS: Record<
-  Exclude<ToolPanel, null>,
-  {
-    title: string;
-    icon: React.ComponentType<{ className?: string }>;
-    component: string;
-  }
-> = {
-  ectd: { title: 'eCTD Navigator', icon: Folder, component: 'ECTDNavigator' },
-  protocol: { title: 'Protocol Designer', icon: ClipboardList, component: 'StudyProtocolDesigner' },
-  intelligence: {
-    title: 'Regulatory Intelligence',
-    icon: Globe,
-    component: 'RegulatoryIntelligence',
-  },
-  vault: { title: 'Document Vault', icon: FileText, component: 'VaultBrowser' },
-  'doc-editor': { title: 'Document Editor', icon: PenLine, component: 'EditorPanel' },
-  'ana-biostats': { title: 'AnA Biostats', icon: FlaskConical, component: 'AnaBiostatsPanel' },
-  // Retained for compliance-sector clients but not actively surfaced:
-  sop: { title: 'SOP Management', icon: BookOpen, component: 'SOPManagement' },
-  capa: { title: 'CAPA Management', icon: AlertTriangle, component: 'CAPAManagement' },
-  pms: { title: 'Post-Market Surveillance', icon: BarChart2, component: 'PostMarketSurveillance' },
-  inspection: {
-    title: 'Inspection Readiness',
-    icon: CheckSquare,
-    component: 'InspectionReadiness',
-  },
-};
-
-// Helper to get project color by type
-function getProjectColor(type: string): string {
-  const colors: Record<string, string> = {
-    '510K': 'blue',
-    IND: 'purple',
-    NDA: 'green',
-    BLA: 'orange',
-    PMA: 'red',
-    MAA: 'pink',
-    DE_NOVO: 'amber',
-    EUA: 'cyan',
-  };
-  return colors[type] || 'gray';
-}
+// TOOL_PANELS and getProjectColor imported from ./zen-app-constants
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL PANEL WRAPPER
@@ -722,7 +512,9 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
                     <Icon className="w-8 h-8 text-stone-500" />
                   </div>
                   <h3 className="text-lg font-semibold text-stone-900 mb-2">{config.title}</h3>
-                  <p className="text-sm text-stone-500 max-w-sm">{config.title} module loading...</p>
+                  <p className="text-sm text-stone-500 max-w-sm">
+                    {config.title} module loading...
+                  </p>
                 </div>
               </div>
             )}
@@ -753,6 +545,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // URL-DRIVEN PROJECT IDENTITY
   // ─────────────────────────────────────────────────────────────────────────────
   const [location, navigate] = useLocation();
+  const { toast } = useToast();
   const embedModulesEnabled = isFeatureEnabled('EMBED_MODULES_IN_SHELL');
   const projectModuleRoutePolicy = useMemo(
     () => getProjectModuleRoutePolicy(location, embedModulesEnabled),
@@ -847,7 +640,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     () => typeof window !== 'undefined' && window.innerWidth < 768
   );
 
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userProfile, setUserProfile] = useUserProfileFromStorage();
 
   // Modals
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -856,6 +649,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   const [projectSwitcherOpen, setProjectSwitcherOpen] = useState(false);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [editProjectOpen, setEditProjectOpen] = useState(false);
+  const [projectsSearchQuery, setProjectsSearchQuery] = useState('');
   const [showFirstRun, setShowFirstRun] = useState(() => {
     try {
       return !localStorage.getItem('concept2cure_first_run_complete');
@@ -863,6 +657,15 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       return false;
     }
   });
+
+  useEffect(() => {
+    if (!showFirstRun) return;
+    if (projects.length === 0) return;
+    setShowFirstRun(false);
+    try {
+      localStorage.setItem('concept2cure_first_run_complete', 'true');
+    } catch {}
+  }, [projects.length, showFirstRun]);
 
   // Tool panels
   const [activeToolPanel, setActiveToolPanel] = useState<ToolPanel>(null);
@@ -919,6 +722,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     title: string;
     content: string;
     ctdSection?: string;
+    templateId?: string;
   } | null>(null);
 
   // Direct artifact open — when a module has already saved an artifact and wants to open it
@@ -933,7 +737,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>(
     urlProjectId ?? initialProjectId ?? projects[0]?.id
   );
-  const [activeConversationId, setActiveConversationId] = useState<string | undefined>(initialConversationId);
+  const [activeConversationId, setActiveConversationId] = useState<string | undefined>(
+    initialConversationId
+  );
   const [activeThreadId, setActiveThreadId] = useState<string | undefined>();
 
   // Sherpa project detail view state
@@ -1237,6 +1043,25 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     [layoutMode]
   );
 
+  // Project-scoped artifacts for section navigation and Outputs tab
+  const { data: projectArtifacts = [] } = useQuery({
+    queryKey: ['project-artifacts', activeProjectId],
+    queryFn: async () => {
+      if (!activeProjectId) return [];
+      const token =
+        sessionStorage.getItem('trialsage_access_token') ||
+        localStorage.getItem('trialsage_access_token');
+      const res = await fetch(`/api/concept2cure/projects/${activeProjectId}/artifacts`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : data?.data ?? data?.artifacts ?? [];
+    },
+    enabled: !!activeProjectId,
+    staleTime: 30_000,
+  });
+
   useEffect(() => {
     if (layoutMode !== 'biostatistics') return;
     setLayoutMode('regulatory-workspace');
@@ -1244,37 +1069,44 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   }, [layoutMode]);
 
   // ── P2: Navigate to section — real navigation ──
-  const handleNavigateToSection = useCallback((sectionCode: string) => {
-    setActiveSectionCode(sectionCode);
-    const moduleNum = sectionCode.charAt(0);
-    const match = projectArtifacts.find((a: any) =>
-      a.ctdSection === sectionCode ||
-      a.ctdSection === `csr-${sectionCode}` ||
-      a.ctdSection === `m${moduleNum}-${sectionCode}`
-    );
-    if (match) {
-      setOpenArtifactId(match.id);
-    } else {
-      setPendingEditorContent({
-        title: `Section ${sectionCode}`,
-        content: '',
-        ctdSection: sectionCode,
-      });
-    }
-    setRiViewMode('editor');
-    setLayoutMode('regulatory-workspace');
-  }, [projectArtifacts]);
+  const handleNavigateToSection = useCallback(
+    (sectionCode: string) => {
+      setActiveSectionCode(sectionCode);
+      const moduleNum = sectionCode.charAt(0);
+      const match = projectArtifacts.find(
+        (a: any) =>
+          a.ctdSection === sectionCode ||
+          a.ctdSection === `csr-${sectionCode}` ||
+          a.ctdSection === `m${moduleNum}-${sectionCode}`
+      );
+      if (match) {
+        setOpenArtifactId(match.id);
+      } else {
+        setPendingEditorContent({
+          title: `Section ${sectionCode}`,
+          content: '',
+          ctdSection: sectionCode,
+        });
+      }
+      setRiViewMode('editor');
+      setLayoutMode('regulatory-workspace');
+    },
+    [projectArtifacts]
+  );
 
   // ── P2: Open artifact — real navigation ──
-  const handleOpenArtifact = useCallback((artifactId: string) => {
-    // On project-home (AnA-first): show artifact in canvas panel without leaving conversation
-    // On other modes: navigate to documents/editor
-    setActiveArtifactId(artifactId);
-    if (layoutMode !== 'project-home') {
-      setOpenArtifactId(artifactId);
-      setLayoutMode('documents');
-    }
-  }, [layoutMode]);
+  const handleOpenArtifact = useCallback(
+    (artifactId: string) => {
+      // On project-home (AnA-first): show artifact in canvas panel without leaving conversation
+      // On other modes: navigate to documents/editor
+      setActiveArtifactId(artifactId);
+      if (layoutMode !== 'project-home') {
+        setOpenArtifactId(artifactId);
+        setLayoutMode('documents');
+      }
+    },
+    [layoutMode]
+  );
 
   // ── P5: Governed promotion — calls real status API ──
   const handleRequestPromotion = useCallback(
@@ -1308,138 +1140,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     [activeProjectId]
   );
 
-  // Workspace suggested actions — context-aware quick-start chips for AnA
-  const workspaceSuggestedActions = useMemo(() => {
-    const biostatsAction = {
-      id: 'open-ana-biostats',
-      label: 'Open AnA Biostats',
-      intent: 'go-biostatistics',
-      description: 'Run SAP-grade biostatistics analysis and governed document generation.',
-    };
-
-    const base = workspaceSummary?.nextActions ?? [];
-    if (base.length > 0) {
-      const withBiostats = base.some(action => action.intent === 'go-biostatistics')
-        ? base
-        : [biostatsAction, ...base];
-      return withBiostats.slice(0, 4);
-    }
-
-    const t = (activeProject?.type || 'IND').toUpperCase();
-    const starters: Record<
-      string,
-      Array<{ id: string; label: string; intent: string; description: string }>
-    > = {
-      '510K': [
-        {
-          id: 'upload-device-docs',
-          label: 'Upload device documents',
-          intent: 'upload-source-documents',
-          description: 'Add device specs, test results, and labeling.',
-        },
-        {
-          id: 'find-predicates',
-          label: 'Find likely predicates',
-          intent: 'find-likely-510k-predicates',
-          description: 'Search FDA for substantially equivalent devices.',
-        },
-        {
-          id: 'draft-device-desc',
-          label: 'Draft device description',
-          intent: 'draft-510k-device-description',
-          description: 'Generate Section 3 device description.',
-        },
-        {
-          id: 'check-estar',
-          label: 'Check eSTAR readiness',
-          intent: 'check-estar-readiness',
-          description: 'Review eSTAR template requirements.',
-        },
-      ],
-      IND: [
-        {
-          id: 'upload-source',
-          label: 'Upload source documents',
-          intent: 'upload-source-documents',
-          description: 'Add CSRs, CMC data, and preclinical files.',
-        },
-        {
-          id: 'draft-ind-outline',
-          label: 'Draft IND outline',
-          intent: 'draft-ind-outline',
-          description: 'Generate IND outline per 21 CFR 312.23.',
-        },
-        {
-          id: 'missing-sections',
-          label: 'Identify missing sections',
-          intent: 'identify-missing-ind-sections',
-          description: 'Audit your IND for incomplete sections.',
-        },
-        {
-          id: 'gen-cmc-workplan',
-          label: 'Generate CMC workplan',
-          intent: 'generate-cmc-workplan',
-          description: 'Build Module 3 CMC workplan and timeline.',
-        },
-      ],
-      CER: [
-        {
-          id: 'upload-evidence',
-          label: 'Upload evidence & literature',
-          intent: 'upload-source-documents',
-          description: 'Add clinical literature and PMS data.',
-        },
-        {
-          id: 'build-cer-outline',
-          label: 'Build CER outline',
-          intent: 'build-cer-outline',
-          description: 'Structure CER sections per MEDDEV 2.7/1 Rev 4.',
-        },
-        {
-          id: 'draft-benefit-risk',
-          label: 'Draft benefit-risk section',
-          intent: 'draft-cer-benefit-risk',
-          description: 'Generate the benefit-risk analysis.',
-        },
-        {
-          id: 'review-pms-pmcf',
-          label: 'Review PMS / PMCF gaps',
-          intent: 'review-pms-pmcf-gaps',
-          description: 'Identify post-market surveillance gaps.',
-        },
-      ],
-      NDA: [
-        {
-          id: 'upload-source',
-          label: 'Upload source documents',
-          intent: 'upload-source-documents',
-          description: 'Add CSRs, CMC data, and prior filings.',
-        },
-        {
-          id: 'draft-nda-outline',
-          label: 'Draft NDA outline',
-          intent: 'draft-nda-outline',
-          description: 'Generate NDA outline per 21 CFR 314.',
-        },
-        {
-          id: 'nda-missing',
-          label: 'Identify missing sections',
-          intent: 'identify-missing-nda-sections',
-          description: 'Audit NDA for gaps and missing modules.',
-        },
-        {
-          id: 'gen-summary',
-          label: 'Generate ISS/ISE outline',
-          intent: 'generate-iss-ise-outline',
-          description: 'Outline Integrated Summary of Safety/Efficacy.',
-        },
-      ],
-    };
-    const fallback = starters[t] ?? starters['IND'];
-    return fallback.some(action => action.intent === 'go-biostatistics')
-      ? fallback.slice(0, 4)
-      : [biostatsAction, ...fallback].slice(0, 4);
-  }, [activeProject?.type, workspaceSummary?.nextActions]);
+  const workspaceSuggestedActions = useWorkspaceSuggestedActions(
+    activeProject?.type,
+    workspaceSummary
+  );
 
   // Pending draft request from IND Workspace → passed to AnA when switching to workspace mode
   const [pendingDraftSection, setPendingDraftSection] = useState<{
@@ -1448,26 +1152,15 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   } | null>(null);
 
   // External message to send into AnA chat (triggered by suggested prompts, dashboard actions)
-  const [externalChatMessage, setExternalChatMessage] = useState<{ text: string; ts: number } | null>(null);
-
-  // Project-scoped artifacts for the Outputs tab (must come after activeProjectId is declared)
-  const { data: projectArtifacts = [] } = useQuery({
-    queryKey: ['project-artifacts', activeProjectId],
-    queryFn: async () => {
-      if (!activeProjectId) return [];
-      const token =
-        sessionStorage.getItem('trialsage_access_token') ||
-        localStorage.getItem('trialsage_access_token');
-      const res = await fetch(`/api/concept2cure/projects/${activeProjectId}/artifacts`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
-      return Array.isArray(data) ? data : (data?.data ?? data?.artifacts ?? []);
-    },
-    enabled: !!activeProjectId,
-    staleTime: 30_000,
-  });
+  const [externalChatMessage, setExternalChatMessage] = useState<{
+    text: string;
+    ts: number;
+  } | null>(null);
+  const [guidedStageRequest, setGuidedStageRequest] = useState<{
+    stage: 'project' | 'ind_ectd' | 'authoring' | 'verify' | 'submission';
+    controlMode?: 'ana' | 'client';
+    ts: number;
+  } | null>(null);
 
   // Instructions + knowledge for Instructions tab (lifted so it doesn't remount per tab)
   const workspaceKnowledge = useProjectKnowledge(activeProjectId ?? null);
@@ -1483,6 +1176,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     if (authoringIntelligence.contradictions)
       setSectionContradictions(authoringIntelligence.contradictions);
   }, [authoringIntelligence.readiness, authoringIntelligence.contradictions]);
+
+  const { mutateAsync: deleteThread } = useDeleteCortexThread();
 
   // Threads for current project
   const { data: threads = [] } = useCortexThreads(activeProjectId);
@@ -1590,161 +1285,182 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     setActiveToolPanel(null);
   }, [activeProjectId]);
 
-  const openProjectWorkspace = useCallback(
-    (
-      projectId: string,
-      options?: {
-        closeProjectSwitcher?: boolean;
-        clearConversation?: boolean;
-      }
-    ) => {
-      if (!projectId) return;
-      setActiveProjectId(projectId);
-      setRiViewMode('editor');
-      setLayoutMode('regulatory-workspace');
-      navigate(`/concept2cure/project/${projectId}`);
-
-      if (options?.closeProjectSwitcher) {
-        setProjectSwitcherOpen(false);
-      }
-
-      const shouldClearConversation = options?.clearConversation ?? true;
-      if (shouldClearConversation) {
-        setActiveConversationId(undefined);
-        setActiveThreadId(undefined);
-      }
-    },
-    [navigate]
-  );
-
-  const getProjectReturnLayout = useCallback(
-    () => (activeProjectId ? 'project-home' : 'projects'),
-    [activeProjectId]
-  );
-
   // ─────────────────────────────────────────────────────────────────────────────
   // NAVIGATION HELPER — intercepts special paths before falling through to layoutMode
   // ─────────────────────────────────────────────────────────────────────────────
+  const SAFE_ANA_NAV_TARGETS = new Set<string>([
+    'projects',
+    'project-home',
+    'apps',
+    'documents',
+    'review',
+    'submissions',
+    'dossier-map',
+    'section-workspace',
+    'csr-workflow',
+    'ind-checklist',
+    'template-library',
+    'regulatory-workspace',
+    'editor',
+    'deep-research',
+    'precedent-intelligence',
+    'biostatistics',
+    'review-readiness',
+    'report-engine',
+    'safety-narrative',
+    'vault',
+    'vault-workspace',
+  ]);
+
   const handleAnaPanelNavigate = useCallback((path: string) => {
-    if (path === 'ana-intelligence') {
+    const normalizedPath = String(path || '').trim();
+    if (!normalizedPath) return;
+
+    if (normalizedPath === 'ana-intelligence') {
       setSettingsSection('ana-intelligence');
       setSettingsOpen(true);
       return;
     }
-    setLayoutMode(path as LayoutMode);
-  }, []);
+    if (normalizedPath === 'project-config') {
+      setEditProjectOpen(true);
+      return;
+    }
+    if (
+      normalizedPath === 'open_capabilities' ||
+      normalizedPath === '/concept2cure?panel=capabilities'
+    ) {
+      setLayoutMode(activeProjectId ? 'project-home' : 'projects');
+      if (activeProjectId) {
+        setExternalChatMessage({
+          text: 'Show me all available capabilities for this project, grouped by workflow stage and what AnA can execute for me.',
+          ts: Date.now(),
+        });
+      }
+      return;
+    }
+    if (
+      normalizedPath === 'guided_project' ||
+      normalizedPath === 'guided_ind_ectd' ||
+      normalizedPath === 'guided_authoring' ||
+      normalizedPath === 'guided_verify' ||
+      normalizedPath === 'guided_submission'
+    ) {
+      if (!activeProjectId) {
+        setLayoutMode('projects');
+        return;
+      }
+      const stageMap: Record<string, 'project' | 'ind_ectd' | 'authoring' | 'verify' | 'submission'> =
+        {
+          guided_project: 'project',
+          guided_ind_ectd: 'ind_ectd',
+          guided_authoring: 'authoring',
+          guided_verify: 'verify',
+          guided_submission: 'submission',
+        };
+      const stage = stageMap[normalizedPath];
+      setLayoutMode('regulatory-workspace');
+      setGuidedStageRequest({
+        stage,
+        controlMode: 'client',
+        ts: Date.now(),
+      });
+      return;
+    }
+    const mapped = SIDEBAR_NAV_TO_LAYOUT[normalizedPath];
+    if (mapped) {
+      setLayoutMode(mapped);
+      return;
+    }
+    if (SAFE_ANA_NAV_TARGETS.has(normalizedPath)) {
+      setLayoutMode(normalizedPath as LayoutMode);
+      return;
+    }
+    console.warn(`[AnaPersistentPanel] Unknown navigation target, falling back safely: ${normalizedPath}`);
+    setLayoutMode(activeProjectId ? 'project-home' : 'projects');
+  }, [activeProjectId]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // KEYBOARD SHORTCUTS — use refs to avoid re-attaching listeners on every state change
   // ─────────────────────────────────────────────────────────────────────────────
 
-  const kbStateRef = useRef({
-    activeToolPanel,
-    commandPaletteOpen,
-    settingsOpen,
-    layoutMode,
-    activeProjectId,
-  });
-  kbStateRef.current = {
-    activeToolPanel,
-    commandPaletteOpen,
-    settingsOpen,
-    layoutMode,
-    activeProjectId,
-  };
-
-  const handleNewChatRef = useRef(handleNewChat);
-  handleNewChatRef.current = handleNewChat;
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const st = kbStateRef.current;
-
-      // Command palette: ⌘K or Ctrl+K
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setCommandPaletteOpen(true);
-      }
-
-      // New chat: ⌘N or Ctrl+N
-      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
-        e.preventDefault();
-        handleNewChatRef.current();
-      }
-
-      // Settings: ⌘,
-      if ((e.metaKey || e.ctrlKey) && e.key === ',') {
-        e.preventDefault();
-        setSettingsOpen(true);
-      }
-
-      // Edit project: ⌘E or Ctrl+E (workspace mode only)
-      if (
-        (e.metaKey || e.ctrlKey) &&
-        e.key === 'e' &&
-        st.layoutMode === 'workspace' &&
-        st.activeProjectId
-      ) {
-        e.preventDefault();
-        setEditProjectOpen(true);
-      }
-
-      // Close tool panel: Escape
-      if (e.key === 'Escape' && st.activeToolPanel && !st.commandPaletteOpen && !st.settingsOpen) {
+  useZenKeyboardShortcuts(
+    { activeToolPanel, commandPaletteOpen, settingsOpen, layoutMode, activeProjectId },
+    {
+      openCommandPalette: () => setCommandPaletteOpen(true),
+      openSettings: () => setSettingsOpen(true),
+      openEditProject: () => setEditProjectOpen(true),
+      closeToolPanel: () => {
         setActiveToolPanel(null);
         setToolPanelFullscreen(false);
-      }
-
-      // Vault drawer: Alt+V
-      if (e.altKey && e.key.toLowerCase() === 'v') {
-        e.preventDefault();
-        setActiveToolPanel('vault');
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-
-    // Listen for Mission Control inter-page navigation events
-    const handleMcNavigate = (e: Event) => {
-      const mode = (e as CustomEvent).detail?.mode as LayoutMode;
-      if (mode) {
+      },
+      openVaultPanel: () => setActiveToolPanel('vault'),
+      handleNewChat,
+      setLayoutMode: mode => {
         setLayoutMode(mode);
         setActiveToolPanel(null);
-      }
-    };
-    window.addEventListener('mc-navigate', handleMcNavigate);
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('mc-navigate', handleMcNavigate);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      },
+    }
+  );
 
   // ─────────────────────────────────────────────────────────────────────────────
   // HANDLERS
   // ─────────────────────────────────────────────────────────────────────────────
 
   const handleDeleteConversation = useCallback(
-    (id: string) => {
-      // Threads are managed by Cortex - would call deleteThread mutation
-      if (activeConversationId === id) {
-        setActiveConversationId(undefined);
-        setActiveThreadId(undefined);
+    async (id: string) => {
+      try {
+        await deleteThread(id);
+        if (activeConversationId === id) {
+          setActiveConversationId(undefined);
+          setActiveThreadId(undefined);
+        }
+        toast({
+          title: 'Conversation deleted',
+          description: 'The conversation has been removed.',
+        });
+      } catch (error) {
+        toast({
+          title: 'Failed to delete conversation',
+          description: error instanceof Error ? error.message : 'Please try again.',
+          variant: 'destructive',
+        });
       }
     },
-    [activeConversationId]
+    [activeConversationId, deleteThread, toast]
   );
 
-  const handleToggleConversationStar = useCallback((id: string) => {
-    // Would update thread metadata via Cortex
-    console.log('Toggle star for conversation:', id);
+  const handleToggleConversationStar = useCallback(() => {
+    // Placeholder for metadata parity with Cortex thread model.
   }, []);
 
-  const handleToggleConversationPin = useCallback((id: string) => {
-    // Would update thread metadata via Cortex
-    console.log('Toggle pin for conversation:', id);
+  const handleToggleConversationPin = useCallback(() => {
+    // Placeholder for metadata parity with Cortex thread model.
   }, []);
+
+  const handleRenameConversation = useCallback(
+    async (id: string) => {
+      const existing = conversations.find(c => c.id === id);
+      if (!existing) return;
+      const nextTitle = window.prompt('Rename conversation', existing.title || 'New conversation');
+      if (!nextTitle) return;
+      const trimmed = nextTitle.trim();
+      if (!trimmed || trimmed === existing.title) return;
+      try {
+        await cortexService.updateThreadTitle(id, trimmed);
+        toast({
+          title: 'Conversation renamed',
+          description: 'The title was updated.',
+        });
+      } catch (error) {
+        toast({
+          title: 'Failed to rename conversation',
+          description: error instanceof Error ? error.message : 'Please try again.',
+          variant: 'destructive',
+        });
+      }
+    },
+    [conversations, toast]
+  );
 
   const handleMoveConversation = useCallback(
     async (conversationId: string, targetProjectId: string) => {
@@ -1865,11 +1581,20 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           conversations: [],
         });
         setNewProjectOpen(false);
+        toast({
+          title: 'Project created',
+          description: `${data.name} is ready.`,
+        });
       } catch (error) {
         console.error('Failed to create project:', error);
+        toast({
+          title: 'Failed to create project',
+          description: error instanceof Error ? error.message : 'Please try again.',
+          variant: 'destructive',
+        });
       }
     },
-    [createProjectMutation]
+    [createProjectMutation, toast]
   );
 
   const handleArchiveProject = useCallback(
@@ -1928,6 +1653,14 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       const project = rawProjects.find(p => p.id === activeProjectId);
       if (project) {
         try {
+          if (data.customInstructions !== undefined) {
+            await updateOwnershipPreferencesMutation({
+              projectId: project.id,
+              preferences: {
+                projectInstructions: data.customInstructions,
+              },
+            });
+          }
           await updateProjectMutation({
             ...project,
             ...(data.name !== undefined && { name: data.name }),
@@ -1945,12 +1678,29 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               ...(data.submissionType !== undefined && { submissionType: data.submissionType }),
             } as any,
           });
+          if (data.customInstructions !== undefined && activeProjectId) {
+            await updateOwnershipPreferencesMutation({
+              projectId: activeProjectId,
+              preferences: {
+                projectInstructions: data.customInstructions || '',
+              },
+            });
+          }
+          toast({
+            title: 'Project updated',
+            description: 'Configuration changes have been saved.',
+          });
         } catch (error) {
           console.error('Failed to update project:', error);
+          toast({
+            title: 'Failed to update project',
+            description: error instanceof Error ? error.message : 'Please try again.',
+            variant: 'destructive',
+          });
         }
       }
     },
-    [activeProjectId, rawProjects, updateProjectMutation]
+    [activeProjectId, rawProjects, updateOwnershipPreferencesMutation, updateProjectMutation, toast]
   );
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -1979,8 +1729,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     const lastActivity = ownershipActivity
       ? `${ownershipActivity.action} · ${new Date(ownershipActivity.timestamp).toLocaleString()}`
       : taskSummary.total > 0
-        ? `${taskSummary.completed}/${taskSummary.total} tasks complete`
-        : 'No tasks yet';
+      ? `${taskSummary.completed}/${taskSummary.total} tasks complete`
+      : 'No tasks yet';
     return {
       deadlineDays,
       complianceScore,
@@ -2034,7 +1784,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       haq: 'HAQ',
       biostatistics: 'Biostatistics',
     };
-    return activeNavId ? (labelByNavId[activeNavId] ?? 'Workspace') : 'Workspace';
+    return activeNavId ? labelByNavId[activeNavId] ?? 'Workspace' : 'Workspace';
   }, [activeNavId, activeProject, activeToolPanel]);
 
   const handleHeaderAction = useCallback(
@@ -2162,30 +1912,36 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     'User';
   const userEmail = userIntelligence?.identity?.email ?? undefined;
 
-  useEffect(() => {
-    const loadProfile = () => {
-      try {
-        const savedProfile = localStorage.getItem('concept2cure_user_profile');
-        if (savedProfile) {
-          setUserProfile(JSON.parse(savedProfile));
-        }
-      } catch (error) {
-        console.warn('Unable to load user profile', error);
-      }
-    };
+  // userProfile sync moved to useUserProfileFromStorage hook
 
-    loadProfile();
-
-    const onStorage = (event: Event) => {
-      const storageEvent = event as { key?: string };
-      if (storageEvent.key === 'concept2cure_user_profile') {
-        loadProfile();
-      }
-    };
-
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, []);
+  // ── Workspace header — shared nav bar for non-chat modules ─────────────────
+  const WorkspaceHeader = ({
+    title,
+    subtitle,
+    icon,
+    onBack,
+    backLabel,
+  }: {
+    title: string;
+    subtitle?: string;
+    icon?: React.ReactNode;
+    onBack: () => void;
+    backLabel?: string;
+  }) => (
+    <div className="flex items-center gap-3 px-4 h-12 border-b border-stone-100 bg-white flex-shrink-0">
+      <button
+        onClick={onBack}
+        className="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-900 transition-colors"
+      >
+        <ChevronLeft className="w-4 h-4" />
+        <span>{backLabel || 'Back'}</span>
+      </button>
+      <div className="w-px h-4 bg-stone-200" />
+      {icon && <span className="text-stone-400">{icon}</span>}
+      <span className="text-sm font-medium text-stone-900">{title}</span>
+      {subtitle && <span className="text-xs text-stone-400 ml-1 hidden sm:inline">{subtitle}</span>}
+    </div>
+  );
 
   return (
     <div className="zen flex h-screen w-full overflow-hidden bg-white">
@@ -2240,15 +1996,19 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           activeToolPanel === 'vault'
             ? 'vault'
             : activeToolPanel === 'ana-biostats'
-              ? 'biostatistics'
-              : activeNavId
+            ? 'biostatistics'
+            : activeNavId
         }
         onSelectConversation={id => {
           setActiveConversationId(id);
           setActiveThreadId(id);
+          setLayoutMode('project-home');
         }}
         onSelectProject={id => {
-          openProjectWorkspace(id, { clearConversation: false });
+          setActiveProjectId(id);
+          setActiveConversationId(undefined);
+          setActiveThreadId(undefined);
+          setLayoutMode('project-home');
         }}
         onNewChat={handleNewChat}
         onOpenProjects={() => setProjectSwitcherOpen(true)}
@@ -2873,19 +2633,19 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
             (riViewMode === 'intelligence' ? (
               <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ri-copilot">
                 {/* Intelligence mode header */}
-                <div className="flex items-center gap-2 px-3 h-9 border-b border-stone-200 bg-white flex-shrink-0">
+                <div className="flex items-center gap-2 px-3 h-9 border-b border-stone-100 bg-white flex-shrink-0">
                   <button
-                    onClick={() => setLayoutMode(getProjectReturnLayout())}
-                    className="flex items-center gap-1 text-xs text-stone-500 hover:text-stone-700 transition-colors"
+                    onClick={() => setLayoutMode('projects')}
+                    className="flex items-center gap-1 text-xs text-stone-400 hover:text-stone-700 transition-colors"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
                     <span>Home</span>
                   </button>
                   <span className="text-stone-200">·</span>
-                  <Brain className="w-3.5 h-3.5 text-stone-500" />
+                  <Brain className="w-3.5 h-3.5 text-blue-500" />
                   <span className="text-xs font-medium text-stone-800">Intelligence</span>
                   {activeProject && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-600 font-medium">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 font-medium">
                       {activeProject.name}
                     </span>
                   )}
@@ -2896,7 +2656,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         onClick={() => setRiViewMode('intelligence')}
                         className={cn(
                           'px-2 py-0.5 text-[11px] font-medium transition-colors',
-                          'bg-stone-200 text-stone-800'
+                          'bg-blue-100 text-stone-700'
                         )}
                       >
                         Intelligence
@@ -2948,6 +2708,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 initialContent={pendingEditorContent?.content}
                 initialTitle={pendingEditorContent?.title}
                 initialCtdSection={pendingEditorContent?.ctdSection}
+                initialTemplateId={pendingEditorContent?.templateId}
                 onInitialContentConsumed={() => setPendingEditorContent(null)}
                 openArtifactId={openArtifactId}
                 onOpenArtifactConsumed={() => setOpenArtifactId(undefined)}
@@ -2971,6 +2732,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   }
                   setLayoutMode(mode as LayoutMode);
                 }}
+                onSuggestedPrompt={prompt => {
+                  setExternalChatMessage({ text: prompt, ts: Date.now() });
+                }}
+                guidedStageCommand={guidedStageRequest}
               />
             ))}
 
@@ -3020,10 +2785,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 onSectionClick={sectionCode => {
                   // Smart routing: if artifact exists, go straight to editor
                   const moduleNum = sectionCode.charAt(0);
-                  const match = projectArtifacts.find((a: any) =>
-                    a.ctdSection === sectionCode ||
-                    a.ctdSection === `csr-${sectionCode}` ||
-                    a.ctdSection === `m${moduleNum}-${sectionCode}`
+                  const match = projectArtifacts.find(
+                    (a: any) =>
+                      a.ctdSection === sectionCode ||
+                      a.ctdSection === `csr-${sectionCode}` ||
+                      a.ctdSection === `m${moduleNum}-${sectionCode}`
                   );
                   if (match) {
                     setOpenArtifactId(match.id);
@@ -3170,12 +2936,16 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
                         submissionTab === tab
                           ? 'border-stone-900 text-stone-900'
-                          : 'border-transparent text-stone-500 hover:text-stone-700',
+                          : 'border-transparent text-stone-500 hover:text-stone-700'
                       )}
                     >
-                      {tab === 'readiness' ? 'Readiness' : 'Package Builder'}
+                      {tab === 'readiness' ? 'Readiness' : 'Package Manifest'}
                     </button>
                   ))}
+                </div>
+                <div className="border-b border-amber-200 bg-amber-50/60 px-4 py-2 text-xs text-amber-800">
+                  Beta note: package generation currently exports a submission manifest JSON for
+                  internal review and handoff.
                 </div>
 
                 {submissionTab === 'readiness' ? (
@@ -3185,10 +2955,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     projectType={activeProject?.type}
                     onSectionClick={(sectionCode, sectionTitle) => {
                       const moduleNum = sectionCode.charAt(0);
-                      const match = projectArtifacts.find((a: any) =>
-                        a.ctdSection === sectionCode ||
-                        a.ctdSection === `csr-${sectionCode}` ||
-                        a.ctdSection === `m${moduleNum}-${sectionCode}`
+                      const match = projectArtifacts.find(
+                        (a: any) =>
+                          a.ctdSection === sectionCode ||
+                          a.ctdSection === `csr-${sectionCode}` ||
+                          a.ctdSection === `m${moduleNum}-${sectionCode}`
                       );
                       if (match) {
                         setOpenArtifactId(match.id);
@@ -3208,15 +2979,22 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     onExport={async () => {
                       if (!activeProjectId) return;
                       try {
-                        const res = await apiRequest('POST', `/api/concept2cure/projects/${activeProjectId}/submission-package`);
+                        const res = await apiRequest(
+                          'POST',
+                          `/api/concept2cure/projects/${activeProjectId}/submission-package`
+                        );
                         const payload = await res.json();
                         const manifest = payload?.data ?? payload;
                         if (manifest) {
-                          const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+                          const blob = new Blob([JSON.stringify(manifest, null, 2)], {
+                            type: 'application/json',
+                          });
                           const url = URL.createObjectURL(blob);
                           const a = document.createElement('a');
                           a.href = url;
-                          a.download = `${manifest.projectName || 'submission'}-package-manifest.json`;
+                          a.download = `${
+                            manifest.projectName || 'submission'
+                          }-package-manifest.json`;
                           a.click();
                           URL.revokeObjectURL(url);
                         }
@@ -3238,12 +3016,12 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         status: a.status || 'draft',
                         version: a.version || 1,
                       }))}
-                      onOpenArtifact={(artifactId) => {
+                      onOpenArtifact={(artifactId: any) => {
                         setOpenArtifactId(artifactId);
                         setRiViewMode('editor');
                         setLayoutMode('regulatory-workspace');
                       }}
-                      onCreateArtifact={(sectionId, sectionLabel) => {
+                      onCreateArtifact={(sectionId: any, sectionLabel: any) => {
                         setPendingEditorContent({
                           title: sectionLabel,
                           content: '',
@@ -3255,13 +3033,19 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       onGeneratePackage={async () => {
                         if (!activeProjectId) return;
                         try {
-                          const res = await apiRequest('POST', `/api/concept2cure/projects/${activeProjectId}/submission-package`);
-                          const manifest = await res.json();
-                          const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+                          const res = await apiRequest(
+                            'POST',
+                            `/api/concept2cure/projects/${activeProjectId}/submission-package`
+                          );
+                          const payload = await res.json();
+                          const manifest = payload?.data ?? payload;
+                          const blob = new Blob([JSON.stringify(manifest, null, 2)], {
+                            type: 'application/json',
+                          });
                           const url = URL.createObjectURL(blob);
                           const a = document.createElement('a');
                           a.href = url;
-                          a.download = `submission-package-${activeProjectId}-${Date.now()}.json`;
+                          a.download = `submission-package-manifest-${activeProjectId}-${Date.now()}.json`;
                           a.click();
                           URL.revokeObjectURL(url);
                         } catch (err) {
@@ -3280,11 +3064,21 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           {!embeddedModule && layoutMode === 'task-board' && activeProjectId && (
             <Suspense fallback={<ModuleLoadingFallback />}>
               <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-stone-50/50">
-                <CanonicalWorkspaceHeader
-                  title="Tasks & Milestones"
-                  subtitle={activeProject?.name || 'Project'}
-                  onBack={() => setLayoutMode(getProjectReturnLayout())}
-                />
+                <div className="sticky top-0 z-10 border-b border-stone-200 bg-white/95 backdrop-blur-sm px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setLayoutMode('project-home')}
+                      className="text-stone-500 hover:text-stone-700"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                    </button>
+                    <div>
+                      <h1 className="text-lg font-semibold text-stone-900">Tasks & Milestones</h1>
+                      <p className="text-xs text-stone-500">{activeProject?.name || 'Project'}</p>
+                    </div>
+                  </div>
+                </div>
                 <div className="flex-1 min-h-0 p-6">
                   <ProjectTaskBoardView
                     projectId={activeProjectId}
@@ -3304,10 +3098,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 onSectionClick={sectionCode => {
                   // Smart routing: if artifact exists for this section, go straight to editor
                   const moduleNum = sectionCode.charAt(0);
-                  const match = projectArtifacts.find((a: any) =>
-                    a.ctdSection === sectionCode ||
-                    a.ctdSection === `csr-${sectionCode}` ||
-                    a.ctdSection === `m${moduleNum}-${sectionCode}`
+                  const match = projectArtifacts.find(
+                    (a: any) =>
+                      a.ctdSection === sectionCode ||
+                      a.ctdSection === `csr-${sectionCode}` ||
+                      a.ctdSection === `m${moduleNum}-${sectionCode}`
                   );
                   if (match) {
                     setOpenArtifactId(match.id);
@@ -3334,7 +3129,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   setRiViewMode('editor');
                   setLayoutMode('regulatory-workspace');
                 }}
-                onBack={() => setLayoutMode(getProjectReturnLayout())}
+                onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
               />
             </Suspense>
           )}
@@ -3348,10 +3143,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 onSectionClick={sectionCode => {
                   // Smart routing: if artifact exists for this section, go straight to editor
                   const moduleNum = sectionCode.charAt(0);
-                  const match = projectArtifacts.find((a: any) =>
-                    a.ctdSection === sectionCode ||
-                    a.ctdSection === `csr-${sectionCode}` ||
-                    a.ctdSection === `m${moduleNum}-${sectionCode}`
+                  const match = projectArtifacts.find(
+                    (a: any) =>
+                      a.ctdSection === sectionCode ||
+                      a.ctdSection === `csr-${sectionCode}` ||
+                      a.ctdSection === `m${moduleNum}-${sectionCode}`
                   );
                   if (match) {
                     setOpenArtifactId(match.id);
@@ -3378,7 +3174,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   setRiViewMode('editor');
                   setLayoutMode('regulatory-workspace');
                 }}
-                onBack={() => setLayoutMode(getProjectReturnLayout())}
+                onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
               />
             </Suspense>
           )}
@@ -3387,41 +3183,64 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           {!embeddedModule && (layoutMode === 'template-library' || layoutMode === 'templates') && (
             <Suspense fallback={<ModuleLoadingFallback />}>
               <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-stone-50/50">
-                <CanonicalWorkspaceHeader
-                  title="Template Library"
-                  subtitle="Regulatory document templates"
-                  onBack={() => setLayoutMode(getProjectReturnLayout())}
-                />
+                <div className="sticky top-0 z-10 border-b border-stone-200 bg-white/95 backdrop-blur-sm px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+                      className="text-stone-500 hover:text-stone-700"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                    </button>
+                    <div>
+                      <h1 className="text-lg font-semibold text-stone-900">Template Library</h1>
+                      <p className="text-xs text-stone-500">Regulatory document templates</p>
+                    </div>
+                  </div>
+                </div>
                 <TemplateLibraryView
-                  onSelectTemplate={(template) => {
+                  onSelectTemplate={template => {
+                    const templateScaffold = [
+                      `<h1>${template.name}</h1>`,
+                      ...template.sections.map((section, index) => {
+                        const heading = `<h2>${index + 1}. ${section.title}</h2>`;
+                        const guidance = section.guidance
+                          ? `<p><em>${section.guidance}</em></p>`
+                          : '<p>[Add section content]</p>';
+                        return `${heading}\n${guidance}`;
+                      }),
+                    ].join('\n');
                     const sectionCode = template.ctdSection;
                     if (sectionCode) {
                       setActiveSectionCode(sectionCode);
                       const moduleNum = sectionCode.charAt(0);
-                      const match = projectArtifacts.find((a: any) =>
-                        a.ctdSection === sectionCode ||
-                        a.ctdSection === `csr-${sectionCode}` ||
-                        a.ctdSection === `m${moduleNum}-${sectionCode}`
+                      const match = projectArtifacts.find(
+                        (a: any) =>
+                          a.ctdSection === sectionCode ||
+                          a.ctdSection === `csr-${sectionCode}` ||
+                          a.ctdSection === `m${moduleNum}-${sectionCode}`
                       );
                       if (match) {
                         setOpenArtifactId(match.id);
                       } else {
                         setPendingEditorContent({
                           title: template.name,
-                          content: '',
+                          content: templateScaffold,
                           ctdSection: sectionCode,
+                          templateId: template.id,
                         });
                       }
                     } else {
                       setPendingEditorContent({
                         title: template.name,
-                        content: '',
+                        content: templateScaffold,
+                        templateId: template.id,
                       });
                     }
                     setRiViewMode('editor');
                     setLayoutMode('regulatory-workspace');
                   }}
-                  onClose={() => setLayoutMode(getProjectReturnLayout())}
+                  onClose={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
                 />
               </div>
             </Suspense>
@@ -3446,14 +3265,21 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   };
 
                   // Find matching artifact by CTD section
-                  const matchingArtifact = projectArtifacts.find((a: any) =>
-                    a.ctdSection === code ||
-                    a.ctdSection === `csr-${code}` ||
-                    a.ctdSection === `m${moduleNum}-${code}`
+                  const matchingArtifact = projectArtifacts.find(
+                    (a: any) =>
+                      a.ctdSection === code ||
+                      a.ctdSection === `csr-${code}` ||
+                      a.ctdSection === `m${moduleNum}-${code}`
                   );
 
                   // Derive status from real artifact if found
-                  let status: 'not-started' | 'drafting' | 'in-review' | 'approved' | 'blocked' | 'locked' = 'not-started';
+                  let status:
+                    | 'not-started'
+                    | 'drafting'
+                    | 'in-review'
+                    | 'approved'
+                    | 'blocked'
+                    | 'locked' = 'not-started';
                   if (matchingArtifact) {
                     const s = matchingArtifact.status;
                     if (s === 'approved') status = 'approved';
@@ -3485,10 +3311,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   // If there's a matching artifact, provide a way to open it in the full editor
                   const code = activeSectionCode || '2.5';
                   const moduleNum = code.charAt(0);
-                  const matchingArtifact = projectArtifacts.find((a: any) =>
-                    a.ctdSection === code ||
-                    a.ctdSection === `csr-${code}` ||
-                    a.ctdSection === `m${moduleNum}-${code}`
+                  const matchingArtifact = projectArtifacts.find(
+                    (a: any) =>
+                      a.ctdSection === code ||
+                      a.ctdSection === `csr-${code}` ||
+                      a.ctdSection === `m${moduleNum}-${code}`
                   );
                   if (matchingArtifact) {
                     return () => {
@@ -3499,20 +3326,28 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   }
                   return undefined;
                 })()}
-                onCreateDraft={activeProjectId ? () => {
-                  const code = activeSectionCode || '2.5';
-                  const moduleNum = code.charAt(0);
-                  const MODULE_NAMES: Record<string, string> = {
-                    '1': 'Administrative', '2': 'CTD Summaries', '3': 'Quality', '4': 'Nonclinical', '5': 'Clinical',
-                  };
-                  setPendingEditorContent({
-                    title: `Section ${code} — ${MODULE_NAMES[moduleNum] || 'Document'}`,
-                    content: '',
-                    ctdSection: code,
-                  });
-                  setRiViewMode('editor');
-                  setLayoutMode('regulatory-workspace');
-                } : undefined}
+                onCreateDraft={
+                  activeProjectId
+                    ? () => {
+                        const code = activeSectionCode || '2.5';
+                        const moduleNum = code.charAt(0);
+                        const MODULE_NAMES: Record<string, string> = {
+                          '1': 'Administrative',
+                          '2': 'CTD Summaries',
+                          '3': 'Quality',
+                          '4': 'Nonclinical',
+                          '5': 'Clinical',
+                        };
+                        setPendingEditorContent({
+                          title: `Section ${code} — ${MODULE_NAMES[moduleNum] || 'Document'}`,
+                          content: '',
+                          ctdSection: code,
+                        });
+                        setRiViewMode('editor');
+                        setLayoutMode('regulatory-workspace');
+                      }
+                    : undefined
+                }
               />
             </Suspense>
           )}
@@ -3642,6 +3477,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     initialContent={pendingEditorContent?.content}
                     initialTitle={pendingEditorContent?.title}
                     initialCtdSection={pendingEditorContent?.ctdSection}
+                    initialTemplateId={pendingEditorContent?.templateId}
                     onInitialContentConsumed={() => setPendingEditorContent(null)}
                   />
                 </Suspense>
@@ -3659,145 +3495,149 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         </div>
 
         {/* ── Project Cards Grid — Simplified entry ── */}
-        {layoutMode === 'projects' && !embeddedModule && projects.length > 0 && (() => {
-          const sortedProjects = projects
-            .filter(p => !p.archived)
-            .sort((a, b) => {
-              if (a.starred && !b.starred) return -1;
-              if (!a.starred && b.starred) return 1;
-              return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
-            });
-          const continueProject = sortedProjects[0];
-          const restProjects = sortedProjects.slice(1, 12);
-          const SUBMISSION_BADGE_MINI: Record<string, { label: string; color: string; bg: string }> = {
-            '510K': { label: '510(k)', color: 'text-stone-700', bg: 'bg-stone-100' },
-            IND: { label: 'IND', color: 'text-[#6B6962]', bg: 'bg-[#FBF0EB]' },
-            NDA: { label: 'NDA', color: 'text-stone-700', bg: 'bg-stone-100' },
-            BLA: { label: 'BLA', color: 'text-[#6B6962]', bg: 'bg-[#F5F4EF]' },
-            PMA: { label: 'PMA', color: 'text-[#6B6962]', bg: 'bg-[#F5F4EF]' },
-            MAA: { label: 'MAA', color: 'text-[#6B6962]', bg: 'bg-[#F5F4EF]' },
-            DE_NOVO: { label: 'De Novo', color: 'text-[#6B6962]', bg: 'bg-[#FBF0EB]' },
-            EUA: { label: 'EUA', color: 'text-[#6B6962]', bg: 'bg-[#FBF0EB]' },
-          };
-          const fallbackBadge = { label: 'Project', color: 'text-stone-600', bg: 'bg-stone-50' };
-          const relTime = (d: Date | string) => {
-            const parsed = new Date(d);
-            if (isNaN(parsed.getTime())) return 'Recently';
-            const ms = Date.now() - parsed.getTime();
-            if (ms < 0) return 'Just now';
-            const min = Math.floor(ms / 60000);
-            if (min < 1) return 'Just now';
-            if (min < 60) return `${min}m ago`;
-            const hr = Math.floor(min / 60);
-            if (hr < 24) return `${hr}h ago`;
-            const day = Math.floor(hr / 24);
-            if (day < 30) return `${day}d ago`;
-            try {
-              return parsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-            } catch {
-              return 'Recently';
-            }
-          };
-
-          return (
-            <div className="px-6 sm:px-8 pt-8 pb-4 max-w-3xl mx-auto w-full flex-shrink-0">
-              {/* Header — quiet foyer */}
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-lg font-semibold text-stone-800">Projects</h2>
-                <button
-                  onClick={() => setNewProjectOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-stone-600 border border-stone-200 hover:bg-stone-50 rounded-lg transition-colors"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  New project
-                </button>
-              </div>
-
-              {/* Continue recent work — hero card */}
-              {continueProject && (
-                <section className="mb-8">
+        {layoutMode === 'projects' &&
+          !embeddedModule &&
+          (() => {
+            const sortedProjects = projects
+              .filter(p => !p.archived)
+              .sort((a, b) => {
+                if (a.starred && !b.starred) return -1;
+                if (!a.starred && b.starred) return 1;
+                return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
+              });
+            const normalizedQuery = projectsSearchQuery.trim().toLowerCase();
+            const filteredProjects = normalizedQuery
+              ? sortedProjects.filter(project =>
+                  [
+                    project.name,
+                    project.description,
+                    project.sponsor,
+                    project.product,
+                    project.targetAgency,
+                    project.region,
+                    project.type,
+                  ]
+                    .filter(Boolean)
+                    .some(value => String(value).toLowerCase().includes(normalizedQuery))
+                )
+              : sortedProjects;
+            const continueProject = filteredProjects[0];
+            const remainingProjects = filteredProjects.slice(1, 16);
+            const recentThresholdMs = 14 * 24 * 60 * 60 * 1000;
+            const SUBMISSION_BADGE_MINI: Record<
+              string,
+              { label: string; color: string; bg: string }
+            > = {
+              '510K': { label: '510(k)', color: 'text-stone-700', bg: 'bg-blue-50' },
+              IND: { label: 'IND', color: 'text-purple-700', bg: 'bg-purple-50' },
+              NDA: { label: 'NDA', color: 'text-green-700', bg: 'bg-green-50' },
+              BLA: { label: 'BLA', color: 'text-orange-700', bg: 'bg-orange-50' },
+              PMA: { label: 'PMA', color: 'text-red-700', bg: 'bg-red-50' },
+              MAA: { label: 'MAA', color: 'text-pink-700', bg: 'bg-pink-50' },
+              DE_NOVO: { label: 'De Novo', color: 'text-amber-700', bg: 'bg-amber-50' },
+              EUA: { label: 'EUA', color: 'text-cyan-700', bg: 'bg-cyan-50' },
+            };
+            const fallbackBadge = { label: 'Project', color: 'text-stone-600', bg: 'bg-stone-50' };
+            const isPinned = (project: (typeof filteredProjects)[number]) =>
+              Boolean(project.starred || project.pinned);
+            const updatedMs = (project: (typeof filteredProjects)[number]) => {
+              const ms = new Date(project.lastUpdated).getTime();
+              return Number.isFinite(ms) ? ms : 0;
+            };
+            const pinnedProjects = remainingProjects.filter(isPinned);
+            const recentProjects = remainingProjects.filter(
+              project => !isPinned(project) && Date.now() - updatedMs(project) <= recentThresholdMs
+            );
+            const generalProjects = remainingProjects.filter(
+              project => !isPinned(project) && Date.now() - updatedMs(project) > recentThresholdMs
+            );
+            const relTime = (d: Date | string) => {
+              const parsed = new Date(d);
+              if (isNaN(parsed.getTime())) return 'Recently';
+              const ms = Date.now() - parsed.getTime();
+              if (ms < 0) return 'Just now';
+              const min = Math.floor(ms / 60000);
+              if (min < 1) return 'Just now';
+              if (min < 60) return `${min}m ago`;
+              const hr = Math.floor(min / 60);
+              if (hr < 24) return `${hr}h ago`;
+              const day = Math.floor(hr / 24);
+              if (day < 30) return `${day}d ago`;
+              try {
+                return parsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+              } catch {
+                return 'Recently';
+              }
+            };
+            const openProjectHome = (projectId: string) => {
+              setActiveProjectId(projectId);
+              setLayoutMode('project-home');
+            };
+            const openProjectHomeWithLastConversation = (
+              projectId: string,
+              conversationCount?: number
+            ) => {
+              setActiveProjectId(projectId);
+              if ((conversationCount ?? 0) > 0) {
+                const rawProject = rawProjects.find(p => p.id === projectId);
+                const latestConversationId =
+                  rawProject?.conversations
+                    ?.slice()
+                    ?.sort(
+                      (a, b) =>
+                        new Date(b.updatedAt ?? b.createdAt ?? 0).getTime() -
+                        new Date(a.updatedAt ?? a.createdAt ?? 0).getTime()
+                    )?.[0]?.id ?? undefined;
+                setActiveConversationId(latestConversationId);
+                setActiveThreadId(latestConversationId);
+              } else {
+                setActiveConversationId(undefined);
+                setActiveThreadId(undefined);
+              }
+              setLayoutMode('project-home');
+            };
+            const renderProjectSection = (
+              title: string,
+              sectionProjects: typeof remainingProjects
+            ) => {
+              if (sectionProjects.length === 0) return null;
+              return (
+                <section className="mt-6 first:mt-0">
                   <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wider mb-3">
-                    Continue recent work
-                  </p>
-                  <button
-                    onClick={() => {
-                      openProjectWorkspace(continueProject.id, { clearConversation: false });
-                    }}
-                    className={cn(
-                      'w-full text-left rounded-xl border border-stone-200 bg-white p-5',
-                      'hover:border-stone-300 hover:shadow-sm transition-all duration-150 group',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40',
-                    )}
-                  >
-                    <div className="flex items-start gap-4">
-                      {/* Accent dot */}
-                      <div
-                        className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0"
-                        style={{ backgroundColor: getProjectAccentColor(continueProject.color, continueProject.type) }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-[15px] font-semibold text-stone-900 truncate group-hover:text-stone-700">
-                            {continueProject.name}
-                          </h3>
-                          {(() => {
-                            const badge = SUBMISSION_BADGE_MINI[continueProject.type] || fallbackBadge;
-                            return (
-                              <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded flex-shrink-0', badge.bg, badge.color)}>
-                                {badge.label}
-                              </span>
-                            );
-                          })()}
-                          {continueProject.starred && (
-                            <Star className="w-3 h-3 text-amber-400 fill-amber-400 flex-shrink-0" />
-                          )}
-                        </div>
-                        {continueProject.description && (
-                          <p className="text-[13px] text-stone-500 line-clamp-1 mb-2 leading-relaxed">
-                            {continueProject.description}
-                          </p>
-                        )}
-                        <div className="flex items-center text-[11px] text-stone-400">
-                          <span>{relTime(continueProject.lastUpdated)}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-stone-400 group-hover:text-stone-600 transition-colors flex-shrink-0 mt-1">
-                        <span className="text-[13px] font-medium hidden sm:inline">Continue</span>
-                        <ChevronLeft className="w-4 h-4 rotate-180" />
-                      </div>
-                    </div>
-                  </button>
-                </section>
-              )}
-
-              {/* All projects grid */}
-              {restProjects.length > 0 && (
-                <section>
-                  <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wider mb-3">
-                    All projects
+                    {title}
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {restProjects.map(project => {
+                    {sectionProjects.map(project => {
                       const badge = SUBMISSION_BADGE_MINI[project.type] || fallbackBadge;
+                      const metadata = [project.product, project.targetAgency, project.region]
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .join(' · ');
+                      const hasConversations = (project.conversationCount ?? 0) > 0;
                       return (
-                        <button
+                        <Button
                           key={project.id}
-                          onClick={() => {
-                            openProjectWorkspace(project.id, { clearConversation: false });
-                          }}
+                          type="button"
+                          variant="ghost"
+                          onClick={() => openProjectHome(project.id)}
                           className={cn(
-                            'group text-left rounded-xl border overflow-hidden transition-all duration-150',
+                            'h-auto w-full group text-left rounded-xl border overflow-hidden transition-all duration-150 p-0',
                             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40',
                             activeProjectId === project.id
                               ? 'border-stone-300 bg-stone-50/80 ring-1 ring-stone-200'
                               : 'border-stone-200 hover:border-stone-300 hover:shadow-sm bg-white'
                           )}
                         >
-                          <div className="p-4">
+                          <div className="p-4 w-full">
                             <div className="flex items-center gap-2 mb-1">
                               <div
                                 className="w-2 h-2 rounded-full flex-shrink-0"
-                                style={{ backgroundColor: getProjectAccentColor(project.color, project.type) }}
+                                style={{
+                                  backgroundColor: getProjectAccentColor(
+                                    project.color,
+                                    project.type
+                                  ),
+                                }}
                               />
                               <h3 className="text-[14px] font-semibold text-stone-900 truncate group-hover:text-stone-700">
                                 {project.name}
@@ -3806,22 +3646,219 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                                 <Star className="w-3 h-3 text-amber-400 fill-amber-400 flex-shrink-0" />
                               )}
                             </div>
-                            <div className="flex items-center gap-2 mt-2 text-[11px] text-stone-400">
-                              <span className={cn('font-medium px-1.5 py-0.5 rounded', badge.bg, badge.color)}>
+                            {metadata && (
+                              <p className="text-[11px] text-stone-500 truncate mb-1.5">
+                                {metadata}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2 mt-1 text-[11px] text-stone-400">
+                              <span
+                                className={cn(
+                                  'font-medium px-1.5 py-0.5 rounded',
+                                  badge.bg,
+                                  badge.color
+                                )}
+                              >
                                 {badge.label}
                               </span>
-                              <span className="ml-auto tabular-nums">{relTime(project.lastUpdated)}</span>
+                              <span className="flex items-center gap-1 tabular-nums">
+                                <MessageSquare className="w-3 h-3" />
+                                {project.conversationCount ?? 0}
+                              </span>
+                              <span className="ml-auto tabular-nums">
+                                {relTime(project.lastUpdated)}
+                              </span>
+                            </div>
+                            <div className="mt-2 flex items-center justify-end">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  openProjectHomeWithLastConversation(
+                                    project.id,
+                                    project.conversationCount ?? 0
+                                  );
+                                }}
+                                className="h-6 px-2 text-[11px] text-stone-500 hover:text-stone-800"
+                              >
+                                {hasConversations ? 'Resume chat' : 'Start chat'}
+                              </Button>
                             </div>
                           </div>
-                        </button>
+                        </Button>
                       );
                     })}
                   </div>
                 </section>
-              )}
-            </div>
-          );
-        })()}
+              );
+            };
+
+            return (
+              <div className="px-6 sm:px-8 pt-8 pb-4 max-w-3xl mx-auto w-full flex-shrink-0">
+                {/* Header — quiet foyer */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-8">
+                  <h2 className="text-lg font-semibold text-stone-800">Projects</h2>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <div className="relative flex-1 sm:w-72">
+                      <Search className="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                      <Input
+                        value={projectsSearchQuery}
+                        onChange={e => setProjectsSearchQuery(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && continueProject) {
+                            e.preventDefault();
+                            openProjectHome(continueProject.id);
+                          }
+                        }}
+                        placeholder="Search projects, product, agency..."
+                        aria-label="Search projects"
+                        className="h-8 pl-8 text-[12px] border-stone-200 bg-white"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setNewProjectOpen(true)}
+                      className="h-8 px-3 text-[12px] text-stone-700 border-stone-200"
+                    >
+                      <Plus className="w-3.5 h-3.5 mr-1.5" />
+                      New project
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Continue recent work — hero card */}
+                {continueProject && (
+                  <section className="mb-8">
+                    <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wider mb-3">
+                      Continue recent work
+                    </p>
+                    <button
+                      onClick={() => {
+                        openProjectHomeWithLastConversation(
+                          continueProject.id,
+                          continueProject.conversationCount ?? 0
+                        );
+                      }}
+                      className={cn(
+                        'w-full text-left rounded-xl border border-stone-200 bg-white p-5',
+                        'hover:border-stone-300 hover:shadow-sm transition-all duration-150 group',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40'
+                      )}
+                    >
+                      <div className="flex items-start gap-4">
+                        {/* Accent dot */}
+                        <div
+                          className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0"
+                          style={{
+                            backgroundColor: getProjectAccentColor(
+                              continueProject.color,
+                              continueProject.type
+                            ),
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-[15px] font-semibold text-stone-900 truncate group-hover:text-stone-700">
+                              {continueProject.name}
+                            </h3>
+                            {(() => {
+                              const badge =
+                                SUBMISSION_BADGE_MINI[continueProject.type] || fallbackBadge;
+                              return (
+                                <span
+                                  className={cn(
+                                    'text-[10px] font-medium px-1.5 py-0.5 rounded flex-shrink-0',
+                                    badge.bg,
+                                    badge.color
+                                  )}
+                                >
+                                  {badge.label}
+                                </span>
+                              );
+                            })()}
+                            {continueProject.starred && (
+                              <Star className="w-3 h-3 text-amber-400 fill-amber-400 flex-shrink-0" />
+                            )}
+                          </div>
+                          {continueProject.description && (
+                            <p className="text-[13px] text-stone-500 line-clamp-1 mb-2 leading-relaxed">
+                              {continueProject.description}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-3 text-[11px] text-stone-400">
+                            <span>{relTime(continueProject.lastUpdated)}</span>
+                            <span className="flex items-center gap-1">
+                              <MessageSquare className="w-3 h-3" />
+                              {continueProject.conversationCount}{' '}
+                              {continueProject.conversationCount === 1 ? 'chat' : 'chats'}
+                            </span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={e => {
+                                e.stopPropagation();
+                                openProjectHomeWithLastConversation(
+                                  continueProject.id,
+                                  continueProject.conversationCount ?? 0
+                                );
+                              }}
+                              className="h-6 px-2 text-[11px] text-stone-500 hover:text-stone-800"
+                            >
+                              {(continueProject.conversationCount ?? 0) > 0
+                                ? 'Resume latest chat'
+                                : 'Start first chat'}
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-stone-400 group-hover:text-stone-600 transition-colors flex-shrink-0 mt-1">
+                          <span className="text-[13px] font-medium hidden sm:inline">Continue</span>
+                          <ChevronLeft className="w-4 h-4 rotate-180" />
+                        </div>
+                      </div>
+                    </button>
+                  </section>
+                )}
+
+                {filteredProjects.length === 0 && (
+                  <div className="rounded-xl border border-stone-200 bg-white p-6 text-center">
+                    <p className="text-[14px] font-medium text-stone-800 mb-1">
+                      No matching projects
+                    </p>
+                    <p className="text-[12px] text-stone-500 mb-4">
+                      Try a different search term or create a new regulatory project.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setNewProjectOpen(true)}
+                    >
+                      <Plus className="w-3.5 h-3.5 mr-1.5" />
+                      New project
+                    </Button>
+                  </div>
+                )}
+
+                {filteredProjects.length > 0 && (
+                  <>
+                    {renderProjectSection('Pinned', pinnedProjects)}
+                    {renderProjectSection('Recent', recentProjects)}
+                    {renderProjectSection(
+                      pinnedProjects.length > 0 || recentProjects.length > 0
+                        ? 'Project directory'
+                        : 'All projects',
+                      generalProjects
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })()}
 
         {/* ── Project Home: AnA chat + Knowledge sidebar (Claude.ai layout) ── */}
         {layoutMode === 'project-home' && (
@@ -3837,8 +3874,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 screenName: 'project-home',
                 activeProject: activeProject?.name,
                 projectId: activeProjectId,
+                threadId: activeThreadId || activeConversationId,
                 moduleContext,
-                customInstructions,
               }}
               projectIntelligence={projectIntelligenceStats}
               greeting={
@@ -3855,6 +3892,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               onOpenArtifact={handleOpenArtifact}
               onRequestPromotion={handleRequestPromotion}
               onRefreshIntelligence={authoringIntelligence.refetch}
+              onThreadChange={threadId => {
+                setActiveThreadId(threadId);
+                setActiveConversationId(threadId);
+              }}
             />
 
             {/* Right sidebar: Project Knowledge (Claude.ai style — always visible) */}
@@ -3881,12 +3922,12 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       artifactId={activeArtifactId}
                       projectId={activeProjectId}
                       onClose={() => setActiveArtifactId(undefined)}
-                      onOpenFullEditor={(id) => {
+                      onOpenFullEditor={id => {
                         setOpenArtifactId(id);
                         setRiViewMode('editor');
                         setLayoutMode('regulatory-workspace');
                       }}
-                      onSaveToVault={(id) => {
+                      onSaveToVault={id => {
                         setActiveArtifactId(undefined);
                         setLayoutMode('vault');
                       }}
@@ -3907,10 +3948,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           layoutMode !== 'project-home' && (
             <AnaPersistentPanel
               mode={
-                layoutMode === 'projects' ||
-                layoutMode === 'deep-research'
-                  ? 'full'
-                  : 'compact'
+                layoutMode === 'projects' || layoutMode === 'deep-research' ? 'full' : 'compact'
               }
               defaultChatMode={layoutMode === 'deep-research' ? 'deep-research' : 'standard'}
               authoringContext={authoringContext}
@@ -3921,8 +3959,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 screenName: layoutMode,
                 activeProject: activeProject?.name,
                 projectId: activeProjectId,
+                threadId: activeThreadId || activeConversationId,
                 moduleContext,
-                customInstructions,
               }}
               projectIntelligence={projectIntelligenceStats}
               greeting={
@@ -3930,11 +3968,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   ? "What would you like to research? I'll search across ClinicalTrials.gov, PubMed, FDA, EMA, and more."
                   : platformGreeting?.text
               }
-              suggestedActions={
-                layoutMode === 'projects'
-                  ? workspaceSuggestedActions
-                  : undefined
-              }
+              suggestedActions={layoutMode === 'projects' ? workspaceSuggestedActions : undefined}
               onActionRun={handleActionRun}
               onNavigate={handleAnaPanelNavigate}
               onDraftInsert={handleDraftInsert}
@@ -3942,6 +3976,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               onOpenArtifact={handleOpenArtifact}
               onRequestPromotion={handleRequestPromotion}
               onRefreshIntelligence={authoringIntelligence.refetch}
+              onThreadChange={threadId => {
+                setActiveThreadId(threadId);
+                setActiveConversationId(threadId);
+              }}
             />
           )}
       </GlobalOperatingShell>
@@ -3986,14 +4024,21 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         onAction={handleCommandAction}
       />
 
-      {/* Settings */}
-      <ZenSettings
-        isOpen={settingsOpen}
-        onClose={() => { setSettingsOpen(false); setSettingsSection(undefined); }}
-        activeProjectId={activeProjectId}
-        activeProjectName={activeProject?.name}
-        initialSection={settingsSection as any}
-      />
+      {/* Settings — lazy loaded */}
+      {settingsOpen && (
+        <React.Suspense fallback={null}>
+          <ZenSettings
+            isOpen={settingsOpen}
+            onClose={() => {
+              setSettingsOpen(false);
+              setSettingsSection(undefined);
+            }}
+            activeProjectId={activeProjectId}
+            activeProjectName={activeProject?.name}
+            initialSection={settingsSection as any}
+          />
+        </React.Suspense>
+      )}
 
       {/* Project switcher - Connected to data layer */}
       <ProjectSwitcher
@@ -4002,10 +4047,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         projects={projects}
         activeProjectId={activeProjectId}
         onSelectProject={id => {
-          openProjectWorkspace(id, {
-            closeProjectSwitcher: true,
-            clearConversation: true,
-          });
+          setActiveProjectId(id);
+          setProjectSwitcherOpen(false);
+          setLayoutMode('project-home');
+          navigate(`/concept2cure/project/${id}`);
         }}
         onCreateProject={() => {
           setProjectSwitcherOpen(false);
@@ -4041,6 +4086,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 targetSubmissionDate: activeProject.targetSubmissionDate,
                 status: activeProject.status,
                 customInstructions: customInstructions,
+                teamMembers: (activeProject as any).teamMembers || [],
               }
             : null
         }
@@ -4100,29 +4146,4 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
 export default ZenApp;
 
-const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
-  // Global destinations
-  projects: 'projects',
-  home: 'projects',
-  documents: 'regulatory-workspace',
-  submissions: 'submissions',
-  reports: 'report-engine',
-  dossier: 'dossier-map',
-  'ri-copilot': 'regulatory-workspace',
-  'submission-builder': 'regulatory-workspace',
-  cmc: 'section-workspace',
-  'clinical-module5': 'section-workspace',
-  verify: 'review-readiness',
-  vault: 'vault-workspace',
-  review: 'review',
-  publish: 'submissions',
-  haq: 'report-engine',
-  'task-board': 'task-board',
-  'csr-workflow': 'csr-workflow',
-  'ind-checklist': 'ind-checklist',
-  templates: 'template-library',
-  'template-library': 'template-library',
-  tools: 'documents',
-  dataroom: 'regulatory-workspace',
-  upload: 'regulatory-workspace',
-};
+const SIDEBAR_NAV_TO_LAYOUT = SIDEBAR_NAV_TO_LAYOUT_EXTRACTED;

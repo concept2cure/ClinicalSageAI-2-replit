@@ -10,10 +10,7 @@ import quotaService from '../services/quotaEnforcementService.js';
 import multer from 'multer';
 import path from 'path';
 import { promises as fs } from 'fs';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-const { authenticateJWT } = require('../middleware/auth');
+import { authenticateJWT } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -571,7 +568,10 @@ router.post(
       const fdaResponse = {
         success: true,
         acknowledgmentNumber: `ACK${Date.now()}`,
-        submissionTrackingNumber: `K${new Date().getFullYear()}${String(submissionId).padStart(6, '0')}`,
+        submissionTrackingNumber: `K${new Date().getFullYear()}${String(submissionId).padStart(
+          6,
+          '0'
+        )}`,
         estimatedReviewTime: '90 days',
         status: testSubmission ? 'Test Submission Received' : 'Submission Received',
         nextSteps: [

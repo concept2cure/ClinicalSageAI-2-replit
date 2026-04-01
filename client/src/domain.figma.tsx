@@ -187,7 +187,7 @@ figma.connect(DataStateWrapper, 'FIGMA_URL_PLACEHOLDER/DataState', {
       loadingComponent={<SkeletonCard />}
       emptyTitle="No items yet"
       emptyDescription="Create your first item."
-      render={data => <div>{/* render data */}</div>}
+      render={(data: any) => <div>{/* render data */}</div>}
     />
   ),
 });

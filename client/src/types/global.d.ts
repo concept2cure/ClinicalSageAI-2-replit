@@ -17,3 +17,19 @@ interface Window {
   dispatchEvent(event: Event): boolean;
   dispatchEvent(event: CustomEvent<any>): boolean;
 }
+
+interface ImportMetaEnv {
+  readonly DEV?: boolean;
+  readonly VITE_SHOW_DEMO_LOGIN?: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
+declare module '@/pages/csr/CERV2Page' {
+  import type { ComponentType } from 'react';
+
+  const CERV2Page: ComponentType<{ projectId: string | null }>;
+  export default CERV2Page;
+}

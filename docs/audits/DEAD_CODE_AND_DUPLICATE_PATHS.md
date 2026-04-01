@@ -7,9 +7,6 @@ Date: 2026-03-31
 - Removed now-unnecessary route imports from `server/index.ts` after bootstrap extraction.
 - Removed dead startup artifacts in `server/index.ts` (unused multer/upload configuration, unused temporary storage client, and related dead imports).
 - Removed duplicate centralized route mounting blocks by replacing them with manifest registration calls.
-- Extracted governance and cross-domain intelligence mount cluster into a dedicated bootstrap manifest.
-- Extracted platform-level health/auth route cluster into a dedicated bootstrap manifest to isolate startup concerns.
-- Extracted reports/admin route cluster into admin manifest for clearer ownership and lower index coupling.
 
 ## Flagged for follow-up (not removed in this pass)
 

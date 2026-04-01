@@ -11,10 +11,11 @@
  * @see /api/fda510k-unified/docs for migration guide
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { create510kDeprecationNotice } from '../middleware/deprecation';
 import literatureAggregator, { LITERATURE_SOURCES } from '../services/LiteratureAggregatorService';
 import literatureSummarizer from '../services/LiteratureSummarizerService';
+import { getSecureOrgId } from '../utils/tenantContext';
 
 const router = Router();
 
@@ -24,12 +25,12 @@ router.use(create510kDeprecationNotice('/literature'));
 /**
  * Middleware to extract tenant context information
  */
-const extractTenantContext = (req: Request, res: Response, next: Function) => {
-  // For now, just ensure organizationId is available in the query or body
-  if (!req.query.organizationId && !req.body?.organizationId) {
-    req.query.organizationId = 'test-org-id'; // Default for development
+const extractTenantContext = (req: Request, res: Response, next: NextFunction) => {
+  const organizationId = getSecureOrgId(req);
+  if (!organizationId) {
+    return res.status(401).json({ error: 'Organization context required' });
   }
-
+  (req as any).organizationId = organizationId;
   next();
 };
 
@@ -266,7 +267,7 @@ router.get('/entry/:id', extractTenantContext, async (req: Request, res: Respons
       return res.status(400).json({ errors });
     }
 
-    const organizationId = req.query.organizationId?.toString() || 'test-org-id';
+    const organizationId = (req as any).organizationId as string;
     const entry = await literatureAggregator.getLiteratureById(req.params.id, organizationId);
 
     if (!entry) {
@@ -308,7 +309,7 @@ router.get('/recent', extractTenantContext, async (req: Request, res: Response) 
     }
 
     const limit = req.query.limit ? parseInt(req.query.limit.toString(), 10) : 10;
-    const organizationId = req.query.organizationId?.toString() || 'test-org-id';
+    const organizationId = (req as any).organizationId as string;
 
     const entries = await literatureAggregator.getRecentLiterature(organizationId, limit);
 
@@ -421,7 +422,7 @@ router.get('/citations/:documentId', extractTenantContext, async (req: Request, 
     }
 
     const documentType = req.query.type?.toString() || '510k';
-    const organizationId = req.query.organizationId?.toString() || 'test-org-id';
+    const organizationId = (req as any).organizationId as string;
 
     const citations = await literatureAggregator.getCitations(
       req.params.documentId,
@@ -462,7 +463,7 @@ router.delete(
         return res.status(400).json({ errors });
       }
 
-      const organizationId = req.query.organizationId?.toString() || 'test-org-id';
+      const organizationId = (req as any).organizationId as string;
 
       await literatureAggregator.removeCitation(req.params.citationId, organizationId);
 
@@ -518,7 +519,7 @@ router.post('/summarize', extractTenantContext, async (req: Request, res: Respon
       literatureIds: req.body.literatureIds,
       summaryType: req.body.summaryType,
       focus: req.body.focus,
-      organizationId: req.body.organizationId,
+      organizationId: (req as any).organizationId,
     });
 
     res.json({
@@ -561,7 +562,7 @@ router.get('/summaries', extractTenantContext, async (req: Request, res: Respons
     }
 
     const limit = req.query.limit ? parseInt(req.query.limit.toString(), 10) : 5;
-    const organizationId = req.query.organizationId?.toString() || 'test-org-id';
+    const organizationId = (req as any).organizationId as string;
 
     const summaries = await literatureSummarizer.getRecentSummaries(organizationId, limit);
 
@@ -595,7 +596,7 @@ router.get('/summary/:id', extractTenantContext, async (req: Request, res: Respo
       return res.status(400).json({ errors });
     }
 
-    const organizationId = req.query.organizationId?.toString() || 'test-org-id';
+    const organizationId = (req as any).organizationId as string;
     const summary = await literatureSummarizer.getSummaryById(req.params.id, organizationId);
 
     if (!summary) {

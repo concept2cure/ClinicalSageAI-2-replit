@@ -255,7 +255,7 @@ class ResearchCompanionService {
 
     const relevantCSRsContext = relevantCSRs
       .map(
-        csr =>
+        (csr: any) =>
           `RELEVANT TRIAL: ${csr.title} (ID: ${csr.id})
       Indication: ${csr.indication}
       Phase: ${csr.phase}
@@ -266,7 +266,7 @@ class ResearchCompanionService {
 
     const relevantAcademicContext = relevantAcademicSources
       .map(
-        source =>
+        (source: any) =>
           `ACADEMIC SOURCE: ${source.title} (ID: ${source.id})
       Author: ${source.author}
       Date: ${source.date}
@@ -351,12 +351,12 @@ class ResearchCompanionService {
 
     // Step 4: Extract and format citations
     const citations = [
-      ...relevantCSRs.map(csr => ({
+      ...relevantCSRs.map((csr: any) => ({
         type: 'csr' as const,
         id: csr.id.toString(),
         title: csr.title,
       })),
-      ...relevantAcademicSources.map(source => ({
+      ...relevantAcademicSources.map((source: any) => ({
         type: 'academic' as const,
         id: source.id,
         title: source.title,

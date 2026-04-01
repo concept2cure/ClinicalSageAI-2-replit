@@ -219,7 +219,7 @@ export function CortexSearchPanel({
             {filteredResults.length} result{filteredResults.length !== 1 ? 's' : ''} found
           </div>
           <div className="space-y-2">
-            {filteredResults.map(result => {
+            {filteredResults.map((result: any) => {
               const typeConfig =
                 ATOM_TYPE_CONFIG[result.atom.type as AtomType] || ATOM_TYPE_CONFIG.fact;
               const Icon = typeConfig.icon;

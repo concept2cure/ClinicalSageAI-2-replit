@@ -436,17 +436,17 @@ router.post('/schedule-digest', async (req: Request, res: Response) => {
     const tasks = await storage.getTasksForUser(userId);
     
     const today = new Date();
-    const dueToday = tasks.filter(t => {
+    const dueToday = tasks.filter((t: any) => {
       const dueDate = new Date(t.dueDate);
       return dueDate.toDateString() === today.toDateString();
     });
     
-    const upcoming = tasks.filter(t => {
+    const upcoming = tasks.filter((t: any) => {
       const dueDate = new Date(t.dueDate);
       return dueDate > today && dueDate <= new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
     });
     
-    const overdue = tasks.filter(t => {
+    const overdue = tasks.filter((t: any) => {
       const dueDate = new Date(t.dueDate);
       return dueDate < today && t.status !== 'completed';
     });
@@ -454,11 +454,11 @@ router.post('/schedule-digest', async (req: Request, res: Response) => {
     const digestData = {
       date: today.toLocaleDateString(),
       dueTodayCount: dueToday.length,
-      dueTodayList: dueToday.map(t => `<li>${t.title} - ${t.priority}</li>`).join(''),
+      dueTodayList: dueToday.map((t: any) => `<li>${t.title} - ${t.priority}</li>`).join(''),
       upcomingCount: upcoming.length,
-      upcomingList: upcoming.map(t => `<li>${t.title} - Due ${new Date(t.dueDate).toLocaleDateString()}</li>`).join(''),
+      upcomingList: upcoming.map((t: any) => `<li>${t.title} - Due ${new Date(t.dueDate).toLocaleDateString()}</li>`).join(''),
       overdueCount: overdue.length,
-      overdueList: overdue.map(t => `<li>${t.title} - Overdue by ${Math.floor((today.getTime() - new Date(t.dueDate).getTime()) / (1000 * 60 * 60 * 24))} days</li>`).join(''),
+      overdueList: overdue.map((t: any) => `<li>${t.title} - Overdue by ${Math.floor((today.getTime() - new Date(t.dueDate).getTime()) / (1000 * 60 * 60 * 24))} days</li>`).join(''),
       recentUpdatesList: '<li>5 tasks updated today</li>',
       dashboardUrl: `${process.env.APP_URL || 'http://localhost:5000'}/dashboard`,
     };

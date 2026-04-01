@@ -11,6 +11,7 @@
 import { eq } from 'drizzle-orm';
 import { unifiedDocuments } from '../../../../shared/schema/unified_workflow';
 import { concept2cureArtifacts } from '../../../../shared/schema';
+import { resolveGovernedContext } from '../../concept2cure/governedDocumentContractService.js';
 import { registerActionHandler } from '../action-registry';
 import { fetchDocument, fetchArtifact } from '../shared-utils';
 import type {
@@ -136,14 +137,69 @@ async function attachToArtifact(
 
   const existingSources = ((artifact.metadata as any)?.sources as SourceReference[]) || [];
   const mergedSources = deduplicateSources([...existingSources, ...sources]);
+  const existingMetadata =
+    artifact.metadata && typeof artifact.metadata === 'object'
+      ? (artifact.metadata as Record<string, unknown>)
+      : {};
+  const existingHarness =
+    existingMetadata.harness && typeof existingMetadata.harness === 'object'
+      ? (existingMetadata.harness as Record<string, unknown>)
+      : {};
+  const governedResolution = resolveGovernedContext({
+    req: {
+      body: {
+        metadata: existingMetadata,
+      },
+      userId: ctx.user.userId,
+      userRole: ctx.user.userRole,
+    } as any,
+    projectId: artifact.projectId,
+    artifactId: artifact.id,
+    documentType: artifact.type || 'regulatory_document',
+    generationMode: 'amendment',
+    lifecycleStatus: artifact.status || 'draft',
+    title: artifact.title || 'Artifact',
+    content: artifact.content || '',
+    ctdSection: artifact.ctdSection || null,
+    sourceRefs: mergedSources.map(s => `source:${s.sourceId}`),
+    exportAllowed: false,
+    eventType: 'artifact.updated',
+  });
+  if (!governedResolution.validation.valid) {
+    throw new AIActionHandlerError(
+      'GOVERNED_CONTRACT_INVALID',
+      governedResolution.validation.errors.join('; '),
+      400,
+      {
+        errors: governedResolution.validation.errors,
+        warnings: governedResolution.validation.warnings,
+      }
+    );
+  }
 
   await db
     .update(concept2cureArtifacts)
     .set({
       metadata: {
-        ...(artifact.metadata as Record<string, unknown> || {}),
+        ...existingMetadata,
         sources: mergedSources,
         lastSourcesUpdatedAt: new Date().toISOString(),
+        harness: {
+          ...existingHarness,
+          clientTrack: governedResolution.contract.clientTrack,
+          submissionProgram: governedResolution.contract.submissionProgram,
+          persona: governedResolution.contract.persona,
+          regulatorScope: governedResolution.contract.regulatorScope,
+          documentClass: governedResolution.contract.documentClass,
+          readinessGate: governedResolution.contract.readinessGate,
+          workspaceTarget: governedResolution.contract.workspaceTarget,
+          originSurface: governedResolution.contract.originSurface,
+          recommendationSource: governedResolution.contract.recommendationSource,
+          regulatorIntent: governedResolution.contract.regulatorIntent,
+          gateChecks: governedResolution.contract.exportEligibility.gateChecks,
+          blockingReasons: governedResolution.contract.exportEligibility.blockingReasons,
+          readinessOutcome: governedResolution.contract.exportEligibility.readinessOutcome,
+        },
       },
       updatedAt: new Date(),
     })

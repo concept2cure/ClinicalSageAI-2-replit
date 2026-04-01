@@ -1,20 +1,9 @@
-/**
- * Centralized auth token management for Concept2Cure client.
- *
- * Single source of truth for token storage. Uses sessionStorage as primary
- * with a one-time migration from legacy localStorage keys.
- *
- * Salvaged from PR #311 and integrated into single-brain sprint.
- *
- * @module client/src/utils/authToken
- */
-
 const TOKEN_KEY = 'token';
-const LEGACY_TOKEN_KEYS = ['authToken', 'auth_token'];
-const ORG_ID_KEY = 'organizationId';
-const LEGACY_ORG_ID_KEYS = ['currentOrganizationId'];
+const LEGACY_TOKEN_KEYS = ['auth_token', 'trialsage_access_token'];
+const ORG_ID_KEY = 'currentOrganizationId';
+const LEGACY_ORG_ID_KEYS = ['currentOrganization', 'organizationId'];
+
 let memoryToken: string | null = null;
-let memoryOrgId: string | null = null;
 
 const canUseSessionStorage = (): boolean => {
   try {
@@ -27,6 +16,30 @@ const canUseSessionStorage = (): boolean => {
   }
 };
 
+const readLocalStorage = (key: string): string | null => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const writeLocalStorage = (key: string, value: string): void => {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Ignore storage write failures in restricted browser modes.
+  }
+};
+
+const removeLocalStorage = (key: string): void => {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Ignore storage write failures in restricted browser modes.
+  }
+};
+
 export const getAuthToken = (): string | null => {
   if (!canUseSessionStorage()) {
     return memoryToken;
@@ -35,15 +48,12 @@ export const getAuthToken = (): string | null => {
   const token = sessionStorage.getItem(TOKEN_KEY);
   if (token) return token;
 
-  // One-time migration from legacy localStorage keys
-  for (const key of [TOKEN_KEY, ...LEGACY_TOKEN_KEYS]) {
-    const legacyToken = localStorage.getItem(key);
+  for (const key of LEGACY_TOKEN_KEYS) {
+    const legacyToken = sessionStorage.getItem(key) || readLocalStorage(key) || readLocalStorage(TOKEN_KEY);
     if (legacyToken) {
       sessionStorage.setItem(TOKEN_KEY, legacyToken);
-      // Clean up legacy keys
-      for (const k of [TOKEN_KEY, ...LEGACY_TOKEN_KEYS]) {
-        localStorage.removeItem(k);
-      }
+      removeLocalStorage(key);
+      removeLocalStorage(TOKEN_KEY);
       memoryToken = legacyToken;
       return legacyToken;
     }
@@ -52,64 +62,75 @@ export const getAuthToken = (): string | null => {
   return memoryToken;
 };
 
+export const getOrgId = (): string => {
+  const fromCurrent = localStorage.getItem('currentOrganizationId');
+  if (fromCurrent && fromCurrent.trim()) return fromCurrent.trim();
+
+  const fromLegacy = localStorage.getItem('currentOrganization');
+  if (fromLegacy && fromLegacy.trim()) return fromLegacy.trim();
+
+  try {
+    const rawUser = localStorage.getItem('trialsage_user');
+    if (rawUser) {
+      const parsed = JSON.parse(rawUser) as { organizationId?: string | number };
+      const orgId = parsed?.organizationId;
+      if (orgId !== undefined && orgId !== null && String(orgId).trim()) {
+        return String(orgId).trim();
+      }
+    }
+  } catch {
+    // ignore malformed user payload and fall through to default
+  }
+
+  return '1';
+};
+
+export const getAuthHeaders = (): Record<string, string> => {
+  const token = getAuthToken();
+  const orgId = getOrgId();
+
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    'x-organization-id': orgId,
+  };
+};
+
 export const setAuthToken = (token: string): void => {
   memoryToken = token;
+
   if (canUseSessionStorage()) {
     sessionStorage.setItem(TOKEN_KEY, token);
+    // Keep legacy session key in sync while old hooks migrate to canonical auth access.
+    sessionStorage.setItem('trialsage_access_token', token);
   }
-  // Clean legacy keys
-  localStorage.removeItem(TOKEN_KEY);
+
+  removeLocalStorage(TOKEN_KEY);
+  removeLocalStorage('trialsage_access_token');
   for (const key of LEGACY_TOKEN_KEYS) {
-    localStorage.removeItem(key);
+    removeLocalStorage(key);
   }
 };
 
 export const clearAuthToken = (): void => {
   memoryToken = null;
+
   if (canUseSessionStorage()) {
     sessionStorage.removeItem(TOKEN_KEY);
-  }
-  localStorage.removeItem(TOKEN_KEY);
-  for (const key of LEGACY_TOKEN_KEYS) {
-    localStorage.removeItem(key);
-  }
-};
-
-/**
- * Get the current organization ID.
- * Checks localStorage (the login flow writes here) with fallback to legacy keys.
- */
-export const getOrgId = (): string => {
-  if (memoryOrgId) return memoryOrgId;
-
-  for (const key of [ORG_ID_KEY, ...LEGACY_ORG_ID_KEYS]) {
-    const orgId = localStorage.getItem(key);
-    if (orgId) {
-      memoryOrgId = orgId;
-      return orgId;
+    sessionStorage.removeItem('trialsage_access_token');
+    for (const key of LEGACY_TOKEN_KEYS) {
+      sessionStorage.removeItem(key);
     }
   }
-  return '1';
+
+  removeLocalStorage(TOKEN_KEY);
+  removeLocalStorage('trialsage_access_token');
+  for (const key of LEGACY_TOKEN_KEYS) {
+    removeLocalStorage(key);
+  }
 };
 
-export const setOrgId = (orgId: string | number): void => {
-  const orgStr = String(orgId);
-  memoryOrgId = orgStr;
-  localStorage.setItem(ORG_ID_KEY, orgStr);
-  // Sync legacy key for backward compat
-  localStorage.setItem('currentOrganizationId', orgStr);
-};
-
-/**
- * Get auth headers for raw fetch calls.
- * Centralizes both token and org ID retrieval.
- */
-export const getAuthHeaders = (): Record<string, string> => {
-  const token = getAuthToken() || '';
-  const orgId = getOrgId();
-  return {
-    'Content-Type': 'application/json',
-    'x-organization-id': orgId,
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
+export const setOrgId = (organizationId: string): void => {
+  if (!organizationId) return;
+  writeLocalStorage(ORG_ID_KEY, organizationId);
+  writeLocalStorage('currentOrganization', organizationId);
 };

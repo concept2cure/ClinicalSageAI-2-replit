@@ -3,12 +3,13 @@ import { z } from 'zod';
 import { db } from '../db';
 import { auditEvents, projects, clientWorkspaces, organizations } from '@shared/schema';
 import { and, eq } from 'drizzle-orm';
-import { getActiveLicenseForOrganization } from '../services/quotaEnforcementService.js';
+import quotaEnforcementService from '../services/quotaEnforcementService.js';
 import { getRequestActor, getTenantContext } from '../utils/tenantContext';
 import { emitRuleEvent } from '../services/rules-engine';
 import { createScopedLogger } from '../utils/logger.js';
 
 const log = createScopedLogger('projects-management');
+const { getActiveLicenseForOrganization } = quotaEnforcementService;
 
 const router = Router();
 
@@ -25,7 +26,8 @@ const createProjectSchema = z.object({
     .transform(val => {
       return typeof val === 'string' ? parseInt(val, 10) : val;
     })
-    .pipe(z.number().int().positive()),
+    .pipe(z.number().int().positive())
+    .optional(),
 });
 
 const updateProjectSchema = z.object({
@@ -137,8 +139,22 @@ router.post('/', async (req, res) => {
     log.debug('Create project request received');
 
     const validatedData = createProjectSchema.parse(req.body);
+    const tenantContext = getTenantContext(req);
+    if ('error' in tenantContext) {
+      return res.status(400).json({ error: tenantContext.error });
+    }
+    const authenticatedOrgId = tenantContext.organizationId;
+    if (
+      validatedData.organizationId !== undefined &&
+      validatedData.organizationId !== authenticatedOrgId
+    ) {
+      return res.status(403).json({
+        error: 'organizationId in payload does not match authenticated tenant',
+      });
+    }
+    const organizationId = authenticatedOrgId;
 
-    const license = await getActiveLicenseForOrganization(validatedData.organizationId);
+    const license = await getActiveLicenseForOrganization(organizationId);
     if (!license) {
       return res.status(403).json({ error: 'No active license for this organization' });
     }
@@ -147,7 +163,7 @@ router.post('/', async (req, res) => {
     let availableClients = await db
       .select()
       .from(clientWorkspaces)
-      .where(eq(clientWorkspaces.organizationId, validatedData.organizationId))
+      .where(eq(clientWorkspaces.organizationId, organizationId))
       .limit(1);
 
     let clientWorkspaceId: number;
@@ -155,14 +171,14 @@ router.post('/', async (req, res) => {
     if (availableClients.length === 0) {
       // Auto-create a default client workspace for the organization
       log.debug(
-        `No client workspaces found for organization ${validatedData.organizationId}. Creating default workspace.`
+        `No client workspaces found for organization ${organizationId}. Creating default workspace.`
       );
 
       // Get organization info for default workspace creation
       const [organization] = await db
         .select()
         .from(organizations)
-        .where(eq(organizations.id, validatedData.organizationId))
+        .where(eq(organizations.id, organizationId))
         .limit(1);
 
       if (!organization) {
@@ -175,12 +191,12 @@ router.post('/', async (req, res) => {
       const [newClientWorkspace] = await db
         .insert(clientWorkspaces)
         .values({
-          organizationId: validatedData.organizationId,
+          organizationId,
           name: `${organization.name} - Default Workspace`,
           slug: `${organization.slug}-default`,
           description: 'Default client workspace created automatically for project management',
           status: 'active',
-          industry: organization.industryType || 'pharmaceutical',
+          industry: organization.industryMode || 'pharmaceutical',
           tier: organization.tier || 'standard',
           quotaUsers: organization.maxUsers || 5,
           quotaProjects: organization.maxProjects || 10,
@@ -190,7 +206,7 @@ router.post('/', async (req, res) => {
 
       clientWorkspaceId = newClientWorkspace.id;
       log.debug(
-        `Created default client workspace ${clientWorkspaceId} (${newClientWorkspace.name}) for organization ${validatedData.organizationId}`
+        `Created default client workspace ${clientWorkspaceId} (${newClientWorkspace.name}) for organization ${organizationId}`
       );
     } else {
       clientWorkspaceId = availableClients[0].id;
@@ -200,8 +216,8 @@ router.post('/', async (req, res) => {
     }
 
     // Use atomic project creation with quota enforcement
-    const { atomicCreateProject } = await import('../services/atomicQuotaService.js');
-    const result = await atomicCreateProject(validatedData.organizationId, {
+    const atomicQuotaService = await import('../services/atomicQuotaService.js');
+    const result = await atomicQuotaService.atomicCreateProject(organizationId, {
       name: validatedData.name,
       description: validatedData.description || null,
       type: validatedData.type,
@@ -235,7 +251,7 @@ router.post('/', async (req, res) => {
       const { userName, userRole } = getRequestActor(req);
 
       await db.insert(auditEvents).values({
-        organizationId: validatedData.organizationId,
+        organizationId,
         eventType: 'project_create',
         entityType: 'project',
         entityId: result.data.id,
@@ -265,7 +281,7 @@ router.post('/', async (req, res) => {
 
     // Emit rules engine event for project creation
     try {
-      await emitRuleEvent('project_created', validatedData.organizationId, result.data.id, {
+      await emitRuleEvent('project_created', organizationId, result.data.id, {
         project: result.data,
       });
     } catch (ruleError) {

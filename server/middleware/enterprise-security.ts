@@ -173,7 +173,7 @@ export function corsMiddleware(req: Request, res: Response, next: NextFunction) 
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Organization-Id, X-Request-Id, X-API-Key'
+    'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Request-Id'
   );
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
@@ -597,8 +597,9 @@ export function applySecurityMiddleware(app: any) {
   // CORS
   app.use(corsMiddleware);
 
-  // Global rate limit
-  app.use(rateLimiters.global);
+  // Global rate limit — removed: Redis rate limiter on /api (in index.ts) provides
+  // category-based limits with persistence across restarts. Keeping per-path limiters below
+  // for defense-in-depth on sensitive endpoints.
 
   // Input sanitization
   app.use(sanitizeInput);

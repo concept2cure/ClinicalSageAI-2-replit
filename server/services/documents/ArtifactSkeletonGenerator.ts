@@ -153,7 +153,7 @@ export class ArtifactSkeletonGenerator {
       logger.info(`Skeleton generated successfully with ${sections.length} sections`);
       return skeleton;
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error generating artifact skeleton:', error);
       throw new Error(`Failed to generate skeleton: ${error.message}`);
     }

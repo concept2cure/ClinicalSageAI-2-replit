@@ -195,7 +195,7 @@ export function SecurityProvider({ children, initialOrgId }: SecurityProviderPro
   useEffect(() => {
     if (state.membership) {
       const rolePermissions = state.membership.roles.flatMap(
-        role => ROLE_PERMISSION_PRESETS[role] || []
+        (role: any) => ROLE_PERMISSION_PRESETS[role] || []
       );
 
       // Merge role permissions with custom permissions

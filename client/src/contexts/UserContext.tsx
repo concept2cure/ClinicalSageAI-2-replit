@@ -293,14 +293,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
         if (projectsResponse.ok) {
           const projectsData = await projectsResponse.json();
           setProjects(projectsData.projects || projectsData || []);
+        } else {
+          setProjects([]);
         }
-      } catch (err) {
-        // Use mock projects for development
-        setProjects([
-          { id: '1', name: 'CardioFlow 510(k)', type: '510k', status: 'active', role: 'lead' },
-          { id: '2', name: 'Pembrolizumab IND', type: 'ind', status: 'draft', role: 'contributor' },
-          { id: '3', name: 'OncoPlex CER', type: 'cer', status: 'active', role: 'reviewer' },
-        ]);
+      } catch {
+        setProjects([]);
       }
 
       // Restore last selected project from localStorage

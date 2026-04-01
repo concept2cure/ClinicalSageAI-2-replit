@@ -909,7 +909,7 @@ export function ECTDNavigator() {
     if (!activeProject || !projectArtifacts || projectArtifacts.length === 0) {
       return ECTD_STRUCTURE;
     }
-    return overlayRealArtifacts(ECTD_STRUCTURE, projectArtifacts.map(a => ({
+    return overlayRealArtifacts(ECTD_STRUCTURE, projectArtifacts.map((a: any) => ({
       id: String(a.id),
       title: a.title,
       ctdSection: a.ctdSection,

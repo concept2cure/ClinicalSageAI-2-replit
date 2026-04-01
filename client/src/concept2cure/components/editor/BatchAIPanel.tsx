@@ -242,10 +242,11 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
 
       try {
         const res = await apiRequest('POST', '/api/concept2cure/ai/edit-section', {
-            action: selectedAction,
-            text: section.text,
-            sectionTitle: section.heading,
-            submissionType: submissionType ?? 'general',
+          action: selectedAction,
+          text: section.text,
+          sectionTitle: section.heading,
+          submissionType: submissionType ?? 'general',
+          contextAttachment: 'adhoc',
         });
 
         if (!res.ok) {

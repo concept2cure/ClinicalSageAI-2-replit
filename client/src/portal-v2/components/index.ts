@@ -37,13 +37,6 @@ export {
 } from './AdminPortalIndex';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AUTH COMPONENTS
-// ─────────────────────────────────────────────────────────────────────────────
-
-export { default as LoginPage } from './auth/LoginPage';
-export { default as MFASetup } from './auth/MfaSetup';
-export { default as PasswordReset } from './auth/PasswordReset';
-
 // ─────────────────────────────────────────────────────────────────────────────
 // ADMIN COMPONENTS
 // ─────────────────────────────────────────────────────────────────────────────

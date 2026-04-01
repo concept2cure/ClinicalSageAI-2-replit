@@ -188,6 +188,11 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                   : 'Create your first document to start regulatory authoring.'
                 : 'Try broadening your search or adjusting filters.'}
             </p>
+            {documents.length === 0 && (
+              <p className="text-[11px] text-stone-500 mb-3">
+                Tip: the selected section stays in context after a document opens in the governed editor.
+              </p>
+            )}
             {sectionRegRef && documents.length === 0 && (
               <p className="text-[10px] text-stone-400 mb-3 font-mono">{sectionRegRef}</p>
             )}
@@ -260,7 +265,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                   onClick={() => onSelect(latestDraft)}
                   className="shrink-0 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
                 >
-                  Continue →
+                  Open in editor →
                 </button>
               </div>
             );
@@ -324,11 +329,18 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                             <p className="text-sm font-medium text-stone-900 truncate leading-snug">
                               {doc.title}
                             </p>
-                            {doc.ctdSection && (
-                              <span className="text-xs text-violet-500 font-medium">
-                                CTD {doc.ctdSection}
+                            <div className="flex items-center gap-2 text-[11px]">
+                              {doc.ctdSection && (
+                                <span className="text-violet-500 font-medium">CTD {doc.ctdSection}</span>
+                              )}
+                              <span className="text-stone-400">
+                                {doc.status === 'locked'
+                                  ? 'View only'
+                                  : doc.status === 'approved'
+                                    ? 'Opens in governed edit (new draft version)'
+                                    : 'Safe to continue drafting'}
                               </span>
-                            )}
+                            </div>
                           </div>
                         </div>
                       </td>

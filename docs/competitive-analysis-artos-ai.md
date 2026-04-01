@@ -1,8 +1,7 @@
 # Competitive Analysis: Artos AI
 
-> Research date: 2026-03-30 (updated)
-> Previous research: 2026-03-29
-> Source: Public website (artosai.com), YC profile, DIA marketplace listing, blog posts, third-party coverage, web searches
+> Research date: 2026-03-29
+> Source: Public website (artosai.com), YC profile, DIA marketplace listing, blog posts, third-party coverage
 
 ---
 
@@ -16,15 +15,6 @@
 - **Stage**: Seed / early-stage
 - **Competitors**: Weave Bio, Ritivel, X Doc (Artos ranks 3rd among 5 active competitors by funding)
 - **Deployment speed**: Claims deployment in a large organization in under 7 days, value realization within 2 weeks
-
-### Conference Presence (2024-2025)
-
-- RAPS Regulatory Strategy 2024
-- AMWA Medical Writing and Communication Conference 2024
-- DIA SIDM Forum (Regulatory Submissions, Information and Document Management)
-- DIA 2025 (exhibitor)
-- RAPS EDTS 2025
-- RAPS Convergence 2025 (Pittsburgh) -- Mihikaa Jain speaking at full-day preconference workshop on "Harnessing AI for Regulatory Excellence"
 
 ### Target Market
 
@@ -100,7 +90,7 @@ Artos does NOT appear to be a traditional rich-text or block-based editor like G
 ### Core Template System
 
 - **Custom Templates**: Users can use Artos-provided templates, custom templates built by their team, or purchased third-party templates
-- **eCTD Templates**: Artos provides 400+ free eCTD-compliant templates for IND/NDA/BLA submissions with guidances, descriptions, and unified styling (regularly updated)
+- **eCTD Templates**: Artos provides free eCTD templates created by their team for IND/NDA/BLA submissions
 - **Template Flexibility**: AI conforms drafts to any template structure
 - **Module-aware**: Understands CTD module structure (e.g., Module 2.2 Introductory Statement per 21 CFR 312.23(a)(3)(i))
 
@@ -274,20 +264,13 @@ Artos appears focused on the **drafting acceleration** phase rather than the ful
 - PDF export not documented
 - XML/eCTD backbone generation not documented
 
-### Integrations (Confirmed)
+### Integrations
 
-- **Veeva RIM**: High-fidelity integration with the most widely used DMS for regulatory submissions
-- **Box**: Sync and manage documents with company Box systems
-- **SharePoint**: Read, write, and manage documents from SharePoint accounts
-- **Google Drive**: Seamless read/write/manage integration
-- **Empower**: Listed as supported integration
-- **LIMS**: Listed as supported integration
-- **Microsoft Teams**: Automations can notify team members via Teams with change summaries
-- **API available**: REST API for custom integrations (IT/Engineering can build custom GxP-compliant data transformation workflows)
-- **SSO support**: Mentioned for enterprise deployment; integrates with user management systems for granular access controls
+- **API available**: REST API for custom integrations
+- **SSO support**: Mentioned for enterprise deployment
+- **DMS integration**: Integrations with existing document management systems
 - **Cross-system automations**: Can define workflows across DMS, communications apps, analysis software
 - **Quick setup**: Integrations can be set up without weeks/months of work
-- **More integrations coming**: Artos explicitly states more integrations are being added
 
 ---
 
@@ -360,28 +343,22 @@ Inconsistency Intelligence is "trained to understand the logic of these submissi
 
 | Area | Assessment |
 |------|-----------|
-| Rich text editing experience | No details on actual editor UX (no screenshots public) |
-| Real-time collaboration | Not mentioned (no co-editing, presence indicators) |
+| Rich text editing experience | No details on actual editor UX |
+| Real-time collaboration | Not mentioned |
 | Commenting / annotations | Not mentioned |
-| Electronic signatures | Not mentioned (21 CFR Part 11 gap) |
-| Formal approval workflows | Not mentioned (no sign-off chains) |
+| Electronic signatures | Not mentioned |
+| Formal approval workflows | Not mentioned |
 | Version comparison / diff | Not mentioned |
-| Export formats | Not documented (Word/PDF export likely but not stated) |
-| eCTD publishing (XML backbone) | Implied by FHIR blog but not confirmed as product feature |
+| Export formats | Not documented |
+| eCTD publishing (XML backbone) | Implied but not confirmed |
 | Offline editing | Not mentioned |
 | Mobile support | Not mentioned |
-| Compliance scanning / style guides | Not mentioned (no language/terminology checking) |
-| Citation management | Not mentioned as formal system |
+| Compliance scanning / style guides | Not mentioned |
+| Citation management | Not mentioned |
 | Cross-reference linking | Not mentioned |
-| Section assignment to users | Not mentioned |
+| Section assignment | Not mentioned |
 | Review routing / assignment | Not mentioned |
 | Pricing | Not public |
-| HIPAA compliance | Not mentioned |
-| 21 CFR Part 11 full compliance | Not mentioned |
-| Data residency options | Not mentioned |
-| Regulatory intelligence accumulation | No equivalent to RIM -- AI generates but does not learn over time |
-| Predictive analytics | No equivalent to Foresight -- no submission risk prediction |
-| Multi-agency comparison | No equivalent to precedent engine |
 
 ---
 
@@ -409,104 +386,23 @@ Inconsistency Intelligence is "trained to understand the logic of these submissi
 8. **No review workflow tooling** -- no reviewer assignment, routing, deadlines
 9. **Early stage** -- $500K funding, small team, limited track record
 10. **No intelligence layer** -- no equivalent to RIM; AI generates but doesn't accumulate regulatory judgment
-11. **No predictive analytics** -- no equivalent to Foresight; cannot predict submission outcomes
-12. **No multi-agency intelligence** -- no precedent engine for comparing FDA/EMA/PMDA/HC approaches
-13. **No conversation-first interface** -- no equivalent to AnA; users work through structured UI only
-14. **No project management** -- no equivalent to project workspace, milestones, team coordination
 
 ### Where They Overlap
 
 | Capability | Artos | Concept2Cure |
 |-----------|-------|-------------|
-| AI document drafting | Core feature (per-doc-type AI) | Via AnA + authoring actions |
-| Section-level editing | Yes (section regeneration) | Yes (UnifiedDocumentEditor) |
-| Source traceability | Strong (Source Tracer) | Via CORTEX + citations |
+| AI document drafting | Core feature | Via AnA + authoring |
+| Section-level editing | Yes | Yes (UnifiedDocumentEditor) |
+| Source traceability | Strong | Via CORTEX + citations |
 | Cross-document consistency | Inconsistency Intelligence | RIM cross-artifact intelligence |
-| eCTD awareness | 400+ templates + structure | Submission workflow + DossierMap |
-| Audit trail | GxP-grade immutable audit logs | Full audit system |
-| Template system | Custom + 400+ eCTD templates | Document templates |
+| eCTD awareness | Templates + structure | Submission workflow + DossierMap |
+| Audit trail | Audit logs | Full audit system |
+| Template system | Custom templates | Document templates |
 | Regulatory search | clinicaltrials.gov, Drugs@FDA | Regulatory intelligence + precedent engine |
-| DMS integrations | Veeva RIM, Box, SharePoint, GDrive | Via export/import |
-| Automation workflows | Trigger-based cross-system | Bull queue + workflow engine |
-| Tables/figures/graphs | AI generation + auto-update | Editor + AI generation |
-| Multi-format ingestion | PDF, RTF, DOCX, JPEG, XLSX | PDF, DOCX import |
-| Security | SOC 2 + GDPR | SOC 2 + GDPR + Helmet + rate limiting |
-| FHIR readiness | Blog-level exploration | Not mentioned |
 
 ---
 
-## 15. Security & Compliance (Updated 2026-03-30)
-
-### Confirmed
-
-- **SOC 2 Type II compliant**: Internal practices exceed SOC II and GDPR requirements
-- **GDPR compliant**: Explicitly mentioned alongside SOC II
-- **GxP compliance**: Automations built with GxP in mind; every AI action and manual edit logged in immutable record
-- **Data privacy**: Artos never trains AI models on data belonging to another company; minimal data redundancy is a core security tenet
-- **Access controls**: Infrastructure designed from database level up with access control; integrates with user management systems for granular, enforceable access controls
-- **Audit logs**: Searchable, real-time retrievable, designed to meet GxP software requirements; captures every action/change with contextual narrative of document evolution
-- **IT dashboard**: Comprehensive IT dashboard for managing Artos and ensuring GxP compliance
-- **AI usage policy**: Published internal policy for responsible, transparent, ethical AI use
-- **Cloud provider security**: Works closely with cloud and AI providers for maximum security
-
-### Not Confirmed / Unknown
-
-- 21 CFR Part 11 electronic signatures (not mentioned)
-- HIPAA compliance (not mentioned)
-- ISO 27001 certification (not mentioned)
-- Encryption specifics (at rest / in transit)
-- Data residency / sovereignty options
-- Penetration testing cadence
-- Specific cloud provider (AWS, Azure, GCP)
-
----
-
-## 16. Automations & Workflows (Updated 2026-03-30)
-
-### Confirmed
-
-- **Trigger-based automations**: Automations trigger on data updates, document changes, and more
-- **Section rewriting**: Automations can rewrite sections based on triggers
-- **Table/graph updates**: Automations can update tables and graphs from new source data
-- **Change tracking**: Automations track their changes for review
-- **User notifications**: Automations notify users of changes (including via Microsoft Teams)
-- **Built-in validation**: Non-AI validation logic ensures automations perform correctly 100% of the time
-- **GxP immutable logging**: Every automation action logged in immutable record
-- **Cross-system rules**: Users can define complex rules and workflows across DMS, communications apps, analysis software
-- **Example workflow**: "Automatically update summaries of tabular data when new tabular data is updated and notify a member via Microsoft Teams with a brief summary of what changes were made"
-- **IT/Engineering API**: Intuitive interface or API to build custom, GxP-compliant data transformation workflows for mappings, database storage, document management
-
-### Assessment
-
-Artos's automation system appears relatively sophisticated for their stage. The trigger-based model with cross-system integration (DMS + Teams + analysis software) is a genuine workflow orchestration capability, not just simple macros. The built-in non-AI validation logic for automations is a noteworthy detail -- it suggests deterministic validation alongside AI generation.
-
----
-
-## 17. Validation & AI Quality (Updated 2026-03-30)
-
-### Multi-Layered Validation Approach (from blog)
-
-Artos has published detailed thinking on production-grade AI validation:
-
-1. **Human-in-the-Loop (HITL)**: Core component; humans evaluate, provide feedback, make edits
-2. **Edit tracking as ground truth**: Monitoring human edits generates validation datasets; modified content becomes benchmark data
-3. **Pipeline validation**: Modular validation of each step:
-   - Document ingestion validation (structured, consistent intake)
-   - Document storage validation (integrity, compliance)
-   - Information retrieval validation (correct content retrieval)
-4. **Modular upgrade path**: Component-level validation minimizes re-validation when upgrading parts of the system
-5. **95% pilot failure rate**: Artos claims 95% of AI pilots fail; positions itself as having solved the production-grade problem
-
-### Anti-Hallucination Claims
-
-- "No hallucinations" is a core marketing claim
-- Purpose-built AI systems per document type (not generic LLM wrapper)
-- All content source-grounded via Source Tracer
-- Reproducible results from agents that interface with LLMs
-
----
-
-## 18. Strategic Takeaways
+## 15. Strategic Takeaways
 
 1. **Artos validates the market** -- YC-backed, focused on the exact problem Concept2Cure solves. The $13B regulatory submission market is real and attracting serious attention.
 
@@ -550,21 +446,3 @@ Artos has published detailed thinking on production-grade AI validation:
 - [Weave Bio (Competitor)](https://www.weave.bio/)
 - [Fondo: Artos Launch Coverage](https://www.fondo.com/blog/artosai-launches)
 - [HuntScreens: Artos](https://huntscreens.com/en/products/artos)
-- [Artos: Integrations](https://www.artosai.com/feature/generative-ai-integrations)
-- [Artos: Security](https://www.artosai.com/resources/security)
-- [Artos: Audit Logs](https://www.artosai.com/backup/generative-ai-medical-writing-audit-logs)
-- [Artos Blog: Validating LLM Systems](https://www.artosai.com/blog/getting-to-production-grade-ai-validating-llm-systems)
-- [Artos Blog: Evaluating Model-Level Performance](https://www.artosai.com/blog/evaluating-model-level-performance-in-genai-applications)
-- [Artos Blog: How Trustworthy Can AI Be?](https://www.artosai.com/blog/how-trustworthy-can-ai-be)
-- [Artos: Clinical Operations Team Page](https://www.artosai.com/team/generative-ai-clinical-operations)
-- [Artos: IT Team Page](https://www.artosai.com/team/generative-ai-information-technology)
-- [Artos: Big Pharma Page](https://www.artosai.com/organization/generative-ai-in-big-pharmaceutical)
-- [Artos at RAPS Convergence 2025](https://www.artosai.com/events/artos-at-raps-convergence-2025)
-- [Artos at RAPS EDTS 2025](https://www.artosai.com/events/artos-at-raps-edts-2025)
-- [Artos at AMWA 2024](https://www.artosai.com/events/artos-at-amwa-medical-writing-and-communication-conference-2024)
-- [Artos at RAPS Regulatory Strategy 2024](https://www.artosai.com/events/artos-at-raps-regulatory-strategy-2024)
-- [Artos at DIA SIDM Forum](https://live.diaglobal.org/event/regulatory-submissions-information-and-document-management-forum/exhibitor/RXhoaWJpdG9yXzIwOTMzOTM=)
-- [Artos: eCTD Templates (400+)](https://www.artosai.com/resources/ectd-ind-nda-bla-templates)
-- [Artos Privacy Policy](https://www.artosai.com/legal)
-- [Artos on PitchBook](https://pitchbook.com/profiles/company/593028-46)
-- [Artos on Crunchbase](https://www.crunchbase.com/organization/artos-78fd)

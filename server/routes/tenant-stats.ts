@@ -8,13 +8,11 @@ import { eq, and, count } from 'drizzle-orm';
 import {
   organizations,
   organizationUsers,
-  users,
   cerProjects,
   projectDocuments,
 } from '../../shared/schema';
 import { authMiddleware } from '../auth';
 import {
-  requireOrganizationContext,
   validateTenantAccessMiddleware,
 } from '../middleware/tenantContext';
 import { createScopedLogger } from '../utils/logger';
@@ -34,44 +32,6 @@ router.get('/:id', validateTenantAccessMiddleware, async (req, res) => {
   const tenantId = parseInt(req.params.id);
 
   try {
-    // For development, return mock data
-    if (process.env.NODE_ENV === 'development') {
-      return res.json({
-        userCount: 4,
-        projectCount: 8,
-        storageUsed: 3548, // in MB
-        activeUsers: 3,
-        recentProjects: [
-          {
-            id: 101,
-            name: 'FDA 510(k) Device Submission',
-            createdAt: '2025-04-18T10:30:00Z',
-            lastActivity: '2025-05-08T14:25:10Z',
-            docsCount: 12,
-          },
-          {
-            id: 102,
-            name: 'CE Mark Technical Documentation',
-            createdAt: '2025-04-22T09:15:00Z',
-            lastActivity: '2025-05-09T11:10:22Z',
-            docsCount: 8,
-          },
-          {
-            id: 103,
-            name: 'Post-Market Surveillance Report',
-            createdAt: '2025-05-01T13:45:00Z',
-            lastActivity: '2025-05-07T16:30:05Z',
-            docsCount: 5,
-          },
-        ],
-        quotaInfo: {
-          users: { used: 4, total: 10, percentage: 40 },
-          projects: { used: 8, total: 20, percentage: 40 },
-          storage: { used: 3.5, total: 50, percentage: 7 }, // GB
-        },
-      });
-    }
-
     // Fetch tenant details to get plan limits
     const tenantDetails = await db
       .select()

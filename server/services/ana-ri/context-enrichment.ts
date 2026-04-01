@@ -59,8 +59,69 @@ interface SlashCommand {
   args: string;
 }
 
-function detectSlashCommand(message: string): SlashCommand | null {
-  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|help|sap|power|dose|defensibility|design|safety|cmc|csr|device|ectd|audit|amend|review|memo|brief|strategy|freeze|sign|scan|checklist|submit|workflow|status|narrative|report|iss|ise|ib|smpc|rmp|uspi|haq|ask)\b\s*(.*)/i);
+export const SUPPORTED_SLASH_COMMANDS = [
+  'risk',
+  'readiness',
+  'precedent',
+  'draft',
+  'preflight',
+  'claims',
+  'recommend',
+  'next',
+  'simulate',
+  'signals',
+  'export',
+  'assess',
+  'twin',
+  'consistency',
+  'deficiencies',
+  'knowledge',
+  'decisions',
+  'help',
+  'sap',
+  'power',
+  'dose',
+  'defensibility',
+  'design',
+  'safety',
+  'cmc',
+  'csr',
+  'device',
+  'diagnostics',
+  'cms',
+  'ectd',
+  'audit',
+  'amend',
+  'review',
+  'memo',
+  'brief',
+  'strategy',
+  'freeze',
+  'sign',
+  'scan',
+  'checklist',
+  'submit',
+  'workflow',
+  'status',
+  'narrative',
+  'report',
+  'iss',
+  'ise',
+  'ib',
+  'smpc',
+  'rmp',
+  'uspi',
+  'haq',
+  'ask',
+] as const;
+
+const SUPPORTED_SLASH_COMMAND_REGEX = new RegExp(
+  `^\\/(${SUPPORTED_SLASH_COMMANDS.join('|')})\\b\\s*(.*)`,
+  'i',
+);
+
+export function detectSlashCommand(message: string): SlashCommand | null {
+  const match = message.match(SUPPORTED_SLASH_COMMAND_REGEX);
   if (!match) return null;
   return { command: match[1].toLowerCase(), args: match[2].trim() };
 }
@@ -155,6 +216,18 @@ const DEVICE_TRIGGERS = [
 const ECTD_TRIGGERS = [
   /\b(?:ectd|module [1-5]|ctd structure|dossier structure|submission structure)\b/i,
   /\b(?:granule|lifecycle|sequence|submission.*package)\b/i,
+];
+
+const CMS_TRIGGERS = [
+  /\b(?:cms|centers? for medicare|medicare|medicaid|coverage determination)\b/i,
+  /\b(?:coding strategy|hcpcs|cpt|drg|apc|icd-10|ntap|pass-through)\b/i,
+  /\b(?:reimbursement|payer|coverage|payment rate|value dossier|heor)\b/i,
+];
+
+const DIAGNOSTICS_TRIGGERS = [
+  /\b(?:diagnostic|companion diagnostic|cdx|in.?vitro diagnostic|ivd)\b/i,
+  /\b(?:analytical validation|clinical validation|sensitivity|specificity|ppv|npv)\b/i,
+  /\b(?:lodd?|linearity|precision|repeatability|reproducibility|method comparison)\b/i,
 ];
 
 function matchesTriggers(message: string, triggers: RegExp[]): boolean {
@@ -450,18 +523,21 @@ async function enrichWithCrossModule(projectId: string | number, orgId?: number)
   }
 }
 
-async function enrichWithSignals(projectId: string | number): Promise<string> {
+async function enrichWithSignals(projectId: string | number, orgId?: number): Promise<string> {
   // Try live RIM signals first
-  try {
-    const signals = getProjectSignals(String(projectId));
-    if (signals && signals.length > 0) {
-      const signalLines = signals.slice(0, 10).map((s: { riskLevel?: string; type?: string; content?: string; message?: string; score?: number }) =>
-        `- **[${s.riskLevel || s.type || 'signal'}]** ${s.content?.slice(0, 300) || s.message || 'No content'} (score: ${s.score ?? '—'})`
-      ).join('\n');
-      return `\n\n## RIM Intelligence Signals (Live)\n**${signals.length} signals** accumulated for this project.\n\n${signalLines}\n\nSummarize patterns, highlight recurring risks, and note trend directions.`;
+  if (orgId) {
+    try {
+      const summary = getProjectSignals(orgId, Number(projectId));
+      if (summary && summary.totalSignals > 0) {
+        const byRisk = Object.entries(summary.byRiskLevel)
+          .filter(([, count]) => Number(count) > 0)
+          .map(([risk, count]) => `- **${risk}**: ${count}`)
+          .join('\n');
+        return `\n\n## RIM Intelligence Signals (Live)\n**${summary.totalSignals} signals** accumulated for this project.\n\nTrend: **${summary.overallTrend}** (${summary.trendConfidence}, n=${summary.trendSampleSize})\nAverage score: **${summary.averageScore}**\nTop patterns: ${summary.topPatternIds.slice(0, 6).join(', ') || 'none'}\n\n### By risk\n${byRisk || '- none'}\n\nSummarize patterns, highlight recurring risks, and note trend directions.`;
+      }
+    } catch (e: unknown) { console.warn("[enrichment] Query failed:", e instanceof Error ? e.message : String(e));
+      // Fall through to memory
     }
-  } catch (e: unknown) { console.warn("[enrichment] Query failed:", e instanceof Error ? e.message : String(e));
-    // Fall through to memory
   }
   return enrichWithProjectMemory(
     projectId,
@@ -520,6 +596,31 @@ async function enrichWithKnowledgeSearch(query: string, projectId: string | numb
   }
 }
 
+async function enrichWithDecisions(projectId: string | number): Promise<string> {
+  try {
+    const { decisionLifecycleService } = await import('../decision-lifecycle-service.js');
+    const decisionCtx = decisionLifecycleService.getDecisionContext(String(projectId), { limit: 12 });
+    const decisionAwareStatus = decisionLifecycleService.computeDecisionAwareStatus(String(projectId), {});
+
+    if (decisionCtx.length === 0) {
+      return '\n\n## Decision Audit Trail\nNo formal decisions recorded for this project yet.';
+    }
+
+    const lines = decisionCtx.slice(0, 10).map(({ decision, receipt }) => {
+      const authority = decision.authority?.level ? ` | authority: ${decision.authority.level}` : '';
+      const receiptState = receipt
+        ? ` | receipt: ${receipt.execution?.executed ? 'executed' : 'pending'}${(receipt.pendingApprovals?.length || 0) > 0 ? `, ${receipt.pendingApprovals.length} pending approval(s)` : ''}`
+        : '';
+      return `- **[${decision.status.toUpperCase()}]** ${decision.kind}: ${decision.summary}${authority}${receiptState}`;
+    });
+
+    return `\n\n## Decision Audit Trail\n${decisionAwareStatus.summary}\n\n${lines.join('\n')}\n\nUse this decision trail for explanation grounding and to avoid contradicting prior approvals.`;
+  } catch (e: unknown) {
+    console.warn('[enrichment] Decision trail enrichment failed:', e instanceof Error ? e.message : String(e));
+    return '';
+  }
+}
+
 async function enrichWithDomainMemory(projectId: string | number, domain: string, categories: string[], label: string): Promise<string> {
   const memBlock = await enrichWithProjectMemory(projectId, categories, label,
     `Project-specific ${domain} data. Reference directly in your response.`, 5);
@@ -554,6 +655,36 @@ async function enrichWithECTD(projectId: string | number): Promise<string> {
   return enrichWithDomainMemory(projectId, 'eCTD',
     ['ectd_structure', 'module_status', 'submission_package', 'granule_tracking'],
     'eCTD Structure Intelligence');
+}
+
+async function enrichWithCMS(projectId: string | number): Promise<string> {
+  return enrichWithDomainMemory(
+    projectId,
+    'CMS coverage and reimbursement',
+    [
+      'cms_strategy',
+      'payer_evidence',
+      'reimbursement_strategy',
+      'coding_coverage',
+      'health_economics',
+    ],
+    'CMS & Reimbursement Intelligence',
+  );
+}
+
+async function enrichWithDiagnostics(projectId: string | number): Promise<string> {
+  return enrichWithDomainMemory(
+    projectId,
+    'diagnostics and IVD',
+    [
+      'diagnostic_validation',
+      'ivd_performance',
+      'analytical_validation',
+      'clinical_performance',
+      'companion_diagnostic',
+    ],
+    'Diagnostics & IVD Intelligence',
+  );
 }
 
 async function enrichWithBiostatContext(projectId: string | number, submissionType?: string): Promise<string> {
@@ -704,15 +835,29 @@ export async function enrichContextForChat(params: {
       risk: () => Promise.all([enrichWithForesight(projectId, organizationId), enrichWithCRLRTF(projectId, organizationId)]).then(r => r.join('')),
       readiness: () => enrichWithReadiness(projectId, organizationId),
       precedent: () => enrichWithPrecedents(projectId),
+      draft: () =>
+        Promise.resolve(detectDocumentType(slash.args || message))
+          .then(doc => (doc ? buildDocumentGenerationContext(doc) : '\n\n## Draft Request Context\nNo specific document type detected. Ask which CTD section or artifact to draft, then produce submission-ready content.')),
+      preflight: () =>
+        Promise.all([
+          enrichWithReadiness(projectId, organizationId),
+          submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
+          enrichWithClaims(projectId),
+          enrichWithCRLRTF(projectId, organizationId),
+        ]).then(r => r.join('')),
       claims: () => enrichWithClaims(projectId),
       recommend: () => enrichWithRecommendations(projectId, organizationId),
       next: () => enrichWithRecommendations(projectId, organizationId),
-      signals: () => enrichWithSignals(projectId),
+      signals: () => enrichWithSignals(projectId, organizationId),
+      export: () =>
+        Promise.resolve(
+          '\n\n## Conversation Export Intent\nUser requested conversation export. Provide a concise markdown-ready output and include any critical action receipts from this turn.'
+        ),
       simulate: () => enrichWithCRLRTF(projectId, organizationId),
       assess: () => Promise.all([
         enrichWithReadiness(projectId, organizationId),
         enrichWithRecommendations(projectId, organizationId),
-        enrichWithSignals(projectId),
+        enrichWithSignals(projectId, organizationId),
         enrichWithForesight(projectId, organizationId),
       ]).then(r => r.join('')),
       twin: () => Promise.all([
@@ -723,6 +868,7 @@ export async function enrichContextForChat(params: {
       consistency: () => enrichWithCrossModule(projectId, organizationId),
       deficiencies: () => enrichWithDeficiencies(submissionType),
       knowledge: () => enrichWithKnowledgeSearch(slash.args || message, projectId),
+      decisions: () => enrichWithDecisions(projectId),
       sap: () => enrichWithBiostatContext(projectId, submissionType),
       power: () => enrichWithBiostatContext(projectId, submissionType),
       dose: () => enrichWithBiostatContext(projectId, submissionType),
@@ -732,6 +878,8 @@ export async function enrichContextForChat(params: {
       cmc: () => enrichWithCMC(projectId),
       csr: () => enrichWithCSR(projectId),
       device: () => enrichWithDevice(projectId),
+      diagnostics: () => enrichWithDiagnostics(projectId),
+      cms: () => enrichWithCMS(projectId),
       ectd: () => enrichWithECTD(projectId),
       audit: () => Promise.all([enrichWithReadiness(projectId, organizationId), enrichWithClaims(projectId)]).then(r => r.join('')),
       amend: () => enrichWithProjectMemory(projectId, ['document_version', 'change_impact', 'amendment_tracking'], 'Amendment Context', 'Relevant version history and change impact data.', 5),
@@ -763,14 +911,16 @@ export async function enrichContextForChat(params: {
       help: () => Promise.all([
         enrichWithReadiness(projectId, organizationId),
         enrichWithRecommendations(projectId, organizationId),
+        enrichWithCMS(projectId),
+        enrichWithDiagnostics(projectId),
       ]).then(r => r.join('')),
     };
 
     triggerType = 'slash_command';
     detectedCommand = slash.command;
     const enrichFn = enrichMap[slash.command];
+    sourcesAttempted++;
     if (enrichFn) {
-      sourcesAttempted++;
       const block = await enrichFn().catch(() => '');
       if (block) {
         blocks.push(block);
@@ -778,6 +928,9 @@ export async function enrichContextForChat(params: {
       } else {
         sourcesFailed.push(slash.command);
       }
+    } else {
+      // Command detected but no enrichment handler is wired for it yet.
+      sourcesFailed.push(`slash_unhandled:${slash.command}`);
     }
 
     // Rewrite the message to be natural for the LLM
@@ -797,6 +950,7 @@ export async function enrichContextForChat(params: {
       consistency: 'Analyze cross-module consistency: find stale references, status gaps, orphaned documents, and module dependency issues across the entire dossier.',
       deficiencies: `Show the known deficiency taxonomy for ${submissionType || 'this submission type'}. List critical deficiency patterns and common reviewer triggers.`,
       knowledge: slash.args ? `Search the project knowledge base for: ${slash.args}` : 'Show all knowledge atoms stored for this project.',
+      decisions: 'Show the decision audit trail for this project. List recent decisions, current status, pending approvals, and execution receipts.',
       sap: slash.args ? `Generate a Statistical Analysis Plan for: ${slash.args}` : 'Generate a Statistical Analysis Plan. Ask the user for study parameters: indication, phase, primary endpoint, sample size target, alpha/power, and missing data strategy.',
       power: slash.args ? `Calculate sample size and power for: ${slash.args}` : 'Calculate sample size and statistical power. Ask the user for: endpoint type (continuous/binary/time-to-event), effect size, alpha, target power, allocation ratio, and dropout rate.',
       dose: slash.args ? `Design a dose escalation study for: ${slash.args}` : 'Design a dose escalation protocol. Ask for: starting dose, dose levels, target DLT rate, escalation method (3+3, BOIN, CRM, or Modified Fibonacci).',
@@ -806,6 +960,8 @@ export async function enrichContextForChat(params: {
       cmc: slash.args ? `Evaluate CMC for: ${slash.args}` : 'Help with CMC/manufacturing work. Ask about: manufacturing change type, CQA impact, comparability assessment needs, or Module 3 documentation.',
       csr: slash.args ? `Analyze CSR for: ${slash.args}` : 'Help with Clinical Study Report work. Ask which section (efficacy, safety, disposition, demographics) or whether they need ICH E3 validation.',
       device: slash.args ? `Analyze device submission for: ${slash.args}` : 'Help with medical device submission. Ask about: submission type (510(k), PMA, De Novo, EU MDR), predicate device, and classification.',
+      diagnostics: slash.args ? `Analyze diagnostics/IVD strategy for: ${slash.args}` : 'Help with diagnostics and IVD strategy. Ask about intended use, analytical validation, clinical performance, cutoff strategy, and companion diagnostic requirements.',
+      cms: slash.args ? `Analyze CMS/reimbursement strategy for: ${slash.args}` : 'Help with CMS and payer strategy. Ask about coding pathway, coverage evidence, payment assumptions, and value dossier requirements.',
       ectd: 'Show the eCTD module structure and help place artifacts in the correct CTD location. Reference Module 1-5 structure.',
       audit: slash.args ? `Audit this document/section: ${slash.args}. Read as a hostile reviewer. Check completeness, consistency, defensibility, and compliance. Produce findings with severity and concrete fixes.` : 'Audit the current section or document. Check completeness, consistency, defensibility, and ICH compliance. Produce specific findings with severity ratings.',
       amend: slash.args ? `Amend/revise: ${slash.args}. Identify affected sections, rewrite only what changed, track changes with regulatory impact.` : 'Help amend the current document. Identify what changed, which sections are affected, rewrite with change tracking.',
@@ -829,12 +985,18 @@ export async function enrichContextForChat(params: {
       workflow: 'Show the full submission workflow status. List all phases, steps completed vs remaining, critical blockers, and the next step the user should take. Be directive.',
       status: 'Give a quick project status briefing: readiness score, workflow progress, top 3 blockers, and the single most important next action. Keep it concise — 5-7 lines max.',
       help: 'The user is asking what you can do. Look at their project state and suggest 3-4 specific things you can do RIGHT NOW. Show, don\'t tell. Demonstrate by referencing their actual readiness score, gaps, and recommendations.',
+      haq: slash.args
+        ? `Draft a health authority question response for: ${slash.args}. Include cited evidence, known/unknown boundaries, and next required action.`
+        : 'Draft a health authority question response. Ask for agency, exact question text, impacted section, and supporting evidence, then provide a defensible response structure.',
+      ask: slash.args
+        ? `Search the project data room and knowledge memory for: ${slash.args}. Return relevant findings with confidence and source category.`
+        : 'Search the project data room and knowledge memory for the most relevant recent items. Summarize with confidence and source category.',
       export: 'Export this conversation.',
     };
 
-    rewrittenMessage = slash.args
-      ? `${commandDescriptions[slash.command] || slash.command} ${slash.args}`
-      : commandDescriptions[slash.command] || message;
+    rewrittenMessage =
+      commandDescriptions[slash.command] ||
+      (slash.args ? `${slash.command.slice(1)} ${slash.args}` : message);
   }
 
   // ── Natural language trigger detection (runs if no slash command) ──
@@ -852,6 +1014,8 @@ export async function enrichContextForChat(params: {
       { test: CMC_TRIGGERS, fn: () => enrichWithCMC(projectId), name: 'cmc' },
       { test: CSR_TRIGGERS, fn: () => enrichWithCSR(projectId), name: 'csr' },
       { test: DEVICE_TRIGGERS, fn: () => enrichWithDevice(projectId), name: 'device' },
+      { test: DIAGNOSTICS_TRIGGERS, fn: () => enrichWithDiagnostics(projectId), name: 'diagnostics' },
+      { test: CMS_TRIGGERS, fn: () => enrichWithCMS(projectId), name: 'cms' },
       { test: ECTD_TRIGGERS, fn: () => enrichWithECTD(projectId), name: 'ectd' },
       { test: HAQ_TRIGGERS, fn: () => Promise.all([enrichWithCRLRTF(projectId, organizationId), enrichWithPrecedents(projectId)]).then(r => r.join('')), name: 'haq' },
     ];

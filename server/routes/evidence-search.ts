@@ -4,6 +4,7 @@
  * as HTTP endpoints for the Evidence Search UI.
  */
 import { Router, Request, Response } from 'express';
+import { searchGovernedDocuments } from '../services/search/opensearchClient';
 
 const router = Router();
 
@@ -36,22 +37,48 @@ router.get('/search', async (req: Request, res: Response) => {
       createdAt?: Date | null;
     }> = [];
 
+
+    const orgId = Number((req as any).organizationId || (req as any).tenantId || 0);
+
     try {
-      // Use the semantic search service if available
-      const { semanticSearchService } = await import('../services/semantic-search-service');
-      if (semanticSearchService) {
-        const searchResults = await semanticSearchService.search(query, limit);
-        results = (searchResults || []).map((r: any) => ({
-          id: r.document?.id || r.id,
-          title: r.document?.title || r.title || 'Untitled',
-          type: r.document?.type || type || 'document',
-          source: 'semantic_search',
-          content: r.document?.content?.substring(0, 200) || '',
-          relevanceScore: r.score || 0,
+      const osResp = await searchGovernedDocuments({
+        query,
+        organizationId: orgId,
+        size: limit,
+      });
+      const hits = osResp?.hits?.hits || [];
+      if (hits.length > 0) {
+        results = hits.map((h: any) => ({
+          id: h._source?.id || h._id,
+          title: h._source?.title || 'Untitled',
+          type: h._source?.docType || type || 'document',
+          source: 'opensearch_hybrid',
+          content: String(h._source?.content || '').substring(0, 200),
+          relevanceScore: Number(h._score || 0),
         }));
       }
     } catch {
-      // Semantic search unavailable, will fall back to basic search
+      // OpenSearch unavailable, continue to current paths.
+    }
+
+    if (results.length === 0) {
+      try {
+        // Use the semantic search service if available
+        const { semanticSearchService } = await import('../services/semantic-search-service');
+        if (semanticSearchService) {
+          const searchResults = await semanticSearchService.search(query, limit);
+          results = (searchResults || []).map((r: any) => ({
+            id: r.document?.id || r.id,
+            title: r.document?.title || r.title || 'Untitled',
+            type: r.document?.type || type || 'document',
+            source: 'semantic_search',
+            content: r.document?.content?.substring(0, 200) || '',
+            relevanceScore: r.score || 0,
+          }));
+        }
+      } catch {
+        // Semantic search unavailable, will fall back to basic search
+      }
     }
 
     // If semantic search returned nothing, try basic text search on vault documents
@@ -103,7 +130,7 @@ router.get('/search', async (req: Request, res: Response) => {
         query,
         results,
         total: results.length,
-        searchType: results[0]?.source === 'semantic_search' ? 'semantic' : 'basic',
+        searchType: results[0]?.source === 'opensearch_hybrid' ? 'hybrid' : results[0]?.source === 'semantic_search' ? 'semantic' : 'basic',
       },
     });
   } catch {

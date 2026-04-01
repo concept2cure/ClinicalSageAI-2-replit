@@ -2,6 +2,7 @@ import { Server as SocketIOServer, Socket } from 'socket.io';
 import { Server } from 'http';
 import jwt from 'jsonwebtoken';
 import { createScopedLogger } from './utils/logger.js';
+import { config } from './config/environment.js';
 const log = createScopedLogger('socket-server');
 
 // Define types for socket events
@@ -172,7 +173,10 @@ function generateCommentId(): string {
 export function initializeSocketServer(server: Server) {
   io = new SocketIOServer(server, {
     cors: {
-      origin: "*",
+      origin: (process.env.ALLOWED_ORIGINS || '')
+        .split(',')
+        .map(origin => origin.trim())
+        .filter(Boolean),
       methods: ["GET", "POST"],
     },
     path: '/socket.io/',
@@ -193,26 +197,30 @@ export function initializeSocketServer(server: Server) {
   ioInstance.use((socket: AuthenticatedSocket, next) => {
     try {
       const token = socket.handshake.auth?.token || socket.handshake.query?.token;
-      if (token) {
-        const secret = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'development-secret';
-        const decoded = jwt.verify(token as string, secret) as any;
-        socket.orgId = String(decoded.organizationId || decoded.orgId || 'default');
-        socket.authUserId = String(decoded.userId || decoded.id || '');
-      } else {
-        // Allow unauthenticated connections but isolate them to a default org
-        socket.orgId = 'default';
-        log.warn(`[Socket.io] Connection ${socket.id} has no auth token — using default org scope`);
+      if (!token) {
+        return next(new Error('Missing bearer token'));
       }
+
+      const decoded = jwt.verify(token as string, config.jwt.secret) as any;
+      if (!decoded.organizationId || !decoded.userId) {
+        return next(new Error('Invalid token claims'));
+      }
+
+      socket.orgId = String(decoded.organizationId);
+      socket.authUserId = String(decoded.userId);
       next();
     } catch (err: any) {
-      log.warn(`[Socket.io] Auth failed for ${socket.id}: ${err?.message} — using default org scope`);
-      (socket as AuthenticatedSocket).orgId = 'default';
-      next();
+      log.warn(`[Socket.io] Auth failed for ${socket.id}: ${err?.message}`);
+      next(new Error('Invalid token'));
     }
   });
 
   ioInstance.on('connection', (socket: AuthenticatedSocket) => {
-    const orgId = socket.orgId || 'default';
+    const orgId = socket.orgId;
+    if (!orgId) {
+      socket.disconnect(true);
+      return;
+    }
     log.debug(`New WebSocket connection: ${socket.id} (org: ${orgId})`);
 
     // Helper to build tenant-scoped room names

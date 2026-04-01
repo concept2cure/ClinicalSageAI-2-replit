@@ -12,8 +12,7 @@
  * @note Requires react-router-dom to be installed: npm install react-router-dom @types/react-router-dom
  */
 
-import React, { Suspense, lazy } from 'react';
-// @ts-expect-error - react-router-dom needs to be installed
+import React, { Suspense, lazy, useCallback } from 'react';
 import { Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -75,11 +74,6 @@ const TrainingManagement = lazy(() => import('./admin/TrainingManagement'));
 
 // Monitoring Components
 const ActivityMonitor = lazy(() => import('./monitoring/ActivityMonitor'));
-
-// Auth Components
-const LoginPage = lazy(() => import('./auth/LoginPage'));
-const MFASetup = lazy(() => import('./auth/MfaSetup'));
-const PasswordReset = lazy(() => import('./auth/PasswordReset'));
 
 // Onboarding Components
 const OnboardingWizard = lazy(() => import('./onboarding/OnboardingWizard'));
@@ -679,17 +673,76 @@ export const AdminPortalLayout: React.FC = () => {
 // AUTH ROUTES (Outside Admin Layout)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const AuthRoutes: React.FC = () => (
-  <Suspense fallback={<LoadingFallback />}>
-    <Routes>
-      <Route path="login" element={<LoginPage />} />
-      <Route path="mfa-setup" element={<MFASetup />} />
-      <Route path="password-reset" element={<PasswordReset />} />
-      <Route path="onboarding" element={<OnboardingWizard />} />
-      <Route path="*" element={<Navigate to="/auth/login" replace />} />
-    </Routes>
-  </Suspense>
-);
+export const AuthRoutes: React.FC = () => {
+  const handleOnboardingComplete = useCallback(async (data: any) => {
+      const organizationId = getOrgId();
+      if (!organizationId) {
+        throw new Error('No organization context is available for onboarding.');
+      }
+
+      const onboardingProfile = {
+        version: 1,
+        completedAt: new Date().toISOString(),
+        organization: {
+          name: data.organizationName,
+          domain: data.domain,
+          country: data.country,
+          industry: data.industry,
+          businessModel: data.businessModel,
+          archetypeId: data.archetype?.id || null,
+        },
+        subscription: {
+          tier: data.subscriptionTier,
+          modelPack: data.modelPack,
+          selectedModules: data.selectedModules,
+          estimatedSeats: data.estimatedSeats,
+          estimatedStorageGB: data.estimatedStorageGB,
+          billingEmail: data.billingEmail,
+          billingCycle: data.billingCycle,
+        },
+        compliance: data.complianceCustomizations,
+        onboardingAdmin: {
+          adminEmail: data.adminEmail,
+          adminName: data.adminName,
+          initialUsers: data.initialUsers,
+        },
+      };
+
+      const res = await fetch(`/api/organizations/${organizationId}/settings`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({
+          onboardingProfile,
+          onboardingStatus: 'company_onboarding_pending',
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(
+          err?.error || err?.message || 'We could not persist organization onboarding settings.'
+        );
+      }
+  }, []);
+
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <Routes>
+        <Route path="login" element={<Navigate to="/concept2cure/login" replace />} />
+        <Route path="mfa-setup" element={<Navigate to="/concept2cure/login" replace />} />
+        <Route path="password-reset" element={<Navigate to="/concept2cure/password-reset" replace />} />
+        <Route
+          path="onboarding"
+          element={<OnboardingWizard onComplete={handleOnboardingComplete} />}
+        />
+        <Route path="*" element={<Navigate to="/auth/login" replace />} />
+      </Routes>
+    </Suspense>
+  );
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EXPORTS

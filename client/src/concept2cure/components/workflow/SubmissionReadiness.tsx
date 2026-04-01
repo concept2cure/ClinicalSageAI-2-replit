@@ -118,12 +118,27 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
   onExport,
 }) => {
   const queryClient = useQueryClient();
+  type ProjectSectionRow = {
+    section_code: string;
+    title: string;
+    status: string;
+  };
 
   const { data: sections, isLoading: sectionsLoading, error, isFetching: sectionsFetching, refetch } = useQuery<Array<{ code: string; title: string; status: string }>>({
     queryKey: queryKeys.ind.projectSections(projectId || 'none'),
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/project-sections?projectId=${projectId}`);
-      return res.json();
+      const res = await apiRequest('GET', `/api/project-sections?project_id=${projectId}`);
+      const payload = await res.json();
+      const rows: ProjectSectionRow[] = Array.isArray(payload?.sections)
+        ? payload.sections
+        : Array.isArray(payload)
+          ? payload
+          : [];
+      return rows.map(row => ({
+        code: row.section_code,
+        title: row.title,
+        status: row.status,
+      }));
     },
     enabled: !!projectId,
     staleTime: 15_000,

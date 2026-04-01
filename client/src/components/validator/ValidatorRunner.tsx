@@ -687,7 +687,7 @@ const ValidatorRunner: React.FC = () => {
                 className="react-select-container"
                 classNamePrefix="react-select"
                 styles={{
-                  control: base => ({
+                  control: (base: any) => ({
                     ...base,
                     borderColor: '#e8e6dc',
                     boxShadow: 'none',
@@ -695,7 +695,7 @@ const ValidatorRunner: React.FC = () => {
                       borderColor: '#d6d3c8',
                     },
                   }),
-                  option: (base, state) => ({
+                  option: (base: any, state: any) => ({
                     ...base,
                     backgroundColor: state.isSelected
                       ? '#e0f2fe'

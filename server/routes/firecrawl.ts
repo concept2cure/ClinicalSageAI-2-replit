@@ -9,6 +9,7 @@ import { getPool } from '../db.ts';
 import { firecrawlError } from '../integrations/firecrawl/errors';
 import { authMiddleware } from '../auth';
 import { normalizeEvidence, persistEvidence } from '../services/research-intelligence';
+import { indexGovernedDocument } from '../services/search/opensearchClient';
 
 const router = Router();
 router.use(authMiddleware);
@@ -137,6 +138,20 @@ router.post('/scrape', async (req, res) => {
         regulatorySignals: normalized.regulatorySignals,
       },
     }).catch(() => null);
+
+    if (evidenceDocumentId) {
+      await indexGovernedDocument({
+        id: String(evidenceDocumentId),
+        organizationId: tenantId,
+        docType: 'external_evidence',
+        title: normalized.title || normalized.url,
+        source: 'firecrawl',
+        provenance: normalized.canonicalUrl,
+        tags: normalized.regulatorySignals || [],
+        lifecycleState: 'ingested',
+        content: (normalized.payload?.markdown || normalized.payload?.html || '').slice(0, 30000),
+      }).catch(() => undefined);
+    }
     await recordSuccessfulFirecrawlScrape(tenantId, 1);
     const updatedQuota = await getFirecrawlQuotaStatus(tenantId);
 

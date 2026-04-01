@@ -9,7 +9,10 @@
  * @module server/services/regulatory/registry/adapters/usIndFromExistingSections
  */
 
-import type { SectionDefinition, SectionBlueprint } from '../../../../../shared/regulatory/document-taxonomy.js';
+import type {
+  SectionDefinition,
+  SectionBlueprint,
+} from '../../../../../shared/regulatory/document-taxonomy.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -29,8 +32,8 @@ interface INDSectionLike {
   description?: string;
   estimatedHours?: number;
   contextOfUse?: string;
-  pyramidTaskId?: string;
-  parentCode?: string;
+  pyramidTaskId?: string | null;
+  parentCode?: string | null;
   children?: INDSectionLike[];
 }
 
@@ -105,7 +108,9 @@ export function adaptAllINDSections(sections: INDSectionLike[]): SectionDefiniti
  * Dynamically imports ind-ectd-sections.ts at call time.
  */
 export async function buildUSIndBlueprint(): Promise<SectionBlueprint> {
-  const { getAllINDSections } = await import('../../../../regulatory/ind-ectd-sections.js');
+  const { getAllINDSections } = (await import(
+    '../../../../../services/regulatory/ind-ectd-sections.js'
+  )) as { getAllINDSections: () => INDSectionLike[] };
   const allSections = getAllINDSections();
 
   return {
@@ -121,7 +126,9 @@ export async function buildUSIndBlueprint(): Promise<SectionBlueprint> {
  * Used by project bootstrap for the detailed section insertion.
  */
 export async function getFullINDSectionsForBootstrap(): Promise<INDSectionLike[]> {
-  const { getAllINDSections } = await import('../../../../regulatory/ind-ectd-sections.js');
+  const { getAllINDSections } = (await import(
+    '../../../../../services/regulatory/ind-ectd-sections.js'
+  )) as { getAllINDSections: () => INDSectionLike[] };
   return getAllINDSections();
 }
 
@@ -129,6 +136,8 @@ export async function getFullINDSectionsForBootstrap(): Promise<INDSectionLike[]
  * Get the section count from the existing IND section map.
  */
 export async function getINDSectionCount(): Promise<number> {
-  const { getAllINDSections } = await import('../../../../regulatory/ind-ectd-sections.js');
+  const { getAllINDSections } = (await import(
+    '../../../../../services/regulatory/ind-ectd-sections.js'
+  )) as { getAllINDSections: () => INDSectionLike[] };
   return getAllINDSections().length;
 }

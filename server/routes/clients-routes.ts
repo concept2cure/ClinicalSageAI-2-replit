@@ -112,7 +112,7 @@ router.get('/all', async (req, res) => {
       success: true,
       clients: transformedClients,
     });
-  } catch (error) {
+  } catch (error: any) {
     log.error('Error fetching all clients:', error);
     return res.status(500).json({
       success: false,
@@ -187,7 +187,7 @@ router.get('/', async (req, res) => {
       success: true,
       clients: transformedClients,
     });
-  } catch (error) {
+  } catch (error: any) {
     log.error('Error fetching clients:', error);
     return res.status(500).json({
       success: false,
@@ -264,7 +264,7 @@ router.post('/', async (req, res) => {
       client: responseClient,
       message: 'Client workspace created successfully',
     });
-  } catch (error) {
+  } catch (error: any) {
     log.error('Error creating client:', error);
 
     // Handle duplicate slug error specifically
@@ -373,7 +373,7 @@ router.get('/:id', async (req, res) => {
       success: true,
       client: clientData,
     });
-  } catch (error) {
+  } catch (error: any) {
     log.error(`Error fetching client ${req.params.id}:`, error);
     res.status(500).json({
       success: false,
@@ -527,7 +527,7 @@ router.patch('/:id', async (req, res) => {
         updatedAt: updatedClient.updatedAt?.toISOString(),
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     log.error(`Error updating client ${req.params.id}:`, error);
     res.status(500).json({
       success: false,
@@ -628,7 +628,7 @@ router.get('/:id/security-settings', async (req, res) => {
       success: true,
       ...settings,
     });
-  } catch (error) {
+  } catch (error: any) {
     log.error(`Error fetching security settings for client ${req.params.id}:`, error);
     res.status(500).json({
       success: false,
@@ -714,7 +714,7 @@ router.patch('/:id/security-settings', async (req, res) => {
       message: 'Security settings updated successfully',
       ...settings,
     });
-  } catch (error) {
+  } catch (error: any) {
     log.error(`Error updating security settings for client ${req.params.id}:`, error);
     res.status(500).json({
       success: false,
@@ -796,7 +796,7 @@ router.delete('/:id', async (req, res) => {
       deletedProjects: result.deletedProjects,
       deletedProjectModules: result.deletedProjectModules,
     });
-  } catch (error) {
+  } catch (error: any) {
     log.error(`Error deleting client ${req.params.id}:`, error);
 
     if (error.message === 'Client workspace not found') {
@@ -914,7 +914,7 @@ router.get('/:id/settings', async (req, res) => {
       success: true,
       ...settings,
     });
-  } catch (error) {
+  } catch (error: any) {
     log.error(`Error fetching workspace settings for client ${req.params.id}:`, error);
     res.status(500).json({
       success: false,
@@ -1026,7 +1026,7 @@ router.patch('/:id/settings', async (req, res) => {
       message: 'Workspace settings updated successfully',
       ...settings,
     });
-  } catch (error) {
+  } catch (error: any) {
     log.error(`Error updating workspace settings for client ${req.params.id}:`, error);
     res.status(500).json({
       success: false,

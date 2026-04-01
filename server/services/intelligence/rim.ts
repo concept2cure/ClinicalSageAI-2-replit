@@ -69,6 +69,10 @@ import {
   type FeedbackSummary,
 } from './learning-loop-service.js';
 
+import {
+  persistEvidenceChain,
+} from '../data-lineage-service.js';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // RIM VERSION
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -185,6 +189,22 @@ export async function runRIMAssessment(ctx: RIMContext): Promise<RIMAssessment> 
       })),
       r.sourceType,
     ));
+
+  // ── Step 2b: Persist evidence chains (non-blocking) ──
+  if (evidenceChains.length > 0 && artifactId) {
+    const versionCtx = {
+      rimVersion: RIM_VERSION,
+      judgmentFrameworkVersion: JUDGMENT_FRAMEWORK_VERSION,
+      patternRegistryVersion: patternRegistry.version,
+    };
+    for (const chain of evidenceChains) {
+      persistEvidenceChain(
+        organizationId, projectId ?? undefined,
+        'artifact', String(artifactId),
+        chain, versionCtx,
+      ).catch(err => console.warn('[RIM] Non-blocking evidence persistence failed:', err));
+    }
+  }
 
   // ── Step 3: Run judgment models ──
   const judgmentCtx: JudgmentContext = {

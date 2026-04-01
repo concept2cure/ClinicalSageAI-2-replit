@@ -26,6 +26,8 @@ import { getGateway } from '../services/ai-gateway/index.js';
 import type { GatewayMessage } from '../services/ai-gateway/types.js';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { createHmac } from 'crypto';
+import { isOssFeatureEnabledViaEnv } from '../config/ossStackFeatureFlags.js';
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -179,6 +181,20 @@ export interface InferenceResponse {
   citations: Citation[];
   regulatoryFlags: RegulatoryFlag[];
   confidence: number;
+  evidenceValidation?: {
+    attempted: boolean;
+    validated: boolean;
+    provider: 'python-enterprise-bridge' | 'none';
+    error?: string;
+    details?: {
+      overallFaithfulness: number;
+      citationsFound: number;
+      citationsValid: number;
+      citationsInvalid: number;
+      missingCitations: number;
+      signedRequest: boolean;
+    };
+  };
   tokenUsage: { prompt: number; completion: number; total: number };
   latencyMs: number;
   routedTo: 'fine-tuned' | 'base' | 'fallback';
@@ -382,11 +398,6 @@ class ModelRegistry {
       },
     });
     void this.persistState();
-  }
-
-  async hydrateFromDisk(): Promise<void> {
-    // No-op: models are registered in-memory via constructor.
-    // This method exists to satisfy startup initialization calls.
   }
 
   getActiveModel(): AnaCortexModel | undefined {
@@ -636,7 +647,7 @@ class ModelRegistry {
       const raw = await fs.readFile(CONTROL_PLANE_STATE_PATH, 'utf-8');
       const parsed = JSON.parse(raw) as {
         activeModelId: string | null;
-        models: LumenCortexModel[];
+        models: AnaCortexModel[];
         deploymentEvents: Array<[string, DeploymentEvent[]]>;
         quantizationBenchmarks: Array<[string, QuantizationBenchmark[]]>;
         remediationPlan: AuditRemediationPlanItem[];
@@ -671,7 +682,7 @@ class ModelRegistry {
     }
   }
 
-  private reviveModel(model: LumenCortexModel): LumenCortexModel {
+  private reviveModel(model: AnaCortexModel): AnaCortexModel {
     return {
       ...model,
       createdAt: new Date(model.createdAt),
@@ -851,6 +862,153 @@ function buildWisdomProfile(content: string, citations: Citation[], flags: Regul
   };
 }
 
+type PromptEvidenceSource = {
+  id: string;
+  title: string;
+  content: string;
+  type: string;
+};
+
+type CitationBridgeResult = NonNullable<InferenceResponse['evidenceValidation']>;
+
+function encodeBase64Url(input: string | Buffer): string {
+  return Buffer.from(input)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+function createBridgeJwt(secret: string): string {
+  const now = Math.floor(Date.now() / 1000);
+  const issuer = process.env.LUMEN_API_BRIDGE_JWT_ISSUER || 'lumen-cortex';
+  const audience = process.env.LUMEN_API_BRIDGE_JWT_AUDIENCE || 'lumen-cortex-api';
+  const subject = process.env.LUMEN_API_BRIDGE_JWT_SUBJECT || 'ana-control-plane';
+  const role = process.env.LUMEN_API_BRIDGE_JWT_ROLE || 'admin';
+
+  const header = encodeBase64Url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const payload = encodeBase64Url(
+    JSON.stringify({
+      iss: issuer,
+      aud: audience,
+      sub: subject,
+      role,
+      iat: now,
+      exp: now + 300,
+    })
+  );
+  const signingInput = `${header}.${payload}`;
+  const signature = createHmac('sha256', secret).update(signingInput).digest();
+  return `${signingInput}.${encodeBase64Url(signature)}`;
+}
+
+function buildBridgeRequestSigningHeaders(pathname: string, body: string): Record<string, string> {
+  const hmacSecret = process.env.LUMEN_API_BRIDGE_HMAC_SECRET;
+  if (!hmacSecret) return {};
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const message = `POST|${pathname}|${timestamp}|${body}`;
+  const signature = createHmac('sha256', hmacSecret).update(message).digest('hex');
+  return {
+    'x-lumen-timestamp': timestamp,
+    'x-lumen-signature': signature,
+  };
+}
+
+async function validateEvidenceWithEnterpriseBridge(
+  content: string,
+  citations: Citation[]
+): Promise<CitationBridgeResult> {
+  if (!isOssFeatureEnabledViaEnv('oss.ana.enterprise_citation_bridge')) {
+    return { attempted: false, validated: false, provider: 'none' };
+  }
+
+  const bridgeUrl = process.env.LUMEN_CORTEX_ENTERPRISE_BRIDGE_URL;
+  const bridgeJwtSecret = process.env.LUMEN_API_BRIDGE_JWT_SECRET;
+  const staticBridgeToken = process.env.LUMEN_CORTEX_ENTERPRISE_BRIDGE_TOKEN;
+  if (!bridgeUrl || (!bridgeJwtSecret && !staticBridgeToken)) {
+    return {
+      attempted: false,
+      validated: false,
+      provider: 'python-enterprise-bridge',
+      error: 'Bridge URL and auth secret/token are not configured',
+    };
+  }
+  const bridgeToken = bridgeJwtSecret ? createBridgeJwt(bridgeJwtSecret) : staticBridgeToken;
+
+  const syntheticSources: PromptEvidenceSource[] = citations.map((c, idx) => ({
+    id: c.id || `source-${idx + 1}`,
+    title: c.source || `Citation ${idx + 1}`,
+    content: `${c.text}\n${c.source}`,
+    type: 'regulatory_reference',
+  }));
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 4500);
+
+  try {
+    const endpointPath = '/api/v2/citations/validate';
+    const requestBody = JSON.stringify({
+      text: content,
+      sources: syntheticSources,
+      enforcement_level: 'moderate',
+      check_mechanisms: ['nli', 'numbers'],
+    });
+    const signingHeaders = buildBridgeRequestSigningHeaders(endpointPath, requestBody);
+    const response = await fetch(`${bridgeUrl.replace(/\/$/, '')}${endpointPath}`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${bridgeToken}`,
+        ...signingHeaders,
+      },
+      body: requestBody,
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      const detail = await response.text();
+      return {
+        attempted: true,
+        validated: false,
+        provider: 'python-enterprise-bridge',
+        error: `Bridge validation failed (${response.status}): ${detail.slice(0, 200)}`,
+      };
+    }
+
+    const payload = (await response.json()) as {
+      is_valid: boolean;
+      overall_faithfulness: number;
+      citations_found: number;
+      citations_valid: number;
+      citations_invalid: number;
+      missing_citations: unknown[];
+    };
+    return {
+      attempted: true,
+      validated: Boolean(payload.is_valid),
+      provider: 'python-enterprise-bridge',
+      details: {
+        overallFaithfulness: payload.overall_faithfulness ?? 0,
+        citationsFound: payload.citations_found ?? 0,
+        citationsValid: payload.citations_valid ?? 0,
+        citationsInvalid: payload.citations_invalid ?? 0,
+        missingCitations: Array.isArray(payload.missing_citations)
+          ? payload.missing_citations.length
+          : 0,
+        signedRequest: Boolean(process.env.LUMEN_API_BRIDGE_HMAC_SECRET),
+      },
+    };
+  } catch (error) {
+    return {
+      attempted: true,
+      validated: false,
+      provider: 'python-enterprise-bridge',
+      error: `Bridge unreachable: ${String(error)}`,
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 let gatewayInstance: ReturnType<typeof getGateway> | null = null;
 function ensureGateway() {
   if (!gatewayInstance) {
@@ -971,6 +1129,8 @@ async function performInference(request: InferenceRequest): Promise<InferenceRes
         });
       }
 
+      const evidenceValidation = await validateEvidenceWithEnterpriseBridge(content, citations);
+
       return {
         id: uuidv4(),
         modelId: model.id,
@@ -981,6 +1141,7 @@ async function performInference(request: InferenceRequest): Promise<InferenceRes
         citations,
         regulatoryFlags,
         confidence: citations.length > 0 ? 0.9 : 0.7,
+        evidenceValidation,
         tokenUsage: {
           prompt: response.usage?.inputTokens || 0,
           completion: response.usage?.outputTokens || 0,
@@ -1004,6 +1165,7 @@ async function performInference(request: InferenceRequest): Promise<InferenceRes
     citations,
     regulatoryFlags,
     confidence: 0.5,
+    evidenceValidation: { attempted: false, validated: false, provider: 'none' },
     tokenUsage: { prompt: 0, completion: 0, total: 0 },
     latencyMs: Date.now() - startTime,
     routedTo,
@@ -1169,7 +1331,7 @@ router.post('/models/:modelId/promote', (req: Request, res: Response) => {
       .json({ error: "Invalid stage. Expected one of: 'staged' | 'canary' | 'live'" });
   }
 
-  let updated: LumenCortexModel | null = null;
+  let updated: AnaCortexModel | null = null;
   try {
     updated = registry.promoteModel(
       req.params.modelId,
@@ -1200,7 +1362,7 @@ router.post('/models/:modelId/promote', (req: Request, res: Response) => {
  */
 router.post('/models/:modelId/rollback', (req: Request, res: Response) => {
   const actor = String(req.body?.actor || 'system');
-  let updated: LumenCortexModel | null = null;
+  let updated: AnaCortexModel | null = null;
   try {
     updated = registry.rollbackModel(req.params.modelId, actor);
   } catch (err) {
@@ -1436,6 +1598,11 @@ router.get('/governance/policy', (_req: Request, res: Response) => {
       allowedRegulatoryBodies: [...LUMEN_GOVERNANCE_POLICY.allowedRegulatoryBodies],
       supportedModalities: [...LUMEN_GOVERNANCE_POLICY.supportedModalities],
       allowedTaskType: LUMEN_GOVERNANCE_POLICY.allowedTaskType,
+      canonicalRuntimePath: '/api/ana-cortex-ft/inference',
+      canonicalRoutingPath: 'ai-gateway.route(taskType=regulatory_review)',
+      canonicalEvidencePath: isOssFeatureEnabledViaEnv('oss.ana.enterprise_citation_bridge')
+        ? 'python-enterprise-bridge:/api/v2/citations/validate'
+        : 'inline-citation-extraction-only',
     },
   });
 });

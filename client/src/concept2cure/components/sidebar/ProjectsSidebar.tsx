@@ -7,19 +7,14 @@
  * Mirrors the design spec in .claude/skills/project-design.md §2.
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useDeferredValue } from 'react';
 import { useProject } from '../../context/ProjectContext';
 import type { Project, SubmissionType, Conversation } from '../../types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Plus,
   MessageSquare,
@@ -59,13 +54,13 @@ const submissionTypeConfig: Record<
 > = {
   '510K': {
     label: '510K',
-    color: 'bg-stone-100 text-stone-700 border-stone-200',
+    color: 'bg-blue-100 text-stone-700 border-blue-200',
     dotColor: 'bg-stone-600',
   },
   IND: {
     label: 'IND',
-    color: 'bg-[#FBF0EB] text-[#6B6962] border-[#E8C7BA]',
-    dotColor: 'bg-[#D97757]',
+    color: 'bg-purple-100 text-purple-700 border-purple-200',
+    dotColor: 'bg-purple-500',
   },
   NDA: {
     label: 'NDA',
@@ -74,33 +69,29 @@ const submissionTypeConfig: Record<
   },
   BLA: {
     label: 'BLA',
-    color: 'bg-[#F5F4EF] text-[#6B6962] border-[#E8E6DC]',
-    dotColor: 'bg-[#8A877D]',
+    color: 'bg-violet-100 text-stone-700 border-violet-200',
+    dotColor: 'bg-violet-500',
   },
   MAA: {
     label: 'MAA',
-    color: 'bg-[#F5F4EF] text-[#6B6962] border-[#E8E6DC]',
-    dotColor: 'bg-[#8A877D]',
+    color: 'bg-teal-100 text-teal-700 border-teal-200',
+    dotColor: 'bg-teal-500',
   },
-  PMA: {
-    label: 'PMA',
-    color: 'bg-[#F5F4EF] text-[#6B6962] border-[#E8E6DC]',
-    dotColor: 'bg-[#8A877D]',
-  },
+  PMA: { label: 'PMA', color: 'bg-red-100 text-red-700 border-red-200', dotColor: 'bg-red-500' },
   DE_NOVO: {
     label: 'De Novo',
-    color: 'bg-[#FBF0EB] text-[#6B6962] border-[#E8C7BA]',
-    dotColor: 'bg-[#D97757]',
+    color: 'bg-cyan-100 text-cyan-700 border-cyan-200',
+    dotColor: 'bg-cyan-500',
   },
   EUA: {
     label: 'EUA',
-    color: 'bg-[#FBF0EB] text-[#6B6962] border-[#E8C7BA]',
-    dotColor: 'bg-[#D97757]',
+    color: 'bg-orange-100 text-orange-700 border-orange-200',
+    dotColor: 'bg-orange-500',
   },
   IVDR: {
     label: 'IVDR',
-    color: 'bg-[#F5F4EF] text-[#6B6962] border-[#E8E6DC]',
-    dotColor: 'bg-[#8A877D]',
+    color: 'bg-green-100 text-green-700 border-green-200',
+    dotColor: 'bg-green-500',
   },
 };
 
@@ -180,11 +171,7 @@ interface ConversationRowProps {
   onClick: () => void;
 }
 
-const ConversationRow: React.FC<ConversationRowProps> = ({
-  conversation,
-  isActive,
-  onClick,
-}) => (
+const ConversationRow: React.FC<ConversationRowProps> = ({ conversation, isActive, onClick }) => (
   <button
     onClick={onClick}
     className={cn(
@@ -279,12 +266,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({
 
   // Expanded sidebar: full row
   return (
-    <div
-      className={cn(
-        'group rounded-lg transition-all',
-        isActive ? 'bg-stone-50' : ''
-      )}
-    >
+    <div className={cn('group rounded-lg transition-all', isActive ? 'bg-stone-50' : '')}>
       {/* Project header row */}
       <div
         className={cn(
@@ -296,7 +278,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({
       >
         {/* Expand chevron */}
         <button
-          onClick={(e) => {
+          onClick={e => {
             e.stopPropagation();
             onToggleExpand();
           }}
@@ -313,10 +295,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({
         <SubmissionBadge type={submissionType} />
 
         {/* Project name + metadata */}
-        <button
-          onClick={onSelect}
-          className="flex-1 min-w-0 text-left"
-        >
+        <button onClick={onSelect} className="flex-1 min-w-0 text-left">
           <div className="flex items-center gap-1.5">
             <span
               className={cn(
@@ -329,9 +308,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({
             <StatusDot status={project.status} />
           </div>
           {project.product && (
-            <p className="text-[11px] text-stone-400 truncate mt-0.5">
-              {project.product}
-            </p>
+            <p className="text-[11px] text-stone-400 truncate mt-0.5">{project.product}</p>
           )}
         </button>
 
@@ -343,7 +320,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({
                 'p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0',
                 'hover:bg-stone-200 text-stone-400 hover:text-stone-600'
               )}
-              onClick={(e) => e.stopPropagation()}
+              onClick={e => e.stopPropagation()}
             >
               <MoreHorizontal className="h-3.5 w-3.5" />
             </button>
@@ -375,10 +352,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({
               Archive
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={onDelete}
-              className="text-red-600 focus:text-red-600"
-            >
+            <DropdownMenuItem onClick={onDelete} className="text-red-600 focus:text-red-600">
               <Trash2 className="mr-2 h-3.5 w-3.5" />
               Delete
             </DropdownMenuItem>
@@ -392,7 +366,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({
           {/* New conversation link */}
           <button
             onClick={onNewConversation}
-            className="w-full flex items-center gap-2 px-2 py-1.5 text-[12px] text-stone-600 hover:bg-stone-100/70 hover:text-stone-800 rounded-md transition-colors"
+            className="w-full flex items-center gap-2 px-2 py-1.5 text-[12px] text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
           >
             <Plus className="h-3 w-3" />
             New chat
@@ -400,7 +374,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({
 
           {/* Conversation rows */}
           {conversations.length > 0 ? (
-            conversations.map((convo) => (
+            conversations.map(convo => (
               <ConversationRow
                 key={convo.id}
                 conversation={convo}
@@ -409,9 +383,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({
               />
             ))
           ) : (
-            <p className="px-2 py-2 text-[11px] text-stone-400">
-              No conversations yet
-            </p>
+            <p className="px-2 py-2 text-[11px] text-stone-400">No conversations yet</p>
           )}
         </div>
       )}
@@ -423,10 +395,7 @@ const ProjectRow: React.FC<ProjectRowProps> = ({
 // SECTION HEADER — PINNED / RECENT / GENERAL
 // ─────────────────────────────────────────────────────────────────────────────
 
-const SectionHeader: React.FC<{ label: string; count?: number }> = ({
-  label,
-  count,
-}) => (
+const SectionHeader: React.FC<{ label: string; count?: number }> = ({ label, count }) => (
   <div className="flex items-center justify-between px-3 pt-4 pb-1.5">
     <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">
       {label}
@@ -458,19 +427,18 @@ export const ProjectsSidebar: React.FC = () => {
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [expandedProjectIds, setExpandedProjectIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const deferredSearchQuery = useDeferredValue(searchQuery);
 
   const isCollapsed = state.ui.sidebarCollapsed;
 
   // ── Grouping: PINNED / RECENT / GENERAL ──
   const { pinned, recent, general } = useMemo(() => {
-    let projects = state.projects.filter(
-      (p) => p.status !== 'archived'
-    );
+    let projects = state.projects.filter(p => p.status !== 'archived');
 
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
+    if (deferredSearchQuery) {
+      const q = deferredSearchQuery.toLowerCase();
       projects = projects.filter(
-        (p) =>
+        p =>
           p.name.toLowerCase().includes(q) ||
           p.description?.toLowerCase().includes(q) ||
           (p.submissionType || p.type || '').toLowerCase().includes(q) ||
@@ -485,26 +453,26 @@ export const ProjectsSidebar: React.FC = () => {
         new Date(a.lastActiveAt || a.updatedAt).getTime()
     );
 
-    const pinnedProjects = projects.filter((p) => p.pinned);
-    const unpinnedProjects = projects.filter((p) => !p.pinned);
+    const pinnedProjects = projects.filter(p => p.pinned);
+    const unpinnedProjects = projects.filter(p => !p.pinned);
 
     // Recent: activity in last 7 days (not pinned)
     const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
     const recentProjects = unpinnedProjects.filter(
-      (p) => new Date(p.lastActiveAt || p.updatedAt).getTime() > sevenDaysAgo
+      p => new Date(p.lastActiveAt || p.updatedAt).getTime() > sevenDaysAgo
     );
     const olderProjects = unpinnedProjects.filter(
-      (p) => new Date(p.lastActiveAt || p.updatedAt).getTime() <= sevenDaysAgo
+      p => new Date(p.lastActiveAt || p.updatedAt).getTime() <= sevenDaysAgo
     );
 
     return { pinned: pinnedProjects, recent: recentProjects, general: olderProjects };
-  }, [state.projects, searchQuery]);
+  }, [state.projects, deferredSearchQuery]);
 
   // Get conversations for a specific project
   const getProjectConversations = useCallback(
     (projectId: string): Conversation[] => {
       if (activeProject?.id === projectId) return projectConversations;
-      const proj = state.projects.find((p) => p.id === projectId);
+      const proj = state.projects.find(p => p.id === projectId);
       return proj?.conversations ?? [];
     },
     [activeProject, projectConversations, state.projects]
@@ -515,11 +483,11 @@ export const ProjectsSidebar: React.FC = () => {
   const handleProjectSelect = (projectId: string) => {
     setActiveProject(projectId);
     // Auto-expand on select
-    setExpandedProjectIds((prev) => new Set(prev).add(projectId));
+    setExpandedProjectIds(prev => new Set(prev).add(projectId));
   };
 
   const toggleExpand = (projectId: string) => {
-    setExpandedProjectIds((prev) => {
+    setExpandedProjectIds(prev => {
       const next = new Set(prev);
       if (next.has(projectId)) {
         next.delete(projectId);
@@ -552,14 +520,12 @@ export const ProjectsSidebar: React.FC = () => {
 
   // ── Render helper for a group of projects ──
   const renderProjectList = (projects: Project[]) =>
-    projects.map((project) => (
+    projects.map(project => (
       <ProjectRow
         key={project.id}
         project={project}
         isActive={activeProject?.id === project.id}
-        isExpanded={
-          expandedProjectIds.has(project.id) || activeProject?.id === project.id
-        }
+        isExpanded={expandedProjectIds.has(project.id) || activeProject?.id === project.id}
         isCollapsed={isCollapsed}
         conversations={getProjectConversations(project.id)}
         activeConversationId={activeConversation?.id}
@@ -569,7 +535,7 @@ export const ProjectsSidebar: React.FC = () => {
         onDelete={() => handleDeleteProject(project.id)}
         onArchive={() => handleArchiveProject(project.id)}
         onNewConversation={() => handleNewConversation(project.id)}
-        onSelectConversation={(id) => setActiveConversation(id)}
+        onSelectConversation={id => setActiveConversation(id)}
       />
     ));
 
@@ -613,7 +579,7 @@ export const ProjectsSidebar: React.FC = () => {
         {/* Projects */}
         <ScrollArea className="flex-1 px-2">
           <div className="space-y-1.5 py-2">
-            {allProjects.map((project) => (
+            {allProjects.map(project => (
               <ProjectRow
                 key={project.id}
                 project={project}
@@ -651,7 +617,7 @@ export const ProjectsSidebar: React.FC = () => {
         <NewProjectModal
           open={showNewProjectModal}
           onClose={() => setShowNewProjectModal(false)}
-          onProjectCreated={(projectId) => {
+          onProjectCreated={projectId => {
             setActiveProject(projectId);
             setShowNewProjectModal(false);
           }}
@@ -699,7 +665,7 @@ export const ProjectsSidebar: React.FC = () => {
             type="text"
             placeholder="Search projects..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className="w-full pl-8 pr-3 py-1.5 text-[13px] bg-white border border-stone-200 rounded-md placeholder:text-stone-400 focus:ring-2 focus:ring-stone-900 focus:border-stone-900 outline-none transition-colors"
           />
         </div>
@@ -715,8 +681,8 @@ export const ProjectsSidebar: React.FC = () => {
             </div>
             <p className="text-sm font-medium text-stone-700 mb-1">No projects yet</p>
             <p className="text-xs text-stone-500 leading-relaxed">
-              Create your first regulatory project to unlock AnA's full intelligence,
-              dossier mapping, and readiness scoring.
+              Create your first regulatory project to unlock AnA's full intelligence, dossier
+              mapping, and readiness scoring.
             </p>
             <Button
               onClick={() => setShowNewProjectModal(true)}
@@ -733,9 +699,7 @@ export const ProjectsSidebar: React.FC = () => {
             {pinned.length > 0 && (
               <>
                 <SectionHeader label="Pinned" count={pinned.length} />
-                <div className="space-y-0.5 px-1">
-                  {renderProjectList(pinned)}
-                </div>
+                <div className="space-y-0.5 px-1">{renderProjectList(pinned)}</div>
               </>
             )}
 
@@ -743,9 +707,7 @@ export const ProjectsSidebar: React.FC = () => {
             {recent.length > 0 && (
               <>
                 <SectionHeader label="Recent" count={recent.length} />
-                <div className="space-y-0.5 px-1">
-                  {renderProjectList(recent)}
-                </div>
+                <div className="space-y-0.5 px-1">{renderProjectList(recent)}</div>
               </>
             )}
 
@@ -756,9 +718,7 @@ export const ProjectsSidebar: React.FC = () => {
                   label={pinned.length > 0 || recent.length > 0 ? 'General' : 'Projects'}
                   count={general.length}
                 />
-                <div className="space-y-0.5 px-1">
-                  {renderProjectList(general)}
-                </div>
+                <div className="space-y-0.5 px-1">{renderProjectList(general)}</div>
               </>
             )}
 
@@ -783,9 +743,9 @@ export const ProjectsSidebar: React.FC = () => {
       <NewProjectModal
         open={showNewProjectModal}
         onClose={() => setShowNewProjectModal(false)}
-        onProjectCreated={(projectId) => {
+        onProjectCreated={projectId => {
           setActiveProject(projectId);
-          setExpandedProjectIds((prev) => new Set(prev).add(projectId));
+          setExpandedProjectIds(prev => new Set(prev).add(projectId));
           setShowNewProjectModal(false);
         }}
       />

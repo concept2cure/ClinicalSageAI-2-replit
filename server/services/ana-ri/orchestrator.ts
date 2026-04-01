@@ -117,6 +117,7 @@ const INTENT_PATTERNS: Record<IntentLens, RegExp[]> = {
     /\b(accelerat(?:ed|ion)|breakthrough|fast track|priority review|orphan)\b/i,
     /\b(regulatory pathway|submission (?:plan|strategy|timeline))\b/i,
     /\b(fda vs|ema vs|region|global)\b/i,
+    /\b(cms|medicare|medicaid|payer|coverage|reimbursement|coding strategy)\b/i,
   ],
   compare: [
     /\b(compare|comparison|versus|vs\.?|differ(?:ence|ent)|side.by.side)\b/i,
@@ -614,29 +615,32 @@ export async function preloadRIMContext(
     }
 
     // 2. Accumulated RIM signals (in-memory, synchronous)
-    try {
-      const signals = getProjectSignals(projectId);
-      if (signals && signals.length > 0) {
-        const signalLines = signals
-          .slice(0, 6)
-          .map(
-            (s: {
-              riskLevel?: string;
-              type?: string;
-              content?: string;
-              message?: string;
-              score?: number;
-            }) =>
-              `- [${s.riskLevel || s.type || 'signal'}] ${(s.content || s.message || '').slice(0, 200)}${s.score != null ? ` (score: ${s.score})` : ''}`,
-          )
+    if (organizationId) {
+      try {
+      const summary = getProjectSignals(organizationId, Number(projectId));
+      if (summary && summary.totalSignals > 0) {
+        const riskLines = Object.entries(summary.byRiskLevel)
+          .filter(([, count]) => Number(count) > 0)
+          .map(([risk, count]) => `- ${risk}: ${count}`)
           .join('\n');
-        parts.push(`**${signals.length} intelligence signals**\n${signalLines}`);
+        const patternLine =
+          summary.topPatternIds.length > 0
+            ? `Top patterns: ${summary.topPatternIds.slice(0, 5).join(', ')}`
+            : 'Top patterns: none captured yet';
+        parts.push(
+          `**${summary.totalSignals} intelligence signals**\n` +
+          `Trend: ${summary.overallTrend} (${summary.trendConfidence}, n=${summary.trendSampleSize})\n` +
+          `Average score: ${summary.averageScore}\n` +
+          `${patternLine}\n` +
+          `Risk distribution:\n${riskLines || '- none'}`,
+        );
       }
-    } catch (e: unknown) {
-      console.warn(
-        '[rim-preload] Signal retrieval failed:',
-        e instanceof Error ? e.message : String(e),
-      );
+      } catch (e: unknown) {
+        console.warn(
+          '[rim-preload] Signal retrieval failed:',
+          e instanceof Error ? e.message : String(e),
+        );
+      }
     }
 
     if (parts.length === 0) return '';
@@ -812,6 +816,13 @@ function detectWorkstreamType(text: string, lens: IntentLens): WorkstreamType {
   if (/pathway|strategy|pre-ind|pre-sub|meeting|submission plan|sequence/i.test(lower)) {
     return 'submission_strategy';
   }
+  if (
+    /cms|medicare|medicaid|payer|reimbursement|coverage determination|coding strategy|hcpcs|cpt|drg|apc/i.test(
+      lower
+    )
+  ) {
+    return 'submission_strategy';
+  }
 
   const scores: Array<{ stream: WorkstreamType; score: number }> = [
     {
@@ -819,6 +830,7 @@ function detectWorkstreamType(text: string, lens: IntentLens): WorkstreamType {
       score: scorePatterns(lower, [
         /pathway|strategy|timeline|meeting|pre-ind|pre-sub|submission plan|sequence|agency/i,
         /fda|ema|pmda|global|regional/i,
+        /cms|medicare|medicaid|payer|reimbursement|coverage|coding strategy|hcpcs|cpt|drg|apc/i,
       ]),
     },
     {
@@ -840,6 +852,7 @@ function detectWorkstreamType(text: string, lens: IntentLens): WorkstreamType {
       score: scorePatterns(lower, [
         /evidence|support|justify|validation|dataset|study|citation|source/i,
         /endpoint|safety|exposure|comparability|stability|specification/i,
+        /diagnostic|ivd|companion diagnostic|analytical validation|clinical performance|sensitivity|specificity/i,
       ]),
     },
     {

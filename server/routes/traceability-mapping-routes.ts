@@ -31,7 +31,7 @@ async function tableExists(req: any, tableName: string): Promise<boolean> {
     `);
 
     return result.rows[0]?.exists === true;
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`Error checking if table ${tableName} exists`, { error });
     return false;
   }
@@ -111,7 +111,7 @@ router.get('/:qmpId', authMiddleware, requireOrganizationContext, async (req, re
       if (ctqFactorsExists) {
         // Create a set of all factor IDs
         const factorIds = new Set<number>();
-        traceabilityItems.forEach(item => {
+        traceabilityItems.forEach((item: any) => {
           if (item.ctqFactorId) {
             factorIds.add(item.ctqFactorId);
           }
@@ -131,13 +131,13 @@ router.get('/:qmpId', authMiddleware, requireOrganizationContext, async (req, re
             );
 
           // Create a map for quick lookup
-          factors.forEach(factor => {
+          factors.forEach((factor: any) => {
             factorsMap.set(factor.id, factor);
           });
         }
 
         // Enhance each traceability item with factor details
-        const enhancedItems = traceabilityItems.map(item => ({
+        const enhancedItems = traceabilityItems.map((item: any) => ({
           ...item,
           ctqFactor: item.ctqFactorId ? factorsMap.get(item.ctqFactorId) : null,
         }));
@@ -153,7 +153,7 @@ router.get('/:qmpId', authMiddleware, requireOrganizationContext, async (req, re
       qmpId: qmpIdNumber,
       traceabilityItems,
     });
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error retrieving QMP traceability matrix', { error });
     return res.status(500).json({
       error: 'Failed to retrieve traceability matrix',
@@ -271,7 +271,7 @@ router.post('/:qmpId', authMiddleware, requireOrganizationContext, async (req, r
       .returning();
 
     return res.status(201).json(result[0]);
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error creating traceability item', { error });
     return res.status(500).json({
       error: 'Failed to create traceability item',
@@ -353,7 +353,7 @@ router.get('/:qmpId/item/:itemId', authMiddleware, requireOrganizationContext, a
     }
 
     return res.json(item);
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error retrieving traceability item', { error });
     return res.status(500).json({
       error: 'Failed to retrieve traceability item',
@@ -487,7 +487,7 @@ router.patch(
         .returning();
 
       return res.json(result[0]);
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error updating traceability item', { error });
       return res.status(500).json({
         error: 'Failed to update traceability item',
@@ -563,7 +563,7 @@ router.delete(
         success: true,
         message: 'Traceability item deleted successfully',
       });
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error deleting traceability item', { error });
       return res.status(500).json({
         error: 'Failed to delete traceability item',
@@ -624,10 +624,10 @@ router.get('/:qmpId/stats', authMiddleware, requireOrganizationContext, async (r
     // Calculate statistics
     const totalRequirements = items.length;
     const verifiedRequirements = items.filter(
-      item => item.verificationStatus === 'verified'
+      (item: any) => item.verificationStatus === 'verified'
     ).length;
-    const pendingRequirements = items.filter(item => item.verificationStatus === 'pending').length;
-    const failedRequirements = items.filter(item => item.verificationStatus === 'failed').length;
+    const pendingRequirements = items.filter((item: any) => item.verificationStatus === 'pending').length;
+    const failedRequirements = items.filter((item: any) => item.verificationStatus === 'failed').length;
 
     // Calculate verification rate
     const verificationRate =
@@ -635,7 +635,7 @@ router.get('/:qmpId/stats', authMiddleware, requireOrganizationContext, async (r
 
     // Calculate stats by requirement source
     const bySource = {};
-    items.forEach(item => {
+    items.forEach((item: any) => {
       const source = item.requirementSource || 'Unknown';
       if (!bySource[source]) {
         bySource[source] = { total: 0, verified: 0 };
@@ -648,7 +648,7 @@ router.get('/:qmpId/stats', authMiddleware, requireOrganizationContext, async (r
 
     // Calculate stats by verification method
     const byMethod = {};
-    items.forEach(item => {
+    items.forEach((item: any) => {
       const method = item.verificationMethod || 'Unknown';
       if (!byMethod[method]) {
         byMethod[method] = { total: 0, verified: 0 };
@@ -669,7 +669,7 @@ router.get('/:qmpId/stats', authMiddleware, requireOrganizationContext, async (r
       bySource,
       byMethod,
     });
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error retrieving traceability statistics', { error });
     return res.status(500).json({
       error: 'Failed to retrieve traceability statistics',

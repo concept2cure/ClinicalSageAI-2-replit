@@ -1,13 +1,13 @@
 #!/usr/bin/env node
-import { execFileSync } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-export function runGit(args) {
-  return execFileSync('git', args, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+function run(cmd) {
+  return execSync(cmd, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
 }
 
-export function parseArgs(argv) {
+function parseArgs(argv) {
   const opts = {
     limit: 20,
     output: null,
@@ -35,15 +35,8 @@ export function parseArgs(argv) {
   return opts;
 }
 
-export function getMergedPrs(limit) {
-  const raw = runGit([
-    'log',
-    '--merges',
-    '--oneline',
-    "--grep=Merge pull request #",
-    '-n',
-    String(limit),
-  ]);
+function getMergedPrs(limit) {
+  const raw = run(`git log --merges --oneline --grep='Merge pull request #' -n ${limit}`);
   if (!raw) return [];
 
   return raw.split('\n').map((line) => {
@@ -55,15 +48,15 @@ export function getMergedPrs(limit) {
   });
 }
 
-export function safeList(args) {
-  const out = runGit(args);
+function safeList(cmd) {
+  const out = run(cmd);
   return out ? out.split('\n').filter(Boolean) : [];
 }
 
-export function collectPrMetrics(item) {
+function collectPrMetrics(item) {
   const { sha } = item;
-  const files = safeList(['diff', '--name-only', `${sha}^1`, sha]);
-  const prSideCommitCount = Number(runGit(['rev-list', '--count', `${sha}^1..${sha}^2`]));
+  const files = safeList(`git diff --name-only ${sha}^1 ${sha}`);
+  const prSideCommitCount = Number(run(`git rev-list --count ${sha}^1..${sha}^2`));
   const missingFiles = files.filter((file) => !existsSync(file)).length;
   const testsChanged = files.filter((file) => {
     const name = path.basename(file).toLowerCase();
@@ -73,9 +66,8 @@ export function collectPrMetrics(item) {
   const limitedFiles = files.slice(0, 20);
   let downstreamTouches = 0;
   if (limitedFiles.length > 0) {
-    downstreamTouches = Number(
-      runGit(['rev-list', '--count', `${sha}..HEAD`, '--', ...limitedFiles]),
-    );
+    const escaped = limitedFiles.map((file) => `"${file.replace(/"/g, '\\"')}"`).join(' ');
+    downstreamTouches = Number(run(`git rev-list --count ${sha}..HEAD -- ${escaped}`));
   }
 
   const wiringAssessment =
@@ -98,7 +90,7 @@ export function collectPrMetrics(item) {
   };
 }
 
-export function buildReport({ date, limit, results }) {
+function buildReport({ date, limit, results }) {
   const successful = results.filter((r) => r.missingFiles === 0).length;
 
   const rows = results
@@ -140,7 +132,7 @@ ${rows}
 `;
 }
 
-export function main() {
+function main() {
   const opts = parseArgs(process.argv.slice(2));
   const output =
     opts.output ?? `docs/audits/LAST_${opts.limit}_PRS_WIRING_AUDIT_${opts.date}.md`;
@@ -160,6 +152,4 @@ export function main() {
   process.stdout.write(`Wrote audit report: ${output}\n`);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main();
-}
+main();

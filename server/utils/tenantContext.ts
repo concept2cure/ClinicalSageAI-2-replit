@@ -78,7 +78,6 @@ export const getSecureOrgId = (req: any): string | null => {
 };
 
 export const getRequestActor = (req: any): RequestActor => ({
-  userName:
-    (req.headers['x-user-name'] as string) || (req.headers['x-user-email'] as string) || 'system',
-  userRole: (req.headers['x-user-role'] as string) || null,
+  userName: req.user?.email || req.userEmail || 'system',
+  userRole: req.user?.role || req.userRole || null,
 });

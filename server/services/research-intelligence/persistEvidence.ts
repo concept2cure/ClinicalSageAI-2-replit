@@ -1,5 +1,5 @@
-import crypto from 'crypto';
-import { getPool } from '../../db.ts';
+import crypto from 'node:crypto';
+import { getPool } from '../../db';
 
 export async function persistEvidence(params: {
   tenantId: number;

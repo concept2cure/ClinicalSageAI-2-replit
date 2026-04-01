@@ -91,10 +91,14 @@ const OPTIONAL_TABLES = [
 
 export interface EnsureTablesResult {
   success: boolean;
+  existingSchemas: string[];
   existingTables: string[];
+  missingSchemas: string[];
   missingCritical: string[];
   missingImportant: string[];
   missingOptional: string[];
+  missingExtensions: string[];
+  warnings: string[];
   errors: string[];
   duration: number;
 }
@@ -125,10 +129,14 @@ export async function ensureCoreTables(connectionString?: string): Promise<Ensur
   const startTime = Date.now();
   const result: EnsureTablesResult = {
     success: false,
+    existingSchemas: [],
     existingTables: [],
+    missingSchemas: [],
     missingCritical: [],
     missingImportant: [],
     missingOptional: [],
+    missingExtensions: [],
+    warnings: [],
     errors: [],
     duration: 0,
   };
@@ -164,6 +172,57 @@ export async function ensureCoreTables(connectionString?: string): Promise<Ensur
     console.log('[ensureCoreTables] Starting table verification...');
     console.log(`[ensureCoreTables] Database: ${isNeonDb ? 'Neon Cloud' : 'Local'}`);
     console.log(`[ensureCoreTables] Pool mode: ${shouldEndPool ? 'standalone' : 'shared'}`);
+
+    // Ensure baseline schemas exist for GA readiness
+    const requiredSchemas = ['public', 'vault', 'extensions'];
+    const schemaResult = await pool.query(`
+      SELECT nspname
+      FROM pg_namespace
+      WHERE nspname = ANY($1::text[])
+      ORDER BY nspname
+    `, [requiredSchemas]);
+    const existingSchemas = new Set(schemaResult.rows.map(r => r.nspname));
+    result.existingSchemas = Array.from(existingSchemas);
+
+    for (const schemaName of requiredSchemas) {
+      if (!existingSchemas.has(schemaName)) {
+        result.missingSchemas.push(schemaName);
+      }
+    }
+
+    for (const missingSchema of result.missingSchemas) {
+      try {
+        await pool.query(`CREATE SCHEMA IF NOT EXISTS "${missingSchema}"`);
+      } catch (schemaErr: any) {
+        result.errors.push(`Could not create schema ${missingSchema}: ${schemaErr.message}`);
+      }
+    }
+
+    // Ensure vector extension is available for retrieval/RAG workloads.
+    // Neon often runs with restricted extension DDL for non-superuser roles, so
+    // we only attempt CREATE EXTENSION there when explicitly enabled.
+    const canAttemptExtensionDDL = !isNeonDb || process.env.ALLOW_EXTENSION_DDL === 'true';
+    const extensionResult = await pool.query(`
+      SELECT extname
+      FROM pg_extension
+      WHERE extname = ANY($1::text[])
+      ORDER BY extname
+    `, [['vector']]);
+    const installedExtensions = new Set(extensionResult.rows.map(r => r.extname));
+    if (!installedExtensions.has('vector')) {
+      if (canAttemptExtensionDDL) {
+        try {
+          await pool.query('CREATE EXTENSION IF NOT EXISTS vector');
+        } catch (extensionErr: any) {
+          result.missingExtensions.push('vector');
+          result.errors.push(`Could not ensure extension vector: ${extensionErr.message}`);
+        }
+      } else {
+        result.warnings.push(
+          'Vector extension not installed and extension DDL skipped (Neon managed mode). Set ALLOW_EXTENSION_DDL=true to attempt CREATE EXTENSION.'
+        );
+      }
+    }
 
     // Get list of existing tables
     const tablesResult = await pool.query(`
@@ -320,8 +379,12 @@ export async function ensureCoreTables(connectionString?: string): Promise<Ensur
     result.existingTables = Array.from(existingTables);
     result.duration = Date.now() - startTime;
 
-    // Success if no critical tables are missing
-    result.success = result.missingCritical.length === 0;
+    // Success if no critical tables/schemas/extensions are missing and no hard errors
+    result.success =
+      result.missingCritical.length === 0 &&
+      result.missingSchemas.length === 0 &&
+      result.missingExtensions.length === 0 &&
+      result.errors.length === 0;
 
     // Log summary
     console.log(`[ensureCoreTables] Found ${result.existingTables.length} tables in database`);
@@ -337,6 +400,22 @@ export async function ensureCoreTables(connectionString?: string): Promise<Ensur
       console.warn(
         `[ensureCoreTables] ⚠️ Important tables missing: ${result.missingImportant.join(', ')}`
       );
+    }
+
+    if (result.missingSchemas.length > 0) {
+      console.warn(
+        `[ensureCoreTables] ⚠️ Schemas required initialization: ${result.missingSchemas.join(', ')}`
+      );
+    }
+
+    if (result.missingExtensions.length > 0) {
+      console.warn(
+        `[ensureCoreTables] ⚠️ Missing required extensions: ${result.missingExtensions.join(', ')}`
+      );
+    }
+
+    if (result.warnings.length > 0) {
+      console.warn('[ensureCoreTables] Warnings:', result.warnings);
     }
 
     console.log(`[ensureCoreTables] Verification complete in ${result.duration}ms`);
@@ -371,6 +450,12 @@ export async function validateCoreTables(connectionString?: string): Promise<voi
     );
   }
 
+  if (result.missingExtensions.length > 0) {
+    throw new Error(
+      `Missing required extensions: ${result.missingExtensions.join(', ')}. Ensure extension install permissions and retry`
+    );
+  }
+
   console.log('[validateCoreTables] All critical tables present');
 }
 
@@ -388,6 +473,9 @@ export async function getDatabaseDiagnostics(connectionString?: string): Promise
     `Status: ${result.success ? '✅ HEALTHY' : '❌ ISSUES DETECTED'}`,
     `Duration: ${result.duration}ms`,
     '',
+    `Existing Schemas (${result.existingSchemas.length}):`,
+    ...result.existingSchemas.map(s => `  ✓ ${s}`),
+    '',
     `Existing Tables (${result.existingTables.length}):`,
     ...result.existingTables.map(t => `  ✓ ${t}`),
     '',
@@ -402,6 +490,24 @@ export async function getDatabaseDiagnostics(connectionString?: string): Promise
   if (result.missingImportant.length > 0) {
     lines.push(`Important Missing (${result.missingImportant.length}):`);
     lines.push(...result.missingImportant.map(t => `  ⚠️ ${t}`));
+    lines.push('');
+  }
+
+  if (result.missingSchemas.length > 0) {
+    lines.push(`Schemas Initialized During Check (${result.missingSchemas.length}):`);
+    lines.push(...result.missingSchemas.map(s => `  ⚠️ ${s}`));
+    lines.push('');
+  }
+
+  if (result.missingExtensions.length > 0) {
+    lines.push(`Missing Extensions (${result.missingExtensions.length}):`);
+    lines.push(...result.missingExtensions.map(e => `  ❌ ${e}`));
+    lines.push('');
+  }
+
+  if (result.warnings.length > 0) {
+    lines.push(`Warnings (${result.warnings.length}):`);
+    lines.push(...result.warnings.map(w => `  ⚠️ ${w}`));
     lines.push('');
   }
 

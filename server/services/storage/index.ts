@@ -33,7 +33,7 @@ export function getStorageProvider(): IStorageProvider {
     case 'aws': {
       const { S3StorageProvider } = require('./s3-provider');
       _instance = new S3StorageProvider();
-      log.debug('[Storage] Using S3 provider (bucket:', process.env.AWS_S3_BUCKET, ')');
+      log.debug('Using S3 provider', { bucket: process.env.AWS_S3_BUCKET });
       break;
     }
     case 'local':

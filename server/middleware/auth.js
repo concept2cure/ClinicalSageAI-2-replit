@@ -5,9 +5,9 @@
  * role-based access control (RBAC), and permission validation.
  */
 
-const jwt = require('jsonwebtoken');
-const config = require('../config/environment').config;
-const { createLogger } = require('../utils/monitoring');
+import jwt from 'jsonwebtoken';
+import { config } from '../config/environment.js';
+import { createLogger } from '../utils/monitoring.js';
 
 const logger = createLogger('auth');
 
@@ -97,6 +97,12 @@ const authenticateJWT = (req, res, next) => {
 };
 
 /**
+ * Backward-compat alias used by older JS routes.
+ * Keep export shape stable during Stage 3 canonicalization.
+ */
+const verifyJwt = authenticateJWT;
+
+/**
  * Check if user has the required role
  */
 const requireRole = requiredRole => {
@@ -172,6 +178,31 @@ const requirePermission = (resource, action) => {
 };
 
 /**
+ * Backward-compat permission helper used by @server/auth barrel.
+ * Returns true/false only; does not send responses.
+ */
+const hasPermission = (req, requiredPermission) => {
+  if (!req?.user) return false;
+
+  // Admin always passes local permission checks.
+  if (req.user.role === 'admin' || req.user.roles?.includes?.('admin')) {
+    return true;
+  }
+
+  const [resource, action] = String(requiredPermission || '').split(':');
+  if (!resource || !action) return false;
+
+  const userPermissions = req.user.permissions || {};
+  const resourcePermissions = userPermissions[resource] || [];
+  return (
+    resourcePermissions.includes(action) ||
+    resourcePermissions.includes('*') ||
+    userPermissions['*']?.includes?.('*') ||
+    userPermissions['*']?.includes?.(action)
+  );
+};
+
+/**
  * Middleware to ensure user belongs to the organization
  * This enforces tenant isolation at the application level
  */
@@ -227,9 +258,19 @@ const isPublicRoute = path => {
   return publicRoutes.some(route => path.startsWith(route));
 };
 
-module.exports = {
+// Aliases used across codebase
+const authenticateToken = authenticateJWT;
+const requireAuth = authenticateJWT;
+const authenticate = authenticateJWT;
+
+export {
   authenticateJWT,
+  verifyJwt,
+  authenticateToken,
+  requireAuth,
+  authenticate,
   requireRole,
+  hasPermission,
   requirePermission,
   requireSameOrganization,
   isPublicRoute,
