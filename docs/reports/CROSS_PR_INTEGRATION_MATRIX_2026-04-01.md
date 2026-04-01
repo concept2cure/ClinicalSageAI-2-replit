@@ -125,3 +125,109 @@ Reason:
 - Parallel streams are active and overlapping on core files.
 - Without sequence control, merges into `concept2cure-v2` will produce expensive conflict churn and unclear regressions.
 
+---
+
+## 6) Conflict-resolution playbook — #323 vs #309 (AnA surfaces)
+
+Status refresh:
+
+- #323 is **MERGED** into `concept2cure-v2`.
+- #309 is **OPEN** and currently **CONFLICTING**.
+- Therefore this is now a **forward-port playbook**: preserve merged #323 architecture while reintroducing #309 queue behavior safely.
+
+### 6.1 Overlap hotspots (exact files)
+
+1. `client/src/concept2cure/components/chat/AnaPersistentPanel.tsx`
+   - #323 adds decision-aware rail + slash parity + shared intelligence flow touches (major hunks around prior ranges ~267-558, ~744-902, ~1993-2221, ~3741-4240).
+   - #309 adds persistent conversation queue + streamed turn-hand-off touches (major hunks around prior ranges ~320-4135 and ~4852-5331).
+   - **Conflict risk:** both branches modify send/stream orchestration and lower input/controls rendering regions.
+
+2. `server/routes/ana-ri.ts`
+   - #323 refactors chat/stream flow to shared context helpers and command/intelligence wiring.
+   - #309 injects queue metadata responses for chat + stream (`buildQueueMeta`, `queueMeta` envelope paths).
+   - **Conflict risk:** both branches touch chat/stream response envelope shape and route internals.
+
+### 6.2 Merge precedence contract
+
+Apply this precedence during conflict resolution:
+
+1. **Keep #323 as structural authority** for AnA route architecture:
+   - shared helper usage and enrichment wiring,
+   - slash parity contract pathing,
+   - decision/intelligence rails already merged.
+2. **Reapply #309 as behavioral delta only**:
+   - queue state model, persistence, resume/retry UX,
+   - stream handoff behavior,
+   - response `queueMeta` propagation where absent.
+3. If a hunk is ambiguous, prefer:
+   - imported shared helper + existing #323 call graph,
+   - then layer queue logic without reintroducing pre-#323 duplicated flow.
+
+### 6.3 Deterministic rebase procedure (for #309 branch owner)
+
+1. Rebase #309 branch onto latest `origin/concept2cure-v2`.
+2. Resolve `AnaPersistentPanel.tsx` with a three-way intent pass:
+   - pass A: retain #323 decision rail + slash command scaffolding;
+   - pass B: restore queue types/state (`conversationQueue`, `activeQueueItemId`, persistence key, queued lifecycle helpers);
+   - pass C: verify only one send/stream pipeline remains (no duplicate send handlers).
+3. Resolve `server/routes/ana-ri.ts` by preserving #323 route architecture and ensuring:
+   - `queueMeta` exists in `/chat` success envelope,
+   - `queueMeta` exists in `/stream` final success envelope,
+   - `queueMeta` also included in stream error payload path.
+4. Re-run lint/typecheck before tests to detect duplicate symbol or envelope-shape drift early.
+
+### 6.4 Required validation gate before merge
+
+Minimum focused set (must pass):
+
+- `tests/routes/ana-ri-health.test.ts`
+- `server/services/__tests__/ana-ri.test.ts`
+- any queue-focused tests touching `AnaPersistentPanel` behavior (or equivalent new tests if absent)
+- `npm run ci:audit-route-mounts:no-regression`
+- `npm run audit:repo-health:no-regression`
+
+Recommended additional confidence checks:
+
+- targeted chat/stream contract smoke (verify `queueMeta` returned in both `/chat` and `/stream`)
+- manual chat UI pass:
+  - enqueue while active response is running,
+  - refresh browser and confirm queue restoration,
+  - resume/retry controls behave deterministically.
+
+---
+
+## 7) Conflict-resolution checklist — #327 vs #324 (authoring-actions + shell surfaces)
+
+Status refresh:
+
+- #327 is **MERGED**.
+- #324 is **MERGED**.
+
+Both already landed; this checklist is a **post-merge guardrail** for any follow-on PRs touching these same surfaces.
+
+### 7.1 Surface checklist
+
+When a future PR touches either:
+
+- `server/routes/authoring-actions.ts`
+- `client/src/concept2cure/ZenApp.tsx`
+
+require:
+
+1. Route authority confirmation:
+   - no bypass path around governed authoring actions,
+   - mount and prefix remain compliant with route-audit guardrails.
+2. Shell/navigation confirmation:
+   - no regression in canonical entry points to EditorPanel and document lifecycle stages.
+3. Test gate:
+   - `tests/resolution/e2e-authoring-workflow.test.ts`
+   - governed export route/consequence checks
+   - governance audits (`ci:audit-route-mounts:no-regression`, `audit:repo-health:no-regression`).
+
+### 7.2 Escalation rule
+
+If both files are changed in one PR, classify as **high integration risk** and require:
+
+- explicit reviewer sign-off from both authoring and shell owners,
+- conflict simulation against latest `concept2cure-v2` before merge queue entry.
+
