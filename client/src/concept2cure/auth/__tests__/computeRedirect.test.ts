@@ -22,7 +22,36 @@ describe('computeRedirect', () => {
     expect(redirect).toBe('/concept2cure');
   });
 
-  it('uses canonical Concept2Cure redirect for client_user/client_admin', () => {
+
+
+  it('rejects non-canonical internal routes outside allowed beta prefixes', () => {
+    const redirect = computeRedirect('?next=/admin');
+    expect(redirect).toBe('/concept2cure');
+  });
+
+  it('rejects traversal-style redirect payloads', () => {
+    const redirect = computeRedirect('?next=/concept2cure/../../etc/passwd');
+    expect(redirect).toBe('/concept2cure');
+  });
+
+  it('rejects backslash path payloads', () => {
+    const redirect = computeRedirect('?next=%2Fconcept2cure%5Cevil');
+    expect(redirect).toBe('/concept2cure');
+  });
+
+
+
+  it('preserves canonical query/hash in allowed paths', () => {
+    const redirect = computeRedirect('?next=/concept2cure/project/p1?tab=work#editor');
+    expect(redirect).toBe('/concept2cure/project/p1?tab=work#editor');
+  });
+
+  it('rejects control-character payloads', () => {
+    const redirect = computeRedirect('?next=%2Fconcept2cure%2Fproject%2Fp1%00');
+    expect(redirect).toBe('/concept2cure');
+  });
+
+  it('uses role-based client redirect for client_user/client_admin', () => {
     const user = { roles: ['client_user'] } as any;
     const redirect = computeRedirect('', user);
     expect(redirect).toBe('/concept2cure');
