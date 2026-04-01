@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-04-01T06:01:43.121Z",
+  "generatedAt": "2026-04-01T06:14:54.828Z",
   "git": {
-    "sha": "e0f11e67c2443512f1c31be3d150b3cd55014380",
+    "sha": "e13e9a8f8f3e10b641a0e42b04fe56321602b001",
     "branch": "cursor/customer-shaped-harness-build-5841"
   },
   "thresholds": {
@@ -2225,7 +2225,14 @@
       }
     ]
   },
-  "comparison": null,
+  "comparison": {
+    "baseline": "docs/reports/repo-health-scan-latest.json",
+    "delta": {
+      "duplicateBasenames": 0,
+      "largeFilesByBytes": 0,
+      "largeFilesByLines": 0
+    }
+  },
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",

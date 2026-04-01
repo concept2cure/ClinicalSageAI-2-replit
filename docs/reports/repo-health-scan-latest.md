@@ -1,14 +1,18 @@
 # Repo Health Scan
 
-Generated: 2026-04-01T06:01:43.121Z
+Generated: 2026-04-01T06:14:54.828Z
 Branch: cursor/customer-shaped-harness-build-5841
-SHA: e0f11e67c2443512f1c31be3d150b3cd55014380
+SHA: e13e9a8f8f3e10b641a0e42b04fe56321602b001
 
 ## Summary
 
 - Duplicate basenames: 195
 - Files over byte threshold: 26
 - Files over line threshold: 85
+- Baseline: docs/reports/repo-health-scan-latest.json
+- Delta duplicate basenames: 0
+- Delta files over byte threshold: 0
+- Delta files over line threshold: 0
 
 ## Owner Summary
 
