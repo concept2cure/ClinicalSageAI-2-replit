@@ -29,6 +29,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspens
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { ZenSidebar } from './components/sidebar/ZenSidebar';
 import { ZenChat } from './components/chat/ZenChat';
@@ -38,11 +39,9 @@ import { ZenCommandPalette } from './components/command/ZenCommandPalette';
 import {
   type ToolPanel,
   type LayoutMode,
-  type UserProfile,
   PRIMARY_NAV_ID_BY_LAYOUT,
   LEGACY_NAV_ID_BY_LAYOUT,
   SIDEBAR_NAV_TO_LAYOUT as SIDEBAR_NAV_TO_LAYOUT_EXTRACTED,
-  INDUSTRY_MODES,
   normalizeIndustryMode,
   TOOL_PANELS,
   getProjectColor,
@@ -56,7 +55,7 @@ const ZenSettings = React.lazy(() =>
 import { ProjectSwitcher, NewProjectModal } from './components/projects/ProjectSwitcher';
 import ProjectConfigPanel from './components/workspace/ProjectConfigPanel';
 // [BATCH 3] WorkflowTimeline — renderer removed, import kept for type compatibility
-import { ProjectFilesCompact } from './components/workspace/ProjectFilesCompact';
+// [BATCH 3] ProjectFilesCompact — unused, import removed
 import { ProjectHeaderBar, getProjectAccentColor } from './components/workspace/ProjectHeaderBar';
 // [BATCH 3] CustomInstructions — knowledge-base renderer removed
 import { useProjectTasks } from './hooks/useProjectTasks';
@@ -75,7 +74,7 @@ import {
 
 import { ProjectWorkspaceShell } from './components/workspace/ProjectWorkspaceShell';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import type { IndustryMode } from './types/workspace';
+// IndustryMode type unused — removed
 // [BATCH 3] ProductAuditQuestionnaire — renderer removed
 import { isFeatureEnabled } from '@/flags/featureFlags';
 import { getProjectModuleRoutePolicy } from './router/projectModuleRoutePolicy';
@@ -91,64 +90,24 @@ const FullDocumentBuilder = lazy(() => import('./components/builder/FullDocument
 // Tools Landing — curated workbench (builder is one tool inside it)
 const ToolsLanding = lazy(() => import('./components/workspace/ToolsLanding'));
 import {
-  Archive,
   X,
   ChevronLeft,
   Maximize2,
   Minimize2,
-  ClipboardList,
-  BookOpen,
-  BarChart2,
-  AlertTriangle,
-  CheckSquare,
-  Globe,
-  Folder,
-  ShieldCheck,
   WifiOff,
   FileText,
   Plus,
   ArrowLeft,
-  CircleDot,
-  Play,
-  Pause,
-  CheckCircle2,
-  AlertCircle,
-  Zap,
-  ListTodo,
-  Calendar,
-  TrendingUp,
-  Beaker,
-  GitBranch,
-  Shield,
-  Eye,
   FlaskConical,
-  Scale,
-  Building2,
-  Fingerprint,
-  Bell,
   Star,
   MessageSquare,
-  FolderOpen,
-  Upload,
-  Link2,
-  Sparkles,
-  PenLine,
-  Layers,
-  Download,
   Brain,
-  Snowflake,
-  Bot,
-  Activity,
-  Rocket,
-  FileStack,
-  Users,
   Loader2,
   Search,
 } from 'lucide-react';
-import { LoadingState } from '@/components/ui/statesV2';
+import { LoadingState, ErrorState } from '@/components/ui/statesV2';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ErrorState } from '@/components/ui/statesV2';
 
 // Canonical loading fallback for Suspense boundaries
 const ModuleLoadingFallback = () => (
@@ -190,11 +149,7 @@ import AnaPersistentPanel from './components/chat/AnaPersistentPanel';
 import { GlobalOperatingShell } from './components/shell/GlobalOperatingShell';
 
 // Canonical authoring context resolver
-import {
-  resolveAuthoringContext,
-  resolveWorkflowStage,
-  type ContextResolverInput,
-} from './services/authoring-context-resolver';
+import { resolveAuthoringContext } from './services/authoring-context-resolver';
 import type {
   AuthoringContextPack,
   ReadinessSnapshot,
@@ -212,10 +167,7 @@ const FirstRunExperience = lazy(() => import('./components/enablement/FirstRunEx
 
 // [BATCH 1 DELETED] INDWorkspace
 
-// IND Workspace Right Rail (section-specific CTD context)
-const INDRightRail = lazy(() =>
-  import('./components/workspace/INDRightRail').then(m => ({ default: m.INDRightRail }))
-);
+// [BATCH cleanup] INDRightRail — unused, lazy import removed
 
 // [BATCH 1 DELETED] SubmissionOpsCommandCenter
 
@@ -344,9 +296,7 @@ const HAQManagerView = lazy(() =>
 
 // ─── New intent-organized workspace lazy loads ──────────────────────────────
 // [BATCH 1 DELETED] IntelligenceHub
-const RegulatoryPrecedentIntelligence = lazy(
-  () => import('./pages/RegulatoryPrecedentIntelligence')
-);
+// [BATCH cleanup] RegulatoryPrecedentIntelligence — unused, lazy import removed
 const ReviewReadiness = lazy(() =>
   import('./pages/ReviewReadiness').then(m => ({ default: m.ReviewReadiness }))
 );
@@ -383,8 +333,7 @@ const AnaBiostatsPanel = lazy(() => import('@/concept2cure/components/biostats/A
 
 // [BATCH 1 DELETED] LegalCenter
 
-// Platform Home — Claude.ai-style landing dashboard
-const PlatformHome = lazy(() => import('./components/home/PlatformHome'));
+// [BATCH cleanup] PlatformHome — unused, lazy import removed
 
 // ─── New global destination pages (Phase 1 OS restructure) ──────────────────
 const AppsPage = lazy(() => import('./pages/AppsPage'));
@@ -401,7 +350,7 @@ const SetupPage = lazy(() => import('./pages/SetupPage'));
 // [BATCH 3] CTDOnboardingWizardPage — demoted, redirect to projects
 
 // Project Sidebar — Claude.ai-style right sidebar (Context, Instructions, Files)
-import { ProjectSidebar } from './components/workspace/ProjectSidebar';
+// ProjectSidebar — unused import removed
 
 // Map panel keys to lazy components
 // Early-access modules (capa, pms, inspection) gated behind feature flag
@@ -628,12 +577,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     industryMode: orgIndustryMode,
     greeting: platformGreeting,
     intelligence: userIntelligence,
-    lastWorkSummary,
-    nextTask,
+    // lastWorkSummary, nextTask — unused, not destructured
   } = usePlatformContext();
 
   // Workspace summary — real counts, org, recent activity, next actions
-  const { data: workspaceSummary, isLoading: summaryLoading } = useWorkspaceSummary();
+  const { data: workspaceSummary } = useWorkspaceSummary();
 
   // Projects from database
   const {
@@ -717,7 +665,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     setShowFirstRun(false);
     try {
       localStorage.setItem('concept2cure_first_run_complete', 'true');
-    } catch {}
+    } catch {
+      /* localStorage unavailable */
+    }
   }, [projects.length, showFirstRun]);
 
   // Tool panels
@@ -746,7 +696,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   const [activeArtifactVersion, setActiveArtifactVersion] = useState<string | undefined>();
   const [activeArtifactStatus, setActiveArtifactStatus] = useState<string | undefined>();
   const [activeSectionTitle, setActiveSectionTitle] = useState<string | undefined>();
-  const [activeModuleCode, setActiveModuleCode] = useState<string | undefined>();
+  const [, setActiveModuleCode] = useState<string | undefined>();
   const [sectionReadiness, setSectionReadiness] = useState<ReadinessSnapshot | undefined>();
   const [sectionContradictions, setSectionContradictions] = useState<
     ContradictionEntry[] | undefined
@@ -755,10 +705,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // Account-level custom instructions for Knowledge Base
   const [customInstructions, setCustomInstructions] = useState('');
 
-  // Right panel tab in workspace mode
-  const [workspacePanelTab, setWorkspacePanelTab] = useState<'files' | 'outputs' | 'instructions'>(
-    'files'
-  );
+  // Right panel tab in workspace mode — reserved for future panel switching
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_workspacePanelTab, _setWorkspacePanelTab] = useState<
+    'files' | 'outputs' | 'instructions'
+  >('files');
   const [workspacePanelOpen, setWorkspacePanelOpen] = useState(true);
 
   const [moduleAssistantOpen, setModuleAssistantOpen] = useState(false);
@@ -796,24 +747,23 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   const [activeThreadId, setActiveThreadId] = useState<string | undefined>();
 
   // Sherpa project detail view state
-  const [sherpaDetailProjectId, setSherpaDetailProjectId] = useState<string | null>(null);
-  const [newTaskOpen, setNewTaskOpen] = useState(false);
-  const [taskFilter, setTaskFilter] = useState<string>('all');
+  const [sherpaDetailProjectId] = useState<string | null>(null);
+  const [
+    ,/* newTaskOpen */
+    /* setNewTaskOpen */
+  ] = useState(false);
+  const [
+    ,/* taskFilter */
+    /* setTaskFilter */
+  ] = useState<string>('all');
 
   // Task management for the selected project in sherpa mode
-  const {
-    tasks: projectTasks,
-    isLoadingTasks,
-    summary: taskSummary,
-    createTask,
-    updateTask,
-    generateMilestones,
-    isGenerating: isGeneratingMilestones,
-  } = useProjectTasks(sherpaDetailProjectId || activeProjectId || '');
+  useProjectTasks(sherpaDetailProjectId || activeProjectId || '');
 
   // Run log — lightweight action execution transparency
   // NOTE: declared after activeProjectId to avoid TDZ in deps arrays
-  const [runLog, setRunLog] = useState<
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_runLog, setRunLog] = useState<
     Array<{
       id: string;
       intent: string;
@@ -872,9 +822,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     if (redirect) {
       setLayoutMode(redirect);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [layoutMode]);
-
-  // Load persisted run log from sessionStorage when the active project changes
   useEffect(() => {
     if (!activeProjectId) return;
     try {
@@ -1475,6 +1424,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       );
       setLayoutMode(activeProjectId ? 'project-home' : 'projects');
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [activeProjectId, requireActiveProject]
   );
 
@@ -1538,6 +1488,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     async (id: string) => {
       const existing = conversations.find(c => c.id === id);
       if (!existing) return;
+      // eslint-disable-next-line no-alert
       const nextTitle = window.prompt(
         'Rename conversation title',
         existing.title || 'New conversation'
@@ -1797,7 +1748,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     [rawProjects, updateProjectMutation]
   );
 
-  const handleToggleProjectPin = useCallback(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _handleToggleProjectPin = useCallback(
     async (id: string) => {
       const project = rawProjects.find(p => p.id === id);
       if (project) {
@@ -1870,7 +1822,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────────
 
-  const workflowRunId = activeProjectId ? `workflow-run-${activeProjectId}` : 'workflow-run-demo';
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _workflowRunId = activeProjectId ? `workflow-run-${activeProjectId}` : 'workflow-run-demo';
   const activeNavId = useMemo(() => {
     if (activeToolPanel === 'vault') return 'vault';
     if (activeToolPanel === 'ana-biostats') return 'biostatistics';
@@ -1896,7 +1849,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       biostatistics: 'Biostatistics',
     };
     return activeNavId ? labelByNavId[activeNavId] ?? 'Workspace' : 'Workspace';
-  }, [activeNavId, activeProject, activeToolPanel]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeNavId, activeToolPanel]);
 
   const handleHeaderAction = useCallback(
     (
@@ -2562,7 +2516,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                       setRiViewMode('editor');
                       setLayoutMode('regulatory-workspace');
                     }}
-                    onDraftFromSource={(sourceTitle, sourceId) => {
+                    onDraftFromSource={(sourceTitle, _sourceId) => {
                       if (!requireActiveProject('regulatory-workspace')) return;
                       setPendingEditorContent({
                         title: `Draft from: ${sourceTitle}`,
@@ -3965,7 +3919,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         setOpenArtifactId(id);
                         setRiViewMode('editor');
                       }}
-                      onSaveToVault={id => {
+                      onSaveToVault={_id => {
                         setActiveArtifactId(undefined);
                         setLayoutMode('vault');
                       }}
@@ -4141,7 +4095,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               setShowFirstRun(false);
               try {
                 localStorage.setItem('concept2cure_first_run_complete', 'true');
-              } catch {}
+              } catch {
+                /* localStorage unavailable */
+              }
               if (selectedRole) {
                 try {
                   const profile = JSON.parse(
@@ -4150,7 +4106,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   profile.role = selectedRole;
                   localStorage.setItem('concept2cure_user_profile', JSON.stringify(profile));
                   setUserProfile(profile);
-                } catch {}
+                } catch {
+                  /* localStorage unavailable */
+                }
               }
               // Auto-select the project created during onboarding and navigate
               if (options?.projectId) {
@@ -4173,7 +4131,9 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               setShowFirstRun(false);
               try {
                 localStorage.setItem('concept2cure_first_run_complete', 'true');
-              } catch {}
+              } catch {
+                /* localStorage unavailable */
+              }
             }}
           />
         </Suspense>

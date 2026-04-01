@@ -3,7 +3,7 @@ import multer from 'multer';
 import bcrypt from 'bcryptjs';
 import fs from 'fs';
 import path from 'path';
-import { spawn } from 'child_process';
+// spawn — reserved for future PDF generation pipeline
 import crypto from 'crypto';
 // Lazy load docx to prevent startup failures
 import { PDFDocument } from 'pdf-lib';
