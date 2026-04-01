@@ -100,6 +100,7 @@ const sendSuccess = <T>(res: Response, data: T, meta?: Record<string, unknown>) 
   return res.json({ success: true, data });
 };
 import { ai } from '../lib/unified-ai-client';
+import { registerCommunicationCenterRoutes } from './concept2cure-communication-center';
 
 const sendError = (
   res: Response,
@@ -162,6 +163,51 @@ interface AuditEntry {
   ipAddress?: string;
   sessionId?: string;
   integrityHash?: string;
+}
+
+let communicationCenterSchemaCheck: 'unknown' | 'ready' | 'missing' = 'unknown';
+
+async function ensureCommunicationCenterTables(): Promise<void> {
+  if (communicationCenterSchemaCheck === 'ready') return;
+  if (communicationCenterSchemaCheck === 'missing') {
+    throw new Error(
+      'Communication Center persistence tables are missing. Run migrations 20260331_communication_center_scaffold.sql and 20260401_submission_center_items.sql'
+    );
+  }
+  const result = await pool.query(
+    `SELECT table_name
+       FROM information_schema.tables
+      WHERE table_schema = 'public'
+        AND table_name = ANY($1::text[])`,
+    [[
+      'concept2cure_authority_profiles',
+      'concept2cure_agency_communications',
+      'concept2cure_publishops_services',
+      'concept2cure_submission_center_items',
+    ]]
+  );
+  const found = new Set(result.rows.map((r: any) => r.table_name));
+  const missing = [
+    'concept2cure_authority_profiles',
+    'concept2cure_agency_communications',
+    'concept2cure_publishops_services',
+    'concept2cure_submission_center_items',
+  ].filter(t => !found.has(t));
+  if (missing.length > 0) {
+    communicationCenterSchemaCheck = 'missing';
+    throw new Error(
+      `Communication Center persistence tables missing: ${missing.join(', ')}. Run migrations 20260331_communication_center_scaffold.sql and 20260401_submission_center_items.sql`
+    );
+  }
+  communicationCenterSchemaCheck = 'ready';
+}
+
+function communicationCenterErrorStatus(error: unknown): number {
+  const message = (error as any)?.message || '';
+  if (typeof message === 'string' && message.includes('persistence tables')) {
+    return 503;
+  }
+  return 400;
 }
 
 /**
@@ -9921,6 +9967,20 @@ router.get('/projects/:projectId/tasks/summary', async (req: Request, res: Respo
     logger.error('Failed to compute task summary', { error: error.message });
     return sendError(res, 500, 'Failed to compute task summary');
   }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMMUNICATION CENTER + SUBMISSION & AGENCY PORTAL + C2C PUBLISHOPS
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerCommunicationCenterRoutes(router, {
+  ensureCommunicationCenterTables,
+  communicationCenterErrorStatus,
+  getOrganizationId,
+  getUserId,
+  logAuditEntry,
+  sendSuccess,
+  sendError,
 });
 
 // GET /api/concept2cure/submission-milestones/:type
