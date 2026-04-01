@@ -75,6 +75,7 @@ vi.mock('../../shared/schema/index.js', () => ({
 
 vi.mock('drizzle-orm', () => ({
   eq: (..._args: any[]) => ({}),
+  and: (..._args: any[]) => ({}),
 }));
 
 import authoringActionsRouter from '../../server/routes/authoring-actions';
@@ -134,6 +135,7 @@ describe('authoring-actions governed validation envelopes', () => {
     const req = createMockRequest({
       body: { projectId: 1, artifactId: 11 },
     }) as any;
+    req.tenantId = 1;
     const res = createMockResponse();
 
     const handler = getRouteHandler('/promote-to-review');
@@ -143,7 +145,9 @@ describe('authoring-actions governed validation envelopes', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         success: false,
-        error: expect.objectContaining({ code: 'GOVERNED_CONTRACT_INVALID' }),
+        error: expect.objectContaining({
+          code: 'GOVERNED_CONTRACT_INVALID',
+        }),
       })
     );
   });

@@ -386,9 +386,9 @@ export default function createIVDRRoutes(pool: Pool): Router {
       const safeId = id.replace(/[^a-zA-Z0-9\-_]/g, '');
       res.setHeader('Content-Disposition', `attachment; filename="ivdr-classification-${safeId}.json"`);
 
-      // Register governed export (non-blocking)
+      // Register governed export (fail-closed for regulated report exports)
       const user = (req as any).user;
-      registerExportGovernanceQuick({
+      const governanceResult = await registerExportGovernanceQuick({
         organizationId: user?.organizationId || Number(orgId) || 1,
         projectId: 0,
         userId: user?.id || 0,
@@ -400,7 +400,13 @@ export default function createIVDRRoutes(pool: Pool): Router {
         docType: 'ivdr_classification_report',
         backendRoute: `/api/ivdr/classify/${id}/report`,
         ipAddress: req.ip,
-      }).catch(() => {}); // non-blocking
+      });
+      if (!governanceResult) {
+        return res.status(500).json({
+          error: 'Export governance registration failed',
+          code: 'EXPORT_GOVERNANCE_REQUIRED',
+        });
+      }
 
       return res.json(report);
     } catch (error: any) {
