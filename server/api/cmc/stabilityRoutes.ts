@@ -4,34 +4,6 @@ import { z } from 'zod';
 
 const router = express.Router();
 
-// Ensure stability_studies table exists (matches cmc-schema.ts)
-let stabilityTablesInitialized = false;
-async function ensureStabilityTables() {
-  if (stabilityTablesInitialized) return;
-  const pool = getPool();
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS stability_studies (
-      id SERIAL PRIMARY KEY,
-      project_id UUID,
-      tenant_id TEXT,
-      study_name TEXT NOT NULL,
-      study_type TEXT,
-      storage_condition TEXT,
-      duration TEXT,
-      time_points TEXT,
-      container_closure TEXT,
-      test_parameters TEXT,
-      status TEXT,
-      started_date DATE,
-      completed_date DATE,
-      results JSONB,
-      created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-      updated_at TIMESTAMP DEFAULT NOW() NOT NULL
-    )
-  `);
-  stabilityTablesInitialized = true;
-}
-
 // Validation schemas
 const createStudySchema = z.object({
   projectId: z.string().uuid().optional(),
@@ -72,7 +44,6 @@ router.get('/:projectId', async (req, res) => {
     }
     const pool = getPool();
 
-    await ensureStabilityTables();
 
     const result = await pool.query(
       `SELECT * FROM stability_studies
@@ -117,7 +88,6 @@ router.post('/', async (req, res) => {
       return res.status(401).json({ error: 'Tenant context required' });
     }
 
-    await ensureStabilityTables();
 
     const result = await pool.query(
       `INSERT INTO stability_studies (
@@ -179,7 +149,6 @@ router.put('/:id', async (req, res) => {
     const data = validationResult.data;
     const pool = getPool();
 
-    await ensureStabilityTables();
 
     // Verify study exists
     const existing = await pool.query(
@@ -259,7 +228,6 @@ router.get('/:id/projections', async (req, res) => {
     const { id } = req.params;
     const pool = getPool();
 
-    await ensureStabilityTables();
 
     const result = await pool.query(
       `SELECT * FROM stability_studies WHERE id = $1`, [id]

@@ -55,12 +55,14 @@ import {
   Save,
   Eye,
 } from 'lucide-react';
+import CMCCommandCenter from './CMCCommandCenter';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
 type CMCTab =
+  | 'command-center'
   | 'overview'
   | 'drug-substance'
   | 'drug-product'
@@ -130,6 +132,7 @@ const MODULE_3_SECTIONS = [
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const TAB_CONFIG: Array<{ id: CMCTab; label: string; icon: React.ComponentType<{ className?: string }> }> = [
+  { id: 'command-center', label: 'Command Center', icon: Shield },
   { id: 'overview', label: 'Overview', icon: BarChart3 },
   { id: 'drug-substance', label: 'Drug Substance', icon: FlaskConical },
   { id: 'drug-product', label: 'Drug Product', icon: Pill },
@@ -528,6 +531,10 @@ export const CMCHub: React.FC<CMCHubProps> = ({
         <div className="max-w-4xl mx-auto">
 
           {/* ── OVERVIEW TAB ────────────────────────────────────────── */}
+          {activeTab === 'command-center' && (
+            <CMCCommandCenter projectId={projectId} />
+          )}
+
           {activeTab === 'overview' && (
             <div className="space-y-6">
               {/* Completion summary */}

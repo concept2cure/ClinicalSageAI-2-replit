@@ -153,3 +153,5 @@ export * from './project-charter';
 export * from './ana-intelligence';
 
 export * from './report-os';
+
+export * from './cmc-os';
