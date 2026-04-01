@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'wouter';
-import { AlertCircle, ArrowLeft, CheckCircle2, Mail, Shield } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle2, Mail } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -363,24 +363,19 @@ export const ZenLogin: React.FC = () => {
       ? 'Choose a new password for your account.'
       : view === 'success'
       ? successMessage
-      : 'A calm, secure sign-in flow for your regulatory workspace.';
+      : 'Secure access to your regulatory workspace.';
 
   return (
     <div className="min-h-screen bg-[#faf9f5]">
-      <div className="mx-auto flex min-h-screen w-full max-w-3xl items-center justify-center px-4 py-8 sm:px-6">
-        <div className="w-full max-w-[420px] space-y-4">
-          <div className="space-y-2 text-center">
-            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-3 py-1 text-[11px] font-medium text-stone-600">
-              <Shield className="h-3.5 w-3.5 text-stone-500" />
-              Trusted access for regulated work
-            </div>
-            <div className="space-y-1">
-              <h1 className="text-lg font-semibold text-stone-900">{title}</h1>
-              <p className="text-[13px] leading-6 text-stone-500">{description}</p>
-            </div>
-          </div>
-
+      <div className="mx-auto flex min-h-screen w-full max-w-3xl items-center justify-center px-4 py-6 sm:px-6">
+        <div className="w-full max-w-[400px]">
           <Card className="border-stone-200 bg-white shadow-sm">
+            <CardHeader className="space-y-1 px-5 pt-5 pb-0 sm:px-6 sm:pt-6">
+              <CardTitle className="text-[17px] font-semibold text-stone-900">{title}</CardTitle>
+              <CardDescription className="text-[13px] leading-6 text-stone-500">
+                {description}
+              </CardDescription>
+            </CardHeader>
             <CardContent className="space-y-5 p-5 sm:p-6">
               {error && (
                 <Alert variant="destructive" className="border-red-200 bg-red-50 text-red-700">
@@ -403,7 +398,7 @@ export const ZenLogin: React.FC = () => {
                       placeholder="you@company.com"
                       autoComplete="email"
                       autoFocus
-                      className="h-11 rounded-xl border-stone-200 bg-white text-[14px] shadow-none focus-visible:ring-stone-400"
+                      className="h-10 rounded-xl border-stone-200 bg-white text-[14px] shadow-none focus-visible:ring-stone-400"
                     />
                   </div>
 
@@ -432,7 +427,7 @@ export const ZenLogin: React.FC = () => {
                     </button>
                   </div>
 
-                  <Button className="h-10 w-full rounded-xl text-[13px]" onClick={handleLogin} disabled={isLoading}>
+                  <Button className="h-10 w-full rounded-xl text-[13px] font-medium" onClick={handleLogin} disabled={isLoading}>
                     {isLoading ? <Spinner size="sm" className="mr-2" /> : null}
                     Sign in
                   </Button>
@@ -473,14 +468,14 @@ export const ZenLogin: React.FC = () => {
                         onChange={event => setMfaCode(event.target.value)}
                         placeholder="Enter a recovery code"
                         autoFocus
-                        className="h-11 rounded-xl border-stone-200 font-mono text-[14px] shadow-none focus-visible:ring-stone-400"
+                        className="h-10 rounded-xl border-stone-200 font-mono text-[14px] shadow-none focus-visible:ring-stone-400"
                       />
                     </div>
                   ) : (
                     <MfaCodeInput value={mfaCode} onChange={setMfaCode} disabled={isLoading} />
                   )}
 
-                  <Button className="h-10 w-full rounded-xl text-[13px]" onClick={handleVerifyMfa} disabled={isLoading}>
+                  <Button className="h-10 w-full rounded-xl text-[13px] font-medium" onClick={handleVerifyMfa} disabled={isLoading}>
                     {isLoading ? <Spinner size="sm" className="mr-2" /> : null}
                     Verify
                   </Button>
@@ -542,12 +537,12 @@ export const ZenLogin: React.FC = () => {
                         onChange={event => setEmail(event.target.value)}
                         placeholder="you@company.com"
                         autoFocus
-                        className="h-11 rounded-xl border-stone-200 bg-white pl-10 text-[14px] shadow-none focus-visible:ring-stone-400"
+                        className="h-10 rounded-xl border-stone-200 bg-white pl-10 text-[14px] shadow-none focus-visible:ring-stone-400"
                       />
                     </div>
                   </div>
 
-                  <Button className="h-10 w-full rounded-xl text-[13px]" onClick={handleForgotPassword} disabled={isLoading}>
+                  <Button className="h-10 w-full rounded-xl text-[13px] font-medium" onClick={handleForgotPassword} disabled={isLoading}>
                     {isLoading ? <Spinner size="sm" className="mr-2" /> : null}
                     Send reset link
                   </Button>
@@ -594,7 +589,7 @@ export const ZenLogin: React.FC = () => {
                     autoComplete="new-password"
                     disabled={isLoading}
                   />
-                  <Button className="h-10 w-full rounded-xl text-[13px]" onClick={handleResetPassword} disabled={isLoading}>
+                  <Button className="h-10 w-full rounded-xl text-[13px] font-medium" onClick={handleResetPassword} disabled={isLoading}>
                     {isLoading ? <Spinner size="sm" className="mr-2" /> : null}
                     Update password
                   </Button>
@@ -610,15 +605,11 @@ export const ZenLogin: React.FC = () => {
                     <CheckCircle2 className="h-6 w-6" />
                   </div>
                   <p className="text-[14px] leading-6 text-stone-600">{successMessage}</p>
-                  <Button className="h-10 w-full rounded-xl text-[13px]" onClick={() => setLocation('/concept2cure')}>
+                  <Button className="h-10 w-full rounded-xl text-[13px] font-medium" onClick={() => setLocation('/concept2cure')}>
                     Continue
                   </Button>
                 </div>
               )}
-
-              <div className="border-t border-stone-100 pt-4 text-center text-[11px] text-stone-400">
-                FDA 21 CFR Part 11 aligned access controls
-              </div>
             </CardContent>
           </Card>
         </div>
