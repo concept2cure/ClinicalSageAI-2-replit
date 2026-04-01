@@ -228,6 +228,30 @@ This audit focused on the practical intelligence path that users actually hit in
 
 ---
 
+## 2026-04-01 Reliability + Observability Hardening Wave (Completed)
+
+### Scope
+- Implemented key reliability recommendations surfaced by parallel subagent audits.
+- Improved command-output hygiene, execution context richness, and enrichment diagnostics visibility in both `/chat` and `/stream`.
+
+### Files Updated
+
+| File | Enhancement |
+|---|---|
+| `server/routes/ana-ri.ts` | Uses cleaned assistant text after command execution in `/chat`; stream now emits/persists cleaned assistant text, includes `enrichmentMeta`, and enriches command context with `userRole`/`userName` |
+| `server/services/ana-ri/context-enrichment.ts` | Adds explicit `sourcesFailed` marker for detected-but-unhandled slash commands (`slash_unhandled:<command>`) and removes duplicate command-description key shadowing |
+
+### Impact
+- Reduces user-facing leakage of raw ```command blocks and keeps persisted assistant output aligned with what users should read.
+- Improves observability by exposing full enrichment diagnostics (trigger type, attempted/succeeded/failed sources) rather than only successful source names.
+- Improves command-execution safety/compliance by passing role/name context into command handlers.
+
+### Residual Risk
+- Slash command completeness still needs dedicated regression tests to prevent future UI/backend drift.
+- Some slashes (`/draft`, `/preflight`, `/export`) are still rewrite-first and should get stronger deterministic execution handlers in a future pass.
+
+---
+
 ## Outcome
 
 AnA now receives materially richer, project-grounded intelligence in both primary runtime paths and has improved command parity with UI promises. This is a meaningful step toward the “alive intelligence operator” behavior you asked for: more context-aware, less generic, more traceable, and more deterministic in action selection.

@@ -725,6 +725,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     // Command executor — execute operational commands (create project, artifact, task, etc.)
     // (Parity with /stream — previously only ran on stream path)
     let executedCommands: any[] = [];
+    let cleanedResponseContent = response.content;
     if (response.content && orgId) {
       try {
         const cmdCtx: CommandContext = {
@@ -735,9 +736,14 @@ router.post('/chat', async (req: Request, res: Response) => {
               ? Number.parseInt(chatProjectIdForActions, 10)
               : chatProjectIdForActions
             : undefined,
+          userName: (req as any).user?.name,
+          userRole: effectiveRole,
         };
         const cmdResult = await processCommandsInResponse(response.content, cmdCtx);
         executedCommands = cmdResult.executedCommands;
+        cleanedResponseContent = cmdResult.cleanedText
+          ? cmdResult.cleanedText
+          : response.content;
         if (executedCommands.length > 0) {
           console.log(`[AnA RI Chat] Executed ${executedCommands.length} command(s)`);
         }
@@ -753,7 +759,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     });
 
     const responsePayload = {
-      response: response.content,
+      response: cleanedResponseContent,
       thread_id: resolvedThreadId,
       orchestration: {
         detectedIntent: orchestration.detectedIntent,
@@ -793,6 +799,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       },
       queueMeta,
       enrichmentSources: chatEnrichment.sources?.length > 0 ? chatEnrichment.sources : undefined,
+      enrichmentMeta: chatEnrichment.enrichmentMeta || undefined,
       _meta: {
         ...(persistenceFailed && { persistenceWarning: 'Messages may not have been saved' }),
       },
@@ -1152,6 +1159,7 @@ router.post('/stream', async (req: Request, res: Response) => {
     const selectedStrategy = policyHint?.preferredStrategy || routingPlan.strategy;
 
     let fullContent = '';
+    let cleanedFullContent = '';
 
     // Stream via gateway
     const gwResponse = await gw.route({
@@ -1172,16 +1180,6 @@ router.post('/stream', async (req: Request, res: Response) => {
       },
       callerModule: 'ana-ri-stream',
     });
-
-    // Persist assistant response
-    if (orgId && threadId && fullContent) {
-      try {
-        await saveMessage(threadId, 'assistant', fullContent);
-      } catch (e: any) {
-        console.error('[AnA RI Stream] Assistant persist failed:', e?.message);
-        persistenceFailed = true;
-      }
-    }
 
     // RIM interception — capture intelligence signals (non-blocking)
     if (fullContent && streamProjectId) {
@@ -1229,16 +1227,29 @@ router.post('/stream', async (req: Request, res: Response) => {
               ? Number.parseInt(streamProjectId, 10)
               : streamProjectId
             : undefined,
+          userName: (req as any).user?.name,
+          userRole: effectiveRole,
         };
         const { processCommandsInResponse } =
           await import('../services/ana-ri/command-executor.js');
         const cmdResult = await processCommandsInResponse(fullContent, cmdCtx);
         executedCommands = cmdResult.executedCommands;
+        cleanedFullContent = cmdResult.cleanedText ? cmdResult.cleanedText : fullContent;
         if (executedCommands.length > 0) {
           console.log(`[AnA RI Stream] Executed ${executedCommands.length} command(s)`);
         }
       } catch (e: any) {
         console.warn('[AnA RI Stream] Command executor failed:', e?.message);
+      }
+    }
+
+    // Persist assistant response using cleaned text when command blocks were present.
+    if (orgId && threadId && fullContent) {
+      try {
+        await saveMessage(threadId, 'assistant', cleanedFullContent || fullContent);
+      } catch (e: any) {
+        console.error('[AnA RI Stream] Assistant persist failed:', e?.message);
+        persistenceFailed = true;
       }
     }
 
@@ -1283,6 +1294,8 @@ router.post('/stream', async (req: Request, res: Response) => {
         executedActions: executedActions.length > 0 ? executedActions : undefined,
         executedCommands: executedCommands.length > 0 ? executedCommands : undefined,
         enrichmentSources: enrichment.sources.length > 0 ? enrichment.sources : undefined,
+        enrichmentMeta: enrichment.enrichmentMeta || undefined,
+        cleanedResponse: cleanedFullContent || undefined,
         evidence: streamEvidenceVerdict || undefined,
         evidenceDiscipline: streamEvidenceCheck
           ? {
