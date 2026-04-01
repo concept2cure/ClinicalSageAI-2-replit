@@ -79,9 +79,7 @@ import {
   interceptFeedback,
 } from '../services/intelligence/rim-interceptors.js';
 import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
-import {
-  resolveGovernedContext,
-} from '../services/concept2cure/governedDocumentContractService';
+import { resolveGovernedContext } from '../services/concept2cure/governedDocumentContractService';
 import {
   buildWorkingMemoryPrompt,
   storeWorkingMemory,
@@ -205,11 +203,13 @@ async function ensureCommunicationCenterTables(): Promise<void> {
        FROM information_schema.tables
       WHERE table_schema = 'public'
         AND table_name = ANY($1::text[])`,
-    [[
-      'concept2cure_authority_profiles',
-      'concept2cure_agency_communications',
-      'concept2cure_publishops_services',
-    ]]
+    [
+      [
+        'concept2cure_authority_profiles',
+        'concept2cure_agency_communications',
+        'concept2cure_publishops_services',
+      ],
+    ]
   );
   const found = new Set(result.rows.map((r: any) => r.table_name));
   const missing = [
@@ -220,7 +220,9 @@ async function ensureCommunicationCenterTables(): Promise<void> {
   if (missing.length > 0) {
     communicationCenterSchemaCheck = 'missing';
     throw new Error(
-      `Communication Center persistence tables missing: ${missing.join(', ')}. Run migration 20260331_communication_center_scaffold.sql`
+      `Communication Center persistence tables missing: ${missing.join(
+        ', '
+      )}. Run migration 20260331_communication_center_scaffold.sql`
     );
   }
   communicationCenterSchemaCheck = 'ready';
@@ -818,7 +820,9 @@ const createArtifactSchema = z.object({
     .enum(['regulatory', 'medical_writer', 'cmc', 'clinical', 'qa', 'executive', 'cro'])
     .optional(),
   regulatorScope: z.enum(['fda', 'ema', 'mhra', 'hc', 'pmda', 'multi']).optional(),
-  evidenceMode: z.enum(['csr', 'literature', 'predicate', 'cmc_source', 'test_data', 'mixed']).optional(),
+  evidenceMode: z
+    .enum(['csr', 'literature', 'predicate', 'cmc_source', 'test_data', 'mixed'])
+    .optional(),
   documentClass: z
     .enum([
       'strategy_memo',
@@ -1111,21 +1115,19 @@ async function loadProjectAccessRow(params: {
   userId: number;
   actorRole: ProjectActorRole;
 }): Promise<{
-  project:
-    | {
-        id: number;
-        name: string;
-        description: string | null;
-        metadata: unknown;
-        status: string;
-        organizationId: number;
-        createdById: number | null;
-        ownerId: number | null;
-        settings: unknown;
-        createdAt: Date;
-        updatedAt: Date;
-      }
-    | null;
+  project: {
+    id: number;
+    name: string;
+    description: string | null;
+    metadata: unknown;
+    status: string;
+    organizationId: number;
+    createdById: number | null;
+    ownerId: number | null;
+    settings: unknown;
+    createdAt: Date;
+    updatedAt: Date;
+  } | null;
   legacyFallbackApplied: boolean;
 }> {
   const [project] = await db
@@ -1157,7 +1159,10 @@ async function loadProjectAccessRow(params: {
   }
 
   const sharing = await loadProjectSharingState(project.id, params.organizationId, project);
-  const settingsWithSharing = applyProjectSharingState(normalizeProjectSettings(project.settings), sharing);
+  const settingsWithSharing = applyProjectSharingState(
+    normalizeProjectSettings(project.settings),
+    sharing
+  );
   const hasAccess = canUseProject({
     actor: { userId: params.userId, orgRole: params.actorRole },
     project: {
@@ -2668,10 +2673,17 @@ router.get('/projects/:id/sharing', async (req: Request, res: Response) => {
 
     return sendSuccess(
       res,
-      buildProjectSharingResponse(projectAccess.project.id, sharing, projectAccess.legacyFallbackApplied)
+      buildProjectSharingResponse(
+        projectAccess.project.id,
+        sharing,
+        projectAccess.legacyFallbackApplied
+      )
     );
   } catch (error: any) {
-    logger.error('Failed to fetch project sharing', { error: error.message, projectId: req.params.id });
+    logger.error('Failed to fetch project sharing', {
+      error: error.message,
+      projectId: req.params.id,
+    });
     return sendError(res, 500, 'Failed to fetch project sharing');
   }
 });
@@ -2986,7 +2998,10 @@ router.put('/projects/:id/sharing/members/:userId', async (req: Request, res: Re
     if (error instanceof z.ZodError) {
       return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
     }
-    logger.error('Failed to upsert project member', { error: error.message, projectId: req.params.id });
+    logger.error('Failed to upsert project member', {
+      error: error.message,
+      projectId: req.params.id,
+    });
     return sendError(res, 500, 'Failed to upsert project member');
   }
 });
@@ -3051,7 +3066,10 @@ router.delete('/projects/:id/sharing/members/:userId', async (req: Request, res:
       buildProjectSharingResponse(scope.numericId, sharing, projectAccess.legacyFallbackApplied)
     );
   } catch (error: any) {
-    logger.error('Failed to remove project member', { error: error.message, projectId: req.params.id });
+    logger.error('Failed to remove project member', {
+      error: error.message,
+      projectId: req.params.id,
+    });
     return sendError(res, 500, 'Failed to remove project member');
   }
 });
@@ -3646,8 +3664,8 @@ router.post(
           req.body?.clientTrack === 'device'
             ? 'device'
             : req.body?.clientTrack === 'diagnostics'
-              ? 'diagnostics'
-              : 'biotech',
+            ? 'diagnostics'
+            : 'biotech',
         submissionProgram: 'general_ri',
         persona: 'regulatory',
         regulatorScope: 'fda',
@@ -3714,7 +3732,8 @@ router.post(
               regulatorIntent: uploadGovernedResolution.contract.regulatorIntent,
               gateChecks: uploadGovernedResolution.contract.exportEligibility.gateChecks,
               blockingReasons: uploadGovernedResolution.contract.exportEligibility.blockingReasons,
-              readinessOutcome: uploadGovernedResolution.contract.exportEligibility.readinessOutcome,
+              readinessOutcome:
+                uploadGovernedResolution.contract.exportEligibility.readinessOutcome,
             },
           },
           createdById: userId,
@@ -3913,32 +3932,34 @@ router.patch('/documents/:documentId/activation', async (req: Request, res: Resp
 // AI EDITING ROUTES
 // ─────────────────────────────────────────────────────────────────────────────
 
-const aiEditSchema = z.object({
-  action: z.enum(['rewrite', 'expand', 'summarize', 'regulatory-tone', 'add-references']),
-  text: z.string().min(1).max(50000),
-  sectionTitle: z.string().optional(),
-  submissionType: z.string().optional(),
-  context: z.string().optional(),
-  projectId: z.union([z.string(), z.number()]).optional(),
-  artifactId: z.union([z.string(), z.number()]).optional(),
-  contextAttachment: z.enum(['project', 'adhoc']).optional(),
-  ctdSection: z.string().optional(),
-}).superRefine((value, ctx) => {
-  if (!value.projectId && value.contextAttachment !== 'adhoc') {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['contextAttachment'],
-      message: 'contextAttachment must be "adhoc" when projectId is not provided',
-    });
-  }
-  if (value.contextAttachment === 'project' && !value.projectId) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['projectId'],
-      message: 'projectId is required when contextAttachment is "project"',
-    });
-  }
-});
+const aiEditSchema = z
+  .object({
+    action: z.enum(['rewrite', 'expand', 'summarize', 'regulatory-tone', 'add-references']),
+    text: z.string().min(1).max(50000),
+    sectionTitle: z.string().optional(),
+    submissionType: z.string().optional(),
+    context: z.string().optional(),
+    projectId: z.union([z.string(), z.number()]).optional(),
+    artifactId: z.union([z.string(), z.number()]).optional(),
+    contextAttachment: z.enum(['project', 'adhoc']).optional(),
+    ctdSection: z.string().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (!value.projectId && value.contextAttachment !== 'adhoc') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['contextAttachment'],
+        message: 'contextAttachment must be "adhoc" when projectId is not provided',
+      });
+    }
+    if (value.contextAttachment === 'project' && !value.projectId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['projectId'],
+        message: 'projectId is required when contextAttachment is "project"',
+      });
+    }
+  });
 
 // ── Source traceability helpers for ai/edit-section ──────────────────────────
 
@@ -3993,7 +4014,8 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
     const data = {
       ...rawData,
       contextAttachment:
-        rawData.contextAttachment || (rawData.projectId ? ('project' as const) : ('adhoc' as const)),
+        rawData.contextAttachment ||
+        (rawData.projectId ? ('project' as const) : ('adhoc' as const)),
     };
 
     const { getGateway } = await import('../services/ai-gateway/gateway.js');
@@ -4897,27 +4919,29 @@ router.get('/ai/templates', (_req: Request, res: Response) => {
  * POST /api/concept2cure/ai/templates/:templateId/generate
  * Generate content from a template with variable values filled in.
  */
-const templateGenerateSchema = z.object({
-  variables: z.record(z.string(), z.string()),
-  projectId: z.union([z.string(), z.number()]).optional(),
-  artifactId: z.union([z.string(), z.number()]).optional(),
-  contextAttachment: z.enum(['project', 'adhoc']).optional(),
-}).superRefine((value, ctx) => {
-  if (!value.projectId && value.contextAttachment !== 'adhoc') {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['contextAttachment'],
-      message: 'contextAttachment must be "adhoc" when projectId is not provided',
-    });
-  }
-  if (value.contextAttachment === 'project' && !value.projectId) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['projectId'],
-      message: 'projectId is required when contextAttachment is "project"',
-    });
-  }
-});
+const templateGenerateSchema = z
+  .object({
+    variables: z.record(z.string(), z.string()),
+    projectId: z.union([z.string(), z.number()]).optional(),
+    artifactId: z.union([z.string(), z.number()]).optional(),
+    contextAttachment: z.enum(['project', 'adhoc']).optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (!value.projectId && value.contextAttachment !== 'adhoc') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['contextAttachment'],
+        message: 'contextAttachment must be "adhoc" when projectId is not provided',
+      });
+    }
+    if (value.contextAttachment === 'project' && !value.projectId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['projectId'],
+        message: 'projectId is required when contextAttachment is "project"',
+      });
+    }
+  });
 
 router.post('/ai/templates/:templateId/generate', async (req: Request, res: Response) => {
   const startMs = Date.now();
@@ -4929,7 +4953,8 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
     const data = {
       ...rawData,
       contextAttachment:
-        rawData.contextAttachment || (rawData.projectId ? ('project' as const) : ('adhoc' as const)),
+        rawData.contextAttachment ||
+        (rawData.projectId ? ('project' as const) : ('adhoc' as const)),
     };
 
     const template = PROMPT_TEMPLATES.find(t => t.id === templateId);
@@ -5998,8 +6023,9 @@ router.patch(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
+      const numericProjectId = parseInt(req.params.projectId.replace('proj_', ''), 10);
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) {
+      if (!hasAccess || Number.isNaN(numericProjectId)) {
         return sendError(res, 404, 'Project not found');
       }
 
@@ -6015,6 +6041,7 @@ router.patch(
         .where(
           and(
             eq(concept2cureConversations.conversationId, req.params.conversationId),
+            eq(concept2cureConversations.projectId, numericProjectId),
             eq(concept2cureConversations.organizationId, organizationId),
             eq(concept2cureConversations.status, 'active')
           )
@@ -6034,9 +6061,16 @@ router.patch(
         .where(eq(concept2cureConversations.id, dbConversation.id))
         .returning();
 
-      await logAuditEntry(req, 'UPDATE', 'conversation', req.params.conversationId, dbConversation, {
-        title: updated.title,
-      });
+      await logAuditEntry(
+        req,
+        'UPDATE',
+        'conversation',
+        req.params.conversationId,
+        dbConversation,
+        {
+          title: updated.title,
+        }
+      );
 
       return sendSuccess(res, {
         id: updated.conversationId,
@@ -6066,8 +6100,9 @@ router.delete(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
+      const numericProjectId = parseInt(req.params.projectId.replace('proj_', ''), 10);
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) {
+      if (!hasAccess || Number.isNaN(numericProjectId)) {
         return sendError(res, 404, 'Project not found');
       }
 
@@ -6077,6 +6112,7 @@ router.delete(
         .where(
           and(
             eq(concept2cureConversations.conversationId, req.params.conversationId),
+            eq(concept2cureConversations.projectId, numericProjectId),
             eq(concept2cureConversations.organizationId, organizationId),
             eq(concept2cureConversations.status, 'active')
           )
@@ -6095,7 +6131,14 @@ router.delete(
         })
         .where(eq(concept2cureConversations.id, dbConversation.id));
 
-      await logAuditEntry(req, 'DELETE', 'conversation', req.params.conversationId, dbConversation, null);
+      await logAuditEntry(
+        req,
+        'DELETE',
+        'conversation',
+        req.params.conversationId,
+        dbConversation,
+        null
+      );
       return sendSuccess(res, {
         conversationId: req.params.conversationId,
         archived: true,
@@ -6911,7 +6954,9 @@ router.put(
         content: dbArtifact.content || '',
         ctdSection: toSection,
         sourceRefs: [`artifact:${dbArtifact.artifactId}`],
-        exportAllowed: ['approved', 'locked', 'published'].includes(String(dbArtifact.status || '')),
+        exportAllowed: ['approved', 'locked', 'published'].includes(
+          String(dbArtifact.status || '')
+        ),
         eventType: 'artifact.updated',
       });
       if (!placementGovernedResolution.validation.valid) {
@@ -6958,8 +7003,10 @@ router.put(
               recommendationSource: placementGovernedResolution.contract.recommendationSource,
               regulatorIntent: placementGovernedResolution.contract.regulatorIntent,
               gateChecks: placementGovernedResolution.contract.exportEligibility.gateChecks,
-              blockingReasons: placementGovernedResolution.contract.exportEligibility.blockingReasons,
-              readinessOutcome: placementGovernedResolution.contract.exportEligibility.readinessOutcome,
+              blockingReasons:
+                placementGovernedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome:
+                placementGovernedResolution.contract.exportEligibility.readinessOutcome,
             },
           },
         })
@@ -8071,8 +8118,8 @@ router.post(
           sourceHarness.clientTrack === 'device'
             ? 'device'
             : sourceHarness.clientTrack === 'diagnostics'
-              ? 'diagnostics'
-              : 'biotech',
+            ? 'diagnostics'
+            : 'biotech',
         submissionProgram:
           sourceHarness.submissionProgram === 'ind' ||
           sourceHarness.submissionProgram === 'ectd' ||
@@ -8509,14 +8556,13 @@ router.put(
         artifactId: artifact.id,
         documentType: artifact.type,
         generationMode: 'amendment',
-        lifecycleStatus:
-          (status === 'review'
-            ? 'in_review'
-            : status === 'locked'
-              ? 'locked'
-              : status === 'approved'
-                ? 'approved'
-                : 'draft') as GovernedDocumentActionContract['lifecycleStatus'],
+        lifecycleStatus: (status === 'review'
+          ? 'in_review'
+          : status === 'locked'
+          ? 'locked'
+          : status === 'approved'
+          ? 'approved'
+          : 'draft') as GovernedDocumentActionContract['lifecycleStatus'],
         title: artifact.title,
         content: artifact.content || '',
         ctdSection: artifact.ctdSection,
@@ -8891,8 +8937,10 @@ router.put(
               recommendationSource: ctdSectionGovernedResolution.contract.recommendationSource,
               regulatorIntent: ctdSectionGovernedResolution.contract.regulatorIntent,
               gateChecks: ctdSectionGovernedResolution.contract.exportEligibility.gateChecks,
-              blockingReasons: ctdSectionGovernedResolution.contract.exportEligibility.blockingReasons,
-              readinessOutcome: ctdSectionGovernedResolution.contract.exportEligibility.readinessOutcome,
+              blockingReasons:
+                ctdSectionGovernedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome:
+                ctdSectionGovernedResolution.contract.exportEligibility.readinessOutcome,
             },
           },
         })
@@ -9147,8 +9195,10 @@ router.post(
               recommendationSource: rollbackGovernedResolution.contract.recommendationSource,
               regulatorIntent: rollbackGovernedResolution.contract.regulatorIntent,
               gateChecks: rollbackGovernedResolution.contract.exportEligibility.gateChecks,
-              blockingReasons: rollbackGovernedResolution.contract.exportEligibility.blockingReasons,
-              readinessOutcome: rollbackGovernedResolution.contract.exportEligibility.readinessOutcome,
+              blockingReasons:
+                rollbackGovernedResolution.contract.exportEligibility.blockingReasons,
+              readinessOutcome:
+                rollbackGovernedResolution.contract.exportEligibility.readinessOutcome,
             },
           },
           updatedAt: new Date(),
@@ -10928,15 +10978,20 @@ router.get('/templates', (req: Request, res: Response) => {
       templates = templates.filter(
         t =>
           t.submissionTypes.includes('IND') ||
-          ['tpl_ind_cover_letter', 'tpl_ind_investigator_brochure', 'tpl_ind_pre_ind_briefing'].includes(
-            t.id
-          )
+          [
+            'tpl_ind_cover_letter',
+            'tpl_ind_investigator_brochure',
+            'tpl_ind_pre_ind_briefing',
+          ].includes(t.id)
       );
     } else if (goal === 'first_ind' || goal === 'ind_initial') {
       templates = templates.filter(t =>
-        ['tpl_ind_cover_letter', 'tpl_ind_investigator_brochure', 'tpl_ind_pre_ind_briefing', 'tpl_ind_protocol'].includes(
-          t.id
-        )
+        [
+          'tpl_ind_cover_letter',
+          'tpl_ind_investigator_brochure',
+          'tpl_ind_pre_ind_briefing',
+          'tpl_ind_protocol',
+        ].includes(t.id)
       );
     } else if (goal === 'cmc') {
       templates = templates.filter(t => ['tpl_ind_protocol', 'tpl_risk_analysis'].includes(t.id));
@@ -12625,7 +12680,11 @@ router.get('/projects/:projectId/authority-profiles', async (req: Request, res: 
       behavior: 'configuration_driven',
     });
   } catch (error: any) {
-    return sendError(res, communicationCenterErrorStatus(error), error?.message || 'Failed to load authority profiles');
+    return sendError(
+      res,
+      communicationCenterErrorStatus(error),
+      error?.message || 'Failed to load authority profiles'
+    );
   }
 });
 
@@ -12691,7 +12750,11 @@ router.post('/projects/:projectId/authority-profiles', async (req: Request, res:
     });
     return sendSuccess(res, profile);
   } catch (error: any) {
-    return sendError(res, communicationCenterErrorStatus(error), error?.message || 'Failed to create authority profile');
+    return sendError(
+      res,
+      communicationCenterErrorStatus(error),
+      error?.message || 'Failed to create authority profile'
+    );
   }
 });
 
@@ -12738,7 +12801,11 @@ router.get('/projects/:projectId/agency-communications', async (req: Request, re
       filtered: records.length - visible.length,
     });
   } catch (error: any) {
-    return sendError(res, communicationCenterErrorStatus(error), error?.message || 'Failed to load agency communication events');
+    return sendError(
+      res,
+      communicationCenterErrorStatus(error),
+      error?.message || 'Failed to load agency communication events'
+    );
   }
 });
 
@@ -12839,7 +12906,11 @@ router.post('/projects/:projectId/agency-communications', async (req: Request, r
     });
     return sendSuccess(res, event);
   } catch (error: any) {
-    return sendError(res, communicationCenterErrorStatus(error), error?.message || 'Failed to create agency communication event');
+    return sendError(
+      res,
+      communicationCenterErrorStatus(error),
+      error?.message || 'Failed to create agency communication event'
+    );
   }
 });
 
@@ -12875,7 +12946,11 @@ router.get('/projects/:projectId/publishops/services', async (req: Request, res:
       scope: { organizationId, projectId },
     });
   } catch (error: any) {
-    return sendError(res, communicationCenterErrorStatus(error), error?.message || 'Failed to load PublishOps services');
+    return sendError(
+      res,
+      communicationCenterErrorStatus(error),
+      error?.message || 'Failed to load PublishOps services'
+    );
   }
 });
 
@@ -12946,7 +13021,11 @@ router.post('/projects/:projectId/publishops/services', async (req: Request, res
     });
     return sendSuccess(res, service);
   } catch (error: any) {
-    return sendError(res, communicationCenterErrorStatus(error), error?.message || 'Failed to create PublishOps service request');
+    return sendError(
+      res,
+      communicationCenterErrorStatus(error),
+      error?.message || 'Failed to create PublishOps service request'
+    );
   }
 });
 
@@ -13016,7 +13095,11 @@ router.patch(
       await logAuditEntry(req, 'UPDATE', 'project', `proj_${projectId}`, previous, updated);
       return sendSuccess(res, updated);
     } catch (error: any) {
-      return sendError(res, communicationCenterErrorStatus(error), error?.message || 'Failed to update PublishOps service status');
+      return sendError(
+        res,
+        communicationCenterErrorStatus(error),
+        error?.message || 'Failed to update PublishOps service status'
+      );
     }
   }
 );
