@@ -266,10 +266,11 @@ export function NewDocumentDialog({
     const docTitle = title.trim() || selectedTemplate?.name || 'Untitled Document';
     const section = ctdSection || selectedTemplate?.ctdSection || undefined;
 
-    if (mode === 'ai-generate' && selectedTemplate && onAIGenerate) {
-      onAIGenerate(selectedTemplate.id, docTitle, section);
-    } else if (mode === 'template' && selectedTemplate) {
-      onCreateFromTemplate(selectedTemplate.id, docTitle, section);
+    const selectedTemplateId = selectedTemplate?.templateId || selectedTemplate?.id;
+    if (mode === 'ai-generate' && selectedTemplate && selectedTemplateId && onAIGenerate) {
+      onAIGenerate(selectedTemplateId, docTitle, section);
+    } else if (mode === 'template' && selectedTemplate && selectedTemplateId) {
+      onCreateFromTemplate(selectedTemplateId, docTitle, section);
     } else {
       onCreateBlank(docTitle, section);
     }
