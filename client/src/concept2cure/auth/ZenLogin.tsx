@@ -20,7 +20,7 @@
  * - NIST 800-63B password guidelines
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -168,7 +168,7 @@ interface MfaInputProps {
 }
 
 const MfaCodeInput: React.FC<MfaInputProps> = ({ value, onChange, error }) => {
-  const inputRefs = Array.from({ length: 6 }, () => React.useRef<HTMLInputElement>(null));
+  const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
   const handleChange = (index: number, digit: string) => {
     if (!/^\d*$/.test(digit)) return;
@@ -180,13 +180,13 @@ const MfaCodeInput: React.FC<MfaInputProps> = ({ value, onChange, error }) => {
 
     // Auto-focus next input
     if (digit && index < 5) {
-      inputRefs[index + 1].current?.focus();
+      inputRefs.current[index + 1]?.focus();
     }
   };
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
     if (e.key === 'Backspace' && !value[index] && index > 0) {
-      inputRefs[index - 1].current?.focus();
+      inputRefs.current[index - 1]?.focus();
     }
   };
 
@@ -194,7 +194,7 @@ const MfaCodeInput: React.FC<MfaInputProps> = ({ value, onChange, error }) => {
     e.preventDefault();
     const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
     onChange(pasted);
-    inputRefs[Math.min(pasted.length, 5)].current?.focus();
+    inputRefs.current[Math.min(pasted.length, 5)]?.focus();
   };
 
   return (
@@ -203,7 +203,9 @@ const MfaCodeInput: React.FC<MfaInputProps> = ({ value, onChange, error }) => {
         {Array.from({ length: 6 }).map((_, index) => (
           <input
             key={index}
-            ref={inputRefs[index]}
+            ref={element => {
+              inputRefs.current[index] = element;
+            }}
             type="text"
             inputMode="numeric"
             maxLength={1}
@@ -264,6 +266,11 @@ export const ZenLogin: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+
+  const supportsRecoveryCodes = useMemo(
+    () => availableMfaMethods.some(method => method.type === 'backup_code'),
+    [availableMfaMethods]
+  );
 
   // Clear error when inputs change
   useEffect(() => {
@@ -377,7 +384,7 @@ export const ZenLogin: React.FC = () => {
 
     try {
       const result = await verifyMfa({
-        method: useRecoveryCode ? ('recovery' as any) : mfaMethod,
+        method: useRecoveryCode ? 'backup_code' : mfaMethod,
         code: mfaCode.trim(),
       });
 
@@ -429,36 +436,10 @@ export const ZenLogin: React.FC = () => {
       return;
     }
 
-    setIsLoading(true);
-    try {
-      const result = await verifyMfa({
-        method: 'backup_code',
-        code,
-      });
-
-      if (!result.success) {
-        setError({
-          field: 'mfa',
-          message: result.error?.message || 'Invalid recovery code. Please try again.',
-        });
-        return;
-      }
-
-      setStep('success');
-      setTimeout(() => {
-        setLocation(
-          computeRedirect(undefined, undefined, () => authService.getUser && authService.getUser())
-        );
-      }, 1000);
-    } catch {
-      setError({
-        field: 'mfa',
-        message: 'Invalid recovery code. Please try again.',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [recoveryCode, setLocation, verifyMfa]);
+    setMfaCode(code);
+    setUseRecoveryCode(true);
+    setStep('mfa');
+  }, [recoveryCode]);
 
   const handleForgotPassword = useCallback(async () => {
     if (!email.trim() || !validateEmail(email)) {
@@ -604,15 +585,8 @@ export const ZenLogin: React.FC = () => {
         }
       }
 
-      // Fallback: keep previous demo behavior for non-dev
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setIsLoading(false);
-      setStep('success');
-      setTimeout(() => {
-        setLocation(
-          computeRedirect(undefined, undefined, () => authService.getUser && authService.getUser())
-        );
-      }, 1000);
+      // Production/staging must use the real SSO initiation route.
+      window.location.assign(`/api/auth/sso/${provider}/initiate`);
     },
     [setLocation]
   );
@@ -1089,7 +1063,7 @@ export const ZenLogin: React.FC = () => {
           </p>
           <p className="text-xs text-stone-400">Check your spam folder if you don't see it</p>
         </div>
-      ) : (
+      ) : supportsRecoveryCodes ? (
         <p className="text-center text-sm text-stone-500">
           Having trouble?{' '}
           <button
@@ -1101,6 +1075,10 @@ export const ZenLogin: React.FC = () => {
           >
             Use a recovery code
           </button>
+        </p>
+      ) : (
+        <p className="text-center text-sm text-stone-500">
+          Contact your organization administrator if you need help accessing your authenticator app.
         </p>
       )}
     </motion.div>
@@ -1183,7 +1161,7 @@ export const ZenLogin: React.FC = () => {
       </button>
 
       <p className="text-center text-sm text-stone-500">
-        {useRecoveryCode ? (
+        {supportsRecoveryCodes && useRecoveryCode ? (
           <button
             type="button"
             onClick={() => {
@@ -1195,7 +1173,7 @@ export const ZenLogin: React.FC = () => {
           >
             Use authenticator app instead
           </button>
-        ) : (
+        ) : supportsRecoveryCodes ? (
           <>
             Having trouble?{' '}
             <button
@@ -1210,6 +1188,8 @@ export const ZenLogin: React.FC = () => {
               Use a recovery code
             </button>
           </>
+        ) : (
+          'Recovery codes are not available for this sign-in method.'
         )}
       </p>
     </motion.div>

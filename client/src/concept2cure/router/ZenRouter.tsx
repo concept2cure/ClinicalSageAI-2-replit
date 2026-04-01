@@ -171,18 +171,18 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated, isLoading } = usePortalAuth();
+  const { isAuthenticated, isLoading, isBootstrapping } = usePortalAuth();
   const [location, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isBootstrapping && !isAuthenticated) {
       // Redirect to login with return URL
       const returnTo = encodeURIComponent(location);
       setLocation(`/concept2cure/login?returnTo=${returnTo}`);
     }
-  }, [isAuthenticated, isLoading, location, setLocation]);
+  }, [isAuthenticated, isBootstrapping, location, setLocation]);
 
-  if (isLoading) {
+  if (isBootstrapping || isLoading) {
     return <ZenLoadingScreen message="Checking authentication..." />;
   }
 
@@ -202,17 +202,17 @@ interface AuthRouteProps {
 }
 
 const AuthRoute: React.FC<AuthRouteProps> = ({ children }) => {
-  const { isAuthenticated, isLoading } = usePortalAuth();
+  const { isAuthenticated, isBootstrapping } = usePortalAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
+    if (!isBootstrapping && isAuthenticated) {
       // Already logged in, redirect to main app
       setLocation('/concept2cure');
     }
-  }, [isAuthenticated, isLoading, setLocation]);
+  }, [isAuthenticated, isBootstrapping, setLocation]);
 
-  if (isLoading) {
+  if (isBootstrapping) {
     return <ZenLoadingScreen message="Loading..." />;
   }
 

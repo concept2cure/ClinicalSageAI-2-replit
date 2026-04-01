@@ -910,6 +910,7 @@ interface AuthContextValue {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isBootstrapping: boolean;
   login: (
     credentials: LoginCredentials
   ) => Promise<AuthResult<{ mfaRequired: boolean; methods?: MfaMethod[]; maskedEmail?: string }>>;
@@ -923,7 +924,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isBootstrapping, setIsBootstrapping] = useState(true);
 
   useEffect(() => {
     // Validate stored auth against server before trusting it
@@ -931,7 +932,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const storedUser = authService.getUser();
       if (!storedUser || !authService.isAuthenticated()) {
         setUser(null);
-        setIsLoading(false);
+        setIsBootstrapping(false);
         return;
       }
 
@@ -942,7 +943,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!token) {
           authService.logout();
           setUser(null);
-          setIsLoading(false);
+          setIsBootstrapping(false);
           return;
         }
 
@@ -958,18 +959,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             authService.logout();
             setUser(null);
           }
-        } else {
+        } else if (res.status === 401 || res.status === 403) {
           // Token invalid/expired server-side — clear stale auth
           authService.logout();
           setUser(null);
+        } else {
+          // Preserve the stored session during transient server failures.
+          setUser(storedUser);
         }
       } catch {
-        // Network error — clear auth to be safe
-        authService.logout();
-        setUser(null);
+        // Preserve the stored session during transient network failures.
+        setUser(storedUser);
       }
 
-      setIsLoading(false);
+      setIsBootstrapping(false);
     };
 
     validateSession();
@@ -1000,23 +1003,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const login = useCallback(async (credentials: LoginCredentials) => {
-    setIsLoading(true);
-    const result = await authService.login(credentials);
-    setIsLoading(false);
-    return result;
+    return authService.login(credentials);
   }, []);
 
   const verifyMfa = useCallback(async (verification: MfaVerification) => {
-    setIsLoading(true);
-    const result = await authService.verifyMfa(verification);
-    setIsLoading(false);
-    return result;
+    return authService.verifyMfa(verification);
   }, []);
 
   const logout = useCallback(async (terminateAll?: boolean) => {
-    setIsLoading(true);
     await authService.logout(terminateAll);
-    setIsLoading(false);
   }, []);
 
   const hasPermission = useCallback((permission: string) => {
@@ -1030,7 +1025,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const value: AuthContextValue = {
     user,
     isAuthenticated: !!user,
-    isLoading,
+    isLoading: isBootstrapping,
+    isBootstrapping,
     login,
     verifyMfa,
     logout,
