@@ -82,4 +82,19 @@ describe('Communication Center backend scaffold', () => {
     expect(serverSrc).toContain('FeatureToggleService.initializeFeatureToggle');
     expect(serverSrc).toContain("'UNIFIED_REGULATORY_SUBMISSIONS'");
   });
+
+  it('removes manual submission placeholder from correspondence intake UI', () => {
+    const hubSrc = read('client/src/concept2cure/components/correspondence/RegulatoryCommunicationsHub.tsx');
+    expect(hubSrc).not.toContain("submissionId: 'manual-submission'");
+    expect(hubSrc).toContain('const resolvedSubmissionId = manualSubmissionId.trim() || selected?.submissionId');
+  });
+
+  it('uses honest empty/unavailable communication-center state without local scaffold fallback', () => {
+    const hookSrc = read('client/src/concept2cure/hooks/useCommunicationCenterData.ts');
+    expect(hookSrc).toContain('const [authorityProfiles, setAuthorityProfiles] = useState<AuthorityProfileItem[]>([])');
+    expect(hookSrc).toContain('const [agencyEvents, setAgencyEvents] = useState<AgencyCommunicationEvent[]>([])');
+    expect(hookSrc).toContain('const [dataUnavailable, setDataUnavailable] = useState(false)');
+    expect(hookSrc).toContain('Live backend data could not be loaded. Showing current persisted records only.');
+    expect(hookSrc).not.toContain('Using local scaffold data while backend data is unavailable.');
+  });
 });

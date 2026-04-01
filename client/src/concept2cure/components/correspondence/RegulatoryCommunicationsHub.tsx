@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, CheckCircle2, Clock3, Inbox, Link2, Shield, UploadCloud } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 
 type HubCorrespondence = {
   id: string;
@@ -30,10 +32,12 @@ interface Props {
 }
 
 export default function RegulatoryCommunicationsHub({ projectId }: Props) {
+  const { toast } = useToast();
   const [rows, setRows] = useState<HubCorrespondence[]>([]);
   const [selected, setSelected] = useState<HubCorrespondence | null>(null);
   const [issues, setIssues] = useState<HubIssue[]>([]);
   const [uploadText, setUploadText] = useState('');
+  const [manualSubmissionId, setManualSubmissionId] = useState('');
   const [timeline, setTimeline] = useState<Array<{ id: string; event_type?: string; summary?: string }>>([]);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [mailboxConnections, setMailboxConnections] = useState<Array<{ id: string; provider: string; mailbox_identifier?: string; sync_status?: string }>>([]);
@@ -91,6 +95,12 @@ export default function RegulatoryCommunicationsHub({ projectId }: Props) {
     loadDetail();
   }, [selected?.id]);
 
+  useEffect(() => {
+    if (!manualSubmissionId && selected?.submissionId) {
+      setManualSubmissionId(selected.submissionId);
+    }
+  }, [selected?.submissionId, manualSubmissionId]);
+
   const overdueCount = useMemo(
     () => rows.filter(r => r.dueDate && new Date(r.dueDate).getTime() < Date.now() && r.status !== 'closed').length,
     [rows]
@@ -98,20 +108,42 @@ export default function RegulatoryCommunicationsHub({ projectId }: Props) {
 
   const handleIntake = async () => {
     if (!projectId || !uploadText.trim()) return;
-    await apiRequest('POST', '/api/regulatory-correspondence/correspondence/intake', {
-      projectId: Number(projectId),
-      submissionId: 'manual-submission',
-      sourceChannel: 'manual_upload',
-      communicationType: 'deficiency_letter',
-      subject: `Manual intake ${new Date().toLocaleDateString()}`,
-      parsedText: uploadText,
-      summary: uploadText.slice(0, 220),
-      responseRequired: true,
-      urgency: 'high',
-      attachments: [{ filename: 'uploaded-letter.txt', size: uploadText.length }],
-    });
-    setUploadText('');
-    load();
+    const resolvedSubmissionId = manualSubmissionId.trim() || selected?.submissionId;
+    if (!resolvedSubmissionId) {
+      toast({
+        title: 'Submission required',
+        description: 'Select correspondence or provide a valid submission ID before intake.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    try {
+      await apiRequest('POST', '/api/regulatory-correspondence/correspondence/intake', {
+        projectId: Number(projectId),
+        submissionId: resolvedSubmissionId,
+        sourceChannel: 'manual_upload',
+        communicationType: 'deficiency_letter',
+        subject: `Manual intake ${new Date().toLocaleDateString()}`,
+        parsedText: uploadText,
+        summary: uploadText.slice(0, 220),
+        responseRequired: true,
+        urgency: 'high',
+        attachments: [{ filename: 'uploaded-letter.txt', size: uploadText.length }],
+      });
+      setUploadText('');
+      setManualSubmissionId(resolvedSubmissionId);
+      await load();
+      toast({
+        title: 'Correspondence ingested',
+        description: 'Manual intake was linked to the selected submission.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Intake failed',
+        description: error?.message || 'Unable to ingest correspondence.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const filteredRows = useMemo(
@@ -196,7 +228,16 @@ export default function RegulatoryCommunicationsHub({ projectId }: Props) {
       <section className="col-span-3 bg-white rounded-xl border border-stone-200 overflow-hidden flex flex-col">
         <div className="px-3 py-2.5 border-b border-stone-100 text-xs font-semibold text-stone-700 flex items-center gap-1.5"><Shield className="w-3.5 h-3.5" /> Response Workbench</div>
         <div className="p-3 space-y-2 text-xs">
-          <p className="text-stone-500">Manual intake supports secure fallback when mailbox integrations are not connected.</p>
+          <p className="text-stone-500">Manual intake requires a real linked submission and supports mailbox-disconnected workflows.</p>
+          <div className="space-y-1">
+            <p className="text-[11px] text-stone-600">Linked submission ID</p>
+            <Input
+              value={manualSubmissionId}
+              onChange={e => setManualSubmissionId(e.target.value)}
+              placeholder="Enter submission ID"
+              className="h-8 text-xs"
+            />
+          </div>
           <textarea
             value={uploadText}
             onChange={e => setUploadText(e.target.value)}

@@ -27,7 +27,7 @@ type CenterTab =
 
 export function CommunicationCenter({ projectId, projectName, submissionType = 'NDA', artifacts }: Props) {
   const [activeTab, setActiveTab] = useState<CenterTab>('overview');
-  const { authorityProfiles, agencyEvents, openAgencyEvents, publishOpsServices, loading } =
+  const { authorityProfiles, agencyEvents, openAgencyEvents, publishOpsServices, loading, dataUnavailable } =
     useCommunicationCenterData(projectId);
 
   const openEvents = useMemo(
@@ -45,6 +45,8 @@ export function CommunicationCenter({ projectId, projectName, submissionType = '
     return Array.from(tiers);
   }, [agencyEvents]);
 
+  const visibilityTierLabel = visibilityTiers.length > 0 ? visibilityTiers.join(', ') : 'none';
+
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-stone-200 bg-white p-4">
@@ -55,6 +57,9 @@ export function CommunicationCenter({ projectId, projectName, submissionType = '
               Operational control room for tasks, collaboration, correspondence, final-mile submission, and C2C PublishOps.
             </p>
             {loading && <p className="text-[11px] text-stone-400">Refreshing scoped operational data…</p>}
+            {dataUnavailable && !loading && (
+              <p className="text-[11px] text-amber-700">Live communication-center feeds are currently unavailable.</p>
+            )}
           </div>
           <div className="flex items-center gap-2 text-xs">
             <Badge variant="outline" className="border-blue-200 text-blue-700">{openEvents} unresolved agency events</Badge>
@@ -94,7 +99,7 @@ export function CommunicationCenter({ projectId, projectName, submissionType = '
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <OverviewCard icon={<Workflow className="h-4 w-4 text-blue-600" />} title="Operational Graph" body="Tasks, threads, and correspondence map into one project timeline with linked artifacts and submissions." />
           <OverviewCard icon={<BellRing className="h-4 w-4 text-amber-600" />} title="Notification Routing" body="Assignments, approvals, validation failures, acknowledgments, and PublishOps changes route to source objects." />
-          <OverviewCard icon={<ShieldCheck className="h-4 w-4 text-emerald-600" />} title="Visibility and Audit" body={`Visibility tiers in use: ${visibilityTiers.join(', ')}. Collaboration and agency events are auditable.`} />
+          <OverviewCard icon={<ShieldCheck className="h-4 w-4 text-emerald-600" />} title="Visibility and Audit" body={`Visibility tiers in use: ${visibilityTierLabel}. Collaboration and agency events are auditable.`} />
         </div>
       )}
 
