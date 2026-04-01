@@ -1,8 +1,8 @@
 # Repo Health Scan
 
-Generated: 2026-04-01T06:14:54.828Z
-Branch: cursor/customer-shaped-harness-build-5841
-SHA: e13e9a8f8f3e10b641a0e42b04fe56321602b001
+Generated: 2026-04-01T06:48:28.038Z
+Branch: concept2cure-v2
+SHA: 52f844a06946f6a1e7c8d29ac4750feaf90c4d90
 
 ## Summary
 

@@ -1,7 +1,7 @@
 {
   "target": "server/index.ts",
-  "generatedAt": "2026-04-01T06:14:54.631Z",
-  "mounts": 292,
+  "generatedAt": "2026-04-01T06:48:28.026Z",
+  "mounts": 295,
   "errors": 0,
   "warnings": 16,
   "issues": {

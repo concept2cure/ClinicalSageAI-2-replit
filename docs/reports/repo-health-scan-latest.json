@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-04-01T06:14:54.828Z",
+  "generatedAt": "2026-04-01T06:48:28.038Z",
   "git": {
-    "sha": "e13e9a8f8f3e10b641a0e42b04fe56321602b001",
-    "branch": "cursor/customer-shaped-harness-build-5841"
+    "sha": "52f844a06946f6a1e7c8d29ac4750feaf90c4d90",
+    "branch": "concept2cure-v2"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -1791,7 +1791,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "bytes": 573541
+        "bytes": 604864
       },
       {
         "file": "client/src/pages/csr/CERV2Page.jsx",
@@ -1799,7 +1799,11 @@
       },
       {
         "file": "server/index.ts",
-        "bytes": 288841
+        "bytes": 290127
+      },
+      {
+        "file": "client/src/concept2cure/components/chat/AnaPersistentPanel.tsx",
+        "bytes": 221426
       },
       {
         "file": "server/statistics-service.ts",
@@ -1810,20 +1814,16 @@
         "bytes": 217559
       },
       {
-        "file": "client/src/concept2cure/components/chat/AnaPersistentPanel.tsx",
-        "bytes": 208999
-      },
-      {
         "file": "client/src/components/cmc/DocumentAuthoringFixed.jsx",
         "bytes": 188653
       },
       {
         "file": "client/src/concept2cure/components/editor/EditorPanel.tsx",
-        "bytes": 178894
+        "bytes": 185815
       },
       {
         "file": "client/src/concept2cure/ZenApp.tsx",
-        "bytes": 172333
+        "bytes": 172401
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -1842,12 +1842,12 @@
         "bytes": 158482
       },
       {
-        "file": "client/src/components/coauthor/ComponentManagementSystem.jsx",
-        "bytes": 152561
+        "file": "server/services/ana-ri/command-executor.ts",
+        "bytes": 155288
       },
       {
-        "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 144639
+        "file": "client/src/components/coauthor/ComponentManagementSystem.jsx",
+        "bytes": 152561
       },
       {
         "file": "client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx",
@@ -1859,7 +1859,7 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "bytes": 118570
+        "bytes": 132245
       },
       {
         "file": "server/storage.ts",
@@ -1879,7 +1879,7 @@
       },
       {
         "file": "client/src/concept2cure/components/editor/UnifiedDocumentEditor.tsx",
-        "bytes": 103575
+        "bytes": 106746
       }
     ],
     "largeFilesByLines": [
@@ -1893,7 +1893,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "lines": 15523
+        "lines": 16223
       },
       {
         "file": "client/src/pages/coauthor/CoAuthor.jsx",
@@ -1905,43 +1905,43 @@
       },
       {
         "file": "server/index.ts",
-        "lines": 7886
+        "lines": 7912
       },
       {
         "file": "server/statistics-service.ts",
         "lines": 6914
       },
       {
-        "file": "server/routes/authoring.router.ts",
-        "lines": 5214
+        "file": "client/src/concept2cure/components/chat/AnaPersistentPanel.tsx",
+        "lines": 5406
       },
       {
-        "file": "client/src/concept2cure/components/chat/AnaPersistentPanel.tsx",
-        "lines": 5081
+        "file": "server/routes/authoring.router.ts",
+        "lines": 5214
       },
       {
         "file": "client/src/components/cmc/DocumentAuthoringFixed.jsx",
         "lines": 4847
       },
       {
+        "file": "client/src/concept2cure/components/editor/EditorPanel.tsx",
+        "lines": 4490
+      },
+      {
         "file": "client/src/components/CommitmentIntelligenceHub.jsx",
         "lines": 4380
       },
       {
-        "file": "client/src/concept2cure/components/editor/EditorPanel.tsx",
-        "lines": 4302
+        "file": "client/src/concept2cure/ZenApp.tsx",
+        "lines": 4248
       },
       {
-        "file": "client/src/concept2cure/ZenApp.tsx",
-        "lines": 4247
+        "file": "server/services/ana-ri/command-executor.ts",
+        "lines": 4230
       },
       {
         "file": "client/src/components/MedicalDeviceDocumentEditor.jsx",
         "lines": 4146
-      },
-      {
-        "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 3960
       },
       {
         "file": "server/storage.ts",
@@ -1969,15 +1969,15 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "lines": 2816
+        "lines": 3185
+      },
+      {
+        "file": "client/src/concept2cure/components/editor/UnifiedDocumentEditor.tsx",
+        "lines": 2807
       },
       {
         "file": "server/src/routes/stability.router.ts",
         "lines": 2773
-      },
-      {
-        "file": "client/src/concept2cure/components/editor/UnifiedDocumentEditor.tsx",
-        "lines": 2725
       },
       {
         "file": "client/src/components/cmc/TaskManagementSystem.jsx",
@@ -2012,6 +2012,10 @@
         "lines": 2254
       },
       {
+        "file": "server/routes/knowledge-base.ts",
+        "lines": 2206
+      },
+      {
         "file": "client/src/components/cer/LiteratureReviewWorkflow.jsx",
         "lines": 2145
       },
@@ -2042,10 +2046,6 @@
       {
         "file": "client/src/components/cmc/ComprehensiveCMCPlatform.jsx",
         "lines": 2032
-      },
-      {
-        "file": "server/routes/knowledge-base.ts",
-        "lines": 2021
       },
       {
         "file": "client/src/pages/ind/UnifiedSubmissionCenter.jsx",
@@ -2124,16 +2124,20 @@
         "lines": 1769
       },
       {
+        "file": "server/routes/ana-ri.ts",
+        "lines": 1752
+      },
+      {
         "file": "server/services/precedent-engine.ts",
         "lines": 1749
       },
       {
-        "file": "client/src/components/510k/EnhancedDocumentVault.jsx",
-        "lines": 1741
+        "file": "server/services/ana-ri/orchestrator.ts",
+        "lines": 1743
       },
       {
-        "file": "server/services/ana-ri/orchestrator.ts",
-        "lines": 1733
+        "file": "client/src/components/510k/EnhancedDocumentVault.jsx",
+        "lines": 1741
       },
       {
         "file": "client/src/services/DocumentIntelligenceService.js",
@@ -2146,10 +2150,6 @@
       {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1658
-      },
-      {
-        "file": "server/routes/ana-ri.ts",
-        "lines": 1651
       },
       {
         "file": "client/src/services/CerValidationService.js",
