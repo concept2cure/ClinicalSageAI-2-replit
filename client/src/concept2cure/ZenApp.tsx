@@ -58,7 +58,6 @@ import ProjectConfigPanel from './components/workspace/ProjectConfigPanel';
 import { ProjectFilesCompact } from './components/workspace/ProjectFilesCompact';
 import { ProjectHeaderBar, getProjectAccentColor } from './components/workspace/ProjectHeaderBar';
 // [BATCH 3] CustomInstructions — knowledge-base renderer removed
-import { useProjectKnowledge } from './hooks/useProjectKnowledge';
 import { useProjectTasks } from './hooks/useProjectTasks';
 import { useAuthoringIntelligence } from './hooks/useAuthoringIntelligence';
 import { useProjects } from './hooks/useProjects';
@@ -1141,9 +1140,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     staleTime: 30_000,
   });
 
-  // Instructions + knowledge for Instructions tab (lifted so it doesn't remount per tab)
-  const workspaceKnowledge = useProjectKnowledge(activeProjectId ?? null);
-
   // ── Authoring intelligence — real readiness/contradiction data for active section ──
   const authoringIntelligence = useAuthoringIntelligence(
     activeProjectId,
@@ -1527,58 +1523,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────────
 
-  const contextMetrics = useMemo(() => {
-    if (!activeProject || !taskSummary) {
-      return {
-        deadlineDays: '—',
-        complianceScore: 0,
-        riskCount: 0,
-        lastActivity: 'No project selected',
-        auditStatus: 'Audit trail active',
-      };
-    }
-    const targetDateStr =
-      activeProject.metadata?.targetSubmissionDate || (activeProject as any).targetEndDate;
-    const targetDate = targetDateStr ? new Date(targetDateStr) : null;
-    const deadlineDays = targetDate
-      ? Math.max(0, Math.ceil((targetDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
-      : '—';
-    const complianceScore = taskSummary.healthScore / 100;
-    const riskCount = taskSummary.overdue + (taskSummary.byStatus?.blocked || 0);
-    const ownershipActivity = activeRawProject?.ownership?.derived?.activityHistory?.[0];
-    const lastActivity = ownershipActivity
-      ? `${ownershipActivity.action} · ${new Date(ownershipActivity.timestamp).toLocaleString()}`
-      : taskSummary.total > 0
-      ? `${taskSummary.completed}/${taskSummary.total} tasks complete`
-      : 'No tasks yet';
-    return {
-      deadlineDays,
-      complianceScore,
-      riskCount,
-      lastActivity,
-      auditStatus: 'Audit trail active',
-    };
-  }, [activeProject, activeRawProject, taskSummary]);
-
-  // Dynamic workspace label based on active project's submission type
-  const submissionWorkspaceLabel = useMemo(() => {
-    const subType = activeProject?.type?.toUpperCase();
-    switch (subType) {
-      case '510K':
-      case '510(K)':
-        return '510(k) Filing';
-      case 'NDA':
-        return 'NDA Filing';
-      case 'BLA':
-        return 'BLA Filing';
-      case 'PMA':
-        return 'PMA Filing';
-      case 'IND':
-      default:
-        return 'IND Filing';
-    }
-  }, [activeProject?.type]);
-
   const workflowRunId = activeProjectId ? `workflow-run-${activeProjectId}` : 'workflow-run-demo';
   const activeNavId = useMemo(() => {
     if (activeToolPanel === 'vault') return 'vault';
@@ -1662,64 +1606,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     [activeProjectId]
   );
 
-  const timelineSteps = useMemo(
-    () => [
-      {
-        id: 'step-intake',
-        name: 'Project Intake',
-        description: 'Capture submission scope, device metadata, and milestones.',
-        status: 'COMPLETED' as const,
-        stepType: 'TASK' as const,
-        order: 1,
-        phaseId: 'phase-intake',
-        phaseName: 'Intake',
-        assigneeRole: 'RA Lead',
-        completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-        isRequired: true,
-      },
-      {
-        id: 'step-authoring',
-        name: 'Draft Core Sections',
-        description: 'Generate and refine core submission sections.',
-        status: 'IN_PROGRESS' as const,
-        stepType: 'TASK' as const,
-        order: 2,
-        phaseId: 'phase-authoring',
-        phaseName: 'Authoring',
-        assigneeRole: 'Medical Writer',
-        startedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
-        slaDueAt: new Date(Date.now() + 10 * 60 * 60 * 1000),
-        isRequired: true,
-      },
-      {
-        id: 'step-review',
-        name: 'Regulatory Review',
-        description: 'QA and regulatory approval of drafted sections.',
-        status: 'READY' as const,
-        stepType: 'APPROVAL' as const,
-        order: 3,
-        phaseId: 'phase-review',
-        phaseName: 'Review',
-        assigneeRole: 'QA Manager',
-        slaDueAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        isRequired: true,
-      },
-      {
-        id: 'step-export',
-        name: 'Submission Export',
-        description: 'Generate finalized eCTD package for submission.',
-        status: 'PENDING' as const,
-        stepType: 'EXPORT' as const,
-        order: 4,
-        phaseId: 'phase-export',
-        phaseName: 'Submission',
-        assigneeRole: 'Project Manager',
-        isRequired: true,
-      },
-    ],
-    []
-  );
-
   const userRole = userProfile?.role || 'Regulatory Lead';
   const rawIndustry = userProfile?.preferences?.industryMode;
   const industryMode = normalizeIndustryMode(
@@ -1733,35 +1619,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   const userEmail = userIntelligence?.identity?.email ?? undefined;
 
   // userProfile sync moved to useUserProfileFromStorage hook
-
-  // ── Workspace header — shared nav bar for non-chat modules ─────────────────
-  const WorkspaceHeader = ({
-    title,
-    subtitle,
-    icon,
-    onBack,
-    backLabel,
-  }: {
-    title: string;
-    subtitle?: string;
-    icon?: React.ReactNode;
-    onBack: () => void;
-    backLabel?: string;
-  }) => (
-    <div className="flex items-center gap-3 px-4 h-12 border-b border-stone-100 bg-white flex-shrink-0">
-      <button
-        onClick={onBack}
-        className="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-900 transition-colors"
-      >
-        <ChevronLeft className="w-4 h-4" />
-        <span>{backLabel || 'Back'}</span>
-      </button>
-      <div className="w-px h-4 bg-stone-200" />
-      {icon && <span className="text-stone-400">{icon}</span>}
-      <span className="text-sm font-medium text-stone-900">{title}</span>
-      {subtitle && <span className="text-xs text-stone-400 ml-1 hidden sm:inline">{subtitle}</span>}
-    </div>
-  );
 
   return (
     <div className="zen flex h-screen w-full overflow-hidden bg-white">
