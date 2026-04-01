@@ -517,31 +517,23 @@ router.post('/compliance/check-rules', async (req, res) => {
 });
 
 // =====================================================
-// Comparability Studies Routes (in-memory until DB table is created)
+// Comparability Studies Routes (canonical DB-backed persistence)
 // =====================================================
-interface ComparabilityStudy {
-  id: string;
-  title: string;
-  product: string;
-  type: string;
-  status: string;
-  startDate: string | null;
-  endDate: string | null;
-  methods: string[];
-  outcome: string | null;
-  owner: string;
-  organizationId: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-const comparabilityStudiesStore: ComparabilityStudy[] = [];
-let csNextId = 1;
 
 router.get('/comparability-studies', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const studies = comparabilityStudiesStore.filter(s => s.organizationId === orgId);
+    const pool = getPool();
+    const { rows } = await pool.query(
+      `SELECT id, assessment_name as title, changed_element as product, change_type as type, status,
+              created_at as "createdAt", updated_at as "updatedAt", affected_process_parameters as methods,
+              justification as outcome, reviewed_by as owner
+       FROM cmc_comparability_assessments
+       WHERE organization_id = $1
+       ORDER BY created_at DESC`,
+      [orgId]
+    );
+    const studies = rows.map((r: any) => ({ ...r, methods: r.methods || [] }));
     res.json({ success: true, data: studies });
   } catch (error) {
     console.error('Error fetching comparability studies:', error);
@@ -552,24 +544,29 @@ router.get('/comparability-studies', async (req, res) => {
 router.post('/comparability-studies', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const now = new Date().toISOString();
-    const study: ComparabilityStudy = {
-      id: `CS-${String(csNextId++).padStart(3, '0')}`,
-      title: req.body.title || '',
-      product: req.body.product || '',
-      type: req.body.type || '',
-      status: req.body.status || 'planned',
-      startDate: req.body.startDate || null,
-      endDate: req.body.endDate || null,
-      methods: req.body.methods || [],
-      outcome: req.body.outcome || null,
-      owner: req.body.owner || '',
-      organizationId: orgId,
-      createdAt: now,
-      updatedAt: now,
-    };
-    comparabilityStudiesStore.push(study);
-    res.json({ success: true, data: study });
+    const pool = getPool();
+    const { rows } = await pool.query(
+      `INSERT INTO cmc_comparability_assessments (
+         organization_id, project_id, assessment_name, change_type, changed_element,
+         affected_process_parameters, justification, reviewed_by, status, tenant_id
+       ) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10)
+       RETURNING id, assessment_name as title, changed_element as product, change_type as type, status,
+                 created_at as "createdAt", updated_at as "updatedAt", affected_process_parameters as methods,
+                 justification as outcome, reviewed_by as owner`,
+      [
+        orgId,
+        req.body.projectId,
+        req.body.title || '',
+        req.body.type || '',
+        req.body.product || '',
+        JSON.stringify(req.body.methods || []),
+        req.body.outcome || null,
+        req.body.owner || null,
+        req.body.status || 'draft',
+        String(orgId),
+      ]
+    );
+    res.json({ success: true, data: rows[0] });
   } catch (error) {
     console.error('Error creating comparability study:', error);
     res.status(500).json({ success: false, error: 'Failed to create comparability study' });
@@ -578,17 +575,38 @@ router.post('/comparability-studies', async (req, res) => {
 
 router.put('/comparability-studies/:id', async (req, res) => {
   try {
-    const idx = comparabilityStudiesStore.findIndex(s => s.id === req.params.id);
-    if (idx === -1) {
+    const orgId = getOrgId(req);
+    const pool = getPool();
+    const { rows } = await pool.query(
+      `UPDATE cmc_comparability_assessments
+       SET assessment_name = COALESCE($1, assessment_name),
+           changed_element = COALESCE($2, changed_element),
+           change_type = COALESCE($3, change_type),
+           affected_process_parameters = COALESCE($4::jsonb, affected_process_parameters),
+           justification = COALESCE($5, justification),
+           reviewed_by = COALESCE($6, reviewed_by),
+           status = COALESCE($7, status),
+           updated_at = NOW()
+       WHERE id = $8 AND organization_id = $9
+       RETURNING id, assessment_name as title, changed_element as product, change_type as type, status,
+                 created_at as "createdAt", updated_at as "updatedAt", affected_process_parameters as methods,
+                 justification as outcome, reviewed_by as owner`,
+      [
+        req.body.title,
+        req.body.product,
+        req.body.type,
+        req.body.methods ? JSON.stringify(req.body.methods) : null,
+        req.body.outcome,
+        req.body.owner,
+        req.body.status,
+        req.params.id,
+        orgId,
+      ]
+    );
+    if (!rows[0]) {
       return res.status(404).json({ success: false, error: 'Study not found' });
     }
-    const updated = {
-      ...comparabilityStudiesStore[idx],
-      ...req.body,
-      updatedAt: new Date().toISOString(),
-    };
-    comparabilityStudiesStore[idx] = updated;
-    res.json({ success: true, data: updated });
+    res.json({ success: true, data: rows[0] });
   } catch (error) {
     console.error('Error updating comparability study:', error);
     res.status(500).json({ success: false, error: 'Failed to update comparability study' });
