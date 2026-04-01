@@ -3,7 +3,15 @@ import { ZoomIn, ZoomOut, RefreshCw, Download } from 'lucide-react';
 import CanvasNode from './CanvasNode';
 import NodeDetailPanel from './NodeDetailPanel';
 import CanvasSidePanel from './CanvasSidePanel';
-import useWindowSize from '../../hooks/useWindowSize';
+function useWindowSize() {
+  const [size, setSize] = React.useState({ width: window.innerWidth, height: window.innerHeight });
+  React.useEffect(() => {
+    const onResize = () => setSize({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  return size;
+}
 import { fetchCTDSections, fetchRiskConnections, updateSectionPosition } from '../../api/coauthor';
 import './CanvasWorkbenchV2.css';
 

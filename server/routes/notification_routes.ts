@@ -3,27 +3,26 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { db } from '../db';
+import { projects } from '../../shared/schema';
+import { eq } from 'drizzle-orm';
 import { logExportAction, getExportLogs } from '../export_logger';
 import { authMiddleware } from '../auth';
+import { sendGenericEmail } from '../services/emailService';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Setup NodeMailer or similar email service here in a real implementation
-// For now, we're creating a mock function
 async function sendEmail(
   to: string,
   subject: string,
   text: string,
   html?: string
 ): Promise<boolean> {
-  console.log(`[MOCK EMAIL] Sending email to ${to}`);
-  console.log(`[MOCK EMAIL] Subject: ${subject}`);
-  console.log(`[MOCK EMAIL] Body: ${text.substring(0, 100)}...`);
-
-  // In a real implementation, we would use a service like SendGrid or NodeMailer
-  // For now, just log and return success
-  return true;
+  const sent = await sendGenericEmail(to, subject, text, html);
+  if (!sent) {
+    console.error(`Email delivery failed for ${to} — subject: ${subject}`);
+  }
+  return sent;
 }
 
 export default function registerNotificationRoutes(app: Express): void {
@@ -315,28 +314,48 @@ async function getUserPreferences(userId: string): Promise<any> {
 }
 
 /**
- * Get protocol details from database
+ * Get protocol/project details from the projects table.
  */
 async function getProtocolDetails(protocolId: string): Promise<any> {
+  const fallback = {
+    id: protocolId,
+    title: 'Unknown Protocol',
+    indication: '',
+    phase: '',
+    sponsor: '',
+  };
+
   try {
-    // In a real implementation, this would query the database
-    // For now, return mock data
+    const numericId = parseInt(protocolId, 10);
+    if (isNaN(numericId)) return fallback;
+
+    const rows = await db
+      .select({
+        id: projects.id,
+        name: projects.name,
+        description: projects.description,
+        type: projects.type,
+        status: projects.status,
+        metadata: projects.metadata,
+      })
+      .from(projects)
+      .where(eq(projects.id, numericId))
+      .limit(1);
+
+    if (rows.length === 0) return fallback;
+
+    const project = rows[0];
+    const meta = (project.metadata as any) || {};
     return {
       id: protocolId,
-      title: 'Phase 3 Study of Drug XYZ for Treatment of Condition ABC',
-      indication: 'Condition ABC',
-      phase: 'Phase 3',
-      sponsor: 'Pharma Company Ltd.',
+      title: project.name || fallback.title,
+      indication: meta.indication || '',
+      phase: meta.phase || '',
+      sponsor: meta.sponsor || '',
     };
   } catch (error) {
     console.error('Error getting protocol details:', error);
-    return {
-      id: protocolId,
-      title: 'Unknown Protocol',
-      indication: 'Unknown',
-      phase: 'Unknown',
-      sponsor: 'Unknown',
-    };
+    return fallback;
   }
 }
 
