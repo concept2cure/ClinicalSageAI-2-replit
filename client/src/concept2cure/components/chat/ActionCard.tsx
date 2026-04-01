@@ -75,6 +75,16 @@ function intentToPrompt(intent: string, label: string): string {
   }
 }
 
+function isGuidedSequenceIntent(intent: string): boolean {
+  return (
+    intent === 'guided_project' ||
+    intent === 'guided_ind_ectd' ||
+    intent === 'guided_authoring' ||
+    intent === 'guided_verify' ||
+    intent === 'guided_submission'
+  );
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export const ActionCard: React.FC<ActionCardProps> = ({
@@ -96,6 +106,14 @@ export const ActionCard: React.FC<ActionCardProps> = ({
   const handlePrimary = () => {
     const action = primary?.action || intent || '';
 
+    if (action && isGuidedSequenceIntent(action)) {
+      onNavigate?.(action);
+      return;
+    }
+    if (action === 'open_capabilities') {
+      onNavigate?.('apps');
+      return;
+    }
     if (action && (action === 'vault.open_upload' || action === 'vault.upload' || action.startsWith('vault'))) {
       onNavigate?.('vault');
       return;
