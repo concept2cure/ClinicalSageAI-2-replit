@@ -193,6 +193,36 @@ describe('Concept2Cure API', () => {
     });
   });
 
+  it('should reject AI template generation without projectId unless adhoc context is explicit', async () => {
+    const req = createMockRequest({
+      params: { templateId: 'ind-cover-letter' },
+      body: {
+        variables: {
+          PRODUCT_NAME: 'Test Product',
+          INDICATION: 'Oncology',
+          SPONSOR: 'Test Sponsor',
+          IND_NUMBER: '000000',
+          SUBMISSION_TYPE: 'Initial IND',
+          DIVISION: 'CDER',
+        },
+      },
+    }) as any;
+    req.userId = 1;
+    req.userEmail = 'tester@example.com';
+    req.userRole = 'admin';
+    req.tenantContext = { organizationId: '1', clientWorkspaceId: '1' };
+
+    const res = createMockResponse();
+    const layer = concept2cureRouter.stack.find(
+      (l: any) =>
+        l.route?.path === '/ai/templates/:templateId/generate' && l.route?.methods?.post
+    );
+    const handler = layer.route.stack[layer.route.stack.length - 1].handle;
+
+    await handler(req, res);
+    expectStatus(res, 400);
+  });
+
   it('should create a signature for an artifact version', async () => {
     const req = createMockRequest({
       params: { projectId: 'proj_1', artifactId: 'artifact_test' },

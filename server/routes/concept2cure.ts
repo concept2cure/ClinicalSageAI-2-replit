@@ -781,6 +781,7 @@ const createArtifactSchema = z.object({
   category: z.enum(['document', 'interactive', 'visualization', 'source', 'evidence']),
   title: z.string().min(1, 'Title required').max(200),
   content: z.string().min(1, 'Content must not be empty').max(1000000, 'Content too large'), // 1MB max, no empty
+  templateId: z.string().min(1).max(200).optional(),
   ctdSection: z.string().max(50).optional(),
   metadata: z.record(z.any()).optional(),
   clientTrack: z.enum(['biotech', 'device', 'diagnostics']).optional(),
@@ -2975,7 +2976,23 @@ const aiEditSchema = z.object({
   context: z.string().optional(),
   projectId: z.union([z.string(), z.number()]).optional(),
   artifactId: z.union([z.string(), z.number()]).optional(),
+  contextAttachment: z.enum(['project', 'adhoc']).optional(),
   ctdSection: z.string().optional(),
+}).superRefine((value, ctx) => {
+  if (!value.projectId && value.contextAttachment !== 'adhoc') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['contextAttachment'],
+      message: 'contextAttachment must be "adhoc" when projectId is not provided',
+    });
+  }
+  if (value.contextAttachment === 'project' && !value.projectId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['projectId'],
+      message: 'projectId is required when contextAttachment is "project"',
+    });
+  }
 });
 
 // ── Source traceability helpers for ai/edit-section ──────────────────────────
@@ -3027,7 +3044,12 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
   try {
     const userId = getUserId(req);
     const organizationId = getOrganizationId(req);
-    const data = aiEditSchema.parse(req.body);
+    const rawData = aiEditSchema.parse(req.body);
+    const data = {
+      ...rawData,
+      contextAttachment:
+        rawData.contextAttachment || (rawData.projectId ? ('project' as const) : ('adhoc' as const)),
+    };
 
     const { getGateway } = await import('../services/ai-gateway/gateway.js');
     const gw = getGateway();
@@ -3934,6 +3956,22 @@ const templateGenerateSchema = z.object({
   variables: z.record(z.string(), z.string()),
   projectId: z.union([z.string(), z.number()]).optional(),
   artifactId: z.union([z.string(), z.number()]).optional(),
+  contextAttachment: z.enum(['project', 'adhoc']).optional(),
+}).superRefine((value, ctx) => {
+  if (!value.projectId && value.contextAttachment !== 'adhoc') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['contextAttachment'],
+      message: 'contextAttachment must be "adhoc" when projectId is not provided',
+    });
+  }
+  if (value.contextAttachment === 'project' && !value.projectId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['projectId'],
+      message: 'projectId is required when contextAttachment is "project"',
+    });
+  }
 });
 
 router.post('/ai/templates/:templateId/generate', async (req: Request, res: Response) => {
@@ -3942,7 +3980,12 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
     const { templateId } = req.params;
     const userId = getUserId(req);
     const organizationId = getOrganizationId(req);
-    const data = templateGenerateSchema.parse(req.body);
+    const rawData = templateGenerateSchema.parse(req.body);
+    const data = {
+      ...rawData,
+      contextAttachment:
+        rawData.contextAttachment || (rawData.projectId ? ('project' as const) : ('adhoc' as const)),
+    };
 
     const template = PROMPT_TEMPLATES.find(t => t.id === templateId);
     if (!template) {
@@ -5211,6 +5254,7 @@ router.post(
           content: sanitizedContent,
           contentHash,
           version: 1,
+          templateId: data.templateId || null,
           metadata: {
             ...(data.metadata || {}),
             harness: {
@@ -5266,6 +5310,7 @@ router.post(
         projectId: req.params.projectId,
         type: newArtifact.type,
         title: newArtifact.title,
+        templateId: data.templateId || null,
         contentLength: sanitizedContent.length,
         contentHash,
       });
@@ -5283,6 +5328,7 @@ router.post(
           title: sanitizedTitle,
           type: data.type,
           category: data.category,
+          templateId: data.templateId || null,
           contentLength: sanitizedContent.length,
           contentHash,
           ctdSection: ctdSection || null,
@@ -9553,6 +9599,102 @@ Sincerely,
 [PERFORMANCE SUMMARY]`,
   },
   {
+    id: 'tpl_ind_cover_letter',
+    name: 'IND Cover Letter',
+    description: 'FDA-aligned IND cover letter for initial and amendment submissions',
+    submissionTypes: ['IND'],
+    category: 'document',
+    ctdSection: '1.2',
+    content: `# IND Cover Letter
+
+[DATE]
+
+Food and Drug Administration
+Center for Drug Evaluation and Research
+[Division]
+
+Re: Investigational New Drug Application — [PRODUCT NAME]
+IND Number: [IND NUMBER]
+Submission Type: [INITIAL / AMENDMENT / ANNUAL REPORT]
+
+Dear [Review Team],
+
+On behalf of [SPONSOR], we submit this [SUBMISSION TYPE] for [PRODUCT NAME].
+This package includes:
+
+- [List major included components]
+- [Safety and clinical updates, if applicable]
+- [CMC updates, if applicable]
+
+Please contact [CONTACT NAME, TITLE] at [EMAIL / PHONE] with any questions.
+
+Sincerely,
+
+[SIGNATURE]
+[NAME]
+[TITLE]
+[SPONSOR]`,
+  },
+  {
+    id: 'tpl_ind_investigator_brochure',
+    name: "Investigator's Brochure (IB)",
+    description: 'IND investigator brochure structure aligned to ICH expectations',
+    submissionTypes: ['IND'],
+    category: 'document',
+    ctdSection: '5.3',
+    content: `# Investigator's Brochure
+
+## 1. Summary
+[High-level summary of product, mechanism, and current evidence]
+
+## 2. Introduction
+[Background and development context]
+
+## 3. Physical, Chemical, and Pharmaceutical Properties
+[Drug substance and product properties]
+
+## 4. Nonclinical Studies
+[Pharmacology, PK, and toxicology summary]
+
+## 5. Effects in Humans
+[Clinical pharmacology, efficacy/safety findings, known risks]
+
+## 6. Guidance for Investigators
+[Dose rationale, monitoring, risk management considerations]
+
+## 7. References
+[Key cited studies and reports]`,
+  },
+  {
+    id: 'tpl_ind_pre_ind_briefing',
+    name: 'Pre-IND Briefing Package',
+    description: 'Structured FDA pre-IND meeting briefing package template',
+    submissionTypes: ['IND'],
+    category: 'document',
+    ctdSection: '1.2',
+    content: `# Pre-IND Briefing Package
+
+## 1. Meeting Request Context
+[Program background, indication, and development stage]
+
+## 2. Product and Development Overview
+[CMC, nonclinical, and clinical overview]
+
+## 3. Proposed Clinical Plan
+[First-in-human or phase transition plan]
+
+## 4. Key Questions for FDA
+1. [Question]
+2. [Question]
+3. [Question]
+
+## 5. Supporting Summaries
+[Relevant nonclinical, CMC, and clinical summary content]
+
+## 6. Appendices
+[Data tables, references, and supporting documents]`,
+  },
+  {
     id: 'tpl_ind_protocol',
     name: 'IND Clinical Protocol',
     description: 'Clinical trial protocol template for IND applications',
@@ -9695,11 +9837,30 @@ Sincerely,
  */
 router.get('/templates', (req: Request, res: Response) => {
   try {
-    const { submissionType } = req.query;
+    const { submissionType, package: templatePackage, projectGoal } = req.query;
 
     let templates = TEMPLATES;
     if (submissionType) {
       templates = templates.filter(t => t.submissionTypes.includes(submissionType as string));
+    }
+    const pkg = typeof templatePackage === 'string' ? templatePackage.toLowerCase() : '';
+    const goal = typeof projectGoal === 'string' ? projectGoal.toLowerCase() : '';
+    if (pkg === 'ind' || pkg === 'ind-core' || pkg === 'ind_readiness') {
+      templates = templates.filter(
+        t =>
+          t.submissionTypes.includes('IND') ||
+          ['tpl_ind_cover_letter', 'tpl_ind_investigator_brochure', 'tpl_ind_pre_ind_briefing'].includes(
+            t.id
+          )
+      );
+    } else if (goal === 'first_ind' || goal === 'ind_initial') {
+      templates = templates.filter(t =>
+        ['tpl_ind_cover_letter', 'tpl_ind_investigator_brochure', 'tpl_ind_pre_ind_briefing', 'tpl_ind_protocol'].includes(
+          t.id
+        )
+      );
+    } else if (goal === 'cmc') {
+      templates = templates.filter(t => ['tpl_ind_protocol', 'tpl_risk_analysis'].includes(t.id));
     }
 
     return sendSuccess(res, templates);
