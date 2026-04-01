@@ -135,13 +135,15 @@ export class ProjectModuleBridge {
   async unlinkModule(
     projectId: number,
     moduleType: string,
-    moduleInstanceId: number
+    moduleInstanceId: number,
+    organizationId: number
   ): Promise<boolean> {
     const result = await db
       .delete(projectModules)
       .where(
         and(
           eq(projectModules.projectId, projectId),
+          eq(projectModules.organizationId, organizationId),
           eq(projectModules.moduleType, moduleType),
           eq(projectModules.moduleInstanceId, moduleInstanceId)
         )
@@ -298,7 +300,8 @@ export class ProjectModuleBridge {
     projectId: number,
     moduleType: string,
     moduleInstanceId: number,
-    status: 'active' | 'inactive' | 'completed'
+    status: 'active' | 'inactive' | 'completed',
+    organizationId: number
   ): Promise<ProjectModuleView | null> {
     const [updated] = await db
       .update(projectModules)
@@ -306,6 +309,7 @@ export class ProjectModuleBridge {
       .where(
         and(
           eq(projectModules.projectId, projectId),
+          eq(projectModules.organizationId, organizationId),
           eq(projectModules.moduleType, moduleType),
           eq(projectModules.moduleInstanceId, moduleInstanceId)
         )

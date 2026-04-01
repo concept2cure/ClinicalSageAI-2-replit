@@ -29,6 +29,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspens
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 import { ZenSidebar } from './components/sidebar/ZenSidebar';
 import { ZenChat } from './components/chat/ZenChat';
 import { ZenCommandPalette } from './components/command/ZenCommandPalette';
@@ -757,6 +758,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // URL-DRIVEN PROJECT IDENTITY
   // ─────────────────────────────────────────────────────────────────────────────
   const [location, navigate] = useLocation();
+  const { toast } = useToast();
   const embedModulesEnabled = isFeatureEnabled('EMBED_MODULES_IN_SHELL');
   const projectModuleRoutePolicy = useMemo(
     () => getProjectModuleRoutePolicy(location, embedModulesEnabled),
@@ -1849,11 +1851,20 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           conversations: [],
         });
         setNewProjectOpen(false);
+        toast({
+          title: 'Project created',
+          description: `${data.name} is ready.`,
+        });
       } catch (error) {
         console.error('Failed to create project:', error);
+        toast({
+          title: 'Failed to create project',
+          description: error instanceof Error ? error.message : 'Please try again.',
+          variant: 'destructive',
+        });
       }
     },
-    [createProjectMutation]
+    [createProjectMutation, toast]
   );
 
   const handleArchiveProject = useCallback(
@@ -1912,6 +1923,14 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       const project = rawProjects.find(p => p.id === activeProjectId);
       if (project) {
         try {
+          if (data.customInstructions !== undefined) {
+            await updateOwnershipPreferencesMutation({
+              projectId: project.id,
+              preferences: {
+                projectInstructions: data.customInstructions,
+              },
+            });
+          }
           await updateProjectMutation({
             ...project,
             ...(data.name !== undefined && { name: data.name }),
@@ -1929,12 +1948,21 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               ...(data.submissionType !== undefined && { submissionType: data.submissionType }),
             } as any,
           });
+          toast({
+            title: 'Project updated',
+            description: 'Configuration changes have been saved.',
+          });
         } catch (error) {
           console.error('Failed to update project:', error);
+          toast({
+            title: 'Failed to update project',
+            description: error instanceof Error ? error.message : 'Please try again.',
+            variant: 'destructive',
+          });
         }
       }
     },
-    [activeProjectId, rawProjects, updateProjectMutation]
+    [activeProjectId, rawProjects, updateOwnershipPreferencesMutation, updateProjectMutation, toast]
   );
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -3947,7 +3975,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 activeProject: activeProject?.name,
                 projectId: activeProjectId,
                 moduleContext,
-                customInstructions,
               }}
               projectIntelligence={projectIntelligenceStats}
               greeting={
@@ -4028,7 +4055,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 activeProject: activeProject?.name,
                 projectId: activeProjectId,
                 moduleContext,
-                customInstructions,
               }}
               projectIntelligence={projectIntelligenceStats}
               greeting={
