@@ -113,6 +113,8 @@ import predictiveSectionsRoutes from './routes/predictive-sections';
 import foresightApiRoutes from './routes/foresight-api';
 import foresightAIAdvancedRoutes from './routes/foresight-ai-advanced';
 import foresightFeedbackRoutes from './routes/foresight-feedback';
+import { csrSearchService } from './services/csr-search-service';
+import { getEndpointRecommenderService } from './services/endpoint-recommender-service';
 
 // Phase 5: Intelligent Document System routes
 import intelligentDocsRoutes from './routes/intelligentDocs';
@@ -1750,52 +1752,29 @@ app.get('/api/csr/search', async (req: Request, res: Response) => {
     const { query, limit = 10 } = req.query;
     debugLog('CSR search endpoint called', { query, limit });
 
-    // Mock CSR search results for now
-    const searchResults = [
-      {
-        id: 'CSR001',
-        title: `Phase II Study of Pembrolizumab in Advanced Non-Small Cell Lung Cancer`,
-        indication: 'Non-Small Cell Lung Cancer',
-        phase: 'Phase II',
-        sponsor: 'Merck & Co',
-        therapeutic_area: 'Oncology',
-        sample_size: 105,
-        duration: '24 months',
-        status: 'Completed',
-        highlights: ['Primary endpoint met', 'Favorable safety profile'],
-        relevance: 0.95,
-      },
-      {
-        id: 'CSR002',
-        title: `Phase III Study of Nivolumab plus Ipilimumab in Melanoma`,
-        indication: 'Melanoma',
-        phase: 'Phase III',
-        sponsor: 'Bristol Myers Squibb',
-        therapeutic_area: 'Oncology',
-        sample_size: 299,
-        duration: '36 months',
-        status: 'Completed',
-        highlights: ['Significant OS improvement', 'Manageable toxicity profile'],
-        relevance: 0.88,
-      },
-    ];
-
-    // Filter by query if provided
-    let results = searchResults;
-    if (query && typeof query === 'string') {
-      const queryLower = query.toLowerCase();
-      results = searchResults.filter(
-        csr =>
-          csr.title.toLowerCase().includes(queryLower) ||
-          csr.indication.toLowerCase().includes(queryLower) ||
-          csr.therapeutic_area.toLowerCase().includes(queryLower) ||
-          csr.sponsor.toLowerCase().includes(queryLower)
-      );
-    }
-
-    // Apply limit
-    const limitNum = parseInt(limit as string, 10);
-    results = results.slice(0, limitNum);
+    const queryText = typeof query === 'string' ? query.trim() : '';
+    const limitNum = Math.max(1, Math.min(100, parseInt(String(limit), 10) || 10));
+    const searchResult = await csrSearchService.searchCSRs({
+      query_text: queryText,
+      limit: limitNum,
+    });
+    const results = (searchResult.csrs || []).map((csr: any) => ({
+      id: csr.id || csr.csr_id || null,
+      title: csr.title || 'Untitled CSR',
+      indication: csr.indication || null,
+      phase: csr.phase || null,
+      sponsor: csr.sponsor || null,
+      sample_size: csr.sample_size ?? null,
+      outcome: csr.outcome || null,
+      relevance:
+        typeof csr.relevance_score === 'number'
+          ? csr.relevance_score
+          : typeof csr.similarity === 'number'
+            ? csr.similarity
+            : null,
+      summary: csr.summary || csr.context_summary || null,
+      source: 'csr_search_service',
+    }));
 
     debugLog('CSR search results', { count: results.length, query });
     res.json({
@@ -2838,47 +2817,30 @@ app.post('/api/search/vector', async (req: Request, res: Response) => {
   try {
     const query = String(req.body?.query || '').trim();
     const k = Math.max(1, parseInt(String(req.body?.k || 5), 10));
+    if (!query) {
+      return res.status(400).json({ error: 'query is required' });
+    }
 
-    const mockResults = [
-      {
-        content:
-          'The study demonstrated statistically significant overall survival improvement versus standard of care.',
-        relevance: 0.95,
-        document_id: 1,
-        document_title: 'Clinical Study Report XYZ-123',
-        source_page: 42,
-        source_section: 'Efficacy Results',
-      },
-      {
-        content:
-          'Grade 3 or higher adverse events were observed at acceptable rates with no unexpected safety signals.',
-        relevance: 0.88,
-        document_id: 1,
-        document_title: 'Clinical Study Report XYZ-123',
-        source_page: 67,
-        source_section: 'Safety Results',
-      },
-      {
-        content:
-          'Comparative analysis shows endpoint consistency with prior phase II oncology studies.',
-        relevance: 0.82,
-        document_id: 2,
-        document_title: 'Comparative Efficacy Analysis',
-        source_page: 15,
-        source_section: 'Discussion',
-      },
-    ];
+    const searchResult = await csrSearchService.searchCSRs({
+      query_text: query,
+      limit: Math.min(50, k),
+    });
 
-    const filtered = query
-      ? mockResults.filter(
-          row =>
-            row.content.toLowerCase().includes(query.toLowerCase()) ||
-            row.document_title.toLowerCase().includes(query.toLowerCase()) ||
-            row.source_section.toLowerCase().includes(query.toLowerCase())
-        )
-      : mockResults;
+    const vectorLikeRows = (searchResult.csrs || []).slice(0, k).map((csr: any, idx: number) => ({
+      content: csr.summary || csr.context_summary || csr.outcome || csr.title || '',
+      relevance:
+        typeof csr.relevance_score === 'number'
+          ? csr.relevance_score
+          : typeof csr.similarity === 'number'
+            ? csr.similarity
+            : null,
+      document_id: csr.id || csr.csr_id || idx,
+      document_title: csr.title || 'Untitled CSR',
+      source_page: csr.source_page ?? null,
+      source_section: csr.source_section || csr.phase || null,
+    }));
 
-    return res.json((filtered.length ? filtered : mockResults).slice(0, k));
+    return res.json(vectorLikeRows);
   } catch (error) {
     console.error('Vector search failed:', error);
     return res.status(500).json({ error: 'Vector search failed' });
@@ -2890,33 +2852,31 @@ app.post('/api/endpoint/recommend', async (req: Request, res: Response) => {
   try {
     const indication = String(req.body?.indication || 'General');
     const phase = String(req.body?.phase || 'Phase 2');
+    const therapeuticArea = String(req.body?.therapeuticArea || '');
+    const service = getEndpointRecommenderService();
+    const recommendations = await service.getComprehensiveEndpointRecommendations(
+      indication,
+      phase,
+      10,
+      therapeuticArea
+    );
 
-    const recommendations = [
-      {
-        endpoint: 'Progression-Free Survival (PFS)',
-        summary: `${phase} ${indication} programs commonly use PFS as a primary efficacy endpoint.`,
-        matchCount: 124,
-        successRate: 0.62,
-        reference: 'CSR corpus cluster A',
-      },
-      {
-        endpoint: 'Overall Response Rate (ORR)',
+    return res.json(
+      recommendations.map((rec: any) => ({
+        endpoint: rec.endpoint,
         summary:
-          'ORR is frequently selected for accelerated decision support in oncology-like indications.',
-        matchCount: 98,
-        successRate: 0.57,
-        reference: 'CSR corpus cluster C',
-      },
-      {
-        endpoint: 'Duration of Response (DoR)',
-        summary: 'DoR is often paired with ORR to strengthen clinical benefit characterization.',
-        matchCount: 86,
-        successRate: 0.54,
-        reference: 'CSR corpus cluster D',
-      },
-    ];
-
-    return res.json(recommendations);
+          rec.evidence?.[0]?.reference_text ||
+          `${phase} ${indication} endpoint recommendation based on available evidence.`,
+        matchCount: rec.occurrence_count ?? 0,
+        successRate:
+          typeof rec.success_rate === 'number'
+            ? rec.success_rate > 1
+              ? rec.success_rate / 100
+              : rec.success_rate
+            : null,
+        reference: rec.evidence?.[0]?.title || null,
+      }))
+    );
   } catch (error) {
     console.error('Endpoint recommendation failed:', error);
     return res.status(500).json({ error: 'Endpoint recommendation failed' });
@@ -2924,105 +2884,35 @@ app.post('/api/endpoint/recommend', async (req: Request, res: Response) => {
 });
 
 // Retention policy compatibility facade (P0 route recovery)
-let retentionPolicies = [
-  {
-    id: 1,
-    policyName: 'Clinical Trial Master Files',
-    documentType: 'CTM',
-    retentionPeriod: 7,
-    periodUnit: 'years',
-    archiveBeforeDelete: true,
-    notifyBeforeDeletion: true,
-    notificationPeriod: 30,
-    notificationUnit: 'days',
-    active: true,
-  },
-  {
-    id: 2,
-    policyName: 'Pharmacovigilance Safety Reports',
-    documentType: 'Safety Report',
-    retentionPeriod: 10,
-    periodUnit: 'years',
-    archiveBeforeDelete: true,
-    notifyBeforeDeletion: true,
-    notificationPeriod: 45,
-    notificationUnit: 'days',
-    active: true,
-  },
-];
-
-const retentionDocumentTypes = [
-  { id: 'ctm', value: 'CTM', label: 'Clinical Trial Master File' },
-  { id: 'csr', value: 'CSR', label: 'Clinical Study Report' },
-  { id: 'safety', value: 'Safety Report', label: 'Safety Report' },
-  { id: 'protocol', value: 'Protocol', label: 'Clinical Protocol' },
-];
+const RETENTION_SERVICE_UNAVAILABLE = {
+  success: false,
+  error: 'Retention service unavailable',
+  message:
+    'Retention policy APIs are temporarily disabled until persistent storage and job execution are fully wired.',
+};
 
 app.get('/api/retention/policies', async (_req: Request, res: Response) => {
-  return res.json({ success: true, data: retentionPolicies });
+  return res.status(503).json(RETENTION_SERVICE_UNAVAILABLE);
 });
 
 app.get('/api/retention/document-types', async (_req: Request, res: Response) => {
-  return res.json({ success: true, data: retentionDocumentTypes });
+  return res.status(503).json(RETENTION_SERVICE_UNAVAILABLE);
 });
 
-app.post('/api/retention/policies', async (req: Request, res: Response) => {
-  try {
-    const newPolicy = {
-      id: Date.now(),
-      ...req.body,
-    };
-    retentionPolicies = [newPolicy, ...retentionPolicies];
-    return res.status(201).json({ success: true, data: newPolicy });
-  } catch (error) {
-    console.error('Failed to create retention policy:', error);
-    return res.status(500).json({ error: 'Failed to create retention policy' });
-  }
+app.post('/api/retention/policies', async (_req: Request, res: Response) => {
+  return res.status(503).json(RETENTION_SERVICE_UNAVAILABLE);
 });
 
-app.put('/api/retention/policies/:id', async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id, 10);
-    const existing = retentionPolicies.find(policy => policy.id === id);
-    if (!existing) {
-      return res.status(404).json({ error: 'Retention policy not found' });
-    }
-
-    retentionPolicies = retentionPolicies.map(policy =>
-      policy.id === id ? { ...policy, ...req.body, id } : policy
-    );
-
-    const updated = retentionPolicies.find(policy => policy.id === id);
-    return res.json({ success: true, data: updated });
-  } catch (error) {
-    console.error('Failed to update retention policy:', error);
-    return res.status(500).json({ error: 'Failed to update retention policy' });
-  }
+app.put('/api/retention/policies/:id', async (_req: Request, res: Response) => {
+  return res.status(503).json(RETENTION_SERVICE_UNAVAILABLE);
 });
 
-app.delete('/api/retention/policies/:id', async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id, 10);
-    const before = retentionPolicies.length;
-    retentionPolicies = retentionPolicies.filter(policy => policy.id !== id);
-
-    if (retentionPolicies.length === before) {
-      return res.status(404).json({ error: 'Retention policy not found' });
-    }
-
-    return res.json({ success: true });
-  } catch (error) {
-    console.error('Failed to delete retention policy:', error);
-    return res.status(500).json({ error: 'Failed to delete retention policy' });
-  }
+app.delete('/api/retention/policies/:id', async (_req: Request, res: Response) => {
+  return res.status(503).json(RETENTION_SERVICE_UNAVAILABLE);
 });
 
 app.post('/api/retention/run-job', async (_req: Request, res: Response) => {
-  return res.json({
-    success: true,
-    jobId: `RETENTION_JOB_${Date.now()}`,
-    status: 'started',
-  });
+  return res.status(503).json(RETENTION_SERVICE_UNAVAILABLE);
 });
 
 // AnA 1.0 RI endpoint

@@ -257,7 +257,7 @@ const ECTDNavigatorPanel = lazy(() =>
   import('./components/regulatory/ECTDNavigator').then(m => ({ default: m.default }))
 );
 const RegulatoryIntelligenceFullPanel = lazy(() =>
-  import('./components/regulatory/RegulatoryIntelligence').then(m => ({ default: m.default }))
+  import('./components/intelligence/RegulatoryIntelligencePanel').then(m => ({ default: m.default }))
 );
 const VaultBrowserPanel = lazy(() =>
   import('@/components/sharepoint/SharePointFileManager').then(m => ({ default: m.default }))
