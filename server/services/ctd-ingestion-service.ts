@@ -204,6 +204,14 @@ export async function uploadCTDDocument(
   organizationId: number,
   doc: CTDDocumentUpload
 ) {
+  const projectResult = await pool.query(
+    `SELECT id FROM ctd_onboarding_projects WHERE id = $1 AND organization_id = $2`,
+    [ctdProjectId, organizationId]
+  );
+  if (projectResult.rows.length === 0) {
+    throw new Error('CTD project not found for organization');
+  }
+
   const result = await pool.query(
     `INSERT INTO ctd_onboarding_documents (
       ctd_project_id, organization_id, file_name, file_size, mime_type,
@@ -319,42 +327,59 @@ export async function validateCTDCompleteness(ctdProjectId: number, organization
   const uploadedSections = new Set(docs.rows.map((d: { ctd_section: string }) => d.ctd_section));
   const required = REQUIRED_SECTIONS[region] || DEFAULT_REQUIRED;
 
-  // Clear existing unresolved gaps and regenerate
+  // Rebuild the required section set from current uploads to avoid stale rows
+  // and keep completion math stable over repeated validation runs.
   await pool.query(
-    `DELETE FROM ctd_compliance_gaps WHERE ctd_project_id = $1 AND organization_id = $2 AND resolved = FALSE`,
+    `DELETE FROM ctd_compliance_gaps WHERE ctd_project_id = $1 AND organization_id = $2`,
     [ctdProjectId, organizationId]
   );
 
   const newGaps: ComplianceGap[] = [];
   for (const req of required) {
-    if (!uploadedSections.has(req.section)) {
-      const gap: ComplianceGap = {
-        ctdModule: req.module,
-        ctdSection: req.section,
-        requirementType: 'missing_section',
-        severity: req.severity,
-        description: `Missing required section: ${req.section} - ${req.title}`,
-        recommendation: `Upload ${req.title} documentation for ${region} submission compliance.`,
-      };
-      newGaps.push(gap);
+    const isResolved = uploadedSections.has(req.section);
+    const gap: ComplianceGap = {
+      ctdModule: req.module,
+      ctdSection: req.section,
+      requirementType: 'missing_section',
+      severity: req.severity,
+      description: isResolved
+        ? `Required section satisfied: ${req.section} - ${req.title}`
+        : `Missing required section: ${req.section} - ${req.title}`,
+      recommendation: isResolved
+        ? `Section ${req.section} has been uploaded for ${region} submission readiness.`
+        : `Upload ${req.title} documentation for ${region} submission compliance.`,
+    };
 
-      await pool.query(
-        `INSERT INTO ctd_compliance_gaps (
-          ctd_project_id, organization_id, ctd_module, ctd_section,
-          requirement_type, severity, description, recommendation, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
-        [
-          ctdProjectId, organizationId, gap.ctdModule, gap.ctdSection,
-          gap.requirementType, gap.severity, gap.description, gap.recommendation,
-        ]
-      );
+    await pool.query(
+      `INSERT INTO ctd_compliance_gaps (
+        ctd_project_id, organization_id, ctd_module, ctd_section,
+        requirement_type, severity, description, recommendation, resolved, resolved_at, created_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())`,
+      [
+        ctdProjectId,
+        organizationId,
+        gap.ctdModule,
+        gap.ctdSection,
+        gap.requirementType,
+        gap.severity,
+        gap.description,
+        gap.recommendation,
+        isResolved,
+        isResolved ? new Date() : null,
+      ]
+    );
+
+    if (!isResolved) {
+      newGaps.push(gap);
     }
   }
 
   // Update project status
   await pool.query(
-    `UPDATE ctd_onboarding_projects SET status = 'validating', updated_at = NOW() WHERE id = $1`,
-    [ctdProjectId]
+    `UPDATE ctd_onboarding_projects
+     SET status = 'validating', updated_at = NOW()
+     WHERE id = $1 AND organization_id = $2`,
+    [ctdProjectId, organizationId]
   );
 
   await recalculateCompletion(ctdProjectId, organizationId);
@@ -385,11 +410,15 @@ function generateInitialGaps(region: string): ComplianceGap[] {
 
 async function recalculateCompletion(ctdProjectId: number, organizationId: number) {
   const totalResult = await pool.query(
-    `SELECT COUNT(*) as total FROM ctd_compliance_gaps WHERE ctd_project_id = $1 AND organization_id = $2`,
+    `SELECT COUNT(*) as total
+     FROM ctd_compliance_gaps
+     WHERE ctd_project_id = $1 AND organization_id = $2`,
     [ctdProjectId, organizationId]
   );
   const resolvedResult = await pool.query(
-    `SELECT COUNT(*) as resolved FROM ctd_compliance_gaps WHERE ctd_project_id = $1 AND organization_id = $2 AND resolved = TRUE`,
+    `SELECT COUNT(*) as resolved
+     FROM ctd_compliance_gaps
+     WHERE ctd_project_id = $1 AND organization_id = $2 AND resolved = TRUE`,
     [ctdProjectId, organizationId]
   );
 
@@ -398,7 +427,9 @@ async function recalculateCompletion(ctdProjectId: number, organizationId: numbe
   const pct = total > 0 ? Math.round((resolved / total) * 100) : 0;
 
   await pool.query(
-    `UPDATE ctd_onboarding_projects SET completion_percentage = $1, updated_at = NOW() WHERE id = $2`,
-    [pct, ctdProjectId]
+    `UPDATE ctd_onboarding_projects
+     SET completion_percentage = $1, updated_at = NOW()
+     WHERE id = $2 AND organization_id = $3`,
+    [pct, ctdProjectId, organizationId]
   );
 }

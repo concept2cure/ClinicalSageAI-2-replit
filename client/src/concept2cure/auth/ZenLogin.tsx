@@ -584,12 +584,14 @@ export const ZenLogin: React.FC = () => {
         } finally {
           setIsLoading(false);
         }
+        return;
       }
 
-      // Production/staging must use the real SSO initiation route.
+      // Production flow: hand off to backend provider initiate endpoint.
       window.location.assign(`/api/auth/sso/${provider}/initiate`);
+      setIsLoading(false);
     },
-    [setLocation]
+    []
   );
 
   const handleKeyDown = useCallback(

@@ -256,6 +256,7 @@ export const ZenOnboarding: React.FC = () => {
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
       localStorage.setItem('concept2cure_onboarded', 'true');
+      localStorage.setItem('concept2cure_first_run_complete', 'true');
       setLocation('/concept2cure');
     } catch (error) {
       console.error('Onboarding error:', error);
@@ -266,6 +267,7 @@ export const ZenOnboarding: React.FC = () => {
 
   const handleSkip = useCallback(() => {
     localStorage.setItem('concept2cure_onboarded', 'true');
+    localStorage.setItem('concept2cure_first_run_complete', 'true');
     setLocation('/concept2cure');
   }, [setLocation]);
 
