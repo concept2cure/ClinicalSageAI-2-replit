@@ -11,8 +11,6 @@ import { Button } from '@/components/ui/button';
 import HelpButton from '../common/HelpButton';
 
 export default function UnifiedTopNavV3({
-  activeTab,
-  onTabChange = () => {},
   breadcrumbs = [],
   navItems = [],
 }) {
@@ -34,7 +32,6 @@ export default function UnifiedTopNavV3({
           source: 'top_nav',
           route: location,
           breadcrumbs,
-          activeTab,
           humanGoal: 'regulatory_decision_support',
         }),
       icon: Sparkles,
@@ -183,7 +180,7 @@ export default function UnifiedTopNavV3({
               </TooltipContent>
             </Tooltip>
 
-            {/* CSR Navigation Links - Added as per specifications */}
+            {/* Optional context nav links (rendered only when provided) */}
             {navItems.length > 0 &&
               navItems.map((item, index) => (
                 <Tooltip key={index}>
@@ -220,15 +217,17 @@ export default function UnifiedTopNavV3({
         </div>
       </div>
 
-      {/* Breadcrumb Trail */}
-      <div className="px-4 py-1 text-[11px] text-stone-500 font-medium bg-white border-b border-stone-100">
-        {breadcrumbs.map((crumb, idx) => (
-          <span key={idx}>
-            {idx > 0 && ' > '}
-            <span className="hover:underline cursor-default transition">{crumb}</span>
-          </span>
-        ))}
-      </div>
+      {/* Breadcrumbs are progressive disclosure; hide chrome when empty */}
+      {breadcrumbs.length > 0 && (
+        <div className="px-4 py-1 text-[11px] text-stone-500 font-medium bg-white border-b border-stone-100">
+          {breadcrumbs.map((crumb, idx) => (
+            <span key={idx}>
+              {idx > 0 && ' > '}
+              <span className="hover:underline cursor-default transition">{crumb}</span>
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Functional row - secondary actions only */}
       <div className="flex justify-center overflow-x-auto whitespace-nowrap gap-2 border-b border-stone-100 bg-white py-2 px-2">
@@ -236,8 +235,7 @@ export default function UnifiedTopNavV3({
           const Icon = tab.icon;
           const isActive =
             (tab.label === 'Risk Heatmap' && location === '/regulatory-risk-dashboard') ||
-            (tab.label === 'Timeline Simulator' && location === '/timeline') ||
-            activeTab === tab.label.replace(/ /g, '');
+            (tab.label === 'Timeline Simulator' && location === '/timeline');
           return (
             <Button
               type="button"

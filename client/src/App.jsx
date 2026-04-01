@@ -259,8 +259,7 @@ function AppContent() {
 }
 
 function MainApp() {
-  // Default tab for the UnifiedTopNavV3 component
-  const activeTab = 'RiskHeatmap';
+  // Top-nav active state is route-driven for truthful shell behavior.
   const [isLoading, setIsLoading] = useState(true);
 
   // Initial loading state management - removed artificial delay
@@ -323,7 +322,7 @@ function MainApp() {
     <div>
       {/* Only show the UnifiedTopNavV3 if we're not on the landing page, regulatory hub, or dashboard */}
       {shouldShowNav && (
-        <UnifiedTopNavV3 activeTab={activeTab} navItems={navItems} />
+        <UnifiedTopNavV3 navItems={navItems} />
       )}
       <div
         className={
