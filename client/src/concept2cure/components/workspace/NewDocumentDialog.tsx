@@ -161,7 +161,7 @@ const QUICK_TEMPLATES: TemplateOption[] = [
     ],
     complexity: 'simple',
     estimatedPages: 2,
-    templateId: 'tpl_ind_cover_letter',
+    templateId: 'tpl_510k_cover',
   },
   {
     id: 'pre-ind-briefing',

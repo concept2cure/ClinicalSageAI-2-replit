@@ -366,47 +366,47 @@ function buildTemplateContent(title: string, ctdSection: string, templateKey?: s
   if (templateKey === 'cover-letter') {
     return `<h1>${title}</h1>
 <h2>Addressee</h2>
-<p>[Agency / division / address]</p>
+<p>Address this cover letter to the reviewing agency and division responsible for your program.</p>
 <h2>Submission Purpose</h2>
-<p>[Purpose and submission context]</p>
+<p>State the submission type, product name, indication, and the regulatory objective of this package.</p>
 <h2>Contents Summary</h2>
-<p>[Summarize package contents and references]</p>
+<p>Summarize the included documents, key updates since the prior interaction, and any referenced attachments.</p>
 <h2>Contact Information</h2>
-<p>[Sponsor contact details]</p>`;
+<p>Provide sponsor regulatory contact details, including name, title, email, and phone number.</p>`;
   }
   if (templateKey === 'csr-synopsis') {
     return `<h1>${title}</h1>
 <h2>Study Information</h2>
-<p>[Protocol number, phase, indication, sponsor]</p>
+<p>Document protocol number, trial phase, indication, sponsor, and study dates.</p>
 <h2>Objectives</h2>
-<p>[Primary and secondary objectives]</p>
+<p>Summarize primary and secondary objectives with endpoints and statistical intent.</p>
 <h2>Methodology</h2>
-<p>[Design, population, treatment, endpoints]</p>
+<p>Describe trial design, population, treatment arms, analysis populations, and endpoint definitions.</p>
 <h2>Results</h2>
-<p>[Efficacy and safety highlights]</p>
+<p>Provide concise efficacy and safety outcomes, including key tables and clinically meaningful findings.</p>
 <h2>Conclusions</h2>
-<p>[Key conclusions and next steps]</p>`;
+<p>Conclude with benefit-risk interpretation and implications for subsequent development or submission steps.</p>`;
   }
   if (templateKey === 'quality-overall-summary') {
     return `<h1>${title}</h1>
 <h2>Drug Substance</h2>
-<p>[Manufacture, control strategy, key specifications]</p>
+<p>Summarize drug substance manufacture, control strategy, critical quality attributes, and release specifications.</p>
 <h2>Drug Product</h2>
-<p>[Composition, process, controls, container closure]</p>
+<p>Summarize formulation, process controls, container closure rationale, and comparability or process validation status.</p>
 <h2>Stability</h2>
-<p>[Stability summary and shelf-life rationale]</p>`;
+<p>Summarize stability program design, key findings, proposed shelf life, and storage conditions.</p>`;
   }
 
   // Fallback: structured starter for unknown sections
   return `<h1>${title}</h1>
 <h2>Purpose</h2>
-<p>[Describe the purpose of this section and its role in the submission.]</p>
+<p>Describe the purpose of this section and its role in the regulatory submission package.</p>
 <h2>Scope</h2>
-<p>[Define the scope of data and analyses presented in this section.]</p>
+<p>Define the scope of data, analyses, and references included in this section.</p>
 <h2>Summary</h2>
-<p>[Provide a concise summary of key findings and conclusions.]</p>
+<p>Provide a concise summary of key findings, supporting evidence, and conclusions.</p>
 <h2>Detailed Content</h2>
-<p>[Begin drafting section content here. Use AnA to help generate regulatory-compliant language.]</p>`;
+<p>Draft section content with explicit traceability to evidence and clear regulatory rationale.</p>`;
 }
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -1445,7 +1445,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             `/api/concept2cure/projects/${projectId}/artifacts`,
             {
               title,
-              content: `<h1>${title}</h1><p>Begin editing this document.</p>`,
+              content: `<h1>${title}</h1><p>This governed draft was created from the selected workflow action. Continue by adding evidence-linked content, section rationale, and regulatory conclusions.</p>`,
               type: 'regulatory_document',
               category: 'document',
               ctdSection,
@@ -1491,7 +1491,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       if (!projectId || !activeArtifactRef.current) return;
       const art = activeArtifactRef.current;
       try {
-        const scaffoldHtml = `<h2>${label}</h2><p>[Content for ${label} — fill this section per regulatory requirements.]</p>`;
+        const scaffoldHtml = `<h2>${label}</h2><p>Draft this subsection with explicit evidence traceability, regulatory rationale, and reviewer-ready language aligned to submission expectations.</p>`;
         const res = await apiRequest(
           'POST',
           `/api/concept2cure/projects/${projectId}/artifacts/${art.id}/versions`,
@@ -1885,8 +1885,9 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 px-4 h-9 border-b border-blue-100 bg-blue-50/40 shrink-0 overflow-x-auto">
-          <span className="text-[10px] uppercase tracking-wide text-blue-600 font-semibold whitespace-nowrap">
+        {showContextBars && (
+        <div className="flex items-center gap-1.5 px-4 h-9 border-b border-stone-100 bg-stone-50/50 shrink-0 overflow-x-auto">
+          <span className="text-[10px] uppercase tracking-wide text-stone-500 font-semibold whitespace-nowrap">
             Guided sequence
           </span>
           {guidedSequence.map((step, idx) => {
@@ -1900,17 +1901,17 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   className={cn(
                     'text-[11px] px-2 py-0.5 rounded-md border whitespace-nowrap transition-colors',
                     isCurrent
-                      ? 'border-blue-300 bg-white text-blue-700 font-semibold'
+                      ? 'border-stone-300 bg-white text-stone-800 font-semibold'
                       : isDone
                         ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                        : 'border-blue-100 bg-white text-stone-600 hover:bg-blue-100'
+                        : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-100'
                   )}
                   title={step.hint}
                 >
                   {step.label}
                 </button>
                 {idx < guidedSequence.length - 1 && (
-                  <ChevronRight className="w-3 h-3 text-blue-300 shrink-0" />
+                  <ChevronRight className="w-3 h-3 text-stone-300 shrink-0" />
                 )}
               </React.Fragment>
             );
@@ -1941,12 +1942,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             </button>
             <button
               onClick={handleGuidedContinue}
-              className="text-[11px] px-2 py-0.5 rounded border border-blue-200 bg-white text-blue-700 hover:bg-blue-100"
+              className="text-[11px] px-2 py-0.5 rounded border border-stone-200 bg-white text-stone-700 hover:bg-stone-100"
             >
               Continue
             </button>
           </div>
         </div>
+        )}
 
         {/* ── Collapsible context bars (AnA Shell, Context Band, CTD Flow) ──── */}
         <div className={cn('overflow-hidden transition-all duration-200', showContextBars ? 'max-h-48' : 'max-h-0')} aria-hidden={!showContextBars}>
