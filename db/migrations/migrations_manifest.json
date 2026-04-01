@@ -475,7 +475,8 @@
     "20260325_ai_goal_plan_hardening.sql",
     "20260325_ai_goal_plan_step_events.sql",
     "20260325_decision_receipts.sql",
-    "emergency_security_migration.sql"
+    "emergency_security_migration.sql",
+    "20260401_project_sharing_visibility.sql"
   ],
   "skipFiles": [
     "031_REGULATORY_AUDIT_REPORT.md"

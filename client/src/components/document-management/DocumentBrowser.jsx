@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useDocuShare } from '@/hooks/useDocuShare';
+import { useDocuShare } from '@/hooks/useDocuShareComponents';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { toast } from '@/hooks/use-toast';
 import {
   Search,
   Filter,
@@ -52,7 +51,7 @@ import {
  * @param {number} props.height - The height of the browser component
  */
 export default function DocumentBrowser({ onDocumentSelect, moduleContext, height = 500 }) {
-  const { documents, isLoadingDocuments, downloadDocument } = useDocuShare();
+  const { documents, loading, downloadDocument } = useDocuShare();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDocuments, setSelectedDocuments] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: 'lastModified', direction: 'desc' });
@@ -99,16 +98,50 @@ export default function DocumentBrowser({ onDocumentSelect, moduleContext, heigh
 
     // Apply module context filter if provided
     if (moduleContext) {
-      docsToDisplay = docsToDisplay.filter(doc => doc.moduleContext === moduleContext);
+      docsToDisplay = docsToDisplay.filter(
+        doc => (doc.moduleContext || doc.moduleLinked || '').toLowerCase() === moduleContext.toLowerCase()
+      );
     }
 
     // Apply search filter
     if (searchTerm) {
       docsToDisplay = docsToDisplay.filter(
         doc =>
-          doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          doc.author.toLowerCase().includes(searchTerm.toLowerCase())
+          (doc.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (doc.author || '').toLowerCase().includes(searchTerm.toLowerCase())
       );
+    }
+
+    // Apply document type filters
+    if (filters.documentTypes.length > 0) {
+      docsToDisplay = docsToDisplay.filter(doc => filters.documentTypes.includes(doc.documentType));
+    }
+
+    // Apply author filters
+    if (filters.authors.length > 0) {
+      docsToDisplay = docsToDisplay.filter(doc => filters.authors.includes(doc.author));
+    }
+
+    // Apply date range filter
+    if (filters.dateRange.start || filters.dateRange.end) {
+      docsToDisplay = docsToDisplay.filter(doc => {
+        const modified = new Date(doc.lastModified);
+        if (Number.isNaN(modified.getTime())) return false;
+
+        if (filters.dateRange.start) {
+          const start = new Date(filters.dateRange.start);
+          start.setHours(0, 0, 0, 0);
+          if (modified < start) return false;
+        }
+
+        if (filters.dateRange.end) {
+          const end = new Date(filters.dateRange.end);
+          end.setHours(23, 59, 59, 999);
+          if (modified > end) return false;
+        }
+
+        return true;
+      });
     }
 
     // Apply sorting
@@ -123,13 +156,13 @@ export default function DocumentBrowser({ onDocumentSelect, moduleContext, heigh
     });
 
     setFilteredDocuments(docsToDisplay);
-  }, [documents, searchTerm, sortConfig, moduleContext]);
+  }, [documents, searchTerm, sortConfig, moduleContext, filters]);
 
   // Get unique document types for filtering
-  const documentTypes = [...new Set(documents.map(doc => doc.documentType))];
+  const documentTypes = [...new Set(documents.map(doc => doc.documentType).filter(Boolean))];
 
   // Get unique authors for filtering
-  const authors = [...new Set(documents.map(doc => doc.author))];
+  const authors = [...new Set(documents.map(doc => doc.author).filter(Boolean))];
 
   return (
     <div className="w-full" style={{ height: `${height}px` }}>
@@ -390,7 +423,7 @@ export default function DocumentBrowser({ onDocumentSelect, moduleContext, heigh
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoadingDocuments ? (
+              {loading ? (
                 <TableRow>
                   <TableCell colSpan={8} className="h-24 text-center">
                     Loading documents...

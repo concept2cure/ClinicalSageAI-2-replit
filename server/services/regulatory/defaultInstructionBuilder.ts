@@ -12,6 +12,7 @@ import type { RegulatoryApplicationType } from '../../../shared/regulatory/docum
 import { getApplicationType } from '../../../shared/regulatory/global-document-registry.js';
 import { getRegionProfile } from '../../../shared/regulatory/region-profiles.js';
 import { resolveRegistryId } from './registry/legacySubmissionTypeMapper.js';
+import { getApplicationType } from '../../../shared/regulatory/global-document-registry.js';
 
 // ─── Specialized Templates ────────────────────────────────────────────────────
 

@@ -195,9 +195,9 @@ router.get('/programs/:programId/rtm/csv', async (req: Request, res: Response) =
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
-    // Register governed export (non-blocking)
+    // Register governed export (fail-closed for regulated outputs)
     const user = (req as any).user;
-    registerExportGovernanceQuick({
+    const governanceResult = await registerExportGovernanceQuick({
       organizationId: user?.organizationId || 1,
       projectId: Number(programId) || 0,
       userId: user?.id || 0,
@@ -209,7 +209,13 @@ router.get('/programs/:programId/rtm/csv', async (req: Request, res: Response) =
       docType: 'rtm_export',
       backendRoute: `/api/rtm/programs/${programId}/rtm/csv`,
       ipAddress: req.ip,
-    }).catch(() => {}); // non-blocking
+    });
+    if (!governanceResult) {
+      return res.status(500).json({
+        error: 'Governed export registration failed',
+        code: 'EXPORT_GOVERNANCE_REQUIRED',
+      });
+    }
 
     return res.send(csvContent);
   } catch (error: any) {

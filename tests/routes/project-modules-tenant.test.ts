@@ -63,8 +63,8 @@ describe('project-modules tenant/workspace enforcement', () => {
 
     await handler!(req, res);
 
-    expect(bridgeMocks.unlinkModule).toHaveBeenCalledWith(12, 3, 'cer', 44);
-    expect(res.json).toHaveBeenCalledWith({ success: true });
+    expect(bridgeMocks.unlinkModule).toHaveBeenCalledWith(12, 'cer', 44, 3, 9);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Module unlinked successfully' });
   });
 
   it('passes tenant org to updateModuleLink', async () => {
@@ -89,17 +89,16 @@ describe('project-modules tenant/workspace enforcement', () => {
 
     await handler!(req, res);
 
-    expect(bridgeMocks.updateModuleLink).toHaveBeenCalledWith(12, 3, 'cer', 44, {
-      status: 'completed',
-      metadata: { source: 'test' },
-    });
-    expect(res.json).toHaveBeenCalledWith({
-      id: 1,
-      projectId: 12,
-      moduleType: 'cer',
-      moduleInstanceId: 44,
-      status: 'completed',
-    });
+    expect(bridgeMocks.updateModuleStatus).toHaveBeenCalledWith(12, 'cer', 44, 'completed', 3, 9);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 1,
+        projectId: 12,
+        moduleType: 'cer',
+        moduleInstanceId: 44,
+        status: 'completed',
+      })
+    );
   });
 
   it('rejects invalid moduleType on /find query', async () => {

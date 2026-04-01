@@ -15,6 +15,7 @@
  */
 
 import { getPool } from '../db.ts';
+import { resolveGovernedContext } from './concept2cure/governedDocumentContractService.js';
 
 const pool = {
   connect: (...args: Parameters<ReturnType<typeof getPool>['connect']>) => getPool().connect(...args),
@@ -166,6 +167,51 @@ export async function tagArtifact(params: TagArtifactParams): Promise<TagArtifac
         isNew = false;
       } else {
         // Insert new artifact
+        const governedResolution = resolveGovernedContext({
+          req: {
+            body: {
+              projectId,
+              metadata: {
+                sourceRefs: [`section:${sectionCode}`],
+              },
+            },
+            userId: userId || 0,
+            userEmail: `user-${userId || 0}@system.local`,
+            userRole: 'regulatory',
+          } as any,
+          projectId,
+          artifactId: null,
+          documentType: 'regulatory_document',
+          generationMode: source === 'import' ? 'imported' : 'ai_assisted',
+          lifecycleStatus: status === 'review' ? 'in_review' : (status as any),
+          originSurface: 'api_route',
+          clientTrack: 'biotech',
+          submissionProgram: 'ectd',
+          persona: 'regulatory',
+          regulatorScope: 'fda',
+          evidenceMode: source === 'import' ? 'mixed' : 'csr',
+          documentClass: sectionCode?.startsWith('3.') ? 'module3_output' : 'section_draft',
+          readinessGate: status === 'approved' || status === 'locked' ? 'submission_candidate' : 'internal_review',
+          approvalPathType: status === 'locked' ? 'qa_lock' : 'regulated_dual_review',
+          recommendationSource: 'report_engine',
+          workspaceTarget: 'project',
+          regulatorIntent: 'submission_authoring',
+          placementContainerId: String(projectId),
+          title,
+          content,
+          ctdSection: sectionCode,
+          sourceRefs: [`section:${sectionCode}`],
+          provider: 'artifact_tagger',
+          model: source,
+          exportAllowed: false,
+          eventType: isNew ? 'artifact.created' : 'artifact.updated',
+        });
+        if (!governedResolution.validation.valid) {
+          throw new Error(
+            `governed artifact tagging failed: ${governedResolution.validation.errors.join('; ')}`
+          );
+        }
+
         const insertResult = await client.query(
           `INSERT INTO concept2cure_artifacts
              (project_id, organization_id, title, content, status, ctd_section,
@@ -185,6 +231,21 @@ export async function tagArtifact(params: TagArtifactParams): Promise<TagArtifac
               source,
               createdAt: new Date().toISOString(),
               taggedBy: userId || 'system',
+              harness: {
+                clientTrack: governedResolution.contract.clientTrack,
+                submissionProgram: governedResolution.contract.submissionProgram,
+                persona: governedResolution.contract.persona,
+                regulatorScope: governedResolution.contract.regulatorScope,
+                documentClass: governedResolution.contract.documentClass,
+                readinessGate: governedResolution.contract.readinessGate,
+                workspaceTarget: governedResolution.contract.workspaceTarget,
+                originSurface: governedResolution.contract.originSurface,
+                recommendationSource: governedResolution.contract.recommendationSource,
+                regulatorIntent: governedResolution.contract.regulatorIntent,
+                gateChecks: governedResolution.contract.exportEligibility.gateChecks,
+                blockingReasons: governedResolution.contract.exportEligibility.blockingReasons,
+                readinessOutcome: governedResolution.contract.exportEligibility.readinessOutcome,
+              },
             }),
           ]
         );

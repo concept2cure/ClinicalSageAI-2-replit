@@ -5083,6 +5083,88 @@ export const projects = pgTable(
   })
 );
 
+/**
+ * Project Visibility Settings
+ *
+ * Controls who can discover/use a project within an organization.
+ * - private: only explicit members + owner/admin can use
+ * - org_public: any org user can use (edit still governed by membership/owner/admin)
+ */
+export const projectVisibilitySettings = pgTable(
+  'project_visibility_settings',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    visibility: text('visibility').notNull().default('private'), // private | org_public
+    updatedById: integer('updated_by_id').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    uniqueProjectVisibility: unique('unique_project_visibility').on(table.projectId),
+    idx_project_visibility_org: index('idx_project_visibility_org').on(table.organizationId),
+  })
+);
+
+export const insertProjectVisibilitySettingsSchema = createInsertSchemaOmit(projectVisibilitySettings, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ProjectVisibilitySettings = InferSelectModel<typeof projectVisibilitySettings>;
+export type InsertProjectVisibilitySettings = z.infer<typeof insertProjectVisibilitySettingsSchema>;
+
+/**
+ * Project Members
+ *
+ * Explicit membership for shared project collaboration.
+ * Roles:
+ * - owner: full control (normally implicit for owner/creator/admin)
+ * - edit: can modify project content/settings
+ * - use: can view/use project context but not edit
+ */
+export const projectMembers = pgTable(
+  'project_members',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    role: text('role').notNull().default('use'), // owner | edit | use
+    status: text('status').notNull().default('active'), // active | revoked
+    invitedById: integer('invited_by_id').references(() => users.id),
+    acceptedAt: timestamp('accepted_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    uniqueProjectMember: unique('unique_project_member').on(table.projectId, table.userId),
+    idx_project_members_org: index('idx_project_members_org').on(table.organizationId),
+    idx_project_members_user: index('idx_project_members_user').on(table.userId),
+  })
+);
+
+export const insertProjectMemberSchema = createInsertSchemaOmit(projectMembers, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ProjectMember = InferSelectModel<typeof projectMembers>;
+export type InsertProjectMember = z.infer<typeof insertProjectMemberSchema>;
+
 // Project Insert Schema
 export const insertProjectSchema = createInsertSchemaOmit(projects, {
   id: true,

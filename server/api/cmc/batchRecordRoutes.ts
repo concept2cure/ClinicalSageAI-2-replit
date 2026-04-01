@@ -4,38 +4,6 @@ import { z } from 'zod';
 
 const router = express.Router();
 
-// Ensure batch_records table exists
-let batchTablesInitialized = false;
-async function ensureBatchTables() {
-  if (batchTablesInitialized) return;
-  const pool = getPool();
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS cmc_batch_records (
-      id SERIAL PRIMARY KEY,
-      project_id UUID,
-      tenant_id TEXT,
-      batch_number TEXT NOT NULL,
-      product_name TEXT NOT NULL,
-      batch_size TEXT,
-      manufacturing_date DATE,
-      expiry_date DATE,
-      manufacturing_site TEXT,
-      status TEXT DEFAULT 'in-progress',
-      process_parameters JSONB,
-      in_process_controls JSONB,
-      yield_data JSONB,
-      deviations JSONB,
-      release_testing JSONB,
-      release_status TEXT DEFAULT 'pending',
-      released_by TEXT,
-      released_at TIMESTAMP,
-      created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-      updated_at TIMESTAMP DEFAULT NOW() NOT NULL
-    )
-  `);
-  batchTablesInitialized = true;
-}
-
 // Validation schemas
 const createBatchSchema = z.object({
   projectId: z.string().uuid().optional(),
@@ -84,7 +52,6 @@ router.get('/:projectId', async (req, res) => {
     }
     const pool = getPool();
 
-    await ensureBatchTables();
 
     const result = await pool.query(
       `SELECT * FROM cmc_batch_records
@@ -129,7 +96,6 @@ router.post('/', async (req, res) => {
       return res.status(401).json({ error: 'Tenant context required' });
     }
 
-    await ensureBatchTables();
 
     const result = await pool.query(
       `INSERT INTO cmc_batch_records (
@@ -192,7 +158,6 @@ router.put('/:id', async (req, res) => {
     const data = validationResult.data;
     const pool = getPool();
 
-    await ensureBatchTables();
 
     // Verify record exists
     const existing = await pool.query(
@@ -284,7 +249,6 @@ router.post('/:id/release', async (req, res) => {
     const data = validationResult.data;
     const pool = getPool();
 
-    await ensureBatchTables();
 
     // Verify record exists
     const existing = await pool.query(

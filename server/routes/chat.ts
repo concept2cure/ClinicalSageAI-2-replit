@@ -32,6 +32,7 @@ import { ALL_CLAUDE_TOOLS } from '../services/claude/ClaudeToolDefinitions.js';
 import { executeAgenticLoop } from '../services/claude/ClaudeToolExecutor.js';
 import type { ClaudeEnhancedResponse } from '../services/ai-gateway/types.js';
 import { buildMemoryContextForChat } from '../services/memory-context-assembler.js';
+import { resolveGovernedContext } from '../services/concept2cure/governedDocumentContractService.js';
 
 const router = Router();
 
@@ -1029,57 +1030,126 @@ router.post('/upload', async (req: Request, res: Response) => {
     // ── Data Room convergence: create artifact + embed for retrieval ──
     let artifactId: string | null = null;
     if (projectId && orgId) {
+      const numericProjectId = parseInt(String(projectId).replace('proj_', ''), 10);
+      const numericOrgId = parseInt(String(orgId), 10);
+      if (isNaN(numericProjectId) || isNaN(numericOrgId)) {
+        return res.status(400).json({
+          error: 'projectId and organizationId must be valid for governed upload',
+          code: 'GOVERNED_UPLOAD_CONTEXT_INVALID',
+        });
+      }
+
+      const artId = `artifact_chat_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+      const fileBuffer = (req as any).file?.buffer;
+      const extractedText = fileBuffer && mimeType.startsWith('text/')
+        ? fileBuffer.toString('utf8')
+        : `[Uploaded via chat: ${fileName}] (${mimeType}, ${fileSize} bytes)`;
+      const boundedContent = extractedText.substring(0, 100000);
+
+      const governedResolution = resolveGovernedContext({
+        req,
+        projectId: numericProjectId,
+        artifactId: null,
+        documentType: 'source_document',
+        generationMode: 'imported',
+        lifecycleStatus: 'draft',
+        originSurface: 'api_route',
+        clientTrack: 'biotech',
+        submissionProgram: 'general_ri',
+        persona: 'regulatory',
+        regulatorScope: 'fda',
+        evidenceMode: 'mixed',
+        documentClass: 'evidence_memo',
+        readinessGate: 'internal_review',
+        approvalPathType: 'single_reviewer',
+        recommendationSource: 'report_engine',
+        workspaceTarget: 'project',
+        regulatorIntent: 'evidence_analysis',
+        placementContainerId: String(numericProjectId),
+        title: fileName,
+        content: boundedContent,
+        sourceRefs: [`upload:${fileId}`],
+        provider: 'chat_upload',
+        model: 'file_ingest',
+        exportAllowed: false,
+        eventType: 'artifact.created',
+      });
+
+      if (!governedResolution.validation.valid) {
+        return res.status(400).json({
+          error: 'Governed document contract validation failed',
+          code: 'GOVERNED_CONTRACT_INVALID',
+          details: {
+            errors: governedResolution.validation.errors,
+            warnings: governedResolution.validation.warnings,
+            resolved: governedResolution.resolved,
+          },
+        });
+      }
+
       try {
-        const numericProjectId = parseInt(String(projectId).replace('proj_', ''), 10);
-        const numericOrgId = parseInt(String(orgId), 10);
-        if (!isNaN(numericProjectId) && !isNaN(numericOrgId)) {
-          const artId = `artifact_chat_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-          // Extract text content from file buffer if available
-          const fileBuffer = (req as any).file?.buffer;
-          const extractedText = fileBuffer && mimeType.startsWith('text/')
-            ? fileBuffer.toString('utf8')
-            : `[Uploaded via chat: ${fileName}] (${mimeType}, ${fileSize} bytes)`;
-
-          const contentHash = sha256(extractedText);
-          await pool.query(
-            `INSERT INTO concept2cure_artifacts
-               (organization_id, project_id, artifact_id, type, category, title, content, content_hash, version, metadata, created_by_id)
-             VALUES ($1, $2, $3, 'source_document', 'source', $4, $5, $6, 1, $7, $8)
-             ON CONFLICT DO NOTHING`,
-            [
-              numericOrgId,
-              numericProjectId,
-              artId,
-              fileName,
-              extractedText.substring(0, 100000),
-              contentHash,
-              JSON.stringify({ uploadSource: 'chat', fileId, mimeType, fileSize }),
-              userId,
-            ]
-          );
-          artifactId = artId;
-
-          // Auto-embed into lumen_data_atoms for pgvector retrieval
-          try {
-            const atomResult = await pool.query(
-              `INSERT INTO lumen_data_atoms
-                 (organization_id, source_type, source_id, atom_type, title, content, tags, confidence, status)
-               VALUES ($1, 'chat_upload', $2, 'source_document', $3, $4, '{source,chat_upload}', 0.85, 'active')
-               ON CONFLICT DO NOTHING
-               RETURNING id`,
-              [numericOrgId, artId, fileName, extractedText.substring(0, 16000)]
-            );
-            if (atomResult.rows.length > 0) {
-              const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
-              const embeddingService = getEmbeddingService(pool);
-              await embeddingService.embedAtom(atomResult.rows[0].id);
-            }
-          } catch (embedErr: any) {
-            console.warn('[AnA] Chat upload embedding failed (non-fatal):', embedErr.message);
-          }
-        }
+        const contentHash = sha256(boundedContent);
+        await pool.query(
+          `INSERT INTO concept2cure_artifacts
+             (organization_id, project_id, artifact_id, type, category, title, content, content_hash, version, metadata, created_by_id)
+           VALUES ($1, $2, $3, 'source_document', 'source', $4, $5, $6, 1, $7, $8)`,
+          [
+            numericOrgId,
+            numericProjectId,
+            artId,
+            fileName,
+            boundedContent,
+            contentHash,
+            JSON.stringify({
+              uploadSource: 'chat',
+              fileId,
+              mimeType,
+              fileSize,
+              harness: {
+                clientTrack: governedResolution.contract.clientTrack,
+                submissionProgram: governedResolution.contract.submissionProgram,
+                persona: governedResolution.contract.persona,
+                regulatorScope: governedResolution.contract.regulatorScope,
+                documentClass: governedResolution.contract.documentClass,
+                readinessGate: governedResolution.contract.readinessGate,
+                workspaceTarget: governedResolution.contract.workspaceTarget,
+                originSurface: governedResolution.contract.originSurface,
+                recommendationSource: governedResolution.contract.recommendationSource,
+                regulatorIntent: governedResolution.contract.regulatorIntent,
+                gateChecks: governedResolution.contract.exportEligibility.gateChecks,
+                blockingReasons: governedResolution.contract.exportEligibility.blockingReasons,
+                readinessOutcome: governedResolution.contract.exportEligibility.readinessOutcome,
+              },
+            }),
+            userId,
+          ]
+        );
+        artifactId = artId;
       } catch (artErr: any) {
-        console.warn('[AnA] Chat upload artifact creation failed (non-fatal):', artErr.message);
+        console.error('[AnA] Chat upload governed artifact persistence failed:', artErr.message);
+        return res.status(500).json({
+          error: 'Governed artifact persistence failed for upload',
+          code: 'ARTIFACT_CONSEQUENCE_REQUIRED',
+        });
+      }
+
+      // Auto-embed into lumen_data_atoms for pgvector retrieval
+      try {
+        const atomResult = await pool.query(
+          `INSERT INTO lumen_data_atoms
+             (organization_id, source_type, source_id, atom_type, title, content, tags, confidence, status)
+           VALUES ($1, 'chat_upload', $2, 'source_document', $3, $4, '{source,chat_upload}', 0.85, 'active')
+           ON CONFLICT DO NOTHING
+           RETURNING id`,
+          [numericOrgId, artId, fileName, boundedContent.substring(0, 16000)]
+        );
+        if (atomResult.rows.length > 0) {
+          const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
+          const embeddingService = getEmbeddingService(pool);
+          await embeddingService.embedAtom(atomResult.rows[0].id);
+        }
+      } catch (embedErr: any) {
+        console.warn('[AnA] Chat upload embedding failed (non-fatal):', embedErr.message);
       }
     }
 
@@ -1312,8 +1382,9 @@ router.delete('/thread/:threadId', async (req: Request, res: Response) => {
  * Same provenance pipeline as /send-message but with real-time token delivery.
  */
 router.post('/stream', async (req: Request, res: Response) => {
+  normalizeBody(req);
   try {
-    const { message, thread_id, system_prompt } = req.body;
+    const { message, thread_id, system_prompt, project_id } = req.body;
     if (!message) {
       return res.status(400).json({ error: 'message is required' });
     }
@@ -1324,6 +1395,11 @@ router.post('/stream', async (req: Request, res: Response) => {
         error: 'No AI providers available. Configure ANTHROPIC_API_KEY or OPENAI_API_KEY.',
       });
     }
+
+    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+    const rawUserId = (req as any).userId || (req as any).user?.id;
+    const numericOrgId = orgId ? (typeof orgId === 'string' ? Number(orgId) : orgId) : null;
+    const numericUserId = typeof rawUserId === 'string' ? parseInt(rawUserId, 10) || 0 : (rawUserId ?? 0);
 
     // Set SSE headers
     res.writeHead(200, {
@@ -1346,7 +1422,6 @@ router.post('/stream', async (req: Request, res: Response) => {
       try {
         const history = await getThreadMessages(thread_id);
         if (history.length > 0) {
-          // Insert history before the current user message
           const historyMessages = history.slice(-10).map((m: any) => ({
             role: m.role as 'user' | 'assistant',
             content: m.content,
@@ -1375,7 +1450,37 @@ router.post('/stream', async (req: Request, res: Response) => {
       callerModule: 'ana-ri-chat-stream',
     });
 
-    // Send final event
+    // Governed action parity: run processResponseActions on the full response
+    // (same pattern as /send-message — non-blocking, non-fatal)
+    let executedActions: Array<{
+      actionType: string;
+      executed: boolean;
+      artifactId: string | null;
+    }> = [];
+
+    if (numericOrgId && project_id && gwResponse.content) {
+      try {
+        const actionResult = await processResponseActions(gwResponse.content, {
+          projectId: typeof project_id === 'string' ? parseInt(project_id, 10) : project_id,
+          organizationId: numericOrgId,
+          userId: numericUserId,
+          userName: (req as any).user?.name || (req as any).user?.email || 'System',
+          threadId: thread_id || undefined,
+        });
+
+        if (actionResult.actions.length > 0) {
+          executedActions = actionResult.actions.map((a: any) => ({
+            actionType: a.actionType,
+            executed: a.executed,
+            artifactId: a.artifactId,
+          }));
+        }
+      } catch (actionErr: any) {
+        console.warn('[Chat Stream] Guidance action processing failed:', actionErr?.message);
+      }
+    }
+
+    // Send final event (includes any governed actions that were executed)
     res.write(
       `data: ${JSON.stringify({
         type: 'done',
@@ -1383,6 +1488,7 @@ router.post('/stream', async (req: Request, res: Response) => {
         provider: gwResponse.provider,
         usage: gwResponse.usage,
         latencyMs: gwResponse.latencyMs,
+        ...(executedActions.length > 0 ? { executedActions } : {}),
       })}\n\n`
     );
 
@@ -1390,7 +1496,6 @@ router.post('/stream', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('[Chat Stream] Error:', error.message);
     if (res.headersSent) {
-      // SECURITY: Don't leak internal error details to client
       res.write(
         `data: ${JSON.stringify({ type: 'error', error: 'An error occurred while generating the response' })}\n\n`
       );
