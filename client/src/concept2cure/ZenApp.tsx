@@ -32,6 +32,23 @@ import { cn } from '@/lib/utils';
 import { ZenSidebar } from './components/sidebar/ZenSidebar';
 import { ZenChat } from './components/chat/ZenChat';
 import { ZenCommandPalette } from './components/command/ZenCommandPalette';
+
+// Stage 10 extracted modules
+import {
+  type ToolPanel,
+  type LayoutMode,
+  type UserProfile,
+  PRIMARY_NAV_ID_BY_LAYOUT,
+  LEGACY_NAV_ID_BY_LAYOUT,
+  SIDEBAR_NAV_TO_LAYOUT as SIDEBAR_NAV_TO_LAYOUT_EXTRACTED,
+  INDUSTRY_MODES,
+  normalizeIndustryMode,
+  TOOL_PANELS,
+  getProjectColor,
+} from './zen-app-constants';
+import { useZenKeyboardShortcuts } from './hooks/useZenKeyboardShortcuts';
+import { useUserProfileFromStorage } from './hooks/useUserProfileFromStorage';
+import { useWorkspaceSuggestedActions } from './hooks/useWorkspaceSuggestedActions';
 const ZenSettings = React.lazy(() =>
   import('./components/settings/ZenSettings').then(m => ({ default: m.ZenSettings }))
 );
@@ -394,253 +411,19 @@ const PANEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.Component
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-type ToolPanel =
-  | 'ectd'
-  | 'protocol'
-  | 'sop'
-  | 'capa'
-  | 'pms'
-  | 'inspection'
-  | 'intelligence'
-  | 'vault'
-  | 'doc-editor'
-  | 'ana-biostats'
-  | null;
+// ToolPanel and LayoutMode types imported from ./zen-app-constants
 
-type LayoutMode =
-  // ── Global destinations ──
-  | 'projects'
-  | 'apps'
-  | 'artifacts-center'
-  | 'setup'
-  // ── Project tabs ──
-  | 'project-home' // Overview
-  | 'documents' // Work
-  | 'vault' // Vault
-  | 'review' // Review
-  | 'submissions' // Submit
-  | 'dossier-map' // Sub-view within Work
-  | 'section-workspace' // Sub-view within Work
-  | 'csr-workflow' // CSR guided authoring (ICH E3)
-  | 'ind-checklist' // IND requirements checklist (21 CFR 312.23)
-  | 'template-library' // Template browser and creation
-  // ── Canonical workspace + editor ──
-  | 'regulatory-workspace'
-  | 'editor'
-  | 'deep-research'
-  // ── Specialist tools (launched from Apps) ──
-  | 'precedent-intelligence'
-  | 'biostatistics'
-  | 'review-readiness'
-  | 'report-engine'
-  | 'safety-narrative'
-  | 'vault-workspace'
-  // ── Compatibility redirects (redirect on mount, no renderer) ──
-  | 'workspace' // → regulatory-workspace
-  | 'assistant' // → regulatory-workspace
-  | 'ctd' // → regulatory-workspace
-  | 'medtech-dashboard' // → regulatory-workspace
-  | 'dossier' // → regulatory-workspace
-  // ── Demoted modes (redirect to projects or documents via DEMOTED_REDIRECTS) ──
-  | 'mission-control'
-  | 'snowglobe'
-  | 'snowglobe-chambers'
-  | 'rules'
-  | 'ectd-coauthor'
-  | 'cmc'
-  | 'document-vault'
-  | 'clinical-trial'
-  | 'templates'
-  | 'sherpa'
-  | 'analytics'
-  | 'timeline'
-  | 'audit'
-  | 'enablement-center'
-  | 'platform-admin'
-  | 'biologics-dashboard'
-  | 'ctd-onboarding'
-  | 'client-intelligence'
-  | 'collaboration-hub'
-  | 'user-inbox'
-  | 'client-branding'
-  | 'training-center'
-  | 'client-onboarding'
-  | 'knowledge-base'
-  | 'project-knowledge'
-  | 'artifacts'
-  | 'document-builder'
-  | 'ana-platform-control'
-  // ── Legacy batch-1 modes (kept for type safety only) ──
-  | 'ind-workspace'
-  | 'submission-workspace'
-  | 'author'
-  | 'intelligence-hub'
-  | 'command-center'
-  | 'legal-center'
-  | 'about-training'
-  | 'ana-dashboard'
-  | 'integrations'
-  // ── Unused MissionControl sub-modes (no renderer, no redirect needed) ──
-  | 'intelligence-feed'
-  | 'gap-analysis'
-  | 'change-impact'
-  | 'ana-memory'
-  | 'artifact-graph'
-  | 'review-center'
-  | 'dossier-view'
-  | 'risk-cockpit'
-  | 'route-planner'
-  | 'evidence-manager'
-  | 'decision-log'
-  | 'authority-tracker'
-  | 'provenance-trail'
-  | 'notifications'
-  | 'program-wizard'
-  | 'task-board'
-  | 'team-workspace'
-  | 'program-analytics';
+// PRIMARY_NAV_ID_BY_LAYOUT and LEGACY_NAV_ID_BY_LAYOUT imported from ./zen-app-constants
 
-const PRIMARY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
-  projects: 'ri-copilot',
-  'project-home': 'ri-copilot',
-  'dossier-map': 'clinical-module5',
-  documents: 'work',
-  review: 'review',
-  submissions: 'publish',
-  'section-workspace': 'clinical-module5',
-  'vault-workspace': 'vault',
-  'review-readiness': 'verify',
-  'report-engine': 'haq',
-  'task-board': 'task-board',
-  'csr-workflow': 'csr-workflow',
-  'ind-checklist': 'ind-checklist',
-  'template-library': 'templates',
-};
+// INDUSTRY_MODES and normalizeIndustryMode imported from ./zen-app-constants
 
-const LEGACY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
-  'regulatory-workspace': 'submission-builder',
-  workspace: 'work',
-  'ind-workspace': 'work',
-  'ectd-coauthor': 'work',
-  cmc: 'cmc',
-  'clinical-trial': 'clinical-module5',
-  author: 'work',
-  editor: 'work',
-  templates: 'work',
-  'document-builder': 'work',
-  'intelligence-hub': 'ri-copilot',
-  snowglobe: 'projects',
-  'snowglobe-chambers': 'projects',
-  'command-center': 'projects',
-  'mission-control': 'projects',
-  'submission-workspace': 'submissions',
-  'document-vault': 'vault',
-  'enablement-center': 'projects',
-  'client-intelligence': 'projects',
-  'collaboration-hub': 'review',
-  'user-inbox': 'projects',
-  'client-branding': 'projects',
-  biostatistics: 'biostatistics',
-  'training-center': 'projects',
-  'client-onboarding': 'projects',
-  'knowledge-base': 'projects',
-  'project-knowledge': 'projects',
-  'legal-center': 'review',
-  sherpa: 'documents',
-  audit: 'review',
-  timeline: 'projects',
-  analytics: 'projects',
-  artifacts: 'documents',
-  'about-training': 'projects',
-  'precedent-intelligence': 'documents',
-  'deep-research': 'documents',
-  'safety-narrative': 'documents',
-  'ana-dashboard': 'projects',
-  'ana-platform-control': 'projects',
-  'platform-admin': 'projects',
-  'biologics-dashboard': 'documents',
-  'ctd-onboarding': 'projects',
-  integrations: 'projects',
-};
-
-const INDUSTRY_MODES: IndustryMode[] = [
-  'biotech',
-  'pharma',
-  'cro',
-  'medtech',
-  'academic',
-  'regulatory',
-  'medical_writing',
-];
-
-const normalizeIndustryMode = (value?: string): IndustryMode => {
-  if (!value) {
-    return 'biotech';
-  }
-
-  const normalized = value.toLowerCase().trim() as IndustryMode;
-  return INDUSTRY_MODES.includes(normalized) ? normalized : 'biotech';
-};
-
-interface UserProfile {
-  role?: string;
-  objectives?: string[];
-  criteria?: string[];
-  preferences?: Record<string, string | number | boolean>;
-  updatedAt?: string;
-}
+// UserProfile type imported from ./zen-app-constants
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL PANEL CONFIG
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// [BATCH 4] TOOL_PANELS — these contextual drawer panels are not user-visible
-// as a static catalog. They are only triggered programmatically (e.g. by AnA
-// or deep links). Retained for future AnA-driven contextual panel support.
-// No standalone "module picker" surfaces these to users.
-const TOOL_PANELS: Record<
-  Exclude<ToolPanel, null>,
-  {
-    title: string;
-    icon: React.ComponentType<{ className?: string }>;
-    component: string;
-  }
-> = {
-  ectd: { title: 'eCTD Navigator', icon: Folder, component: 'ECTDNavigator' },
-  protocol: { title: 'Protocol Designer', icon: ClipboardList, component: 'StudyProtocolDesigner' },
-  intelligence: {
-    title: 'Regulatory Intelligence',
-    icon: Globe,
-    component: 'RegulatoryIntelligence',
-  },
-  vault: { title: 'Document Vault', icon: FileText, component: 'VaultBrowser' },
-  'doc-editor': { title: 'Document Editor', icon: PenLine, component: 'EditorPanel' },
-  'ana-biostats': { title: 'AnA Biostats', icon: FlaskConical, component: 'AnaBiostatsPanel' },
-  // Retained for compliance-sector clients but not actively surfaced:
-  sop: { title: 'SOP Management', icon: BookOpen, component: 'SOPManagement' },
-  capa: { title: 'CAPA Management', icon: AlertTriangle, component: 'CAPAManagement' },
-  pms: { title: 'Post-Market Surveillance', icon: BarChart2, component: 'PostMarketSurveillance' },
-  inspection: {
-    title: 'Inspection Readiness',
-    icon: CheckSquare,
-    component: 'InspectionReadiness',
-  },
-};
-
-// Helper to get project color by type
-function getProjectColor(type: string): string {
-  const colors: Record<string, string> = {
-    '510K': 'blue',
-    IND: 'purple',
-    NDA: 'green',
-    BLA: 'orange',
-    PMA: 'red',
-    MAA: 'pink',
-    DE_NOVO: 'amber',
-    EUA: 'cyan',
-  };
-  return colors[type] || 'gray';
-}
+// TOOL_PANELS and getProjectColor imported from ./zen-app-constants
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL PANEL WRAPPER
@@ -851,7 +634,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     () => typeof window !== 'undefined' && window.innerWidth < 768
   );
 
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userProfile, setUserProfile] = useUserProfileFromStorage();
 
   // Modals
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -1322,138 +1105,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     [activeProjectId]
   );
 
-  // Workspace suggested actions — context-aware quick-start chips for AnA
-  const workspaceSuggestedActions = useMemo(() => {
-    const biostatsAction = {
-      id: 'open-ana-biostats',
-      label: 'Open AnA Biostats',
-      intent: 'go-biostatistics',
-      description: 'Run SAP-grade biostatistics analysis and governed document generation.',
-    };
-
-    const base = workspaceSummary?.nextActions ?? [];
-    if (base.length > 0) {
-      const withBiostats = base.some(action => action.intent === 'go-biostatistics')
-        ? base
-        : [biostatsAction, ...base];
-      return withBiostats.slice(0, 4);
-    }
-
-    const t = (activeProject?.type || 'IND').toUpperCase();
-    const starters: Record<
-      string,
-      Array<{ id: string; label: string; intent: string; description: string }>
-    > = {
-      '510K': [
-        {
-          id: 'upload-device-docs',
-          label: 'Upload device documents',
-          intent: 'upload-source-documents',
-          description: 'Add device specs, test results, and labeling.',
-        },
-        {
-          id: 'find-predicates',
-          label: 'Find likely predicates',
-          intent: 'find-likely-510k-predicates',
-          description: 'Search FDA for substantially equivalent devices.',
-        },
-        {
-          id: 'draft-device-desc',
-          label: 'Draft device description',
-          intent: 'draft-510k-device-description',
-          description: 'Generate Section 3 device description.',
-        },
-        {
-          id: 'check-estar',
-          label: 'Check eSTAR readiness',
-          intent: 'check-estar-readiness',
-          description: 'Review eSTAR template requirements.',
-        },
-      ],
-      IND: [
-        {
-          id: 'upload-source',
-          label: 'Upload source documents',
-          intent: 'upload-source-documents',
-          description: 'Add CSRs, CMC data, and preclinical files.',
-        },
-        {
-          id: 'draft-ind-outline',
-          label: 'Draft IND outline',
-          intent: 'draft-ind-outline',
-          description: 'Generate IND outline per 21 CFR 312.23.',
-        },
-        {
-          id: 'missing-sections',
-          label: 'Identify missing sections',
-          intent: 'identify-missing-ind-sections',
-          description: 'Audit your IND for incomplete sections.',
-        },
-        {
-          id: 'gen-cmc-workplan',
-          label: 'Generate CMC workplan',
-          intent: 'generate-cmc-workplan',
-          description: 'Build Module 3 CMC workplan and timeline.',
-        },
-      ],
-      CER: [
-        {
-          id: 'upload-evidence',
-          label: 'Upload evidence & literature',
-          intent: 'upload-source-documents',
-          description: 'Add clinical literature and PMS data.',
-        },
-        {
-          id: 'build-cer-outline',
-          label: 'Build CER outline',
-          intent: 'build-cer-outline',
-          description: 'Structure CER sections per MEDDEV 2.7/1 Rev 4.',
-        },
-        {
-          id: 'draft-benefit-risk',
-          label: 'Draft benefit-risk section',
-          intent: 'draft-cer-benefit-risk',
-          description: 'Generate the benefit-risk analysis.',
-        },
-        {
-          id: 'review-pms-pmcf',
-          label: 'Review PMS / PMCF gaps',
-          intent: 'review-pms-pmcf-gaps',
-          description: 'Identify post-market surveillance gaps.',
-        },
-      ],
-      NDA: [
-        {
-          id: 'upload-source',
-          label: 'Upload source documents',
-          intent: 'upload-source-documents',
-          description: 'Add CSRs, CMC data, and prior filings.',
-        },
-        {
-          id: 'draft-nda-outline',
-          label: 'Draft NDA outline',
-          intent: 'draft-nda-outline',
-          description: 'Generate NDA outline per 21 CFR 314.',
-        },
-        {
-          id: 'nda-missing',
-          label: 'Identify missing sections',
-          intent: 'identify-missing-nda-sections',
-          description: 'Audit NDA for gaps and missing modules.',
-        },
-        {
-          id: 'gen-summary',
-          label: 'Generate ISS/ISE outline',
-          intent: 'generate-iss-ise-outline',
-          description: 'Outline Integrated Summary of Safety/Efficacy.',
-        },
-      ],
-    };
-    const fallback = starters[t] ?? starters['IND'];
-    return fallback.some(action => action.intent === 'go-biostatistics')
-      ? fallback.slice(0, 4)
-      : [biostatsAction, ...fallback].slice(0, 4);
-  }, [activeProject?.type, workspaceSummary?.nextActions]);
+  const workspaceSuggestedActions = useWorkspaceSuggestedActions(
+    activeProject?.type,
+    workspaceSummary
+  );
 
   // Pending draft request from IND Workspace → passed to AnA when switching to workspace mode
   const [pendingDraftSection, setPendingDraftSection] = useState<{
@@ -1623,88 +1278,18 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // KEYBOARD SHORTCUTS — use refs to avoid re-attaching listeners on every state change
   // ─────────────────────────────────────────────────────────────────────────────
 
-  const kbStateRef = useRef({
-    activeToolPanel,
-    commandPaletteOpen,
-    settingsOpen,
-    layoutMode,
-    activeProjectId,
-  });
-  kbStateRef.current = {
-    activeToolPanel,
-    commandPaletteOpen,
-    settingsOpen,
-    layoutMode,
-    activeProjectId,
-  };
-
-  const handleNewChatRef = useRef(handleNewChat);
-  handleNewChatRef.current = handleNewChat;
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const st = kbStateRef.current;
-
-      // Command palette: ⌘K or Ctrl+K
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setCommandPaletteOpen(true);
-      }
-
-      // New chat: ⌘N or Ctrl+N
-      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
-        e.preventDefault();
-        handleNewChatRef.current();
-      }
-
-      // Settings: ⌘,
-      if ((e.metaKey || e.ctrlKey) && e.key === ',') {
-        e.preventDefault();
-        setSettingsOpen(true);
-      }
-
-      // Edit project: ⌘E or Ctrl+E (workspace mode only)
-      if (
-        (e.metaKey || e.ctrlKey) &&
-        e.key === 'e' &&
-        st.layoutMode === 'workspace' &&
-        st.activeProjectId
-      ) {
-        e.preventDefault();
-        setEditProjectOpen(true);
-      }
-
-      // Close tool panel: Escape
-      if (e.key === 'Escape' && st.activeToolPanel && !st.commandPaletteOpen && !st.settingsOpen) {
-        setActiveToolPanel(null);
-        setToolPanelFullscreen(false);
-      }
-
-      // Vault drawer: Alt+V
-      if (e.altKey && e.key.toLowerCase() === 'v') {
-        e.preventDefault();
-        setActiveToolPanel('vault');
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-
-    // Listen for Mission Control inter-page navigation events
-    const handleMcNavigate = (e: Event) => {
-      const mode = (e as CustomEvent).detail?.mode as LayoutMode;
-      if (mode) {
-        setLayoutMode(mode);
-        setActiveToolPanel(null);
-      }
-    };
-    window.addEventListener('mc-navigate', handleMcNavigate);
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('mc-navigate', handleMcNavigate);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useZenKeyboardShortcuts(
+    { activeToolPanel, commandPaletteOpen, settingsOpen, layoutMode, activeProjectId },
+    {
+      openCommandPalette: () => setCommandPaletteOpen(true),
+      openSettings: () => setSettingsOpen(true),
+      openEditProject: () => setEditProjectOpen(true),
+      closeToolPanel: () => { setActiveToolPanel(null); setToolPanelFullscreen(false); },
+      openVaultPanel: () => setActiveToolPanel('vault'),
+      handleNewChat,
+      setLayoutMode: (mode) => { setLayoutMode(mode); setActiveToolPanel(null); },
+    }
+  );
 
   // ─────────────────────────────────────────────────────────────────────────────
   // HANDLERS
@@ -2147,30 +1732,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     'User';
   const userEmail = userIntelligence?.identity?.email ?? undefined;
 
-  useEffect(() => {
-    const loadProfile = () => {
-      try {
-        const savedProfile = localStorage.getItem('concept2cure_user_profile');
-        if (savedProfile) {
-          setUserProfile(JSON.parse(savedProfile));
-        }
-      } catch (error) {
-        console.warn('Unable to load user profile', error);
-      }
-    };
-
-    loadProfile();
-
-    const onStorage = (event: Event) => {
-      const storageEvent = event as { key?: string };
-      if (storageEvent.key === 'concept2cure_user_profile') {
-        loadProfile();
-      }
-    };
-
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, []);
+  // userProfile sync moved to useUserProfileFromStorage hook
 
   // ── Workspace header — shared nav bar for non-chat modules ─────────────────
   const WorkspaceHeader = ({
@@ -4230,36 +3792,4 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
 export default ZenApp;
 
-const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
-  // Global destinations
-  apps: 'apps',
-  'artifacts-center': 'artifacts-center',
-  setup: 'setup',
-  projects: 'projects',
-  home: 'projects',
-  documents: 'regulatory-workspace',
-  submissions: 'submissions',
-  reports: 'report-engine',
-  dossier: 'dossier-map',
-  'ri-copilot': 'regulatory-workspace',
-  'submission-builder': 'regulatory-workspace',
-  cmc: 'section-workspace',
-  'clinical-module5': 'section-workspace',
-  verify: 'review-readiness',
-  vault: 'vault-workspace',
-  review: 'review',
-  publish: 'submissions',
-  haq: 'report-engine',
-  'task-board': 'task-board',
-  'csr-workflow': 'csr-workflow',
-  'ind-checklist': 'ind-checklist',
-  overview: 'project-home',
-  work: 'documents',
-  'review-tab': 'review',
-  submit: 'submissions',
-  templates: 'template-library',
-  'template-library': 'template-library',
-  tools: 'documents',
-  dataroom: 'regulatory-workspace',
-  upload: 'regulatory-workspace',
-};
+const SIDEBAR_NAV_TO_LAYOUT = SIDEBAR_NAV_TO_LAYOUT_EXTRACTED;
