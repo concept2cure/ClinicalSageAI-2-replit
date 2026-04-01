@@ -59,8 +59,69 @@ interface SlashCommand {
   args: string;
 }
 
-function detectSlashCommand(message: string): SlashCommand | null {
-  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|decisions|help|sap|power|dose|defensibility|design|safety|cmc|csr|device|diagnostics|cms|ectd|audit|amend|review|memo|brief|strategy|freeze|sign|scan|checklist|submit|workflow|status|narrative|report|iss|ise|ib|smpc|rmp|uspi|haq|ask)\b\s*(.*)/i);
+export const SUPPORTED_SLASH_COMMANDS = [
+  'risk',
+  'readiness',
+  'precedent',
+  'draft',
+  'preflight',
+  'claims',
+  'recommend',
+  'next',
+  'simulate',
+  'signals',
+  'export',
+  'assess',
+  'twin',
+  'consistency',
+  'deficiencies',
+  'knowledge',
+  'decisions',
+  'help',
+  'sap',
+  'power',
+  'dose',
+  'defensibility',
+  'design',
+  'safety',
+  'cmc',
+  'csr',
+  'device',
+  'diagnostics',
+  'cms',
+  'ectd',
+  'audit',
+  'amend',
+  'review',
+  'memo',
+  'brief',
+  'strategy',
+  'freeze',
+  'sign',
+  'scan',
+  'checklist',
+  'submit',
+  'workflow',
+  'status',
+  'narrative',
+  'report',
+  'iss',
+  'ise',
+  'ib',
+  'smpc',
+  'rmp',
+  'uspi',
+  'haq',
+  'ask',
+] as const;
+
+const SUPPORTED_SLASH_COMMAND_REGEX = new RegExp(
+  `^\\/(${SUPPORTED_SLASH_COMMANDS.join('|')})\\b\\s*(.*)`,
+  'i',
+);
+
+export function detectSlashCommand(message: string): SlashCommand | null {
+  const match = message.match(SUPPORTED_SLASH_COMMAND_REGEX);
   if (!match) return null;
   return { command: match[1].toLowerCase(), args: match[2].trim() };
 }

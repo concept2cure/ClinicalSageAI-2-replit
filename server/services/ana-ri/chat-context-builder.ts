@@ -48,7 +48,7 @@ export interface ChatContext {
 
 // ─── Authoring context builder ───────────────────────────────────────────────
 
-function buildAuthoringContextBlock(authoring_context: any): string {
+export function buildAuthoringContextBlock(authoring_context: any): string {
   if (!authoring_context || typeof authoring_context !== 'object') return '';
 
   const ac = authoring_context;
@@ -110,7 +110,8 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
   const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
   const userId = (req as any).userId || (req as any).user?.id || 'anonymous';
   const numericOrgId = orgId ? Number(orgId) : null;
-  const projectId = req.body.project_id || req.body.context?.projectId;
+  const projectId =
+    req.body.project_id || req.body.context?.projectId || req.body.project_context?.projectId;
 
   // Infer role
   const effectiveRole: UserRole = validatedRole || inferRole({

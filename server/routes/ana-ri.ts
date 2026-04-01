@@ -83,6 +83,7 @@ import {
   processCommandsInResponse,
   type CommandContext,
 } from '../services/ana-ri/command-executor.js';
+import { buildAuthoringContextBlock } from '../services/ana-ri/chat-context-builder.js';
 import {
   getFirecrawlQuotaStatus,
   recordSuccessfulFirecrawlScrape,
@@ -241,49 +242,8 @@ router.post('/chat', async (req: Request, res: Response) => {
         department: req.body.context?.department,
       });
 
-    // ── Build authoring context block for system prompt enrichment ──
-    let authoringContextBlock = '';
-    if (authoring_context && typeof authoring_context === 'object') {
-      const ac = authoring_context;
-      const parts: string[] = ['<authoring_context>'];
-      if (ac.workflowStage) parts.push(`  <workflow_stage>${ac.workflowStage}</workflow_stage>`);
-      if (ac.sectionCode) parts.push(`  <section_code>${ac.sectionCode}</section_code>`);
-      if (ac.sectionTitle) parts.push(`  <section_title>${ac.sectionTitle}</section_title>`);
-      if (ac.moduleCode) parts.push(`  <module_code>${ac.moduleCode}</module_code>`);
-      if (ac.artifactId) parts.push(`  <artifact_id>${ac.artifactId}</artifact_id>`);
-      if (ac.artifactVersionId)
-        parts.push(`  <artifact_version_id>${ac.artifactVersionId}</artifact_version_id>`);
-      if (ac.artifactStatus)
-        parts.push(`  <artifact_status>${ac.artifactStatus}</artifact_status>`);
-      if (ac.submissionType)
-        parts.push(`  <submission_type>${ac.submissionType}</submission_type>`);
-      if (ac.readiness) {
-        parts.push(
-          `  <readiness score="${ac.readiness.score ?? 'unknown'}" blocked="${
-            ac.readiness.blocked ?? false
-          }">`
-        );
-        if (ac.readiness.blockers?.length) {
-          for (const b of ac.readiness.blockers) {
-            parts.push(
-              `    <blocker severity="${b.severity}" code="${b.code}">${b.message}</blocker>`
-            );
-          }
-        }
-        parts.push('  </readiness>');
-      }
-      if (ac.contradictions?.length) {
-        parts.push('  <contradictions>');
-        for (const c of ac.contradictions) {
-          parts.push(
-            `    <contradiction id="${c.id}" type="${c.type}" severity="${c.severity}">${c.explanation}</contradiction>`
-          );
-        }
-        parts.push('  </contradictions>');
-      }
-      parts.push('</authoring_context>');
-      authoringContextBlock = parts.join('\n');
-    }
+    // Shared builder parity: keep authoring-context serialization identical across chat/stream.
+    const authoringContextBlock = buildAuthoringContextBlock(authoring_context);
 
     // Optional governed external evidence pre-routing (AnA-owned orchestration)
     const evidenceUsage: any = {
@@ -900,23 +860,8 @@ router.post('/stream', async (req: Request, res: Response) => {
         department: req.body.context?.department,
       });
 
-    // Build authoring context block
-    let authoringContextBlock = '';
-    if (authoring_context && typeof authoring_context === 'object') {
-      const ac = authoring_context;
-      const parts: string[] = ['<authoring_context>'];
-      if (ac.workflowStage) parts.push(`  <workflow_stage>${ac.workflowStage}</workflow_stage>`);
-      if (ac.sectionCode) parts.push(`  <section_code>${ac.sectionCode}</section_code>`);
-      if (ac.sectionTitle) parts.push(`  <section_title>${ac.sectionTitle}</section_title>`);
-      if (ac.moduleCode) parts.push(`  <module_code>${ac.moduleCode}</module_code>`);
-      if (ac.artifactId) parts.push(`  <artifact_id>${ac.artifactId}</artifact_id>`);
-      if (ac.artifactStatus)
-        parts.push(`  <artifact_status>${ac.artifactStatus}</artifact_status>`);
-      if (ac.submissionType)
-        parts.push(`  <submission_type>${ac.submissionType}</submission_type>`);
-      parts.push('</authoring_context>');
-      authoringContextBlock = parts.join('\n');
-    }
+    // Shared builder parity: keep authoring-context serialization identical across chat/stream.
+    const authoringContextBlock = buildAuthoringContextBlock(authoring_context);
 
     const streamProjectId = project_id || req.body.context?.projectId || req.body.project_context?.projectId;
     const streamProjectIdNumber = streamProjectId != null ? Number(streamProjectId) : null;
