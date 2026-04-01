@@ -80,6 +80,28 @@ type MessageInput = GatewayMessage[] | { role: string; content: string }[] | str
 // ─────────────────────────────────────────────────────────────────────────────
 
 class UnifiedAIClient {
+  async embeddings(params: {
+    model?: string;
+    input: string;
+    dimensions?: number;
+  }): Promise<{ embedding: number[] }> {
+    const response = await this.chat(params.input, {
+      taskType: 'embedding',
+      model: params.model,
+      maxTokens: params.dimensions,
+      temperature: 0,
+    });
+
+    try {
+      const parsed = JSON.parse(response.content);
+      return {
+        embedding: Array.isArray(parsed) ? parsed.map(value => Number(value) || 0) : [],
+      };
+    } catch {
+      return { embedding: [] };
+    }
+  }
+
   /**
    * Complete a prompt and return just the text content.
    * Simplest API — drop-in replacement for `openai.chat.completions.create()`.

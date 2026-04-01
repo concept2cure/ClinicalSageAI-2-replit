@@ -87,7 +87,7 @@ export async function extractCsrReferences(text: string): Promise<CSRReference[]
             }
 
             return resolve(result.references);
-          } catch (e) {
+          } catch (e: any) {
             console.error('Error processing CSR references:', e);
             // Fallback to simple extraction on error
             return resolve(extractBasicReferences(text));
@@ -95,7 +95,7 @@ export async function extractCsrReferences(text: string): Promise<CSRReference[]
         }
       );
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in extractCsrReferences:', error);
     return extractBasicReferences(text);
   }
@@ -213,7 +213,7 @@ export async function performDeepCsrSearch(
             }
 
             return resolve(result);
-          } catch (e) {
+          } catch (e: any) {
             console.error('Error processing semantic search results:', e);
             return resolve({
               error: `Failed to process search results: ${e.message}`,
@@ -223,7 +223,7 @@ export async function performDeepCsrSearch(
         }
       );
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in performDeepCsrSearch:', error);
     return {
       error: `Error performing semantic search: ${error.message}`,
@@ -284,7 +284,7 @@ export async function generateStudyDesignRecommendations(params: StudyDesignPara
             }
 
             return resolve(result);
-          } catch (e) {
+          } catch (e: any) {
             console.error('Error processing study design recommendations:', e);
             return resolve({
               error: `Failed to process recommendations: ${e.message}`,
@@ -294,7 +294,7 @@ export async function generateStudyDesignRecommendations(params: StudyDesignPara
         }
       );
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in generateStudyDesignRecommendations:', error);
     return {
       error: `Error generating recommendations: ${error.message}`,
