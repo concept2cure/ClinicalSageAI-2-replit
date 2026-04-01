@@ -217,14 +217,41 @@ async function seedFallbackSession(page: Page): Promise<void> {
     });
   });
 
-  await page.route('**/api/concept2cure/projects/**', async route => {
+  await page.route('**/api/concept2cure/projects', async route => {
     const request = route.request();
-    const url = new URL(request.url());
-    if (request.method() === 'GET' && url.pathname === '/api/concept2cure/projects') {
+    if (request.method() === 'GET') {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({ success: true, data: [seededProject] }),
+      });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.route('**/api/concept2cure/projects?*', async route => {
+    const request = route.request();
+    if (request.method() === 'GET') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: [seededProject] }),
+      });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.route('**/api/concept2cure/projects/**', async route => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const projectDetailPath = /^\/api\/concept2cure\/projects\/[^/]+$/;
+    if (request.method() === 'GET' && projectDetailPath.test(url.pathname)) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: seededProject }),
       });
       return;
     }
@@ -949,7 +976,9 @@ test.describe('Stage 9 - Authenticated beta pulse certification', () => {
         .locator('[data-testid="create-blank-document"], button:has-text("Create Document")')
         .first();
       await expect(createButton).toBeVisible({ timeout: 10000 });
-      await createButton.click();
+      await createButton.evaluate((el: Element) => {
+        (el as HTMLElement).click();
+      });
 
       const titleInput = page.locator('input[placeholder*="New document title"]').first();
       if (await titleInput.isVisible({ timeout: 3000 }).catch(() => false)) {
