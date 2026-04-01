@@ -102,6 +102,10 @@ import {
 import { apiRequest } from '@/lib/queryClient';
 import { applySourceTraceabilityToHtml, type AIProvenance } from './utils/applySourceTraceability';
 import { useYjsProvider } from '../../hooks/useYjsProvider';
+import {
+  getTemplateStructureForArtifact,
+  type TemplateStructureNode,
+} from '../../models/ctdHierarchy';
 
 import { LoadingState } from '@/components/ui/statesV2';
 import { Button } from '@/components/ui/button';
@@ -122,6 +126,7 @@ interface Artifact {
   content: string;
   type: string;
   category: string;
+  templateId?: string | null;
   version: number;
   versions?: { version: number; content: string; createdAt: string }[];
   status?: string;
@@ -426,6 +431,26 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [openArtifactNotFound, setOpenArtifactNotFound] = useState(false);
   const [showTemplateGenerator, setShowTemplateGenerator] = useState(false);
   const [showAutoDraft, setShowAutoDraft] = useState(false);
+  const [traceabilityLinks, setTraceabilityLinks] = useState<
+    Array<{
+      id: string;
+      sourceId: string;
+      sourceHash: string;
+      targetRange: { from: number; to: number };
+      linkedText: string;
+      createdAt: string;
+      createdBy: string;
+    }>
+  >([]);
+  const [traceabilitySources, setTraceabilitySources] = useState<
+    Array<{ id: string; title: string; type?: string; version?: string; hash?: string; confidence?: number }>
+  >([]);
+
+  // Prevent stale traceability side-panel data when switching documents.
+  useEffect(() => {
+    setTraceabilityLinks([]);
+    setTraceabilitySources([]);
+  }, [activeArtifact?.id]);
 
   // ── Claim validation (zero-hallucination layer) ──────────────────────────
   const [claimValidation, setClaimValidation] = useState<{
@@ -1807,10 +1832,54 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     if (aiProvenance?.sources?.length) {
       finalContent = applySourceTraceabilityToHtml(htmlContent, aiProvenance);
       const srcCount = aiProvenance.sources.length;
+      const sourceByIdx = new Map<number, (typeof aiProvenance.sources)[number]>();
+      aiProvenance.sources.forEach((src, idx) => {
+        sourceByIdx.set(src.index ?? idx + 1, src);
+      });
+      const nextLinks: typeof traceabilityLinks = [];
+      const sentenceRegex = /([^.!?]+[.!?])/g;
+      let sentenceMatch: RegExpExecArray | null;
+      let sentenceCounter = 0;
+      while ((sentenceMatch = sentenceRegex.exec(aiResult || '')) !== null) {
+        const sentence = sentenceMatch[1].trim();
+        const refs = Array.from(sentence.matchAll(/\[SRC-(\d+)\]/g))
+          .map(ref => Number(ref[1]))
+          .filter(n => Number.isFinite(n));
+        if (refs.length === 0) continue;
+        const cleanSentence = sentence.replace(/\[SRC-\d+\]/g, '').trim();
+        refs.forEach(ref => {
+          const src = sourceByIdx.get(ref);
+          if (!src) return;
+          sentenceCounter += 1;
+          nextLinks.push({
+            id: `trace-${Date.now()}-${sentenceCounter}`,
+            sourceId: src.id,
+            sourceHash: src.sourceHash || src.id,
+            targetRange: { from: 0, to: 0 },
+            linkedText: cleanSentence,
+            createdAt: new Date().toISOString(),
+            createdBy: currentUser.id,
+          });
+        });
+      }
+      setTraceabilityLinks(nextLinks);
+      setTraceabilitySources(
+        aiProvenance.sources.map(src => ({
+          id: src.id,
+          title: src.name || src.title || src.id,
+          type: src.type,
+          version: src.version,
+          hash: src.sourceHash || src.id,
+          confidence: src.confidence,
+        }))
+      );
       pushToast(
         `Applied ${srcCount} source traceability link${srcCount !== 1 ? 's' : ''}`,
         'success'
       );
+    } else {
+      setTraceabilityLinks([]);
+      setTraceabilitySources([]);
     }
 
     setActiveArtifact({ ...activeArtifact, content: finalContent });
@@ -1819,7 +1888,23 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
     // Auto-run claim validation in background after AI edit is accepted
     runClaimValidation(finalContent);
-  }, [aiResult, aiProvenance, activeArtifact, runClaimValidation]);
+  }, [aiResult, aiProvenance, activeArtifact, currentUser.id, runClaimValidation]);
+
+  const templateStructure = useMemo(() => {
+    if (!activeArtifact) return undefined;
+    const structure = getTemplateStructureForArtifact({
+      templateId: activeArtifact.templateId,
+      ctdSection: activeArtifact.ctdSection,
+    });
+    if (!structure?.length) return undefined;
+    return structure.map(
+      (node: TemplateStructureNode): { key: string; label: string; required: boolean } => ({
+        key: node.key,
+        label: node.label,
+        required: node.required,
+      })
+    );
+  }, [activeArtifact]);
 
   // ── DOCX Export (real generation via knowledge-base → shadow service) ───
   const generateDocxMutation = useGenerateDocx();
@@ -3652,7 +3737,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             documentType={activeArtifact?.type}
             submissionType={submissionType}
             showCompliance={true}
-            showTraceability={false}
+            showTraceability={true}
+            traceabilityLinks={traceabilityLinks}
+            sources={traceabilitySources}
+            templateStructure={templateStructure}
             complianceIssues={complianceIssues as any}
             onComplianceIssuesFound={(issues: any[]) => {
               setComplianceIssues(issues);
