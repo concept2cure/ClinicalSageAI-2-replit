@@ -143,6 +143,10 @@ import firecrawlWebhooksRoutes from './routes/firecrawl-webhooks';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const EXPERIMENTAL_ROUTES_ENABLED =
+  process.env.ENABLE_EXPERIMENTAL_ROUTES === 'true' && process.env.NODE_ENV !== 'production';
+const DEMO_ROUTES_ENABLED =
+  process.env.ENABLE_DEMO_ROUTES === 'true' && process.env.NODE_ENV !== 'production';
 
 // --- Start Python FastAPI Backend as a Child Process ---
 const __filename = fileURLToPath(import.meta.url);
@@ -1557,26 +1561,36 @@ try {
   console.error('❌ Failed to mount Defense Packet routes:', error);
 }
 
-// Mount Demo Seed routes (for creating demo projects)
-try {
-  const seedDemoModule = await import('./routes/seed-demo.js');
-  const seedDemoRoutes = seedDemoModule.default;
-  app.use('/api/demo', seedDemoRoutes);
-  console.log('✅ Demo seeding API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount Demo seed routes:', error);
+// Mount Demo Seed routes (for creating demo projects) — explicit opt-in only
+if (DEMO_ROUTES_ENABLED) {
+  try {
+    const seedDemoModule = await import('./routes/seed-demo.js');
+    const seedDemoRoutes = seedDemoModule.default;
+    app.use('/api/demo', seedDemoRoutes);
+    console.log('✅ Demo seeding API routes mounted successfully');
+  } catch (error) {
+    console.error('❌ Failed to mount Demo seed routes:', error);
+  }
+} else {
+  console.log('ℹ️ Demo seed routes disabled (set ENABLE_DEMO_ROUTES=true to enable in non-production).');
 }
 
 // Mount Collaboration Center routes for 510(k) activity tracking
-try {
-  const collaborationModule = await import('./routes/collaboration');
-  const collaborationRoutes = collaborationModule.default;
-  app.use('/api/collaboration', collaborationRoutes);
+if (EXPERIMENTAL_ROUTES_ENABLED) {
+  try {
+    const collaborationModule = await import('./routes/collaboration');
+    const collaborationRoutes = collaborationModule.default;
+    app.use('/api/collaboration', collaborationRoutes);
+    console.log(
+      '✅ Collaboration Center API routes mounted successfully (510(k) team activity tracking)'
+    );
+  } catch (error) {
+    console.error('❌ Failed to mount Collaboration Center routes:', error);
+  }
+} else {
   console.log(
-    '✅ Collaboration Center API routes mounted successfully (510(k) team activity tracking)'
+    'ℹ️ Collaboration Center legacy activity routes disabled (experimental in-memory behavior).'
   );
-} catch (error) {
-  console.error('❌ Failed to mount Collaboration Center routes:', error);
 }
 
 // Mount CERV2 Sections routes for 510(k) section management
@@ -5460,7 +5474,7 @@ app.get('/api/vault/list', async (req: Request, res: Response) => {
 });
 
 // AnA RI Regulatory Intelligence endpoint
-app.get('/api/ana/regulatory-intelligence', async (req: Request, res: Response) => {
+app.get('/api/ana/regulatory-intelligence', authMiddleware as any, async (req: Request, res: Response) => {
   try {
     // Return regulatory intelligence data
     res.json({
@@ -5496,7 +5510,7 @@ app.get('/api/ana/regulatory-intelligence', async (req: Request, res: Response) 
 });
 
 // AnA RI Regulatory Analysis endpoint
-app.post('/api/ana/regulatory-analysis', async (req: Request, res: Response) => {
+app.post('/api/ana/regulatory-analysis', authMiddleware as any, async (req: Request, res: Response) => {
   console.log('🔥 AnA RI Regulatory Analysis endpoint hit!');
   try {
     // Add cache-busting headers
@@ -5553,21 +5567,9 @@ Return JSON shape:
     try {
       res.json(JSON.parse(response.content));
     } catch {
-      res.json({
-        comprehensive_analysis: {
-          regulatory_readiness_score: 70,
-          overall_risk_assessment: 'Medium',
-          timeline_analysis: { projected_delay_days: 0 },
-          cost_analysis: { total_financial_impact: 0 },
-          regulatory_gaps: [],
-          ich_e6r3_assessment: { compliance_score: 75, risk_factors: [], recommendations: [] },
-        },
-        ana_1_0_ri_intelligence_summary: {
-          confidence_score: 60,
-          analysis_timestamp: new Date().toISOString(),
-          data_sources: ['AI Gateway', 'Parser fallback'],
-        },
-        raw_response: response.content,
+      return res.status(502).json({
+        error: 'AI analysis returned invalid JSON payload',
+        code: 'AI_INVALID_RESPONSE_FORMAT',
       });
     }
   } catch (error) {
@@ -5577,7 +5579,7 @@ Return JSON shape:
 });
 
 // AnA RI ICH E6(R3) Guidance endpoint
-app.post('/api/ana/ich-e6r3-guidance', async (req: Request, res: Response) => {
+app.post('/api/ana/ich-e6r3-guidance', authMiddleware as any, async (req: Request, res: Response) => {
   console.log('🔥 AnA RI ICH E6(R3) Guidance endpoint hit!');
   try {
     // Add cache-busting headers
@@ -5631,20 +5633,9 @@ Return JSON:
     try {
       res.json(JSON.parse(response.content));
     } catch {
-      res.json({
-        guidance_response: {
-          answer: response.content,
-          regulatory_framework: 'ICH_E6_R3',
-          confidence_score: 70,
-          supporting_sections: [],
-          implementation_guidance: [],
-          references: [],
-        },
-        query_metadata: {
-          query_timestamp: new Date().toISOString(),
-          processing_time_ms: Date.now() - started,
-          guidance_version: 'E6(R3)',
-        },
+      return res.status(502).json({
+        error: 'AI guidance returned invalid JSON payload',
+        code: 'AI_INVALID_RESPONSE_FORMAT',
       });
     }
   } catch (error) {
@@ -7171,16 +7162,22 @@ async function startServer() {
   // ──────────────────────────────────────────────────────────────────────────
   // MISSION CONTROL — Program OS (PM ecosystem)
   // ──────────────────────────────────────────────────────────────────────────
-  try {
-    const missionControlRoutes = await import('./routes/mission-control');
-    app.use('/api/mission-control', missionControlRoutes.default);
-    console.log('✅ Mission Control routes mounted at /api/mission-control');
+  if (EXPERIMENTAL_ROUTES_ENABLED) {
+    try {
+      const missionControlRoutes = await import('./routes/mission-control');
+      app.use('/api/mission-control', missionControlRoutes.default);
+      console.log('✅ Mission Control routes mounted at /api/mission-control');
 
-    const snowglobeRoutes = await import('./routes/snowglobe');
-    app.use('/api/snowglobe', snowglobeRoutes.default);
-    console.log('✅ Snow Globe routes mounted at /api/snowglobe');
-  } catch (error) {
-    console.error('❌ Failed to mount Mission Control routes:', error);
+      const snowglobeRoutes = await import('./routes/snowglobe');
+      app.use('/api/snowglobe', snowglobeRoutes.default);
+      console.log('✅ Snow Globe routes mounted at /api/snowglobe');
+    } catch (error) {
+      console.error('❌ Failed to mount Mission Control routes:', error);
+    }
+  } else {
+    console.log(
+      'ℹ️ Experimental mission-control/snowglobe routes disabled (set ENABLE_EXPERIMENTAL_ROUTES=true in non-production).'
+    );
   }
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -7246,17 +7243,21 @@ async function startServer() {
   }
 
   // ──────────────────────────────────────────────────────────────────────────
-  // C2C MISSING ROUTES — stub endpoints for notifications, sections, predicates
-  // Must be registered BEFORE the catch-all 404 handler
+  // C2C MISSING ROUTES — legacy stub endpoints (disabled by default)
+  // Must be explicitly opted in for non-production diagnostics only.
   // ──────────────────────────────────────────────────────────────────────────
-  try {
-    const c2cMissingRoutes = await import('./routes/c2c-missing-routes');
-    app.use('/api', c2cMissingRoutes.default);
-    console.log(
-      '✅ C2C missing routes registered (notifications, sections, predicates, vault/docs)'
-    );
-  } catch (error) {
-    console.error('❌ Failed to mount c2c-missing-routes:', error);
+  if (EXPERIMENTAL_ROUTES_ENABLED) {
+    try {
+      const c2cMissingRoutes = await import('./routes/c2c-missing-routes');
+      app.use('/api', c2cMissingRoutes.default);
+      console.log(
+        '✅ C2C missing routes registered (notifications, sections, predicates, vault/docs)'
+      );
+    } catch (error) {
+      console.error('❌ Failed to mount c2c-missing-routes:', error);
+    }
+  } else {
+    console.log('ℹ️ C2C legacy stub routes disabled.');
   }
 
   // ──────────────────────────────────────────────────────────────────────────
