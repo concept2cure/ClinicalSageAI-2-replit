@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-04-01T05:04:14.652Z",
+  "generatedAt": "2026-04-01T05:11:08.994Z",
   "git": {
-    "sha": "d7c54688fdbadcbb8fe4058befaafae017500e2c",
+    "sha": "24766bca2d8f784c061fd1c19c90b47b3f6e6a3a",
     "branch": "cursor/customer-shaped-harness-build-5841"
   },
   "thresholds": {
@@ -2224,5 +2224,13 @@
         "lines": 1517
       }
     ]
+  },
+  "comparison": {
+    "baseline": "docs/reports/repo-health-scan-latest.json",
+    "delta": {
+      "duplicateBasenames": 0,
+      "largeFilesByBytes": 0,
+      "largeFilesByLines": 0
+    }
   }
 }

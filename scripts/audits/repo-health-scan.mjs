@@ -19,6 +19,7 @@ function parseArgs(argv) {
   const options = {
     output: DEFAULT_OUTPUT,
     strict: false,
+    baseline: null,
     maxBytes: DEFAULT_MAX_BYTES,
     maxLines: DEFAULT_MAX_LINES,
   };
@@ -30,6 +31,9 @@ function parseArgs(argv) {
       i += 1;
     } else if (arg === '--strict') {
       options.strict = true;
+    } else if (arg === '--baseline') {
+      options.baseline = argv[i + 1];
+      i += 1;
     } else if (arg === '--max-bytes') {
       options.maxBytes = Number(argv[i + 1]);
       i += 1;
@@ -147,19 +151,67 @@ function printSummary(outputPath, report) {
   console.log(`- files over line threshold: ${report.summary.largeFilesByLines}`);
 }
 
+function readBaseline(filePath) {
+  if (!filePath) return null;
+  const abs = path.resolve(process.cwd(), filePath);
+  if (!fs.existsSync(abs)) {
+    throw new Error(`Baseline file not found: ${filePath}`);
+  }
+  const raw = fs.readFileSync(abs, 'utf8');
+  const parsed = JSON.parse(raw);
+  if (!parsed || typeof parsed !== 'object' || !parsed.summary) {
+    throw new Error(`Invalid baseline report shape: ${filePath}`);
+  }
+  return parsed;
+}
+
+function computeDelta(current, baseline) {
+  if (!baseline) {
+    return null;
+  }
+  const safe = value => (Number.isFinite(value) ? value : 0);
+  const currentSummary = current.summary ?? {};
+  const baselineSummary = baseline.summary ?? {};
+  return {
+    duplicateBasenames: safe(currentSummary.duplicateBasenames) - safe(baselineSummary.duplicateBasenames),
+    largeFilesByBytes: safe(currentSummary.largeFilesByBytes) - safe(baselineSummary.largeFilesByBytes),
+    largeFilesByLines: safe(currentSummary.largeFilesByLines) - safe(baselineSummary.largeFilesByLines),
+  };
+}
+
+function hasRegression(delta) {
+  if (!delta) return false;
+  return delta.duplicateBasenames > 0 || delta.largeFilesByBytes > 0 || delta.largeFilesByLines > 0;
+}
+
 function main() {
   const options = parseArgs(process.argv.slice(2));
   const files = getTrackedFiles();
   const findings = classifyFiles(files, options);
+  const baseline = readBaseline(options.baseline);
   const report = buildReport(findings, options);
+  report.comparison = baseline
+    ? {
+        baseline: options.baseline,
+        delta: computeDelta(report, baseline),
+      }
+    : null;
+
   writeReport(options.output, report);
   printSummary(options.output, report);
+  if (report.comparison) {
+    console.log(`- baseline: ${report.comparison.baseline}`);
+    console.log(`- delta duplicate basenames: ${report.comparison.delta.duplicateBasenames}`);
+    console.log(`- delta files over byte threshold: ${report.comparison.delta.largeFilesByBytes}`);
+    console.log(`- delta files over line threshold: ${report.comparison.delta.largeFilesByLines}`);
+  }
 
   if (options.strict) {
-    const failed =
-      report.summary.duplicateBasenames > 0 ||
-      report.summary.largeFilesByBytes > 0 ||
-      report.summary.largeFilesByLines > 0;
+    const failed = baseline
+      ? hasRegression(report.comparison?.delta)
+      : report.summary.duplicateBasenames > 0 ||
+        report.summary.largeFilesByBytes > 0 ||
+        report.summary.largeFilesByLines > 0;
     if (failed) {
       process.exit(1);
     }

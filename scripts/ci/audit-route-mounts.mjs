@@ -20,6 +20,8 @@ function parseArgs(argv) {
   const options = {
     target: DEFAULT_TARGET,
     json: false,
+    strictNoRegression: false,
+    maxWarnings: null,
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -29,7 +31,16 @@ function parseArgs(argv) {
       i += 1;
     } else if (arg === '--json') {
       options.json = true;
+    } else if (arg === '--strict-no-regression') {
+      options.strictNoRegression = true;
+    } else if (arg === '--max-warnings') {
+      options.maxWarnings = Number(argv[i + 1]);
+      i += 1;
     }
+  }
+
+  if (options.maxWarnings != null && (!Number.isInteger(options.maxWarnings) || options.maxWarnings < 0)) {
+    throw new Error(`Invalid --max-warnings value: ${options.maxWarnings}`);
   }
 
   return options;
@@ -168,7 +179,13 @@ function printHumanReport(target, entries, result) {
 }
 
 function main() {
-  const options = parseArgs(process.argv.slice(2));
+  let options;
+  try {
+    options = parseArgs(process.argv.slice(2));
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
   const target = path.resolve(process.cwd(), options.target);
   if (!fs.existsSync(target)) {
     console.error(`Missing route mount target: ${options.target}`);
@@ -198,6 +215,17 @@ function main() {
 
   if (result.errors.length > 0) {
     process.exit(1);
+  }
+
+  if (options.strictNoRegression) {
+    const baselineWarnings = options.maxWarnings ?? 16;
+    if (result.warnings.length > baselineWarnings) {
+      console.error(
+        `Route mount warning regression detected: ` +
+          `${result.warnings.length} warnings > baseline ${baselineWarnings}`
+      );
+      process.exit(1);
+    }
   }
 }
 

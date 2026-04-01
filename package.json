@@ -40,6 +40,7 @@
     "ci:governed-export-routes": "node scripts/ci/check-governed-export-routes.mjs",
     "ci:governed-export-consequence-shape": "node scripts/ci/check-governed-export-consequence-shape.mjs",
     "ci:audit-route-mounts": "node scripts/ci/audit-route-mounts.mjs",
+    "ci:audit-route-mounts:strict": "node scripts/ci/audit-route-mounts.mjs --strict-no-regression --baseline docs/reports/route-mount-audit-baseline.json",
     "db:push": "drizzle-kit push",
     "db:seed": "node scripts/seed-ga-demo.mjs",
     "db:seed:admin": "node scripts/seed-admin.mjs",
@@ -78,7 +79,8 @@
     "audit:dead-code": "npx knip --no-exit-code --reporter compact",
     "audit:bundle": "ANALYZE=true vite build",
     "audit:repo-health": "node scripts/audits/repo-health-scan.mjs",
-    "audit:repo-health:strict": "node scripts/audits/repo-health-scan.mjs --strict"
+    "audit:repo-health:strict": "node scripts/audits/repo-health-scan.mjs --strict",
+    "audit:repo-health:no-regression": "node scripts/audits/repo-health-scan.mjs --strict-no-regression --baseline docs/reports/repo-health-scan-latest.json"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [

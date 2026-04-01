@@ -27,11 +27,11 @@ jobs:
       - name: Guardrails — ban direct new Pool()
         run: scripts/ci/ban-new-pool.sh
 
-      - name: Guardrails — route mount authority audit
-        run: npm run ci:audit-route-mounts
+      - name: Guardrails — route mount authority audit (no regressions)
+        run: npm run ci:audit-route-mounts:no-regression
 
-      - name: Audit — repo health scan
-        run: npm run audit:repo-health
+      - name: Audit — repo health scan (no regressions)
+        run: npm run audit:repo-health:no-regression
 
       - name: Run ESLint
         run: npm run lint
