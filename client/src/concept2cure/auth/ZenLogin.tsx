@@ -602,19 +602,14 @@ export const ZenLogin: React.FC = () => {
         } finally {
           setIsLoading(false);
         }
+        return;
       }
 
-      // Fallback: keep previous demo behavior for non-dev
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Production flow: hand off to backend provider initiate endpoint.
+      window.location.assign(`/api/auth/sso/${provider}/initiate`);
       setIsLoading(false);
-      setStep('success');
-      setTimeout(() => {
-        setLocation(
-          computeRedirect(undefined, undefined, () => authService.getUser && authService.getUser())
-        );
-      }, 1000);
     },
-    [setLocation]
+    []
   );
 
   const handleKeyDown = useCallback(

@@ -868,6 +868,15 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     }
   });
 
+  useEffect(() => {
+    if (!showFirstRun) return;
+    if (projects.length === 0) return;
+    setShowFirstRun(false);
+    try {
+      localStorage.setItem('concept2cure_first_run_complete', 'true');
+    } catch {}
+  }, [projects.length, showFirstRun]);
+
   // Tool panels
   const [activeToolPanel, setActiveToolPanel] = useState<ToolPanel>(null);
   const [toolPanelFullscreen, setToolPanelFullscreen] = useState(false);
