@@ -47,6 +47,8 @@ import {
   projects,
   users,
   organizationUsers,
+  projectMembers,
+  projectVisibilitySettings,
   concept2cureConversations,
   concept2cureMessages,
   concept2cureArtifacts,
@@ -95,6 +97,14 @@ import {
   type PublishOpsServiceRecord,
   type CommunicationVisibilityTier,
 } from '../../shared/types/communication-center';
+import {
+  applyProjectSharingState,
+  canEditProject,
+  canManageProject,
+  canUseProject,
+  getProjectSharingState,
+  type ProjectActorRole,
+} from '../services/project-sharing-access';
 
 const logger = createScopedLogger('concept2cure-api');
 const router = Router();
@@ -691,6 +701,15 @@ const createProjectSchema = z.object({
 
 const updateProjectSchema = createProjectSchema.partial();
 
+const projectVisibilitySchema = z.object({
+  visibility: z.enum(['private', 'org_public']),
+});
+
+const upsertProjectMemberSchema = z.object({
+  userId: z.number().int().positive(),
+  role: z.enum(['use', 'edit']),
+});
+
 const updateKnowledgeSchema = z
   .object({
     customInstructions: z.string().max(5000).optional(),
@@ -1062,6 +1081,308 @@ function getClientWorkspaceId(req: Request): number {
   throw new Error('Client workspace context required');
 }
 
+function getActorRole(req: Request): ProjectActorRole {
+  const normalized = (req.userRole || 'member').toLowerCase() as ProjectActorRole;
+  return normalized || 'member';
+}
+
+function isMissingTableError(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: string }).code === '42P01'
+  );
+}
+
+function getProjectScope(projectParam: string): { numericId: number } | null {
+  const projectId = projectParam.replace('proj_', '');
+  const numericId = parseInt(projectId, 10);
+  if (isNaN(numericId)) {
+    return null;
+  }
+  return { numericId };
+}
+
+async function loadProjectAccessRow(params: {
+  organizationId: number;
+  clientWorkspaceId: number;
+  projectId: number;
+  userId: number;
+  actorRole: ProjectActorRole;
+}): Promise<{
+  project:
+    | {
+        id: number;
+        name: string;
+        description: string | null;
+        metadata: unknown;
+        status: string;
+        organizationId: number;
+        createdById: number | null;
+        ownerId: number | null;
+        settings: unknown;
+        createdAt: Date;
+        updatedAt: Date;
+      }
+    | null;
+  legacyFallbackApplied: boolean;
+}> {
+  const [project] = await db
+    .select({
+      id: projects.id,
+      name: projects.name,
+      description: projects.description,
+      metadata: projects.metadata,
+      status: projects.status,
+      organizationId: projects.organizationId,
+      createdById: projects.createdById,
+      ownerId: projects.ownerId,
+      settings: projects.settings,
+      createdAt: projects.createdAt,
+      updatedAt: projects.updatedAt,
+    })
+    .from(projects)
+    .where(
+      and(
+        eq(projects.id, params.projectId),
+        eq(projects.organizationId, params.organizationId),
+        eq(projects.clientWorkspaceId, params.clientWorkspaceId)
+      )
+    )
+    .limit(1);
+
+  if (!project) {
+    return { project: null, legacyFallbackApplied: false };
+  }
+
+  const sharing = await loadProjectSharingState(project.id, params.organizationId, project);
+  const settingsWithSharing = applyProjectSharingState(normalizeProjectSettings(project.settings), sharing);
+  const hasAccess = canUseProject({
+    actor: { userId: params.userId, orgRole: params.actorRole },
+    project: {
+      createdById: project.createdById ?? null,
+      ownerId: project.ownerId ?? null,
+      settings: settingsWithSharing,
+    },
+  });
+
+  if (!hasAccess) {
+    return { project: null, legacyFallbackApplied: sharing.legacyFallbackApplied };
+  }
+
+  return { project, legacyFallbackApplied: sharing.legacyFallbackApplied };
+}
+
+async function loadProjectSharingState(
+  projectId: number,
+  organizationId: number,
+  project?: { ownerId: number | null; createdById: number | null; settings: unknown }
+) {
+  const fallback = getProjectSharingState({
+    settings: normalizeProjectSettings(project?.settings),
+    ownerId: project?.ownerId ?? null,
+    createdById: project?.createdById ?? null,
+  });
+
+  try {
+    const [[visibility], members] = await Promise.all([
+      db
+        .select({ visibility: projectVisibilitySettings.visibility })
+        .from(projectVisibilitySettings)
+        .where(
+          and(
+            eq(projectVisibilitySettings.projectId, projectId),
+            eq(projectVisibilitySettings.organizationId, organizationId)
+          )
+        )
+        .limit(1),
+      db
+        .select({
+          userId: projectMembers.userId,
+          role: projectMembers.role,
+          status: projectMembers.status,
+          invitedById: projectMembers.invitedById,
+          acceptedAt: projectMembers.acceptedAt,
+        })
+        .from(projectMembers)
+        .where(
+          and(
+            eq(projectMembers.projectId, projectId),
+            eq(projectMembers.organizationId, organizationId),
+            eq(projectMembers.status, 'active')
+          )
+        ),
+    ]);
+
+    return getProjectSharingState({
+      settings: {
+        projectSharing: {
+          visibility: visibility?.visibility ?? fallback.visibility,
+          members: members.map(m => ({
+            userId: m.userId,
+            role: m.role,
+            status: m.status,
+            addedById: m.invitedById ?? null,
+            addedAt: m.acceptedAt?.toISOString() ?? new Date().toISOString(),
+          })),
+        },
+      },
+      ownerId: project?.ownerId ?? null,
+      createdById: project?.createdById ?? null,
+    });
+  } catch (error) {
+    if (isMissingTableError(error)) {
+      return fallback;
+    }
+    throw error;
+  }
+}
+
+async function loadProjectSharingStateMap(
+  organizationId: number,
+  projectRows: Array<{
+    id: number;
+    ownerId: number | null;
+    createdById: number | null;
+    settings: unknown;
+  }>
+): Promise<Map<number, ReturnType<typeof getProjectSharingState>>> {
+  const sharingByProjectId = new Map<number, ReturnType<typeof getProjectSharingState>>();
+  if (projectRows.length === 0) {
+    return sharingByProjectId;
+  }
+
+  const fallbackByProjectId = new Map<number, ReturnType<typeof getProjectSharingState>>();
+  for (const row of projectRows) {
+    fallbackByProjectId.set(
+      row.id,
+      getProjectSharingState({
+        settings: normalizeProjectSettings(row.settings),
+        ownerId: row.ownerId ?? null,
+        createdById: row.createdById ?? null,
+      })
+    );
+  }
+
+  try {
+    const projectIds = projectRows.map(p => p.id);
+    const [visibilityRows, memberRows] = await Promise.all([
+      db
+        .select({
+          projectId: projectVisibilitySettings.projectId,
+          visibility: projectVisibilitySettings.visibility,
+        })
+        .from(projectVisibilitySettings)
+        .where(
+          and(
+            eq(projectVisibilitySettings.organizationId, organizationId),
+            inArray(projectVisibilitySettings.projectId, projectIds)
+          )
+        ),
+      db
+        .select({
+          projectId: projectMembers.projectId,
+          userId: projectMembers.userId,
+          role: projectMembers.role,
+          status: projectMembers.status,
+          invitedById: projectMembers.invitedById,
+          acceptedAt: projectMembers.acceptedAt,
+        })
+        .from(projectMembers)
+        .where(
+          and(
+            eq(projectMembers.organizationId, organizationId),
+            inArray(projectMembers.projectId, projectIds),
+            eq(projectMembers.status, 'active')
+          )
+        ),
+    ]);
+
+    const visibilityByProjectId = new Map<number, 'private' | 'org_public'>();
+    for (const row of visibilityRows) {
+      visibilityByProjectId.set(row.projectId, row.visibility as 'private' | 'org_public');
+    }
+
+    const membersByProjectId = new Map<
+      number,
+      Array<{
+        userId: number;
+        role: string;
+        status: string;
+        invitedById: number | null;
+        acceptedAt: Date | null;
+      }>
+    >();
+    for (const row of memberRows) {
+      const list = membersByProjectId.get(row.projectId) || [];
+      list.push({
+        userId: row.userId,
+        role: row.role,
+        status: row.status,
+        invitedById: row.invitedById ?? null,
+        acceptedAt: row.acceptedAt ?? null,
+      });
+      membersByProjectId.set(row.projectId, list);
+    }
+
+    for (const row of projectRows) {
+      const fallback = fallbackByProjectId.get(row.id)!;
+      const members = membersByProjectId.get(row.id);
+      sharingByProjectId.set(
+        row.id,
+        getProjectSharingState({
+          settings: {
+            projectSharing: {
+              visibility: visibilityByProjectId.get(row.id) ?? fallback.visibility,
+              members:
+                members?.map(m => ({
+                  userId: m.userId,
+                  role: m.role,
+                  status: m.status,
+                  addedById: m.invitedById ?? null,
+                  addedAt: m.acceptedAt?.toISOString() ?? new Date().toISOString(),
+                })) ?? fallback.members,
+            },
+          },
+          ownerId: row.ownerId ?? null,
+          createdById: row.createdById ?? null,
+        })
+      );
+    }
+  } catch (error) {
+    if (!isMissingTableError(error)) {
+      throw error;
+    }
+    for (const row of projectRows) {
+      sharingByProjectId.set(row.id, fallbackByProjectId.get(row.id)!);
+    }
+  }
+
+  return sharingByProjectId;
+}
+
+function buildProjectSharingResponse(
+  projectId: number,
+  sharing: ReturnType<typeof getProjectSharingState>,
+  legacyFallbackApplied?: boolean
+) {
+  return {
+    projectId: `proj_${projectId}`,
+    visibility: sharing.visibility,
+    legacyFallbackApplied: legacyFallbackApplied ?? sharing.legacyFallbackApplied,
+    members: sharing.members
+      .filter(m => m.status !== 'revoked')
+      .map(m => ({
+        userId: m.userId,
+        role: m.role,
+        status: m.status ?? 'active',
+        addedById: m.addedById ?? null,
+        addedAt: m.addedAt ?? null,
+      })),
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // DATABASE-BACKED DATA ACCESS
 // All conversations and artifacts are persisted to PostgreSQL
@@ -1424,23 +1745,25 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
+      const userId = getUserId(req);
+      const actorRole = getActorRole(req);
+      const clientWorkspaceId = getClientWorkspaceId(req);
 
       // Use raw SQL to avoid Drizzle ORM schema mismatch (parent_project_id doesn't exist in DB)
       const result = await pool.query(
-        `SELECT id, name, description, status, type, metadata, settings, created_at, updated_at
+        `SELECT id, name, description, status, type, metadata, settings, created_at, updated_at, created_by_id, owner_id
        FROM projects
        WHERE organization_id = $1
+         AND client_workspace_id = $2
          AND actual_end_date IS NULL
        ORDER BY updated_at DESC
        LIMIT 100`,
-        [organizationId]
+        [organizationId, clientWorkspaceId]
       );
 
       // Batch-load all conversations for all projects (2 queries total instead of 2*N)
       const projectIds = result.rows.map((p: any) => p.id);
       const allConversationsByProject = new Map<number, Conversation[]>();
-      const derivationData = await getOwnershipDerivationData(projectIds, organizationId);
-
       if (projectIds.length > 0) {
         const allDbConvs = await db
           .select()
@@ -1495,27 +1818,68 @@ router.get(
         }
       }
 
-      const response = result.rows.map((p: any) => {
-        const conversations = allConversationsByProject.get(p.id) || [];
-        return {
-          id: `proj_${p.id}`,
-          name: p.name,
-          submissionType: p.metadata?.submissionType || p.type || 'IND',
-          description: p.description,
-          status: p.status || 'active',
-          sponsor: p.metadata?.sponsor,
-          product: p.metadata?.product,
-          region: p.metadata?.region,
-          pinned: (p.metadata as any)?.pinned ?? false,
-          targetAgency: (p.metadata as any)?.targetAgency ?? null,
-          color: (p.metadata as any)?.color ?? null,
-          organizationId,
-          conversations,
-          ownership: buildProjectOwnership(conversations, normalizeProjectSettings(p.settings)),
-          createdAt: p.created_at,
-          updatedAt: p.updated_at,
-        };
-      });
+      const sharingByProjectId = await loadProjectSharingStateMap(
+        organizationId,
+        result.rows.map((p: any) => ({
+          id: p.id,
+          ownerId: p.owner_id ?? null,
+          createdById: p.created_by_id ?? null,
+          settings: p.settings,
+        }))
+      );
+
+      const response = result.rows
+        .filter((p: any) => {
+          const sharing =
+            sharingByProjectId.get(p.id) ??
+            getProjectSharingState({
+              settings: normalizeProjectSettings(p.settings),
+              ownerId: p.owner_id ?? null,
+              createdById: p.created_by_id ?? null,
+            });
+          const settingsWithSharing = applyProjectSharingState(
+            normalizeProjectSettings(p.settings),
+            sharing
+          );
+          return canUseProject({
+            actor: { userId, orgRole: actorRole },
+            project: {
+              createdById: p.created_by_id ?? null,
+              ownerId: p.owner_id ?? null,
+              settings: settingsWithSharing,
+            },
+          });
+        })
+        .map((p: any) => {
+          const conversations = allConversationsByProject.get(p.id) || [];
+          return {
+            id: `proj_${p.id}`,
+            name: p.name,
+            submissionType: p.metadata?.submissionType || p.type || 'IND',
+            description: p.description,
+            status: p.status || 'active',
+            sponsor: p.metadata?.sponsor,
+            product: p.metadata?.product,
+            region: p.metadata?.region,
+            pinned: (p.metadata as any)?.pinned ?? false,
+            targetAgency: (p.metadata as any)?.targetAgency ?? null,
+            color: (p.metadata as any)?.color ?? null,
+            organizationId,
+            conversations,
+            ownership: buildProjectOwnership(conversations, normalizeProjectSettings(p.settings)),
+            createdAt: p.created_at,
+            updatedAt: p.updated_at,
+            sharing: buildProjectSharingResponse(
+              p.id,
+              sharingByProjectId.get(p.id) ??
+                getProjectSharingState({
+                  settings: normalizeProjectSettings(p.settings),
+                  ownerId: p.owner_id ?? null,
+                  createdById: p.created_by_id ?? null,
+                })
+            ),
+          };
+        });
 
       return sendSuccess(res, response);
     } catch (error: any) {
@@ -1538,19 +1902,21 @@ router.get(
 router.get('/projects/:id', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const projectId = req.params.id.replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
-
-    if (isNaN(numericId)) {
+    const userId = getUserId(req);
+    const actorRole = getActorRole(req);
+    const clientWorkspaceId = getClientWorkspaceId(req);
+    const scope = getProjectScope(req.params.id);
+    if (!scope) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
-
-    // Query with tenant isolation
-    const [project] = await db
-      .select()
-      .from(projects)
-      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
-      .limit(1);
+    const projectAccess = await loadProjectAccessRow({
+      organizationId,
+      clientWorkspaceId,
+      projectId: scope.numericId,
+      userId,
+      actorRole,
+    });
+    const project = projectAccess.project;
 
     if (!project) {
       return sendError(res, 404, 'Project not found');
@@ -1558,6 +1924,11 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
 
     const settings = normalizeProjectSettings(project.settings);
     const conversations = await getConversationsFromDb(project.id, organizationId);
+    const sharing = await loadProjectSharingState(scope.numericId, organizationId, {
+      ownerId: project.ownerId ?? null,
+      createdById: project.createdById ?? null,
+      settings: project.settings,
+    });
 
     // Transform to API response with DB conversations
     const response = {
@@ -1576,6 +1947,11 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
       organizationId: project.organizationId,
       conversations,
       ownership: buildProjectOwnership(conversations, settings),
+      sharing: buildProjectSharingResponse(
+        project.id,
+        sharing,
+        projectAccess.legacyFallbackApplied
+      ),
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
     };
@@ -1702,6 +2078,38 @@ router.post('/projects', async (req: Request, res: Response) => {
       })
       .returning();
 
+    await db
+      .insert(projectVisibilitySettings)
+      .values({
+        organizationId,
+        projectId: newProject.id,
+        visibility: 'private',
+        updatedById: userId,
+      })
+      .onConflictDoNothing();
+
+    await db
+      .insert(projectMembers)
+      .values({
+        organizationId,
+        projectId: newProject.id,
+        userId,
+        role: 'owner',
+        status: 'active',
+        invitedById: userId,
+        acceptedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [projectMembers.projectId, projectMembers.userId],
+        set: {
+          role: 'owner',
+          status: 'active',
+          invitedById: userId,
+          acceptedAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+
     const projectId = `proj_${newProject.id}`;
 
     // Log audit entry for 21 CFR Part 11 compliance
@@ -1715,6 +2123,20 @@ router.post('/projects', async (req: Request, res: Response) => {
     const initialThreadId = `thread_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
 
     // Transform response
+    const sharing = {
+      visibility: 'private' as const,
+      members: [
+        {
+          userId,
+          role: 'owner' as const,
+          status: 'active' as const,
+          addedById: userId,
+          addedAt: new Date().toISOString(),
+        },
+      ],
+      legacyFallbackApplied: false,
+    };
+
     const response = {
       id: projectId,
       name: newProject.name,
@@ -1730,6 +2152,7 @@ router.post('/projects', async (req: Request, res: Response) => {
       dossierStandard: data.dossierStandard ?? null,
       conversations: [],
       ownership: buildProjectOwnership([], normalizeProjectSettings(newProject.settings)),
+      sharing,
       status: newProject.status,
       organizationId: newProject.organizationId,
       pinned: (newProject.metadata as any)?.pinned ?? false,
@@ -2113,14 +2536,7 @@ router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Re
       status: updated.status,
       organizationId: updated.organizationId,
       conversations,
-      ownership: buildProjectOwnership({
-        conversations,
-        settings: normalizeProjectSettings(updated.settings),
-        approvals: derivationData.approvalsByProject.get(numericId) || [],
-        reviewTasks: derivationData.reviewTasksByProject.get(numericId) || [],
-        reports: derivationData.reportsByProject.get(numericId) || [],
-        activityHistory: derivationData.activitiesByProject.get(numericId) || [],
-      }),
+      ownership: buildProjectOwnership(conversations, normalizeProjectSettings(updated.settings)),
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,
     });
@@ -2136,6 +2552,7 @@ router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Re
 /**
  * GET /api/concept2cure/projects/:projectId/collaborators
  * Returns current project collaborator permission assignments.
+ * @deprecated Use GET /projects/:id/sharing for comprehensive sharing state
  */
 router.get('/projects/:projectId/collaborators', async (req: Request, res: Response) => {
   try {
@@ -2207,8 +2624,62 @@ router.get('/projects/:projectId/collaborators', async (req: Request, res: Respo
 });
 
 /**
+ * GET /api/concept2cure/projects/:id/sharing
+ * Retrieve sharing visibility and member assignments for a project.
+ */
+router.get('/projects/:id/sharing', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const userId = getUserId(req);
+    const actorRole = getActorRole(req);
+    const scope = getProjectScope(req.params.id);
+    if (!scope) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+
+    const projectAccess = await loadProjectAccessRow({
+      organizationId,
+      clientWorkspaceId: getClientWorkspaceId(req),
+      projectId: scope.numericId,
+      userId,
+      actorRole,
+    });
+
+    if (!projectAccess.project) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    const sharing = await loadProjectSharingState(projectAccess.project.id, organizationId);
+    if (
+      !canUseProject({
+        actor: { userId, orgRole: actorRole },
+        project: {
+          createdById: projectAccess.project.createdById ?? null,
+          ownerId: projectAccess.project.ownerId ?? null,
+          settings: applyProjectSharingState(
+            normalizeProjectSettings(projectAccess.project.settings),
+            sharing
+          ),
+        },
+      })
+    ) {
+      return sendError(res, 403, 'Forbidden');
+    }
+
+    return sendSuccess(
+      res,
+      buildProjectSharingResponse(projectAccess.project.id, sharing, projectAccess.legacyFallbackApplied)
+    );
+  } catch (error: any) {
+    logger.error('Failed to fetch project sharing', { error: error.message, projectId: req.params.id });
+    return sendError(res, 500, 'Failed to fetch project sharing');
+  }
+});
+
+/**
  * PUT /api/concept2cure/projects/:projectId/collaborators
  * Replaces project collaborator permission assignments.
+ * @deprecated Use PATCH /projects/:id/sharing/visibility + PUT /projects/:id/sharing/members/:userId
  */
 router.put('/projects/:projectId/collaborators', async (req: Request, res: Response) => {
   try {
@@ -2306,6 +2777,286 @@ router.put('/projects/:projectId/collaborators', async (req: Request, res: Respo
 });
 
 /**
+ * PATCH /api/concept2cure/projects/:id/sharing/visibility
+ * Update project visibility policy (private | org_public).
+ */
+router.patch('/projects/:id/sharing/visibility', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const userId = getUserId(req);
+    const actorRole = getActorRole(req);
+    const scope = getProjectScope(req.params.id);
+    if (!scope) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+    const { visibility } = projectVisibilitySchema.parse(req.body);
+
+    const projectAccess = await loadProjectAccessRow({
+      organizationId,
+      clientWorkspaceId: getClientWorkspaceId(req),
+      projectId: scope.numericId,
+      userId,
+      actorRole,
+    });
+
+    if (!projectAccess.project) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    if (
+      !canManageProject({
+        actor: { userId, orgRole: actorRole },
+        project: {
+          createdById: projectAccess.project.createdById ?? null,
+          ownerId: projectAccess.project.ownerId ?? null,
+          settings: normalizeProjectSettings(projectAccess.project.settings),
+        },
+      })
+    ) {
+      return sendError(res, 403, 'Forbidden');
+    }
+
+    const [existingVisibility] = await db
+      .select({
+        id: projectVisibilitySettings.id,
+      })
+      .from(projectVisibilitySettings)
+      .where(
+        and(
+          eq(projectVisibilitySettings.organizationId, organizationId),
+          eq(projectVisibilitySettings.projectId, scope.numericId)
+        )
+      )
+      .limit(1);
+
+    if (existingVisibility) {
+      await db
+        .update(projectVisibilitySettings)
+        .set({
+          visibility,
+          updatedById: userId,
+          updatedAt: new Date(),
+        })
+        .where(eq(projectVisibilitySettings.id, existingVisibility.id));
+    } else {
+      await db.insert(projectVisibilitySettings).values({
+        organizationId,
+        projectId: scope.numericId,
+        visibility,
+        updatedById: userId,
+      });
+    }
+
+    const sharing = await loadProjectSharingState(scope.numericId, organizationId);
+    return sendSuccess(
+      res,
+      buildProjectSharingResponse(scope.numericId, sharing, projectAccess.legacyFallbackApplied)
+    );
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+    }
+    logger.error('Failed to update project sharing visibility', {
+      error: error.message,
+      projectId: req.params.id,
+    });
+    return sendError(res, 500, 'Failed to update project sharing visibility');
+  }
+});
+
+/**
+ * PUT /api/concept2cure/projects/:id/sharing/members/:userId
+ * Add/update explicit project member with use/edit role.
+ */
+router.put('/projects/:id/sharing/members/:userId', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const actorUserId = getUserId(req);
+    const actorRole = getActorRole(req);
+    const scope = getProjectScope(req.params.id);
+    if (!scope) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+
+    const pathUserId = Number.parseInt(req.params.userId, 10);
+    if (!Number.isFinite(pathUserId) || pathUserId <= 0) {
+      return sendError(res, 400, 'Invalid member userId', undefined, 'INVALID_ID');
+    }
+
+    const payload = upsertProjectMemberSchema.parse({
+      userId: pathUserId,
+      role: req.body?.role,
+    });
+
+    const projectAccess = await loadProjectAccessRow({
+      organizationId,
+      clientWorkspaceId: getClientWorkspaceId(req),
+      projectId: scope.numericId,
+      userId: actorUserId,
+      actorRole,
+    });
+
+    if (!projectAccess.project) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    if (
+      !canManageProject({
+        actor: { userId: actorUserId, orgRole: actorRole },
+        project: {
+          createdById: projectAccess.project.createdById ?? null,
+          ownerId: projectAccess.project.ownerId ?? null,
+          settings: normalizeProjectSettings(projectAccess.project.settings),
+        },
+      })
+    ) {
+      return sendError(res, 403, 'Forbidden');
+    }
+
+    const [targetUser] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.id, payload.userId))
+      .limit(1);
+    if (!targetUser) {
+      return sendError(res, 404, 'Target user not found');
+    }
+
+    const [orgMembership] = await db
+      .select({ id: organizationUsers.id })
+      .from(organizationUsers)
+      .where(
+        and(
+          eq(organizationUsers.organizationId, organizationId),
+          eq(organizationUsers.userId, payload.userId)
+        )
+      )
+      .limit(1);
+    if (!orgMembership) {
+      return sendError(
+        res,
+        400,
+        'Target user is not a member of this organization',
+        undefined,
+        'ORG_MEMBERSHIP_REQUIRED'
+      );
+    }
+
+    const [existingMember] = await db
+      .select({ id: projectMembers.id })
+      .from(projectMembers)
+      .where(
+        and(
+          eq(projectMembers.organizationId, organizationId),
+          eq(projectMembers.projectId, scope.numericId),
+          eq(projectMembers.userId, payload.userId)
+        )
+      )
+      .limit(1);
+
+    if (existingMember) {
+      await db
+        .update(projectMembers)
+        .set({
+          role: payload.role,
+          status: 'active',
+          invitedById: actorUserId,
+          acceptedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(projectMembers.id, existingMember.id));
+    } else {
+      await db.insert(projectMembers).values({
+        organizationId,
+        projectId: scope.numericId,
+        userId: payload.userId,
+        role: payload.role,
+        status: 'active',
+        invitedById: actorUserId,
+        acceptedAt: new Date(),
+      });
+    }
+
+    const sharing = await loadProjectSharingState(scope.numericId, organizationId);
+    return sendSuccess(
+      res,
+      buildProjectSharingResponse(scope.numericId, sharing, projectAccess.legacyFallbackApplied)
+    );
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+    }
+    logger.error('Failed to upsert project member', { error: error.message, projectId: req.params.id });
+    return sendError(res, 500, 'Failed to upsert project member');
+  }
+});
+
+/**
+ * DELETE /api/concept2cure/projects/:id/sharing/members/:userId
+ * Remove explicit member access from project.
+ */
+router.delete('/projects/:id/sharing/members/:userId', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const actorUserId = getUserId(req);
+    const actorRole = getActorRole(req);
+    const scope = getProjectScope(req.params.id);
+    if (!scope) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+    const targetUserId = Number.parseInt(req.params.userId, 10);
+
+    if (!Number.isFinite(targetUserId) || targetUserId <= 0) {
+      return sendError(res, 400, 'Invalid member userId', undefined, 'INVALID_ID');
+    }
+
+    const projectAccess = await loadProjectAccessRow({
+      organizationId,
+      clientWorkspaceId: getClientWorkspaceId(req),
+      projectId: scope.numericId,
+      userId: actorUserId,
+      actorRole,
+    });
+
+    if (!projectAccess.project) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    if (
+      !canManageProject({
+        actor: { userId: actorUserId, orgRole: actorRole },
+        project: {
+          createdById: projectAccess.project.createdById ?? null,
+          ownerId: projectAccess.project.ownerId ?? null,
+          settings: normalizeProjectSettings(projectAccess.project.settings),
+        },
+      })
+    ) {
+      return sendError(res, 403, 'Forbidden');
+    }
+
+    await db
+      .delete(projectMembers)
+      .where(
+        and(
+          eq(projectMembers.organizationId, organizationId),
+          eq(projectMembers.projectId, scope.numericId),
+          eq(projectMembers.userId, targetUserId)
+        )
+      );
+
+    const sharing = await loadProjectSharingState(scope.numericId, organizationId);
+    return sendSuccess(
+      res,
+      buildProjectSharingResponse(scope.numericId, sharing, projectAccess.legacyFallbackApplied)
+    );
+  } catch (error: any) {
+    logger.error('Failed to remove project member', { error: error.message, projectId: req.params.id });
+    return sendError(res, 500, 'Failed to remove project member');
+  }
+});
+
+/**
  * DELETE /api/concept2cure/projects/:id
  * Soft delete a project for 21 CFR Part 11 compliance.
  * Records are never truly deleted - just marked with actualEndDate.
@@ -2316,19 +3067,22 @@ router.put('/projects/:projectId/collaborators', async (req: Request, res: Respo
 router.delete('/projects/:id', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const projectId = req.params.id.replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
-
-    if (isNaN(numericId)) {
+    const userId = getUserId(req);
+    const actorRole = getActorRole(req);
+    const scope = getProjectScope(req.params.id);
+    if (!scope) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
-    // First verify ownership and capture state for audit
-    const [existing] = await db
-      .select()
-      .from(projects)
-      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
-      .limit(1);
+    // First verify access and capture state for audit
+    const projectAccess = await loadProjectAccessRow({
+      organizationId,
+      clientWorkspaceId: getClientWorkspaceId(req),
+      projectId: scope.numericId,
+      userId,
+      actorRole,
+    });
+    const existing = projectAccess.project;
 
     if (!existing) {
       return sendError(res, 404, 'Project not found');
@@ -2342,7 +3096,7 @@ router.delete('/projects/:id', async (req: Request, res: Response) => {
         status: 'archived',
         updatedAt: new Date(),
       })
-      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)));
+      .where(and(eq(projects.id, scope.numericId), eq(projects.organizationId, organizationId)));
 
     // Soft delete related conversations in DB (set status to archived)
     await db
@@ -2350,7 +3104,7 @@ router.delete('/projects/:id', async (req: Request, res: Response) => {
       .set({ status: 'archived', updatedAt: new Date() })
       .where(
         and(
-          eq(concept2cureConversations.projectId, numericId),
+          eq(concept2cureConversations.projectId, scope.numericId),
           eq(concept2cureConversations.organizationId, organizationId)
         )
       );
@@ -2377,18 +3131,21 @@ router.delete('/projects/:id', async (req: Request, res: Response) => {
 router.get('/projects/:projectId/knowledge', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const projectId = req.params.projectId.replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
-
-    if (isNaN(numericId)) {
+    const userId = getUserId(req);
+    const actorRole = getActorRole(req);
+    const scope = getProjectScope(req.params.projectId);
+    if (!scope) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
-    const [project] = await db
-      .select()
-      .from(projects)
-      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
-      .limit(1);
+    const projectAccess = await loadProjectAccessRow({
+      organizationId,
+      clientWorkspaceId: getClientWorkspaceId(req),
+      projectId: scope.numericId,
+      userId,
+      actorRole,
+    });
+    const project = projectAccess.project;
 
     if (!project) {
       return sendError(res, 404, 'Project not found');
@@ -2497,20 +3254,23 @@ router.get(
 router.patch('/projects/:projectId/knowledge', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const projectId = req.params.projectId.replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
-
-    if (isNaN(numericId)) {
+    const userId = getUserId(req);
+    const actorRole = getActorRole(req);
+    const scope = getProjectScope(req.params.projectId);
+    if (!scope) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
     const data = updateKnowledgeSchema.parse(req.body);
 
-    const [project] = await db
-      .select()
-      .from(projects)
-      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
-      .limit(1);
+    const projectAccess = await loadProjectAccessRow({
+      organizationId,
+      clientWorkspaceId: getClientWorkspaceId(req),
+      projectId: scope.numericId,
+      userId,
+      actorRole,
+    });
+    const project = projectAccess.project;
 
     if (!project) {
       return sendError(res, 404, 'Project not found');
@@ -2544,7 +3304,7 @@ router.patch('/projects/:projectId/knowledge', async (req: Request, res: Respons
     const [updated] = await db
       .update(projects)
       .set({ settings: updatedSettings, updatedAt: new Date() })
-      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .where(and(eq(projects.id, scope.numericId), eq(projects.organizationId, organizationId)))
       .returning();
 
     await logAuditEntry(req, 'UPDATE', 'project', req.params.projectId, project, updated);
@@ -4996,17 +5756,25 @@ router.post('/errors', async (req: Request, res: Response) => {
  */
 async function verifyProjectAccess(req: Request, projectId: string): Promise<boolean> {
   const organizationId = getOrganizationId(req);
-  const numericId = parseInt(projectId.replace('proj_', ''), 10);
-
-  if (isNaN(numericId)) return false;
-
-  const [project] = await db
-    .select({ id: projects.id })
-    .from(projects)
-    .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
-    .limit(1);
-
-  return !!project;
+  const userId = getUserId(req);
+  const actorRole = getActorRole(req);
+  const clientWorkspaceId = getClientWorkspaceId(req);
+  try {
+    const scope = getProjectScope(projectId);
+    if (!scope) {
+      return false;
+    }
+    const projectAccess = await loadProjectAccessRow({
+      organizationId,
+      clientWorkspaceId,
+      projectId: scope.numericId,
+      userId,
+      actorRole,
+    });
+    return !!projectAccess.project;
+  } catch {
+    return false;
+  }
 }
 
 /**
