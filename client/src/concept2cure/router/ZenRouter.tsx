@@ -20,7 +20,7 @@
 import React, { useEffect, lazy, Suspense } from 'react';
 import { Switch, Route, useLocation, useRoute, Redirect } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ZenLogin, ZenSignup, ZenAuthLayout, ZenOnboarding } from '../auth';
+import { ZenLogin, ZenSignup, ZenAuthLayout } from '../auth';
 import { ZenApp } from '../ZenApp';
 import { ProjectProvider } from '../context/ProjectContext';
 import ProofCertificatePage from '../pages/ProofCertificatePage';

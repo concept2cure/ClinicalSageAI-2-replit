@@ -75,11 +75,6 @@ const TrainingManagement = lazy(() => import('./admin/TrainingManagement'));
 // Monitoring Components
 const ActivityMonitor = lazy(() => import('./monitoring/ActivityMonitor'));
 
-// Auth Components
-const LoginPage = lazy(() => import('./auth/LoginPage'));
-const MFASetup = lazy(() => import('./auth/MfaSetup'));
-const PasswordReset = lazy(() => import('./auth/PasswordReset'));
-
 // Onboarding Components
 const OnboardingWizard = lazy(() => import('./onboarding/OnboardingWizard'));
 
