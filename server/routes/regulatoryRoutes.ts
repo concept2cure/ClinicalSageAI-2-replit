@@ -118,18 +118,9 @@ router.post('/calendar', async (_req, res) => {
   });
 });
 
-// Keep /search contract intact for existing clients while avoiding registry route overlap.
-router.get('/search', async (req, res) => {
-  const { q, phase } = req.query;
-  await regulatoryService.initialize();
-  const results = await regulatoryService.getRegulatoryIntelligence(
-    (phase as string) || 'Phase 2',
-    q as string | undefined
-  );
-  res.json(results);
-});
-
-router.get('/regulatory/search', async (req, res) => {
+// Renamed from GET /search: regulatory-registry.ts also defines GET /search and is
+// mounted on /api/regulatory before this router, so the intelligence handler was shadowed and never reached.
+router.get('/intelligence-search', async (req, res) => {
   const { q, phase } = req.query;
   await regulatoryService.initialize();
   const results = await regulatoryService.getRegulatoryIntelligence(

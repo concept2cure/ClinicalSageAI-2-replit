@@ -86,7 +86,7 @@ export function buildProjectModuleLinkPath(
   moduleType: ModuleType,
   moduleInstanceId: number
 ): string {
-  return `/api/projects/${projectId}/modules/${moduleType}/${moduleInstanceId}`;
+  return `/api/project-modules/${projectId}/modules/${moduleType}/${moduleInstanceId}`;
 }
 
 export function unwrapProjectModulesResponse(response: {
@@ -685,7 +685,7 @@ export function useProjectModules(
   return useQuery({
     queryKey: moduleKeys.byProject(projectId!),
     queryFn: async () => {
-      const response = await apiFetch<{ modules: ProjectModule[] }>(`/api/projects/${projectId}/modules`);
+      const response = await apiFetch<{ modules: ProjectModule[] }>(`/api/project-modules/${projectId}/modules`);
       return unwrapProjectModulesResponse(response);
     },
     enabled: projectId !== undefined,
@@ -711,7 +711,7 @@ export function useLinkModule() {
       settings?: Record<string, unknown>;
       metadata?: Record<string, unknown>;
     }) =>
-      apiFetch<ProjectModule>(`/api/projects/${projectId}/modules`, {
+      apiFetch<ProjectModule>(`/api/project-modules/${projectId}/modules`, {
         method: 'POST',
         body: JSON.stringify({ moduleType, moduleInstanceId, settings, metadata }),
       }),
