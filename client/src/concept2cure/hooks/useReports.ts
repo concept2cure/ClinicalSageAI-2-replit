@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { getOrgId } from '@/utils/authToken';
@@ -158,13 +158,7 @@ export function useReports() {
     staleTime: 30_000,
   });
 
-  const [runDependencies, setRunDependencies] = useMemo(() => {
-    const state: ReportRunDependency[] = [];
-    const setter = (next: ReportRunDependency[]) => {
-      state.splice(0, state.length, ...next);
-    };
-    return [state, setter] as const;
-  }, []);
+  const [runDependencies, setRunDependencies] = useState<ReportRunDependency[]>([]);
 
   const bundlesQuery = useQuery({
     queryKey: ['concept2cure', 'reports', 'bundles', organizationId] as const,
