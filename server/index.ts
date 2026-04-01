@@ -115,6 +115,7 @@ const debugLog = (message: string, data?: any) => {
 
 // Route imports now consolidated in server/bootstrap/ manifests.
 // Only imports NOT yet migrated to bootstrap remain here.
+import { mountBetaSafeRoutes } from './betaRouteManifest';
 import aiAssistanceRoutes, { setAIService } from './routes/ai-assistance';
 import predictiveSectionsRoutes from './routes/predictive-sections';
 import foresightApiRoutes from './routes/foresight-api';
@@ -4036,10 +4037,9 @@ app.get('/api/510k-workflow/:projectId/compliance-report', async (req, res) => {
 console.log('✅ 510k-workflow API routes mounted successfully');
 console.log('✅ FDA compliance tracking enabled with full audit trails');
 
-// Mount 510k project routes (for project wizard)
-import projectRoutes from './routes/510k-project.routes';
-app.use('/api/510k-project', projectRoutes);
-console.log('✅ 510k-project API routes mounted successfully');
+// Mount beta-safe route manifest (510(k) + tester telemetry)
+mountBetaSafeRoutes(app);
+console.log('✅ Beta-safe routes mounted successfully');
 
 // Mount FDA forms routes
 import fdaFormsRoutes from './routes/fda-forms.routes';

@@ -84,7 +84,11 @@
     "audit:repo-health": "node scripts/audits/repo-health-scan.mjs",
     "audit:repo-health:strict": "node scripts/audits/repo-health-scan.mjs --strict --owners docs/reports/repo-health-owners.json --write-markdown docs/reports/repo-health-scan-latest.md",
     "audit:repo-health:no-regression": "node scripts/audits/repo-health-scan.mjs --strict-no-regression --baseline docs/reports/repo-health-scan-latest.json --owners docs/reports/repo-health-owners.json --write-markdown docs/reports/repo-health-scan-latest.md",
-    "audit:repo-health:full-strict": "node scripts/audits/repo-health-scan.mjs --strict --owners docs/reports/repo-health-owners.json --write-markdown docs/reports/repo-health-scan-latest.md"
+    "audit:repo-health:full-strict": "node scripts/audits/repo-health-scan.mjs --strict --owners docs/reports/repo-health-owners.json --write-markdown docs/reports/repo-health-scan-latest.md",
+    "beta:seed:510k": "node scripts/seed-beta-510k-workspace.mjs",
+    "beta:typecheck": "NODE_OPTIONS=\"--max-old-space-size=4096\" tsc --noEmit -p tsconfig.beta-slice.json",
+    "beta:founder-proof": "npx playwright test tests/e2e/510k-founder-path.e2e.spec.ts",
+    "beta:proof": "node scripts/run-beta-founder-proof.mjs"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
@@ -229,7 +233,6 @@
     "js-yaml": "^4.1.0",
     "jsdom": "27.4.0",
     "jose": "6.2.2",
-    "jsdom": "27.4.0",
     "jsonwebtoken": "9.0.2",
     "jspdf": "2.5.2",
     "jspdf-autotable": "3.8.4",

@@ -50,6 +50,9 @@ jobs:
       - name: Run TypeScript check
         run: npm run typecheck
 
+      - name: Run beta-slice TypeScript check
+        run: npm run beta:typecheck
+
   test:
     name: Test
     runs-on: ubuntu-latest
