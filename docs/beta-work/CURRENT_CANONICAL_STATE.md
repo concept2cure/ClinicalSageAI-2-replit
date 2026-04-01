@@ -1,148 +1,226 @@
-# Stage 8 - Current Canonical State (Merge Reconciliation and Canonical Lock)
+# Concept2Cure v2 — Current Canonical State
 
-Date: 2026-04-01
-Reviewer branch: `cursor/-bc-d266059a-12f4-4d65-af37-647370353b36-b1bb`
-Compared workstream: `origin/cursor/critical-files-management-f38a`
-Base branch: `origin/concept2cure-v2`
+**Generated:** 2026-04-01
+**Branch:** `concept2cure-v2` (HEAD `0e8674c3`)
+**Prior cleanup workstream:** Fully merged — 0 commits ahead, 0 behind
+**Purpose:** Single source of truth for what the product is right now
 
-## 1) Code-grounded branch truth
+---
 
-The active review branch is currently in sync with base (`0 ahead / 0 behind` vs `origin/concept2cure-v2`), but the cleanup workstream branch targeted for reconciliation is materially diverged:
+## 1. Branch Reality
 
-- `origin/concept2cure-v2...origin/cursor/critical-files-management-f38a`
-- Ahead/behind: `60 33` (base has 60 unique commits, workstream has 33 unique commits)
-- Changed files: 50 files
-- Diff volume: `3723 insertions, 595 deletions`
+The prior cleanup workstream branch (`cursor/critical-files-management-f38a` and similar)
+has been **fully integrated** into `concept2cure-v2`. The merge risk described in the
+original work order no longer applies as a branch-divergence problem. The integration
+risk is now **internal**: duplicate routes, monolithic files, and test gaps are all on
+the single branch and must be addressed in-place.
 
-This confirms the founder-level risk statement: integration drift is now the bottleneck, not discovery.
+| Metric | Value |
+|--------|-------|
+| Workstream commits ahead of base | 0 |
+| Workstream commits behind base | 0 |
+| Merge base | `0e8674c3` (same as HEAD) |
+| Recent history | Template/submission sequence work, auth hardening, PR integrations |
 
-## 2) Required critical file drift check (base vs workstream)
+---
 
-The following files were explicitly opened/compared:
+## 2. Shell Architecture (Client)
 
-| File | Drift observed vs base | Risk |
-|---|---|---|
-| `client/src/App.jsx` | Route truth cleanup: canonical `/concept2cure/*` path emphasis, `/client-portal/*` fence redirect, nav item contraction, loading UI standardization. | High |
-| `client/src/concept2cure/ZenApp.tsx` | Large shell mutation: project home cards/search/resume flow, thread/context propagation into AnA, sidebar nav mapping updates, project handoff behavior changes. | High |
-| `client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx` | Large extraction: in-file `SectionRequirementsPanel` removed and imported from new file. | High |
-| `server/index.ts` | No diff in this compare. | Medium (protected organ, but unchanged here) |
-| `server/routes/auth.ts` | No diff in this compare. | Medium |
-| `server/db.ts` | No diff in this compare. | Medium |
-| `server/db.js` | Compatibility expansion: re-export canonical db helpers (`getDb`, `runMigrations`, `ensureAuthTables`, `transaction`, `healthCheck`) while preserving legacy import shapes. | High |
-| `server/middleware/auth.ts` | No diff in this compare. | Medium |
-| `server/middleware/auth.js` | Compatibility aliases added (`verifyJwt`, `hasPermission`) and export shape widened for older JS routes. | High |
-| `server/routes/concept2cure.ts` | No diff in this compare. | High (protected organ, unchanged here) |
+### Entry chain
 
-Additional high-impact drift also exists in:
+```
+index.html → main.tsx → App.jsx → ZenRouter.tsx → ZenApp.tsx
+```
 
-- `server/routes/chat.ts` (thread ownership/project scoping and stricter thread listing behavior)
-- `tests/e2e/workspace-smoke.e2e.ts` (new Stage 7 pulse tests and auth bootstrap path)
-- `server/__tests__/routes/smoke.test.ts` (expanded backend contract assertions)
+| File | Lines | Role |
+|------|------:|------|
+| `client/src/main.tsx` | 26 | Canonical Vite entry: Sentry, QueryClient, ErrorBoundary, App |
+| `client/src/main.jsx` | 13 | Legacy alternate entry — not used by index.html |
+| `client/src/App.jsx` | 967 | Root router: wouter Switch, lazy routes, login redirects, AnAAssistantContainer |
+| `client/src/concept2cure/router/ZenRouter.tsx` | ~450 | Concept2Cure sub-router: auth gates, project bridges, onboarding |
+| `client/src/concept2cure/ZenApp.tsx` | 4,265 | **The real shell**: sidebar, chat, command palette, project identity, workspace handoff |
 
-## 3) Complete changed-file ledger and classification
+### Shell organs
 
-Classification statuses used in this stage:
+| File | Lines | Blast radius | Current state |
+|------|------:|-------------|---------------|
+| `ZenApp.tsx` | 4,265 | **Critical** — project identity, route policy, module hosting, handoff state, AnA context | Working but monolithic; prior cleanup demoted dead renderers |
+| `ProjectWorkspaceShell.tsx` | 3,499 | **Critical** — governed document workspace (trees, editor, inspectors) | Strongest governed surface; Phase 3 additions landed |
+| `AnaPersistentPanel.tsx` | 5,405 | **Critical** — single AnA chat surface, queue, message handling | Working; largest client component |
+| `ZenSidebar.tsx` | 1,255 | **High** — global + project navigation, pinned/recent projects | Clean after cleanup; 6 global + 5 project tabs |
 
-- `merge-now`: can land directly with minimal reconciliation risk
-- `re-review`: must be manually reconciled against base branch drift
-- `defer`: keep in workstream for later stage, not required for Stage 8 landing slice
-- `drop`: explicitly exclude from merge candidate
-- `docs-only`: documentation evidence, not runtime source of truth
+### Route truth
 
-### 3.1 Ledger by file family
+- All login aliases (`/sign-in`, `/auth`, `/login`) redirect to `/concept2cure/login`
+- Root `/` redirects to `/concept2cure`
+- `/concept2cure/*` is the canonical product shell
+- `App.jsx` still carries ~60 lazy-loaded secondary routes (CMC, CSR, CER, admin, etc.)
+- Legacy routes (`/client-portal`, `/v3`) are not in the approved beta path
 
-| File family | Files | Status | Why |
-|---|---|---|---|
-| Shell entry and canonical route surfaces | `client/src/App.jsx`, `client/src/concept2cure/ZenApp.tsx`, `client/src/concept2cure/components/sidebar/ZenSidebar.tsx`, `client/src/concept2cure/components/chat/AnaPersistentPanel.tsx`, `client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx`, `client/src/concept2cure/components/workspace/SectionRequirementsPanel.tsx` | re-review | Core beta-path behavior and handoff semantics; high conflict and regression blast radius. |
-| Secondary nav chrome | `client/src/components/common/NavigationBanner.jsx`, `client/src/components/navigation/UnifiedTopNav.jsx`, `client/src/components/navigation/UnifiedTopNavV3.jsx`, `client/src/components/navigation/UnifiedTopNavV4.jsx` | defer | Valuable polish but not merge-blocking for canonical Stage 8 lock. |
-| Auth/redirect compatibility in client | `client/src/concept2cure/auth/redirectUtils.ts`, `client/src/concept2cure/auth/__tests__/computeRedirect.test.ts`, `client/src/main.jsx`, `client/src/portal-v2/ClientPortalV2.tsx`, `client/src/portal-v2/index.ts`, `client/src/utils/authToken.ts` | re-review | Compatibility fences are useful but can silently diverge auth assumptions. |
-| Project data shaping | `client/src/concept2cure/hooks/useProjects.ts` | re-review | Affects shell/project list behavior and active-project continuity. |
-| Test and pulse net | `tests/e2e/workspace-smoke.e2e.ts`, `tests/stage6-governed-workspace-verifier.test.ts`, `client/src/__tests__/shellTruthRoutes.test.ts`, `client/src/concept2cure/router/__tests__/projectModuleRoutePolicy.smoke.test.ts`, `server/__tests__/routes/smoke.test.ts`, `server/__tests__/security/auth-db-contract-smoke.test.ts`, `server/__tests__/security/auth-invalid-expired-jwt.test.ts` | merge-now | Protective evidence net; should move forward with Stage 8 and extend in Stage 9. |
-| Backend compatibility and route behavior | `server/db.js`, `server/middleware/auth.js`, `server/routes/chat.ts`, `server/routes/index.ts`, `server/services/enhancedEmbeddingService.ts` | re-review | Auth/db/route compatibility and retrieval behavior changes require explicit ownership decisions. |
-| Pure cleanup deletions and low-risk cleanup | `server/routes_update.ts` (deleted), `client/src/hooks/use-auth.jsx` (deleted), `tsconfig.json` | merge-now | Low-risk, evidence-backed cleanup wins. |
-| Stage evidence docs | `docs/beta-work/stage-1-*.md` through `stage-7-*.md`, `docs/reports/claude-ui-northstar-execution-checklist-2026-03-31.md`, `docs/reports/claude-ui-northstar-gap-assessment-2026-03-31.md`, `docs/reports/clickthrough-seg3-projects.md` | docs-only | Useful audit trail; not runtime truth by themselves. |
+---
 
-### 3.2 Explicit statuses for all changed files
+## 3. Backend Architecture
 
-| File | Status |
-|---|---|
-| `client/src/App.jsx` | re-review |
-| `client/src/__tests__/shellTruthRoutes.test.ts` | merge-now |
-| `client/src/components/common/NavigationBanner.jsx` | defer |
-| `client/src/components/navigation/UnifiedTopNav.jsx` | defer |
-| `client/src/components/navigation/UnifiedTopNavV3.jsx` | defer |
-| `client/src/components/navigation/UnifiedTopNavV4.jsx` | defer |
-| `client/src/concept2cure/ZenApp.tsx` | re-review |
-| `client/src/concept2cure/auth/__tests__/computeRedirect.test.ts` | re-review |
-| `client/src/concept2cure/auth/redirectUtils.ts` | re-review |
-| `client/src/concept2cure/components/chat/AnaPersistentPanel.tsx` | re-review |
-| `client/src/concept2cure/components/sidebar/ZenSidebar.tsx` | re-review |
-| `client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx` | re-review |
-| `client/src/concept2cure/components/workspace/SectionRequirementsPanel.tsx` | re-review |
-| `client/src/concept2cure/hooks/useProjects.ts` | re-review |
-| `client/src/concept2cure/router/__tests__/projectModuleRoutePolicy.smoke.test.ts` | merge-now |
-| `client/src/hooks/use-auth.jsx` | merge-now |
-| `client/src/main.jsx` | re-review |
-| `client/src/portal-v2/ClientPortalV2.tsx` | re-review |
-| `client/src/portal-v2/index.ts` | re-review |
-| `client/src/utils/authToken.ts` | re-review |
-| `docs/beta-work/stage-1-ownership-manifest.md` | docs-only |
-| `docs/beta-work/stage-1-route-ownership-matrix.md` | docs-only |
-| `docs/beta-work/stage-1-runtime-path-schematic.md` | docs-only |
-| `docs/beta-work/stage-2-delete-proof-pack.md` | docs-only |
-| `docs/beta-work/stage-2-post-cut-smoke-notes.md` | docs-only |
-| `docs/beta-work/stage-3-auth-db-canonical-plan.md` | docs-only |
-| `docs/beta-work/stage-3-request-contract-table.md` | docs-only |
-| `docs/beta-work/stage-4-backend-route-manifest.md` | docs-only |
-| `docs/beta-work/stage-4-beta-api-contract.md` | docs-only |
-| `docs/beta-work/stage-5-frontend-shell-truth.md` | docs-only |
-| `docs/beta-work/stage-5-route-ownership-after.md` | docs-only |
-| `docs/beta-work/stage-6-governed-workspace-map.md` | docs-only |
-| `docs/beta-work/stage-6-workspace-smoke-pack.md` | docs-only |
-| `docs/beta-work/stage-7-demo-click-path.md` | docs-only |
-| `docs/beta-work/stage-7-ui-beta-truth-audit.md` | docs-only |
-| `docs/reports/claude-ui-northstar-execution-checklist-2026-03-31.md` | docs-only |
-| `docs/reports/claude-ui-northstar-gap-assessment-2026-03-31.md` | docs-only |
-| `docs/reports/clickthrough-seg3-projects.md` | docs-only |
-| `server/__tests__/routes/smoke.test.ts` | merge-now |
-| `server/__tests__/security/auth-db-contract-smoke.test.ts` | merge-now |
-| `server/__tests__/security/auth-invalid-expired-jwt.test.ts` | merge-now |
-| `server/db.js` | re-review |
-| `server/middleware/auth.js` | re-review |
-| `server/routes/chat.ts` | re-review |
-| `server/routes/index.ts` | re-review |
-| `server/routes_update.ts` | merge-now |
-| `server/services/enhancedEmbeddingService.ts` | re-review |
-| `tests/e2e/workspace-smoke.e2e.ts` | merge-now |
-| `tests/stage6-governed-workspace-verifier.test.ts` | merge-now |
-| `tsconfig.json` | merge-now |
+### Express entry
 
-No file family is currently classified as `drop` based on code evidence gathered in Stage 8.
+| File | Lines | Role |
+|------|------:|------|
+| `server/index.ts` | 7,911 | **The backend monolith**: all middleware, all route mounts, startServer() |
+| `server/routes/concept2cure.ts` | 16,383 | **The API monolith**: projects, documents, conversations, artifacts, AI, vault, team |
 
-## 4) Canonical lock decision (Stage 8 recommendation)
+### Route mount reality
 
-Preferred integration path: **fresh RC branch from `concept2cure-v2` plus selective cherry-pick of validated slices**, then manual reconcile of high-risk organs.
+**307 route files** under `server/routes/` (263 `.ts`, 26 `.js`, plus subdirectories).
+Total directory: **6.3 MB**.
 
-Why this is preferred:
+#### Known duplicate/stacked prefixes in server/index.ts
 
-1. The workstream is both ahead and behind, and high-risk files (`App.jsx`, `ZenApp.tsx`, `ProjectWorkspaceShell.tsx`, auth/db compatibility files) are active.
-2. A blind branch merge imports stale drift and conflict noise as one blob.
-3. Selective slice landing keeps auditability while preserving controlled blast radius.
-4. This approach is consistent with stop conditions: no convenience-driven merge and no uncontrolled rewrite during classification.
+| Prefix | Mount count | Files |
+|--------|------------:|-------|
+| `/api/ind` | 2 | `ind-generation.ts` (line 3923), `ind.ts` (line 7022) |
+| `/api/regulatory` | 2 | `regulatory-registry.ts` (line 3928), `regulatoryRoutes.ts` (line 7266) |
+| `/api/documents` | 4+ | `versionDiff.ts` (1761), `documents-unified.ts` (7184), `sourceLinks.ts` (7192), `document-intelligence-routes.ts` (7208), plus `documentManagement` at `/api` |
+| `/api/ai` | 3 | Line 966, line 1032 (circuit breaker), line 3935 (claims) |
+| `/api/projects` | 3 | Line 7083, line 7145, line 7146 (`project-modules`) |
+| `/api/programs` | 2 | Line 1697 (SE Matrix), line 1709 (Defense Packet) |
 
-Fallback strategy:
+#### Auth boundary files
 
-- Mixed strategy: merge `origin/concept2cure-v2` into cleanup workstream, resolve conflicts there, then merge back with strict gates.
-- Use only if commit-level slice extraction is impractical.
+| File | Lines | Role |
+|------|------:|------|
+| `server/middleware/auth.ts` | 248 | JWT auth: `authenticateToken`, `requireRole`, `requireOrgAccess`, `optionalAuth` |
+| `server/middleware/auth.js` | 244 | ESM `.js` variant with same exports (different style) |
+| `server/middleware/authAdapter.ts` | — | Adapter layer |
+| `server/middleware/tenantAuth.ts` | — | Tenant-scoped auth |
+| `server/routes/auth.ts` | ~50KB | Auth routes (login, register, password, MFA) |
+| `server/routes/authEnterprise.ts` | ~23KB | Enterprise auth (SSO config, SAML) |
+| `server/routes/sso.ts` | — | SSO routes |
 
-## 5) Founder summary (Stage 8 gate)
+### Database layer
 
-- Stage: Stage 8 - Merge Reconciliation and Canonical State Lock
-- Branch / commits reviewed: `origin/concept2cure-v2` vs `origin/cursor/critical-files-management-f38a` (`60 behind / 33 ahead` from base perspective)
-- Files opened for evidence: all 50 changed files plus explicit critical file drift checks listed above
-- Files classified: complete table included (merge-now / re-review / defer / docs-only)
-- Protected organs locked: see `docs/beta-work/stage-8-protected-organs-lock.md`
-- Evidence docs created: this file + merge-risk matrix + protected-organs lock
-- Conflict risks found: high in shell core, workspace shell extraction, auth/db compatibility shims, chat route behavior
-- Recommendation: **fresh RC branch with selective cherry-pick of validated slices; manual reconcile for high-risk organs**
-- Unlock next stage? **Yes, for Stage 9 only after Stage 8 reconciliation plan is accepted**
+| File | Lines | Role |
+|------|------:|------|
+| `server/db.ts` | 434 | **Canonical**: Pool, Drizzle, migrations, healthCheck |
+| `server/db.js` | 252 | **Shim**: imports from db.ts, adds EventEmitter status tracking |
+
+### Key service directories
+
+| Directory | Size | Key contents |
+|-----------|------|-------------|
+| `server/services/` | 11 MB | 40+ subdirectories, 200+ files |
+| `server/services/intelligence/` | — | RIM: rim.ts, judgment-framework, pattern-registry, signal-capture, interceptors |
+| `server/services/ai-gateway/` | — | AI provider routing (Claude primary, OpenAI fallback) |
+| `server/services/cortex/` | — | CORTEX Prime: knowledge atoms, threads, agents |
+| `server/services/foresight/` | — | Predictive analytics (75KB engine) |
+| `server/services/csr/` | — | CSR builder + knowledge extraction |
+
+### Deprecated/legacy
+
+- `server/routes/index.ts` (106 lines) — explicitly deprecated; `mountApiRoutes()` is no-op unless `ENABLE_LEGACY_API_INDEX=true`
+- `server/routes_update.ts` — **deleted** (confirmed not present)
+- `main.jsx` — legacy entry, not referenced by index.html
+
+---
+
+## 4. Schema and Database
+
+| File | Role |
+|------|------|
+| `shared/schema/` (356 KB total) | Modular Drizzle ORM schemas — source of truth |
+| `shared/schema/schema.ts` | Legacy monolithic backup (~730KB documented) |
+| `migrations/` | SQL migration files (0000–0010+) |
+| `db/migrations/` | Kernel DB schema additions |
+
+---
+
+## 5. Test Net
+
+### Coverage summary
+
+| Category | File count | Location |
+|----------|----------:|----------|
+| Unit tests | ~130 | `tests/` root + `tests/unit/` |
+| Route tests | 15 | `tests/routes/` |
+| Resolution tests | 16 | `tests/resolution/` |
+| Service tests | 15 | `tests/services/` |
+| Server tests | 73 | `server/**/__tests__/` |
+| Client tests | 12 | `client/src/**/__tests__/` |
+| E2E (Playwright .e2e.ts) | 9 | `tests/e2e/` — governed lifecycle, permissions, rollback, diff, review, submission-ops |
+| E2E (Playwright .spec.ts) | 10 | `tests/e2e/` — login, biotech, workspace, CMC, screenshots — **NOT in default testMatch** |
+| **Total** | **267** | |
+
+### Playwright configuration
+
+- Config: `playwright.config.ts` — `testMatch: '**/*.e2e.ts'` only
+- Default base: `http://localhost:5000`
+- **Port drift**: some spec files default to 5173 or 3000 — needs alignment
+- The 10 `.spec.ts` files are **excluded** from default runs
+
+### Known test gaps (from Stage 8 known-limits)
+
+- `npm run typecheck` fails with broad pre-existing TS issues outside beta slices
+- E2E assembly requires `DATABASE_URL` — cannot run in most CI without live DB
+- `roleBasedAccess.test.ts` and `mfaService.test.ts` currently fail
+- `guided-demo-path.test.ts` has drift failures (old strings/routes)
+- `ana-ri-health.test.ts` has 1 failing mocked-import scenario
+
+---
+
+## 6. Documentation State
+
+| Directory | Files | Role |
+|-----------|------:|------|
+| `docs/beta-work/` | 3 | Stage 8 beta RC pack, known limits, demo runbook |
+| `docs/proof/` | 30 | Validation evidence (baseline, harness, document loop, canvas, etc.) |
+| `docs/plans/` | 25 | Architecture plans, convergence specs, execution boards |
+| `docs/reports/` | many | Audit reports, beta readiness, route audits |
+| `docs/release/` | — | Rollback guidance, release notes |
+
+---
+
+## 7. What Is Beta-Safe Today
+
+| Surface | Status | Evidence |
+|---------|--------|----------|
+| Zen shell (6 global + project tabs) | Beta-safe with caveats | Controlled beta freeze doc |
+| Concept2Cure router + project module paths | Beta-safe | ZenRouter.tsx verified |
+| Governed export + authoring guardrails | Beta-safe (smoke validated) | Stage 8 test results |
+| AnA chat surface | Beta-safe | Single brain proof, benchmark results |
+| Governed workspace (ProjectWorkspaceShell) | Beta-safe — strongest surface | Phase 3 validated |
+| Document lifecycle (draft→review→verify→publish) | Beta-safe with known limits | Document loop proof |
+
+### What Is Deliberately Hidden
+
+| Surface | Disposition |
+|---------|------------|
+| Mission Control / SnowGlobe families | Demoted and redirected in ZenApp |
+| Standalone eCTD without active project | Non-primary path; empty state expected |
+| Legacy routes (`/v3`, `/client-portal`) | Not in approved demo path |
+| Dr. Sage legacy code | Present in repo, not in primary shell |
+
+---
+
+## 8. Top Risks (Ordered)
+
+1. **Server-side route duplication** — Multiple routers on same prefix creates ordering-dependent behavior and silent shadowing
+2. **ZenApp monolith** (4,265 lines) — Every shell change touches one file; domain seams not yet extracted
+3. **AnaPersistentPanel monolith** (5,405 lines) — Largest client component; change risk is high
+4. **concept2cure.ts API monolith** (16,383 lines) — All product API in one file
+5. **server/index.ts** (7,911 lines) — All middleware and route mounting in one file; mount-order sensitivity
+6. **Auth boundary duplication** — `.ts` and `.js` variants of middleware/auth exist simultaneously
+7. **Test port drift** — Playwright config, spec files, and E2E files use different default ports
+8. **TypeScript type safety** — `npm run typecheck` does not pass cleanly
+9. **App.jsx route museum** — ~60 secondary lazy routes still present alongside the canonical concept2cure path
+
+---
+
+## 9. Recommended Next Actions (Stage 8→13 Program)
+
+| Stage | Mission | Depends on |
+|-------|---------|-----------|
+| 8 (this doc) | Canonical state lock + integration program | — |
+| 9 | Authenticated browser pulse certification | Stage 8 canonical state |
+| 10 | ZenApp domain-seam extraction | Stage 9 pulse baseline |
+| 11 | Backend route ownership convergence | Stage 10 shell stability |
+| 12 | AnA / artifact contract enforcement | Stage 11 API clarity |
+| 13 | RC merge-back and human beta readiness | All prior stages |
