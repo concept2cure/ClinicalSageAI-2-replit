@@ -7140,13 +7140,12 @@ async function startServer() {
   }
 
   // Mount project-module integration routes (Pillar 4: Full module integration)
+  // NOTE: Do not mount this router at /api/projects — projects-management owns /api/projects and
+  // defines GET /:projectId, which would steal paths like /find and /org-stats from this router.
   try {
     const moduleRoutes = await import('./routes/project-modules');
-    app.use('/api/projects', moduleRoutes.default || moduleRoutes); // nested: /api/projects/:id/modules
-    app.use('/api/project-modules', moduleRoutes.default || moduleRoutes); // top-level: /api/project-modules/find, /org-stats
-    console.log(
-      '✅ Project Module Integration routes mounted at /api/projects/:id/modules & /api/project-modules'
-    );
+    app.use('/api/project-modules', moduleRoutes.default || moduleRoutes);
+    console.log('✅ Project Module Integration routes mounted at /api/project-modules');
   } catch (error) {
     console.error('Failed to mount project-modules routes:', error);
   }
