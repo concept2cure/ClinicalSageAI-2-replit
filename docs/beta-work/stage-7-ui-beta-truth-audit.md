@@ -3,8 +3,8 @@
 Stage: Stage 7 — UI-Only Beta Honesty Pass  
 Branch: `cursor/critical-files-management-f38a`  
 Stage 7 implementation baseline: `082ef07c` (`082ef07c`)  
-Stage 7 cleanup chain: `185ab0fd` -> `d8046d56` -> `7e49bcac` -> `d097be99` -> `1034efbf` -> `4e994db4`  
-Branch / commit reviewed for archival evidence (current): `ab6c97af`
+Stage 7 cleanup chain: `185ab0fd` -> `d8046d56` -> `7e49bcac` -> `d097be99` -> `1034efbf` -> `4e994db4` -> `ab6c97af` -> `d273d530`  
+Branch / commit reviewed for archival evidence (current): `d273d530`
 
 ## Wave A / Batch A1 follow-on (canonical shell exposure policy)
 
@@ -103,8 +103,8 @@ Make the visible UI stop lying by implication. Expose only beta-safe surfaces th
   - one explicit implementation chain
   - one explicit validation snapshot
   - one explicit residual-risk statement
-- Pre-test certification anchor commit: `ab6c97af`.
-- Final validation evidence will be recorded after re-running:
+- Pre-test certification anchor commit: `d273d530`.
+- Final validation evidence recorded after rerunning:
   - Stage 7 `PULSE-*` browser heartbeat checks
   - shell truth + governed workspace contract tests
 
@@ -132,4 +132,11 @@ Make the visible UI stop lying by implication. Expose only beta-safe surfaces th
   - authenticated project route into shell/workspace
 
 This is a route-and-shell truth check, not full feature-depth E2E certification.
+
+## A6 final certification results (locked)
+
+- Final certification reruns completed from this chain:
+  - `npx vitest run --config vitest.config.ts client/src/__tests__/shellTruthRoutes.test.ts tests/stage6-governed-workspace-verifier.test.ts` -> **PASS (15/15)**
+  - `npx playwright test tests/e2e/workspace-smoke.e2e.ts --grep "PULSE-" --project=chromium` -> **PASS (4/4)**
+- Validation snapshot commit lock: `d273d530`.
 
