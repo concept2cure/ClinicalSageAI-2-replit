@@ -1226,6 +1226,129 @@ async function loadProjectSharingState(
   }
 }
 
+async function loadProjectSharingStateMap(
+  organizationId: number,
+  projectRows: Array<{
+    id: number;
+    ownerId: number | null;
+    createdById: number | null;
+    settings: unknown;
+  }>
+): Promise<Map<number, ReturnType<typeof getProjectSharingState>>> {
+  const sharingByProjectId = new Map<number, ReturnType<typeof getProjectSharingState>>();
+  if (projectRows.length === 0) {
+    return sharingByProjectId;
+  }
+
+  const fallbackByProjectId = new Map<number, ReturnType<typeof getProjectSharingState>>();
+  for (const row of projectRows) {
+    fallbackByProjectId.set(
+      row.id,
+      getProjectSharingState({
+        settings: normalizeProjectSettings(row.settings),
+        ownerId: row.ownerId ?? null,
+        createdById: row.createdById ?? null,
+      })
+    );
+  }
+
+  try {
+    const projectIds = projectRows.map(p => p.id);
+    const [visibilityRows, memberRows] = await Promise.all([
+      db
+        .select({
+          projectId: projectVisibilitySettings.projectId,
+          visibility: projectVisibilitySettings.visibility,
+        })
+        .from(projectVisibilitySettings)
+        .where(
+          and(
+            eq(projectVisibilitySettings.organizationId, organizationId),
+            inArray(projectVisibilitySettings.projectId, projectIds)
+          )
+        ),
+      db
+        .select({
+          projectId: projectMembers.projectId,
+          userId: projectMembers.userId,
+          role: projectMembers.role,
+          status: projectMembers.status,
+          invitedById: projectMembers.invitedById,
+          acceptedAt: projectMembers.acceptedAt,
+        })
+        .from(projectMembers)
+        .where(
+          and(
+            eq(projectMembers.organizationId, organizationId),
+            inArray(projectMembers.projectId, projectIds),
+            eq(projectMembers.status, 'active')
+          )
+        ),
+    ]);
+
+    const visibilityByProjectId = new Map<number, 'private' | 'org_public'>();
+    for (const row of visibilityRows) {
+      visibilityByProjectId.set(row.projectId, row.visibility as 'private' | 'org_public');
+    }
+
+    const membersByProjectId = new Map<
+      number,
+      Array<{
+        userId: number;
+        role: string;
+        status: string;
+        invitedById: number | null;
+        acceptedAt: Date | null;
+      }>
+    >();
+    for (const row of memberRows) {
+      const list = membersByProjectId.get(row.projectId) || [];
+      list.push({
+        userId: row.userId,
+        role: row.role,
+        status: row.status,
+        invitedById: row.invitedById ?? null,
+        acceptedAt: row.acceptedAt ?? null,
+      });
+      membersByProjectId.set(row.projectId, list);
+    }
+
+    for (const row of projectRows) {
+      const fallback = fallbackByProjectId.get(row.id)!;
+      const members = membersByProjectId.get(row.id);
+      sharingByProjectId.set(
+        row.id,
+        getProjectSharingState({
+          settings: {
+            projectSharing: {
+              visibility: visibilityByProjectId.get(row.id) ?? fallback.visibility,
+              members:
+                members?.map(m => ({
+                  userId: m.userId,
+                  role: m.role,
+                  status: m.status,
+                  addedById: m.invitedById ?? null,
+                  addedAt: m.acceptedAt?.toISOString() ?? new Date().toISOString(),
+                })) ?? fallback.members,
+            },
+          },
+          ownerId: row.ownerId ?? null,
+          createdById: row.createdById ?? null,
+        })
+      );
+    }
+  } catch (error) {
+    if (!isMissingTableError(error)) {
+      throw error;
+    }
+    for (const row of projectRows) {
+      sharingByProjectId.set(row.id, fallbackByProjectId.get(row.id)!);
+    }
+  }
+
+  return sharingByProjectId;
+}
+
 function buildProjectSharingResponse(
   projectId: number,
   sharing: ReturnType<typeof getProjectSharingState>,
@@ -1682,13 +1805,25 @@ router.get(
         }
       }
 
+      const sharingByProjectId = await loadProjectSharingStateMap(
+        organizationId,
+        result.rows.map((p: any) => ({
+          id: p.id,
+          ownerId: p.owner_id ?? null,
+          createdById: p.created_by_id ?? null,
+          settings: p.settings,
+        }))
+      );
+
       const response = result.rows
         .filter((p: any) => {
-          const sharing = getProjectSharingState({
-            settings: normalizeProjectSettings(p.settings),
-            ownerId: p.owner_id ?? null,
-            createdById: p.created_by_id ?? null,
-          });
+          const sharing =
+            sharingByProjectId.get(p.id) ??
+            getProjectSharingState({
+              settings: normalizeProjectSettings(p.settings),
+              ownerId: p.owner_id ?? null,
+              createdById: p.created_by_id ?? null,
+            });
           const settingsWithSharing = applyProjectSharingState(
             normalizeProjectSettings(p.settings),
             sharing
@@ -1723,11 +1858,12 @@ router.get(
             updatedAt: p.updated_at,
             sharing: buildProjectSharingResponse(
               p.id,
-              getProjectSharingState({
-                settings: normalizeProjectSettings(p.settings),
-                ownerId: p.owner_id ?? null,
-                createdById: p.created_by_id ?? null,
-              })
+              sharingByProjectId.get(p.id) ??
+                getProjectSharingState({
+                  settings: normalizeProjectSettings(p.settings),
+                  ownerId: p.owner_id ?? null,
+                  createdById: p.created_by_id ?? null,
+                })
             ),
           };
         });
