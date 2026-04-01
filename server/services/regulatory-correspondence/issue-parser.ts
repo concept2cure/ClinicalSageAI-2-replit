@@ -26,6 +26,8 @@ export interface IssueExtractionResult {
     extractionVersion: string;
     sourceTextDigest: string;
     matchedRuleCount: number;
+    deterministicSignals: string[];
+    modelAssistedReasoningUsed: boolean;
   };
 }
 
@@ -34,13 +36,85 @@ const KEYWORD_TAXONOMY: Array<{
   category: CorrespondenceIssue['category'];
   severity: CorrespondenceIssue['severity'];
   blocker: boolean;
+  regulatorAskType: string;
+  impactedSubmissionComponent: string;
+  sectionCandidates: string[];
+  ownerFunction: string;
+  responsePackageType: string;
+  evidenceNeeds: string[];
 }> = [
-  { pattern: /refuse to file|rtf|reject/i, category: 'filing_acceptance_issue', severity: 'critical', blocker: true },
-  { pattern: /deficiency|missing information|clarification/i, category: 'missing_information_clarification', severity: 'high', blocker: true },
-  { pattern: /stability|specification|quality|cmc/i, category: 'cmc_quality_issue', severity: 'high', blocker: true },
-  { pattern: /safety|adverse event|risk/i, category: 'clinical_safety_issue', severity: 'high', blocker: true },
-  { pattern: /efficacy|endpoint|benefit/i, category: 'clinical_efficacy_issue', severity: 'medium', blocker: false },
-  { pattern: /format|ectd|technical/i, category: 'ectd_technical_formatting', severity: 'medium', blocker: false },
+  {
+    pattern: /refuse to file|rtf|reject/i,
+    category: 'filing_acceptance_issue',
+    severity: 'critical',
+    blocker: true,
+    regulatorAskType: 'filing_acceptance_remediation',
+    impactedSubmissionComponent: 'cover_sequence',
+    sectionCandidates: ['1.0', '1.2'],
+    ownerFunction: 'regulatory_affairs',
+    responsePackageType: 'filing_acceptance_response',
+    evidenceNeeds: ['administrative check matrix', 'filing acceptance remediation narrative'],
+  },
+  {
+    pattern: /deficiency|missing information|clarification/i,
+    category: 'missing_information_clarification',
+    severity: 'high',
+    blocker: true,
+    regulatorAskType: 'deficiency_response',
+    impactedSubmissionComponent: 'discipline_module',
+    sectionCandidates: ['2.5', '2.7'],
+    ownerFunction: 'regulatory_operations',
+    responsePackageType: 'deficiency_response_package',
+    evidenceNeeds: ['point-by-point response table', 'supporting evidence references'],
+  },
+  {
+    pattern: /stability|specification|quality|cmc/i,
+    category: 'cmc_quality_issue',
+    severity: 'high',
+    blocker: true,
+    regulatorAskType: 'cmc_data_request',
+    impactedSubmissionComponent: 'module_3',
+    sectionCandidates: ['3.2.S', '3.2.P'],
+    ownerFunction: 'cmc',
+    responsePackageType: 'cmc_amendment',
+    evidenceNeeds: ['updated stability dataset', 'quality justification memo'],
+  },
+  {
+    pattern: /safety|adverse event|risk/i,
+    category: 'clinical_safety_issue',
+    severity: 'high',
+    blocker: true,
+    regulatorAskType: 'safety_clarification',
+    impactedSubmissionComponent: 'module_2_5_2_7',
+    sectionCandidates: ['2.5', '2.7.4'],
+    ownerFunction: 'clinical_safety',
+    responsePackageType: 'clinical_safety_response',
+    evidenceNeeds: ['integrated safety summary update', 'risk mitigation rationale'],
+  },
+  {
+    pattern: /efficacy|endpoint|benefit/i,
+    category: 'clinical_efficacy_issue',
+    severity: 'medium',
+    blocker: false,
+    regulatorAskType: 'efficacy_follow_up',
+    impactedSubmissionComponent: 'clinical_summary',
+    sectionCandidates: ['2.5', '2.7.3'],
+    ownerFunction: 'clinical_development',
+    responsePackageType: 'efficacy_response',
+    evidenceNeeds: ['endpoint sensitivity analysis', 'benefit-risk narrative'],
+  },
+  {
+    pattern: /format|ectd|technical/i,
+    category: 'ectd_technical_formatting',
+    severity: 'medium',
+    blocker: false,
+    regulatorAskType: 'technical_correction',
+    impactedSubmissionComponent: 'ectd_sequence',
+    sectionCandidates: ['module_index'],
+    ownerFunction: 'publishing_operations',
+    responsePackageType: 'technical_resequence',
+    evidenceNeeds: ['validation report', 'publishing checklist'],
+  },
 ];
 
 export function resolveIssueParserGovernanceConfig(env: NodeJS.ProcessEnv): IssueParserGovernanceConfig {
@@ -85,6 +159,9 @@ export function runGovernedIssueParser(text: string, correspondenceId: string): 
   const normalized = text || '';
   const sourceTextDigest = crypto.createHash('sha256').update(normalized).digest('hex');
   const matches = KEYWORD_TAXONOMY.filter(rule => rule.pattern.test(normalized));
+  const deterministicSignals = matches.map(
+    m => `${m.category}:${m.regulatorAskType}:${m.impactedSubmissionComponent}`
+  );
 
   const issues = (!matches.length
     ? [{
@@ -100,6 +177,16 @@ export function runGovernedIssueParser(text: string, correspondenceId: string): 
         mappedCtdSections: [],
         mappedArtifactIds: [],
         resolutionStatus: 'open' as const,
+        structuredExtraction: {
+          regulatorAskType: 'manual_triage_required',
+          impactedSubmissionComponent: 'unknown',
+          sectionCandidates: [],
+          recommendedOwnerFunction: 'regulatory_affairs',
+          recommendedResponsePackageType: 'manual_triage_response',
+          evidenceNeeds: ['manual issue triage'],
+          confidenceTrace: [{ signal: 'no_rule_match', score: 0.41, deterministic: true }],
+          humanReviewRequired: true,
+        },
       }]
     : matches.map(match => ({
         id: crypto.randomUUID(),
@@ -111,9 +198,23 @@ export function runGovernedIssueParser(text: string, correspondenceId: string): 
         sourceExcerpt: normalized.slice(0, 280),
         confidence: match.blocker ? 0.78 : 0.63,
         humanReviewStatus: 'pending' as const,
-        mappedCtdSections: [],
+        mappedCtdSections: match.sectionCandidates,
         mappedArtifactIds: [],
         resolutionStatus: 'open' as const,
+        owner: match.ownerFunction,
+        structuredExtraction: {
+          regulatorAskType: match.regulatorAskType,
+          impactedSubmissionComponent: match.impactedSubmissionComponent,
+          sectionCandidates: match.sectionCandidates,
+          recommendedOwnerFunction: match.ownerFunction,
+          recommendedResponsePackageType: match.responsePackageType,
+          evidenceNeeds: match.evidenceNeeds,
+          confidenceTrace: [
+            { signal: `rule_match:${match.category}`, score: 0.6, deterministic: true },
+            { signal: `severity:${match.severity}`, score: 0.2, deterministic: true },
+          ],
+          humanReviewRequired: true,
+        },
       }))) satisfies CorrespondenceIssue[];
 
   return {
@@ -128,6 +229,8 @@ export function runGovernedIssueParser(text: string, correspondenceId: string): 
       extractionVersion: ISSUE_EXTRACTION_VERSION,
       sourceTextDigest,
       matchedRuleCount: matches.length,
+      deterministicSignals,
+      modelAssistedReasoningUsed: false,
     },
   };
 }
