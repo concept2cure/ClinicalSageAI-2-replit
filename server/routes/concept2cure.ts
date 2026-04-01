@@ -15830,9 +15830,12 @@ router.get(
     try {
       const conversationId = parseInt(req.params.conversationId, 10);
       const organizationId =
-        (req as any).organizationId ||
-        parseInt(req.headers['x-organization-id'] as string, 10) ||
-        1;
+        Number((req as any).tenantContext?.organizationId) ||
+        Number((req as any).tenantId) ||
+        Number((req as any).user?.organizationId);
+      if (!organizationId) {
+        return sendError(res, 403, 'Organization context required');
+      }
 
       if (!conversationId || isNaN(conversationId)) {
         return sendError(res, 400, 'Invalid conversation ID');
@@ -15858,9 +15861,12 @@ router.get(
     try {
       const conversationId = parseInt(req.params.conversationId, 10);
       const organizationId =
-        (req as any).organizationId ||
-        parseInt(req.headers['x-organization-id'] as string, 10) ||
-        1;
+        Number((req as any).tenantContext?.organizationId) ||
+        Number((req as any).tenantId) ||
+        Number((req as any).user?.organizationId);
+      if (!organizationId) {
+        return sendError(res, 403, 'Organization context required');
+      }
 
       if (!conversationId || isNaN(conversationId)) {
         return sendError(res, 400, 'Invalid conversation ID');
@@ -15894,9 +15900,12 @@ router.post(
     try {
       const conversationId = parseInt(req.params.conversationId, 10);
       const organizationId =
-        (req as any).organizationId ||
-        parseInt(req.headers['x-organization-id'] as string, 10) ||
-        1;
+        Number((req as any).tenantContext?.organizationId) ||
+        Number((req as any).tenantId) ||
+        Number((req as any).user?.organizationId);
+      if (!organizationId) {
+        return sendError(res, 403, 'Organization context required');
+      }
 
       if (!conversationId || isNaN(conversationId)) {
         return sendError(res, 400, 'Invalid conversation ID');
@@ -16028,8 +16037,9 @@ router.post(
     try {
       const conversationId = parseInt(req.params.conversationId, 10);
       const organizationId =
-        (req as any).organizationId ||
-        parseInt(req.headers['x-organization-id'] as string, 10) ||
+        Number((req as any).tenantContext?.organizationId) ||
+        Number((req as any).tenantId) ||
+        Number((req as any).user?.organizationId) ||
         null;
       if (!organizationId) {
         return sendError(res, 403, 'Organization context required');
@@ -16623,7 +16633,12 @@ router.get('/team/workload', async (req: Request, res: Response) => {
 router.post('/feedback', authMiddleware, async (req: Request, res: Response) => {
   try {
     const organizationId =
-      (req as any).organizationId || parseInt(req.headers['x-organization-id'] as string, 10) || 1;
+      Number((req as any).tenantContext?.organizationId) ||
+      Number((req as any).tenantId) ||
+      Number((req as any).user?.organizationId);
+    if (!organizationId) {
+      return sendError(res, 403, 'Organization context required');
+    }
     const userId = getUserId(req);
     const { messageId, positive, conversationId, comment } = req.body;
 
