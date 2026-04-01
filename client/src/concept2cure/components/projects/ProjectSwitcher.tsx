@@ -60,6 +60,7 @@ interface ProjectSwitcherProps {
   isOpen: boolean;
   onClose: () => void;
   projects: any[];
+  isLoading?: boolean;
   activeProjectId?: string;
   onSelectProject: (id: string) => void;
   onCreateProject: () => void;
@@ -712,6 +713,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
   isOpen,
   onClose,
   projects,
+  isLoading = false,
   activeProjectId,
   onSelectProject,
   onCreateProject,
@@ -822,12 +824,32 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
 
         {/* Content — card-based project browser (Claude-style) */}
         <div className="flex-1 overflow-y-auto">
-          {filteredProjects.length === 0 ? (
+          {isLoading ? (
+            <div className="px-4 py-4 space-y-2" aria-live="polite" aria-busy="true">
+              {Array.from({ length: 3 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className="h-20 rounded-xl border border-stone-200 bg-stone-50/70 animate-pulse"
+                />
+              ))}
+              <p className="text-xs text-stone-500">Loading projects…</p>
+            </div>
+          ) : filteredProjects.length === 0 ? (
             <div className="text-center py-8 px-4">
               <FileText className="w-5 h-5 mx-auto mb-2 text-stone-400" />
               <p className="text-xs text-stone-500">
                 {searchQuery ? 'No projects match your search' : 'No projects yet'}
               </p>
+              {!searchQuery && (
+                <Button
+                  size="sm"
+                  className="mt-3"
+                  onClick={onCreateProject}
+                >
+                  <Plus className="w-3 h-3" />
+                  Create your first project
+                </Button>
+              )}
             </div>
           ) : (
             <div className="px-4 py-3 space-y-4">
