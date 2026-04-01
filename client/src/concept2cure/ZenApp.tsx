@@ -1264,7 +1264,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     setActiveToolPanel('ana-biostats');
   }, [layoutMode]);
 
-  // Project-scoped artifacts for route/handoff decisions (must come after activeProjectId)
+  // Project-scoped artifacts for the Outputs tab (hoisted before callbacks that reference it)
   const { data: projectArtifacts = [] } = useQuery({
     queryKey: ['project-artifacts', activeProjectId],
     queryFn: async () => {
@@ -1495,10 +1495,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   } | null>(null);
 
   // External message to send into AnA chat (triggered by suggested prompts, dashboard actions)
-  const [externalChatMessage, setExternalChatMessage] = useState<{
-    text: string;
-    ts: number;
-  } | null>(null);
+  const [externalChatMessage, setExternalChatMessage] = useState<{ text: string; ts: number } | null>(null);
 
   // Instructions + knowledge for Instructions tab (lifted so it doesn't remount per tab)
   const workspaceKnowledge = useProjectKnowledge(activeProjectId ?? null);
