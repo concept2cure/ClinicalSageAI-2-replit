@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Hardening Edge Cases — Audit-Driven Tests
  *
@@ -7,7 +8,11 @@
  * @module tests/unit/hardening-edge-cases
  */
 
-import { describe, it, expect } from 'vitest';
+import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderHook, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { useProjectKnowledge } from '../../client/src/concept2cure/hooks/useProjectKnowledge';
 
 // ─── Fix 1: Contradiction Deduplication ──────────────────────────────────────
 
@@ -233,5 +238,168 @@ describe('SQL safety', () => {
     expect(sampleQuery).toContain('$2');
     expect(sampleQuery).not.toContain('${');
     expect(sampleQuery).not.toContain('\' +');
+  });
+});
+
+// ─── Fix 8: queryClient apiRequest signature compatibility ───────────────────
+
+function createStorageMock(initial: Record<string, string> = {}) {
+  const store = new Map(Object.entries(initial));
+  return {
+    getItem: vi.fn((key: string) => (store.has(key) ? store.get(key)! : null)),
+    setItem: vi.fn((key: string, value: string) => {
+      store.set(key, String(value));
+    }),
+    removeItem: vi.fn((key: string) => {
+      store.delete(key);
+    }),
+    clear: vi.fn(() => {
+      store.clear();
+    }),
+  };
+}
+
+describe('Fix 8: queryClient apiRequest signature compatibility', () => {
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('supports modern method+url signature and returns fetch Response', async () => {
+    const local = createStorageMock({ currentOrganizationId: '1' });
+    const session = createStorageMock({ token: 'stage9-token' });
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ success: true, data: [] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    );
+
+    vi.stubGlobal('localStorage', local);
+    vi.stubGlobal('sessionStorage', session);
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { apiRequest } = await import('../../client/src/lib/queryClient.js');
+    const res = await apiRequest('GET', '/api/concept2cure/projects');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/concept2cure/projects',
+      expect.objectContaining({
+        method: 'GET',
+        credentials: 'include',
+        headers: expect.objectContaining({
+          'x-organization-id': '1',
+          Authorization: 'Bearer stage9-token',
+        }),
+      })
+    );
+    expect(res).toBeInstanceOf(Response);
+  });
+
+  it('keeps legacy url+options signature behavior for JS callers', async () => {
+    const local = createStorageMock({ currentOrganizationId: '1' });
+    const session = createStorageMock({ token: 'legacy-token' });
+    vi.stubGlobal('localStorage', local);
+    vi.stubGlobal('sessionStorage', session);
+
+    const { apiRequest, api } = await import('../../client/src/lib/queryClient.js');
+    let seenConfig: Record<string, any> | undefined;
+    api.defaults.adapter = async config => {
+      seenConfig = config as Record<string, any>;
+      return {
+        data: { ok: true },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config,
+        request: {},
+      };
+    };
+
+    const result = await apiRequest('/api/legacy-endpoint', { method: 'POST', data: { a: 1 } });
+
+    expect(result).toEqual({ ok: true });
+    expect(seenConfig?.url).toBe('/api/legacy-endpoint');
+    expect(String(seenConfig?.method).toUpperCase()).toBe('POST');
+    expect(
+      typeof seenConfig?.data === 'string' ? JSON.parse(seenConfig.data) : seenConfig?.data
+    ).toEqual({ a: 1 });
+  });
+});
+
+// ─── Fix 9: Project knowledge normalization prevents undefined.filter crash ──
+
+describe('Fix 9: project knowledge normalization', () => {
+  const createWrapper = () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+      },
+    });
+    return ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client: queryClient }, children);
+  };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('does not crash when API returns knowledge without documents array', async () => {
+    const local = createStorageMock({ currentOrganizationId: '1' });
+    const session = createStorageMock({ token: 'knowledge-token' });
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            customInstructions: 'Focus on IND quality and traceability.',
+            context: 'seeded',
+          },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
+    );
+
+    vi.stubGlobal('localStorage', local);
+    vi.stubGlobal('sessionStorage', session);
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useProjectKnowledge('stage9-project'), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.error).toBeNull();
+    expect(result.current.knowledge?.documents).toEqual([]);
+    expect(result.current.contextTokens).toBe(0);
+  });
+
+  it('normalizes localStorage fallback payload when documents are missing', async () => {
+    const local = createStorageMock({
+      currentOrganizationId: '1',
+      'concept2cure_knowledge_stage9-project': JSON.stringify({
+        customInstructions: 'Fallback-only payload',
+      }),
+    });
+    const session = createStorageMock({ token: 'knowledge-token' });
+
+    vi.stubGlobal('localStorage', local);
+    vi.stubGlobal('sessionStorage', session);
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network down')));
+
+    const { result } = renderHook(() => useProjectKnowledge('stage9-project'), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.error).toBeNull();
+    expect(result.current.knowledge?.documents).toEqual([]);
+    expect(result.current.knowledge?.customInstructions).toBe('Fallback-only payload');
+    expect(result.current.contextTokens).toBe(0);
   });
 });
