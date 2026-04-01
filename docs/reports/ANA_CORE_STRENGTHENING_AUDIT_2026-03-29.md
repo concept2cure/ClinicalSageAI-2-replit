@@ -255,3 +255,91 @@ This audit focused on the practical intelligence path that users actually hit in
 ## Outcome
 
 AnA now receives materially richer, project-grounded intelligence in both primary runtime paths and has improved command parity with UI promises. This is a meaningful step toward the “alive intelligence operator” behavior you asked for: more context-aware, less generic, more traceable, and more deterministic in action selection.
+
+---
+
+## 2026-04-01 Cross-Session Consolidation Audit (Pause Point)
+
+### Audit Objective
+- Pause implementation and evaluate:
+  1. Current AnA feature-set quality and risk posture
+  2. Open PR overlap/conflict risk
+  3. Cursor branches with work not yet represented in an open PR and not merged to `concept2cure-v2`
+  4. Concrete next-step execution sequence
+
+### Feature-Set Status Snapshot (AnA)
+
+| Capability Area | Status | Notes |
+|---|---|---|
+| Chat/stream intelligence prefetch | **Improved** | Shared prefetch helper added and wired into both `/chat` + `/stream` |
+| Slash parity contract | **Improved** | Backend slash contract exported + parity tests added |
+| Decision intelligence UX | **Improved** | Decision status rail + `/decisions` deterministic handling in chat panel |
+| Response cleanup hygiene | **Improved** | Action/command cleanup unified before persistence/return |
+| Biostats command wiring | **Improved** | `generateSAP` + `computeSampleSize` wired to real orchestrator/engine |
+| Route maintainability | **Partial** | Drift reduced, but `server/routes/ana-ri.ts` remains monolithic |
+
+### Risk-Ranked Findings
+
+#### High
+1. **Open PR overlap risk (merge sequencing required).**
+   - Confirmed overlapping file hotspots:
+     - PR #323 ↔ PR #309: `AnaPersistentPanel.tsx`, `server/routes/ana-ri.ts`
+     - PR #327 ↔ PR #324: `server/routes/authoring-actions.ts`
+     - PR #325 ↔ PR #323: `tests/routes/ana-ri-health.test.ts`
+     - PR #325 ↔ PR #320: `package.json`
+
+2. **Un-PR'd cursor branches with unmerged commits exist.**
+   - `cursor/critical-files-management-f38a` → not merged; 33 branch-only commits relative to `concept2cure-v2`
+   - `cursor/development-environment-setup-811c` → not merged; diverged (2 branch-only commits, base ahead by 39)
+
+#### Medium
+3. **Large PR scope concentration in #323.**
+   - Broad multi-wave surface area increases review and conflict cost if landing is delayed.
+
+4. **Monolithic route pressure remains.**
+   - Shared helpers now exist, but `/chat` and `/stream` still carry substantial duplicated post-response lifecycle logic.
+
+#### Low
+5. **Local session hygiene.**
+   - Two local debug import processes were detected and terminated; no active background diagnostics remain.
+
+### Open PR Landscape (targeting `concept2cure-v2`)
+
+| PR | Branch | Draft | Merge State | Scope Summary |
+|---|---|---:|---|---|
+| #323 | `cursor/ana-intelligence-refinement-35c8` | Yes | UNSTABLE | AnA intelligence + commands + decision UX + parity + shared prefetch |
+| #324 | `cursor/customer-shaped-harness-build-e420` | Yes | UNSTABLE | Large governed enforcement and transition QA surface |
+| #325 | `cursor/customer-shaped-harness-build-5841` | Yes | UNSTABLE | Stage 8 RC docs/scripts/route mapping + test/package touches |
+| #326 | `cursor/central-system-review-18f8` | Yes | UNSTABLE | “Docs” titled but includes route/server/client functional changes |
+| #327 | `cursor/biotech-client-ui-experience-ebb9` | Yes | UNSTABLE | Workflow/auth/governance stabilization set |
+| #320 | `codex/refactor-codebase-for-optimization` | No | DIRTY | Structural/bootstrap/package refactor |
+| #309 | `codex/implement-ana-continuous-conversation-queue` | No | DIRTY | Earlier AnA queue/streaming line with overlap into #323 |
+
+### Cursor Branches Without Open PR
+
+| Branch | Merge Status vs `concept2cure-v2` | Action |
+|---|---|---|
+| `cursor/app-ui-assessment-86e4` | Already merged | No action |
+| `cursor/critical-files-management-f38a` | Not merged | Open PR or cherry-pick selected commits |
+| `cursor/development-environment-setup-811c` | Not merged (diverged) | Open PR for the 2 unique commits or cherry-pick |
+
+### Recommended Merge Sequence (Conflict-Minimizing)
+
+1. **Land #323 first** (current AnA line is cohesive and validated)
+2. **Land #327 next** (smaller overlap footprint than #324)
+3. **Rebase and land #324** after #327 (shared `authoring-actions.ts` hotspot)
+4. **Handle #326** after rebasing onto latest `concept2cure-v2` (contains functional route changes despite docs title)
+5. **Split #325 if needed**: separate docs/report payload from runtime/test/package edits before merge
+6. **Decide disposition of #309 and #320** (close as superseded or rebase/cherry-pick only surviving deltas)
+
+### Immediate Next-Step Plan
+
+1. **Consolidation control pass**
+   - Produce a per-PR file-touch map and classify each touched file as: independent / conflict-prone / superseded.
+2. **Orphan-branch triage**
+   - Create PRs (or explicit cherry-pick plans) for:
+     - `cursor/critical-files-management-f38a`
+     - `cursor/development-environment-setup-811c`
+3. **AnA hardening phase after merge**
+   - Extract shared post-response pipeline from `ana-ri.ts` (actions/commands cleanup/persistence/RIM intercept) into a dedicated service to complete drift reduction.
+
