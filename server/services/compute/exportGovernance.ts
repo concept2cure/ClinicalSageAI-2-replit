@@ -67,7 +67,7 @@ export interface ExportGovernanceResult {
  */
 export async function registerGovernedExport(
   input: ExportGovernanceInput
-): Promise<ExportGovernanceResult | null> {
+): Promise<ExportGovernanceResult> {
   const pool = getPool();
   const client = await pool.connect();
   const now = new Date();
@@ -277,7 +277,7 @@ export async function registerGovernedExport(
     };
   } catch (error) {
     await client.query('ROLLBACK').catch(() => {});
-    console.error('[ExportGovernance] Failed to register governed export — degraded mode:', error);
+    console.error('[ExportGovernance] Failed to register governed export:', error);
 
     // Trace: export_failure
     emitTraceEvent({
@@ -290,7 +290,7 @@ export async function registerGovernedExport(
       metadata: { error: (error as Error).message, exportFormat: input.exportFormat },
     });
 
-    return null;
+    throw error;
   } finally {
     client.release();
   }
@@ -318,7 +318,7 @@ export async function registerExportGovernanceQuick(opts: {
   backendRoute: string;
   ctdSection?: string;
   ipAddress?: string;
-}): Promise<ExportGovernanceResult | null> {
+}): Promise<ExportGovernanceResult> {
   try {
     const contentHash = opts.exportHash ?? crypto.createHash('sha256')
       .update(`${opts.title}:${opts.exportFilename}:${opts.exportFileSize}`)
@@ -346,7 +346,7 @@ export async function registerExportGovernanceQuick(opts: {
       ipAddress: opts.ipAddress,
     });
   } catch (err) {
-    console.error('[ExportGovernanceQuick] Non-blocking governance registration failed:', err);
-    return null;
+    console.error('[ExportGovernanceQuick] Governance registration failed:', err);
+    throw err;
   }
 }

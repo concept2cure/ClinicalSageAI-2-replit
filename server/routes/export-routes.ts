@@ -72,9 +72,9 @@ router.get('/download/study-bundle', async (req, res) => {
       const zipPath = path.join(exportDir, zipFiles[0]);
       const fileStat = fs.statSync(zipPath);
 
-      // Register governed export (non-blocking — export proceeds even if governance fails)
+      // Register governed export (fail-closed for regulated outputs)
       const user = (req as any).user;
-      registerExportGovernanceQuick({
+      const exportGovernance = await registerExportGovernanceQuick({
         organizationId: user?.organizationId || 1,
         projectId: user?.projectId || 0,
         userId: user?.id || 0,
@@ -86,7 +86,13 @@ router.get('/download/study-bundle', async (req, res) => {
         docType: 'study_bundle',
         backendRoute: '/api/download/study-bundle',
         ipAddress: req.ip,
-      }).catch(() => {}); // non-blocking
+      });
+      if (!exportGovernance) {
+        return res.status(500).json({
+          error: 'Governed export registration failed',
+          code: 'EXPORT_GOVERNANCE_FAILED',
+        });
+      }
 
       // Set headers for file download
       res.setHeader('Content-Type', 'application/zip');

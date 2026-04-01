@@ -946,7 +946,10 @@ router.post('/generate-module3-docx', async (req: Request, res: Response) => {
         const parsedProjId = parseInt(artifactProjectId, 10);
         const orgId = user?.organizationId;
         if (isNaN(parsedProjId) || !orgId) {
-          console.warn('[knowledge-base] Skipping artifact save: invalid projectId or missing org');
+          return res.status(400).json({
+            error: 'Governed artifact save requires valid projectId and organization context',
+            code: 'ARTIFACT_CONSEQUENCE_REQUIRED',
+          });
         } else {
           const docTitle = `Module 3 – Quality (CMC): ${drug_name || substance_name || 'Drug'}`;
           const htmlContent = sections
@@ -1086,7 +1089,12 @@ router.post('/generate-module3-docx', async (req: Request, res: Response) => {
           );
         }
       } catch (artErr: any) {
-        console.warn(`[knowledge-base] Could not save Module 3 as artifact: ${artErr.message}`);
+        console.error(`[knowledge-base] Module 3 governed artifact save failed: ${artErr.message}`);
+        return res.status(500).json({
+          error: 'Governed artifact persistence failed for Module 3 output',
+          code: 'ARTIFACT_CONSEQUENCE_REQUIRED',
+          detail: artErr.message,
+        });
       }
     }
 
@@ -1597,72 +1605,90 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
         }
         // Also save as artifact version if projectId + artifactId provided
         if (projectId && artifactId && db) {
-          try {
-            const numericProjectId = Number(projectId);
-            const numericArtifactId = Number(artifactId);
-            if (Number.isNaN(numericProjectId) || Number.isNaN(numericArtifactId)) {
-              throw new Error('Invalid projectId/artifactId for versioning');
-            }
-            const contentHash = crypto.createHash('sha256').update(content).digest('hex');
-            const governedResolution = resolveGovernedContext({
-              req,
-              projectId: numericProjectId,
-              artifactId: numericArtifactId,
-              documentType: 'regulatory_document',
-              generationMode: 'manual',
-              lifecycleStatus: 'draft',
-              originSurface: 'api_route',
-              title,
-              content,
-              ctdSection: metadata?.ctdSection || null,
-              sourceRefs: [`connector:vault_dms:${docId}`],
-              exportAllowed: false,
-              eventType: 'artifact.versioned',
+          const numericProjectId = Number(projectId);
+          const numericArtifactId = Number(artifactId);
+          if (Number.isNaN(numericProjectId) || Number.isNaN(numericArtifactId)) {
+            return res.status(400).json({
+              success: false,
+              error: {
+                message: 'Invalid projectId/artifactId for versioning',
+                code: 'GOVERNED_CONTRACT_INVALID',
+              },
             });
-            if (!governedResolution.validation.valid) {
-              throw new Error(
-                `Governed contract invalid for connector versioning: ${governedResolution.validation.errors.join('; ')}`
-              );
-            }
-            const artifactVersion = await db.insert(concept2cureArtifactVersions).values({
-              artifactId: numericArtifactId,
-              organizationId: orgId,
-              version: 1,
-              content,
-              contentHash,
-              createdById: user?.id || null,
-            } as any).returning();
-            const insertedVersionId = artifactVersion?.[0]?.id || null;
-            if (insertedVersionId) {
-              const [artifactRow] = await db
-                .select()
-                .from(concept2cureArtifacts)
-                .where(eq(concept2cureArtifacts.id, numericArtifactId))
-                .limit(1);
-              const artifactMetadata =
-                artifactRow?.metadata && typeof artifactRow.metadata === 'object'
-                  ? (artifactRow.metadata as Record<string, unknown>)
-                  : {};
-              const artifactHarness =
-                artifactMetadata.harness && typeof artifactMetadata.harness === 'object'
-                  ? (artifactMetadata.harness as Record<string, unknown>)
-                  : {};
-              await db
-                .update(concept2cureArtifacts)
-                .set({ metadata: {
-                  ...(artifactMetadata || {}),
-                  harness: {
-                    ...(artifactHarness || {}),
-                    gateChecks: governedResolution.contract.exportEligibility.gateChecks,
-                    blockingReasons: governedResolution.contract.exportEligibility.blockingReasons,
-                    readinessOutcome: governedResolution.contract.exportEligibility.readinessOutcome,
-                  },
-                } })
-                .where(eq(concept2cureArtifacts.id, numericArtifactId));
-            }
-          } catch (versionErr: any) {
-            console.warn('[knowledge-base] Vault DMS version insert skipped:', versionErr?.message);
           }
+          const contentHash = crypto.createHash('sha256').update(content).digest('hex');
+          const governedResolution = resolveGovernedContext({
+            req,
+            projectId: numericProjectId,
+            artifactId: numericArtifactId,
+            documentType: 'regulatory_document',
+            generationMode: 'manual',
+            lifecycleStatus: 'draft',
+            originSurface: 'api_route',
+            title,
+            content,
+            ctdSection: metadata?.ctdSection || null,
+            sourceRefs: [`connector:vault_dms:${docId}`],
+            exportAllowed: false,
+            eventType: 'artifact.versioned',
+          });
+          if (!governedResolution.validation.valid) {
+            return res.status(400).json({
+              success: false,
+              error: {
+                message: 'Governed document contract validation failed',
+                code: 'GOVERNED_CONTRACT_INVALID',
+                details: {
+                  errors: governedResolution.validation.errors,
+                  warnings: governedResolution.validation.warnings,
+                  resolved: governedResolution.resolved,
+                },
+              },
+            });
+          }
+          const artifactVersion = await db.insert(concept2cureArtifactVersions).values({
+            artifactId: numericArtifactId,
+            organizationId: orgId,
+            version: 1,
+            content,
+            contentHash,
+            createdById: user?.id || null,
+          } as any).returning();
+          const insertedVersionId = artifactVersion?.[0]?.id || null;
+          if (!insertedVersionId) {
+            return res.status(500).json({
+              success: false,
+              error: {
+                message: 'Vault DMS version consequence failed',
+                code: 'ARTIFACT_CONSEQUENCE_REQUIRED',
+              },
+            });
+          }
+          const [artifactRow] = await db
+            .select()
+            .from(concept2cureArtifacts)
+            .where(eq(concept2cureArtifacts.id, numericArtifactId))
+            .limit(1);
+          const artifactMetadata =
+            artifactRow?.metadata && typeof artifactRow.metadata === 'object'
+              ? (artifactRow.metadata as Record<string, unknown>)
+              : {};
+          const artifactHarness =
+            artifactMetadata.harness && typeof artifactMetadata.harness === 'object'
+              ? (artifactMetadata.harness as Record<string, unknown>)
+              : {};
+          await db
+            .update(concept2cureArtifacts)
+            .set({ metadata: {
+              ...(artifactMetadata || {}),
+              harness: {
+                ...(artifactHarness || {}),
+                gateChecks: governedResolution.contract.exportEligibility.gateChecks,
+                blockingReasons: governedResolution.contract.exportEligibility.blockingReasons,
+                readinessOutcome: governedResolution.contract.exportEligibility.readinessOutcome,
+              },
+            } })
+            .where(eq(concept2cureArtifacts.id, numericArtifactId));
         }
         result = { success: true, fileId: docId, message: 'Saved to project vault' };
         break;
@@ -2132,7 +2158,7 @@ router.post('/ind-autodraft/generate', async (req: Request, res: Response) => {
           if (artifact) {
             artifactId = String(artifact.id);
 
-            // Create initial version
+            // Create initial version (fail-closed: version history is mandatory for governed output)
             await db.insert(concept2cureArtifactVersions).values({
               artifactId: artifact.id,
               organizationId: orgId,
@@ -2141,11 +2167,9 @@ router.post('/ind-autodraft/generate', async (req: Request, res: Response) => {
               contentHash: crypto.createHash('sha256').update(content).digest('hex'),
               createdById: user?.id || user?.userId || null,
               changeDescription: 'Generated by IND AutoDraft',
-            } as any).catch(() => {
-              // Version table may have different schema — non-fatal
-            });
+            } as any);
 
-            // Emit provenance event
+            // Emit provenance event (best-effort telemetry, not a blocking mutation primitive)
             await emitKBProvenanceEvent({
               artifactDbId: artifact.id,
               organizationId: orgId,
@@ -2164,12 +2188,19 @@ router.post('/ind-autodraft/generate', async (req: Request, res: Response) => {
               sourceDescription: `IND AutoDraft — ${title}`,
               backendRoute: 'POST /api/knowledge-base/ind-autodraft/generate',
             }).catch(() => {
-              // Provenance logging failure is non-fatal
+              // Non-blocking observability
             });
           }
         } catch (dbErr: any) {
           console.error(`[ind-autodraft] Failed to save artifact for ${section.code}:`, dbErr.message);
-          // Continue even if save fails — still return the content
+          return res.status(500).json({
+            error: 'Governed artifact consequence failed for IND autodraft output',
+            code: 'ARTIFACT_CONSEQUENCE_REQUIRED',
+            details: {
+              sectionCode: section.code,
+              message: dbErr?.message || String(dbErr),
+            },
+          });
         }
 
         generatedSections.push({
@@ -2182,12 +2213,13 @@ router.post('/ind-autodraft/generate', async (req: Request, res: Response) => {
         });
       } catch (genErr: any) {
         console.error(`[ind-autodraft] Failed to generate ${section.code}:`, genErr.message);
-        generatedSections.push({
-          code: section.code,
-          title: section.title,
-          content: `[Generation failed: ${genErr.message}]`,
-          wordCount: 0,
-          sourceCount: 0,
+        return res.status(500).json({
+          error: 'IND section generation failed',
+          code: 'IND_SECTION_GENERATION_FAILED',
+          details: {
+            sectionCode: section.code,
+            message: genErr?.message || String(genErr),
+          },
         });
       }
     }
