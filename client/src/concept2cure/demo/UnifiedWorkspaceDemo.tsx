@@ -384,7 +384,7 @@ const SubmissionsView: React.FC = () => (
     nodes={MOCK_DOSSIER}
     submissionName="ABC-123 NDA"
     submissionType="NDA"
-    onNodeSelect={(node) => console.log('Node selected:', node)}
+    onNodeSelect={(node: any) => console.log('Node selected:', node)}
     className="h-full"
   />
 );

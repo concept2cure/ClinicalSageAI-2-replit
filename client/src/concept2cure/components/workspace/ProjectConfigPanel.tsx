@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { DataStateWrapper } from '@/components/ui/statesV2';
+import { useToast } from '@/hooks/use-toast';
+import {
+  useProjectCollaborators,
+  useProjectTeamMembers,
+  type ProjectCollaborator,
+  type ProjectCollaboratorPermission,
+} from '@/concept2cure/hooks/useProjects';
 import { Settings, FileText, Users, ShieldCheck, Save } from 'lucide-react';
 
 interface ProjectConfigPanelProps {
@@ -29,6 +37,7 @@ interface ProjectConfigPanelProps {
     targetSubmissionDate?: string;
     status?: string;
     customInstructions?: string;
+    teamMembers?: Array<{ userId: number; name: string; email?: string }>;
   } | null;
   onSave: (data: Record<string, any>) => Promise<void>;
 }
@@ -66,6 +75,7 @@ const STATUS_LABELS: Record<string, string> = {
 const INSTRUCTIONS_MAX = 5000;
 
 function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigPanelProps) {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('general');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -82,6 +92,33 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
 
   // Form state — Instructions tab
   const [customInstructions, setCustomInstructions] = useState('');
+  const [newCollaboratorUserId, setNewCollaboratorUserId] = useState('');
+  const [newCollaboratorPermission, setNewCollaboratorPermission] =
+    useState<ProjectCollaboratorPermission>('can_use');
+  const [localCollaborators, setLocalCollaborators] = useState<ProjectCollaborator[] | null>(null);
+
+  const {
+    collaborators,
+    isLoading: isLoadingCollaborators,
+    error: collaboratorsError,
+    updateCollaborators,
+    isUpdating: isUpdatingCollaborators,
+  } = useProjectCollaborators(project?.id ?? null);
+  const {
+    data: teamMembers = [],
+    isLoading: isLoadingTeamMembers,
+    error: teamMembersError,
+  } = useProjectTeamMembers(project?.id ?? null);
+
+  const effectiveCollaborators = localCollaborators ?? collaborators;
+  const assignedIds = useMemo(
+    () => new Set(effectiveCollaborators.map(c => c.userId)),
+    [effectiveCollaborators]
+  );
+  const projectTeamCandidates = useMemo(
+    () => teamMembers.filter(member => !assignedIds.has(member.userId)),
+    [teamMembers, assignedIds]
+  );
 
   // Sync form state when project prop changes or panel opens
   useEffect(() => {
@@ -95,9 +132,17 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
       setTargetSubmissionDate(project.targetSubmissionDate || '');
       setStatus(project.status || '');
       setCustomInstructions(project.customInstructions || '');
+      setLocalCollaborators(null);
+      setNewCollaboratorUserId('');
+      setNewCollaboratorPermission('can_use');
       setSaved(false);
     }
   }, [isOpen, project]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setLocalCollaborators(collaborators);
+  }, [isOpen, collaborators]);
 
   const handleSave = async () => {
     if (!name.trim()) return;
@@ -125,6 +170,53 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
 
   const handleResetInstructions = () => {
     setCustomInstructions('');
+  };
+
+  const handleAddCollaborator = () => {
+    const userId = Number(newCollaboratorUserId);
+    if (!Number.isInteger(userId) || userId <= 0) return;
+    if (assignedIds.has(userId)) return;
+
+    const userMeta = projectTeamCandidates.find((m: any) => Number(m.userId) === userId);
+    setLocalCollaborators(prev => [
+      ...(prev ?? collaborators),
+      {
+        userId,
+        permission: newCollaboratorPermission,
+        name: userMeta?.name ?? null,
+        email: userMeta?.email ?? null,
+      },
+    ]);
+    setNewCollaboratorUserId('');
+    setNewCollaboratorPermission('can_use');
+  };
+
+  const handleRemoveCollaborator = (userId: number) => {
+    setLocalCollaborators(prev => (prev ?? collaborators).filter(c => c.userId !== userId));
+  };
+
+  const handlePermissionChange = (userId: number, permission: ProjectCollaboratorPermission) => {
+    setLocalCollaborators(prev =>
+      (prev ?? collaborators).map(c => (c.userId === userId ? { ...c, permission } : c))
+    );
+  };
+
+  const handleSaveTeam = async () => {
+    try {
+      await updateCollaborators(effectiveCollaborators);
+      toast({
+        title: 'Team permissions updated',
+        description: 'Project collaborator access has been saved.',
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (error) {
+      toast({
+        title: 'Failed to update team permissions',
+        description: error instanceof Error ? error.message : 'Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -362,19 +454,132 @@ function ProjectConfigPanel({ isOpen, onClose, project, onSave }: ProjectConfigP
               </div>
             </TabsContent>
 
-            {/* ── Team Tab (placeholder) ── */}
+            {/* ── Team Tab ── */}
             <TabsContent value="team" className="px-6 py-5 m-0">
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-12 h-12 rounded-xl bg-[#E8E6DC]/50 flex items-center justify-center mb-4">
-                  <Users className="h-6 w-6 text-[#4D4B45]/40" />
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-medium text-[#4D4B45] mb-1.5">Project collaborators</h3>
+                  <p className="text-xs text-[#4D4B45]/50">
+                    Assign project-specific access controls. <strong>Can use</strong> grants project
+                    access in AnA; <strong>Can edit</strong> grants full editing rights.
+                  </p>
                 </div>
-                <h3 className="text-sm font-medium text-[#4D4B45] mb-1.5">
-                  Team Management
-                </h3>
-                <p className="text-sm text-[#4D4B45]/50 max-w-[260px]">
-                  Team management for enterprise accounts.
-                  Assign roles, manage permissions, and track contributor activity.
-                </p>
+
+                <div className="p-3 rounded-lg border border-[#E8E6DC] bg-white space-y-3">
+                  <div className="grid grid-cols-1 gap-2">
+                    <Select value={newCollaboratorUserId} onValueChange={setNewCollaboratorUserId}>
+                      <SelectTrigger className="border-[#E8E6DC] bg-white text-[#4D4B45]">
+                        <SelectValue placeholder="Select organization user" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {projectTeamCandidates.map((member: any) => (
+                          <SelectItem key={String(member.userId)} value={String(member.userId)}>
+                            {member.name} {member.email ? `(${member.email})` : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {teamMembersError && (
+                      <p className="text-xs text-red-600">
+                        Failed to load team members: {teamMembersError.message}
+                      </p>
+                    )}
+                    <div className="flex gap-2">
+                      <Select
+                        value={newCollaboratorPermission}
+                        onValueChange={value =>
+                          setNewCollaboratorPermission(value as ProjectCollaboratorPermission)
+                        }
+                      >
+                        <SelectTrigger className="border-[#E8E6DC] bg-white text-[#4D4B45]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="can_use">Can use</SelectItem>
+                          <SelectItem value="can_edit">Can edit</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleAddCollaborator}
+                        disabled={!newCollaboratorUserId || isLoadingTeamMembers}
+                        className="bg-[#4D4B45] text-white hover:bg-[#3A3935] disabled:opacity-40"
+                      >
+                        Add
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <DataStateWrapper<ProjectCollaborator[]>
+                  isLoading={isLoadingCollaborators}
+                  error={collaboratorsError as Error | null}
+                  data={effectiveCollaborators}
+                  emptyTitle="No collaborators yet"
+                  emptyDescription="Add users to share this project with your organization."
+                  testId="project-config-team"
+                >
+                  {items => (
+                    <div className="space-y-2">
+                      {items.map(member => (
+                        <div
+                          key={member.userId}
+                          className="flex items-center justify-between gap-2 rounded-lg border border-[#E8E6DC] bg-white px-3 py-2"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-[#4D4B45] truncate">
+                              {member.name || `User ${member.userId}`}
+                            </p>
+                            <p className="text-xs text-[#4D4B45]/55 truncate">
+                              {member.email || `ID: ${member.userId}`}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Select
+                              value={member.permission}
+                              onValueChange={value =>
+                                handlePermissionChange(
+                                  member.userId,
+                                  value as ProjectCollaboratorPermission
+                                )
+                              }
+                            >
+                              <SelectTrigger className="h-8 w-[120px] border-[#E8E6DC]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="can_use">Can use</SelectItem>
+                                <SelectItem value="can_edit">Can edit</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="text-[#4D4B45]/60 hover:text-red-600"
+                              onClick={() => handleRemoveCollaborator(member.userId)}
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </DataStateWrapper>
+
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleSaveTeam}
+                    disabled={isUpdatingCollaborators}
+                    className="bg-[#4D4B45] text-white hover:bg-[#3A3935] disabled:opacity-40"
+                  >
+                    {isUpdatingCollaborators ? 'Saving team...' : 'Save team permissions'}
+                  </Button>
+                </div>
               </div>
             </TabsContent>
 

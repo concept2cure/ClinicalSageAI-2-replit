@@ -224,6 +224,7 @@ function CreateProjectScreen({
   onChangeProjectName,
   onChangeProductName,
   isCreating,
+  createError,
 }: {
   projectName: string;
   productName: string;
@@ -337,7 +338,7 @@ function ConfidenceScreen({
 export default function FirstRunExperience({
   onComplete,
   onSkip,
-  existingProjects,
+  existingProjects = [],
   userName,
 }: FirstRunExperienceProps) {
   const [screen, setScreen] = useState(0);
@@ -359,10 +360,10 @@ export default function FirstRunExperience({
 
   const canContinue = useCallback((): boolean => {
     if (screen === 0) return track !== null;
-    if (screen === 1) return role !== null && submissionType !== null;
+    if (screen === 1) return role !== null && submissionType !== null && region !== null;
     if (screen === 2) return projectName.trim().length > 0;
     return true;
-  }, [screen, track, role, submissionType, projectName]);
+  }, [screen, track, role, submissionType, region, projectName]);
 
   const goNext = useCallback(async () => {
     if (!canContinue()) return;
@@ -406,7 +407,16 @@ export default function FirstRunExperience({
   }, [screen, canContinue, createdProjectId, projectName, submissionType, productName, region]);
 
   const goPrev = useCallback(() => {
-    if (screen > 0) setScreen(s => s - 1);
+    if (screen > 0) {
+      setScreen(s => {
+        const previous = s - 1;
+        if (s === 3 && previous === 2) {
+          setCreatedProjectId(null);
+          setCreateError(false);
+        }
+        return previous;
+      });
+    }
   }, [screen]);
 
   const handleFinish = useCallback((action?: string) => {
@@ -423,6 +433,13 @@ export default function FirstRunExperience({
     localStorage.setItem('concept2cure_first_run_complete', 'true');
     onSkip();
   }, [onSkip]);
+
+  useEffect(() => {
+    if (existingProjects.length > 0) {
+      localStorage.setItem('concept2cure_first_run_complete', 'true');
+      onSkip();
+    }
+  }, [existingProjects.length, onSkip]);
 
   // Keyboard navigation
   useEffect(() => {

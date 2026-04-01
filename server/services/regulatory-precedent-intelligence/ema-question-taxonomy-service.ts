@@ -15,18 +15,36 @@ const log = createScopedLogger('ema-question-taxonomy');
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type EMAProcedurePhase =
-  | 'day_80' | 'day_120' | 'day_150' | 'day_180'
-  | 'clock_stop_1' | 'clock_stop_2'
-  | 'oral_explanation' | 'post_opinion';
+  | 'day_80'
+  | 'day_120'
+  | 'day_150'
+  | 'day_180'
+  | 'clock_stop_1'
+  | 'clock_stop_2'
+  | 'oral_explanation'
+  | 'post_opinion';
 
 export type EMAQuestionCategory =
-  | 'clinical_efficacy' | 'clinical_safety' | 'clinical_pharmacology'
-  | 'quality_cmc' | 'nonclinical' | 'biostatistics'
-  | 'risk_management' | 'pharmacovigilance' | 'labeling_spc'
-  | 'environmental_risk' | 'gmp_compliance' | 'pediatric'
-  | 'conditional_approval' | 'biosimilarity';
+  | 'clinical_efficacy'
+  | 'clinical_safety'
+  | 'clinical_pharmacology'
+  | 'quality_cmc'
+  | 'nonclinical'
+  | 'biostatistics'
+  | 'risk_management'
+  | 'pharmacovigilance'
+  | 'labeling_spc'
+  | 'environmental_risk'
+  | 'gmp_compliance'
+  | 'pediatric'
+  | 'conditional_approval'
+  | 'biosimilarity';
 
-export type EMAQuestionType = 'major_objection' | 'other_concern' | 'recommendation' | 'point_to_consider';
+export type EMAQuestionType =
+  | 'major_objection'
+  | 'other_concern'
+  | 'recommendation'
+  | 'point_to_consider';
 
 export interface EMAQuestionPattern {
   id: string;
@@ -81,12 +99,14 @@ export interface EMASearchInput {
 // ─── Service ─────────────────────────────────────────────────────────────────
 
 class EMAQuestionTaxonomyService {
-
   /**
    * Search EMA question patterns
    */
   async searchPatterns(input: EMASearchInput): Promise<EMAQuestionPattern[]> {
-    log.info('Searching EMA question patterns', { phase: input.procedurePhase, category: input.questionCategory });
+    log.info('Searching EMA question patterns', {
+      phase: input.procedurePhase,
+      category: input.questionCategory,
+    });
 
     const conditions: string[] = ['organization_id = $1'];
     const params: (string | number)[] = [input.organizationId];
@@ -116,12 +136,15 @@ class EMAQuestionTaxonomyService {
     const limit = input.limit ?? 25;
     params.push(limit);
 
-    const result = await pool!.query(`
+    const result = await pool!.query(
+      `
       SELECT * FROM regulatory_intel.ema_question_patterns
       WHERE ${conditions.join(' AND ')}
       ORDER BY escalation_risk DESC NULLS LAST, frequency_rate DESC NULLS LAST
       LIMIT $${paramIdx}
-    `, params);
+    `,
+      params
+    );
 
     return result.rows.map(this.mapPattern);
   }
@@ -140,10 +163,16 @@ class EMAQuestionTaxonomyService {
   /**
    * Create a new EMA question pattern
    */
-  async createPattern(pattern: Omit<EMAQuestionPattern, 'id' | 'createdAt' | 'updatedAt'>): Promise<EMAQuestionPattern> {
-    log.info('Creating EMA question pattern', { code: pattern.patternCode, phase: pattern.procedurePhase });
+  async createPattern(
+    pattern: Omit<EMAQuestionPattern, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<EMAQuestionPattern> {
+    log.info('Creating EMA question pattern', {
+      code: pattern.patternCode,
+      phase: pattern.procedurePhase,
+    });
 
-    const result = await pool!.query(`
+    const result = await pool!.query(
+      `
       INSERT INTO regulatory_intel.ema_question_patterns (
         organization_id, pattern_code, pattern_name,
         procedure_phase, procedure_type, question_category, question_type,
@@ -152,13 +181,25 @@ class EMAQuestionTaxonomyService {
         therapeutic_areas, rapporteur_countries
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
       RETURNING *
-    `, [
-      pattern.organizationId, pattern.patternCode, pattern.patternName,
-      pattern.procedurePhase, pattern.procedureType, pattern.questionCategory, pattern.questionType,
-      pattern.typicalChmpLanguage, pattern.questionTemplate, pattern.expectedResponseFormat,
-      pattern.frequencyRate, pattern.escalationRisk, pattern.clockStopProbability,
-      pattern.therapeuticAreas, pattern.rapporteurCountries
-    ]);
+    `,
+      [
+        pattern.organizationId,
+        pattern.patternCode,
+        pattern.patternName,
+        pattern.procedurePhase,
+        pattern.procedureType,
+        pattern.questionCategory,
+        pattern.questionType,
+        pattern.typicalChmpLanguage,
+        pattern.questionTemplate,
+        pattern.expectedResponseFormat,
+        pattern.frequencyRate,
+        pattern.escalationRisk,
+        pattern.clockStopProbability,
+        pattern.therapeuticAreas,
+        pattern.rapporteurCountries,
+      ]
+    );
 
     return this.mapPattern(result.rows[0]);
   }
@@ -195,33 +236,45 @@ class EMAQuestionTaxonomyService {
     );
 
     // Calculate aggregate risks
-    const majorObjectionRisk = patterns.length > 0
-      ? patterns.reduce((sum, p) => sum + p.escalationRisk, 0) / patterns.length
-      : 0;
-    const clockStopRisk = patterns.length > 0
-      ? patterns.reduce((sum, p) => sum + p.clockStopProbability, 0) / patterns.length
-      : 0;
+    const majorObjectionRisk =
+      patterns.length > 0
+        ? patterns.reduce((sum, p) => sum + p.escalationRisk, 0) / patterns.length
+        : 0;
+    const clockStopRisk =
+      patterns.length > 0
+        ? patterns.reduce((sum, p) => sum + p.clockStopProbability, 0) / patterns.length
+        : 0;
 
     // Generate preparation guidance per category
-    const guidance: PreparationGuidanceItem[] = Object.entries(byCategory).map(([category, catPatterns]) => {
-      const avgEscalation = catPatterns.reduce((s, p) => s + p.escalationRisk, 0) / catPatterns.length;
-      const avgClockStop = catPatterns.reduce((s, p) => s + p.clockStopProbability, 0) / catPatterns.length;
+    const guidance: PreparationGuidanceItem[] = Object.entries(byCategory)
+      .map(([category, catPatterns]) => {
+        const avgEscalation =
+          catPatterns.reduce((s, p) => s + p.escalationRisk, 0) / catPatterns.length;
+        const avgClockStop =
+          catPatterns.reduce((s, p) => s + p.clockStopProbability, 0) / catPatterns.length;
 
-      return {
-        category: category as EMAQuestionCategory,
-        expectedQuestionCount: catPatterns.length,
-        majorObjectionProbability: avgEscalation,
-        clockStopProbability: avgClockStop,
-        recommendedPreparation: this.generatePreparationAdvice(category as EMAQuestionCategory, avgEscalation),
-        priority: avgEscalation > 0.5 ? 'critical'
-          : avgEscalation > 0.3 ? 'high'
-          : avgEscalation > 0.15 ? 'medium'
-          : 'low',
-      };
-    }).sort((a, b) => {
-      const order = { critical: 0, high: 1, medium: 2, low: 3 };
-      return order[a.priority] - order[b.priority];
-    });
+        return {
+          category: category as EMAQuestionCategory,
+          expectedQuestionCount: catPatterns.length,
+          majorObjectionProbability: avgEscalation,
+          clockStopProbability: avgClockStop,
+          recommendedPreparation: this.generatePreparationAdvice(
+            category as EMAQuestionCategory,
+            avgEscalation
+          ),
+          priority: (avgEscalation > 0.5
+            ? 'critical'
+            : avgEscalation > 0.3
+            ? 'high'
+            : avgEscalation > 0.15
+            ? 'medium'
+            : 'low') as 'critical' | 'high' | 'medium' | 'low',
+        };
+      })
+      .sort((a, b) => {
+        const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+        return order[a.priority] - order[b.priority];
+      });
 
     return {
       procedurePhase: input.procedurePhase,
@@ -252,27 +305,30 @@ class EMAQuestionTaxonomyService {
       limit: 100,
     });
 
-    const relevant = patterns.filter(p =>
-      input.questionCategories.includes(p.questionCategory)
-    );
+    const relevant = patterns.filter(p => input.questionCategories.includes(p.questionCategory));
 
-    const contributingFactors = input.questionCategories.map(cat => {
-      const catPatterns = relevant.filter(p => p.questionCategory === cat);
-      const prob = catPatterns.length > 0
-        ? catPatterns.reduce((s, p) => s + p.clockStopProbability, 0) / catPatterns.length
+    const contributingFactors = input.questionCategories
+      .map(cat => {
+        const catPatterns = relevant.filter(p => p.questionCategory === cat);
+        const prob =
+          catPatterns.length > 0
+            ? catPatterns.reduce((s, p) => s + p.clockStopProbability, 0) / catPatterns.length
+            : 0;
+        return { category: cat, probability: prob };
+      })
+      .sort((a, b) => b.probability - a.probability);
+
+    const overallProbability =
+      contributingFactors.length > 0
+        ? 1 - contributingFactors.reduce((prod, f) => prod * (1 - f.probability), 1)
         : 0;
-      return { category: cat, probability: prob };
-    }).sort((a, b) => b.probability - a.probability);
 
-    const overallProbability = contributingFactors.length > 0
-      ? 1 - contributingFactors.reduce((prod, f) => prod * (1 - f.probability), 1)
-      : 0;
-
-    const recommendation = overallProbability > 0.7
-      ? 'High clock stop risk. Proactively address all major objection areas before Day 120.'
-      : overallProbability > 0.4
-      ? 'Moderate clock stop risk. Prepare detailed responses for key question categories.'
-      : 'Low clock stop risk. Standard preparation should suffice.';
+    const recommendation =
+      overallProbability > 0.7
+        ? 'High clock stop risk. Proactively address all major objection areas before Day 120.'
+        : overallProbability > 0.4
+        ? 'Moderate clock stop risk. Prepare detailed responses for key question categories.'
+        : 'Low clock stop risk. Standard preparation should suffice.';
 
     return { overallProbability, contributingFactors, recommendation };
   }
@@ -281,20 +337,26 @@ class EMAQuestionTaxonomyService {
 
   private generatePreparationAdvice(category: EMAQuestionCategory, escalationRisk: number): string {
     const adviceMap: Record<string, string> = {
-      clinical_efficacy: 'Prepare robust efficacy data package with sensitivity analyses and subgroup breakdowns.',
-      clinical_safety: 'Compile comprehensive safety database with long-term follow-up and signal detection analysis.',
+      clinical_efficacy:
+        'Prepare robust efficacy data package with sensitivity analyses and subgroup breakdowns.',
+      clinical_safety:
+        'Compile comprehensive safety database with long-term follow-up and signal detection analysis.',
       clinical_pharmacology: 'Ensure PK/PD modeling is complete with dose-response justification.',
-      quality_cmc: 'Verify all manufacturing data, specifications, and stability results are current.',
-      nonclinical: 'Review all nonclinical study reports for completeness and regulatory alignment.',
+      quality_cmc:
+        'Verify all manufacturing data, specifications, and stability results are current.',
+      nonclinical:
+        'Review all nonclinical study reports for completeness and regulatory alignment.',
       biostatistics: 'Validate SAP adherence, multiplicity adjustments, and missing data handling.',
       risk_management: 'Update RMP with latest safety data and risk minimization measures.',
-      pharmacovigilance: 'Ensure PSUR/PBRER data is integrated and safety monitoring plan is robust.',
+      pharmacovigilance:
+        'Ensure PSUR/PBRER data is integrated and safety monitoring plan is robust.',
       labeling_spc: 'Align SmPC/PIL with latest clinical data and EMA labeling guidance.',
       environmental_risk: 'Complete ERA per CHMP/SWP guidelines.',
       gmp_compliance: 'Confirm GMP inspection readiness for all manufacturing sites.',
       pediatric: 'Verify PIP compliance and pediatric data submissions.',
       conditional_approval: 'Prepare comprehensive benefit-risk assessment for unmet medical need.',
-      biosimilarity: 'Ensure totality of evidence approach with analytical, PK, and clinical comparability.',
+      biosimilarity:
+        'Ensure totality of evidence approach with analytical, PK, and clinical comparability.',
     };
 
     let advice = adviceMap[category] ?? 'Prepare comprehensive response documentation.';

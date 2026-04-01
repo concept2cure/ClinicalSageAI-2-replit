@@ -58,7 +58,7 @@ export async function runComplianceChecks(submissionId: string) {
         'Check for consistency across all sections',
       ],
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Compliance check error:', error);
     return {
       status: 'error',

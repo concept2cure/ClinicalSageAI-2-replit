@@ -397,7 +397,7 @@ router.post('/', async (req: Request, res: Response) => {
       templateType,
       granuleId,
       ichGuidance,
-      tags: tags ? tags.split(',').map(tag => tag.trim()) : [],
+      tags: tags ? tags.split(',').map((tag: any) => tag.trim()) : [],
       organizationId,
       createdBy: 1, // TODO: Get from authentication
     };

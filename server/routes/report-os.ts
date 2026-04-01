@@ -18,6 +18,9 @@ import { z } from 'zod';
 import { REPORT_TYPE_SEED } from '../services/report-os/taxonomy';
 import { resolveScope } from '../services/report-os/scope-model';
 import { computeInitialRun } from '../services/report-os/orchestrator';
+import { evaluateReadiness } from '../services/regulatory/readinessEvaluator.js';
+import { buildPackageManifest } from '../services/regulatory/submissionPackageBuilder.js';
+import { resolveRegistryId } from '../services/regulatory/registry/legacySubmissionTypeMapper.js';
 import { authMiddleware } from '../auth';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
@@ -52,6 +55,8 @@ const createRunSchema = z.object({
   scopeType: z.enum(reportScopeEnum),
   scopeId: z.string().min(1),
   reportTypeId: z.string().min(1),
+  registryId: z.string().max(80).optional(),
+  submissionType: z.string().max(80).optional(),
   requestedBy: z.number().int().positive().optional(),
 });
 
@@ -146,6 +151,7 @@ type ReportBundleRecord = {
   description?: string;
   createdAt: string;
   createdBy?: number;
+  projectIds?: number[];
   runIds: number[];
   items: ReportBundleItem[];
 };
@@ -168,8 +174,53 @@ type DeliveryRecord = {
   correspondenceId?: string;
 };
 
-const reportBundles = new Map<string, ReportBundleRecord>();
-const reportDeliveries = new Map<string, DeliveryRecord>();
+const REPORT_OS_RECORD_CATEGORY = 'regulatory';
+const REPORT_OS_RECORD_SOURCE = 'report_os_state';
+const REPORT_OS_BUNDLE_SUBCATEGORY = 'report_bundle_record';
+const REPORT_OS_DELIVERY_SUBCATEGORY = 'report_delivery_record';
+
+const reportBundleRecordSchema = z.object({
+  bundleId: z.string().uuid(),
+  organizationId: z.number().int().positive(),
+  name: z.string(),
+  description: z.string().optional(),
+  createdAt: z.string(),
+  createdBy: z.number().int().positive().optional(),
+  projectIds: z.array(z.number().int().positive()).optional(),
+  runIds: z.array(z.number().int().positive()),
+  items: z.array(
+    z.object({
+      runId: z.number().int().positive(),
+      runUuid: z.string(),
+      reportTypeId: z.string(),
+      reportTypeLabel: z.string(),
+      scopeType: z.string(),
+      scopeId: z.string(),
+      status: z.string(),
+      confidence: z.number().nullable(),
+      blockers: z.array(z.string()),
+      createdAt: z.string(),
+    })
+  ),
+});
+
+const reportDeliveryRecordSchema = z.object({
+  deliveryId: z.string().uuid(),
+  organizationId: z.number().int().positive(),
+  projectId: z.number().int().positive().optional(),
+  runId: z.number().int().positive().optional(),
+  bundleId: z.string().uuid().optional(),
+  submissionId: z.string().optional(),
+  channel: z.enum(['platform_send', 'external_pdf_export']),
+  correspondenceType: z.string().optional(),
+  recipients: z.array(z.string()),
+  subject: z.string(),
+  message: z.string().optional(),
+  status: z.enum(['sent', 'exported', 'queued', 'failed']),
+  requestedBy: z.number().int().positive().optional(),
+  createdAt: z.string(),
+  correspondenceId: z.string().uuid().optional(),
+});
 
 function parseKeywordIssues(text: string) {
   const normalized = text.toLowerCase();
@@ -426,6 +477,141 @@ async function createBundlePdf(bundle: ReportBundleRecord): Promise<Buffer> {
 
   const bytes = await pdf.save();
   return Buffer.from(bytes);
+}
+
+function decodeRecordPayload<T>(input: string, key: string, schema: z.ZodType<T>): T | null {
+  try {
+    const parsed = JSON.parse(input) as { [k: string]: unknown };
+    const payload = parsed?.[key];
+    const validated = schema.safeParse(payload);
+    return validated.success ? validated.data : null;
+  } catch {
+    return null;
+  }
+}
+
+function dedupeByLatest<T extends { id: string; createdAt: string }>(rows: T[]): T[] {
+  const map = new Map<string, T>();
+  for (const row of rows) {
+    if (!map.has(row.id)) map.set(row.id, row);
+  }
+  return [...map.values()].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+function resolveProjectsForBundleRuns(runs: Array<{ scopeType: string; scopeId: string; dependencySummary: unknown }>) {
+  const ids = new Set<number>();
+  for (const run of runs) {
+    const projectId = resolveProjectIdForRun(run);
+    if (projectId) ids.add(projectId);
+  }
+  return [...ids];
+}
+
+async function persistBundleRecord(bundle: ReportBundleRecord) {
+  const projectIds = bundle.projectIds ?? [];
+  for (const projectId of projectIds) {
+    const profileId = await ensureProjectProfileId(bundle.organizationId, projectId, bundle.createdBy);
+    await db.insert(projectMemoryEntries).values({
+      projectProfileId: profileId,
+      projectId,
+      organizationId: bundle.organizationId,
+      category: 'regulatory',
+      subcategory: REPORT_OS_BUNDLE_SUBCATEGORY,
+      title: `bundle:${bundle.bundleId}`,
+      content: JSON.stringify({ bundleRecord: bundle }).slice(0, 20000),
+      sourceDocumentType: REPORT_OS_RECORD_SOURCE,
+      confidenceScore: 0.93,
+      importanceLevel: 'high',
+      extractedBy: 'report_os_bundle',
+    });
+  }
+}
+
+async function loadBundlesForOrg(organizationId: number): Promise<ReportBundleRecord[]> {
+  const rows = await db
+    .select({
+      title: projectMemoryEntries.title,
+      content: projectMemoryEntries.content,
+      createdAt: projectMemoryEntries.createdAt,
+    })
+    .from(projectMemoryEntries)
+    .where(
+      and(
+        eq(projectMemoryEntries.organizationId, organizationId),
+        eq(projectMemoryEntries.category, 'regulatory'),
+        eq(projectMemoryEntries.subcategory, REPORT_OS_BUNDLE_SUBCATEGORY),
+        eq(projectMemoryEntries.sourceDocumentType, REPORT_OS_RECORD_SOURCE)
+      )
+    )
+    .orderBy(desc(projectMemoryEntries.createdAt))
+    .limit(1000);
+
+  const normalized = rows
+    .map(row => {
+      const parsed = decodeRecordPayload(row.content, 'bundleRecord', reportBundleRecordSchema);
+      if (!parsed) return null;
+      return { id: parsed.bundleId, ...parsed };
+    })
+    .filter((row): row is ReportBundleRecord & { id: string } => !!row);
+
+  const deduped = dedupeByLatest(normalized).map(({ id: _id, ...rest }) => rest);
+  return deduped;
+}
+
+async function loadBundleById(
+  organizationId: number,
+  bundleId: string
+): Promise<ReportBundleRecord | undefined> {
+  const bundles = await loadBundlesForOrg(organizationId);
+  return bundles.find(bundle => bundle.bundleId === bundleId);
+}
+
+async function persistDeliveryRecord(delivery: DeliveryRecord) {
+  if (!delivery.projectId) return;
+  const profileId = await ensureProjectProfileId(delivery.organizationId, delivery.projectId, delivery.requestedBy);
+  await db.insert(projectMemoryEntries).values({
+    projectProfileId: profileId,
+    projectId: delivery.projectId,
+    organizationId: delivery.organizationId,
+    category: 'regulatory',
+    subcategory: REPORT_OS_DELIVERY_SUBCATEGORY,
+    title: `delivery:${delivery.deliveryId}`,
+    content: JSON.stringify({ deliveryRecord: delivery }).slice(0, 20000),
+    sourceDocumentType: REPORT_OS_RECORD_SOURCE,
+    confidenceScore: 0.92,
+    importanceLevel: 'high',
+    extractedBy: 'report_os_delivery',
+  });
+}
+
+async function loadDeliveriesForOrg(organizationId: number): Promise<DeliveryRecord[]> {
+  const rows = await db
+    .select({
+      content: projectMemoryEntries.content,
+      createdAt: projectMemoryEntries.createdAt,
+    })
+    .from(projectMemoryEntries)
+    .where(
+      and(
+        eq(projectMemoryEntries.organizationId, organizationId),
+        eq(projectMemoryEntries.category, 'regulatory'),
+        eq(projectMemoryEntries.subcategory, REPORT_OS_DELIVERY_SUBCATEGORY),
+        eq(projectMemoryEntries.sourceDocumentType, REPORT_OS_RECORD_SOURCE)
+      )
+    )
+    .orderBy(desc(projectMemoryEntries.createdAt))
+    .limit(1000);
+
+  const normalized = rows
+    .map(row => {
+      const parsed = decodeRecordPayload(row.content, 'deliveryRecord', reportDeliveryRecordSchema);
+      if (!parsed) return null;
+      return { id: parsed.deliveryId, ...parsed };
+    })
+    .filter((row): row is DeliveryRecord & { id: string } => !!row);
+
+  const deduped = dedupeByLatest(normalized).map(({ id: _id, ...rest }) => rest);
+  return deduped;
 }
 
 async function persistCorrespondenceToPlatform(params: {
@@ -1078,7 +1264,7 @@ router.post('/bundles', async (req: Request, res: Response) => {
       runIds: uniqueRunIds,
       items,
     };
-    reportBundles.set(bundle.bundleId, bundle);
+    await persistBundleRecord(bundle);
     return res.status(201).json({ data: bundle });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
@@ -1091,9 +1277,7 @@ router.get('/bundles', async (req: Request, res: Response) => {
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(400).json({ error: 'organizationId query parameter is required' });
     }
-    const rows = [...reportBundles.values()]
-      .filter(bundle => bundle.organizationId === organizationId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const rows = await loadBundlesForOrg(organizationId);
     return res.json({ data: rows });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
@@ -1108,7 +1292,7 @@ router.get('/bundles/:bundleId/export.pdf', async (req: Request, res: Response) 
     }
     const bundleId = Array.isArray(req.params.bundleId) ? req.params.bundleId[0] : req.params.bundleId;
     if (!bundleId) return res.status(400).json({ error: 'bundleId route parameter is required' });
-    const bundle = reportBundles.get(bundleId);
+    const bundle = await loadBundleById(organizationId, bundleId);
     if (!bundle || bundle.organizationId !== organizationId) {
       return res.status(404).json({ error: 'Bundle not found' });
     }
@@ -1130,9 +1314,7 @@ router.get('/deliveries', async (req: Request, res: Response) => {
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(400).json({ error: 'organizationId query parameter is required' });
     }
-    const rows = [...reportDeliveries.values()]
-      .filter(delivery => delivery.organizationId === organizationId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const rows = await loadDeliveriesForOrg(organizationId);
     return res.json({ data: rows });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
@@ -1159,7 +1341,7 @@ router.post('/deliveries', async (req: Request, res: Response) => {
       if (!projectId) projectId = resolveProjectIdForRun(runRecord);
     }
     if (payload.bundleId) {
-      bundleRecord = reportBundles.get(payload.bundleId);
+      bundleRecord = await loadBundleById(payload.organizationId, payload.bundleId);
       if (!bundleRecord || bundleRecord.organizationId !== payload.organizationId) {
         return res.status(404).json({ error: 'Bundle not found' });
       }
@@ -1214,7 +1396,7 @@ router.post('/deliveries', async (req: Request, res: Response) => {
       createdAt: new Date().toISOString(),
       correspondenceId,
     };
-    reportDeliveries.set(delivery.deliveryId, delivery);
+    await persistDeliveryRecord(delivery);
 
     if (payload.captureForLearning && projectId) {
       const sourceRef = payload.runId
@@ -1317,6 +1499,29 @@ router.get('/health', async (_req: Request, res: Response) => {
     const [dependencyCount] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(reportRunDependencies);
+    const [bundleRecords, deliveryRecords] = await Promise.all([
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(projectMemoryEntries)
+        .where(
+          and(
+            eq(projectMemoryEntries.category, 'regulatory'),
+            eq(projectMemoryEntries.subcategory, REPORT_OS_BUNDLE_SUBCATEGORY),
+            eq(projectMemoryEntries.sourceDocumentType, REPORT_OS_RECORD_SOURCE)
+          )
+        ),
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(projectMemoryEntries)
+        .where(
+          and(
+            eq(projectMemoryEntries.category, 'regulatory'),
+            eq(projectMemoryEntries.subcategory, REPORT_OS_DELIVERY_SUBCATEGORY),
+            eq(projectMemoryEntries.sourceDocumentType, REPORT_OS_RECORD_SOURCE)
+          )
+        ),
+    ]);
+
     return res.json({
       data: {
         groups: groupCount?.count ?? 0,
@@ -1324,8 +1529,8 @@ router.get('/health', async (_req: Request, res: Response) => {
         runs: runCount?.count ?? 0,
         snapshots: snapshotCount?.count ?? 0,
         dependencies: dependencyCount?.count ?? 0,
-        bundles: reportBundles.size,
-        deliveries: reportDeliveries.size,
+        bundles: bundleRecords[0]?.count ?? 0,
+        deliveries: deliveryRecords[0]?.count ?? 0,
       },
     });
   } catch (error: any) {

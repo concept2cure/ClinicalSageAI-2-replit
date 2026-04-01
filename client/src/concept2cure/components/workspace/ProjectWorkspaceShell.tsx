@@ -103,6 +103,7 @@ const EditorPanel = lazy(() => import('../editor/EditorPanel').then(m => ({ defa
 
 import { NewDocumentDialog } from './NewDocumentDialog';
 import { canEscalateToEdit } from '../../contexts/DocumentModeContext';
+import { SectionRequirementsPanel, type SectionMetrics } from './SectionRequirementsPanel';
 
 // ── Left-rail mode type ──────────────────────────────────────────────────────
 type LeftRailMode = 'files' | 'dossier' | 'templates' | 'outline' | 'registry';
@@ -130,20 +131,9 @@ type DocumentTab =
   | 'signatures'
   | 'provenance'
   | 'export';
+type GuidedSequenceStage = 'project' | 'ind_ectd' | 'authoring' | 'verify' | 'submission';
 
 // ── Dossier metrics types ────────────────────────────────────────────────────
-interface SectionMetrics {
-  artifactCount: number;
-  draftCount: number;
-  reviewCount: number;
-  approvedCount: number;
-  lockedCount: number;
-  completionPercent: number;
-  templateCoverageAvailable: boolean;
-  evidenceCount: number;
-  precedentCount: number;
-}
-
 interface OperatingLayerConfig {
   id: OperatingLayer;
   label: string;
@@ -376,47 +366,47 @@ function buildTemplateContent(title: string, ctdSection: string, templateKey?: s
   if (templateKey === 'cover-letter') {
     return `<h1>${title}</h1>
 <h2>Addressee</h2>
-<p>[Agency / division / address]</p>
+<p>Address this cover letter to the reviewing agency and division responsible for your program.</p>
 <h2>Submission Purpose</h2>
-<p>[Purpose and submission context]</p>
+<p>State the submission type, product name, indication, and the regulatory objective of this package.</p>
 <h2>Contents Summary</h2>
-<p>[Summarize package contents and references]</p>
+<p>Summarize the included documents, key updates since the prior interaction, and any referenced attachments.</p>
 <h2>Contact Information</h2>
-<p>[Sponsor contact details]</p>`;
+<p>Provide sponsor regulatory contact details, including name, title, email, and phone number.</p>`;
   }
   if (templateKey === 'csr-synopsis') {
     return `<h1>${title}</h1>
 <h2>Study Information</h2>
-<p>[Protocol number, phase, indication, sponsor]</p>
+<p>Document protocol number, trial phase, indication, sponsor, and study dates.</p>
 <h2>Objectives</h2>
-<p>[Primary and secondary objectives]</p>
+<p>Summarize primary and secondary objectives with endpoints and statistical intent.</p>
 <h2>Methodology</h2>
-<p>[Design, population, treatment, endpoints]</p>
+<p>Describe trial design, population, treatment arms, analysis populations, and endpoint definitions.</p>
 <h2>Results</h2>
-<p>[Efficacy and safety highlights]</p>
+<p>Provide concise efficacy and safety outcomes, including key tables and clinically meaningful findings.</p>
 <h2>Conclusions</h2>
-<p>[Key conclusions and next steps]</p>`;
+<p>Conclude with benefit-risk interpretation and implications for subsequent development or submission steps.</p>`;
   }
   if (templateKey === 'quality-overall-summary') {
     return `<h1>${title}</h1>
 <h2>Drug Substance</h2>
-<p>[Manufacture, control strategy, key specifications]</p>
+<p>Summarize drug substance manufacture, control strategy, critical quality attributes, and release specifications.</p>
 <h2>Drug Product</h2>
-<p>[Composition, process, controls, container closure]</p>
+<p>Summarize formulation, process controls, container closure rationale, and comparability or process validation status.</p>
 <h2>Stability</h2>
-<p>[Stability summary and shelf-life rationale]</p>`;
+<p>Summarize stability program design, key findings, proposed shelf life, and storage conditions.</p>`;
   }
 
   // Fallback: structured starter for unknown sections
   return `<h1>${title}</h1>
 <h2>Purpose</h2>
-<p>[Describe the purpose of this section and its role in the submission.]</p>
+<p>Describe the purpose of this section and its role in the regulatory submission package.</p>
 <h2>Scope</h2>
-<p>[Define the scope of data and analyses presented in this section.]</p>
+<p>Define the scope of data, analyses, and references included in this section.</p>
 <h2>Summary</h2>
-<p>[Provide a concise summary of key findings and conclusions.]</p>
+<p>Provide a concise summary of key findings, supporting evidence, and conclusions.</p>
 <h2>Detailed Content</h2>
-<p>[Begin drafting section content here. Use AnA to help generate regulatory-compliant language.]</p>`;
+<p>Draft section content with explicit traceability to evidence and clear regulatory rationale.</p>`;
 }
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -455,6 +445,8 @@ interface ProjectWorkspaceShellProps {
   onNavigate?: (mode: string) => void;
   /** Push a guided prompt into AnA */
   onSuggestedPrompt?: (prompt: string) => void;
+  /** Allow parent (AnA/ZenApp) to trigger guided stage execution */
+  guidedStageCommand?: { stage: GuidedSequenceStage; ts: number } | null;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -478,6 +470,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   onActiveDocumentChange,
   onNavigate,
   onSuggestedPrompt,
+  guidedStageCommand,
 }) => {
   // ── Local state ──────────────────────────────────────────────────────────
   const [artifacts, setArtifacts] = useState<TreeArtifact[]>([]);
@@ -1452,7 +1445,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             `/api/concept2cure/projects/${projectId}/artifacts`,
             {
               title,
-              content: `<h1>${title}</h1><p>Begin editing this document.</p>`,
+              content: `<h1>${title}</h1><p>This governed draft was created from the selected workflow action. Continue by adding evidence-linked content, section rationale, and regulatory conclusions.</p>`,
               type: 'regulatory_document',
               category: 'document',
               ctdSection,
@@ -1498,7 +1491,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       if (!projectId || !activeArtifactRef.current) return;
       const art = activeArtifactRef.current;
       try {
-        const scaffoldHtml = `<h2>${label}</h2><p>[Content for ${label} — fill this section per regulatory requirements.]</p>`;
+        const scaffoldHtml = `<h2>${label}</h2><p>Draft this subsection with explicit evidence traceability, regulatory rationale, and reviewer-ready language aligned to submission expectations.</p>`;
         const res = await apiRequest(
           'POST',
           `/api/concept2cure/projects/${projectId}/artifacts/${art.id}/versions`,
@@ -1618,8 +1611,6 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     approvedOrLockedCount > 0 &&
     readinessPercent >= 80 &&
     approvedOrLockedCount >= Math.max(1, Math.ceil(artifacts.length * 0.4));
-
-  type GuidedSequenceStage = 'project' | 'ind_ectd' | 'authoring' | 'verify' | 'submission';
 
   const guidedSequence = useMemo<
     Array<{ id: GuidedSequenceStage; label: string; hint: string }>
@@ -1764,6 +1755,11 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     handleGuidedStageAction(nextStage);
   }, [currentGuidedStage, guidedSequence, handleGuidedStageAction]);
 
+  useEffect(() => {
+    if (!guidedStageCommand?.stage) return;
+    handleGuidedStageAction(guidedStageCommand.stage);
+  }, [guidedStageCommand?.stage, guidedStageCommand?.ts, handleGuidedStageAction]);
+
   // Outline available only when doc is open
   const outlineAvailable = mode === 'edit' && !!selectedDocId;
 
@@ -1889,8 +1885,9 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 px-4 h-9 border-b border-blue-100 bg-blue-50/40 shrink-0 overflow-x-auto">
-          <span className="text-[10px] uppercase tracking-wide text-blue-600 font-semibold whitespace-nowrap">
+        {showContextBars && (
+        <div className="flex items-center gap-1.5 px-4 h-9 border-b border-stone-100 bg-stone-50/50 shrink-0 overflow-x-auto">
+          <span className="text-[10px] uppercase tracking-wide text-stone-500 font-semibold whitespace-nowrap">
             Guided sequence
           </span>
           {guidedSequence.map((step, idx) => {
@@ -1904,17 +1901,17 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   className={cn(
                     'text-[11px] px-2 py-0.5 rounded-md border whitespace-nowrap transition-colors',
                     isCurrent
-                      ? 'border-blue-300 bg-white text-blue-700 font-semibold'
+                      ? 'border-stone-300 bg-white text-stone-800 font-semibold'
                       : isDone
                         ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                        : 'border-blue-100 bg-white text-stone-600 hover:bg-blue-100'
+                        : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-100'
                   )}
                   title={step.hint}
                 >
                   {step.label}
                 </button>
                 {idx < guidedSequence.length - 1 && (
-                  <ChevronRight className="w-3 h-3 text-blue-300 shrink-0" />
+                  <ChevronRight className="w-3 h-3 text-stone-300 shrink-0" />
                 )}
               </React.Fragment>
             );
@@ -1945,12 +1942,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             </button>
             <button
               onClick={handleGuidedContinue}
-              className="text-[11px] px-2 py-0.5 rounded border border-blue-200 bg-white text-blue-700 hover:bg-blue-100"
+              className="text-[11px] px-2 py-0.5 rounded border border-stone-200 bg-white text-stone-700 hover:bg-stone-100"
             >
               Continue
             </button>
           </div>
         </div>
+        )}
 
         {/* ── Collapsible context bars (AnA Shell, Context Band, CTD Flow) ──── */}
         <div className={cn('overflow-hidden transition-all duration-200', showContextBars ? 'max-h-48' : 'max-h-0')} aria-hidden={!showContextBars}>
@@ -3304,196 +3302,5 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     </DocumentModeProvider>
   );
 };
-
-// ── Section requirements panel (extracted) ───────────────────────────────────
-
-interface SectionReqsPanelProps {
-  reqs: SectionRequirement;
-  metrics?: SectionMetrics;
-  onClose: () => void;
-}
-
-function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelProps) {
-  const [showChildren, setShowChildren] = useState(false);
-
-  return (
-    <div className="w-[200px] 2xl:w-[240px] border-l border-stone-200 shrink-0 flex flex-col bg-white overflow-y-auto">
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-stone-200 bg-stone-50/60">
-        <div className="flex items-center gap-1.5">
-          <Info className="w-3 h-3 text-blue-600" />
-          <span className="text-xs font-semibold text-stone-700">Section Requirements</span>
-        </div>
-        <button
-          onClick={onClose}
-          className="p-1.5 text-stone-400 hover:text-stone-600 rounded hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-400 outline-none"
-          aria-label="Close panel"
-          title="Close"
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
-      </div>
-      <div className="p-2.5 space-y-2.5 text-xs">
-        {/* Section */}
-        <div>
-          <div className="text-xs text-stone-400 uppercase tracking-wide mb-0.5">Section</div>
-          <div className="font-semibold text-stone-900">{reqs.ctdSection}</div>
-          <div className="text-stone-600 mt-0.5">{reqs.label}</div>
-        </div>
-
-        {/* Description */}
-        <div>
-          <div className="text-xs text-stone-400 uppercase tracking-wide mb-0.5">Description</div>
-          <p className="text-stone-600 leading-relaxed">{reqs.description}</p>
-        </div>
-
-        {/* Expected doc types */}
-        <div>
-          <div className="text-xs text-stone-400 uppercase tracking-wide mb-0.5">
-            Expected Documents
-          </div>
-          <ul className="space-y-0.5">
-            {reqs.requiredDocTypes.map((dt, i) => (
-              <li key={i} className="text-stone-700 flex items-center gap-1">
-                <FileText className="w-2.5 h-2.5 text-stone-400" />
-                {dt}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Required / Optional */}
-        <div className="flex items-center gap-1 px-2 py-1 rounded bg-stone-50">
-          {reqs.optional ? (
-            <>
-              <Info className="w-3 h-3 text-blue-500" />
-              <span className="text-xs text-stone-700 font-medium">Optional section</span>
-            </>
-          ) : (
-            <>
-              <AlertTriangle className="w-3 h-3 text-amber-500" />
-              <span className="text-xs text-amber-700 font-medium">Required section</span>
-            </>
-          )}
-        </div>
-
-        {/* Templates available */}
-        {reqs.starterTemplatesAvailable.length > 0 && (
-          <div>
-            <div className="text-xs text-stone-400 uppercase tracking-wide mb-0.5">
-              Starter Templates
-            </div>
-            {reqs.starterTemplatesAvailable.map((t, i) => (
-              <div key={i} className="text-stone-600 flex items-center gap-1 py-0.5">
-                <Layers className="w-2.5 h-2.5 text-violet-500" />
-                {t}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Common missing blocks */}
-        {reqs.commonMissingBlocks.length > 0 && (
-          <div>
-            <div className="text-xs text-stone-400 uppercase tracking-wide mb-0.5">
-              Expected Content Blocks
-            </div>
-            {reqs.commonMissingBlocks.map((b, i) => (
-              <div key={i} className="text-stone-500 text-xs py-0.5">
-                • {b}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Children sections */}
-        {(reqs.requiredChildren.length > 0 || reqs.optionalChildren.length > 0) && (
-          <div>
-            <button
-              onClick={() => setShowChildren(!showChildren)}
-              className="flex items-center gap-1 text-xs text-stone-400 uppercase tracking-wide mb-0.5 hover:text-stone-600"
-            >
-              {showChildren ? (
-                <ChevronDown className="w-2.5 h-2.5" />
-              ) : (
-                <ChevronRight className="w-2.5 h-2.5" />
-              )}
-              Child Sections ({reqs.requiredChildren.length + reqs.optionalChildren.length})
-            </button>
-            {showChildren && (
-              <div className="space-y-0.5 mt-0.5">
-                {reqs.requiredChildren.map((c, i) => (
-                  <div key={i} className="text-stone-600 text-xs">
-                    ▸ {c}
-                  </div>
-                ))}
-                {reqs.optionalChildren.map((c, i) => (
-                  <div key={i} className="text-stone-400 text-xs italic">
-                    ▹ {c}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Current metrics */}
-        {metrics && (
-          <div>
-            <div className="text-xs text-stone-400 uppercase tracking-wide mb-0.5">
-              Current Status
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-stone-500">Artifacts</span>
-                <span className="font-medium text-stone-700">{metrics.artifactCount}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-stone-500">Completion</span>
-                <span className="font-medium text-stone-700">{metrics.completionPercent}%</span>
-              </div>
-              <div className="w-full bg-stone-100 rounded-full h-1.5">
-                <div
-                  className={cn(
-                    'h-1.5 rounded-full transition-all duration-150',
-                    metrics.completionPercent >= 75
-                      ? 'bg-emerald-500'
-                      : metrics.completionPercent >= 25
-                        ? 'bg-amber-500'
-                        : 'bg-red-400'
-                  )}
-                  style={{ width: `${Math.min(100, metrics.completionPercent)}%` }}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-stone-500">Evidence</span>
-                <span className="font-medium text-stone-700">{metrics.evidenceCount}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-stone-500">Precedents</span>
-                <span className="font-medium text-stone-700">{metrics.precedentCount}</span>
-              </div>
-              {/* Warning signals */}
-              {metrics.artifactCount > 0 && metrics.evidenceCount === 0 && (
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 text-xs">
-                  <AlertTriangle className="w-2.5 h-2.5" /> No evidence linked
-                </div>
-              )}
-              {metrics.artifactCount > 0 && metrics.precedentCount === 0 && (
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 text-xs">
-                  <AlertTriangle className="w-2.5 h-2.5" /> No precedents
-                </div>
-              )}
-              {metrics.artifactCount === 0 && reqs.hasTemplates && (
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-xs">
-                  <Info className="w-2.5 h-2.5" /> Template available, no doc created
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export default ProjectWorkspaceShell;

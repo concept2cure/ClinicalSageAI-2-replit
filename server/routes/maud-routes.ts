@@ -164,7 +164,7 @@ router.get(
         // Save validation in the background (don't await)
         saveValidation(validationToSave)
           .then(() => log.debug(`Saved validation ${validationToSave.validation_id} to database`))
-          .catch(err => log.error('Error saving validation to database:', err));
+          .catch((err: any) => log.error('Error saving validation to database:', err));
       }
 
       return res.status(200).json(response.data);
@@ -338,7 +338,7 @@ router.get(
         );
 
         // Format the history for consistent API response
-        const formattedHistory = dbHistory.map(record => ({
+        const formattedHistory = dbHistory.map((record: any) => ({
           validationId: record.validation_id,
           status: record.status,
           timestamp: record.timestamp,
@@ -421,7 +421,7 @@ router.get(
             );
 
             // Format the history for consistent API response
-            const formattedHistory = dbHistory.map(record => ({
+            const formattedHistory = dbHistory.map((record: any) => ({
               validationId: record.validation_id,
               status: record.status,
               timestamp: record.timestamp,

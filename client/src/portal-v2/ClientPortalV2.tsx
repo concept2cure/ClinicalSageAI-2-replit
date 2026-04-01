@@ -3,6 +3,11 @@
  *
  * Central router and provider setup for the Client Portal V2.
  * This component serves as the root of the portal module system.
+ *
+ * @deprecated Stage 2 beta cleanup fence.
+ * This file defines a full /client-portal/* route tree, but Stage 1 ownership
+ * evidence did not prove an explicit live mount from App.jsx.
+ * Do not delete or repurpose until /client-portal ownership is finalized.
  */
 
 import React, { Suspense, lazy, useState, useCallback } from 'react';

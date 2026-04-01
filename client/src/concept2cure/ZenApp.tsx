@@ -29,6 +29,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspens
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 import { ZenSidebar } from './components/sidebar/ZenSidebar';
 import { ZenChat } from './components/chat/ZenChat';
 import { ZenCommandPalette } from './components/command/ZenCommandPalette';
@@ -61,7 +62,8 @@ import { ProjectHeaderBar, getProjectAccentColor } from './components/workspace/
 import { useProjectTasks } from './hooks/useProjectTasks';
 import { useAuthoringIntelligence } from './hooks/useAuthoringIntelligence';
 import { useProjects } from './hooks/useProjects';
-import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
+import { useCortexThreads, useCortexHealth, useDeleteCortexThread } from './hooks/useCortex';
+import { cortexService } from './services/cortexService';
 import { usePlatformContext } from './hooks/useLicense';
 import { useWorkspaceSummary } from './hooks/useWorkspaceSummary';
 import { useReadinessAssessment } from './hooks/useOrchestration';
@@ -141,8 +143,11 @@ import {
   FileStack,
   Users,
   Loader2,
+  Search,
 } from 'lucide-react';
 import { LoadingState } from '@/components/ui/statesV2';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 // Canonical loading fallback for Suspense boundaries
 const ModuleLoadingFallback = () => (
@@ -539,6 +544,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // URL-DRIVEN PROJECT IDENTITY
   // ─────────────────────────────────────────────────────────────────────────────
   const [location, navigate] = useLocation();
+  const { toast } = useToast();
   const embedModulesEnabled = isFeatureEnabled('EMBED_MODULES_IN_SHELL');
   const projectModuleRoutePolicy = useMemo(
     () => getProjectModuleRoutePolicy(location, embedModulesEnabled),
@@ -642,6 +648,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   const [projectSwitcherOpen, setProjectSwitcherOpen] = useState(false);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [editProjectOpen, setEditProjectOpen] = useState(false);
+  const [projectsSearchQuery, setProjectsSearchQuery] = useState('');
   const [showFirstRun, setShowFirstRun] = useState(() => {
     try {
       return !localStorage.getItem('concept2cure_first_run_complete');
@@ -649,6 +656,15 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       return false;
     }
   });
+
+  useEffect(() => {
+    if (!showFirstRun) return;
+    if (projects.length === 0) return;
+    setShowFirstRun(false);
+    try {
+      localStorage.setItem('concept2cure_first_run_complete', 'true');
+    } catch {}
+  }, [projects.length, showFirstRun]);
 
   // Tool panels
   const [activeToolPanel, setActiveToolPanel] = useState<ToolPanel>(null);
@@ -1026,6 +1042,25 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     [layoutMode]
   );
 
+  // Project-scoped artifacts for section navigation and Outputs tab
+  const { data: projectArtifacts = [] } = useQuery({
+    queryKey: ['project-artifacts', activeProjectId],
+    queryFn: async () => {
+      if (!activeProjectId) return [];
+      const token =
+        sessionStorage.getItem('trialsage_access_token') ||
+        localStorage.getItem('trialsage_access_token');
+      const res = await fetch(`/api/concept2cure/projects/${activeProjectId}/artifacts`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : data?.data ?? data?.artifacts ?? [];
+    },
+    enabled: !!activeProjectId,
+    staleTime: 30_000,
+  });
+
   useEffect(() => {
     if (layoutMode !== 'biostatistics') return;
     setLayoutMode('regulatory-workspace');
@@ -1120,25 +1155,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     text: string;
     ts: number;
   } | null>(null);
-
-  // Project-scoped artifacts for the Outputs tab (must come after activeProjectId is declared)
-  const { data: projectArtifacts = [] } = useQuery({
-    queryKey: ['project-artifacts', activeProjectId],
-    queryFn: async () => {
-      if (!activeProjectId) return [];
-      const token =
-        sessionStorage.getItem('trialsage_access_token') ||
-        localStorage.getItem('trialsage_access_token');
-      const res = await fetch(`/api/concept2cure/projects/${activeProjectId}/artifacts`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
-      return Array.isArray(data) ? data : data?.data ?? data?.artifacts ?? [];
-    },
-    enabled: !!activeProjectId,
-    staleTime: 30_000,
-  });
+  const [guidedStageRequest, setGuidedStageRequest] = useState<{
+    stage: 'project' | 'ind_ectd' | 'authoring' | 'verify' | 'submission';
+    controlMode?: 'ana' | 'client';
+    ts: number;
+  } | null>(null);
 
   // ── Authoring intelligence — real readiness/contradiction data for active section ──
   const authoringIntelligence = useAuthoringIntelligence(
@@ -1151,6 +1172,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     if (authoringIntelligence.contradictions)
       setSectionContradictions(authoringIntelligence.contradictions);
   }, [authoringIntelligence.readiness, authoringIntelligence.contradictions]);
+
+  const { mutateAsync: deleteThread } = useDeleteCortexThread();
 
   // Threads for current project
   const { data: threads = [] } = useCortexThreads(activeProjectId);
@@ -1262,13 +1285,67 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // NAVIGATION HELPER — intercepts special paths before falling through to layoutMode
   // ─────────────────────────────────────────────────────────────────────────────
   const handleAnaPanelNavigate = useCallback((path: string) => {
-    if (path === 'ana-intelligence') {
+    const normalizedPath = String(path || '').trim();
+    if (!normalizedPath) return;
+
+    if (normalizedPath === 'ana-intelligence') {
       setSettingsSection('ana-intelligence');
       setSettingsOpen(true);
       return;
     }
-    setLayoutMode(path as LayoutMode);
-  }, []);
+    if (normalizedPath === 'project-config') {
+      setEditProjectOpen(true);
+      return;
+    }
+    if (
+      normalizedPath === 'open_capabilities' ||
+      normalizedPath === '/concept2cure?panel=capabilities'
+    ) {
+      setLayoutMode(activeProjectId ? 'project-home' : 'projects');
+      if (activeProjectId) {
+        setExternalChatMessage({
+          text: 'Show me all available capabilities for this project, grouped by workflow stage and what AnA can execute for me.',
+          ts: Date.now(),
+        });
+      }
+      return;
+    }
+    if (
+      normalizedPath === 'guided_project' ||
+      normalizedPath === 'guided_ind_ectd' ||
+      normalizedPath === 'guided_authoring' ||
+      normalizedPath === 'guided_verify' ||
+      normalizedPath === 'guided_submission'
+    ) {
+      const stageMap: Record<string, 'project' | 'ind_ectd' | 'authoring' | 'verify' | 'submission'> =
+        {
+          guided_project: 'project',
+          guided_ind_ectd: 'ind_ectd',
+          guided_authoring: 'authoring',
+          guided_verify: 'verify',
+          guided_submission: 'submission',
+        };
+      const stage = stageMap[normalizedPath];
+      setLayoutMode('regulatory-workspace');
+      setGuidedStageRequest({
+        stage,
+        controlMode: 'client',
+        ts: Date.now(),
+      });
+      return;
+    }
+    const mapped = SIDEBAR_NAV_TO_LAYOUT[normalizedPath];
+    if (mapped) {
+      setLayoutMode(mapped);
+      return;
+    }
+    const knownLayoutValues = Object.values(SIDEBAR_NAV_TO_LAYOUT);
+    if (knownLayoutValues.includes(normalizedPath as LayoutMode)) {
+      setLayoutMode(normalizedPath as LayoutMode);
+      return;
+    }
+    console.warn(`[AnaPersistentPanel] Unknown navigation target: ${normalizedPath}`);
+  }, [activeProjectId]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // KEYBOARD SHORTCUTS — use refs to avoid re-attaching listeners on every state change
@@ -1280,10 +1357,16 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       openCommandPalette: () => setCommandPaletteOpen(true),
       openSettings: () => setSettingsOpen(true),
       openEditProject: () => setEditProjectOpen(true),
-      closeToolPanel: () => { setActiveToolPanel(null); setToolPanelFullscreen(false); },
+      closeToolPanel: () => {
+        setActiveToolPanel(null);
+        setToolPanelFullscreen(false);
+      },
       openVaultPanel: () => setActiveToolPanel('vault'),
       handleNewChat,
-      setLayoutMode: (mode) => { setLayoutMode(mode); setActiveToolPanel(null); },
+      setLayoutMode: mode => {
+        setLayoutMode(mode);
+        setActiveToolPanel(null);
+      },
     }
   );
 
@@ -1292,25 +1375,60 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // ─────────────────────────────────────────────────────────────────────────────
 
   const handleDeleteConversation = useCallback(
-    (id: string) => {
-      // Threads are managed by Cortex - would call deleteThread mutation
-      if (activeConversationId === id) {
-        setActiveConversationId(undefined);
-        setActiveThreadId(undefined);
+    async (id: string) => {
+      try {
+        await deleteThread(id);
+        if (activeConversationId === id) {
+          setActiveConversationId(undefined);
+          setActiveThreadId(undefined);
+        }
+        toast({
+          title: 'Conversation deleted',
+          description: 'The conversation has been removed.',
+        });
+      } catch (error) {
+        toast({
+          title: 'Failed to delete conversation',
+          description: error instanceof Error ? error.message : 'Please try again.',
+          variant: 'destructive',
+        });
       }
     },
-    [activeConversationId]
+    [activeConversationId, deleteThread, toast]
   );
 
-  const handleToggleConversationStar = useCallback((id: string) => {
-    // Would update thread metadata via Cortex
-    console.log('Toggle star for conversation:', id);
+  const handleToggleConversationStar = useCallback(() => {
+    // Placeholder for metadata parity with Cortex thread model.
   }, []);
 
-  const handleToggleConversationPin = useCallback((id: string) => {
-    // Would update thread metadata via Cortex
-    console.log('Toggle pin for conversation:', id);
+  const handleToggleConversationPin = useCallback(() => {
+    // Placeholder for metadata parity with Cortex thread model.
   }, []);
+
+  const handleRenameConversation = useCallback(
+    async (id: string) => {
+      const existing = conversations.find(c => c.id === id);
+      if (!existing) return;
+      const nextTitle = window.prompt('Rename conversation', existing.title || 'New conversation');
+      if (!nextTitle) return;
+      const trimmed = nextTitle.trim();
+      if (!trimmed || trimmed === existing.title) return;
+      try {
+        await cortexService.updateThreadTitle(id, trimmed);
+        toast({
+          title: 'Conversation renamed',
+          description: 'The title was updated.',
+        });
+      } catch (error) {
+        toast({
+          title: 'Failed to rename conversation',
+          description: error instanceof Error ? error.message : 'Please try again.',
+          variant: 'destructive',
+        });
+      }
+    },
+    [conversations, toast]
+  );
 
   const handleMoveConversation = useCallback(
     async (conversationId: string, targetProjectId: string) => {
@@ -1431,11 +1549,20 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           conversations: [],
         });
         setNewProjectOpen(false);
+        toast({
+          title: 'Project created',
+          description: `${data.name} is ready.`,
+        });
       } catch (error) {
         console.error('Failed to create project:', error);
+        toast({
+          title: 'Failed to create project',
+          description: error instanceof Error ? error.message : 'Please try again.',
+          variant: 'destructive',
+        });
       }
     },
-    [createProjectMutation]
+    [createProjectMutation, toast]
   );
 
   const handleArchiveProject = useCallback(
@@ -1494,6 +1621,14 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       const project = rawProjects.find(p => p.id === activeProjectId);
       if (project) {
         try {
+          if (data.customInstructions !== undefined) {
+            await updateOwnershipPreferencesMutation({
+              projectId: project.id,
+              preferences: {
+                projectInstructions: data.customInstructions,
+              },
+            });
+          }
           await updateProjectMutation({
             ...project,
             ...(data.name !== undefined && { name: data.name }),
@@ -1511,12 +1646,29 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               ...(data.submissionType !== undefined && { submissionType: data.submissionType }),
             } as any,
           });
+          if (data.customInstructions !== undefined && activeProjectId) {
+            await updateOwnershipPreferencesMutation({
+              projectId: activeProjectId,
+              preferences: {
+                projectInstructions: data.customInstructions || '',
+              },
+            });
+          }
+          toast({
+            title: 'Project updated',
+            description: 'Configuration changes have been saved.',
+          });
         } catch (error) {
           console.error('Failed to update project:', error);
+          toast({
+            title: 'Failed to update project',
+            description: error instanceof Error ? error.message : 'Please try again.',
+            variant: 'destructive',
+          });
         }
       }
     },
-    [activeProjectId, rawProjects, updateProjectMutation]
+    [activeProjectId, rawProjects, updateOwnershipPreferencesMutation, updateProjectMutation, toast]
   );
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -1679,9 +1831,12 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         onSelectConversation={id => {
           setActiveConversationId(id);
           setActiveThreadId(id);
+          setLayoutMode('project-home');
         }}
         onSelectProject={id => {
           setActiveProjectId(id);
+          setActiveConversationId(undefined);
+          setActiveThreadId(undefined);
           setLayoutMode('project-home');
         }}
         onNewChat={handleNewChat}
@@ -2409,6 +2564,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 onSuggestedPrompt={prompt => {
                   setExternalChatMessage({ text: prompt, ts: Date.now() });
                 }}
+                guidedStageCommand={guidedStageRequest}
               />
             ))}
 
@@ -2617,7 +2773,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   ))}
                 </div>
                 <div className="border-b border-amber-200 bg-amber-50/60 px-4 py-2 text-xs text-amber-800">
-                  Beta note: package generation currently exports a submission manifest JSON for internal review and handoff.
+                  Beta note: package generation currently exports a submission manifest JSON for
+                  internal review and handoff.
                 </div>
 
                 {submissionTab === 'readiness' ? (
@@ -2688,12 +2845,12 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                         status: a.status || 'draft',
                         version: a.version || 1,
                       }))}
-                      onOpenArtifact={artifactId => {
+                      onOpenArtifact={(artifactId: any) => {
                         setOpenArtifactId(artifactId);
                         setRiViewMode('editor');
                         setLayoutMode('regulatory-workspace');
                       }}
-                      onCreateArtifact={(sectionId, sectionLabel) => {
+                      onCreateArtifact={(sectionId: any, sectionLabel: any) => {
                         setPendingEditorContent({
                           title: sectionLabel,
                           content: '',
@@ -3169,7 +3326,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         {/* ── Project Cards Grid — Simplified entry ── */}
         {layoutMode === 'projects' &&
           !embeddedModule &&
-          projects.length > 0 &&
           (() => {
             const sortedProjects = projects
               .filter(p => !p.archived)
@@ -3178,8 +3334,25 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 if (!a.starred && b.starred) return 1;
                 return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
               });
-            const continueProject = sortedProjects[0];
-            const restProjects = sortedProjects.slice(1, 12);
+            const normalizedQuery = projectsSearchQuery.trim().toLowerCase();
+            const filteredProjects = normalizedQuery
+              ? sortedProjects.filter(project =>
+                  [
+                    project.name,
+                    project.description,
+                    project.sponsor,
+                    project.product,
+                    project.targetAgency,
+                    project.region,
+                    project.type,
+                  ]
+                    .filter(Boolean)
+                    .some(value => String(value).toLowerCase().includes(normalizedQuery))
+                )
+              : sortedProjects;
+            const continueProject = filteredProjects[0];
+            const remainingProjects = filteredProjects.slice(1, 16);
+            const recentThresholdMs = 14 * 24 * 60 * 60 * 1000;
             const SUBMISSION_BADGE_MINI: Record<
               string,
               { label: string; color: string; bg: string }
@@ -3194,6 +3367,19 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               EUA: { label: 'EUA', color: 'text-cyan-700', bg: 'bg-cyan-50' },
             };
             const fallbackBadge = { label: 'Project', color: 'text-stone-600', bg: 'bg-stone-50' };
+            const isPinned = (project: (typeof filteredProjects)[number]) =>
+              Boolean(project.starred || project.pinned);
+            const updatedMs = (project: (typeof filteredProjects)[number]) => {
+              const ms = new Date(project.lastUpdated).getTime();
+              return Number.isFinite(ms) ? ms : 0;
+            };
+            const pinnedProjects = remainingProjects.filter(isPinned);
+            const recentProjects = remainingProjects.filter(
+              project => !isPinned(project) && Date.now() - updatedMs(project) <= recentThresholdMs
+            );
+            const generalProjects = remainingProjects.filter(
+              project => !isPinned(project) && Date.now() - updatedMs(project) > recentThresholdMs
+            );
             const relTime = (d: Date | string) => {
               const parsed = new Date(d);
               if (isNaN(parsed.getTime())) return 'Recently';
@@ -3212,19 +3398,165 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 return 'Recently';
               }
             };
+            const openProjectHome = (projectId: string) => {
+              setActiveProjectId(projectId);
+              setLayoutMode('project-home');
+            };
+            const openProjectHomeWithLastConversation = (
+              projectId: string,
+              conversationCount?: number
+            ) => {
+              setActiveProjectId(projectId);
+              if ((conversationCount ?? 0) > 0) {
+                const rawProject = rawProjects.find(p => p.id === projectId);
+                const latestConversationId =
+                  rawProject?.conversations
+                    ?.slice()
+                    ?.sort(
+                      (a, b) =>
+                        new Date(b.updatedAt ?? b.createdAt ?? 0).getTime() -
+                        new Date(a.updatedAt ?? a.createdAt ?? 0).getTime()
+                    )?.[0]?.id ?? undefined;
+                setActiveConversationId(latestConversationId);
+                setActiveThreadId(latestConversationId);
+              } else {
+                setActiveConversationId(undefined);
+                setActiveThreadId(undefined);
+              }
+              setLayoutMode('project-home');
+            };
+            const renderProjectSection = (
+              title: string,
+              sectionProjects: typeof remainingProjects
+            ) => {
+              if (sectionProjects.length === 0) return null;
+              return (
+                <section className="mt-6 first:mt-0">
+                  <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wider mb-3">
+                    {title}
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {sectionProjects.map(project => {
+                      const badge = SUBMISSION_BADGE_MINI[project.type] || fallbackBadge;
+                      const metadata = [project.product, project.targetAgency, project.region]
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .join(' · ');
+                      const hasConversations = (project.conversationCount ?? 0) > 0;
+                      return (
+                        <Button
+                          key={project.id}
+                          type="button"
+                          variant="ghost"
+                          onClick={() => openProjectHome(project.id)}
+                          className={cn(
+                            'h-auto w-full group text-left rounded-xl border overflow-hidden transition-all duration-150 p-0',
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40',
+                            activeProjectId === project.id
+                              ? 'border-stone-300 bg-stone-50/80 ring-1 ring-stone-200'
+                              : 'border-stone-200 hover:border-stone-300 hover:shadow-sm bg-white'
+                          )}
+                        >
+                          <div className="p-4 w-full">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div
+                                className="w-2 h-2 rounded-full flex-shrink-0"
+                                style={{
+                                  backgroundColor: getProjectAccentColor(
+                                    project.color,
+                                    project.type
+                                  ),
+                                }}
+                              />
+                              <h3 className="text-[14px] font-semibold text-stone-900 truncate group-hover:text-stone-700">
+                                {project.name}
+                              </h3>
+                              {project.starred && (
+                                <Star className="w-3 h-3 text-amber-400 fill-amber-400 flex-shrink-0" />
+                              )}
+                            </div>
+                            {metadata && (
+                              <p className="text-[11px] text-stone-500 truncate mb-1.5">
+                                {metadata}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2 mt-1 text-[11px] text-stone-400">
+                              <span
+                                className={cn(
+                                  'font-medium px-1.5 py-0.5 rounded',
+                                  badge.bg,
+                                  badge.color
+                                )}
+                              >
+                                {badge.label}
+                              </span>
+                              <span className="flex items-center gap-1 tabular-nums">
+                                <MessageSquare className="w-3 h-3" />
+                                {project.conversationCount ?? 0}
+                              </span>
+                              <span className="ml-auto tabular-nums">
+                                {relTime(project.lastUpdated)}
+                              </span>
+                            </div>
+                            <div className="mt-2 flex items-center justify-end">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  openProjectHomeWithLastConversation(
+                                    project.id,
+                                    project.conversationCount ?? 0
+                                  );
+                                }}
+                                className="h-6 px-2 text-[11px] text-stone-500 hover:text-stone-800"
+                              >
+                                {hasConversations ? 'Resume chat' : 'Start chat'}
+                              </Button>
+                            </div>
+                          </div>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </section>
+              );
+            };
 
             return (
               <div className="px-6 sm:px-8 pt-8 pb-4 max-w-3xl mx-auto w-full flex-shrink-0">
                 {/* Header — quiet foyer */}
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-8">
                   <h2 className="text-lg font-semibold text-stone-800">Projects</h2>
-                  <button
-                    onClick={() => setNewProjectOpen(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-stone-600 border border-stone-200 hover:bg-stone-50 rounded-lg transition-colors"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    New project
-                  </button>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <div className="relative flex-1 sm:w-72">
+                      <Search className="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                      <Input
+                        value={projectsSearchQuery}
+                        onChange={e => setProjectsSearchQuery(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && continueProject) {
+                            e.preventDefault();
+                            openProjectHome(continueProject.id);
+                          }
+                        }}
+                        placeholder="Search projects, product, agency..."
+                        aria-label="Search projects"
+                        className="h-8 pl-8 text-[12px] border-stone-200 bg-white"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setNewProjectOpen(true)}
+                      className="h-8 px-3 text-[12px] text-stone-700 border-stone-200"
+                    >
+                      <Plus className="w-3.5 h-3.5 mr-1.5" />
+                      New project
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Continue recent work — hero card */}
@@ -3235,8 +3567,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                     </p>
                     <button
                       onClick={() => {
-                        setActiveProjectId(continueProject.id);
-                        setLayoutMode('project-home');
+                        openProjectHomeWithLastConversation(
+                          continueProject.id,
+                          continueProject.conversationCount ?? 0
+                        );
                       }}
                       className={cn(
                         'w-full text-left rounded-xl border border-stone-200 bg-white p-5',
@@ -3291,6 +3625,23 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                               {continueProject.conversationCount}{' '}
                               {continueProject.conversationCount === 1 ? 'chat' : 'chats'}
                             </span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={e => {
+                                e.stopPropagation();
+                                openProjectHomeWithLastConversation(
+                                  continueProject.id,
+                                  continueProject.conversationCount ?? 0
+                                );
+                              }}
+                              className="h-6 px-2 text-[11px] text-stone-500 hover:text-stone-800"
+                            >
+                              {(continueProject.conversationCount ?? 0) > 0
+                                ? 'Resume latest chat'
+                                : 'Start first chat'}
+                            </Button>
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 text-stone-400 group-hover:text-stone-600 transition-colors flex-shrink-0 mt-1">
@@ -3302,68 +3653,37 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                   </section>
                 )}
 
-                {/* All projects grid */}
-                {restProjects.length > 0 && (
-                  <section>
-                    <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wider mb-3">
-                      All projects
+                {filteredProjects.length === 0 && (
+                  <div className="rounded-xl border border-stone-200 bg-white p-6 text-center">
+                    <p className="text-[14px] font-medium text-stone-800 mb-1">
+                      No matching projects
                     </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {restProjects.map(project => {
-                        const badge = SUBMISSION_BADGE_MINI[project.type] || fallbackBadge;
-                        return (
-                          <button
-                            key={project.id}
-                            onClick={() => {
-                              setActiveProjectId(project.id);
-                              setLayoutMode('project-home');
-                            }}
-                            className={cn(
-                              'group text-left rounded-xl border overflow-hidden transition-all duration-150',
-                              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40',
-                              activeProjectId === project.id
-                                ? 'border-stone-300 bg-stone-50/80 ring-1 ring-stone-200'
-                                : 'border-stone-200 hover:border-stone-300 hover:shadow-sm bg-white'
-                            )}
-                          >
-                            <div className="p-4">
-                              <div className="flex items-center gap-2 mb-1">
-                                <div
-                                  className="w-2 h-2 rounded-full flex-shrink-0"
-                                  style={{
-                                    backgroundColor: getProjectAccentColor(
-                                      project.color,
-                                      project.type
-                                    ),
-                                  }}
-                                />
-                                <h3 className="text-[14px] font-semibold text-stone-900 truncate group-hover:text-stone-700">
-                                  {project.name}
-                                </h3>
-                                {project.starred && (
-                                  <Star className="w-3 h-3 text-amber-400 fill-amber-400 flex-shrink-0" />
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2 mt-2 text-[11px] text-stone-400">
-                                <span
-                                  className={cn(
-                                    'font-medium px-1.5 py-0.5 rounded',
-                                    badge.bg,
-                                    badge.color
-                                  )}
-                                >
-                                  {badge.label}
-                                </span>
-                                <span className="ml-auto tabular-nums">
-                                  {relTime(project.lastUpdated)}
-                                </span>
-                              </div>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </section>
+                    <p className="text-[12px] text-stone-500 mb-4">
+                      Try a different search term or create a new regulatory project.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setNewProjectOpen(true)}
+                    >
+                      <Plus className="w-3.5 h-3.5 mr-1.5" />
+                      New project
+                    </Button>
+                  </div>
+                )}
+
+                {filteredProjects.length > 0 && (
+                  <>
+                    {renderProjectSection('Pinned', pinnedProjects)}
+                    {renderProjectSection('Recent', recentProjects)}
+                    {renderProjectSection(
+                      pinnedProjects.length > 0 || recentProjects.length > 0
+                        ? 'Project directory'
+                        : 'All projects',
+                      generalProjects
+                    )}
+                  </>
                 )}
               </div>
             );
@@ -3383,8 +3703,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 screenName: 'project-home',
                 activeProject: activeProject?.name,
                 projectId: activeProjectId,
+                threadId: activeThreadId || activeConversationId,
                 moduleContext,
-                customInstructions,
               }}
               projectIntelligence={projectIntelligenceStats}
               greeting={
@@ -3401,6 +3721,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               onOpenArtifact={handleOpenArtifact}
               onRequestPromotion={handleRequestPromotion}
               onRefreshIntelligence={authoringIntelligence.refetch}
+              onThreadChange={threadId => {
+                setActiveThreadId(threadId);
+                setActiveConversationId(threadId);
+              }}
             />
 
             {/* Right sidebar: Project Knowledge (Claude.ai style — always visible) */}
@@ -3464,8 +3788,8 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 screenName: layoutMode,
                 activeProject: activeProject?.name,
                 projectId: activeProjectId,
+                threadId: activeThreadId || activeConversationId,
                 moduleContext,
-                customInstructions,
               }}
               projectIntelligence={projectIntelligenceStats}
               greeting={
@@ -3481,6 +3805,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
               onOpenArtifact={handleOpenArtifact}
               onRequestPromotion={handleRequestPromotion}
               onRefreshIntelligence={authoringIntelligence.refetch}
+              onThreadChange={threadId => {
+                setActiveThreadId(threadId);
+                setActiveConversationId(threadId);
+              }}
             />
           )}
       </GlobalOperatingShell>
@@ -3552,9 +3880,6 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
           setProjectSwitcherOpen(false);
           setLayoutMode('project-home');
           navigate(`/concept2cure/project/${id}`);
-          // Clear conversation when switching projects
-          setActiveConversationId(undefined);
-          setActiveThreadId(undefined);
         }}
         onCreateProject={() => {
           setProjectSwitcherOpen(false);
@@ -3590,6 +3915,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
                 targetSubmissionDate: activeProject.targetSubmissionDate,
                 status: activeProject.status,
                 customInstructions: customInstructions,
+                teamMembers: (activeProject as any).teamMembers || [],
               }
             : null
         }

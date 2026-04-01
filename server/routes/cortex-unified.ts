@@ -819,7 +819,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
           message,
           fullContent,
           organizationId
-        ).catch(err => logger.warn(`[WorkingMemory] Auto-summarization failed: ${err.message}`));
+        ).catch((err: any) => logger.warn(`[WorkingMemory] Auto-summarization failed: ${err.message}`));
       }
 
       // Include artifacts in the done event so the client can display them
@@ -898,7 +898,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
         message,
         assistantMessage,
         organizationId
-      ).catch(err => logger.warn(`[WorkingMemory] Auto-summarization failed: ${err.message}`));
+      ).catch((err: any) => logger.warn(`[WorkingMemory] Auto-summarization failed: ${err.message}`));
     }
 
     res.json({

@@ -27,7 +27,7 @@ router.get('/', async (_req: Request, res: Response) => {
  */
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     if (!db) {
       return res.status(500).json({ error: 'Database connection unavailable' });
     }
@@ -52,7 +52,7 @@ router.get('/:id', async (req: Request, res: Response) => {
  */
 router.post('/generate/:protocolId', async (req: Request, res: Response) => {
   try {
-    const { protocolId } = req.params;
+    const protocolId = req.params.protocolId as string;
     if (!db) {
       return res.status(500).json({ error: 'Database connection unavailable' });
     }
@@ -193,7 +193,7 @@ router.post('/generate-manual', async (req: Request, res: Response) => {
  */
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     if (!db) {
       return res.status(500).json({ error: 'Database connection unavailable' });
     }

@@ -122,6 +122,49 @@ export interface CreateAssumptionInput {
 // ─── Service ─────────────────────────────────────────────────────────────────
 
 export class AssumptionRegistryService {
+  private static instance: AssumptionRegistryService;
+
+  static getInstance(): AssumptionRegistryService {
+    if (!AssumptionRegistryService.instance) {
+      AssumptionRegistryService.instance = new AssumptionRegistryService();
+    }
+    return AssumptionRegistryService.instance;
+  }
+
+  async createAssumption(input: Record<string, unknown>): Promise<AssumptionRecord> {
+    return this.create({
+      organizationId: Number(input.organizationId),
+      projectId: Number(input.projectId),
+      assumptionCode: String(input.name || input.assumptionCode || `ASM-${Date.now()}`),
+      title: String(input.description || input.name || 'Assumption'),
+      domainTrack: (input.domainTrack as DomainTrack) ?? 'regulatory',
+      category: (input.category as AssumptionCategory) ?? 'regulatory_pathway',
+      assumedValue: String(input.textValue || input.numericValue || input.value || ''),
+      unit: (input.unit as string) || undefined,
+      rationale: String(input.rationale || 'No rationale provided'),
+      sourceType: (input.sourceType as SourceType) ?? 'expert_opinion',
+      sourceReference: (input.sourceDescription as string) || undefined,
+      confidenceLevel: (input.confidence as ConfidenceLevel) ?? 'moderate',
+      applicableRegulators: [],
+      linkedArtifactId: (input.sourceArtifactId as number) || undefined,
+      linkedArtifactVersion: undefined,
+      linkedSectionCode: undefined,
+      createdBy: String(input.createdById || 'system'),
+    });
+  }
+
+  async createContradictionLink(): Promise<void> {
+    // Compatibility shim for legacy integration paths.
+  }
+
+  async linkToArtifact(): Promise<void> {
+    // Compatibility shim for legacy integration paths.
+  }
+
+  async linkToDecision(): Promise<void> {
+    // Compatibility shim for legacy integration paths.
+  }
+
   async create(input: CreateAssumptionInput): Promise<AssumptionRecord> {
     log.info('Creating assumption', { code: input.assumptionCode, project: input.projectId });
 

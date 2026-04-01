@@ -88,39 +88,39 @@ router.get('/dashboard/:qmpId', authMiddleware, requireOrganizationContext, asyn
 
     // Filter factors by those referenced in gating rules
     const factorIds = new Set();
-    gatingRules.forEach(rule => {
+    gatingRules.forEach((rule: any) => {
       if (rule.requiredCtqFactorIds && Array.isArray(rule.requiredCtqFactorIds)) {
         rule.requiredCtqFactorIds.forEach((id: number) => factorIds.add(id));
       }
     });
 
-    const relatedFactors = allFactors.filter(factor => factorIds.has(factor.id));
+    const relatedFactors = allFactors.filter((factor: any) => factorIds.has(factor.id));
 
     // Calculate statistics
     const sectionStats = {
       totalSections: gatingRules.length,
       sectionsByGateLevel: {
-        hard: gatingRules.filter(rule => rule.minimumMandatoryCompletion === 100).length,
+        hard: gatingRules.filter((rule: any) => rule.minimumMandatoryCompletion === 100).length,
         soft: gatingRules.filter(
-          rule => rule.minimumMandatoryCompletion < 100 && rule.minimumMandatoryCompletion >= 80
+          (rule: any) => rule.minimumMandatoryCompletion < 100 && rule.minimumMandatoryCompletion >= 80
         ).length,
-        info: gatingRules.filter(rule => rule.minimumMandatoryCompletion < 80).length,
+        info: gatingRules.filter((rule: any) => rule.minimumMandatoryCompletion < 80).length,
       },
-      activeSections: gatingRules.filter(rule => rule.active === true).length,
-      inactiveSections: gatingRules.filter(rule => rule.active === false).length,
-      sectionsAllowingOverride: gatingRules.filter(rule => rule.allowOverride === true).length,
+      activeSections: gatingRules.filter((rule: any) => rule.active === true).length,
+      inactiveSections: gatingRules.filter((rule: any) => rule.active === false).length,
+      sectionsAllowingOverride: gatingRules.filter((rule: any) => rule.allowOverride === true).length,
     };
 
     const factorStats = {
       totalFactors: relatedFactors.length,
       factorsByRiskLevel: {
-        high: relatedFactors.filter(factor => factor.riskLevel === 'high').length,
-        medium: relatedFactors.filter(factor => factor.riskLevel === 'medium').length,
-        low: relatedFactors.filter(factor => factor.riskLevel === 'low').length,
+        high: relatedFactors.filter((factor: any) => factor.riskLevel === 'high').length,
+        medium: relatedFactors.filter((factor: any) => factor.riskLevel === 'medium').length,
+        low: relatedFactors.filter((factor: any) => factor.riskLevel === 'low').length,
       },
-      activeFactors: relatedFactors.filter(factor => factor.active === true).length,
-      inactiveFactors: relatedFactors.filter(factor => factor.active === false).length,
-      requiredFactors: relatedFactors.filter(factor => factor.required === true).length,
+      activeFactors: relatedFactors.filter((factor: any) => factor.active === true).length,
+      inactiveFactors: relatedFactors.filter((factor: any) => factor.active === false).length,
+      requiredFactors: relatedFactors.filter((factor: any) => factor.required === true).length,
     };
 
     // Build dashboard data
@@ -232,9 +232,9 @@ router.post('/batch-validate', authMiddleware, requireOrganizationContext, async
 
     // Get all CTQ factors for these rules
     const ctqFactorIds = gatingRules
-      .map(rule => rule.requiredCtqFactorIds || [])
+      .map((rule: any) => rule.requiredCtqFactorIds || [])
       .flat()
-      .filter((v, i, a) => a.indexOf(v) === i); // Unique factor IDs
+      .filter((v: any, i: any, a: any) => a.indexOf(v) === i); // Unique factor IDs
 
     let ctqFactorDetails = [];
     if (ctqFactorIds.length > 0) {
@@ -255,7 +255,7 @@ router.post('/batch-validate', authMiddleware, requireOrganizationContext, async
         const { sectionCode, content } = section;
 
         // Find the rule for this section
-        const rule = gatingRules.find(r => r.sectionKey === sectionCode);
+        const rule = gatingRules.find((r: any) => r.sectionKey === sectionCode);
 
         // If no rule, section automatically passes
         if (!rule) {
@@ -269,7 +269,7 @@ router.post('/batch-validate', authMiddleware, requireOrganizationContext, async
 
         // Get factors for this section
         const requiredFactorIds = rule.requiredCtqFactorIds || [];
-        const factors = ctqFactorDetails.filter(f => requiredFactorIds.includes(f.id));
+        const factors = ctqFactorDetails.filter((f: any) => requiredFactorIds.includes(f.id));
 
         // Validate against each factor
         const validationResults = [];
@@ -532,9 +532,9 @@ router.get('/plans/:id', authMiddleware, requireOrganizationContext, async (req,
 
     // Get all CTQ factors for this QMP
     const ctqFactorIds = gatingRules
-      .map(rule => rule.requiredCtqFactorIds || [])
+      .map((rule: any) => rule.requiredCtqFactorIds || [])
       .flat()
-      .filter((v, i, a) => a.indexOf(v) === i); // Unique factor IDs
+      .filter((v: any, i: any, a: any) => a.indexOf(v) === i); // Unique factor IDs
 
     let ctqFactorDetails = [];
     if (ctqFactorIds.length > 0) {
@@ -552,10 +552,10 @@ router.get('/plans/:id', authMiddleware, requireOrganizationContext, async (req,
     // Build the enriched QMP object
     const enrichedQmp = {
       ...qmp,
-      sections: gatingRules.map(rule => ({
+      sections: gatingRules.map((rule: any) => ({
         ...rule,
         ctqFactors: rule.requiredCtqFactorIds
-          ? ctqFactorDetails.filter(f => rule.requiredCtqFactorIds.includes(f.id))
+          ? ctqFactorDetails.filter((f: any) => rule.requiredCtqFactorIds.includes(f.id))
           : [],
       })),
     };

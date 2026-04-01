@@ -66,7 +66,7 @@ const dbOps = {
       const milestones = await db.execute(milestonesQuery);
 
       // Format milestones for frontend
-      const formattedMilestones = milestones.map(ms => ({
+      const formattedMilestones = milestones.map((ms: any) => ({
         id: ms.id,
         title: ms.title,
         dueDate: ms.due_date,

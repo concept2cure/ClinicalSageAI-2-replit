@@ -100,7 +100,7 @@ describe('validateSoD', () => {
       const result = validateSoD(existingRoles, newRole);
 
       // Conflicts should be for each conflicting existing role
-      result.conflicts.forEach(conflict => {
+      result.conflicts.forEach((conflict: any) => {
         expect(conflict.newRole).toBe(newRole);
         expect(existingRoles).toContain(conflict.existingRole);
       });
@@ -221,7 +221,7 @@ describe('ROLE_PERMISSION_PRESETS', () => {
 
       // Admin should have user management
       const hasUserPermission = adminPermissions.some(
-        p => p.resource === 'users' || p.action === '*'
+        (p: any) => p.resource === 'users' || p.action === '*'
       );
       expect(hasUserPermission).toBe(true);
     });
@@ -233,7 +233,7 @@ describe('ROLE_PERMISSION_PRESETS', () => {
 
       // All viewer permissions should be read
       const hasWritePermission = viewerPermissions.some(
-        p => p.action === 'write' || p.action === 'delete' || p.action === 'approve'
+        (p: any) => p.action === 'write' || p.action === 'delete' || p.action === 'approve'
       );
       expect(hasWritePermission).toBe(false);
     });
@@ -244,7 +244,7 @@ describe('ROLE_PERMISSION_PRESETS', () => {
       const writerPermissions = ROLE_PERMISSION_PRESETS.medical_writer;
 
       const hasDocumentAccess = writerPermissions.some(
-        p => p.resource === 'documents' && (p.action === 'write' || p.action === '*')
+        (p: any) => p.resource === 'documents' && (p.action === 'write' || p.action === '*')
       );
       expect(hasDocumentAccess).toBe(true);
     });
@@ -253,7 +253,7 @@ describe('ROLE_PERMISSION_PRESETS', () => {
       const statPermissions = ROLE_PERMISSION_PRESETS.biostatistician;
 
       const hasAnalyticsAccess = statPermissions.some(
-        p => p.resource === 'analytics' || p.resource === 'studies'
+        (p: any) => p.resource === 'analytics' || p.resource === 'studies'
       );
       expect(hasAnalyticsAccess).toBe(true);
     });
@@ -398,7 +398,7 @@ describe('SOD_CONFLICT_MATRIX', () => {
   it('should have symmetric conflicts where applicable', () => {
     // If A conflicts with B, B should conflict with A
     Object.entries(SOD_CONFLICT_MATRIX).forEach(([role, conflicts]) => {
-      conflicts.forEach(conflictingRole => {
+      conflicts.forEach((conflictingRole: any) => {
         const reverseConflicts = SOD_CONFLICT_MATRIX[conflictingRole as UserRole];
         if (reverseConflicts) {
           // Symmetric conflict check (warning: not all conflicts need to be symmetric)

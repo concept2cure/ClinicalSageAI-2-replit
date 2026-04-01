@@ -578,7 +578,7 @@ export function getProjectMemoryContext(projectId: string, maxEntries = 10): str
 
   const relevant = entries.slice(0, maxEntries);
   const lines = relevant.map(
-    e => `[${e.category.toUpperCase()}] ${e.content}`,
+    (e: any) => `[${e.category.toUpperCase()}] ${e.content}`,
   );
 
   return `\n--- Project Memory (AnA RI) ---\n${lines.join('\n')}\n--- End Memory ---\n`;

@@ -21,7 +21,7 @@ router.post('/link-csr', async (req, res) => {
     const vault = await AutoVaultIngest.create(vaultService, programId, organizationId);
     const docId = await vault.saveCSREvidence(csrData, Boolean(isRealData));
     res.json({ success: true, documentId: docId });
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
@@ -45,7 +45,7 @@ router.post('/link-submission', async (req, res) => {
     const buffer = Buffer.isBuffer(zipBuffer) ? zipBuffer : Buffer.from(zipBuffer);
     const docId = await vault.saveSubmissionPackage(buffer, Number(modulesCompleted || 0));
     res.json({ success: true, documentId: docId });
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });

@@ -1,1573 +1,1011 @@
-/**
- * Intelligent Report Generator — Full-screen GA component
- *
- * Unified report generation UI covering all platform domains with:
- * - Domain/subtype selection across regulatory, clinical, CMC, PV, QM, etc.
- * - Global regulatory body targeting (17 agencies)
- * - Real-time compliance scoring & atom-level provenance
- * - Immutable sealing with cryptographic verification
- * - Quasi-indemnification attestation viewer
- * - Section drill-down with atom provenance detail
- * - Export (JSON/CSV/manifest) with integrity headers
- * - Drift detection & compliance validation
- * - Supersede / revoke lifecycle actions
- */
-
-import React, { useState, useEffect, useCallback } from 'react';
-import { apiRequest } from '@/lib/queryClient';
-import NanoBananaImageGenerator from '@/components/NanoBananaImageGenerator';
+import React, { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  FileText, Shield, Lock, CheckCircle2, AlertTriangle,
-  ChevronRight, Globe2, Atom, Hash, Fingerprint,
-  Clock, Building2, ShieldCheck, Eye, Download,
-  Layers, BadgeCheck, ScrollText, FileCheck,
-  ChevronDown, Search, X, ArrowRight, Zap,
-  BookOpen, Scale, Activity, BarChart3,
-  FlaskConical, Pill, Microscope, Briefcase,
-  ShieldAlert, ClipboardCheck, Brain, Sparkles,
-  ChevronUp, RefreshCw, XCircle, FileJson,
-  FileSpreadsheet, FileSignature, GitBranch,
-  AlertOctagon, CircleDot, ExternalLink,
+  AlertTriangle,
+  CheckCircle2,
+  Download,
+  ExternalLink,
+  FileDown,
+  FileStack,
+  Filter,
+  Mail,
+  RefreshCw,
+  Search,
+  Send,
+  ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
+import { getOrgId } from '@/utils/authToken';
+import { queryKeys } from '@/concept2cure/hooks/queryKeys';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  WorkspaceCanvas,
+  WorkspaceHeaderRich,
+} from '@/components/ui/workspace-primitives';
+import {
+  DataStateWrapper,
+  SkeletonCard,
+  SkeletonTable,
+} from '@/components/ui/statesV2';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 
-// ── Types ────────────────────────────────────────────────────
-
-interface DomainBlueprint {
-  domain: string;
+type ReportBundle = {
+  bundleId: string;
   label: string;
-  subtypes: string[];
-  requiredSections: string[];
-  defaultComplianceFrameworks: string[];
-  indemnificationTier: 'full_audit_trail' | 'partial' | 'advisory_only';
-}
-
-interface RegulatoryBody {
-  code: string;
-  name: string;
-  country: string;
-  regulationCount: number;
-  retentionYears: number;
-  languageRequirement: string;
-}
-
-interface GeneratedReport {
-  reportId: number;
-  reportUuid: string;
-  reportCode: string;
-  verificationCode: string;
-  contentHash: string;
-  merkleRoot: string;
-  sealStatus: string;
-  complianceScore: number;
-  indemnificationTier: string;
-  provenanceAtomCount: number;
-  attestationCount: number;
-  generationDurationMs: number;
-  record: any;
-}
-
-interface ReportAttestation {
-  id: number;
-  attestationType: string;
-  regulationCode: string;
-  regulationTitle: string;
-  complianceStatus: string;
-  complianceScore: number;
-  attestationStatement: string;
-  indemnificationScope: string;
-  sealed: boolean;
-}
-
-interface ProvenanceEntry {
-  id: number;
-  sectionPath: string;
-  fieldLabel: string;
-  reportedValue: string;
-  atomId: number | null;
-  sourceTable: string;
-  sourceRecordId: string;
-  sourceField: string;
-  sourceValue: string;
-  valueHash: string;
-  transformationType: string;
-  confidence: number;
-  driftDetected: boolean;
-}
-
-interface ComplianceCheck {
-  checkId: string;
-  category: string;
   description: string;
-  passed: boolean;
-  severity: string;
-  details: string;
+  personas: string[];
+  allowedScopes: string[];
+  reportTypeIds: string[];
+  defaultDeliveryMode: 'platform_email' | 'save_pdf';
+  exportFormats: Array<'pdf' | 'json' | 'csv'>;
+};
+
+type ReportRunRow = {
+  id: number;
+  runUuid: string;
+  scopeType: string;
+  scopeId: string;
+  reportTypeId: string;
+  status: string;
+  confidence: number | null;
+  blockers: string[] | null;
+  createdAt: string;
+};
+
+type WorkspaceSummaryResponse = {
+  scope: { scopeType: string; scopeId: string | null };
+  bundles: ReportBundle[];
+  taxonomy: Array<{
+    typeId: string;
+    label: string;
+    family: string;
+    allowedScopes: string[];
+    allowedPersonas: string[];
+  }>;
+  summary: {
+    runCount: number;
+    immutableReportCount: number;
+    learningEventCount: number;
+    partialRuns: number;
+    completedRuns: number;
+  };
+  recentRuns: ReportRunRow[];
+  recentReports: Array<{
+    id: number;
+    reportCode: string;
+    reportTitle: string;
+    reportDomain: string;
+    sealStatus: string;
+    complianceScore: number | null;
+    createdAt: string;
+    projectId: number | null;
+  }>;
+};
+
+type DeliveryMode = 'platform_email' | 'save_pdf';
+type ScopeType = 'account' | 'program' | 'project' | 'study' | 'submission' | 'document';
+
+const scopeOptions: Array<{ value: ScopeType; label: string }> = [
+  { value: 'account', label: 'Account' },
+  { value: 'program', label: 'Program' },
+  { value: 'project', label: 'Project' },
+  { value: 'study', label: 'Study' },
+  { value: 'submission', label: 'Submission' },
+  { value: 'document', label: 'Document' },
+];
+
+const deliveryOptions: Array<{ value: DeliveryMode; label: string; description: string }> = [
+  {
+    value: 'platform_email',
+    label: 'Send through Concept2Cure',
+    description: 'Logs the outbound correspondence and helps the wisdom layer learn from the exchange.',
+  },
+  {
+    value: 'save_pdf',
+    label: 'Save PDF for offline delivery',
+    description: 'Exports a governed PDF when clients prefer to send from their own email accounts.',
+  },
+];
+
+function formatDate(value?: string | null) {
+  if (!value) return '—';
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleString();
 }
 
-interface DriftResult {
-  total: number;
-  checked: number;
-  drifted: number;
-  details: { atomId: number; sectionPath: string; fieldLabel: string; originalHash: string; currentHash: string }[];
+function statusTone(status?: string) {
+  switch (status) {
+    case 'completed':
+    case 'sealed':
+      return 'ready';
+    case 'partial':
+    case 'draft':
+      return 'needs-work';
+    case 'revoked':
+      return 'blocked';
+    default:
+      return 'drafting';
+  }
 }
 
-// ── Domain icons ─────────────────────────────────────────────
+function toneClass(status?: string) {
+  switch (statusTone(status)) {
+    case 'ready':
+      return 'border-emerald-200 bg-emerald-50 text-emerald-700';
+    case 'needs-work':
+      return 'border-amber-200 bg-amber-50 text-amber-700';
+    case 'blocked':
+      return 'border-red-200 bg-red-50 text-red-700';
+    default:
+      return 'border-blue-200 bg-blue-50 text-blue-700';
+  }
+}
 
-const DOMAIN_ICONS: Record<string, React.ReactNode> = {
-  regulatory_submission: <ScrollText className="w-5 h-5" />,
-  clinical_study: <FlaskConical className="w-5 h-5" />,
-  cmc_manufacturing: <Pill className="w-5 h-5" />,
-  pharmacovigilance: <ShieldAlert className="w-5 h-5" />,
-  quality_management: <ClipboardCheck className="w-5 h-5" />,
-  compliance_attestation: <BadgeCheck className="w-5 h-5" />,
-  strategic_intelligence: <Brain className="w-5 h-5" />,
-  provenance_audit: <Fingerprint className="w-5 h-5" />,
-  device_regulatory: <Microscope className="w-5 h-5" />,
-  biostatistics: <BarChart3 className="w-5 h-5" />,
-  environmental_safety: <Globe2 className="w-5 h-5" />,
-  cross_functional: <Layers className="w-5 h-5" />,
-};
-
-const TIER_COLORS: Record<string, string> = {
-  full_audit_trail: 'text-emerald-700 bg-emerald-50 border-emerald-200',
-  partial: 'text-amber-700 bg-amber-50 border-amber-200',
-  advisory_only: 'text-stone-700 bg-blue-50 border-blue-200',
-};
-
-const TIER_LABELS: Record<string, string> = {
-  full_audit_trail: 'Full Audit Trail — Maximum Indemnification',
-  partial: 'Partial — Standard Compliance',
-  advisory_only: 'Advisory Only — Informational',
-};
-
-const SEVERITY_COLORS: Record<string, string> = {
-  critical: 'text-red-700 bg-red-50 border-red-200',
-  major: 'text-amber-700 bg-amber-50 border-amber-200',
-  minor: 'text-stone-700 bg-blue-50 border-blue-200',
-};
-
-// ── Component ────────────────────────────────────────────────
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
+}
 
 export default function IntelligentReportGenerator() {
-  // Catalog data
-  const [domains, setDomains] = useState<DomainBlueprint[]>([]);
-  const [regulatoryBodies, setRegulatoryBodies] = useState<RegulatoryBody[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const organizationId = Number(getOrgId());
+  const [scopeType, setScopeType] = useState<ScopeType>('project');
+  const [scopeId, setScopeId] = useState('');
+  const [bundleSearch, setBundleSearch] = useState('');
+  const [personaFilter, setPersonaFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedBundleId, setSelectedBundleId] = useState<string>('');
+  const [selectedRecipients, setSelectedRecipients] = useState('');
+  const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>('save_pdf');
+  const [deliverySubject, setDeliverySubject] = useState('');
+  const [deliveryMessage, setDeliveryMessage] = useState('');
+  const [selectedReportIds, setSelectedReportIds] = useState<number[]>([]);
+  const [activeTab, setActiveTab] = useState('packs');
 
-  // Form state
-  const [selectedDomain, setSelectedDomain] = useState<DomainBlueprint | null>(null);
-  const [selectedSubtype, setSelectedSubtype] = useState<string>('');
-  const [selectedBody, setSelectedBody] = useState<string>('');
-  const [reportTitle, setReportTitle] = useState('');
-  const [customFrameworks, setCustomFrameworks] = useState<string[]>([]);
-
-  // Generation state
-  const [generating, setGenerating] = useState(false);
-  const [generatedReport, setGeneratedReport] = useState<GeneratedReport | null>(null);
-  const [attestations, setAttestations] = useState<ReportAttestation[]>([]);
-  const [verificationResult, setVerificationResult] = useState<any>(null);
-  const [sealing, setSealing] = useState(false);
-  const [sealJustification, setSealJustification] = useState('');
-
-  // Provenance state
-  const [provenanceEntries, setProvenanceEntries] = useState<ProvenanceEntry[]>([]);
-  const [provenanceLoading, setProvenanceLoading] = useState(false);
-  const [selectedProvenance, setSelectedProvenance] = useState<ProvenanceEntry | null>(null);
-
-  // Compliance validation state
-  const [complianceChecks, setComplianceChecks] = useState<ComplianceCheck[]>([]);
-  const [complianceScore, setComplianceScore] = useState<number | null>(null);
-  const [validating, setValidating] = useState(false);
-
-  // Drift detection state
-  const [driftResult, setDriftResult] = useState<DriftResult | null>(null);
-  const [checkingDrift, setCheckingDrift] = useState(false);
-
-  // Export state
-  const [exporting, setExporting] = useState(false);
-  const [showVisualGen, setShowVisualGen] = useState(false);
-
-  // Supersede/revoke state
-  const [superseding, setSuperseding] = useState(false);
-  const [revoking, setRevoking] = useState(false);
-  const [revokeJustification, setRevokeJustification] = useState('');
-  const [showRevokeModal, setShowRevokeModal] = useState(false);
-
-  // Section drill-down
-  const [expandedSection, setExpandedSection] = useState<string | null>(null);
-
-  // View state
-  const [activeTab, setActiveTab] = useState<
-    'generate' | 'result' | 'provenance' | 'compliance' | 'attestations' | 'history'
-  >('generate');
-  const [reportHistory, setReportHistory] = useState<any[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // ── Load catalog ─────────────────────────────────────────
-
-  useEffect(() => {
-    loadCatalog();
-  }, []);
-
-  const loadCatalog = async () => {
-    try {
-      const [domainsRes, bodiesRes] = await Promise.all([
-        apiRequest('GET', '/api/intelligent-reports/catalog/domains'),
-        apiRequest('GET', '/api/intelligent-reports/catalog/regulatory-bodies'),
-      ]);
-      const domainsData = await domainsRes.json();
-      const bodiesData = await bodiesRes.json();
-      if (domainsData.success) setDomains(domainsData.data);
-      if (bodiesData.success) setRegulatoryBodies(bodiesData.data);
-    } catch (err) {
-      console.error('Failed to load catalog:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ── Generate report ──────────────────────────────────────
-
-  const handleGenerate = useCallback(async () => {
-    if (!selectedDomain || !reportTitle) return;
-    setGenerating(true);
-    setVerificationResult(null);
-    setDriftResult(null);
-    setComplianceChecks([]);
-    setComplianceScore(null);
-
-    try {
-      const res = await apiRequest('POST', '/api/intelligent-reports/generate', {
-          organizationId: 1,
-          domain: selectedDomain.domain,
-          subtype: selectedSubtype || undefined,
-          title: reportTitle,
-          targetRegulatory: selectedBody || undefined,
-          complianceFrameworks: customFrameworks.length > 0
-            ? customFrameworks
-            : selectedDomain.defaultComplianceFrameworks,
-          parameters: {},
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        setGeneratedReport(data.data);
-        setActiveTab('result');
-
-        // Load attestations and provenance in parallel
-        const [attRes, provRes] = await Promise.all([
-          apiRequest('GET', `/api/intelligent-reports/${data.data.reportId}/attestations`),
-          apiRequest('GET', `/api/intelligent-reports/${data.data.reportId}/provenance`),
-        ]);
-        const attData = await attRes.json();
-        const provData = await provRes.json();
-        if (attData.success) setAttestations(attData.data);
-        if (provData.success) setProvenanceEntries(provData.data);
-      }
-    } catch (err) {
-      console.error('Generation error:', err);
-    } finally {
-      setGenerating(false);
-    }
-  }, [selectedDomain, selectedSubtype, selectedBody, reportTitle, customFrameworks]);
-
-  // ── Seal report ──────────────────────────────────────────
-
-  const handleSeal = useCallback(async () => {
-    if (!generatedReport || !sealJustification) return;
-    setSealing(true);
-
-    try {
-      const res = await apiRequest('POST', `/api/intelligent-reports/${generatedReport.reportId}/seal`,
-        { justification: sealJustification }
-      );
-
-      const data = await res.json();
-      if (data.success) {
-        setGeneratedReport(prev => prev ? { ...prev, sealStatus: 'sealed' } : null);
-        setSealJustification('');
-      }
-    } catch (err) {
-      console.error('Seal error:', err);
-    } finally {
-      setSealing(false);
-    }
-  }, [generatedReport, sealJustification]);
-
-  // ── Verify integrity ─────────────────────────────────────
-
-  const handleVerify = useCallback(async () => {
-    if (!generatedReport) return;
-
-    try {
-      const res = await apiRequest('GET', `/api/intelligent-reports/${generatedReport.reportId}/verify`);
-      const data = await res.json();
-      if (data.success) setVerificationResult(data.data);
-    } catch (err) {
-      console.error('Verification error:', err);
-    }
-  }, [generatedReport]);
-
-  // ── Load provenance ──────────────────────────────────────
-
-  const loadProvenance = useCallback(async () => {
-    if (!generatedReport) return;
-    setProvenanceLoading(true);
-    try {
-      const res = await apiRequest('GET', `/api/intelligent-reports/${generatedReport.reportId}/provenance`);
-      const data = await res.json();
-      if (data.success) setProvenanceEntries(data.data);
-    } catch (err) {
-      console.error('Provenance error:', err);
-    } finally {
-      setProvenanceLoading(false);
-    }
-  }, [generatedReport]);
-
-  useEffect(() => {
-    if (activeTab === 'provenance' && generatedReport && provenanceEntries.length === 0) {
-      loadProvenance();
-    }
-  }, [activeTab, generatedReport, provenanceEntries.length, loadProvenance]);
-
-  // ── Compliance validation ────────────────────────────────
-
-  const handleComplianceValidation = useCallback(async () => {
-    if (!generatedReport) return;
-    setValidating(true);
-    try {
-      const res = await apiRequest('GET', `/api/intelligent-reports/${generatedReport.reportId}/compliance-validation`);
-      const data = await res.json();
-      if (data.success) {
-        setComplianceChecks(data.data.checks);
-        setComplianceScore(data.data.overallScore);
-      }
-    } catch (err) {
-      console.error('Validation error:', err);
-    } finally {
-      setValidating(false);
-    }
-  }, [generatedReport]);
-
-  useEffect(() => {
-    if (activeTab === 'compliance' && generatedReport && complianceChecks.length === 0) {
-      handleComplianceValidation();
-    }
-  }, [activeTab, generatedReport, complianceChecks.length, handleComplianceValidation]);
-
-  // ── Drift detection ──────────────────────────────────────
-
-  const handleDriftCheck = useCallback(async () => {
-    if (!generatedReport) return;
-    setCheckingDrift(true);
-    try {
-      const res = await apiRequest('GET', `/api/intelligent-reports/${generatedReport.reportId}/drift-check`);
-      const data = await res.json();
-      if (data.success) setDriftResult(data.data);
-    } catch (err) {
-      console.error('Drift check error:', err);
-    } finally {
-      setCheckingDrift(false);
-    }
-  }, [generatedReport]);
-
-  // ── Export ───────────────────────────────────────────────
-
-  const handleExport = useCallback(async (format: 'json' | 'csv' | 'manifest') => {
-    if (!generatedReport) return;
-    setExporting(true);
-    try {
-      const res = await fetch(`/api/intelligent-reports/${generatedReport.reportId}/export/${format}`);
-      const blob = await res.blob();
-      const filename = res.headers.get('Content-Disposition')?.split('filename="')[1]?.replace('"', '')
-        || `report_${generatedReport.reportCode}.${format === 'csv' ? 'csv' : 'json'}`;
-
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('Export error:', err);
-    } finally {
-      setExporting(false);
-    }
-  }, [generatedReport]);
-
-  // ── Supersede ────────────────────────────────────────────
-
-  const handleSupersede = useCallback(async () => {
-    if (!generatedReport || !selectedDomain || !reportTitle) return;
-    setSuperseding(true);
-    try {
-      const res = await apiRequest('POST', `/api/intelligent-reports/${generatedReport.reportId}/supersede`, {
-          organizationId: 1,
-          domain: generatedReport.record.reportDomain || selectedDomain.domain,
-          title: `${reportTitle} (v2)`,
-          targetRegulatory: generatedReport.record.targetRegulatory || selectedBody || undefined,
-          complianceFrameworks: generatedReport.record.complianceFrameworks || selectedDomain.defaultComplianceFrameworks,
-      });
-      const data = await res.json();
-      if (data.success) {
-        // Load the new report
-        const newRes = await apiRequest('GET', `/api/intelligent-reports/${data.data.newReportId}`);
-        const newData = await newRes.json();
-        if (newData.success) {
-          setGeneratedReport({
-            reportId: newData.data.id,
-            reportUuid: newData.data.reportUuid,
-            reportCode: newData.data.reportCode,
-            verificationCode: data.data.verificationCode || '',
-            contentHash: newData.data.contentHash || '',
-            merkleRoot: newData.data.merkleRoot || '',
-            sealStatus: newData.data.sealStatus,
-            complianceScore: newData.data.complianceScore || 0,
-            indemnificationTier: newData.data.indemnificationTier || '',
-            provenanceAtomCount: 0,
-            attestationCount: 0,
-            generationDurationMs: newData.data.generationDurationMs || 0,
-            record: newData.data,
-          });
-          setVerificationResult(null);
-          setDriftResult(null);
-          setComplianceChecks([]);
-          setComplianceScore(null);
-          setProvenanceEntries([]);
-        }
-      }
-    } catch (err) {
-      console.error('Supersede error:', err);
-    } finally {
-      setSuperseding(false);
-    }
-  }, [generatedReport, selectedDomain, selectedBody, reportTitle]);
-
-  // ── Revoke ───────────────────────────────────────────────
-
-  const handleRevoke = useCallback(async () => {
-    if (!generatedReport || !revokeJustification) return;
-    setRevoking(true);
-    try {
-      const res = await apiRequest('POST', `/api/intelligent-reports/${generatedReport.reportId}/revoke`,
-        { justification: revokeJustification }
-      );
-      const data = await res.json();
-      if (data.success) {
-        setGeneratedReport(prev => prev ? { ...prev, sealStatus: 'revoked' } : null);
-        setShowRevokeModal(false);
-        setRevokeJustification('');
-      }
-    } catch (err) {
-      console.error('Revoke error:', err);
-    } finally {
-      setRevoking(false);
-    }
-  }, [generatedReport, revokeJustification]);
-
-  // ── Load history ─────────────────────────────────────────
-
-  const loadHistory = useCallback(async () => {
-    try {
-      const res = await apiRequest('GET', '/api/intelligent-reports/list/1?limit=50');
-      const data = await res.json();
-      if (data.success) setReportHistory(data.data);
-    } catch (err) {
-      console.error('History error:', err);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (activeTab === 'history') loadHistory();
-  }, [activeTab, loadHistory]);
-
-  // ── Filter domains ───────────────────────────────────────
-
-  const filteredDomains = domains.filter(d =>
-    !searchQuery ||
-    d.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    d.subtypes.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()))
+  const workspaceParams = useMemo(
+    () => ({
+      organizationId,
+      scopeType,
+      scopeId: scopeId.trim(),
+    }),
+    [organizationId, scopeId, scopeType]
   );
 
-  // ── Group provenance by section ──────────────────────────
+  const workspaceQuery = useQuery({
+    queryKey: queryKeys.reports.workspace(workspaceParams),
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        organizationId: String(organizationId),
+        scopeType,
+      });
+      if (scopeId.trim()) params.set('scopeId', scopeId.trim());
+      const response = await apiRequest('GET', `/api/report-os/workspace?${params.toString()}`);
+      const json = await response.json();
+      return json.data as WorkspaceSummaryResponse;
+    },
+    enabled: Number.isFinite(organizationId) && organizationId > 0,
+  });
 
-  const provenanceBySection = provenanceEntries.reduce<Record<string, ProvenanceEntry[]>>((acc, p) => {
-    const section = p.sectionPath.split('.')[0] || 'ungrouped';
-    if (!acc[section]) acc[section] = [];
-    acc[section].push(p);
-    return acc;
-  }, {});
+  const runsQuery = useQuery({
+    queryKey: queryKeys.reports.runs(workspaceParams),
+    queryFn: async () => {
+      const params = new URLSearchParams({ organizationId: String(organizationId) });
+      if (scopeId.trim()) {
+        params.set('scopeType', scopeType);
+        params.set('scopeId', scopeId.trim());
+      }
+      const response = await apiRequest('GET', `/api/report-os/runs?${params.toString()}`);
+      const json = await response.json();
+      return (json.data || []) as ReportRunRow[];
+    },
+    enabled: Number.isFinite(organizationId) && organizationId > 0,
+  });
 
-  // ── Render ───────────────────────────────────────────────
+  const filteredBundles = useMemo(() => {
+    const bundles = workspaceQuery.data?.bundles || [];
+    return bundles.filter(bundle => {
+      const matchesSearch =
+        !bundleSearch.trim() ||
+        bundle.label.toLowerCase().includes(bundleSearch.toLowerCase()) ||
+        bundle.description.toLowerCase().includes(bundleSearch.toLowerCase()) ||
+        bundle.personas.some(persona => persona.toLowerCase().includes(bundleSearch.toLowerCase()));
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-800" />
-      </div>
-    );
-  }
+      const matchesPersona =
+        personaFilter === 'all' || bundle.personas.includes(personaFilter);
 
-  const tabs = [
-    { key: 'generate' as const, label: 'Generate', icon: <Sparkles className="w-3.5 h-3.5" /> },
-    { key: 'result' as const, label: 'Report', icon: <FileText className="w-3.5 h-3.5" /> },
-    { key: 'provenance' as const, label: 'Provenance', icon: <Atom className="w-3.5 h-3.5" /> },
-    { key: 'compliance' as const, label: 'Compliance', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
-    { key: 'attestations' as const, label: 'Attestations', icon: <BadgeCheck className="w-3.5 h-3.5" /> },
-    { key: 'history' as const, label: 'History', icon: <Clock className="w-3.5 h-3.5" /> },
-  ];
+      return matchesSearch && matchesPersona;
+    });
+  }, [bundleSearch, personaFilter, workspaceQuery.data?.bundles]);
+
+  const filteredRuns = useMemo(() => {
+    const runs = runsQuery.data || [];
+    return runs.filter(run => (statusFilter === 'all' ? true : run.status === statusFilter));
+  }, [runsQuery.data, statusFilter]);
+
+  const selectedBundle =
+    workspaceQuery.data?.bundles.find(bundle => bundle.bundleId === selectedBundleId) || null;
+
+  const generateBundleMutation = useMutation({
+    mutationFn: async (bundle: ReportBundle) => {
+      const resolvedScopeId = scopeId.trim();
+      if (!resolvedScopeId) {
+        throw new Error('Enter a scope ID before generating a bundle.');
+      }
+
+      const response = await apiRequest('POST', '/api/report-os/bundle-runs', {
+        organizationId,
+        scopeType,
+        scopeId: resolvedScopeId,
+        bundleId: bundle.bundleId,
+        deliveryMode,
+        recipients:
+          deliveryMode === 'platform_email'
+            ? selectedRecipients
+                .split(',')
+                .map(entry => entry.trim())
+                .filter(Boolean)
+            : undefined,
+        subject: deliverySubject || `${bundle.label} delivery`,
+        message: deliveryMessage || undefined,
+      });
+
+      return response.json();
+    },
+    onSuccess: async payload => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.reports.workspace(workspaceParams) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.reports.runs(workspaceParams) }),
+      ]);
+      const reports = payload?.data?.immutableReports || [];
+      setSelectedReportIds(reports.map((report: { reportId: number }) => report.reportId));
+      toast({
+        title: 'Bundle generated',
+        description:
+          reports.length > 0
+            ? `${reports.length} governed reports are ready for export or delivery.`
+            : 'Bundle run completed.',
+      });
+      setActiveTab('history');
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Bundle generation failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const deliveryMutation = useMutation({
+    mutationFn: async (reportId: number) => {
+      const recipients = selectedRecipients
+        .split(',')
+        .map(entry => entry.trim())
+        .filter(Boolean);
+
+      if (deliveryMode === 'platform_email' && recipients.length === 0) {
+        throw new Error('At least one recipient email is required.');
+      }
+
+      const response = await apiRequest('POST', '/api/report-os/deliveries', {
+        reportId,
+        organizationId,
+        projectId:
+          workspaceQuery.data?.recentReports.find(report => report.id === reportId)?.projectId || undefined,
+        submissionId: scopeType === 'submission' ? scopeId.trim() || undefined : undefined,
+        deliveryMode,
+        recipients,
+        subject:
+          deliverySubject ||
+          `Regulatory report delivery — ${workspaceQuery.data?.recentReports.find(report => report.id === reportId)?.reportTitle || 'Concept2Cure report'}`,
+        message: deliveryMessage || undefined,
+        communicationType: 'response_letter',
+      });
+      return response.json();
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.reports.workspace(workspaceParams) });
+      toast({
+        title: deliveryMode === 'platform_email' ? 'Delivery sent' : 'Delivery logged',
+        description:
+          deliveryMode === 'platform_email'
+            ? 'The report was sent and captured as outbound correspondence.'
+            : 'The PDF workflow was logged for offline delivery and learning capture.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Delivery failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const exportMutation = useMutation({
+    mutationFn: async ({ reportId, format }: { reportId: number; format: 'pdf' | 'json' | 'csv' }) => {
+      const url =
+        format === 'pdf'
+          ? `/api/report-os/exports/${reportId}/pdf`
+          : `/api/intelligent-reports/${reportId}/export/${format}`;
+
+      const response = await apiRequest('GET', url);
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || 'Export failed');
+      }
+
+      const blob = await response.blob();
+      const filename =
+        response.headers.get('Content-Disposition')?.split('filename="')[1]?.replace('"', '') ||
+        `report-${reportId}.${format}`;
+      downloadBlob(blob, filename);
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Export ready',
+        description: 'The report export has been downloaded.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Export failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const personaOptions = useMemo(() => {
+    const personas = new Set<string>();
+    (workspaceQuery.data?.bundles || []).forEach(bundle => bundle.personas.forEach(persona => personas.add(persona)));
+    return ['all', ...Array.from(personas)];
+  }, [workspaceQuery.data?.bundles]);
+
+  const selectedReports = useMemo(
+    () => (workspaceQuery.data?.recentReports || []).filter(report => selectedReportIds.includes(report.id)),
+    [selectedReportIds, workspaceQuery.data?.recentReports]
+  );
+
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => {
+          workspaceQuery.refetch();
+          runsQuery.refetch();
+        }}
+      >
+        <RefreshCw className="mr-2 h-4 w-4" />
+        Refresh
+      </Button>
+      {selectedReports[0] && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm">
+              <FileDown className="mr-2 h-4 w-4" />
+              Export selected
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Download format</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => exportMutation.mutate({ reportId: selectedReports[0].id, format: 'pdf' })}>
+              PDF
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => exportMutation.mutate({ reportId: selectedReports[0].id, format: 'json' })}>
+              JSON
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => exportMutation.mutate({ reportId: selectedReports[0].id, format: 'csv' })}>
+              CSV
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </div>
+  );
 
   return (
-    <div className="h-full flex flex-col bg-white overflow-hidden">
-      {/* Header */}
-      <div className="flex-shrink-0 border-b border-stone-200 bg-white px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-stone-800 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold text-stone-900">Intelligent Report Engine</h1>
-              <p className="text-xs text-stone-500">Immutable records with atom-level provenance & quasi-indemnification</p>
-            </div>
+    <div className="flex h-full min-h-0 flex-col bg-stone-50/40">
+      <WorkspaceHeaderRich
+        title="Reporting Workspace"
+        breadcrumb="AnA / Report OS"
+        actions={headerActions}
+        secondaryInfo={
+          <div className="flex flex-wrap items-center gap-2 text-[11px] text-stone-500">
+            <span>Bundle-first reporting for executives, RA, QA, writers, and agency response teams.</span>
+            <Badge variant="outline" className="border-emerald-200 text-emerald-700">
+              Wisdom capture active
+            </Badge>
           </div>
+        }
+      />
 
-          <div className="flex items-center gap-1">
-            {tabs.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                  activeTab === tab.key
-                    ? 'bg-blue-100 text-stone-700'
-                    : 'text-stone-500 hover:bg-stone-100'
-                }`}
-              >
-                {tab.icon}
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Body */}
-      <div className="flex-1 overflow-y-auto">
-        {/* ── Generate Tab ─────────────────────────────── */}
-        {activeTab === 'generate' && (
-          <div className="max-w-5xl mx-auto p-6 space-y-6">
-            {/* Report Title */}
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1.5">Report Title</label>
-              <input
-                type="text"
-                value={reportTitle}
-                onChange={e => setReportTitle(e.target.value)}
-                placeholder="e.g., IND Annual Report — Compound XYZ-201"
-                className="w-full px-4 py-2.5 border border-stone-300 rounded-xl text-sm focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
-              />
+      <WorkspaceCanvas maxWidth="6xl" bg="default">
+        <DataStateWrapper
+          isLoading={workspaceQuery.isLoading}
+          error={(workspaceQuery.error as Error) || null}
+          data={workspaceQuery.data}
+          loadingComponent={
+            <div className="space-y-4">
+              <SkeletonCard />
+              <SkeletonTable rows={6} columns={5} />
             </div>
-
-            {/* Domain Selection */}
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-2">Report Domain</label>
-              <div className="relative mb-3">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Search domains and subtypes..."
-                  className="w-full pl-10 pr-4 py-2 border border-stone-200 rounded-lg text-sm"
-                />
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                {filteredDomains.map(d => (
-                  <button
-                    key={d.domain}
-                    onClick={() => {
-                      setSelectedDomain(d);
-                      setSelectedSubtype('');
-                      setCustomFrameworks([]);
-                    }}
-                    className={`p-3 rounded-xl border text-left transition-all ${
-                      selectedDomain?.domain === d.domain
-                        ? 'border-stone-600 bg-blue-50 ring-2 ring-stone-300'
-                        : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className={selectedDomain?.domain === d.domain ? 'text-blue-600' : 'text-stone-400'}>
-                        {DOMAIN_ICONS[d.domain] || <FileText className="w-5 h-5" />}
-                      </span>
-                      <span className="text-sm font-medium text-stone-900 truncate">{d.label}</span>
+          }
+          emptyTitle="Reporting workspace unavailable"
+          emptyDescription="No reporting data is available for the current scope yet."
+          retry={() => workspaceQuery.refetch()}
+        >
+          {workspace => (
+            <>
+              <div className="grid gap-4 lg:grid-cols-[2.2fr_1fr]">
+                <Card className="border-stone-200 shadow-sm">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-lg font-semibold text-stone-900">
+                      Calm, scope-aware reporting
+                    </CardTitle>
+                    <CardDescription>
+                      Run board packs, audit packs, submission response bundles, and PDF exports from one governed surface.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid gap-3 md:grid-cols-3">
+                      <MetricCard
+                        label="Report runs"
+                        value={String(workspace.summary.runCount)}
+                        detail={`${workspace.summary.completedRuns} completed / ${workspace.summary.partialRuns} partial`}
+                      />
+                      <MetricCard
+                        label="Immutable reports"
+                        value={String(workspace.summary.immutableReportCount)}
+                        detail="Ready for PDF, JSON, CSV, and audit review"
+                      />
+                      <MetricCard
+                        label="Learning events"
+                        value={String(workspace.summary.learningEventCount)}
+                        detail="Correspondence and delivery insights captured"
+                      />
                     </div>
-                    <div className="flex items-center gap-1.5 text-xs text-stone-500">
-                      <span>{d.subtypes.length} subtypes</span>
-                      <span className="text-stone-400">|</span>
-                      <span className={TIER_COLORS[d.indemnificationTier]?.split(' ')[0] || 'text-stone-500'}>
-                        {d.indemnificationTier === 'full_audit_trail' ? 'Full' :
-                         d.indemnificationTier === 'partial' ? 'Partial' : 'Advisory'}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
 
-            {/* Subtype Selection */}
-            {selectedDomain && (
-              <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-                <label className="block text-sm font-medium text-stone-700 mb-2">Report Subtype</label>
-                <div className="flex flex-wrap gap-2">
-                  {selectedDomain.subtypes.map(sub => (
-                    <button
-                      key={sub}
-                      onClick={() => setSelectedSubtype(sub)}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
-                        selectedSubtype === sub
-                          ? 'border-stone-600 bg-blue-100 text-stone-700'
-                          : 'border-stone-200 text-stone-600 hover:bg-stone-50'
-                      }`}
+                    <div className="grid gap-3 md:grid-cols-3">
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-medium uppercase tracking-wide text-stone-500">
+                          Scope type
+                        </label>
+                        <Select value={scopeType} onValueChange={value => setScopeType(value as ScopeType)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Choose a scope" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {scopeOptions.map(option => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-medium uppercase tracking-wide text-stone-500">
+                          Scope ID
+                        </label>
+                        <Input
+                          value={scopeId}
+                          onChange={event => setScopeId(event.target.value)}
+                          placeholder="Project, submission, or program ID"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-medium uppercase tracking-wide text-stone-500">
+                          Persona filter
+                        </label>
+                        <Select value={personaFilter} onValueChange={setPersonaFilter}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="All personas" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {personaOptions.map(option => (
+                              <SelectItem key={option} value={option}>
+                                {option === 'all' ? 'All personas' : option}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-xs text-stone-600">
+                      <div className="flex items-start gap-2">
+                        <ShieldCheck className="mt-0.5 h-4 w-4 text-emerald-600" />
+                        <div>
+                          Platform email sends through Concept2Cure and records outbound correspondence for future learning.
+                          Saving as PDF still logs the delivery event so rejection-response workflows continue improving AnA.
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-stone-200 shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-semibold text-stone-900">Selected report actions</CardTitle>
+                    <CardDescription>
+                      Export or deliver the most recent generated report directly to agencies or third parties.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-medium uppercase tracking-wide text-stone-500">
+                        Delivery mode
+                      </label>
+                      <Select value={deliveryMode} onValueChange={value => setDeliveryMode(value as DeliveryMode)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {deliveryOptions.map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[11px] text-stone-500">
+                        {deliveryOptions.find(option => option.value === deliveryMode)?.description}
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-medium uppercase tracking-wide text-stone-500">
+                        Recipient emails
+                      </label>
+                      <Input
+                        value={selectedRecipients}
+                        onChange={event => setSelectedRecipients(event.target.value)}
+                        placeholder="regulator@example.gov, partner@example.com"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-medium uppercase tracking-wide text-stone-500">
+                        Subject
+                      </label>
+                      <Input
+                        value={deliverySubject}
+                        onChange={event => setDeliverySubject(event.target.value)}
+                        placeholder="Agency response package"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-medium uppercase tracking-wide text-stone-500">
+                        Message
+                      </label>
+                      <Textarea
+                        value={deliveryMessage}
+                        onChange={event => setDeliveryMessage(event.target.value)}
+                        className="min-h-28"
+                        placeholder="Optional delivery note or submission context"
+                      />
+                    </div>
+
+                    <Button
+                      className="w-full"
+                      disabled={!selectedReports[0] || deliveryMutation.isPending}
+                      onClick={() => {
+                        if (selectedReports[0]) {
+                          deliveryMutation.mutate(selectedReports[0].id);
+                        }
+                      }}
                     >
-                      {sub}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Regulatory Body */}
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-2">
-                Target Regulatory Body
-                <span className="text-stone-400 font-normal ml-1">(optional)</span>
-              </label>
-              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                {regulatoryBodies.map(b => (
-                  <button
-                    key={b.code}
-                    onClick={() => setSelectedBody(selectedBody === b.code ? '' : b.code)}
-                    className={`p-2.5 rounded-lg border text-left transition-all ${
-                      selectedBody === b.code
-                        ? 'border-stone-600 bg-blue-50 ring-1 ring-stone-300'
-                        : 'border-stone-200 hover:border-stone-300'
-                    }`}
-                  >
-                    <div className="text-xs font-semibold text-stone-900">{b.code.replace('_', ' ')}</div>
-                    <div className="text-xs text-stone-500 truncate">{b.country}</div>
-                    <div className="text-xs text-stone-400">{b.regulationCount} regs</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Compliance Frameworks */}
-            {selectedDomain && (
-              <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1.5">
-                  Compliance Frameworks
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {selectedDomain.defaultComplianceFrameworks.map(fw => (
-                    <span key={fw} className="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs rounded-full border border-emerald-200">
-                      <ShieldCheck className="w-3 h-3 inline-block mr-1 -mt-0.5" />
-                      {fw}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Indemnification Tier Notice */}
-            {selectedDomain && (
-              <div className={`p-4 rounded-xl border ${TIER_COLORS[selectedDomain.indemnificationTier]}`}>
-                <div className="flex items-center gap-2 mb-1">
-                  <Shield className="w-4 h-4" />
-                  <span className="text-sm font-semibold">
-                    {TIER_LABELS[selectedDomain.indemnificationTier]}
-                  </span>
-                </div>
-                <p className="text-xs opacity-80">
-                  {selectedDomain.indemnificationTier === 'full_audit_trail'
-                    ? 'Every data point will be traced to its source atom. SHA-256 hash chain with Merkle tree verification. Cryptographic seal available. Full quasi-indemnification attestations generated.'
-                    : selectedDomain.indemnificationTier === 'partial'
-                    ? 'Key data points traced. Standard compliance attestations. Seal available for critical sections.'
-                    : 'Strategic advisory content. Not intended for regulatory submission. Standard provenance only.'}
-                </p>
-              </div>
-            )}
-
-            {/* Generate Button */}
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={handleGenerate}
-                disabled={!selectedDomain || !reportTitle || generating}
-                className="flex items-center gap-2 px-6 py-2.5 bg-stone-800 text-white rounded-lg font-medium text-sm hover:bg-stone-900 disabled:opacity-50 disabled:pointer-events-none transition-colors duration-150 shadow-sm focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 outline-none"
-              >
-                {generating ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                    Generating Immutable Record...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4" />
-                    Generate Immutable Report
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── Result Tab ───────────────────────────────── */}
-        {activeTab === 'result' && generatedReport && (
-          <div className="max-w-5xl mx-auto p-6 space-y-6">
-            {/* Report Header Card */}
-            <div className="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden">
-              <div className="bg-stone-800 px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-white font-semibold text-lg">{generatedReport.record.reportTitle}</h2>
-                    <p className="text-blue-200 text-sm">{generatedReport.reportCode}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {generatedReport.record.version && (
-                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white">
-                        v{generatedReport.record.version}
-                      </span>
-                    )}
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      generatedReport.sealStatus === 'sealed'
-                        ? 'bg-emerald-500 text-white'
-                        : generatedReport.sealStatus === 'revoked'
-                        ? 'bg-red-500 text-white'
-                        : generatedReport.sealStatus === 'superseded'
-                        ? 'bg-amber-500 text-white'
-                        : 'bg-white/20 text-white'
-                    }`}>
-                      {generatedReport.sealStatus.toUpperCase()}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <div className="text-xs text-stone-500 mb-0.5">Verification Code</div>
-                  <div className="text-sm font-mono font-semibold text-blue-600">{generatedReport.verificationCode}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-stone-500 mb-0.5">Compliance Score</div>
-                  <div className="text-sm font-semibold text-emerald-600">{generatedReport.complianceScore}/100</div>
-                </div>
-                <div>
-                  <div className="text-xs text-stone-500 mb-0.5">Provenance Atoms</div>
-                  <div className="text-sm font-semibold text-purple-600">{generatedReport.provenanceAtomCount}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-stone-500 mb-0.5">Generation Time</div>
-                  <div className="text-sm font-semibold text-stone-600">{generatedReport.generationDurationMs}ms</div>
-                </div>
-              </div>
-
-              {/* Cryptographic Details */}
-              <div className="border-t border-stone-200 px-6 py-4 bg-stone-50">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <div className="text-xs text-stone-500 flex items-center gap-1 mb-0.5">
-                      <Hash className="w-3 h-3" /> Content Hash (SHA-256)
-                    </div>
-                    <div className="text-xs font-mono text-stone-600 break-all">{generatedReport.contentHash}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-stone-500 flex items-center gap-1 mb-0.5">
-                      <Layers className="w-3 h-3" /> Merkle Root
-                    </div>
-                    <div className="text-xs font-mono text-stone-600 break-all">{generatedReport.merkleRoot}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Bar */}
-            <div className="flex flex-wrap gap-3">
-              {/* Verify */}
-              <button
-                onClick={handleVerify}
-                className="flex items-center gap-2 px-4 py-2.5 border border-stone-300 rounded-xl text-sm font-medium text-stone-700 hover:bg-stone-50 transition-colors duration-150"
-              >
-                <Fingerprint className="w-4 h-4" />
-                Verify Integrity
-              </button>
-
-              {/* Drift Check */}
-              <button
-                onClick={handleDriftCheck}
-                disabled={checkingDrift}
-                className="flex items-center gap-2 px-4 py-2.5 border border-stone-300 rounded-xl text-sm font-medium text-stone-700 hover:bg-stone-50 transition-colors disabled:opacity-60"
-              >
-                {checkingDrift ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-stone-600" />
-                ) : (
-                  <RefreshCw className="w-4 h-4" />
-                )}
-                Drift Check
-              </button>
-
-              {/* Export dropdown */}
-              <div className="relative group">
-                <button
-                  disabled={exporting}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-stone-300 rounded-xl text-sm font-medium text-stone-700 hover:bg-stone-50 transition-colors disabled:opacity-60"
-                >
-                  <Download className="w-4 h-4" />
-                  Export
-                  <ChevronDown className="w-3 h-3" />
-                </button>
-                <div className="absolute top-full left-0 mt-1 bg-white border border-stone-200 rounded-xl shadow-sm py-1 w-48 hidden group-hover:block z-10">
-                  <button
-                    onClick={() => handleExport('json')}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-stone-700 hover:bg-stone-50"
-                  >
-                    <FileJson className="w-4 h-4 text-blue-500" />
-                    JSON (Full Report)
-                  </button>
-                  <button
-                    onClick={() => handleExport('csv')}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-stone-700 hover:bg-stone-50"
-                  >
-                    <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
-                    CSV (Provenance)
-                  </button>
-                  <button
-                    onClick={() => handleExport('manifest')}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-stone-700 hover:bg-stone-50"
-                  >
-                    <FileSignature className="w-4 h-4 text-purple-500" />
-                    Integrity Manifest
-                  </button>
-                  <div className="mx-2 my-0.5 border-t border-stone-200" />
-                  <button
-                    onClick={() => setShowVisualGen(prev => !prev)}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-stone-700 hover:bg-amber-50"
-                  >
-                    <Sparkles className="w-4 h-4 text-amber-500" />
-                    AI Visual / Infographic
-                  </button>
-                </div>
-              </div>
-
-              {/* Seal (if draft) */}
-              {generatedReport.sealStatus === 'draft' && (
-                <div className="flex items-center gap-2 flex-1 min-w-[300px]">
-                  <input
-                    type="text"
-                    value={sealJustification}
-                    onChange={e => setSealJustification(e.target.value)}
-                    placeholder="Justification for sealing (required)..."
-                    className="flex-1 px-3 py-2.5 border border-stone-300 rounded-xl text-sm"
-                  />
-                  <button
-                    onClick={handleSeal}
-                    disabled={!sealJustification || sealing}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 disabled:opacity-60 transition-colors duration-150"
-                  >
-                    <Lock className="w-4 h-4" />
-                    {sealing ? 'Sealing...' : 'Seal'}
-                  </button>
-                </div>
-              )}
-
-              {/* Supersede (if sealed) */}
-              {generatedReport.sealStatus === 'sealed' && (
-                <button
-                  onClick={handleSupersede}
-                  disabled={superseding}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-amber-300 bg-amber-50 rounded-xl text-sm font-medium text-amber-700 hover:bg-amber-100 transition-colors disabled:opacity-60"
-                >
-                  <GitBranch className="w-4 h-4" />
-                  {superseding ? 'Creating new version...' : 'Supersede'}
-                </button>
-              )}
-
-              {/* Revoke (if not revoked) */}
-              {generatedReport.sealStatus !== 'revoked' && generatedReport.sealStatus !== 'superseded' && (
-                <button
-                  onClick={() => setShowRevokeModal(true)}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-red-300 bg-red-50 rounded-xl text-sm font-medium text-red-700 hover:bg-red-100 transition-colors duration-150"
-                >
-                  <XCircle className="w-4 h-4" />
-                  Revoke
-                </button>
-              )}
-            </div>
-
-            {/* Revoke Modal */}
-            {showRevokeModal && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
-                <div className="flex items-center gap-2 mb-3">
-                  <AlertOctagon className="w-5 h-5 text-red-600" />
-                  <span className="text-sm font-semibold text-red-700">Revoke Report</span>
-                  <span className="text-xs text-red-500">This action is permanent and recorded in the seal chain.</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={revokeJustification}
-                    onChange={e => setRevokeJustification(e.target.value)}
-                    placeholder="Justification for revocation (required)..."
-                    className="flex-1 px-3 py-2.5 border border-red-300 rounded-xl text-sm"
-                  />
-                  <button
-                    onClick={handleRevoke}
-                    disabled={!revokeJustification || revoking}
-                    className="px-4 py-2.5 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 disabled:opacity-60"
-                  >
-                    {revoking ? 'Revoking...' : 'Confirm Revoke'}
-                  </button>
-                  <button
-                    onClick={() => { setShowRevokeModal(false); setRevokeJustification(''); }}
-                    className="px-3 py-2.5 text-stone-500 hover:text-stone-700 text-sm"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Nano Banana Visual AI */}
-            {showVisualGen && (
-              <div className="mt-4">
-                <NanoBananaImageGenerator
-                  context={`${selectedDomain?.label || 'Regulatory'} report: ${reportTitle || 'compliance report'} — compliance score ${generatedReport.complianceScore}%, ${selectedBody || 'multi-agency'} targeting`}
-                  mode="infographic"
-                  promptSuffix="Regulatory compliance infographic. Publication-ready, professional, data-rich."
-                />
-              </div>
-            )}
-
-            {/* Verification Result */}
-            {verificationResult && (
-              <div className={`p-4 rounded-xl border ${
-                verificationResult.valid
-                  ? 'bg-emerald-50 border-emerald-200'
-                  : 'bg-red-50 border-red-200'
-              }`}>
-                <div className="flex items-center gap-2 mb-2">
-                  {verificationResult.valid
-                    ? <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                    : <AlertTriangle className="w-5 h-5 text-red-600" />
-                  }
-                  <span className={`font-semibold text-sm ${verificationResult.valid ? 'text-emerald-700' : 'text-red-700'}`}>
-                    {verificationResult.valid ? 'All Integrity Checks Passed' : 'Integrity Issues Detected'}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
-                  <div className="text-xs">
-                    <span className="text-stone-500">Content Hash:</span>{' '}
-                    <span className={verificationResult.contentHashValid ? 'text-emerald-600 font-medium' : 'text-red-600 font-semibold'}>
-                      {verificationResult.contentHashValid ? 'Valid' : 'MISMATCH'}
-                    </span>
-                  </div>
-                  <div className="text-xs">
-                    <span className="text-stone-500">Merkle Root:</span>{' '}
-                    <span className={verificationResult.merkleRootValid ? 'text-emerald-600 font-medium' : 'text-red-600 font-semibold'}>
-                      {verificationResult.merkleRootValid ? 'Valid' : 'MISMATCH'}
-                    </span>
-                  </div>
-                  <div className="text-xs">
-                    <span className="text-stone-500">Seal Chain:</span>{' '}
-                    <span className={verificationResult.chainIntact ? 'text-emerald-600 font-medium' : 'text-red-600 font-semibold'}>
-                      {verificationResult.chainIntact ? 'Intact' : 'BROKEN'}
-                    </span>
-                  </div>
-                  <div className="text-xs">
-                    <span className="text-stone-500">Provenance Drift:</span>{' '}
-                    <span className={verificationResult.provenanceDrift.drifted === 0 ? 'text-emerald-600 font-medium' : 'text-amber-600 font-semibold'}>
-                      {verificationResult.provenanceDrift.drifted}/{verificationResult.provenanceDrift.total} drifted
-                    </span>
-                  </div>
-                </div>
-                {verificationResult.details.length > 0 && (
-                  <div className="mt-2 text-xs text-stone-600">
-                    {verificationResult.details.map((d: string, i: number) => (
-                      <div key={i} className="flex items-start gap-1">
-                        <ChevronRight className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                        {d}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Drift Detection Result */}
-            {driftResult && (
-              <div className={`p-4 rounded-xl border ${
-                driftResult.drifted === 0
-                  ? 'bg-emerald-50 border-emerald-200'
-                  : 'bg-amber-50 border-amber-200'
-              }`}>
-                <div className="flex items-center gap-2 mb-2">
-                  <RefreshCw className={`w-4 h-4 ${driftResult.drifted === 0 ? 'text-emerald-600' : 'text-amber-600'}`} />
-                  <span className={`text-sm font-semibold ${driftResult.drifted === 0 ? 'text-emerald-700' : 'text-amber-700'}`}>
-                    Provenance Drift: {driftResult.drifted === 0 ? 'No drift detected' : `${driftResult.drifted} atoms drifted`}
-                  </span>
-                  <span className="text-xs text-stone-500">
-                    ({driftResult.checked}/{driftResult.total} checked)
-                  </span>
-                </div>
-                {driftResult.details.length > 0 && (
-                  <div className="space-y-1 mt-2">
-                    {driftResult.details.map((d, i) => (
-                      <div key={i} className="text-xs bg-white/60 rounded-lg px-3 py-2 flex items-center gap-3">
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
-                        <div>
-                          <span className="font-medium text-stone-700">{d.fieldLabel}</span>
-                          <span className="text-stone-400 mx-1">in</span>
-                          <span className="text-stone-600">{d.sectionPath}</span>
-                        </div>
-                        <div className="ml-auto text-stone-400 font-mono text-xs">
-                          {d.currentHash === 'DELETED' ? 'SOURCE DELETED' : 'HASH CHANGED'}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Report Sections — Drill-Down */}
-            {generatedReport.record.sections && (
-              <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-stone-700 flex items-center gap-2">
-                  <Layers className="w-4 h-4" />
-                  Report Sections
-                  <span className="text-xs text-stone-400 font-normal">
-                    ({(generatedReport.record.sections as any[]).length} sections)
-                  </span>
-                </h3>
-                {(generatedReport.record.sections as any[]).map((section: any, idx: number) => {
-                  const isExpanded = expandedSection === section.sectionId;
-                  const sectionProvenance = provenanceEntries.filter(p =>
-                    p.sectionPath.startsWith(section.sectionId)
-                  );
-                  return (
-                    <div key={idx} className="bg-white rounded-xl border border-stone-200 overflow-hidden">
-                      <button
-                        onClick={() => setExpandedSection(isExpanded ? null : section.sectionId)}
-                        className="w-full p-4 flex items-center justify-between hover:bg-stone-50 transition-colors duration-150"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 font-semibold text-xs">
-                            {idx + 1}
-                          </div>
-                          <div className="text-left">
-                            <span className="text-sm font-medium text-stone-900">{section.title}</span>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-xs text-purple-500">{section.atomRefCount || 0} atoms</span>
-                              {section.complianceNotes?.length > 0 && (
-                                <span className="text-xs text-emerald-500">{section.complianceNotes.length} notes</span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        {isExpanded ? <ChevronUp className="w-4 h-4 text-stone-400" /> : <ChevronDown className="w-4 h-4 text-stone-400" />}
-                      </button>
-
-                      {isExpanded && (
-                        <div className="border-t border-stone-200 p-4 space-y-3">
-                          {/* Section Content */}
-                          <div className="bg-stone-50 rounded-lg p-3">
-                            <div className="text-xs font-medium text-stone-500 mb-1">Section Data</div>
-                            <pre className="text-xs text-stone-700 whitespace-pre-wrap max-h-60 overflow-y-auto font-mono">
-                              {JSON.stringify(section.content, null, 2)}
-                            </pre>
-                          </div>
-
-                          {/* Compliance Notes */}
-                          {section.complianceNotes?.length > 0 && (
-                            <div>
-                              <div className="text-xs font-medium text-stone-500 mb-1">Compliance Notes</div>
-                              <div className="flex flex-wrap gap-2">
-                                {section.complianceNotes.map((note: string, ni: number) => (
-                                  <span key={ni} className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 text-xs rounded-lg border border-emerald-200">
-                                    <ShieldCheck className="w-3 h-3" />
-                                    {note}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Section-level Provenance Atoms */}
-                          {sectionProvenance.length > 0 && (
-                            <div>
-                              <div className="text-xs font-medium text-stone-500 mb-1">Provenance Atoms ({sectionProvenance.length})</div>
-                              <div className="space-y-1">
-                                {sectionProvenance.map(p => (
-                                  <div
-                                    key={p.id}
-                                    className="flex items-center gap-2 px-2 py-1.5 bg-purple-50 rounded-lg text-xs cursor-pointer hover:bg-purple-100"
-                                    onClick={() => setSelectedProvenance(p)}
-                                  >
-                                    <Atom className="w-3 h-3 text-purple-500 flex-shrink-0" />
-                                    <span className="font-medium text-purple-700">{p.fieldLabel}</span>
-                                    <span className="text-stone-400">from</span>
-                                    <span className="font-mono text-stone-600">{p.sourceTable}.{p.sourceField}</span>
-                                    <span className="ml-auto text-stone-400">
-                                      {Math.round((p.confidence || 0) * 100)}%
-                                    </span>
-                                    {p.driftDetected && (
-                                      <AlertTriangle className="w-3 h-3 text-amber-500" />
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                      {deliveryMode === 'platform_email' ? (
+                        <Mail className="mr-2 h-4 w-4" />
+                      ) : (
+                        <Send className="mr-2 h-4 w-4" />
                       )}
-                    </div>
-                  );
-                })}
+                      {deliveryMutation.isPending ? 'Processing...' : 'Deliver selected report'}
+                    </Button>
+                  </CardContent>
+                </Card>
               </div>
-            )}
 
-            {/* Indemnification Statement */}
-            {generatedReport.record.attestationStatement && (
-              <div className="p-4 bg-stone-900 rounded-xl text-stone-400 text-xs font-mono whitespace-pre-wrap leading-relaxed">
-                <div className="flex items-center gap-2 mb-3 text-stone-100">
-                  <Scale className="w-4 h-4" />
-                  <span className="font-semibold text-sm">Quasi-Indemnification Statement</span>
-                </div>
-                {generatedReport.record.attestationStatement}
-              </div>
-            )}
-          </div>
-        )}
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="bg-stone-100">
+                  <TabsTrigger value="packs">Bundle packs</TabsTrigger>
+                  <TabsTrigger value="history">Run history</TabsTrigger>
+                  <TabsTrigger value="reports">Immutable reports</TabsTrigger>
+                </TabsList>
 
-        {/* ── Provenance Tab ───────────────────────────── */}
-        {activeTab === 'provenance' && generatedReport && (
-          <div className="max-w-6xl mx-auto p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Atom className="w-5 h-5 text-purple-600" />
-                <h3 className="text-sm font-semibold text-stone-700">Atom-Level Provenance Chain</h3>
-                <span className="text-xs text-stone-400">
-                  {provenanceEntries.length} atoms — every data point traced to source
-                </span>
-              </div>
-              <button
-                onClick={loadProvenance}
-                disabled={provenanceLoading}
-                className="flex items-center gap-1 text-xs text-blue-600 hover:text-stone-700"
-              >
-                <RefreshCw className={`w-3 h-3 ${provenanceLoading ? 'animate-spin' : ''}`} />
-                Refresh
-              </button>
-            </div>
-
-            {provenanceEntries.length === 0 ? (
-              <div className="text-center py-12 text-stone-400 text-sm">
-                <Atom className="w-8 h-8 mx-auto mb-2 text-purple-300" />
-                {provenanceLoading ? 'Loading provenance data...' : 'No provenance atoms recorded for this report.'}
-              </div>
-            ) : (
-              <div className="flex gap-6">
-                {/* Provenance list grouped by section */}
-                <div className="flex-1 space-y-4">
-                  {Object.entries(provenanceBySection).map(([section, entries]) => (
-                    <div key={section}>
-                      <div className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2">
-                        {section.replace(/_/g, ' ')}
+                <TabsContent value="packs" className="space-y-4">
+                  <Card className="border-stone-200 shadow-sm">
+                    <CardContent className="pt-6">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-center">
+                        <div className="relative flex-1">
+                          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+                          <Input
+                            value={bundleSearch}
+                            onChange={event => setBundleSearch(event.target.value)}
+                            className="pl-9"
+                            placeholder="Search pack names, personas, or descriptions"
+                          />
+                        </div>
+                        <Badge variant="outline" className="border-stone-300 text-stone-600">
+                          <Filter className="mr-1 h-3 w-3" />
+                          {filteredBundles.length} bundle presets
+                        </Badge>
                       </div>
-                      <div className="space-y-1">
-                        {entries.map(p => (
-                          <div
-                            key={p.id}
-                            onClick={() => setSelectedProvenance(p)}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs cursor-pointer transition-colors ${
-                              selectedProvenance?.id === p.id
-                                ? 'bg-purple-100 border border-purple-300'
-                                : 'bg-white border border-stone-200 hover:border-purple-200 hover:bg-purple-50'
-                            }`}
+                    </CardContent>
+                  </Card>
+
+                  <div className="grid gap-4 xl:grid-cols-[1.5fr_1fr]">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {filteredBundles.map(bundle => {
+                        const isSelected = selectedBundleId === bundle.bundleId;
+                        return (
+                          <button
+                            key={bundle.bundleId}
+                            type="button"
+                            onClick={() => {
+                              setSelectedBundleId(bundle.bundleId);
+                              setDeliveryMode(bundle.defaultDeliveryMode);
+                              setDeliverySubject(`${bundle.label} delivery`);
+                            }}
+                            className={cn(
+                              'rounded-xl border bg-white p-5 text-left transition-colors',
+                              isSelected
+                                ? 'border-stone-900 shadow-sm'
+                                : 'border-stone-200 hover:border-stone-300'
+                            )}
                           >
-                            <CircleDot className={`w-3 h-3 flex-shrink-0 ${
-                              p.driftDetected ? 'text-amber-500' : 'text-purple-400'
-                            }`} />
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-stone-900 truncate">{p.fieldLabel || p.sectionPath}</div>
-                              <div className="text-stone-400 truncate">
-                                {p.sourceTable}.{p.sourceField} #{p.sourceRecordId}
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <FileStack className="h-4 w-4 text-stone-500" />
+                                  <h3 className="text-sm font-semibold text-stone-900">{bundle.label}</h3>
+                                </div>
+                                <p className="mt-2 text-sm text-stone-600">{bundle.description}</p>
+                              </div>
+                              {isSelected && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+                            </div>
+                            <div className="mt-4 flex flex-wrap gap-2">
+                              {bundle.personas.map(persona => (
+                                <Badge key={persona} variant="outline" className="border-stone-200 text-stone-600">
+                                  {persona}
+                                </Badge>
+                              ))}
+                            </div>
+                            <div className="mt-4 flex flex-wrap gap-4 text-[11px] text-stone-500">
+                              <span>{bundle.reportTypeIds.length} report modules</span>
+                              <span>{bundle.exportFormats.join(', ').toUpperCase()}</span>
+                              <span>{bundle.defaultDeliveryMode === 'platform_email' ? 'Platform send' : 'PDF first'}</span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <Card className="border-stone-200 shadow-sm">
+                      <CardHeader>
+                        <CardTitle className="text-sm font-semibold text-stone-900">
+                          {selectedBundle?.label || 'Choose a bundle'}
+                        </CardTitle>
+                        <CardDescription>
+                          {selectedBundle
+                            ? 'Review the included report types and launch a governed run.'
+                            : 'Select a pack to see which reports will be generated for this scope.'}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {selectedBundle ? (
+                          <>
+                            <div className="space-y-2">
+                              <p className="text-[11px] font-medium uppercase tracking-wide text-stone-500">
+                                Included report types
+                              </p>
+                              <div className="space-y-2">
+                                {selectedBundle.reportTypeIds.map(typeId => {
+                                  const type = workspace.taxonomy.find(entry => entry.typeId === typeId);
+                                  return (
+                                    <div key={typeId} className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2">
+                                      <div className="text-sm font-medium text-stone-900">{type?.label || typeId}</div>
+                                      <div className="mt-1 text-[11px] text-stone-500">
+                                        {type?.family || 'report family'} • {(type?.allowedPersonas || []).join(', ')}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                                p.transformationType === 'direct_copy' ? 'bg-emerald-50 text-emerald-600' :
-                                p.transformationType === 'aggregation' ? 'bg-blue-50 text-blue-600' :
-                                p.transformationType === 'ai_generated' ? 'bg-purple-50 text-purple-600' :
-                                'bg-stone-100 text-stone-500'
-                              }`}>
-                                {p.transformationType.replace('_', ' ')}
-                              </span>
-                              <span className="text-stone-400 w-10 text-right">
-                                {Math.round((p.confidence || 0) * 100)}%
-                              </span>
-                              {p.driftDetected && (
-                                <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                              )}
+
+                            <div className="rounded-lg border border-stone-200 bg-stone-50 p-3 text-xs text-stone-600">
+                              Bundle runs create Report OS lineage entries and generate immutable reports that can be exported
+                              or delivered immediately.
                             </div>
+
+                            <Button
+                              className="w-full"
+                              onClick={() => generateBundleMutation.mutate(selectedBundle)}
+                              disabled={generateBundleMutation.isPending}
+                            >
+                              <Sparkles className="mr-2 h-4 w-4" />
+                              {generateBundleMutation.isPending ? 'Generating bundle...' : 'Generate bundle'}
+                            </Button>
+                          </>
+                        ) : (
+                          <div className="rounded-lg border border-dashed border-stone-200 px-4 py-10 text-center text-sm text-stone-500">
+                            No bundle selected yet.
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Provenance Detail Panel */}
-                {selectedProvenance && (
-                  <div className="w-80 flex-shrink-0 bg-white border border-stone-200 rounded-xl p-4 sticky top-6 self-start">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-sm font-semibold text-stone-900">Atom Detail</h4>
-                      <button onClick={() => setSelectedProvenance(null)} className="text-stone-400 hover:text-stone-600">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div className="space-y-3 text-xs">
-                      <div>
-                        <div className="text-stone-400 mb-0.5">Field Label</div>
-                        <div className="text-stone-900 font-medium">{selectedProvenance.fieldLabel}</div>
-                      </div>
-                      <div>
-                        <div className="text-stone-400 mb-0.5">Section Path</div>
-                        <div className="text-stone-600 font-mono">{selectedProvenance.sectionPath}</div>
-                      </div>
-                      <div>
-                        <div className="text-stone-400 mb-0.5">Reported Value</div>
-                        <div className="text-stone-700 bg-stone-50 p-2 rounded-lg break-all max-h-20 overflow-auto">
-                          {selectedProvenance.reportedValue || '—'}
-                        </div>
-                      </div>
-                      <hr className="border-stone-200" />
-                      <div>
-                        <div className="text-stone-400 mb-0.5">Source Table</div>
-                        <div className="text-blue-600 font-mono font-medium">{selectedProvenance.sourceTable}</div>
-                      </div>
-                      <div>
-                        <div className="text-stone-400 mb-0.5">Source Record ID</div>
-                        <div className="text-stone-700 font-mono">{selectedProvenance.sourceRecordId}</div>
-                      </div>
-                      <div>
-                        <div className="text-stone-400 mb-0.5">Source Field</div>
-                        <div className="text-stone-700 font-mono">{selectedProvenance.sourceField}</div>
-                      </div>
-                      <div>
-                        <div className="text-stone-400 mb-0.5">Source Value</div>
-                        <div className="text-stone-700 bg-stone-50 p-2 rounded-lg break-all max-h-20 overflow-auto">
-                          {selectedProvenance.sourceValue || '—'}
-                        </div>
-                      </div>
-                      <hr className="border-stone-200" />
-                      <div className="flex gap-3">
-                        <div>
-                          <div className="text-stone-400 mb-0.5">Transformation</div>
-                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                            selectedProvenance.transformationType === 'direct_copy' ? 'bg-emerald-50 text-emerald-600' :
-                            selectedProvenance.transformationType === 'aggregation' ? 'bg-blue-50 text-blue-600' :
-                            'bg-stone-100 text-stone-500'
-                          }`}>
-                            {selectedProvenance.transformationType}
-                          </span>
-                        </div>
-                        <div>
-                          <div className="text-stone-400 mb-0.5">Confidence</div>
-                          <div className="font-semibold text-stone-900">{Math.round((selectedProvenance.confidence || 0) * 100)}%</div>
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-stone-400 mb-0.5">Value Hash (SHA-256)</div>
-                        <div className="text-stone-500 font-mono text-xs break-all">{selectedProvenance.valueHash}</div>
-                      </div>
-                      {selectedProvenance.driftDetected && (
-                        <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg">
-                          <div className="flex items-center gap-1 text-amber-700 font-medium">
-                            <AlertTriangle className="w-3.5 h-3.5" />
-                            Drift Detected
-                          </div>
-                          <div className="text-amber-600 mt-0.5">Source data has changed since this report was generated.</div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── Compliance Tab ─────────────────────────────── */}
-        {activeTab === 'compliance' && generatedReport && (
-          <div className="max-w-5xl mx-auto p-6 space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-emerald-600" />
-                <h3 className="text-sm font-semibold text-stone-700">Compliance Validation</h3>
-              </div>
-              <button
-                onClick={handleComplianceValidation}
-                disabled={validating}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-blue-600 hover:text-stone-700 border border-blue-200 rounded-lg hover:bg-blue-50"
-              >
-                <RefreshCw className={`w-3 h-3 ${validating ? 'animate-spin' : ''}`} />
-                Re-validate
-              </button>
-            </div>
-
-            {complianceScore !== null && (
-              <div className="bg-white rounded-xl border border-stone-200 p-5">
-                <div className="flex items-center gap-6">
-                  <div className="relative w-24 h-24">
-                    <svg className="w-24 h-24 -rotate-90" viewBox="0 0 36 36">
-                      <path
-                        className="text-stone-100"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        fill="none"
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      />
-                      <path
-                        className={complianceScore >= 80 ? 'text-emerald-500' : complianceScore >= 60 ? 'text-amber-500' : 'text-red-500'}
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        strokeDasharray={`${complianceScore}, 100`}
-                        strokeLinecap="round"
-                        fill="none"
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className={`text-base font-medium ${complianceScore >= 80 ? 'text-emerald-600' : complianceScore >= 60 ? 'text-amber-600' : 'text-red-600'}`}>
-                        {complianceScore}
-                      </span>
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="text-lg font-semibold text-stone-900">Overall Compliance Score</h4>
-                    <p className="text-sm text-stone-500 mt-1">
-                      {complianceChecks.filter(c => c.passed).length}/{complianceChecks.length} checks passed
-                    </p>
-                    <div className="flex gap-4 mt-2">
-                      <span className="text-xs text-red-600">{complianceChecks.filter(c => !c.passed && c.severity === 'critical').length} critical failures</span>
-                      <span className="text-xs text-amber-600">{complianceChecks.filter(c => !c.passed && c.severity === 'major').length} major issues</span>
-                      <span className="text-xs text-blue-600">{complianceChecks.filter(c => !c.passed && c.severity === 'minor').length} minor items</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {validating && complianceChecks.length === 0 && (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-800 mx-auto mb-3" />
-                <div className="text-sm text-stone-500">Running compliance validation...</div>
-              </div>
-            )}
-
-            {complianceChecks.length > 0 && (
-              <div className="space-y-2">
-                {complianceChecks.map((check, idx) => (
-                  <div
-                    key={idx}
-                    className={`p-3 rounded-xl border flex items-start gap-3 ${
-                      check.passed ? 'bg-white border-stone-200' : SEVERITY_COLORS[check.severity] || 'bg-stone-50 border-stone-200'
-                    }`}
-                  >
-                    {check.passed ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-                    ) : (
-                      <AlertTriangle className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
-                        check.severity === 'critical' ? 'text-red-500' :
-                        check.severity === 'major' ? 'text-amber-500' : 'text-blue-500'
-                      }`} />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono text-stone-400">{check.checkId}</span>
-                        <span className="text-sm font-medium text-stone-900">{check.description}</span>
-                      </div>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="text-xs text-stone-500">{check.category.replace(/_/g, ' ')}</span>
-                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                          check.severity === 'critical' ? 'bg-red-100 text-red-700' :
-                          check.severity === 'major' ? 'bg-amber-100 text-amber-700' :
-                          'bg-blue-100 text-stone-700'
-                        }`}>
-                          {check.severity}
-                        </span>
-                      </div>
-                      <div className="text-xs text-stone-500 mt-1">{check.details}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── Attestations Tab ─────────────────────────── */}
-        {activeTab === 'attestations' && (
-          <div className="max-w-5xl mx-auto p-6 space-y-4">
-            <div className="flex items-center gap-2 mb-2">
-              <BadgeCheck className="w-5 h-5 text-emerald-600" />
-              <h3 className="text-sm font-semibold text-stone-700">Indemnification Attestations</h3>
-              <span className="text-xs text-stone-400">{attestations.length} records</span>
-            </div>
-
-            {attestations.length === 0 ? (
-              <div className="text-center py-12 text-stone-400 text-sm">
-                Generate a report to see attestations.
-              </div>
-            ) : (
-              attestations.map((att, idx) => (
-                <div key={idx} className="p-4 bg-white rounded-xl border border-stone-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-2.5 h-2.5 rounded-full ${
-                        att.complianceStatus === 'compliant' ? 'bg-emerald-500' :
-                        att.complianceStatus === 'partially_compliant' ? 'bg-amber-500' :
-                        'bg-red-500'
-                      }`} />
-                      <span className="text-sm font-medium text-stone-900 capitalize">
-                        {att.attestationType.replace(/_/g, ' ')}
-                      </span>
-                      {att.regulationCode && (
-                        <span className="text-xs bg-stone-100 text-stone-600 px-2 py-0.5 rounded">
-                          {att.regulationCode}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-stone-600">
-                        {att.complianceScore}/100
-                      </span>
-                      {att.sealed && (
-                        <Lock className="w-3 h-3 text-emerald-600" />
-                      )}
-                    </div>
-                  </div>
-                  {att.attestationStatement && (
-                    <p className="text-xs text-stone-600 mt-1">{att.attestationStatement}</p>
-                  )}
-                  <div className="flex items-center gap-3 mt-2 text-xs text-stone-400">
-                    <span>Scope: {att.indemnificationScope}</span>
-                    <span>Status: {att.complianceStatus}</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
-
-        {/* ── History Tab ──────────────────────────────── */}
-        {activeTab === 'history' && (
-          <div className="max-w-5xl mx-auto p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Clock className="w-5 h-5 text-stone-600" />
-              <h3 className="text-sm font-semibold text-stone-700">Report Ledger</h3>
-              <span className="text-xs text-stone-400">{reportHistory.length} records</span>
-            </div>
-
-            {reportHistory.length === 0 ? (
-              <div className="text-center py-12 text-stone-400 text-sm">
-                No reports generated yet. Use the Generate tab to create your first immutable report.
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {reportHistory.map((report: any) => (
-                  <div
-                    key={report.id}
-                    className="p-4 bg-white rounded-xl border border-stone-200 hover:border-stone-300 transition-colors cursor-pointer"
-                    onClick={() => {
-                      setGeneratedReport({
-                        reportId: report.id,
-                        reportUuid: report.reportUuid,
-                        reportCode: report.reportCode,
-                        verificationCode: report.contentHash ? `${report.contentHash.slice(0,8).toUpperCase()}-${report.contentHash.slice(-8).toUpperCase()}` : '',
-                        contentHash: report.contentHash || '',
-                        merkleRoot: report.merkleRoot || '',
-                        sealStatus: report.sealStatus,
-                        complianceScore: report.complianceScore || 0,
-                        indemnificationTier: report.indemnificationTier || '',
-                        provenanceAtomCount: 0,
-                        attestationCount: 0,
-                        generationDurationMs: report.generationDurationMs || 0,
-                        record: report,
-                      });
-                      setVerificationResult(null);
-                      setDriftResult(null);
-                      setComplianceChecks([]);
-                      setComplianceScore(null);
-                      setProvenanceEntries([]);
-                      setActiveTab('result');
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="text-stone-400">
-                          {DOMAIN_ICONS[report.reportDomain] || <FileText className="w-5 h-5" />}
-                        </span>
-                        <div>
-                          <div className="text-sm font-medium text-stone-900">{report.reportTitle}</div>
-                          <div className="flex items-center gap-2 text-xs text-stone-500">
-                            <span>{report.reportCode}</span>
-                            {report.version && <span className="text-stone-400">v{report.version}</span>}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className={`px-2 py-0.5 text-xs rounded-full border ${
-                          report.sealStatus === 'sealed'
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                            : report.sealStatus === 'revoked'
-                            ? 'bg-red-50 text-red-700 border-red-200'
-                            : report.sealStatus === 'superseded'
-                            ? 'bg-amber-50 text-amber-700 border-amber-200'
-                            : 'bg-stone-50 text-stone-600 border-stone-200'
-                        }`}>
-                          {report.sealStatus}
-                        </span>
-                        {report.complianceScore && (
-                          <span className="text-xs font-semibold text-stone-600">{report.complianceScore}/100</span>
                         )}
-                        <ChevronRight className="w-4 h-4 text-stone-400" />
+                      </CardContent>
+                    </Card>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="history">
+                  <Card className="border-stone-200 shadow-sm">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-semibold text-stone-900">Report run history</CardTitle>
+                      <CardDescription>
+                        Track readiness confidence, blockers, and the latest scoped runs.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="mb-4 flex items-center justify-between gap-3">
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Filter status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All status</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="partial">Partial</SelectItem>
+                            <SelectItem value="queued">Queued</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Badge variant="outline" className="border-stone-300 text-stone-600">
+                          {filteredRuns.length} runs
+                        </Badge>
                       </div>
+
+                      <DataStateWrapper
+                        isLoading={runsQuery.isLoading}
+                        error={(runsQuery.error as Error) || null}
+                        data={filteredRuns}
+                        loadingComponent={<SkeletonTable rows={5} columns={5} />}
+                        emptyTitle="No report runs yet"
+                        emptyDescription="Generate a bundle pack to create your first scoped run."
+                        retry={() => runsQuery.refetch()}
+                      >
+                        {runs => (
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Run</TableHead>
+                                <TableHead>Type</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Confidence</TableHead>
+                                <TableHead>Blockers</TableHead>
+                                <TableHead>Created</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {runs.map(run => (
+                                <TableRow key={run.id}>
+                                  <TableCell className="font-medium text-stone-900">#{run.id}</TableCell>
+                                  <TableCell>{run.reportTypeId}</TableCell>
+                                  <TableCell>
+                                    <WorkspaceStatusBadge status={statusTone(run.status)} />
+                                  </TableCell>
+                                  <TableCell>{run.confidence != null ? `${run.confidence}%` : '—'}</TableCell>
+                                  <TableCell className="max-w-[320px] text-xs text-stone-500">
+                                    {(run.blockers || []).length > 0
+                                      ? (run.blockers || []).slice(0, 2).join('; ')
+                                      : 'No blockers'}
+                                  </TableCell>
+                                  <TableCell>{formatDate(run.createdAt)}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        )}
+                      </DataStateWrapper>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="reports">
+                  <Card className="border-stone-200 shadow-sm">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-semibold text-stone-900">Immutable reports</CardTitle>
+                      <CardDescription>
+                        Export PDF or structured formats, and select one for direct delivery.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <DataStateWrapper
+                        isLoading={workspaceQuery.isLoading}
+                        error={(workspaceQuery.error as Error) || null}
+                        data={workspace.recentReports}
+                        loadingComponent={<SkeletonTable rows={5} columns={6} />}
+                        emptyTitle="No immutable reports available"
+                        emptyDescription="Generate a report bundle to create export-ready immutable records."
+                        retry={() => workspaceQuery.refetch()}
+                      >
+                        {reports => (
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Select</TableHead>
+                                <TableHead>Report</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Compliance</TableHead>
+                                <TableHead>Created</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {reports.map(report => {
+                                const checked = selectedReportIds.includes(report.id);
+                                return (
+                                  <TableRow key={report.id}>
+                                    <TableCell>
+                                      <Checkbox
+                                        checked={checked}
+                                        onCheckedChange={value => {
+                                          setSelectedReportIds(current =>
+                                            value
+                                              ? [...current, report.id]
+                                              : current.filter(id => id !== report.id)
+                                          );
+                                        }}
+                                      />
+                                    </TableCell>
+                                    <TableCell>
+                                      <div className="space-y-1">
+                                        <div className="font-medium text-stone-900">{report.reportTitle}</div>
+                                        <div className="text-xs text-stone-500">
+                                          {report.reportCode} • {report.reportDomain}
+                                        </div>
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>
+                                      <WorkspaceStatusBadge status={statusTone(report.sealStatus)} />
+                                    </TableCell>
+                                    <TableCell>{report.complianceScore != null ? `${report.complianceScore}%` : '—'}</TableCell>
+                                    <TableCell>{formatDate(report.createdAt)}</TableCell>
+                                    <TableCell className="text-right">
+                                      <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                          <Button variant="outline" size="sm">
+                                            <ExternalLink className="mr-2 h-4 w-4" />
+                                            Actions
+                                          </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                          <DropdownMenuLabel>Export report</DropdownMenuLabel>
+                                          <DropdownMenuSeparator />
+                                          <DropdownMenuItem
+                                            onClick={() => exportMutation.mutate({ reportId: report.id, format: 'pdf' })}
+                                          >
+                                            <Download className="mr-2 h-4 w-4" />
+                                            Export PDF
+                                          </DropdownMenuItem>
+                                          <DropdownMenuItem
+                                            onClick={() => exportMutation.mutate({ reportId: report.id, format: 'json' })}
+                                          >
+                                            Export JSON
+                                          </DropdownMenuItem>
+                                          <DropdownMenuItem
+                                            onClick={() => exportMutation.mutate({ reportId: report.id, format: 'csv' })}
+                                          >
+                                            Export CSV
+                                          </DropdownMenuItem>
+                                          <DropdownMenuSeparator />
+                                          <DropdownMenuItem
+                                            onClick={() => {
+                                              setSelectedReportIds([report.id]);
+                                              setActiveTab('reports');
+                                            }}
+                                          >
+                                            Select for delivery
+                                          </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                      </DropdownMenu>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        )}
+                      </DataStateWrapper>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+
+              {selectedReports.length > 0 && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="mt-0.5 h-4 w-4" />
+                    <div>
+                      Selected report for delivery: <strong>{selectedReports[0].reportTitle}</strong>. If you send through
+                      Concept2Cure, the platform will log the outbound correspondence so future rejection letters and agency
+                      responses improve AnA’s judgment over time.
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                </div>
+              )}
+            </>
+          )}
+        </DataStateWrapper>
+      </WorkspaceCanvas>
+    </div>
+  );
+}
 
-        {/* ── No Report Placeholder ────────────────────── */}
-        {['result', 'provenance', 'compliance'].includes(activeTab) && !generatedReport && (
-          <div className="flex flex-col items-center justify-center py-20 text-stone-400">
-            <FileText className="w-12 h-12 mb-3 text-stone-400" />
-            <p className="text-sm">No report generated yet</p>
-            <button
-              onClick={() => setActiveTab('generate')}
-              className="mt-3 text-sm text-blue-600 hover:text-stone-700"
-            >
-              Go to Generate tab
-            </button>
-          </div>
-        )}
-      </div>
+function MetricCard({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
+      <div className="text-[11px] font-medium uppercase tracking-wide text-stone-500">{label}</div>
+      <div className="mt-1 text-2xl font-semibold text-stone-900">{value}</div>
+      <div className="mt-1 text-xs text-stone-500">{detail}</div>
     </div>
   );
 }

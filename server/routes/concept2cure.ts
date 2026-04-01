@@ -717,6 +717,15 @@ const ownershipPreferencesSchema = z
   })
   .partial();
 
+const projectCollaboratorSchema = z.object({
+  userId: z.number().int().positive(),
+  permission: z.enum(['can_use', 'can_edit']),
+});
+
+const updateProjectCollaboratorsSchema = z.object({
+  collaborators: z.array(projectCollaboratorSchema).max(100),
+});
+
 const errorLogSchema = z.object({
   id: z.string().min(1),
   timestamp: z.string().datetime(),
@@ -940,6 +949,7 @@ interface ProjectOwnership {
   documentInventory: UploadedDocument[];
   vaultLinkedFilesEvidence: UploadedDocument[];
   projectInstructions: string;
+  ownershipTeam?: Array<{ userId: number; permission: 'can_use' | 'can_edit' }>;
   connectedAppsContext: string;
   reusableSnippetsKnowledge: string[];
   reports: string[];
@@ -969,6 +979,9 @@ function buildProjectOwnership(
     projectInstructions:
       (typeof settings.customInstructions === 'string' ? settings.customInstructions : '') ||
       (typeof ownership.projectInstructions === 'string' ? ownership.projectInstructions : ''),
+    ownershipTeam: Array.isArray(ownership.ownershipTeam)
+      ? (ownership.ownershipTeam as Array<{ userId: number; permission: 'can_use' | 'can_edit' }>)
+      : [],
     connectedAppsContext: (() => {
       const apps = normalizeConnectedApps(settings);
       return apps
@@ -2117,6 +2130,178 @@ router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Re
     }
     logger.error('Failed to update ownership preferences', { error: error.message });
     return sendError(res, 500, 'Failed to update ownership preferences');
+  }
+});
+
+/**
+ * GET /api/concept2cure/projects/:projectId/collaborators
+ * Returns current project collaborator permission assignments.
+ */
+router.get('/projects/:projectId/collaborators', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const projectId = req.params.projectId.replace('proj_', '');
+    const numericId = parseInt(projectId, 10);
+
+    if (isNaN(numericId)) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .limit(1);
+    if (!project) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    const settings = normalizeProjectSettings(project.settings);
+    const ownership =
+      settings.ownership && typeof settings.ownership === 'object'
+        ? (settings.ownership as Record<string, unknown>)
+        : {};
+
+    const team = Array.isArray(ownership.ownershipTeam)
+      ? (ownership.ownershipTeam as Array<{ userId: number; permission: 'can_use' | 'can_edit' }>)
+      : [];
+    const normalizedTeam = team.filter(
+      member =>
+        Number.isInteger(member?.userId) &&
+        member.userId > 0 &&
+        (member.permission === 'can_use' || member.permission === 'can_edit')
+    );
+
+    const memberIds = normalizedTeam.map(member => member.userId);
+    const memberDirectory =
+      memberIds.length > 0
+        ? await db
+            .select({
+              userId: users.id,
+              name: users.name,
+              email: users.email,
+            })
+            .from(users)
+            .where(inArray(users.id, memberIds))
+        : [];
+    const directoryById = new Map(memberDirectory.map(member => [member.userId, member]));
+
+    const collaborators = normalizedTeam.map(member => ({
+      userId: member.userId,
+      permission: member.permission,
+      name: directoryById.get(member.userId)?.name || null,
+      email: directoryById.get(member.userId)?.email || null,
+    }));
+
+    return sendSuccess(res, {
+      projectId: `proj_${numericId}`,
+      collaborators,
+    });
+  } catch (error: any) {
+    logger.error('Failed to fetch project collaborators', {
+      error: error.message,
+      projectId: req.params.projectId,
+    });
+    return sendError(res, 500, 'Failed to fetch project collaborators');
+  }
+});
+
+/**
+ * PUT /api/concept2cure/projects/:projectId/collaborators
+ * Replaces project collaborator permission assignments.
+ */
+router.put('/projects/:projectId/collaborators', async (req: Request, res: Response) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    const projectId = req.params.projectId.replace('proj_', '');
+    const numericId = parseInt(projectId, 10);
+
+    if (isNaN(numericId)) {
+      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+    }
+
+    const payload = updateProjectCollaboratorsSchema.parse(req.body);
+
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .limit(1);
+    if (!project) {
+      return sendError(res, 404, 'Project not found');
+    }
+
+    const uniqueByUser = new Map<number, { userId: number; permission: 'can_use' | 'can_edit' }>();
+    for (const collaborator of payload.collaborators) {
+      uniqueByUser.set(collaborator.userId, collaborator);
+    }
+    const collaborators = Array.from(uniqueByUser.values());
+
+    if (collaborators.length > 0) {
+      const orgMembers = await db
+        .select({ userId: organizationUsers.userId })
+        .from(organizationUsers)
+        .where(
+          and(
+            eq(organizationUsers.organizationId, organizationId),
+            inArray(
+              organizationUsers.userId,
+              collaborators.map(entry => entry.userId)
+            )
+          )
+        );
+      const allowedIds = new Set(orgMembers.map(member => member.userId));
+      const invalidIds = collaborators
+        .map(entry => entry.userId)
+        .filter(userId => !allowedIds.has(userId));
+      if (invalidIds.length > 0) {
+        return sendError(
+          res,
+          400,
+          `Collaborator user IDs not in organization: ${invalidIds.join(', ')}`
+        );
+      }
+    }
+
+    const settings = normalizeProjectSettings(project.settings);
+    const ownership =
+      settings.ownership && typeof settings.ownership === 'object'
+        ? (settings.ownership as Record<string, unknown>)
+        : {};
+
+    const mergedSettings = {
+      ...settings,
+      ownership: {
+        ...ownership,
+        ownershipTeam: collaborators,
+      },
+    };
+
+    const [updated] = await db
+      .update(projects)
+      .set({ settings: mergedSettings, updatedAt: new Date() })
+      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
+      .returning();
+
+    await logAuditEntry(req, 'UPDATE', 'project', `proj_${numericId}`, project, {
+      collaborators,
+      action: 'update_collaborators',
+    });
+
+    return sendSuccess(res, {
+      projectId: `proj_${numericId}`,
+      collaborators,
+      updatedAt: updated.updatedAt,
+    });
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+    }
+    logger.error('Failed to update project collaborators', {
+      error: error.message,
+      projectId: req.params.projectId,
+    });
+    return sendError(res, 500, 'Failed to update project collaborators');
   }
 });
 
@@ -5032,6 +5217,127 @@ router.post(
       }
       logConcept2cureError('add message', error, { conversationId: req.params.conversationId });
       return sendError(res, 500, 'Failed to add message');
+    }
+  }
+);
+
+/**
+ * PATCH /api/concept2cure/projects/:projectId/conversations/:conversationId
+ * Update mutable conversation metadata (currently title).
+ */
+router.patch(
+  '/projects/:projectId/conversations/:conversationId',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) {
+        return sendError(res, 404, 'Project not found');
+      }
+
+      const payload = z
+        .object({
+          title: z.string().min(1).max(200),
+        })
+        .parse(req.body);
+
+      const [dbConversation] = await db
+        .select()
+        .from(concept2cureConversations)
+        .where(
+          and(
+            eq(concept2cureConversations.conversationId, req.params.conversationId),
+            eq(concept2cureConversations.organizationId, organizationId),
+            eq(concept2cureConversations.status, 'active')
+          )
+        )
+        .limit(1);
+
+      if (!dbConversation) {
+        return sendError(res, 404, 'Conversation not found');
+      }
+
+      const [updated] = await db
+        .update(concept2cureConversations)
+        .set({
+          title: sanitizeContent(payload.title.trim()),
+          updatedAt: new Date(),
+        })
+        .where(eq(concept2cureConversations.id, dbConversation.id))
+        .returning();
+
+      await logAuditEntry(req, 'UPDATE', 'conversation', req.params.conversationId, dbConversation, {
+        title: updated.title,
+      });
+
+      return sendSuccess(res, {
+        id: updated.conversationId,
+        projectId: req.params.projectId,
+        title: updated.title,
+        updatedAt: updated.updatedAt,
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+      }
+      logConcept2cureError('update conversation', error, {
+        projectId: req.params.projectId,
+        conversationId: req.params.conversationId,
+      });
+      return sendError(res, 500, 'Failed to update conversation');
+    }
+  }
+);
+
+/**
+ * DELETE /api/concept2cure/projects/:projectId/conversations/:conversationId
+ * Soft-delete a conversation (status -> archived).
+ */
+router.delete(
+  '/projects/:projectId/conversations/:conversationId',
+  async (req: Request, res: Response) => {
+    try {
+      const organizationId = getOrganizationId(req);
+      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
+      if (!hasAccess) {
+        return sendError(res, 404, 'Project not found');
+      }
+
+      const [dbConversation] = await db
+        .select()
+        .from(concept2cureConversations)
+        .where(
+          and(
+            eq(concept2cureConversations.conversationId, req.params.conversationId),
+            eq(concept2cureConversations.organizationId, organizationId),
+            eq(concept2cureConversations.status, 'active')
+          )
+        )
+        .limit(1);
+
+      if (!dbConversation) {
+        return sendError(res, 404, 'Conversation not found');
+      }
+
+      await db
+        .update(concept2cureConversations)
+        .set({
+          status: 'archived',
+          updatedAt: new Date(),
+        })
+        .where(eq(concept2cureConversations.id, dbConversation.id));
+
+      await logAuditEntry(req, 'DELETE', 'conversation', req.params.conversationId, dbConversation, null);
+      return sendSuccess(res, {
+        conversationId: req.params.conversationId,
+        archived: true,
+      });
+    } catch (error: any) {
+      logConcept2cureError('delete conversation', error, {
+        projectId: req.params.projectId,
+        conversationId: req.params.conversationId,
+      });
+      return sendError(res, 500, 'Failed to delete conversation');
     }
   }
 );
@@ -9606,34 +9912,32 @@ Sincerely,
     category: 'document',
     ctdSection: '1.2',
     content: `# IND Cover Letter
-
-[DATE]
+Date: <Insert submission date>
 
 Food and Drug Administration
 Center for Drug Evaluation and Research
-[Division]
+<Insert division or office name>
 
-Re: Investigational New Drug Application — [PRODUCT NAME]
-IND Number: [IND NUMBER]
-Submission Type: [INITIAL / AMENDMENT / ANNUAL REPORT]
+Re: Investigational New Drug Application - <Insert product name>
+IND Number: <Insert IND number or "new IND">
+Submission Type: <Initial IND | Amendment | Annual Report | Safety Report>
 
-Dear [Review Team],
+Dear Review Team,
 
-On behalf of [SPONSOR], we submit this [SUBMISSION TYPE] for [PRODUCT NAME].
+On behalf of <Insert sponsor name>, we submit this <Insert submission type> for <Insert product name>.
 This package includes:
 
-- [List major included components]
-- [Safety and clinical updates, if applicable]
-- [CMC updates, if applicable]
+- Administrative and regulatory submission materials for this filing
+- Relevant nonclinical, clinical, and safety updates for the current reporting period
+- Chemistry, manufacturing, and controls updates applicable to this submission
 
-Please contact [CONTACT NAME, TITLE] at [EMAIL / PHONE] with any questions.
+Please contact <Insert contact name and title> at <Insert email and phone> with any questions.
 
 Sincerely,
 
-[SIGNATURE]
-[NAME]
-[TITLE]
-[SPONSOR]`,
+<Insert signatory name>
+<Insert signatory title>
+<Insert sponsor name>`,
   },
   {
     id: 'tpl_ind_investigator_brochure',
@@ -9645,25 +9949,25 @@ Sincerely,
     content: `# Investigator's Brochure
 
 ## 1. Summary
-[High-level summary of product, mechanism, and current evidence]
+Provide a concise clinical and nonclinical summary of the investigational product, mechanism of action, and development status.
 
 ## 2. Introduction
-[Background and development context]
+Describe product background, indication context, and development rationale.
 
 ## 3. Physical, Chemical, and Pharmaceutical Properties
-[Drug substance and product properties]
+Summarize relevant drug substance and drug product characteristics, including formulation and handling information for investigators.
 
 ## 4. Nonclinical Studies
-[Pharmacology, PK, and toxicology summary]
+Summarize pharmacology, pharmacokinetics, and toxicology findings that inform clinical risk management.
 
 ## 5. Effects in Humans
-[Clinical pharmacology, efficacy/safety findings, known risks]
+Summarize clinical pharmacology, known efficacy signals, observed safety profile, and important risk considerations.
 
 ## 6. Guidance for Investigators
-[Dose rationale, monitoring, risk management considerations]
+Provide dosing rationale, monitoring expectations, contraindications, and investigator actions for adverse events.
 
 ## 7. References
-[Key cited studies and reports]`,
+List key source reports, publications, and supporting references used in this brochure.`,
   },
   {
     id: 'tpl_ind_pre_ind_briefing',
@@ -9675,24 +9979,24 @@ Sincerely,
     content: `# Pre-IND Briefing Package
 
 ## 1. Meeting Request Context
-[Program background, indication, and development stage]
+Summarize sponsor, product, indication, and current development stage.
 
 ## 2. Product and Development Overview
-[CMC, nonclinical, and clinical overview]
+Provide a concise integrated overview of CMC, nonclinical, and clinical development work completed to date.
 
 ## 3. Proposed Clinical Plan
-[First-in-human or phase transition plan]
+Describe the proposed first-in-human or next-phase plan, including study design rationale and key safety controls.
 
 ## 4. Key Questions for FDA
-1. [Question]
-2. [Question]
-3. [Question]
+1. Include a focused question on CMC strategy and release readiness.
+2. Include a focused question on nonclinical package adequacy.
+3. Include a focused question on clinical design, dose justification, and safety monitoring.
 
 ## 5. Supporting Summaries
-[Relevant nonclinical, CMC, and clinical summary content]
+Provide supporting summaries and references for each question area.
 
 ## 6. Appendices
-[Data tables, references, and supporting documents]`,
+Attach key tables, prior correspondence, and reference documents needed for efficient FDA review.`,
   },
   {
     id: 'tpl_ind_protocol',
@@ -15524,9 +15828,12 @@ router.get(
     try {
       const conversationId = parseInt(req.params.conversationId, 10);
       const organizationId =
-        (req as any).organizationId ||
-        parseInt(req.headers['x-organization-id'] as string, 10) ||
-        1;
+        Number((req as any).tenantContext?.organizationId) ||
+        Number((req as any).tenantId) ||
+        Number((req as any).user?.organizationId);
+      if (!organizationId) {
+        return sendError(res, 403, 'Organization context required');
+      }
 
       if (!conversationId || isNaN(conversationId)) {
         return sendError(res, 400, 'Invalid conversation ID');
@@ -15552,9 +15859,12 @@ router.get(
     try {
       const conversationId = parseInt(req.params.conversationId, 10);
       const organizationId =
-        (req as any).organizationId ||
-        parseInt(req.headers['x-organization-id'] as string, 10) ||
-        1;
+        Number((req as any).tenantContext?.organizationId) ||
+        Number((req as any).tenantId) ||
+        Number((req as any).user?.organizationId);
+      if (!organizationId) {
+        return sendError(res, 403, 'Organization context required');
+      }
 
       if (!conversationId || isNaN(conversationId)) {
         return sendError(res, 400, 'Invalid conversation ID');
@@ -15588,9 +15898,12 @@ router.post(
     try {
       const conversationId = parseInt(req.params.conversationId, 10);
       const organizationId =
-        (req as any).organizationId ||
-        parseInt(req.headers['x-organization-id'] as string, 10) ||
-        1;
+        Number((req as any).tenantContext?.organizationId) ||
+        Number((req as any).tenantId) ||
+        Number((req as any).user?.organizationId);
+      if (!organizationId) {
+        return sendError(res, 403, 'Organization context required');
+      }
 
       if (!conversationId || isNaN(conversationId)) {
         return sendError(res, 400, 'Invalid conversation ID');
@@ -15722,8 +16035,9 @@ router.post(
     try {
       const conversationId = parseInt(req.params.conversationId, 10);
       const organizationId =
-        (req as any).organizationId ||
-        parseInt(req.headers['x-organization-id'] as string, 10) ||
+        Number((req as any).tenantContext?.organizationId) ||
+        Number((req as any).tenantId) ||
+        Number((req as any).user?.organizationId) ||
         null;
       if (!organizationId) {
         return sendError(res, 403, 'Organization context required');
@@ -16317,7 +16631,12 @@ router.get('/team/workload', async (req: Request, res: Response) => {
 router.post('/feedback', authMiddleware, async (req: Request, res: Response) => {
   try {
     const organizationId =
-      (req as any).organizationId || parseInt(req.headers['x-organization-id'] as string, 10) || 1;
+      Number((req as any).tenantContext?.organizationId) ||
+      Number((req as any).tenantId) ||
+      Number((req as any).user?.organizationId);
+    if (!organizationId) {
+      return sendError(res, 403, 'Organization context required');
+    }
     const userId = getUserId(req);
     const { messageId, positive, conversationId, comment } = req.body;
 

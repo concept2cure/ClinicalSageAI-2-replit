@@ -173,7 +173,7 @@ router.get('/example/:persona', async (req, res) => {
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
 
     // Construct response with example files
-    const exampleFiles = manifest.files.map(file => {
+    const exampleFiles = manifest.files.map((file: any) => {
       const filePath = path.join(EXAMPLE_REPORTS_PATH, persona, file);
       let fileContent = null;
       let fileExists = fs.existsSync(filePath);

@@ -339,6 +339,7 @@ function toPersistedDraft(data: OnboardingData, currentStep: WizardStep): Persis
 
 interface OnboardingWizardProps {
   onComplete?: (data: OnboardingData) => void | Promise<void>;
+  onPaymentConfirmed?: (data: OnboardingData) => void | Promise<void>;
   onCancel?: () => void;
 }
 
@@ -355,7 +356,11 @@ function mapTierToBillingTier(tier: SubscriptionTier): 'standard' | 'professiona
   }
 }
 
-export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps) {
+export function OnboardingWizard({
+  onComplete,
+  onPaymentConfirmed,
+  onCancel,
+}: OnboardingWizardProps) {
   const [data, setData] = useState<OnboardingData>(() => ({
     organizationName: '',
     domain: '',
@@ -500,10 +505,11 @@ export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps
         setCheckoutLoading(false);
       }
     } else {
+      await onPaymentConfirmed?.(data);
       sessionStorage.removeItem(ONBOARDING_STORAGE_KEY);
       setSetupCompleted(true);
     }
-  }, [data, onComplete]);
+  }, [data, onComplete, onPaymentConfirmed]);
 
   if (setupCompleted) {
     return <ActivationCompleteView organizationName={data.organizationName} />;

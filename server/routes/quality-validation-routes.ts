@@ -31,7 +31,7 @@ async function tableExists(req: any, tableName: string): Promise<boolean> {
     `);
 
     return result.rows[0]?.exists === true;
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`Error checking if table ${tableName} exists`, { error });
     return false;
   }
@@ -135,15 +135,15 @@ router.post('/validate-section', authMiddleware, requireOrganizationContext, asy
       );
 
     // Perform validation for each factor
-    const validationResults = factors.map(factor => {
+    const validationResults = factors.map((factor: any) => {
       // Simple text search validation based on validation criteria
       // In a real implementation, this could use more sophisticated validation
       const validationTerms = (factor.validationCriteria || '')
         .split(',')
-        .map(term => term.trim().toLowerCase());
+        .map((term: any) => term.trim().toLowerCase());
       const contentLower = content.toLowerCase();
 
-      const allTermsPresent = validationTerms.every(term =>
+      const allTermsPresent = validationTerms.every((term: any) =>
         term.length > 0 ? contentLower.includes(term) : true
       );
 
@@ -157,28 +157,28 @@ router.post('/validate-section', authMiddleware, requireOrganizationContext, asy
         details: allTermsPresent
           ? 'All required terms are present'
           : `Missing terms: ${validationTerms
-              .filter(term => term.length > 0 && !contentLower.includes(term))
+              .filter((term: any) => term.length > 0 && !contentLower.includes(term))
               .join(', ')}`,
       };
     });
 
     // Calculate overall validation result
     // For HIGH risk factors, all must pass for validation to succeed
-    const highRiskFactors = factors.filter(f => f.riskLevel === 'high');
+    const highRiskFactors = factors.filter((f: any) => f.riskLevel === 'high');
     const highRiskResults = validationResults.filter(
-      (_, index) => factors[index].riskLevel === 'high'
+      (_: any, index: any) => factors[index].riskLevel === 'high'
     );
 
-    const highRiskPassed = highRiskFactors.length === 0 || highRiskResults.every(r => r.passed);
+    const highRiskPassed = highRiskFactors.length === 0 || highRiskResults.every((r: any) => r.passed);
 
     // Medium risk factors generate warnings but don't fail validation
     const mediumRiskWarnings = validationResults.filter(
-      (r, index) => !r.passed && factors[index].riskLevel === 'medium'
+      (r: any, index: any) => !r.passed && factors[index].riskLevel === 'medium'
     );
 
     // Low risk factors are just informational
     const lowRiskInfo = validationResults.filter(
-      (r, index) => !r.passed && factors[index].riskLevel === 'low'
+      (r: any, index: any) => !r.passed && factors[index].riskLevel === 'low'
     );
 
     // Determine the overall gating level based on rule
@@ -194,7 +194,7 @@ router.post('/validate-section', authMiddleware, requireOrganizationContext, asy
       infos: lowRiskInfo.length,
       validations: validationResults,
     });
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error validating section against quality rules', { error });
     return res.status(500).json({
       error: 'Failed to validate section',
@@ -269,13 +269,13 @@ router.post('/batch-validate', authMiddleware, requireOrganizationContext, async
 
     // Create a map for quick lookup of gating rules by section code
     const gatingRulesBySection = new Map();
-    gatingRules.forEach(rule => {
+    gatingRules.forEach((rule: any) => {
       gatingRulesBySection.set(rule.sectionKey, rule);
     });
 
     // Collect all CTQ factor IDs from all gating rules
     const allFactorIds = new Set<number>();
-    gatingRules.forEach(rule => {
+    gatingRules.forEach((rule: any) => {
       const factorIds = (rule.requiredCtqFactorIds as number[]) || [];
       factorIds.forEach(id => allFactorIds.add(id));
     });
@@ -335,11 +335,11 @@ router.post('/batch-validate', authMiddleware, requireOrganizationContext, async
         const validationResults = sectionFactors.map(factor => {
           const validationTerms = (factor.validationCriteria || '')
             .split(',')
-            .map(term => term.trim().toLowerCase());
+            .map((term: any) => term.trim().toLowerCase());
 
           const contentLower = content.toLowerCase();
 
-          const allTermsPresent = validationTerms.every(term =>
+          const allTermsPresent = validationTerms.every((term: any) =>
             term.length > 0 ? contentLower.includes(term) : true
           );
 
@@ -355,7 +355,7 @@ router.post('/batch-validate', authMiddleware, requireOrganizationContext, async
             details: allTermsPresent
               ? 'All required terms are present'
               : `Missing terms: ${validationTerms
-                  .filter(term => term.length > 0 && !contentLower.includes(term))
+                  .filter((term: any) => term.length > 0 && !contentLower.includes(term))
                   .join(', ')}`,
           };
         });
@@ -406,7 +406,7 @@ router.post('/batch-validate', authMiddleware, requireOrganizationContext, async
         : 'One or more sections fail to meet quality requirements',
       sections: sectionResults,
     });
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error batch validating sections against quality rules', { error });
     return res.status(500).json({
       error: 'Failed to batch validate sections',
@@ -502,7 +502,7 @@ router.get('/stats/:qmpId', authMiddleware, requireOrganizationContext, async (r
 
         totalSections = parseInt(sectionsCount.rows[0]?.count || '0', 10);
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.warn('Error counting CER sections', { error });
     }
 
@@ -514,7 +514,7 @@ router.get('/stats/:qmpId', authMiddleware, requireOrganizationContext, async (r
 
     // Collect all CTQ factor IDs from all gating rules
     const factorIdsInUse = new Set<number>();
-    gatingRules.forEach(rule => {
+    gatingRules.forEach((rule: any) => {
       const factorIds = (rule.requiredCtqFactorIds as number[]) || [];
       factorIds.forEach(id => factorIdsInUse.add(id));
     });
@@ -526,16 +526,16 @@ router.get('/stats/:qmpId', authMiddleware, requireOrganizationContext, async (r
       sectionsWithRules: gatingRules.length,
       totalFactors: factors.length,
       factorsInUse: factorIdsInUse.size,
-      highRiskFactors: factors.filter(f => f.riskLevel === 'high').length,
-      mediumRiskFactors: factors.filter(f => f.riskLevel === 'medium').length,
-      lowRiskFactors: factors.filter(f => f.riskLevel === 'low').length,
-      hardGates: gatingRules.filter(r => r.requiredLevel === 'hard').length,
-      softGates: gatingRules.filter(r => r.requiredLevel === 'soft').length,
+      highRiskFactors: factors.filter((f: any) => f.riskLevel === 'high').length,
+      mediumRiskFactors: factors.filter((f: any) => f.riskLevel === 'medium').length,
+      lowRiskFactors: factors.filter((f: any) => f.riskLevel === 'low').length,
+      hardGates: gatingRules.filter((r: any) => r.requiredLevel === 'hard').length,
+      softGates: gatingRules.filter((r: any) => r.requiredLevel === 'soft').length,
       sectionsPassingAll: 0, // This would be populated from actual validation results
     };
 
     return res.json(stats);
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error retrieving validation statistics', { error });
     return res.status(500).json({
       error: 'Failed to retrieve validation statistics',

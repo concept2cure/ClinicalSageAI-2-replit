@@ -872,11 +872,11 @@ export class eSTARPlusBuilder {
       
       // Query the database for completed sections using the FDA510kSection type
       const sections = await db.query.fda510kSections.findMany({
-        where: (sections, { eq, and }) => and(
+        where: (sections: any, { eq, and }) => and(
           eq(sections.projectId, projectId),
           eq(sections.status, 'completed')
         ),
-        orderBy: (sections, { asc }) => [asc(sections.order)]
+        orderBy: (sections: any, { asc }) => [asc(sections.order)]
       });
       
       if (!sections || sections.length === 0) {
@@ -884,7 +884,7 @@ export class eSTARPlusBuilder {
         return [];
       }
       
-      return sections.map(section => ({
+      return sections.map((section: any) => ({
         id: section.id,
         name: section.sectionKey,
         title: section.title,

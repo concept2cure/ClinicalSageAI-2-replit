@@ -65,7 +65,7 @@ router.get('/academic/resources', async (req, res) => {
       count: resources.length,
       resources,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching academic resources:', error);
     res.status(500).json({
       success: false,
@@ -116,7 +116,7 @@ router.post('/academic/upload', academicUpload.single('file'), async (req, res) 
         keyInsights: result.keyInsights?.slice(0, 5), // Just return a sample
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error processing academic upload:', error);
     res.status(500).json({
       success: false,
@@ -149,7 +149,7 @@ router.post('/academic/query', async (req, res) => {
       count: results.length,
       results,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error querying academic knowledge:', error);
     res.status(500).json({
       success: false,
@@ -175,7 +175,7 @@ router.post('/regulatory/analyze', async (req, res) => {
 
     // Default to all regions if none specified
     const regulatoryRegions = regions
-      ? regions.map(r => r.toUpperCase())
+      ? regions.map((r: any) => r.toUpperCase())
       : Object.values(RegulatoryRegion);
 
     // Analyze global compliance
@@ -189,7 +189,7 @@ router.post('/regulatory/analyze', async (req, res) => {
       regions: regulatoryRegions,
       results: complianceResults,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error analyzing regulatory compliance:', error);
     res.status(500).json({
       success: false,
@@ -215,7 +215,7 @@ router.get('/regulatory/regions', (req, res) => {
         description: getRegulatoryRegionDescription(region),
       })),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching regulatory regions:', error);
     res.status(500).json({
       success: false,

@@ -30,13 +30,13 @@ import type { PatternMatch } from './pattern-registry.js';
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export type SignalType =
-  | 'judgment'          // From judgment framework evaluation
-  | 'pattern_match'     // From pattern registry scan
-  | 'recommendation'    // From recommendation engine
-  | 'feedback'          // From user feedback on AnA output
-  | 'artifact_change'   // From artifact versioning
-  | 'compliance_scan'   // From compliance engine
-  | 'cross_module';     // From cross-module intelligence
+  | 'judgment' // From judgment framework evaluation
+  | 'pattern_match' // From pattern registry scan
+  | 'recommendation' // From recommendation engine
+  | 'feedback' // From user feedback on AnA output
+  | 'artifact_change' // From artifact versioning
+  | 'compliance_scan' // From compliance engine
+  | 'cross_module'; // From cross-module intelligence
 
 /**
  * Provenance: records which version of the intelligence system produced this signal.
@@ -151,7 +151,7 @@ export function captureJudgmentSignals(
   provenance: SignalProvenance,
   userId?: number,
   artifactId?: string,
-  artifactVersionId?: string,
+  artifactVersionId?: string
 ): IntelligenceSignal[] {
   const signals: IntelligenceSignal[] = [];
 
@@ -170,9 +170,8 @@ export function captureJudgmentSignals(
       defensibilityVerdict: score.verdict,
       score: score.score,
       confidence: score.confidence,
-      action: score.findings.length > 0
-        ? score.findings[0].remediation
-        : 'No immediate action required',
+      action:
+        score.findings.length > 0 ? score.findings[0].remediation : 'No immediate action required',
       patternIds: [],
       metadata: {
         model: score.model,
@@ -197,7 +196,7 @@ export function capturePatternSignals(
   sectionCode?: string,
   userId?: number,
   artifactId?: string,
-  artifactVersionId?: string,
+  artifactVersionId?: string
 ): IntelligenceSignal[] {
   const signals: IntelligenceSignal[] = [];
 
@@ -212,13 +211,22 @@ export function capturePatternSignals(
       artifactId,
       artifactVersionId,
       riskLevel: match.pattern.severity,
-      reviewerSensitivity: match.pattern.category === 'reviewer_trigger'
-        ? 'likely_question'
-        : match.pattern.severity === 'critical'
+      reviewerSensitivity:
+        match.pattern.category === 'reviewer_trigger'
+          ? 'likely_question'
+          : match.pattern.severity === 'critical'
           ? 'likely_question'
           : 'possible_question',
       defensibilityVerdict: severityToVerdict(match.pattern.severity),
-      score: 100 - (match.pattern.severity === 'critical' ? 80 : match.pattern.severity === 'high' ? 60 : match.pattern.severity === 'medium' ? 30 : 10),
+      score:
+        100 -
+        (match.pattern.severity === 'critical'
+          ? 80
+          : match.pattern.severity === 'high'
+          ? 60
+          : match.pattern.severity === 'medium'
+          ? 30
+          : 10),
       confidence: match.matchConfidence,
       action: match.pattern.remediation,
       patternIds: [match.patternId],
@@ -240,7 +248,7 @@ export function capturePatternSignals(
  * Capture a generic intelligence signal into working memory.
  */
 export function captureSignal(
-  input: Omit<IntelligenceSignal, 'signalId' | 'createdAt' | 'persisted'>,
+  input: Omit<IntelligenceSignal, 'signalId' | 'createdAt' | 'persisted'>
 ): IntelligenceSignal {
   const signal: IntelligenceSignal = {
     ...input,
@@ -303,7 +311,7 @@ export function querySignals(query: SignalQuery): IntelligenceSignal[] {
 export function getSectionHistory(
   organizationId: number,
   projectId: number,
-  sectionCode: string,
+  sectionCode: string
 ): IntelligenceSignal[] {
   const key = projectKey(organizationId, projectId);
   const signals = signalStore.get(key) ?? [];
@@ -319,7 +327,7 @@ export function getSectionHistory(
 export function getRecurringPatterns(
   organizationId: number,
   projectId: number,
-  sectionCode?: string,
+  sectionCode?: string
 ): Array<{ patternId: string; occurrences: number; firstSeen: string; lastSeen: string }> {
   const key = projectKey(organizationId, projectId);
   let signals = signalStore.get(key) ?? [];
@@ -329,7 +337,10 @@ export function getRecurringPatterns(
   }
 
   // Only count patterns from different runs
-  const patternRuns = new Map<string, { runIds: Set<string>; firstSeen: string; lastSeen: string }>();
+  const patternRuns = new Map<
+    string,
+    { runIds: Set<string>; firstSeen: string; lastSeen: string }
+  >();
 
   for (const signal of signals) {
     for (const pid of signal.patternIds) {
@@ -364,10 +375,7 @@ export function getRecurringPatterns(
  * Trend detection is grounded: requires minimum sample size and only
  * compares same-type signals.
  */
-export function getSignalSummary(
-  organizationId: number,
-  projectId: number,
-): SignalSummary {
+export function getSignalSummary(organizationId: number, projectId: number): SignalSummary {
   const key = projectKey(organizationId, projectId);
   const signals = signalStore.get(key) ?? [];
 
@@ -410,7 +418,8 @@ export function getSignalSummary(
     trendConfidence,
     trendSampleSize: sampleSize,
     periodStart: signals.length > 0 ? signals[0].createdAt : new Date().toISOString(),
-    periodEnd: signals.length > 0 ? signals[signals.length - 1].createdAt : new Date().toISOString(),
+    periodEnd:
+      signals.length > 0 ? signals[signals.length - 1].createdAt : new Date().toISOString(),
   };
 }
 
@@ -427,7 +436,7 @@ export function getSignalSummary(
 export async function persistSignals(
   organizationId: number,
   projectId: number,
-  runId: string,
+  runId: string
 ): Promise<PersistenceResult> {
   const key = projectKey(organizationId, projectId);
   const signals = signalStore.get(key) ?? [];
@@ -440,16 +449,20 @@ export async function persistSignals(
     // Lazy imports — avoids failing module load in test environments
     const { db } = await import('../../db.js');
     const { eq, and } = await import('drizzle-orm');
-    const { projectIntelligenceProfiles, projectMemoryEntries } = await import('../../../shared/schema.js');
+    const { projectIntelligenceProfiles, projectMemoryEntries } = await import(
+      '../../../shared/schema.js'
+    );
 
     // Get the project intelligence profile
     const [profile] = await db
       .select({ id: projectIntelligenceProfiles.id })
       .from(projectIntelligenceProfiles)
-      .where(and(
-        eq(projectIntelligenceProfiles.projectId, projectId),
-        eq(projectIntelligenceProfiles.organizationId, organizationId),
-      ))
+      .where(
+        and(
+          eq(projectIntelligenceProfiles.projectId, projectId),
+          eq(projectIntelligenceProfiles.organizationId, organizationId)
+        )
+      )
       .limit(1);
 
     if (!profile) {
@@ -465,9 +478,12 @@ export async function persistSignals(
 
     // Persist the summary + top signals as an intelligence record
     await db.insert(projectMemoryEntries).values({
-      profileId: profile.id,
+      projectProfileId: profile.id,
+      projectId,
       organizationId,
       category: 'intelligence_signal_summary',
+      subcategory: 'signal_capture',
+      title: `RIM Signal Summary ${runId}`,
       content: JSON.stringify({
         ...summary,
         runId,
@@ -488,13 +504,6 @@ export async function persistSignals(
             patternIds: s.patternIds,
             createdAt: s.createdAt,
           })),
-      }),
-      source: 'rim_signal_capture',
-      importance: summary.averageScore < 50 ? 'high' : 'medium',
-      metadata: {
-        runId,
-        signalCount: signals.length,
-        trendConfidence: summary.trendConfidence,
         topRisks: signals
           .filter(s => s.riskLevel === 'critical' || s.riskLevel === 'high')
           .slice(0, 5)
@@ -505,7 +514,12 @@ export async function persistSignals(
             section: s.sectionCode,
             artifactId: s.artifactId,
           })),
-      },
+      }),
+      sourceDocumentName: runId,
+      sourceDocumentType: 'system',
+      confidenceScore: 0.95,
+      importanceLevel: summary.averageScore < 50 ? 'high' : 'medium',
+      extractedBy: 'system',
     });
 
     // Mark in-memory signals as persisted
@@ -530,9 +544,11 @@ export async function persistSignals(
 // TREND COMPUTATION — Grounded, disciplined
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function computeTrend(
-  signals: IntelligenceSignal[],
-): { trend: 'improving' | 'stable' | 'declining'; trendConfidence: TrendConfidence; sampleSize: number } {
+function computeTrend(signals: IntelligenceSignal[]): {
+  trend: 'improving' | 'stable' | 'declining';
+  trendConfidence: TrendConfidence;
+  sampleSize: number;
+} {
   const sampleSize = signals.length;
 
   // Not enough data — don't pretend to know
@@ -546,29 +562,34 @@ function computeTrend(
   const recentHalf = signals.slice(midpoint);
 
   // Both halves must have minimum comparison size
-  if (olderHalf.length < MIN_TREND_COMPARISON_SIZE || recentHalf.length < MIN_TREND_COMPARISON_SIZE) {
+  if (
+    olderHalf.length < MIN_TREND_COMPARISON_SIZE ||
+    recentHalf.length < MIN_TREND_COMPARISON_SIZE
+  ) {
     return { trend: 'stable', trendConfidence: 'insufficient', sampleSize };
   }
 
   // Only compare signals produced by the same framework version (like-for-like)
   const recentVersion = recentHalf[recentHalf.length - 1]?.provenance?.judgmentFrameworkVersion;
   const compatibleRecent = recentHalf.filter(
-    s => s.provenance?.judgmentFrameworkVersion === recentVersion,
+    s => s.provenance?.judgmentFrameworkVersion === recentVersion
   );
   const compatibleOlder = olderHalf.filter(
-    s => s.provenance?.judgmentFrameworkVersion === recentVersion,
+    s => s.provenance?.judgmentFrameworkVersion === recentVersion
   );
 
   // If version changed mid-stream, we can still compute but with lower confidence
-  const versionConsistent = compatibleRecent.length === recentHalf.length
-    && compatibleOlder.length === olderHalf.length;
+  const versionConsistent =
+    compatibleRecent.length === recentHalf.length && compatibleOlder.length === olderHalf.length;
 
-  const recentAvg = compatibleRecent.length > 0
-    ? compatibleRecent.reduce((sum, s) => sum + s.score, 0) / compatibleRecent.length
-    : null;
-  const olderAvg = compatibleOlder.length > 0
-    ? compatibleOlder.reduce((sum, s) => sum + s.score, 0) / compatibleOlder.length
-    : null;
+  const recentAvg =
+    compatibleRecent.length > 0
+      ? compatibleRecent.reduce((sum, s) => sum + s.score, 0) / compatibleRecent.length
+      : null;
+  const olderAvg =
+    compatibleOlder.length > 0
+      ? compatibleOlder.reduce((sum, s) => sum + s.score, 0) / compatibleOlder.length
+      : null;
 
   // Can't compute if either side is empty after version filtering
   if (recentAvg === null || olderAvg === null) {
@@ -599,11 +620,16 @@ function computeTrend(
 
 function verdictToRisk(verdict: JudgmentVerdict): IntelligenceSignal['riskLevel'] {
   switch (verdict) {
-    case 'fail': return 'critical';
-    case 'at_risk': return 'high';
-    case 'needs_attention': return 'medium';
-    case 'acceptable': return 'low';
-    case 'pass': return 'none';
+    case 'fail':
+      return 'critical';
+    case 'at_risk':
+      return 'high';
+    case 'needs_attention':
+      return 'medium';
+    case 'acceptable':
+      return 'low';
+    case 'pass':
+      return 'none';
   }
 }
 
@@ -615,9 +641,13 @@ function scoreToSensitivity(score: number): IntelligenceSignal['reviewerSensitiv
 
 function severityToVerdict(severity: 'critical' | 'high' | 'medium' | 'low'): JudgmentVerdict {
   switch (severity) {
-    case 'critical': return 'fail';
-    case 'high': return 'at_risk';
-    case 'medium': return 'needs_attention';
-    case 'low': return 'acceptable';
+    case 'critical':
+      return 'fail';
+    case 'high':
+      return 'at_risk';
+    case 'medium':
+      return 'needs_attention';
+    case 'low':
+      return 'acceptable';
   }
 }

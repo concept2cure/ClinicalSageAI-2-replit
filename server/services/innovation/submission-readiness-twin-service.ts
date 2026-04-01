@@ -1,16 +1,16 @@
 /**
  * Submission Readiness Twin Service
- * 
+ *
  * Enterprise-grade digital twin for predictive regulatory readiness scoring.
  * Provides real-time assessment of submission completeness, quality, and
  * predicted outcomes.
- * 
+ *
  * Features:
  * - Multi-criteria readiness evaluation
  * - Predictive approval probability
  * - Module-level scoring and gap analysis
  * - Historical trend tracking
- * 
+ *
  * Part 11 Compliance: Full audit trail for all assessments
  */
 
@@ -130,9 +130,8 @@ export class SubmissionReadinessTwinService {
   private static assessmentsCache: ReadinessTwinAssessment[] = [];
   private static tablesInitialized = false;
 
-  constructor(pool: Pool, openaiApiKey?: string) {
+  constructor(pool: Pool, _openaiApiKey?: string) {
     this.pool = pool;
-    this.openai = getOpenAIClient();
     this.ensureTables();
   }
 
@@ -251,35 +250,198 @@ export class SubmissionReadinessTwinService {
    */
   private async seedDefaultCriteria(client: any): Promise<void> {
     const defaultCriteria = [
-      { code: 'ectd_structure', name: 'eCTD Structure Compliance', module: 'm1', desc: 'Submission follows eCTD format with valid XML backbone and all required module folders', weight: 1.5, req: 'mandatory', guidance: 'FDA eCTD Guidance v4.0' },
-      { code: 'form_356h', name: 'FDA Form 356h', module: 'm1', desc: 'Complete and signed FDA Form 356h included', weight: 1.0, req: 'mandatory', guidance: '21 CFR 314.50(a)' },
-      { code: 'user_fee', name: 'PDUFA User Fee', module: 'm1', desc: 'PDUFA user fee payment confirmed or waiver obtained', weight: 1.0, req: 'mandatory', guidance: 'PDUFA Reauthorization Act' },
-      { code: 'clinical_overview', name: 'Clinical Overview (2.5)', module: 'm2.5', desc: 'Module 2.5 Clinical Overview provides integrated analysis of clinical evidence', weight: 2.0, req: 'mandatory', guidance: 'ICH M4E(R2)' },
-      { code: 'clinical_summary', name: 'Clinical Summary (2.7)', module: 'm2.7', desc: 'Module 2.7 Clinical Summary with efficacy and safety summaries', weight: 2.0, req: 'mandatory', guidance: 'ICH M4E(R2)' },
-      { code: 'quality_summary', name: 'Quality Overall Summary (2.3)', module: 'm2.3', desc: 'Module 2.3 Quality Overall Summary covering drug substance and product', weight: 1.5, req: 'mandatory', guidance: 'ICH M4Q(R1)' },
-      { code: 'nonclinical_overview', name: 'Nonclinical Overview (2.4)', module: 'm2.4', desc: 'Module 2.4 Nonclinical Overview with integrated safety assessment', weight: 1.5, req: 'mandatory', guidance: 'ICH M4S(R2)' },
-      { code: 'drug_substance', name: 'Drug Substance (3.2.S)', module: 'm3.2.s', desc: 'Complete characterization of drug substance including manufacturing, controls, and stability', weight: 2.0, req: 'mandatory', guidance: 'ICH Q1-Q12' },
-      { code: 'drug_product', name: 'Drug Product (3.2.P)', module: 'm3.2.p', desc: 'Drug product formulation, manufacturing, specifications, and stability data', weight: 2.0, req: 'mandatory', guidance: 'ICH Q1-Q12' },
-      { code: 'stability_data', name: 'Stability Data', module: 'm3', desc: 'Minimum 6 months accelerated and 12 months long-term stability data', weight: 1.5, req: 'mandatory', guidance: 'ICH Q1A(R2), Q1E' },
-      { code: 'tox_package', name: 'Toxicology Package', module: 'm4', desc: 'Complete nonclinical toxicology package per ICH M3(R2)', weight: 1.5, req: 'mandatory', guidance: 'ICH M3(R2), S1-S11' },
-      { code: 'genotox_battery', name: 'Genotoxicity Battery', module: 'm4', desc: 'Standard genotoxicity battery (Ames, in vitro chromosomal, in vivo micronucleus)', weight: 1.0, req: 'mandatory', guidance: 'ICH S2(R1)' },
-      { code: 'pivotal_studies', name: 'Pivotal Clinical Studies', module: 'm5', desc: 'At least one adequate and well-controlled clinical study per 21 CFR 314.126', weight: 2.5, req: 'mandatory', guidance: '21 CFR 314.126, ICH E8/E9' },
-      { code: 'safety_database', name: 'Safety Database Size', module: 'm5', desc: 'Safety database meets ICH E1 requirements (300/100/1500 rule for chronic use)', weight: 2.0, req: 'mandatory', guidance: 'ICH E1' },
-      { code: 'statistical_analysis', name: 'Statistical Analysis Plan', module: 'm5', desc: 'Pre-specified statistical analysis plan with appropriate multiplicity control', weight: 1.5, req: 'mandatory', guidance: 'ICH E9(R1)' },
-      { code: 'labeling_draft', name: 'Draft Labeling', module: 'm1', desc: 'Proposed product labeling including prescribing information', weight: 1.0, req: 'mandatory', guidance: '21 CFR 201' },
-      { code: 'pediatric_plan', name: 'Pediatric Study Plan', module: 'm1', desc: 'Pediatric study plan or waiver request per PREA', weight: 0.8, req: 'conditional', guidance: 'PREA, 21 CFR 314.55' },
-      { code: 'rems', name: 'REMS Assessment', module: 'm1', desc: 'Risk Evaluation and Mitigation Strategy if safety profile warrants', weight: 0.8, req: 'conditional', guidance: 'FDA REMS Guidance' },
-      { code: 'environmental_assessment', name: 'Environmental Assessment', module: 'm1', desc: 'Environmental assessment or categorical exclusion claim', weight: 0.5, req: 'recommended', guidance: '21 CFR 25' },
-      { code: 'patent_info', name: 'Patent Information', module: 'm1', desc: 'Patent and exclusivity information for Orange Book listing', weight: 0.5, req: 'recommended', guidance: '21 CFR 314.53' },
+      {
+        code: 'ectd_structure',
+        name: 'eCTD Structure Compliance',
+        module: 'm1',
+        desc: 'Submission follows eCTD format with valid XML backbone and all required module folders',
+        weight: 1.5,
+        req: 'mandatory',
+        guidance: 'FDA eCTD Guidance v4.0',
+      },
+      {
+        code: 'form_356h',
+        name: 'FDA Form 356h',
+        module: 'm1',
+        desc: 'Complete and signed FDA Form 356h included',
+        weight: 1.0,
+        req: 'mandatory',
+        guidance: '21 CFR 314.50(a)',
+      },
+      {
+        code: 'user_fee',
+        name: 'PDUFA User Fee',
+        module: 'm1',
+        desc: 'PDUFA user fee payment confirmed or waiver obtained',
+        weight: 1.0,
+        req: 'mandatory',
+        guidance: 'PDUFA Reauthorization Act',
+      },
+      {
+        code: 'clinical_overview',
+        name: 'Clinical Overview (2.5)',
+        module: 'm2.5',
+        desc: 'Module 2.5 Clinical Overview provides integrated analysis of clinical evidence',
+        weight: 2.0,
+        req: 'mandatory',
+        guidance: 'ICH M4E(R2)',
+      },
+      {
+        code: 'clinical_summary',
+        name: 'Clinical Summary (2.7)',
+        module: 'm2.7',
+        desc: 'Module 2.7 Clinical Summary with efficacy and safety summaries',
+        weight: 2.0,
+        req: 'mandatory',
+        guidance: 'ICH M4E(R2)',
+      },
+      {
+        code: 'quality_summary',
+        name: 'Quality Overall Summary (2.3)',
+        module: 'm2.3',
+        desc: 'Module 2.3 Quality Overall Summary covering drug substance and product',
+        weight: 1.5,
+        req: 'mandatory',
+        guidance: 'ICH M4Q(R1)',
+      },
+      {
+        code: 'nonclinical_overview',
+        name: 'Nonclinical Overview (2.4)',
+        module: 'm2.4',
+        desc: 'Module 2.4 Nonclinical Overview with integrated safety assessment',
+        weight: 1.5,
+        req: 'mandatory',
+        guidance: 'ICH M4S(R2)',
+      },
+      {
+        code: 'drug_substance',
+        name: 'Drug Substance (3.2.S)',
+        module: 'm3.2.s',
+        desc: 'Complete characterization of drug substance including manufacturing, controls, and stability',
+        weight: 2.0,
+        req: 'mandatory',
+        guidance: 'ICH Q1-Q12',
+      },
+      {
+        code: 'drug_product',
+        name: 'Drug Product (3.2.P)',
+        module: 'm3.2.p',
+        desc: 'Drug product formulation, manufacturing, specifications, and stability data',
+        weight: 2.0,
+        req: 'mandatory',
+        guidance: 'ICH Q1-Q12',
+      },
+      {
+        code: 'stability_data',
+        name: 'Stability Data',
+        module: 'm3',
+        desc: 'Minimum 6 months accelerated and 12 months long-term stability data',
+        weight: 1.5,
+        req: 'mandatory',
+        guidance: 'ICH Q1A(R2), Q1E',
+      },
+      {
+        code: 'tox_package',
+        name: 'Toxicology Package',
+        module: 'm4',
+        desc: 'Complete nonclinical toxicology package per ICH M3(R2)',
+        weight: 1.5,
+        req: 'mandatory',
+        guidance: 'ICH M3(R2), S1-S11',
+      },
+      {
+        code: 'genotox_battery',
+        name: 'Genotoxicity Battery',
+        module: 'm4',
+        desc: 'Standard genotoxicity battery (Ames, in vitro chromosomal, in vivo micronucleus)',
+        weight: 1.0,
+        req: 'mandatory',
+        guidance: 'ICH S2(R1)',
+      },
+      {
+        code: 'pivotal_studies',
+        name: 'Pivotal Clinical Studies',
+        module: 'm5',
+        desc: 'At least one adequate and well-controlled clinical study per 21 CFR 314.126',
+        weight: 2.5,
+        req: 'mandatory',
+        guidance: '21 CFR 314.126, ICH E8/E9',
+      },
+      {
+        code: 'safety_database',
+        name: 'Safety Database Size',
+        module: 'm5',
+        desc: 'Safety database meets ICH E1 requirements (300/100/1500 rule for chronic use)',
+        weight: 2.0,
+        req: 'mandatory',
+        guidance: 'ICH E1',
+      },
+      {
+        code: 'statistical_analysis',
+        name: 'Statistical Analysis Plan',
+        module: 'm5',
+        desc: 'Pre-specified statistical analysis plan with appropriate multiplicity control',
+        weight: 1.5,
+        req: 'mandatory',
+        guidance: 'ICH E9(R1)',
+      },
+      {
+        code: 'labeling_draft',
+        name: 'Draft Labeling',
+        module: 'm1',
+        desc: 'Proposed product labeling including prescribing information',
+        weight: 1.0,
+        req: 'mandatory',
+        guidance: '21 CFR 201',
+      },
+      {
+        code: 'pediatric_plan',
+        name: 'Pediatric Study Plan',
+        module: 'm1',
+        desc: 'Pediatric study plan or waiver request per PREA',
+        weight: 0.8,
+        req: 'conditional',
+        guidance: 'PREA, 21 CFR 314.55',
+      },
+      {
+        code: 'rems',
+        name: 'REMS Assessment',
+        module: 'm1',
+        desc: 'Risk Evaluation and Mitigation Strategy if safety profile warrants',
+        weight: 0.8,
+        req: 'conditional',
+        guidance: 'FDA REMS Guidance',
+      },
+      {
+        code: 'environmental_assessment',
+        name: 'Environmental Assessment',
+        module: 'm1',
+        desc: 'Environmental assessment or categorical exclusion claim',
+        weight: 0.5,
+        req: 'recommended',
+        guidance: '21 CFR 25',
+      },
+      {
+        code: 'patent_info',
+        name: 'Patent Information',
+        module: 'm1',
+        desc: 'Patent and exclusivity information for Orange Book listing',
+        weight: 0.5,
+        req: 'recommended',
+        guidance: '21 CFR 314.53',
+      },
     ];
 
     for (const c of defaultCriteria) {
-      await client.query(`
+      await client.query(
+        `
         INSERT INTO innovation.readiness_criteria
           (submission_type, agency, module_path, criterion_code, criterion_name, description, requirement_type, weight, guidance_reference, is_active)
         VALUES ('NDA', 'FDA', $1, $2, $3, $4, $5, $6, $7, TRUE)
         ON CONFLICT (submission_type, agency, criterion_code) DO NOTHING
-      `, [c.module, c.code, c.name, c.desc, c.req, c.weight, c.guidance]);
+      `,
+        [c.module, c.code, c.name, c.desc, c.req, c.weight, c.guidance]
+      );
     }
 
     console.log('[ReadinessTwin] Seeded default FDA NDA readiness criteria');
@@ -297,7 +459,10 @@ export class SubmissionReadinessTwinService {
     evaluationMethod?: string;
     requiredDocuments?: string[];
   }): Promise<ReadinessCriterion> {
-    const criterionCode = input.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 40);
+    const criterionCode = input.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .slice(0, 40);
     const client = await this.pool.connect();
     await client.query("SET app.bypass_rls = 'true'");
     await client.query("SET app.is_admin = 'true'");
@@ -318,7 +483,7 @@ export class SubmissionReadinessTwinService {
         input.name,
         input.description,
         'mandatory',
-        input.weight
+        input.weight,
       ]
     );
 
@@ -334,7 +499,7 @@ export class SubmissionReadinessTwinService {
         description: input.description,
         requirementType: 'mandatory',
         weight: input.weight,
-        isActive: true
+        isActive: true,
       } as ReadinessCriterion;
       SubmissionReadinessTwinService.criteriaCache.push(fallback);
       client.release();
@@ -350,16 +515,22 @@ export class SubmissionReadinessTwinService {
   /**
    * Get all criteria for a submission type and agency
    */
-  async getCriteria(submissionTypeOrProgramId: string, agency?: string): Promise<ReadinessCriterion[]> {
+  async getCriteria(
+    submissionTypeOrProgramId: string,
+    agency?: string
+  ): Promise<ReadinessCriterion[]> {
     if (agency) {
-      const result = await this.pool.query(`
+      const result = await this.pool.query(
+        `
         SELECT * FROM innovation.readiness_criteria
-        WHERE submission_type = $1 
-          AND agency = $2 
+        WHERE submission_type = $1
+          AND agency = $2
           AND is_active = TRUE
           AND (effective_date IS NULL OR effective_date <= CURRENT_DATE)
         ORDER BY module_path, criterion_code
-      `, [submissionTypeOrProgramId, agency]);
+      `,
+        [submissionTypeOrProgramId, agency]
+      );
 
       return result.rows.map(this.mapCriterion);
     }
@@ -382,11 +553,13 @@ export class SubmissionReadinessTwinService {
    * Run a comprehensive readiness assessment
    */
   async runAssessment(
-    programIdOrOptions: string | {
-      programId: string;
-      submissionType: string;
-      targetAgency: string;
-    },
+    programIdOrOptions:
+      | string
+      | {
+          programId: string;
+          submissionType: string;
+          targetAgency: string;
+        },
     submissionType?: string,
     targetAgency?: string,
     documentData?: Map<string, any>
@@ -399,19 +572,26 @@ export class SubmissionReadinessTwinService {
         documentData
       );
 
-      const categoryScores = Object.entries(assessment.moduleScores || {}).map(([category, score]) => ({
-        category,
-        score
-      }));
+      const categoryScores = Object.entries(assessment.moduleScores || {}).map(
+        ([category, score]) => ({
+          category,
+          score,
+        })
+      );
 
       return {
         ...assessment,
         overallScore: assessment.overallReadinessScore,
-        categoryScores
+        categoryScores,
       };
     }
 
-    return this.runAssessmentInternal(programIdOrOptions, submissionType!, targetAgency!, documentData);
+    return this.runAssessmentInternal(
+      programIdOrOptions,
+      submissionType!,
+      targetAgency!,
+      documentData
+    );
   }
 
   private async runAssessmentInternal(
@@ -455,12 +635,12 @@ export class SubmissionReadinessTwinService {
       }
 
       // Calculate overall score
-      const overallScore = totalWeight > 0 ? (totalWeightedScore / totalWeight) : 0;
+      const overallScore = totalWeight > 0 ? totalWeightedScore / totalWeight : 0;
 
       // Calculate module-level scores
       const moduleScoreObj: Record<string, number> = {};
       for (const [module, data] of moduleScores) {
-        moduleScoreObj[module] = data.weight > 0 ? (data.score / data.weight) : 0;
+        moduleScoreObj[module] = data.weight > 0 ? data.score / data.weight : 0;
       }
 
       // Calculate dimension scores
@@ -478,7 +658,8 @@ export class SubmissionReadinessTwinService {
       const riskFactors = this.identifyRiskFactors(evaluations, criteria);
 
       // Create assessment record
-      const assessmentResult = await client.query(`
+      const assessmentResult = await client.query(
+        `
         INSERT INTO innovation.readiness_twin_assessments (
           program_id, assessment_type, submission_type, target_agency,
           overall_readiness_score, module_scores,
@@ -492,21 +673,23 @@ export class SubmissionReadinessTwinService {
           $10, $11, $12, $13, 'completed'
         )
         RETURNING *
-      `, [
-        programId,
-        submissionType,
-        targetAgency,
-        overallScore,
-        JSON.stringify(moduleScoreObj),
-        dimensionScores.completeness,
-        dimensionScores.quality,
-        dimensionScores.consistency,
-        dimensionScores.compliance,
-        predictions.approvalProbability,
-        predictions.reviewTimeDays,
-        predictions.deficiencyCount,
-        JSON.stringify(riskFactors)
-      ]);
+      `,
+        [
+          programId,
+          submissionType,
+          targetAgency,
+          overallScore,
+          JSON.stringify(moduleScoreObj),
+          dimensionScores.completeness,
+          dimensionScores.quality,
+          dimensionScores.consistency,
+          dimensionScores.compliance,
+          predictions.approvalProbability,
+          predictions.reviewTimeDays,
+          predictions.deficiencyCount,
+          JSON.stringify(riskFactors),
+        ]
+      );
 
       const assessmentRow = assessmentResult?.rows?.[0];
       if (!assessmentRow) {
@@ -520,7 +703,7 @@ export class SubmissionReadinessTwinService {
           overallReadinessScore: overallScore,
           moduleScores: moduleScoreObj,
           status: 'completed',
-          assessedAt: new Date()
+          assessedAt: new Date(),
         } as ReadinessTwinAssessment;
         SubmissionReadinessTwinService.assessmentsCache.push(fallback);
         return fallback;
@@ -530,23 +713,26 @@ export class SubmissionReadinessTwinService {
 
       // Store criterion evaluations
       for (const evaluation of evaluations) {
-        await client.query(`
+        await client.query(
+          `
           INSERT INTO innovation.readiness_criterion_evaluations (
             assessment_id, criterion_id, status, score,
             evidence_summary, evidence_locations, gaps_identified,
             recommendations, estimated_effort_hours
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        `, [
-          assessment.id,
-          evaluation.criterionId,
-          evaluation.status,
-          evaluation.score,
-          evaluation.evidenceSummary,
-          evaluation.evidenceLocations,
-          evaluation.gapsIdentified,
-          evaluation.recommendations,
-          evaluation.estimatedEffortHours
-        ]);
+        `,
+          [
+            assessment.id,
+            evaluation.criterionId,
+            evaluation.status,
+            evaluation.score,
+            evaluation.evidenceSummary,
+            evaluation.evidenceLocations,
+            evaluation.gapsIdentified,
+            evaluation.recommendations,
+            evaluation.estimatedEffortHours,
+          ]
+        );
       }
 
       // Record trend data
@@ -557,7 +743,6 @@ export class SubmissionReadinessTwinService {
       console.log(`[ReadinessTwin] Assessment completed: score=${overallScore.toFixed(1)}`);
       SubmissionReadinessTwinService.assessmentsCache.push(assessment);
       return assessment;
-
     } catch (error) {
       await client.query('ROLLBACK');
       console.error('[ReadinessTwin] Assessment failed:', error);
@@ -576,7 +761,7 @@ export class SubmissionReadinessTwinService {
   ): Promise<CriterionEvaluation> {
     // For now, use a rule-based evaluation
     // In production, this would integrate with actual document analysis
-    
+
     let status: CriterionEvaluation['status'] = 'not_met';
     let score = 0;
     const gaps: string[] = [];
@@ -584,8 +769,8 @@ export class SubmissionReadinessTwinService {
     let effortHours = 0;
 
     // Check if we have document data for this module
-    const hasContent = documentData?.has(criterion.modulePath || '') || 
-                       documentData?.has(criterion.criterionCode);
+    const hasContent =
+      documentData?.has(criterion.modulePath || '') || documentData?.has(criterion.criterionCode);
 
     if (hasContent) {
       // Simulate content analysis
@@ -596,7 +781,9 @@ export class SubmissionReadinessTwinService {
       } else if (random > 0.4) {
         status = 'partially_met';
         score = 60;
-        gaps.push(`Criterion "${criterion.criterionName}" is partially addressed but needs enhancement`);
+        gaps.push(
+          `Criterion "${criterion.criterionName}" is partially addressed but needs enhancement`
+        );
         recommendations.push(`Review and enhance content for: ${criterion.description}`);
         effortHours = 4;
       } else {
@@ -632,11 +819,13 @@ export class SubmissionReadinessTwinService {
       criterionId: criterion.id,
       status,
       score,
-      evidenceSummary: hasContent ? 'Content found in submission documents' : 'No matching content found',
+      evidenceSummary: hasContent
+        ? 'Content found in submission documents'
+        : 'No matching content found',
       evidenceLocations: hasContent ? [criterion.modulePath || 'general'] : [],
       gapsIdentified: gaps,
       recommendations,
-      estimatedEffortHours: effortHours
+      estimatedEffortHours: effortHours,
     };
   }
 
@@ -654,29 +843,27 @@ export class SubmissionReadinessTwinService {
   } {
     // Completeness: % of mandatory criteria met
     const mandatory = criteria.filter(c => c.requirementType === 'mandatory');
-    const mandatoryEvals = evaluations.filter(e => 
-      mandatory.some(c => c.id === e.criterionId)
+    const mandatoryEvals = evaluations.filter(e => mandatory.some(c => c.id === e.criterionId));
+    const mandatoryMet = mandatoryEvals.filter(
+      e => e.status === 'met' || e.status === 'not_applicable'
     );
-    const mandatoryMet = mandatoryEvals.filter(e => e.status === 'met' || e.status === 'not_applicable');
-    const completeness = mandatory.length > 0 
-      ? (mandatoryMet.length / mandatory.length) * 100 
-      : 100;
+    const completeness =
+      mandatory.length > 0 ? (mandatoryMet.length / mandatory.length) * 100 : 100;
 
     // Quality: average score across all evaluations
-    const avgScore = evaluations.reduce((sum, e) => sum + e.score, 0) / Math.max(evaluations.length, 1);
+    const avgScore =
+      evaluations.reduce((sum, e) => sum + e.score, 0) / Math.max(evaluations.length, 1);
     const quality = avgScore;
 
     // Consistency: standard deviation of scores (lower is better)
-    const variance = evaluations.reduce((sum, e) => sum + Math.pow(e.score - avgScore, 2), 0) / Math.max(evaluations.length, 1);
+    const variance =
+      evaluations.reduce((sum, e) => sum + Math.pow(e.score - avgScore, 2), 0) /
+      Math.max(evaluations.length, 1);
     const consistency = Math.max(0, 100 - Math.sqrt(variance));
 
     // Compliance: % of criteria with no gaps
-    const compliant = evaluations.filter(e => 
-      e.status === 'met' || e.status === 'not_applicable'
-    );
-    const compliance = evaluations.length > 0 
-      ? (compliant.length / evaluations.length) * 100 
-      : 0;
+    const compliant = evaluations.filter(e => e.status === 'met' || e.status === 'not_applicable');
+    const compliance = evaluations.length > 0 ? (compliant.length / evaluations.length) * 100 : 0;
 
     return { completeness, quality, consistency, compliance };
   }
@@ -696,9 +883,9 @@ export class SubmissionReadinessTwinService {
   }> {
     // Simple prediction model based on score
     // In production, this would use ML models trained on historical data
-    
-    const criticalGaps = evaluations.filter(e => 
-      e.status === 'not_met' && e.gapsIdentified && e.gapsIdentified.length > 0
+
+    const criticalGaps = evaluations.filter(
+      e => e.status === 'not_met' && e.gapsIdentified && e.gapsIdentified.length > 0
     ).length;
 
     // Approval probability decreases with score and critical gaps
@@ -708,18 +895,18 @@ export class SubmissionReadinessTwinService {
 
     // Review time increases with complexity and gaps
     const baseReviewDays: Record<string, number> = {
-      'IND': 30,
-      'NDA': 300,
-      'BLA': 300,
+      IND: 30,
+      NDA: 300,
+      BLA: 300,
       '510k': 90,
-      'PMA': 180
+      PMA: 180,
     };
     let reviewTimeDays = baseReviewDays[submissionType] || 180;
     reviewTimeDays += criticalGaps * 30; // Each gap adds ~30 days
 
     // Deficiency count based on gaps
-    const deficiencyCount = evaluations.filter(e => 
-      e.status === 'not_met' || e.status === 'partially_met'
+    const deficiencyCount = evaluations.filter(
+      e => e.status === 'not_met' || e.status === 'partially_met'
     ).length;
 
     return { approvalProbability, reviewTimeDays, deficiencyCount };
@@ -728,7 +915,9 @@ export class SubmissionReadinessTwinService {
   /**
    * Generate predictive summary for a program
    */
-  async generatePredictions(programId: string): Promise<{ predictedScore: number; confidenceInterval: [number, number] }> {
+  async generatePredictions(
+    programId: string
+  ): Promise<{ predictedScore: number; confidenceInterval: [number, number] }> {
     const result = await this.pool.query(
       `
       SELECT overall_readiness_score
@@ -743,14 +932,17 @@ export class SubmissionReadinessTwinService {
     const score = result.rows.length > 0 ? parseFloat(result.rows[0].overall_readiness_score) : 0;
     return {
       predictedScore: score,
-      confidenceInterval: [Math.max(0, score - 5), Math.min(100, score + 5)]
+      confidenceInterval: [Math.max(0, score - 5), Math.min(100, score + 5)],
     };
   }
 
   /**
    * Analyze readiness trends
    */
-  async analyzeTrends(programId: string, options?: { lookbackDays?: number }): Promise<{ trendData: ReadinessTrend[] }> {
+  async analyzeTrends(
+    programId: string,
+    options?: { lookbackDays?: number }
+  ): Promise<{ trendData: ReadinessTrend[] }> {
     const trendData = await this.getTrendData(programId, options?.lookbackDays || 30);
     return { trendData };
   }
@@ -779,16 +971,18 @@ export class SubmissionReadinessTwinService {
         const criterion = criteria.find(c => c.id === evaluation.criterionId);
         if (!criterion) continue;
 
-        const severity = criterion.impactOnRejection || 
+        const severity =
+          criterion.impactOnRejection ||
           (criterion.requirementType === 'mandatory' ? 'high' : 'medium');
 
         risks.push({
           risk: `Gap in: ${criterion.criterionName}`,
           severity,
-          impact: criterion.requirementType === 'mandatory' 
-            ? 'May result in refuse-to-file or complete response letter'
-            : 'May result in information request',
-          mitigation: evaluation.recommendations?.[0] || 'Address the identified gap'
+          impact:
+            criterion.requirementType === 'mandatory'
+              ? 'May result in refuse-to-file or complete response letter'
+              : 'May result in information request',
+          mitigation: evaluation.recommendations?.[0] || 'Address the identified gap',
         });
       }
     }
@@ -814,18 +1008,23 @@ export class SubmissionReadinessTwinService {
     const criteriaTotal = evaluations.length;
 
     // Get previous score for delta calculation
-    const prevResult = await client.query(`
+    const prevResult = await client.query(
+      `
       SELECT overall_score FROM innovation.readiness_trends
       WHERE program_id = $1
       ORDER BY trend_date DESC
       LIMIT 1
-    `, [programId]);
+    `,
+      [programId]
+    );
 
-    const scoreDelta = prevResult.rows.length > 0 
-      ? overallScore - parseFloat(prevResult.rows[0].overall_score)
-      : null;
+    const scoreDelta =
+      prevResult.rows.length > 0
+        ? overallScore - parseFloat(prevResult.rows[0].overall_score)
+        : null;
 
-    await client.query(`
+    await client.query(
+      `
       INSERT INTO innovation.readiness_trends (
         program_id, trend_date, overall_score, module_scores,
         criteria_met_count, criteria_total_count, score_delta
@@ -836,27 +1035,36 @@ export class SubmissionReadinessTwinService {
         criteria_met_count = EXCLUDED.criteria_met_count,
         criteria_total_count = EXCLUDED.criteria_total_count,
         score_delta = EXCLUDED.score_delta
-    `, [
-      programId,
-      overallScore,
-      JSON.stringify(moduleScores),
-      criteriaMet,
-      criteriaTotal,
-      scoreDelta
-    ]);
+    `,
+      [
+        programId,
+        overallScore,
+        JSON.stringify(moduleScores),
+        criteriaMet,
+        criteriaTotal,
+        scoreDelta,
+      ]
+    );
   }
 
   /**
    * Get full dashboard data
    */
-  async getDashboard(programId: string, submissionType: string, agency: string): Promise<ReadinessDashboard> {
+  async getDashboard(
+    programId: string,
+    submissionType: string,
+    agency: string
+  ): Promise<ReadinessDashboard> {
     // Get latest assessment
-    const assessmentResult = await this.pool.query(`
+    const assessmentResult = await this.pool.query(
+      `
       SELECT * FROM innovation.readiness_twin_assessments
       WHERE program_id = $1 AND submission_type = $2 AND target_agency = $3
       ORDER BY assessed_at DESC
       LIMIT 1
-    `, [programId, submissionType, agency]);
+    `,
+      [programId, submissionType, agency]
+    );
 
     if (assessmentResult.rows.length === 0) {
       // Return empty dashboard if no assessment exists
@@ -866,20 +1074,26 @@ export class SubmissionReadinessTwinService {
     const assessment = this.mapAssessment(assessmentResult.rows[0]);
 
     // Get evaluations
-    const evalsResult = await this.pool.query(`
+    const evalsResult = await this.pool.query(
+      `
       SELECT ce.*, rc.criterion_name, rc.module_path, rc.requirement_type
       FROM innovation.readiness_criterion_evaluations ce
       JOIN innovation.readiness_criteria rc ON rc.id = ce.criterion_id
       WHERE ce.assessment_id = $1
-    `, [assessment.id]);
+    `,
+      [assessment.id]
+    );
 
     // Get trend data
-    const trendResult = await this.pool.query(`
+    const trendResult = await this.pool.query(
+      `
       SELECT * FROM innovation.readiness_trends
       WHERE program_id = $1
       ORDER BY trend_date DESC
       LIMIT 30
-    `, [programId]);
+    `,
+      [programId]
+    );
 
     // Calculate trend direction
     const trends = trendResult.rows;
@@ -890,7 +1104,7 @@ export class SubmissionReadinessTwinService {
       const latestScore = parseFloat(trends[0].overall_score);
       const previousScore = parseFloat(trends[1].overall_score);
       trendDelta = latestScore - previousScore;
-      
+
       if (trendDelta > 2) trendDirection = 'improving';
       else if (trendDelta < -2) trendDirection = 'declining';
     }
@@ -904,7 +1118,7 @@ export class SubmissionReadinessTwinService {
       partiallyMet: evalsResult.rows.filter((e: any) => e.status === 'partially_met').length,
       notMet: evalsResult.rows.filter((e: any) => e.status === 'not_met').length,
       notApplicable: evalsResult.rows.filter((e: any) => e.status === 'not_applicable').length,
-      total: evalsResult.rows.length
+      total: evalsResult.rows.length,
     };
 
     // Build top recommendations
@@ -922,7 +1136,7 @@ export class SubmissionReadinessTwinService {
         priority: i + 1,
         recommendation: e.recommendations[0],
         effort: `${e.estimated_effort_hours || 'N/A'} hours`,
-        impact: e.requirement_type === 'mandatory' ? 'High' : 'Medium'
+        impact: e.requirement_type === 'mandatory' ? 'High' : 'Medium',
       }));
 
     return {
@@ -932,12 +1146,12 @@ export class SubmissionReadinessTwinService {
       predictedOutcome: {
         approvalProbability: assessment.predictedApprovalProbability || 0,
         reviewTimeDays: assessment.predictedReviewTimeDays || 0,
-        deficiencyCount: assessment.predictedDeficiencyCount || 0
+        deficiencyCount: assessment.predictedDeficiencyCount || 0,
       },
       moduleReadiness,
       topRisks: (assessment.riskFactors as any[]) || [],
       topRecommendations: recommendations,
-      criteriaProgress
+      criteriaProgress,
     };
   }
 
@@ -945,12 +1159,15 @@ export class SubmissionReadinessTwinService {
    * Build module readiness hierarchy
    */
   private buildModuleReadiness(evaluations: any[]): ModuleReadiness[] {
-    const moduleMap = new Map<string, {
-      name: string;
-      scores: number[];
-      gaps: string[];
-      recommendations: string[];
-    }>();
+    const moduleMap = new Map<
+      string,
+      {
+        name: string;
+        scores: number[];
+        gaps: string[];
+        recommendations: string[];
+      }
+    >();
 
     for (const eval_ of evaluations) {
       const module = eval_.module_path || 'general';
@@ -958,7 +1175,7 @@ export class SubmissionReadinessTwinService {
         name: this.getModuleName(module),
         scores: [],
         gaps: [],
-        recommendations: []
+        recommendations: [],
       };
 
       existing.scores.push(eval_.score);
@@ -982,7 +1199,7 @@ export class SubmissionReadinessTwinService {
         criteriaMet: data.scores.filter(s => s >= 80).length,
         criteriaTotal: data.scores.length,
         gaps: [...new Set(data.gaps)].slice(0, 5),
-        recommendations: [...new Set(data.recommendations)].slice(0, 5)
+        recommendations: [...new Set(data.recommendations)].slice(0, 5),
       });
     }
 
@@ -997,19 +1214,19 @@ export class SubmissionReadinessTwinService {
    */
   private getModuleName(path: string): string {
     const names: Record<string, string> = {
-      'm1': 'Module 1: Administrative',
-      'm2': 'Module 2: Summaries',
+      m1: 'Module 1: Administrative',
+      m2: 'Module 2: Summaries',
       'm2.3': 'Module 2.3: Quality Summary',
       'm2.4': 'Module 2.4: Nonclinical Overview',
       'm2.5': 'Module 2.5: Clinical Overview',
       'm2.6': 'Module 2.6: Nonclinical Summary',
       'm2.7': 'Module 2.7: Clinical Summary',
-      'm3': 'Module 3: Quality',
+      m3: 'Module 3: Quality',
       'm3.2.s': 'Module 3.2.S: Drug Substance',
       'm3.2.p': 'Module 3.2.P: Drug Product',
-      'm4': 'Module 4: Nonclinical',
-      'm5': 'Module 5: Clinical',
-      'general': 'General Requirements'
+      m4: 'Module 4: Nonclinical',
+      m5: 'Module 5: Clinical',
+      general: 'General Requirements',
     };
     return names[path] || path;
   }
@@ -1025,7 +1242,7 @@ export class SubmissionReadinessTwinService {
       predictedOutcome: {
         approvalProbability: 0,
         reviewTimeDays: 0,
-        deficiencyCount: 0
+        deficiencyCount: 0,
       },
       moduleReadiness: [],
       topRisks: [],
@@ -1035,21 +1252,27 @@ export class SubmissionReadinessTwinService {
         partiallyMet: 0,
         notMet: 0,
         notApplicable: 0,
-        total: 0
-      }
+        total: 0,
+      },
     };
   }
 
   /**
    * Get assessment history
    */
-  async getAssessmentHistory(programId: string, limit: number = 10): Promise<ReadinessTwinAssessment[]> {
-    const result = await this.pool.query(`
+  async getAssessmentHistory(
+    programId: string,
+    limit: number = 10
+  ): Promise<ReadinessTwinAssessment[]> {
+    const result = await this.pool.query(
+      `
       SELECT * FROM innovation.readiness_twin_assessments
       WHERE program_id = $1
       ORDER BY assessed_at DESC
       LIMIT $2
-    `, [programId, limit]);
+    `,
+      [programId, limit]
+    );
 
     return result.rows.map(this.mapAssessment);
   }
@@ -1058,12 +1281,15 @@ export class SubmissionReadinessTwinService {
    * Get trend data for charts
    */
   async getTrendData(programId: string, days: number = 30): Promise<ReadinessTrend[]> {
-    const result = await this.pool.query(`
+    const result = await this.pool.query(
+      `
       SELECT * FROM innovation.readiness_trends
       WHERE program_id = $1
         AND trend_date > CURRENT_DATE - INTERVAL '1 day' * $2
       ORDER BY trend_date ASC
-    `, [programId, days]);
+    `,
+      [programId, days]
+    );
 
     return result.rows.map(this.mapTrend);
   }
@@ -1087,7 +1313,7 @@ export class SubmissionReadinessTwinService {
       guidanceReference: row.guidance_reference,
       regulationReference: row.regulation_reference,
       isActive: row.is_active,
-      effectiveDate: row.effective_date
+      effectiveDate: row.effective_date,
     };
   }
 
@@ -1108,12 +1334,18 @@ export class SubmissionReadinessTwinService {
       qualityScore: row.quality_score ? parseFloat(row.quality_score) : undefined,
       consistencyScore: row.consistency_score ? parseFloat(row.consistency_score) : undefined,
       complianceScore: row.compliance_score ? parseFloat(row.compliance_score) : undefined,
-      predictedApprovalProbability: row.predicted_approval_probability ? parseFloat(row.predicted_approval_probability) : undefined,
-      predictedReviewTimeDays: row.predicted_review_time_days ? parseInt(row.predicted_review_time_days) : undefined,
-      predictedDeficiencyCount: row.predicted_deficiency_count ? parseInt(row.predicted_deficiency_count) : undefined,
+      predictedApprovalProbability: row.predicted_approval_probability
+        ? parseFloat(row.predicted_approval_probability)
+        : undefined,
+      predictedReviewTimeDays: row.predicted_review_time_days
+        ? parseInt(row.predicted_review_time_days)
+        : undefined,
+      predictedDeficiencyCount: row.predicted_deficiency_count
+        ? parseInt(row.predicted_deficiency_count)
+        : undefined,
       riskFactors: row.risk_factors,
       status: row.status,
-      assessedAt: row.assessed_at
+      assessedAt: row.assessed_at,
     };
   }
 
@@ -1129,7 +1361,7 @@ export class SubmissionReadinessTwinService {
       moduleScores: row.module_scores,
       criteriaMet: parseInt(row.criteria_met_count),
       criteriaTotal: parseInt(row.criteria_total_count),
-      scoreDelta: row.score_delta ? parseFloat(row.score_delta) : undefined
+      scoreDelta: row.score_delta ? parseFloat(row.score_delta) : undefined,
     };
   }
 }

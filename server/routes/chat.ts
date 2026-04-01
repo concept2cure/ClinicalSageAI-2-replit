@@ -207,10 +207,11 @@ const sendMessageHandler = async (req: Request, res: Response) => {
     const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) || 0 : userId;
 
     // ── STEP 2: CREATE / VALIDATE THREAD ─────────────────────────────────────────
-    const threadId = await getOrCreateThread(thread_id, (req as any).user?.id);
+    const requestedThreadId = Array.isArray(thread_id) ? thread_id[0] : thread_id;
+    const threadId = await getOrCreateThread(requestedThreadId ?? null, (req as any).user?.id);
 
     // Fix B: Enforce thread ownership — if thread_id was supplied, verify org match
-    if (thread_id && numericOrgId) {
+    if (requestedThreadId && numericOrgId) {
       try {
         const ownerCheck = await pool.query(
           `SELECT organization_id FROM ai_threads WHERE id = $1`,
@@ -282,7 +283,11 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       }
     }
 
-    // ── STEP 4: RETRIEVE (org-scoped pgvector hybrid search) ────────────
+    const normalizedProjectId = project_id
+      ? String(project_id).replace(/^proj_/, '')
+      : undefined;
+
+    // ── STEP 4: RETRIEVE (org-scoped + project-scoped when available) ───
     let sources: Array<{ id: string; title: string; content: string; score: number }> = [];
     let confidence: number | null = null;
     let retrievalRunId: string | null = null;
@@ -302,7 +307,8 @@ const sendMessageHandler = async (req: Request, res: Response) => {
           message,
           RETRIEVAL_TOP_K,
           RETRIEVAL_THRESHOLD,
-          orgUuid
+          orgUuid,
+          normalizedProjectId
         );
         sources = searchResults.map(r => ({
           id: r.id,
@@ -899,7 +905,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
     if (numericOrgId) {
       interceptChatResponse({
         organizationId: numericOrgId,
-        projectId: parseInt(String(project_id || '0'), 10),
+        projectId: parseInt(String(normalizedProjectId || '0'), 10),
         userId: (req as any).user?.id,
         sectionCode: (req as any).body?.section_code,
         assistantMessage,
@@ -914,7 +920,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
     if (numericOrgId && generationRunId && sources.length > 0) {
       try {
         const { recordLineageBatch } = await import('../services/data-lineage-service');
-        const projectIdNum = parseInt(String(project_id || '0'), 10);
+        const projectIdNum = parseInt(String(normalizedProjectId || '0'), 10);
         const entries = sources.filter((_s, i) => citedRefs.has(i)).map((s, _i) => ({
           organizationId: numericOrgId,
           projectId: projectIdNum || undefined,
@@ -1108,7 +1114,7 @@ router.get('/threads', async (req: Request, res: Response) => {
     let params: unknown[];
 
     if (projectId) {
-      // Try ai_threads first (has project_id), fall back to chat_threads
+      // Try ai_threads first (has project_id) and return empty when no project rows.
       try {
         const aiResult = await pool.query(
           `SELECT id, project_id, title, created_at, updated_at FROM ai_threads
@@ -1116,16 +1122,11 @@ router.get('/threads', async (req: Request, res: Response) => {
            ORDER BY COALESCE(updated_at, created_at) DESC LIMIT ${orgId ? '$3' : '$2'}`,
           orgId ? [projectId, orgId, limit] : [projectId, limit]
         );
-        if (aiResult.rows.length > 0) {
-          return res.json({ threads: aiResult.rows });
-        }
+        return res.json({ threads: aiResult.rows });
       } catch {
-        /* ai_threads may not exist — fall through */
+        // ai_threads unavailable: fail closed for project-scoped listing
+        return res.json({ threads: [] });
       }
-
-      // Fall back to chat_threads (no project_id column)
-      query = `SELECT id, created_at, updated_at FROM chat_threads ORDER BY updated_at DESC LIMIT $1`;
-      params = [limit];
     } else {
       query = `SELECT id, created_at, updated_at FROM chat_threads ORDER BY updated_at DESC LIMIT $1`;
       params = [limit];

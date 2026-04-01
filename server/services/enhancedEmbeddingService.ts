@@ -156,8 +156,8 @@ export class EnhancedEmbeddingService {
 
     // Limit cache size
     if (this.embeddingCache.size > 10000) {
-      const firstKey = this.embeddingCache.keys().next().value;
-      this.embeddingCache.delete(firstKey);
+      const firstKey = this.embeddingCache.keys().next().value as string | undefined;
+      if (firstKey) this.embeddingCache.delete(firstKey);
     }
 
     return {
@@ -424,7 +424,8 @@ export class EnhancedEmbeddingService {
     query: string,
     limit = 10,
     semanticWeight = 0.7,
-    organizationUuid?: string
+    organizationUuid?: string,
+    projectId?: string
   ): Promise<
     Array<{
       id: string;
@@ -443,6 +444,11 @@ export class EnhancedEmbeddingService {
     // CTE that restricts candidates to the tenant's atoms BEFORE scoring.
     let rows: any[];
     if (organizationUuid) {
+      const projectFilterClause = projectId
+        ? `AND a.source_type IN ('artifact', 'data_room_upload') AND a.source_id IN (
+             SELECT artifact_id FROM concept2cure_artifacts WHERE project_id = $6
+           )`
+        : '';
       const { rows: orgRows } = await this.pool.query(
         `
         WITH org_atoms AS (
@@ -450,6 +456,7 @@ export class EnhancedEmbeddingService {
           FROM lumen_data_atoms a
           JOIN organizations o ON a.organization_id = o.id
           WHERE o.uuid = $5
+            ${projectFilterClause}
         ),
         hybrid AS (
           SELECT * FROM search_atoms_hybrid($1, $2::vector, $3, $4)
@@ -460,7 +467,16 @@ export class EnhancedEmbeddingService {
         ORDER BY h.combined_score DESC
         LIMIT $4
         `,
-        [query, `[${queryResult.embedding.join(',')}]`, semanticWeight, limit, organizationUuid]
+        projectId
+          ? [
+              query,
+              `[${queryResult.embedding.join(',')}]`,
+              semanticWeight,
+              limit,
+              organizationUuid,
+              Number(projectId),
+            ]
+          : [query, `[${queryResult.embedding.join(',')}]`, semanticWeight, limit, organizationUuid]
       );
       rows = orgRows;
     } else {

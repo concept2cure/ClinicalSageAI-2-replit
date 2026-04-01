@@ -36,6 +36,14 @@ const router = Router();
 const JWT_EXPIRES_IN = '24h';
 const REFRESH_TOKEN_EXPIRES_IN = '7d';
 
+function getRefreshTokenSecret(): string {
+  const refreshSecret = process.env.REFRESH_TOKEN_SECRET;
+  if (!refreshSecret && process.env.NODE_ENV === 'production') {
+    throw new Error('REFRESH_TOKEN_SECRET must be configured in production');
+  }
+  return refreshSecret || config.jwt.secret;
+}
+
 // ─── Rate Limiters ──────────────────────────────────────────────────────────
 // Separate limiters for different risk levels.
 
@@ -137,44 +145,6 @@ function requireDb(res: Response): boolean {
   return true;
 }
 
-async function getMembershipForOrg(userId: number, organizationId?: string | number | null) {
-  if (!organizationId) return null;
-  const orgId =
-    typeof organizationId === 'string' ? parseInt(organizationId, 10) : Number(organizationId);
-  if (!Number.isFinite(orgId)) return null;
-
-  const [membership] = await db
-    .select({
-      organizationId: organizationUsers.organizationId,
-      role: organizationUsers.role,
-    })
-    .from(organizationUsers)
-    .where(
-      and(eq(organizationUsers.userId, userId), eq(organizationUsers.organizationId, orgId))
-    )
-    .limit(1);
-
-  return membership || null;
-}
-
-async function resolveOrganizationContext(userId: number, preferredOrganizationId?: string | number | null) {
-  const preferredMembership = await getMembershipForOrg(userId, preferredOrganizationId);
-  if (preferredMembership) {
-    return preferredMembership;
-  }
-
-  const [fallbackMembership] = await db
-    .select({
-      organizationId: organizationUsers.organizationId,
-      role: organizationUsers.role,
-    })
-    .from(organizationUsers)
-    .where(eq(organizationUsers.userId, userId))
-    .limit(1);
-
-  return fallbackMembership || null;
-}
-
 /**
  * GET /api/auth/session
  * Get current session status and user info
@@ -223,20 +193,35 @@ router.get('/session', async (req: Request, res: Response) => {
     const sessionLastName = sessionNameParts.slice(1).join(' ') || '';
     const sessionDisplayName = (userData.name || '').trim() || userData.email;
 
-    const sessionMembership = await resolveOrganizationContext(userData.id, decoded.organizationId);
-    const sessionOrganizationId =
-      decoded.organizationId || sessionMembership?.organizationId?.toString() || null;
-    const sessionRole = sessionMembership?.role || 'user';
+    // Resolve role from the org in the JWT to avoid cross-org role bleed.
+    let sessionRole = 'user';
+    if (decoded.organizationId) {
+      const orgId = parseInt(decoded.organizationId, 10);
+      const [sessionMembership] = await db
+        .select({ role: organizationUsers.role })
+        .from(organizationUsers)
+        .where(
+          and(eq(organizationUsers.userId, userData.id), eq(organizationUsers.organizationId, orgId))
+        )
+        .limit(1);
+      if (!sessionMembership) {
+        return res.status(401).json({
+          authenticated: false,
+          error: { code: 'AUTH_006', message: 'Invalid tenant membership' },
+        });
+      }
+      sessionRole = sessionMembership.role;
+    }
     const sessionRoles =
       sessionRole === 'admin' ? ['admin', 'user'] : [sessionRole === 'editor' ? 'editor' : 'user'];
 
     // Get organization
     let orgName = 'Concept2Cure';
-    if (sessionOrganizationId) {
+    if (decoded.organizationId) {
       const org = await db
         .select()
         .from(organizations)
-        .where(eq(organizations.id, parseInt(sessionOrganizationId, 10)))
+        .where(eq(organizations.id, parseInt(decoded.organizationId)))
         .limit(1);
       if (org.length) {
         orgName = org[0].name;
@@ -253,19 +238,10 @@ router.get('/session', async (req: Request, res: Response) => {
         displayName: sessionDisplayName,
         roles: sessionRoles,
         permissions: [],
-        organizationId: sessionOrganizationId,
+        organizationId: decoded.organizationId,
         organizationName: orgName,
-        mfaEnabled: userData.mfaEnabled === true,
-        mfaMethods:
-          userData.mfaEnabled === true
-            ? [
-                {
-                  type: (userData as any).mfaMethod || 'totp',
-                  isEnabled: true,
-                  isPrimary: true,
-                },
-              ]
-            : [],
+        mfaEnabled: false,
+        mfaMethods: [],
         mustChangePassword: false,
       },
       session: {
@@ -363,20 +339,30 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     let organizationId = defaultOrganizationId;
     let jwtRole = 'user';
 
-    // Single query for org membership + role (avoids duplicate organizationUsers queries)
-    const [membership] = await db
+    // Resolve all memberships and pick default org membership if available.
+    const memberships = await db
       .select({
         organizationId: organizationUsers.organizationId,
         role: organizationUsers.role,
       })
       .from(organizationUsers)
       .where(eq(organizationUsers.userId, userData.id))
-      .limit(1);
+      .limit(25);
+
+    if (memberships.length === 0) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'AUTH_011', message: 'No organization assigned' },
+      });
+    }
 
     if (!organizationId) {
-      organizationId = membership?.organizationId || null;
+      organizationId = memberships[0]?.organizationId || null;
     }
-    jwtRole = membership?.role || 'user';
+    const selectedMembership =
+      memberships.find(m => m.organizationId === organizationId) || memberships[0];
+    organizationId = selectedMembership?.organizationId || null;
+    jwtRole = selectedMembership?.role || 'user';
 
     if (!organizationId) {
       return res.status(403).json({
@@ -448,13 +434,8 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       });
     }
     const refreshToken = jwt.sign(
-      {
-        userId: userData.id.toString(),
-        email: userData.email,
-        organizationId: String(organizationId),
-        type: 'refresh',
-      },
-      process.env.REFRESH_TOKEN_SECRET || config.jwt.secret,
+      { userId: userData.id.toString(), email: userData.email, type: 'refresh' },
+      getRefreshTokenSecret(),
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
   } catch (error: any) {
@@ -545,7 +526,7 @@ router.post('/dev-login', loginLimiter, async (req: Request, res: Response) => {
       {
         userId: userData.id.toString(),
         email: userData.email,
-        organizationId: String(organizationId),
+        organizationId: organizationId.toString(),
         organizationUuid: organization?.uuid || null,
         role: jwtRole,
       },
@@ -554,12 +535,7 @@ router.post('/dev-login', loginLimiter, async (req: Request, res: Response) => {
     );
 
     const refreshToken = jwt.sign(
-      {
-        userId: userData.id.toString(),
-        email: userData.email,
-        organizationId: organizationId.toString(),
-        type: 'refresh',
-      },
+      { userId: userData.id.toString(), email: userData.email, type: 'refresh' },
       process.env.REFRESH_TOKEN_SECRET || config.jwt.secret,
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
@@ -660,7 +636,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY;
     if (stripeSecretKey) {
       const Stripe = (await import('stripe')).default;
-      const stripe = new Stripe(stripeSecretKey);
+      const stripe = new Stripe(stripeSecretKey, { apiVersion: '2023-10-16' });
       const customer = await stripe.customers.create({
         email,
         name: companyName,
@@ -810,13 +786,9 @@ router.post('/refresh', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(
-      refreshToken,
-      process.env.REFRESH_TOKEN_SECRET || config.jwt.secret
-    ) as {
+    const decoded = jwt.verify(refreshToken, getRefreshTokenSecret()) as {
       userId: string;
       email: string;
-      organizationId?: string;
       type: string;
     };
 
@@ -845,8 +817,16 @@ router.post('/refresh', async (req: Request, res: Response) => {
     }
 
     const refreshUserData = refreshUser[0];
-    const refreshMembership = await resolveOrganizationContext(refreshUserData.id, decoded.organizationId);
-    const refreshOrgId = refreshMembership?.organizationId || refreshUserData.defaultOrganizationId || null;
+    const refreshMemberships = await db
+      .select({ organizationId: organizationUsers.organizationId, role: organizationUsers.role })
+      .from(organizationUsers)
+      .where(eq(organizationUsers.userId, refreshUserData.id))
+      .limit(25);
+
+    let refreshOrgId = refreshUserData.defaultOrganizationId;
+    if (!refreshOrgId || !refreshMemberships.some(m => m.organizationId === refreshOrgId)) {
+      refreshOrgId = refreshMemberships[0]?.organizationId || null;
+    }
 
     if (!refreshOrgId) {
       return res.status(403).json({
@@ -855,26 +835,31 @@ router.post('/refresh', async (req: Request, res: Response) => {
       });
     }
 
-    // Get the user's role for the JWT
+    // Get the user's role for the specific org in scope.
+    const refreshMembershipRole =
+      refreshMemberships.find(m => m.organizationId === refreshOrgId) || null;
+
+    if (!refreshMembershipRole) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'AUTH_011', message: 'Invalid tenant membership' },
+      });
+    }
+
     const accessToken = jwt.sign(
       {
         userId: decoded.userId,
         email: decoded.email,
         organizationId: refreshOrgId.toString(),
-        role: refreshMembership?.role || 'user',
+        role: refreshMembershipRole.role,
       },
       config.jwt.secret,
       { expiresIn: JWT_EXPIRES_IN }
     );
 
     const newRefreshToken = jwt.sign(
-      {
-        userId: decoded.userId,
-        email: decoded.email,
-        organizationId: refreshOrgId.toString(),
-        type: 'refresh',
-      },
-      process.env.REFRESH_TOKEN_SECRET || config.jwt.secret,
+      { userId: decoded.userId, email: decoded.email, type: 'refresh' },
+      getRefreshTokenSecret(),
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
 
@@ -946,7 +931,24 @@ router.get('/me', async (req: Request, res: Response) => {
     const meLastName = meParts.slice(1).join(' ') || '';
     const meDisplayName = (userData.name || '').trim() || userData.email;
 
-    const meMembership = await resolveOrganizationContext(userData.id, decoded.organizationId);
+    // Get role
+    const [meMembership] = await db
+      .select({ role: organizationUsers.role, organizationId: organizationUsers.organizationId })
+      .from(organizationUsers)
+      .where(
+        decoded.organizationId
+          ? and(
+              eq(organizationUsers.userId, userData.id),
+              eq(organizationUsers.organizationId, parseInt(decoded.organizationId, 10))
+            )
+          : eq(organizationUsers.userId, userData.id)
+      )
+      .limit(1);
+    if (decoded.organizationId && !meMembership) {
+      return res.status(401).json({
+        error: { code: 'AUTH_006', message: 'Invalid tenant membership' },
+      });
+    }
     const meRole = meMembership?.role || 'user';
     const meRoles =
       meRole === 'admin' ? ['admin', 'user'] : [meRole === 'editor' ? 'editor' : 'user'];
@@ -1023,22 +1025,17 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
 
     const userId = parseInt(challenge.userId);
 
-    // Verify the code — try email OTP first (default), then TOTP/backup codes
+    // Verify the code — try email OTP first (default), then TOTP
     const verificationMethod = method || 'email';
     let isValid = false;
-    let resolvedMethod: 'email' | 'totp' | 'backup_code' = verificationMethod === 'email' ? 'email' : 'totp';
 
     if (verificationMethod === 'email') {
       isValid = await emailOtpService.verifyEmailOtp(userId, code);
     }
 
-    // Fall back to TOTP or backup-code verification via the canonical MFA service.
+    // Fall back to TOTP verification (for users with authenticator apps)
     if (!isValid) {
-      const detectedMethod = await mfaService.detectVerificationMethod(userId, code);
       isValid = await mfaService.verifyToken(userId, code);
-      if (isValid && detectedMethod) {
-        resolvedMethod = detectedMethod;
-      }
     }
 
     if (!isValid) {
@@ -1075,13 +1072,8 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
     );
 
     const refreshToken = jwt.sign(
-      {
-        userId: challenge.userId,
-        email: challenge.email,
-        organizationId: challenge.organizationId,
-        type: 'refresh',
-      },
-      process.env.REFRESH_TOKEN_SECRET || config.jwt.secret,
+      { userId: challenge.userId, email: challenge.email, type: 'refresh' },
+      getRefreshTokenSecret(),
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
 
@@ -1124,7 +1116,7 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
         organizationName: mfaOrgName,
         organizationUuid: challenge.organizationUuid,
         mfaEnabled: true,
-        mfaMethods: [{ type: resolvedMethod, isEnabled: true, isPrimary: true }],
+        mfaMethods: [{ type: verificationMethod, isEnabled: true, isPrimary: true }],
         mustChangePassword: false,
       },
       mfaRequired: false,
